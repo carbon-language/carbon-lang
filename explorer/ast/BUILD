@@ -51,11 +51,11 @@ cc_library(
         "//common:error",
         "//common:indirect_value",
         "//common:ostream",
-        "//explorer/common:arena",
-        "//explorer/common:decompose",
-        "//explorer/common:error_builders",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
+        "//explorer/base:arena",
+        "//explorer/base:decompose",
+        "//explorer/base:error_builders",
+        "//explorer/base:nonnull",
+        "//explorer/base:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -81,8 +81,8 @@ cc_test(
     deps = [
         ":ast",
         ":ast_test_matchers",
-        "//explorer/common:arena",
-        "//testing/util:gtest_main",
+        "//explorer/base:arena",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -93,8 +93,8 @@ cc_test(
     deps = [
         ":ast",
         ":paren_contents",
-        "//explorer/common:arena",
-        "//testing/util:gtest_main",
+        "//explorer/base:arena",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -109,8 +109,8 @@ cc_library(
     name = "paren_contents",
     hdrs = ["paren_contents.h"],
     deps = [
-        "//explorer/common:error_builders",
-        "//explorer/common:source_location",
+        "//explorer/base:error_builders",
+        "//explorer/base:source_location",
     ],
 )
 
@@ -120,8 +120,8 @@ cc_test(
     deps = [
         ":ast",
         ":paren_contents",
-        "//explorer/common:arena",
-        "//testing/util:gtest_main",
+        "//explorer/base:arena",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -133,8 +133,8 @@ cc_test(
     deps = [
         ":ast",
         ":paren_contents",
-        "//explorer/common:arena",
-        "//testing/util:gtest_main",
+        "//explorer/base:arena",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -149,10 +149,10 @@ cc_library(
         "//common:check",
         "//common:error",
         "//common:ostream",
-        "//explorer/common:error_builders",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
-        "//explorer/common:trace_stream",
+        "//explorer/base:error_builders",
+        "//explorer/base:nonnull",
+        "//explorer/base:source_location",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )

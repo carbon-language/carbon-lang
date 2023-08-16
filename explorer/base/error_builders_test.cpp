@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "explorer/common/error_builders.h"
+#include "explorer/base/error_builders.h"
 
 #include <gtest/gtest.h>
 
-#include "explorer/common/source_location.h"
-#include "testing/util/test_raw_ostream.h"
+#include "explorer/base/source_location.h"
+#include "testing/base/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {

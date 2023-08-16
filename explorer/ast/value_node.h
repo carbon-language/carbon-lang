@@ -12,7 +12,7 @@
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/clone_context.h"
 #include "explorer/ast/expression_category.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
 
 namespace Carbon {
 

@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_COMMON_SOURCE_LOCATION_H_
-#define CARBON_EXPLORER_COMMON_SOURCE_LOCATION_H_
+#ifndef CARBON_EXPLORER_BASE_SOURCE_LOCATION_H_
+#define CARBON_EXPLORER_BASE_SOURCE_LOCATION_H_
 
 #include <string>
 #include <string_view>
 
 #include "common/ostream.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
 
 namespace Carbon {
 
@@ -72,4 +72,4 @@ class SourceLocation {
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_COMMON_SOURCE_LOCATION_H_
+#endif  // CARBON_EXPLORER_BASE_SOURCE_LOCATION_H_

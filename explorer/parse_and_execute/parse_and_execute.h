@@ -6,7 +6,7 @@
 #define CARBON_EXPLORER_PARSE_AND_EXECUTE_PARSE_AND_EXECUTE_H_
 
 #include "common/error.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/trace_stream.h"
 #include "llvm/Support/VirtualFileSystem.h"
 
 namespace Carbon {

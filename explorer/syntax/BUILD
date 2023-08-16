@@ -15,8 +15,8 @@ cc_test(
     srcs = ["parse_test.cpp"],
     deps = [
         ":syntax",
-        "//explorer/common:arena",
-        "//testing/util:gtest_main",
+        "//explorer/base:arena",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -42,8 +42,8 @@ cc_library(
         ":syntax",
         "//common:error",
         "//explorer/ast",
-        "//explorer/common:arena",
-        "//explorer/common:nonnull",
+        "//explorer/base:arena",
+        "//explorer/base:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -86,10 +86,10 @@ cc_library(
         "//explorer/ast",
         "//explorer/ast:expression_category",
         "//explorer/ast:paren_contents",
-        "//explorer/common:arena",
-        "//explorer/common:error_builders",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
+        "//explorer/base:arena",
+        "//explorer/base:error_builders",
+        "//explorer/base:nonnull",
+        "//explorer/base:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -148,7 +148,7 @@ cc_test(
         ":parse_test_matchers",
         ":syntax",
         "//explorer/ast:ast_test_matchers",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

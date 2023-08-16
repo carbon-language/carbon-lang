@@ -10,8 +10,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/SourceMgr.h"
-#include "testing/util/test_raw_ostream.h"
-#include "toolchain/common/yaml_test_helpers.h"
+#include "testing/base/test_raw_ostream.h"
+#include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Testing {

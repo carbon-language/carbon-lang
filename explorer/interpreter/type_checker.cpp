@@ -22,10 +22,10 @@
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
 #include "explorer/ast/value_transform.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/error_builders.h"
-#include "explorer/common/source_location.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/error_builders.h"
+#include "explorer/base/source_location.h"
+#include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
@@ -2378,7 +2378,6 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
   MatchingImplSet::Match match(&matching_impl_set_, &impl, impl_type, &iface);
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "\n";
     trace_stream_->SubHeading("match impl");
     trace_stream_->Start() << "looking for `" << *impl_type << "` as `" << iface
                            << "`\n";

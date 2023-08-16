@@ -24,6 +24,24 @@ auto LoweringHandleAddressOf(LoweringFunctionContext& context,
   context.SetLocal(node_id, context.GetLocal(node.GetAsAddressOf()));
 }
 
+auto LoweringHandleArrayIndex(LoweringFunctionContext& /*context*/,
+                              SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
+auto LoweringHandleArrayType(LoweringFunctionContext& /*context*/,
+                             SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
+auto LoweringHandleArrayValue(LoweringFunctionContext& /*context*/,
+                              SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
 auto LoweringHandleAssign(LoweringFunctionContext& context,
                           SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
