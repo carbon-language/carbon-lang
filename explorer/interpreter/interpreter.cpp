@@ -22,10 +22,10 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/expression_category.h"
 #include "explorer/ast/value.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/error_builders.h"
-#include "explorer/common/source_location.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/error_builders.h"
+#include "explorer/base/source_location.h"
+#include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/pattern_match.h"
@@ -502,6 +502,11 @@ auto Interpreter::EvalAssociatedConstant(
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
+  if (trace_stream_->is_enabled()) {
+    trace_stream_->Start() << "instantiating type `" << *type << "` ("
+                           << source_loc << ")\n";
+  }
+
   switch (type->kind()) {
     case Value::Kind::VariableType: {
       CARBON_ASSIGN_OR_RETURN(

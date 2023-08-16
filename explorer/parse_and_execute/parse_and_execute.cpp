@@ -7,7 +7,7 @@
 #include <locale>
 
 #include "common/error.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/exec_program.h"
 #include "explorer/interpreter/stack_space.h"
 #include "explorer/syntax/parse.h"

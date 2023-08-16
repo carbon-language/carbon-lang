@@ -165,13 +165,20 @@ these.
 
 ### Foundational libraries and data types
 
--   Generally prefer LLVM libraries and data structures to standard C++ ones.
+-   In the toolchain, prefer LLVM libraries and data structures to standard C++
+    ones.
     -   These are optimized significantly for performance, especially when used
         without exception handling or safety requirements, and when used in
         patterns that tend to occur while building compilers.
     -   They also minimize the vocabulary type friction when using actual LLVM
         and Clang APIs.
--   Do not add third-party library dependencies to any code that might
+-   In explorer, prefer standard C++ facilities, but use LLVM facilities when
+    there is no standard equivalent.
+    -   This approach is aimed to make the explorer codebase more approachable
+        to new contributors.
+    -   In explorer, performance is not a high priority, and friction with LLVM
+        and Clang APIs is much less of a concern.
+-   Do not add other third-party library dependencies to any code that might
     conceivably be used as part of the compiler or runtime.
     -   Compilers and runtime libraries have unique constraints on their
         licensing. For simplicity, we want all transitive dependencies of these

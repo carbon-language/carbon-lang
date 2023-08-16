@@ -5,8 +5,8 @@
 #include "absl/flags/flag.h"
 #include "explorer/main.h"
 #include "re2/re2.h"
+#include "testing/base/test_raw_ostream.h"
 #include "testing/file_test/file_test_base.h"
-#include "testing/util/test_raw_ostream.h"
 
 ABSL_FLAG(bool, trace, false,
           "Set to true to run tests with tracing enabled, even if they don't "

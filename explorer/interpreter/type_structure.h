@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {

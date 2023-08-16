@@ -4,7 +4,7 @@
 
 #include "explorer/syntax/parse_and_lex_context.h"
 
-#include "explorer/common/error_builders.h"
+#include "explorer/base/error_builders.h"
 
 namespace Carbon {
 

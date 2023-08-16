@@ -11,9 +11,9 @@
 #include "explorer/ast/address.h"
 #include "explorer/ast/value.h"
 #include "explorer/ast/value_node.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/common/source_location.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/nonnull.h"
+#include "explorer/base/source_location.h"
+#include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
 
 namespace Carbon {

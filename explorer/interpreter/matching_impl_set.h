@@ -10,7 +10,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/value.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "llvm/ADT/DenseMap.h"
 

@@ -15,7 +15,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/heap.h"
 #include "llvm/ADT/ArrayRef.h"

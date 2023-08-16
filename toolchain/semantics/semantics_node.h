@@ -9,7 +9,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
-#include "toolchain/common/index_base.h"
+#include "toolchain/base/index_base.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_node_kind.h"
@@ -309,6 +309,18 @@ class SemanticsNode {
 
   using AddressOf = SemanticsNode::Factory<SemanticsNodeKind::AddressOf,
                                            SemanticsNodeId /*lvalue_id*/>;
+
+  using ArrayIndex =
+      Factory<SemanticsNodeKind::ArrayIndex, SemanticsNodeId /*array_id*/,
+              SemanticsNodeId /*index*/>;
+
+  using ArrayType =
+      SemanticsNode::Factory<SemanticsNodeKind::ArrayType,
+                             SemanticsNodeId /*bound_node_id*/,
+                             SemanticsTypeId /*array_element_type_id*/>;
+
+  using ArrayValue = Factory<SemanticsNodeKind::ArrayValue,
+                             SemanticsNodeId /*tuple_value_id*/>;
 
   using Assign = SemanticsNode::FactoryNoType<SemanticsNodeKind::Assign,
                                               SemanticsNodeId /*lhs_id*/,

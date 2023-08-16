@@ -92,6 +92,8 @@ class CheckLine : public FileTestLineBase {
     }
   }
 
+  auto is_blank() const -> bool override { return false; }
+
  private:
   bool line_number_re_has_file_;
   const RE2* line_number_re_;
@@ -102,15 +104,17 @@ class CheckLine : public FileTestLineBase {
 
 }  // namespace
 
-// Adds output lines for autoupdate.
-static auto AddCheckLines(
+// Builds CheckLine lists for autoupdate.
+static auto BuildCheckLines(
     llvm::StringRef output, const char* label,
     const llvm::SmallVector<llvm::StringRef>& filenames,
     bool line_number_re_has_file, const RE2& line_number_re,
-    std::function<void(std::string&)> do_extra_check_replacements,
-    llvm::SmallVector<llvm::SmallVector<CheckLine>>& check_lines) -> void {
+    std::function<void(std::string&)> do_extra_check_replacements)
+    -> llvm::SmallVector<llvm::SmallVector<CheckLine>> {
+  llvm::SmallVector<llvm::SmallVector<CheckLine>> check_lines;
+  check_lines.resize(filenames.size());
   if (output.empty()) {
-    return;
+    return check_lines;
   }
 
   // Prepare to look for filenames in lines.
@@ -185,6 +189,8 @@ static auto AddCheckLines(
         CheckLine(line_number, line_number_re_has_file,
                   use_line_number ? &line_number_re : nullptr, check_line));
   }
+
+  return check_lines;
 }
 
 auto AutoupdateFileTest(
@@ -200,22 +206,19 @@ auto AutoupdateFileTest(
                                     << line_number_replacement.pattern << "`";
 
   // Prepare CHECK lines.
-  llvm::SmallVector<llvm::SmallVector<CheckLine>> stdout_check_lines;
-  stdout_check_lines.resize(filenames.size());
-  AddCheckLines(stdout, "STDOUT", filenames, line_number_replacement.has_file,
-                line_number_re, do_extra_check_replacements,
-                stdout_check_lines);
-
-  llvm::SmallVector<llvm::SmallVector<CheckLine>> stderr_check_lines;
-  stderr_check_lines.resize(filenames.size());
-  AddCheckLines(stderr, "STDERR", filenames, line_number_replacement.has_file,
-                line_number_re, do_extra_check_replacements,
-                stderr_check_lines);
+  llvm::SmallVector<llvm::SmallVector<CheckLine>> stdout_check_lines =
+      BuildCheckLines(stdout, "STDOUT", filenames,
+                      line_number_replacement.has_file, line_number_re,
+                      do_extra_check_replacements);
+  llvm::SmallVector<llvm::SmallVector<CheckLine>> stderr_check_lines =
+      BuildCheckLines(stderr, "STDERR", filenames,
+                      line_number_replacement.has_file, line_number_re,
+                      do_extra_check_replacements);
 
   // All CHECK lines are suppressed until we reach AUTOUPDATE.
   bool reached_autoupdate = false;
 
-  FileTestLine blank_line(-1, "");
+  const FileTestLine blank_line(-1, "");
 
   // Stitch together content.
   llvm::SmallVector<const FileTestLineBase*> new_lines;
@@ -288,14 +291,9 @@ auto AutoupdateFileTest(
     if (stderr_check_line != stderr_check_file.end() ||
         stdout_check_line != stdout_check_file.end()) {
       // Ensure there's a blank line before any trailing CHECKs.
-      if (!new_lines.empty()) {
-        std::string str;
-        llvm::raw_string_ostream out(str);
-        new_lines.back()->Print(out);
-        if (!str.empty()) {
-          new_lines.push_back(&blank_line);
-          ++output_line_number;
-        }
+      if (!new_lines.empty() && !new_lines.back()->is_blank()) {
+        new_lines.push_back(&blank_line);
+        ++output_line_number;
       }
 
       add_check_lines(stderr_check_file, stderr_check_line, INT_MAX, "");

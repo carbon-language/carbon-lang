@@ -10,8 +10,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
-#include "testing/util/test_raw_ostream.h"
-#include "toolchain/common/yaml_test_helpers.h"
+#include "testing/base/test_raw_ostream.h"
+#include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {

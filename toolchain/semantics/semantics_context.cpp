@@ -379,6 +379,31 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     // Type doesn't need to change.
     return ImplicitAsKind::Identical;
   }
+
+  auto as_type = semantics_ir_->GetTypeAllowBuiltinTypes(as_type_id);
+  auto as_type_node = semantics_ir_->GetNode(as_type);
+  if (as_type_node.kind() == SemanticsNodeKind::ArrayType) {
+    auto [bound_node_id, element_type_id] = as_type_node.GetAsArrayType();
+    // To resolve lambda issue.
+    auto element_type = element_type_id;
+    auto value_type_node = semantics_ir_->GetNode(
+        semantics_ir_->GetTypeAllowBuiltinTypes(value_type_id));
+    if (value_type_node.kind() == SemanticsNodeKind::TupleType) {
+      auto tuple_type_block_id = value_type_node.GetAsTupleType();
+      const auto& type_block = semantics_ir_->GetTypeBlock(tuple_type_block_id);
+      if (type_block.size() ==
+              semantics_ir_->GetArrayBoundValue(bound_node_id) &&
+          std::all_of(type_block.begin(), type_block.end(),
+                      [&](auto type) { return type == element_type; })) {
+        if (output_value_id != nullptr) {
+          *output_value_id = AddNode(SemanticsNode::ArrayValue::Make(
+              value.parse_node(), as_type_id, value_id));
+        }
+        return ImplicitAsKind::Compatible;
+      }
+    }
+  }
+
   if (as_type_id == SemanticsTypeId::TypeType) {
     if (value.kind() == SemanticsNodeKind::TupleValue) {
       auto tuple_block_id = value.GetAsTupleValue();
@@ -499,6 +524,13 @@ static auto ProfileTupleType(const llvm::SmallVector<SemanticsTypeId>& type_ids,
 static auto ProfileType(SemanticsContext& semantics_context, SemanticsNode node,
                         llvm::FoldingSetNodeID& canonical_id) -> void {
   switch (node.kind()) {
+    case SemanticsNodeKind::ArrayType: {
+      auto [bound_id, element_type_id] = node.GetAsArrayType();
+      canonical_id.AddInteger(
+          semantics_context.semantics_ir().GetArrayBoundValue(bound_id));
+      canonical_id.AddInteger(element_type_id.index);
+      break;
+    }
     case SemanticsNodeKind::Builtin:
       canonical_id.AddInteger(node.GetAsBuiltin().AsInt());
       break;
@@ -608,8 +640,9 @@ auto SemanticsContext::GetUnqualifiedType(SemanticsTypeId type_id)
     -> SemanticsTypeId {
   SemanticsNode type_node =
       semantics_ir_->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(type_id));
-  if (type_node.kind() == SemanticsNodeKind::ConstType)
+  if (type_node.kind() == SemanticsNodeKind::ConstType) {
     return type_node.GetAsConstType();
+  }
   return type_id;
 }
 
