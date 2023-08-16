@@ -28,7 +28,6 @@ using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
-using ::testing::StrEq;
 
 class LexerTest : public ::testing::Test {
  protected:
