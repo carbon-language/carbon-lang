@@ -117,7 +117,7 @@ def git_checkout(commit: str) -> None:
 
 
 def git_diff(baseline: str, current: str) -> None:
-    subprocess.run(
+    p = subprocess.run(
         [
             "git",
             "diff",
@@ -126,7 +126,9 @@ def git_diff(baseline: str, current: str) -> None:
         ],
         check=True,
         encoding="utf-8",
+        stdout=subprocess.PIPE,
     )
+    log(p.stdout)
 
 
 def main() -> None:
