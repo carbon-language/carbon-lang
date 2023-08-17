@@ -44,9 +44,16 @@ class Driver {
   struct Options;
   struct CompileOptions;
 
+  // Delegates to the command line library to parse the arguments and store the
+  // results in a custom `Options` structure that the rest of the driver uses.
   auto ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
       -> CommandLine::ParseResult;
+
+  // Does custom validation of the compile-subcommand options structure beyond
+  // what the command line parsing library supports.
   auto ValidateCompileOptions(const CompileOptions& options) const -> bool;
+
+  // Implements the compile subcommand of the driver.
   auto Compile(const CompileOptions& options) -> bool;
 
   llvm::vfs::FileSystem& fs_;

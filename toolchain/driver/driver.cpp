@@ -92,7 +92,7 @@ The input Carbon source file to compile.
             .help = R"""(
 Selects the compilation phase to run. These phases are always run in sequence,
 so every phase before the one selected will also be run. The default is to
-compile, lower, and generate machine code.
+compile to machine code.
 )""",
         },
         [&](auto& arg_b) {
@@ -107,6 +107,8 @@ compile, lower, and generate machine code.
               &phase);
         });
 
+    // TODO: Rearrange the code setting this option and two related ones to
+    // allow them to reference each other instead of hard-coding their names.
     b.AddStringOption(
         {
             .name = "output",
@@ -298,10 +300,11 @@ For questions, issues, or bug reports, please use our GitHub project:
         },
         [&](auto& arg_b) { arg_b.Set(&verbose); });
 
-    b.AddSubcommand(CompileOptions::Info, [&](auto& sub_b) {
-      compile_options.Build(sub_b);
-      sub_b.Do([&] { subcommand = Subcommand::Compile; });
-    });
+    b.AddSubcommand(CompileOptions::Info,
+                    [&](CommandLine::CommandBuilder& sub_b) {
+                      compile_options.Build(sub_b);
+                      sub_b.Do([&] { subcommand = Subcommand::Compile; });
+                    });
 
     b.RequiresSubcommand();
   }
@@ -490,6 +493,9 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
 
   if (options.output_file_name == "-") {
+    // TODO: the output file name, forcing object output, and requesting textual
+    // assembly output are all somewhat linked flags. We should add some
+    // validation that they are used correctly.
     if (options.force_obj_output) {
       if (!codegen->EmitObject(output_stream_)) {
         return false;
