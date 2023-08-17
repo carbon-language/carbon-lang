@@ -289,7 +289,7 @@ files within the disk cache, typically located at
 `bazel clean` should allow your next rebuild, with the recommended options, to
 supply the symbols for debugging.
 
-For debugging on MacOS using VSCode, I've had good luck using the CodeLLDB
+For debugging on MacOS using VSCode, some have had success using the CodeLLDB
 extension. In order for LLDB to connect the project source files with the
 symbols you will need to add a `"sourceMap": { ".": "${workspaceRoot}" }` line
 to the `launch.json` configuration, for example:
