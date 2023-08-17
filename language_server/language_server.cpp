@@ -85,7 +85,6 @@ auto LanguageServer::Symbols(clang::clangd::DocumentSymbolParams& params)
   auto lexed = TokenizedBuffer::Lex(*buf, NullDiagnosticConsumer());
   auto parsed = ParseTree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;
-  // TODO: use preorder
   for (const auto& node : parsed.postorder()) {
     switch (parsed.node_kind(node)) {
       case ParseNodeKind::FunctionDeclaration:
