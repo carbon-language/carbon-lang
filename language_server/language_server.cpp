@@ -16,22 +16,26 @@ namespace Carbon::LS {
 namespace {
 template <typename T>
 // TODO: handle parsing error
-auto ParseJSON(llvm::json::Value& v) -> T {
+auto ParseJSON(llvm::json::Value& v, T& parsed) -> bool {
   llvm::json::Path::Root root_path;
-  T parsed;
-  clang::clangd::fromJSON(v, parsed, root_path);
-  return parsed;
+  return clang::clangd::fromJSON(v, parsed, root_path);
 }
 }  // namespace
 
 auto LanguageServer::onNotify(llvm::StringRef method, llvm::json::Value value)
     -> bool {
   if (method == "textDocument/didOpen") {
-    auto params = ParseJSON<clang::clangd::DidOpenTextDocumentParams>(value);
+    clang::clangd::DidOpenTextDocumentParams params;
+    if (!ParseJSON(value, params)) {
+      return false;
+    }
     files_.emplace(params.textDocument.uri.file(), params.textDocument.text);
   }
   if (method == "textDocument/didChange") {
-    auto params = ParseJSON<clang::clangd::DidChangeTextDocumentParams>(value);
+    clang::clangd::DidChangeTextDocumentParams params;
+    if (!ParseJSON(value, params)) {
+      return false;
+    }
     // full text is sent if full sync is specified in capabilities.
     assert(params.contentChanges.size() == 1);
     std::string file = params.textDocument.uri.file().str();
@@ -49,9 +53,11 @@ auto LanguageServer::onCall(llvm::StringRef method, llvm::json::Value params,
         id, llvm::json::Object{{"capabilities", std::move(capabilities)}});
   }
   if (method == "textDocument/documentSymbol") {
-    auto symbols_params =
-        ParseJSON<clang::clangd::DocumentSymbolParams>(params);
-    auto symbols = Symbols(symbols_params);
+    clang::clangd::DocumentSymbolParams symbol_params;
+    if (!ParseJSON(params, symbol_params)) {
+      return false;
+    }
+    auto symbols = Symbols(symbol_params);
     transport_->reply(id, symbols);
   }
 
