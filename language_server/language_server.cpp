@@ -4,6 +4,7 @@
 
 #include "language_server.h"
 
+#include "third_party/clangd/Protocol.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -27,12 +28,14 @@ auto LanguageServer::onNotify(llvm::StringRef method, llvm::json::Value value)
     -> bool {
   if (method == "textDocument/didOpen") {
     auto params = ParseJSON<clang::clangd::DidOpenTextDocumentParams>(value);
-    vfs_.addFile(
-        params.textDocument.uri.file(), /*mtime=*/0,
-        llvm::MemoryBuffer::getMemBufferCopy(params.textDocument.text));
+    files_.emplace(params.textDocument.uri.file(), params.textDocument.text);
   }
   if (method == "textDocument/didChange") {
-    // TODO: sync files
+    auto params = ParseJSON<clang::clangd::DidChangeTextDocumentParams>(value);
+    // full text is sent if full sync is specified in capabilities.
+    assert(params.contentChanges.size() == 1);
+    std::string file = params.textDocument.uri.file().str();
+    files_[file] = params.contentChanges[0].text;
   }
   return true;
 }
@@ -40,7 +43,8 @@ auto LanguageServer::onNotify(llvm::StringRef method, llvm::json::Value value)
 auto LanguageServer::onCall(llvm::StringRef method, llvm::json::Value params,
                             llvm::json::Value id) -> bool {
   if (method == "initialize") {
-    llvm::json::Object capabilities{{"documentSymbolProvider", true}};
+    llvm::json::Object capabilities{{"documentSymbolProvider", true},
+                                    {"textDocumentSync", /*Full=*/1}};
     transport_->reply(
         id, llvm::json::Object{{"capabilities", std::move(capabilities)}});
   }
@@ -72,7 +76,12 @@ static auto getName(ParseTree& p, ParseTree::Node node)
 
 auto LanguageServer::Symbols(clang::clangd::DocumentSymbolParams& params)
     -> std::vector<clang::clangd::DocumentSymbol> {
-  auto buf = SourceBuffer::CreateFromFile(vfs_, params.textDocument.uri.file());
+  llvm::vfs::InMemoryFileSystem vfs;
+  auto file = params.textDocument.uri.file().str();
+  vfs.addFile(file, /*mtime=*/0,
+              llvm::MemoryBuffer::getMemBufferCopy(files_.at(file)));
+
+  auto buf = SourceBuffer::CreateFromFile(vfs, file);
   auto lexed = TokenizedBuffer::Lex(*buf, NullDiagnosticConsumer());
   auto parsed = ParseTree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;

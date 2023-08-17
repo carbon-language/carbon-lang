@@ -4,6 +4,7 @@
 
 #ifndef CARBON_LANGUAGE_SERVER_LANGUAGE_SERVER_H
 #define CARBON_LANGUAGE_SERVER_LANGUAGE_SERVER_H
+#include <unordered_map>
 #include <vector>
 
 #include "third_party/clangd/Protocol.h"
@@ -28,7 +29,7 @@ class LanguageServer : public clang::clangd::Transport::MessageHandler {
 
  private:
   std::unique_ptr<clang::clangd::Transport> transport_;
-  llvm::vfs::InMemoryFileSystem vfs_;
+  std::unordered_map<std::string, std::string> files_;
 
   auto Symbols(clang::clangd::DocumentSymbolParams& params)
       -> std::vector<clang::clangd::DocumentSymbol>;
