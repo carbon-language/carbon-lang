@@ -196,7 +196,9 @@ jobs:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
-        run: bazelisk build -c ${{ matrix.build_mode }} //...:all
+        run: |
+          bazelisk build -c ${{ matrix.build_mode }} \
+            ${{ env.BAZEL_DIFF_TARGETS }}
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
@@ -205,7 +207,9 @@ jobs:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
-        run: bazelisk test -c ${{ matrix.build_mode }} //...:all
+        run: |
+          bazelisk test -c ${{ matrix.build_mode }} \
+            ${{ env.BAZEL_DIFF_TARGETS }}
 
       # See "Disk space before build".
       - name: Disk space after build
