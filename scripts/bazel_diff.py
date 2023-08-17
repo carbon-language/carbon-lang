@@ -165,7 +165,8 @@ def main() -> None:
         log(f"Current hashes: {current_hashes}")
 
         targets = impacted_targets(bazel_diff, baseline_hashes, current_hashes)
-        targets = filter_targets(bazel, targets)
+        if targets != "":
+            targets = filter_targets(bazel, targets)
         log(f"Found {len(targets.splitlines())} impacted targets!")
 
         print(targets.rstrip())
