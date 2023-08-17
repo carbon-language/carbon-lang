@@ -15,7 +15,6 @@ namespace Carbon::LS {
 
 namespace {
 template <typename T>
-// TODO: handle parsing error
 auto ParseJSON(llvm::json::Value& v, T& parsed) -> bool {
   llvm::json::Path::Root root_path;
   return clang::clangd::fromJSON(v, parsed, root_path);
