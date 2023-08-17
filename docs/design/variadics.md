@@ -174,7 +174,7 @@ during typechecking. For example, in this code:
 
 ```carbon
 fn F[each T:! type](x: (..., each i32), ..., each y: Optional(each T)) {
-  let z: auto = (..., expand x, 0 as f32, each y);
+  let z: auto = (..., expand x, 0 as f32, ..., each y);
 }
 ```
 
@@ -192,12 +192,12 @@ and only as the subscript of an indexing expression on a tuple. The pack index
 is used solely as a placeholder, and never has a value. There are also symbolic
 variables representing the arity of every variadic binding. For purposes of
 illustration, the notation `<V, N>` represents a pack component with
-representative V and arity N, `$I` represents the pack index, and given a
+representative `V` and arity `N`, `$I` represents the pack index, and given a
 variadic binding `B`, `|B|` represents the arity of `B`, and `B/$I` represents
 the `$I`th value bound by `B`.
 
 So, continuing the earlier example, the type of `z` is represented symbolically
-as `(<i32, Sizeof(x)>, <f32, 1>, <Optional(T/$I), |T|>)`.
+as `(<i32, SizeOf(x)>, <f32, 1>, <Optional(T/$I), |T|>)`.
 
 A pack component is _variadic_ if its arity is unknown, and _singular_ if its
 arity is known to be 1 and its representative does not refer to the pack index.
@@ -207,7 +207,7 @@ normalized, meaning that every component is either singular or variadic. This is
 always possible because if a component's arity is known to be some fixed value N
 other than 1, we can replace it with N singular components. The _shape_ of a
 tuple type is the sequence of arities of its components, so the shape of the
-type of `z` is `(Sizeof(x), 1, |T|)`.
+type of `z` is `(SizeOf(x), 1, |T|)`.
 
 In order to index into a tuple, all of the components of its type must be
 singular, so that we can determine the type of the indexing expression.
