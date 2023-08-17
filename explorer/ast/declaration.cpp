@@ -15,104 +15,112 @@ using llvm::cast;
 Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
+  PrintDepth(-1, 0, out);
+}
+void Declaration::PrintDepth(int depth, int indent_num_spaces,
+                             llvm::raw_ostream& out) const {
+  if (depth == 0) {
+    out.indent(indent_num_spaces) << " ... ";
+    return;
+  }
+
   switch (kind()) {
     case DeclarationKind::NamespaceDeclaration:
-      PrintID(out);
-      out << ";";
+      out.indent(indent_num_spaces) << PrintAsID(*this) << ";";
       break;
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       const auto& iface_decl = cast<ConstraintTypeDeclaration>(*this);
-      PrintID(out);
-      out << " {\n";
+      out.indent(indent_num_spaces) << PrintAsID(*this) << " {\n";
       for (Nonnull<Declaration*> m : iface_decl.members()) {
-        out << *m;
+        out.indent(indent_num_spaces + 2) << *m << "\n";
       }
-      out << "}\n";
+      out.indent(indent_num_spaces) << "}";
       break;
     }
     case DeclarationKind::ImplDeclaration: {
       const auto& impl_decl = cast<ImplDeclaration>(*this);
-      PrintID(out);
-      out << " {\n";
+      out.indent(indent_num_spaces) << PrintAsID(impl_decl) << " {\n";
       for (Nonnull<Declaration*> m : impl_decl.members()) {
-        out << *m;
+        m->PrintDepth(-1, indent_num_spaces + 2, out);
+        out << "\n";
       }
-      out << "}\n";
+      out.indent(indent_num_spaces) << "}";
       break;
     }
     case DeclarationKind::MatchFirstDeclaration: {
       const auto& match_first_decl = cast<MatchFirstDeclaration>(*this);
-      PrintID(out);
-      out << " {\n";
+      out.indent(indent_num_spaces) << PrintAsID(match_first_decl) << " {\n";
       for (Nonnull<const ImplDeclaration*> m :
            match_first_decl.impl_declarations()) {
-        out << *m;
+        m->PrintDepth(-1, indent_num_spaces + 2, out);
+        out << "\n";
       }
-      out << "}\n";
+      out.indent(indent_num_spaces) << "}";
       break;
     }
     case DeclarationKind::FunctionDeclaration:
-      cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
+      cast<FunctionDeclaration>(*this).PrintDepth(depth, indent_num_spaces,
+                                                  out);
       break;
     case DeclarationKind::DestructorDeclaration:
-      cast<DestructorDeclaration>(*this).PrintDepth(-1, out);
+      cast<DestructorDeclaration>(*this).PrintDepth(depth, indent_num_spaces,
+                                                    out);
       break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
-      PrintID(out);
+      out.indent(indent_num_spaces) << PrintAsID(class_decl);
       if (class_decl.type_params().has_value()) {
         out << **class_decl.type_params();
       }
       out << " {\n";
       for (Nonnull<Declaration*> m : class_decl.members()) {
-        out << *m;
+        m->PrintDepth(-1, indent_num_spaces + 2, out);
+        out << "\n";
       }
-      out << "}\n";
+      out.indent(indent_num_spaces) << "}";
       break;
     }
     case DeclarationKind::MixinDeclaration: {
       const auto& mixin_decl = cast<MixinDeclaration>(*this);
-      PrintID(out);
-      out << "{\n";
+      out.indent(indent_num_spaces) << PrintAsID(mixin_decl) << "{\n";
       for (Nonnull<Declaration*> m : mixin_decl.members()) {
-        out << *m;
+        m->PrintDepth(-1, indent_num_spaces + 2, out);
+        out << "\n";
       }
-      out << "}\n";
+      out.indent(indent_num_spaces) << "}";
       break;
     }
     case DeclarationKind::MixDeclaration: {
       const auto& mix_decl = cast<MixDeclaration>(*this);
-      PrintID(out);
+      out.indent(indent_num_spaces) << PrintAsID(mix_decl);
       out << mix_decl.mixin() << ";";
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*this);
-      PrintID(out);
-      out << " {\n";
+      out.indent(indent_num_spaces) << PrintAsID(choice) << " {\n";
       for (Nonnull<const AlternativeSignature*> alt : choice.alternatives()) {
-        out << *alt << ";\n";
+        out.indent(indent_num_spaces + 2) << *alt << ";\n";
       }
-      out << "}\n";
+      out.indent(indent_num_spaces) << "}";
       break;
     }
 
     case DeclarationKind::VariableDeclaration: {
       const auto& var = cast<VariableDeclaration>(*this);
-      PrintID(out);
+      out.indent(indent_num_spaces) << PrintAsID(var);
       if (var.has_initializer()) {
         out << " = " << var.initializer();
       }
-      out << ";\n";
+      out << ";";
       break;
     }
 
     case DeclarationKind::InterfaceExtendDeclaration:
     case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration: {
-      PrintID(out);
-      out << ";\n";
+      out.indent(indent_num_spaces) << PrintAsID(*this) << ";";
       break;
     }
 
@@ -123,14 +131,13 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
     case DeclarationKind::AliasDeclaration: {
       const auto& alias = cast<AliasDeclaration>(*this);
-      PrintID(out);
-      out << " = " << alias.target() << ";\n";
+      out.indent(indent_num_spaces)
+          << PrintAsID(alias) << " = " << alias.target() << ";";
       break;
     }
 
     case DeclarationKind::ExtendBaseDeclaration: {
-      PrintID(out);
-      out << ";\n";
+      out.indent(indent_num_spaces) << PrintAsID(*this) << ";";
       break;
     }
   }
@@ -406,25 +413,24 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
       virt_override);
 }
 
-void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
+void CallableDeclaration::PrintDepth(int depth, int indent_num_spaces,
+                                     llvm::raw_ostream& out) const {
   auto name = GetName(*this);
   CARBON_CHECK(name) << "Unexpected missing name for `" << *this << "`.";
-  out << "fn " << *name << " ";
+  out.indent(indent_num_spaces) << "fn " << *name << " ";
   if (!deduced_parameters_.empty()) {
     out << "[";
     llvm::ListSeparator sep;
     for (Nonnull<const GenericBinding*> deduced : deduced_parameters_) {
       out << sep << *deduced;
     }
-    out << "]";
+    out << "] ";
   }
-  out << *param_pattern_ << return_term_;
+  out << *param_pattern_ << " " << return_term_;
   if (body_) {
-    out << " {\n";
-    (*body_)->PrintDepth(depth, out);
-    out << "\n}\n";
+    (*body_)->PrintDepth(depth, indent_num_spaces, out);
   } else {
-    out << ";\n";
+    out << ";";
   }
 }
 
