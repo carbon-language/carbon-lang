@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Basics](#basics)
+    -   [Additional examples](#additional-examples)
 -   [Expression and statement semantics](#expression-and-statement-semantics)
 -   [Typechecking expressions and statements](#typechecking-expressions-and-statements)
     -   [Generalized tuple types](#generalized-tuple-types)
@@ -57,20 +58,19 @@ rooted at any of these operations is called a _pack expansion_. The operand of
 A pack expansion must contain one or more _expansion arguments_, which are
 marked by `expand` or `each`. `expand` is a prefix unary expression operator
 with the same precedence as `*`. The operand of `each` is always an identifier
-name, not an expression, so it does not have a precedence. For example, in the
+name or a binding pattern, so it does not have a precedence. For example, in the
 loop condition `...and expand iters != each vector.End()` in the body of `Zip`,
-`expand iters` and `each vector` are expansion arguments.
+`expand iters` and `each vector` are expansion arguments. Note that `each` can
+also appear in a deduced parameter list, as discussed below.
 
 The _arity_ of an expansion argument is a compile-time value representing the
-number of elements it evaluates to. Every pack expansion must contain at least
-one expansion argument, and all arguments of a given expansion must have the
-same arity (which we will also refer to as the arity of the expansion). If any
-expansion argument is a non-expression pattern, the entire pack expansion is a
-pattern. In particular, this means that the expansion arguments of a `...{`
-expansion must be expressions.
-
-> **Open question:** Is it possible to drop that requirement, and support code
-> like `let each x: ElementType = *expand iters;` within a `...{` expansion?
+number of elements it evaluates to (or the number of values it matches, if it's
+a pattern). Every pack expansion must contain at least one expansion argument,
+and all arguments of a given expansion must have the same arity (which we will
+also refer to as the arity of the expansion). If any expansion argument is a
+non-expression pattern, the entire pack expansion is a pattern. In particular,
+this means that the expansion arguments of a `...{` expansion must be
+expressions.
 
 Pack expansions can be nested only if the inner expansion is within one of the
 outer expansion's arguments. For example,
@@ -132,6 +132,68 @@ it binds the name to one value for each iteration of the expansion. The name
 declared by a variadic binding can only be used inside a pack expansion, where
 it acts as an expansion argument whose elements are the bound values. It must be
 prefixed by `each` at the point of use.
+
+### Additional examples
+
+```carbon
+// Computes the sum of its arguments, which are i64s
+fn SumInts(..., each param: i64) -> i64 {
+  var sum: i64 = 0;
+  ...{
+    sum += each param;
+  }
+  return sum;
+}
+```
+
+```carbon
+// Concatenates its arguments, which are all convertible to String
+fn StrCat[each T:! ConvertibleToString](..., each param: each T) -> String {
+  var len: i64 = 0;
+  ...{ len += each param.Length(); }
+  var result: String = "";
+  result.Reserve(len);
+  ...{ result.Append(each param.ToString()); }
+  return result;
+}
+```
+
+```carbon
+// Returns the minimum of its arguments, which must all have the same type T.
+//
+// Note that this implementation is not recursive. We split the parameters into
+// first and rest in order to forbid calling `Min` with no arguments.
+fn Min[T:! Comparable & Value](first: T, ..., each next: T) -> T {
+  var result: T = first;
+  ...{
+    if (each next < result) {
+      result = next;
+    }
+  }
+  return result;
+}
+```
+
+```carbon
+// Invokes f, with the tuple `args` as its arguments.
+fn Apply[each T:! type, F:! CallableWith(..., each T)](f: F, args: (..., each T)) -> auto {
+  return f(..., expand args);
+}
+```
+
+```carbon
+// Toy example of mixing packs and values in a single parameter list.
+// Takes an i64, any number of f64s, and then another i64.
+fn MiddleVariadic(first: i64, ..., each middle: f64, last: i64);
+```
+
+```carbon
+// Toy example of using the result of variadic type deduction.
+fn TupleConcat[each T1: type, each T2: type](
+    t1: (..., each T1), t2: (..., each T2)) -> (..., each T1, ..., each T2) {
+  return (..., expand t1, ..., expand t2);
+}
+```
 
 ## Expression and statement semantics
 
@@ -287,7 +349,7 @@ have at least N + M elements, the pattern does not match.
 
 The remaining elements of the scrutinee are iteratively matched against
 _operand_, in order. In each iteration, `$I` is equal to the index of the
-scrutinee element being matched.
+scrutinee element being matched, minus N.
 
 A variadic binding pattern binds the name to each of the scrutinee values, in
 order.
