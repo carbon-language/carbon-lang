@@ -43,7 +43,11 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
       const auto& while_stmt = cast<While>(*this);
       out.indent(indent_num_spaces)
           << "while (" << while_stmt.condition() << ")\n";
-      while_stmt.body().PrintDepth(depth - 1, indent_num_spaces + 2, out);
+      if (depth < 0 || depth > 1) {
+        while_stmt.body().PrintDepth(depth - 1, indent_num_spaces + 2, out);
+      } else {
+        out.indent(indent_num_spaces) << "...";
+      }
       break;
     }
     case StatementKind::For: {
@@ -51,7 +55,11 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
       out.indent(indent_num_spaces)
           << "for (" << for_stmt.variable_declaration() << " in "
           << for_stmt.loop_target() << ")\n";
-      for_stmt.body().PrintDepth(depth - 1, indent_num_spaces + 2, out);
+      if (depth < 0 || depth > 1) {
+        for_stmt.body().PrintDepth(depth - 1, indent_num_spaces + 2, out);
+      } else {
+        out.indent(indent_num_spaces) << "...";
+      }
       break;
     }
     case StatementKind::Break:
@@ -93,12 +101,18 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
     case StatementKind::If: {
       const auto& if_stmt = cast<If>(*this);
       out.indent(indent_num_spaces) << "if (" << if_stmt.condition() << ") ";
-      if_stmt.then_block().PrintDepth(depth - 1, indent_num_spaces, out);
-      if (if_stmt.else_block()) {
-        out << "\n";
-        out.indent(indent_num_spaces) << "else\n";
-        (*if_stmt.else_block())
-            ->PrintDepth(depth - 1, indent_num_spaces + 2, out);
+      if (depth < 0 || depth > 1) {
+        if_stmt.then_block().PrintDepth(depth - 1, indent_num_spaces, out);
+        if (if_stmt.else_block()) {
+          out << "\n";
+          out.indent(indent_num_spaces) << "else\n";
+          (*if_stmt.else_block())
+              ->PrintDepth(depth - 1, indent_num_spaces + 2, out);
+        }
+      } else {
+        if (if_stmt.else_block()) {
+          out << "} else { ... }";
+        }
       }
       break;
     }
@@ -118,12 +132,20 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
     case StatementKind::Block: {
       const auto& block = cast<Block>(*this);
       const auto statements = block.statements();
-      out << "{\n";
-      for (const auto* statement : statements) {
-        statement->PrintDepth(depth, indent_num_spaces + 2, out);
-        out << "\n";
+      if (depth < 0 || depth > 1) {
+        out << "{\n";
+        for (const auto* statement : statements) {
+          statement->PrintDepth(depth, indent_num_spaces + 2, out);
+          out << "\n";
+        }
+        out.indent(indent_num_spaces) << "}";
+      } else {
+        out << "{";
+        for (const auto* statement : statements) {
+          statement->PrintDepth(depth, indent_num_spaces, out);
+        }
+        out.indent(indent_num_spaces) << "}";
       }
-      out.indent(indent_num_spaces) << "}";
       break;
     }
   }
