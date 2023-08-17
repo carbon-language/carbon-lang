@@ -54,6 +54,7 @@ class DriverTest : public testing::Test {
     return file_name;
   }
 
+  // Makes a temp dir and sets the working directory. Returns a scope_exit that will delete it and restore the working directory.
   auto ScopedTempWorkingDir() {
     // Save our current working directory.
     std::error_code ec;

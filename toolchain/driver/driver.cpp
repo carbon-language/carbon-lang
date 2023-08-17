@@ -131,8 +131,7 @@ assembly. Binary object output can be forced by enabling `--force-obj-output`.
         {
             .name = "target",
             .help = R"""(
-Select a target platform. Uses the LLVM target syntax, often called a "triple"
-(despite not actually being a triple in many common cases).
+Select a target platform. Uses the LLVM target syntax. Also known as a "triple" for historical reasons.
 
 This corresponds to the `target` flag to Clang and accepts the same strings
 documented there:
