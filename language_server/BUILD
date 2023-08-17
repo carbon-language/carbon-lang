@@ -17,7 +17,10 @@ cc_binary(
         "//common:error",
         "//third_party/clangd",
         "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
+        "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
     ],
 )
