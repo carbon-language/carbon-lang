@@ -81,21 +81,26 @@ def impacted_targets(
 
 
 def filter_targets(bazel: str, targets: str) -> str:
-    args = [
-        bazel,
-        "query",
-        (
+    with tempfile.NamedTemporaryFile(mode="w") as tmp:
+        tmp.write(
             f"let t = set({targets}) in "
-            f"kind(rule, $t) except attr(tags, manual, $t)"
-        ),
-    ]
-    p = subprocess.run(
-        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8"
-    )
-    if p.returncode != 0:
-        print(p.stderr)
-        exit(f"Bazel run returned {p.returncode}")
-    return p.stdout
+            "kind(rule, $t) except attr(tags, manual, $t)\n"
+        )
+        args = [
+            bazel,
+            "query",
+            f"--query_file={tmp.name}",
+        ]
+        p = subprocess.run(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+        )
+        if p.returncode != 0:
+            print(p.stderr)
+            exit(f"Bazel run returned {p.returncode}")
+        return p.stdout
 
 
 def git_checkout(commit: str) -> None:
