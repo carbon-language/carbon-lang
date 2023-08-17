@@ -30,16 +30,37 @@ auto LoweringHandleArrayIndex(LoweringFunctionContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleArrayType(LoweringFunctionContext& /*context*/,
-                             SemanticsNodeId /*node_id*/, SemanticsNode node)
+auto LoweringHandleArrayValue(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
-}
+  auto* llvm_type = context.GetType(node.type_id());
+  auto* alloca =
+      context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "array");
+  context.SetLocal(node_id, alloca);
+  auto tuple_node_id = node.GetAsArrayValue();
+  auto* tuple_value = context.GetLocal(tuple_node_id);
 
-auto LoweringHandleArrayValue(LoweringFunctionContext& /*context*/,
-                              SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  for (int i = 0; i < static_cast<int>(llvm_type->getArrayNumElements()); ++i) {
+    llvm::Value* array_element_value;
+    if (tuple_value->getType()->isPointerTy()) {
+      // Extracting values from tuple and loading them to the memory.
+      auto* gep = context.builder().CreateStructGEP(
+          context.GetType(
+              context.semantics_ir().GetNode(tuple_node_id).type_id()),
+          tuple_value, i);
+      array_element_value =
+          context.builder().CreateLoad(llvm_type->getArrayElementType(), gep);
+    } else {
+      // For non pointer types such as call or return, using extract value as
+      // gep cannot be used.
+      array_element_value =
+          context.builder().CreateExtractValue(tuple_value, i);
+    }
+    // Initializing the array with values.
+    context.builder().CreateStore(
+        array_element_value,
+        context.builder().CreateStructGEP(llvm_type, alloca, i));
+  }
 }
 
 auto LoweringHandleAssign(LoweringFunctionContext& context,
@@ -175,21 +196,6 @@ auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
       << node;
 }
 
-auto LoweringHandleTupleIndex(LoweringFunctionContext& context,
-                              SemanticsNodeId node_id, SemanticsNode node)
-    -> void {
-  auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
-  auto* llvm_type =
-      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
-  auto index_node = context.semantics_ir().GetNode(index_node_id);
-  const auto index = context.semantics_ir()
-                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
-                         .getZExtValue();
-  auto* gep = context.builder().CreateStructGEP(
-      llvm_type, context.GetLocal(tuple_node_id), index, "tuple.index");
-  context.SetLocal(node_id, gep);
-}
-
 auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {
@@ -263,6 +269,29 @@ auto LoweringHandleStructAccess(LoweringFunctionContext& context,
   context.SetLocal(node_id, gep);
 }
 
+auto LoweringHandleTupleIndex(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
+  auto* tuple_value = context.GetLocal(tuple_node_id);
+  auto index_node = context.semantics_ir().GetNode(index_node_id);
+  const auto index = context.semantics_ir()
+                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
+                         .getZExtValue();
+  llvm::Value* value;
+  if (tuple_value->getType()->isPointerTy()) {
+    auto* llvm_type = context.GetType(
+        context.semantics_ir().GetNode(tuple_node_id).type_id());
+    value = context.builder().CreateStructGEP(llvm_type, tuple_value, index,
+                                              "tuple.index");
+  } else {
+    // For non pointer types such as call or return, using extract value as
+    // gep cannot be used.
+    value = context.builder().CreateExtractValue(tuple_value, index);
+  }
+  context.SetLocal(node_id, value);
+}
+
 auto LoweringHandleTupleValue(LoweringFunctionContext& context,
                               SemanticsNodeId node_id, SemanticsNode node)
     -> void {
@@ -270,7 +299,6 @@ auto LoweringHandleTupleValue(LoweringFunctionContext& context,
   auto* alloca =
       context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "tuple");
   context.SetLocal(node_id, alloca);
-
   auto refs = context.semantics_ir().GetNodeBlock(node.GetAsTupleValue());
   auto type_refs = context.semantics_ir().GetTypeBlock(
       context.semantics_ir()
