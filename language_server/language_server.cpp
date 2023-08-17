@@ -97,6 +97,8 @@ auto LanguageServer::Symbols(clang::clangd::DocumentSymbolParams& params)
       case ParseNodeKind::FunctionDefinitionStart:
       case ParseNodeKind::Namespace:
       case ParseNodeKind::InterfaceDefinitionStart:
+      case ParseNodeKind::NamedConstraintDefinitionStart:
+      case ParseNodeKind::ClassDefinitionStart:
         break;
       default:
         continue;
