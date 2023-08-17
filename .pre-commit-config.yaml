@@ -215,4 +215,5 @@ exclude: |
       bazel/patches/.*\.patch|
       third_party/examples/.*/carbon/.*|
       third_party/llvm-project/.*|
+      third_party/clangd/.*|
   )$
