@@ -202,8 +202,8 @@ jobs:
         run: |
           echo "$EVENT_CONTEXT"
           ./scripts/bazel_diff.py \
-            --baseline=${{ github.event.push.before }} \
-            --current=${{ github.event.push.after }} \
+            --baseline=${{ github.event.before }} \
+            --current=${{ github.event.after }} \
             >targets
 
       # Build all targets first to isolate build failures.
