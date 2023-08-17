@@ -342,7 +342,8 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   llvm_unreachable("All subcommands handled!");
 }
 
-auto Driver::ValidateCompileOptions(const CompileOptions& options) const -> bool {
+auto Driver::ValidateCompileOptions(const CompileOptions& options) const
+    -> bool {
   using Phase = CompileOptions::Phase;
   switch (options.phase) {
     case Phase::Lex:
