@@ -166,9 +166,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: ->> checking Block `{
-// CHECK:STDOUT:   return 0;
-// CHECK:STDOUT: }` (phase_type_checking.carbon:11)
+// CHECK:STDOUT: ->> checking Block `{return 0;}` (phase_type_checking.carbon:11)
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking stmt at (phase_type_checking.carbon:10)
 // CHECK:STDOUT: ```
