@@ -28,10 +28,13 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
 
   if (trace_stream->is_enabled()) {
     trace_stream->Heading("source program");
-    for (auto& declaration : ast.declarations) {
-      set_file_ctx.update_source_loc(declaration->source_loc());
+    for (size_t i = 0; i < ast.declarations.size(); ++i) {
+      set_file_ctx.update_source_loc(ast.declarations[i]->source_loc());
       if (trace_stream->is_enabled()) {
-        *trace_stream << *declaration;
+        *trace_stream << *ast.declarations[i];
+        if(i != ast.declarations.size()-1)  {
+          *trace_stream << "\n\n";
+        }
       }
     }
   }
@@ -70,11 +73,13 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
 
   set_prog_phase.update_phase(ProgramPhase::Declarations);
   if (trace_stream->is_enabled()) {
-    trace_stream->Heading("printing declarations");
-    for (auto& declaration : ast.declarations) {
-      set_file_ctx.update_source_loc(declaration->source_loc());
+    for (size_t i = 0; i < ast.declarations.size(); ++i) {
+      set_file_ctx.update_source_loc(ast.declarations[i]->source_loc());
       if (trace_stream->is_enabled()) {
-        *trace_stream << *declaration;
+        *trace_stream << *ast.declarations[i];
+        if(i != ast.declarations.size()-1)  {
+          *trace_stream << "\n\n";
+        }
       }
     }
   }
