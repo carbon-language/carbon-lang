@@ -34,20 +34,19 @@ auto LoweringHandleArrayIndex(LoweringFunctionContext& context,
       context.GetType(context.semantics_ir().GetNode(array_node_id).type_id());
   auto index_node = context.semantics_ir().GetNode(index_node_id);
   llvm::Value* array_element_value;
-  if (index_node.kind() != SemanticsNodeKind::IntegerLiteral) {
-    auto* load_inst = context.builder().CreateLoad(
-        llvm_type->getArrayElementType(), context.GetLocal(index_node_id));
-    array_element_value = context.builder().CreateInBoundsGEP(
-        llvm_type, array_value,
-        context.builder().CreateZExt(
-            load_inst, llvm::Type::getInt64Ty(context.llvm_context()),
-            "array.index"));
-  } else {
+
+  if (index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
     const auto index = context.semantics_ir()
                            .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
                            .getZExtValue();
-    array_element_value = context.GetValueForPoiterTY(llvm_type, array_value,
-                                                      index, "array.index");
+    array_element_value = context.GetIndexFromStructOrArray(
+        llvm_type, array_value, index, "array.index");
+  } else {
+    auto* index = context.builder().CreateLoad(llvm_type->getArrayElementType(),
+                                               context.GetLocal(index_node_id));
+    // TODO: Handle return value or call such as `F()[a]`.
+    array_element_value = context.builder().CreateInBoundsGEP(
+        llvm_type, array_value, index, "array.index");
   }
   context.SetLocal(node_id, array_element_value);
 }
@@ -65,8 +64,8 @@ auto LoweringHandleArrayValue(LoweringFunctionContext& context,
       context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
 
   for (int i = 0; i < static_cast<int>(llvm_type->getArrayNumElements()); ++i) {
-    llvm::Value* array_element_value =
-        context.GetValueForPoiterTY(tuple_type, tuple_value, i);
+    llvm::Value* array_element_value = context.GetIndexFromStructOrArray(
+        tuple_type, tuple_value, i, "array.element");
     if (tuple_value->getType()->isPointerTy()) {
       array_element_value = context.builder().CreateLoad(
           llvm_type->getArrayElementType(), array_element_value);
@@ -295,8 +294,8 @@ auto LoweringHandleTupleIndex(LoweringFunctionContext& context,
                          .getZExtValue();
   auto* llvm_type =
       context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
-  context.SetLocal(node_id, context.GetValueForPoiterTY(llvm_type, tuple_value,
-                                                        index, "tuple.index"));
+  context.SetLocal(node_id, context.GetIndexFromStructOrArray(
+                                llvm_type, tuple_value, index, "tuple.index"));
 }
 
 auto LoweringHandleTupleValue(LoweringFunctionContext& context,

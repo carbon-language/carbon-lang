@@ -60,13 +60,14 @@ class LoweringFunctionContext {
     CARBON_CHECK(added) << "Duplicate local insert: " << node_id;
   }
 
-  // Checks if val is pointer type and returns the element value based on this.
-  auto GetValueForPoiterTY(llvm::Type* llvm_type, llvm::Value* val,
-                           unsigned idx, const llvm::Twine& name = "")
+  // Returns the requested index into val based on whether val is a pointer
+  // type.
+  auto GetIndexFromStructOrArray(llvm::Type* llvm_type, llvm::Value* val,
+                                 unsigned idx, const llvm::Twine& name)
       -> llvm::Value* {
     return val->getType()->isPointerTy()
                ? builder().CreateStructGEP(llvm_type, val, idx, name)
-               : builder().CreateExtractValue(val, idx);
+               : builder().CreateExtractValue(val, idx, name);
   }
 
   // Gets a callable's function.
