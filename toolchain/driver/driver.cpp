@@ -118,7 +118,7 @@ When this is a file name, either textual assembly or a binary object will be
 written to it based on the flag `--asm-output`. The default is to write a binary
 object file.
 
-This can also be the string `-` which will write the output to stdout. In that
+Passing `--output=-` will write the output to stdout. In that
 case, the flag `--asm-output` is ignored and the output defaults to textual
 assembly. Binary object output can be forced by enabling `--force-obj-output`.
 )""",
