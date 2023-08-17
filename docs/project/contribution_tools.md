@@ -13,21 +13,19 @@ contributions.
 
 ## Table of contents
 
-- [Contribution tools](#contribution-tools)
-  - [Table of contents](#table-of-contents)
-  - [Setup commands](#setup-commands)
-    - [Debian or Ubuntu](#debian-or-ubuntu)
-    - [macOS](#macos)
-  - [Tools](#tools)
-    - [Main tools](#main-tools)
-      - [Running pre-commit](#running-pre-commit)
-    - [Optional tools](#optional-tools)
-    - [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
-  - [Troubleshooting build issues](#troubleshooting-build-issues)
-    - [Old LLVM versions](#old-llvm-versions)
-    - [Asking for help](#asking-for-help)
-  - [Troubleshooting debug issues](#troubleshooting-debug-issues)
-    - [Debugging on MacOS](#debugging-on-macos)
+-   [Setup commands](#setup-commands)
+    -   [Debian or Ubuntu](#debian-or-ubuntu)
+    -   [macOS](#macos)
+-   [Tools](#tools)
+    -   [Main tools](#main-tools)
+        -   [Running pre-commit](#running-pre-commit)
+    -   [Optional tools](#optional-tools)
+    -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
+-   [Troubleshooting build issues](#troubleshooting-build-issues)
+    -   [Old LLVM versions](#old-llvm-versions)
+    -   [Asking for help](#asking-for-help)
+-   [Troubleshooting debug issues](#troubleshooting-debug-issues)
+    -   [Debugging on MacOS](#debugging-on-macos)
 
 <!-- tocstop -->
 
@@ -275,7 +273,7 @@ v5 format.
 ### Debugging on MacOS
 
 Getting Bazel to build debuggable binaries on MacOS requires passing a few extra
-flags while building:
+options while building:
 
 ```shell
 bazel build --spawn_strategy=local -c dbg //explorer --apple_generate_dsym
@@ -283,12 +281,12 @@ bazel build --spawn_strategy=local -c dbg //explorer --apple_generate_dsym
 
 You should then be able to debug with `lldb`.
 
-If this build command doesn't seem to produce a debuggable binary you might
-need to both clear the build disk cache and clean the build. Running
+If this build command doesn't seem to produce a debuggable binary you might need
+to both clear the build disk cache and clean the build. Running
 `scripts/clean_disk_cache.sh` may not be enough, you might try deleting all the
 files within the disk cache, typically located at
 `~/.cache/carbon-lang-build-cache`. Deleting the disk cache, followed by a
-`bazel clean` should allow your next rebuild, with the recommended flags, to
+`bazel clean` should allow your next rebuild, with the recommended options, to
 supply the symbols for debugging.
 
 For debugging on MacOS using VSCode, I've had good luck using the CodeLLDB
@@ -298,19 +296,19 @@ to the `launch.json` configuration, for example:
 
 ```json
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "explorer",
-      "type": "lldb",
-      "request": "launch",
-      "program": "${workspaceRoot}/bazel-bin/explorer/explorer",
-      "args": [],
-      "cwd": "${workspaceRoot}",
-      "sourceMap": {
-        ".": "${workspaceRoot}"
-      }
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "explorer",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/bazel-bin/explorer/explorer",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+            "sourceMap": {
+                ".": "${workspaceRoot}"
+            }
+        }
+    ]
 }
 ```
