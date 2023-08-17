@@ -159,9 +159,10 @@ jobs:
           CACHE_VERSION: 1
         run: |
           cat >user.bazelrc <<EOF
-          # Enable remote cache for our CI.
+          # Enable remote cache for our CI but minimize downloads.
           build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ env.os_for_cache }}
           build --google_credentials=$HOME/gcp-builds-service-account.json
+          build --remote_download_minimal
 
           # General build options.
           build --verbose_failures
@@ -181,13 +182,10 @@ jobs:
       - name: Compute impacted targets
         if: steps.filter.outputs.ignore == 'false'
         run: |
-          {
-            echo 'BAZEL_DIFF_TARGETS<<EOF'
-            ./scripts/bazel_diff.py \
-              --baseline=${{ github.head_ref }} \
-              --current=${{ github.event.pull_request.head.sha || github.ref }}
-            echo EOF
-          } >> "$GITHUB_ENV"
+          ./scripts/bazel_diff.py \
+            --baseline=${{ github.head_ref }} \
+            --current=${{ github.event.pull_request.head.sha || github.ref }} \
+            >targets
 
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
@@ -198,7 +196,7 @@ jobs:
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
         run: |
           bazelisk build -c ${{ matrix.build_mode }} \
-            ${{ env.BAZEL_DIFF_TARGETS }}
+            --target_pattern_file=targets
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
@@ -209,7 +207,7 @@ jobs:
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
         run: |
           bazelisk test -c ${{ matrix.build_mode }} \
-            ${{ env.BAZEL_DIFF_TARGETS }}
+            --target_pattern_file=targets
 
       # See "Disk space before build".
       - name: Disk space after build
