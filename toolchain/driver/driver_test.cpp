@@ -25,7 +25,6 @@ namespace {
 
 using ::testing::ContainsRegex;
 using ::testing::ElementsAre;
-using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
