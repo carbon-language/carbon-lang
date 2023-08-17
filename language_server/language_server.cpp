@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "language_server.h"
+#include "language_server/language_server.h"
 
 #include "third_party/clangd/Protocol.h"
 #include "toolchain/diagnostics/null_diagnostics.h"

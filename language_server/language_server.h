@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_LANGUAGE_SERVER_LANGUAGE_SERVER_H
-#define CARBON_LANGUAGE_SERVER_LANGUAGE_SERVER_H
+#ifndef CARBON_LANGUAGE_SERVER_LANGUAGE_SERVER_H_
+#define CARBON_LANGUAGE_SERVER_LANGUAGE_SERVER_H_
 #include <unordered_map>
 #include <vector>
 
@@ -37,4 +37,4 @@ class LanguageServer : public clang::clangd::Transport::MessageHandler {
 
 }  // namespace Carbon::LS
 
-#endif  // CARBON_LANGUAGE_SERVER_LANGUAGE_SERVER_H
+#endif  // CARBON_LANGUAGE_SERVER_LANGUAGE_SERVER_H_
