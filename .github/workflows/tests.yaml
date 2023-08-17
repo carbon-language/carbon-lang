@@ -179,12 +179,21 @@ jobs:
       # Bazel-based diffing.
       # TODO: This isn't used yet until we are confident it is computing the
       # correct baseline git reference and target set.
-      - name: Compute impacted targets
-        if: steps.filter.outputs.ignore == 'false'
+      - name: Compute impacted pull request targets
+        if: steps.filter.outputs.ignore == 'false' && github.event_name == 'pull_request_target'
+        run: |
+          git rev-parse ${{ github.sha }}^
+          ./scripts/bazel_diff.py \
+            --baseline=${{ github.base_sha }} \
+            --current=${{ github.event.pull_request.head.sha || HEAD }} \
+            >targets
+
+      - name: Compute impacted branch targets
+        if: steps.filter.outputs.ignore == 'false' && github.event_name != 'pull_request_target'
         run: |
           ./scripts/bazel_diff.py \
-            --baseline=${{ github.head_ref }} \
-            --current=${{ github.event.pull_request.head.sha || github.ref }} \
+            --baseline=${{ github.event.push.before }} \
+            --current=${{ github.event.push.after }} \
             >targets
 
       # Build all targets first to isolate build failures.
