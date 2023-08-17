@@ -86,7 +86,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_type_checking.carbon:11)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
@@ -104,7 +104,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking declaration at (phase_type_checking.carbon:11)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```

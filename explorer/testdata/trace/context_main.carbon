@@ -20,7 +20,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,7 +124,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (context_main.carbon:11)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
@@ -142,7 +142,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking declaration at (context_main.carbon:11)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
@@ -234,7 +234,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -256,7 +256,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (context_main.carbon:11)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `fn Main` (context_main.carbon:11)
