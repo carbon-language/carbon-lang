@@ -27,10 +27,14 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> resolving decl `fn Main` (phase_name_resolution.carbon:11)
 // CHECK:STDOUT: ==> marked `Main` declared but not usable in `package`
 // CHECK:STDOUT: ==> marked `Main` usable in `package`
-// CHECK:STDOUT: ->> resolving stmt `{return 0;}` (phase_name_resolution.carbon:11)
+// CHECK:STDOUT: ->> resolving stmt `{
+// CHECK:STDOUT:   return 0;
+// CHECK:STDOUT: }` (phase_name_resolution.carbon:11)
 // CHECK:STDOUT: ->> resolving stmt `return 0;` (phase_name_resolution.carbon:10)
 // CHECK:STDOUT: <<- finished resolving stmt `return 0;` (phase_name_resolution.carbon:10)
-// CHECK:STDOUT: <<- finished resolving stmt `{return 0;}` (phase_name_resolution.carbon:11)
+// CHECK:STDOUT: <<- finished resolving stmt `{
+// CHECK:STDOUT:   return 0;
+// CHECK:STDOUT: }` (phase_name_resolution.carbon:11)
 // CHECK:STDOUT: <<- finished resolving decl `fn Main` (phase_name_resolution.carbon:11)
 // CHECK:STDOUT: ==> resolved `Main` as `fn Main` in `package` (<Main()>:0)
 // CHECK:STDOUT: result: 0

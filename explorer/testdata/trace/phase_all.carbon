@@ -26,20 +26,17 @@ fn Main() -> i32 {
 // CHECK:STDOUT: --------------------------------------------------------
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: namespace N;fn Foo (n: i32)-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: return (n + 1);
+// CHECK:STDOUT:
+// CHECK:STDOUT: namespace N;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn Foo (n: i32) -> i32{
+// CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
-// CHECK:STDOUT: fn Main ()-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: var x: i32 = N.Foo(0);
-// CHECK:STDOUT: return x;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT:
 // CHECK:STDOUT: * * * * * * * * * *  resolving names  * * * * * * * * * *
 // CHECK:STDOUT: ---------------------------------------------------------
@@ -61,25 +58,41 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ==> marked `Foo` declared but not usable in `namespace N`
 // CHECK:STDOUT: ==> declared `n` as `n` in `fn N.Foo` (phase_all.carbon:11)
 // CHECK:STDOUT: ==> marked `Foo` usable in `namespace N`
-// CHECK:STDOUT: ->> resolving stmt `{return (n + 1);}` (phase_all.carbon:13)
+// CHECK:STDOUT: ->> resolving stmt `{
+// CHECK:STDOUT:   return (n + 1);
+// CHECK:STDOUT: }` (phase_all.carbon:13)
 // CHECK:STDOUT: ->> resolving stmt `return (n + 1);` (phase_all.carbon:12)
 // CHECK:STDOUT: ==> resolved `n` as `n` in `fn N.Foo` (phase_all.carbon:12)
 // CHECK:STDOUT: <<- finished resolving stmt `return (n + 1);` (phase_all.carbon:12)
-// CHECK:STDOUT: <<- finished resolving stmt `{return (n + 1);}` (phase_all.carbon:13)
+// CHECK:STDOUT: <<- finished resolving stmt `{
+// CHECK:STDOUT:   return (n + 1);
+// CHECK:STDOUT: }` (phase_all.carbon:13)
 // CHECK:STDOUT: <<- finished resolving decl `fn N.Foo` (phase_all.carbon:13)
 // CHECK:STDOUT: ->> resolving decl `fn Main` (phase_all.carbon:18)
 // CHECK:STDOUT: ==> marked `Main` declared but not usable in `package`
 // CHECK:STDOUT: ==> marked `Main` usable in `package`
-// CHECK:STDOUT: ->> resolving stmt `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:18)
+// CHECK:STDOUT: ->> resolving stmt `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` (phase_all.carbon:18)
 // CHECK:STDOUT: ->> resolving stmt `var x: i32 = N.Foo(0);` (phase_all.carbon:16)
 // CHECK:STDOUT: ==> resolved `N` as `namespace N` in `package` (phase_all.carbon:16)
 // CHECK:STDOUT: ==> resolved `Foo` as `fn N.Foo` in `namespace N` (phase_all.carbon:16)
-// CHECK:STDOUT: ==> declared `x` as `x` in `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:16)
+// CHECK:STDOUT: ==> declared `x` as `x` in `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` (phase_all.carbon:16)
 // CHECK:STDOUT: <<- finished resolving stmt `var x: i32 = N.Foo(0);` (phase_all.carbon:16)
 // CHECK:STDOUT: ->> resolving stmt `return x;` (phase_all.carbon:17)
-// CHECK:STDOUT: ==> resolved `x` as `x` in `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:17)
+// CHECK:STDOUT: ==> resolved `x` as `x` in `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` (phase_all.carbon:17)
 // CHECK:STDOUT: <<- finished resolving stmt `return x;` (phase_all.carbon:17)
-// CHECK:STDOUT: <<- finished resolving stmt `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:18)
+// CHECK:STDOUT: <<- finished resolving stmt `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` (phase_all.carbon:18)
 // CHECK:STDOUT: <<- finished resolving decl `fn Main` (phase_all.carbon:18)
 // CHECK:STDOUT: ==> resolved `Main` as `fn Main` in `package` (<Main()>:0)
 // CHECK:STDOUT:
@@ -97,7 +110,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> declaring `interface TestInterface` (phase_all.carbon:7)
 // CHECK:STDOUT: <<- finished declaring `interface TestInterface` (phase_all.carbon:7)
@@ -106,7 +118,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> checking InterfaceDeclaration `interface TestInterface` (phase_all.carbon:7)
 // CHECK:STDOUT: ->> checking `interface TestInterface` (phase_all.carbon:7)
@@ -174,13 +185,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:13)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Foo (n: i32)-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: return (n + 1);
+// CHECK:STDOUT: fn Foo (n: i32) -> i32{
+// CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> declaring function `Foo` (phase_all.carbon:13)
 // CHECK:STDOUT: ->> checking TuplePattern `(n: i32)` (phase_all.carbon:11)
@@ -207,13 +214,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking declaration at (phase_all.carbon:13)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Foo (n: i32)-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: return (n + 1);
+// CHECK:STDOUT: fn Foo (n: i32) -> i32{
+// CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> checking FunctionDeclaration `fn N.Foo` (phase_all.carbon:13)
 // CHECK:STDOUT: ->> checking function `Foo` (phase_all.carbon:13)
@@ -270,11 +273,12 @@ fn Main() -> i32 {
 // CHECK:STDOUT: *** type checking stmt at (phase_all.carbon:13)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: {
-// CHECK:STDOUT: return (n + 1);
+// CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: ->> checking Block `{return (n + 1);}` (phase_all.carbon:13)
+// CHECK:STDOUT: ->> checking Block `{
+// CHECK:STDOUT:   return (n + 1);
+// CHECK:STDOUT: }` (phase_all.carbon:13)
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking stmt at (phase_all.carbon:12)
 // CHECK:STDOUT: ```
@@ -288,14 +292,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:18)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main ()-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: var x: i32 = N.Foo(0);
-// CHECK:STDOUT: return x;
+// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> declaring function `Main` (phase_all.carbon:18)
 // CHECK:STDOUT: ->> checking TuplePattern `()` (phase_all.carbon:15)
@@ -311,14 +311,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking declaration at (phase_all.carbon:18)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main ()-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: var x: i32 = N.Foo(0);
-// CHECK:STDOUT: return x;
+// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> checking FunctionDeclaration `fn Main` (phase_all.carbon:18)
 // CHECK:STDOUT: ->> checking function `Main` (phase_all.carbon:18)
@@ -375,12 +371,14 @@ fn Main() -> i32 {
 // CHECK:STDOUT: *** type checking stmt at (phase_all.carbon:18)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: {
-// CHECK:STDOUT: var x: i32 = N.Foo(0);
-// CHECK:STDOUT: return x;
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: ->> checking Block `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:18)
+// CHECK:STDOUT: ->> checking Block `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` (phase_all.carbon:18)
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking stmt at (phase_all.carbon:16)
 // CHECK:STDOUT: ```
@@ -427,35 +425,33 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> resolving-unformed in decl `interface TestInterface` (phase_all.carbon:7)
 // CHECK:STDOUT: ->> resolving-unformed in decl `namespace N` (phase_all.carbon:9)
 // CHECK:STDOUT: ->> resolving-unformed in decl `fn N.Foo` (phase_all.carbon:13)
-// CHECK:STDOUT: ->> resolving-unformed in stmt `{return (n + 1);}` (phase_all.carbon:13)
+// CHECK:STDOUT: ->> resolving-unformed in stmt `{
+// CHECK:STDOUT:   return (n + 1);
+// CHECK:STDOUT: }` (phase_all.carbon:13)
 // CHECK:STDOUT: ->> resolving-unformed in stmt `return (n + 1);` (phase_all.carbon:12)
 // CHECK:STDOUT: ==> check `n` (phase_all.carbon:12)
 // CHECK:STDOUT: ->> resolving-unformed in decl `fn Main` (phase_all.carbon:18)
-// CHECK:STDOUT: ->> resolving-unformed in stmt `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:18)
+// CHECK:STDOUT: ->> resolving-unformed in stmt `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` (phase_all.carbon:18)
 // CHECK:STDOUT: ->> resolving-unformed in stmt `var x: i32 = N.Foo(0);` (phase_all.carbon:16)
 // CHECK:STDOUT: ==> add init `x` (phase_all.carbon:16)
 // CHECK:STDOUT: ->> resolving-unformed in stmt `return x;` (phase_all.carbon:17)
 // CHECK:STDOUT: ==> check `x` (phase_all.carbon:17)
-// CHECK:STDOUT:
-// CHECK:STDOUT:
-// CHECK:STDOUT: * * * * * * * * * *  printing declarations  * * * * * * * * * *
-// CHECK:STDOUT: ---------------------------------------------------------------
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: namespace N;fn Foo (n: i32)-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: return (n + 1);
+// CHECK:STDOUT:
+// CHECK:STDOUT: namespace N;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn Foo (n: i32) -> i32{
+// CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
-// CHECK:STDOUT: fn Main ()-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: var x: i32 = N.Foo(0);
-// CHECK:STDOUT: return x;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT:
 // CHECK:STDOUT: * * * * * * * * * *  starting execution  * * * * * * * * * *
 // CHECK:STDOUT: ------------------------------------------------------------
@@ -468,8 +464,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:7)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: interface TestInterface {
-// CHECK:STDOUT: }
-// CHECK:STDOUT: ```
+// CHECK:STDOUT: }```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `interface TestInterface` (phase_all.carbon:7)
 // CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `namespace N` (phase_all.carbon:9)
 // CHECK:STDOUT: ->> step DeclarationAction pos: 0 `namespace N` (phase_all.carbon:9) --->
@@ -483,27 +478,19 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:13)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Foo (n: i32)-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: return (n + 1);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT: ```
+// CHECK:STDOUT: fn Foo (n: i32) -> i32{
+// CHECK:STDOUT:   return (n + 1);
+// CHECK:STDOUT: }```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `fn N.Foo` (phase_all.carbon:13)
 // CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `fn Main` (phase_all.carbon:18)
 // CHECK:STDOUT: ->> step DeclarationAction pos: 0 `fn Main` (phase_all.carbon:18) --->
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:18)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main ()-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: var x: i32 = N.Foo(0);
-// CHECK:STDOUT: return x;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT: ```
+// CHECK:STDOUT: fn Main () -> i32{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `fn Main` (phase_all.carbon:18)
 // CHECK:STDOUT:
 // CHECK:STDOUT: - - - - -  calling main function  - - - - -
@@ -524,16 +511,21 @@ fn Main() -> i32 {
 // CHECK:STDOUT: === match pattern `()`
 // CHECK:STDOUT:     from value expression with value `()`
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [] (None)
-// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:18)
-// CHECK:STDOUT: ->> step StatementAction pos: 0 `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:18) --->
+// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` (phase_all.carbon:18)
+// CHECK:STDOUT: ->> step StatementAction pos: 0 `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` (phase_all.carbon:18) --->
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (phase_all.carbon:18)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: {
-// CHECK:STDOUT: var x: i32 = N.Foo(0);
-// CHECK:STDOUT: return x;
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `var x: i32 = N.Foo(0);` (phase_all.carbon:16)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `var x: i32 = N.Foo(0);` (phase_all.carbon:16) --->
@@ -566,15 +558,18 @@ fn Main() -> i32 {
 // CHECK:STDOUT: === match pattern `Placeholder<n>`
 // CHECK:STDOUT:     from value expression with value `0`
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [`n: i32`: `0`] (None)
-// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{return (n + 1);}` (phase_all.carbon:13)
-// CHECK:STDOUT: ->> step StatementAction pos: 0 `{return (n + 1);}` (phase_all.carbon:13) --->
+// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{
+// CHECK:STDOUT:   return (n + 1);
+// CHECK:STDOUT: }` (phase_all.carbon:13)
+// CHECK:STDOUT: ->> step StatementAction pos: 0 `{
+// CHECK:STDOUT:   return (n + 1);
+// CHECK:STDOUT: }` (phase_all.carbon:13) --->
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (phase_all.carbon:13)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: {
-// CHECK:STDOUT: return (n + 1);
+// CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `return (n + 1);` (phase_all.carbon:12)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `return (n + 1);` (phase_all.carbon:12) --->
@@ -614,7 +609,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: --> memory-write: #1 `1`
 // CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `return (n + 1);` results: [`1`]  (phase_all.carbon:12)
-// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `{return (n + 1);}` scope: [] (phase_all.carbon:13)
+// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `{
+// CHECK:STDOUT:   return (n + 1);
+// CHECK:STDOUT: }` scope: [] (phase_all.carbon:13)
 // CHECK:STDOUT: <[] stack-pop:  ScopeAction pos: 0  scope: [`n: i32`: `0`] (None)
 // CHECK:STDOUT: >[] stack-push: CleanUpAction pos: 0  scope: [`n: i32`: `0`] (stack cleanup:1)
 // CHECK:STDOUT: >[] stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
@@ -637,15 +634,17 @@ fn Main() -> i32 {
 // CHECK:STDOUT: === match pattern `Placeholder<x>`
 // CHECK:STDOUT:     from initializing expression with value `1`
 // CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `var x: i32 = N.Foo(0);` results: [`1`]  (phase_all.carbon:16)
-// CHECK:STDOUT: ->> step StatementAction pos: 1 `{var x: i32 = N.Foo(0);return x;}` scope: [`x: i32`: `lval<Allocation(1)>`] (phase_all.carbon:18) --->
+// CHECK:STDOUT: ->> step StatementAction pos: 1 `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` scope: [`x: i32`: `lval<Allocation(1)>`] (phase_all.carbon:18) --->
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (phase_all.carbon:18)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: {
-// CHECK:STDOUT: var x: i32 = N.Foo(0);
-// CHECK:STDOUT: return x;
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `return x;` (phase_all.carbon:17)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `return x;` (phase_all.carbon:17) --->
@@ -669,7 +668,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT: return x;
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `return x;` results: [`1`]  (phase_all.carbon:17)
-// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 2 `{var x: i32 = N.Foo(0);return x;}` scope: [`x: i32`: `lval<Allocation(1)>`] (phase_all.carbon:18)
+// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 2 `{
+// CHECK:STDOUT:   var x: i32 = N.Foo(0);
+// CHECK:STDOUT:   return x;
+// CHECK:STDOUT: }` scope: [`x: i32`: `lval<Allocation(1)>`] (phase_all.carbon:18)
 // CHECK:STDOUT: <[] stack-pop:  ScopeAction pos: 0  scope: [] (None)
 // CHECK:STDOUT: >[] stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
 // CHECK:STDOUT: >[] stack-push: CleanUpAction pos: 0  scope: [`x: i32`: `lval<Allocation(1)>`] (stack cleanup:1)
