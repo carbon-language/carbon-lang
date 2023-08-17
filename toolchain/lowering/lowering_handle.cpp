@@ -61,12 +61,12 @@ auto LoweringHandleArrayValue(LoweringFunctionContext& context,
   context.SetLocal(node_id, alloca);
   auto tuple_node_id = node.GetAsArrayValue();
   auto* tuple_value = context.GetLocal(tuple_node_id);
+  auto* tuple_type =
+      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
 
   for (int i = 0; i < static_cast<int>(llvm_type->getArrayNumElements()); ++i) {
-    llvm::Value* array_element_value = context.GetValueForPoiterTY(
-        context.GetType(
-            context.semantics_ir().GetNode(tuple_node_id).type_id()),
-        tuple_value, i);
+    llvm::Value* array_element_value =
+        context.GetValueForPoiterTY(tuple_type, tuple_value, i);
     if (tuple_value->getType()->isPointerTy()) {
       array_element_value = context.builder().CreateLoad(
           llvm_type->getArrayElementType(), array_element_value);
