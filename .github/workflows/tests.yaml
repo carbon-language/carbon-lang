@@ -183,7 +183,10 @@ jobs:
         if:
           steps.filter.outputs.ignore == 'false' && github.event_name ==
           'pull_request_target'
+        env:
+          EVENT_CONTEXT: ${{ toJson(github.event) }}
         run: |
+          echo "$EVENT_CONTEXT"
           git rev-parse ${{ github.sha }}^
           ./scripts/bazel_diff.py \
             --baseline=${{ github.base_ref }} \
@@ -194,7 +197,10 @@ jobs:
         if:
           steps.filter.outputs.ignore == 'false' && github.event_name !=
           'pull_request_target'
+        env:
+          EVENT_CONTEXT: ${{ toJson(github.event) }}
         run: |
+          echo "$EVENT_CONTEXT"
           ./scripts/bazel_diff.py \
             --baseline=${{ github.event.push.before }} \
             --current=${{ github.event.push.after }} \
