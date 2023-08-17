@@ -186,8 +186,8 @@ jobs:
         run: |
           git rev-parse ${{ github.sha }}^
           ./scripts/bazel_diff.py \
-            --baseline=${{ github.base_sha }} \
-            --current=${{ github.event.pull_request.head.sha || HEAD }} \
+            --baseline=${{ github.base_ref }} \
+            --current=${{ github.head_ref }} \
             >targets
 
       - name: Compute impacted branch targets
