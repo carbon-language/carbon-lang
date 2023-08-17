@@ -12,6 +12,7 @@ def sh_run(name, args, **kwargs):
     native.sh_binary(
         name = name,
         srcs = ["//bazel/sh_run:exec.sh"],
+        tags = ["manual"],
         args = args,
         **kwargs
     )
