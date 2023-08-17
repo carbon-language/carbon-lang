@@ -32,7 +32,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
       set_file_ctx.update_source_loc(ast.declarations[i]->source_loc());
       if (trace_stream->is_enabled()) {
         *trace_stream << *ast.declarations[i];
-        if(i != ast.declarations.size()-1)  {
+        if (i != ast.declarations.size() - 1) {
           *trace_stream << "\n\n";
         }
       }
@@ -77,7 +77,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
       set_file_ctx.update_source_loc(ast.declarations[i]->source_loc());
       if (trace_stream->is_enabled()) {
         *trace_stream << *ast.declarations[i];
-        if(i != ast.declarations.size()-1)  {
+        if (i != ast.declarations.size() - 1) {
           *trace_stream << "\n\n";
         }
       }
