@@ -308,6 +308,6 @@ tree_sitter_register_toolchains()
 http_jar(
     name = "bazel_diff",
     urls = [
-        "https://github.com/Tinder/bazel-diff/releases/download/4.3.0/bazel-diff_deploy.jar",
+        "https://github.com/Tinder/bazel-diff/releases/download/4.8.0/bazel-diff_deploy.jar",
     ],
 )
