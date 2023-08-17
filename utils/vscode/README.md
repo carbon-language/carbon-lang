@@ -27,6 +27,9 @@ code --install-extension out/carbon.vsix
 
 1. Open utils/vscode folder in VS Code.
 2. Launch the extension using Run command (F5).
+3. In the opened window, open the carbon-lang repository as folder.
+4. Open a carbon file.
+5. Open code outline (Ctrl+Shift+O).
 
 To update dependencies:
 

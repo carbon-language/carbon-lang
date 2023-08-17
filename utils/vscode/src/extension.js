@@ -4,7 +4,37 @@
  * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  */
 
+const { LanguageClient } = require('vscode-languageclient/node');
+
+function activate(context) {
+  const serverOptions = {
+    run: {
+      command: 'bazel',
+      args: ['run', 'language_server'],
+    },
+    debug: {
+      command: 'bazel',
+      args: ['run', 'language_server'],
+    },
+  };
+
+  const clientOptions = {
+    documentSelector: [{ scheme: 'file', language: 'carbon' }],
+  };
+
+  let disposable = new LanguageClient(
+    'languageServer',
+    'Language Server for Carbon',
+    serverOptions,
+    clientOptions
+  ).start();
+
+  context.subscriptions.push(disposable);
+}
+
+function deactivate() {}
+
 module.exports = {
-  activate() {},
-  deactivate() {},
+  activate,
+  deactivate,
 };
