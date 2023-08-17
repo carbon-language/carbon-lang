@@ -26,8 +26,7 @@ var x: type = 42;
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: typeTypeType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: nodeError},
 // CHECK:STDOUT: ]
@@ -38,12 +37,11 @@ var x: type = 42;
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %x: type = var
+// CHECK:STDOUT:   %x: type = var "x"
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 42
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

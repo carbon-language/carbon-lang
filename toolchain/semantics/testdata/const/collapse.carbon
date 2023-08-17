@@ -14,7 +14,7 @@ fn F(p: const i32**) -> const (const i32)** {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type3, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type3, body: [block4]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -36,8 +36,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type3},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+3, type: type3},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type3},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type1, type: typeTypeType},
@@ -53,20 +52,19 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:

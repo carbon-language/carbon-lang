@@ -33,21 +33,17 @@ var test_type: type = i32;
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+1},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type1},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+6},
-// CHECK:STDOUT:   {kind: VarStorage, type: type2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+8, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: node+4},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type2},
 // CHECK:STDOUT:   {kind: StringLiteral, arg0: str3, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+10},
-// CHECK:STDOUT:   {kind: VarStorage, type: typeTypeType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+12, type: typeTypeType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: nodeIntegerType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+7},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str4, type: typeTypeType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+9, arg1: nodeIntegerType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -64,23 +60,19 @@ var test_type: type = i32;
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %test_i32: i32 = var
+// CHECK:STDOUT:   %test_i32: i32 = var "test_i32"
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0
 // CHECK:STDOUT:   assign %test_i32, %.loc7
-// CHECK:STDOUT:   %test_f64: f64 = var
+// CHECK:STDOUT:   %test_f64: f64 = var "test_f64"
 // CHECK:STDOUT:   %.loc8: f64 = real_literal 1e-1
 // CHECK:STDOUT:   assign %test_f64, %.loc8
-// CHECK:STDOUT:   %test_str: String = var
+// CHECK:STDOUT:   %test_str: String = var "test_str"
 // CHECK:STDOUT:   %.loc9: String = string_literal "Test"
 // CHECK:STDOUT:   assign %test_str, %.loc9
-// CHECK:STDOUT:   %test_type: type = var
+// CHECK:STDOUT:   %test_type: type = var "test_type"
 // CHECK:STDOUT:   assign %test_type, i32
 // CHECK:STDOUT: }

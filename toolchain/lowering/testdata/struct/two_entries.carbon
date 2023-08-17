@@ -14,16 +14,16 @@ fn Run() -> i32 {
 // CHECK:STDOUT: source_filename = "two_entries.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
-// CHECK:STDOUT:   %var = alloca { i32, i32 }, align 8
+// CHECK:STDOUT:   %x = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %struct = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %struct, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %a, align 4
 // CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %struct, i32 0, i32 1
 // CHECK:STDOUT:   store i32 2, ptr %b, align 4
 // CHECK:STDOUT:   %1 = load { i32, i32 }, ptr %struct, align 4
-// CHECK:STDOUT:   store { i32, i32 } %1, ptr %var, align 4
-// CHECK:STDOUT:   %var1 = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %2 = load { i32, i32 }, ptr %var, align 4
-// CHECK:STDOUT:   store { i32, i32 } %2, ptr %var1, align 4
+// CHECK:STDOUT:   store { i32, i32 } %1, ptr %x, align 4
+// CHECK:STDOUT:   %y = alloca { i32, i32 }, align 8
+// CHECK:STDOUT:   %2 = load { i32, i32 }, ptr %x, align 4
+// CHECK:STDOUT:   store { i32, i32 } %2, ptr %y, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
