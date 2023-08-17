@@ -31,6 +31,11 @@ class Statement : public AstNode {
 
   void Print(llvm::raw_ostream& out) const override { PrintDepth(-1, 0, out); }
   void PrintID(llvm::raw_ostream& out) const override { PrintDepth(1, 0, out); }
+
+  // The depth parameter signals how many levels of nesting to print, so
+  // recursive calls can pass `depth - 1`, and when depth is 0 it prints "..."
+  // and returns. when depth is -1 that means "no depth limit".
+  // `indent_num_spaces` is used for consistent formatting (recommended: 2 spaces).
   void PrintDepth(int depth, int indent_num_spaces,
                   llvm::raw_ostream& out) const;
 
