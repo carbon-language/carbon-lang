@@ -272,11 +272,14 @@ v5 format.
 
 ### Debugging on MacOS
 
-Getting Bazel to build debuggable binaries on MacOS requires passing a few extra
-options while building:
+Bazel sandboxes builds, which makes it hard for the debugger to locate symbols
+on linked binaries when debugging. See this
+[Bazel issue](https://github.com/bazelbuild/bazel/issues/2537#issuecomment-449089673)
+for more information. To workaround, provide the `--spawn_strategy=local` option
+to Bazel for the debug build, like:
 
 ```shell
-bazel build --spawn_strategy=local -c dbg //explorer --apple_generate_dsym
+bazel build --spawn_strategy=local -c dbg //explorer
 ```
 
 You should then be able to debug with `lldb`.
