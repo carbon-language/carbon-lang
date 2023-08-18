@@ -15,9 +15,10 @@ namespace Carbon::LS {
 
 namespace {
 template <typename T>
-auto ParseJSON(llvm::json::Value& v, T& parsed) -> bool {
+// Parse untyped JSON into a typed form.
+auto ParseJSON(const llvm::json::Value& untyped, T& parsed) -> bool {
   llvm::json::Path::Root root_path;
-  return clang::clangd::fromJSON(v, parsed, root_path);
+  return clang::clangd::fromJSON(untyped, parsed, root_path);
 }
 }  // namespace
 
@@ -29,8 +30,7 @@ auto LanguageServer::onNotify(llvm::StringRef method, llvm::json::Value value)
       return false;
     }
     files_.emplace(params.textDocument.uri.file(), params.textDocument.text);
-  }
-  if (method == "textDocument/didChange") {
+  } else if (method == "textDocument/didChange") {
     clang::clangd::DidChangeTextDocumentParams params;
     if (!ParseJSON(value, params)) {
       return false;
@@ -50,8 +50,7 @@ auto LanguageServer::onCall(llvm::StringRef method, llvm::json::Value params,
                                     {"textDocumentSync", /*Full=*/1}};
     transport_->reply(
         id, llvm::json::Object{{"capabilities", std::move(capabilities)}});
-  }
-  if (method == "textDocument/documentSymbol") {
+  } else if (method == "textDocument/documentSymbol") {
     clang::clangd::DocumentSymbolParams symbol_params;
     if (!ParseJSON(params, symbol_params)) {
       return false;
@@ -79,7 +78,7 @@ static auto getName(ParseTree& p, ParseTree::Node node)
   return std::nullopt;
 }
 
-auto LanguageServer::Symbols(clang::clangd::DocumentSymbolParams& params)
+auto LanguageServer::Symbols(clang::clangd::DocumentSymbolParams const& params)
     -> std::vector<clang::clangd::DocumentSymbol> {
   llvm::vfs::InMemoryFileSystem vfs;
   auto file = params.textDocument.uri.file().str();

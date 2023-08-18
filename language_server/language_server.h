@@ -20,18 +20,23 @@ class LanguageServer : public clang::clangd::Transport::MessageHandler {
   explicit LanguageServer(std::unique_ptr<clang::clangd::Transport> transport)
       : transport_(std::move(transport)) {}
 
+  // Handlers returns true to keep processing messages, or false to shut down.
+  // Handler called on notification by client.
   auto onNotify(llvm::StringRef method, llvm::json::Value value)
       -> bool override;
+  // Handler called on method call by client.
   auto onCall(llvm::StringRef method, llvm::json::Value params,
               llvm::json::Value id) -> bool override;
+  // Handler called on response of Transport::call.
   auto onReply(llvm::json::Value id, llvm::Expected<llvm::json::Value> result)
       -> bool override;
 
  private:
-  std::unique_ptr<clang::clangd::Transport> transport_;
+  const std::unique_ptr<clang::clangd::Transport> transport_;
+  // content of files managed by the language client.
   std::unordered_map<std::string, std::string> files_;
 
-  auto Symbols(clang::clangd::DocumentSymbolParams& params)
+  auto Symbols(clang::clangd::DocumentSymbolParams const& params)
       -> std::vector<clang::clangd::DocumentSymbol>;
 };
 
