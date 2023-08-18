@@ -16,7 +16,8 @@
 namespace Carbon {
 
 auto CodeGen::Create(llvm::Module& module, llvm::StringRef target_triple,
-                     llvm::raw_pwrite_stream& errors) -> std::optional<CodeGen> {
+                     llvm::raw_pwrite_stream& errors)
+    -> std::optional<CodeGen> {
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
