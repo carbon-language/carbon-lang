@@ -28,7 +28,25 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Basics
 
-This example illustrates many of the key concepts of variadics:
+The central concept in variadics is a "pack expansion", which is a kind of
+compile-time loop over sequences called "expansion arguments". Expansion
+arguments can be formed from tuples with the `expand` operator, or from a
+"variadic binding", which is marked with the `each` keyword at the point of
+declaration and the point of use. Pack expansions come in several forms, with
+slightly different iteration semantics:
+
+-   `...,` iteratively evaluates an expression, and treats the values as
+    successive elements of an enclosing tuple.
+-   `...and` and `...or` iteratively evaluate a boolean expression, combining
+    the values using `and` and `or`, and ending the loop early if the underlying
+    operator short-circuits.
+-   `...{}` iteratively executes a block of statements.
+
+`...,` can also be used in patterns, where it iteratively matches the elements
+of a scrutinee tuple. In conjunction with variadic bindings, this enables
+functions to take an arbitrary number of arguments.
+
+This example illustrates many of the key concepts:
 
 ```carbon
 // Takes an arbitrary number of vectors with arbitrary element types, and
