@@ -9,7 +9,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <queue>
 #include <random>
 #include <utility>
 #include <variant>
@@ -18,7 +17,6 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/ast/address.h"
-#include "explorer/ast/bindings.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
