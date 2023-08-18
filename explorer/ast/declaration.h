@@ -52,7 +52,7 @@ class Declaration : public AstNode {
 
   // The depth parameter signals how many levels of nesting to print, so
   // recursive calls can pass `depth - 1`, and when depth is 0 it prints "..."
-  // and returns. when depth is -1 that means "no depth limit".
+  // and returns. When depth is -1 that means "no depth limit".
   // `indent_num_spaces` is used for consistent formatting (recommended: 2
   // spaces).
   virtual void PrintDepth(int depth, int indent_num_spaces,
