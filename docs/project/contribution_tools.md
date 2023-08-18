@@ -272,8 +272,8 @@ v5 format.
 
 ### Debugging on MacOS
 
-Bazel sandboxes builds, which makes it hard for the debugger to locate symbols
-on linked binaries when debugging. See this
+Bazel sandboxes builds, which on MacOS makes it hard for the debugger to locate
+symbols on linked binaries when debugging. See this
 [Bazel issue](https://github.com/bazelbuild/bazel/issues/2537#issuecomment-449089673)
 for more information. To workaround, provide the `--spawn_strategy=local` option
 to Bazel for the debug build, like:
