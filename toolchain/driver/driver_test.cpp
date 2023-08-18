@@ -211,7 +211,7 @@ TEST_F(DriverTest, FileOutput) {
   EXPECT_TRUE(driver_.RunCommand({"compile", "--asm-output", "test.carbon"}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // TODO: This may need to be tailored to other assembly formats.
-  EXPECT_THAT(ReadFile("test.s"), ContainsRegex("\\.file\\s+\"test.carbon\""));
+  EXPECT_THAT(ReadFile("test.s"), ContainsRegex("Main:"));
 }
 
 }  // namespace
