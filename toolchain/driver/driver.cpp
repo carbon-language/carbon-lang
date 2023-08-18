@@ -298,7 +298,7 @@ For questions, issues, or bug reports, please use our GitHub project:
             .short_name = "v",
             .help = "Enable verbose logging to the stderr stream.",
         },
-        [&](auto& arg_b) { arg_b.Set(&verbose); });
+        [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&verbose); });
 
     b.AddSubcommand(CompileOptions::Info,
                     [&](CommandLine::CommandBuilder& sub_b) {
@@ -317,8 +317,9 @@ For questions, issues, or bug reports, please use our GitHub project:
 
 auto Driver::ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
     -> CommandLine::ParseResult {
-  return CommandLine::Parse(args, output_stream_, error_stream_, Options::Info,
-                            [&](auto& b) { options.Build(b); });
+  return CommandLine::Parse(
+      args, output_stream_, error_stream_, Options::Info,
+      [&](CommandLine::CommandBuilder& b) { options.Build(b); });
 }
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
