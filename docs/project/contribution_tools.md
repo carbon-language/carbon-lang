@@ -25,6 +25,7 @@ contributions.
     -   [Old LLVM versions](#old-llvm-versions)
     -   [Asking for help](#asking-for-help)
 -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
+    -   [Debugging on MacOS](#debugging-on-macos)
 
 <!-- tocstop -->
 
@@ -268,3 +269,49 @@ Dwarf Error: DW_FORM_strx1 found in non-DWO CU
 
 It means that the version of GDB used is too old, and does not support the DWARF
 v5 format.
+
+### Debugging on MacOS
+
+Bazel sandboxes builds, which on MacOS makes it hard for the debugger to locate
+symbols on linked binaries when debugging. See this
+[Bazel issue](https://github.com/bazelbuild/bazel/issues/2537#issuecomment-449089673)
+for more information. To workaround, provide the `--spawn_strategy=local` option
+to Bazel for the debug build, like:
+
+```shell
+bazel build --spawn_strategy=local -c dbg //explorer
+```
+
+You should then be able to debug with `lldb`.
+
+If this build command doesn't seem to produce a debuggable binary you might need
+to both clear the build disk cache and clean the build. Running
+`scripts/clean_disk_cache.sh` may not be enough, you might try deleting all the
+files within the disk cache, typically located at
+`~/.cache/carbon-lang-build-cache`. Deleting the disk cache, followed by a
+`bazel clean` should allow your next rebuild, with the recommended options, to
+supply the symbols for debugging.
+
+For debugging on MacOS using VSCode, some people have had success using the
+CodeLLDB extension. In order for LLDB to connect the project source files with
+the symbols you will need to add a `"sourceMap": { ".": "${workspaceRoot}" }`
+line to the CodeLLDB `launch.json` configuration, for example:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "explorer",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/bazel-bin/explorer/explorer",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+            "sourceMap": {
+                ".": "${workspaceRoot}"
+            }
+        }
+    ]
+}
+```
