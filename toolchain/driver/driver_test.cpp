@@ -173,8 +173,7 @@ TEST_F(DriverTest, StdoutOutput) {
   EXPECT_TRUE(driver_.RunCommand({"compile", "--output=-", "test.carbon"}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // The default is textual assembly.
-  EXPECT_THAT(test_output_stream_.TakeStr(),
-              ContainsRegex("\\.file\\s+\"test.carbon\""));
+  EXPECT_THAT(test_output_stream_.TakeStr(), ContainsRegex("Main:"));
 
   EXPECT_TRUE(driver_.RunCommand(
       {"compile", "--output=-", "--force-obj-output", "test.carbon"}));
