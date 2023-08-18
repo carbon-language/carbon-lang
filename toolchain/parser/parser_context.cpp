@@ -229,8 +229,9 @@ auto ParserContext::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
 }
 
 auto ParserContext::SkipTo(TokenizedBuffer::Token t) -> void {
-  CARBON_CHECK(t >= *position_) << "Tried to skip backwards from " << position_
-                                << " to " << TokenizedBuffer::TokenIterator(t);
+  CARBON_CHECK(t >= *position_)
+      << "Tried to skip backwards from " << position_ << " to "
+      << TokenizedBuffer::TokenIterator(t) << " in " << *tokens_;
   position_ = TokenizedBuffer::TokenIterator(t);
   CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
 }
