@@ -108,9 +108,10 @@ class ParserContext {
 
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
-  // there's no open paren.
+  // there's no open paren. Returns the open paren token if it was found.
   auto ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
-                              ParseNodeKind start_kind) -> void;
+                              ParseNodeKind start_kind)
+      -> std::optional<TokenizedBuffer::Token>;
 
   // Parses a closing symbol corresponding to the opening symbol
   // `expected_open`, possibly skipping forward and diagnosing if necessary.
