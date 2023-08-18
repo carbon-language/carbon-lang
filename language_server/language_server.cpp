@@ -4,7 +4,7 @@
 
 #include "language_server/language_server.h"
 
-#include "third_party/clangd/Protocol.h"
+#include "clang-tools-extra/clangd/Protocol.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"

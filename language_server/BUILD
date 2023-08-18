@@ -13,14 +13,16 @@ cc_binary(
         "language_server.h",
         "main.cpp",
     ],
+    # Some parameters are unused in clangd headers.
+    copts = ["-Wno-unused-parameter"],
     deps = [
         "//common:error",
-        "//third_party/clangd",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
+        "@llvm-project//clang-tools-extra/clangd:clangd_library",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -1,0 +1,276 @@
+From 2625e497fef1429f2041922a739d841050eda909 Mon Sep 17 00:00:00 2001
+From: maan2003 <manmeetmann2003@gmail.com>
+Date: Sat, 19 Aug 2023 02:32:03 +0530
+Subject: [PATCH] Add library for clangd
+
+---
+ clang-tools-extra/clangd/BUILD.bazel  | 36 +++++++++++++++++++++++++++
+ clang-tools-extra/clangd/Protocol.cpp | 15 +++++++----
+ clang-tools-extra/clangd/Protocol.h   | 12 +++++++--
+ clang-tools-extra/clangd/Transport.h  |  1 -
+ 4 files changed, 56 insertions(+), 8 deletions(-)
+ create mode 100644 clang-tools-extra/clangd/BUILD.bazel
+
+diff --git a/clang-tools-extra/clangd/BUILD.bazel b/clang-tools-extra/clangd/BUILD.bazel
+new file mode 100644
+index 000000000..9f3f93f24
+--- /dev/null
++++ b/clang-tools-extra/clangd/BUILD.bazel
+@@ -0,0 +1,35 @@
++package(default_visibility = ["//visibility:public"])
++
++cc_library(
++    name = "clangd_library",
++    srcs = [
++        "JSONTransport.cpp",
++        "Protocol.cpp",
++        "URI.cpp",
++        "support/Logger.cpp",
++        "support/Trace.cpp",
++        "support/MemoryTree.cpp",
++        "support/Context.cpp",
++        "support/Cancellation.cpp",
++        "support/ThreadCrashReporter.cpp",
++        "support/Shutdown.cpp",
++    ],
++    hdrs = [
++        "Transport.h",
++        "Protocol.h",
++        "URI.h",
++        "support/Function.h",
++        "support/Cancellation.h",
++        "support/ThreadCrashReporter.h",
++        "support/Logger.h",
++        "support/Trace.h",
++        "support/MemoryTree.h",
++        "support/Context.h",
++        "support/Shutdown.h",
++    ],
++    includes = ["."],
++    deps = [
++        "//llvm:Support",
++        "//clang:basic",
++    ],
++)
+diff --git a/clang-tools-extra/clangd/Protocol.cpp b/clang-tools-extra/clangd/Protocol.cpp
+index e44aee2d4..a031b877e 100644
+--- a/clang-tools-extra/clangd/Protocol.cpp
++++ b/clang-tools-extra/clangd/Protocol.cpp
+@@ -12,10 +12,8 @@
+
+ #include "Protocol.h"
+ #include "URI.h"
+ #include "support/Logger.h"
+-#include "clang/Basic/LLVM.h"
+-#include "clang/Index/IndexSymbol.h"
+ #include "llvm/ADT/StringRef.h"
+ #include "llvm/ADT/StringSwitch.h"
+ #include "llvm/Support/ErrorHandling.h"
+@@ -294,8 +292,9 @@ SymbolKind adjustKindToCapability(SymbolKind Kind,
+     return SymbolKind::String;
+   }
+ }
+
++/*
+ SymbolKind indexSymbolKindToSymbolKind(index::SymbolKind Kind) {
+   switch (Kind) {
+   case index::SymbolKind::Unknown:
+     return SymbolKind::Variable;
+@@ -354,8 +353,9 @@ SymbolKind indexSymbolKindToSymbolKind(index::SymbolKind Kind) {
+     return SymbolKind::Interface;
+   }
+   llvm_unreachable("invalid symbol kind");
+ }
++*/
+
+ bool fromJSON(const llvm::json::Value &Params, ClientCapabilities &R,
+               llvm::json::Path P) {
+   const llvm::json::Object *O = Params.getAsObject();
+@@ -804,8 +804,9 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &O,
+   O << SI.containerName << "::" << SI.name << " - " << toJSON(SI);
+   return O;
+ }
+
++/*
+ bool operator==(const SymbolDetails &LHS, const SymbolDetails &RHS) {
+   return LHS.name == RHS.name && LHS.containerName == RHS.containerName &&
+          LHS.USR == RHS.USR && LHS.ID == RHS.ID &&
+          LHS.declarationRange == RHS.declarationRange &&
+@@ -850,8 +851,9 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &O, const SymbolDetails &S) {
+   }
+   O << S.name << " - " << toJSON(S);
+   return O;
+ }
++*/
+
+ bool fromJSON(const llvm::json::Value &Params, WorkspaceSymbolParams &R,
+               llvm::json::Path P) {
+   llvm::json::ObjectMapper O(Params, P);
+@@ -1332,8 +1334,9 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &O,
+                               const TypeHierarchyItem &I) {
+   return O << I.name << " - " << toJSON(I);
+ }
+
++/*
+ llvm::json::Value toJSON(const TypeHierarchyItem::ResolveParams &RP) {
+   llvm::json::Object Result{{"symbolID", RP.symbolID}};
+   if (RP.parents)
+     Result["parents"] = RP.parents;
+@@ -1344,14 +1347,15 @@ bool fromJSON(const llvm::json::Value &Params,
+   llvm::json::ObjectMapper O(Params, P);
+   return O && O.map("symbolID", RP.symbolID) &&
+          mapOptOrNull(Params, "parents", RP.parents, P);
+ }
++*/
+
+ llvm::json::Value toJSON(const TypeHierarchyItem &I) {
+   llvm::json::Object Result{
+       {"name", I.name},   {"kind", static_cast<int>(I.kind)},
+       {"range", I.range}, {"selectionRange", I.selectionRange},
+-      {"uri", I.uri},     {"data", I.data},
++      {"uri", I.uri},
+   };
+
+   if (I.detail)
+     Result["detail"] = I.detail;
+@@ -1368,10 +1372,9 @@ bool fromJSON(const llvm::json::Value &Params, TypeHierarchyItem &I,
+          O.map("selectionRange", I.selectionRange) &&
+          mapOptOrNull(Params, "detail", I.detail, P) &&
+          mapOptOrNull(Params, "deprecated", I.deprecated, P) &&
+          mapOptOrNull(Params, "parents", I.parents, P) &&
+-         mapOptOrNull(Params, "children", I.children, P) &&
+-         mapOptOrNull(Params, "data", I.data, P);
++         mapOptOrNull(Params, "children", I.children, P);
+ }
+
+ bool fromJSON(const llvm::json::Value &Params,
+               ResolveTypeHierarchyItemParams &R, llvm::json::Path P) {
+@@ -1632,8 +1635,9 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ASTNode &Root) {
+   Print(Root, 0);
+   return OS;
+ }
+
++/*
+ bool fromJSON(const llvm::json::Value &E, SymbolID &S, llvm::json::Path P) {
+   auto Str = E.getAsString();
+   if (!Str) {
+     P.report("expected a string");
+@@ -1648,7 +1652,8 @@ bool fromJSON(const llvm::json::Value &E, SymbolID &S, llvm::json::Path P) {
+   S = *ID;
+   return true;
+ }
+ llvm::json::Value toJSON(const SymbolID &S) { return S.str(); }
++*/
+
+ } // namespace clangd
+ } // namespace clang
+diff --git a/clang-tools-extra/clangd/Protocol.h b/clang-tools-extra/clangd/Protocol.h
+index e88c80469..ea33c9327 100644
+--- a/clang-tools-extra/clangd/Protocol.h
++++ b/clang-tools-extra/clangd/Protocol.h
+@@ -23,11 +23,9 @@
+ #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANGD_PROTOCOL_H
+ #define LLVM_CLANG_TOOLS_EXTRA_CLANGD_PROTOCOL_H
+
+ #include "URI.h"
+-#include "index/SymbolID.h"
+ #include "support/MemoryTree.h"
+-#include "clang/Index/IndexSymbol.h"
+ #include "llvm/ADT/SmallVector.h"
+ #include "llvm/Support/JSON.h"
+ #include "llvm/Support/raw_ostream.h"
+ #include <bitset>
+@@ -76,10 +74,12 @@ public:
+     return llvm::inconvertibleErrorCode();
+   }
+ };
+
++/*
+ bool fromJSON(const llvm::json::Value &, SymbolID &, llvm::json::Path);
+ llvm::json::Value toJSON(const SymbolID &);
++*/
+
+ // URI in "file" scheme for a file.
+ struct URIForFile {
+   URIForFile() = default;
+@@ -416,9 +416,11 @@ SymbolKind adjustKindToCapability(SymbolKind Kind,
+ // Convert a index::SymbolKind to clangd::SymbolKind (LSP)
+ // Note, some are not perfect matches and should be improved when this LSP
+ // issue is addressed:
+ // https://github.com/Microsoft/language-server-protocol/issues/344
++/*
+ SymbolKind indexSymbolKindToSymbolKind(index::SymbolKind Kind);
++*/
+
+ // Determines the encoding used to measure offsets and lengths of source in LSP.
+ enum class OffsetEncoding {
+   // Any string is legal on the wire. Unrecognized encodings parse as this.
+@@ -1148,8 +1150,9 @@ struct SymbolInformation {
+ };
+ llvm::json::Value toJSON(const SymbolInformation &);
+ llvm::raw_ostream &operator<<(llvm::raw_ostream &, const SymbolInformation &);
+
++/*
+ /// Represents information about identifier.
+ /// This is returned from textDocument/symbolInfo, which is a clangd extension.
+ struct SymbolDetails {
+   std::string name;
+@@ -1171,8 +1174,9 @@ struct SymbolDetails {
+ };
+ llvm::json::Value toJSON(const SymbolDetails &);
+ llvm::raw_ostream &operator<<(llvm::raw_ostream &, const SymbolDetails &);
+ bool operator==(const SymbolDetails &, const SymbolDetails &);
++*/
+
+ /// The parameters of a Workspace Symbol Request.
+ struct WorkspaceSymbolParams {
+   /// A query string to filter symbols by.
+@@ -1503,8 +1507,9 @@ struct TypeHierarchyItem {
+   /// The range that should be selected and revealed when this symbol is being
+   /// picked, e.g. the name of a function. Must be contained by the `range`.
+   Range selectionRange;
+
++  /*
+   /// Used to resolve a client provided item back.
+   struct ResolveParams {
+     SymbolID symbolID;
+     /// std::nullopt means parents aren't resolved and empty is no parents.
+@@ -1514,8 +1519,9 @@ struct TypeHierarchyItem {
+   /// supertypes or subtypes requests. It could also be used to identify the
+   /// type hierarchy in the server, helping improve the performance on resolving
+   /// supertypes and subtypes.
+   ResolveParams data;
++  */
+
+   /// `true` if the hierarchy item is deprecated. Otherwise, `false`.
+   /// This is a clangd exntesion.
+   bool deprecated = false;
+@@ -1528,10 +1534,12 @@ struct TypeHierarchyItem {
+   /// descendants. If not defined, the children have not been resolved.
+   /// This is a clangd exntesion.
+   std::optional<std::vector<TypeHierarchyItem>> children;
+ };
++/*
+ llvm::json::Value toJSON(const TypeHierarchyItem::ResolveParams &);
+ bool fromJSON(const TypeHierarchyItem::ResolveParams &);
++*/
+ llvm::json::Value toJSON(const TypeHierarchyItem &);
+ llvm::raw_ostream &operator<<(llvm::raw_ostream &, const TypeHierarchyItem &);
+ bool fromJSON(const llvm::json::Value &, TypeHierarchyItem &, llvm::json::Path);
+
+diff --git a/clang-tools-extra/clangd/Transport.h b/clang-tools-extra/clangd/Transport.h
+index 4e80ea95b..f17441cfc 100644
+--- a/clang-tools-extra/clangd/Transport.h
++++ b/clang-tools-extra/clangd/Transport.h
+@@ -17,9 +17,8 @@
+
+ #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANGD_TRANSPORT_H
+ #define LLVM_CLANG_TOOLS_EXTRA_CLANGD_TRANSPORT_H
+
+-#include "Feature.h"
+ #include "llvm/ADT/StringRef.h"
+ #include "llvm/Support/JSON.h"
+ #include "llvm/Support/raw_ostream.h"
+
+--
+2.41.0

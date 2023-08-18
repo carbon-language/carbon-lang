@@ -7,8 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "third_party/clangd/Protocol.h"
-#include "third_party/clangd/Transport.h"
+#include "clang-tools-extra/clangd/Protocol.h"
+#include "clang-tools-extra/clangd/Transport.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/source/source_buffer.h"
