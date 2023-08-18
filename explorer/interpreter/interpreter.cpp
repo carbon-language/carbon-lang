@@ -183,16 +183,20 @@ class Interpreter {
                     std::optional<AllocationId> location_received)
       -> ErrorOr<Success>;
 
+  // Call the destructor method in `fun`, which can bind an immutable Self
+  // reference to `receiver`, or a mutable addr Self reference to `class_addr`.
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
-                      Nonnull<const Value*> receiver,
-                      const LocationValue* class_addr) -> ErrorOr<Success>;
+                      Nonnull<const NominalClassValue*> receiver,
+                      Nonnull<const LocationValue*> class_addr)
+      -> ErrorOr<Success>;
 
-  // If the given `method` has a self argument, bind it to `method_scope`.
+  // If the given method or destructor `decl` has a self argument, bind it to
+  // `receiver` if its immutable or `receiver_addr` if its a mutable addr.
   void BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
                          Nonnull<const Value*> receiver,
                          Nonnull<const Value*> receiver_addr,
-                         const SourceLocation& source_location,
-                         RuntimeScope& method_scope, BindingMap& generic_args);
+                         RuntimeScope& method_scope, BindingMap& generic_args,
+                         const SourceLocation& source_location);
 
   auto phase() const -> Phase { return phase_; }
 
@@ -922,8 +926,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
       // Bind the receiver to the `self` parameter, if there is one.
       if (const auto* method_val = dyn_cast<BoundMethodValue>(func_val)) {
         BindSelfIfPresent(&function, method_val->receiver(),
-                          method_val->receiver(), call.source_loc(),
-                          function_scope, generic_args);
+                          method_val->receiver(), function_scope, generic_args,
+                          call.source_loc());
       }
 
       CARBON_ASSIGN_OR_RETURN(
@@ -978,17 +982,16 @@ auto Interpreter::CallFunction(const CallExpression& call,
 }
 
 auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
-                                 Nonnull<const Value*> receiver,
-                                 const LocationValue* class_addr)
+                                 Nonnull<const NominalClassValue*> receiver,
+                                 Nonnull<const LocationValue*> class_addr)
     -> ErrorOr<Success> {
   const DestructorDeclaration& method = *fun;
   CARBON_CHECK(method.is_method());
 
   RuntimeScope method_scope(&heap_);
   BindingMap generic_args;
-  BindSelfIfPresent(fun, receiver, class_addr,
-                    SourceLocation::DiagnosticsIgnored(), method_scope,
-                    generic_args);
+  BindSelfIfPresent(fun, receiver, class_addr, method_scope, generic_args,
+                    SourceLocation::DiagnosticsIgnored());
 
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";
@@ -1001,9 +1004,9 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
 void Interpreter::BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
                                     Nonnull<const Value*> receiver,
                                     Nonnull<const Value*> receiver_addr,
-                                    const SourceLocation& source_location,
                                     RuntimeScope& method_scope,
-                                    BindingMap& generic_args) {
+                                    BindingMap& generic_args,
+                                    const SourceLocation& source_location) {
   CARBON_CHECK(decl->is_method());
   const auto* self_pattern = &decl->self_pattern().value();
   if (const auto* placeholder =
