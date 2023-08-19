@@ -35,8 +35,11 @@ class ExternalRepo(NamedTuple):
 # paths for that repository.
 EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     # llvm:include/llvm/Support/Error.h ->llvm/Support/Error.h
+    # clang-tools-extra/clangd:URI.h -> clang-tools-extra/clangd/URI.h
     "@llvm-project": ExternalRepo(
-        lambda x: re.sub("^(.*:(lib|include))/", "", x), "...", None
+        lambda x: re.sub(":", "/", re.sub("^(.*:(lib|include))/", "", x)),
+        "...",
+        None,
     ),
     # :src/google/protobuf/descriptor.h -> google/protobuf/descriptor.h
     # - protobuf_headers is specified because there are multiple overlapping
