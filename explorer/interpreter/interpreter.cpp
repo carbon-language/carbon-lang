@@ -191,9 +191,8 @@ class Interpreter {
   // If the given method or destructor `decl` has a self argument, bind it to
   // `receiver` if its immutable or `receiver_addr` if its a mutable addr.
   void BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
-                         Nonnull<const Value*> receiver,
-                         Nonnull<const Value*> receiver_addr,
-                         RuntimeScope& method_scope, BindingMap& generic_args,
+                         ExpressionResult receiver, RuntimeScope& method_scope,
+                         BindingMap& generic_args,
                          const SourceLocation& source_location);
 
   auto phase() const -> Phase { return phase_; }
@@ -923,9 +922,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
 
       // Bind the receiver to the `self` parameter, if there is one.
       if (const auto* method_val = dyn_cast<BoundMethodValue>(func_val)) {
-        BindSelfIfPresent(&function, method_val->receiver(),
-                          method_val->receiver(), function_scope, generic_args,
-                          call.source_loc());
+        BindSelfIfPresent(&function,
+                          ExpressionResult::Value(method_val->receiver()),
+                          function_scope, generic_args, call.source_loc());
       }
 
       CARBON_ASSIGN_OR_RETURN(
@@ -988,8 +987,9 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
 
   RuntimeScope method_scope(&heap_);
   BindingMap generic_args;
-  BindSelfIfPresent(fun, receiver, class_addr, method_scope, generic_args,
-                    SourceLocation::DiagnosticsIgnored());
+  BindSelfIfPresent(
+      fun, ExpressionResult::Reference(receiver, class_addr->address()),
+      method_scope, generic_args, SourceLocation::DiagnosticsIgnored());
 
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";
@@ -1000,8 +1000,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
 }
 
 void Interpreter::BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
-                                    Nonnull<const Value*> receiver,
-                                    Nonnull<const Value*> receiver_addr,
+                                    ExpressionResult receiver,
                                     RuntimeScope& method_scope,
                                     BindingMap& generic_args,
                                     const SourceLocation& source_location) {
@@ -1010,16 +1009,27 @@ void Interpreter::BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
   if (const auto* placeholder =
           dyn_cast<BindingPlaceholderValue>(self_pattern)) {
     // Immutable self with `[self: Self]`
-    // TODO: move this logic into PatternMatch
     if (placeholder->value_node().has_value()) {
-      method_scope.BindValue(*placeholder->value_node(), receiver);
+      bool success =
+          PatternMatch(placeholder, receiver, source_location, &method_scope,
+                       generic_args, trace_stream_, this->arena_);
+      CARBON_CHECK(success) << "Failed to bind self";
     }
   } else {
     // Mutable self with `[addr self: Self*]`
     CARBON_CHECK(isa<AddrValue>(self_pattern));
-    bool success = PatternMatch(
-        self_pattern, ExpressionResult::Value(receiver_addr), source_location,
-        &method_scope, generic_args, trace_stream_, this->arena_);
+    ExpressionResult v = receiver;
+    // See if we need to make a LocationValue from the address provided in the
+    // ExpressionResult
+    if (receiver.value()->kind() != Value::Kind::LocationValue) {
+      CARBON_CHECK(receiver.expression_category() ==
+                   ExpressionCategory::Reference);
+      CARBON_CHECK(receiver.address().has_value());
+      v = ExpressionResult::Value(
+          arena_->New<LocationValue>(receiver.address().value()));
+    }
+    bool success = PatternMatch(self_pattern, v, source_location, &method_scope,
+                                generic_args, trace_stream_, this->arena_);
     CARBON_CHECK(success) << "Failed to bind addr self";
   }
 }
