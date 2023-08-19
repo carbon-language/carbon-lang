@@ -112,6 +112,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `{}.(interface ImplicitAs(T = class T).Convert)` results: [`bound_method<Convert>`]  (phase_execution.carbon:10)
 // CHECK:STDOUT: ->> step ExpressionAction pos: 1 `{}.(interface ImplicitAs(T = class T).Convert)()` results: [`bound_method<Convert>`]  scope: [] (phase_execution.carbon:10) --->
 // CHECK:STDOUT: -() calling function: bound_method<Convert>
+// CHECK:STDOUT: === match pattern `Placeholder<self>`
+// CHECK:STDOUT:     from value expression with value `{}`
 // CHECK:STDOUT: === match pattern `()`
 // CHECK:STDOUT:     from value expression with value `()`
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [`self: Self`: `{}`] (None)

@@ -181,15 +181,13 @@ class Interpreter {
                     std::optional<AllocationId> location_received)
       -> ErrorOr<Success>;
 
-  // Call the destructor method in `fun`, which can bind an immutable Self
-  // reference to `receiver`, or a mutable addr Self reference to `class_addr`.
+  // Call the destructor method in `fun`, with any self argument bound to
+  // `receiver`.
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
-                      Nonnull<const NominalClassValue*> receiver,
-                      Nonnull<const LocationValue*> class_addr)
-      -> ErrorOr<Success>;
+                      ExpressionResult receiver) -> ErrorOr<Success>;
 
   // If the given method or destructor `decl` has a self argument, bind it to
-  // `receiver` if its immutable or `receiver_addr` if its a mutable addr.
+  // `receiver`.
   void BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
                          ExpressionResult receiver, RuntimeScope& method_scope,
                          BindingMap& generic_args,
@@ -979,17 +977,15 @@ auto Interpreter::CallFunction(const CallExpression& call,
 }
 
 auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
-                                 Nonnull<const NominalClassValue*> receiver,
-                                 Nonnull<const LocationValue*> class_addr)
+                                 ExpressionResult receiver)
     -> ErrorOr<Success> {
   const DestructorDeclaration& method = *fun;
   CARBON_CHECK(method.is_method());
 
   RuntimeScope method_scope(&heap_);
   BindingMap generic_args;
-  BindSelfIfPresent(
-      fun, ExpressionResult::Reference(receiver, class_addr->address()),
-      method_scope, generic_args, SourceLocation::DiagnosticsIgnored());
+  BindSelfIfPresent(fun, receiver, method_scope, generic_args,
+                    SourceLocation::DiagnosticsIgnored());
 
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";
@@ -2415,9 +2411,9 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         // Run the destructor, if there is one.
         if (auto destructor = class_decl.destructor()) {
-          const Address obj_addr = destroy_act.location()->address();
-          const auto* self_addr = arena_->New<LocationValue>(obj_addr);
-          return CallDestructor(*destructor, class_obj, self_addr);
+          return CallDestructor(
+              *destructor, ExpressionResult::Reference(
+                               class_obj, destroy_act.location()->address()));
         } else {
           return todo_.RunAgain();
         }
