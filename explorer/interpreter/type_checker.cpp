@@ -2937,9 +2937,37 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 access.set_expression_category(ExpressionCategory::Value);
                 break;
               }
-              case DeclarationKind::AliasDeclaration:
-                return ProgramError(access.source_loc())
-                       << "Member access to aliases is not yet supported.";
+              case DeclarationKind::AliasDeclaration: {
+                const auto* alias_decl = cast<AliasDeclaration>(member);
+                const auto& target = alias_decl->target();
+                if (target.kind() !=
+                    ExpressionKind::SimpleMemberAccessExpression) {
+                  return ProgramError(access.source_loc())
+                         << alias_decl->name() << " is not an "
+                         << "alias for a supported expression.";
+                }
+                const auto& alias_access =
+                    cast<SimpleMemberAccessExpression>(target);
+                CARBON_CHECK(alias_access.object().static_type().kind() ==
+                             Value::Kind::TypeType);
+                CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                                        InterpExp(&alias_access.object()));
+                CARBON_RETURN_IF_ERROR(ExpectCompleteType(
+                    alias_access.source_loc(), "alias member access", type));
+                if (type->kind() != Value::Kind::InterfaceType) {
+                  return ProgramError(alias_access.source_loc()) << "WRITEME";
+                }
+                CARBON_ASSIGN_OR_RETURN(
+                    ConstraintLookupResult result,
+                    LookupInConstraint(e->source_loc(), "alias member access",
+                                       type, alias_access.member_name()));
+                access.set_member(arena_->New<NamedElement>(result.member));
+                access.set_found_in_interface(result.interface);
+                access.set_static_type(
+                    arena_->New<TypeOfMemberName>(&access.member()));
+                access.set_expression_category(ExpressionCategory::Value);
+                return Success();
+              }
               default:
                 CARBON_FATAL() << "member " << access.member_name()
                                << " is not a field or method";
