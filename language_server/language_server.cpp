@@ -22,41 +22,57 @@ auto ParseJSON(const llvm::json::Value& untyped, T& parsed) -> bool {
 }
 }  // namespace
 
+void LanguageServer::OnDidOpenTextDocument(
+    clang::clangd::DidOpenTextDocumentParams const& params) {
+  files_.emplace(params.textDocument.uri.file(), params.textDocument.text);
+}
+
+void LanguageServer::OnDidChangeTextDocument(
+    clang::clangd::DidChangeTextDocumentParams const& params) {
+  // full text is sent if full sync is specified in capabilities.
+  assert(params.contentChanges.size() == 1);
+  std::string file = params.textDocument.uri.file().str();
+  files_[file] = params.contentChanges[0].text;
+}
+
+void LanguageServer::OnInitialize(
+    clang::clangd::NoParams const& client_capabilities,
+    clang::clangd::Callback<llvm::json::Object> cb) {
+  llvm::json::Object capabilities{{"documentSymbolProvider", true},
+                                  {"textDocumentSync", /*Full=*/1}};
+
+  llvm::json::Object reply{{"capabilities", std::move(capabilities)}};
+  cb(reply);
+};
+
 auto LanguageServer::onNotify(llvm::StringRef method, llvm::json::Value value)
     -> bool {
-  if (method == "textDocument/didOpen") {
-    clang::clangd::DidOpenTextDocumentParams params;
-    if (!ParseJSON(value, params)) {
-      return false;
-    }
-    files_.emplace(params.textDocument.uri.file(), params.textDocument.text);
-  } else if (method == "textDocument/didChange") {
-    clang::clangd::DidChangeTextDocumentParams params;
-    if (!ParseJSON(value, params)) {
-      return false;
-    }
-    // full text is sent if full sync is specified in capabilities.
-    assert(params.contentChanges.size() == 1);
-    std::string file = params.textDocument.uri.file().str();
-    files_[file] = params.contentChanges[0].text;
+  if (method == "exit") {
+    return false;
   }
+  if (auto handler = handlers_.NotificationHandlers.find(method);
+      handler != handlers_.NotificationHandlers.end()) {
+    handler->second(std::move(value));
+  } else {
+    clang::clangd::log("unhandled notification {0}", method);
+  }
+
   return true;
 }
 
 auto LanguageServer::onCall(llvm::StringRef method, llvm::json::Value params,
                             llvm::json::Value id) -> bool {
-  if (method == "initialize") {
-    llvm::json::Object capabilities{{"documentSymbolProvider", true},
-                                    {"textDocumentSync", /*Full=*/1}};
+  if (auto handler = handlers_.MethodHandlers.find(method);
+      handler != handlers_.MethodHandlers.end()) {
+    // TODO: improve this if add threads
+    handler->second(std::move(params),
+                    [&](llvm::Expected<llvm::json::Value> reply) {
+                      transport_->reply(id, std::move(reply));
+                    });
+  } else {
     transport_->reply(
-        id, llvm::json::Object{{"capabilities", std::move(capabilities)}});
-  } else if (method == "textDocument/documentSymbol") {
-    clang::clangd::DocumentSymbolParams symbol_params;
-    if (!ParseJSON(params, symbol_params)) {
-      return false;
-    }
-    auto symbols = Symbols(symbol_params);
-    transport_->reply(id, symbols);
+        id, llvm::make_error<clang::clangd::LSPError>(
+                "method not found", clang::clangd::ErrorCode::MethodNotFound));
   }
 
   return true;
@@ -78,8 +94,9 @@ static auto getName(ParseTree& p, ParseTree::Node node)
   return std::nullopt;
 }
 
-auto LanguageServer::Symbols(clang::clangd::DocumentSymbolParams const& params)
-    -> std::vector<clang::clangd::DocumentSymbol> {
+void LanguageServer::OnDocumentSymbol(
+    clang::clangd::DocumentSymbolParams const& params,
+    clang::clangd::Callback<std::vector<clang::clangd::DocumentSymbol>> cb) {
   llvm::vfs::InMemoryFileSystem vfs;
   auto file = params.textDocument.uri.file().str();
   vfs.addFile(file, /*mtime=*/0,
@@ -117,13 +134,21 @@ auto LanguageServer::Symbols(clang::clangd::DocumentSymbolParams const& params)
       result.push_back(symbol);
     }
   }
-  return result;
+  cb(result);
 }
 
 void LanguageServer::Start() {
   auto transport =
       clang::clangd::newJSONTransport(stdin, llvm::outs(), nullptr, true);
   LanguageServer ls(std::move(transport));
+  clang::clangd::LSPBinder binder(ls.handlers_, ls);
+  binder.notification("textDocument/didOpen", &ls,
+                      &LanguageServer::OnDidOpenTextDocument);
+  binder.notification("textDocument/didChange", &ls,
+                      &LanguageServer::OnDidChangeTextDocument);
+  binder.method("initialize", &ls, &LanguageServer::OnInitialize);
+  binder.method("textDocument/documentSymbol", &ls,
+                &LanguageServer::OnDocumentSymbol);
   auto error = ls.transport_->loop(ls);
   llvm::errs() << "Error: " << error << "\n";
 }

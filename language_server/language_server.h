@@ -7,19 +7,22 @@
 #include <unordered_map>
 #include <vector>
 
+#include "clang-tools-extra/clangd/LSPBinder.h"
 #include "clang-tools-extra/clangd/Protocol.h"
 #include "clang-tools-extra/clangd/Transport.h"
+#include "clang-tools-extra/clangd/support/Function.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::LS {
-class LanguageServer : public clang::clangd::Transport::MessageHandler {
+class LanguageServer : public clang::clangd::Transport::MessageHandler,
+                       public clang::clangd::LSPBinder::RawOutgoing {
  public:
   static void Start();
   explicit LanguageServer(std::unique_ptr<clang::clangd::Transport> transport)
       : transport_(std::move(transport)) {}
-
+  // Transport::MessageHandler
   // Handlers returns true to keep processing messages, or false to shut down.
   // Handler called on notification by client.
   auto onNotify(llvm::StringRef method, llvm::json::Value value)
@@ -31,13 +34,34 @@ class LanguageServer : public clang::clangd::Transport::MessageHandler {
   auto onReply(llvm::json::Value id, llvm::Expected<llvm::json::Value> result)
       -> bool override;
 
+  // LSPBinder::RawOutgoing
+  // Send method call to client
+  void callMethod(llvm::StringRef Method, llvm::json::Value Params,
+                  clang::clangd::Callback<llvm::json::Value> Reply) override {
+    // TODO: implement when needed
+  }
+
+  // Send notification to client
+  void notify(llvm::StringRef method, llvm::json::Value params) override {
+    transport_->notify(method, params);
+  }
+
  private:
   const std::unique_ptr<clang::clangd::Transport> transport_;
   // content of files managed by the language client.
   std::unordered_map<std::string, std::string> files_;
+  // handlers for client methods and notifications
+  clang::clangd::LSPBinder::RawHandlers handlers_;
 
-  auto Symbols(clang::clangd::DocumentSymbolParams const& params)
-      -> std::vector<clang::clangd::DocumentSymbol>;
+  void OnDidOpenTextDocument(
+      clang::clangd::DidOpenTextDocumentParams const& params);
+  void OnDidChangeTextDocument(
+      clang::clangd::DidChangeTextDocumentParams const& params);
+  void OnInitialize(clang::clangd::NoParams const& client_capabilities,
+                    clang::clangd::Callback<llvm::json::Object> cb);
+  void OnDocumentSymbol(
+      clang::clangd::DocumentSymbolParams const& params,
+      clang::clangd::Callback<std::vector<clang::clangd::DocumentSymbol>> cb);
 };
 
 }  // namespace Carbon::LS

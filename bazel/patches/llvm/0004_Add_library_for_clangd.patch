@@ -16,7 +16,7 @@ new file mode 100644
 index 000000000..9f3f93f24
 --- /dev/null
 +++ b/clang-tools-extra/clangd/BUILD.bazel
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,36 @@
 +package(default_visibility = ["//visibility:public"])
 +
 +cc_library(
@@ -37,6 +37,7 @@ index 000000000..9f3f93f24
 +        "Transport.h",
 +        "Protocol.h",
 +        "URI.h",
++        "LSPBinder.h",
 +        "support/Function.h",
 +        "support/Cancellation.h",
 +        "support/ThreadCrashReporter.h",
