@@ -35,7 +35,6 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
         *trace_stream << sep << *declaration;
       }
     }
-    set_file_ctx.update_source_loc(std::nullopt);
     if(trace_stream->is_enabled()) {
       *trace_stream << "\n";
     }
@@ -83,7 +82,6 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
         *trace_stream << sep << *declaration;
       }
     }
-    set_file_ctx.update_source_loc(std::nullopt);
     if(trace_stream->is_enabled()) {
       *trace_stream << "\n";
     }
