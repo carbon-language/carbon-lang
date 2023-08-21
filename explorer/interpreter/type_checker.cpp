@@ -2964,9 +2964,9 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 access.set_member(arena_->New<NamedElement>(result.member));
                 access.set_found_in_interface(result.interface);
                 access.set_static_type(
-                    arena_->New<TypeOfMemberName>(&access.member()));
+                    arena_->New<TypeOfMemberName>(&alias_access.member()));
                 access.set_expression_category(ExpressionCategory::Value);
-                return Success();
+                break;
               }
               default:
                 CARBON_FATAL() << "member " << access.member_name()
@@ -3706,6 +3706,16 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                   ChoiceDeclaration>(param_name.declaration()))
               << "unknown type of ParameterizedEntityName for " << param_name;
           call.set_static_type(arena_->New<TypeType>());
+          call.set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case Value::Kind::TypeOfMemberName: {
+          // I need to do something here to connect the call to the interface
+          // method.
+          const auto& member_name =
+              cast<TypeOfMemberName>(call.function().static_type()).member();
+          call.set_static_type(
+              arena_->New<TypeOfMemberName>(&member_name_t.member()));
           call.set_expression_category(ExpressionCategory::Value);
           return Success();
         }
