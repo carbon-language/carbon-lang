@@ -218,15 +218,6 @@ class SemanticsIR {
     return strings_[string_id.index];
   }
 
-  // Returns an ID for the string if it's previously been stored.
-  auto GetStringID(llvm::StringRef str) -> std::optional<SemanticsStringId> {
-    auto str_find = string_to_id_.find(str);
-    if (str_find != string_to_id_.end()) {
-      return str_find->second;
-    }
-    return std::nullopt;
-  }
-
   // Adds a type, returning an ID to reference it.
   auto AddType(SemanticsNodeId node_id) -> SemanticsTypeId {
     SemanticsTypeId type_id(types_.size());
