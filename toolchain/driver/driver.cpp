@@ -449,6 +449,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     }
   }
   if (options.dump_semantics_ir) {
+    consumer->Flush();
     FormatSemanticsIR(tokenized_source, parse_tree, semantics_ir,
                       output_stream_);
   }
