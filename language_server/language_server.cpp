@@ -84,6 +84,7 @@ auto LanguageServer::onReply(llvm::json::Value /*id*/,
   return true;
 }
 
+// Returns the text of first child of kind ParseNodeKind::Name.
 static auto getName(ParseTree& p, ParseTree::Node node)
     -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
