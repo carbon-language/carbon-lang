@@ -200,16 +200,17 @@ class SemanticsIR {
 
   // Adds an string, returning an ID to reference it.
   auto AddString(llvm::StringRef str) -> SemanticsStringId {
-    // If the string has already been stored, return the corresponding ID.
-    if (auto existing_id = GetStringID(str)) {
-      return *existing_id;
+    // Look up the string, or add it if it's new.
+    SemanticsStringId next_id(strings_.size());
+    auto [it, added] = string_to_id_.insert({str, next_id});
+
+    if (added) {
+      // Update the reverse mapping from IDs to strings.
+      CARBON_CHECK(it->second == next_id);
+      strings_.push_back(it->first());
     }
 
-    // Allocate the string and store it in the map.
-    SemanticsStringId id(strings_.size());
-    strings_.push_back(str);
-    CARBON_CHECK(string_to_id_.insert({str, id}).second);
-    return id;
+    return it->second;
   }
 
   // Returns the requested string.
