@@ -108,13 +108,21 @@ void LanguageServer::OnDocumentSymbol(
   auto parsed = ParseTree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;
   for (const auto& node : parsed.postorder()) {
+    clang::clangd::SymbolKind symbol_kind;
     switch (parsed.node_kind(node)) {
       case ParseNodeKind::FunctionDeclaration:
       case ParseNodeKind::FunctionDefinitionStart:
+        symbol_kind = clang::clangd::SymbolKind::Function;
+        break;
       case ParseNodeKind::Namespace:
+        symbol_kind = clang::clangd::SymbolKind::Namespace;
+        break;
       case ParseNodeKind::InterfaceDefinitionStart:
       case ParseNodeKind::NamedConstraintDefinitionStart:
+        symbol_kind = clang::clangd::SymbolKind::Interface;
+        break;
       case ParseNodeKind::ClassDefinitionStart:
+        symbol_kind = clang::clangd::SymbolKind::Class;
         break;
       default:
         continue;
@@ -127,7 +135,7 @@ void LanguageServer::OnDocumentSymbol(
 
       clang::clangd::DocumentSymbol symbol{
           .name = std::string(*name),
-          .kind = clang::clangd::SymbolKind::Function,
+          .kind = symbol_kind,
           .range = {.start = pos, .end = pos},
           .selectionRange = {.start = pos, .end = pos},
       };
