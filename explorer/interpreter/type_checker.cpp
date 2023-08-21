@@ -3714,8 +3714,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           // method.
           const auto& member_name =
               cast<TypeOfMemberName>(call.function().static_type()).member();
-          call.set_static_type(
-              arena_->New<TypeOfMemberName>(&member_name_t.member()));
+          call.set_static_type(arena_->New<TypeOfMemberName>(&member_name));
           call.set_expression_category(ExpressionCategory::Value);
           return Success();
         }
