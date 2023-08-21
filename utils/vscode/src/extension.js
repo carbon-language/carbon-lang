@@ -17,14 +17,15 @@ function activate(context) {
     documentSelector: [{ scheme: 'file', language: 'carbon' }],
   };
 
-  let disposable = new LanguageClient(
+  const client = new LanguageClient(
     'languageServer',
     'Language Server for Carbon',
     serverOptions,
     clientOptions
-  ).start();
+  );
 
-  context.subscriptions.push(disposable);
+  // stop client on shutdown
+  context.subscriptions.push(client.start());
 }
 
 function deactivate() {}
