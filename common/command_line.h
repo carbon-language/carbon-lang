@@ -472,7 +472,7 @@ class OneOfArgBuilder : public ArgBuilder {
   // optional, and also will cause that value to be stored into the result
   // even if the argument is not parsed explicitly.
   template <typename T, typename U, size_t N>
-  void SetOneOf(const OneOfValueT<U> (&values)[N], T* result);
+  void SetOneOf(const std::array<OneOfValueT<U>, N> &values, T* result);
 
   // Configures the argument to append a parsed value to the provided
   // container. Each time the argument is parsed, a new value will be
@@ -500,14 +500,14 @@ class OneOfArgBuilder : public ArgBuilder {
   // However, appending one-of arguments cannot use a default. The values must
   // always be explicitly parsed.
   template <typename T, typename U, size_t N>
-  void AppendOneOf(const OneOfValueT<U> (&values)[N],
+  void AppendOneOf(const std::array<OneOfValueT<U>, N> &values,
                    llvm::SmallVectorImpl<T>* sequence);
 
  private:
   using ArgBuilder::ArgBuilder;
 
   template <typename U, size_t N, typename MatchT, size_t... Indices>
-  void OneOfImpl(const OneOfValueT<U> (&input_values)[N], MatchT match,
+  void OneOfImpl(const std::array<OneOfValueT<U>, N> &input_values, MatchT match,
                  std::index_sequence<Indices...> /*indices*/);
 };
 
@@ -765,7 +765,7 @@ auto OneOfArgBuilder::OneOfValue(llvm::StringRef str, T value)
 }
 
 template <typename T, typename U, size_t N>
-void OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N], T* result) {
+void OneOfArgBuilder::SetOneOf(const std::array<OneOfValueT<U>, N> &values, T* result) {
   static_assert(N > 0, "Must include at least one value.");
   arg_.is_append = false;
   OneOfImpl(
@@ -774,7 +774,7 @@ void OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N], T* result) {
 }
 
 template <typename T, typename U, size_t N>
-void OneOfArgBuilder::AppendOneOf(const OneOfValueT<U> (&values)[N],
+void OneOfArgBuilder::AppendOneOf(const std::array<OneOfValueT<U>, N> &values,
                                   llvm::SmallVectorImpl<T>* sequence) {
   static_assert(N > 0, "Must include at least one value.");
   arg_.is_append = true;
@@ -795,7 +795,7 @@ void OneOfArgBuilder::AppendOneOf(const OneOfValueT<U> (&values)[N],
 // lambdas that do the type-aware operations and storing those into type-erased
 // function objects.
 template <typename U, size_t N, typename MatchT, size_t... Indices>
-void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
+void OneOfArgBuilder::OneOfImpl(const std::array<OneOfValueT<U>, N> &input_values,
                                 MatchT match,
                                 std::index_sequence<Indices...> /*indices*/) {
   std::array<llvm::StringRef, N> value_strings = {input_values[Indices].str...};
