@@ -15,9 +15,12 @@ fn Main() -> i32 {
 // ARGS: --trace_file=- --trace_phase=declarations %s
 // AUTOUPDATE
 
+// CHECK:STDOUT: * * * * * * * * * *  printing declarations  * * * * * * * * * *
+// CHECK:STDOUT: ---------------------------------------------------------------
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
-// CHECK:STDOUT: }result: 0
+// CHECK:STDOUT: }
+// CHECK:STDOUT: result: 0

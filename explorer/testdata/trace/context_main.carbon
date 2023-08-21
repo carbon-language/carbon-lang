@@ -24,6 +24,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT:
 // CHECK:STDOUT: * * * * * * * * * *  resolving names  * * * * * * * * * *
 // CHECK:STDOUT: ---------------------------------------------------------
 // CHECK:STDOUT: ==> declared `TestInterface` as `interface TestInterface` in `package` (context_main.carbon:7)
@@ -223,12 +224,17 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> resolving-unformed in decl `fn Main` (context_main.carbon:11)
 // CHECK:STDOUT: ->> resolving-unformed in stmt `{return 0;}` (context_main.carbon:11)
 // CHECK:STDOUT: ->> resolving-unformed in stmt `return 0;` (context_main.carbon:10)
+// CHECK:STDOUT:
+// CHECK:STDOUT:
+// CHECK:STDOUT: * * * * * * * * * *  printing declarations  * * * * * * * * * *
+// CHECK:STDOUT: ---------------------------------------------------------------
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT:
 // CHECK:STDOUT: * * * * * * * * * *  starting execution  * * * * * * * * * *
 // CHECK:STDOUT: ------------------------------------------------------------

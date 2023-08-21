@@ -22,4 +22,5 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn Main () -> i32 {
 // CHECK:STDOUT:   return 0;
-// CHECK:STDOUT: }result: 0
+// CHECK:STDOUT: }
+// CHECK:STDOUT: result: 0

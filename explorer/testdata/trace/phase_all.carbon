@@ -38,6 +38,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT:
 // CHECK:STDOUT: * * * * * * * * * *  resolving names  * * * * * * * * * *
 // CHECK:STDOUT: ---------------------------------------------------------
 // CHECK:STDOUT: ==> declared `TestInterface` as `interface TestInterface` in `package` (phase_all.carbon:7)
@@ -413,6 +414,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ==> add init `x` (phase_all.carbon:16)
 // CHECK:STDOUT: ->> resolving-unformed in stmt `return x;` (phase_all.carbon:17)
 // CHECK:STDOUT: ==> check `x` (phase_all.carbon:17)
+// CHECK:STDOUT:
+// CHECK:STDOUT:
+// CHECK:STDOUT: * * * * * * * * * *  printing declarations  * * * * * * * * * *
+// CHECK:STDOUT: ---------------------------------------------------------------
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -426,6 +431,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   var x: i32 = N.Foo(0);
 // CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT:
 // CHECK:STDOUT: * * * * * * * * * *  starting execution  * * * * * * * * * *
 // CHECK:STDOUT: ------------------------------------------------------------
