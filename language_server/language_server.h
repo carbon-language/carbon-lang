@@ -24,6 +24,7 @@ class LanguageServer : public clang::clangd::Transport::MessageHandler,
 
   // Transport::MessageHandler
   // Handlers returns true to keep processing messages, or false to shut down.
+
   // Handler called on notification by client.
   auto onNotify(llvm::StringRef method, llvm::json::Value value)
       -> bool override;
@@ -35,6 +36,7 @@ class LanguageServer : public clang::clangd::Transport::MessageHandler,
       -> bool override;
 
   // LSPBinder::RawOutgoing
+
   // Send method call to client
   void callMethod(llvm::StringRef Method, llvm::json::Value Params,
                   clang::clangd::Callback<llvm::json::Value> Reply) override {
@@ -56,13 +58,21 @@ class LanguageServer : public clang::clangd::Transport::MessageHandler,
   explicit LanguageServer(std::unique_ptr<clang::clangd::Transport> transport)
       : transport_(std::move(transport)) {}
 
-  // handlers
+  // Typed handlers for notifications and method calls by client.
+
+  // Client opened a document.
   void OnDidOpenTextDocument(
       clang::clangd::DidOpenTextDocumentParams const& params);
+
+  // Client updated content of a document.
   void OnDidChangeTextDocument(
       clang::clangd::DidChangeTextDocumentParams const& params);
+
+  // Capabilities negotiation
   void OnInitialize(clang::clangd::NoParams const& client_capabilities,
                     clang::clangd::Callback<llvm::json::Object> cb);
+
+  // Code outline
   void OnDocumentSymbol(
       clang::clangd::DocumentSymbolParams const& params,
       clang::clangd::Callback<std::vector<clang::clangd::DocumentSymbol>> cb);
