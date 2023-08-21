@@ -54,8 +54,12 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
     if (refs_id == SemanticsNodeBlockId::Empty) {
       refs_id = context.semantics_ir().AddNodeBlock();
     }
-    context.semantics_ir().GetNodeBlock(refs_id).push_back(
-        SemanticsNodeId::Invalid);
+    // Tentatively put a materialized temporary in the function's return slot.
+    // This will be replaced if necessary when we perform initialization.
+    auto return_slot_id =
+        context.AddNode(SemanticsNode::MaterializeTemporary::Make(
+            call_expr_parse_node, callable.return_type_id));
+    context.semantics_ir().GetNodeBlock(refs_id).push_back(return_slot_id);
   }
   auto call_node_id = context.AddNode(SemanticsNode::Call::Make(
       call_expr_parse_node, type_id, refs_id, function_id));

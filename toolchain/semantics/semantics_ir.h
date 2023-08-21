@@ -161,6 +161,11 @@ class SemanticsIR {
     return node_id;
   }
 
+  // Overwrites a given node with a new value.
+  auto ReplaceNode(SemanticsNodeId node_id, SemanticsNode node) -> void {
+    nodes_[node_id.index] = node;
+  }
+
   // Returns the requested node.
   auto GetNode(SemanticsNodeId node_id) const -> SemanticsNode {
     return nodes_[node_id.index];

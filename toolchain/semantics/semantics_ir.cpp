@@ -237,6 +237,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::Invalid:
     case SemanticsNodeKind::MaterializeTemporary:
     case SemanticsNodeKind::Namespace:
+    case SemanticsNodeKind::NoOp:
     case SemanticsNodeKind::RealLiteral:
     case SemanticsNodeKind::Return:
     case SemanticsNodeKind::ReturnExpression:
@@ -383,6 +384,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::IntegerLiteral:
       case SemanticsNodeKind::MaterializeTemporary:
       case SemanticsNodeKind::Namespace:
+      case SemanticsNodeKind::NoOp:
       case SemanticsNodeKind::RealLiteral:
       case SemanticsNodeKind::Return:
       case SemanticsNodeKind::ReturnExpression:
@@ -433,6 +435,7 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::BranchWithArg:
       case SemanticsNodeKind::FunctionDeclaration:
       case SemanticsNodeKind::Namespace:
+      case SemanticsNodeKind::NoOp:
       case SemanticsNodeKind::Return:
       case SemanticsNodeKind::ReturnExpression:
       case SemanticsNodeKind::StructTypeField:

@@ -268,9 +268,15 @@ auto SemanticsContext::is_current_position_reachable() -> bool {
   }
 }
 
-auto SemanticsContext::ConvertToInitializingExpression(
-    SemanticsNodeId expr_id, SemanticsNodeId target_id) -> SemanticsNodeId {
+auto SemanticsContext::Initialize(ParseTree::Node parse_node,
+                                  SemanticsNodeId target_id,
+                                  SemanticsNodeId value_id) -> SemanticsNodeId {
+  // Implicitly convert the value to the type of the target.
+  auto type_id = semantics_ir().GetNode(target_id).type_id();
+  auto expr_id = ImplicitAsRequired(parse_node, value_id, type_id);
   SemanticsNode expr = semantics_ir().GetNode(expr_id);
+
+  // Perform initialization now that we have an expression of the right type.
   switch (GetSemanticsExpressionCategory(semantics_ir(), expr_id)) {
     case SemanticsExpressionCategory::NotExpression:
       CARBON_FATAL() << "Converting non-expression node " << expr
@@ -299,21 +305,6 @@ auto SemanticsContext::ConvertToInitializingExpression(
   }
 }
 
-auto SemanticsContext::MaterializeTemporary(SemanticsNodeId init_id)
-    -> SemanticsNodeId {
-  SemanticsNode init = semantics_ir().GetNode(init_id);
-  CARBON_CHECK(GetSemanticsExpressionCategory(semantics_ir(), init_id) ==
-               SemanticsExpressionCategory::Initializing)
-      << "can only materialize initializing initessions, found " << init;
-
-  auto temporary_id = AddNode(SemanticsNode::MaterializeTemporary::Make(
-      init.parse_node(), init.type_id(), init_id));
-  // TODO: The temporary materialization appears later in the IR than the
-  // initession that initializes it.
-  MarkInitializerFor(init_id, temporary_id);
-  return temporary_id;
-}
-
 auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
     -> SemanticsNodeId {
   switch (GetSemanticsExpressionCategory(semantics_ir(), expr_id)) {
@@ -323,9 +314,8 @@ auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
                      << " to value expression";
 
     case SemanticsExpressionCategory::Initializing: {
-      // TODO: For class types, use an interface to determine how to perform
-      // this operation.
-      expr_id = MaterializeTemporary(expr_id);
+      // Commit to using a temporary for this initializing expression.
+      expr_id = FinalizeTemporary(expr_id, /*discarded=*/false);
       [[fallthrough]];
     }
 
@@ -339,6 +329,64 @@ auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
 
     case SemanticsExpressionCategory::Value:
       return expr_id;
+  }
+}
+
+auto SemanticsContext::FinalizeTemporary(SemanticsNodeId init_id,
+                                         bool discarded) -> SemanticsNodeId {
+  // TODO: See if we can refactor this with MarkInitializerFor once recursion
+  // through struct and tuple values is properly handled.
+  while (true) {
+    SemanticsNode init = semantics_ir().GetNode(init_id);
+    CARBON_CHECK(GetSemanticsExpressionCategory(semantics_ir(), init_id) ==
+                 SemanticsExpressionCategory::Initializing)
+        << "Can only materialize initializing expressions, found " << init;
+    switch (init.kind()) {
+      default:
+        CARBON_FATAL() << "Initialization from unexpected node " << init;
+
+      case SemanticsNodeKind::StructValue:
+      case SemanticsNodeKind::TupleValue:
+        CARBON_FATAL() << init << " is not modeled as initializing yet";
+
+      case SemanticsNodeKind::StubReference: {
+        init_id = init.GetAsStubReference();
+        continue;
+      }
+
+      case SemanticsNodeKind::Call: {
+        auto [refs_id, callee_id] = init.GetAsCall();
+        if (!semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
+          if (discarded) {
+            // Don't invent a temporary that we're going to discard.
+            return SemanticsNodeId::Invalid;
+          }
+
+          // The function has no return slot, which means it represents an
+          // empty tuple. Materialize one now.
+          auto temporary_id = AddNode(SemanticsNode::MaterializeTemporary::Make(
+              init.parse_node(), CanonicalizeTupleType(init.parse_node(), {})));
+          // TODO: Do we need to create an empty TupleValue and Assign it to the
+          // temporary?
+          return temporary_id;
+        }
+
+        // The return slot should have a materialized temporary in it. Assign
+        // the initializer to it and return its address.
+        auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
+        auto temporary = semantics_ir().GetNode(temporary_id);
+        CARBON_CHECK(temporary.kind() ==
+                     SemanticsNodeKind::MaterializeTemporary)
+            << "Return slot for function call does not contain a temporary; "
+            << "initialized multiple times? Have " << temporary;
+        AddNode(SemanticsNode::Assign::Make(temporary.parse_node(),
+                                            temporary_id, init_id));
+        return temporary_id;
+      }
+
+      case SemanticsNodeKind::InitializeFrom:
+        CARBON_FATAL() << init << " should be created with a destination";
+    }
   }
 }
 
@@ -364,15 +412,19 @@ auto SemanticsContext::MarkInitializerFor(SemanticsNodeId init_id,
 
       case SemanticsNodeKind::Call: {
         // If the callee has a return slot, point it at our target.
-        // TODO: Consider treating calls to functions without a return slot as
-        // value expressions, to avoid materializing unused temporaries.
         auto [refs_id, callee_id] = init.GetAsCall();
         if (semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
-          auto& refs = semantics_ir().GetNodeBlock(refs_id);
-          CARBON_CHECK(!refs.back().is_valid())
-              << "return slot for function call set multiple times, have "
-              << init << ", new return slot is " << target_id;
-          refs.back() = target_id;
+          // Replace the return slot with our given target, and remove the
+          // tentatively-created temporary.
+          auto temporary_id = std::exchange(
+              semantics_ir().GetNodeBlock(refs_id).back(), target_id);
+          auto temporary = semantics_ir().GetNode(temporary_id);
+          CARBON_CHECK(temporary.kind() ==
+                       SemanticsNodeKind::MaterializeTemporary)
+              << "Return slot for function call does not contain a temporary; "
+              << "initialized multiple times? Have " << temporary;
+          semantics_ir().ReplaceNode(
+              temporary_id, SemanticsNode::NoOp::Make(temporary.parse_node()));
         }
         return;
       }
@@ -386,7 +438,10 @@ auto SemanticsContext::MarkInitializerFor(SemanticsNodeId init_id,
 auto SemanticsContext::HandleDiscardedExpression(SemanticsNodeId expr_id)
     -> void {
   // If we discard an initializing expression, materialize it first.
-  expr_id = MaterializeIfInitializing(expr_id);
+  if (GetSemanticsExpressionCategory(semantics_ir(), expr_id) ==
+      SemanticsExpressionCategory::Initializing) {
+    FinalizeTemporary(expr_id, /*discarded=*/true);
+  }
 
   // TODO: This will eventually need to do some "do not discard" analysis.
   (void)expr_id;

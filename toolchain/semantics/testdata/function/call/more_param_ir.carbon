@@ -65,7 +65,6 @@ fn Main() {
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+19, type: type0},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: function0, type: type1},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+22, type: type1},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -107,7 +106,6 @@ fn Main() {
 // CHECK:STDOUT:     node+21,
 // CHECK:STDOUT:     node+22,
 // CHECK:STDOUT:     node+23,
-// CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+14,
@@ -142,6 +140,5 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_25.2: i32 = stub_reference %.loc11_25.1
 // CHECK:STDOUT:   %.loc11_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc11_6.2: () = call @Foo(%.loc11_13.2, %.loc11_20.2, %.loc11_25.2)
-// CHECK:STDOUT:   %.loc11_6.3: () = materialize_temporary %.loc11_6.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

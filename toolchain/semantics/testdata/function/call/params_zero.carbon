@@ -36,7 +36,6 @@ fn Main() {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+4, type: type0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -53,7 +52,6 @@ fn Main() {
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -71,6 +69,5 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc10_6.2: () = call @Foo()
-// CHECK:STDOUT:   %.loc10_6.3: () = materialize_temporary %.loc10_6.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -110,19 +110,12 @@ class SemanticsContext {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Convert the given expression to an initializing expression of the same
-  // type. `target_id` is a reference expression describing the object that is
-  // initialized.
-  auto ConvertToInitializingExpression(SemanticsNodeId expr_id,
-                                       SemanticsNodeId target_id)
-      -> SemanticsNodeId;
-
   // Converts the given expression to an ephemeral reference to a temporary if
   // it is an initializing expression.
   auto MaterializeIfInitializing(SemanticsNodeId expr_id) -> SemanticsNodeId {
     if (GetSemanticsExpressionCategory(semantics_ir(), expr_id) ==
         SemanticsExpressionCategory::Initializing) {
-      return MaterializeTemporary(expr_id);
+      return FinalizeTemporary(expr_id, /*discarded=*/false);
     }
     return expr_id;
   }
@@ -133,11 +126,7 @@ class SemanticsContext {
   // Performs initialization of `target_id` from `value_id`. Returns the
   // converted initializer value.
   auto Initialize(ParseTree::Node parse_node, SemanticsNodeId target_id,
-                  SemanticsNodeId value_id) -> SemanticsNodeId {
-    auto type_id = semantics_ir().GetNode(target_id).type_id();
-    return ConvertToInitializingExpression(
-        ImplicitAsRequired(parse_node, value_id, type_id), target_id);
-  }
+                  SemanticsNodeId value_id) -> SemanticsNodeId;
 
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(ParseTree::Node parse_node,
@@ -302,9 +291,13 @@ class SemanticsContext {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
-  // Materializes a temporary to store the result of initializing expression
-  // `init_id`.
-  auto MaterializeTemporary(SemanticsNodeId init_id) -> SemanticsNodeId;
+  // Commits to using a temporary to store the result of the initializing
+  // expression described by `init_id`, and returns the location of the
+  // temporary. If `discarded` is `true`, the result is discarded, and no
+  // temporary will be created if possible; if no temporary is created, the
+  // return value will be `SemanticsNodeId::Invalid`.
+  auto FinalizeTemporary(SemanticsNodeId init_id, bool discarded)
+      -> SemanticsNodeId;
 
   // Marks the initializer `init_id` as initializing `target_id`.
   auto MarkInitializerFor(SemanticsNodeId target_id, SemanticsNodeId init_id)

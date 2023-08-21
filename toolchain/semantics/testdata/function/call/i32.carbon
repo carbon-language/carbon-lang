@@ -46,8 +46,9 @@ fn Main() {
 // CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+8, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+10, type: type0},
+// CHECK:STDOUT:   {kind: NoOp},
 // CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+12},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+13},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -78,6 +79,7 @@ fn Main() {
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+11,
@@ -102,6 +104,7 @@ fn Main() {
 // CHECK:STDOUT:   %b: i32 = var
 // CHECK:STDOUT:   %.loc12_21.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_21.2: i32 = stub_reference %.loc12_21.1
+// CHECK:STDOUT:   no_op
 // CHECK:STDOUT:   %.loc12_20: i32 = call @Echo(%.loc12_21.2) to %b
 // CHECK:STDOUT:   assign %b, %.loc12_20
 // CHECK:STDOUT:   return

@@ -393,11 +393,12 @@ class SemanticsNode {
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;
 
-  using MaterializeTemporary = Factory<SemanticsNodeKind::MaterializeTemporary,
-                                       SemanticsNodeId /*initializer_id*/>;
+  using MaterializeTemporary = Factory<SemanticsNodeKind::MaterializeTemporary>;
 
   using Namespace = FactoryNoType<SemanticsNodeKind::Namespace,
                                   SemanticsNameScopeId /*name_scope_id*/>;
+
+  using NoOp = FactoryNoType<SemanticsNodeKind::NoOp>;
 
   using PointerType =
       Factory<SemanticsNodeKind::PointerType, SemanticsTypeId /*pointee_id*/>;

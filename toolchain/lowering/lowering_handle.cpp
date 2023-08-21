@@ -200,6 +200,12 @@ auto LoweringHandleNamespace(LoweringFunctionContext& /*context*/,
   // No action to take.
 }
 
+auto LoweringHandleNoOp(LoweringFunctionContext& /*context*/,
+                        SemanticsNodeId /*node_id*/, SemanticsNode /*node*/)
+    -> void {
+  // No action to take.
+}
+
 auto LoweringHandleRealLiteral(LoweringFunctionContext& context,
                                SemanticsNodeId node_id, SemanticsNode node)
     -> void {

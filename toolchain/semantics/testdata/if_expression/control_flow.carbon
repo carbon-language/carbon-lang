@@ -53,17 +53,19 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+10, type: type1},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block9, arg1: node+14},
 // CHECK:STDOUT:   {kind: Branch, arg0: block10},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block11, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+17, type: type0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+18, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+17, arg1: node+18},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+17, type: type0},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block12, arg1: function1, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+20, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+21, arg1: node+22},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+21, type: type0},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+19},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+22},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+20},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+24},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block13, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+25, arg1: node+12, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+26},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+27, arg1: node+12, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+28},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -106,24 +108,26 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:     node+19,
-// CHECK:STDOUT:     node+23,
+// CHECK:STDOUT:     node+20,
+// CHECK:STDOUT:     node+25,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:     node+21,
 // CHECK:STDOUT:     node+22,
+// CHECK:STDOUT:     node+23,
 // CHECK:STDOUT:     node+24,
+// CHECK:STDOUT:     node+26,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+18,
+// CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+21,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+25,
-// CHECK:STDOUT:     node+26,
 // CHECK:STDOUT:     node+27,
+// CHECK:STDOUT:     node+28,
+// CHECK:STDOUT:     node+29,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -153,15 +157,17 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   if %.loc10 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %.loc11_21.1: i32 = call @A() to %.loc11_21.2
-// CHECK:STDOUT:   %.loc11_21.2: i32 = materialize_temporary %.loc11_21.1
-// CHECK:STDOUT:   %.loc11_21.3: i32 = value_binding %.loc11_21.2
+// CHECK:STDOUT:   %.loc11_21.1: i32 = materialize_temporary
+// CHECK:STDOUT:   %.loc11_21.2: i32 = call @A() to %.loc11_21.1
+// CHECK:STDOUT:   assign %.loc11_21.1, %.loc11_21.2
+// CHECK:STDOUT:   %.loc11_21.3: i32 = value_binding %.loc11_21.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_21.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %.loc11_30.1: i32 = call @B() to %.loc11_30.2
-// CHECK:STDOUT:   %.loc11_30.2: i32 = materialize_temporary %.loc11_30.1
-// CHECK:STDOUT:   %.loc11_30.3: i32 = value_binding %.loc11_30.2
+// CHECK:STDOUT:   %.loc11_30.1: i32 = materialize_temporary
+// CHECK:STDOUT:   %.loc11_30.2: i32 = call @B() to %.loc11_30.1
+// CHECK:STDOUT:   assign %.loc11_30.1, %.loc11_30.2
+// CHECK:STDOUT:   %.loc11_30.3: i32 = value_binding %.loc11_30.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_30.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:

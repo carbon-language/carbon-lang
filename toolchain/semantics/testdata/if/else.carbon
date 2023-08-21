@@ -58,13 +58,10 @@ fn If(b: bool) {
 // CHECK:STDOUT:   {kind: Branch, arg0: block9},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type1},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+13, type: type1},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type1},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+15, type: type1},
 // CHECK:STDOUT:   {kind: Branch, arg0: block10},
 // CHECK:STDOUT:   {kind: Branch, arg0: block10},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function2, type: type1},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+19, type: type1},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -100,18 +97,15 @@ fn If(b: bool) {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+14,
-// CHECK:STDOUT:     node+17,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+15,
-// CHECK:STDOUT:     node+16,
-// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+19,
-// CHECK:STDOUT:     node+20,
-// CHECK:STDOUT:     node+21,
+// CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -145,16 +139,13 @@ fn If(b: bool) {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc13_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc13_6.2: () = call @F()
-// CHECK:STDOUT:   %.loc13_6.3: () = materialize_temporary %.loc13_6.2
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc15_6.1: () = call @G()
-// CHECK:STDOUT:   %.loc15_6.2: () = materialize_temporary %.loc15_6.1
+// CHECK:STDOUT:   %.loc15: () = call @G()
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
-// CHECK:STDOUT:   %.loc17_4.1: () = call @H()
-// CHECK:STDOUT:   %.loc17_4.2: () = materialize_temporary %.loc17_4.1
+// CHECK:STDOUT:   %.loc17: () = call @H()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

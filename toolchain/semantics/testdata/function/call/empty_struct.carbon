@@ -45,8 +45,9 @@ fn Main() {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+11, type: type0},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+13, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+14},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -78,10 +79,11 @@ fn Main() {
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -101,7 +103,8 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_9.1: {} = struct_value ()
 // CHECK:STDOUT:   %.loc12_9.2: {} = stub_reference %.loc12_9.1
-// CHECK:STDOUT:   %.loc12_7.1: {} = call @Echo(%.loc12_9.2) to %.loc12_7.2
-// CHECK:STDOUT:   %.loc12_7.2: {} = materialize_temporary %.loc12_7.1
+// CHECK:STDOUT:   %.loc12_7.1: {} = materialize_temporary
+// CHECK:STDOUT:   %.loc12_7.2: {} = call @Echo(%.loc12_9.2) to %.loc12_7.1
+// CHECK:STDOUT:   assign %.loc12_7.1, %.loc12_7.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
