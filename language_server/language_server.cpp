@@ -13,15 +13,6 @@
 
 namespace Carbon::LS {
 
-namespace {
-template <typename T>
-// Parse untyped JSON into a typed form.
-auto ParseJSON(const llvm::json::Value& untyped, T& parsed) -> bool {
-  llvm::json::Path::Root root_path;
-  return clang::clangd::fromJSON(untyped, parsed, root_path);
-}
-}  // namespace
-
 void LanguageServer::OnDidOpenTextDocument(
     clang::clangd::DidOpenTextDocumentParams const& params) {
   files_.emplace(params.textDocument.uri.file(), params.textDocument.text);

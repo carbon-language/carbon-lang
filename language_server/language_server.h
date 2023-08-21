@@ -19,9 +19,9 @@ namespace Carbon::LS {
 class LanguageServer : public clang::clangd::Transport::MessageHandler,
                        public clang::clangd::LSPBinder::RawOutgoing {
  public:
+  // Start the language server.
   static void Start();
-  explicit LanguageServer(std::unique_ptr<clang::clangd::Transport> transport)
-      : transport_(std::move(transport)) {}
+
   // Transport::MessageHandler
   // Handlers returns true to keep processing messages, or false to shut down.
   // Handler called on notification by client.
@@ -53,6 +53,10 @@ class LanguageServer : public clang::clangd::Transport::MessageHandler,
   // handlers for client methods and notifications
   clang::clangd::LSPBinder::RawHandlers handlers_;
 
+  explicit LanguageServer(std::unique_ptr<clang::clangd::Transport> transport)
+      : transport_(std::move(transport)) {}
+
+  // handlers
   void OnDidOpenTextDocument(
       clang::clangd::DidOpenTextDocumentParams const& params);
   void OnDidChangeTextDocument(
