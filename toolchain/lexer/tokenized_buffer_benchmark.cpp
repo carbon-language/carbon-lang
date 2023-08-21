@@ -27,6 +27,14 @@ class LexerBenchHelper {
     return TokenizedBuffer::Lex(source_, consumer);
   }
 
+  auto DiagnoseErrors() -> llvm::StringRef {
+    auto buffer = TokenizedBuffer::Lex(source_, ConsoleDiagnosticConsumer());
+    CARBON_CHECK(buffer.has_errors())
+        << "Asked to diagnose errors but none found!";
+    // Return an empty string so this can be streamed into a check failure.
+    return "";
+  }
+
  private:
   llvm::vfs::InMemoryFileSystem fs_;
   std::string filename_ = "test.carbon";
@@ -64,7 +72,6 @@ BENCHMARK(BM_ValidKeywords);
 
 // clang-format off
 constexpr char IdentifierChars[] = {
-    '_',
     // Digits:
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     // Upper case:
@@ -73,6 +80,8 @@ constexpr char IdentifierChars[] = {
     // Lower case:
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'M', 'n', 'o',
     'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    // Other characters:
+    '_',
 };
 // clang-format on
 
@@ -86,16 +95,36 @@ void BM_ValidIdentifiers(benchmark::State& state) {
   for (int i = 0; i < NumTokens; ++i) {
     int length = absl::Uniform<int>(gen, min_length, max_length);
     os << sep;
-    for (int j : llvm::seq<int>(0, length)) {
-      os << IdentifierChars[absl::Uniform<int>(gen, j == 0 ? 10 : 0,
-                                               sizeof(IdentifierChars))];
+    int id_start = source.size();
+    for (;;) {
+      // Erase any prior attempts to find an identifier.
+      source.resize(id_start);
+      for (int j : llvm::seq<int>(0, length)) {
+        os << IdentifierChars[absl::Uniform<int>(gen, j == 0 ? 10 : 0,
+                                                 sizeof(IdentifierChars))];
+      }
+      // Check if we ended up forming an integer type literal or a keyword, and
+      // try again.
+      auto id = llvm::StringRef(source).substr(id_start);
+      if (llvm::any_of(TokenKind::KeywordTokens, [id](auto token) {
+            return id == token.fixed_spelling();
+          })) {
+        continue;
+      }
+      if (id.consume_front("i") || id.consume_front("u") ||
+          id.consume_front("f")) {
+        if (llvm::all_of(id, [](const char c) { return llvm::isDigit(c); })) {
+          continue;
+        }
+      }
+      break;
     }
   }
 
   LexerBenchHelper helper(source);
   for (auto _ : state) {
     TokenizedBuffer buffer = helper.Lex();
-    CARBON_CHECK(buffer.has_errors());
+    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
   }
 
   state.counters["TokenRate"] = benchmark::Counter(
