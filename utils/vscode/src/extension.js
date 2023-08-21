@@ -7,15 +7,10 @@
 const { LanguageClient } = require('vscode-languageclient/node');
 
 function activate(context) {
+  const command = './bazel-bin/language_server/language_server';
   const serverOptions = {
-    run: {
-      command: 'bazel',
-      args: ['run', 'language_server'],
-    },
-    debug: {
-      command: 'bazel',
-      args: ['run', 'language_server'],
-    },
+    run: { command },
+    debug: { command },
   };
 
   const clientOptions = {
