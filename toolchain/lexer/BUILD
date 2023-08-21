@@ -232,6 +232,21 @@ cc_fuzz_test(
     ],
 )
 
+cc_binary(
+    name = "tokenized_buffer_benchmark",
+    testonly = 1,
+    srcs = ["tokenized_buffer_benchmark.cpp"],
+    deps = [
+        ":token_kind",
+        ":tokenized_buffer",
+        "//common:check",
+        "//toolchain/diagnostics:null_diagnostics",
+        "@com_github_google_benchmark//:benchmark_main",
+        "@com_google_absl//absl/random",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 file_test(
     name = "lexer_file_test",
     srcs = ["lexer_file_test.cpp"],

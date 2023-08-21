@@ -8,6 +8,7 @@
 #include <cstdint>
 
 #include "common/enum_base.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/FormatVariadicDetails.h"
 
 namespace Carbon {
@@ -21,6 +22,9 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
  public:
 #define CARBON_TOKEN(TokenName) CARBON_ENUM_CONSTANT_DECLARATION(TokenName)
 #include "toolchain/lexer/token_kind.def"
+
+  // An array of all the keyword tokens.
+  static const llvm::ArrayRef<TokenKind> KeywordTokens;
 
   // Test whether this kind of token is a simple symbol sequence (punctuation,
   // not letters) that appears directly in the source text and can be
@@ -74,11 +78,21 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
     }
     return false;
   }
+
+ private:
+  static const TokenKind KeywordTokensStorage[];
 };
 
 #define CARBON_TOKEN(TokenName) \
   CARBON_ENUM_CONSTANT_DEFINITION(TokenKind, TokenName)
 #include "toolchain/lexer/token_kind.def"
+
+constexpr TokenKind TokenKind::KeywordTokensStorage[] = {
+#define CARBON_KEYWORD_TOKEN(TokenName, Spelling) TokenKind::TokenName,
+#include "toolchain/lexer/token_kind.def"
+};
+constexpr llvm::ArrayRef<TokenKind> TokenKind::KeywordTokens =
+    KeywordTokensStorage;
 
 }  // namespace Carbon
 
