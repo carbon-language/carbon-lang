@@ -3,6 +3,9 @@ From: maan2003 <manmeetmann2003@gmail.com>
 Date: Sat, 19 Aug 2023 02:32:03 +0530
 Subject: [PATCH] Add library for clangd
 
+This exports clangd language server protocol helpers publically.
+
+This removes references to clang specific types in `Protocol.h`.
 ---
  clang-tools-extra/clangd/BUILD.bazel  | 36 +++++++++++++++++++++++++++
  clang-tools-extra/clangd/Protocol.cpp | 15 +++++++----
