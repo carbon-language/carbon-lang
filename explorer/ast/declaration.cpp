@@ -19,19 +19,21 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 }
 void Declaration::PrintDepth(int depth, int indent_num_spaces,
                              llvm::raw_ostream& out) const {
+  if(kind() != DeclarationKind::FunctionDeclaration || kind() != DeclarationKind::DestructorDeclaration)
+  out.indent(indent_num_spaces);
   if (depth == 0) {
-    out.indent(indent_num_spaces) << " ... ";
+    out << "...";
     return;
   }
 
   switch (kind()) {
     case DeclarationKind::NamespaceDeclaration:
-      out.indent(indent_num_spaces) << PrintAsID(*this) << ";";
+      out << PrintAsID(*this) << ";";
       break;
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       const auto& iface_decl = cast<ConstraintTypeDeclaration>(*this);
-      out.indent(indent_num_spaces) << PrintAsID(*this);
+      out << PrintAsID(*this);
       if(auto params =iface_decl.params()) {
         out <<  " " << **params << " ";
       }
@@ -44,7 +46,7 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
     }
     case DeclarationKind::ImplDeclaration: {
       const auto& impl_decl = cast<ImplDeclaration>(*this);
-      out.indent(indent_num_spaces) << PrintAsID(impl_decl) << " {\n";
+      out << PrintAsID(impl_decl) << " {\n";
       for (Nonnull<Declaration*> m : impl_decl.members()) {
         m->PrintDepth(-1, indent_num_spaces + 2, out);
         out << "\n";
@@ -54,7 +56,7 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
     }
     case DeclarationKind::MatchFirstDeclaration: {
       const auto& match_first_decl = cast<MatchFirstDeclaration>(*this);
-      out.indent(indent_num_spaces) << PrintAsID(match_first_decl) << " {\n";
+      out << PrintAsID(match_first_decl) << " {\n";
       for (Nonnull<const ImplDeclaration*> m :
            match_first_decl.impl_declarations()) {
         m->PrintDepth(-1, indent_num_spaces + 2, out);
@@ -73,7 +75,7 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
       break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
-      out.indent(indent_num_spaces) << PrintAsID(class_decl);
+      out << PrintAsID(class_decl);
       if (class_decl.type_params().has_value()) {
         out << **class_decl.type_params();
       }
@@ -87,7 +89,7 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
     }
     case DeclarationKind::MixinDeclaration: {
       const auto& mixin_decl = cast<MixinDeclaration>(*this);
-      out.indent(indent_num_spaces) << PrintAsID(mixin_decl) << "{\n";
+      out << PrintAsID(mixin_decl) << "{\n";
       for (Nonnull<Declaration*> m : mixin_decl.members()) {
         m->PrintDepth(-1, indent_num_spaces + 2, out);
         out << "\n";
@@ -97,13 +99,13 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
     }
     case DeclarationKind::MixDeclaration: {
       const auto& mix_decl = cast<MixDeclaration>(*this);
-      out.indent(indent_num_spaces) << PrintAsID(mix_decl);
+      out << PrintAsID(mix_decl);
       out << mix_decl.mixin() << ";";
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(*this);
-      out.indent(indent_num_spaces) << PrintAsID(choice) << " {\n";
+      out << PrintAsID(choice) << " {\n";
       for (Nonnull<const AlternativeSignature*> alt : choice.alternatives()) {
         out.indent(indent_num_spaces + 2) << *alt << ";\n";
       }
@@ -113,7 +115,7 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
 
     case DeclarationKind::VariableDeclaration: {
       const auto& var = cast<VariableDeclaration>(*this);
-      out.indent(indent_num_spaces) << PrintAsID(var);
+      out << PrintAsID(var);
       if (var.has_initializer()) {
         out << " = " << var.initializer();
       }
@@ -124,7 +126,7 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
     case DeclarationKind::InterfaceExtendDeclaration:
     case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration: {
-      out.indent(indent_num_spaces) << PrintAsID(*this) << ";";
+      out << PrintAsID(*this) << ";";
       break;
     }
 
@@ -135,13 +137,13 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
 
     case DeclarationKind::AliasDeclaration: {
       const auto& alias = cast<AliasDeclaration>(*this);
-      out.indent(indent_num_spaces)
+      out
           << PrintAsID(alias) << " = " << alias.target() << ";";
       break;
     }
 
     case DeclarationKind::ExtendBaseDeclaration: {
-      out.indent(indent_num_spaces) << PrintAsID(*this) << ";";
+      out << PrintAsID(*this) << ";";
       break;
     }
   }
