@@ -132,7 +132,7 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
       const auto& block = cast<Block>(*this);
       const auto statements = block.statements();
       if (depth < 0 || depth > 1) {
-        out << "{\n";
+        out.indent(indent_num_spaces) << "{\n";
         for (const auto* statement : statements) {
           statement->PrintDepth(depth, indent_num_spaces + 2, out);
           out << "\n";
