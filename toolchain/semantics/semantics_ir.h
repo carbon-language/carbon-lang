@@ -388,6 +388,36 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
                                     SemanticsNodeId node_id)
     -> SemanticsExpressionCategory;
 
+// The value representation to use when passing or returning by value.
+struct SemanticsValueRepresentation {
+  enum Kind {
+    // The type has no value representation. This is used for empty types, such
+    // as `()`.
+    None,
+    // The value representation is a copy of the value. On call boundaries, the
+    // value itself will be passed or returned.
+    Copy,
+    // The value representation is a pointer to the object. When used as a
+    // parameter, the address of the value is passed. When used as a return
+    // type, a pointer to a return slot is passed to the function. `type` is the
+    // pointee type.
+    Pointer,
+    // The value representation has been customized, and has the same behavior
+    // as the value representation of some other type.
+    // TODO: This is not implemented or used yet.
+    Custom,
+  };
+  // The kind of value representation used by this type.
+  Kind kind;
+  // The type used to model the value representation.
+  SemanticsTypeId type;
+};
+
+// Returns information about the value representation to use for a type.
+auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
+                                     SemanticsTypeId type_id)
+    -> SemanticsValueRepresentation;
+
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_

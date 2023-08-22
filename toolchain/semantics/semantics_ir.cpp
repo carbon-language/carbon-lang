@@ -533,4 +533,133 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
   }
 }
 
+auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
+                                     SemanticsTypeId type_id)
+    -> SemanticsValueRepresentation {
+  const SemanticsIR* ir = &semantics_ir;
+  SemanticsNodeId node_id = ir->GetType(type_id);
+  while (true) {
+    auto node = ir->GetNode(node_id);
+    switch (node.kind()) {
+      case SemanticsNodeKind::AddressOf:
+      case SemanticsNodeKind::ArrayIndex:
+      case SemanticsNodeKind::ArrayValue:
+      case SemanticsNodeKind::Assign:
+      case SemanticsNodeKind::BinaryOperatorAdd:
+      case SemanticsNodeKind::BlockArg:
+      case SemanticsNodeKind::BoolLiteral:
+      case SemanticsNodeKind::Branch:
+      case SemanticsNodeKind::BranchIf:
+      case SemanticsNodeKind::BranchWithArg:
+      case SemanticsNodeKind::Call:
+      case SemanticsNodeKind::Dereference:
+      case SemanticsNodeKind::FunctionDeclaration:
+      case SemanticsNodeKind::InitializeFrom:
+      case SemanticsNodeKind::IntegerLiteral:
+      case SemanticsNodeKind::Invalid:
+      case SemanticsNodeKind::MaterializeTemporary:
+      case SemanticsNodeKind::Namespace:
+      case SemanticsNodeKind::NoOp:
+      case SemanticsNodeKind::RealLiteral:
+      case SemanticsNodeKind::Return:
+      case SemanticsNodeKind::ReturnExpression:
+      case SemanticsNodeKind::StringLiteral:
+      case SemanticsNodeKind::StructAccess:
+      case SemanticsNodeKind::StructTypeField:
+      case SemanticsNodeKind::StructValue:
+      case SemanticsNodeKind::TupleIndex:
+      case SemanticsNodeKind::TupleValue:
+      case SemanticsNodeKind::UnaryOperatorNot:
+      case SemanticsNodeKind::ValueBinding:
+      case SemanticsNodeKind::VarStorage:
+        CARBON_FATAL() << "Type refers to non-type node " << node;
+
+      case SemanticsNodeKind::CrossReference: {
+        auto [xref_id, xref_node_id] = node.GetAsCrossReference();
+        ir = &semantics_ir.GetCrossReferenceIR(xref_id);
+        node_id = xref_node_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::BindName: {
+        auto [name_id, value_id] = node.GetAsBindName();
+        node_id = value_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::StubReference: {
+        node_id = node.GetAsStubReference();
+        continue;
+      }
+
+      case SemanticsNodeKind::ArrayType:
+        // For arrays, it's convenient to always use a pointer representation,
+        // even when the array has zero or one element, in order to support
+        // indexing.
+        return {.kind = SemanticsValueRepresentation::Pointer, .type = type_id};
+
+      case SemanticsNodeKind::StructType: {
+        auto& fields = ir->GetNodeBlock(node.GetAsStructType());
+        if (fields.empty()) {
+          // An empty struct has an empty representation.
+          return {.kind = SemanticsValueRepresentation::None,
+                  .type = SemanticsTypeId::Invalid};
+        }
+        if (fields.size() == 1) {
+          // A struct with one field has the same representation as its field.
+          auto [field_name_id, field_type_id] =
+              ir->GetNode(fields.front()).GetAsStructTypeField();
+          node_id = ir->GetType(field_type_id);
+          continue;
+        }
+        // For any other struct, use a pointer representation.
+        return {.kind = SemanticsValueRepresentation::Pointer, .type = type_id};
+      }
+
+      case SemanticsNodeKind::TupleType: {
+        auto& elements = ir->GetTypeBlock(node.GetAsTupleType());
+        if (elements.empty()) {
+          // An empty tuple has an empty representation.
+          return {.kind = SemanticsValueRepresentation::None,
+                  .type = SemanticsTypeId::Invalid};
+        }
+        if (elements.size() == 1) {
+          // A one-tuple has the same representation as its sole element.
+          node_id = ir->GetType(elements.front());
+          continue;
+        }
+        // For any other tuple, use a pointer representation.
+        return {.kind = SemanticsValueRepresentation::Pointer, .type = type_id};
+      }
+
+      case SemanticsNodeKind::Builtin:
+        switch (node.GetAsBuiltin()) {
+          case SemanticsBuiltinKind::TypeType:
+          case SemanticsBuiltinKind::Error:
+          case SemanticsBuiltinKind::Invalid:
+            return {.kind = SemanticsValueRepresentation::None,
+                    .type = SemanticsTypeId::Invalid};
+          case SemanticsBuiltinKind::BoolType:
+          case SemanticsBuiltinKind::IntegerType:
+          case SemanticsBuiltinKind::FloatingPointType:
+            return {.kind = SemanticsValueRepresentation::Copy,
+                    .type = type_id};
+          case SemanticsBuiltinKind::StringType:
+            // TODO: Decide on string value semantics. This should probably be a
+            // custom value representation carrying a pointer and size or
+            // similar.
+            return {.kind = SemanticsValueRepresentation::Pointer,
+                    .type = type_id};
+        }
+
+      case SemanticsNodeKind::PointerType:
+        return {.kind = SemanticsValueRepresentation::Copy, .type = type_id};
+
+      case SemanticsNodeKind::ConstType:
+        node_id = ir->GetType(node.GetAsConstType());
+        continue;
+    }
+  }
+}
+
 }  // namespace Carbon
