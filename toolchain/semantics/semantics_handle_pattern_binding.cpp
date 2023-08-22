@@ -28,13 +28,8 @@ auto SemanticsHandlePatternBinding(SemanticsContext& context,
       context.node_stack().PopWithParseNode<ParseNodeKind::Name>();
 
   // Allocate storage, linked to the name for error locations.
-  auto storage_id =
-      context.AddNode(SemanticsNode::VarStorage::Make(name_node, cast_type_id));
-
-  // Bind the name to storage.
-  context.AddNodeAndPush(parse_node,
-                         SemanticsNode::BindName::Make(name_node, cast_type_id,
-                                                       name_id, storage_id));
+  context.AddNodeAndPush(parse_node, SemanticsNode::VarStorage::Make(
+                                         name_node, cast_type_id, name_id));
   return true;
 }
 

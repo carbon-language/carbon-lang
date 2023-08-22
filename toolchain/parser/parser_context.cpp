@@ -77,15 +77,18 @@ auto ParserContext::AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
 }
 
 auto ParserContext::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
-                                           ParseNodeKind start_kind) -> void {
+                                           ParseNodeKind start_kind)
+    -> std::optional<TokenizedBuffer::Token> {
   if (auto open_paren = ConsumeIf(TokenKind::OpenParen)) {
     AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
+    return open_paren;
   } else {
     CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
                       TokenKind);
     emitter_->Emit(*position_, ExpectedParenAfter,
                    tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
+    return std::nullopt;
   }
 }
 

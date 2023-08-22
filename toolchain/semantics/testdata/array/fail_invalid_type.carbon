@@ -31,8 +31,7 @@ var a: [1; 1];
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:   {kind: ArrayType, arg0: node+1, arg1: typeError, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+3, type: type1},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type1},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -42,7 +41,6 @@ var a: [1; 1];
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -50,5 +48,5 @@ var a: [1; 1];
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_13: type = array_type %.loc10_12, <error>
-// CHECK:STDOUT:   %a: [<error>; 1] = var
+// CHECK:STDOUT:   %a: [<error>; 1] = var "a"
 // CHECK:STDOUT: }

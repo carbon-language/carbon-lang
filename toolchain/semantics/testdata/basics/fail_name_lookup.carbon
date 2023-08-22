@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn Main() {
-  // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+3]]:3: Name `x` not found
+  // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+3]]:3: Name `x` not found.
   // CHECK:STDERR:   x;
   // CHECK:STDERR:   ^
   x;
@@ -13,7 +13,7 @@ fn Main() {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, body: [block2]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]

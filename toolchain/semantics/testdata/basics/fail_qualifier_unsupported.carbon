@@ -28,11 +28,9 @@ var y: i32 = x.b;
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
-// CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -41,13 +39,11 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %y: i32 = var
+// CHECK:STDOUT:   %x: i32 = var "x"
+// CHECK:STDOUT:   %y: i32 = var "y"
 // CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }

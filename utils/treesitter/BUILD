@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
 load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_cc_library")
 
 tree_sitter_cc_library(

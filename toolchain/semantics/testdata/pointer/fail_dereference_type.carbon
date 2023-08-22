@@ -28,8 +28,7 @@ var p: *i32;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: Dereference, arg0: nodeIntegerType, type: typeError},
-// CHECK:STDOUT:   {kind: VarStorage, type: typeError},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+1, type: typeError},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: typeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -37,11 +36,10 @@ var p: *i32;
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc13: <error> = dereference i32
-// CHECK:STDOUT:   %p: <error> = var
+// CHECK:STDOUT:   %p: <error> = var "p"
 // CHECK:STDOUT: }

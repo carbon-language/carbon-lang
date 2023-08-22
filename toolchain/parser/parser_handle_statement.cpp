@@ -86,8 +86,12 @@ auto ParserHandleStatementContinueFinish(ParserContext& context) -> void {
 auto ParserHandleStatementForHeader(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddOpenParen(state.token, ParseNodeKind::ForHeaderStart);
-
+  std::optional<TokenizedBuffer::Token> open_paren =
+      context.ConsumeAndAddOpenParen(state.token,
+                                     ParseNodeKind::ForHeaderStart);
+  if (open_paren) {
+    state.token = *open_paren;
+  }
   state.state = ParserState::StatementForHeaderIn;
 
   if (context.PositionIs(TokenKind::Var)) {
@@ -118,9 +122,8 @@ auto ParserHandleStatementForHeaderIn(ParserContext& context) -> void {
 auto ParserHandleStatementForHeaderFinish(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(
-      *(TokenizedBuffer::TokenIterator(state.token) + 1), state,
-      ParseNodeKind::ForHeader);
+  context.ConsumeAndAddCloseSymbol(state.token, state,
+                                   ParseNodeKind::ForHeader);
 
   context.PushState(ParserState::CodeBlock);
 }

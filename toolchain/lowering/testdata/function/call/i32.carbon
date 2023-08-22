@@ -20,8 +20,8 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %var = alloca i32, align 4
+// CHECK:STDOUT:   %b = alloca i32, align 4
 // CHECK:STDOUT:   %Echo = call i32 @Echo(i32 1)
-// CHECK:STDOUT:   store i32 %Echo, ptr %var, align 4
+// CHECK:STDOUT:   store i32 %Echo, ptr %b, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

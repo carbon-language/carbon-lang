@@ -44,7 +44,8 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
 
 auto SemanticsContext::TODO(ParseTree::Node parse_node, std::string label)
     -> bool {
-  CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: {0}", std::string);
+  CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: `{0}`.",
+                    std::string);
   emitter_->Emit(parse_node, SemanticsTodo, std::move(label));
   return false;
 }
@@ -91,7 +92,7 @@ auto SemanticsContext::DiagnoseDuplicateName(ParseTree::Node parse_node,
 
 auto SemanticsContext::DiagnoseNameNotFound(ParseTree::Node parse_node,
                                             SemanticsStringId name_id) -> void {
-  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found",
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
   emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
 }

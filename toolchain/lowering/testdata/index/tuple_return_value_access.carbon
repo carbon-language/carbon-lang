@@ -24,9 +24,9 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Run() {
-// CHECK:STDOUT:   %var = alloca i32, align 4
+// CHECK:STDOUT:   %t = alloca i32, align 4
 // CHECK:STDOUT:   %F = call { i32, i32 } @F()
-// CHECK:STDOUT:   %1 = extractvalue { i32, i32 } %F, 1
-// CHECK:STDOUT:   store i32 %1, ptr %var, align 4
+// CHECK:STDOUT:   %tuple.index = extractvalue { i32, i32 } %F, 1
+// CHECK:STDOUT:   store i32 %tuple.index, ptr %t, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
