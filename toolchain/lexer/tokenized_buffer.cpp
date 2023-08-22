@@ -13,6 +13,7 @@
 #include "common/check.h"
 #include "common/string_helpers.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -247,6 +248,10 @@ class TokenizedBuffer::Lexer {
     bool formed_token_;
   };
 
+  using DispatchFunctionT = LexResult(Lexer& lexer,
+                                      llvm::StringRef& source_text);
+  using DispatchTableT = std::array<DispatchFunctionT*, 256>;
+
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer_(&buffer),
         translator_(&buffer),
@@ -351,7 +356,7 @@ class TokenizedBuffer::Lexer {
     std::optional<LexedNumericLiteral> literal =
         LexedNumericLiteral::Lex(source_text);
     if (!literal) {
-      return LexResult::NoMatch();
+      return LexError(source_text);
     }
 
     int int_column = current_column_;
@@ -402,7 +407,7 @@ class TokenizedBuffer::Lexer {
     std::optional<LexedStringLiteral> literal =
         LexedStringLiteral::Lex(source_text);
     if (!literal) {
-      return LexResult::NoMatch();
+      return LexError(source_text);
     }
 
     Line string_line = current_line_;
@@ -453,15 +458,46 @@ class TokenizedBuffer::Lexer {
     }
   }
 
-  auto LexSymbolToken(llvm::StringRef& source_text) -> LexResult {
-    TokenKind kind = llvm::StringSwitch<TokenKind>(source_text)
+  auto LexSymbolToken(llvm::StringRef& source_text, TokenKind kind)
+      -> LexResult {
+    // We use the `period` token as a place-holder for cases where one
+    // character isn't enough to pick a definitive symbol token. Recompute the
+    // kind using the full symbol set.
+    if (LLVM_UNLIKELY(kind == TokenKind::Period)) {
+      kind = llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
   .StartsWith(Spelling, TokenKind::Name)
 #include "toolchain/lexer/token_kind.def"
-                         .Default(TokenKind::Error);
-    if (kind == TokenKind::Error) {
-      return LexResult::NoMatch();
+                 .Default(TokenKind::Error);
+      if (kind == TokenKind::Error) {
+        return LexError(source_text);
+      }
+    } else {
+#ifndef NDEBUG
+      // Verify in a debug build that the incoming token kind is correct.
+      TokenKind debug_kind = llvm::StringSwitch<TokenKind>(source_text)
+#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
+  .StartsWith(Spelling, TokenKind::Name)
+#include "toolchain/lexer/token_kind.def"
+                                 .Default(TokenKind::Error);
+      CARBON_CHECK(kind == debug_kind)
+          << "Incoming token kind '" << kind
+          << "' does not match computed kind '" << debug_kind << "'!";
+#endif
     }
+
+    // In debug builds, re-check the kind after our optimizations to make sure
+    // we get the same result.
+#ifndef NDEBUG
+    TokenKind debug_kind = llvm::StringSwitch<TokenKind>(source_text)
+#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
+  .StartsWith(Spelling, TokenKind::Name)
+#include "toolchain/lexer/token_kind.def"
+                               .Default(TokenKind::Error);
+    CARBON_CHECK(debug_kind == kind)
+        << "Optimized code computed kind '" << kind
+        << "' but it should have been '" << debug_kind << "'";
+#endif
 
     if (!set_indent_) {
       current_line_info_->indent = current_column_;
@@ -609,9 +645,11 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexKeywordOrIdentifier(llvm::StringRef& source_text) -> LexResult {
-    if (!IsAlpha(source_text.front()) && source_text.front() != '_') {
-      return LexResult::NoMatch();
+    if (static_cast<unsigned char>(source_text.front()) > 0x7F) {
+      // TODO: Need to add support for Unicode lexing.
+      return LexError(source_text);
     }
+    CARBON_CHECK(IsAlpha(source_text.front()) || source_text.front() == '_');
 
     if (!set_indent_) {
       current_line_info_->indent = current_column_;
@@ -692,6 +730,82 @@ class TokenizedBuffer::Lexer {
                        .column = current_column_});
   }
 
+  constexpr static auto MakeDispatchTable() -> DispatchTableT {
+    DispatchTableT table = {};
+    auto dispatch_lex_error = +[](Lexer& lexer, llvm::StringRef& source_text) {
+      return lexer.LexError(source_text);
+    };
+    for (int i = 0; i < 256; ++i) {
+      table[i] = dispatch_lex_error;
+    }
+
+    // First, set the first character of each symbol token spelling to dispatch
+    // to the symbol lexer. We use a `Period` placeholder for the token as there
+    // may be several different tokens that start with the same spelling. When
+    // that placeholder token kind is used, the symbol lexer will compute the
+    // exact symbol token kind.
+    auto dispatch_lex_symbol = +[](Lexer& lexer, llvm::StringRef& source_text) {
+      return lexer.LexSymbolToken(source_text, TokenKind::Period);
+    };
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
+  table[(Spelling)[0]] = dispatch_lex_symbol;
+#include "toolchain/lexer/token_kind.def"
+
+    // Now special cased single-character symbols that are guaranteed to not
+    // join with another symbol. These are grouping symbols, terminators,
+    // or separators in the grammar and have a good reason to be
+    // orthogonal to any other punctuation. We do this separately because this
+    // needs to override soe of the generic handling above.
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)                  \
+  table[(Spelling)[0]] = +[](Lexer& lexer, llvm::StringRef& source_text) { \
+    return lexer.LexSymbolToken(source_text, TokenKind::TokenName);        \
+  };
+#include "toolchain/lexer/token_kind.def"
+
+    // For identifiers, keywords, and numeric type literals, we use the
+    // `Identifier` placeholder token kind.
+    auto dispatch_lex_word = +[](Lexer& lexer, llvm::StringRef& source_text) {
+      return lexer.LexKeywordOrIdentifier(source_text);
+    };
+    table['_'] = dispatch_lex_word;
+    // Note that we use raw loops because this needs to be `constexpr`
+    // evaluated.
+    for (unsigned char c = 'a'; c <= 'z'; ++c) {
+      table[c] = dispatch_lex_word;
+    }
+    for (unsigned char c = 'A'; c <= 'Z'; ++c) {
+      table[c] = dispatch_lex_word;
+    }
+    // We dispatch all non-ASCII UTF-8 characters to the identifier lexing
+    // as whitespace characters should already have been skipped and the
+    // only remaining valid Unicode characters would be part of an
+    // identifier. That code can either accept or reject.
+    for (int i = 0x80; i < 0x100; ++i) {
+      table[i] = dispatch_lex_word;
+    }
+
+    // For numeric literals of all kinds, we use the `IntegerLiteral`
+    // placeholder token kind.
+    auto dispatch_lex_numeric =
+        +[](Lexer& lexer, llvm::StringRef& source_text) {
+          return lexer.LexNumericLiteral(source_text);
+        };
+    for (unsigned char c = '0'; c <= '9'; ++c) {
+      table[c] = dispatch_lex_numeric;
+    }
+
+    // We can immediately tell when starting to lex a string literal and
+    // dispatch directly.
+    auto dispatch_lex_string = +[](Lexer& lexer, llvm::StringRef& source_text) {
+      return lexer.LexStringLiteral(source_text);
+    };
+    table['\''] = dispatch_lex_string;
+    table['"'] = dispatch_lex_string;
+    table['#'] = dispatch_lex_string;
+
+    return table;
+  };
+
  private:
   TokenizedBuffer* buffer_;
 
@@ -716,24 +830,16 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   ErrorTrackingDiagnosticConsumer error_tracking_consumer(consumer);
   Lexer lexer(buffer, error_tracking_consumer);
 
+  // Build a table of function pointers that we can use to dispatch to the
+  // correct lexer routine based on the first byte of source text.
+  constexpr Lexer::DispatchTableT DispatchTable = Lexer::MakeDispatchTable();
+
   llvm::StringRef source_text = source.text();
   while (lexer.SkipWhitespace(source_text)) {
-    // Each time we find non-whitespace characters, try each kind of token we
-    // support lexing, from simplest to most complex.
-    Lexer::LexResult result = lexer.LexSymbolToken(source_text);
-    if (!result) {
-      result = lexer.LexKeywordOrIdentifier(source_text);
-    }
-    if (!result) {
-      result = lexer.LexNumericLiteral(source_text);
-    }
-    if (!result) {
-      result = lexer.LexStringLiteral(source_text);
-    }
-    if (!result) {
-      result = lexer.LexError(source_text);
-    }
-    CARBON_CHECK(result) << "No token was lexed.";
+    Lexer::LexResult result =
+        DispatchTable[static_cast<unsigned char>(source_text.front())](
+            lexer, source_text);
+    CARBON_CHECK(result) << "Failed to form a token!";
   }
 
   // The end-of-file token is always considered to be whitespace.

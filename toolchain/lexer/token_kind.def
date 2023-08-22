@@ -36,6 +36,11 @@
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) CARBON_TOKEN(Name)
 #endif
 
+#ifndef CARBON_ONE_CHAR_SYMBOL_TOKEN
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(Name, Spelling) \
+  CARBON_SYMBOL_TOKEN(Name, Spelling)
+#endif
+
 #ifndef CARBON_TOKEN_WITH_VIRTUAL_NODE
 #define CARBON_TOKEN_WITH_VIRTUAL_NODE(Name) Name
 #endif
@@ -78,7 +83,6 @@ CARBON_SYMBOL_TOKEN(At,                  "@")
 CARBON_SYMBOL_TOKEN(Backslash,           "\\")
 CARBON_SYMBOL_TOKEN(Caret,               "^")
 CARBON_SYMBOL_TOKEN(Colon,               ":")
-CARBON_SYMBOL_TOKEN(Comma,               ",")
 CARBON_SYMBOL_TOKEN(Equal,               "=")
 CARBON_SYMBOL_TOKEN(Exclaim,             "!")
 CARBON_SYMBOL_TOKEN(Greater,             ">")
@@ -89,16 +93,25 @@ CARBON_SYMBOL_TOKEN(Period,              ".")
 CARBON_SYMBOL_TOKEN(Pipe,                "|")
 CARBON_SYMBOL_TOKEN(Plus,                "+")
 CARBON_SYMBOL_TOKEN(Question,            "?")
-CARBON_SYMBOL_TOKEN(Semi,                ";")
 CARBON_SYMBOL_TOKEN(Slash,               "/")
 CARBON_SYMBOL_TOKEN(Star,                "*")
 CARBON_SYMBOL_TOKEN(Tilde,               "~")
+
+// Some Carbon symbols are constructively exactly one character and cannot be
+// combined with any other characters to form new symbols. We can lex these
+// without needing to max-munch any other characters. These are typically
+// expected to be terminators or separators that need to compose with all other
+// parts of the grammar. Group symbols are also currently one-character symbols,
+// although we may choose to remove that if we need to add composite grouping
+// symbols in the future.
+CARBON_ONE_CHAR_SYMBOL_TOKEN(Comma,      ",")
+CARBON_ONE_CHAR_SYMBOL_TOKEN(Semi,       ";")
 
 // clang-format on
 
 #ifndef CARBON_OPENING_GROUP_SYMBOL_TOKEN
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(Name, Spelling, ClosingName) \
-  CARBON_SYMBOL_TOKEN(Name, Spelling)
+  CARBON_ONE_CHAR_SYMBOL_TOKEN(Name, Spelling)
 #endif
 CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenParen, "(", CloseParen)
 CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenCurlyBrace, "{", CloseCurlyBrace)
@@ -107,13 +120,14 @@ CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenSquareBracket, "[", CloseSquareBracket)
 
 #ifndef CARBON_CLOSING_GROUP_SYMBOL_TOKEN
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(Name, Spelling, OpeningName) \
-  CARBON_SYMBOL_TOKEN(Name, Spelling)
+  CARBON_ONE_CHAR_SYMBOL_TOKEN(Name, Spelling)
 #endif
 CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseParen, ")", OpenParen)
 CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseCurlyBrace, "}", OpenCurlyBrace)
 CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseSquareBracket, "]", OpenSquareBracket)
 #undef CARBON_CLOSING_GROUP_SYMBOL_TOKEN
 
+#undef CARBON_ONE_CHAR_SYMBOL_TOKEN
 #undef CARBON_SYMBOL_TOKEN
 
 #ifndef CARBON_KEYWORD_TOKEN
