@@ -56,7 +56,8 @@ void BM_ValidKeywords(benchmark::State& state) {
   std::string source;
   llvm::raw_string_ostream os(source);
   llvm::ListSeparator sep(" ");
-  for (int i = 0; i < NumTokens; ++i) {
+  for (int i : llvm::seq(0, NumTokens)) {
+    static_cast<void>(i);
     int token = absl::Uniform<int>(gen, 0, TokenKind::KeywordTokens.size());
     os << sep << TokenKind::KeywordTokens[token].fixed_spelling();
   }
@@ -76,10 +77,10 @@ auto IdentifierStartChars() -> llvm::ArrayRef<char> {
   static llvm::SmallVector<char> chars = [] {
     llvm::SmallVector<char> chars;
     chars.push_back('_');
-    for (char c : llvm::seq('A', 'Z')) {
+    for (char c : llvm::seq_inclusive('A', 'Z')) {
       chars.push_back(c);
     }
-    for (char c : llvm::seq('a', 'z')) {
+    for (char c : llvm::seq_inclusive('a', 'z')) {
       chars.push_back(c);
     }
     return chars;
@@ -91,7 +92,7 @@ auto IdentifierChars() -> llvm::ArrayRef<char> {
   static llvm::SmallVector<char> chars = [] {
     llvm::ArrayRef<char> start_chars = IdentifierStartChars();
     llvm::SmallVector<char> chars(start_chars.begin(), start_chars.end());
-    for (char c : llvm::seq('0', '9')) {
+    for (char c : llvm::seq_inclusive('0', '9')) {
       chars.push_back(c);
     }
     return chars;
@@ -106,7 +107,8 @@ void BM_ValidIdentifiers(benchmark::State& state) {
   std::string source;
   llvm::raw_string_ostream os(source);
   llvm::ListSeparator sep(" ");
-  for (int i = 0; i < NumTokens; ++i) {
+  for (int i : llvm::seq(0, NumTokens)) {
+    static_cast<void>(i);
     int length = absl::Uniform<int>(gen, min_length, max_length);
     os << sep;
     int id_start = source.size();
@@ -117,7 +119,8 @@ void BM_ValidIdentifiers(benchmark::State& state) {
       llvm::ArrayRef<char> start_chars = IdentifierStartChars();
       os << start_chars[absl::Uniform<int>(gen, 0, start_chars.size())];
       llvm::ArrayRef<char> chars = IdentifierChars();
-      for (int j = 0; j < length; ++j) {
+      for (int j : llvm::seq(0, length)) {
+        static_cast<void>(j);
         os << chars[absl::Uniform<int>(gen, 0, chars.size())];
       }
       // Check if we ended up forming an integer type literal or a keyword, and
@@ -143,7 +146,13 @@ void BM_ValidIdentifiers(benchmark::State& state) {
   state.counters["TokenRate"] = benchmark::Counter(
       NumTokens, benchmark::Counter::kIsIterationInvariantRate);
 }
-BENCHMARK(BM_ValidIdentifiers)->Args({3, 5})->Args({3, 16})->Args({12, 64});
+BENCHMARK(BM_ValidIdentifiers)
+    // Benchmark a few ranges of identifier widths to cover different patterns
+    // that emerge with small, medium, and longer identifiers.
+    ->Args({1, 3})
+    ->Args({3, 5})
+    ->Args({3, 16})
+    ->Args({12, 64});
 
 }  // namespace
 }  // namespace Carbon::Testing
