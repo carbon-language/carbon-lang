@@ -235,7 +235,6 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::Call:
     case SemanticsNodeKind::Dereference:
     case SemanticsNodeKind::FunctionDeclaration:
-    case SemanticsNodeKind::InitializeFrom:
     case SemanticsNodeKind::IntegerLiteral:
     case SemanticsNodeKind::Invalid:
     case SemanticsNodeKind::MaterializeTemporary:
@@ -396,7 +395,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::FunctionDeclaration:
-      case SemanticsNodeKind::InitializeFrom:
       case SemanticsNodeKind::IntegerLiteral:
       case SemanticsNodeKind::MaterializeTemporary:
       case SemanticsNodeKind::Namespace:
@@ -520,7 +518,6 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
         return SemanticsExpressionCategory::Value;
 
       case SemanticsNodeKind::Call:
-      case SemanticsNodeKind::InitializeFrom:
         return SemanticsExpressionCategory::Initializing;
 
       case SemanticsNodeKind::Dereference:
@@ -554,7 +551,6 @@ auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::Call:
       case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::FunctionDeclaration:
-      case SemanticsNodeKind::InitializeFrom:
       case SemanticsNodeKind::IntegerLiteral:
       case SemanticsNodeKind::Invalid:
       case SemanticsNodeKind::MaterializeTemporary:

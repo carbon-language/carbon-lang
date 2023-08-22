@@ -639,16 +639,6 @@ class SemanticsIRFormatter {
     out_ << " " << xref_id << "." << node_id;
   }
 
-  template <>
-  auto FormatInstructionRHS<SemanticsNode::InitializeFrom>(SemanticsNode node)
-      -> void {
-    auto [init_id, target_id] = node.GetAsInitializeFrom();
-    out_ << " ";
-    FormatArg(init_id);
-    out_ << " to ";
-    FormatArg(target_id);
-  }
-
   // StructTypeFields are formatted as part of their StructType.
   template <>
   auto FormatInstruction<SemanticsNode::StructTypeField>(

@@ -64,8 +64,6 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(Dereference, "dereference", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(FunctionDeclaration, "fn_decl", Untyped,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(InitializeFrom, "initialize_from", Typed,
-                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_literal", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(MaterializeTemporary, "materialize_temporary",

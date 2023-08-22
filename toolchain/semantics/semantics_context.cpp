@@ -391,9 +391,6 @@ auto SemanticsContext::FinalizeTemporary(SemanticsNodeId init_id,
         }
         return temporary_id;
       }
-
-      case SemanticsNodeKind::InitializeFrom:
-        CARBON_FATAL() << init << " should be created with a destination";
     }
   }
 }
@@ -441,9 +438,6 @@ auto SemanticsContext::MarkInitializerFor(SemanticsNodeId init_id,
         }
         return;
       }
-
-      case SemanticsNodeKind::InitializeFrom:
-        CARBON_FATAL() << init << " should be created with a destination";
     }
   }
 }
