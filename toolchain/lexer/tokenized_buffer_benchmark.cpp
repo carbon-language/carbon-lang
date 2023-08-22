@@ -4,8 +4,6 @@
 
 #include <benchmark/benchmark.h>
 
-#include <forward_list>
-
 #include "absl/random/random.h"
 #include "common/check.h"
 #include "llvm/ADT/Sequence.h"
@@ -30,22 +28,24 @@ class LexerBenchHelper {
   auto DiagnoseErrors() -> std::string {
     std::string result;
     llvm::raw_string_ostream out(result);
-    auto buffer = TokenizedBuffer::Lex(source_, StreamDiagnosticConsumer(out));
+    StreamDiagnosticConsumer consumer(out);
+    auto buffer = TokenizedBuffer::Lex(source_, consumer);
+    consumer.Flush();
     CARBON_CHECK(buffer.has_errors())
         << "Asked to diagnose errors but none found!";
     return result;
   }
 
  private:
-  llvm::vfs::InMemoryFileSystem fs_;
-  std::string filename_ = "test.carbon";
-  SourceBuffer source_;
-
   auto MakeSourceBuffer(llvm::StringRef text) -> SourceBuffer {
     CARBON_CHECK(fs_.addFile(filename_, /*ModificationTime=*/0,
                              llvm::MemoryBuffer::getMemBuffer(text)));
     return std::move(*SourceBuffer::CreateFromFile(fs_, filename_));
   }
+
+  llvm::vfs::InMemoryFileSystem fs_;
+  std::string filename_ = "test.carbon";
+  SourceBuffer source_;
 };
 
 constexpr int NumTokens = 100000;
@@ -63,7 +63,7 @@ void BM_ValidKeywords(benchmark::State& state) {
   LexerBenchHelper helper(source);
   for (auto _ : state) {
     TokenizedBuffer buffer = helper.Lex();
-    benchmark::DoNotOptimize(buffer.has_errors());
+    CARBON_CHECK(!buffer.has_errors());
   }
 
   state.counters["TokenRate"] = benchmark::Counter(
@@ -71,20 +71,32 @@ void BM_ValidKeywords(benchmark::State& state) {
 }
 BENCHMARK(BM_ValidKeywords);
 
-// clang-format off
-constexpr char IdentifierChars[] = {
-    // Digits:
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    // Upper case:
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    // Lower case:
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    // Other characters:
-    '_',
-};
-// clang-format on
+auto IdentifierStartChars() -> llvm::ArrayRef<char> {
+  static llvm::SmallVector<char> chars = [] {
+    llvm::SmallVector<char> chars;
+    chars.push_back('_');
+    for (char c : llvm::seq('A', 'Z')) {
+      chars.push_back(c);
+    }
+    for (char c : llvm::seq('a', 'z')) {
+      chars.push_back(c);
+    }
+    return chars;
+  }();
+  return chars;
+}
+
+auto IdentifierChars() -> llvm::ArrayRef<char> {
+  static llvm::SmallVector<char> chars = [] {
+    llvm::ArrayRef<char> start_chars = IdentifierStartChars();
+    llvm::SmallVector<char> chars(start_chars.begin(), start_chars.end());
+    for (char c : llvm::seq('0', '9')) {
+      chars.push_back(c);
+    }
+    return chars;
+  }();
+  return chars;
+}
 
 void BM_ValidIdentifiers(benchmark::State& state) {
   int min_length = state.range(0);
@@ -101,9 +113,11 @@ void BM_ValidIdentifiers(benchmark::State& state) {
     do {
       // Erase any prior attempts to find an identifier.
       source.resize(id_start);
-      for (int j : llvm::seq<int>(0, length)) {
-        os << IdentifierChars[absl::Uniform<int>(gen, j == 0 ? 10 : 0,
-                                                 sizeof(IdentifierChars))];
+      llvm::ArrayRef<char> start_chars = IdentifierStartChars();
+      os << start_chars[absl::Uniform<int>(gen, 0, start_chars.size())];
+      llvm::ArrayRef<char> chars = IdentifierChars();
+      for (int j = 0; j < length; ++j) {
+        os << chars[absl::Uniform<int>(gen, 0, chars.size())];
       }
       // Check if we ended up forming an integer type literal or a keyword, and
       // try again.
@@ -112,14 +126,18 @@ void BM_ValidIdentifiers(benchmark::State& state) {
       llvm::any_of(TokenKind::KeywordTokens, [id](auto token) {
             return id == token.fixed_spelling();
           }) ||
-      (id.consume_front("i") || id.consume_front("u") ||
+      ((id.consume_front("i") || id.consume_front("u") ||
           id.consume_front("f")) &&
-        llvm::all_of(id, [](const char c) { return llvm::isDigit(c); })));
+        llvm::all_of(id, [](const char c) {
+      return llvm::isDigit(c); })));
   }
 
   LexerBenchHelper helper(source);
   for (auto _ : state) {
     TokenizedBuffer buffer = helper.Lex();
+
+    // Ensure that lexing actually occurs for benchmarking and that it doesn't
+    // hit errors that would skew the benchmark results.
     CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
   }
 
