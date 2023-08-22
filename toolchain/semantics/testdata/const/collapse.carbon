@@ -23,6 +23,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   F,
 // CHECK:STDOUT:   p,
+// CHECK:STDOUT:   return,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
@@ -41,8 +42,10 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   {kind: ConstType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type3},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+3, type: type3},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -52,11 +55,6 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
@@ -64,19 +62,23 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc11_32: type = const_type i32
-// CHECK:STDOUT:   %.loc11_25: type = const_type const i32
-// CHECK:STDOUT:   %.loc11_42: type = ptr_type const i32
-// CHECK:STDOUT:   %.loc11_43: type = ptr_type const i32*
-// CHECK:STDOUT:   %.loc11_1 = fn_decl @F
+// CHECK:STDOUT:   %.loc11 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return %p
+// CHECK:STDOUT:   %.loc11: const i32** = value_binding %p
+// CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }

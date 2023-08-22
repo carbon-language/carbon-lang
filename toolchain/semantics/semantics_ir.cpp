@@ -569,12 +569,6 @@ auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
         continue;
       }
 
-      case SemanticsNodeKind::BindName: {
-        auto [name_id, value_id] = node.GetAsBindName();
-        node_id = value_id;
-        continue;
-      }
-
       case SemanticsNodeKind::StubReference: {
         node_id = node.GetAsStubReference();
         continue;

@@ -26,6 +26,7 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   If,
 // CHECK:STDOUT:   b,
+// CHECK:STDOUT:   return,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeBoolType,
@@ -35,37 +36,41 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+0},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+3},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+6},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
+// CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -75,7 +80,8 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !if.then else br !if.else
+// CHECK:STDOUT:   %.loc7: bool = value_binding %b
+// CHECK:STDOUT:   if %.loc7 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 1

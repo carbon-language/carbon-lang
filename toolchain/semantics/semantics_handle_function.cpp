@@ -137,8 +137,11 @@ auto SemanticsHandleReturnType(SemanticsContext& context,
   auto [type_parse_node, type_node_id] =
       context.node_stack().PopExpressionWithParseNode();
   auto type_id = context.ExpressionAsType(type_parse_node, type_node_id);
-  context.AddNodeAndPush(parse_node,
-                         SemanticsNode::VarStorage::Make(parse_node, type_id));
+  // TODO: Use a dedicated node rather than VarStorage here.
+  context.AddNodeAndPush(
+      parse_node,
+      SemanticsNode::VarStorage::Make(
+          parse_node, type_id, context.semantics_ir().AddString("return")));
   return true;
 }
 
