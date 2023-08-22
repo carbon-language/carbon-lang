@@ -17,7 +17,7 @@ Declaration::~Declaration() = default;
 void Declaration::Print(llvm::raw_ostream& out) const { PrintIndent(0, out); }
 void Declaration::PrintIndent(int indent_num_spaces,
                               llvm::raw_ostream& out) const {
-  if (kind() != DeclarationKind::FunctionDeclaration ||
+  if (kind() != DeclarationKind::FunctionDeclaration &&
       kind() != DeclarationKind::DestructorDeclaration) {
     out.indent(indent_num_spaces);
   }

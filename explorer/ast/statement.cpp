@@ -18,58 +18,82 @@ Statement::~Statement() = default;
 void Statement::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
     case StatementKind::Match: {
-      const auto& match = cast<Match>(*this);
-      out << "match (" << match.expression() << ") { ... }";
+      out << "match (...) { ... }";
       break;
     }
     case StatementKind::While: {
-      const auto& while_stmt = cast<While>(*this);
-      out << "while (" << while_stmt.condition() << ") { ... }";
+      out << "while (...) { ... }";
       break;
     }
     case StatementKind::For: {
-      const auto& for_stmt = cast<For>(*this);
-      out << "for (" << for_stmt.variable_declaration() << " in "
-          << for_stmt.loop_target() << ") { ... }";
+      out << "for (...) { ... }";
       break;
     }
-
+    case StatementKind::Break:
+      out << "break;";
+      break;
+    case StatementKind::Continue:
+      out << "continue;";
+      break;
+    case StatementKind::VariableDefinition: {
+      const auto& var = cast<VariableDefinition>(*this);
+      if (var.is_returned()) {
+        out << "returned ";
+      }
+      out << "var " << PrintAsID(var.pattern());
+      if (var.has_init()) {
+        out << " = ...";
+      }
+      out << ";";
+      break;
+    }
+    case StatementKind::ExpressionStatement:
+      out << PrintAsID(cast<ExpressionStatement>(*this).expression()) << ";";
+      break;
+    case StatementKind::Assign: {
+      const auto& assign = cast<Assign>(*this);
+      out << "... "
+          << AssignOperatorToString(assign.op()) << " "
+          << "...;";
+      break;
+    }
+    case StatementKind::IncrementDecrement: {
+      const auto& inc_dec = cast<IncrementDecrement>(*this);
+      out << (inc_dec.is_increment() ? "++" : "--")
+          << PrintAsID(inc_dec.argument()) << ";";
+      break;
+    }
     case StatementKind::If: {
       const auto& if_stmt = cast<If>(*this);
-      out << "if (" << if_stmt.condition() << ") { ... }";
+      out << "if (...) { ... }";
       if (if_stmt.else_block()) {
         out << " else { ... }";
       }
       break;
     }
-    case StatementKind::Block: {
-      const auto& block = cast<Block>(*this);
-      const auto statements = block.statements();
-      out << "{";
-      for (const auto* statement : statements) {
-        statement->Print(out);
-      }
-      out << "}";
+    case StatementKind::ReturnVar: {
+      out << "return var;";
       break;
     }
-    case StatementKind::Break:
-    case StatementKind::Continue:
-    case StatementKind::VariableDefinition:
-    case StatementKind::ExpressionStatement:
-    case StatementKind::Assign:
-    case StatementKind::IncrementDecrement:
-    case StatementKind::ReturnVar:
     case StatementKind::ReturnExpression: {
-      Print(out);
+      const auto& ret = cast<ReturnExpression>(*this);
+      if (ret.is_omitted_expression()) {
+        out << "return;";
+      } else {
+        out << "return <expr>;";
+      }
+      break;
+    }
+    case StatementKind::Block: {
+      out << "{ ... }";
+      break;
     }
   }
 }
 
 void Statement::PrintIndent(int indent_num_spaces,
                             llvm::raw_ostream& out) const {
-  if (kind() != StatementKind::Block) {
-    out.indent(indent_num_spaces);
-  }
+  out.indent(indent_num_spaces);
 
   switch (kind()) {
     case StatementKind::Match: {
@@ -77,7 +101,7 @@ void Statement::PrintIndent(int indent_num_spaces,
       out << "match (" << match.expression() << ") {\n";
       for (const auto& clause : match.clauses()) {
         out.indent(indent_num_spaces + 2)
-            << "case " << clause.pattern() << " => \n";
+            << "case " << clause.pattern() << " =>\n";
         clause.statement().PrintIndent(indent_num_spaces + 2, out);
         out << "\n";
       }
@@ -94,7 +118,7 @@ void Statement::PrintIndent(int indent_num_spaces,
       const auto& for_stmt = cast<For>(*this);
       out << "for (" << for_stmt.variable_declaration() << " in "
           << for_stmt.loop_target() << ")\n";
-      for_stmt.body().PrintIndent(indent_num_spaces + 2, out);
+      for_stmt.body().PrintIndent(indent_num_spaces, out);
       break;
     }
     case StatementKind::Break:
@@ -132,13 +156,12 @@ void Statement::PrintIndent(int indent_num_spaces,
     }
     case StatementKind::If: {
       const auto& if_stmt = cast<If>(*this);
-      out << "if (" << if_stmt.condition() << ")";
-      out << "\n";
+      out << "if (" << if_stmt.condition() << ")\n";
       if_stmt.then_block().PrintIndent(indent_num_spaces, out);
       if (if_stmt.else_block()) {
         out << "\n";
         out.indent(indent_num_spaces) << "else\n";
-        (*if_stmt.else_block())->PrintIndent(indent_num_spaces + 2, out);
+        (*if_stmt.else_block())->PrintIndent(indent_num_spaces, out);
       }
       break;
     }
@@ -158,7 +181,7 @@ void Statement::PrintIndent(int indent_num_spaces,
     case StatementKind::Block: {
       const auto& block = cast<Block>(*this);
       const auto statements = block.statements();
-      out.indent(indent_num_spaces) << "{\n";
+      out << "{\n";
       for (const auto* statement : statements) {
         statement->PrintIndent(indent_num_spaces + 2, out);
         out << "\n";

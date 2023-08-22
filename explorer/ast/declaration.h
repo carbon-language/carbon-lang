@@ -240,8 +240,7 @@ class CallableDeclaration : public Declaration {
         body_(context.Clone(other.body_)),
         virt_override_(other.virt_override_) {}
 
-  void PrintIndent(int indent_num_spaces,
-                   llvm::raw_ostream& out) const override;
+  void PrintIndent(int indent_num_spaces, llvm::raw_ostream& out) const override;
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
