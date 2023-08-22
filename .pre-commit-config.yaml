@@ -192,6 +192,11 @@ repos:
           - '; '
           - ''
           - --custom_format
+          - '\.lua$'
+          - ''
+          - '-- '
+          - ''
+          - --custom_format
           - '\.c$'
           - ''
           - '// '
