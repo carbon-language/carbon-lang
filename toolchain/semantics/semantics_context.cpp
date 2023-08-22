@@ -465,8 +465,8 @@ auto SemanticsContext::ImplicitAsForArgs(
     return true;
   }
 
-  auto arg_refs = semantics_ir_->GetNodeBlock(arg_refs_id);
-  auto param_refs = semantics_ir_->GetNodeBlock(param_refs_id);
+  auto &arg_refs = semantics_ir_->GetNodeBlock(arg_refs_id);
+  const auto &param_refs = semantics_ir_->GetNodeBlock(param_refs_id);
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
@@ -582,6 +582,9 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
           std::all_of(type_block.begin(), type_block.end(),
                       [&](auto type) { return type == element_type; })) {
         if (output_value_id != nullptr) {
+          // TODO: We should convert an initializing expression of tuple type
+          // to an initializing expression of array type.
+          value_id = ConvertToValueExpression(value_id);
           *output_value_id = AddNode(SemanticsNode::ArrayValue::Make(
               value.parse_node(), as_type_id, value_id));
         }

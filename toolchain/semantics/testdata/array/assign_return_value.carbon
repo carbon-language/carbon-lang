@@ -57,8 +57,11 @@ fn Run() {
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+13, type: type3},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
-// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+15, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+16},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+16, arg1: node+15},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+16, type: type2},
+// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+18, type: type3},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+19},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -96,6 +99,9 @@ fn Run() {
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:     node+18,
+// CHECK:STDOUT:     node+19,
+// CHECK:STDOUT:     node+20,
+// CHECK:STDOUT:     node+21,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -118,7 +124,10 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
 // CHECK:STDOUT:   %t: [i32; 1] = var
 // CHECK:STDOUT:   %.loc10_22.1: (i32,) = call @F()
-// CHECK:STDOUT:   %.loc10_22.2: [i32; 1] = array_value %.loc10_22.1
-// CHECK:STDOUT:   assign %t, %.loc10_22.2
+// CHECK:STDOUT:   %.loc10_22.2: (i32,) = materialize_temporary
+// CHECK:STDOUT:   assign %.loc10_22.2, %.loc10_22.1
+// CHECK:STDOUT:   %.loc10_22.3: (i32,) = value_binding %.loc10_22.2
+// CHECK:STDOUT:   %.loc10_22.4: [i32; 1] = array_value %.loc10_22.3
+// CHECK:STDOUT:   assign %t, %.loc10_22.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

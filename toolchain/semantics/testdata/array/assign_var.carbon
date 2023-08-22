@@ -61,8 +61,9 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   {kind: ArrayType, arg0: node+16, arg1: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+18, type: type3},
-// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+6, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+18, arg1: node+20},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+6, type: type2},
+// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+20, type: type3},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+18, arg1: node+21},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -90,6 +91,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:     node+21,
+// CHECK:STDOUT:     node+22,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -122,6 +124,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc8_14: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc8_15: type = array_type %.loc8_14, i32
 // CHECK:STDOUT:   %b: [i32; 3] = var
-// CHECK:STDOUT:   %.loc7_5: [i32; 3] = array_value %a
-// CHECK:STDOUT:   assign %b, %.loc7_5
+// CHECK:STDOUT:   %.loc7_5.1: (i32, i32, i32) = value_binding %a
+// CHECK:STDOUT:   %.loc7_5.2: [i32; 3] = array_value %.loc7_5.1
+// CHECK:STDOUT:   assign %b, %.loc7_5.2
 // CHECK:STDOUT: }

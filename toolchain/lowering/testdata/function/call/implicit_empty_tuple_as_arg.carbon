@@ -30,6 +30,6 @@ fn Main() {
 // CHECK:STDOUT:   call void @Foo()
 // CHECK:STDOUT:   %temp = alloca {}, align 8
 // CHECK:STDOUT:   %1 = load {}, ptr %temp, align 1
-// CHECK:STDOUT:   call void @Bar({} undef)
+// CHECK:STDOUT:   call void @Bar({} %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
