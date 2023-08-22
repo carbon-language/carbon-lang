@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 
@@ -30,8 +31,8 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
       auto refs =
           context.semantics_ir().GetNodeBlock(base_type.GetAsStructType());
       // TODO: Do we need to optimize this with a lookup table for O(1)?
-      for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
-        auto ref = context.semantics_ir().GetNode(refs[i]);
+      for (auto [i, ref_id] : llvm::enumerate(refs)) {
+        auto ref = context.semantics_ir().GetNode(ref_id);
         if (auto [field_name_id, field_type_id] = ref.GetAsStructTypeField();
             name_id == field_name_id) {
           context.AddNodeAndPush(

@@ -5,9 +5,8 @@
 #include "toolchain/semantics/semantics_ir.h"
 
 #include "common/check.h"
-#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
@@ -52,7 +51,7 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   // Copy builtins over.
   semantics_ir.nodes_.resize_for_overwrite(SemanticsBuiltinKind::ValidCount);
   static constexpr auto BuiltinIR = SemanticsCrossReferenceIRId(0);
-  for (int i = 0; i < SemanticsBuiltinKind::ValidCount; ++i) {
+  for (int i : llvm::seq(SemanticsBuiltinKind::ValidCount)) {
     // We can reuse the type node ID because the offsets of cross-references
     // will be the same in this IR.
     auto type = builtin_ir.nodes_[i].type_id();

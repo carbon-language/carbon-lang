@@ -5,6 +5,7 @@
 #include "toolchain/semantics/semantics_node_block_stack.h"
 
 #include "common/vlog.h"
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
@@ -40,8 +41,8 @@ auto SemanticsNodeBlockStack::Pop() -> SemanticsNodeBlockId {
 auto SemanticsNodeBlockStack::PrintForStackDump(llvm::raw_ostream& output) const
     -> void {
   output << name_ << ":\n";
-  for (int i = 0; i < static_cast<int>(stack_.size()); ++i) {
-    output << "\t" << i << ".\t" << stack_[i] << "\n";
+  for (auto [i, entry] : llvm::enumerate(stack_)) {
+    output << "\t" << i << ".\t" << entry << "\n";
   }
 }
 

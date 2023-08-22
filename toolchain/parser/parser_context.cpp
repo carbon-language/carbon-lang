@@ -4,11 +4,10 @@
 
 #include "toolchain/parser/parser_context.h"
 
-#include <cstdlib>
-#include <memory>
 #include <optional>
 
 #include "common/check.h"
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -448,8 +447,7 @@ auto ParserContext::EmitExpectedDeclarationSemiOrDefinition(
 
 auto ParserContext::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   output << "Parser stack:\n";
-  for (int i = 0; i < static_cast<int>(state_stack_.size()); ++i) {
-    const auto& entry = state_stack_[i];
+  for (auto [i, entry] : llvm::enumerate(state_stack_)) {
     output << "\t" << i << ".\t" << entry.state;
     PrintTokenForStackDump(output, entry.token);
   }
