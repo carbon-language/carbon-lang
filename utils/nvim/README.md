@@ -13,4 +13,5 @@ This requires neovim >= 0.9 and
 
 1. `./setup.sh`
 2. Start nvim in carbon-lang root folder and open a carbon file.
-3. View document symbols. If you have telescope.nvim installed, you can use `:Telescope lsp_document_symbols`
+3. View document symbols. If you have telescope.nvim installed, you can use
+   `:Telescope lsp_document_symbols`
