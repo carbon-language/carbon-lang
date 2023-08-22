@@ -2,9 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --print-errors=streamed dump tokens %s
+// ARGS: compile --phase=lex --stream-errors %s
 //
-// TODO: Disable token output, it's not interesting for these tests.
 // AUTOUPDATE
 
 fn run(String program) {
@@ -17,23 +16,3 @@ fn run(String program) {
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^
 var x = 3a;
-
-// CHECK:STDOUT: [
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: {{.*}}
-// CHECK:STDOUT: ]

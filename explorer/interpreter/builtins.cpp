@@ -4,7 +4,7 @@
 
 #include "explorer/interpreter/builtins.h"
 
-#include "explorer/common/error_builders.h"
+#include "explorer/base/error_builders.h"
 
 using llvm::dyn_cast;
 

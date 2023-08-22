@@ -7,7 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "testing/util/test_raw_ostream.h"
+#include "testing/base/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {

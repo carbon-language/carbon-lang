@@ -25,8 +25,12 @@ code --install-extension out/carbon.vsix
 
 ## Development
 
-1. Open utils/vscode folder in VS Code.
-2. Launch the extension using Run command (F5).
+1. `bazel build language_server` in project root.
+2. Open utils/vscode folder in VS Code.
+3. Launch the extension using Run command (F5).
+4. In the opened window, open the carbon-lang repository as folder.
+5. Open a carbon file.
+6. Open code outline (Ctrl+Shift+O).
 
 To update dependencies:
 

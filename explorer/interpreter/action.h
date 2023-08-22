@@ -18,7 +18,7 @@
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/source_location.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"

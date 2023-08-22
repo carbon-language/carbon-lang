@@ -468,7 +468,9 @@ CARBON_PARSER_STATE_VARIANTS2(ParameterListFinish, Deduced, Regular)
 
 // Handles the processing of a `(condition)` up through the expression.
 //
-// Always:
+// If `OpenCurlyBrace`:
+//   1. ParenConditionAs(If|While)Finish
+// Else:
 //   1. Expression
 //   2. ParenConditionAs(If|While)Finish
 CARBON_PARSER_STATE_VARIANTS2(ParenCondition, If, While)

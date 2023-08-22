@@ -5,8 +5,8 @@
 #include "explorer/interpreter/pattern_match.h"
 
 #include "explorer/ast/value.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/action.h"
 #include "llvm/Support/Casting.h"
 
@@ -61,9 +61,11 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
                   BindingMap& generic_args, Nonnull<TraceStream*> trace_stream,
                   Nonnull<Arena*> arena) -> bool {
   if (trace_stream->is_enabled()) {
-    *trace_stream << "match pattern " << *p << "\nfrom "
-                  << ExpressionCategoryToString(v.expression_category())
-                  << " expression with value " << *v.value() << "\n";
+    trace_stream->Match() << "match pattern `" << *p << "`\n";
+    trace_stream->Indent() << "from "
+                           << ExpressionCategoryToString(
+                                  v.expression_category())
+                           << " expression with value `" << *v.value() << "`\n";
   }
   const auto make_expr_result =
       [](Nonnull<const Value*> v) -> ExpressionResult {

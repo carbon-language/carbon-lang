@@ -10,8 +10,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
-#include "testing/util/test_raw_ostream.h"
-#include "toolchain/common/yaml_test_helpers.h"
+#include "testing/base/test_raw_ostream.h"
+#include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
@@ -32,7 +32,8 @@ TEST(SemanticsIRTest, YAML) {
                           llvm::MemoryBuffer::getMemBuffer("var x: i32 = 0;")));
   TestRawOstream print_stream;
   Driver d(fs, print_stream, llvm::errs());
-  d.RunFullCommand({"dump", "raw-semantics-ir", "test.carbon"});
+  d.RunCommand(
+      {"compile", "--phase=check", "--dump-raw-semantics-ir", "test.carbon"});
 
   // Matches the ID of a node. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.

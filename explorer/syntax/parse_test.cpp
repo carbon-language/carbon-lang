@@ -10,7 +10,7 @@
 #include <string>
 #include <variant>
 
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 
 namespace Carbon::Testing {
 namespace {

@@ -14,6 +14,7 @@ cc_library(
     hdrs = ["driver.h"],
     textual_hdrs = ["flags.def"],
     deps = [
+        "//common:command_line",
         "//common:vlog",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
@@ -26,6 +27,7 @@ cc_library(
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
     ],
 )
 
@@ -45,12 +47,13 @@ cc_test(
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
-        "//testing/util:gtest_main",
-        "//testing/util:test_raw_ostream",
-        "//toolchain/common:yaml_test_helpers",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "//toolchain/base:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
         "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Object",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -62,7 +65,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":driver",
-        "//testing/util:test_raw_ostream",
+        "//testing/base:test_raw_ostream",
         "@llvm-project//llvm:Support",
     ],
 )

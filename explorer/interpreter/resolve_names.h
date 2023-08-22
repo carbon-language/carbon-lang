@@ -6,8 +6,8 @@
 #define CARBON_EXPLORER_INTERPRETER_RESOLVE_NAMES_H_
 
 #include "explorer/ast/ast.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/trace_stream.h"
 
 namespace Carbon {
 

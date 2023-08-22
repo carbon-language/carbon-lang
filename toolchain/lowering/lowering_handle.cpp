@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/lowering/lowering_function_context.h"
+#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 
@@ -22,6 +23,58 @@ auto LoweringHandleAddressOf(LoweringFunctionContext& context,
                              SemanticsNodeId node_id, SemanticsNode node)
     -> void {
   context.SetLocal(node_id, context.GetLocal(node.GetAsAddressOf()));
+}
+
+auto LoweringHandleArrayIndex(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  auto [array_node_id, index_node_id] = node.GetAsArrayIndex();
+  auto* array_value = context.GetLocal(array_node_id);
+  auto* llvm_type =
+      context.GetType(context.semantics_ir().GetNode(array_node_id).type_id());
+  auto index_node = context.semantics_ir().GetNode(index_node_id);
+  llvm::Value* array_element_value;
+
+  if (index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
+    const auto index = context.semantics_ir()
+                           .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
+                           .getZExtValue();
+    array_element_value = context.GetIndexFromStructOrArray(
+        llvm_type, array_value, index, "array.index");
+  } else {
+    auto* index = context.builder().CreateLoad(llvm_type->getArrayElementType(),
+                                               context.GetLocal(index_node_id));
+    // TODO: Handle return value or call such as `F()[a]`.
+    array_element_value = context.builder().CreateInBoundsGEP(
+        llvm_type, array_value, index, "array.index");
+  }
+  context.SetLocal(node_id, array_element_value);
+}
+
+auto LoweringHandleArrayValue(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  auto* llvm_type = context.GetType(node.type_id());
+  auto* alloca =
+      context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "array");
+  context.SetLocal(node_id, alloca);
+  auto tuple_node_id = node.GetAsArrayValue();
+  auto* tuple_value = context.GetLocal(tuple_node_id);
+  auto* tuple_type =
+      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
+
+  for (int i = 0; i < static_cast<int>(llvm_type->getArrayNumElements()); ++i) {
+    llvm::Value* array_element_value = context.GetIndexFromStructOrArray(
+        tuple_type, tuple_value, i, "array.element");
+    if (tuple_value->getType()->isPointerTy()) {
+      array_element_value = context.builder().CreateLoad(
+          llvm_type->getArrayElementType(), array_element_value);
+    }
+    // Initializing the array with values.
+    context.builder().CreateStore(
+        array_element_value,
+        context.builder().CreateStructGEP(llvm_type, alloca, i));
+  }
 }
 
 auto LoweringHandleAssign(LoweringFunctionContext& context,
@@ -168,21 +221,6 @@ auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
       << node;
 }
 
-auto LoweringHandleTupleIndex(LoweringFunctionContext& context,
-                              SemanticsNodeId node_id, SemanticsNode node)
-    -> void {
-  auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
-  auto* llvm_type =
-      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
-  auto index_node = context.semantics_ir().GetNode(index_node_id);
-  const auto index = context.semantics_ir()
-                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
-                         .getZExtValue();
-  auto* gep = context.builder().CreateStructGEP(
-      llvm_type, context.GetLocal(tuple_node_id), index, "tuple.index");
-  context.SetLocal(node_id, gep);
-}
-
 auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {
@@ -262,6 +300,21 @@ auto LoweringHandleStructAccess(LoweringFunctionContext& context,
   context.SetLocal(node_id, gep);
 }
 
+auto LoweringHandleTupleIndex(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
+  auto* tuple_value = context.GetLocal(tuple_node_id);
+  auto index_node = context.semantics_ir().GetNode(index_node_id);
+  const auto index = context.semantics_ir()
+                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
+                         .getZExtValue();
+  auto* llvm_type =
+      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
+  context.SetLocal(node_id, context.GetIndexFromStructOrArray(
+                                llvm_type, tuple_value, index, "tuple.index"));
+}
+
 auto LoweringHandleTupleValue(LoweringFunctionContext& context,
                               SemanticsNodeId node_id, SemanticsNode node)
     -> void {
@@ -269,7 +322,6 @@ auto LoweringHandleTupleValue(LoweringFunctionContext& context,
   auto* alloca =
       context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "tuple");
   context.SetLocal(node_id, alloca);
-
   auto refs = context.semantics_ir().GetNodeBlock(node.GetAsTupleValue());
   auto type_refs = context.semantics_ir().GetTypeBlock(
       context.semantics_ir()

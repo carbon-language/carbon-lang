@@ -10,7 +10,7 @@
 #include <string>
 
 #include "explorer/ast/paren_contents.h"
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon::Testing {

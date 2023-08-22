@@ -14,7 +14,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:error",
-        "//explorer/common:trace_stream",
+        "//explorer/base:trace_stream",
         "//explorer/interpreter:exec_program",
         "//explorer/interpreter:stack_space",
         "//explorer/syntax",
@@ -28,7 +28,7 @@ cc_test(
     srcs = ["parse_and_execute_test.cpp"],
     deps = [
         ":parse_and_execute",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

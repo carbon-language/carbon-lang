@@ -35,8 +35,11 @@ class ExternalRepo(NamedTuple):
 # paths for that repository.
 EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     # llvm:include/llvm/Support/Error.h ->llvm/Support/Error.h
+    # clang-tools-extra/clangd:URI.h -> clang-tools-extra/clangd/URI.h
     "@llvm-project": ExternalRepo(
-        lambda x: re.sub("^(.*:(lib|include))/", "", x), "...", None
+        lambda x: re.sub(":", "/", re.sub("^(.*:(lib|include))/", "", x)),
+        "...",
+        None,
     ),
     # :src/google/protobuf/descriptor.h -> google/protobuf/descriptor.h
     # - protobuf_headers is specified because there are multiple overlapping
@@ -69,6 +72,7 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
 # Try using `bazel cquery --output=starlark` to print `target.files`.
 # For protobuf, need to add support for `alias` rule kind.
 IGNORE_HEADER_REGEX = re.compile("^(.*\\.pb\\.h)$")
+IGNORE_SOURCE_FILE_REGEX = re.compile("^third_party/clangd")
 
 
 class Rule(NamedTuple):
@@ -198,6 +202,9 @@ def get_missing_deps(
     for source_file in rule_files:
         if source_file in generated_files:
             continue
+        if IGNORE_SOURCE_FILE_REGEX.match(source_file):
+            continue
+
         with open(source_file, "r") as f:
             for header_groups in re.findall(
                 r'^(#include (?:"([^"]+)"|'
@@ -251,9 +258,10 @@ def main() -> None:
     external_rules = get_rules(bazel, external_repo_query, True)
 
     print("Building header map...")
-    header_to_rule_map: Dict[str, Set[str]] = {}
-    header_to_rule_map["gmock/gmock.h"] = {"@com_google_googletest//:gtest"}
-    header_to_rule_map["gtest/gtest.h"] = {"@com_google_googletest//:gtest"}
+    header_to_rule_map: Dict[str, Set[str]] = {
+        "gmock/gmock.h": {"@com_google_googletest//:gtest"},
+        "gtest/gtest.h": {"@com_google_googletest//:gtest"},
+    }
     map_headers(header_to_rule_map, carbon_rules)
     map_headers(header_to_rule_map, external_rules)
 
