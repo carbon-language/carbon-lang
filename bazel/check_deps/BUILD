@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_python//python:defs.bzl", "py_test")
+
 # The filegroups establishing root rules for `genquery` invocations can be
 # updated by running:
 #
