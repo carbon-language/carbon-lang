@@ -31,7 +31,11 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       const auto& iface_decl = cast<ConstraintTypeDeclaration>(*this);
-      out.indent(indent_num_spaces) << PrintAsID(*this) << " {\n";
+      out.indent(indent_num_spaces) << PrintAsID(*this);
+      if(auto params =iface_decl.params()) {
+        out <<  " " << **params << " ";
+      }
+      out << " {\n";
       for (Nonnull<Declaration*> m : iface_decl.members()) {
         out.indent(indent_num_spaces + 2) << *m << "\n";
       }
