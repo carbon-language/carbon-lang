@@ -27,12 +27,13 @@ class LexerBenchHelper {
     return TokenizedBuffer::Lex(source_, consumer);
   }
 
-  auto DiagnoseErrors() -> llvm::StringRef {
-    auto buffer = TokenizedBuffer::Lex(source_, ConsoleDiagnosticConsumer());
+  auto DiagnoseErrors() -> std::string {
+    std::string result;
+    llvm::raw_string_ostream out(result);
+    auto buffer = TokenizedBuffer::Lex(source_, StreamDiagnosticConsumer(out));
     CARBON_CHECK(buffer.has_errors())
         << "Asked to diagnose errors but none found!";
-    // Return an empty string so this can be streamed into a check failure.
-    return "";
+    return result;
   }
 
  private:
@@ -78,7 +79,7 @@ constexpr char IdentifierChars[] = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
     'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     // Lower case:
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'M', 'n', 'o',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
     'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     // Other characters:
     '_',
@@ -96,7 +97,8 @@ void BM_ValidIdentifiers(benchmark::State& state) {
     int length = absl::Uniform<int>(gen, min_length, max_length);
     os << sep;
     int id_start = source.size();
-    for (;;) {
+    llvm::StringRef id;
+    do {
       // Erase any prior attempts to find an identifier.
       source.resize(id_start);
       for (int j : llvm::seq<int>(0, length)) {
@@ -105,20 +107,14 @@ void BM_ValidIdentifiers(benchmark::State& state) {
       }
       // Check if we ended up forming an integer type literal or a keyword, and
       // try again.
-      auto id = llvm::StringRef(source).substr(id_start);
-      if (llvm::any_of(TokenKind::KeywordTokens, [id](auto token) {
+      id = llvm::StringRef(source).substr(id_start);
+    } while (
+      llvm::any_of(TokenKind::KeywordTokens, [id](auto token) {
             return id == token.fixed_spelling();
-          })) {
-        continue;
-      }
-      if (id.consume_front("i") || id.consume_front("u") ||
-          id.consume_front("f")) {
-        if (llvm::all_of(id, [](const char c) { return llvm::isDigit(c); })) {
-          continue;
-        }
-      }
-      break;
-    }
+          }) ||
+      (id.consume_front("i") || id.consume_front("u") ||
+          id.consume_front("f")) &&
+        llvm::all_of(id, [](const char c) { return llvm::isDigit(c); })));
   }
 
   LexerBenchHelper helper(source);
