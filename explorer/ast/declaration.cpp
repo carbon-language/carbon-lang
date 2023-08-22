@@ -432,7 +432,7 @@ void CallableDeclaration::PrintDepth(int depth, int indent_num_spaces,
   }
   out << *param_pattern_ << " " << return_term_;
   if (body_) {
-    out << " ";
+    out << "\n";
     (*body_)->PrintDepth(depth, indent_num_spaces, out);
   } else {
     out << ";";
