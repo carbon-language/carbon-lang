@@ -10,7 +10,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, return_slot: node+6, body: {block4, block5, block6, block7}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block6, block7}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -49,8 +49,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+13},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+16},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block7, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+19, arg1: node+6, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+20},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+19},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -92,7 +91,6 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:     node+20,
-// CHECK:STDOUT:     node+21,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -100,7 +98,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> %return: i32 {
+// CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_6: bool = value_binding %b
 // CHECK:STDOUT:   if %.loc7_6 br !if.expr.then else br !if.expr.else
@@ -118,7 +116,6 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   br !if.expr.result(%.loc8_33)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc8_10.1: i32 = block_arg !if.expr.result
-// CHECK:STDOUT:   %.loc8_10.2: i32 = initialize_from %.loc8_10.1 to %return
-// CHECK:STDOUT:   return %.loc8_10.2
+// CHECK:STDOUT:   %.loc8_10: i32 = block_arg !if.expr.result
+// CHECK:STDOUT:   return %.loc8_10
 // CHECK:STDOUT: }

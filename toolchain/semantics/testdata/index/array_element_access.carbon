@@ -50,26 +50,22 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type2},
 // CHECK:STDOUT:   {kind: ArrayValue, arg0: node+9, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+10, arg1: node+2, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+11},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+10},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+13, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+12, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+15, arg1: node+13, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+16},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+14},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+18, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+16, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type0},
-// CHECK:STDOUT:   {kind: ArrayIndex, arg0: node+2, arg1: node+20, type: type0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+21, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+22, arg1: node+18, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+18, arg1: node+23},
+// CHECK:STDOUT:   {kind: ArrayIndex, arg0: node+2, arg1: node+18, type: type0},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+19, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+16, arg1: node+20},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+25, type: type0},
-// CHECK:STDOUT:   {kind: ArrayIndex, arg0: node+2, arg1: node+13, type: type0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+27, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+28, arg1: node+25, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+25, arg1: node+29},
+// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+22, type: type0},
+// CHECK:STDOUT:   {kind: ArrayIndex, arg0: node+2, arg1: node+12, type: type0},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+24, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+22, arg1: node+25},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -102,10 +98,6 @@ var d: i32 = a[b];
 // CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:     node+25,
 // CHECK:STDOUT:     node+26,
-// CHECK:STDOUT:     node+27,
-// CHECK:STDOUT:     node+28,
-// CHECK:STDOUT:     node+29,
-// CHECK:STDOUT:     node+30,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
@@ -124,21 +116,17 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_26.1: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc7_26.2: (i32, i32) = tuple_value (%.loc7_20.2, %.loc7_24.2)
 // CHECK:STDOUT:   %.loc7_26.3: [i32; 2] = array_value %.loc7_26.2
-// CHECK:STDOUT:   %.loc7_26.4: [i32; 2] = initialize_from %.loc7_26.3 to %a
-// CHECK:STDOUT:   assign %a, %.loc7_26.4
+// CHECK:STDOUT:   assign %a, %.loc7_26.3
 // CHECK:STDOUT:   %b: i32 = var
-// CHECK:STDOUT:   %.loc8_14.1: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc8_14.2: i32 = initialize_from %.loc8_14.1 to %b
-// CHECK:STDOUT:   assign %b, %.loc8_14.2
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 1
+// CHECK:STDOUT:   assign %b, %.loc8
 // CHECK:STDOUT:   %c: i32 = var
 // CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc9_17.1: i32 = array_index %a, %.loc9_16
 // CHECK:STDOUT:   %.loc9_17.2: i32 = value_binding %.loc9_17.1
-// CHECK:STDOUT:   %.loc9_17.3: i32 = initialize_from %.loc9_17.2 to %c
-// CHECK:STDOUT:   assign %c, %.loc9_17.3
+// CHECK:STDOUT:   assign %c, %.loc9_17.2
 // CHECK:STDOUT:   %d: i32 = var
 // CHECK:STDOUT:   %.loc10_17.1: i32 = array_index %a, %b
 // CHECK:STDOUT:   %.loc10_17.2: i32 = value_binding %.loc10_17.1
-// CHECK:STDOUT:   %.loc10_17.3: i32 = initialize_from %.loc10_17.2 to %d
-// CHECK:STDOUT:   assign %d, %.loc10_17.3
+// CHECK:STDOUT:   assign %d, %.loc10_17.2
 // CHECK:STDOUT: }

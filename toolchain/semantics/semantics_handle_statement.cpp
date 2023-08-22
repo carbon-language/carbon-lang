@@ -53,11 +53,24 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           .Build(parse_node, ReturnStatementDisallowExpression)
           .Note(fn_node.parse_node(), ReturnStatementImplicitNote)
           .Emit();
-    } else if (callable.return_slot_id.is_valid()) {
-      arg = context.Initialize(parse_node, callable.return_slot_id, arg);
-    }
 
-    context.AddNode(SemanticsNode::ReturnExpression::Make(parse_node, arg));
+      context.AddNode(SemanticsNode::ReturnExpression::Make(parse_node, arg));
+    } else if (callable.return_slot_id.is_valid()) {
+      context.Initialize(parse_node, callable.return_slot_id, arg);
+
+      context.AddNode(SemanticsNode::Return::Make(parse_node));
+    } else {
+      arg = context.ConvertToValueOfType(parse_node, arg,
+                                         callable.return_type_id);
+
+      if (GetSemanticsInitializingRepresentation(context.semantics_ir(),
+                                                 callable.return_type_id)
+              .kind == SemanticsInitializingRepresentation::None) {
+        context.AddNode(SemanticsNode::Return::Make(parse_node));
+      } else {
+        context.AddNode(SemanticsNode::ReturnExpression::Make(parse_node, arg));
+      }
+    }
   }
 
   // Switch to a new, unreachable, empty node block. This typically won't

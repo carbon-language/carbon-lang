@@ -55,32 +55,56 @@ auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
 
 auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
     -> llvm::Function* {
-  auto function = semantics_ir().GetFunction(function_id);
+  const auto& function = semantics_ir().GetFunction(function_id);
+  const bool has_return_slot = function.return_slot_id.is_valid();
+  const int first_param = has_return_slot ? 1 : 0;
+
+  SemanticsInitializingRepresentation return_rep =
+      function.return_type_id.is_valid()
+          ? GetSemanticsInitializingRepresentation(semantics_ir(),
+                                                   function.return_type_id)
+          : SemanticsInitializingRepresentation{
+                .kind = SemanticsInitializingRepresentation::None};
+  CARBON_CHECK(return_rep.has_return_slot() == has_return_slot);
 
   // TODO: Lower type information for the arguments prior to building args.
   auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
   llvm::SmallVector<llvm::Type*> args;
-  args.resize_for_overwrite(param_refs.size());
+  args.resize_for_overwrite(first_param + param_refs.size());
+  if (has_return_slot) {
+    args[0] = GetType(function.return_type_id)->getPointerTo();
+  }
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    args[i] = GetType(semantics_ir().GetNode(param_refs[i]).type_id());
+    args[first_param + i] =
+        GetType(semantics_ir().GetNode(param_refs[i]).type_id());
   }
 
-  // If return type is not valid, the function does not have a return type.
-  // Hence, set return type to void.
-  llvm::Type* return_type = function.return_type_id.is_valid()
-                                ? GetType(function.return_type_id)
-                                : llvm::Type::getVoidTy(llvm_context());
+  // If the initializing representation doesn't produce a value, set the return
+  // type to void.
+  llvm::Type* return_type =
+      return_rep.kind == SemanticsInitializingRepresentation::ByCopy
+          ? GetType(function.return_type_id)
+          : llvm::Type::getVoidTy(llvm_context());
+
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
   auto* llvm_function = llvm::Function::Create(
       function_type, llvm::Function::ExternalLinkage,
       semantics_ir().GetString(function.name_id), llvm_module());
 
+  if (has_return_slot) {
+    auto* return_slot = llvm_function->getArg(0);
+    return_slot->addAttr(llvm::Attribute::getWithStructRetType(
+        llvm_context(), GetType(function.return_type_id)));
+    return_slot->setName("return");
+  }
+
   // Set parameter names.
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
     auto [param_name_id, _] =
         semantics_ir().GetNode(param_refs[i]).GetAsBindName();
-    llvm_function->getArg(i)->setName(semantics_ir().GetString(param_name_id));
+    llvm_function->getArg(first_param + i)
+        ->setName(semantics_ir().GetString(param_name_id));
   }
 
   return llvm_function;
@@ -88,7 +112,7 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
 
 auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
     -> void {
-  auto function = semantics_ir().GetFunction(function_id);
+  const auto& function = semantics_ir().GetFunction(function_id);
   const auto& body_block_ids = function.body_block_ids;
   if (body_block_ids.empty()) {
     // Function is probably defined in another file; not an error.
@@ -98,16 +122,23 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
   llvm::Function* llvm_function = GetFunction(function_id);
   LoweringFunctionContext function_lowering(*this, llvm_function);
 
+  const bool has_return_slot = function.return_slot_id.is_valid();
+  const int first_param = has_return_slot ? 1 : 0;
+
   // Add parameters to locals.
   auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  if (has_return_slot) {
+    function_lowering.SetLocal(function.return_slot_id,
+                               llvm_function->getArg(0));
+  }
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
     auto param_storage =
         semantics_ir().GetNode(param_refs[i]).GetAsBindName().second;
-    function_lowering.SetLocal(param_storage, llvm_function->getArg(i));
+    function_lowering.SetLocal(param_storage,
+                               llvm_function->getArg(first_param + i));
   }
 
   // Lower all blocks.
-  // TODO: Determine the set of reachable blocks, and only lower those ones.
   for (auto block_id : body_block_ids) {
     CARBON_VLOG() << "Lowering " << block_id << "\n";
     auto* llvm_block = function_lowering.GetBlock(block_id);

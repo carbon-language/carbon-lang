@@ -60,9 +60,12 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
                           "Expression is not assignable.");
         context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
       }
-      rhs_id = context.Initialize(parse_node, lhs_id, rhs_id);
-      context.AddNodeAndPush(
-          parse_node, SemanticsNode::Assign::Make(parse_node, lhs_id, rhs_id));
+      context.Initialize(parse_node, lhs_id, rhs_id);
+      // We model assignment as an expression, so we need to push a value for
+      // it, even though it doesn't produce a value.
+      // TODO: Consider changing our parse tree to model assignment as a
+      // different kind of statement than an expression statement.
+      context.node_stack().Push(parse_node, lhs_id);
       return true;
     }
     default:

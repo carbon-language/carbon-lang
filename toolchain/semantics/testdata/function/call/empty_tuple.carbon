@@ -41,10 +41,11 @@ fn Main() {
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+2, type: type0},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+10, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
@@ -64,19 +65,20 @@ fn Main() {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -87,7 +89,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return %a
+// CHECK:STDOUT:   %.loc7: () = value_binding %a
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

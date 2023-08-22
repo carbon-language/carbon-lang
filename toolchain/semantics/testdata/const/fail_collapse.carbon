@@ -16,7 +16,7 @@ fn G(p: const (const i32)**) -> i32** {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type5, return_slot: node+8, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type5, body: {block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -47,8 +47,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   {kind: PointerType, arg0: type4, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type5},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+8, type: typeError},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -72,7 +71,6 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -80,8 +78,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   %.loc10 = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p: const i32**) -> %return: i32** {
+// CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %return
-// CHECK:STDOUT:   return %.1
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

@@ -50,8 +50,8 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type2},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, arg1: node+5, type: type2},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+12},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+11},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -96,7 +96,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc9_11.2: i32 = stub_reference %.loc9_11.1
 // CHECK:STDOUT:   %.loc9_15.1: i32 = int_literal 35
 // CHECK:STDOUT:   %.loc9_15.2: i32 = stub_reference %.loc9_15.1
-// CHECK:STDOUT:   %.loc9_17.1: (i32, i32) = tuple_value (%.loc9_11.2, %.loc9_15.2)
-// CHECK:STDOUT:   %.loc9_17.2: (i32, i32) = initialize_from %.loc9_17.1 to %return
-// CHECK:STDOUT:   return %.loc9_17.2
+// CHECK:STDOUT:   %.loc9_17: (i32, i32) = tuple_value (%.loc9_11.2, %.loc9_15.2)
+// CHECK:STDOUT:   assign %return, %.loc9_17
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -12,8 +12,8 @@ fn Run() -> i32 {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, return_slot: node+4, body: {block4}}},
-// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1, return_slot: node+11, body: {block7}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: {block4}}},
+// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1, body: {block7}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -48,18 +48,16 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+6, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type2},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+8, arg1: node+4, type: type2},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+9},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type2},
-// CHECK:STDOUT:   {kind: Call, arg0: block8, arg1: function0, type: type2},
+// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+14},
-// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+13, arg1: node+15, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+17, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+18, arg1: node+11, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+19},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+14, arg1: node+12},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+14, arg1: node+13, type: type1},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+16, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+17},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -76,33 +74,28 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:     node+18,
-// CHECK:STDOUT:     node+19,
-// CHECK:STDOUT:     node+20,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -111,23 +104,21 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc9 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: (i32,) {
+// CHECK:STDOUT: fn @F() -> (i32,) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_28.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_28.2: i32 = stub_reference %.loc7_28.1
-// CHECK:STDOUT:   %.loc7_30.1: (i32,) = tuple_value (%.loc7_28.2)
-// CHECK:STDOUT:   %.loc7_30.2: (i32,) = initialize_from %.loc7_30.1 to %return
-// CHECK:STDOUT:   return %.loc7_30.2
+// CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_value (%.loc7_28.2)
+// CHECK:STDOUT:   return %.loc7_30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run() -> %return: i32 {
+// CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_11.1: (i32,) = materialize_temporary
-// CHECK:STDOUT:   %.loc10_11.2: (i32,) = call @F() to %.loc10_11.1
+// CHECK:STDOUT:   %.loc10_11.1: (i32,) = call @F()
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 0
-// CHECK:STDOUT:   assign %.loc10_11.1, %.loc10_11.2
-// CHECK:STDOUT:   %.loc10_15.1: i32 = tuple_index %.loc10_11.1, %.loc10_14
+// CHECK:STDOUT:   %.loc10_11.2: (i32,) = materialize_temporary
+// CHECK:STDOUT:   assign %.loc10_11.2, %.loc10_11.1
+// CHECK:STDOUT:   %.loc10_15.1: i32 = tuple_index %.loc10_11.2, %.loc10_14
 // CHECK:STDOUT:   %.loc10_15.2: i32 = value_binding %.loc10_15.1
-// CHECK:STDOUT:   %.loc10_15.3: i32 = initialize_from %.loc10_15.2 to %return
-// CHECK:STDOUT:   return %.loc10_15.3
+// CHECK:STDOUT:   return %.loc10_15.2
 // CHECK:STDOUT: }

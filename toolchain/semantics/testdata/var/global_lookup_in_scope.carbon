@@ -33,14 +33,12 @@ fn Main() {
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+2, arg1: node+0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+3},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: type0},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+8, arg1: node+6, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+9},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+7},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -52,31 +50,27 @@ fn Main() {
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %.loc7_14.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc7_14.2: i32 = initialize_from %.loc7_14.1 to %x
-// CHECK:STDOUT:   assign %x, %.loc7_14.2
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 0
+// CHECK:STDOUT:   assign %x, %.loc7
 // CHECK:STDOUT:   %.loc9 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   %.loc7_5.1: i32 = value_binding package.%x
-// CHECK:STDOUT:   %.loc7_5.2: i32 = initialize_from %.loc7_5.1 to %y
-// CHECK:STDOUT:   assign %y, %.loc7_5.2
+// CHECK:STDOUT:   %.loc7: i32 = value_binding package.%x
+// CHECK:STDOUT:   assign %y, %.loc7
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

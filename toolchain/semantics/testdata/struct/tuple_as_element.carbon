@@ -55,18 +55,16 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type2},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+14, type: type2},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block5, type: type3},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+17, arg1: node+7, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+18},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+17},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, arg1: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block8, type: type1},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type2},
 // CHECK:STDOUT:   {kind: StructType, arg0: block7, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
-// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+25, type: type3},
+// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+24, type: type3},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+7, type: type3},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+27, arg1: node+25, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+25, arg1: node+28},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+24, arg1: node+26},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -98,8 +96,6 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:     node+25,
 // CHECK:STDOUT:     node+26,
 // CHECK:STDOUT:     node+27,
-// CHECK:STDOUT:     node+28,
-// CHECK:STDOUT:     node+29,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -120,11 +116,11 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+20,
-// CHECK:STDOUT:     node+23,
+// CHECK:STDOUT:     node+19,
+// CHECK:STDOUT:     node+22,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+21,
+// CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -141,14 +137,12 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.loc7_47.2: i32 = stub_reference %.loc7_47.1
 // CHECK:STDOUT:   %.loc7_49: (i32,) = tuple_value (%.loc7_47.2)
 // CHECK:STDOUT:   %.loc7_44: (i32,) = stub_reference %.loc7_49
-// CHECK:STDOUT:   %.loc7_50.1: {.a: i32, .b: (i32,)} = struct_value (%.loc7_36, %.loc7_44)
-// CHECK:STDOUT:   %.loc7_50.2: {.a: i32, .b: (i32,)} = initialize_from %.loc7_50.1 to %x
-// CHECK:STDOUT:   assign %x, %.loc7_50.2
+// CHECK:STDOUT:   %.loc7_50: {.a: i32, .b: (i32,)} = struct_value (%.loc7_36, %.loc7_44)
+// CHECK:STDOUT:   assign %x, %.loc7_50
 // CHECK:STDOUT:   %.loc8_23: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_27: (type,) = tuple_value (%.loc8_23)
 // CHECK:STDOUT:   %.loc8_28: type = struct_type {.a: i32, .b: (i32,)}
 // CHECK:STDOUT:   %y: {.a: i32, .b: (i32,)} = var
-// CHECK:STDOUT:   %.loc7_5.1: {.a: i32, .b: (i32,)} = value_binding %x
-// CHECK:STDOUT:   %.loc7_5.2: {.a: i32, .b: (i32,)} = initialize_from %.loc7_5.1 to %y
-// CHECK:STDOUT:   assign %y, %.loc7_5.2
+// CHECK:STDOUT:   %.loc7_5: {.a: i32, .b: (i32,)} = value_binding %x
+// CHECK:STDOUT:   assign %y, %.loc7_5
 // CHECK:STDOUT: }

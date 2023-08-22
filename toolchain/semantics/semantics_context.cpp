@@ -271,7 +271,7 @@ auto SemanticsContext::is_current_position_reachable() -> bool {
 
 auto SemanticsContext::Initialize(ParseTree::Node parse_node,
                                   SemanticsNodeId target_id,
-                                  SemanticsNodeId value_id) -> SemanticsNodeId {
+                                  SemanticsNodeId value_id) -> void {
   // Implicitly convert the value to the type of the target.
   auto type_id = semantics_ir().GetNode(target_id).type_id();
   auto expr_id = ImplicitAsRequired(parse_node, value_id, type_id);
@@ -297,12 +297,13 @@ auto SemanticsContext::Initialize(ParseTree::Node parse_node,
     case SemanticsExpressionCategory::Value:
       // TODO: For class types, use an interface to determine how to perform
       // this operation.
-      return AddNode(SemanticsNode::InitializeFrom::Make(
-          expr.parse_node(), expr.type_id(), expr_id, target_id));
+      AddNode(
+          SemanticsNode::Assign::Make(expr.parse_node(), target_id, expr_id));
+      return;
 
     case SemanticsExpressionCategory::Initializing:
       MarkInitializerFor(expr_id, target_id);
-      return expr_id;
+      return;
   }
 }
 
@@ -316,6 +317,8 @@ auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
 
     case SemanticsExpressionCategory::Initializing: {
       // Commit to using a temporary for this initializing expression.
+      // TODO: Don't create a temporary if the initializing representation is
+      // already a value representation.
       expr_id = FinalizeTemporary(expr_id, /*discarded=*/false);
       [[fallthrough]];
     }
@@ -357,31 +360,35 @@ auto SemanticsContext::FinalizeTemporary(SemanticsNodeId init_id,
 
       case SemanticsNodeKind::Call: {
         auto [refs_id, callee_id] = init.GetAsCall();
-        if (!semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
-          if (discarded) {
-            // Don't invent a temporary that we're going to discard.
-            return SemanticsNodeId::Invalid;
-          }
-
-          // The function has no return slot, which means it represents an
-          // empty tuple. Materialize one now.
-          auto temporary_id = AddNode(SemanticsNode::MaterializeTemporary::Make(
-              init.parse_node(), CanonicalizeTupleType(init.parse_node(), {})));
-          // TODO: Do we need to create an empty TupleValue and Assign it to the
-          // temporary?
+        if (semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
+          // The return slot should have a materialized temporary in it.
+          auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
+          CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
+                       SemanticsNodeKind::MaterializeTemporary)
+              << "Return slot for function call does not contain a temporary; "
+              << "initialized multiple times? Have "
+              << semantics_ir().GetNode(temporary_id);
           return temporary_id;
         }
 
-        // The return slot should have a materialized temporary in it. Assign
-        // the initializer to it and return its address.
-        auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
-        auto temporary = semantics_ir().GetNode(temporary_id);
-        CARBON_CHECK(temporary.kind() ==
-                     SemanticsNodeKind::MaterializeTemporary)
-            << "Return slot for function call does not contain a temporary; "
-            << "initialized multiple times? Have " << temporary;
-        AddNode(SemanticsNode::Assign::Make(temporary.parse_node(),
-                                            temporary_id, init_id));
+        if (discarded) {
+          // Don't invent a temporary that we're going to discard.
+          return SemanticsNodeId::Invalid;
+        }
+
+        // The function has no return slot, but we want to produce a temporary
+        // object. Materialize one now.
+        auto temporary_id = AddNode(SemanticsNode::MaterializeTemporary::Make(
+            init.parse_node(), init.type_id()));
+        if (GetSemanticsInitializingRepresentation(semantics_ir(),
+                                                   init.type_id())
+                .kind != SemanticsInitializingRepresentation::None) {
+          AddNode(SemanticsNode::Assign::Make(init.parse_node(), temporary_id,
+                                              init_id));
+        } else {
+          // TODO: Should we create an empty value and Assign it to the
+          // temporary?
+        }
         return temporary_id;
       }
 
@@ -426,6 +433,11 @@ auto SemanticsContext::MarkInitializerFor(SemanticsNodeId init_id,
               << "initialized multiple times? Have " << temporary;
           semantics_ir().ReplaceNode(
               temporary_id, SemanticsNode::NoOp::Make(temporary.parse_node()));
+        } else if (GetSemanticsInitializingRepresentation(semantics_ir(),
+                                                          init.type_id())
+                       .kind != SemanticsInitializingRepresentation::None) {
+          AddNode(SemanticsNode::Assign::Make(init.parse_node(), target_id,
+                                              init_id));
         }
         return;
       }

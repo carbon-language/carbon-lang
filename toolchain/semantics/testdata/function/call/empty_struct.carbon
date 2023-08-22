@@ -14,7 +14,7 @@ fn Main() {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type0, return_slot: node+5, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type0, body: {block4}}},
 // CHECK:STDOUT:   {name: str2, param_refs: block0, body: {block5}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
@@ -40,14 +40,11 @@ fn Main() {
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+2, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+7, arg1: node+5, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+11, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+10, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+14},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -66,24 +63,20 @@ fn Main() {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+14,
-// CHECK:STDOUT:     node+15,
-// CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -92,19 +85,16 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Echo(%a: {}) -> %return: {} {
+// CHECK:STDOUT: fn @Echo(%a: {}) -> {} {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_9.1: {} = value_binding %a
-// CHECK:STDOUT:   %.loc7_9.2: {} = initialize_from %.loc7_9.1 to %return
-// CHECK:STDOUT:   return %.loc7_9.2
+// CHECK:STDOUT:   %.loc7: {} = value_binding %a
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_9.1: {} = struct_value ()
 // CHECK:STDOUT:   %.loc12_9.2: {} = stub_reference %.loc12_9.1
-// CHECK:STDOUT:   %.loc12_7.1: {} = materialize_temporary
-// CHECK:STDOUT:   %.loc12_7.2: {} = call @Echo(%.loc12_9.2) to %.loc12_7.1
-// CHECK:STDOUT:   assign %.loc12_7.1, %.loc12_7.2
+// CHECK:STDOUT:   %.loc12_7: {} = call @Echo(%.loc12_9.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

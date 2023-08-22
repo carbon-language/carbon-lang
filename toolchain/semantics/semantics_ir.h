@@ -437,6 +437,9 @@ struct SemanticsInitializingRepresentation {
   };
   // The kind of initializing representation used by this type.
   Kind kind;
+
+  // Returns whether a return slot is used when returning this type.
+  bool has_return_slot() const { return kind == InPlace; }
 };
 
 // Returns information about the initializing representation to use for a type.

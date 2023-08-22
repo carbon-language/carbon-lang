@@ -10,7 +10,7 @@ fn Not(b: bool) -> bool {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type0, return_slot: node+2, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type0, body: {block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -32,8 +32,7 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+4, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+5, arg1: node+2, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+6},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -53,7 +52,6 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -61,10 +59,9 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Not
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Not(%b: bool) -> %return: bool {
+// CHECK:STDOUT: fn @Not(%b: bool) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7: bool = value_binding %b
-// CHECK:STDOUT:   %.loc8_10.1: bool = not %.loc7
-// CHECK:STDOUT:   %.loc8_10.2: bool = initialize_from %.loc8_10.1 to %return
-// CHECK:STDOUT:   return %.loc8_10.2
+// CHECK:STDOUT:   %.loc8: bool = not %.loc7
+// CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }

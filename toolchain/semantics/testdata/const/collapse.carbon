@@ -14,7 +14,7 @@ fn F(p: const i32**) -> const (const i32)** {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type3, return_slot: node+9, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type3, body: {block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -45,8 +45,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+3, type: type3},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, arg1: node+9, type: type3},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+12},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+11},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -72,7 +71,6 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -80,9 +78,8 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   %.loc11 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p: const i32**) -> %return: const i32** {
+// CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_6.1: const i32** = value_binding %p
-// CHECK:STDOUT:   %.loc11_6.2: const i32** = initialize_from %.loc11_6.1 to %return
-// CHECK:STDOUT:   return %.loc11_6.2
+// CHECK:STDOUT:   %.loc11: const i32** = value_binding %p
+// CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }

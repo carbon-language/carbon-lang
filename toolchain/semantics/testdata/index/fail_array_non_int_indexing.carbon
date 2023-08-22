@@ -45,13 +45,11 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type2},
 // CHECK:STDOUT:   {kind: ArrayValue, arg0: node+7, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+8, arg1: node+2, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+9},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+8},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+11, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+10, type: type0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type3},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+11, type: typeError},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+11, arg1: node+14},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+10, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -71,8 +69,6 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+14,
-// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
@@ -88,10 +84,8 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc7_23.1: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc7_23.2: (i32,) = tuple_value (%.loc7_20.2)
 // CHECK:STDOUT:   %.loc7_23.3: [i32; 1] = array_value %.loc7_23.2
-// CHECK:STDOUT:   %.loc7_23.4: [i32; 1] = initialize_from %.loc7_23.3 to %a
-// CHECK:STDOUT:   assign %a, %.loc7_23.4
+// CHECK:STDOUT:   assign %a, %.loc7_23.3
 // CHECK:STDOUT:   %b: i32 = var
 // CHECK:STDOUT:   %.loc11: f64 = real_literal 26e-1
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %b
-// CHECK:STDOUT:   assign %b, %.1
+// CHECK:STDOUT:   assign %b, <error>
 // CHECK:STDOUT: }

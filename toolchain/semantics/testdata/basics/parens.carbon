@@ -29,8 +29,7 @@ var test_i32: i32 = ((1) + (2));
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+2, arg1: node+3, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+4, arg1: node+0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+5},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+4},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -42,7 +41,6 @@ var test_i32: i32 = ((1) + (2));
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -50,7 +48,6 @@ var test_i32: i32 = ((1) + (2));
 // CHECK:STDOUT:   %test_i32: i32 = var
 // CHECK:STDOUT:   %.loc7_23: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_29: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc7_26.1: i32 = add %.loc7_23, %.loc7_29
-// CHECK:STDOUT:   %.loc7_26.2: i32 = initialize_from %.loc7_26.1 to %test_i32
-// CHECK:STDOUT:   assign %test_i32, %.loc7_26.2
+// CHECK:STDOUT:   %.loc7_26: i32 = add %.loc7_23, %.loc7_29
+// CHECK:STDOUT:   assign %test_i32, %.loc7_26
 // CHECK:STDOUT: }

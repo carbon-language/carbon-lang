@@ -38,8 +38,7 @@ var y: i32 = x;
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+4, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+4, type: typeError},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+6},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -49,7 +48,6 @@ var y: i32 = x;
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
@@ -61,8 +59,7 @@ var y: i32 = x;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %y
-// CHECK:STDOUT:   assign %y, %.1
+// CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

@@ -123,10 +123,9 @@ class SemanticsContext {
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemanticsNodeId expr_id) -> SemanticsNodeId;
 
-  // Performs initialization of `target_id` from `value_id`. Returns the
-  // converted initializer value.
+  // Performs initialization of `target_id` from `value_id`.
   auto Initialize(ParseTree::Node parse_node, SemanticsNodeId target_id,
-                  SemanticsNodeId value_id) -> SemanticsNodeId;
+                  SemanticsNodeId value_id) -> void;
 
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(ParseTree::Node parse_node,

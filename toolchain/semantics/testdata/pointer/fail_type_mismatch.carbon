@@ -13,7 +13,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type4, return_slot: node+9, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type4, body: {block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -44,8 +44,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   {kind: ConstType, arg0: type3, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type4},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+9, type: typeError},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+11},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -70,7 +69,6 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -78,8 +76,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %.loc7 = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> %return: const ({}*) {
+// CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %return
-// CHECK:STDOUT:   return %.1
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

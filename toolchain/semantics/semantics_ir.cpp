@@ -537,7 +537,7 @@ auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
                                      SemanticsTypeId type_id)
     -> SemanticsValueRepresentation {
   const SemanticsIR* ir = &semantics_ir;
-  SemanticsNodeId node_id = ir->GetType(type_id);
+  SemanticsNodeId node_id = ir->GetTypeAllowBuiltinTypes(type_id);
   while (true) {
     auto node = ir->GetNode(node_id);
     switch (node.kind()) {
@@ -609,7 +609,7 @@ auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
           // A struct with one field has the same representation as its field.
           auto [field_name_id, field_type_id] =
               ir->GetNode(fields.front()).GetAsStructTypeField();
-          node_id = ir->GetType(field_type_id);
+          node_id = ir->GetTypeAllowBuiltinTypes(field_type_id);
           continue;
         }
         // For any other struct, use a pointer representation.
@@ -625,7 +625,7 @@ auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
         }
         if (elements.size() == 1) {
           // A one-tuple has the same representation as its sole element.
-          node_id = ir->GetType(elements.front());
+          node_id = ir->GetTypeAllowBuiltinTypes(elements.front());
           continue;
         }
         // For any other tuple, use a pointer representation.
@@ -656,7 +656,7 @@ auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
         return {.kind = SemanticsValueRepresentation::Copy, .type = type_id};
 
       case SemanticsNodeKind::ConstType:
-        node_id = ir->GetType(node.GetAsConstType());
+        node_id = ir->GetTypeAllowBuiltinTypes(node.GetAsConstType());
         continue;
     }
   }

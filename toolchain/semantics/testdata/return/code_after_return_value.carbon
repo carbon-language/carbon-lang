@@ -18,7 +18,7 @@ fn F(b: bool) -> i32 {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, return_slot: node+2, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -44,25 +44,23 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+4, arg1: node+2, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+7, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: unreachable, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+12, arg1: node+7, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+13},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+11},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: false, type: type0},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
-// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+17, type: type0},
+// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+15, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: unreachable, arg1: node+20},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: unreachable, arg1: node+18},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: unreachable, type: type0},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: unreachable, arg1: node+22},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: unreachable, arg1: node+20},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: unreachable, type: type0},
 // CHECK:STDOUT:   {kind: Branch, arg0: unreachable},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
@@ -84,7 +82,6 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -92,9 +89,8 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b: bool) -> %return: i32 {
+// CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_10.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc8_10.2: i32 = initialize_from %.loc8_10.1 to %return
-// CHECK:STDOUT:   return %.loc8_10.2
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0
+// CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }

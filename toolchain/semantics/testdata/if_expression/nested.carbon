@@ -10,7 +10,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, return_slot: node+6, body: {block4, block5, block7, block8, block9, block6, block10, block11, block12, block13}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block7, block8, block9, block6, block10, block11, block12, block13}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -63,8 +63,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+18},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+26},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block13, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+29, arg1: node+6, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+30},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+29},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -128,7 +127,6 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+29,
 // CHECK:STDOUT:     node+30,
-// CHECK:STDOUT:     node+31,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -136,7 +134,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> %return: i32 {
+// CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_6: bool = value_binding %a
 // CHECK:STDOUT:   if %.loc7_6 br !if.expr.then.loc8_10 else br !if.expr.else.loc8_10
@@ -174,7 +172,6 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   br !if.expr.result.loc8_10(%.loc8_44)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc8_10:
-// CHECK:STDOUT:   %.loc8_10.1: i32 = block_arg !if.expr.result.loc8_10
-// CHECK:STDOUT:   %.loc8_10.2: i32 = initialize_from %.loc8_10.1 to %return
-// CHECK:STDOUT:   return %.loc8_10.2
+// CHECK:STDOUT:   %.loc8_10: i32 = block_arg !if.expr.result.loc8_10
+// CHECK:STDOUT:   return %.loc8_10
 // CHECK:STDOUT: }

@@ -27,15 +27,10 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
     return_slot_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
     return_type_id = context.semantics_ir().GetNode(return_slot_id).type_id();
 
-    // If the function has an explicit return type of `()`, it has no return
-    // slot, to keep the IR for explicit and implicit non-value-returning
-    // functions consistent.
-    auto return_type = context.semantics_ir().GetNode(
-        context.semantics_ir().GetTypeAllowBuiltinTypes(return_type_id));
-    if (return_type.kind() == SemanticsNodeKind::TupleType &&
-        context.semantics_ir()
-            .GetTypeBlock(return_type.GetAsTupleType())
-            .empty()) {
+    // The function only has a return slot if it uses in-place initialization.
+    if (!GetSemanticsInitializingRepresentation(context.semantics_ir(),
+                                                return_type_id)
+             .has_return_slot()) {
       return_slot_id = SemanticsNodeId::Invalid;
     }
   }

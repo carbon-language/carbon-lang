@@ -31,11 +31,11 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   node+1,
 // CHECK:STDOUT:   node+6,
 // CHECK:STDOUT:   nodeFloatingPointType,
-// CHECK:STDOUT:   node+12,
-// CHECK:STDOUT:   node+19,
-// CHECK:STDOUT:   node+24,
-// CHECK:STDOUT:   node+27,
-// CHECK:STDOUT:   node+40,
+// CHECK:STDOUT:   node+11,
+// CHECK:STDOUT:   node+18,
+// CHECK:STDOUT:   node+22,
+// CHECK:STDOUT:   node+25,
+// CHECK:STDOUT:   node+38,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT:   [
@@ -65,27 +65,27 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type2},
 // CHECK:STDOUT:   {kind: ArrayValue, arg0: node+7, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+8, arg1: node+2, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+9},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+8},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type0},
-// CHECK:STDOUT:   {kind: ArrayType, arg0: node+11, arg1: type3, type: typeTypeType},
+// CHECK:STDOUT:   {kind: ArrayType, arg0: node+10, arg1: type3, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type4},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+13, type: type4},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+12, type: type4},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type3},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+15, type: type3},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+14, type: type3},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real1, type: type3},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+17, type: type3},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+16, type: type3},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type5},
-// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+20, type: type4},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+21, arg1: node+13, type: type4},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+22},
+// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+19, type: type4},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+20},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type6},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type0},
-// CHECK:STDOUT:   {kind: ArrayType, arg0: node+26, arg1: type6, type: typeTypeType},
+// CHECK:STDOUT:   {kind: ArrayType, arg0: node+24, arg1: type6, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type7},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+28, type: type7},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+26, type: type7},
+// CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type6},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+28, type: type6},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type6},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+30, type: type6},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type6},
@@ -94,13 +94,10 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+34, type: type6},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type6},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+36, type: type6},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type6},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+38, type: type6},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock3, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type8},
-// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+41, type: type7},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+42, arg1: node+28, type: type7},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+28, arg1: node+43},
+// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+39, type: type7},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+26, arg1: node+40},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -148,23 +145,20 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:     node+39,
 // CHECK:STDOUT:     node+40,
 // CHECK:STDOUT:     node+41,
-// CHECK:STDOUT:     node+42,
-// CHECK:STDOUT:     node+43,
-// CHECK:STDOUT:     node+44,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+16,
-// CHECK:STDOUT:     node+18,
+// CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+29,
 // CHECK:STDOUT:     node+31,
 // CHECK:STDOUT:     node+33,
 // CHECK:STDOUT:     node+35,
 // CHECK:STDOUT:     node+37,
-// CHECK:STDOUT:     node+39,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -177,8 +171,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc7_22.1: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc7_22.2: (i32,) = tuple_value (%.loc7_20.2)
 // CHECK:STDOUT:   %.loc7_22.3: [i32; 1] = array_value %.loc7_22.2
-// CHECK:STDOUT:   %.loc7_22.4: [i32; 1] = initialize_from %.loc7_22.3 to %a
-// CHECK:STDOUT:   assign %a, %.loc7_22.4
+// CHECK:STDOUT:   assign %a, %.loc7_22.3
 // CHECK:STDOUT:   %.loc8_14: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc8_15: type = array_type %.loc8_14, f64
 // CHECK:STDOUT:   %b: [f64; 2] = var
@@ -189,8 +182,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc8_30.1: type = tuple_type (f64, f64)
 // CHECK:STDOUT:   %.loc8_30.2: (f64, f64) = tuple_value (%.loc8_20.2, %.loc8_26.2)
 // CHECK:STDOUT:   %.loc8_30.3: [f64; 2] = array_value %.loc8_30.2
-// CHECK:STDOUT:   %.loc8_30.4: [f64; 2] = initialize_from %.loc8_30.3 to %b
-// CHECK:STDOUT:   assign %b, %.loc8_30.4
+// CHECK:STDOUT:   assign %b, %.loc8_30.3
 // CHECK:STDOUT:   %.loc9_10.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc9_10.2: () = tuple_value ()
 // CHECK:STDOUT:   %.loc9_13: i32 = int_literal 5
@@ -209,6 +201,5 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc9_38.1: type = tuple_type ((), (), (), (), ())
 // CHECK:STDOUT:   %.loc9_38.2: ((), (), (), (), ()) = tuple_value (%.loc9_20.2, %.loc9_24.2, %.loc9_28.2, %.loc9_32.2, %.loc9_36.2)
 // CHECK:STDOUT:   %.loc9_38.3: [(); 5] = array_value %.loc9_38.2
-// CHECK:STDOUT:   %.loc9_38.4: [(); 5] = initialize_from %.loc9_38.3 to %c
-// CHECK:STDOUT:   assign %c, %.loc9_38.4
+// CHECK:STDOUT:   assign %c, %.loc9_38.3
 // CHECK:STDOUT: }

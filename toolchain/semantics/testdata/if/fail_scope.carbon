@@ -17,7 +17,7 @@ fn VarScope(b: bool) -> i32 {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, return_slot: node+2, body: {block4, block5, block6}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block6}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   2,
@@ -46,14 +46,11 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+7, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+9, arg1: node+7, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+10},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+9},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+7, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+12, arg1: node+2, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+13},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+11},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+2, type: typeError},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+16},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -81,12 +78,9 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+16,
-// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -94,21 +88,18 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc7 = fn_decl @VarScope
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @VarScope(%b: bool) -> %return: i32 {
+// CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7: bool = value_binding %b
 // CHECK:STDOUT:   if %.loc7 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %n: i32 = var
-// CHECK:STDOUT:   %.loc9_18.1: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc9_18.2: i32 = initialize_from %.loc9_18.1 to %n
-// CHECK:STDOUT:   assign %n, %.loc9_18.2
-// CHECK:STDOUT:   %.loc9_9.1: i32 = value_binding %n
-// CHECK:STDOUT:   %.loc9_9.2: i32 = initialize_from %.loc9_9.1 to %return
-// CHECK:STDOUT:   return %.loc9_9.2
+// CHECK:STDOUT:   %.loc9_18: i32 = int_literal 2
+// CHECK:STDOUT:   assign %n, %.loc9_18
+// CHECK:STDOUT:   %.loc9_9: i32 = value_binding %n
+// CHECK:STDOUT:   return %.loc9_9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %return
-// CHECK:STDOUT:   return %.1
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

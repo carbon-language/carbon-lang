@@ -34,8 +34,7 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type1},
 // CHECK:STDOUT:   {kind: StructType, arg0: block0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type2},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+2, type: typeError},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+6},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -48,7 +47,6 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -60,6 +58,5 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:   %x: {.a: i32} = var
 // CHECK:STDOUT:   %.loc10_21.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_21.2: {} = struct_value ()
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %x
-// CHECK:STDOUT:   assign %x, %.1
+// CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
