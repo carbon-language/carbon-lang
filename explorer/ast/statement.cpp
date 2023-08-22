@@ -15,41 +15,29 @@ using llvm::cast;
 
 Statement::~Statement() = default;
 
-void Statement::PrintDepth(int depth, int indent_num_spaces,
+void Statement::PrintIndent(int indent_num_spaces,
                            llvm::raw_ostream& out) const {
   if(kind() != StatementKind::Block) {
     out.indent(indent_num_spaces);
   }
-  if (depth == 0) {
-    out.indent(indent_num_spaces) << " ... ";
-    return;
-  }
+
   switch (kind()) {
     case StatementKind::Match: {
       const auto& match = cast<Match>(*this);
-      out << "match (" << match.expression() << ") {";
-      if (depth < 0 || depth > 1) {
+      out << "match (" << match.expression() << ") {\n";
+      for (const auto& clause : match.clauses()) {
+        out.indent(indent_num_spaces + 2)
+            << "case " << clause.pattern() << " => \n";
+        clause.statement().PrintIndent( indent_num_spaces + 2, out);
         out << "\n";
-        for (const auto& clause : match.clauses()) {
-          out.indent(indent_num_spaces + 2)
-              << "case " << clause.pattern() << " => \n";
-          clause.statement().PrintDepth(depth - 1, indent_num_spaces + 2, out);
-          out << "\n";
-        }
-        out.indent(indent_num_spaces) << "}";
-      } else {
-        out << "...";
       }
+      out.indent(indent_num_spaces) << "}";
       break;
     }
     case StatementKind::While: {
       const auto& while_stmt = cast<While>(*this);
       out << "while (" << while_stmt.condition() << ")\n";
-      if (depth < 0 || depth > 1) {
-        while_stmt.body().PrintDepth(depth - 1, indent_num_spaces, out);
-      } else {
-        out << "...";
-      }
+      while_stmt.body().PrintIndent(indent_num_spaces, out);
       break;
     }
     case StatementKind::For: {
@@ -57,11 +45,7 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
       out
           << "for (" << for_stmt.variable_declaration() << " in "
           << for_stmt.loop_target() << ")\n";
-      if (depth < 0 || depth > 1) {
-        for_stmt.body().PrintDepth(depth - 1, indent_num_spaces + 2, out);
-      } else {
-        out << "...";
-      }
+      for_stmt.body().PrintIndent(indent_num_spaces + 2, out);
       break;
     }
     case StatementKind::Break:
@@ -99,19 +83,13 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
     case StatementKind::If: {
       const auto& if_stmt = cast<If>(*this);
       out << "if (" << if_stmt.condition() << ")";
-      if (depth < 0 || depth > 1) {
+      out << "\n";
+      if_stmt.then_block().PrintIndent(indent_num_spaces, out);
+      if (if_stmt.else_block()) {
         out << "\n";
-        if_stmt.then_block().PrintDepth(depth - 1, indent_num_spaces, out);
-        if (if_stmt.else_block()) {
-          out << "\n";
-          out.indent(indent_num_spaces) << "else\n";
-          (*if_stmt.else_block())
-              ->PrintDepth(depth - 1, indent_num_spaces + 2, out);
-        }
-      } else {
-        if (if_stmt.else_block()) {
-          out << " ... else ...";
-        }
+        out.indent(indent_num_spaces) << "else\n";
+        (*if_stmt.else_block())
+            ->PrintIndent(indent_num_spaces + 2, out);
       }
       break;
     }
@@ -131,20 +109,12 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
     case StatementKind::Block: {
       const auto& block = cast<Block>(*this);
       const auto statements = block.statements();
-      if (depth < 0 || depth > 1) {
-        out.indent(indent_num_spaces) << "{\n";
-        for (const auto* statement : statements) {
-          statement->PrintDepth(depth, indent_num_spaces + 2, out);
-          out << "\n";
-        }
-        out.indent(indent_num_spaces) << "}";
-      } else {
-        out << "{";
-        for (const auto* statement : statements) {
-          statement->PrintDepth(depth, indent_num_spaces, out);
-        }
-        out.indent(indent_num_spaces) << "}";
+      out.indent(indent_num_spaces) << "{\n";
+      for (const auto* statement : statements) {
+        statement->PrintIndent(indent_num_spaces + 2, out);
+        out << "\n";
       }
+      out.indent(indent_num_spaces) << "}";
       break;
     }
   }
