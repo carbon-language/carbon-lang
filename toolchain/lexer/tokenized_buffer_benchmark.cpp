@@ -109,7 +109,7 @@ void BM_ValidIdentifiers(benchmark::State& state) {
   llvm::ListSeparator sep(" ");
   for (int i : llvm::seq(0, NumTokens)) {
     static_cast<void>(i);
-    int length = absl::Uniform<int>(gen, min_length, max_length);
+    int length = absl::Uniform<int>(absl::IntervalClosedClosed, gen, min_length, max_length);
     os << sep;
     int id_start = source.size();
     llvm::StringRef id;
