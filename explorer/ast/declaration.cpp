@@ -30,9 +30,6 @@ void Declaration::PrintIndent(int indent_num_spaces, llvm::raw_ostream& out) con
     case DeclarationKind::ConstraintDeclaration: {
       const auto& iface_decl = cast<ConstraintTypeDeclaration>(*this);
       out << PrintAsID(*this);
-      if(auto params =iface_decl.params()) {
-        out <<  " " << **params << " ";
-      }
       out << " {\n";
       for (Nonnull<Declaration*> m : iface_decl.members()) {
         out.indent(indent_num_spaces + 2) << *m << "\n";

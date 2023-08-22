@@ -18,5 +18,5 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> declaring `interface As` (prelude.carbon:14)
 // CHECK:STDOUT: ->> declaring function `Main` (context_all.carbon:11)
 // CHECK:STDOUT: interface As {
-// CHECK:STDOUT: fn Main () -> i32 {
+// CHECK:STDOUT: fn Main () -> i32
 // CHECK:STDOUT: ->> step ExpressionAction pos: 0 `Main()` (<Main()>:0) --->

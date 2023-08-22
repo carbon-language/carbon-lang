@@ -35,7 +35,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_execution.carbon:12)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main () -> i32 {
+// CHECK:STDOUT: fn Main () -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   var x: T = {}.(interface ImplicitAs(T = class T).Convert)();
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }

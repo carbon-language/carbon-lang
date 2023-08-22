@@ -29,11 +29,13 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: namespace N;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn Foo (n: i32) -> i32 {
+// CHECK:STDOUT: fn Foo (n: i32) -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn Main () -> i32 {
+// CHECK:STDOUT: fn Main () -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   var x: i32 = N.Foo(0);
 // CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
@@ -170,7 +172,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:13)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Foo (n: i32) -> i32 {
+// CHECK:STDOUT: fn Foo (n: i32) -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
@@ -199,7 +202,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking declaration at (phase_all.carbon:13)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Foo (n: i32) -> i32 {
+// CHECK:STDOUT: fn Foo (n: i32) -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
@@ -275,7 +279,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:18)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main () -> i32 {
+// CHECK:STDOUT: fn Main () -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   var x: i32 = N.Foo(0);
 // CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
@@ -294,7 +299,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking declaration at (phase_all.carbon:18)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main () -> i32 {
+// CHECK:STDOUT: fn Main () -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   var x: i32 = N.Foo(0);
 // CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
@@ -423,11 +429,13 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: namespace N;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn Foo (n: i32) -> i32 {
+// CHECK:STDOUT: fn Foo (n: i32) -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn Main () -> i32 {
+// CHECK:STDOUT: fn Main () -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   var x: i32 = N.Foo(0);
 // CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
@@ -460,7 +468,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:13)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Foo (n: i32) -> i32 {
+// CHECK:STDOUT: fn Foo (n: i32) -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   return (n + 1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
@@ -470,7 +479,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:18)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main () -> i32 {
+// CHECK:STDOUT: fn Main () -> i32
+// CHECK:STDOUT: {
 // CHECK:STDOUT:   var x: i32 = N.Foo(0);
 // CHECK:STDOUT:   return x;
 // CHECK:STDOUT: }
