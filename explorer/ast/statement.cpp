@@ -15,6 +15,57 @@ using llvm::cast;
 
 Statement::~Statement() = default;
 
+void Statement::PrintID(llvm::raw_ostream& out) const {
+  switch(kind()) {
+    case StatementKind::Match: {
+      const auto& match = cast<Match>(*this);
+      out << "match (" << match.expression() << ") { ... }";
+      break;
+    }
+    case StatementKind::While: {
+      const auto& while_stmt = cast<While>(*this);
+      out << "while (" << while_stmt.condition() << ") { ... }";
+      break;
+    }
+    case StatementKind::For: {
+      const auto& for_stmt = cast<For>(*this);
+      out
+          << "for (" << for_stmt.variable_declaration() << " in "
+          << for_stmt.loop_target() << ") { ... }";
+      break;
+    }
+
+    case StatementKind::If: {
+      const auto& if_stmt = cast<If>(*this);
+      out << "if (" << if_stmt.condition() << ") { ... }";
+      if (if_stmt.else_block()) {
+        out << " else { ... }";
+      }
+      break;
+    }
+    case StatementKind::Block: {
+      const auto& block = cast<Block>(*this);
+      const auto statements = block.statements();
+      out << "{";
+      for (const auto* statement : statements) {
+        statement->Print(out);
+      }
+      out << "}";
+      break;
+    }
+    case StatementKind::Break:
+    case StatementKind::Continue:
+    case StatementKind::VariableDefinition:
+    case StatementKind::ExpressionStatement:
+    case StatementKind::Assign:
+    case StatementKind::IncrementDecrement:
+    case StatementKind::ReturnVar:
+    case StatementKind::ReturnExpression: {
+      Print(out);
+    }
+  }
+}
+
 void Statement::PrintIndent(int indent_num_spaces,
                            llvm::raw_ostream& out) const {
   if(kind() != StatementKind::Block) {
