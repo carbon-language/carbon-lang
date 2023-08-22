@@ -35,7 +35,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
         *trace_stream << sep << *declaration;
       }
     }
-    if(trace_stream->is_enabled()) {
+    if (trace_stream->is_enabled()) {
       *trace_stream << "\n";
     }
   }
@@ -82,7 +82,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
         *trace_stream << sep << *declaration;
       }
     }
-    if(trace_stream->is_enabled()) {
+    if (trace_stream->is_enabled()) {
       *trace_stream << "\n";
     }
   }

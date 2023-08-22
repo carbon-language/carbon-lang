@@ -14,11 +14,11 @@ using llvm::cast;
 
 Declaration::~Declaration() = default;
 
-void Declaration::Print(llvm::raw_ostream& out) const {
-  PrintIndent(0, out);
-}
-void Declaration::PrintIndent(int indent_num_spaces, llvm::raw_ostream& out) const {
-  if(kind() != DeclarationKind::FunctionDeclaration || kind() != DeclarationKind::DestructorDeclaration) {
+void Declaration::Print(llvm::raw_ostream& out) const { PrintIndent(0, out); }
+void Declaration::PrintIndent(int indent_num_spaces,
+                              llvm::raw_ostream& out) const {
+  if (kind() != DeclarationKind::FunctionDeclaration ||
+      kind() != DeclarationKind::DestructorDeclaration) {
     out.indent(indent_num_spaces);
   }
 
@@ -59,12 +59,10 @@ void Declaration::PrintIndent(int indent_num_spaces, llvm::raw_ostream& out) con
       break;
     }
     case DeclarationKind::FunctionDeclaration:
-      cast<FunctionDeclaration>(*this).PrintIndent(indent_num_spaces,
-                                                  out);
+      cast<FunctionDeclaration>(*this).PrintIndent(indent_num_spaces, out);
       break;
     case DeclarationKind::DestructorDeclaration:
-      cast<DestructorDeclaration>(*this).PrintIndent(indent_num_spaces,
-                                                    out);
+      cast<DestructorDeclaration>(*this).PrintIndent(indent_num_spaces, out);
       break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
@@ -130,8 +128,7 @@ void Declaration::PrintIndent(int indent_num_spaces, llvm::raw_ostream& out) con
 
     case DeclarationKind::AliasDeclaration: {
       const auto& alias = cast<AliasDeclaration>(*this);
-      out
-          << PrintAsID(alias) << " = " << alias.target() << ";";
+      out << PrintAsID(alias) << " = " << alias.target() << ";";
       break;
     }
 
@@ -413,7 +410,7 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
 }
 
 void CallableDeclaration::PrintIndent(int indent_num_spaces,
-                                     llvm::raw_ostream& out) const {
+                                      llvm::raw_ostream& out) const {
   auto name = GetName(*this);
   CARBON_CHECK(name) << "Unexpected missing name for `" << *this << "`.";
   out.indent(indent_num_spaces) << "fn " << *name << " ";
@@ -426,7 +423,7 @@ void CallableDeclaration::PrintIndent(int indent_num_spaces,
     out << "]";
   }
   out << *param_pattern_;
-  if(!return_term_.is_omitted()) {
+  if (!return_term_.is_omitted()) {
     out << " " << return_term_;
   }
   if (body_) {
