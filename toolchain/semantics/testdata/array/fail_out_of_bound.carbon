@@ -48,7 +48,8 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+8, type: type0},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+2, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+12},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -67,6 +68,7 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
@@ -87,5 +89,6 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:   %.loc10_26.2: i32 = stub_reference %.loc10_26.1
 // CHECK:STDOUT:   %.loc10_27.1: type = tuple_type (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_27.2: (i32, i32, i32) = tuple_value (%.loc10_20.2, %.loc10_23.2, %.loc10_26.2)
-// CHECK:STDOUT:   assign %a, <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %a
+// CHECK:STDOUT:   assign %a, %.1
 // CHECK:STDOUT: }

@@ -48,6 +48,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Run() {
 // CHECK:STDOUT:   %var = alloca [2 x i32], align 4
+// CHECK:STDOUT:   %temp = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %A = call { i32, i32 } @A()
 // CHECK:STDOUT:   %array = alloca [2 x i32], align 4
 // CHECK:STDOUT:   %array.element = extractvalue { i32, i32 } %A, 0
@@ -59,17 +60,23 @@ fn Run() {
 // CHECK:STDOUT:   %3 = load [2 x i32], ptr %array, align 4
 // CHECK:STDOUT:   store [2 x i32] %3, ptr %var, align 4
 // CHECK:STDOUT:   %var2 = alloca i32, align 4
-// CHECK:STDOUT:   %A3 = call { i32, i32 } @A()
-// CHECK:STDOUT:   %tuple.index = extractvalue { i32, i32 } %A3, 0
-// CHECK:STDOUT:   store i32 %tuple.index, ptr %var2, align 4
-// CHECK:STDOUT:   %var4 = alloca i32, align 4
-// CHECK:STDOUT:   %4 = load i32, ptr %var2, align 4
-// CHECK:STDOUT:   %array.index = getelementptr inbounds [2 x i32], ptr %var, i32 %4
-// CHECK:STDOUT:   %5 = load i32, ptr %array.index, align 4
-// CHECK:STDOUT:   store i32 %5, ptr %var4, align 4
+// CHECK:STDOUT:   %temp3 = alloca { i32, i32 }, align 8
+// CHECK:STDOUT:   %A4 = call { i32, i32 } @A()
+// CHECK:STDOUT:   store { i32, i32 } %A4, ptr %temp3, align 4
+// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32 }, ptr %temp3, i32 0, i32 0
+// CHECK:STDOUT:   %4 = load i32, ptr %tuple.index, align 4
+// CHECK:STDOUT:   store i32 %4, ptr %var2, align 4
 // CHECK:STDOUT:   %var5 = alloca i32, align 4
+// CHECK:STDOUT:   %5 = load i32, ptr %var2, align 4
+// CHECK:STDOUT:   %array.index = getelementptr inbounds [2 x i32], ptr %var, i32 %5
+// CHECK:STDOUT:   %6 = load i32, ptr %array.index, align 4
+// CHECK:STDOUT:   store i32 %6, ptr %var5, align 4
+// CHECK:STDOUT:   %var6 = alloca i32, align 4
+// CHECK:STDOUT:   %temp7 = alloca [2 x i32], align 4
 // CHECK:STDOUT:   %B = call [2 x i32] @B()
-// CHECK:STDOUT:   %array.index6 = extractvalue [2 x i32] %B, 1
-// CHECK:STDOUT:   store i32 %array.index6, ptr %var5, align 4
+// CHECK:STDOUT:   store [2 x i32] %B, ptr %temp7, align 4
+// CHECK:STDOUT:   %array.index8 = getelementptr inbounds [2 x i32], ptr %temp7, i32 0, i32 1
+// CHECK:STDOUT:   %7 = load i32, ptr %array.index8, align 4
+// CHECK:STDOUT:   store i32 %7, ptr %var6, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

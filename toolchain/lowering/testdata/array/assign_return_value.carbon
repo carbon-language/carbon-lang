@@ -25,6 +25,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Run() {
 // CHECK:STDOUT:   %var = alloca [2 x i32], align 4
+// CHECK:STDOUT:   %temp = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %F = call { i32, i32 } @F()
 // CHECK:STDOUT:   %array = alloca [2 x i32], align 4
 // CHECK:STDOUT:   %array.element = extractvalue { i32, i32 } %F, 0

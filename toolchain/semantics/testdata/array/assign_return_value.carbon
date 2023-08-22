@@ -12,8 +12,8 @@ fn Run() {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: {block3}}},
-// CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block5}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, return_slot: node+4, body: {block4}}},
+// CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block6}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -30,7 +30,7 @@ fn Run() {
 // CHECK:STDOUT:   node+1,
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT:   node+3,
-// CHECK:STDOUT:   node+11,
+// CHECK:STDOUT:   node+13,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT:   [
@@ -45,19 +45,23 @@ fn Run() {
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type0},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, type: type2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: type1},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type2},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+7},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+6, type: type1},
+// CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type2},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+8, arg1: node+4, type: type2},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+9},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: ArrayType, arg0: node+10, arg1: type1, type: typeTypeType},
+// CHECK:STDOUT:   {kind: ArrayType, arg0: node+12, arg1: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+12, type: type3},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
-// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+14, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+15},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+14, type: type3},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type2},
+// CHECK:STDOUT:   {kind: Call, arg0: block7, arg1: function0, type: type2},
+// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+17, type: type3},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+18, arg1: node+14, type: type3},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+14, arg1: node+19},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -69,47 +73,53 @@ fn Run() {
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+18,
+// CHECK:STDOUT:     node+19,
+// CHECK:STDOUT:     node+20,
+// CHECK:STDOUT:     node+21,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7_12: type = stub_reference i32
-// CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc7_16.2: (type,) = tuple_value (%.loc7_12)
-// CHECK:STDOUT:   %.loc7_16.3: type = tuple_type (i32)
-// CHECK:STDOUT:   %.loc7_1 = fn_decl @F
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc9 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> (i32,) {
+// CHECK:STDOUT: fn @F() -> %return: (i32,) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_28.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_28.2: i32 = stub_reference %.loc7_28.1
-// CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_value (%.loc7_28.2)
-// CHECK:STDOUT:   return %.loc7_30
+// CHECK:STDOUT:   %.loc7_30.1: (i32,) = tuple_value (%.loc7_28.2)
+// CHECK:STDOUT:   %.loc7_30.2: (i32,) = initialize_from %.loc7_30.1 to %return
+// CHECK:STDOUT:   return %.loc7_30.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -117,8 +127,10 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
 // CHECK:STDOUT:   %t: [i32; 1] = var
-// CHECK:STDOUT:   %.loc10_22.1: (i32,) = call @F()
-// CHECK:STDOUT:   %.loc10_22.2: [i32; 1] = array_value %.loc10_22.1
-// CHECK:STDOUT:   assign %t, %.loc10_22.2
+// CHECK:STDOUT:   %.loc10_22.1: (i32,) = materialize_temporary
+// CHECK:STDOUT:   %.loc10_22.2: (i32,) = call @F() to %.loc10_22.1
+// CHECK:STDOUT:   %.loc10_22.3: [i32; 1] = array_value %.loc10_22.2
+// CHECK:STDOUT:   %.loc10_22.4: [i32; 1] = initialize_from %.loc10_22.3 to %t
+// CHECK:STDOUT:   assign %t, %.loc10_22.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
