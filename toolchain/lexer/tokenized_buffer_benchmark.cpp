@@ -122,14 +122,12 @@ void BM_ValidIdentifiers(benchmark::State& state) {
       // Check if we ended up forming an integer type literal or a keyword, and
       // try again.
       id = llvm::StringRef(source).substr(id_start);
-    } while (
-      llvm::any_of(TokenKind::KeywordTokens, [id](auto token) {
-            return id == token.fixed_spelling();
-          }) ||
-      ((id.consume_front("i") || id.consume_front("u") ||
-          id.consume_front("f")) &&
-        llvm::all_of(id, [](const char c) {
-      return llvm::isDigit(c); })));
+    } while (llvm::any_of(
+                 TokenKind::KeywordTokens,
+                 [id](auto token) { return id == token.fixed_spelling(); }) ||
+             ((id.consume_front("i") || id.consume_front("u") ||
+               id.consume_front("f")) &&
+              llvm::all_of(id, [](const char c) { return llvm::isDigit(c); })));
   }
 
   LexerBenchHelper helper(source);
