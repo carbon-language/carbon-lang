@@ -388,19 +388,20 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
                                     SemanticsNodeId node_id)
     -> SemanticsExpressionCategory;
 
-// The value representation to use when passing or returning by value.
+// The value representation to use when passing by value.
 struct SemanticsValueRepresentation {
   enum Kind {
     // The type has no value representation. This is used for empty types, such
-    // as `()`.
+    // as `()`, where there is no value.
     None,
     // The value representation is a copy of the value. On call boundaries, the
-    // value itself will be passed or returned.
+    // value itself will be passed. `type` is the value type.
+    // TODO: `type` should be `const`-qualified, but is currently not.
     Copy,
-    // The value representation is a pointer to the object. When used as a
-    // parameter, the address of the value is passed. When used as a return
-    // type, a pointer to a return slot is passed to the function. `type` is the
-    // pointee type.
+    // The value representation is a pointer to an object. When used as a
+    // parameter, the argument is a reference expression. `type` is the pointee
+    // type.
+    // TODO: `type` should be `const`-qualified, but is currently not.
     Pointer,
     // The value representation has been customized, and has the same behavior
     // as the value representation of some other type.
@@ -417,6 +418,31 @@ struct SemanticsValueRepresentation {
 auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
                                      SemanticsTypeId type_id)
     -> SemanticsValueRepresentation;
+
+// The initializing representation to use when returning by value.
+struct SemanticsInitializingRepresentation {
+  enum Kind {
+    // The type has no initializing representation. This is used for empty
+    // types, where no initialization is necessary.
+    None,
+    // An initializing expression produces a value, which is copied into the
+    // initialized object.
+    ByCopy,
+    // An initializing expression takes a location as input, which is
+    // initialized as a side effect of evaluating the expression.
+    InPlace,
+    // TODO: Consider adding a kind where the expression takes an advisory
+    // location and returns a value plus an indicator of whether the location
+    // was actually initialized.
+  };
+  // The kind of initializing representation used by this type.
+  Kind kind;
+};
+
+// Returns information about the initializing representation to use for a type.
+auto GetSemanticsInitializingRepresentation(const SemanticsIR& semantics_ir,
+                                            SemanticsTypeId type_id)
+    -> SemanticsInitializingRepresentation;
 
 }  // namespace Carbon
 
