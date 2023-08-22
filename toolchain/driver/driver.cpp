@@ -388,6 +388,9 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
 
   StreamDiagnosticConsumer stream_consumer(error_stream_);
   DiagnosticConsumer* consumer = &stream_consumer;
+
+  // Note, the diagnostics consumer must be flushed before each `return` in this
+  // function, as diagnostics can refer to state that lives on our stack.
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
   if (vlog_stream_ == nullptr && !options.stream_errors) {
     sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
@@ -398,20 +401,16 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
                 << options.input_file_name << "' ***\n";
   auto source = SourceBuffer::CreateFromFile(fs_, options.input_file_name);
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile done ***\n";
-  // Require flushing the consumer before the source buffer is destroyed,
-  // because diagnostics may reference the buffer.
-  auto flush_for_source = llvm::make_scope_exit([&]() { consumer->Flush(); });
   if (!source.ok()) {
     error_stream_ << "ERROR: Unable to open input source file: "
                   << source.error();
+    consumer->Flush();
     return false;
   }
   CARBON_VLOG() << "*** file:\n```\n" << source->text() << "\n```\n";
 
   CARBON_VLOG() << "*** TokenizedBuffer::Lex ***\n";
   auto tokenized_source = TokenizedBuffer::Lex(*source, *consumer);
-  // Diagnostics may reference the tokenized buffer.
-  auto flush_for_tokens = llvm::make_scope_exit([&]() { consumer->Flush(); });
   bool has_errors = tokenized_source.has_errors();
   CARBON_VLOG() << "*** TokenizedBuffer::Lex done ***\n";
   if (options.dump_tokens) {
@@ -421,13 +420,12 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
   CARBON_VLOG() << "tokenized_buffer: " << tokenized_source;
   if (options.phase == Phase::Lex) {
+    consumer->Flush();
     return !has_errors;
   }
 
   CARBON_VLOG() << "*** ParseTree::Parse ***\n";
   auto parse_tree = ParseTree::Parse(tokenized_source, *consumer, vlog_stream_);
-  // Diagnostics may reference the parse tree.
-  auto flush_for_parse = llvm::make_scope_exit([&]() { consumer->Flush(); });
   has_errors |= parse_tree.has_errors();
   CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
   if (options.dump_parse_tree) {
@@ -436,6 +434,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
   CARBON_VLOG() << "parse_tree: " << parse_tree;
   if (options.phase == Phase::Parse) {
+    consumer->Flush();
     return !has_errors;
   }
 
@@ -443,12 +442,15 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
   const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
       builtin_ir, tokenized_source, parse_tree, *consumer, vlog_stream_);
-  // Diagnostics may reference the semantics IR.
-  auto flush_for_ir = llvm::make_scope_exit([&]() { consumer->Flush(); });
+
+  // We've finished all steps that can produce diagnostics. Emit the
+  // diagnostics now, so that the developer sees them sooner and doesn't need
+  // to wait for code generation.
+  consumer->Flush();
+
   has_errors |= semantics_ir.has_errors();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
   if (options.dump_raw_semantics_ir) {
-    consumer->Flush();
     semantics_ir.Print(output_stream_, options.builtin_semantics_ir);
     if (options.dump_semantics_ir) {
       output_stream_ << "\n";
@@ -469,12 +471,6 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     CARBON_VLOG() << "*** Stopping before lowering due to syntax errors ***";
     return false;
   }
-
-  // Emit diagnostics now, so that the developer sees them sooner and doesn't
-  // need to wait for code generation.
-  // TODO: If we allow lowering to produce warnings, should we interleave them
-  // with diagnostics produced by earlier steps?
-  consumer->Flush();
 
   CARBON_VLOG() << "*** LowerToLLVM ***\n";
   llvm::LLVMContext llvm_context;
