@@ -19,9 +19,9 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %var = alloca i32, align 4
-// CHECK:STDOUT:   store i32 0, ptr %var, align 4
-// CHECK:STDOUT:   %1 = load i32, ptr %var, align 4
+// CHECK:STDOUT:   %a = alloca i32, align 4
+// CHECK:STDOUT:   store i32 0, ptr %a, align 4
+// CHECK:STDOUT:   %1 = load i32, ptr %a, align 4
 // CHECK:STDOUT:   call void @DoNothing(i32 %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

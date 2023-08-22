@@ -57,7 +57,8 @@ repos:
       - id: buildifier
         name: Bazel buildifier
         entry: scripts/run_buildifier.py
-        args: ['-r', '.']
+        # Beyond just formatting, explicitly fix lint warnings.
+        args: ['--lint=fix', '--warnings=all', '-r', '.']
         language: python
         files: |
           (?x)^(
@@ -190,6 +191,11 @@ repos:
           - '\.scm$'
           - ''
           - '; '
+          - ''
+          - --custom_format
+          - '\.lua$'
+          - ''
+          - '-- '
           - ''
           - --custom_format
           - '\.c$'

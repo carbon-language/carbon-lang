@@ -15,15 +15,16 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'empty_tuple.carbon'
 // CHECK:STDOUT: source_filename = "empty_tuple.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Echo({} %a) {
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: define {} @Echo({} %a) {
+// CHECK:STDOUT:   ret {} %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   %tuple = alloca {}, align 8
-// CHECK:STDOUT:   %var = alloca {}, align 8
+// CHECK:STDOUT:   %b = alloca {}, align 8
 // CHECK:STDOUT:   %tuple1 = alloca {}, align 8
 // CHECK:STDOUT:   %1 = load {}, ptr %tuple1, align 1
-// CHECK:STDOUT:   call void @Echo({} %1)
+// CHECK:STDOUT:   %Echo = call {} @Echo({} %1)
+// CHECK:STDOUT:   store {} %Echo, ptr %b, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

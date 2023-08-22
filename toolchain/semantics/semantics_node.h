@@ -331,10 +331,6 @@ class SemanticsNode {
                              SemanticsNodeId /*lhs_id*/,
                              SemanticsNodeId /*rhs_id*/>;
 
-  using BindName = SemanticsNode::Factory<SemanticsNodeKind::BindName,
-                                          SemanticsStringId /*name_id*/,
-                                          SemanticsNodeId /*node_id*/>;
-
   using BlockArg =
       Factory<SemanticsNodeKind::BlockArg, SemanticsNodeBlockId /*block_id*/>;
 
@@ -455,8 +451,10 @@ class SemanticsNode {
   using ValueBinding =
       Factory<SemanticsNodeKind::ValueBinding, SemanticsNodeId /*value_id*/>;
 
-  using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
-  SemanticsNode()
+  using VarStorage =
+      Factory<SemanticsNodeKind::VarStorage, SemanticsStringId /*name_id*/>;
+
+  explicit SemanticsNode()
       : SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Invalid,
                       SemanticsTypeId::Invalid) {}
 

@@ -18,10 +18,6 @@ Tree-sitter is currently used for syntax highlighting in supported editors.
 2. Install [Helix](https://docs.helix-editor.com/install.html).
 3. Run `./helix.sh`
 
-### Neovim
-
-TODO
-
 ### Emacs
 
 TODO

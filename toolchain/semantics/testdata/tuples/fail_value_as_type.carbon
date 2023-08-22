@@ -39,8 +39,7 @@ var x: (1, );
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type1},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+5, type: type2},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -52,7 +51,6 @@ var x: (1, );
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
@@ -65,5 +63,5 @@ var x: (1, );
 // CHECK:STDOUT:   %.loc10_12.1: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc10_12.2: (i32,) = tuple_value (%.loc10_9.2)
 // CHECK:STDOUT:   %.loc10_12.3: type = tuple_type (<error>)
-// CHECK:STDOUT:   %x: (<error>,) = var
+// CHECK:STDOUT:   %x: (<error>,) = var "x"
 // CHECK:STDOUT: }

@@ -33,8 +33,7 @@ var x: {.a = 1};
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: StructType, arg0: block2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block3, type: type1},
-// CHECK:STDOUT:   {kind: VarStorage, type: typeError},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+5, type: typeError},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: typeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -45,7 +44,6 @@ var x: {.a = 1};
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
@@ -60,5 +58,5 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %.loc10_12: i32 = stub_reference %.loc10_14
 // CHECK:STDOUT:   %.loc10_15.1: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %.loc10_15.2: {.a: i32} = struct_value (%.loc10_12)
-// CHECK:STDOUT:   %x: <error> = var
+// CHECK:STDOUT:   %x: <error> = var "x"
 // CHECK:STDOUT: }

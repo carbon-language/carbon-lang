@@ -33,16 +33,14 @@ var y: i32 = x.b;
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, arg1: type0},
 // CHECK:STDOUT:   {kind: StructType, arg0: block2, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type1},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, arg1: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+4, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+3, type: type0},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block4, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+7},
-// CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+9, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+9, arg1: nodeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+6},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -52,32 +50,30 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %x: {.a: i32} = var
+// CHECK:STDOUT:   %x: {.a: i32} = var "x"
 // CHECK:STDOUT:   %.loc7_26: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc7_24: i32 = stub_reference %.loc7_26
 // CHECK:STDOUT:   %.loc7_27: {.a: i32} = struct_value (%.loc7_24)
 // CHECK:STDOUT:   assign %x, %.loc7_27
-// CHECK:STDOUT:   %y: i32 = var
+// CHECK:STDOUT:   %y: i32 = var "y"
 // CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }

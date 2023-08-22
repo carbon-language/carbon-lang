@@ -25,11 +25,13 @@ using ::testing::ElementsAre;
 using ::testing::IsEmpty;
 using ::testing::MatchesRegex;
 using ::testing::Pair;
+using ::testing::SizeIs;
 
 TEST(SemanticsIRTest, YAML) {
   llvm::vfs::InMemoryFileSystem fs;
-  CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
-                          llvm::MemoryBuffer::getMemBuffer("var x: i32 = 0;")));
+  CARBON_CHECK(fs.addFile(
+      "test.carbon", /*ModificationTime=*/0,
+      llvm::MemoryBuffer::getMemBuffer("fn F() { var x: i32 = 0; return; }")));
   TestRawOstream print_stream;
   Driver d(fs, print_stream, llvm::errs());
   d.RunCommand(
@@ -45,10 +47,10 @@ TEST(SemanticsIRTest, YAML) {
       Yaml::Value::FromText(print_stream.TakeStr()),
       ElementsAre(Yaml::Mapping(ElementsAre(
           Pair("cross_reference_irs_size", "1"),
-          Pair("functions", Yaml::Sequence(IsEmpty())),
+          Pair("functions", Yaml::Sequence(SizeIs(1))),
           Pair("integer_literals", Yaml::Sequence(ElementsAre("0"))),
           Pair("real_literals", Yaml::Sequence(IsEmpty())),
-          Pair("strings", Yaml::Sequence(ElementsAre("x"))),
+          Pair("strings", Yaml::Sequence(ElementsAre("F", "x"))),
           Pair("types", Yaml::Sequence(ElementsAre(node_builtin))),
           Pair("type_blocks", Yaml::Sequence(IsEmpty())),
           Pair("nodes",
@@ -56,19 +58,19 @@ TEST(SemanticsIRTest, YAML) {
                    // kind is required, other parts are optional.
                    Each(Yaml::Mapping(Contains(Pair("kind", _)))),
                    // A 0-arg node.
-                   Contains(Yaml::Mapping(ElementsAre(
-                       Pair("kind", "VarStorage"), Pair("type", type_id)))),
+                   Contains(Yaml::Mapping(ElementsAre(Pair("kind", "Return")))),
                    // A 1-arg node.
                    Contains(Yaml::Mapping(ElementsAre(
                        Pair("kind", "IntegerLiteral"), Pair("arg0", "int0"),
                        Pair("type", type_id)))),
                    // A 2-arg node.
                    Contains(Yaml::Mapping(ElementsAre(
-                       Pair("kind", "BindName"), Pair("arg0", "str0"),
-                       Pair("arg1", node_id), Pair("type", type_id))))))),
-          // This production has only one node block.
+                       Pair("kind", "Assign"), Pair("arg0", node_id),
+                       Pair("arg1", node_id))))))),
+          // This production has only two node blocks.
           Pair("node_blocks",
                Yaml::Sequence(ElementsAre(Yaml::Sequence(IsEmpty()),
+                                          Yaml::Sequence(Each(node_id)),
                                           Yaml::Sequence(Each(node_id)))))))));
 }
 

@@ -20,16 +20,17 @@ fn Main() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Bar({} %a) {
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: define {} @Bar({} %a) {
+// CHECK:STDOUT:   ret {} %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   %tuple = alloca {}, align 8
-// CHECK:STDOUT:   %var = alloca {}, align 8
+// CHECK:STDOUT:   %x = alloca {}, align 8
 // CHECK:STDOUT:   call void @Foo()
-// CHECK:STDOUT:   %temp = alloca {}, align 8
-// CHECK:STDOUT:   %1 = load {}, ptr %temp, align 1
-// CHECK:STDOUT:   call void @Bar({} %1)
+// CHECK:STDOUT:   %call.result = alloca {}, align 8
+// CHECK:STDOUT:   %1 = load {}, ptr %call.result, align 1
+// CHECK:STDOUT:   %Bar = call {} @Bar({} %1)
+// CHECK:STDOUT:   store {} %Bar, ptr %x, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

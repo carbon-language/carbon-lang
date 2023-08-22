@@ -333,23 +333,13 @@ class NodeNamer {
 
     Scope& scope = GetScopeInfo(scope_idx);
 
-    // Use bound names where available. The BindName node appears after the node
-    // that it's giving a name to, so we need to do this before assigning
-    // fallback names.
+    // Use bound names where available. Otherwise, assign a backup name.
     for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
       if (!node_id.is_valid()) {
         continue;
       }
       auto node = semantics_ir_.GetNode(node_id);
       switch (node.kind()) {
-        case SemanticsNodeKind::BindName: {
-          auto [name_id, named_node_id] = node.GetAsBindName();
-          nodes[named_node_id.index] = {
-              scope_idx,
-              scope.nodes.AllocateName(*this, node.parse_node(),
-                                       semantics_ir_.GetString(name_id).str())};
-          break;
-        }
         case SemanticsNodeKind::Branch: {
           auto dest_id = node.GetAsBranch();
           AddBlockLabel(scope_idx, dest_id, node);
@@ -365,23 +355,24 @@ class NodeNamer {
           AddBlockLabel(scope_idx, dest_id, node);
           break;
         }
-        default:
+        case SemanticsNodeKind::VarStorage: {
+          // TODO: Eventually this name will be optional, and we'll want to
+          // provide something like `var` as a default. However, that's not
+          // possible right now so cannot be tested.
+          auto name_id = node.GetAsVarStorage();
+          nodes[node_id.index] = {
+              scope_idx,
+              scope.nodes.AllocateName(*this, node.parse_node(),
+                                       semantics_ir_.GetString(name_id).str())};
           break;
-      }
-    }
-
-    // Sequentially number all remaining values.
-    for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
-      if (!node_id.is_valid()) {
-        continue;
-      }
-      auto node = semantics_ir_.GetNode(node_id);
-      if (node.kind() != SemanticsNodeKind::BindName &&
-          node.kind().value_kind() != SemanticsNodeValueKind::None) {
-        auto& name = nodes[node_id.index];
-        if (!name.second) {
-          name = {scope_idx,
-                  scope.nodes.AllocateName(*this, node.parse_node())};
+        }
+        default: {
+          // Sequentially number all remaining values.
+          if (node.kind().value_kind() != SemanticsNodeValueKind::None) {
+            nodes[node_id.index] = {
+                scope_idx, scope.nodes.AllocateName(*this, node.parse_node())};
+          }
+          break;
         }
       }
     }
@@ -446,11 +437,9 @@ class SemanticsIRFormatter {
         out_ << "invalid";
         continue;
       }
-      auto param = semantics_ir_.GetNode(param_id);
-      auto [name_id, node_id] = param.GetAsBindName();
-      FormatNodeName(node_id);
+      FormatNodeName(param_id);
       out_ << ": ";
-      FormatType(param.type_id());
+      FormatType(semantics_ir_.GetNode(param_id).type_id());
     }
     out_ << ")";
     if (fn.return_type_id.is_valid()) {
@@ -541,15 +530,6 @@ class SemanticsIRFormatter {
     // By default, an instruction has a comma-separated argument list.
     FormatArgs(Kind::Get(node));
   }
-
-  // BindName is handled by the NodeNamer and doesn't appear in the output.
-  // These nodes are currently used simply to give a name to another node, and
-  // are never referenced themselves.
-  // TODO: Include BindName nodes in the output if we start referring to them.
-  template <>
-  auto FormatInstruction<SemanticsNode::BindName>(SemanticsNodeId /*node_id*/,
-                                                  SemanticsNode /*node*/)
-      -> void {}
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::BlockArg>(SemanticsNode node)

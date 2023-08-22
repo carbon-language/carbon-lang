@@ -226,7 +226,6 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::ArrayValue:
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
-    case SemanticsNodeKind::BindName:
     case SemanticsNodeKind::BlockArg:
     case SemanticsNodeKind::BoolLiteral:
     case SemanticsNodeKind::Branch:
@@ -384,7 +383,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::ArrayValue:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
-      case SemanticsNodeKind::BindName:
       case SemanticsNodeKind::BlockArg:
       case SemanticsNodeKind::BoolLiteral:
       case SemanticsNodeKind::Branch:
@@ -459,12 +457,6 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
         auto [xref_id, xref_node_id] = node.GetAsCrossReference();
         ir = &semantics_ir.GetCrossReferenceIR(xref_id);
         node_id = xref_node_id;
-        continue;
-      }
-
-      case SemanticsNodeKind::BindName: {
-        auto [name_id, value_id] = node.GetAsBindName();
-        node_id = value_id;
         continue;
       }
 

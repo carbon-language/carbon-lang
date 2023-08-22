@@ -101,10 +101,9 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
 
   // Set parameter names.
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    auto [param_name_id, _] =
-        semantics_ir().GetNode(param_refs[i]).GetAsBindName();
+    auto name_id = semantics_ir().GetNode(param_refs[i]).GetAsVarStorage();
     llvm_function->getArg(first_param + i)
-        ->setName(semantics_ir().GetString(param_name_id));
+        ->setName(semantics_ir().GetString(name_id));
   }
 
   return llvm_function;
@@ -132,9 +131,7 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
                                llvm_function->getArg(0));
   }
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    auto param_storage =
-        semantics_ir().GetNode(param_refs[i]).GetAsBindName().second;
-    function_lowering.SetLocal(param_storage,
+    function_lowering.SetLocal(param_refs[i],
                                llvm_function->getArg(first_param + i));
   }
 

@@ -13,7 +13,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type4, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type4, body: [block4]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -27,8 +27,8 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   node+0,
 // CHECK:STDOUT:   node+2,
 // CHECK:STDOUT:   node+3,
+// CHECK:STDOUT:   node+6,
 // CHECK:STDOUT:   node+7,
-// CHECK:STDOUT:   node+8,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
@@ -37,12 +37,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type1, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: type2},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type2},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type3, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type4},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
 // CHECK:STDOUT: ]
@@ -55,25 +53,26 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7 = fn_decl @ConstMismatch
+// CHECK:STDOUT:   %.loc7_43: {} = struct_value ()
+// CHECK:STDOUT:   %.loc7_44: type = ptr_type {}
+// CHECK:STDOUT:   %.loc7_35: type = const_type {}*
+// CHECK:STDOUT:   %.loc7_1 = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
