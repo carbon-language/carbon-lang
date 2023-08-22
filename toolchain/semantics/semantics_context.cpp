@@ -465,8 +465,8 @@ auto SemanticsContext::ImplicitAsForArgs(
     return true;
   }
 
-  auto &arg_refs = semantics_ir_->GetNodeBlock(arg_refs_id);
-  const auto &param_refs = semantics_ir_->GetNodeBlock(param_refs_id);
+  auto& arg_refs = semantics_ir_->GetNodeBlock(arg_refs_id);
+  const auto& param_refs = semantics_ir_->GetNodeBlock(param_refs_id);
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {

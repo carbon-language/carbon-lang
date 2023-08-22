@@ -649,17 +649,17 @@ auto GetSemanticsInitializingRepresentation(const SemanticsIR& semantics_ir,
     -> SemanticsInitializingRepresentation {
   auto value_rep = GetSemanticsValueRepresentation(semantics_ir, type_id);
   switch (value_rep.kind) {
-  case SemanticsValueRepresentation::None:
-    return {.kind = SemanticsInitializingRepresentation::None};
+    case SemanticsValueRepresentation::None:
+      return {.kind = SemanticsInitializingRepresentation::None};
 
-  case SemanticsValueRepresentation::Copy:
-    // TODO: Use in-place initialization for types that have a non-trivial
-    // destructor.
-    return {.kind = SemanticsInitializingRepresentation::ByCopy};
+    case SemanticsValueRepresentation::Copy:
+      // TODO: Use in-place initialization for types that have a non-trivial
+      // destructor.
+      return {.kind = SemanticsInitializingRepresentation::ByCopy};
 
-  case SemanticsValueRepresentation::Pointer:
-  case SemanticsValueRepresentation::Custom:
-    return {.kind = SemanticsInitializingRepresentation::InPlace};
+    case SemanticsValueRepresentation::Pointer:
+    case SemanticsValueRepresentation::Custom:
+      return {.kind = SemanticsInitializingRepresentation::InPlace};
   }
 }
 
