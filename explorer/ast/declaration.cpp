@@ -15,15 +15,11 @@ using llvm::cast;
 Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
-  PrintDepth(-1, 0, out);
+  PrintIndent(0, out);
 }
-void Declaration::PrintDepth(int depth, int indent_num_spaces,
-                             llvm::raw_ostream& out) const {
-  if(kind() != DeclarationKind::FunctionDeclaration || kind() != DeclarationKind::DestructorDeclaration)
-  out.indent(indent_num_spaces);
-  if (depth == 0) {
-    out << "...";
-    return;
+void Declaration::PrintIndent(int indent_num_spaces, llvm::raw_ostream& out) const {
+  if(kind() != DeclarationKind::FunctionDeclaration || kind() != DeclarationKind::DestructorDeclaration) {
+    out.indent(indent_num_spaces);
   }
 
   switch (kind()) {
@@ -48,7 +44,7 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
       const auto& impl_decl = cast<ImplDeclaration>(*this);
       out << PrintAsID(impl_decl) << " {\n";
       for (Nonnull<Declaration*> m : impl_decl.members()) {
-        m->PrintDepth(-1, indent_num_spaces + 2, out);
+        m->PrintIndent(indent_num_spaces + 2, out);
         out << "\n";
       }
       out.indent(indent_num_spaces) << "}";
@@ -59,18 +55,18 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
       out << PrintAsID(match_first_decl) << " {\n";
       for (Nonnull<const ImplDeclaration*> m :
            match_first_decl.impl_declarations()) {
-        m->PrintDepth(-1, indent_num_spaces + 2, out);
+        m->PrintIndent(indent_num_spaces + 2, out);
         out << "\n";
       }
       out.indent(indent_num_spaces) << "}";
       break;
     }
     case DeclarationKind::FunctionDeclaration:
-      cast<FunctionDeclaration>(*this).PrintDepth(depth, indent_num_spaces,
+      cast<FunctionDeclaration>(*this).PrintIndent(indent_num_spaces,
                                                   out);
       break;
     case DeclarationKind::DestructorDeclaration:
-      cast<DestructorDeclaration>(*this).PrintDepth(depth, indent_num_spaces,
+      cast<DestructorDeclaration>(*this).PrintIndent(indent_num_spaces,
                                                     out);
       break;
     case DeclarationKind::ClassDeclaration: {
@@ -81,7 +77,7 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
       }
       out << " {\n";
       for (Nonnull<Declaration*> m : class_decl.members()) {
-        m->PrintDepth(-1, indent_num_spaces + 2, out);
+        m->PrintIndent(indent_num_spaces + 2, out);
         out << "\n";
       }
       out.indent(indent_num_spaces) << "}";
@@ -91,7 +87,7 @@ void Declaration::PrintDepth(int depth, int indent_num_spaces,
       const auto& mixin_decl = cast<MixinDeclaration>(*this);
       out << PrintAsID(mixin_decl) << "{\n";
       for (Nonnull<Declaration*> m : mixin_decl.members()) {
-        m->PrintDepth(-1, indent_num_spaces + 2, out);
+        m->PrintIndent(indent_num_spaces + 2, out);
         out << "\n";
       }
       out.indent(indent_num_spaces) << "}";
@@ -419,7 +415,7 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
       virt_override);
 }
 
-void CallableDeclaration::PrintDepth(int depth, int indent_num_spaces,
+void CallableDeclaration::PrintIndent(int indent_num_spaces,
                                      llvm::raw_ostream& out) const {
   auto name = GetName(*this);
   CARBON_CHECK(name) << "Unexpected missing name for `" << *this << "`.";
@@ -438,7 +434,7 @@ void CallableDeclaration::PrintDepth(int depth, int indent_num_spaces,
   }
   if (body_) {
     out << "\n";
-    (*body_)->PrintDepth(depth, indent_num_spaces, out);
+    (*body_)->PrintIndent(indent_num_spaces, out);
   } else {
     out << ";";
   }

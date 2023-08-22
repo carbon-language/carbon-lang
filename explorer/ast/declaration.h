@@ -50,13 +50,7 @@ class Declaration : public AstNode {
   void Print(llvm::raw_ostream& out) const override;
   void PrintID(llvm::raw_ostream& out) const override;
 
-  // The depth parameter signals how many levels of nesting to print, so
-  // recursive calls can pass `depth - 1`, and when depth is 0 it prints "..."
-  // and returns. When depth is -1 that means "no depth limit".
-  // `indent_num_spaces` is used for consistent formatting (recommended: 2
-  // spaces).
-  virtual void PrintDepth(int depth, int indent_num_spaces,
-                          llvm::raw_ostream& out) const;
+  virtual void PrintIndent(int indent_num_spaces, llvm::raw_ostream& out) const;
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDeclaration(node->kind());
@@ -246,8 +240,7 @@ class CallableDeclaration : public Declaration {
         body_(context.Clone(other.body_)),
         virt_override_(other.virt_override_) {}
 
-  void PrintDepth(int depth, int indent_num_spaces,
-                  llvm::raw_ostream& out) const override;
+  void PrintIndent(int indent_num_spaces, llvm::raw_ostream& out) const override;
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
