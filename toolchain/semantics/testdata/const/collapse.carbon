@@ -44,7 +44,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type3},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+3, type: type3},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+3, type: type3},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -79,6 +79,6 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: const i32** = value_binding %p
+// CHECK:STDOUT:   %.loc11: const i32** = bind_value %p
 // CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }

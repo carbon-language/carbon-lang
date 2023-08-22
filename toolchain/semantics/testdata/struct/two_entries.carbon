@@ -45,7 +45,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type0},
 // CHECK:STDOUT:   {kind: StructType, arg0: block5, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+3, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+3, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: node+16},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -98,6 +98,6 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   assign %x, %.loc7_44
 // CHECK:STDOUT:   %.loc8: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %y: {.a: i32, .b: i32} = var "y"
-// CHECK:STDOUT:   %.loc7_5: {.a: i32, .b: i32} = value_binding %x
+// CHECK:STDOUT:   %.loc7_5: {.a: i32, .b: i32} = bind_value %x
 // CHECK:STDOUT:   assign %y, %.loc7_5
 // CHECK:STDOUT: }

@@ -41,7 +41,7 @@ fn Main() {
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+2, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+2, type: type0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
@@ -88,7 +88,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: () = value_binding %a
+// CHECK:STDOUT:   %.loc7: () = bind_value %a
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

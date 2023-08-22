@@ -331,6 +331,9 @@ class SemanticsNode {
                              SemanticsNodeId /*lhs_id*/,
                              SemanticsNodeId /*rhs_id*/>;
 
+  using BindValue =
+      Factory<SemanticsNodeKind::BindValue, SemanticsNodeId /*value_id*/>;
+
   using BlockArg =
       Factory<SemanticsNodeKind::BlockArg, SemanticsNodeBlockId /*block_id*/>;
 
@@ -447,9 +450,6 @@ class SemanticsNode {
 
   using UnaryOperatorNot = Factory<SemanticsNodeKind::UnaryOperatorNot,
                                    SemanticsNodeId /*operand_id*/>;
-
-  using ValueBinding =
-      Factory<SemanticsNodeKind::ValueBinding, SemanticsNodeId /*value_id*/>;
 
   using VarStorage =
       Factory<SemanticsNodeKind::VarStorage, SemanticsStringId /*name_id*/>;

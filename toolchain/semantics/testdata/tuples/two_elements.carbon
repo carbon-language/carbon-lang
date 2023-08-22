@@ -52,7 +52,7 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type2},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+5, type: type2},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+5, type: type2},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: node+16},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -109,6 +109,6 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc8_14: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_17: (type, type) = tuple_value (%.loc8_9, %.loc8_14)
 // CHECK:STDOUT:   %y: (i32, i32) = var "y"
-// CHECK:STDOUT:   %.loc7_5: (i32, i32) = value_binding %x
+// CHECK:STDOUT:   %.loc7_5: (i32, i32) = bind_value %x
 // CHECK:STDOUT:   assign %y, %.loc7_5
 // CHECK:STDOUT: }

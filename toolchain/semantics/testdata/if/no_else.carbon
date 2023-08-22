@@ -45,7 +45,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+4, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+4, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block7, arg1: node+6},
 // CHECK:STDOUT:   {kind: Branch, arg0: block8},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
@@ -108,7 +108,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: bool = value_binding %b
+// CHECK:STDOUT:   %.loc10: bool = bind_value %b
 // CHECK:STDOUT:   if %.loc10 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:

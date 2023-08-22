@@ -59,7 +59,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type1},
 // CHECK:STDOUT:   {kind: ArrayType, arg0: node+15, arg1: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type3},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+6, type: type2},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+6, type: type2},
 // CHECK:STDOUT:   {kind: ArrayValue, arg0: node+18, type: type3},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+17, arg1: node+19},
 // CHECK:STDOUT: ]
@@ -120,7 +120,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc8_14: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc8_15: type = array_type %.loc8_14, i32
 // CHECK:STDOUT:   %b: [i32; 3] = var "b"
-// CHECK:STDOUT:   %.loc7_5.1: (i32, i32, i32) = value_binding %a
+// CHECK:STDOUT:   %.loc7_5.1: (i32, i32, i32) = bind_value %a
 // CHECK:STDOUT:   %.loc7_5.2: [i32; 3] = array_value %.loc7_5.1
 // CHECK:STDOUT:   assign %b, %.loc7_5.2
 // CHECK:STDOUT: }

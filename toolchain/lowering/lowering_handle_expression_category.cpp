@@ -6,18 +6,18 @@
 
 namespace Carbon {
 
+auto LoweringHandleBindValue(LoweringFunctionContext& context,
+                             SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  context.SetLocal(node_id, context.GetLocalLoaded(node.GetAsBindValue()));
+}
+
 auto LoweringHandleMaterializeTemporary(LoweringFunctionContext& context,
                                         SemanticsNodeId node_id,
                                         SemanticsNode node) -> void {
   context.SetLocal(
       node_id, context.builder().CreateAlloca(context.GetType(node.type_id()),
                                               nullptr, "temp"));
-}
-
-auto LoweringHandleValueBinding(LoweringFunctionContext& context,
-                                SemanticsNodeId node_id, SemanticsNode node)
-    -> void {
-  context.SetLocal(node_id, context.GetLocalLoaded(node.GetAsValueBinding()));
 }
 
 }  // namespace Carbon

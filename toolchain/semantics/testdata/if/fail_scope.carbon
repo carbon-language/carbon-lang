@@ -40,13 +40,13 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+3},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+7},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+6, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+6, type: type1},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+9},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
@@ -87,14 +87,14 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = value_binding %b
+// CHECK:STDOUT:   %.loc7: bool = bind_value %b
 // CHECK:STDOUT:   if %.loc7 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %n: i32 = var "n"
 // CHECK:STDOUT:   %.loc9_18: i32 = int_literal 2
 // CHECK:STDOUT:   assign %n, %.loc9_18
-// CHECK:STDOUT:   %.loc9_9: i32 = value_binding %n
+// CHECK:STDOUT:   %.loc9_9: i32 = bind_value %n
 // CHECK:STDOUT:   return %.loc9_9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:

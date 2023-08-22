@@ -46,7 +46,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+11, arg1: node+10},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+11, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+11, type: type0},
 // CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+13, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+14},
@@ -54,7 +54,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
 // CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+19, arg1: node+18},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+19, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+19, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+21},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block9, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+23},
@@ -130,7 +130,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   %.loc11_11.1: bool = call @F()
 // CHECK:STDOUT:   %.loc11_11.2: bool = materialize_temporary
 // CHECK:STDOUT:   assign %.loc11_11.2, %.loc11_11.1
-// CHECK:STDOUT:   %.loc11_11.3: bool = value_binding %.loc11_11.2
+// CHECK:STDOUT:   %.loc11_11.3: bool = bind_value %.loc11_11.2
 // CHECK:STDOUT:   %.loc11_14.1: bool = not %.loc11_11.3
 // CHECK:STDOUT:   %.loc11_14.2: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc11_14.1 br !or.rhs else br !or.result(%.loc11_14.2)
@@ -139,7 +139,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   %.loc11_18.1: bool = call @G()
 // CHECK:STDOUT:   %.loc11_18.2: bool = materialize_temporary
 // CHECK:STDOUT:   assign %.loc11_18.2, %.loc11_18.1
-// CHECK:STDOUT:   %.loc11_18.3: bool = value_binding %.loc11_18.2
+// CHECK:STDOUT:   %.loc11_18.3: bool = bind_value %.loc11_18.2
 // CHECK:STDOUT:   br !or.result(%.loc11_18.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.result:

@@ -41,7 +41,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+1, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+1, type: type1},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
@@ -50,7 +50,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type3},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+9, type: type3},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+9, type: type3},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+14},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -97,12 +97,12 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Ptr(%p: i32*) -> i32* {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32* = value_binding %p
+// CHECK:STDOUT:   %.loc7: i32* = bind_value %p
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstPtr(%p: const i32*) -> const i32* {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: const i32* = value_binding %p
+// CHECK:STDOUT:   %.loc11: const i32* = bind_value %p
 // CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }

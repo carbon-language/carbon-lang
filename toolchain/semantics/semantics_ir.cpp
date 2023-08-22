@@ -226,6 +226,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::ArrayValue:
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
+    case SemanticsNodeKind::BindValue:
     case SemanticsNodeKind::BlockArg:
     case SemanticsNodeKind::BoolLiteral:
     case SemanticsNodeKind::Branch:
@@ -250,7 +251,6 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::TupleIndex:
     case SemanticsNodeKind::TupleValue:
     case SemanticsNodeKind::UnaryOperatorNot:
-    case SemanticsNodeKind::ValueBinding:
     case SemanticsNodeKind::VarStorage:
       CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
   }
@@ -383,6 +383,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::ArrayValue:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
+      case SemanticsNodeKind::BindValue:
       case SemanticsNodeKind::BlockArg:
       case SemanticsNodeKind::BoolLiteral:
       case SemanticsNodeKind::Branch:
@@ -407,7 +408,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::TupleIndex:
       case SemanticsNodeKind::TupleValue:
       case SemanticsNodeKind::UnaryOperatorNot:
-      case SemanticsNodeKind::ValueBinding:
       case SemanticsNodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
         // in errors, but make it clear what's going on so that it's clearer
@@ -463,6 +463,7 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::AddressOf:
       case SemanticsNodeKind::ArrayType:
       case SemanticsNodeKind::BinaryOperatorAdd:
+      case SemanticsNodeKind::BindValue:
       case SemanticsNodeKind::BlockArg:
       case SemanticsNodeKind::BoolLiteral:
       case SemanticsNodeKind::Builtin:
@@ -474,7 +475,6 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::StructType:
       case SemanticsNodeKind::TupleType:
       case SemanticsNodeKind::UnaryOperatorNot:
-      case SemanticsNodeKind::ValueBinding:
         return SemanticsExpressionCategory::Value;
 
       case SemanticsNodeKind::ArrayIndex: {
@@ -535,6 +535,7 @@ auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::ArrayValue:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
+      case SemanticsNodeKind::BindValue:
       case SemanticsNodeKind::BlockArg:
       case SemanticsNodeKind::BoolLiteral:
       case SemanticsNodeKind::Branch:
@@ -558,7 +559,6 @@ auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::TupleIndex:
       case SemanticsNodeKind::TupleValue:
       case SemanticsNodeKind::UnaryOperatorNot:
-      case SemanticsNodeKind::ValueBinding:
       case SemanticsNodeKind::VarStorage:
         CARBON_FATAL() << "Type refers to non-type node " << node;
 

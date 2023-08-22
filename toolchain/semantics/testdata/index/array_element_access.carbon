@@ -56,11 +56,11 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type0},
 // CHECK:STDOUT:   {kind: ArrayIndex, arg0: node+2, arg1: node+15, type: type0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+16, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+16, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+14, arg1: node+17},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type0},
 // CHECK:STDOUT:   {kind: ArrayIndex, arg0: node+2, arg1: node+11, type: type0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+20, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+20, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+19, arg1: node+21},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -115,10 +115,10 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %c: i32 = var "c"
 // CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc9_17.1: i32 = array_index %a, %.loc9_16
-// CHECK:STDOUT:   %.loc9_17.2: i32 = value_binding %.loc9_17.1
+// CHECK:STDOUT:   %.loc9_17.2: i32 = bind_value %.loc9_17.1
 // CHECK:STDOUT:   assign %c, %.loc9_17.2
 // CHECK:STDOUT:   %d: i32 = var "d"
 // CHECK:STDOUT:   %.loc10_17.1: i32 = array_index %a, %b
-// CHECK:STDOUT:   %.loc10_17.2: i32 = value_binding %.loc10_17.1
+// CHECK:STDOUT:   %.loc10_17.2: i32 = bind_value %.loc10_17.1
 // CHECK:STDOUT:   assign %d, %.loc10_17.2
 // CHECK:STDOUT: }

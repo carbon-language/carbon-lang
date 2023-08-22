@@ -57,7 +57,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   {kind: MaterializeTemporary, type: type2},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+14, arg1: node+12},
 // CHECK:STDOUT:   {kind: TupleIndex, arg0: node+14, arg1: node+13, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+16, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+16, type: type1},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+17},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -120,6 +120,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc10_11.2: (i32,) = materialize_temporary
 // CHECK:STDOUT:   assign %.loc10_11.2, %.loc10_11.1
 // CHECK:STDOUT:   %.loc10_15.1: i32 = tuple_index %.loc10_11.2, %.loc10_14
-// CHECK:STDOUT:   %.loc10_15.2: i32 = value_binding %.loc10_15.1
+// CHECK:STDOUT:   %.loc10_15.2: i32 = bind_value %.loc10_15.1
 // CHECK:STDOUT:   return %.loc10_15.2
 // CHECK:STDOUT: }

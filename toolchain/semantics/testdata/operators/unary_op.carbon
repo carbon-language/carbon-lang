@@ -30,7 +30,7 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+3, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4},
 // CHECK:STDOUT: ]
@@ -60,7 +60,7 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = value_binding %b
+// CHECK:STDOUT:   %.loc7: bool = bind_value %b
 // CHECK:STDOUT:   %.loc8: bool = not %.loc7
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }

@@ -46,14 +46,14 @@ fn And() -> bool {
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+11, arg1: node+10},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+11, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+11, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: false, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+13},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+14},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
 // CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+18, arg1: node+17},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+18, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+18, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+20},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block9, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+22},
@@ -128,7 +128,7 @@ fn And() -> bool {
 // CHECK:STDOUT:   %.loc11_11.1: bool = call @F()
 // CHECK:STDOUT:   %.loc11_11.2: bool = materialize_temporary
 // CHECK:STDOUT:   assign %.loc11_11.2, %.loc11_11.1
-// CHECK:STDOUT:   %.loc11_11.3: bool = value_binding %.loc11_11.2
+// CHECK:STDOUT:   %.loc11_11.3: bool = bind_value %.loc11_11.2
 // CHECK:STDOUT:   %.loc11_14.1: bool = bool_literal false
 // CHECK:STDOUT:   if %.loc11_11.3 br !and.rhs else br !and.result(%.loc11_14.1)
 // CHECK:STDOUT:
@@ -136,7 +136,7 @@ fn And() -> bool {
 // CHECK:STDOUT:   %.loc11_19.1: bool = call @G()
 // CHECK:STDOUT:   %.loc11_19.2: bool = materialize_temporary
 // CHECK:STDOUT:   assign %.loc11_19.2, %.loc11_19.1
-// CHECK:STDOUT:   %.loc11_19.3: bool = value_binding %.loc11_19.2
+// CHECK:STDOUT:   %.loc11_19.3: bool = bind_value %.loc11_19.2
 // CHECK:STDOUT:   br !and.result(%.loc11_19.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:

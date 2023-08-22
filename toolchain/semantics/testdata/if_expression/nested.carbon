@@ -39,10 +39,10 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str4, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+5},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+1, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+1, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block7, arg1: node+8},
 // CHECK:STDOUT:   {kind: Branch, arg0: block8},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
@@ -50,7 +50,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+11},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+12},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block9, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+2, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+2, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block10, arg1: node+16},
 // CHECK:STDOUT:   {kind: Branch, arg0: block11},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
@@ -131,11 +131,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_6: bool = value_binding %a
+// CHECK:STDOUT:   %.loc7_6: bool = bind_value %a
 // CHECK:STDOUT:   if %.loc7_6 br !if.expr.then.loc8_10 else br !if.expr.else.loc8_10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_10:
-// CHECK:STDOUT:   %.loc7_15: bool = value_binding %b
+// CHECK:STDOUT:   %.loc7_15: bool = bind_value %b
 // CHECK:STDOUT:   if %.loc7_15 br !if.expr.then.loc8_20 else br !if.expr.else.loc8_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_20:
@@ -151,7 +151,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   br !if.expr.result.loc8_10(%.loc8_20)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc8_10:
-// CHECK:STDOUT:   %.loc7_24: bool = value_binding %c
+// CHECK:STDOUT:   %.loc7_24: bool = bind_value %c
 // CHECK:STDOUT:   if %.loc7_24 br !if.expr.then.loc8_44 else br !if.expr.else.loc8_44
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_44:

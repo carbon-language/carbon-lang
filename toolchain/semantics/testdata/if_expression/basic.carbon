@@ -35,14 +35,14 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type1},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str4, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+5},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+1, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+2, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+1, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+2, type: type1},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+8, arg1: node+9, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+2, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+1, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+2, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+1, type: type1},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+11, arg1: node+12, type: type1},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+10},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+13},
@@ -95,18 +95,18 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_6: bool = value_binding %b
+// CHECK:STDOUT:   %.loc7_6: bool = bind_value %b
 // CHECK:STDOUT:   if %.loc7_6 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %.loc7_15.1: i32 = value_binding %n
-// CHECK:STDOUT:   %.loc7_23.1: i32 = value_binding %m
+// CHECK:STDOUT:   %.loc7_15.1: i32 = bind_value %n
+// CHECK:STDOUT:   %.loc7_23.1: i32 = bind_value %m
 // CHECK:STDOUT:   %.loc8_22: i32 = add %.loc7_15.1, %.loc7_23.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc8_22)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %.loc7_23.2: i32 = value_binding %m
-// CHECK:STDOUT:   %.loc7_15.2: i32 = value_binding %n
+// CHECK:STDOUT:   %.loc7_23.2: i32 = bind_value %m
+// CHECK:STDOUT:   %.loc7_15.2: i32 = bind_value %n
 // CHECK:STDOUT:   %.loc8_33: i32 = add %.loc7_23.2, %.loc7_15.2
 // CHECK:STDOUT:   br !if.expr.result(%.loc8_33)
 // CHECK:STDOUT:

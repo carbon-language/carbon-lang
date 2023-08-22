@@ -40,7 +40,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   {kind: Dereference, arg0: node+6, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+7, type: type1},
 // CHECK:STDOUT:   {kind: Dereference, arg0: node+8, type: type0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+9, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+9, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -80,6 +80,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc9_12: i32 = dereference %.loc9_13.2
 // CHECK:STDOUT:   %.loc9_11: i32* = address_of %.loc9_12
 // CHECK:STDOUT:   %.loc9_10.1: i32 = dereference %.loc9_11
-// CHECK:STDOUT:   %.loc9_10.2: i32 = value_binding %.loc9_10.1
+// CHECK:STDOUT:   %.loc9_10.2: i32 = bind_value %.loc9_10.1
 // CHECK:STDOUT:   return %.loc9_10.2
 // CHECK:STDOUT: }

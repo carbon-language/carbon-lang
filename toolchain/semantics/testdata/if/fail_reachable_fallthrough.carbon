@@ -63,7 +63,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+3},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
@@ -72,7 +72,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+9, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+9, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block11, arg1: node+12},
 // CHECK:STDOUT:   {kind: Branch, arg0: block12},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
@@ -81,7 +81,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+18, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+18, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block17, arg1: node+21},
 // CHECK:STDOUT:   {kind: Branch, arg0: block18},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
@@ -166,7 +166,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = value_binding %b
+// CHECK:STDOUT:   %.loc7: bool = bind_value %b
 // CHECK:STDOUT:   if %.loc7 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
@@ -181,7 +181,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17: bool = value_binding %b
+// CHECK:STDOUT:   %.loc17: bool = bind_value %b
 // CHECK:STDOUT:   if %.loc17 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
@@ -196,7 +196,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If3(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc27: bool = value_binding %b
+// CHECK:STDOUT:   %.loc27: bool = bind_value %b
 // CHECK:STDOUT:   if %.loc27 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:

@@ -43,7 +43,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: Dereference, arg0: node+2, type: typeError},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type1},
@@ -84,7 +84,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = value_binding %n
+// CHECK:STDOUT:   %.loc7: i32 = bind_value %n
 // CHECK:STDOUT:   %.loc11: <error> = dereference %.loc7
 // CHECK:STDOUT:   %.loc15_5.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc15_5.2: () = tuple_value ()

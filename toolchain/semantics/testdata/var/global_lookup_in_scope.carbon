@@ -35,7 +35,7 @@ fn Main() {
 // CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+5},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
@@ -66,7 +66,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %y: i32 = var "y"
-// CHECK:STDOUT:   %.loc7: i32 = value_binding package.%x
+// CHECK:STDOUT:   %.loc7: i32 = bind_value package.%x
 // CHECK:STDOUT:   assign %y, %.loc7
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

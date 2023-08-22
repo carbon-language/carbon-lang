@@ -118,14 +118,14 @@ fn Main() {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str4, type: type4},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+1, type: type4},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+45, arg1: node+46},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+45, type: type4},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+45, type: type4},
 // CHECK:STDOUT:   {kind: Dereference, arg0: node+48, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int12, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+49, arg1: node+50},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type5},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+52},
 // CHECK:STDOUT:   {kind: Branch, arg0: block9},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+45, type: type4},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+45, type: type4},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+1, type: type4},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block10, arg1: node+55},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block10, arg1: node+56},
@@ -281,7 +281,7 @@ fn Main() {
 // CHECK:STDOUT:   %p: i32* = var "p"
 // CHECK:STDOUT:   %.loc19_17: i32* = address_of %a
 // CHECK:STDOUT:   assign %p, %.loc19_17
-// CHECK:STDOUT:   %.loc19_7.1: i32* = value_binding %p
+// CHECK:STDOUT:   %.loc19_7.1: i32* = bind_value %p
 // CHECK:STDOUT:   %.loc20_3: i32 = dereference %.loc19_7.1
 // CHECK:STDOUT:   %.loc20_8: i32 = int_literal 5
 // CHECK:STDOUT:   assign %.loc20_3, %.loc20_8
@@ -289,7 +289,7 @@ fn Main() {
 // CHECK:STDOUT:   if %.loc22_8 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %.loc19_7.2: i32* = value_binding %p
+// CHECK:STDOUT:   %.loc19_7.2: i32* = bind_value %p
 // CHECK:STDOUT:   br !if.expr.result(%.loc19_7.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:

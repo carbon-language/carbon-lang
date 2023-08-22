@@ -42,9 +42,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type1},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+2, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+7},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+6, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+6, type: type1},
 // CHECK:STDOUT:   {kind: Dereference, arg0: node+9, type: type0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+10, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+10, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+11},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -84,8 +84,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %p: i32* = var "p"
 // CHECK:STDOUT:   %.loc9_17: i32* = address_of %n
 // CHECK:STDOUT:   assign %p, %.loc9_17
-// CHECK:STDOUT:   %.loc9_7: i32* = value_binding %p
+// CHECK:STDOUT:   %.loc9_7: i32* = bind_value %p
 // CHECK:STDOUT:   %.loc11_10.1: i32 = dereference %.loc9_7
-// CHECK:STDOUT:   %.loc11_10.2: i32 = value_binding %.loc11_10.1
+// CHECK:STDOUT:   %.loc11_10.2: i32 = bind_value %.loc11_10.1
 // CHECK:STDOUT:   return %.loc11_10.2
 // CHECK:STDOUT: }

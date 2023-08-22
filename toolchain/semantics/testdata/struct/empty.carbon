@@ -31,7 +31,7 @@ var y: {} = x;
 // CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+3},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+2, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+2, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+7},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -58,6 +58,6 @@ var y: {} = x;
 // CHECK:STDOUT:   assign %x, %.loc7_14
 // CHECK:STDOUT:   %.loc8: {} = struct_value ()
 // CHECK:STDOUT:   %y: {} = var "y"
-// CHECK:STDOUT:   %.loc7_5: {} = value_binding %x
+// CHECK:STDOUT:   %.loc7_5: {} = bind_value %x
 // CHECK:STDOUT:   assign %y, %.loc7_5
 // CHECK:STDOUT: }

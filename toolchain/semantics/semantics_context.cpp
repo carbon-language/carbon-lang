@@ -290,7 +290,7 @@ auto SemanticsContext::Initialize(ParseTree::Node parse_node,
       //
       // TODO: Determine whether this is observably different from the design,
       // and change either the toolchain or the design so they match.
-      expr_id = AddNode(SemanticsNode::ValueBinding::Make(
+      expr_id = AddNode(SemanticsNode::BindValue::Make(
           expr.parse_node(), expr.type_id(), expr_id));
       [[fallthrough]];
 
@@ -327,8 +327,8 @@ auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
     case SemanticsExpressionCategory::EphemeralReference: {
       // TODO: Support types with custom value representations.
       SemanticsNode expr = semantics_ir().GetNode(expr_id);
-      return AddNode(SemanticsNode::ValueBinding::Make(
-          expr.parse_node(), expr.type_id(), expr_id));
+      return AddNode(SemanticsNode::BindValue::Make(expr.parse_node(),
+                                                    expr.type_id(), expr_id));
     }
 
     case SemanticsExpressionCategory::Value:
