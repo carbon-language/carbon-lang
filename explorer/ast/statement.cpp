@@ -17,6 +17,9 @@ Statement::~Statement() = default;
 
 void Statement::PrintDepth(int depth, int indent_num_spaces,
                            llvm::raw_ostream& out) const {
+  if(kind() != StatementKind::Block) {
+    out.indent(indent_num_spaces);
+  }
   if (depth == 0) {
     out.indent(indent_num_spaces) << " ... ";
     return;
@@ -24,57 +27,55 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
   switch (kind()) {
     case StatementKind::Match: {
       const auto& match = cast<Match>(*this);
-      out.indent(indent_num_spaces) << "match (" << match.expression() << ") {";
+      out << "match (" << match.expression() << ") {";
       if (depth < 0 || depth > 1) {
         out << "\n";
         for (const auto& clause : match.clauses()) {
           out.indent(indent_num_spaces + 2)
-              << "case " << clause.pattern() << " => ";
+              << "case " << clause.pattern() << " => \n";
           clause.statement().PrintDepth(depth - 1, indent_num_spaces + 2, out);
           out << "\n";
         }
+        out.indent(indent_num_spaces) << "}";
       } else {
-        out.indent(indent_num_spaces) << "...";
+        out << "...";
       }
-      out.indent(indent_num_spaces) << "}";
       break;
     }
     case StatementKind::While: {
       const auto& while_stmt = cast<While>(*this);
-      out.indent(indent_num_spaces)
-          << "while (" << while_stmt.condition() << ")\n";
+      out << "while (" << while_stmt.condition() << ")\n";
       if (depth < 0 || depth > 1) {
-        while_stmt.body().PrintDepth(depth - 1, indent_num_spaces + 2, out);
+        while_stmt.body().PrintDepth(depth - 1, indent_num_spaces, out);
       } else {
-        out.indent(indent_num_spaces) << "...";
+        out << "...";
       }
       break;
     }
     case StatementKind::For: {
       const auto& for_stmt = cast<For>(*this);
-      out.indent(indent_num_spaces)
+      out
           << "for (" << for_stmt.variable_declaration() << " in "
           << for_stmt.loop_target() << ")\n";
       if (depth < 0 || depth > 1) {
         for_stmt.body().PrintDepth(depth - 1, indent_num_spaces + 2, out);
       } else {
-        out.indent(indent_num_spaces) << "...";
+        out << "...";
       }
       break;
     }
     case StatementKind::Break:
-      out.indent(indent_num_spaces) << "break;";
+      out << "break;";
       break;
     case StatementKind::Continue:
-      out.indent(indent_num_spaces) << "continue;";
+      out << "continue;";
       break;
     case StatementKind::VariableDefinition: {
       const auto& var = cast<VariableDefinition>(*this);
       if (var.is_returned()) {
-        out.indent(indent_num_spaces) << "returned ";
+        out << "returned ";
       }
-      out.indent(var.is_returned() ? 0 : indent_num_spaces)
-          << "var " << var.pattern();
+      out << "var " << var.pattern();
       if (var.has_init()) {
         out << " = " << var.init();
       }
@@ -82,26 +83,24 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
       break;
     }
     case StatementKind::ExpressionStatement:
-      out.indent(indent_num_spaces)
-          << cast<ExpressionStatement>(*this).expression() << ";";
+      out << cast<ExpressionStatement>(*this).expression() << ";";
       break;
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*this);
-      out.indent(indent_num_spaces)
-          << assign.lhs() << " " << AssignOperatorToString(assign.op()) << " "
+      out << assign.lhs() << " " << AssignOperatorToString(assign.op()) << " "
           << assign.rhs() << ";";
       break;
     }
     case StatementKind::IncrementDecrement: {
       const auto& inc_dec = cast<IncrementDecrement>(*this);
-      out.indent(indent_num_spaces)
-          << (inc_dec.is_increment() ? "++" : "--") << inc_dec.argument();
+      out << (inc_dec.is_increment() ? "++" : "--") << inc_dec.argument() << ";";
       break;
     }
     case StatementKind::If: {
       const auto& if_stmt = cast<If>(*this);
-      out.indent(indent_num_spaces) << "if (" << if_stmt.condition() << ") ";
+      out << "if (" << if_stmt.condition() << ")";
       if (depth < 0 || depth > 1) {
+        out << "\n";
         if_stmt.then_block().PrintDepth(depth - 1, indent_num_spaces, out);
         if (if_stmt.else_block()) {
           out << "\n";
@@ -111,21 +110,21 @@ void Statement::PrintDepth(int depth, int indent_num_spaces,
         }
       } else {
         if (if_stmt.else_block()) {
-          out << "} else { ... }";
+          out << " ... else ...";
         }
       }
       break;
     }
     case StatementKind::ReturnVar: {
-      out.indent(indent_num_spaces) << "return var;";
+      out << "return var;";
       break;
     }
     case StatementKind::ReturnExpression: {
       const auto& ret = cast<ReturnExpression>(*this);
       if (ret.is_omitted_expression()) {
-        out.indent(indent_num_spaces) << "return;";
+        out << "return;";
       } else {
-        out.indent(indent_num_spaces) << "return " << ret.expression() << ";";
+        out << "return " << ret.expression() << ";";
       }
       break;
     }
