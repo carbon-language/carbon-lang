@@ -17,7 +17,14 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
   explicit SortingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
       : next_consumer_(&next_consumer) {}
 
-  ~SortingDiagnosticConsumer() override { Flush(); }
+  ~SortingDiagnosticConsumer() override {
+    // We choose not to automatically flush diagnostics here, because they are
+    // likely to refer to data that gets destroyed before the diagnostics
+    // consumer is destroyed, because the diagnostics consumer is typically
+    // created before the objects that diagnostics refer into are created.
+    CARBON_CHECK(diagnostics_.empty())
+        << "Must flush diagnostics consumer before destroying it";
+  }
 
   // Buffers the diagnostic.
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
