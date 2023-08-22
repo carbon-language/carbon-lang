@@ -291,7 +291,7 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
                                const std::vector<Nonnull<const Value*>>& values)
     -> Nonnull<const Value*> {
   std::vector<NamedValue> elements;
-  for (const auto& [field, value] : llvm::zip_equal(fields, values)) {
+  for (const auto [field, value] : llvm::zip_equal(fields, values)) {
     elements.push_back({field.name(), value});
   }
 
@@ -741,7 +741,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         }
       }
       std::vector<Nonnull<const Value*>> new_elements;
-      for (const auto& [element, dest_type] :
+      for (const auto [element, dest_type] :
            llvm::zip_equal(tuple->elements(), destination_element_types)) {
         CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> val,
                                 Convert(element, dest_type, source_loc));
@@ -1538,7 +1538,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Prepare witnesses.
         ImplWitnessMap witnesses;
         if (num_witnesses > 0) {
-          for (const auto& [witness, result] : llvm::zip(
+          for (const auto [witness, result] : llvm::zip(
                    call.witnesses(),
                    llvm::ArrayRef(act.results()).drop_front(1 + num_args))) {
             witnesses[witness.first] = result;
