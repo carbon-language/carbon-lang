@@ -15,13 +15,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
 // CHECK:STDOUT:   %struct = alloca {}, align 8
-// CHECK:STDOUT:   %var = alloca {}, align 8
+// CHECK:STDOUT:   %x = alloca {}, align 8
 // CHECK:STDOUT:   %struct1 = alloca {}, align 8
 // CHECK:STDOUT:   %1 = load {}, ptr %struct1, align 1
-// CHECK:STDOUT:   store {} %1, ptr %var, align 1
+// CHECK:STDOUT:   store {} %1, ptr %x, align 1
 // CHECK:STDOUT:   %struct2 = alloca {}, align 8
-// CHECK:STDOUT:   %var3 = alloca {}, align 8
-// CHECK:STDOUT:   %2 = load {}, ptr %var, align 1
-// CHECK:STDOUT:   store {} %2, ptr %var3, align 1
+// CHECK:STDOUT:   %y = alloca {}, align 8
+// CHECK:STDOUT:   %2 = load {}, ptr %x, align 1
+// CHECK:STDOUT:   store {} %2, ptr %y, align 1
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

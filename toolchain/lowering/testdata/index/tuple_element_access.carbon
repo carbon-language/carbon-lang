@@ -24,7 +24,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   store %type zeroinitializer, ptr %2, align 1
 // CHECK:STDOUT:   %3 = getelementptr inbounds { %type, %type, %type }, ptr %tuple, i32 0, i32 2
 // CHECK:STDOUT:   store %type zeroinitializer, ptr %3, align 1
-// CHECK:STDOUT:   %var = alloca { i32, i32, i32 }, align 8
+// CHECK:STDOUT:   %a = alloca { i32, i32, i32 }, align 8
 // CHECK:STDOUT:   %tuple1 = alloca { i32, i32, i32 }, align 8
 // CHECK:STDOUT:   %4 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple1, i32 0, i32 0
 // CHECK:STDOUT:   store i32 0, ptr %4, align 4
@@ -33,14 +33,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %6 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple1, i32 0, i32 2
 // CHECK:STDOUT:   store i32 2, ptr %6, align 4
 // CHECK:STDOUT:   %7 = load { i32, i32, i32 }, ptr %tuple1, align 4
-// CHECK:STDOUT:   store { i32, i32, i32 } %7, ptr %var, align 4
-// CHECK:STDOUT:   %var2 = alloca i32, align 4
-// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32, i32 }, ptr %var, i32 0, i32 0
+// CHECK:STDOUT:   store { i32, i32, i32 } %7, ptr %a, align 4
+// CHECK:STDOUT:   %b = alloca i32, align 4
+// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32, i32 }, ptr %a, i32 0, i32 0
 // CHECK:STDOUT:   %8 = load i32, ptr %tuple.index, align 4
-// CHECK:STDOUT:   store i32 %8, ptr %var2, align 4
-// CHECK:STDOUT:   %var3 = alloca i32, align 4
-// CHECK:STDOUT:   %tuple.index4 = getelementptr inbounds { i32, i32, i32 }, ptr %var, i32 0, i32 2
-// CHECK:STDOUT:   %9 = load i32, ptr %tuple.index4, align 4
-// CHECK:STDOUT:   store i32 %9, ptr %var3, align 4
+// CHECK:STDOUT:   store i32 %8, ptr %b, align 4
+// CHECK:STDOUT:   %c = alloca i32, align 4
+// CHECK:STDOUT:   %tuple.index2 = getelementptr inbounds { i32, i32, i32 }, ptr %a, i32 0, i32 2
+// CHECK:STDOUT:   %9 = load i32, ptr %tuple.index2, align 4
+// CHECK:STDOUT:   store i32 %9, ptr %c, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

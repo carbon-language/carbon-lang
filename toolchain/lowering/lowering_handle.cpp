@@ -363,14 +363,12 @@ auto LoweringHandleUnaryOperatorNot(LoweringFunctionContext& context,
 auto LoweringHandleVarStorage(LoweringFunctionContext& context,
                               SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  // TODO: This should provide a name, not just `var`. Also, LLVM requires
-  // globals to have a name. Do we want to generate a name, which would need to
-  // be consistent across translation units, or use the given name, which
-  // requires either looking ahead for BindName or restructuring semantics,
-  // either of which affects the destructuring due to the difference in
-  // storage?
+  // TODO: Eventually this name will be optional, and we'll want to provide
+  // something like `var` as a default. However, that's not possible right now
+  // so cannot be tested.
+  auto name = context.semantics_ir().GetString(node.GetAsVarStorage());
   auto* alloca = context.builder().CreateAlloca(context.GetType(node.type_id()),
-                                                /*ArraySize=*/nullptr, "var");
+                                                /*ArraySize=*/nullptr, name);
   context.SetLocal(node_id, alloca);
 }
 
