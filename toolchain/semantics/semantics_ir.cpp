@@ -653,8 +653,8 @@ auto GetSemanticsInitializingRepresentation(const SemanticsIR& semantics_ir,
       return {.kind = SemanticsInitializingRepresentation::None};
 
     case SemanticsValueRepresentation::Copy:
-      // TODO: Use in-place initialization for types that have a non-trivial
-      // destructor.
+      // TODO: Use in-place initialization for types that have non-trivial
+      // destructive move.
       return {.kind = SemanticsInitializingRepresentation::ByCopy};
 
     case SemanticsValueRepresentation::Pointer:
