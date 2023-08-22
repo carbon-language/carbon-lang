@@ -11,7 +11,6 @@
 #include <optional>
 #include <random>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "common/check.h"
@@ -28,13 +27,14 @@
 #include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
+#include "explorer/interpreter/heap.h"
 #include "explorer/interpreter/pattern_match.h"
-#include "explorer/interpreter/stack.h"
 #include "explorer/interpreter/type_utils.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Error.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -290,10 +290,9 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
 auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
                                const std::vector<Nonnull<const Value*>>& values)
     -> Nonnull<const Value*> {
-  CARBON_CHECK(fields.size() == values.size());
   std::vector<NamedValue> elements;
-  for (size_t i = 0; i < fields.size(); ++i) {
-    elements.push_back({fields[i].name(), values[i]});
+  for (const auto& [field, value] : llvm::zip_equal(fields, values)) {
+    elements.push_back({field.name(), value});
   }
 
   return arena_->New<StructValue>(std::move(elements));
@@ -741,14 +740,11 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           return value;
         }
       }
-      CARBON_CHECK(tuple->elements().size() ==
-                   destination_element_types.size());
       std::vector<Nonnull<const Value*>> new_elements;
-      for (size_t i = 0; i < tuple->elements().size(); ++i) {
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> val,
-            Convert(tuple->elements()[i], destination_element_types[i],
-                    source_loc));
+      for (const auto& [element, dest_type] :
+           llvm::zip_equal(tuple->elements(), destination_element_types)) {
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> val,
+                                Convert(element, dest_type, source_loc));
         new_elements.push_back(val);
       }
       return arena_->New<TupleValue>(std::move(new_elements));
@@ -1534,17 +1530,18 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         // Prepare parameters tuple.
         std::vector<Nonnull<const Value*>> param_values;
-        for (int i = 1; i <= num_args; ++i) {
-          param_values.push_back(act.results()[i]);
+        for (const auto& arg_result :
+             llvm::ArrayRef(act.results()).drop_front().take_front(num_args)) {
+          param_values.push_back(arg_result);
         }
         const auto* param_tuple = arena_->New<TupleValue>(param_values);
         // Prepare witnesses.
         ImplWitnessMap witnesses;
         if (num_witnesses > 0) {
-          int i = 1 + num_args;
-          for (const auto& [impl_bind, impl_exp] : call.witnesses()) {
-            witnesses[impl_bind] = act.results()[i];
-            ++i;
+          for (const auto& [witness, result] : llvm::zip(
+                   call.witnesses(),
+                   llvm::ArrayRef(act.results()).drop_front(1 + num_args))) {
+            witnesses[witness.first] = result;
           }
         }
         return CallFunction(call, act.results()[0], param_tuple,

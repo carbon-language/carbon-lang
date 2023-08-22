@@ -5,20 +5,11 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_INTERPRETER_H_
 #define CARBON_EXPLORER_INTERPRETER_INTERPRETER_H_
 
-#include <optional>
-#include <utility>
-#include <vector>
-
 #include "common/ostream.h"
 #include "explorer/ast/ast.h"
-#include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
-#include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
 #include "explorer/base/trace_stream.h"
-#include "explorer/interpreter/action.h"
-#include "explorer/interpreter/heap.h"
-#include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
 
