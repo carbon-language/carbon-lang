@@ -430,9 +430,12 @@ void CallableDeclaration::PrintDepth(int depth, int indent_num_spaces,
     for (Nonnull<const GenericBinding*> deduced : deduced_parameters_) {
       out << sep << *deduced;
     }
-    out << "] ";
+    out << "]";
   }
-  out << *param_pattern_ << " " << return_term_;
+  out << *param_pattern_;
+  if(!return_term_.is_omitted()) {
+    out << " " << return_term_;
+  }
   if (body_) {
     out << "\n";
     (*body_)->PrintDepth(depth, indent_num_spaces, out);
