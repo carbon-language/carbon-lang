@@ -48,6 +48,7 @@ class LexerBenchHelper {
   SourceBuffer source_;
 };
 
+// A large value for measurement stability without making benchmarking too slow.
 constexpr int NumTokens = 100000;
 
 void BM_ValidKeywords(benchmark::State& state) {
