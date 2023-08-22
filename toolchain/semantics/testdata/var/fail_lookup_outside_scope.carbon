@@ -8,7 +8,7 @@ fn Main() {
   var x: i32;
 }
 
-// CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+3]]:14: Name `x` not found
+// CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+3]]:14: Name `x` not found.
 // CHECK:STDERR: var y: i32 = x;
 // CHECK:STDERR:              ^
 var y: i32 = x;

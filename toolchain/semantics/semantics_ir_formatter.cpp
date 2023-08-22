@@ -22,10 +22,13 @@ namespace {
 //   type to distinguish.
 class NodeNamer {
  public:
-  enum class ScopeIndex : int {
+  // int32_t matches the input value size.
+  // NOLINTNEXTLINE(performance-enum-size)
+  enum class ScopeIndex : int32_t {
     None = -1,
     Package = 0,
   };
+  static_assert(sizeof(ScopeIndex) == sizeof(SemanticsFunctionId));
 
   NodeNamer(const TokenizedBuffer& tokenized_buffer,
             const ParseTree& parse_tree, const SemanticsIR& semantics_ir)
@@ -68,7 +71,7 @@ class NodeNamer {
 
   // Returns the scope index corresponding to a function.
   auto GetScopeFor(SemanticsFunctionId fn_id) -> ScopeIndex {
-    return ScopeIndex(fn_id.index + 1);
+    return static_cast<ScopeIndex>(fn_id.index + 1);
   }
 
   // Returns the IR name to use for a function.
@@ -76,7 +79,7 @@ class NodeNamer {
     if (!fn_id.is_valid()) {
       return "invalid";
     }
-    return GetScopeInfo(GetScopeFor(fn_id)).name;
+    return GetScopeInfo(GetScopeFor(fn_id)).name.str();
   }
 
   // Returns the IR name to use for a node, when referenced from a given scope.
@@ -144,8 +147,6 @@ class NodeNamer {
         }
         return value->first();
       }
-
-      operator llvm::StringRef() const { return str(); }
 
       auto SetFallback(Name name) -> void { value_->second.fallback = name; }
 
@@ -239,7 +240,7 @@ class NodeNamer {
   };
 
   auto GetScopeInfo(ScopeIndex scope_idx) -> Scope& {
-    return scopes[(int)scope_idx];
+    return scopes[static_cast<int>(scope_idx)];
   }
 
   auto AddBlockLabel(ScopeIndex scope_idx, SemanticsNodeBlockId block_id,
@@ -251,7 +252,8 @@ class NodeNamer {
     }
 
     if (parse_node == ParseTree::Node::Invalid) {
-      if (auto& block = semantics_ir_.GetNodeBlock(block_id); !block.empty()) {
+      if (const auto& block = semantics_ir_.GetNodeBlock(block_id);
+          !block.empty()) {
         parse_node = semantics_ir_.GetNode(block.front()).parse_node();
       }
     }
@@ -524,8 +526,9 @@ class SemanticsIRFormatter {
   // are never referenced themselves.
   // TODO: Include BindName nodes in the output if we start referring to them.
   template <>
-  auto FormatInstruction<SemanticsNode::BindName>(SemanticsNodeId,
-                                                  SemanticsNode) -> void {}
+  auto FormatInstruction<SemanticsNode::BindName>(SemanticsNodeId /*node_id*/,
+                                                  SemanticsNode /*node*/)
+      -> void {}
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::BlockArg>(SemanticsNode node)
@@ -535,7 +538,7 @@ class SemanticsIRFormatter {
   }
 
   template <>
-  auto FormatInstruction<SemanticsNode::BranchIf>(SemanticsNodeId,
+  auto FormatInstruction<SemanticsNode::BranchIf>(SemanticsNodeId /*node_id*/,
                                                   SemanticsNode node) -> void {
     if (!in_terminator_sequence) {
       out_ << "  ";
@@ -550,9 +553,8 @@ class SemanticsIRFormatter {
   }
 
   template <>
-  auto FormatInstruction<SemanticsNode::BranchWithArg>(SemanticsNodeId,
-                                                       SemanticsNode node)
-      -> void {
+  auto FormatInstruction<SemanticsNode::BranchWithArg>(
+      SemanticsNodeId /*node_id*/, SemanticsNode node) -> void {
     if (!in_terminator_sequence) {
       out_ << "  ";
     }
@@ -566,7 +568,7 @@ class SemanticsIRFormatter {
   }
 
   template <>
-  auto FormatInstruction<SemanticsNode::Branch>(SemanticsNodeId,
+  auto FormatInstruction<SemanticsNode::Branch>(SemanticsNodeId /*node_id*/,
                                                 SemanticsNode node) -> void {
     if (!in_terminator_sequence) {
       out_ << "  ";
@@ -596,9 +598,8 @@ class SemanticsIRFormatter {
 
   // StructTypeFields are formatted as part of their StructType.
   template <>
-  auto FormatInstruction<SemanticsNode::StructTypeField>(SemanticsNodeId,
-                                                         SemanticsNode)
-      -> void {}
+  auto FormatInstruction<SemanticsNode::StructTypeField>(
+      SemanticsNodeId /*node_id*/, SemanticsNode /*node*/) -> void {}
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::StructType>(SemanticsNode node)
@@ -616,7 +617,7 @@ class SemanticsIRFormatter {
     out_ << "}";
   }
 
-  auto FormatArgs(SemanticsNode::NoArgs) -> void {}
+  auto FormatArgs(SemanticsNode::NoArgs /*unused*/) -> void {}
 
   template <typename Arg1>
   auto FormatArgs(Arg1 arg) -> void {
