@@ -1531,7 +1531,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // Prepare parameters tuple.
         std::vector<Nonnull<const Value*>> param_values;
         for (const auto& arg_result :
-             llvm::ArrayRef(act.results()).drop_front().take_front(num_args)) {
+             llvm::ArrayRef(act.results()).slice(1, num_args)) {
           param_values.push_back(arg_result);
         }
         const auto* param_tuple = arena_->New<TupleValue>(param_values);
