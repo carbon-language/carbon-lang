@@ -248,8 +248,8 @@ class TokenizedBuffer::Lexer {
     bool formed_token_;
   };
 
-  using DispatchFunctionT = auto (Lexer& lexer,
-                                  llvm::StringRef& source_text) -> LexResult;
+  using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef& source_text)
+      -> LexResult;
   using DispatchTableT = std::array<DispatchFunctionT*, 256>;
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
@@ -463,7 +463,7 @@ class TokenizedBuffer::Lexer {
     auto compute_symbol_kind = [](llvm::StringRef source_text) {
       return llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
-    .StartsWith(Spelling, TokenKind::Name)
+  .StartsWith(Spelling, TokenKind::Name)
 #include "toolchain/lexer/token_kind.def"
           .Default(TokenKind::Error);
     };
@@ -811,27 +811,27 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
 
   // Build a table of function pointers that we can use to dispatch to the
   // correct lexer routine based on the first byte of source text.
-  // 
+  //
   // While it is tempting to simply use a `switch` on the first byte and
   // dispatch with cases into this, in practice that doesn't produce great code.
   // There seem to be two issues that are the root cause.
-  // 
+  //
   // First, there are lots of different values of bytes that dispatch to a
   // fairly small set of routines, and then some byte values that dispatch
   // differently for each byte. This pattern isn't one that the compiler-based
   // lowering of switches works well with -- it tries to balance all the cases,
   // and in doing so emits several compares and other control flow rather than a
   // simple jump table.
-  // 
+  //
   // Second, with a `case`, it isn't as obvious how to create a single, uniform
   // interface that is effective for *every* byte value, and thus makes for a
   // single consistent table-based dispatch. By forcing these to be function
   // pointers, we also coerce the code to use a strictly homogenous structure
   // that can form a single dispatch table.
-  // 
+  //
   // These two actually interact -- the second issue is part of what makes the
   // non-table lowering in the first one desirable for many switches and cases.
-  // 
+  //
   // Ultimately, when table-based dispatch is such an important technique, we
   // get better results by taking full control and manually creating the
   // dispatch structures.
