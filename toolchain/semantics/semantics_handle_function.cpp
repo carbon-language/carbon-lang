@@ -11,6 +11,15 @@ namespace Carbon::Check {
 // definition syntax.
 static auto BuildFunctionDeclaration(Context& context)
     -> std::pair<SemIR::FunctionId, SemIR::NodeId> {
+  // TODO: This contains the IR block for the parameters and return type. At
+  // present, it's just loose, but it's not strictly required for parameter
+  // refs; we should either stop constructing it completely or, if it turns out
+  // to be needed, store it. Note, the underlying issue is that the LLVM IR has
+  // nowhere clear to emit, so changing storage would require addressing that
+  // problem. For comparison with function calls, the IR needs to be emitted
+  // prior to the call.
+  context.node_block_stack().Pop();
+
   SemIR::TypeId return_type_id = SemIR::TypeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
@@ -98,6 +107,9 @@ auto HandleFunctionDefinitionStart(Context& context, ParseTree::Node parse_node)
 
 auto HandleFunctionIntroducer(Context& context, ParseTree::Node parse_node)
     -> bool {
+  // Create a node block to hold the nodes created as part of the function
+  // signature, such as parameter and return types.
+  context.node_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.

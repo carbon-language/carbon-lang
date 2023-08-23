@@ -86,12 +86,12 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0},
 // CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1},
-// CHECK:STDOUT:   {name: str3, param_refs: block0, body: [block3]},
-// CHECK:STDOUT:   {name: str5, param_refs: block0, body: [block7]},
-// CHECK:STDOUT:   {name: str6, param_refs: block0, body: [block8]},
-// CHECK:STDOUT:   {name: str7, param_refs: block0, body: [block9]},
-// CHECK:STDOUT:   {name: str8, param_refs: block0, body: [block10]},
-// CHECK:STDOUT:   {name: str9, param_refs: block13, body: [block14]},
+// CHECK:STDOUT:   {name: str3, param_refs: block0, body: [block4]},
+// CHECK:STDOUT:   {name: str5, param_refs: block0, body: [block8]},
+// CHECK:STDOUT:   {name: str6, param_refs: block0, body: [block9]},
+// CHECK:STDOUT:   {name: str7, param_refs: block0, body: [block10]},
+// CHECK:STDOUT:   {name: str8, param_refs: block0, body: [block11]},
+// CHECK:STDOUT:   {name: str9, param_refs: block14, body: [block15]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -146,7 +146,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type0},
-// CHECK:STDOUT:   {kind: StructType, arg0: block2, type: typeTypeType},
+// CHECK:STDOUT:   {kind: StructType, arg0: block3, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
@@ -166,13 +166,13 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+19, type: type0},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type9},
+// CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type9},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type9, type: typeTypeType},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+22, type: type10},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+25, type: type0},
-// CHECK:STDOUT:   {kind: StructValue, arg0: block6, type: type1},
+// CHECK:STDOUT:   {kind: StructValue, arg0: block7, type: type1},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+28, type: type11},
 // CHECK:STDOUT:   {kind: Return},
@@ -204,7 +204,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+56, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int7, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+58, type: type0},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block11, type: type9},
+// CHECK:STDOUT:   {kind: TupleValue, arg0: block12, type: type9},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int8, type: type0},
 // CHECK:STDOUT:   {kind: TupleIndex, arg0: node+60, arg1: node+61, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+62, type: type2},
@@ -222,8 +222,6 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+32,
@@ -231,6 +229,10 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:     node+48,
 // CHECK:STDOUT:     node+55,
 // CHECK:STDOUT:     node+66,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
@@ -331,8 +333,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7 = fn_decl @G
-// CHECK:STDOUT:   %.loc9_19: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.loc9_1 = fn_decl @H
+// CHECK:STDOUT:   %.loc9 = fn_decl @H
 // CHECK:STDOUT:   %.loc11 = fn_decl @AddressOfLiteral
 // CHECK:STDOUT:   %.loc38 = fn_decl @AddressOfOperator
 // CHECK:STDOUT:   %.loc53 = fn_decl @AddressOfCall

@@ -53,12 +53,12 @@ fn Main() {
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
@@ -77,8 +77,7 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7_20: () = tuple_value ()
-// CHECK:STDOUT:   %.loc7_1 = fn_decl @Echo
+// CHECK:STDOUT:   %.loc7 = fn_decl @Echo
 // CHECK:STDOUT:   %.loc11 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

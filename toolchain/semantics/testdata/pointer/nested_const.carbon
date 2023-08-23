@@ -54,12 +54,12 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
@@ -70,8 +70,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc8_41: type = const_type i32
-// CHECK:STDOUT:   %.loc8_1 = fn_decl @F
+// CHECK:STDOUT:   %.loc8 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const (const (const i32*)*)) -> const i32 {
