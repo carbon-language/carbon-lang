@@ -80,7 +80,7 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
 
   // Set parameter names.
   for (auto [i, param_ref] : llvm::enumerate(param_refs)) {
-    auto name_id = semantics_ir().GetNode(param_ref).GetAsVarStorage();
+    auto name_id = semantics_ir().GetNode(param_ref).GetAsParameter();
     llvm_function->getArg(i)->setName(semantics_ir().GetString(name_id));
   }
 

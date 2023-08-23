@@ -66,6 +66,7 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(FunctionDeclaration, "fn_decl", Untyped,
 CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_literal", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Namespace, "namespace", Untyped, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Parameter, "parameter", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(PointerType, "ptr_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(RealLiteral, "real_literal", Typed,
                                 NotTerminator)
