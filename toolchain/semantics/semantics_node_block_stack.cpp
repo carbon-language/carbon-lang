@@ -8,16 +8,16 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsNodeBlockStack::Push(SemanticsNodeBlockId id) -> void {
+auto NodeBlockStack::Push(SemIR::NodeBlockId id) -> void {
   CARBON_VLOG() << name_ << " Push " << stack_.size() << "\n";
   CARBON_CHECK(stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
   stack_.push_back(id);
 }
 
-auto SemanticsNodeBlockStack::PeekForAdd() -> SemanticsNodeBlockId {
+auto NodeBlockStack::PeekForAdd() -> SemIR::NodeBlockId {
   CARBON_CHECK(!stack_.empty()) << "no current block";
   auto& back = stack_.back();
   if (!back.is_valid()) {
@@ -28,17 +28,17 @@ auto SemanticsNodeBlockStack::PeekForAdd() -> SemanticsNodeBlockId {
   return back;
 }
 
-auto SemanticsNodeBlockStack::Pop() -> SemanticsNodeBlockId {
+auto NodeBlockStack::Pop() -> SemIR::NodeBlockId {
   CARBON_CHECK(!stack_.empty()) << "no current block";
   auto back = stack_.pop_back_val();
   CARBON_VLOG() << name_ << " Pop " << stack_.size() << ": " << back << "\n";
   if (!back.is_valid()) {
-    return SemanticsNodeBlockId::Empty;
+    return SemIR::NodeBlockId::Empty;
   }
   return back;
 }
 
-auto SemanticsNodeBlockStack::PrintForStackDump(llvm::raw_ostream& output) const
+auto NodeBlockStack::PrintForStackDump(llvm::raw_ostream& output) const
     -> void {
   output << name_ << ":\n";
   for (auto [i, entry] : llvm::enumerate(stack_)) {
@@ -46,4 +46,4 @@ auto SemanticsNodeBlockStack::PrintForStackDump(llvm::raw_ostream& output) const
   }
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

@@ -5,30 +5,26 @@
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleNamedConstraintDeclaration(SemanticsContext& context,
-                                               ParseTree::Node parse_node)
-    -> bool {
+auto HandleNamedConstraintDeclaration(Context& context,
+                                      ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleNamedConstraintDeclaration");
 }
 
-auto SemanticsHandleNamedConstraintDefinition(SemanticsContext& context,
-                                              ParseTree::Node parse_node)
-    -> bool {
+auto HandleNamedConstraintDefinition(Context& context,
+                                     ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleNamedConstraintDefinition");
 }
 
-auto SemanticsHandleNamedConstraintDefinitionStart(SemanticsContext& context,
-                                                   ParseTree::Node parse_node)
-    -> bool {
+auto HandleNamedConstraintDefinitionStart(Context& context,
+                                          ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleNamedConstraintDefinitionStart");
 }
 
-auto SemanticsHandleNamedConstraintIntroducer(SemanticsContext& context,
-                                              ParseTree::Node parse_node)
-    -> bool {
+auto HandleNamedConstraintIntroducer(Context& context,
+                                     ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleNamedConstraintIntroducer");
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

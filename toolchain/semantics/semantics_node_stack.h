@@ -13,9 +13,9 @@
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-// Wraps the stack of nodes for SemanticsParseTreeHandler.
+// Wraps the stack of nodes for Context.
 //
 // All pushes and pops will be vlogged.
 //
@@ -28,10 +28,10 @@ namespace Carbon {
 //
 // These should be assumed API constraints unless otherwise mentioned on a
 // method. The main exception is PopAndIgnore, which doesn't do verification.
-class SemanticsNodeStack {
+class NodeStack {
  public:
-  explicit SemanticsNodeStack(const ParseTree& parse_tree,
-                              llvm::raw_ostream* vlog_stream)
+  explicit NodeStack(const ParseTree& parse_tree,
+                     llvm::raw_ostream* vlog_stream)
       : parse_tree_(&parse_tree), vlog_stream_(vlog_stream) {}
 
   // Pushes a solo parse tree node onto the stack. Used when there is no
@@ -44,7 +44,7 @@ class SemanticsNodeStack {
                   << parse_tree_->node_kind(parse_node) << " -> <none>\n";
     CARBON_CHECK(stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
-    stack_.push_back(Entry(parse_node, SemanticsNodeId::Invalid));
+    stack_.push_back(Entry(parse_node, SemIR::NodeId::Invalid));
   }
 
   // Pushes a parse tree node onto the stack with an ID.
@@ -64,12 +64,12 @@ class SemanticsNodeStack {
   }
 
   // Pops the top of the stack without any verification.
-  auto PopAndIgnore() -> void { PopEntry<SemanticsNodeId>(); }
+  auto PopAndIgnore() -> void { PopEntry<SemIR::NodeId>(); }
 
   // Pops the top of the stack and returns the parse_node.
   template <ParseNodeKind::RawEnumType RequiredParseKind>
   auto PopForSoloParseNode() -> ParseTree::Node {
-    Entry back = PopEntry<SemanticsNodeId>();
+    Entry back = PopEntry<SemIR::NodeId>();
     RequireIdKind(ParseNodeKind::Create(RequiredParseKind),
                   IdKind::SoloParseNode);
     RequireParseKind<RequiredParseKind>(back.parse_node);
@@ -85,8 +85,8 @@ class SemanticsNodeStack {
   // Pops an expression from the top of the stack and returns the parse_node and
   // the ID.
   auto PopExpressionWithParseNode()
-      -> std::pair<ParseTree::Node, SemanticsNodeId> {
-    return PopWithParseNode<SemanticsNodeId>();
+      -> std::pair<ParseTree::Node, SemIR::NodeId> {
+    return PopWithParseNode<SemIR::NodeId>();
   }
 
   // Pops the top of the stack and returns the parse_node and the ID.
@@ -94,28 +94,28 @@ class SemanticsNodeStack {
   auto PopWithParseNode() -> auto {
     constexpr IdKind RequiredIdKind =
         ParseNodeKindToIdKind(ParseNodeKind::Create(RequiredParseKind));
-    if constexpr (RequiredIdKind == IdKind::SemanticsNodeId) {
-      auto back = PopWithParseNode<SemanticsNodeId>();
+    if constexpr (RequiredIdKind == IdKind::NodeId) {
+      auto back = PopWithParseNode<SemIR::NodeId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
-    if constexpr (RequiredIdKind == IdKind::SemanticsNodeBlockId) {
-      auto back = PopWithParseNode<SemanticsNodeBlockId>();
+    if constexpr (RequiredIdKind == IdKind::NodeBlockId) {
+      auto back = PopWithParseNode<SemIR::NodeBlockId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
-    if constexpr (RequiredIdKind == IdKind::SemanticsFunctionId) {
-      auto back = PopWithParseNode<SemanticsFunctionId>();
+    if constexpr (RequiredIdKind == IdKind::FunctionId) {
+      auto back = PopWithParseNode<SemIR::FunctionId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
-    if constexpr (RequiredIdKind == IdKind::SemanticsStringId) {
-      auto back = PopWithParseNode<SemanticsStringId>();
+    if constexpr (RequiredIdKind == IdKind::StringId) {
+      auto back = PopWithParseNode<SemIR::StringId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
-    if constexpr (RequiredIdKind == IdKind::SemanticsTypeId) {
-      auto back = PopWithParseNode<SemanticsTypeId>();
+    if constexpr (RequiredIdKind == IdKind::TypeId) {
+      auto back = PopWithParseNode<SemIR::TypeId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
@@ -125,8 +125,8 @@ class SemanticsNodeStack {
   }
 
   // Pops an expression from the top of the stack and returns the ID.
-  // Expressions map multiple ParseNodeKinds to SemanticsNodeId always.
-  auto PopExpression() -> SemanticsNodeId {
+  // Expressions map multiple ParseNodeKinds to SemIR::NodeId always.
+  auto PopExpression() -> SemIR::NodeId {
     return PopExpressionWithParseNode().second;
   }
 
@@ -146,20 +146,20 @@ class SemanticsNodeStack {
     RequireParseKind<RequiredParseKind>(back.parse_node);
     constexpr IdKind RequiredIdKind =
         ParseNodeKindToIdKind(ParseNodeKind::Create(RequiredParseKind));
-    if constexpr (RequiredIdKind == IdKind::SemanticsNodeId) {
-      return back.id<SemanticsNodeId>();
+    if constexpr (RequiredIdKind == IdKind::NodeId) {
+      return back.id<SemIR::NodeId>();
     }
-    if constexpr (RequiredIdKind == IdKind::SemanticsNodeBlockId) {
-      return back.id<SemanticsNodeBlockId>();
+    if constexpr (RequiredIdKind == IdKind::NodeBlockId) {
+      return back.id<SemIR::NodeBlockId>();
     }
-    if constexpr (RequiredIdKind == IdKind::SemanticsFunctionId) {
-      return back.id<SemanticsFunctionId>();
+    if constexpr (RequiredIdKind == IdKind::FunctionId) {
+      return back.id<SemIR::FunctionId>();
     }
-    if constexpr (RequiredIdKind == IdKind::SemanticsStringId) {
-      return back.id<SemanticsStringId>();
+    if constexpr (RequiredIdKind == IdKind::StringId) {
+      return back.id<SemIR::StringId>();
     }
-    if constexpr (RequiredIdKind == IdKind::SemanticsTypeId) {
-      return back.id<SemanticsTypeId>();
+    if constexpr (RequiredIdKind == IdKind::TypeId) {
+      return back.id<SemIR::TypeId>();
     }
     CARBON_FATAL() << "Unpeekable IdKind for parse kind: "
                    << ParseNodeKind::Create(RequiredParseKind)
@@ -175,11 +175,11 @@ class SemanticsNodeStack {
  private:
   // Possible associated ID types.
   enum class IdKind {
-    SemanticsNodeId,
-    SemanticsNodeBlockId,
-    SemanticsFunctionId,
-    SemanticsStringId,
-    SemanticsTypeId,
+    NodeId,
+    NodeBlockId,
+    FunctionId,
+    StringId,
+    TypeId,
     // No associated ID type.
     SoloParseNode,
     // Not expected in the node stack.
@@ -188,34 +188,33 @@ class SemanticsNodeStack {
 
   // An entry in stack_.
   struct Entry {
-    explicit Entry(ParseTree::Node parse_node, SemanticsNodeId node_id)
+    explicit Entry(ParseTree::Node parse_node, SemIR::NodeId node_id)
         : parse_node(parse_node), node_id(node_id) {}
-    explicit Entry(ParseTree::Node parse_node,
-                   SemanticsNodeBlockId node_block_id)
+    explicit Entry(ParseTree::Node parse_node, SemIR::NodeBlockId node_block_id)
         : parse_node(parse_node), node_block_id(node_block_id) {}
-    explicit Entry(ParseTree::Node parse_node, SemanticsFunctionId function_id)
+    explicit Entry(ParseTree::Node parse_node, SemIR::FunctionId function_id)
         : parse_node(parse_node), function_id(function_id) {}
-    explicit Entry(ParseTree::Node parse_node, SemanticsStringId name_id)
+    explicit Entry(ParseTree::Node parse_node, SemIR::StringId name_id)
         : parse_node(parse_node), name_id(name_id) {}
-    explicit Entry(ParseTree::Node parse_node, SemanticsTypeId type_id)
+    explicit Entry(ParseTree::Node parse_node, SemIR::TypeId type_id)
         : parse_node(parse_node), type_id(type_id) {}
 
     // Returns the appropriate ID basaed on type.
     template <typename T>
     auto id() -> T& {
-      if constexpr (std::is_same<T, SemanticsNodeId>()) {
+      if constexpr (std::is_same<T, SemIR::NodeId>()) {
         return node_id;
       }
-      if constexpr (std::is_same<T, SemanticsNodeBlockId>()) {
+      if constexpr (std::is_same<T, SemIR::NodeBlockId>()) {
         return node_block_id;
       }
-      if constexpr (std::is_same<T, SemanticsFunctionId>()) {
+      if constexpr (std::is_same<T, SemIR::FunctionId>()) {
         return function_id;
       }
-      if constexpr (std::is_same<T, SemanticsStringId>()) {
+      if constexpr (std::is_same<T, SemIR::StringId>()) {
         return name_id;
       }
-      if constexpr (std::is_same<T, SemanticsTypeId>()) {
+      if constexpr (std::is_same<T, SemIR::TypeId>()) {
         return type_id;
       }
     }
@@ -229,11 +228,11 @@ class SemanticsNodeStack {
     // A discriminator isn't needed because the caller can determine which field
     // is used based on the ParseNodeKind.
     union {
-      SemanticsNodeId node_id;
-      SemanticsNodeBlockId node_block_id;
-      SemanticsFunctionId function_id;
-      SemanticsStringId name_id;
-      SemanticsTypeId type_id;
+      SemIR::NodeId node_id;
+      SemIR::NodeBlockId node_block_id;
+      SemIR::FunctionId function_id;
+      SemIR::StringId name_id;
+      SemIR::TypeId type_id;
     };
   };
   static_assert(sizeof(Entry) == 8, "Unexpected Entry size");
@@ -261,15 +260,15 @@ class SemanticsNodeStack {
       case ParseNodeKind::StructFieldType:
       case ParseNodeKind::StructTypeLiteral:
       case ParseNodeKind::TupleLiteral:
-        return IdKind::SemanticsNodeId;
+        return IdKind::NodeId;
       case ParseNodeKind::IfExpressionThen:
       case ParseNodeKind::IfStatementElse:
       case ParseNodeKind::ParameterList:
-        return IdKind::SemanticsNodeBlockId;
+        return IdKind::NodeBlockId;
       case ParseNodeKind::FunctionDefinitionStart:
-        return IdKind::SemanticsFunctionId;
+        return IdKind::FunctionId;
       case ParseNodeKind::Name:
-        return IdKind::SemanticsStringId;
+        return IdKind::StringId;
       case ParseNodeKind::ArrayExpressionSemi:
       case ParseNodeKind::CodeBlockStart:
       case ParseNodeKind::FunctionIntroducer:
@@ -292,20 +291,20 @@ class SemanticsNodeStack {
   // ParseNodeKindToIdKind.
   template <typename IdT>
   static constexpr auto IdTypeToIdKind() -> IdKind {
-    if constexpr (std::is_same_v<IdT, SemanticsNodeId>) {
-      return IdKind::SemanticsNodeId;
+    if constexpr (std::is_same_v<IdT, SemIR::NodeId>) {
+      return IdKind::NodeId;
     }
-    if constexpr (std::is_same_v<IdT, SemanticsNodeBlockId>) {
-      return IdKind::SemanticsNodeBlockId;
+    if constexpr (std::is_same_v<IdT, SemIR::NodeBlockId>) {
+      return IdKind::NodeBlockId;
     }
-    if constexpr (std::is_same_v<IdT, SemanticsFunctionId>) {
-      return IdKind::SemanticsFunctionId;
+    if constexpr (std::is_same_v<IdT, SemIR::FunctionId>) {
+      return IdKind::FunctionId;
     }
-    if constexpr (std::is_same_v<IdT, SemanticsStringId>) {
-      return IdKind::SemanticsStringId;
+    if constexpr (std::is_same_v<IdT, SemIR::StringId>) {
+      return IdKind::StringId;
     }
-    if constexpr (std::is_same_v<IdT, SemanticsTypeId>) {
-      return IdKind::SemanticsTypeId;
+    if constexpr (std::is_same_v<IdT, SemIR::TypeId>) {
+      return IdKind::TypeId;
     }
   }
 
@@ -355,6 +354,6 @@ class SemanticsNodeStack {
   llvm::SmallVector<Entry> stack_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_STACK_H_

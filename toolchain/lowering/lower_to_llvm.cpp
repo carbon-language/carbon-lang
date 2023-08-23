@@ -9,7 +9,7 @@
 namespace Carbon {
 
 auto LowerToLLVM(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
-                 const SemanticsIR& semantics_ir,
+                 const SemIR::File& semantics_ir,
                  llvm::raw_ostream* vlog_stream)
     -> std::unique_ptr<llvm::Module> {
   LoweringContext context(llvm_context, module_name, semantics_ir, vlog_stream);

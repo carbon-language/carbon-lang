@@ -12,10 +12,10 @@
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::SemIR {
 
 // A function.
-struct SemanticsFunction {
+struct Function {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", "
         << "param_refs: " << param_refs_id;
@@ -32,30 +32,32 @@ struct SemanticsFunction {
     }
     out << "}";
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
   // The function name.
-  SemanticsStringId name_id;
+  StringId name_id;
   // A block containing a single reference node per parameter.
-  SemanticsNodeBlockId param_refs_id;
+  NodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
-  SemanticsTypeId return_type_id;
+  TypeId return_type_id;
   // The storage for the return value, which is a reference expression whose
   // type is the return type of the function. Will be invalid if the function
   // doesn't have a return slot. If this is valid, a call to the function is
   // expected to have an additional final argument corresponding to the return
   // slot.
-  SemanticsNodeId return_slot_id;
+  NodeId return_slot_id;
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
-  llvm::SmallVector<SemanticsNodeBlockId> body_block_ids;
+  llvm::SmallVector<NodeBlockId> body_block_ids;
 };
 
-struct SemanticsRealLiteral {
+struct RealLiteral {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{mantissa: " << mantissa << ", exponent: " << exponent
         << ", is_decimal: " << is_decimal << "}";
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
   llvm::APInt mantissa;
   llvm::APInt exponent;
@@ -66,17 +68,17 @@ struct SemanticsRealLiteral {
 };
 
 // Provides semantic analysis on a ParseTree.
-class SemanticsIR {
+class File {
  public:
   // Produces the builtins.
-  static auto MakeBuiltinIR() -> SemanticsIR;
+  static auto MakeBuiltinIR() -> File;
 
   // Adds the IR for the provided ParseTree.
-  static auto MakeFromParseTree(const SemanticsIR& builtin_ir,
+  static auto MakeFromParseTree(const File& builtin_ir,
                                 const TokenizedBuffer& tokens,
                                 const ParseTree& parse_tree,
                                 DiagnosticConsumer& consumer,
-                                llvm::raw_ostream* vlog_stream) -> SemanticsIR;
+                                llvm::raw_ostream* vlog_stream) -> File;
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
@@ -86,136 +88,126 @@ class SemanticsIR {
   // TODO: In the future, the things to print may change, for example by adding
   // preludes. We may then want the ability to omit other things similar to
   // builtins.
+  auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
+
   auto Print(llvm::raw_ostream& out) const -> void {
     Print(out, /*include_builtins=*/false);
   }
-  auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
   // Returns array bound value from the bound node.
-  auto GetArrayBoundValue(SemanticsNodeId bound_id) const -> uint64_t {
+  auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
     return GetIntegerLiteral(GetNode(bound_id).GetAsIntegerLiteral())
         .getZExtValue();
   }
 
   // Returns the requested IR.
-  auto GetCrossReferenceIR(SemanticsCrossReferenceIRId xref_id) const
-      -> const SemanticsIR& {
+  auto GetCrossReferenceIR(CrossReferenceIRId xref_id) const -> const File& {
     return *cross_reference_irs_[xref_id.index];
   }
 
   // Adds a callable, returning an ID to reference it.
-  auto AddFunction(SemanticsFunction function) -> SemanticsFunctionId {
-    SemanticsFunctionId id(functions_.size());
+  auto AddFunction(Function function) -> FunctionId {
+    FunctionId id(functions_.size());
     functions_.push_back(function);
     return id;
   }
 
   // Returns the requested callable.
-  auto GetFunction(SemanticsFunctionId function_id) const
-      -> const SemanticsFunction& {
+  auto GetFunction(FunctionId function_id) const -> const Function& {
     return functions_[function_id.index];
   }
 
   // Returns the requested callable.
-  auto GetFunction(SemanticsFunctionId function_id) -> SemanticsFunction& {
+  auto GetFunction(FunctionId function_id) -> Function& {
     return functions_[function_id.index];
   }
 
   // Adds an integer literal, returning an ID to reference it.
-  auto AddIntegerLiteral(llvm::APInt integer_literal)
-      -> SemanticsIntegerLiteralId {
-    SemanticsIntegerLiteralId id(integer_literals_.size());
+  auto AddIntegerLiteral(llvm::APInt integer_literal) -> IntegerLiteralId {
+    IntegerLiteralId id(integer_literals_.size());
     integer_literals_.push_back(integer_literal);
     return id;
   }
 
   // Returns the requested integer literal.
-  auto GetIntegerLiteral(SemanticsIntegerLiteralId int_id) const
-      -> const llvm::APInt& {
+  auto GetIntegerLiteral(IntegerLiteralId int_id) const -> const llvm::APInt& {
     return integer_literals_[int_id.index];
   }
 
   // Adds a name scope, returning an ID to reference it.
-  auto AddNameScope() -> SemanticsNameScopeId {
-    SemanticsNameScopeId name_scopes_id(name_scopes_.size());
+  auto AddNameScope() -> NameScopeId {
+    NameScopeId name_scopes_id(name_scopes_.size());
     name_scopes_.resize(name_scopes_id.index + 1);
     return name_scopes_id;
   }
 
   // Adds an entry to a name scope. Returns true on success, false on
   // duplicates.
-  auto AddNameScopeEntry(SemanticsNameScopeId scope_id,
-                         SemanticsStringId name_id, SemanticsNodeId target_id)
-      -> bool {
+  auto AddNameScopeEntry(NameScopeId scope_id, StringId name_id,
+                         NodeId target_id) -> bool {
     return name_scopes_[scope_id.index].insert({name_id, target_id}).second;
   }
 
   // Returns the requested name scope.
-  auto GetNameScope(SemanticsNameScopeId scope_id) const
-      -> const llvm::DenseMap<SemanticsStringId, SemanticsNodeId>& {
+  auto GetNameScope(NameScopeId scope_id) const
+      -> const llvm::DenseMap<StringId, NodeId>& {
     return name_scopes_[scope_id.index];
   }
 
   // Adds a node to a specified block, returning an ID to reference the node.
-  auto AddNode(SemanticsNodeBlockId block_id, SemanticsNode node)
-      -> SemanticsNodeId {
-    SemanticsNodeId node_id(nodes_.size());
+  auto AddNode(NodeBlockId block_id, Node node) -> NodeId {
+    NodeId node_id(nodes_.size());
     nodes_.push_back(node);
-    if (block_id != SemanticsNodeBlockId::Unreachable) {
+    if (block_id != NodeBlockId::Unreachable) {
       node_blocks_[block_id.index].push_back(node_id);
     }
     return node_id;
   }
 
   // Overwrites a given node with a new value.
-  auto ReplaceNode(SemanticsNodeId node_id, SemanticsNode node) -> void {
+  auto ReplaceNode(NodeId node_id, Node node) -> void {
     nodes_[node_id.index] = node;
   }
 
   // Returns the requested node.
-  auto GetNode(SemanticsNodeId node_id) const -> SemanticsNode {
-    return nodes_[node_id.index];
-  }
+  auto GetNode(NodeId node_id) const -> Node { return nodes_[node_id.index]; }
 
   // Adds an empty node block, returning an ID to reference it.
-  auto AddNodeBlock() -> SemanticsNodeBlockId {
-    SemanticsNodeBlockId id(node_blocks_.size());
+  auto AddNodeBlock() -> NodeBlockId {
+    NodeBlockId id(node_blocks_.size());
     node_blocks_.push_back({});
     return id;
   }
 
   // Returns the requested node block.
-  auto GetNodeBlock(SemanticsNodeBlockId block_id) const
-      -> const llvm::SmallVector<SemanticsNodeId>& {
-    CARBON_CHECK(block_id != SemanticsNodeBlockId::Unreachable);
+  auto GetNodeBlock(NodeBlockId block_id) const
+      -> const llvm::SmallVector<NodeId>& {
+    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
 
   // Returns the requested node block.
-  auto GetNodeBlock(SemanticsNodeBlockId block_id)
-      -> llvm::SmallVector<SemanticsNodeId>& {
-    CARBON_CHECK(block_id != SemanticsNodeBlockId::Unreachable);
+  auto GetNodeBlock(NodeBlockId block_id) -> llvm::SmallVector<NodeId>& {
+    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
 
   // Adds a real literal, returning an ID to reference it.
-  auto AddRealLiteral(SemanticsRealLiteral real_literal)
-      -> SemanticsRealLiteralId {
-    SemanticsRealLiteralId id(real_literals_.size());
+  auto AddRealLiteral(RealLiteral real_literal) -> RealLiteralId {
+    RealLiteralId id(real_literals_.size());
     real_literals_.push_back(real_literal);
     return id;
   }
 
   // Returns the requested real literal.
-  auto GetRealLiteral(SemanticsRealLiteralId int_id) const
-      -> const SemanticsRealLiteral& {
+  auto GetRealLiteral(RealLiteralId int_id) const -> const RealLiteral& {
     return real_literals_[int_id.index];
   }
 
   // Adds an string, returning an ID to reference it.
-  auto AddString(llvm::StringRef str) -> SemanticsStringId {
+  auto AddString(llvm::StringRef str) -> StringId {
     // Look up the string, or add it if it's new.
-    SemanticsStringId next_id(strings_.size());
+    StringId next_id(strings_.size());
     auto [it, added] = string_to_id_.insert({str, next_id});
 
     if (added) {
@@ -228,13 +220,13 @@ class SemanticsIR {
   }
 
   // Returns the requested string.
-  auto GetString(SemanticsStringId string_id) const -> llvm::StringRef {
+  auto GetString(StringId string_id) const -> llvm::StringRef {
     return strings_[string_id.index];
   }
 
   // Adds a type, returning an ID to reference it.
-  auto AddType(SemanticsNodeId node_id) -> SemanticsTypeId {
-    SemanticsTypeId type_id(types_.size());
+  auto AddType(NodeId node_id) -> TypeId {
+    TypeId type_id(types_.size());
     types_.push_back(node_id);
     return type_id;
   }
@@ -242,40 +234,38 @@ class SemanticsIR {
   // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
   // order to avoid a check; callers that need that should use
   // GetTypeAllowBuiltinTypes.
-  auto GetType(SemanticsTypeId type_id) const -> SemanticsNodeId {
+  auto GetType(TypeId type_id) const -> NodeId {
     // Double-check it's not called with TypeType or InvalidType.
     CARBON_CHECK(type_id.index >= 0)
         << "Invalid argument for GetType: " << type_id;
     return types_[type_id.index];
   }
 
-  auto GetTypeAllowBuiltinTypes(SemanticsTypeId type_id) const
-      -> SemanticsNodeId {
-    if (type_id == SemanticsTypeId::TypeType) {
-      return SemanticsNodeId::BuiltinTypeType;
-    } else if (type_id == SemanticsTypeId::Error) {
-      return SemanticsNodeId::BuiltinError;
+  auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> NodeId {
+    if (type_id == TypeId::TypeType) {
+      return NodeId::BuiltinTypeType;
+    } else if (type_id == TypeId::Error) {
+      return NodeId::BuiltinError;
     } else {
       return GetType(type_id);
     }
   }
 
   // Adds an empty type block, returning an ID to reference it.
-  auto AddTypeBlock() -> SemanticsTypeBlockId {
-    SemanticsTypeBlockId id(type_blocks_.size());
+  auto AddTypeBlock() -> TypeBlockId {
+    TypeBlockId id(type_blocks_.size());
     type_blocks_.push_back({});
     return id;
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(SemanticsTypeBlockId block_id) const
-      -> const llvm::SmallVector<SemanticsTypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) const
+      -> const llvm::SmallVector<TypeId>& {
     return type_blocks_[block_id.index];
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(SemanticsTypeBlockId block_id)
-      -> llvm::SmallVector<SemanticsTypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) -> llvm::SmallVector<TypeId>& {
     return type_blocks_[block_id.index];
   }
 
@@ -283,82 +273,77 @@ class SemanticsIR {
   // explicit conversion to type `type` will be added in cases where the type
   // expression would otherwise have a different type, such as a tuple or
   // struct type.
-  auto StringifyType(SemanticsTypeId type_id,
-                     bool in_type_context = false) const -> std::string;
+  auto StringifyType(TypeId type_id, bool in_type_context = false) const
+      -> std::string;
 
   auto functions_size() const -> int { return functions_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
   auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
-  auto types() const -> const llvm::SmallVector<SemanticsNodeId>& {
-    return types_;
-  }
+  auto types() const -> const llvm::SmallVector<NodeId>& { return types_; }
 
   // The node blocks, for direct mutation.
-  auto node_blocks() -> llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>& {
+  auto node_blocks() -> llvm::SmallVector<llvm::SmallVector<NodeId>>& {
     return node_blocks_;
   }
 
-  auto top_node_block_id() const -> SemanticsNodeBlockId {
-    return top_node_block_id_;
-  }
+  auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
 
   // Returns true if there were errors creating the semantics IR.
   auto has_errors() const -> bool { return has_errors_; }
 
  private:
-  explicit SemanticsIR(const SemanticsIR* builtin_ir)
+  explicit File(const File* builtin_ir)
       : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
-    // For SemanticsNodeBlockId::Empty.
+    // For NodeBlockId::Empty.
     node_blocks_.resize(1);
   }
 
   bool has_errors_ = false;
 
   // Storage for callable objects.
-  llvm::SmallVector<SemanticsFunction> functions_;
+  llvm::SmallVector<Function> functions_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
   // crossing node blocks).
-  llvm::SmallVector<const SemanticsIR*> cross_reference_irs_;
+  llvm::SmallVector<const File*> cross_reference_irs_;
 
   // Storage for integer literals.
   llvm::SmallVector<llvm::APInt> integer_literals_;
 
   // Storage for name scopes.
-  llvm::SmallVector<llvm::DenseMap<SemanticsStringId, SemanticsNodeId>>
-      name_scopes_;
+  llvm::SmallVector<llvm::DenseMap<StringId, NodeId>> name_scopes_;
 
   // Storage for real literals.
-  llvm::SmallVector<SemanticsRealLiteral> real_literals_;
+  llvm::SmallVector<RealLiteral> real_literals_;
 
   // Storage for strings. strings_ provides a list of allocated strings, while
   // string_to_id_ provides a mapping to identify strings.
-  llvm::StringMap<SemanticsStringId> string_to_id_;
+  llvm::StringMap<StringId> string_to_id_;
   llvm::SmallVector<llvm::StringRef> strings_;
 
   // Nodes which correspond to in-use types. Stored separately for easy access
   // by lowering.
-  llvm::SmallVector<SemanticsNodeId> types_;
+  llvm::SmallVector<NodeId> types_;
 
   // Storage for blocks within the IR. These reference entries in types_.
-  llvm::SmallVector<llvm::SmallVector<SemanticsTypeId>> type_blocks_;
+  llvm::SmallVector<llvm::SmallVector<TypeId>> type_blocks_;
 
   // All nodes. The first entries will always be cross-references to builtins,
-  // at indices matching SemanticsBuiltinKind ordering.
-  llvm::SmallVector<SemanticsNode> nodes_;
+  // at indices matching BuiltinKind ordering.
+  llvm::SmallVector<Node> nodes_;
 
   // Storage for blocks within the IR. These reference entries in nodes_.
-  llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>> node_blocks_;
+  llvm::SmallVector<llvm::SmallVector<NodeId>> node_blocks_;
 
   // The top node block ID.
-  SemanticsNodeBlockId top_node_block_id_ = SemanticsNodeBlockId::Invalid;
+  NodeBlockId top_node_block_id_ = NodeBlockId::Invalid;
 };
 
 // The expression category of a semantics node. See /docs/design/values.md for
 // details.
-enum class SemanticsExpressionCategory {
+enum class ExpressionCategory {
   // This node does not correspond to an expression, and as such has no
   // category.
   NotExpression,
@@ -376,12 +361,11 @@ enum class SemanticsExpressionCategory {
 };
 
 // Returns the expression category for a node.
-auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
-                                    SemanticsNodeId node_id)
-    -> SemanticsExpressionCategory;
+auto GetExpressionCategory(const File& file, NodeId node_id)
+    -> ExpressionCategory;
 
 // The value representation to use when passing by value.
-struct SemanticsValueRepresentation {
+struct ValueRepresentation {
   enum Kind {
     // The type has no value representation. This is used for empty types, such
     // as `()`, where there is no value.
@@ -403,16 +387,15 @@ struct SemanticsValueRepresentation {
   // The kind of value representation used by this type.
   Kind kind;
   // The type used to model the value representation.
-  SemanticsTypeId type;
+  TypeId type;
 };
 
 // Returns information about the value representation to use for a type.
-auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
-                                     SemanticsTypeId type_id)
-    -> SemanticsValueRepresentation;
+auto GetValueRepresentation(const File& file, File type_id)
+    -> ValueRepresentation;
 
 // The initializing representation to use when returning by value.
-struct SemanticsInitializingRepresentation {
+struct InitializingRepresentation {
   enum Kind {
     // The type has no initializing representation. This is used for empty
     // types, where no initialization is necessary.
@@ -435,10 +418,9 @@ struct SemanticsInitializingRepresentation {
 };
 
 // Returns information about the initializing representation to use for a type.
-auto GetSemanticsInitializingRepresentation(const SemanticsIR& semantics_ir,
-                                            SemanticsTypeId type_id)
-    -> SemanticsInitializingRepresentation;
+auto GetInitializingRepresentation(const File& file, TypeId type_id)
+    -> InitializingRepresentation;
 
-}  // namespace Carbon
+}  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_H_

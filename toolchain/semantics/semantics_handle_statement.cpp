@@ -5,17 +5,16 @@
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleExpressionStatement(SemanticsContext& context,
-                                        ParseTree::Node /*parse_node*/)
+auto HandleExpressionStatement(Context& context, ParseTree::Node /*parse_node*/)
     -> bool {
   context.HandleDiscardedExpression(context.node_stack().PopExpression());
   return true;
 }
 
-auto SemanticsHandleReturnStatement(SemanticsContext& context,
-                                    ParseTree::Node parse_node) -> bool {
+auto HandleReturnStatement(Context& context, ParseTree::Node parse_node)
+    -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
   const auto& fn_node =
       context.semantics_ir().GetNode(context.return_scope_stack().back());
@@ -37,7 +36,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           .Emit();
     }
 
-    context.AddNode(SemanticsNode::Return::Make(parse_node));
+    context.AddNode(SemIR::Node::Return::Make(parse_node));
   } else {
     auto arg = context.node_stack().PopExpression();
     context.node_stack()
@@ -54,21 +53,21 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           .Note(fn_node.parse_node(), ReturnStatementImplicitNote)
           .Emit();
 
-      context.AddNode(SemanticsNode::ReturnExpression::Make(parse_node, arg));
+      context.AddNode(SemIR::Node::ReturnExpression::Make(parse_node, arg));
     } else if (callable.return_slot_id.is_valid()) {
       context.Initialize(parse_node, callable.return_slot_id, arg);
 
-      context.AddNode(SemanticsNode::Return::Make(parse_node));
+      context.AddNode(SemIR::Node::Return::Make(parse_node));
     } else {
       arg = context.ConvertToValueOfType(parse_node, arg,
                                          callable.return_type_id);
 
-      if (GetSemanticsInitializingRepresentation(context.semantics_ir(),
-                                                 callable.return_type_id)
-              .kind == SemanticsInitializingRepresentation::None) {
-        context.AddNode(SemanticsNode::Return::Make(parse_node));
+      if (SemIR::GetInitializingRepresentation(context.semantics_ir(),
+                                               callable.return_type_id)
+              .kind == SemIR::InitializingRepresentation::None) {
+        context.AddNode(SemIR::Node::Return::Make(parse_node));
       } else {
-        context.AddNode(SemanticsNode::ReturnExpression::Make(parse_node, arg));
+        context.AddNode(SemIR::Node::ReturnExpression::Make(parse_node, arg));
       }
     }
   }
@@ -81,11 +80,11 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleReturnStatementStart(SemanticsContext& context,
-                                         ParseTree::Node parse_node) -> bool {
+auto HandleReturnStatementStart(Context& context, ParseTree::Node parse_node)
+    -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

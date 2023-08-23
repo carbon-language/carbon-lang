@@ -6,11 +6,11 @@
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
-                                           ParseTree::Node parse_node) -> bool {
-  SemanticsStringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
+auto HandleMemberAccessExpression(Context& context, ParseTree::Node parse_node)
+    -> bool {
+  SemIR::StringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
 
   auto base_id = context.node_stack().PopExpression();
 
@@ -18,7 +18,7 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
   base_id = context.MaterializeIfInitializing(base_id);
 
   auto base = context.semantics_ir().GetNode(base_id);
-  if (base.kind() == SemanticsNodeKind::Namespace) {
+  if (base.kind() == SemIR::NodeKind::Namespace) {
     // For a namespace, just resolve the name.
     auto node_id =
         context.LookupName(parse_node, name_id, base.GetAsNamespace(),
@@ -31,7 +31,7 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
       context.semantics_ir().GetTypeAllowBuiltinTypes(base.type_id()));
 
   switch (base_type.kind()) {
-    case SemanticsNodeKind::StructType: {
+    case SemIR::NodeKind::StructType: {
       auto refs =
           context.semantics_ir().GetNodeBlock(base_type.GetAsStructType());
       // TODO: Do we need to optimize this with a lookup table for O(1)?
@@ -41,8 +41,8 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
             name_id == field_name_id) {
           context.AddNodeAndPush(
               parse_node,
-              SemanticsNode::StructAccess::Make(
-                  parse_node, field_type_id, base_id, SemanticsMemberIndex(i)));
+              SemIR::Node::StructAccess::Make(parse_node, field_type_id,
+                                              base_id, SemIR::MemberIndex(i)));
           return true;
         }
       }
@@ -56,7 +56,7 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
       break;
     }
     default: {
-      if (base.type_id() != SemanticsTypeId::Error) {
+      if (base.type_id() != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
                           "Type `{0}` does not support qualified expressions.",
                           std::string);
@@ -69,18 +69,16 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
   }
 
   // Should only be reached on error.
-  context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinError);
+  context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
   return true;
 }
 
-auto SemanticsHandlePointerMemberAccessExpression(SemanticsContext& context,
-                                                  ParseTree::Node parse_node)
-    -> bool {
+auto HandlePointerMemberAccessExpression(Context& context,
+                                         ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandlePointerMemberAccessExpression");
 }
 
-auto SemanticsHandleName(SemanticsContext& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandleName(Context& context, ParseTree::Node parse_node) -> bool {
   auto name_str = context.parse_tree().GetNodeText(parse_node);
   auto name_id = context.semantics_ir().AddString(name_str);
   // The parent is responsible for binding the name.
@@ -88,19 +86,19 @@ auto SemanticsHandleName(SemanticsContext& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto SemanticsHandleNameExpression(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
+auto HandleNameExpression(Context& context, ParseTree::Node parse_node)
+    -> bool {
   auto name_str = context.parse_tree().GetNodeText(parse_node);
   auto name_id = context.semantics_ir().AddString(name_str);
   context.node_stack().Push(
       parse_node,
-      context.LookupName(parse_node, name_id, SemanticsNameScopeId::Invalid,
+      context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true));
   return true;
 }
 
-auto SemanticsHandleQualifiedDeclaration(SemanticsContext& context,
-                                         ParseTree::Node parse_node) -> bool {
+auto HandleQualifiedDeclaration(Context& context, ParseTree::Node parse_node)
+    -> bool {
   auto pop_and_apply_first_child = [&]() {
     if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
         ParseNodeKind::QualifiedDeclaration) {
@@ -119,12 +117,11 @@ auto SemanticsHandleQualifiedDeclaration(SemanticsContext& context,
 
   ParseTree::Node parse_node2 = context.node_stack().PeekParseNode();
   if (context.parse_tree().node_kind(parse_node2) == ParseNodeKind::Name) {
-    SemanticsStringId name_id2 =
-        context.node_stack().Pop<ParseNodeKind::Name>();
+    SemIR::StringId name_id2 = context.node_stack().Pop<ParseNodeKind::Name>();
     pop_and_apply_first_child();
     context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
   } else {
-    SemanticsNodeId node_id2 = context.node_stack().PopExpression();
+    SemIR::NodeId node_id2 = context.node_stack().PopExpression();
     pop_and_apply_first_child();
     context.declaration_name_stack().ApplyExpressionQualifier(parse_node2,
                                                               node_id2);
@@ -133,14 +130,13 @@ auto SemanticsHandleQualifiedDeclaration(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleSelfTypeNameExpression(SemanticsContext& context,
-                                           ParseTree::Node parse_node) -> bool {
+auto HandleSelfTypeNameExpression(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleSelfTypeNameExpression");
 }
 
-auto SemanticsHandleSelfValueName(SemanticsContext& context,
-                                  ParseTree::Node parse_node) -> bool {
+auto HandleSelfValueName(Context& context, ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleSelfValueName");
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check
