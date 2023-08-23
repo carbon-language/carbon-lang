@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "toolchain/lowering/lowering_function_context.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
@@ -63,7 +65,7 @@ auto LoweringHandleArrayValue(LoweringFunctionContext& context,
   auto* tuple_type =
       context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
 
-  for (int i = 0; i < static_cast<int>(llvm_type->getArrayNumElements()); ++i) {
+  for (auto i : llvm::seq(llvm_type->getArrayNumElements())) {
     llvm::Value* array_element_value = context.GetIndexFromStructOrArray(
         tuple_type, tuple_value, i, "array.element");
     if (tuple_value->getType()->isPointerTy()) {
@@ -306,14 +308,9 @@ auto LoweringHandleTupleValue(LoweringFunctionContext& context,
       context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "tuple");
   context.SetLocal(node_id, alloca);
   auto refs = context.semantics_ir().GetNodeBlock(node.GetAsTupleValue());
-  auto type_refs = context.semantics_ir().GetTypeBlock(
-      context.semantics_ir()
-          .GetNode(context.semantics_ir().GetType(node.type_id()))
-          .GetAsTupleType());
-
-  for (int i = 0; i < static_cast<int>(type_refs.size()); ++i) {
+  for (auto [i, ref] : llvm::enumerate(refs)) {
     auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
-    context.builder().CreateStore(context.GetLocal(refs[i]), gep);
+    context.builder().CreateStore(context.GetLocal(ref), gep);
   }
 }
 
@@ -337,13 +334,13 @@ auto LoweringHandleStructValue(LoweringFunctionContext& context,
       context.semantics_ir()
           .GetNode(context.semantics_ir().GetType(node.type_id()))
           .GetAsStructType());
-  for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
+  for (auto [i, ref, type_ref] : llvm::enumerate(refs, type_refs)) {
     auto [field_name_id, field_type_id] =
-        context.semantics_ir().GetNode(type_refs[i]).GetAsStructTypeField();
+        context.semantics_ir().GetNode(type_ref).GetAsStructTypeField();
     auto member_name = context.semantics_ir().GetString(field_name_id);
     auto* gep =
         context.builder().CreateStructGEP(llvm_type, alloca, i, member_name);
-    context.builder().CreateStore(context.GetLocal(refs[i]), gep);
+    context.builder().CreateStore(context.GetLocal(ref), gep);
   }
 }
 

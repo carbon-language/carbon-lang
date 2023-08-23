@@ -4,8 +4,8 @@
 
 #include "toolchain/semantics/semantics_ir_formatter.h"
 
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
@@ -45,7 +45,7 @@ class NodeNamer {
     CollectNamesInBlock(ScopeIndex::Package, semantics_ir.top_node_block_id());
 
     // Build each function scope.
-    for (int i = 0; i != semantics_ir.functions_size(); ++i) {
+    for (int i : llvm::seq(semantics_ir.functions_size())) {
       auto fn_id = SemanticsFunctionId(i);
       auto fn_scope = GetScopeFor(fn_id);
       const auto& fn = semantics_ir.GetFunction(fn_id);
@@ -405,7 +405,7 @@ class SemanticsIRFormatter {
     }
     out_ << "}\n";
 
-    for (int i = 0; i != semantics_ir_.functions_size(); ++i) {
+    for (int i : llvm::seq(semantics_ir_.functions_size())) {
       FormatFunction(SemanticsFunctionId(i));
     }
   }
