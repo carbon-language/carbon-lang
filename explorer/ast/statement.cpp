@@ -40,9 +40,9 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       if (var.is_returned()) {
         out << "returned ";
       }
-      out << "var " << PrintAsID(var.pattern());
+      out << "var " <<var.pattern();
       if (var.has_init()) {
-        out << " = ...";
+        out << " = " << PrintAsID(var.init());
       }
       out << ";";
       break;
@@ -80,12 +80,19 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       if (ret.is_omitted_expression()) {
         out << "return;";
       } else {
-        out << "return <expr>;";
+        out << "return ...;";
       }
       break;
     }
     case StatementKind::Block: {
-      out << "{ ... }";
+      const auto& block = cast<Block>(*this);
+      const auto statements = block.statements();
+      out << "{";
+      llvm::ListSeparator sep(" ");
+      for(const auto& statement : statements) {
+        out <<  sep << PrintAsID(*statement);
+      }
+      out << "}";
       break;
     }
   }
