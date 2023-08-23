@@ -12,8 +12,8 @@ fn Run() -> i32 {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: [block3]},
-// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1, body: [block5]},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: [block4]},
+// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1, body: [block6]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -46,7 +46,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: type1},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type2},
+// CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type2},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+7},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
@@ -62,11 +62,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
@@ -86,11 +88,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7_12: type = stub_reference i32
-// CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc7_16.2: (type,) = tuple_value (%.loc7_12)
-// CHECK:STDOUT:   %.loc7_16.3: type = tuple_type (i32)
-// CHECK:STDOUT:   %.loc7_1 = fn_decl @F
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc9 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -11,7 +11,7 @@ fn Main() -> (i32, i32) {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: [block3]},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: [block4]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   15,
@@ -48,7 +48,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+6, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+8, type: type1},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type2},
+// CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type2},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -60,11 +60,13 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
@@ -81,12 +83,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc8_15: type = stub_reference i32
-// CHECK:STDOUT:   %.loc8_20: type = stub_reference i32
-// CHECK:STDOUT:   %.loc8_23.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc8_23.2: (type, type) = tuple_value (%.loc8_15, %.loc8_20)
-// CHECK:STDOUT:   %.loc8_23.3: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc8_1 = fn_decl @Main
+// CHECK:STDOUT:   %.loc8 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> (i32, i32) {
