@@ -400,6 +400,9 @@ class SemanticsNode {
   using Namespace = FactoryNoType<SemanticsNodeKind::Namespace,
                                   SemanticsNameScopeId /*name_scope_id*/>;
 
+  using Parameter =
+      Factory<SemanticsNodeKind::Parameter, SemanticsStringId /*name_id*/>;
+
   using PointerType =
       Factory<SemanticsNodeKind::PointerType, SemanticsTypeId /*pointee_id*/>;
 

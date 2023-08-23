@@ -75,6 +75,13 @@ fn AddressOfTupleElementValue() {
   &((1, 2)[0]);
 }
 
+fn AddressOfParameter(param: i32) {
+  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:26: Cannot take the address of non-reference expression.
+  // CHECK:STDERR:   var param_addr: i32* = &param;
+  // CHECK:STDERR:                          ^
+  var param_addr: i32* = &param;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0},
@@ -84,6 +91,7 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   {name: str6, param_refs: block0, body: [block8]},
 // CHECK:STDOUT:   {name: str7, param_refs: block0, body: [block9]},
 // CHECK:STDOUT:   {name: str8, param_refs: block0, body: [block10]},
+// CHECK:STDOUT:   {name: str9, param_refs: block13, body: [block14]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -109,6 +117,9 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   AddressOfCall,
 // CHECK:STDOUT:   AddressOfType,
 // CHECK:STDOUT:   AddressOfTupleElementValue,
+// CHECK:STDOUT:   AddressOfParameter,
+// CHECK:STDOUT:   param,
+// CHECK:STDOUT:   param_addr,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
@@ -198,6 +209,13 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   {kind: TupleIndex, arg0: node+60, arg1: node+61, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+62, type: type2},
 // CHECK:STDOUT:   {kind: Return},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str10, type: type0},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function7},
+// CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str11, type: type2},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+65, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+68, arg1: node+69},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -212,6 +230,7 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:     node+44,
 // CHECK:STDOUT:     node+48,
 // CHECK:STDOUT:     node+55,
+// CHECK:STDOUT:     node+66,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
@@ -295,6 +314,19 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:     node+57,
 // CHECK:STDOUT:     node+59,
 // CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+65,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+65,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+67,
+// CHECK:STDOUT:     node+68,
+// CHECK:STDOUT:     node+69,
+// CHECK:STDOUT:     node+70,
+// CHECK:STDOUT:     node+71,
+// CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
@@ -306,6 +338,7 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   %.loc53 = fn_decl @AddressOfCall
 // CHECK:STDOUT:   %.loc60 = fn_decl @AddressOfType
 // CHECK:STDOUT:   %.loc71 = fn_decl @AddressOfTupleElementValue
+// CHECK:STDOUT:   %.loc78 = fn_decl @AddressOfParameter
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;
@@ -384,5 +417,14 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   %.loc75_12: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc75_13: i32 = tuple_index %.loc75_10, %.loc75_12
 // CHECK:STDOUT:   %.loc75_3: i32* = address_of %.loc75_13
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @AddressOfParameter(%param: i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc82_22: type = ptr_type i32
+// CHECK:STDOUT:   %param_addr: i32* = var "param_addr"
+// CHECK:STDOUT:   %.loc82_26: i32* = address_of %param
+// CHECK:STDOUT:   assign %param_addr, %.loc82_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
