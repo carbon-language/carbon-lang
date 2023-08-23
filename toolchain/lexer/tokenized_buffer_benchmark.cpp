@@ -259,7 +259,7 @@ auto RandomMixedSeq(int symbol_percent, int keyword_percent) -> std::string {
   CARBON_CHECK(num_identifiers == 0 || num_identifiers > 500)
       << "We require at least 500 identifiers as we need to collect a "
          "reasonable number of samples to end up with a reasonable "
-         "distribution of lenghts.";
+         "distribution of lengths.";
 
   for (int i : llvm::seq(num_symbols)) {
     indices[i] = {Symbol, i % symbols.size()};
