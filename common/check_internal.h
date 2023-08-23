@@ -7,7 +7,7 @@
 
 #include <cstdlib>
 
-#include "llvm/Support/raw_ostream.h"
+#include "common/ostream.h"
 
 namespace Carbon::Internal {
 

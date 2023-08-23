@@ -45,6 +45,7 @@ cc_library(
     ],
     hdrs = ["check.h"],
     deps = [
+        ":ostream",
         "@llvm-project//llvm:Support",
     ],
 )

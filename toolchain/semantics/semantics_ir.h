@@ -16,20 +16,18 @@ namespace Carbon::SemIR {
 
 // A function.
 struct Function {
-  friend auto operator<<(llvm::raw_ostream& out, const Function& fn)
-      -> llvm::raw_ostream& {
-    out << "{name: " << fn.name_id << ", "
-        << "param_refs: " << fn.param_refs_id;
-    if (fn.return_type_id.is_valid()) {
-      out << ", return_type: " << fn.return_type_id;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{name: " << name_id << ", "
+        << "param_refs: " << param_refs_id;
+    if (return_type_id.is_valid()) {
+      out << ", return_type: " << return_type_id;
     }
-    if (!fn.body_block_ids.empty()) {
+    if (!body_block_ids.empty()) {
       out << llvm::formatv(
           ", body: [{0}]",
-          llvm::make_range(fn.body_block_ids.begin(), fn.body_block_ids.end()));
+          llvm::make_range(body_block_ids.begin(), body_block_ids.end()));
     }
     out << "}";
-    return out;
   }
   LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
@@ -46,11 +44,9 @@ struct Function {
 };
 
 struct RealLiteral {
-  friend auto operator<<(llvm::raw_ostream& out, const RealLiteral& val)
-      -> llvm::raw_ostream& {
-    out << "{mantissa: " << val.mantissa << ", exponent: " << val.exponent
-        << ", is_decimal: " << val.is_decimal << "}";
-    return out;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{mantissa: " << mantissa << ", exponent: " << exponent
+        << ", is_decimal: " << is_decimal << "}";
   }
   LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
@@ -85,12 +81,9 @@ class File {
   // builtins.
   auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
-  friend auto operator<<(llvm::raw_ostream& out, const File& file)
-      -> llvm::raw_ostream& {
-    file.Print(out, /*include_builtins=*/false);
-    return out;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    Print(out, /*include_builtins=*/false);
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
   // Returns array bound value from the bound node.
   auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {

@@ -27,21 +27,18 @@ struct NodeId : public IndexBase {
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const NodeId& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "node";
-    if (!id.is_valid()) {
-      id.Print(out);
-    } else if (id.index < BuiltinKind::ValidCount) {
-      out << BuiltinKind::FromInt(id.index);
+    if (!is_valid()) {
+      IndexBase::Print(out);
+    } else if (index < BuiltinKind::ValidCount) {
+      out << BuiltinKind::FromInt(index);
     } else {
       // Use the `+` as a small reminder that this is a delta, rather than an
       // absolute index.
-      out << "+" << id.index - BuiltinKind::ValidCount;
+      out << "+" << index - BuiltinKind::ValidCount;
     }
-    return out;
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
@@ -55,25 +52,19 @@ constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
 // The ID of a function.
 struct FunctionId : public IndexBase {
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const FunctionId& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "function";
-    id.Print(out);
-    return out;
+    IndexBase::Print(out);
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The ID of a cross-referenced IR.
 struct CrossReferenceIRId : public IndexBase {
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const CrossReferenceIRId& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "ir";
-    id.Print(out);
-    return out;
+    IndexBase::Print(out);
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // A boolean value.
@@ -82,9 +73,8 @@ struct BoolValue : public IndexBase {
   static const BoolValue True;
 
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const BoolValue& val)
-      -> llvm::raw_ostream& {
-    switch (val.index) {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    switch (index) {
       case 0:
         out << "false";
         break;
@@ -92,11 +82,9 @@ struct BoolValue : public IndexBase {
         out << "true";
         break;
       default:
-        CARBON_FATAL() << "Invalid bool value " << val.index;
+        CARBON_FATAL() << "Invalid bool value " << index;
     }
-    return out;
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr BoolValue BoolValue::False = BoolValue(0);
@@ -105,13 +93,10 @@ constexpr BoolValue BoolValue::True = BoolValue(1);
 // The ID of an integer literal.
 struct IntegerLiteralId : public IndexBase {
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const IntegerLiteralId& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "int";
-    id.Print(out);
-    return out;
+    IndexBase::Print(out);
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The ID of a name scope.
@@ -120,13 +105,10 @@ struct NameScopeId : public IndexBase {
   static const NameScopeId Invalid;
 
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const NameScopeId& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "name_scope";
-    id.Print(out);
-    return out;
+    IndexBase::Print(out);
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr NameScopeId NameScopeId::Invalid =
@@ -144,17 +126,14 @@ struct NodeBlockId : public IndexBase {
   static const NodeBlockId Unreachable;
 
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const NodeBlockId& id)
-      -> llvm::raw_ostream& {
-    if (id.index == Unreachable.index) {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    if (index == Unreachable.index) {
       out << "unreachable";
     } else {
       out << "block";
-      id.Print(out);
+      IndexBase::Print(out);
     }
-    return out;
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr NodeBlockId NodeBlockId::Empty = NodeBlockId(0);
@@ -166,25 +145,19 @@ constexpr NodeBlockId NodeBlockId::Unreachable =
 // The ID of a real literal.
 struct RealLiteralId : public IndexBase {
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const RealLiteralId& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "real";
-    id.Print(out);
-    return out;
+    IndexBase::Print(out);
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The ID of a string.
 struct StringId : public IndexBase {
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const StringId& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "str";
-    id.Print(out);
-    return out;
+    IndexBase::Print(out);
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The ID of a node block.
@@ -199,19 +172,16 @@ struct TypeId : public IndexBase {
   static const TypeId Invalid;
 
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const TypeId& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "type";
-    if (id.index == TypeType.index) {
+    if (index == TypeType.index) {
       out << "TypeType";
-    } else if (id.index == Error.index) {
+    } else if (index == Error.index) {
       out << "Error";
     } else {
-      id.Print(out);
+      IndexBase::Print(out);
     }
-    return out;
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr TypeId TypeId::TypeType = TypeId(TypeId::InvalidIndex - 2);
@@ -221,25 +191,19 @@ constexpr TypeId TypeId::Invalid = TypeId(TypeId::InvalidIndex);
 // The ID of a type block.
 struct TypeBlockId : public IndexBase {
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const TypeBlockId& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "typeBlock";
-    id.Print(out);
-    return out;
+    IndexBase::Print(out);
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // An index for member access.
 struct MemberIndex : public IndexBase {
   using IndexBase::IndexBase;
-  friend auto operator<<(llvm::raw_ostream& out, const MemberIndex& id)
-      -> llvm::raw_ostream& {
+  auto Print(llvm::raw_ostream& out) const -> void {
     out << "member";
-    id.Print(out);
-    return out;
+    IndexBase::Print(out);
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The standard structure for Node. This is trying to provide a minimal
