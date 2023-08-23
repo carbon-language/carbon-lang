@@ -40,7 +40,7 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       if (var.is_returned()) {
         out << "returned ";
       }
-      out << "var " <<var.pattern();
+      out << "var " << var.pattern();
       if (var.has_init()) {
         out << " = ...";
       }
@@ -52,8 +52,7 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       break;
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*this);
-      out << "... "
-          << AssignOperatorToString(assign.op()) << " "
+      out << "... " << AssignOperatorToString(assign.op()) << " "
           << "...;";
       break;
     }
@@ -89,8 +88,8 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       const auto statements = block.statements();
       out << "{";
       llvm::ListSeparator sep(" ");
-      for(const auto& statement : statements) {
-        out <<  sep << PrintAsID(*statement);
+      for (const auto& statement : statements) {
+        out << sep << PrintAsID(*statement);
       }
       out << "}";
       break;
