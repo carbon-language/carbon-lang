@@ -2,12 +2,37 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "bazel_working_dir",
     hdrs = ["bazel_working_dir.h"],
     deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "command_line",
+    srcs = ["command_line.cpp"],
+    hdrs = ["command_line.h"],
+    deps = [
+        ":check",
+        ":ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "command_line_test",
+    srcs = ["command_line_test.cpp"],
+    deps = [
+        ":command_line",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

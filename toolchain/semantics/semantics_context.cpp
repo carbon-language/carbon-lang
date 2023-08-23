@@ -8,6 +8,7 @@
 
 #include "common/check.h"
 #include "common/vlog.h"
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -44,7 +45,8 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
 
 auto SemanticsContext::TODO(ParseTree::Node parse_node, std::string label)
     -> bool {
-  CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: {0}", std::string);
+  CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: `{0}`.",
+                    std::string);
   emitter_->Emit(parse_node, SemanticsTodo, std::move(label));
   return false;
 }
@@ -91,7 +93,7 @@ auto SemanticsContext::DiagnoseDuplicateName(ParseTree::Node parse_node,
 
 auto SemanticsContext::DiagnoseNameNotFound(ParseTree::Node parse_node,
                                             SemanticsStringId name_id) -> void {
-  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found",
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
   emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
 }
@@ -297,9 +299,8 @@ auto SemanticsContext::ImplicitAsForArgs(
   // Check type conversions per-element.
   // TODO: arg_ir_id is passed so that implicit conversions can be inserted.
   // It's currently not supported, but will be needed.
-  for (size_t i = 0; i < arg_refs.size(); ++i) {
-    auto value_id = arg_refs[i];
-    auto as_type_id = semantics_ir_->GetNode(param_refs[i]).type_id();
+  for (auto [i, value_id, param_ref] : llvm::enumerate(arg_refs, param_refs)) {
+    auto as_type_id = semantics_ir_->GetNode(param_ref).type_id();
     if (ImplicitAsImpl(value_id, as_type_id,
                        diagnostic == nullptr ? &value_id : nullptr) ==
         ImplicitAsKind::Incompatible) {
@@ -640,8 +641,9 @@ auto SemanticsContext::GetUnqualifiedType(SemanticsTypeId type_id)
     -> SemanticsTypeId {
   SemanticsNode type_node =
       semantics_ir_->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(type_id));
-  if (type_node.kind() == SemanticsNodeKind::ConstType)
+  if (type_node.kind() == SemanticsNodeKind::ConstType) {
     return type_node.GetAsConstType();
+  }
   return type_id;
 }
 

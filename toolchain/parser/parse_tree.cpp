@@ -4,9 +4,6 @@
 
 #include "toolchain/parser/parse_tree.h"
 
-#include <cstdlib>
-#include <optional>
-
 #include "common/check.h"
 #include "common/error.h"
 #include "llvm/ADT/Sequence.h"
@@ -244,7 +241,7 @@ auto ParseTree::Verify() const -> ErrorOr<Success> {
         }
       }
     } else {
-      for (int i = 0; i < n_impl.kind.child_count(); ++i) {
+      for (int i : llvm::seq(n_impl.kind.child_count())) {
         if (nodes.empty()) {
           return Error(llvm::formatv(
               "Node #{0} is a {1} with child_count {2}, but only had {3} "

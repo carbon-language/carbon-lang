@@ -67,7 +67,7 @@ struct DiagnosticMessage {
       llvm::StringLiteral format, llvm::SmallVector<llvm::Any> format_args,
       std::function<std::string(const DiagnosticMessage&)> format_fn)
       : kind(kind),
-        location(std::move(location)),
+        location(location),
         format(format),
         format_args(std::move(format_args)),
         format_fn(std::move(format_fn)) {}

@@ -12,11 +12,23 @@ static auto ParserHandleParenCondition(ParserContext& context,
                                        ParserState finish_state) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddOpenParen(state.token, start_kind);
-
+  std::optional<TokenizedBuffer::Token> open_paren =
+      context.ConsumeAndAddOpenParen(state.token, start_kind);
+  if (open_paren) {
+    state.token = *open_paren;
+  }
   state.state = finish_state;
   context.PushState(state);
-  context.PushState(ParserState::Expression);
+
+  if (!open_paren && context.PositionIs(TokenKind::OpenCurlyBrace)) {
+    // For an open curly, assume the condition was completely omitted.
+    // Expression parsing would treat the { as a struct, but instead assume it's
+    // a code block and just emit an invalid parse.
+    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+                        /*has_error=*/true);
+  } else {
+    context.PushState(ParserState::Expression);
+  }
 }
 
 auto ParserHandleParenConditionAsIf(ParserContext& context) -> void {
@@ -32,17 +44,15 @@ auto ParserHandleParenConditionAsWhile(ParserContext& context) -> void {
 auto ParserHandleParenConditionFinishAsIf(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(
-      *(TokenizedBuffer::TokenIterator(state.token) + 1), state,
-      ParseNodeKind::IfCondition);
+  context.ConsumeAndAddCloseSymbol(state.token, state,
+                                   ParseNodeKind::IfCondition);
 }
 
 auto ParserHandleParenConditionFinishAsWhile(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(
-      *(TokenizedBuffer::TokenIterator(state.token) + 1), state,
-      ParseNodeKind::WhileCondition);
+  context.ConsumeAndAddCloseSymbol(state.token, state,
+                                   ParseNodeKind::WhileCondition);
 }
 
 }  // namespace Carbon

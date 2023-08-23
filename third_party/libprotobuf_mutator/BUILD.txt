@@ -5,6 +5,8 @@
 # libprotobuf_mutator uses cmake and doesn't provide a bazel BUILD file.
 # See https://github.com/google/libprotobuf-mutator/issues/91.
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
 exports_files(["LICENSE"])
 
 cc_library(

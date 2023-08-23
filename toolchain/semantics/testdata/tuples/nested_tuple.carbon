@@ -55,18 +55,17 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type1},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock3, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type4},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+10, type: type4},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type4},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type2},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+12, type: type2},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+11, type: type2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type2},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+14, type: type2},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+13, type: type2},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type3},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+16, type: type3},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+15, type: type3},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type2},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+18, type: type2},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+17, type: type2},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type4},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+10, arg1: node+20},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+10, arg1: node+19},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -93,7 +92,6 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:     node+20,
-// CHECK:STDOUT:     node+21,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -104,12 +102,12 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+17,
-// CHECK:STDOUT:     node+19,
+// CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -124,7 +122,7 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   %.loc7_24.2: ((type, type), type) = tuple_value (%.loc7_18.3, %.loc7_21)
 // CHECK:STDOUT:   %.loc7_18.4: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc7_24.3: type = tuple_type ((i32, i32), i32)
-// CHECK:STDOUT:   %x: ((i32, i32), i32) = var
+// CHECK:STDOUT:   %x: ((i32, i32), i32) = var "x"
 // CHECK:STDOUT:   %.loc7_30.1: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc7_30.2: i32 = stub_reference %.loc7_30.1
 // CHECK:STDOUT:   %.loc7_34.1: i32 = int_literal 76

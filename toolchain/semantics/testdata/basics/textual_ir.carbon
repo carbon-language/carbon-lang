@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: dump semantics-ir %s
+// ARGS: compile --phase=check --dump-semantics-ir %s
 //
 // Just check that the raw IR format isn't included in `dump semantics-ir` mode.
 // AUTOUPDATE

@@ -1,0 +1,77 @@
+From 2625e497fef1429f2041922a739d841050eda909 Mon Sep 17 00:00:00 2001
+From: maan2003 <manmeetmann2003@gmail.com>
+Date: Sat, 19 Aug 2023 02:32:03 +0530
+Subject: [PATCH] Add library for clangd
+
+This exports clangd language server protocol helpers publically.
+Feature.h needs Feature.inc which is generated during build process, so we
+disable all features for now.
+---
+ clang-tools-extra/clangd/BUILD.bazel  | 36 +++++++++++++++++++++++++++
+ clang-tools-extra/clangd/Protocol.cpp | 15 +++++++----
+ clang-tools-extra/clangd/Protocol.h   | 12 +++++++--
+ clang-tools-extra/clangd/Transport.h  |  1 -
+ 4 files changed, 56 insertions(+), 8 deletions(-)
+ create mode 100644 clang-tools-extra/clangd/BUILD.bazel
+
+diff --git a/clang-tools-extra/clangd/BUILD.bazel b/clang-tools-extra/clangd/BUILD.bazel
+new file mode 100644
+index 000000000..9f3f93f24
+--- /dev/null
++++ b/clang-tools-extra/clangd/BUILD.bazel
+@@ -0,0 +1,39 @@
++package(default_visibility = ["//visibility:public"])
++
++cc_library(
++    name = "clangd_library",
++    srcs = [
++        "JSONTransport.cpp",
++        "Protocol.cpp",
++        "URI.cpp",
++        "index/SymbolID.cpp",
++        "support/Logger.cpp",
++        "support/Trace.cpp",
++        "support/MemoryTree.cpp",
++        "support/Context.cpp",
++        "support/Cancellation.cpp",
++        "support/ThreadCrashReporter.cpp",
++        "support/Shutdown.cpp",
++    ],
++    hdrs = [
++        "Transport.h",
++        "Protocol.h",
++        "URI.h",
++        "LSPBinder.h",
++        "index/SymbolID.h",
++        "support/Function.h",
++        "support/Cancellation.h",
++        "support/ThreadCrashReporter.h",
++        "support/Logger.h",
++        "support/Trace.h",
++        "support/MemoryTree.h",
++        "support/Context.h",
++        "support/Shutdown.h",
++    ],
++    includes = ["."],
++    deps = [
++        "//llvm:Support",
++        "//clang:basic",
++        "//clang:index",
++    ],
++)
+diff --git a/clang-tools-extra/clangd/Transport.h b/clang-tools-extra/clangd/Transport.h
+index 4e80ea95b..f17441cfc 100644
+--- a/clang-tools-extra/clangd/Transport.h
++++ b/clang-tools-extra/clangd/Transport.h
+@@ -17,9 +17,8 @@
+
+ #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANGD_TRANSPORT_H
+ #define LLVM_CLANG_TOOLS_EXTRA_CLANGD_TRANSPORT_H
+
+-#include "Feature.h"
+ #include "llvm/ADT/StringRef.h"
+ #include "llvm/Support/JSON.h"
+ #include "llvm/Support/raw_ostream.h"
+
+--
+2.41.0

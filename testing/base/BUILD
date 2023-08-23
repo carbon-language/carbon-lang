@@ -5,6 +5,8 @@
 # Trivial, single-file testing libraries. More complex libraries should get
 # their own directory.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(default_visibility = ["//visibility:public"])
 
 # This does extra initialization on top of googletest's gtest_main in order to

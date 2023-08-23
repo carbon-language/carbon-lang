@@ -31,10 +31,10 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // TODO: Get semantics-ir to a point where it can handle invalid parse trees
   // without crashing.
-  if (!driver.RunFullCommand({"dump", "parse-tree", TestFileName})) {
+  if (!driver.RunCommand({"compile", "--phase=parse", TestFileName})) {
     return 0;
   }
-  driver.RunFullCommand({"dump", "semantics-ir", TestFileName});
+  driver.RunCommand({"compile", "--phase=check", TestFileName});
   return 0;
 }
 

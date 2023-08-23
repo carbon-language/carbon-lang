@@ -16,7 +16,7 @@ fn G(p: const (const i32)**) -> i32** {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type5, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type5, body: [block4]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -31,8 +31,8 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   node+0,
 // CHECK:STDOUT:   node+2,
 // CHECK:STDOUT:   node+3,
+// CHECK:STDOUT:   node+5,
 // CHECK:STDOUT:   node+6,
-// CHECK:STDOUT:   node+7,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
@@ -41,8 +41,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   {kind: ConstType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type3},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: type3},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type3},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type4, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
@@ -57,18 +56,17 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:

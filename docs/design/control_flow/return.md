@@ -88,7 +88,7 @@ may be declared with a `returned` statement. Its syntax is:
 When a variable is marked as `returned`, it must be the only `returned` value
 in-scope.
 
-If a `returned var` is returned, the specific syntax `return var` must be used.
+If a `returned var` is returned, the specific syntax `return var;` must be used.
 Returning expressions is not allowed while a `returned var` is in scope. For
 example:
 
@@ -102,7 +102,7 @@ fn MakeCircle(radius: i32) -> Circle {
 ```
 
 If control flow exits the scope of a `returned` variable in any way other than
-`return var`, the `returned var`'s lifetime ends as normal. When this occurs,
+`return var;`, the `returned var`'s lifetime ends as normal. When this occurs,
 `return` may again be used with expressions. For example:
 
 ```carbon
@@ -112,7 +112,7 @@ fn MakePointInArea(area: Area, preferred_x: i32, preferred_y: i32) -> Point {
     if (area.Contains(p)) {
       return var;
     }
-    // p's lifetime ends here when `return var` is not reached.
+    // p's lifetime ends here when `return var;` is not reached.
   }
 
   return area.RandomPoint();

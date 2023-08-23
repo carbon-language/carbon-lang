@@ -79,11 +79,11 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0},
 // CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1},
-// CHECK:STDOUT:   {name: str3, param_refs: block0, body: {block3}}},
-// CHECK:STDOUT:   {name: str5, param_refs: block0, body: {block7}}},
-// CHECK:STDOUT:   {name: str6, param_refs: block0, body: {block8}}},
-// CHECK:STDOUT:   {name: str7, param_refs: block0, body: {block9}}},
-// CHECK:STDOUT:   {name: str8, param_refs: block0, body: {block10}}},
+// CHECK:STDOUT:   {name: str3, param_refs: block0, body: [block3]},
+// CHECK:STDOUT:   {name: str5, param_refs: block0, body: [block7]},
+// CHECK:STDOUT:   {name: str6, param_refs: block0, body: [block8]},
+// CHECK:STDOUT:   {name: str7, param_refs: block0, body: [block9]},
+// CHECK:STDOUT:   {name: str8, param_refs: block0, body: [block10]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,

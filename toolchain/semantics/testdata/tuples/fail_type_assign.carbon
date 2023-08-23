@@ -37,8 +37,7 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type0},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+4, type: type2},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type2},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: nodeError},
@@ -55,13 +54,12 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -70,7 +68,7 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:   %.loc10_14.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc10_14.2: (type,) = tuple_value (%.loc10_9)
 // CHECK:STDOUT:   %.loc10_14.3: type = tuple_type (i32)
-// CHECK:STDOUT:   %x: (i32,) = var
+// CHECK:STDOUT:   %x: (i32,) = var "x"
 // CHECK:STDOUT:   %.loc10_19: type = stub_reference i32
 // CHECK:STDOUT:   %.loc10_24: (type,) = tuple_value (%.loc10_19)
 // CHECK:STDOUT:   assign %x, <error>
