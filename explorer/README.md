@@ -111,7 +111,7 @@ To explain this boilerplate:
 -   The standard copyright is expected.
 -   The `AUTOUPDATE` line indicates that `CHECK` lines matching the output will
     be automatically inserted immediately below by the
-    `./autoupdate_testdata.py` script.
+    `./autoupdate_testdata.sh` script.
 -   The `CHECK` lines indicate expected output.
     -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
         braces indicate a contained regular expression.
@@ -119,9 +119,8 @@ To explain this boilerplate:
 
 ### Useful commands
 
--   `./autoupdate_testdata.py` -- Updates expected output.
+-   `./autoupdate_testdata.sh` -- Updates expected output.
     -   This can be combined with `git diff` to see changes in output.
--   `autoupdate_lit_testdata.py` -- Updates lit tests expected output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
 -   `bazel test //explorer:file_test.subset --test_arg=explorer/testdata/DIR/FILE.carbon`
     -- Runs a specific test.
@@ -134,16 +133,29 @@ To explain this boilerplate:
 Please refer to
 [Fuzzer documentation](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/README.md).
 
-## Trace Program Execution
+## Explorer's Trace Output
 
-When tracing is turned on (using the `--trace_file=...` option or `.verbose`
-target), `explorer` prints the state of the program and each step that is
-performed during execution.
+Explorer's Trace Output refers to a detailed record of program phases and their
+internal processes a program goes through when executed using the `explorer`, it
+also records things like changes in memory and action stack that describes the
+state of the program.
+
+Tracing can be turned on (using the `--trace_file=...` option or `.verbose`
+target).
+
+By default, `explorer` prints the state of the program and each step that is
+performed during execution for the file containing the main function when
+tracing is enabled, tracing for different phases and file contexts can be
+selected using filtering that is explained below.
 
 Printing directly to the standard output using the `--trace_file` option is
 supported by passing `-` in place of a filepath (`--trace_file=-`).
 
-Trace output can be customized by selecting program phases and file contexts for
+### Filtering of the trace
+
+Trace output can be filtered based on either program phase or file context.
+
+Trace output can be filtered by selecting program phases and file contexts for
 which tracing should be enabled. The `-trace_phase=...` option is used to select
 program phases, while the `-trace_file_context=...` option is used to select
 file contexts.
@@ -172,6 +184,11 @@ The following options can be passed as a comma-separated list to the
 -   `import`: Includes trace output for imports.
 -   `include`: Includes trace output for all.
 -   By default, tracing is only enabled for the `main` file context.
+
+**Note (for developers):** Two
+[RAII](https://en.cppreference.com/w/cpp/language/raii) classes
+`SetProgramPhase` and `SetFileContext`, are there for setting program phase and
+file context dynamically in the code.
 
 ### State of the Program
 
@@ -231,7 +248,7 @@ the following format
 ActionKind pos: <pos_count> `<syntax>` results: [<collected_results>]  scope: [<scope>]
 ```
 
-1. `ActionKind`: The kind of an action. Examples: ExpressionAction,
+1. `ActionKind`: The `kind` of an action. Examples: ExpressionAction,
    DeclarationAction, etc.
 2. `pos_count`: The position of execution (an integer) for this action. Each
    action can take multiple steps to complete.
@@ -250,13 +267,56 @@ result value appears at the end of the `results`.
 
 Each step of execution is printed in the following format:
 
-    --- step kind syntax .position. (file-location) --->
+    ->> step ActionKind pos: position syntax (<file-location>) --->
 
 -   The `syntax` is the part of the program being executed.
--   The `kind` is the syntactic category of the part, such as `exp`, `stmt`, or
-    `decl`.
+-   The `ActionKind` is the kind of action for which the step is executed.
 -   The `position` says how far along `explorer` is in executing this action.
 -   The `file-location` gives the filename and line number for the `syntax`.
 
 Each step of execution can push new actions on the stack, pop actions, increment
 the position number of an action, and add result values to an action.
+
+### Trace Conventions (For Developers)
+
+#### Syntax and Code Formatting
+
+When including syntax or code within trace messages, it should be wrapped
+appropriately to maintain clarity and differentiation between code elements and
+regular text in the trace output.
+
+-   For single-line code or syntax, use single backticks.
+-   For multiline code blocks, use triple backticks (\`\`\`) to enclose the
+    code.
+
+**Examples:**
+
+````
+For single line code:
+`let x: i32 = 0`;
+
+For multi line code:
+```
+fn Main() -> i32 {
+    return 0;
+}
+```
+````
+
+#### Line Prefixes
+
+Each line of trace output starts with a prefix that indicates the nature of the
+information being presented. These prefixes are added using specific formatting
+methods in the `TraceStream` class.
+
+**Example usage:**
+
+```
+trace_stream->PrefixMethod() << ... ;
+```
+
+#### Formatting Utility Methods
+
+The `TraceStream` class also have utility methods for adding formatted headings
+and subheadings to the trace output. These methods help structure the trace
+information and provide visual separation for different sections.
