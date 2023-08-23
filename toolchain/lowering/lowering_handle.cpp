@@ -79,8 +79,38 @@ auto LoweringHandleArrayValue(LoweringFunctionContext& context,
 auto LoweringHandleAssign(LoweringFunctionContext& context,
                           SemIR::NodeId /*node_id*/, SemIR::Node node) -> void {
   auto [storage_id, value_id] = node.GetAsAssign();
-  context.builder().CreateStore(context.GetLocalLoaded(value_id),
-                                context.GetLocal(storage_id));
+  auto storage_type_id = context.semantics_ir().GetNode(storage_id).type_id();
+
+  // We can assign from either a value expression or a by-copy initializing
+  // expression. In either case, the value of the source is the value
+  // representation of the target.
+  // TODO: Should we use different semantic nodes for those operations?
+  switch (auto rep = SemIR::GetValueRepresentation(context.semantics_ir(),
+                                                   storage_type_id);
+          rep.kind) {
+    case SemIR::ValueRepresentation::None:
+      break;
+    case SemIR::ValueRepresentation::Copy:
+      context.builder().CreateStore(context.GetLocalLoaded(value_id),
+                                    context.GetLocal(storage_id));
+      break;
+    case SemIR::ValueRepresentation::Pointer: {
+      auto& layout = context.llvm_module().getDataLayout();
+      auto* type = context.GetType(storage_type_id);
+      auto size = layout.getTypeAllocSize(type);
+      // TODO: Compute known alignment of the source and destination, which may
+      // be greater than the alignment computed by LLVM.
+      auto align = layout.getABITypeAlign(type);
+
+      // TODO: Attach !tbaa.struct metadata indicating which portions of the
+      // type we actually need to copy and which are padding.
+      context.builder().CreateMemCpy(context.GetLocal(storage_id), align,
+                                     context.GetLocal(value_id), align, size);
+      break;
+    }
+    case SemIR::ValueRepresentation::Custom:
+      CARBON_FATAL() << "TODO: Add support for Assign with custom value rep";
+  }
 }
 
 auto LoweringHandleBinaryOperatorAdd(LoweringFunctionContext& /*context*/,
