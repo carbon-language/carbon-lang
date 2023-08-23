@@ -8,6 +8,7 @@
 
 #include "common/check.h"
 #include "common/vlog.h"
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -298,9 +299,8 @@ auto SemanticsContext::ImplicitAsForArgs(
   // Check type conversions per-element.
   // TODO: arg_ir_id is passed so that implicit conversions can be inserted.
   // It's currently not supported, but will be needed.
-  for (size_t i = 0; i < arg_refs.size(); ++i) {
-    auto value_id = arg_refs[i];
-    auto as_type_id = semantics_ir_->GetNode(param_refs[i]).type_id();
+  for (auto [i, value_id, param_ref] : llvm::enumerate(arg_refs, param_refs)) {
+    auto as_type_id = semantics_ir_->GetNode(param_ref).type_id();
     if (ImplicitAsImpl(value_id, as_type_id,
                        diagnostic == nullptr ? &value_id : nullptr) ==
         ImplicitAsKind::Incompatible) {

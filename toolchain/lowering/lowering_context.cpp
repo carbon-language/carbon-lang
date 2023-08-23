@@ -5,6 +5,8 @@
 #include "toolchain/lowering/lowering_context.h"
 
 #include "common/vlog.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "toolchain/lowering/lowering_function_context.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
@@ -31,20 +33,20 @@ auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
   // Lower types.
   auto types = semantics_ir_->types();
   types_.resize_for_overwrite(types.size());
-  for (int i = 0; i < static_cast<int>(types.size()); ++i) {
-    types_[i] = BuildType(types[i]);
+  for (auto [i, type] : llvm::enumerate(types)) {
+    types_[i] = BuildType(type);
   }
 
   // Lower function declarations.
   functions_.resize_for_overwrite(semantics_ir_->functions_size());
-  for (int i = 0; i < semantics_ir_->functions_size(); ++i) {
+  for (auto i : llvm::seq(semantics_ir_->functions_size())) {
     functions_[i] = BuildFunctionDeclaration(SemanticsFunctionId(i));
   }
 
   // TODO: Lower global variable declarations.
 
   // Lower function definitions.
-  for (int i = 0; i < semantics_ir_->functions_size(); ++i) {
+  for (auto i : llvm::seq(semantics_ir_->functions_size())) {
     BuildFunctionDefinition(SemanticsFunctionId(i));
   }
 
@@ -61,8 +63,8 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
   auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
   llvm::SmallVector<llvm::Type*> args;
   args.resize_for_overwrite(param_refs.size());
-  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    args[i] = GetType(semantics_ir().GetNode(param_refs[i]).type_id());
+  for (auto [i, param_ref] : llvm::enumerate(param_refs)) {
+    args[i] = GetType(semantics_ir().GetNode(param_ref).type_id());
   }
 
   // If return type is not valid, the function does not have a return type.
@@ -77,10 +79,9 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
       semantics_ir().GetString(function.name_id), llvm_module());
 
   // Set parameter names.
-  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    auto [param_name_id, _] =
-        semantics_ir().GetNode(param_refs[i]).GetAsBindName();
-    llvm_function->getArg(i)->setName(semantics_ir().GetString(param_name_id));
+  for (auto [i, param_ref] : llvm::enumerate(param_refs)) {
+    auto name_id = semantics_ir().GetNode(param_ref).GetAsVarStorage();
+    llvm_function->getArg(i)->setName(semantics_ir().GetString(name_id));
   }
 
   return llvm_function;
@@ -100,10 +101,8 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
 
   // Add parameters to locals.
   auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
-  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    auto param_storage =
-        semantics_ir().GetNode(param_refs[i]).GetAsBindName().second;
-    function_lowering.SetLocal(param_storage, llvm_function->getArg(i));
+  for (auto [i, param_ref] : llvm::enumerate(param_refs)) {
+    function_lowering.SetLocal(param_ref, llvm_function->getArg(i));
   }
 
   // Lower all blocks.

@@ -24,7 +24,7 @@ struct SemanticsFunction {
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
-          ", body: {{{0}}}",
+          ", body: [{0}]",
           llvm::make_range(body_block_ids.begin(), body_block_ids.end()));
     }
     out << "}";
