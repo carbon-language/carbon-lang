@@ -248,8 +248,8 @@ class TokenizedBuffer::Lexer {
     bool formed_token_;
   };
 
-  using DispatchFunctionT = LexResult(Lexer& lexer,
-                                      llvm::StringRef& source_text);
+  using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef& source_text)
+      -> LexResult;
   using DispatchTableT = std::array<DispatchFunctionT*, 256>;
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
@@ -458,46 +458,31 @@ class TokenizedBuffer::Lexer {
     }
   }
 
-  auto LexSymbolToken(llvm::StringRef& source_text, TokenKind kind)
-      -> LexResult {
-    // We use the `period` token as a place-holder for cases where one
-    // character isn't enough to pick a definitive symbol token. Recompute the
-    // kind using the full symbol set.
-    if (LLVM_UNLIKELY(kind == TokenKind::Period)) {
-      kind = llvm::StringSwitch<TokenKind>(source_text)
+  auto LexSymbolToken(llvm::StringRef& source_text,
+                      TokenKind kind = TokenKind::Error) -> LexResult {
+    auto compute_symbol_kind = [](llvm::StringRef source_text) {
+      return llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
   .StartsWith(Spelling, TokenKind::Name)
 #include "toolchain/lexer/token_kind.def"
-                 .Default(TokenKind::Error);
+          .Default(TokenKind::Error);
+    };
+
+    // We use the `error` token as a place-holder for cases where one character
+    // isn't enough to pick a definitive symbol token. Recompute the kind using
+    // the full symbol set.
+    if (LLVM_UNLIKELY(kind == TokenKind::Error)) {
+      kind = compute_symbol_kind(source_text);
       if (kind == TokenKind::Error) {
         return LexError(source_text);
       }
     } else {
-#ifndef NDEBUG
       // Verify in a debug build that the incoming token kind is correct.
-      TokenKind debug_kind = llvm::StringSwitch<TokenKind>(source_text)
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
-  .StartsWith(Spelling, TokenKind::Name)
-#include "toolchain/lexer/token_kind.def"
-                                 .Default(TokenKind::Error);
-      CARBON_CHECK(kind == debug_kind)
+      CARBON_DCHECK(kind == compute_symbol_kind(source_text))
           << "Incoming token kind '" << kind
-          << "' does not match computed kind '" << debug_kind << "'!";
-#endif
+          << "' does not match computed kind '"
+          << compute_symbol_kind(source_text) << "'!";
     }
-
-    // In debug builds, re-check the kind after our optimizations to make sure
-    // we get the same result.
-#ifndef NDEBUG
-    TokenKind debug_kind = llvm::StringSwitch<TokenKind>(source_text)
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
-  .StartsWith(Spelling, TokenKind::Name)
-#include "toolchain/lexer/token_kind.def"
-                               .Default(TokenKind::Error);
-    CARBON_CHECK(debug_kind == kind)
-        << "Optimized code computed kind '" << kind
-        << "' but it should have been '" << debug_kind << "'";
-#endif
 
     if (!set_indent_) {
       current_line_info_->indent = current_column_;
@@ -739,13 +724,12 @@ class TokenizedBuffer::Lexer {
       table[i] = dispatch_lex_error;
     }
 
-    // First, set the first character of each symbol token spelling to dispatch
-    // to the symbol lexer. We use a `Period` placeholder for the token as there
-    // may be several different tokens that start with the same spelling. When
-    // that placeholder token kind is used, the symbol lexer will compute the
+    // Symbols have some special dispatching. First, set the first character of
+    // each symbol token spelling to dispatch to the symbol lexer. We don't
+    // provide a pre-computed token here, so the symbol lexer will compute the
     // exact symbol token kind.
     auto dispatch_lex_symbol = +[](Lexer& lexer, llvm::StringRef& source_text) {
-      return lexer.LexSymbolToken(source_text, TokenKind::Period);
+      return lexer.LexSymbolToken(source_text);
     };
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
   table[(Spelling)[0]] = dispatch_lex_symbol;
@@ -755,20 +739,19 @@ class TokenizedBuffer::Lexer {
     // join with another symbol. These are grouping symbols, terminators,
     // or separators in the grammar and have a good reason to be
     // orthogonal to any other punctuation. We do this separately because this
-    // needs to override soe of the generic handling above.
+    // needs to override some of the generic handling above, and provide a
+    // custom token.
 #define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)                  \
   table[(Spelling)[0]] = +[](Lexer& lexer, llvm::StringRef& source_text) { \
     return lexer.LexSymbolToken(source_text, TokenKind::TokenName);        \
   };
 #include "toolchain/lexer/token_kind.def"
 
-    // For identifiers, keywords, and numeric type literals, we use the
-    // `Identifier` placeholder token kind.
     auto dispatch_lex_word = +[](Lexer& lexer, llvm::StringRef& source_text) {
       return lexer.LexKeywordOrIdentifier(source_text);
     };
     table['_'] = dispatch_lex_word;
-    // Note that we use raw loops because this needs to be `constexpr`
+    // Note that we don't use `llvm::seq` because this needs to be `constexpr`
     // evaluated.
     for (unsigned char c = 'a'; c <= 'z'; ++c) {
       table[c] = dispatch_lex_word;
@@ -784,8 +767,6 @@ class TokenizedBuffer::Lexer {
       table[i] = dispatch_lex_word;
     }
 
-    // For numeric literals of all kinds, we use the `IntegerLiteral`
-    // placeholder token kind.
     auto dispatch_lex_numeric =
         +[](Lexer& lexer, llvm::StringRef& source_text) {
           return lexer.LexNumericLiteral(source_text);
@@ -794,8 +775,6 @@ class TokenizedBuffer::Lexer {
       table[c] = dispatch_lex_numeric;
     }
 
-    // We can immediately tell when starting to lex a string literal and
-    // dispatch directly.
     auto dispatch_lex_string = +[](Lexer& lexer, llvm::StringRef& source_text) {
       return lexer.LexStringLiteral(source_text);
     };
@@ -832,6 +811,30 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
 
   // Build a table of function pointers that we can use to dispatch to the
   // correct lexer routine based on the first byte of source text.
+  //
+  // While it is tempting to simply use a `switch` on the first byte and
+  // dispatch with cases into this, in practice that doesn't produce great code.
+  // There seem to be two issues that are the root cause.
+  //
+  // First, there are lots of different values of bytes that dispatch to a
+  // fairly small set of routines, and then some byte values that dispatch
+  // differently for each byte. This pattern isn't one that the compiler-based
+  // lowering of switches works well with -- it tries to balance all the cases,
+  // and in doing so emits several compares and other control flow rather than a
+  // simple jump table.
+  //
+  // Second, with a `case`, it isn't as obvious how to create a single, uniform
+  // interface that is effective for *every* byte value, and thus makes for a
+  // single consistent table-based dispatch. By forcing these to be function
+  // pointers, we also coerce the code to use a strictly homogeneous structure
+  // that can form a single dispatch table.
+  //
+  // These two actually interact -- the second issue is part of what makes the
+  // non-table lowering in the first one desirable for many switches and cases.
+  //
+  // Ultimately, when table-based dispatch is such an important technique, we
+  // get better results by taking full control and manually creating the
+  // dispatch structures.
   constexpr Lexer::DispatchTableT DispatchTable = Lexer::MakeDispatchTable();
 
   llvm::StringRef source_text = source.text();
