@@ -12,8 +12,8 @@ fn Run() -> i32 {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: {block3}}},
-// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1, body: {block5}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: [block3]},
+// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1, body: [block5]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,

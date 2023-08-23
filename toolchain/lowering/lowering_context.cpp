@@ -78,9 +78,8 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
 
   // Set parameter names.
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    auto [param_name_id, _] =
-        semantics_ir().GetNode(param_refs[i]).GetAsBindName();
-    llvm_function->getArg(i)->setName(semantics_ir().GetString(param_name_id));
+    auto name_id = semantics_ir().GetNode(param_refs[i]).GetAsVarStorage();
+    llvm_function->getArg(i)->setName(semantics_ir().GetString(name_id));
   }
 
   return llvm_function;
@@ -101,9 +100,7 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
   // Add parameters to locals.
   auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    auto param_storage =
-        semantics_ir().GetNode(param_refs[i]).GetAsBindName().second;
-    function_lowering.SetLocal(param_storage, llvm_function->getArg(i));
+    function_lowering.SetLocal(param_refs[i], llvm_function->getArg(i));
   }
 
   // Lower all blocks.

@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/file_test:rules.bzl", "file_test")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
@@ -14,6 +15,7 @@ cc_library(
     hdrs = ["driver.h"],
     textual_hdrs = ["flags.def"],
     deps = [
+        "//common:command_line",
         "//common:vlog",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
@@ -26,6 +28,7 @@ cc_library(
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
     ],
 )
 
@@ -51,6 +54,7 @@ cc_test(
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
         "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Object",
         "@llvm-project//llvm:Support",
     ],
 )

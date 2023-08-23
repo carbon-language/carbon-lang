@@ -12,8 +12,8 @@ fn Run() {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: {block3}}},
-// CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block5}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: [block3]},
+// CHECK:STDOUT:   {name: str1, param_refs: block0, body: [block5]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -53,11 +53,10 @@ fn Run() {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: ArrayType, arg0: node+10, arg1: type1, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type3},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+12, type: type3},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type3},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
-// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+14, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+15},
+// CHECK:STDOUT:   {kind: ArrayValue, arg0: node+13, type: type3},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+14},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -91,7 +90,6 @@ fn Run() {
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+16,
-// CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -116,7 +114,7 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
-// CHECK:STDOUT:   %t: [i32; 1] = var
+// CHECK:STDOUT:   %t: [i32; 1] = var "t"
 // CHECK:STDOUT:   %.loc10_22.1: (i32,) = call @F()
 // CHECK:STDOUT:   %.loc10_22.2: [i32; 1] = array_value %.loc10_22.1
 // CHECK:STDOUT:   assign %t, %.loc10_22.2

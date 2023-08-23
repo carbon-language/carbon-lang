@@ -21,10 +21,10 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   %tuple = alloca {}, align 8
-// CHECK:STDOUT:   %var = alloca {}, align 8
+// CHECK:STDOUT:   %b = alloca {}, align 8
 // CHECK:STDOUT:   %tuple1 = alloca {}, align 8
 // CHECK:STDOUT:   %1 = load {}, ptr %tuple1, align 1
 // CHECK:STDOUT:   %Echo = call {} @Echo({} %1)
-// CHECK:STDOUT:   store {} %Echo, ptr %var, align 1
+// CHECK:STDOUT:   store {} %Echo, ptr %b, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

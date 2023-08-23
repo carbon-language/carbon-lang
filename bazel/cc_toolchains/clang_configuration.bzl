@@ -212,15 +212,15 @@ def _configure_clang_toolchain_impl(repository_ctx):
         "clang_detected_variables.bzl",
         repository_ctx.attr._clang_detected_variables_template,
         substitutions = {
-            "{LLVM_BINDIR}": str(ar_path.dirname),
-            "{LLVM_SYMBOLIZER}": str(ar_path.dirname.get_child("llvm-symbolizer")),
             "{CLANG_BINDIR}": str(clang.dirname),
-            "{CLANG_VERSION}": str(clang_version),
-            "{CLANG_VERSION_FOR_CACHE}": clang_version_for_cache.replace('"', "_").replace("\\", "_"),
-            "{CLANG_RESOURCE_DIR}": resource_dir,
             "{CLANG_INCLUDE_DIRS_LIST}": str(
                 [str(path) for path in include_dirs],
             ),
+            "{CLANG_RESOURCE_DIR}": resource_dir,
+            "{CLANG_VERSION_FOR_CACHE}": clang_version_for_cache.replace('"', "_").replace("\\", "_"),
+            "{CLANG_VERSION}": str(clang_version),
+            "{LLVM_BINDIR}": str(ar_path.dirname),
+            "{LLVM_SYMBOLIZER}": str(ar_path.dirname.get_child("llvm-symbolizer")),
             "{SYSROOT}": str(sysroot_dir),
         },
         executable = False,
@@ -231,10 +231,6 @@ configure_clang_toolchain = repository_rule(
     configure = True,
     local = True,
     attrs = {
-        "_clang_toolchain_build": attr.label(
-            default = Label("//bazel/cc_toolchains:clang_toolchain.BUILD"),
-            allow_single_file = True,
-        ),
         "_clang_cc_toolchain_config": attr.label(
             default = Label(
                 "//bazel/cc_toolchains:clang_cc_toolchain_config.bzl",
@@ -245,6 +241,10 @@ configure_clang_toolchain = repository_rule(
             default = Label(
                 "//bazel/cc_toolchains:clang_detected_variables.tpl.bzl",
             ),
+            allow_single_file = True,
+        ),
+        "_clang_toolchain_build": attr.label(
+            default = Label("//bazel/cc_toolchains:clang_toolchain.BUILD"),
             allow_single_file = True,
         ),
     },

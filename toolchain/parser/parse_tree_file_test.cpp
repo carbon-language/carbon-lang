@@ -15,7 +15,7 @@ class ParseTreeFileTest : public DriverFileTestBase {
   using DriverFileTestBase::DriverFileTestBase;
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    return {"dump", "parse-tree", "%s"};
+    return {"compile", "--phase=parse", "--dump-parse-tree", "%s"};
   }
 };
 

@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
 package(default_visibility = ["//explorer/parse_and_execute:__pkg__"])
 
 cc_library(
