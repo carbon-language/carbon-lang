@@ -11,7 +11,7 @@
 
 namespace Carbon {
 
-// Lowers SemIR:: IR to LLVM IR.
+// Lowers SemIR to LLVM IR.
 auto LowerToLLVM(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
                  const SemIR::File& semantics_ir,
                  llvm::raw_ostream* vlog_stream)

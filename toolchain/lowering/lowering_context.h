@@ -77,13 +77,13 @@ class LoweringContext {
   llvm::LLVMContext* llvm_context_;
   std::unique_ptr<llvm::Module> llvm_module_;
 
-  // The input SemIR:: IR.
+  // The input SemIR.
   const SemIR::File* const semantics_ir_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;
 
-  // Maps callables to lowered functions. SemIR:: treats callables as the
+  // Maps callables to lowered functions. SemIR treats callables as the
   // canonical form of a function, so lowering needs to do the same.
   llvm::SmallVector<llvm::Function*> functions_;
 
