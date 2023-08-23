@@ -41,6 +41,7 @@ struct NodeId : public IndexBase {
     }
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
@@ -60,6 +61,7 @@ struct FunctionId : public IndexBase {
     id.Print(out);
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The ID of a cross-referenced IR.
@@ -71,6 +73,7 @@ struct CrossReferenceIRId : public IndexBase {
     id.Print(out);
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // A boolean value.
@@ -93,6 +96,7 @@ struct BoolValue : public IndexBase {
     }
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr BoolValue BoolValue::False = BoolValue(0);
@@ -107,6 +111,7 @@ struct IntegerLiteralId : public IndexBase {
     id.Print(out);
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The ID of a name scope.
@@ -121,6 +126,7 @@ struct NameScopeId : public IndexBase {
     id.Print(out);
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr NameScopeId NameScopeId::Invalid =
@@ -148,6 +154,7 @@ struct NodeBlockId : public IndexBase {
     }
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr NodeBlockId NodeBlockId::Empty = NodeBlockId(0);
@@ -165,6 +172,7 @@ struct RealLiteralId : public IndexBase {
     id.Print(out);
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The ID of a string.
@@ -176,6 +184,7 @@ struct StringId : public IndexBase {
     id.Print(out);
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The ID of a node block.
@@ -202,6 +211,7 @@ struct TypeId : public IndexBase {
     }
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 constexpr TypeId TypeId::TypeType = TypeId(TypeId::InvalidIndex - 2);
@@ -217,6 +227,7 @@ struct TypeBlockId : public IndexBase {
     id.Print(out);
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // An index for member access.
@@ -228,6 +239,7 @@ struct MemberIndex : public IndexBase {
     id.Print(out);
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 };
 
 // The standard structure for Node. This is trying to provide a minimal
@@ -456,6 +468,7 @@ class Node {
 
   friend auto operator<<(llvm::raw_ostream& out, const Node& node)
       -> llvm::raw_ostream&;
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
  private:
   // Builtins have peculiar construction, so they are a friend rather than using

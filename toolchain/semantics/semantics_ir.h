@@ -31,6 +31,7 @@ struct Function {
     out << "}";
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
   // The function name.
   StringId name_id;
@@ -51,6 +52,7 @@ struct RealLiteral {
         << ", is_decimal: " << val.is_decimal << "}";
     return out;
   }
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
   llvm::APInt mantissa;
   llvm::APInt exponent;
@@ -81,12 +83,14 @@ class File {
   // TODO: In the future, the things to print may change, for example by adding
   // preludes. We may then want the ability to omit other things similar to
   // builtins.
+  auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
+
   friend auto operator<<(llvm::raw_ostream& out, const File& file)
       -> llvm::raw_ostream& {
     file.Print(out, /*include_builtins=*/false);
     return out;
   }
-  auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
+  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
   // Returns array bound value from the bound node.
   auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
