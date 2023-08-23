@@ -190,10 +190,10 @@ auto LoweringHandleCall(LoweringFunctionContext& context, SemIR::NodeId node_id,
 
   if (llvm_function->getReturnType()->isVoidTy()) {
     context.builder().CreateCall(llvm_function, args);
-    // TODO: A function with a void return type shouldn't be referred to by
-    // other nodes.
+    // The value of a function call with a void return type shouldn't used, but
+    // StubReference needs a value to propagate.
     context.SetLocal(node_id,
-                     llvm::UndefValue::get(context.GetType(node.type_id())));
+                     llvm::PoisonValue::get(context.GetType(node.type_id())));
   } else {
     context.SetLocal(node_id,
                      context.builder().CreateCall(llvm_function, args,

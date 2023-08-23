@@ -18,7 +18,8 @@ fn F() -> i32 {
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @G(ptr %p) {
-// CHECK:STDOUT:   ret ptr %p
+// CHECK:STDOUT:   %1 = load i32, ptr %p, align 4
+// CHECK:STDOUT:   ret i32 %1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F() {

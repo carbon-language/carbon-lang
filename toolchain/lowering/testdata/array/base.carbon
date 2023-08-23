@@ -105,18 +105,20 @@ fn Run() {
 // CHECK:STDOUT:   %34 = load { i32, i32, i32 }, ptr %tuple19, align 4
 // CHECK:STDOUT:   store { i32, i32, i32 } %34, ptr %d, align 4
 // CHECK:STDOUT:   %e = alloca [3 x i32], align 4
-// CHECK:STDOUT:   %35 = load { i32, i32, i32 }, ptr %d, align 4
 // CHECK:STDOUT:   %array20 = alloca [3 x i32], align 4
-// CHECK:STDOUT:   %array.element21 = extractvalue { i32, i32, i32 } %35, 0
+// CHECK:STDOUT:   %array.element21 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 0
+// CHECK:STDOUT:   %35 = load i32, ptr %array.element21, align 4
 // CHECK:STDOUT:   %36 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 0
-// CHECK:STDOUT:   store i32 %array.element21, ptr %36, align 4
-// CHECK:STDOUT:   %array.element22 = extractvalue { i32, i32, i32 } %35, 1
-// CHECK:STDOUT:   %37 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 1
-// CHECK:STDOUT:   store i32 %array.element22, ptr %37, align 4
-// CHECK:STDOUT:   %array.element23 = extractvalue { i32, i32, i32 } %35, 2
-// CHECK:STDOUT:   %38 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 2
-// CHECK:STDOUT:   store i32 %array.element23, ptr %38, align 4
-// CHECK:STDOUT:   %39 = load [3 x i32], ptr %array20, align 4
-// CHECK:STDOUT:   store [3 x i32] %39, ptr %e, align 4
+// CHECK:STDOUT:   store i32 %35, ptr %36, align 4
+// CHECK:STDOUT:   %array.element22 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 1
+// CHECK:STDOUT:   %37 = load i32, ptr %array.element22, align 4
+// CHECK:STDOUT:   %38 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 1
+// CHECK:STDOUT:   store i32 %37, ptr %38, align 4
+// CHECK:STDOUT:   %array.element23 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 2
+// CHECK:STDOUT:   %39 = load i32, ptr %array.element23, align 4
+// CHECK:STDOUT:   %40 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 2
+// CHECK:STDOUT:   store i32 %39, ptr %40, align 4
+// CHECK:STDOUT:   %41 = load [3 x i32], ptr %array20, align 4
+// CHECK:STDOUT:   store [3 x i32] %41, ptr %e, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

@@ -28,15 +28,16 @@ fn Run() {
 // CHECK:STDOUT:   %t = alloca [2 x i32], align 4
 // CHECK:STDOUT:   %temp = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   call void @F(ptr %temp)
-// CHECK:STDOUT:   %1 = load { i32, i32 }, ptr %temp, align 4
 // CHECK:STDOUT:   %array = alloca [2 x i32], align 4
-// CHECK:STDOUT:   %array.element = extractvalue { i32, i32 } %1, 0
+// CHECK:STDOUT:   %array.element = getelementptr inbounds { i32, i32 }, ptr %temp, i32 0, i32 0
+// CHECK:STDOUT:   %1 = load i32, ptr %array.element, align 4
 // CHECK:STDOUT:   %2 = getelementptr inbounds [2 x i32], ptr %array, i32 0, i32 0
-// CHECK:STDOUT:   store i32 %array.element, ptr %2, align 4
-// CHECK:STDOUT:   %array.element1 = extractvalue { i32, i32 } %1, 1
-// CHECK:STDOUT:   %3 = getelementptr inbounds [2 x i32], ptr %array, i32 0, i32 1
-// CHECK:STDOUT:   store i32 %array.element1, ptr %3, align 4
-// CHECK:STDOUT:   %4 = load [2 x i32], ptr %array, align 4
-// CHECK:STDOUT:   store [2 x i32] %4, ptr %t, align 4
+// CHECK:STDOUT:   store i32 %1, ptr %2, align 4
+// CHECK:STDOUT:   %array.element1 = getelementptr inbounds { i32, i32 }, ptr %temp, i32 0, i32 1
+// CHECK:STDOUT:   %3 = load i32, ptr %array.element1, align 4
+// CHECK:STDOUT:   %4 = getelementptr inbounds [2 x i32], ptr %array, i32 0, i32 1
+// CHECK:STDOUT:   store i32 %3, ptr %4, align 4
+// CHECK:STDOUT:   %5 = load [2 x i32], ptr %array, align 4
+// CHECK:STDOUT:   store [2 x i32] %5, ptr %t, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
