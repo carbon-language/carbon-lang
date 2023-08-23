@@ -826,7 +826,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   // Second, with a `case`, it isn't as obvious how to create a single, uniform
   // interface that is effective for *every* byte value, and thus makes for a
   // single consistent table-based dispatch. By forcing these to be function
-  // pointers, we also coerce the code to use a strictly homogenous structure
+  // pointers, we also coerce the code to use a strictly homogeneous structure
   // that can form a single dispatch table.
   //
   // These two actually interact -- the second issue is part of what makes the
