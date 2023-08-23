@@ -27,7 +27,7 @@ using ::testing::MatchesRegex;
 using ::testing::Pair;
 using ::testing::SizeIs;
 
-TEST(SemanticsIRTest, YAML) {
+TEST(SemIRTest, YAML) {
   llvm::vfs::InMemoryFileSystem fs;
   CARBON_CHECK(fs.addFile(
       "test.carbon", /*ModificationTime=*/0,

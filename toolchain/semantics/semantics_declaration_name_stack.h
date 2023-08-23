@@ -9,9 +9,9 @@
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-class SemanticsContext;
+class Context;
 
 // Provides support and stacking for qualified declaration name handling.
 //
@@ -48,10 +48,10 @@ class SemanticsContext;
 // // is forward declared in `MyType`, but is not a scope itself.
 // fn MyNamespace.MyType.DoSomething() { ... }
 // ```
-class SemanticsDeclarationNameStack {
+class DeclarationNameStack {
  public:
   // Context for declaration name construction.
-  struct Context {
+  struct NameContext {
     enum class State {
       // A new context which has not processed any parts of the qualifier.
       New,
@@ -77,7 +77,7 @@ class SemanticsDeclarationNameStack {
 
     // The scope which qualified names are added to. For unqualified names,
     // this will be Invalid to indicate the current scope should be used.
-    SemanticsNameScopeId target_scope_id = SemanticsNameScopeId::Invalid;
+    SemIR::NameScopeId target_scope_id = SemIR::NameScopeId::Invalid;
 
     // The last parse node used.
     ParseTree::Node parse_node = ParseTree::Node::Invalid;
@@ -85,15 +85,14 @@ class SemanticsDeclarationNameStack {
     union {
       // The ID of a resolved qualifier, including both identifiers and
       // expressions. Invalid indicates resolution failed.
-      SemanticsNodeId resolved_node_id = SemanticsNodeId::Invalid;
+      SemIR::NodeId resolved_node_id = SemIR::NodeId::Invalid;
 
       // The ID of an unresolved identifier.
-      SemanticsStringId unresolved_name_id;
+      SemIR::StringId unresolved_name_id;
     };
   };
 
-  explicit SemanticsDeclarationNameStack(SemanticsContext* context)
-      : context_(context) {}
+  explicit DeclarationNameStack(Context* context) : context_(context) {}
 
   // Pushes processing of a new declaration name, which will be used
   // contextually.
@@ -102,38 +101,39 @@ class SemanticsDeclarationNameStack {
   // Pops the current declaration name processing, returning the final context
   // for adding the name to lookup. This also pops the final name node from the
   // node stack, which will be applied to the declaration name if appropriate.
-  auto Pop() -> Context;
+  auto Pop() -> NameContext;
 
   // Applies an expression from the node stack to the top of the declaration
   // name stack.
   auto ApplyExpressionQualifier(ParseTree::Node parse_node,
-                                SemanticsNodeId node_id) -> void;
+                                SemIR::NodeId node_id) -> void;
 
   // Applies a Name from the node stack to the top of the declaration name
   // stack.
-  auto ApplyNameQualifier(ParseTree::Node parse_node, SemanticsStringId name_id)
+  auto ApplyNameQualifier(ParseTree::Node parse_node, SemIR::StringId name_id)
       -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Context name_context, SemanticsNodeId target_id) -> void;
+  auto AddNameToLookup(NameContext name_context, SemIR::NodeId target_id)
+      -> void;
 
  private:
   // Returns true if the context is in a state where it can resolve qualifiers.
   // Updates name_context as needed.
-  auto CanResolveQualifier(Context& name_context, ParseTree::Node parse_node)
-      -> bool;
+  auto CanResolveQualifier(NameContext& name_context,
+                           ParseTree::Node parse_node) -> bool;
 
   // Updates the scope on name_context as needed. This is called after
   // resolution is complete, whether for Name or expression.
-  auto UpdateScopeIfNeeded(Context& name_context) -> void;
+  auto UpdateScopeIfNeeded(NameContext& name_context) -> void;
 
   // The linked context.
-  SemanticsContext* context_;
+  Context* context_;
 
   // Provides nesting for construction.
-  llvm::SmallVector<Context> declaration_name_stack_;
+  llvm::SmallVector<NameContext> declaration_name_stack_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_DECLARATION_NAME_STACK_H_

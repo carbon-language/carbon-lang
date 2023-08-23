@@ -6,16 +6,16 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsDeclarationNameStack::Push() -> void {
+auto DeclarationNameStack::Push() -> void {
   declaration_name_stack_.push_back(
-      {.state = Context::State::New,
-       .target_scope_id = SemanticsNameScopeId::Invalid,
-       .resolved_node_id = SemanticsNodeId::Invalid});
+      {.state = NameContext::State::New,
+       .target_scope_id = SemIR::NameScopeId::Invalid,
+       .resolved_node_id = SemIR::NodeId::Invalid});
 }
 
-auto SemanticsDeclarationNameStack::Pop() -> Context {
+auto DeclarationNameStack::Pop() -> NameContext {
   if (context_->parse_tree().node_kind(
           context_->node_stack().PeekParseNode()) ==
       ParseNodeKind::QualifiedDeclaration) {
@@ -33,27 +33,26 @@ auto SemanticsDeclarationNameStack::Pop() -> Context {
   return declaration_name_stack_.pop_back_val();
 }
 
-auto SemanticsDeclarationNameStack::AddNameToLookup(Context name_context,
-                                                    SemanticsNodeId target_id)
-    -> void {
+auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
+                                           SemIR::NodeId target_id) -> void {
   switch (name_context.state) {
-    case Context::State::Error:
+    case NameContext::State::Error:
       // The name is invalid and a diagnostic has already been emitted.
       return;
 
-    case Context::State::New:
+    case NameContext::State::New:
       CARBON_FATAL() << "Name is missing, not expected to call AddNameToLookup "
                         "(but that may change based on error handling).";
 
-    case Context::State::Resolved:
-    case Context::State::ResolvedNonScope: {
+    case NameContext::State::Resolved:
+    case NameContext::State::ResolvedNonScope: {
       context_->DiagnoseDuplicateName(name_context.parse_node,
                                       name_context.resolved_node_id);
       return;
     }
 
-    case Context::State::Unresolved:
-      if (name_context.target_scope_id == SemanticsNameScopeId::Invalid) {
+    case NameContext::State::Unresolved:
+      if (name_context.target_scope_id == SemIR::NameScopeId::Invalid) {
         context_->AddNameToLookup(name_context.parse_node,
                                   name_context.unresolved_name_id, target_id);
       } else {
@@ -69,13 +68,14 @@ auto SemanticsDeclarationNameStack::AddNameToLookup(Context name_context,
   }
 }
 
-auto SemanticsDeclarationNameStack::ApplyExpressionQualifier(
-    ParseTree::Node parse_node, SemanticsNodeId node_id) -> void {
+auto DeclarationNameStack::ApplyExpressionQualifier(ParseTree::Node parse_node,
+                                                    SemIR::NodeId node_id)
+    -> void {
   auto& name_context = declaration_name_stack_.back();
   if (CanResolveQualifier(name_context, parse_node)) {
-    if (node_id == SemanticsNodeId::BuiltinError) {
+    if (node_id == SemIR::NodeId::BuiltinError) {
       // The input node is an error, so error the context.
-      name_context.state = Context::State::Error;
+      name_context.state = NameContext::State::Error;
       return;
     }
 
@@ -88,8 +88,8 @@ auto SemanticsDeclarationNameStack::ApplyExpressionQualifier(
   }
 }
 
-auto SemanticsDeclarationNameStack::ApplyNameQualifier(
-    ParseTree::Node parse_node, SemanticsStringId name_id) -> void {
+auto DeclarationNameStack::ApplyNameQualifier(ParseTree::Node parse_node,
+                                              SemIR::StringId name_id) -> void {
   auto& name_context = declaration_name_stack_.back();
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
@@ -97,9 +97,9 @@ auto SemanticsDeclarationNameStack::ApplyNameQualifier(
     auto resolved_node_id = context_->LookupName(
         name_context.parse_node, name_id, name_context.target_scope_id,
         /*print_diagnostics=*/false);
-    if (resolved_node_id == SemanticsNodeId::BuiltinError) {
+    if (resolved_node_id == SemIR::NodeId::BuiltinError) {
       // Invalid indicates an unresolved node. Store it and return.
-      name_context.state = Context::State::Unresolved;
+      name_context.state = NameContext::State::Unresolved;
       name_context.unresolved_name_id = name_id;
       return;
     } else {
@@ -111,42 +111,43 @@ auto SemanticsDeclarationNameStack::ApplyNameQualifier(
   }
 }
 
-auto SemanticsDeclarationNameStack::UpdateScopeIfNeeded(Context& name_context)
+auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
     -> void {
   // This will only be reached for resolved nodes. We update the target
   // scope based on the resolved type.
   auto resolved_node =
       context_->semantics_ir().GetNode(name_context.resolved_node_id);
   switch (resolved_node.kind()) {
-    case SemanticsNodeKind::Namespace:
-      name_context.state = Context::State::Resolved;
+    case SemIR::NodeKind::Namespace:
+      name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id = resolved_node.GetAsNamespace();
       break;
     default:
-      name_context.state = Context::State::ResolvedNonScope;
+      name_context.state = NameContext::State::ResolvedNonScope;
       break;
   }
 }
 
-auto SemanticsDeclarationNameStack::CanResolveQualifier(
-    Context& name_context, ParseTree::Node parse_node) -> bool {
+auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
+                                               ParseTree::Node parse_node)
+    -> bool {
   switch (name_context.state) {
-    case Context::State::Error:
+    case NameContext::State::Error:
       // Already in an error state, so return without examining.
       return false;
 
-    case Context::State::Unresolved:
+    case NameContext::State::Unresolved:
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier failed to resolve.
-      name_context.state = Context::State::Error;
+      name_context.state = NameContext::State::Error;
       context_->DiagnoseNameNotFound(name_context.parse_node,
                                      name_context.unresolved_name_id);
       return false;
 
-    case Context::State::ResolvedNonScope: {
+    case NameContext::State::ResolvedNonScope: {
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier didn't resolve to a scoped entity.
-      name_context.state = Context::State::Error;
+      name_context.state = NameContext::State::Error;
       CARBON_DIAGNOSTIC(QualifiedDeclarationInNonScope, Error,
                         "Declaration qualifiers are only allowed for entities "
                         "that provide a scope.");
@@ -159,12 +160,12 @@ auto SemanticsDeclarationNameStack::CanResolveQualifier(
       return false;
     }
 
-    case Context::State::New:
-    case Context::State::Resolved: {
+    case NameContext::State::New:
+    case NameContext::State::Resolved: {
       name_context.parse_node = parse_node;
       return true;
     }
   }
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

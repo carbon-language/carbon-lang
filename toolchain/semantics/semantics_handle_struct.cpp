@@ -4,10 +4,10 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleStructComma(SemanticsContext& context,
-                                ParseTree::Node /*parse_node*/) -> bool {
+auto HandleStructComma(Context& context, ParseTree::Node /*parse_node*/)
+    -> bool {
   context.ParamOrArgComma(
       /*for_args=*/context.parse_tree().node_kind(
           context.node_stack().PeekParseNode()) !=
@@ -15,9 +15,8 @@ auto SemanticsHandleStructComma(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleStructFieldDesignator(SemanticsContext& context,
-                                          ParseTree::Node /*parse_node*/)
-    -> bool {
+auto HandleStructFieldDesignator(Context& context,
+                                 ParseTree::Node /*parse_node*/) -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
   CARBON_CHECK(
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
@@ -25,35 +24,35 @@ auto SemanticsHandleStructFieldDesignator(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleStructFieldType(SemanticsContext& context,
-                                    ParseTree::Node parse_node) -> bool {
+auto HandleStructFieldType(Context& context, ParseTree::Node parse_node)
+    -> bool {
   auto [type_node, type_id] = context.node_stack().PopExpressionWithParseNode();
-  SemanticsTypeId cast_type_id = context.ExpressionAsType(type_node, type_id);
+  SemIR::TypeId cast_type_id = context.ExpressionAsType(type_node, type_id);
 
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<ParseNodeKind::Name>();
 
-  context.AddNodeAndPush(parse_node, SemanticsNode::StructTypeField::Make(
+  context.AddNodeAndPush(parse_node, SemIR::Node::StructTypeField::Make(
                                          name_node, name_id, cast_type_id));
   return true;
 }
 
-auto SemanticsHandleStructFieldUnknown(SemanticsContext& context,
-                                       ParseTree::Node parse_node) -> bool {
+auto HandleStructFieldUnknown(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleStructFieldUnknown");
 }
 
-auto SemanticsHandleStructFieldValue(SemanticsContext& context,
-                                     ParseTree::Node parse_node) -> bool {
+auto HandleStructFieldValue(Context& context, ParseTree::Node parse_node)
+    -> bool {
   auto [value_parse_node, value_node_id] =
       context.node_stack().PopExpressionWithParseNode();
-  SemanticsStringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
+  SemIR::StringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
 
   // Store the name for the type.
   auto type_block_id = context.args_type_info_stack().PeekForAdd();
   context.semantics_ir().AddNode(
       type_block_id,
-      SemanticsNode::StructTypeField::Make(
+      SemIR::Node::StructTypeField::Make(
           parse_node, name_id,
           context.semantics_ir().GetNode(value_node_id).type_id()));
 
@@ -62,8 +61,7 @@ auto SemanticsHandleStructFieldValue(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleStructLiteral(SemanticsContext& context,
-                                  ParseTree::Node parse_node) -> bool {
+auto HandleStructLiteral(Context& context, ParseTree::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
       /*for_args=*/true, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
 
@@ -76,13 +74,14 @@ auto SemanticsHandleStructLiteral(SemanticsContext& context,
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
   auto value_id = context.AddNode(
-      SemanticsNode::StructValue::Make(parse_node, type_id, refs_id));
+      SemIR::Node::StructValue::Make(parse_node, type_id, refs_id));
   context.node_stack().Push(parse_node, value_id);
   return true;
 }
 
-auto SemanticsHandleStructLiteralOrStructTypeLiteralStart(
-    SemanticsContext& context, ParseTree::Node parse_node) -> bool {
+auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
+                                                 ParseTree::Node parse_node)
+    -> bool {
   context.PushScope();
   context.node_stack().Push(parse_node);
   // At this point we aren't sure whether this will be a value or type literal,
@@ -93,8 +92,8 @@ auto SemanticsHandleStructLiteralOrStructTypeLiteralStart(
   return true;
 }
 
-auto SemanticsHandleStructTypeLiteral(SemanticsContext& context,
-                                      ParseTree::Node parse_node) -> bool {
+auto HandleStructTypeLiteral(Context& context, ParseTree::Node parse_node)
+    -> bool {
   auto refs_id = context.ParamOrArgEnd(
       /*for_args=*/false, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
 
@@ -105,13 +104,13 @@ auto SemanticsHandleStructTypeLiteral(SemanticsContext& context,
   // This is only used for value literals.
   context.args_type_info_stack().Pop();
 
-  CARBON_CHECK(refs_id != SemanticsNodeBlockId::Empty)
+  CARBON_CHECK(refs_id != SemIR::NodeBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
   context.AddNodeAndPush(parse_node,
-                         SemanticsNode::StructType::Make(
-                             parse_node, SemanticsTypeId::TypeType, refs_id));
+                         SemIR::Node::StructType::Make(
+                             parse_node, SemIR::TypeId::TypeType, refs_id));
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

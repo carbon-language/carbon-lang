@@ -26,7 +26,7 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},

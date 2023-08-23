@@ -34,7 +34,7 @@ fn Main() {
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructType, arg0: block0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},

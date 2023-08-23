@@ -20,19 +20,19 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(SemanticsNodeKind) = {
   return Table[AsInt()];
 }
 
-auto SemanticsNodeKind::value_kind() const -> SemanticsNodeValueKind {
-  static constexpr SemanticsNodeValueKind Table[] = {
-#define CARBON_SEMANTICS_NODE_KIND_WITH_VALUE_KIND(Name, ValueKind) \
-  SemanticsNodeValueKind::ValueKind,
+auto SemanticsNodeKind::value_kind() const -> SemIR::NodeValueKind {
+  static constexpr SemIR::NodeValueKind Table[] = {
+#define CARBON_SEMANTICS_NODE_KIND_WITH_VALUE_KIND(Name, Kind) \
+  SemIR::NodeValueKind::Kind,
 #include "toolchain/semantics/semantics_node_kind.def"
   };
   return Table[AsInt()];
 }
 
-auto SemanticsNodeKind::terminator_kind() const -> SemanticsTerminatorKind {
-  static constexpr SemanticsTerminatorKind Table[] = {
-#define CARBON_SEMANTICS_NODE_KIND_WITH_TERMINATOR_KIND(Name, TerminatorKind) \
-  SemanticsTerminatorKind::TerminatorKind,
+auto SemanticsNodeKind::terminator_kind() const -> SemIR::TerminatorKind {
+  static constexpr SemIR::TerminatorKind Table[] = {
+#define CARBON_SEMANTICS_NODE_KIND_WITH_TERMINATOR_KIND(Name, Kind) \
+  SemIR::TerminatorKind::Kind,
 #include "toolchain/semantics/semantics_node_kind.def"
   };
   return Table[AsInt()];

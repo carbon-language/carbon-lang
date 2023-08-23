@@ -4,21 +4,20 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleLiteral(SemanticsContext& context,
-                            ParseTree::Node parse_node) -> bool {
+auto HandleLiteral(Context& context, ParseTree::Node parse_node) -> bool {
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case TokenKind::False:
     case TokenKind::True: {
       context.AddNodeAndPush(
           parse_node,
-          SemanticsNode::BoolLiteral::Make(
+          SemIR::Node::BoolLiteral::Make(
               parse_node,
-              context.CanonicalizeType(SemanticsNodeId::BuiltinBoolType),
-              token_kind == TokenKind::True ? SemanticsBoolValue::True
-                                            : SemanticsBoolValue::False));
+              context.CanonicalizeType(SemIR::NodeId::BuiltinBoolType),
+              token_kind == TokenKind::True ? SemIR::BoolValue::True
+                                            : SemIR::BoolValue::False));
       break;
     }
     case TokenKind::IntegerLiteral: {
@@ -26,10 +25,9 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
           context.tokens().GetIntegerLiteral(token));
       context.AddNodeAndPush(
           parse_node,
-          SemanticsNode::IntegerLiteral::Make(
+          SemIR::Node::IntegerLiteral::Make(
               parse_node,
-              context.CanonicalizeType(SemanticsNodeId::BuiltinIntegerType),
-              id));
+              context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType), id));
       break;
     }
     case TokenKind::RealLiteral: {
@@ -38,12 +36,12 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
           {.mantissa = token_value.Mantissa(),
            .exponent = token_value.Exponent(),
            .is_decimal = token_value.IsDecimal()});
-      context.AddNodeAndPush(parse_node,
-                             SemanticsNode::RealLiteral::Make(
-                                 parse_node,
-                                 context.CanonicalizeType(
-                                     SemanticsNodeId::BuiltinFloatingPointType),
-                                 id));
+      context.AddNodeAndPush(
+          parse_node,
+          SemIR::Node::RealLiteral::Make(
+              parse_node,
+              context.CanonicalizeType(SemIR::NodeId::BuiltinFloatingPointType),
+              id));
       break;
     }
     case TokenKind::StringLiteral: {
@@ -51,18 +49,17 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
           context.tokens().GetStringLiteral(token));
       context.AddNodeAndPush(
           parse_node,
-          SemanticsNode::StringLiteral::Make(
+          SemIR::Node::StringLiteral::Make(
               parse_node,
-              context.CanonicalizeType(SemanticsNodeId::BuiltinStringType),
-              id));
+              context.CanonicalizeType(SemIR::NodeId::BuiltinStringType), id));
       break;
     }
     case TokenKind::Type: {
-      context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinTypeType);
+      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinTypeType);
       break;
     }
     case TokenKind::Bool: {
-      context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinBoolType);
+      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinBoolType);
       break;
     }
     case TokenKind::IntegerTypeLiteral: {
@@ -70,8 +67,7 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
       if (text != "i32") {
         return context.TODO(parse_node, "Currently only i32 is allowed");
       }
-      context.node_stack().Push(parse_node,
-                                SemanticsNodeId::BuiltinIntegerType);
+      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinIntegerType);
       break;
     }
     case TokenKind::FloatingPointTypeLiteral: {
@@ -80,11 +76,11 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
         return context.TODO(parse_node, "Currently only f64 is allowed");
       }
       context.node_stack().Push(parse_node,
-                                SemanticsNodeId::BuiltinFloatingPointType);
+                                SemIR::NodeId::BuiltinFloatingPointType);
       break;
     }
     case TokenKind::StringTypeLiteral: {
-      context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinStringType);
+      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinStringType);
       break;
     }
     default: {
@@ -95,4 +91,4 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

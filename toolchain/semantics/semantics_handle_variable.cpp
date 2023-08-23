@@ -5,12 +5,12 @@
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
+auto HandleVariableDeclaration(Context& context, ParseTree::Node parse_node)
+    -> bool {
   // Handle the optional initializer.
-  auto expr_node_id = SemanticsNodeId::Invalid;
+  auto expr_node_id = SemIR::NodeId::Invalid;
   bool has_init =
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
       ParseNodeKind::PatternBinding;
@@ -21,7 +21,7 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
   }
 
   // Get the storage and add it to name lookup.
-  SemanticsNodeId var_id =
+  SemIR::NodeId var_id =
       context.node_stack().Pop<ParseNodeKind::PatternBinding>();
   auto var = context.semantics_ir().GetNode(var_id);
   auto name_id = var.GetAsVarStorage();
@@ -31,7 +31,7 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
     auto cast_value_id =
         context.ImplicitAsRequired(parse_node, expr_node_id, var.type_id());
     context.AddNode(
-        SemanticsNode::Assign::Make(parse_node, var_id, cast_value_id));
+        SemIR::Node::Assign::Make(parse_node, var_id, cast_value_id));
   }
 
   context.node_stack()
@@ -40,18 +40,18 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleVariableIntroducer(SemanticsContext& context,
-                                       ParseTree::Node parse_node) -> bool {
+auto HandleVariableIntroducer(Context& context, ParseTree::Node parse_node)
+    -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto SemanticsHandleVariableInitializer(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
+auto HandleVariableInitializer(Context& context, ParseTree::Node parse_node)
+    -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

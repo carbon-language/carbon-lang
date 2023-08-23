@@ -4,13 +4,13 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
 // Build a FunctionDeclaration describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
-static auto BuildFunctionDeclaration(SemanticsContext& context)
-    -> std::pair<SemanticsFunctionId, SemanticsNodeId> {
+static auto BuildFunctionDeclaration(Context& context)
+    -> std::pair<SemIR::FunctionId, SemIR::NodeId> {
   // TODO: This contains the IR block for the parameters and return type. At
   // present, it's just loose, but it's not strictly required for parameter
   // refs; we should either stop constructing it completely or, if it turns out
@@ -20,12 +20,12 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
   // prior to the call.
   context.node_block_stack().Pop();
 
-  SemanticsTypeId return_type_id = SemanticsTypeId::Invalid;
+  SemIR::TypeId return_type_id = SemIR::TypeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
     return_type_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
   }
-  SemanticsNodeBlockId param_refs_id =
+  SemIR::NodeBlockId param_refs_id =
       context.node_stack().Pop<ParseNodeKind::ParameterList>();
   auto name_context = context.declaration_name_stack().Pop();
   auto fn_node = context.node_stack()
@@ -36,30 +36,28 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
 
   // Add the callable.
   auto function_id = context.semantics_ir().AddFunction(
-      {.name_id =
-           name_context.state ==
-                   SemanticsDeclarationNameStack::Context::State::Unresolved
-               ? name_context.unresolved_name_id
-               : SemanticsStringId(SemanticsStringId::InvalidIndex),
+      {.name_id = name_context.state ==
+                          DeclarationNameStack::NameContext::State::Unresolved
+                      ? name_context.unresolved_name_id
+                      : SemIR::StringId(SemIR::StringId::InvalidIndex),
        .param_refs_id = param_refs_id,
        .return_type_id = return_type_id,
        .body_block_ids = {}});
   auto decl_id = context.AddNode(
-      SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));
+      SemIR::Node::FunctionDeclaration::Make(fn_node, function_id));
   context.declaration_name_stack().AddNameToLookup(name_context, decl_id);
   return {function_id, decl_id};
 }
 
-auto SemanticsHandleFunctionDeclaration(SemanticsContext& context,
-                                        ParseTree::Node /*parse_node*/)
+auto HandleFunctionDeclaration(Context& context, ParseTree::Node /*parse_node*/)
     -> bool {
   BuildFunctionDeclaration(context);
   return true;
 }
 
-auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
-                                       ParseTree::Node parse_node) -> bool {
-  SemanticsFunctionId function_id =
+auto HandleFunctionDefinition(Context& context, ParseTree::Node parse_node)
+    -> bool {
+  SemIR::FunctionId function_id =
       context.node_stack().Pop<ParseNodeKind::FunctionDefinitionStart>();
 
   // If the `}` of the function is reachable, reject if we need a return value
@@ -73,7 +71,7 @@ auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
           "Missing `return` at end of function with declared return type.");
       context.emitter().Emit(parse_node, MissingReturnStatement);
     } else {
-      context.AddNode(SemanticsNode::Return::Make(parse_node));
+      context.AddNode(SemIR::Node::Return::Make(parse_node));
     }
   }
 
@@ -83,8 +81,7 @@ auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
-                                            ParseTree::Node parse_node)
+auto HandleFunctionDefinitionStart(Context& context, ParseTree::Node parse_node)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] = BuildFunctionDeclaration(context);
@@ -100,7 +97,7 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   for (auto ref_id :
        context.semantics_ir().GetNodeBlock(function.param_refs_id)) {
     auto ref = context.semantics_ir().GetNode(ref_id);
-    auto name_id = ref.GetAsVarStorage();
+    auto name_id = ref.GetAsParameter();
     context.AddNameToLookup(ref.parse_node(), name_id, ref_id);
   }
 
@@ -108,8 +105,8 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleFunctionIntroducer(SemanticsContext& context,
-                                       ParseTree::Node parse_node) -> bool {
+auto HandleFunctionIntroducer(Context& context, ParseTree::Node parse_node)
+    -> bool {
   // Create a node block to hold the nodes created as part of the function
   // signature, such as parameter and return types.
   context.node_block_stack().Push();
@@ -120,8 +117,7 @@ auto SemanticsHandleFunctionIntroducer(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleReturnType(SemanticsContext& context,
-                               ParseTree::Node parse_node) -> bool {
+auto HandleReturnType(Context& context, ParseTree::Node parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
       context.node_stack().PopExpressionWithParseNode();
@@ -130,4 +126,4 @@ auto SemanticsHandleReturnType(SemanticsContext& context,
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

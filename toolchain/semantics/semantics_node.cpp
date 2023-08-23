@@ -4,10 +4,10 @@
 
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::SemIR {
 
 static auto PrintArgs(llvm::raw_ostream& /*out*/,
-                      const SemanticsNode::NoArgs /*no_args*/) -> void {}
+                      const Node::NoArgs /*no_args*/) -> void {}
 
 template <typename T>
 static auto PrintArgs(llvm::raw_ostream& out, T arg) -> void {
@@ -20,19 +20,21 @@ static auto PrintArgs(llvm::raw_ostream& out, std::pair<T0, T1> args) -> void {
   out << ", arg1: " << args.second;
 }
 
-auto SemanticsNode::Print(llvm::raw_ostream& out) const -> void {
-  out << "{kind: " << kind_;
-  switch (kind_) {
+auto operator<<(llvm::raw_ostream& out, const Node& node)
+    -> llvm::raw_ostream& {
+  out << "{kind: " << node.kind_;
+  switch (node.kind_) {
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
-  case SemanticsNodeKind::Name:          \
-    PrintArgs(out, GetAs##Name());       \
+  case NodeKind::Name:                   \
+    PrintArgs(out, node.GetAs##Name());  \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
   }
-  if (type_id_.is_valid()) {
-    out << ", type: " << type_id_;
+  if (node.type_id_.is_valid()) {
+    out << ", type: " << node.type_id_;
   }
   out << "}";
+  return out;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::SemIR

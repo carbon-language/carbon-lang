@@ -54,6 +54,10 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   // The token kind must be a closing symbol.
   [[nodiscard]] auto opening_symbol() const -> TokenKind;
 
+  // Test whether this kind of token is a one-character symbol whose character
+  // is not part of any other symbol.
+  [[nodiscard]] auto is_one_char_symbol() const -> bool;
+
   // Test whether this kind of token is a keyword.
   [[nodiscard]] auto is_keyword() const -> bool;
 
