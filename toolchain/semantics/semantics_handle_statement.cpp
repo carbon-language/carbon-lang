@@ -5,10 +5,9 @@
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleExpressionStatement(SemanticsContext& context,
-                                        ParseTree::Node /*parse_node*/)
+auto HandleExpressionStatement(Context& context, ParseTree::Node /*parse_node*/)
     -> bool {
   // Pop the expression without investigating its contents.
   // TODO: This will probably eventually need to do some "do not discard"
@@ -17,8 +16,8 @@ auto SemanticsHandleExpressionStatement(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleReturnStatement(SemanticsContext& context,
-                                    ParseTree::Node parse_node) -> bool {
+auto HandleReturnStatement(Context& context, ParseTree::Node parse_node)
+    -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
   const auto& fn_node =
       context.semantics_ir().GetNode(context.return_scope_stack().back());
@@ -40,7 +39,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           .Emit();
     }
 
-    context.AddNode(SemanticsNode::Return::Make(parse_node));
+    context.AddNode(SemIR::Node::Return::Make(parse_node));
   } else {
     auto arg = context.node_stack().PopExpression();
     context.node_stack()
@@ -61,7 +60,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           context.ImplicitAsRequired(parse_node, arg, callable.return_type_id);
     }
 
-    context.AddNode(SemanticsNode::ReturnExpression::Make(parse_node, arg));
+    context.AddNode(SemIR::Node::ReturnExpression::Make(parse_node, arg));
   }
 
   // Switch to a new, unreachable, empty node block. This typically won't
@@ -72,11 +71,11 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleReturnStatementStart(SemanticsContext& context,
-                                         ParseTree::Node parse_node) -> bool {
+auto HandleReturnStatementStart(Context& context, ParseTree::Node parse_node)
+    -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

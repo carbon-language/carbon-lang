@@ -438,9 +438,9 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return !has_errors;
   }
 
-  const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
+  const SemIR::File builtin_ir = SemIR::File::MakeBuiltinIR();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
-  const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
+  const SemIR::File semantics_ir = SemIR::File::MakeFromParseTree(
       builtin_ir, tokenized_source, parse_tree, *consumer, vlog_stream_);
 
   // We've finished all steps that can produce diagnostics. Emit the
@@ -449,7 +449,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   consumer->Flush();
 
   has_errors |= semantics_ir.has_errors();
-  CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
+  CARBON_VLOG() << "*** SemIR::File::MakeFromParseTree done ***\n";
   if (options.dump_raw_semantics_ir) {
     semantics_ir.Print(output_stream_, options.builtin_semantics_ir);
     if (options.dump_semantics_ir) {
@@ -458,7 +458,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
   if (options.dump_semantics_ir) {
     consumer->Flush();
-    FormatSemanticsIR(tokenized_source, parse_tree, semantics_ir,
+    SemIR::FormatFile(tokenized_source, parse_tree, semantics_ir,
                       output_stream_);
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;

@@ -16,14 +16,14 @@ namespace Carbon {
 
 LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
                                  llvm::StringRef module_name,
-                                 const SemanticsIR& semantics_ir,
+                                 const SemIR::File& semantics_ir,
                                  llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       semantics_ir_(&semantics_ir),
       vlog_stream_(vlog_stream) {
   CARBON_CHECK(!semantics_ir.has_errors())
-      << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
+      << "Generating LLVM IR from invalid SemIR::File is unsupported.";
 }
 
 // TODO: Move this to lower_to_llvm.cpp.
@@ -40,14 +40,14 @@ auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
   // Lower function declarations.
   functions_.resize_for_overwrite(semantics_ir_->functions_size());
   for (auto i : llvm::seq(semantics_ir_->functions_size())) {
-    functions_[i] = BuildFunctionDeclaration(SemanticsFunctionId(i));
+    functions_[i] = BuildFunctionDeclaration(SemIR::FunctionId(i));
   }
 
   // TODO: Lower global variable declarations.
 
   // Lower function definitions.
   for (auto i : llvm::seq(semantics_ir_->functions_size())) {
-    BuildFunctionDefinition(SemanticsFunctionId(i));
+    BuildFunctionDefinition(SemIR::FunctionId(i));
   }
 
   // TODO: Lower global variable initializers.
@@ -55,7 +55,7 @@ auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
   return std::move(llvm_module_);
 }
 
-auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
+auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
   auto function = semantics_ir().GetFunction(function_id);
 
@@ -87,7 +87,7 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
   return llvm_function;
 }
 
-auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
+auto LoweringContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     -> void {
   auto function = semantics_ir().GetFunction(function_id);
   const auto& body_block_ids = function.body_block_ids;
@@ -118,7 +118,7 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
       CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
       switch (node.kind()) {
 #define CARBON_SEMANTICS_NODE_KIND(Name)                    \
-  case SemanticsNodeKind::Name:                             \
+  case SemIR::NodeKind::Name:                               \
     LoweringHandle##Name(function_lowering, node_id, node); \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
@@ -127,15 +127,15 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
   }
 }
 
-auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
+auto LoweringContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
   switch (node_id.index) {
-    case SemanticsBuiltinKind::FloatingPointType.AsInt():
+    case SemIR::BuiltinKind::FloatingPointType.AsInt():
       // TODO: Handle different sizes.
       return llvm::Type::getDoubleTy(*llvm_context_);
-    case SemanticsBuiltinKind::IntegerType.AsInt():
+    case SemIR::BuiltinKind::IntegerType.AsInt():
       // TODO: Handle different sizes.
       return llvm::Type::getInt32Ty(*llvm_context_);
-    case SemanticsBuiltinKind::BoolType.AsInt():
+    case SemIR::BuiltinKind::BoolType.AsInt():
       // TODO: We may want to have different representations for `bool` storage
       // (`i8`) versus for `bool` values (`i1`).
       return llvm::Type::getInt1Ty(*llvm_context_);
@@ -143,16 +143,16 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
 
   auto node = semantics_ir_->GetNode(node_id);
   switch (node.kind()) {
-    case SemanticsNodeKind::ArrayType: {
+    case SemIR::NodeKind::ArrayType: {
       auto [bound_node_id, type_id] = node.GetAsArrayType();
       return llvm::ArrayType::get(
           GetType(type_id), semantics_ir_->GetArrayBoundValue(bound_node_id));
     }
-    case SemanticsNodeKind::ConstType:
+    case SemIR::NodeKind::ConstType:
       return GetType(node.GetAsConstType());
-    case SemanticsNodeKind::PointerType:
+    case SemIR::NodeKind::PointerType:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
-    case SemanticsNodeKind::StructType: {
+    case SemIR::NodeKind::StructType: {
       auto refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
@@ -161,13 +161,13 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
             semantics_ir_->GetNode(ref_id).GetAsStructTypeField();
         // TODO: Handle recursive types. The restriction for builtins prevents
         // recursion while still letting them cache.
-        CARBON_CHECK(field_type_id.index < SemanticsBuiltinKind::ValidCount)
+        CARBON_CHECK(field_type_id.index < SemIR::BuiltinKind::ValidCount)
             << field_type_id;
         subtypes.push_back(GetType(field_type_id));
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
-    case SemanticsNodeKind::TupleType: {
+    case SemIR::NodeKind::TupleType: {
       // TODO: Investigate special-casing handling of empty tuples so that they
       // can be collectively replaced with LLVM's void, particularly around
       // function returns. LLVM doesn't allow declaring variables with a void

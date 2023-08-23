@@ -4,23 +4,22 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleEmptyDeclaration(SemanticsContext& /*context*/,
-                                     ParseTree::Node /*parse_node*/) -> bool {
+auto HandleEmptyDeclaration(Context& /*context*/,
+                            ParseTree::Node /*parse_node*/) -> bool {
   // Empty declarations have no actions associated.
   return true;
 }
 
-auto SemanticsHandleFileEnd(SemanticsContext& /*context*/,
-                            ParseTree::Node /*parse_node*/) -> bool {
+auto HandleFileEnd(Context& /*context*/, ParseTree::Node /*parse_node*/)
+    -> bool {
   // Do nothing, no need to balance this node.
   return true;
 }
 
-auto SemanticsHandleInvalidParse(SemanticsContext& context,
-                                 ParseTree::Node parse_node) -> bool {
+auto HandleInvalidParse(Context& context, ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleInvalidParse");
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

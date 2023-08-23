@@ -10,7 +10,7 @@
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
 
-namespace Carbon {
+namespace Carbon::SemIR {
 
 namespace {
 // Assigns names to nodes, blocks, and scopes in the Semantics IR.
@@ -28,10 +28,10 @@ class NodeNamer {
     None = -1,
     Package = 0,
   };
-  static_assert(sizeof(ScopeIndex) == sizeof(SemanticsFunctionId));
+  static_assert(sizeof(ScopeIndex) == sizeof(FunctionId));
 
   NodeNamer(const TokenizedBuffer& tokenized_buffer,
-            const ParseTree& parse_tree, const SemanticsIR& semantics_ir)
+            const ParseTree& parse_tree, const File& semantics_ir)
       : tokenized_buffer_(tokenized_buffer),
         parse_tree_(parse_tree),
         semantics_ir_(semantics_ir) {
@@ -46,7 +46,7 @@ class NodeNamer {
 
     // Build each function scope.
     for (int i : llvm::seq(semantics_ir.functions_size())) {
-      auto fn_id = SemanticsFunctionId(i);
+      auto fn_id = FunctionId(i);
       auto fn_scope = GetScopeFor(fn_id);
       const auto& fn = semantics_ir.GetFunction(fn_id);
       // TODO: Provide a location for the function for use as a
@@ -70,12 +70,12 @@ class NodeNamer {
   }
 
   // Returns the scope index corresponding to a function.
-  auto GetScopeFor(SemanticsFunctionId fn_id) -> ScopeIndex {
+  auto GetScopeFor(FunctionId fn_id) -> ScopeIndex {
     return static_cast<ScopeIndex>(fn_id.index + 1);
   }
 
   // Returns the IR name to use for a function.
-  auto GetNameFor(SemanticsFunctionId fn_id) -> llvm::StringRef {
+  auto GetNameFor(FunctionId fn_id) -> llvm::StringRef {
     if (!fn_id.is_valid()) {
       return "invalid";
     }
@@ -83,15 +83,14 @@ class NodeNamer {
   }
 
   // Returns the IR name to use for a node, when referenced from a given scope.
-  auto GetNameFor(ScopeIndex scope_idx, SemanticsNodeId node_id)
-      -> std::string {
+  auto GetNameFor(ScopeIndex scope_idx, NodeId node_id) -> std::string {
     if (!node_id.is_valid()) {
       return "invalid";
     }
 
     // Check for a builtin.
-    if (node_id.index < SemanticsBuiltinKind::ValidCount) {
-      return SemanticsBuiltinKind::FromInt(node_id.index).label().str();
+    if (node_id.index < BuiltinKind::ValidCount) {
+      return BuiltinKind::FromInt(node_id.index).label().str();
     }
 
     auto& [node_scope, node_name] = nodes[node_id.index];
@@ -106,8 +105,7 @@ class NodeNamer {
   }
 
   // Returns the IR name to use for a label, when referenced from a given scope.
-  auto GetLabelFor(ScopeIndex scope_idx, SemanticsNodeBlockId block_id)
-      -> std::string {
+  auto GetLabelFor(ScopeIndex scope_idx, NodeBlockId block_id) -> std::string {
     if (!block_id.is_valid()) {
       return "!invalid";
     }
@@ -243,7 +241,7 @@ class NodeNamer {
     return scopes[static_cast<int>(scope_idx)];
   }
 
-  auto AddBlockLabel(ScopeIndex scope_idx, SemanticsNodeBlockId block_id,
+  auto AddBlockLabel(ScopeIndex scope_idx, NodeBlockId block_id,
                      std::string name = "",
                      ParseTree::Node parse_node = ParseTree::Node::Invalid)
       -> void {
@@ -265,19 +263,19 @@ class NodeNamer {
 
   // Finds and adds a suitable block label for the given semantics node that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeIndex scope_idx, SemanticsNodeBlockId block_id,
-                     SemanticsNode node) -> void {
+  auto AddBlockLabel(ScopeIndex scope_idx, NodeBlockId block_id, Node node)
+      -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(node.parse_node())) {
       case ParseNodeKind::IfExpressionIf:
         switch (node.kind()) {
-          case SemanticsNodeKind::BranchIf:
+          case NodeKind::BranchIf:
             name = "if.expr.then";
             break;
-          case SemanticsNodeKind::Branch:
+          case NodeKind::Branch:
             name = "if.expr.else";
             break;
-          case SemanticsNodeKind::BranchWithArg:
+          case NodeKind::BranchWithArg:
             name = "if.expr.result";
             break;
           default:
@@ -287,10 +285,10 @@ class NodeNamer {
 
       case ParseNodeKind::IfCondition:
         switch (node.kind()) {
-          case SemanticsNodeKind::BranchIf:
+          case NodeKind::BranchIf:
             name = "if.then";
             break;
-          case SemanticsNodeKind::Branch:
+          case NodeKind::Branch:
             name = "if.else";
             break;
           default:
@@ -303,7 +301,7 @@ class NodeNamer {
         break;
 
       case ParseNodeKind::ShortCircuitOperand: {
-        bool is_rhs = node.kind() == SemanticsNodeKind::BranchIf;
+        bool is_rhs = node.kind() == NodeKind::BranchIf;
         bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
                           node.parse_node())) == TokenKind::And;
         name = is_and ? (is_rhs ? "and.rhs" : "and.result")
@@ -318,8 +316,7 @@ class NodeNamer {
     AddBlockLabel(scope_idx, block_id, name.str(), node.parse_node());
   }
 
-  auto CollectNamesInBlock(ScopeIndex scope_idx, SemanticsNodeBlockId block_id)
-      -> void {
+  auto CollectNamesInBlock(ScopeIndex scope_idx, NodeBlockId block_id) -> void {
     if (!block_id.is_valid()) {
       return;
     }
@@ -330,22 +327,22 @@ class NodeNamer {
     for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
       auto node = semantics_ir_.GetNode(node_id);
       switch (node.kind()) {
-        case SemanticsNodeKind::Branch: {
+        case NodeKind::Branch: {
           auto dest_id = node.GetAsBranch();
           AddBlockLabel(scope_idx, dest_id, node);
           break;
         }
-        case SemanticsNodeKind::BranchIf: {
+        case NodeKind::BranchIf: {
           auto [dest_id, cond_id] = node.GetAsBranchIf();
           AddBlockLabel(scope_idx, dest_id, node);
           break;
         }
-        case SemanticsNodeKind::BranchWithArg: {
+        case NodeKind::BranchWithArg: {
           auto [dest_id, arg_id] = node.GetAsBranchWithArg();
           AddBlockLabel(scope_idx, dest_id, node);
           break;
         }
-        case SemanticsNodeKind::Parameter: {
+        case NodeKind::Parameter: {
           auto name_id = node.GetAsParameter();
           nodes[node_id.index] = {
               scope_idx,
@@ -353,7 +350,7 @@ class NodeNamer {
                                        semantics_ir_.GetString(name_id).str())};
           break;
         }
-        case SemanticsNodeKind::VarStorage: {
+        case NodeKind::VarStorage: {
           // TODO: Eventually this name will be optional, and we'll want to
           // provide something like `var` as a default. However, that's not
           // possible right now so cannot be tested.
@@ -366,7 +363,7 @@ class NodeNamer {
         }
         default: {
           // Sequentially number all remaining values.
-          if (node.kind().value_kind() != SemanticsNodeValueKind::None) {
+          if (node.kind().value_kind() != NodeValueKind::None) {
             nodes[node_id.index] = {
                 scope_idx, scope.nodes.AllocateName(*this, node.parse_node())};
           }
@@ -378,7 +375,7 @@ class NodeNamer {
 
   const TokenizedBuffer& tokenized_buffer_;
   const ParseTree& parse_tree_;
-  const SemanticsIR& semantics_ir_;
+  const File& semantics_ir_;
 
   Namespace globals = {.prefix = "@"};
   std::vector<std::pair<ScopeIndex, Namespace::Name>> nodes;
@@ -388,12 +385,11 @@ class NodeNamer {
 }  // namespace
 
 // Formatter for printing textual Semantics IR.
-class SemanticsIRFormatter {
+class Formatter {
  public:
-  explicit SemanticsIRFormatter(const TokenizedBuffer& tokenized_buffer,
-                                const ParseTree& parse_tree,
-                                const SemanticsIR& semantics_ir,
-                                llvm::raw_ostream& out)
+  explicit Formatter(const TokenizedBuffer& tokenized_buffer,
+                     const ParseTree& parse_tree, const File& semantics_ir,
+                     llvm::raw_ostream& out)
       : semantics_ir_(semantics_ir),
         out_(out),
         node_namer_(tokenized_buffer, parse_tree, semantics_ir) {}
@@ -414,12 +410,12 @@ class SemanticsIRFormatter {
     out_ << "}\n";
 
     for (int i : llvm::seq(semantics_ir_.functions_size())) {
-      FormatFunction(SemanticsFunctionId(i));
+      FormatFunction(FunctionId(i));
     }
   }
 
-  auto FormatFunction(SemanticsFunctionId id) -> void {
-    const SemanticsFunction& fn = semantics_ir_.GetFunction(id);
+  auto FormatFunction(FunctionId id) -> void {
+    const Function& fn = semantics_ir_.GetFunction(id);
 
     out_ << "\nfn ";
     FormatFunctionName(id);
@@ -428,8 +424,7 @@ class SemanticsIRFormatter {
     llvm::SaveAndRestore function_scope(scope_, node_namer_.GetScopeFor(id));
 
     llvm::ListSeparator sep;
-    for (const SemanticsNodeId param_id :
-         semantics_ir_.GetNodeBlock(fn.param_refs_id)) {
+    for (const NodeId param_id : semantics_ir_.GetNodeBlock(fn.param_refs_id)) {
       out_ << sep;
       FormatNodeName(param_id);
       out_ << ": ";
@@ -459,37 +454,37 @@ class SemanticsIRFormatter {
     }
   }
 
-  auto FormatCodeBlock(SemanticsNodeBlockId block_id) -> void {
+  auto FormatCodeBlock(NodeBlockId block_id) -> void {
     if (!block_id.is_valid()) {
       return;
     }
 
-    for (const SemanticsNodeId node_id : semantics_ir_.GetNodeBlock(block_id)) {
+    for (const NodeId node_id : semantics_ir_.GetNodeBlock(block_id)) {
       FormatInstruction(node_id);
     }
   }
 
-  auto FormatInstruction(SemanticsNodeId node_id) -> void {
+  auto FormatInstruction(NodeId node_id) -> void {
     if (!node_id.is_valid()) {
-      out_ << "  " << SemanticsNodeKind::Invalid.ir_name() << "\n";
+      out_ << "  " << NodeKind::Invalid.ir_name() << "\n";
       return;
     }
 
     FormatInstruction(node_id, semantics_ir_.GetNode(node_id));
   }
 
-  auto FormatInstruction(SemanticsNodeId node_id, SemanticsNode node) -> void {
+  auto FormatInstruction(NodeId node_id, Node node) -> void {
     switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name)                   \
-  case SemanticsNodeKind::Name:                            \
-    FormatInstruction<SemanticsNode::Name>(node_id, node); \
+#define CARBON_SEMANTICS_NODE_KIND(Name)          \
+  case NodeKind::Name:                            \
+    FormatInstruction<Node::Name>(node_id, node); \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
     }
   }
 
   template <typename Kind>
-  auto FormatInstruction(SemanticsNodeId node_id, SemanticsNode node) -> void {
+  auto FormatInstruction(NodeId node_id, Node node) -> void {
     out_ << "  ";
     FormatInstructionLHS(node_id, node);
     out_ << node.kind().ir_name();
@@ -497,60 +492,58 @@ class SemanticsIRFormatter {
     out_ << "\n";
   }
 
-  auto FormatInstructionLHS(SemanticsNodeId node_id, SemanticsNode node)
-      -> void {
+  auto FormatInstructionLHS(NodeId node_id, Node node) -> void {
     switch (node.kind().value_kind()) {
-      case SemanticsNodeValueKind::Typed:
+      case NodeValueKind::Typed:
         FormatNodeName(node_id);
         out_ << ": ";
         FormatType(node.type_id());
         out_ << " = ";
         break;
-      case SemanticsNodeValueKind::Untyped:
+      case NodeValueKind::Untyped:
         FormatNodeName(node_id);
         out_ << " = ";
         break;
-      case SemanticsNodeValueKind::None:
+      case NodeValueKind::None:
         break;
     }
   }
 
   template <typename Kind>
-  auto FormatInstructionRHS(SemanticsNode node) -> void {
+  auto FormatInstructionRHS(Node node) -> void {
     // By default, an instruction has a comma-separated argument list.
     FormatArgs(Kind::Get(node));
   }
 
   template <>
-  auto FormatInstructionRHS<SemanticsNode::BlockArg>(SemanticsNode node)
-      -> void {
+  auto FormatInstructionRHS<Node::BlockArg>(Node node) -> void {
     out_ << " ";
     FormatLabel(node.GetAsBlockArg());
   }
 
   template <>
-  auto FormatInstruction<SemanticsNode::BranchIf>(SemanticsNodeId /*node_id*/,
-                                                  SemanticsNode node) -> void {
+  auto FormatInstruction<Node::BranchIf>(NodeId /*node_id*/, Node node)
+      -> void {
     if (!in_terminator_sequence) {
       out_ << "  ";
     }
     auto [label_id, cond_id] = node.GetAsBranchIf();
     out_ << "if ";
     FormatNodeName(cond_id);
-    out_ << " " << SemanticsNodeKind::Branch.ir_name() << " ";
+    out_ << " " << NodeKind::Branch.ir_name() << " ";
     FormatLabel(label_id);
     out_ << " else ";
     in_terminator_sequence = true;
   }
 
   template <>
-  auto FormatInstruction<SemanticsNode::BranchWithArg>(
-      SemanticsNodeId /*node_id*/, SemanticsNode node) -> void {
+  auto FormatInstruction<Node::BranchWithArg>(NodeId /*node_id*/, Node node)
+      -> void {
     if (!in_terminator_sequence) {
       out_ << "  ";
     }
     auto [label_id, arg_id] = node.GetAsBranchWithArg();
-    out_ << SemanticsNodeKind::BranchWithArg.ir_name() << " ";
+    out_ << NodeKind::BranchWithArg.ir_name() << " ";
     FormatLabel(label_id);
     out_ << "(";
     FormatNodeName(arg_id);
@@ -559,19 +552,18 @@ class SemanticsIRFormatter {
   }
 
   template <>
-  auto FormatInstruction<SemanticsNode::Branch>(SemanticsNodeId /*node_id*/,
-                                                SemanticsNode node) -> void {
+  auto FormatInstruction<Node::Branch>(NodeId /*node_id*/, Node node) -> void {
     if (!in_terminator_sequence) {
       out_ << "  ";
     }
-    out_ << SemanticsNodeKind::Branch.ir_name() << " ";
+    out_ << NodeKind::Branch.ir_name() << " ";
     FormatLabel(node.GetAsBranch());
     out_ << "\n";
     in_terminator_sequence = false;
   }
 
   template <>
-  auto FormatInstructionRHS<SemanticsNode::Call>(SemanticsNode node) -> void {
+  auto FormatInstructionRHS<Node::Call>(Node node) -> void {
     out_ << " ";
     auto [args_id, callee_id] = node.GetAsCall();
     FormatArg(callee_id);
@@ -579,8 +571,7 @@ class SemanticsIRFormatter {
   }
 
   template <>
-  auto FormatInstructionRHS<SemanticsNode::CrossReference>(SemanticsNode node)
-      -> void {
+  auto FormatInstructionRHS<Node::CrossReference>(Node node) -> void {
     // TODO: Figure out a way to make this meaningful. We'll need some way to
     // name cross-reference IRs, perhaps by the node ID of the import?
     auto [xref_id, node_id] = node.GetAsCrossReference();
@@ -589,12 +580,11 @@ class SemanticsIRFormatter {
 
   // StructTypeFields are formatted as part of their StructType.
   template <>
-  auto FormatInstruction<SemanticsNode::StructTypeField>(
-      SemanticsNodeId /*node_id*/, SemanticsNode /*node*/) -> void {}
+  auto FormatInstruction<Node::StructTypeField>(NodeId /*node_id*/,
+                                                Node /*node*/) -> void {}
 
   template <>
-  auto FormatInstructionRHS<SemanticsNode::StructType>(SemanticsNode node)
-      -> void {
+  auto FormatInstructionRHS<Node::StructType>(Node node) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
     for (auto field_id : semantics_ir_.GetNodeBlock(node.GetAsStructType())) {
@@ -608,7 +598,7 @@ class SemanticsIRFormatter {
     out_ << "}";
   }
 
-  auto FormatArgs(SemanticsNode::NoArgs /*unused*/) -> void {}
+  auto FormatArgs(Node::NoArgs /*unused*/) -> void {}
 
   template <typename Arg1>
   auto FormatArgs(Arg1 arg) -> void {
@@ -624,24 +614,24 @@ class SemanticsIRFormatter {
     FormatArgs(args.second);
   }
 
-  auto FormatArg(SemanticsBoolValue v) -> void { out_ << v; }
+  auto FormatArg(BoolValue v) -> void { out_ << v; }
 
-  auto FormatArg(SemanticsBuiltinKind kind) -> void { out_ << kind.label(); }
+  auto FormatArg(BuiltinKind kind) -> void { out_ << kind.label(); }
 
-  auto FormatArg(SemanticsFunctionId id) -> void { FormatFunctionName(id); }
+  auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 
-  auto FormatArg(SemanticsIntegerLiteralId id) -> void {
+  auto FormatArg(IntegerLiteralId id) -> void {
     out_ << semantics_ir_.GetIntegerLiteral(id);
   }
 
-  auto FormatArg(SemanticsMemberIndex index) -> void { out_ << index; }
+  auto FormatArg(MemberIndex index) -> void { out_ << index; }
 
   // TODO: Should we be printing scopes inline, or should we have a separate
   // step to print them like we do for functions?
-  auto FormatArg(SemanticsNameScopeId id) -> void {
+  auto FormatArg(NameScopeId id) -> void {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    std::vector<std::pair<SemanticsNodeId, SemanticsStringId>> entries;
+    std::vector<std::pair<NodeId, StringId>> entries;
     for (auto [name_id, node_id] : semantics_ir_.GetNameScope(id)) {
       entries.push_back({node_id, name_id});
     }
@@ -659,9 +649,9 @@ class SemanticsIRFormatter {
     out_ << '}';
   }
 
-  auto FormatArg(SemanticsNodeId id) -> void { FormatNodeName(id); }
+  auto FormatArg(NodeId id) -> void { FormatNodeName(id); }
 
-  auto FormatArg(SemanticsNodeBlockId id) -> void {
+  auto FormatArg(NodeBlockId id) -> void {
     out_ << '(';
     llvm::ListSeparator sep;
     for (auto node_id : semantics_ir_.GetNodeBlock(id)) {
@@ -671,21 +661,21 @@ class SemanticsIRFormatter {
     out_ << ')';
   }
 
-  auto FormatArg(SemanticsRealLiteralId id) -> void {
+  auto FormatArg(RealLiteralId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
     const auto& real = semantics_ir_.GetRealLiteral(id);
     out_ << real.mantissa << (real.is_decimal ? 'e' : 'p') << real.exponent;
   }
 
-  auto FormatArg(SemanticsStringId id) -> void {
+  auto FormatArg(StringId id) -> void {
     out_ << '"';
     out_.write_escaped(semantics_ir_.GetString(id), /*UseHexEscapes=*/true);
     out_ << '"';
   }
 
-  auto FormatArg(SemanticsTypeId id) -> void { FormatType(id); }
+  auto FormatArg(TypeId id) -> void { FormatType(id); }
 
-  auto FormatArg(SemanticsTypeBlockId id) -> void {
+  auto FormatArg(TypeBlockId id) -> void {
     out_ << '(';
     llvm::ListSeparator sep;
     for (auto type_id : semantics_ir_.GetTypeBlock(id)) {
@@ -695,23 +685,23 @@ class SemanticsIRFormatter {
     out_ << ')';
   }
 
-  auto FormatNodeName(SemanticsNodeId id) -> void {
+  auto FormatNodeName(NodeId id) -> void {
     out_ << node_namer_.GetNameFor(scope_, id);
   }
 
-  auto FormatLabel(SemanticsNodeBlockId id) -> void {
+  auto FormatLabel(NodeBlockId id) -> void {
     out_ << node_namer_.GetLabelFor(scope_, id);
   }
 
-  auto FormatString(SemanticsStringId id) -> void {
+  auto FormatString(StringId id) -> void {
     out_ << semantics_ir_.GetString(id);
   }
 
-  auto FormatFunctionName(SemanticsFunctionId id) -> void {
+  auto FormatFunctionName(FunctionId id) -> void {
     out_ << node_namer_.GetNameFor(id);
   }
 
-  auto FormatType(SemanticsTypeId id) -> void {
+  auto FormatType(TypeId id) -> void {
     if (!id.is_valid()) {
       out_ << "invalid";
     } else {
@@ -720,19 +710,17 @@ class SemanticsIRFormatter {
   }
 
  private:
-  const SemanticsIR& semantics_ir_;
+  const File& semantics_ir_;
   llvm::raw_ostream& out_;
   NodeNamer node_namer_;
   NodeNamer::ScopeIndex scope_ = NodeNamer::ScopeIndex::None;
   bool in_terminator_sequence = false;
 };
 
-auto FormatSemanticsIR(const TokenizedBuffer& tokenized_buffer,
-                       const ParseTree& parse_tree,
-                       const SemanticsIR& semantics_ir, llvm::raw_ostream& out)
-    -> void {
-  SemanticsIRFormatter(tokenized_buffer, parse_tree, semantics_ir, out)
-      .Format();
+auto FormatFile(const TokenizedBuffer& tokenized_buffer,
+                const ParseTree& parse_tree, const File& semantics_ir,
+                llvm::raw_ostream& out) -> void {
+  Formatter(tokenized_buffer, parse_tree, semantics_ir, out).Format();
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::SemIR
