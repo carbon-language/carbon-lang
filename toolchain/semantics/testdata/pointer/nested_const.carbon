@@ -42,12 +42,11 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: BindValue, arg0: node+5, type: type5},
-// CHECK:STDOUT:   {kind: Dereference, arg0: node+9, type: type3},
-// CHECK:STDOUT:   {kind: BindValue, arg0: node+10, type: type3},
-// CHECK:STDOUT:   {kind: Dereference, arg0: node+11, type: type1},
-// CHECK:STDOUT:   {kind: BindValue, arg0: node+12, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+13},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+5, type: type3},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+9, type: type3},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+10, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+11, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+12},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -74,7 +73,6 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -84,8 +82,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: const (const (const i32*)*) = bind_value %p
-// CHECK:STDOUT:   %.loc9_11.1: const (const i32*) = dereference %.loc8
+// CHECK:STDOUT:   %.loc9_11.1: const (const i32*) = dereference %p
 // CHECK:STDOUT:   %.loc9_11.2: const (const i32*) = bind_value %.loc9_11.1
 // CHECK:STDOUT:   %.loc9_10.1: const i32 = dereference %.loc9_11.2
 // CHECK:STDOUT:   %.loc9_10.2: const i32 = bind_value %.loc9_10.1

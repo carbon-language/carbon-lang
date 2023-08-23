@@ -551,6 +551,7 @@ auto GetSemanticsValueRepresentation(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::MaterializeTemporary:
       case SemanticsNodeKind::Namespace:
       case SemanticsNodeKind::NoOp:
+      case SemanticsNodeKind::Parameter:
       case SemanticsNodeKind::RealLiteral:
       case SemanticsNodeKind::Return:
       case SemanticsNodeKind::ReturnExpression:
