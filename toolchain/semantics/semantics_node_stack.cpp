@@ -4,6 +4,7 @@
 
 #include "toolchain/semantics/semantics_node_stack.h"
 
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
@@ -11,8 +12,7 @@ namespace Carbon {
 auto SemanticsNodeStack::PrintForStackDump(llvm::raw_ostream& output) const
     -> void {
   output << "SemanticsNodeStack:\n";
-  for (int i = 0; i < static_cast<int>(stack_.size()); ++i) {
-    const auto& entry = stack_[i];
+  for (auto [i, entry] : llvm::enumerate(stack_)) {
     auto parse_node_kind = parse_tree_->node_kind(entry.parse_node);
     output << "\t" << i << ".\t" << parse_node_kind;
     if (parse_node_kind == ParseNodeKind::PatternBinding) {
