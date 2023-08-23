@@ -407,6 +407,9 @@ class SemanticsNode {
 
   using NoOp = FactoryNoType<SemanticsNodeKind::NoOp>;
 
+  using Parameter =
+      Factory<SemanticsNodeKind::Parameter, SemanticsStringId /*name_id*/>;
+
   using PointerType =
       Factory<SemanticsNodeKind::PointerType, SemanticsTypeId /*pointee_id*/>;
 

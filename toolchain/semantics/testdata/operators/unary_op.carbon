@@ -19,7 +19,6 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   Not,
 // CHECK:STDOUT:   b,
-// CHECK:STDOUT:   return,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeBoolType,
@@ -27,30 +26,26 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type0},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: BindValue, arg0: node+0, type: type0},
-// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+3, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4},
+// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -60,7 +55,6 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = bind_value %b
-// CHECK:STDOUT:   %.loc8: bool = not %.loc7
+// CHECK:STDOUT:   %.loc8: bool = not %b
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }

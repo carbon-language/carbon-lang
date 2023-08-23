@@ -246,6 +246,12 @@ auto LoweringHandleNoOp(LoweringFunctionContext& /*context*/,
   // No action to take.
 }
 
+auto LoweringHandleParameter(LoweringFunctionContext& /*context*/,
+                             SemanticsNodeId /*node_id*/,
+                             SemanticsNode /*node*/) -> void {
+  CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
+}
+
 auto LoweringHandleRealLiteral(LoweringFunctionContext& context,
                                SemanticsNodeId node_id, SemanticsNode node)
     -> void {

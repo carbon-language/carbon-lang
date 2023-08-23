@@ -70,6 +70,7 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(MaterializeTemporary, "materialize_temporary",
                                 Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Namespace, "namespace", Untyped, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(NoOp, "no_op", None, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Parameter, "parameter", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(PointerType, "ptr_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(RealLiteral, "real_literal", Typed,
                                 NotTerminator)

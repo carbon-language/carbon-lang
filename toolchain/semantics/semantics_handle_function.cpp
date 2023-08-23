@@ -111,7 +111,7 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   for (auto ref_id :
        context.semantics_ir().GetNodeBlock(function.param_refs_id)) {
     auto ref = context.semantics_ir().GetNode(ref_id);
-    auto name_id = ref.GetAsVarStorage();
+    auto name_id = ref.GetAsParameter();
     context.AddNameToLookup(ref.parse_node(), name_id, ref_id);
   }
 

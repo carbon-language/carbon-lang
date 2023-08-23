@@ -43,7 +43,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: Return},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type0},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str3, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: BindValue, arg0: node+4, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block7, arg1: node+6},
