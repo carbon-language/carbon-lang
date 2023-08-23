@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-fn F(param: i32) {
+fn F() {
   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 
   var p: {.a: i32, .b: i32}* = &s;
@@ -14,10 +14,6 @@ fn F(param: i32) {
   var t: (i32, i32) = (1, 2);
   var t0: i32* = &t[0];
   var t1: i32* = &t[1];
-
-  // TODO: Once we start treating parameters as `let` bindings by default, we
-  // should reject this, but `fn F(var n: i32)` should still work.
-  var param_addr: i32* = &param;
 }
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
@@ -67,7 +63,7 @@ fn F(param: i32) {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str3, arg1: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str4, arg1: type0},
@@ -277,9 +273,9 @@ fn F(param: i32) {
 // CHECK:STDOUT:   %.loc16_22: i32 = tuple_index %t, %.loc16_21
 // CHECK:STDOUT:   %.loc16_18: i32* = address_of %.loc16_22
 // CHECK:STDOUT:   assign %t1, %.loc16_18
-// CHECK:STDOUT:   %.loc20_22: type = ptr_type i32
+// CHECK:STDOUT:   %.loc23_22: type = ptr_type i32
 // CHECK:STDOUT:   %param_addr: i32* = var "param_addr"
-// CHECK:STDOUT:   %.loc20_26: i32* = address_of %param
-// CHECK:STDOUT:   assign %param_addr, %.loc20_26
+// CHECK:STDOUT:   %.loc23_26: i32* = address_of %param
+// CHECK:STDOUT:   assign %param_addr, %.loc23_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

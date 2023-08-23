@@ -42,7 +42,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type1},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str3, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block7, arg1: node+6},
 // CHECK:STDOUT:   {kind: Branch, arg0: block8},

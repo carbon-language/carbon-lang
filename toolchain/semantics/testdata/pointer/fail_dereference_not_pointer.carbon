@@ -41,7 +41,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: Dereference, arg0: node+0, type: typeError},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},

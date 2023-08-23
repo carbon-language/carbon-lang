@@ -345,6 +345,14 @@ class NodeNamer {
           AddBlockLabel(scope_idx, dest_id, node);
           break;
         }
+        case SemanticsNodeKind::Parameter: {
+          auto name_id = node.GetAsParameter();
+          nodes[node_id.index] = {
+              scope_idx,
+              scope.nodes.AllocateName(*this, node.parse_node(),
+                                       semantics_ir_.GetString(name_id).str())};
+          break;
+        }
         case SemanticsNodeKind::VarStorage: {
           // TODO: Eventually this name will be optional, and we'll want to
           // provide something like `var` as a default. However, that's not

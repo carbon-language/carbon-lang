@@ -36,7 +36,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+0},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},

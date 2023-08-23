@@ -75,6 +75,13 @@ fn AddressOfTupleElementValue() {
   &((1, 2)[0]);
 }
 
+fn AddressOfParameter(param: i32) {
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+3]]:26: Cannot take the address of non-reference expression.
+  // CHECK:STDERR:   var param_addr: i32* = &param;
+  // CHECK:STDERR:                          ^
+  var param_addr: i32* = &param;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0},

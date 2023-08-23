@@ -37,7 +37,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   {kind: ConstType, arg0: type2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type3, type: typeTypeType},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type4, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type5},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type5},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: Dereference, arg0: node+5, type: type3},

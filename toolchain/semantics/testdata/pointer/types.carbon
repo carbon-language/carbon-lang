@@ -36,13 +36,13 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type1},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type1},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type3},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type3},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
