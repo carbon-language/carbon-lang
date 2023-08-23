@@ -42,7 +42,7 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       }
       out << "var " <<var.pattern();
       if (var.has_init()) {
-        out << " = " << PrintAsID(var.init());
+        out << " = ...";
       }
       out << ";";
       break;
