@@ -248,8 +248,8 @@ class TokenizedBuffer::Lexer {
     bool formed_token_;
   };
 
-  using DispatchFunctionT = LexResult(Lexer& lexer,
-                                      llvm::StringRef& source_text);
+  using DispatchFunctionT = auto (Lexer& lexer,
+                                  llvm::StringRef& source_text) -> LexResult;
   using DispatchTableT = std::array<DispatchFunctionT*, 256>;
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
@@ -473,17 +473,18 @@ class TokenizedBuffer::Lexer {
         return LexError(source_text);
       }
     } else {
-#ifndef NDEBUG
-      // Verify in a debug build that the incoming token kind is correct.
-      TokenKind debug_kind = llvm::StringSwitch<TokenKind>(source_text)
+      auto compute_kind = [] (llvm::StringRef source_text) {
+        return llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
-  .StartsWith(Spelling, TokenKind::Name)
+    .StartsWith(Spelling, TokenKind::Name)
 #include "toolchain/lexer/token_kind.def"
-                                 .Default(TokenKind::Error);
-      CARBON_CHECK(kind == debug_kind)
+                                   .Default(TokenKind::Error);
+      };
+
+      // Verify in a debug build that the incoming token kind is correct.
+      CARBON_DCHECK(kind == compute_kind(source_text))
           << "Incoming token kind '" << kind
-          << "' does not match computed kind '" << debug_kind << "'!";
-#endif
+          << "' does not match computed kind '" << compute_kind(source_text) << "'!";
     }
 
     // In debug builds, re-check the kind after our optimizations to make sure
@@ -768,7 +769,7 @@ class TokenizedBuffer::Lexer {
       return lexer.LexKeywordOrIdentifier(source_text);
     };
     table['_'] = dispatch_lex_word;
-    // Note that we use raw loops because this needs to be `constexpr`
+    // Note that we don't use `llvm::seq` because this needs to be `constexpr`
     // evaluated.
     for (unsigned char c = 'a'; c <= 'z'; ++c) {
       table[c] = dispatch_lex_word;
