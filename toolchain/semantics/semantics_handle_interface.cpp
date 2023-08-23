@@ -4,27 +4,26 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleInterfaceDeclaration(SemanticsContext& context,
-                                         ParseTree::Node parse_node) -> bool {
+auto HandleInterfaceDeclaration(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleInterfaceDeclaration");
 }
 
-auto SemanticsHandleInterfaceDefinition(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
+auto HandleInterfaceDefinition(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleInterfaceDefinition");
 }
 
-auto SemanticsHandleInterfaceDefinitionStart(SemanticsContext& context,
-                                             ParseTree::Node parse_node)
-    -> bool {
+auto HandleInterfaceDefinitionStart(Context& context,
+                                    ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleInterfaceDefinitionStart");
 }
 
-auto SemanticsHandleInterfaceIntroducer(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
+auto HandleInterfaceIntroducer(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleInterfaceIntroducer");
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

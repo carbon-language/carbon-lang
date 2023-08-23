@@ -11,58 +11,57 @@
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-// Wraps the stack of node blocks for SemanticsParseTreeHandler.
+// Wraps the stack of node blocks for Context.
 //
 // All pushes and pops will be vlogged.
-class SemanticsNodeBlockStack {
+class NodeBlockStack {
  public:
-  explicit SemanticsNodeBlockStack(llvm::StringLiteral name,
-                                   SemanticsIR& semantics_ir,
-                                   llvm::raw_ostream* vlog_stream)
+  explicit NodeBlockStack(llvm::StringLiteral name, SemIR::File& semantics_ir,
+                          llvm::raw_ostream* vlog_stream)
       : name_(name), semantics_ir_(&semantics_ir), vlog_stream_(vlog_stream) {}
 
   // Pushes an existing node block.
-  auto Push(SemanticsNodeBlockId id) -> void;
+  auto Push(SemIR::NodeBlockId id) -> void;
 
   // Pushes a new node block. It will be invalid unless PeekForAdd is called in
   // order to support lazy allocation.
-  auto Push() -> void { Push(SemanticsNodeBlockId::Invalid); }
+  auto Push() -> void { Push(SemIR::NodeBlockId::Invalid); }
 
   // Pushes a new unreachable code block.
-  auto PushUnreachable() -> void { Push(SemanticsNodeBlockId::Unreachable); }
+  auto PushUnreachable() -> void { Push(SemIR::NodeBlockId::Unreachable); }
 
   // Allocates and pushes a new node block.
-  auto PushForAdd() -> SemanticsNodeBlockId {
+  auto PushForAdd() -> SemIR::NodeBlockId {
     Push();
     return PeekForAdd();
   }
 
   // Peeks at the top node block. This does not trigger lazy allocation, so the
   // returned node block may be invalid.
-  auto Peek() -> SemanticsNodeBlockId {
+  auto Peek() -> SemIR::NodeBlockId {
     CARBON_CHECK(!stack_.empty()) << "no current block";
     return stack_.back();
   }
 
   // Returns the top node block, allocating one if it's still invalid.
-  auto PeekForAdd() -> SemanticsNodeBlockId;
+  auto PeekForAdd() -> SemIR::NodeBlockId;
 
   // Pops the top node block. This will always return a valid node block;
-  // SemanticsNodeBlockId::Empty is returned if one wasn't allocated.
-  auto Pop() -> SemanticsNodeBlockId;
+  // SemIR::NodeBlockId::Empty is returned if one wasn't allocated.
+  auto Pop() -> SemIR::NodeBlockId;
 
   // Pops the top node block, ensuring that it is lazily allocated if it's
   // empty. For use when more nodes will be added to the block later.
-  auto PopForAdd() -> SemanticsNodeBlockId {
+  auto PopForAdd() -> SemIR::NodeBlockId {
     PeekForAdd();
     return Pop();
   }
 
   // Returns whether the current block is statically reachable.
   auto is_current_block_reachable() -> bool {
-    return Peek() != SemanticsNodeBlockId::Unreachable;
+    return Peek() != SemIR::NodeBlockId::Unreachable;
   }
 
   // Prints the stack for a stack dump.
@@ -75,8 +74,8 @@ class SemanticsNodeBlockStack {
   // A name for debugging.
   llvm::StringLiteral name_;
 
-  // The underlying SemanticsIR instance. Always non-null.
-  SemanticsIR* semantics_ir_;
+  // The underlying SemIR::File instance. Always non-null.
+  SemIR::File* semantics_ir_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
@@ -84,9 +83,9 @@ class SemanticsNodeBlockStack {
   // The actual stack.
   // PushEntry and PopEntry control modification in order to centralize
   // vlogging.
-  llvm::SmallVector<SemanticsNodeBlockId> stack_;
+  llvm::SmallVector<SemIR::NodeBlockId> stack_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_BLOCK_STACK_H_

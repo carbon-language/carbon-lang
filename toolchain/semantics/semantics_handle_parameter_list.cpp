@@ -4,21 +4,19 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleDeducedParameterList(SemanticsContext& context,
-                                         ParseTree::Node parse_node) -> bool {
+auto HandleDeducedParameterList(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleDeducedParameterList");
 }
 
-auto SemanticsHandleDeducedParameterListStart(SemanticsContext& context,
-                                              ParseTree::Node parse_node)
-    -> bool {
+auto HandleDeducedParameterListStart(Context& context,
+                                     ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleDeducedParameterListStart");
 }
 
-auto SemanticsHandleParameterList(SemanticsContext& context,
-                                  ParseTree::Node parse_node) -> bool {
+auto HandleParameterList(Context& context, ParseTree::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
       /*for_args=*/false, ParseNodeKind::ParameterListStart);
   // TODO: This contains the IR block for parameters. At present, it's just
@@ -36,14 +34,14 @@ auto SemanticsHandleParameterList(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleParameterListComma(SemanticsContext& context,
-                                       ParseTree::Node /*parse_node*/) -> bool {
+auto HandleParameterListComma(Context& context, ParseTree::Node /*parse_node*/)
+    -> bool {
   context.ParamOrArgComma(/*for_args=*/false);
   return true;
 }
 
-auto SemanticsHandleParameterListStart(SemanticsContext& context,
-                                       ParseTree::Node parse_node) -> bool {
+auto HandleParameterListStart(Context& context, ParseTree::Node parse_node)
+    -> bool {
   context.PushScope();
   context.node_stack().Push(parse_node);
   context.node_block_stack().Push();
@@ -51,4 +49,4 @@ auto SemanticsHandleParameterListStart(SemanticsContext& context,
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

@@ -4,10 +4,9 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleIfExpressionIf(SemanticsContext& context,
-                                   ParseTree::Node if_node) -> bool {
+auto HandleIfExpressionIf(Context& context, ParseTree::Node if_node) -> bool {
   auto cond_value_id = context.node_stack().PopExpression();
 
   context.node_stack().Push(if_node);
@@ -26,15 +25,15 @@ auto SemanticsHandleIfExpressionIf(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleIfExpressionThen(SemanticsContext& context,
-                                     ParseTree::Node then_node) -> bool {
+auto HandleIfExpressionThen(Context& context, ParseTree::Node then_node)
+    -> bool {
   context.node_stack().Push(then_node, context.node_block_stack().Pop());
   context.AddCurrentCodeBlockToFunction();
   return true;
 }
 
-auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
-                                     ParseTree::Node else_node) -> bool {
+auto HandleIfExpressionElse(Context& context, ParseTree::Node else_node)
+    -> bool {
   auto else_value_id = context.node_stack().PopExpression();
   auto [then_node, then_end_block_id] =
       context.node_stack().PopWithParseNode<ParseNodeKind::IfExpressionThen>();
@@ -61,4 +60,4 @@ auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check
