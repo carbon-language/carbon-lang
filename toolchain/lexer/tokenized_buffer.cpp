@@ -24,6 +24,10 @@
 #include "toolchain/lexer/numeric_literal.h"
 #include "toolchain/lexer/string_literal.h"
 
+#if __x86_64__
+#include <x86intrin.h>
+#endif
+
 namespace Carbon {
 
 // TODO: Move Overload and VariantMatch somewhere more central.
@@ -46,6 +50,167 @@ Overload(Fs...) -> Overload<Fs...>;
 template <typename V, typename... Fs>
 auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
   return std::visit(Overload{std::forward<Fs&&>(fs)...}, std::forward<V&&>(v));
+}
+
+// Scans the provided text and returns the prefix `StringRef` of contiguous
+// identifier characters.
+//
+// This is a performance sensitive function and so uses vectorized code
+// sequences to optimize its scanning. When modifying, the identifier lexing
+// benchmarks should be checked for regressions.
+//
+// Identifier characters here are currently the ASCII characters `[0-9A-Za-z_]`.
+//
+// TODO: Currently, this code does not implement Carbon's design for Unicode
+// characters in identifiers. It does work on UTF-8 code unit sequences, but
+// currently considers non-ASCII characters to be non-identifier characters.
+// Some work has been done to ensure the hot loop, while optimized, retains
+// enough information to add Unicode handling without completely destroying the
+// relevant optimizations.
+static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
+  // A table of booleans that we can use to classify bytes as being valid
+  // identifier (or keyword) characters. This is used in the generic,
+  // non-vectorized fallback code to scan for length of an identifier.
+  constexpr std::array<bool, 256> IsIdentifierByteTable = []() constexpr {
+    std::array<bool, 256> table = {};
+    for (char c = '0'; c <= '9'; ++c) {
+      table[c] = true;
+    }
+    for (char c = 'A'; c <= 'Z'; ++c) {
+      table[c] = true;
+    }
+    for (char c = 'a'; c <= 'z'; ++c) {
+      table[c] = true;
+    }
+    table['_'] = true;
+    return table;
+  }();
+
+#if __x86_64__
+  // This code uses a scheme derived from the techniques in Geoff Langdale and
+  // Daniel Lemire's work on parsing JSON[1]. Specifically, that paper outlines
+  // a technique of using two 4-bit indexed in-register look-up tables (LUTs) to
+  // classify bytes in a branchless SIMD code sequence.
+  //
+  // [1]: https://arxiv.org/pdf/1902.08318.pdf
+  //
+  // The goal is to get a bit mask classifying different sets of bytes. For each
+  // input byte, we first test for a high bit indicating a UTF-8 encoded Unicode
+  // character. Otherwise, we want the mask bits to be set with the following
+  // logic derived by inspecting the high nibble and low nibble of the input:
+  // bit0 = 1 for `_`: high `0x5` and low `0xF`
+  // bit1 = 1 for `0-9`: high `0x3` and low `0x0` - `0x9`
+  // bit2 = 1 for `A-O` and `a-o`: high `0x4` or `0x6` and low `0x1` - `0xF`
+  // bit3 = 1 for `P-Z` and 'p-z': high `0x5` or `0x7` and low `0x0` - `0xA`
+  // bit4 = unused
+  // bit5 = unused
+  // bit6 = unused
+  // bit7 = unused
+  //
+  // No bits set means definitively non-ID ASCII character.
+  //
+  // bits 4-7 remain unused if we need to classify more characters.
+  const auto high_lut = _mm_setr_epi8(
+      /*0x0:*/ 0b0000'0000,
+      /*0x1:*/ 0b0000'0000,
+      /*0x2:*/ 0b0000'0000,
+      /*0x3:*/ 0b0000'0010,
+      /*0x4:*/ 0b0000'0100,
+      /*0x5:*/ 0b0000'1001,
+      /*0x6:*/ 0b0000'0100,
+      /*0x7:*/ 0b0000'1000,
+      /*0x8:*/ 0b0000'0000,
+      /*0x9:*/ 0b0000'0000,
+      /*0xA:*/ 0b0000'0000,
+      /*0xB:*/ 0b0000'0000,
+      /*0xC:*/ 0b0000'0000,
+      /*0xD:*/ 0b0000'0000,
+      /*0xE:*/ 0b0000'0000,
+      /*0xF:*/ 0b0000'0000);
+  const auto low_lut = _mm_setr_epi8(
+      /*0x0:*/ 0b0000'1010,
+      /*0x1:*/ 0b0000'1110,
+      /*0x2:*/ 0b0000'1110,
+      /*0x3:*/ 0b0000'1110,
+      /*0x4:*/ 0b0000'1110,
+      /*0x5:*/ 0b0000'1110,
+      /*0x6:*/ 0b0000'1110,
+      /*0x7:*/ 0b0000'1110,
+      /*0x8:*/ 0b0000'1110,
+      /*0x9:*/ 0b0000'1110,
+      /*0xA:*/ 0b0000'1100,
+      /*0xB:*/ 0b0000'0100,
+      /*0xC:*/ 0b0000'0100,
+      /*0xD:*/ 0b0000'0100,
+      /*0xE:*/ 0b0000'0100,
+      /*0xF:*/ 0b0000'0101);
+
+  // Use `ssize_t` for performance here as we index memory in a tight loop.
+  ssize_t i = 0;
+  const ssize_t size = text.size();
+  while ((i + 16) <= size) {
+    __m128i input =
+        _mm_loadu_si128(reinterpret_cast<const __m128i*>(text.data() + i));
+
+    // The high bits of each byte indicate a non-ASCII character encoded using
+    // UTF-8. Test those and fall back to the scalar code if present. These
+    // bytes will also cause spurious zeros in the LUT results, but we can
+    // ignore that because we track them independently here.
+#if __SSE4_1__
+    if (!_mm_test_all_zeros(_mm_set1_epi8(0x80), input)) {
+      break;
+    }
+#else
+    if (_mm_movemask_epi8(input) != 0) {
+      break;
+    }
+#endif
+
+    // Do two LUT lookups and mask the results together to get the results for
+    // both low and high nibbles. Note that we don't need to mask out the high
+    // bit of input here because we track that above for UTF-8 handling.
+    __m128i low_mask = _mm_shuffle_epi8(low_lut, input);
+    // Note that the input needs to be masked to only include the high nibble or
+    // we could end up with bit7 set forcing the result to a zero byte.
+    __m128i input_high =
+        _mm_and_si128(_mm_srli_epi32(input, 4), _mm_set1_epi8(0x0f));
+    __m128i high_mask = _mm_shuffle_epi8(high_lut, input_high);
+    __m128i mask = _mm_and_si128(low_mask, high_mask);
+
+    // Now compare to find the completely zero bytes.
+    __m128i id_byte_mask_vec = _mm_cmpeq_epi8(mask, _mm_setzero_si128());
+    int tail_ascii_mask = _mm_movemask_epi8(id_byte_mask_vec);
+
+    // Check if there are bits in the tail mask, which means zero bytes and the
+    // end of the identifier. We could do this without materializing the scalar
+    // mask on more recent CPUs, but we generally expect the median length we
+    // encounter to be <16 characters and so we avoid the extra instruction in
+    // that case and predict this branch to succeed so it is laid out in a
+    // reasonable way.
+    if (LLVM_LIKELY(tail_ascii_mask != 0)) {
+      // Move past the definitively classified bytes that are part of the
+      // identifier, and return the complete identifier text.
+      i += __builtin_ctz(tail_ascii_mask);
+      return text.substr(0, i);
+    }
+    i += 16;
+  }
+
+  // Fallback to scalar loop. We only end up here when we don't have >=16
+  // bytes to scan or we find a UTF-8 unicode character.
+  // TODO: This assumes all Unicode characters are non-identifiers.
+  while (i < size &&
+         IsIdentifierByteTable[static_cast<unsigned char>(text[i])]) {
+    ++i;
+  }
+
+  return text.substr(0, i);
+#else
+  // TODO: Optimize this with SIMD for other architectures.
+  return text.take_while([](char c) {
+    return IsIdentifierByteTable[static_cast<unsigned char>(c)];
+  });
+#endif
 }
 
 // Implementation of the lexer logic itself.
@@ -454,8 +619,7 @@ class TokenizedBuffer::Lexer {
     }
 
     // Take the valid characters off the front of the source buffer.
-    llvm::StringRef identifier_text =
-        source_text.take_while([](char c) { return IsAlnum(c) || c == '_'; });
+    llvm::StringRef identifier_text = ScanForIdentifierPrefix(source_text);
     CARBON_CHECK(!identifier_text.empty())
         << "Must have at least one character!";
     int identifier_column = current_column_;
