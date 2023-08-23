@@ -59,7 +59,6 @@ auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = semantics_ir().GetFunction(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
-  const int first_param = has_return_slot ? 1 : 0;
 
   SemIR::InitializingRepresentation return_rep =
       function.return_type_id.is_valid()
@@ -72,13 +71,30 @@ auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   // TODO: Lower type information for the arguments prior to building args.
   auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
   llvm::SmallVector<llvm::Type*> args;
-  args.resize_for_overwrite(first_param + param_refs.size());
+  llvm::SmallVector<SemIR::NodeId> param_nodes;
+  args.reserve(has_return_slot + param_refs.size());
+  param_nodes.reserve(has_return_slot + param_refs.size());
   if (has_return_slot) {
-    args[0] = GetType(function.return_type_id)->getPointerTo();
+    args.push_back(GetType(function.return_type_id)->getPointerTo());
+    param_nodes.push_back(function.return_slot_id);
   }
   for (auto [i, param_ref] : llvm::enumerate(param_refs)) {
-    args[first_param + i] =
-        GetType(semantics_ir().GetNode(param_ref).type_id());
+    auto param_type_id = semantics_ir().GetNode(param_ref).type_id();
+    switch (auto value_rep =
+                SemIR::GetValueRepresentation(semantics_ir(), param_type_id);
+            value_rep.kind) {
+      case SemIR::ValueRepresentation::None:
+        break;
+      case SemIR::ValueRepresentation::Copy:
+      case SemIR::ValueRepresentation::Custom:
+        args.push_back(GetType(value_rep.type));
+        param_nodes.push_back(param_ref);
+        break;
+      case SemIR::ValueRepresentation::Pointer:
+        args.push_back(GetType(value_rep.type)->getPointerTo());
+        param_nodes.push_back(param_ref);
+        break;
+    }
   }
 
   // If the initializing representation doesn't produce a value, set the return
@@ -94,18 +110,18 @@ auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
       function_type, llvm::Function::ExternalLinkage,
       semantics_ir().GetString(function.name_id), llvm_module());
 
-  if (has_return_slot) {
-    auto* return_slot = llvm_function->getArg(0);
-    return_slot->addAttr(llvm::Attribute::getWithStructRetType(
-        llvm_context(), GetType(function.return_type_id)));
-    return_slot->setName("return");
-  }
-
-  // Set parameter names.
-  for (auto [i, param_ref] : llvm::enumerate(param_refs)) {
-    auto name_id = semantics_ir().GetNode(param_ref).GetAsParameter();
-    llvm_function->getArg(first_param + i)
-        ->setName(semantics_ir().GetString(name_id));
+  // Set up parameters.
+  for (auto [i, node_id, arg] : llvm::enumerate(
+           param_nodes,
+           map_range(llvm_function->args(), [](auto& arg) { return &arg; }))) {
+    auto node = semantics_ir().GetNode(node_id);
+    if (node.kind() == SemIR::NodeKind::Parameter) {
+      arg->setName(semantics_ir().GetString(node.GetAsParameter()));
+    } else if (node_id == function.return_slot_id) {
+      arg->setName("return");
+      arg->addAttr(llvm::Attribute::getWithStructRetType(
+          llvm_context(), GetType(function.return_type_id)));
+    }
   }
 
   return llvm_function;
@@ -124,17 +140,27 @@ auto LoweringContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   LoweringFunctionContext function_lowering(*this, llvm_function);
 
   const bool has_return_slot = function.return_slot_id.is_valid();
-  const int first_param = has_return_slot ? 1 : 0;
 
   // Add parameters to locals.
+  // TODO: This duplicates the mapping between semantics nodes and LLVM
+  // function parameters that was already computed in BuildFunctionDeclaration.
+  // We should only do that once.
   auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  int param_index = 0;
   if (has_return_slot) {
     function_lowering.SetLocal(function.return_slot_id,
-                               llvm_function->getArg(0));
+                               llvm_function->getArg(param_index++));
   }
   for (auto [i, param_ref] : llvm::enumerate(param_refs)) {
-    function_lowering.SetLocal(param_ref,
-                               llvm_function->getArg(first_param + i));
+    auto param_type_id = semantics_ir().GetNode(param_ref).type_id();
+    if (SemIR::GetValueRepresentation(semantics_ir(), param_type_id).kind ==
+        SemIR::ValueRepresentation::None) {
+      function_lowering.SetLocal(
+          param_ref, llvm::PoisonValue::get(GetType(param_type_id)));
+    } else {
+      function_lowering.SetLocal(param_ref,
+                                 llvm_function->getArg(param_index++));
+    }
   }
 
   // Lower all blocks.
