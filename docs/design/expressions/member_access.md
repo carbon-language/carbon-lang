@@ -417,7 +417,10 @@ For a simple member access `a.b` where `b` names a member of an interface `I`:
     -   More generally, if the member was found in something the type extends,
         such as a facet type or mixin, `T` is the type that was initially
         searched, not what it extended.
--   Otherwise, `impl` lookup is not performed:
+-   Otherwise, `impl` lookup is not performed.
+
+[Instance binding](#instance-binding) may also apply if the member is an
+instance member.
 
 For example:
 
@@ -463,87 +466,108 @@ class Integer {
 For a compound member access `a.(b)` where `b` names a member of an interface
 `I`, `impl` lookup is performed for `T as I`, where:
 
--   If `b` is an instance member, `T` is the type of `a`.
-    -   `my_value.(Interface.InstanceInterfaceMember)()`, where `my_value` is of
-        type `MyClass`, uses `MyClass as Interface`.
-    -   `MyClass.(Interface.InstanceInterfaceMember)()` uses
-        `type as Interface`.
+-   If `b` is an instance member, `T` is the type of `a`. In this case,
+    [instance binding](#instance-binding) is always performed.
 -   Otherwise, `a` is implicitly converted to `I`, and `T` is the result of
-    symbolically evaluating the converted expression.
-    -   `MyClass.(Interface.NonInstanceInterfaceMember)()` uses
-        `MyClass as Interface`. so
-    -   `my_value.(Interface.NonInstanceInterfaceMember)()` is an error unless
-        `my_value` implicitly converts to a type.
+    symbolically evaluating the converted expression. In this case,
+    [instance binding](#instance-binding) is never performed.
+
+For example:
 
 ```carbon
-fn SumIntegers(v: Vector(Integer)) -> Integer {
-  // which is then called.
-  return Integer.Sum(v);
+interface Interface {
+  fn InstanceInterfaceMember[self: Self]();
+  fn NonInstanceInterfaceMember();
 }
 
-fn AddTwoIntegers(a: Integer, b: Integer) -> Integer {
-  // Member resolution resolves the name `Add` to #1, which is
-  // an instance member.
-  // `impl` lookup then locates the `impl Integer as Addable`,
-  // and determines that the member access refers to #3.
-  // Finally, instance binding will be performed as described later.
-  return a.Add(b);
-  // This can be written more verbosely and explicitly as any of:
-  // -   `return a.(Integer.Add)(b);`
-  //                       ^ performs impl lookup here
-  // -   `return a.(Addable.Add)(b);`
-  //              ^ impl lookup and instance binding here
-  // -   `return a.((Integer as Addable).Add)(b);`
-  //     no impl lookup needed
+class MyClass {}
+impl MyClass as Interface;
+
+fn F(my_value: MyClass) {
+  // Since `Interface.InstanceInterfaceMember` is an instance
+  // member of `Interface`, `T` is set to the type of `my_value`,
+  // and so uses `MyClass as Interface`.
+  my_value.(Interface.InstanceInterfaceMember)();
+
+  // ❌ By the same logic, `T` is set to the type of `MyClass`,
+  // and so uses `type as Interface`, which isn't implemented.
+  MyClass.(Interface.InstanceInterfaceMember)();
+
+  // Since `Interface.NonInstanceInterfaceMember` is a
+  // non-instance member of `Interface`, `MyClass` is implicitly
+  // converted to `Interface`, and so uses `MyClass as Interface`.
+  MyClass.(Interface.NonInstanceInterfaceMember)();
+
+  // ❌ This is an error unless `my_value` implicitly converts to
+  // a type.
+  my_value.(Interface.NonInstanceInterfaceMember)();
 }
 ```
 
-FIXME: needs updates:
+FIXME: Maybe instead continue the previous example?
 
-The type `T` that is expected to implement `I` depends on the first operand of
-the member access expression, `V`:
+```carbon
+fn AddTwoIntegers(a: Integer, b: Integer) -> Integer {
+  // Since `Addable.Add` is an instance member of `Addable`, `T`
+  // is set to the type of `a`, and so uses `Integer as Addable`.
+  return a.(Addable.Add)(b);
+  //      ^ impl lookup and instance binding here
+  // Impl lookup transforms this into:
+  //   return a.((Integer as Addable).Add)(b);
+  // which no longer requires impl lookup.
 
--   If `V` can be evaluated and evaluates to a type, then `T` is `V`.
-    ```carbon
-    // `V` is `Integer`. `T` is `V`, which is `Integer`.
-    // Alias refers to #2.
-    alias AddIntegers = Integer.Add;
-    ```
--   Otherwise, `T` is the type of `V`.
-    ```carbon
-    let a: Integer = {};
-    // `V` is `a`. `T` is the type of `V`, which is `Integer`.
-    // `a.Add` refers to #2.
-    let twice_a: Integer = a.Add(a);
-    ```
+  // ❌ By the same logic, in this example, `T` is set to the
+  // type of `Integer`, and so uses `type as Addable`, which
+  // isn't implemented.
+  return Integer.(Addable.Add)(...);
+}
+
+fn SumIntegers(v: Vector(Integer)) -> Integer {
+  // Since `Addable.Sum` is a  non-instance member of `Addable`,
+  // `Integer` is implicitly converted to `Addable`, and so uses
+  // `Integer as Addable`.
+  Integer.(Addable.Sum)(v);
+  //     ^ impl lookup but no instance binding here
+  // Impl lookup transforms this into:
+  //   ((Integer as Addable).Sum)(v);
+  // which no longer requires impl lookup.
+
+  var a: Integer;
+  // ❌ This is an error since `a` does not implicitly convert to
+  // a type.
+  a.(Addable.Sum)(...);
+}
+```
 
 The appropriate `impl T as I` implementation is located. The program is invalid
 if no such `impl` exists. When `T` or `I` depends on a checked generic binding,
 a suitable constraint must be specified to ensure that such an `impl` will
-exist. When `T` or `I` depends on a template parameter, this check is deferred
-until the argument for the template parameter is known.
+exist. When `T` or `I` depends on a template binding, this check is deferred
+until the value for the template binding is known.
 
 `M` is replaced by the member of the `impl` that corresponds to `M`.
 
+FIXME: Left off here
+
 ```carbon
 interface I {
-  // #1
+  // #5
   default fn F[self: Self]() {}
   let N:! i32;
 }
 class C {
   extend impl as I where .N = 5 {
-    // #2
+    // #6
     fn F[self: C]() {}
   }
 }
 
 // `V` is `I` and `M` is `I.F`. Because `V` is a facet type,
-// `impl` lookup is not performed, and the alias binds to #1.
+// `impl` lookup is not performed, and the alias binds to #5.
 alias A1 = I.F;
 
 // `V` is `C` and `M` is `I.F`. Because `V` is a type, `impl`
-// lookup is performed with `T` being `C`, and the alias binds to #2.
+// lookup is performed with `T` being `C`, and the alias binds to #6.
 alias A2 = C.F;
 
 let c: C = {};
@@ -562,9 +586,11 @@ instance member.
 var c: C;
 // `V` is `c` and `M` is `I.F`. Because `V` is not a type, `T` is the
 // type of `c`, which is `C`. `impl` lookup is performed, and `M` is
-// replaced with #2. Then instance binding is performed.
+// replaced with #6. Then instance binding is performed.
 c.F();
 ```
+
+FIXME: Okay after this
 
 **Note:** When an interface member is added to a class by an alias, `impl`
 lookup is not performed as part of handling the alias, but will happen when
@@ -572,21 +598,21 @@ naming the interface member as a member of the class.
 
 ```carbon
 interface Renderable {
-  // #1
+  // #7
   fn Draw[self: Self]();
 }
 
 class RoundWidget {
   impl as Renderable {
-    // #2
+    // #8
     fn Draw[self: Self]();
   }
-  // `Draw` names the member of the `Renderable` interface.
+  // `Draw` names #7, the member of the `Renderable` interface.
   alias Draw = Renderable.Draw;
 }
 
 class SquareWidget {
-  // #3
+  // #9
   fn Draw[self: Self]() {}
   impl as Renderable {
     alias Draw = Self.Draw;
@@ -595,29 +621,29 @@ class SquareWidget {
 
 fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   // ✅ OK: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
-  // the member `Draw` of `impl RoundWidget as Renderable`, #2.
+  // member `Draw` of `Renderable`, #7, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #8.
   // The outer member access then forms a bound member function that
-  // calls #2 on `r`, as described in "Instance binding".
+  // calls #8 on `r`, as described in "Instance binding".
   r.(RoundWidget.Draw)();
 
   // ✅ OK: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `SquareWidget`, #3.
+  // member `Draw` of `SquareWidget`, #9.
   // The outer member access then forms a bound member function that
-  // calls #3 on `s`.
+  // calls #9 on `s`.
   s.(SquareWidget.Draw)();
 
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `SquareWidget`, #3.
+  // member `Draw` of `SquareWidget`, #9.
   // The outer member access fails because we can't call
-  // #3, `Draw[self: SquareWidget]()`, on a `RoundWidget` object `r`.
+  // #9, `Draw[self: SquareWidget]()`, on a `RoundWidget` object `r`.
   r.(SquareWidget.Draw)();
 
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
-  // the member `Draw` of `impl RoundWidget as Renderable`, #2.
+  // member `Draw` of `Renderable`, #7, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #8.
   // The outer member access fails because we can't call
-  // #2, `Draw[self: RoundWidget]()`, on a `SquareWidget` object `s`.
+  // #8, `Draw[self: RoundWidget]()`, on a `SquareWidget` object `s`.
   s.(RoundWidget.Draw)();
 }
 
