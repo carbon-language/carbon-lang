@@ -17,10 +17,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %tuple = alloca {}, align 8
 // CHECK:STDOUT:   %x = alloca {}, align 8
 // CHECK:STDOUT:   %tuple1 = alloca {}, align 8
-// CHECK:STDOUT:   %1 = load {}, ptr %tuple1, align 1
-// CHECK:STDOUT:   store {} %1, ptr %x, align 1
 // CHECK:STDOUT:   %tuple2 = alloca {}, align 8
 // CHECK:STDOUT:   %y = alloca {}, align 8
-// CHECK:STDOUT:   store {} poison, ptr %y, align 1
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
