@@ -18,6 +18,7 @@ import termplotlib as tpl  # type:ignore
 from pathlib import Path
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field, asdict
+from collections import Counter
 
 BLANK_RE = re.compile(r"\s*")
 COMMENT_RE = re.compile(r"\s*///*\s*")
@@ -40,48 +41,24 @@ class _Stats:
     blank_lines: int = 0
     comment_lines: int = 0
     empty_comment_lines: int = 0
-    comment_line_widths: Dict[int, int] = field(default_factory=lambda: {})
+    comment_line_widths: Counter[int] = field(default_factory=lambda: Counter())
     lines_with_trailing_comments: int = 0
     classes: int = 0
     identifiers: int = 0
-    identifier_widths: Dict[int, int] = field(default_factory=lambda: {})
-    ids_per_line: Dict[int, int] = field(default_factory=lambda: {})
-
-    def add_comment_line_width(self, width: int) -> None:
-        if width in self.comment_line_widths:
-            self.comment_line_widths[width] += 1
-        else:
-            self.comment_line_widths[width] = 1
-
-    def add_identifier_width(self, width: int) -> None:
-        if width in self.identifier_widths:
-            self.identifier_widths[width] += 1
-        else:
-            self.identifier_widths[width] = 1
-
-    def add_ids_per_line(self, num_ids: int) -> None:
-        if num_ids in self.ids_per_line:
-            self.ids_per_line[num_ids] += 1
-        else:
-            self.ids_per_line[num_ids] = 1
+    identifier_widths: Counter[int] = field(default_factory=lambda: Counter())
+    ids_per_line: Counter[int] = field(default_factory=lambda: Counter())
 
     def accumulate(self, other: _Stats) -> None:
         self.lines += other.lines
         self.blank_lines += other.blank_lines
         self.empty_comment_lines += other.empty_comment_lines
         self.comment_lines += other.comment_lines
-        for width, count in other.comment_line_widths.items():
-            self.comment_line_widths.setdefault(width, 0)
-            self.comment_line_widths[width] += count
+        self.comment_line_widths.update(other.comment_line_widths)
         self.lines_with_trailing_comments += other.lines_with_trailing_comments
         self.classes += other.classes
         self.identifiers += other.identifiers
-        for width, count in other.identifier_widths.items():
-            self.identifier_widths.setdefault(width, 0)
-            self.identifier_widths[width] += count
-        for num_ids, count in other.ids_per_line.items():
-            self.ids_per_line.setdefault(num_ids, 0)
-            self.ids_per_line[num_ids] += count
+        self.identifier_widths.update(other.identifier_widths)
+        self.ids_per_line.update(other.ids_per_line)
 
 
 def _scan_file(file: Path) -> _Stats:
@@ -103,7 +80,7 @@ def _scan_file(file: Path) -> _Stats:
             if m.end() == len(line):
                 stats.empty_comment_lines += 1
             else:
-                stats.add_comment_line_width(len(line))
+                stats.comment_line_widths[len(line)] += 1
             continue
         line_identifiers = 0
         for m in re.finditer(LINE_RE, line):
@@ -113,7 +90,7 @@ def _scan_file(file: Path) -> _Stats:
             if m.group("class_intro"):
                 stats.classes += 1
                 line_identifiers += 1
-                stats.add_identifier_width(len(m.group("class_name")))
+                stats.identifier_widths[len(m.group("class_name"))] += 1
             elif m.group("end_open_curly"):
                 pass
             else:
@@ -122,9 +99,9 @@ def _scan_file(file: Path) -> _Stats:
                     line[m.start() : m.end()],
                 )
                 line_identifiers += 1
-                stats.add_identifier_width(len(m.group("id")))
+                stats.identifier_widths[len(m.group("id"))] += 1
         stats.identifiers += line_identifiers
-        stats.add_ids_per_line(line_identifiers)
+        stats.ids_per_line[line_identifiers] += 1
     return stats
 
 
