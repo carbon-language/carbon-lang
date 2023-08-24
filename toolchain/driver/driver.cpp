@@ -469,11 +469,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return false;
   }
 
-  CARBON_VLOG() << "*** LowerToLLVM ***\n";
+  CARBON_VLOG() << "*** Lower::LowerToLLVM ***\n";
   llvm::LLVMContext llvm_context;
-  const std::unique_ptr<llvm::Module> module = LowerToLLVM(
+  const std::unique_ptr<llvm::Module> module = Lower::LowerToLLVM(
       llvm_context, options.input_file_name, semantics_ir, vlog_stream_);
-  CARBON_VLOG() << "*** LowerToLLVM done ***\n";
+  CARBON_VLOG() << "*** Lower::LowerToLLVM done ***\n";
   if (options.dump_llvm_ir) {
     module->print(output_stream_, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/true);

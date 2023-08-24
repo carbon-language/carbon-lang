@@ -4,36 +4,31 @@
 
 #include "toolchain/lowering/lowering_function_context.h"
 
-namespace Carbon {
+namespace Carbon::Lower {
 
-auto LoweringHandleArrayType(LoweringFunctionContext& context,
-                             SemIR::NodeId node_id, SemIR::Node /*node*/)
-    -> void {
+auto HandleArrayType(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::Node /*node*/) -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
-auto LoweringHandleConstType(LoweringFunctionContext& context,
-                             SemIR::NodeId node_id, SemIR::Node /*node*/)
-    -> void {
+auto HandleConstType(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::Node /*node*/) -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
-auto LoweringHandlePointerType(LoweringFunctionContext& context,
-                               SemIR::NodeId node_id, SemIR::Node /*node*/)
-    -> void {
+auto HandlePointerType(FunctionContext& context, SemIR::NodeId node_id,
+                       SemIR::Node /*node*/) -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
-auto LoweringHandleStructType(LoweringFunctionContext& context,
-                              SemIR::NodeId node_id, SemIR::Node /*node*/)
-    -> void {
+auto HandleStructType(FunctionContext& context, SemIR::NodeId node_id,
+                      SemIR::Node /*node*/) -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
-auto LoweringHandleTupleType(LoweringFunctionContext& context,
-                             SemIR::NodeId node_id, SemIR::Node /*node*/)
-    -> void {
+auto HandleTupleType(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::Node /*node*/) -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lower

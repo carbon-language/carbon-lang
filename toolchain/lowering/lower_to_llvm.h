@@ -9,7 +9,7 @@
 #include "llvm/IR/Module.h"
 #include "toolchain/semantics/semantics_ir.h"
 
-namespace Carbon {
+namespace Carbon::Lower {
 
 // Lowers SemIR to LLVM IR.
 auto LowerToLLVM(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
@@ -17,6 +17,6 @@ auto LowerToLLVM(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
                  llvm::raw_ostream* vlog_stream)
     -> std::unique_ptr<llvm::Module>;
 
-}  // namespace Carbon
+}  // namespace Carbon::Lower
 
 #endif  // CARBON_TOOLCHAIN_LOWERING_LOWER_TO_LLVM_H_
