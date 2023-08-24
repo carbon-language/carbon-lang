@@ -88,12 +88,18 @@ auto GetRandomIdentifiers() -> const std::array<std::string, NumTokens>& {
   static const std::array<std::string, NumTokens> id_storage = [] {
     std::array<int, 64> id_length_counts;
     // For non-uniform distribution, we simulate a distribution roughly based on
-    // the observed histogram of identifier lengths in LLVM, but smoothed a bit
-    // and reduced to small counts so that we cycle through all the lengths
-    // reasonably quickly. We want the sampling even 10% of NumTokens from this
+    // the observed histogram of identifier lengths, but smoothed a bit and
+    // reduced to small counts so that we cycle through all the lengths
+    // reasonably quickly. We want sampling of even 10% of NumTokens from this
     // in a round-robin form to not be skewed overly much. This still inherently
     // compresses the long tail as we'd rather have coverage even though it
     // distorts the distribution a bit.
+    //
+    // The distribution here comes from a script that analyzes source code run
+    // over a few directories of LLVM. The script renders a visual ascii-art
+    // histogram along with the data for each bucket, and that output is
+    // included in comments above each bucket size below to help visualize the
+    // rough shape we're aiming for.
     //
     // 1 characters   [3976]  ███████████████████████████████▊
     id_length_counts[0] = 40;
@@ -130,8 +136,8 @@ auto GetRandomIdentifiers() -> const std::array<std::string, NumTokens>& {
     for (int i : llvm::seq(14, 18)) {
       id_length_counts[i] = 2;
     }
-    // 19 - 63 characters are all <100 in LLVM but non-zero, and we map them to
-    // 1 for coverage despite slightly over weighting the tail.
+    // 19 - 63 characters are all <100 but non-zero, and we map them to 1 for
+    // coverage despite slightly over weighting the tail.
     for (int i : llvm::seq(18, 64)) {
       id_length_counts[i] = 1;
     }
@@ -149,8 +155,7 @@ auto GetRandomIdentifiers() -> const std::array<std::string, NumTokens>& {
         // lengths in round-robin to get a deterministic and exact size on every
         // run. We will then shuffle them at the end to produce a random
         // ordering.
-        int length = MinLength +
-                     (MaxLength > MinLength ? i % (MaxLength - MinLength) : 0);
+        int length = MinLength + i % (1 + MaxLength - MinLength);
         id = GenerateRandomIdentifier(gen, length);
         continue;
       }
@@ -253,9 +258,7 @@ auto RandomMixedSeq(int symbol_percent, int keyword_percent) -> std::string {
 
   int num_symbols = (NumTokens / 100) * symbol_percent;
   int num_keywords = (NumTokens / 100) * keyword_percent;
-  int num_identifiers =
-      (NumTokens / 100) * (100 - symbol_percent - keyword_percent);
-  CARBON_CHECK((num_symbols + num_keywords + num_identifiers) == NumTokens);
+  int num_identifiers = NumTokens - num_symbols - num_keywords;
   CARBON_CHECK(num_identifiers == 0 || num_identifiers > 500)
       << "We require at least 500 identifiers as we need to collect a "
          "reasonable number of samples to end up with a reasonable "
