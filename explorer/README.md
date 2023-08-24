@@ -208,25 +208,25 @@ both heap-allocated objects and also mutable parts of the procedure call stack.
 1. **Memory Allocation** is printed as
 
 ```
-(+) memory-alloc: #<allocation_index> `value` uninitialized?
+++# memory-alloc: #<allocation_index> `value` uninitialized?
 ```
 
 2. **Read Memory** is printed as
 
 ```
-+++ memory-read: #<allocation_index> `value`
+<-- memory-read: #<allocation_index> `value`
 ```
 
 3. **Write Memory** is printed as
 
 ```
-+++ memory-write: #<allocation_index> `value`
+--> memory-write: #<allocation_index> `value`
 ```
 
 4. **Memory Deallocation** is printed as
 
 ```
-(+) memory-dealloc: #<allocation_index> `value`
+--# memory-dealloc: #<allocation_index> `value`
 ```
 
 `allocation_index` is used for locating an object within the heap. `value`
@@ -238,8 +238,8 @@ The stack is list of actions, push and pop changes in the stack are printed in
 the following format
 
 ```
-(+) stack-push: <action> (<source location>)
-(+) stack-pop:  <action> (<source location>)
+>[] stack-push: <action> (<source location>)
+<[] stack-pop:  <action> (<source location>)
 ```
 
 `action` is printed in the following format
@@ -293,7 +293,7 @@ regular text in the trace output.
 
 ````
 For single line code:
-`let x: i32 = 0`;
+`let x: i32 = 0;`
 
 For multi line code:
 ```
@@ -320,3 +320,17 @@ trace_stream->PrefixMethod() << ... ;
 The `TraceStream` class also have utility methods for adding formatted headings
 and subheadings to the trace output. These methods help structure the trace
 information and provide visual separation for different sections.
+
+`Heading(...)` method prints the heading in following format:
+
+```
+* * * * * * * * * *  Heading * * * * * * * * * *
+------------------------------------------------
+```
+
+`SubHeading(...)` method prints the heading in the following format:
+
+```
+- - - - -  Sub Heading - - - - -
+--------------------------------
+```
