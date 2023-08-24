@@ -60,11 +60,9 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   // Lastly, read the contents of each argument out of the data.
   llvm::SmallVector<llvm::StringRef> args;
   args.reserve(num_args);
-  llvm::errs() << "# args: " << num_args << "\n";
   for (int arg_length : arg_lengths) {
     args.push_back(
         llvm::StringRef(reinterpret_cast<const char*>(data), arg_length));
-    llvm::errs() << "arg: '" << args.back() << "'\n";
     data += arg_length;
     size -= arg_length;
   }
