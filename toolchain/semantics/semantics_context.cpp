@@ -306,13 +306,12 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
                      << semantics_ir().GetNode(expr_id)
                      << " to value expression";
 
-    case SemIR::ExpressionCategory::Initializing: {
+    case SemIR::ExpressionCategory::Initializing:
       // Commit to using a temporary for this initializing expression.
       // TODO: Don't create a temporary if the initializing representation is
       // already a value representation.
       expr_id = FinalizeTemporary(expr_id, /*discarded=*/false);
       [[fallthrough]];
-    }
 
     case SemIR::ExpressionCategory::DurableReference:
     case SemIR::ExpressionCategory::EphemeralReference: {
