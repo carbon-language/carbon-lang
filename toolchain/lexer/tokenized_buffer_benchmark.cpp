@@ -4,6 +4,8 @@
 
 #include <benchmark/benchmark.h>
 
+#include <algorithm>
+
 #include "absl/random/random.h"
 #include "common/check.h"
 #include "llvm/ADT/Sequence.h"
@@ -182,25 +184,18 @@ auto GetRandomIdentifiers() -> const std::array<std::string, NumTokens>& {
 // Compute a random sequence of just identifiers.
 template <int MinLength = 1, int MaxLength = 64, bool Uniform = false>
 auto RandomIdentifierSeq() -> std::string {
-  std::string result;
-
   // Get a static pool of identifiers with the desired distribution.
   const std::array<std::string, NumTokens>& ids =
       GetRandomIdentifiers<MinLength, MaxLength, Uniform>();
 
-  // Shuffle indices so we get exactly one of each identifier but in a random
+  // Shuffle tokens so we get exactly one of each identifier but in a random
   // order.
-  std::array<int, NumTokens> indices;
-  std::iota(indices.begin(), indices.end(), 0);
-  std::shuffle(indices.begin(), indices.end(), absl::BitGen());
-
-  llvm::raw_string_ostream os(result);
-  llvm::ListSeparator sep(" ");
-  for (int i : indices) {
-    os << sep << ids[i];
+  std::array<llvm::StringRef, NumTokens> tokens;
+  for (int i : llvm::seq(NumTokens)) {
+    tokens[i] = ids[i];
   }
-
-  return result;
+  std::shuffle(tokens.begin(), tokens.end(), absl::BitGen());
+  return llvm::join(tokens, " ");
 }
 
 auto GetSymbolTokenTable() -> llvm::ArrayRef<TokenKind> {
@@ -247,14 +242,9 @@ auto RandomMixedSeq(int symbol_percent, int keyword_percent) -> std::string {
   llvm::ArrayRef<TokenKind> keywords = TokenKind::KeywordTokens;
   const std::array<std::string, NumTokens>& ids = GetRandomIdentifiers();
 
-  // Build a list of kind keys and indices into the relevant tables that have
-  // the desired distribution, then shuffle that list.
-  enum ElementKind {
-    Symbol,
-    Keyword,
-    Identifier,
-  };
-  std::array<std::pair<ElementKind, int>, NumTokens> indices;
+  // Build a list of StringRefs from the different types with the desired
+  // distribution, then shuffle that list.
+  std::array<llvm::StringRef, NumTokens> tokens;
 
   int num_symbols = (NumTokens / 100) * symbol_percent;
   int num_keywords = (NumTokens / 100) * keyword_percent;
@@ -265,28 +255,18 @@ auto RandomMixedSeq(int symbol_percent, int keyword_percent) -> std::string {
          "distribution of lengths.";
 
   for (int i : llvm::seq(num_symbols)) {
-    indices[i] = {Symbol, i % symbols.size()};
+    tokens[i] = symbols[i % symbols.size()].fixed_spelling();
   }
   for (int i : llvm::seq(num_keywords)) {
-    indices[num_symbols + i] = {Keyword, i % keywords.size()};
+    tokens[num_symbols + i] = keywords[i % keywords.size()].fixed_spelling();
   }
   for (int i : llvm::seq(num_identifiers)) {
     // We always have enough identifiers, so no need to mod here.
-    indices[num_symbols + num_keywords + i] = {Identifier, i};
+    tokens[num_symbols + num_keywords + i] = ids[i];
   }
-  std::shuffle(indices.begin(), indices.end(), absl::BitGen());
+  std::shuffle(tokens.begin(), tokens.end(), absl::BitGen());
 
-  std::string result;
-  llvm::raw_string_ostream os(result);
-  llvm::ListSeparator sep(" ");
-  for (auto [kind, i] : indices) {
-    os << sep
-       << (kind == Symbol    ? symbols[i].fixed_spelling()
-           : kind == Keyword ? keywords[i].fixed_spelling()
-                             : ids[i]);
-  }
-
-  return result;
+  return llvm::join(tokens, " ");
 }
 
 class LexerBenchHelper {
@@ -324,18 +304,13 @@ class LexerBenchHelper {
 
 void BM_ValidKeywords(benchmark::State& state) {
   absl::BitGen gen;
-  std::array<int, NumTokens> indices;
-  for (int i : llvm::seq(0, NumTokens)) {
-    indices[i] = i % TokenKind::KeywordTokens.size();
+  std::array<llvm::StringRef, NumTokens> tokens;
+  for (int i : llvm::seq(NumTokens)) {
+    tokens[i] = TokenKind::KeywordTokens[i % TokenKind::KeywordTokens.size()]
+                    .fixed_spelling();
   }
-  std::shuffle(indices.begin(), indices.end(), gen);
-
-  std::string source;
-  llvm::raw_string_ostream os(source);
-  llvm::ListSeparator sep(" ");
-  for (int i : llvm::seq(0, NumTokens)) {
-    os << sep << TokenKind::KeywordTokens[indices[i]].fixed_spelling();
-  }
+  std::shuffle(tokens.begin(), tokens.end(), gen);
+  std::string source = llvm::join(tokens, " ");
 
   LexerBenchHelper helper(source);
   for (auto _ : state) {
