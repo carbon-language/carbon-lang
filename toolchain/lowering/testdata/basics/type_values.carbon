@@ -15,12 +15,10 @@ fn F64() -> type {
 // CHECK:STDOUT: ; ModuleID = 'type_values.carbon'
 // CHECK:STDOUT: source_filename = "type_values.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %type = type {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: define %type @I32() {
-// CHECK:STDOUT:   ret %type zeroinitializer
+// CHECK:STDOUT: define void @I32() {
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %type @F64() {
-// CHECK:STDOUT:   ret %type zeroinitializer
+// CHECK:STDOUT: define void @F64() {
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

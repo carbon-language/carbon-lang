@@ -985,7 +985,8 @@ auto Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg) -> bool {
   }
 
   for (unsigned char c : unparsed_arg) {
-    auto* arg_entry = short_option_table_[c];
+    auto* arg_entry =
+        (c < short_option_table_.size()) ? short_option_table_[c] : nullptr;
     if (!arg_entry) {
       errors_ << "ERROR: Unknown short option '" << c << "'\n";
       return false;

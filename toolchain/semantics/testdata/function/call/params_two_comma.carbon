@@ -39,8 +39,8 @@ fn Main() {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type0},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str2, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},

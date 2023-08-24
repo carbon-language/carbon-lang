@@ -79,6 +79,15 @@ auto TokenKind::opening_symbol() const -> TokenKind {
   return result;
 }
 
+auto TokenKind::is_one_char_symbol() const -> bool {
+  static constexpr bool Table[] = {
+#define CARBON_TOKEN(TokenName) false,
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) true,
+#include "toolchain/lexer/token_kind.def"
+  };
+  return Table[AsInt()];
+}
+
 auto TokenKind::is_keyword() const -> bool {
   static constexpr bool Table[] = {
 #define CARBON_TOKEN(TokenName) false,

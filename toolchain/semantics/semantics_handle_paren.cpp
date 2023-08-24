@@ -6,10 +6,10 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleParenExpression(SemanticsContext& context,
-                                    ParseTree::Node parse_node) -> bool {
+auto HandleParenExpression(Context& context, ParseTree::Node parse_node)
+    -> bool {
   auto value_id = context.node_stack().PopExpression();
   // ParamOrArgStart was called for tuple handling; clean up the ParamOrArg
   // support for non-tuple cases.
@@ -22,21 +22,37 @@ auto SemanticsHandleParenExpression(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleParenExpressionOrTupleLiteralStart(
-    SemanticsContext& context, ParseTree::Node parse_node) -> bool {
+auto HandleParenExpressionOrTupleLiteralStart(Context& context,
+                                              ParseTree::Node parse_node)
+    -> bool {
   context.node_stack().Push(parse_node);
   context.ParamOrArgStart();
   return true;
 }
 
-auto SemanticsHandleTupleLiteralComma(SemanticsContext& context,
-                                      ParseTree::Node /*parse_node*/) -> bool {
+static auto HandleTupleLiteralElement(Context& context) -> void {
+  // Convert the operand to a value.
+  // TODO: We need to decide how tuple literals interact with expression
+  // categories.
+  auto [value_node, value_id] =
+      context.node_stack().PopExpressionWithParseNode();
+  value_id = context.ConvertToValueExpression(value_id);
+  context.node_stack().Push(value_node, value_id);
+}
+
+auto HandleTupleLiteralComma(Context& context, ParseTree::Node /*parse_node*/)
+    -> bool {
+  HandleTupleLiteralElement(context);
   context.ParamOrArgComma(/*for_args=*/true);
   return true;
 }
 
-auto SemanticsHandleTupleLiteral(SemanticsContext& context,
-                                 ParseTree::Node parse_node) -> bool {
+auto HandleTupleLiteral(Context& context, ParseTree::Node parse_node) -> bool {
+  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
+      ParseNodeKind::ParenExpressionOrTupleLiteralStart) {
+    HandleTupleLiteralElement(context);
+  }
+
   auto refs_id = context.ParamOrArgEnd(
       /*for_args=*/true, ParseNodeKind::ParenExpressionOrTupleLiteralStart);
 
@@ -44,7 +60,7 @@ auto SemanticsHandleTupleLiteral(SemanticsContext& context,
       .PopAndDiscardSoloParseNode<
           ParseNodeKind::ParenExpressionOrTupleLiteralStart>();
   const auto& node_block = context.semantics_ir().GetNodeBlock(refs_id);
-  llvm::SmallVector<SemanticsTypeId> type_ids;
+  llvm::SmallVector<SemIR::TypeId> type_ids;
   type_ids.reserve(node_block.size());
   for (auto node : node_block) {
     type_ids.push_back(context.semantics_ir().GetNode(node).type_id());
@@ -52,9 +68,9 @@ auto SemanticsHandleTupleLiteral(SemanticsContext& context,
   auto type_id = context.CanonicalizeTupleType(parse_node, std::move(type_ids));
 
   auto value_id = context.AddNode(
-      SemanticsNode::TupleValue::Make(parse_node, type_id, refs_id));
+      SemIR::Node::TupleValue::Make(parse_node, type_id, refs_id));
   context.node_stack().Push(parse_node, value_id);
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

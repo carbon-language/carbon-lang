@@ -8,13 +8,12 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/semantics/semantics_ir.h"
 
-namespace Carbon {
+namespace Carbon::SemIR {
 
-auto FormatSemanticsIR(const TokenizedBuffer& tokenized_buffer,
-                       const ParseTree& parse_tree,
-                       const SemanticsIR& semantics_ir, llvm::raw_ostream& out)
-    -> void;
+auto FormatFile(const TokenizedBuffer& tokenized_buffer,
+                const ParseTree& parse_tree, const File& semantics_ir,
+                llvm::raw_ostream& out) -> void;
 
-}  // namespace Carbon
+}  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_IR_FORMATTER_H_
