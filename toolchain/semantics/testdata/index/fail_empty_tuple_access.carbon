@@ -43,6 +43,7 @@ fn Run() {
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
 // CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+6, arg1: node+5, type: typeError},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -61,6 +62,7 @@ fn Run() {
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -80,5 +82,6 @@ fn Run() {
 // CHECK:STDOUT:   %.loc13_4.2: () = call @F()
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc13_4.3: () = materialize_temporary
+// CHECK:STDOUT:   %.loc13_8: <error> = tuple_index %.loc13_4.3, %.loc13_7
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

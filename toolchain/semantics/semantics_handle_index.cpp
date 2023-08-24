@@ -15,79 +15,89 @@ auto HandleIndexExpressionStart(Context& /*context*/,
   return true;
 }
 
+// Validates that the index (required to be an IntegerLiteral) is valid within
+// the array or tuple size. Returns the index on success, or nullptr on failure.
+static auto ValidateIntegerLiteralBound(Context& context,
+                                        ParseTree::Node parse_node,
+                                        SemIR::Node operand_node,
+                                        SemIR::Node index_node, int size)
+    -> const llvm::APInt* {
+  const auto& index_val = context.semantics_ir().GetIntegerLiteral(
+      index_node.GetAsIntegerLiteral());
+  if (index_val.uge(size)) {
+    CARBON_DIAGNOSTIC(IndexOutOfBounds, Error,
+                      "Index `{0}` is past the end of `{1}`.", llvm::APSInt,
+                      std::string);
+    context.emitter().Emit(
+        parse_node, IndexOutOfBounds,
+        llvm::APSInt(index_val, /*isUnsigned=*/true),
+        context.semantics_ir().StringifyType(operand_node.type_id()));
+    return nullptr;
+  }
+  return &index_val;
+}
+
 auto HandleIndexExpression(Context& context, ParseTree::Node parse_node)
     -> bool {
-  CARBON_DIAGNOSTIC(OutOfBoundsAccess, Error,
-                    "Index `{0}` is past the end of `{1}`.", llvm::APSInt,
-                    std::string);
-
   auto index_node_id = context.node_stack().PopExpression();
   auto index_node = context.semantics_ir().GetNode(index_node_id);
-  auto name_node_id = context.node_stack().PopExpression();
-  name_node_id = context.MaterializeIfInitializing(name_node_id);
-  auto name_node = context.semantics_ir().GetNode(name_node_id);
-  auto name_type_id =
-      context.semantics_ir().GetTypeAllowBuiltinTypes(name_node.type_id());
-  auto name_type_node = context.semantics_ir().GetNode(name_type_id);
+  auto operand_node_id = context.node_stack().PopExpression();
+  operand_node_id = context.MaterializeIfInitializing(operand_node_id);
+  auto operand_node = context.semantics_ir().GetNode(operand_node_id);
+  auto operand_type_id = operand_node.type_id();
+  auto operand_type_node = context.semantics_ir().GetNode(
+      context.semantics_ir().GetTypeAllowBuiltinTypes(operand_type_id));
 
-  if (name_type_node.kind() == SemIR::NodeKind::ArrayType) {
-    auto [bound_id, type_id] = name_type_node.GetAsArrayType();
-    if (index_node.kind() == SemIR::NodeKind::IntegerLiteral) {
-      const auto& index_val = context.semantics_ir().GetIntegerLiteral(
-          index_node.GetAsIntegerLiteral());
-      if (index_val.uge(context.semantics_ir().GetArrayBoundValue(bound_id))) {
-        context.emitter().Emit(
-            parse_node, OutOfBoundsAccess,
-            llvm::APSInt(index_val, /*isUnsigned=*/true),
-            context.semantics_ir().StringifyType(name_node.type_id()));
-      } else {
-        context.AddNodeAndPush(
-            parse_node, SemIR::Node::ArrayIndex::Make(
-                            parse_node, type_id, name_node_id, index_node_id));
-        return true;
+  switch (operand_type_node.kind()) {
+    case SemIR::NodeKind::ArrayType: {
+      auto [bound_id, element_type_id] = operand_type_node.GetAsArrayType();
+      // We can check whether integers are in-bounds, although it doesn't affect
+      // the IR for an array.
+      if (index_node.kind() == SemIR::NodeKind::IntegerLiteral) {
+        ValidateIntegerLiteralBound(
+            context, parse_node, operand_node, index_node,
+            context.semantics_ir().GetArrayBoundValue(bound_id));
       }
-    } else if (context.ImplicitAsRequired(
-                   index_node.parse_node(), index_node_id,
-                   context.CanonicalizeType(
-                       SemIR::NodeId::BuiltinIntegerType)) !=
-               SemIR::NodeId::BuiltinError) {
-      context.AddNodeAndPush(
-          parse_node, SemIR::Node::ArrayIndex::Make(
-                          parse_node, type_id, name_node_id, index_node_id));
+      auto cast_index_id = context.ImplicitAsRequired(
+          index_node.parse_node(), index_node_id,
+          context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType));
+      context.AddNodeAndPush(parse_node, SemIR::Node::ArrayIndex::Make(
+                                             parse_node, element_type_id,
+                                             operand_node_id, cast_index_id));
       return true;
     }
-  } else if (name_type_node.kind() == SemIR::NodeKind::TupleType) {
-    if (index_node.kind() == SemIR::NodeKind::IntegerLiteral) {
-      const auto& index_val = context.semantics_ir().GetIntegerLiteral(
-          index_node.GetAsIntegerLiteral());
-      auto type_block =
-          context.semantics_ir().GetTypeBlock(name_type_node.GetAsTupleType());
-
-      if (index_val.uge(static_cast<uint64_t>(type_block.size()))) {
-        context.emitter().Emit(
-            parse_node, OutOfBoundsAccess,
-            llvm::APSInt(index_val, /*isUnsigned=*/true),
-            context.semantics_ir().StringifyType(name_node.type_id()));
+    case SemIR::NodeKind::TupleType: {
+      SemIR::TypeId element_type_id = SemIR::TypeId::Error;
+      if (index_node.kind() == SemIR::NodeKind::IntegerLiteral) {
+        auto type_block = context.semantics_ir().GetTypeBlock(
+            operand_type_node.GetAsTupleType());
+        if (const auto* index_val =
+                ValidateIntegerLiteralBound(context, parse_node, operand_node,
+                                            index_node, type_block.size())) {
+          element_type_id = type_block[index_val->getZExtValue()];
+        }
       } else {
-        context.AddNodeAndPush(
-            parse_node, SemIR::Node::TupleIndex::Make(
-                            parse_node, type_block[index_val.getZExtValue()],
-                            name_node_id, index_node_id));
-        return true;
+        CARBON_DIAGNOSTIC(TupleIndexIntegerLiteral, Error,
+                          "Tuples indices must be integer literals.");
+        context.emitter().Emit(parse_node, TupleIndexIntegerLiteral);
       }
-    } else {
-      CARBON_DIAGNOSTIC(NondeterministicType, Error,
-                        "Type cannot be determined at compile time.");
-      context.emitter().Emit(parse_node, NondeterministicType);
+      context.AddNodeAndPush(parse_node, SemIR::Node::TupleIndex::Make(
+                                             parse_node, element_type_id,
+                                             operand_node_id, index_node_id));
+      return true;
     }
-  } else if (name_type_id != SemIR::NodeId::BuiltinError) {
-    CARBON_DIAGNOSTIC(InvalidIndexExpression, Error,
-                      "Invalid index expression.");
-    context.emitter().Emit(parse_node, InvalidIndexExpression);
+    default: {
+      if (operand_type_id != SemIR::TypeId::Error) {
+        CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
+                          "`{0}` does not support indexing.", std::string);
+        context.emitter().Emit(
+            parse_node, TypeNotIndexable,
+            context.semantics_ir().StringifyType(operand_type_id));
+      }
+      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+      return true;
+    }
   }
-
-  context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
-  return true;
 }
 
 }  // namespace Carbon::Check

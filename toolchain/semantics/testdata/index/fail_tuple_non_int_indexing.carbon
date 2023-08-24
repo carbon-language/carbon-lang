@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_tuple_non_int_indexing.carbon:[[@LINE+3]]:19: Type cannot be determined at compile time.
+// CHECK:STDERR: fail_tuple_non_int_indexing.carbon:[[@LINE+3]]:19: Tuples indices must be integer literals.
 // CHECK:STDERR: var b: i32 = a[2.6];
 // CHECK:STDERR:                   ^
 var b: i32 = a[2.6];
@@ -55,6 +55,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+10},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type1},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type3},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+5, arg1: node+13, type: typeError},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -76,6 +77,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -101,6 +103,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc7_27: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_26.2)
 // CHECK:STDOUT:   assign %a, %.loc7_27
 // CHECK:STDOUT:   %b: i32 = var "b"
-// CHECK:STDOUT:   %.loc11: f64 = real_literal 26e-1
+// CHECK:STDOUT:   %.loc11_16: f64 = real_literal 26e-1
+// CHECK:STDOUT:   %.loc11_19: <error> = tuple_index %a, %.loc11_16
 // CHECK:STDOUT:   assign %b, <error>
 // CHECK:STDOUT: }

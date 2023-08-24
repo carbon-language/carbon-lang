@@ -6,7 +6,7 @@
 
 var a: (i32, i32) = (2, 3);
 var b: i32 = 0;
-// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:17: Type cannot be determined at compile time.
+// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:17: Tuples indices must be integer literals.
 // CHECK:STDERR: var c: i32 = a[b];
 // CHECK:STDERR:                 ^
 var c: i32 = a[b];
@@ -58,6 +58,7 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+13},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type1},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+5, arg1: node+12, type: typeError},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -81,6 +82,7 @@ var c: i32 = a[b];
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -109,5 +111,6 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0
 // CHECK:STDOUT:   assign %b, %.loc8
 // CHECK:STDOUT:   %c: i32 = var "c"
+// CHECK:STDOUT:   %.loc12: <error> = tuple_index %a, %b
 // CHECK:STDOUT:   assign %c, <error>
 // CHECK:STDOUT: }
