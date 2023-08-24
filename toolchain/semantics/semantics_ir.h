@@ -391,7 +391,7 @@ struct ValueRepresentation {
 };
 
 // Returns information about the value representation to use for a type.
-auto GetValueRepresentation(const File& file, File type_id)
+auto GetValueRepresentation(const File& file, TypeId type_id)
     -> ValueRepresentation;
 
 // The initializing representation to use when returning by value.
