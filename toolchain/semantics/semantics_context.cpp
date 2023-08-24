@@ -399,10 +399,9 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
       case SemIR::NodeKind::TupleValue:
         CARBON_FATAL() << init << " is not modeled as initializing yet";
 
-      case SemIR::NodeKind::StubReference: {
+      case SemIR::NodeKind::StubReference:
         init_id = init.GetAsStubReference();
         continue;
-      }
 
       case SemIR::NodeKind::Call: {
         // If the callee has a return slot, point it at our target.
