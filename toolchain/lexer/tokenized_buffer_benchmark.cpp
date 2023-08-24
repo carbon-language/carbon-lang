@@ -15,6 +15,11 @@
 namespace Carbon::Testing {
 namespace {
 
+// A large value for measurement stability without making benchmarking too slow.
+// Needs to be a multiple of 100 so we can easily divide it up into percentages,
+// and 1% itself needs to not be too tiny. This makes 100,000 a great balance.
+constexpr int NumTokens = 100'000;
+
 auto IdentifierStartChars() -> llvm::ArrayRef<char> {
   static llvm::SmallVector<char> chars = [] {
     llvm::SmallVector<char> chars;
@@ -42,29 +47,11 @@ auto IdentifierChars() -> llvm::ArrayRef<char> {
   return chars;
 }
 
-// Generates a random identifier string using the provided RNG BitGen.
-//
-// Optionally, can specify a min and max length for the generated identifier.
-//
-// Optionally, can request a uniform distribution of lengths. When this is false
-// (the default) the routine tries to generate a distribution that roughly
-// matches what we observe in C++ code.
-auto GenerateRandomIdentifier(absl::BitGen& gen, int min_length = 1,
-                              int max_length = 64, bool uniform_lengths = false)
-    -> std::string {
+// Generates a random identifier string of the specified length using the
+// provided RNG BitGen.
+auto GenerateRandomIdentifier(absl::BitGen& gen, int length) -> std::string {
   llvm::ArrayRef<char> start_chars = IdentifierStartChars();
   llvm::ArrayRef<char> chars = IdentifierChars();
-
-  int length =
-      uniform_lengths
-          ? absl::Uniform<int>(gen, min_length, max_length)
-          // None of the Abseil distributions are *great* fits for observed data
-          // on identifier length, but log-uniform is vaguely close. A better
-          // distribution would have two peaks -- one at 1 and the other at 4,
-          // with a minor dip between and a fairly slow log-uniform falloff into
-          // the long tail. Lacking more nuanced distribution functions, we work
-          // with a basic log-uniform.
-          : absl::LogUniform<int>(gen, min_length, max_length);
 
   std::string id_result;
   llvm::raw_string_ostream os(id_result);
@@ -89,41 +76,217 @@ auto GenerateRandomIdentifier(absl::BitGen& gen, int min_length = 1,
   return id_result;
 }
 
-// Build our own table of symbols so we can use repetitions to skew the
-// distribution.
-auto GetSymbolTokenTableImpl() -> llvm::SmallVector<TokenKind> {
-  llvm::SmallVector<TokenKind> table;
+// Get a static pool of random identifiers with the desired distribution.
+template <int MinLength = 1, int MaxLength = 64, bool Uniform = false>
+auto GetRandomIdentifiers() -> const std::array<std::string, NumTokens>& {
+  static_assert(MinLength <= MaxLength);
+  static_assert(
+      Uniform || MaxLength <= 64,
+      "Cannot produce a meaningful non-uniform distribution of lengths longer "
+      "than 64 as those are exceedingly rare in our observed data sets.");
+
+  static const std::array<std::string, NumTokens> id_storage = [] {
+    std::array<int, 64> id_length_counts;
+    // For non-uniform distribution, we simulate a distribution roughly based on
+    // the observed histogram of identifier lengths, but smoothed a bit and
+    // reduced to small counts so that we cycle through all the lengths
+    // reasonably quickly. We want sampling of even 10% of NumTokens from this
+    // in a round-robin form to not be skewed overly much. This still inherently
+    // compresses the long tail as we'd rather have coverage even though it
+    // distorts the distribution a bit.
+    //
+    // The distribution here comes from a script that analyzes source code run
+    // over a few directories of LLVM. The script renders a visual ascii-art
+    // histogram along with the data for each bucket, and that output is
+    // included in comments above each bucket size below to help visualize the
+    // rough shape we're aiming for.
+    //
+    // 1 characters   [3976]  ███████████████████████████████▊
+    id_length_counts[0] = 40;
+    // 2 characters   [3724]  █████████████████████████████▊
+    id_length_counts[1] = 40;
+    // 3 characters   [4173]  █████████████████████████████████▍
+    id_length_counts[2] = 40;
+    // 4 characters   [5000]  ████████████████████████████████████████
+    id_length_counts[3] = 50;
+    // 5 characters   [1568]  ████████████▌
+    id_length_counts[4] = 20;
+    // 6 characters   [2226]  █████████████████▊
+    id_length_counts[5] = 20;
+    // 7 characters   [2380]  ███████████████████
+    id_length_counts[6] = 20;
+    // 8 characters   [1786]  ██████████████▎
+    id_length_counts[7] = 18;
+    // 9 characters   [1397]  ███████████▏
+    id_length_counts[8] = 12;
+    // 10 characters  [ 739]  █████▉
+    id_length_counts[9] = 12;
+    // 11 characters  [ 779]  ██████▎
+    id_length_counts[10] = 12;
+    // 12 characters  [1344]  ██████████▊
+    id_length_counts[11] = 12;
+    // 13 characters  [ 498]  ████
+    id_length_counts[12] = 5;
+    // 14 characters  [ 284]  ██▎
+    id_length_counts[13] = 3;
+    // 15 characters  [ 172]  █▍
+    // 16 characters  [ 278]  ██▎
+    // 17 characters  [ 191]  █▌
+    // 18 characters  [ 207]  █▋
+    for (int i : llvm::seq(14, 18)) {
+      id_length_counts[i] = 2;
+    }
+    // 19 - 63 characters are all <100 but non-zero, and we map them to 1 for
+    // coverage despite slightly over weighting the tail.
+    for (int i : llvm::seq(18, 64)) {
+      id_length_counts[i] = 1;
+    }
+
+    // Used to track the different count buckets when in a non-uniform
+    // distribution.
+    int length_bucket_index = 0;
+    int length_count = 0;
+
+    std::array<std::string, NumTokens> ids;
+    absl::BitGen gen;
+    for (auto [i, id] : llvm::enumerate(ids)) {
+      if (Uniform) {
+        // Rather than using randomness, for a uniform distribution rotate
+        // lengths in round-robin to get a deterministic and exact size on every
+        // run. We will then shuffle them at the end to produce a random
+        // ordering.
+        int length = MinLength + i % (1 + MaxLength - MinLength);
+        id = GenerateRandomIdentifier(gen, length);
+        continue;
+      }
+
+      // For non-uniform distribution, walk through each each length bucket
+      // until our count matches the desired distribution, and then move to the
+      // next.
+      id = GenerateRandomIdentifier(gen, length_bucket_index + 1);
+
+      if (length_count < id_length_counts[length_bucket_index]) {
+        ++length_count;
+      } else {
+        length_bucket_index =
+            (length_bucket_index + 1) % id_length_counts.size();
+        length_count = 0;
+      }
+    }
+
+    return ids;
+  }();
+  return id_storage;
+}
+
+// Compute a random sequence of just identifiers.
+template <int MinLength = 1, int MaxLength = 64, bool Uniform = false>
+auto RandomIdentifierSeq() -> std::string {
+  std::string result;
+
+  // Get a static pool of identifiers with the desired distribution.
+  const std::array<std::string, NumTokens>& ids =
+      GetRandomIdentifiers<MinLength, MaxLength, Uniform>();
+
+  // Shuffle indices so we get exactly one of each identifier but in a random
+  // order.
+  std::array<int, NumTokens> indices;
+  std::iota(indices.begin(), indices.end(), 0);
+  std::shuffle(indices.begin(), indices.end(), absl::BitGen());
+
+  llvm::raw_string_ostream os(result);
+  llvm::ListSeparator sep(" ");
+  for (int i : indices) {
+    os << sep << ids[i];
+  }
+
+  return result;
+}
+
+auto GetSymbolTokenTable() -> llvm::ArrayRef<TokenKind> {
+  // Build our own table of symbols so we can use repetitions to skew the
+  // distribution.
+  static auto symbol_token_table_storage = [] {
+    llvm::SmallVector<TokenKind> table;
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
   table.push_back(TokenKind::TokenName);
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)
 #include "toolchain/lexer/token_kind.def"
-  table.insert(table.end(), 32, TokenKind::Semi);
-  table.insert(table.end(), 16, TokenKind::Comma);
-  table.insert(table.end(), 12, TokenKind::Period);
-  table.insert(table.end(), 8, TokenKind::Colon);
-  table.insert(table.end(), 8, TokenKind::Equal);
-  table.insert(table.end(), 4, TokenKind::Amp);
-  table.insert(table.end(), 4, TokenKind::ColonExclaim);
-  table.insert(table.end(), 4, TokenKind::EqualEqual);
-  table.insert(table.end(), 4, TokenKind::ExclaimEqual);
-  table.insert(table.end(), 4, TokenKind::MinusGreater);
-  table.insert(table.end(), 4, TokenKind::Star);
-  return table;
-}
-
-auto GetSymbolTokenTable() -> llvm::ArrayRef<TokenKind> {
-  static auto symbol_token_table_storage = GetSymbolTokenTableImpl();
+    table.insert(table.end(), 32, TokenKind::Semi);
+    table.insert(table.end(), 16, TokenKind::Comma);
+    table.insert(table.end(), 12, TokenKind::Period);
+    table.insert(table.end(), 8, TokenKind::Colon);
+    table.insert(table.end(), 8, TokenKind::Equal);
+    table.insert(table.end(), 4, TokenKind::Amp);
+    table.insert(table.end(), 4, TokenKind::ColonExclaim);
+    table.insert(table.end(), 4, TokenKind::EqualEqual);
+    table.insert(table.end(), 4, TokenKind::ExclaimEqual);
+    table.insert(table.end(), 4, TokenKind::MinusGreater);
+    table.insert(table.end(), 4, TokenKind::Star);
+    return table;
+  }();
   return symbol_token_table_storage;
 }
 
-// Generate random symbols. This skews the distribution as best it can towards
-// what we expect in real world source code, but doesn't include grouping
-// symbols for simplicity.
-auto GenerateRandomSymbol(absl::BitGen& gen) -> llvm::StringRef {
-  llvm::ArrayRef<TokenKind> table = GetSymbolTokenTable();
-  auto index = absl::Uniform<int>(gen, 0, table.size());
-  return table[index].fixed_spelling();
+// Compute a random sequence of mixed symbols, keywords, and identifiers, with
+// percentages of each according to the parameters.
+auto RandomMixedSeq(int symbol_percent, int keyword_percent) -> std::string {
+  CARBON_CHECK(0 <= symbol_percent && symbol_percent <= 100)
+      << "Must be a percent: [0, 100].";
+  CARBON_CHECK(0 <= keyword_percent && keyword_percent <= 100)
+      << "Must be a percent: [0, 100].";
+  CARBON_CHECK((symbol_percent + keyword_percent) <= 100)
+      << "Cannot have >100%.";
+  static_assert((NumTokens % 100) == 0,
+                "The number of tokens must be divisible by 100 so that we can "
+                "easily scale integer percentages up to it.");
+
+  // Get static pools of symbols, keywords, and identifiers.
+  llvm::ArrayRef<TokenKind> symbols = GetSymbolTokenTable();
+  llvm::ArrayRef<TokenKind> keywords = TokenKind::KeywordTokens;
+  const std::array<std::string, NumTokens>& ids = GetRandomIdentifiers();
+
+  // Build a list of kind keys and indices into the relevant tables that have
+  // the desired distribution, then shuffle that list.
+  enum ElementKind {
+    Symbol,
+    Keyword,
+    Identifier,
+  };
+  std::array<std::pair<ElementKind, int>, NumTokens> indices;
+
+  int num_symbols = (NumTokens / 100) * symbol_percent;
+  int num_keywords = (NumTokens / 100) * keyword_percent;
+  int num_identifiers = NumTokens - num_symbols - num_keywords;
+  CARBON_CHECK(num_identifiers == 0 || num_identifiers > 500)
+      << "We require at least 500 identifiers as we need to collect a "
+         "reasonable number of samples to end up with a reasonable "
+         "distribution of lengths.";
+
+  for (int i : llvm::seq(num_symbols)) {
+    indices[i] = {Symbol, i % symbols.size()};
+  }
+  for (int i : llvm::seq(num_keywords)) {
+    indices[num_symbols + i] = {Keyword, i % keywords.size()};
+  }
+  for (int i : llvm::seq(num_identifiers)) {
+    // We always have enough identifiers, so no need to mod here.
+    indices[num_symbols + num_keywords + i] = {Identifier, i};
+  }
+  std::shuffle(indices.begin(), indices.end(), absl::BitGen());
+
+  std::string result;
+  llvm::raw_string_ostream os(result);
+  llvm::ListSeparator sep(" ");
+  for (auto [kind, i] : indices) {
+    os << sep
+       << (kind == Symbol    ? symbols[i].fixed_spelling()
+           : kind == Keyword ? keywords[i].fixed_spelling()
+                             : ids[i]);
+  }
+
+  return result;
 }
 
 class LexerBenchHelper {
@@ -159,18 +322,19 @@ class LexerBenchHelper {
   SourceBuffer source_;
 };
 
-// A large value for measurement stability without making benchmarking too slow.
-constexpr int NumTokens = 100000;
-
 void BM_ValidKeywords(benchmark::State& state) {
   absl::BitGen gen;
+  std::array<int, NumTokens> indices;
+  for (int i : llvm::seq(0, NumTokens)) {
+    indices[i] = i % TokenKind::KeywordTokens.size();
+  }
+  std::shuffle(indices.begin(), indices.end(), gen);
+
   std::string source;
   llvm::raw_string_ostream os(source);
   llvm::ListSeparator sep(" ");
   for (int i : llvm::seq(0, NumTokens)) {
-    static_cast<void>(i);
-    int token = absl::Uniform<int>(gen, 0, TokenKind::KeywordTokens.size());
-    os << sep << TokenKind::KeywordTokens[token].fixed_spelling();
+    os << sep << TokenKind::KeywordTokens[indices[i]].fixed_spelling();
   }
 
   LexerBenchHelper helper(source);
@@ -179,23 +343,15 @@ void BM_ValidKeywords(benchmark::State& state) {
     CARBON_CHECK(!buffer.has_errors());
   }
 
-  state.counters["TokenRate"] = benchmark::Counter(
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
       NumTokens, benchmark::Counter::kIsIterationInvariantRate);
 }
 BENCHMARK(BM_ValidKeywords);
 
-void BM_ValidIdentifiers(benchmark::State& state, bool uniform_lengths) {
-  int min_length = state.range(0);
-  int max_length = state.range(1);
-  absl::BitGen gen;
-  std::string source;
-  llvm::raw_string_ostream os(source);
-  llvm::ListSeparator sep(" ");
-  for (int i = 0; i < NumTokens; ++i) {
-    os << sep
-       << GenerateRandomIdentifier(gen, min_length, max_length,
-                                   uniform_lengths);
-  }
+template <int MinLength, int MaxLength, bool Uniform>
+void BM_ValidIdentifiers(benchmark::State& state) {
+  std::string source = RandomIdentifierSeq<MinLength, MaxLength, Uniform>();
 
   LexerBenchHelper helper(source);
   for (auto _ : state) {
@@ -203,42 +359,25 @@ void BM_ValidIdentifiers(benchmark::State& state, bool uniform_lengths) {
     CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
   }
 
-  state.counters["TokenRate"] = benchmark::Counter(
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
       NumTokens, benchmark::Counter::kIsIterationInvariantRate);
 }
 // Benchmark the non-uniform distribution we observe in C++ code.
-BENCHMARK_CAPTURE(BM_ValidIdentifiers, Representative,
-                  /*uniform_lengths=*/false)
-    ->Args({1, 64});
+BENCHMARK(BM_ValidIdentifiers<1, 64, /*Uniform=*/false>);
 
 // Also benchmark a few uniform distribution ranges of identifier widths to
 // cover different patterns that emerge with small, medium, and longer
 // identifiers.
-BENCHMARK_CAPTURE(BM_ValidIdentifiers, Uniform,
-                  /*uniform_lengths=*/true)
-    ->Args({3, 5})
-    ->Args({3, 16})
-    ->Args({12, 64});
+BENCHMARK(BM_ValidIdentifiers<1, 1, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<3, 5, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<3, 16, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<12, 64, /*Uniform=*/true>);
 
 void BM_ValidMix(benchmark::State& state) {
   int symbol_percent = state.range(0);
   int keyword_percent = state.range(1);
-  absl::BitGen gen;
-  std::string source;
-  llvm::raw_string_ostream os(source);
-  llvm::ListSeparator sep(" ");
-  for (int i = 0; i < NumTokens; ++i) {
-    os << sep;
-    int percent_bucket = absl::Uniform<int>(gen, 0, 100);
-    if (percent_bucket < symbol_percent) {
-      os << GenerateRandomSymbol(gen);
-    } else if (percent_bucket < symbol_percent + keyword_percent) {
-      int index = absl::Uniform<int>(gen, 0, TokenKind::KeywordTokens.size());
-      os << TokenKind::KeywordTokens[index].fixed_spelling();
-    } else {
-      os << GenerateRandomIdentifier(gen);
-    }
-  }
+  std::string source = RandomMixedSeq(symbol_percent, keyword_percent);
 
   LexerBenchHelper helper(source);
   for (auto _ : state) {
@@ -249,7 +388,8 @@ void BM_ValidMix(benchmark::State& state) {
     CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
   }
 
-  state.counters["TokenRate"] = benchmark::Counter(
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
       NumTokens, benchmark::Counter::kIsIterationInvariantRate);
 }
 // The distributions between symbols, keywords, and identifiers here are
