@@ -110,6 +110,40 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
+  // Converts the given expression to an ephemeral reference to a temporary if
+  // it is an initializing expression.
+  auto MaterializeIfInitializing(SemIR::NodeId expr_id) -> SemIR::NodeId {
+    if (GetExpressionCategory(semantics_ir(), expr_id) ==
+        SemIR::ExpressionCategory::Initializing) {
+      return FinalizeTemporary(expr_id, /*discarded=*/false);
+    }
+    return expr_id;
+  }
+
+  // Convert the given expression to a value expression of the same type.
+  auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
+
+  // Performs initialization of `target_id` from `value_id`.
+  auto Initialize(ParseTree::Node parse_node, SemIR::NodeId target_id,
+                  SemIR::NodeId value_id) -> void;
+
+  // Converts `value_id` to a value expression of type `type_id`.
+  auto ConvertToValueOfType(ParseTree::Node parse_node, SemIR::NodeId value_id,
+                            SemIR::TypeId type_id) -> SemIR::NodeId {
+    return ConvertToValueExpression(
+        ImplicitAsRequired(parse_node, value_id, type_id));
+  }
+
+  // Converts `value_id` to a value expression of type `bool`.
+  auto ConvertToBoolValue(ParseTree::Node parse_node, SemIR::NodeId value_id)
+      -> SemIR::NodeId {
+    return ConvertToValueOfType(
+        parse_node, value_id, CanonicalizeType(SemIR::NodeId::BuiltinBoolType));
+  }
+
+  // Handles an expression whose result is discarded.
+  auto HandleDiscardedExpression(SemIR::NodeId id) -> void;
+
   // Runs ImplicitAsImpl for a set of arguments and parameters.
   //
   // This will eventually need to support checking against multiple possible
@@ -128,10 +162,6 @@ class Context {
   // unsupported.
   auto ImplicitAsRequired(ParseTree::Node parse_node, SemIR::NodeId value_id,
                           SemIR::TypeId as_type_id) -> SemIR::NodeId;
-
-  // Runs ImplicitAsRequired for a conversion to `bool`.
-  auto ImplicitAsBool(ParseTree::Node parse_node, SemIR::NodeId value_id)
-      -> SemIR::NodeId;
 
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.
@@ -170,7 +200,7 @@ class Context {
     }
 
     return CanonicalizeType(
-        ImplicitAsRequired(parse_node, value_id, SemIR::TypeId::TypeType));
+        ConvertToValueOfType(parse_node, value_id, SemIR::TypeId::TypeType));
   }
 
   // Removes any top-level `const` qualifiers from a type.
@@ -255,6 +285,18 @@ class Context {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
+
+  // Commits to using a temporary to store the result of the initializing
+  // expression described by `init_id`, and returns the location of the
+  // temporary. If `discarded` is `true`, the result is discarded, and no
+  // temporary will be created if possible; if no temporary is created, the
+  // return value will be `SemIR::NodeId::Invalid`.
+  auto FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
+      -> SemIR::NodeId;
+
+  // Marks the initializer `init_id` as initializing `target_id`.
+  auto MarkInitializerFor(SemIR::NodeId target_id, SemIR::NodeId init_id)
+      -> void;
 
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
   // result type. The result will be the node to use to replace `value`.

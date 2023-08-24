@@ -317,6 +317,8 @@ class Node {
   using BinaryOperatorAdd = Node::Factory<NodeKind::BinaryOperatorAdd,
                                           NodeId /*lhs_id*/, NodeId /*rhs_id*/>;
 
+  using BindValue = Factory<NodeKind::BindValue, NodeId /*value_id*/>;
+
   using BlockArg = Factory<NodeKind::BlockArg, NodeBlockId /*block_id*/>;
 
   using BoolLiteral = Factory<NodeKind::BoolLiteral, BoolValue /*value*/>;
@@ -373,8 +375,12 @@ class Node {
   using IntegerLiteral =
       Factory<NodeKind::IntegerLiteral, IntegerLiteralId /*integer_id*/>;
 
+  using MaterializeTemporary = Factory<NodeKind::MaterializeTemporary>;
+
   using Namespace =
       FactoryNoType<NodeKind::Namespace, NameScopeId /*name_scope_id*/>;
+
+  using NoOp = FactoryNoType<NodeKind::NoOp>;
 
   using Parameter = Factory<NodeKind::Parameter, StringId /*name_id*/>;
 

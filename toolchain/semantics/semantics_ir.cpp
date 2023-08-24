@@ -220,6 +220,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::ArrayValue:
     case NodeKind::Assign:
     case NodeKind::BinaryOperatorAdd:
+    case NodeKind::BindValue:
     case NodeKind::BlockArg:
     case NodeKind::BoolLiteral:
     case NodeKind::Branch:
@@ -230,7 +231,9 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::FunctionDeclaration:
     case NodeKind::IntegerLiteral:
     case NodeKind::Invalid:
+    case NodeKind::MaterializeTemporary:
     case NodeKind::Namespace:
+    case NodeKind::NoOp:
     case NodeKind::Parameter:
     case NodeKind::RealLiteral:
     case NodeKind::Return:
@@ -375,6 +378,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::ArrayValue:
       case NodeKind::Assign:
       case NodeKind::BinaryOperatorAdd:
+      case NodeKind::BindValue:
       case NodeKind::BlockArg:
       case NodeKind::BoolLiteral:
       case NodeKind::Branch:
@@ -382,11 +386,13 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::BranchWithArg:
       case NodeKind::Builtin:
       case NodeKind::Call:
-      case NodeKind::Dereference:
       case NodeKind::CrossReference:
+      case NodeKind::Dereference:
       case NodeKind::FunctionDeclaration:
       case NodeKind::IntegerLiteral:
+      case NodeKind::MaterializeTemporary:
       case NodeKind::Namespace:
+      case NodeKind::NoOp:
       case NodeKind::Parameter:
       case NodeKind::RealLiteral:
       case NodeKind::Return:
@@ -423,9 +429,9 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
   return str;
 }
 
-auto GetExpressionCategory(const File& semantics_ir, NodeId node_id)
+auto GetExpressionCategory(const File& file, NodeId node_id)
     -> ExpressionCategory {
-  const File* ir = &semantics_ir;
+  const File* ir = &file;
   while (true) {
     auto node = ir->GetNode(node_id);
     switch (node.kind()) {
@@ -436,6 +442,7 @@ auto GetExpressionCategory(const File& semantics_ir, NodeId node_id)
       case NodeKind::BranchWithArg:
       case NodeKind::FunctionDeclaration:
       case NodeKind::Namespace:
+      case NodeKind::NoOp:
       case NodeKind::Return:
       case NodeKind::ReturnExpression:
       case NodeKind::StructTypeField:
@@ -443,18 +450,15 @@ auto GetExpressionCategory(const File& semantics_ir, NodeId node_id)
 
       case NodeKind::CrossReference: {
         auto [xref_id, xref_node_id] = node.GetAsCrossReference();
-        ir = &semantics_ir.GetCrossReferenceIR(xref_id);
+        ir = &ir->GetCrossReferenceIR(xref_id);
         node_id = xref_node_id;
         continue;
       }
 
-      case NodeKind::Call:
-        // TODO: This should eventually be Initializing.
-        return ExpressionCategory::Value;
-
       case NodeKind::AddressOf:
       case NodeKind::ArrayType:
       case NodeKind::BinaryOperatorAdd:
+      case NodeKind::BindValue:
       case NodeKind::BlockArg:
       case NodeKind::BoolLiteral:
       case NodeKind::Builtin:
@@ -501,10 +505,151 @@ auto GetExpressionCategory(const File& semantics_ir, NodeId node_id)
         // struct/tuple value construction.
         return ExpressionCategory::Value;
 
+      case NodeKind::Call:
+        return ExpressionCategory::Initializing;
+
       case NodeKind::Dereference:
       case NodeKind::VarStorage:
         return ExpressionCategory::DurableReference;
+
+      case NodeKind::MaterializeTemporary:
+        return ExpressionCategory::EphemeralReference;
     }
+  }
+}
+
+auto GetValueRepresentation(const File& file, TypeId type_id)
+    -> ValueRepresentation {
+  const File* ir = &file;
+  NodeId node_id = ir->GetTypeAllowBuiltinTypes(type_id);
+  while (true) {
+    auto node = ir->GetNode(node_id);
+    switch (node.kind()) {
+      case NodeKind::AddressOf:
+      case NodeKind::ArrayIndex:
+      case NodeKind::ArrayValue:
+      case NodeKind::Assign:
+      case NodeKind::BinaryOperatorAdd:
+      case NodeKind::BindValue:
+      case NodeKind::BlockArg:
+      case NodeKind::BoolLiteral:
+      case NodeKind::Branch:
+      case NodeKind::BranchIf:
+      case NodeKind::BranchWithArg:
+      case NodeKind::Call:
+      case NodeKind::Dereference:
+      case NodeKind::FunctionDeclaration:
+      case NodeKind::IntegerLiteral:
+      case NodeKind::Invalid:
+      case NodeKind::MaterializeTemporary:
+      case NodeKind::Namespace:
+      case NodeKind::NoOp:
+      case NodeKind::Parameter:
+      case NodeKind::RealLiteral:
+      case NodeKind::Return:
+      case NodeKind::ReturnExpression:
+      case NodeKind::StringLiteral:
+      case NodeKind::StructAccess:
+      case NodeKind::StructTypeField:
+      case NodeKind::StructValue:
+      case NodeKind::TupleIndex:
+      case NodeKind::TupleValue:
+      case NodeKind::UnaryOperatorNot:
+      case NodeKind::VarStorage:
+        CARBON_FATAL() << "Type refers to non-type node " << node;
+
+      case NodeKind::CrossReference: {
+        auto [xref_id, xref_node_id] = node.GetAsCrossReference();
+        ir = &ir->GetCrossReferenceIR(xref_id);
+        node_id = xref_node_id;
+        continue;
+      }
+
+      case NodeKind::StubReference: {
+        node_id = node.GetAsStubReference();
+        continue;
+      }
+
+      case NodeKind::ArrayType:
+        // For arrays, it's convenient to always use a pointer representation,
+        // even when the array has zero or one element, in order to support
+        // indexing.
+        return {.kind = ValueRepresentation::Pointer, .type = type_id};
+
+      case NodeKind::StructType: {
+        auto& fields = ir->GetNodeBlock(node.GetAsStructType());
+        if (fields.empty()) {
+          // An empty struct has an empty representation.
+          return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
+        }
+        if (fields.size() == 1) {
+          // A struct with one field has the same representation as its field.
+          auto [field_name_id, field_type_id] =
+              ir->GetNode(fields.front()).GetAsStructTypeField();
+          node_id = ir->GetTypeAllowBuiltinTypes(field_type_id);
+          continue;
+        }
+        // For any other struct, use a pointer representation.
+        return {.kind = ValueRepresentation::Pointer, .type = type_id};
+      }
+
+      case NodeKind::TupleType: {
+        auto& elements = ir->GetTypeBlock(node.GetAsTupleType());
+        if (elements.empty()) {
+          // An empty tuple has an empty representation.
+          return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
+        }
+        if (elements.size() == 1) {
+          // A one-tuple has the same representation as its sole element.
+          node_id = ir->GetTypeAllowBuiltinTypes(elements.front());
+          continue;
+        }
+        // For any other tuple, use a pointer representation.
+        return {.kind = ValueRepresentation::Pointer, .type = type_id};
+      }
+
+      case NodeKind::Builtin:
+        switch (node.GetAsBuiltin()) {
+          case BuiltinKind::TypeType:
+          case BuiltinKind::Error:
+          case BuiltinKind::Invalid:
+            return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
+          case BuiltinKind::BoolType:
+          case BuiltinKind::IntegerType:
+          case BuiltinKind::FloatingPointType:
+            return {.kind = ValueRepresentation::Copy, .type = type_id};
+          case BuiltinKind::StringType:
+            // TODO: Decide on string value semantics. This should probably be a
+            // custom value representation carrying a pointer and size or
+            // similar.
+            return {.kind = ValueRepresentation::Pointer, .type = type_id};
+        }
+
+      case NodeKind::PointerType:
+        return {.kind = ValueRepresentation::Copy, .type = type_id};
+
+      case NodeKind::ConstType:
+        node_id = ir->GetTypeAllowBuiltinTypes(node.GetAsConstType());
+        continue;
+    }
+  }
+}
+
+auto GetInitializingRepresentation(const File& file, TypeId type_id)
+    -> InitializingRepresentation {
+  auto value_rep = GetValueRepresentation(file, type_id);
+  switch (value_rep.kind) {
+    case ValueRepresentation::None:
+      return {.kind = InitializingRepresentation::None};
+
+    case ValueRepresentation::Copy:
+      // TODO: Use in-place initialization for types that have non-trivial
+      // destructive move.
+      return {.kind = InitializingRepresentation::ByCopy};
+
+    case ValueRepresentation::Pointer:
+    case ValueRepresentation::Custom:
+      return {.kind = InitializingRepresentation::InPlace};
   }
 }
 

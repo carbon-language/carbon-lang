@@ -253,6 +253,7 @@ class NodeStack {
       case ParseNodeKind::PatternBinding:
       case ParseNodeKind::PostfixOperator:
       case ParseNodeKind::PrefixOperator:
+      case ParseNodeKind::ReturnType:
       case ParseNodeKind::ShortCircuitOperand:
       case ParseNodeKind::StructFieldValue:
       case ParseNodeKind::StructLiteral:
@@ -268,8 +269,6 @@ class NodeStack {
         return IdKind::FunctionId;
       case ParseNodeKind::Name:
         return IdKind::StringId;
-      case ParseNodeKind::ReturnType:
-        return IdKind::TypeId;
       case ParseNodeKind::ArrayExpressionSemi:
       case ParseNodeKind::CodeBlockStart:
       case ParseNodeKind::FunctionIntroducer:

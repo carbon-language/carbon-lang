@@ -57,6 +57,13 @@ class NodeNamer {
           fn.name_id.is_valid() ? semantics_ir.GetString(fn.name_id).str()
                                 : "");
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
+      if (fn.return_slot_id.is_valid()) {
+        nodes[fn.return_slot_id.index] = {
+            fn_scope,
+            GetScopeInfo(fn_scope).nodes.AllocateName(
+                *this, semantics_ir.GetNode(fn.return_slot_id).parse_node(),
+                "return")};
+      }
       if (!fn.body_block_ids.empty()) {
         AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
       }
@@ -325,6 +332,9 @@ class NodeNamer {
 
     // Use bound names where available. Otherwise, assign a backup name.
     for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
+      if (!node_id.is_valid()) {
+        continue;
+      }
       auto node = semantics_ir_.GetNode(node_id);
       switch (node.kind()) {
         case NodeKind::Branch: {
@@ -426,6 +436,10 @@ class Formatter {
     llvm::ListSeparator sep;
     for (const NodeId param_id : semantics_ir_.GetNodeBlock(fn.param_refs_id)) {
       out_ << sep;
+      if (!param_id.is_valid()) {
+        out_ << "invalid";
+        continue;
+      }
       FormatNodeName(param_id);
       out_ << ": ";
       FormatType(semantics_ir_.GetNode(param_id).type_id());
@@ -433,6 +447,10 @@ class Formatter {
     out_ << ")";
     if (fn.return_type_id.is_valid()) {
       out_ << " -> ";
+      if (fn.return_slot_id.is_valid()) {
+        FormatNodeName(fn.return_slot_id);
+        out_ << ": ";
+      }
       FormatType(fn.return_type_id);
     }
 
@@ -567,7 +585,29 @@ class Formatter {
     out_ << " ";
     auto [args_id, callee_id] = node.GetAsCall();
     FormatArg(callee_id);
-    FormatArg(args_id);
+
+    llvm::ArrayRef<NodeId> args = semantics_ir_.GetNodeBlock(args_id);
+
+    bool has_return_slot =
+        semantics_ir_.GetFunction(callee_id).return_slot_id.is_valid();
+    NodeId return_slot_id = NodeId::Invalid;
+    if (has_return_slot) {
+      return_slot_id = args.back();
+      args = args.drop_back();
+    }
+
+    llvm::ListSeparator sep;
+    out_ << '(';
+    for (auto node_id : args) {
+      out_ << sep;
+      FormatArg(node_id);
+    }
+    out_ << ')';
+
+    if (has_return_slot) {
+      out_ << " to ";
+      FormatArg(return_slot_id);
+    }
   }
 
   template <>

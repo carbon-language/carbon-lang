@@ -13,6 +13,10 @@ auto HandleMemberAccessExpression(Context& context, ParseTree::Node parse_node)
   SemIR::StringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
 
   auto base_id = context.node_stack().PopExpression();
+
+  // Materialize a temporary for the base expression if necessary.
+  base_id = context.MaterializeIfInitializing(base_id);
+
   auto base = context.semantics_ir().GetNode(base_id);
   if (base.kind() == SemIR::NodeKind::Namespace) {
     // For a namespace, just resolve the name.

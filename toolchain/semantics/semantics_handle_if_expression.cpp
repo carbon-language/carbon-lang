@@ -12,7 +12,7 @@ auto HandleIfExpressionIf(Context& context, ParseTree::Node if_node) -> bool {
   context.node_stack().Push(if_node);
 
   // Convert the condition to `bool`, and branch on it.
-  cond_value_id = context.ImplicitAsBool(if_node, cond_value_id);
+  cond_value_id = context.ConvertToBoolValue(if_node, cond_value_id);
   auto then_block_id =
       context.AddDominatedBlockAndBranchIf(if_node, cond_value_id);
   auto else_block_id = context.AddDominatedBlockAndBranch(if_node);
@@ -27,6 +27,12 @@ auto HandleIfExpressionIf(Context& context, ParseTree::Node if_node) -> bool {
 
 auto HandleIfExpressionThen(Context& context, ParseTree::Node then_node)
     -> bool {
+  // Convert the first operand to a value.
+  auto [then_value_node, then_value_id] =
+      context.node_stack().PopExpressionWithParseNode();
+  context.node_stack().Push(then_value_node,
+                            context.ConvertToValueExpression(then_value_id));
+
   context.node_stack().Push(then_node, context.node_block_stack().Pop());
   context.AddCurrentCodeBlockToFunction();
   return true;
@@ -46,7 +52,7 @@ auto HandleIfExpressionElse(Context& context, ParseTree::Node else_node)
   // TODO: Find a common type, and convert both operands to it instead.
   auto result_type_id = context.semantics_ir().GetNode(then_value_id).type_id();
   else_value_id =
-      context.ImplicitAsRequired(else_node, else_value_id, result_type_id);
+      context.ConvertToValueOfType(else_node, else_value_id, result_type_id);
   auto else_end_block_id = context.node_block_stack().Pop();
 
   // Create a resumption block and branches to it.

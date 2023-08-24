@@ -29,6 +29,5 @@ fn F() {
 // CHECK:STDOUT:   %b1 = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
 // CHECK:STDOUT:   %2 = load ptr, ptr %b1, align 8
 // CHECK:STDOUT:   call void @G(ptr %2)
-// CHECK:STDOUT:   %call.result = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

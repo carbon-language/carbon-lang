@@ -20,11 +20,21 @@ static auto BuildFunctionDeclaration(Context& context)
   // prior to the call.
   context.node_block_stack().Pop();
 
-  SemIR::TypeId return_type_id = SemIR::TypeId::Invalid;
+  auto return_type_id = SemIR::TypeId::Invalid;
+  auto return_slot_id = SemIR::NodeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
-    return_type_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
+    return_slot_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
+    return_type_id = context.semantics_ir().GetNode(return_slot_id).type_id();
+
+    // The function only has a return slot if it uses in-place initialization.
+    if (!SemIR::GetInitializingRepresentation(context.semantics_ir(),
+                                              return_type_id)
+             .has_return_slot()) {
+      return_slot_id = SemIR::NodeId::Invalid;
+    }
   }
+
   SemIR::NodeBlockId param_refs_id =
       context.node_stack().Pop<ParseNodeKind::ParameterList>();
   auto name_context = context.declaration_name_stack().Pop();
@@ -42,6 +52,7 @@ static auto BuildFunctionDeclaration(Context& context)
                       : SemIR::StringId(SemIR::StringId::InvalidIndex),
        .param_refs_id = param_refs_id,
        .return_type_id = return_type_id,
+       .return_slot_id = return_slot_id,
        .body_block_ids = {}});
   auto decl_id = context.AddNode(
       SemIR::Node::FunctionDeclaration::Make(fn_node, function_id));
@@ -121,8 +132,12 @@ auto HandleReturnType(Context& context, ParseTree::Node parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
       context.node_stack().PopExpressionWithParseNode();
-  auto cast_node_id = context.ExpressionAsType(type_parse_node, type_node_id);
-  context.node_stack().Push(parse_node, cast_node_id);
+  auto type_id = context.ExpressionAsType(type_parse_node, type_node_id);
+  // TODO: Use a dedicated node rather than VarStorage here.
+  context.AddNodeAndPush(
+      parse_node,
+      SemIR::Node::VarStorage::Make(
+          parse_node, type_id, context.semantics_ir().AddString("return")));
   return true;
 }
 

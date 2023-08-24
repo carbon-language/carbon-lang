@@ -22,6 +22,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   ConstMismatch,
 // CHECK:STDOUT:   p,
+// CHECK:STDOUT:   return,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   node+0,
@@ -41,6 +42,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type3, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type4},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
 // CHECK:STDOUT: ]
@@ -56,15 +58,16 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:

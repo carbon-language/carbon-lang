@@ -263,6 +263,184 @@ auto Context::is_current_position_reachable() -> bool {
   }
 }
 
+auto Context::Initialize(ParseTree::Node parse_node, SemIR::NodeId target_id,
+                         SemIR::NodeId value_id) -> void {
+  // Implicitly convert the value to the type of the target.
+  auto type_id = semantics_ir().GetNode(target_id).type_id();
+  auto expr_id = ImplicitAsRequired(parse_node, value_id, type_id);
+  SemIR::Node expr = semantics_ir().GetNode(expr_id);
+
+  // Perform initialization now that we have an expression of the right type.
+  switch (SemIR::GetExpressionCategory(semantics_ir(), expr_id)) {
+    case SemIR::ExpressionCategory::NotExpression:
+      CARBON_FATAL() << "Converting non-expression node " << expr
+                     << " to initializing expression";
+
+    case SemIR::ExpressionCategory::DurableReference:
+    case SemIR::ExpressionCategory::EphemeralReference:
+      // The design uses a custom "copy initialization" process here. We model
+      // that as value binding followed by direct initialization.
+      //
+      // TODO: Determine whether this is observably different from the design,
+      // and change either the toolchain or the design so they match.
+      expr_id = AddNode(SemIR::Node::BindValue::Make(expr.parse_node(),
+                                                     expr.type_id(), expr_id));
+      [[fallthrough]];
+
+    case SemIR::ExpressionCategory::Value:
+      // TODO: For class types, use an interface to determine how to perform
+      // this operation.
+      AddNode(SemIR::Node::Assign::Make(expr.parse_node(), target_id, expr_id));
+      return;
+
+    case SemIR::ExpressionCategory::Initializing:
+      MarkInitializerFor(expr_id, target_id);
+      return;
+  }
+}
+
+auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
+  switch (SemIR::GetExpressionCategory(semantics_ir(), expr_id)) {
+    case SemIR::ExpressionCategory::NotExpression:
+      CARBON_FATAL() << "Converting non-expression node "
+                     << semantics_ir().GetNode(expr_id)
+                     << " to value expression";
+
+    case SemIR::ExpressionCategory::Initializing:
+      // Commit to using a temporary for this initializing expression.
+      // TODO: Don't create a temporary if the initializing representation is
+      // already a value representation.
+      expr_id = FinalizeTemporary(expr_id, /*discarded=*/false);
+      [[fallthrough]];
+
+    case SemIR::ExpressionCategory::DurableReference:
+    case SemIR::ExpressionCategory::EphemeralReference: {
+      // TODO: Support types with custom value representations.
+      SemIR::Node expr = semantics_ir().GetNode(expr_id);
+      return AddNode(SemIR::Node::BindValue::Make(expr.parse_node(),
+                                                  expr.type_id(), expr_id));
+    }
+
+    case SemIR::ExpressionCategory::Value:
+      return expr_id;
+  }
+}
+
+auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
+    -> SemIR::NodeId {
+  // TODO: See if we can refactor this with MarkInitializerFor once recursion
+  // through struct and tuple values is properly handled.
+  while (true) {
+    SemIR::Node init = semantics_ir().GetNode(init_id);
+    CARBON_CHECK(SemIR::GetExpressionCategory(semantics_ir(), init_id) ==
+                 SemIR::ExpressionCategory::Initializing)
+        << "Can only materialize initializing expressions, found " << init;
+    switch (init.kind()) {
+      default:
+        CARBON_FATAL() << "Initialization from unexpected node " << init;
+
+      case SemIR::NodeKind::StructValue:
+      case SemIR::NodeKind::TupleValue:
+        CARBON_FATAL() << init << " is not modeled as initializing yet";
+
+      case SemIR::NodeKind::StubReference: {
+        init_id = init.GetAsStubReference();
+        continue;
+      }
+
+      case SemIR::NodeKind::Call: {
+        auto [refs_id, callee_id] = init.GetAsCall();
+        if (semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
+          // The return slot should have a materialized temporary in it.
+          auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
+          CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
+                       SemIR::NodeKind::MaterializeTemporary)
+              << "Return slot for function call does not contain a temporary; "
+              << "initialized multiple times? Have "
+              << semantics_ir().GetNode(temporary_id);
+          return temporary_id;
+        }
+
+        if (discarded) {
+          // Don't invent a temporary that we're going to discard.
+          return SemIR::NodeId::Invalid;
+        }
+
+        // The function has no return slot, but we want to produce a temporary
+        // object. Materialize one now.
+        auto temporary_id = AddNode(SemIR::Node::MaterializeTemporary::Make(
+            init.parse_node(), init.type_id()));
+        if (SemIR::GetInitializingRepresentation(semantics_ir(), init.type_id())
+                .kind != SemIR::InitializingRepresentation::None) {
+          AddNode(SemIR::Node::Assign::Make(init.parse_node(), temporary_id,
+                                            init_id));
+        } else {
+          // TODO: Should we create an empty value and Assign it to the
+          // temporary?
+        }
+        return temporary_id;
+      }
+    }
+  }
+}
+
+auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
+    -> void {
+  while (true) {
+    SemIR::Node init = semantics_ir().GetNode(init_id);
+    CARBON_CHECK(SemIR::GetExpressionCategory(semantics_ir(), init_id) ==
+                 SemIR::ExpressionCategory::Initializing)
+        << "initialization from non-initializing node " << init;
+    switch (init.kind()) {
+      default:
+        CARBON_FATAL() << "Initialization from unexpected node " << init;
+
+      case SemIR::NodeKind::StructValue:
+      case SemIR::NodeKind::TupleValue:
+        CARBON_FATAL() << init << " is not modeled as initializing yet";
+
+      case SemIR::NodeKind::StubReference:
+        init_id = init.GetAsStubReference();
+        continue;
+
+      case SemIR::NodeKind::Call: {
+        // If the callee has a return slot, point it at our target.
+        auto [refs_id, callee_id] = init.GetAsCall();
+        if (semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
+          // Replace the return slot with our given target, and remove the
+          // tentatively-created temporary.
+          auto temporary_id = std::exchange(
+              semantics_ir().GetNodeBlock(refs_id).back(), target_id);
+          auto temporary = semantics_ir().GetNode(temporary_id);
+          CARBON_CHECK(temporary.kind() ==
+                       SemIR::NodeKind::MaterializeTemporary)
+              << "Return slot for function call does not contain a temporary; "
+              << "initialized multiple times? Have " << temporary;
+          semantics_ir().ReplaceNode(
+              temporary_id, SemIR::Node::NoOp::Make(temporary.parse_node()));
+        } else if (SemIR::GetInitializingRepresentation(semantics_ir(),
+                                                        init.type_id())
+                       .kind != SemIR::InitializingRepresentation::None) {
+          AddNode(
+              SemIR::Node::Assign::Make(init.parse_node(), target_id, init_id));
+        }
+        return;
+      }
+    }
+  }
+}
+
+auto Context::HandleDiscardedExpression(SemIR::NodeId expr_id) -> void {
+  // If we discard an initializing expression, materialize it first.
+  if (SemIR::GetExpressionCategory(semantics_ir(), expr_id) ==
+      SemIR::ExpressionCategory::Initializing) {
+    FinalizeTemporary(expr_id, /*discarded=*/true);
+  }
+
+  // TODO: This will eventually need to do some "do not discard" analysis.
+  (void)expr_id;
+}
+
 auto Context::ImplicitAsForArgs(
     SemIR::NodeBlockId arg_refs_id, ParseTree::Node param_parse_node,
     SemIR::NodeBlockId param_refs_id,
@@ -274,8 +452,8 @@ auto Context::ImplicitAsForArgs(
     return true;
   }
 
-  auto arg_refs = semantics_ir_->GetNodeBlock(arg_refs_id);
-  auto param_refs = semantics_ir_->GetNodeBlock(param_refs_id);
+  auto& arg_refs = semantics_ir_->GetNodeBlock(arg_refs_id);
+  const auto& param_refs = semantics_ir_->GetNodeBlock(param_refs_id);
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
@@ -308,6 +486,13 @@ auto Context::ImplicitAsForArgs(
                        semantics_ir_->StringifyType(as_type_id));
       return false;
     }
+
+    // TODO: Convert to the proper expression category. For now, we assume
+    // parameters are all `let` bindings.
+    if (!diagnostic) {
+      // TODO: Insert the conversion in the proper place in the node block.
+      arg_refs[i] = ConvertToValueExpression(value_id);
+    }
   }
 
   return true;
@@ -331,12 +516,6 @@ auto Context::ImplicitAsRequired(ParseTree::Node parse_node,
         .Emit();
   }
   return output_value_id;
-}
-
-auto Context::ImplicitAsBool(ParseTree::Node parse_node, SemIR::NodeId value_id)
-    -> SemIR::NodeId {
-  return ImplicitAsRequired(parse_node, value_id,
-                            CanonicalizeType(SemIR::NodeId::BuiltinBoolType));
 }
 
 auto Context::ImplicitAsImpl(SemIR::NodeId value_id, SemIR::TypeId as_type_id,
@@ -386,6 +565,9 @@ auto Context::ImplicitAsImpl(SemIR::NodeId value_id, SemIR::TypeId as_type_id,
           std::all_of(type_block.begin(), type_block.end(),
                       [&](auto type) { return type == element_type; })) {
         if (output_value_id != nullptr) {
+          // TODO: We should convert an initializing expression of tuple type
+          // to an initializing expression of array type.
+          value_id = ConvertToValueExpression(value_id);
           *output_value_id = AddNode(SemIR::Node::ArrayValue::Make(
               value.parse_node(), as_type_id, value_id));
         }

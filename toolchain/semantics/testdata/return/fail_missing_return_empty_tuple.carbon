@@ -20,6 +20,7 @@ fn F() -> () {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   F,
+// CHECK:STDOUT:   return,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   node+0,
@@ -31,6 +32,7 @@ fn F() -> () {
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -39,9 +41,10 @@ fn F() -> () {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],

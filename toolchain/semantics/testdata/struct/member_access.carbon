@@ -46,9 +46,11 @@ var z: i32 = y;
 // CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: node+10},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type1},
 // CHECK:STDOUT:   {kind: StructAccess, arg0: node+3, arg1: member1, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+13},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+13, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+14},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str4, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: node+12},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+12, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+16, arg1: node+17},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -69,6 +71,8 @@ var z: i32 = y;
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -94,8 +98,10 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc7_46: {.a: f64, .b: i32} = struct_value (%.loc7_33, %.loc7_43)
 // CHECK:STDOUT:   assign %x, %.loc7_46
 // CHECK:STDOUT:   %y: i32 = var "y"
-// CHECK:STDOUT:   %.loc8: i32 = struct_access %x, member1
-// CHECK:STDOUT:   assign %y, %.loc8
+// CHECK:STDOUT:   %.loc8_15.1: i32 = struct_access %x, member1
+// CHECK:STDOUT:   %.loc8_15.2: i32 = bind_value %.loc8_15.1
+// CHECK:STDOUT:   assign %y, %.loc8_15.2
 // CHECK:STDOUT:   %z: i32 = var "z"
-// CHECK:STDOUT:   assign %z, %y
+// CHECK:STDOUT:   %.loc8_5: i32 = bind_value %y
+// CHECK:STDOUT:   assign %z, %.loc8_5
 // CHECK:STDOUT: }

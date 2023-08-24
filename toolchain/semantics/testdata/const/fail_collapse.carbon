@@ -25,6 +25,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   G,
 // CHECK:STDOUT:   p,
+// CHECK:STDOUT:   return,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
@@ -44,6 +45,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type3},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type4, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type5},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
 // CHECK:STDOUT: ]
@@ -58,15 +60,16 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:

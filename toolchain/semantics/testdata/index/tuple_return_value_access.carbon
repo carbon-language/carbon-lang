@@ -13,7 +13,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: [block4]},
-// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1, body: [block6]},
+// CHECK:STDOUT:   {name: str2, param_refs: block0, return_type: type1, body: [block7]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -23,6 +23,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   F,
+// CHECK:STDOUT:   return,
 // CHECK:STDOUT:   Run,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
@@ -43,16 +44,21 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type0},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+6, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type2},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+7},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+10, arg1: node+11, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+12},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+14, arg1: node+12},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+14, arg1: node+13, type: type1},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+16, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+17},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -62,28 +68,35 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -102,8 +115,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_11: (i32,) = call @F()
+// CHECK:STDOUT:   %.loc10_11.1: (i32,) = call @F()
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc10_15: i32 = tuple_index %.loc10_11, %.loc10_14
-// CHECK:STDOUT:   return %.loc10_15
+// CHECK:STDOUT:   %.loc10_11.2: (i32,) = materialize_temporary
+// CHECK:STDOUT:   assign %.loc10_11.2, %.loc10_11.1
+// CHECK:STDOUT:   %.loc10_15.1: i32 = tuple_index %.loc10_11.2, %.loc10_14
+// CHECK:STDOUT:   %.loc10_15.2: i32 = bind_value %.loc10_15.1
+// CHECK:STDOUT:   return %.loc10_15.2
 // CHECK:STDOUT: }

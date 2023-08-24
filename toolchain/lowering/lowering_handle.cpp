@@ -172,21 +172,32 @@ auto LoweringHandleBuiltin(LoweringFunctionContext& /*context*/,
 auto LoweringHandleCall(LoweringFunctionContext& context, SemIR::NodeId node_id,
                         SemIR::Node node) -> void {
   auto [refs_id, function_id] = node.GetAsCall();
-  auto* function = context.GetFunction(function_id);
+  auto* llvm_function = context.GetFunction(function_id);
+  const auto& function = context.semantics_ir().GetFunction(function_id);
+
   std::vector<llvm::Value*> args;
-  for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
+  llvm::ArrayRef<SemIR::NodeId> arg_ids =
+      context.semantics_ir().GetNodeBlock(refs_id);
+
+  if (function.return_slot_id.is_valid()) {
+    args.push_back(context.GetLocal(arg_ids.back()));
+    arg_ids = arg_ids.drop_back();
+  }
+
+  for (auto ref_id : arg_ids) {
     args.push_back(context.GetLocalLoaded(ref_id));
   }
-  if (function->getReturnType()->isVoidTy()) {
-    context.builder().CreateCall(function, args);
-    // TODO: use empty tuple type.
-    // TODO: don't create the empty tuple if the call does not get assigned.
-    context.SetLocal(node_id, context.builder().CreateAlloca(
-                                  llvm::StructType::get(context.llvm_context()),
-                                  /*ArraySize=*/nullptr, "call.result"));
+
+  if (llvm_function->getReturnType()->isVoidTy()) {
+    context.builder().CreateCall(llvm_function, args);
+    // TODO: A function with a void return type shouldn't be referred to by
+    // other nodes.
+    context.SetLocal(node_id,
+                     llvm::UndefValue::get(context.GetType(node.type_id())));
   } else {
-    context.SetLocal(node_id, context.builder().CreateCall(
-                                  function, args, function->getName()));
+    context.SetLocal(node_id,
+                     context.builder().CreateCall(llvm_function, args,
+                                                  llvm_function->getName()));
   }
 }
 
@@ -218,6 +229,12 @@ auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
 
 auto LoweringHandleNamespace(LoweringFunctionContext& /*context*/,
                              SemIR::NodeId /*node_id*/, SemIR::Node /*node*/)
+    -> void {
+  // No action to take.
+}
+
+auto LoweringHandleNoOp(LoweringFunctionContext& /*context*/,
+                        SemIR::NodeId /*node_id*/, SemIR::Node /*node*/)
     -> void {
   // No action to take.
 }

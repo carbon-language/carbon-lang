@@ -22,6 +22,9 @@ struct Function {
     if (return_type_id.is_valid()) {
       out << ", return_type: " << return_type_id;
     }
+    if (return_slot_id.is_valid()) {
+      out << ", return_slot: " << return_slot_id;
+    }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
           ", body: [{0}]",
@@ -37,6 +40,12 @@ struct Function {
   NodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   TypeId return_type_id;
+  // The storage for the return value, which is a reference expression whose
+  // type is the return type of the function. Will be invalid if the function
+  // doesn't have a return slot. If this is valid, a call to the function is
+  // expected to have an additional final argument corresponding to the return
+  // slot.
+  NodeId return_slot_id;
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
@@ -153,6 +162,11 @@ class File {
       node_blocks_[block_id.index].push_back(node_id);
     }
     return node_id;
+  }
+
+  // Overwrites a given node with a new value.
+  auto ReplaceNode(NodeId node_id, Node node) -> void {
+    nodes_[node_id.index] = node;
   }
 
   // Returns the requested node.
@@ -347,8 +361,65 @@ enum class ExpressionCategory {
 };
 
 // Returns the expression category for a node.
-auto GetExpressionCategory(const File& semantics_ir, NodeId node_id)
+auto GetExpressionCategory(const File& file, NodeId node_id)
     -> ExpressionCategory;
+
+// The value representation to use when passing by value.
+struct ValueRepresentation {
+  enum Kind {
+    // The type has no value representation. This is used for empty types, such
+    // as `()`, where there is no value.
+    None,
+    // The value representation is a copy of the value. On call boundaries, the
+    // value itself will be passed. `type` is the value type.
+    // TODO: `type` should be `const`-qualified, but is currently not.
+    Copy,
+    // The value representation is a pointer to an object. When used as a
+    // parameter, the argument is a reference expression. `type` is the pointee
+    // type.
+    // TODO: `type` should be `const`-qualified, but is currently not.
+    Pointer,
+    // The value representation has been customized, and has the same behavior
+    // as the value representation of some other type.
+    // TODO: This is not implemented or used yet.
+    Custom,
+  };
+  // The kind of value representation used by this type.
+  Kind kind;
+  // The type used to model the value representation.
+  TypeId type;
+};
+
+// Returns information about the value representation to use for a type.
+auto GetValueRepresentation(const File& file, TypeId type_id)
+    -> ValueRepresentation;
+
+// The initializing representation to use when returning by value.
+struct InitializingRepresentation {
+  enum Kind {
+    // The type has no initializing representation. This is used for empty
+    // types, where no initialization is necessary.
+    None,
+    // An initializing expression produces a value, which is copied into the
+    // initialized object.
+    ByCopy,
+    // An initializing expression takes a location as input, which is
+    // initialized as a side effect of evaluating the expression.
+    InPlace,
+    // TODO: Consider adding a kind where the expression takes an advisory
+    // location and returns a value plus an indicator of whether the location
+    // was actually initialized.
+  };
+  // The kind of initializing representation used by this type.
+  Kind kind;
+
+  // Returns whether a return slot is used when returning this type.
+  bool has_return_slot() const { return kind == InPlace; }
+};
+
+// Returns information about the initializing representation to use for a type.
+auto GetInitializingRepresentation(const File& file, TypeId type_id)
+    -> InitializingRepresentation;
 
 }  // namespace Carbon::SemIR
 
