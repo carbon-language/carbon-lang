@@ -20,23 +20,19 @@ static auto PrintArgs(llvm::raw_ostream& out, std::pair<T0, T1> args) -> void {
   out << ", arg1: " << args.second;
 }
 
-auto operator<<(llvm::raw_ostream& out, const Node& node)
-    -> llvm::raw_ostream& {
-  out << "{kind: " << node.kind_;
-  // clang warns on unhandled enum values; clang-tidy is incorrect here.
-  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-  switch (node.kind_) {
+auto Node::Print(llvm::raw_ostream& out) const -> void {
+  out << "{kind: " << kind_;
+  switch (kind_) {
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
   case NodeKind::Name:                   \
-    PrintArgs(out, node.GetAs##Name());  \
+    PrintArgs(out, GetAs##Name());       \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
   }
-  if (node.type_id_.is_valid()) {
-    out << ", type: " << node.type_id_;
+  if (type_id_.is_valid()) {
+    out << ", type: " << type_id_;
   }
   out << "}";
-  return out;
 }
 
 }  // namespace Carbon::SemIR
