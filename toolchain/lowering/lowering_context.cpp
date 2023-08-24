@@ -59,6 +59,7 @@ auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = semantics_ir().GetFunction(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
+  auto& param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
 
   SemIR::InitializingRepresentation return_rep =
       function.return_type_id.is_valid()
@@ -68,18 +69,20 @@ auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
                 .kind = SemIR::InitializingRepresentation::None};
   CARBON_CHECK(return_rep.has_return_slot() == has_return_slot);
 
-  // TODO: Lower type information for the arguments prior to building args.
-  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
-  llvm::SmallVector<llvm::Type*> args;
-  llvm::SmallVector<SemIR::NodeId> param_nodes;
-  args.reserve(has_return_slot + param_refs.size());
-  param_nodes.reserve(has_return_slot + param_refs.size());
+  llvm::SmallVector<llvm::Type*> param_types;
+  // TODO: Consider either storing `param_node_ids` somewhere so that we can
+  // reuse it from `BuildFunctionDefinition` and when building calls, or factor
+  // out a mechanism to compute the mapping between parameters and arguments on
+  // demand.
+  llvm::SmallVector<SemIR::NodeId> param_node_ids;
+  param_types.reserve(has_return_slot + param_refs.size());
+  param_node_ids.reserve(has_return_slot + param_refs.size());
   if (has_return_slot) {
-    args.push_back(GetType(function.return_type_id)->getPointerTo());
-    param_nodes.push_back(function.return_slot_id);
+    param_types.push_back(GetType(function.return_type_id)->getPointerTo());
+    param_node_ids.push_back(function.return_slot_id);
   }
-  for (auto [i, param_ref] : llvm::enumerate(param_refs)) {
-    auto param_type_id = semantics_ir().GetNode(param_ref).type_id();
+  for (auto param_ref_id : param_refs) {
+    auto param_type_id = semantics_ir().GetNode(param_ref_id).type_id();
     switch (auto value_rep =
                 SemIR::GetValueRepresentation(semantics_ir(), param_type_id);
             value_rep.kind) {
@@ -87,12 +90,12 @@ auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
         break;
       case SemIR::ValueRepresentation::Copy:
       case SemIR::ValueRepresentation::Custom:
-        args.push_back(GetType(value_rep.type));
-        param_nodes.push_back(param_ref);
+        param_types.push_back(GetType(value_rep.type));
+        param_node_ids.push_back(param_ref_id);
         break;
       case SemIR::ValueRepresentation::Pointer:
-        args.push_back(GetType(value_rep.type)->getPointerTo());
-        param_nodes.push_back(param_ref);
+        param_types.push_back(GetType(value_rep.type)->getPointerTo());
+        param_node_ids.push_back(param_ref_id);
         break;
     }
   }
@@ -105,22 +108,21 @@ auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
           : llvm::Type::getVoidTy(llvm_context());
 
   llvm::FunctionType* function_type =
-      llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
+      llvm::FunctionType::get(return_type, param_types, /*isVarArg=*/false);
   auto* llvm_function = llvm::Function::Create(
       function_type, llvm::Function::ExternalLinkage,
       semantics_ir().GetString(function.name_id), llvm_module());
 
-  // Set up parameters.
-  for (auto [i, node_id, arg] : llvm::enumerate(
-           param_nodes,
-           map_range(llvm_function->args(), [](auto& arg) { return &arg; }))) {
-    auto node = semantics_ir().GetNode(node_id);
-    if (node.kind() == SemIR::NodeKind::Parameter) {
-      arg->setName(semantics_ir().GetString(node.GetAsParameter()));
-    } else if (node_id == function.return_slot_id) {
-      arg->setName("return");
-      arg->addAttr(llvm::Attribute::getWithStructRetType(
+  // Set up parameters and the return slot.
+  for (auto [node_id, arg] :
+       llvm::zip_equal(param_node_ids, llvm_function->args())) {
+    if (node_id == function.return_slot_id) {
+      arg.setName("return");
+      arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
+    } else {
+      arg.setName(semantics_ir().GetString(
+          semantics_ir().GetNode(node_id).GetAsParameter()));
     }
   }
 
@@ -145,21 +147,23 @@ auto LoweringContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // TODO: This duplicates the mapping between semantics nodes and LLVM
   // function parameters that was already computed in BuildFunctionDeclaration.
   // We should only do that once.
-  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  auto& param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
     function_lowering.SetLocal(function.return_slot_id,
-                               llvm_function->getArg(param_index++));
+                               llvm_function->getArg(param_index));
+    ++param_index;
   }
-  for (auto [i, param_ref] : llvm::enumerate(param_refs)) {
-    auto param_type_id = semantics_ir().GetNode(param_ref).type_id();
+  for (auto param_ref_id : param_refs) {
+    auto param_type_id = semantics_ir().GetNode(param_ref_id).type_id();
     if (SemIR::GetValueRepresentation(semantics_ir(), param_type_id).kind ==
         SemIR::ValueRepresentation::None) {
       function_lowering.SetLocal(
-          param_ref, llvm::PoisonValue::get(GetType(param_type_id)));
+          param_ref_id, llvm::PoisonValue::get(GetType(param_type_id)));
     } else {
-      function_lowering.SetLocal(param_ref,
-                                 llvm_function->getArg(param_index++));
+      function_lowering.SetLocal(param_ref_id,
+                                 llvm_function->getArg(param_index));
+      ++param_index;
     }
   }
 
@@ -210,7 +214,7 @@ auto LoweringContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
     case SemIR::NodeKind::PointerType:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
     case SemIR::NodeKind::StructType: {
-      auto refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
+      auto& refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
       for (auto ref_id : refs) {
@@ -229,7 +233,7 @@ auto LoweringContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       // can be collectively replaced with LLVM's void, particularly around
       // function returns. LLVM doesn't allow declaring variables with a void
       // type, so that may require significant special casing.
-      auto refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
+      auto& refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
       for (auto ref_id : refs) {
