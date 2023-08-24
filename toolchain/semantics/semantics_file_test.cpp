@@ -10,7 +10,7 @@
 namespace Carbon::Testing {
 namespace {
 
-class SemanticsFileTest : public DriverFileTestBase {
+class CheckFileTest : public DriverFileTestBase {
  public:
   using DriverFileTestBase::DriverFileTestBase;
 
@@ -24,6 +24,6 @@ class SemanticsFileTest : public DriverFileTestBase {
 
 }  // namespace
 
-CARBON_FILE_TEST_FACTORY(SemanticsFileTest);
+CARBON_FILE_TEST_FACTORY(CheckFileTest);
 
 }  // namespace Carbon::Testing

@@ -19,6 +19,5 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   call void @Foo(i32 1)
-// CHECK:STDOUT:   %call.result = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

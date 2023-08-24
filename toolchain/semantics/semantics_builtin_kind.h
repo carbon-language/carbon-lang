@@ -52,6 +52,11 @@ static_assert(
 static_assert(sizeof(SemanticsBuiltinKind) == 1,
               "Kind objects include padding!");
 
+// TODO: Refactor EnumBase to remove the need for this alias.
+namespace SemIR {
+using BuiltinKind = SemanticsBuiltinKind;
+}  // namespace SemIR
+
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_BUILTIN_KIND_H_

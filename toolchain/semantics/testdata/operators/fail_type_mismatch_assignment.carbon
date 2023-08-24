@@ -38,7 +38,7 @@ fn Main() {
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+2},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+4},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: nodeError},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -67,6 +67,6 @@ fn Main() {
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 3
 // CHECK:STDOUT:   assign %a, %.loc8
 // CHECK:STDOUT:   %.loc12: f64 = real_literal 56e-1
-// CHECK:STDOUT:   assign %a, %.loc12
+// CHECK:STDOUT:   assign %a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
