@@ -34,15 +34,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %6 = getelementptr inbounds { %type, %type }, ptr %tuple2, i32 0, i32 1
 // CHECK:STDOUT:   store %type zeroinitializer, ptr %6, align 1
 // CHECK:STDOUT:   %y = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %7 = load { i32, i32 }, ptr %x, align 4
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.sl_i32i32s.i64(ptr align 4 %y, { i32, i32 } align 4 %7, i64 8, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %y, ptr align 4 %x, i64 8, i1 false)
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.sl_i32i32s.i64(ptr noalias nocapture writeonly, { i32, i32 } noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }

@@ -19,6 +19,5 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %struct1 = alloca {}, align 8
 // CHECK:STDOUT:   %struct2 = alloca {}, align 8
 // CHECK:STDOUT:   %y = alloca {}, align 8
-// CHECK:STDOUT:   %1 = load {}, ptr %x, align 1
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

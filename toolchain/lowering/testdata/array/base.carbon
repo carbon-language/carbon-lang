@@ -101,17 +101,19 @@ fn Run() {
 // CHECK:STDOUT:   store i32 3, ptr %30, align 4
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %d, ptr align 4 %tuple19, i64 12, i1 false)
 // CHECK:STDOUT:   %e = alloca [3 x i32], align 4
-// CHECK:STDOUT:   %31 = load { i32, i32, i32 }, ptr %d, align 4
 // CHECK:STDOUT:   %array20 = alloca [3 x i32], align 4
-// CHECK:STDOUT:   %array.element21 = extractvalue { i32, i32, i32 } %31, 0
+// CHECK:STDOUT:   %array.element21 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 0
+// CHECK:STDOUT:   %31 = load i32, ptr %array.element21, align 4
 // CHECK:STDOUT:   %32 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 0
-// CHECK:STDOUT:   store i32 %array.element21, ptr %32, align 4
-// CHECK:STDOUT:   %array.element22 = extractvalue { i32, i32, i32 } %31, 1
-// CHECK:STDOUT:   %33 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 1
-// CHECK:STDOUT:   store i32 %array.element22, ptr %33, align 4
-// CHECK:STDOUT:   %array.element23 = extractvalue { i32, i32, i32 } %31, 2
-// CHECK:STDOUT:   %34 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 2
-// CHECK:STDOUT:   store i32 %array.element23, ptr %34, align 4
+// CHECK:STDOUT:   store i32 %31, ptr %32, align 4
+// CHECK:STDOUT:   %array.element22 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 1
+// CHECK:STDOUT:   %33 = load i32, ptr %array.element22, align 4
+// CHECK:STDOUT:   %34 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 1
+// CHECK:STDOUT:   store i32 %33, ptr %34, align 4
+// CHECK:STDOUT:   %array.element23 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 2
+// CHECK:STDOUT:   %35 = load i32, ptr %array.element23, align 4
+// CHECK:STDOUT:   %36 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 2
+// CHECK:STDOUT:   store i32 %35, ptr %36, align 4
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %e, ptr align 4 %array20, i64 12, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
