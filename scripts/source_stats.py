@@ -34,7 +34,7 @@ LINE_RE = re.compile(
 
 
 @dataclass
-class _Stats:
+class Stats:
     """Stats collected while scanning source files"""
 
     lines: int = 0
@@ -48,7 +48,7 @@ class _Stats:
     identifier_widths: Counter[int] = field(default_factory=lambda: Counter())
     ids_per_line: Counter[int] = field(default_factory=lambda: Counter())
 
-    def accumulate(self, other: _Stats) -> None:
+    def accumulate(self, other: Stats) -> None:
         self.lines += other.lines
         self.blank_lines += other.blank_lines
         self.empty_comment_lines += other.empty_comment_lines
@@ -61,9 +61,9 @@ class _Stats:
         self.ids_per_line.update(other.ids_per_line)
 
 
-def _scan_file(file: Path) -> _Stats:
+def scan_file(file: Path) -> Stats:
     """Scans the provided file and accumulates stats."""
-    stats = _Stats()
+    stats = Stats()
     for line in file.open():
         # Strip off the line endings.
         line = line.rstrip("\r\n")
@@ -105,7 +105,7 @@ def _scan_file(file: Path) -> _Stats:
     return stats
 
 
-def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     """Parsers command-line arguments and flags."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -119,11 +119,11 @@ def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
 
 
 def main() -> None:
-    parsed_args = _parse_args()
-    stats = _Stats()
+    parsed_args = parse_args()
+    stats = Stats()
     with alive_bar(len(parsed_args.files)) as bar:
         with Pool() as p:
-            for file_stats in p.imap_unordered(_scan_file, parsed_args.files):
+            for file_stats in p.imap_unordered(scan_file, parsed_args.files):
                 stats.accumulate(file_stats)
                 bar()
 
