@@ -145,7 +145,7 @@ target).
 
 By default, `explorer` prints the state of the program and each step that is
 performed during execution for the file containing the main function when
-tracing is enabled, tracing for different phases and file contexts can be
+tracing is enabled. Tracing for different phases and file contexts can be
 selected using filtering that is explained below.
 
 Printing directly to the standard output using the `--trace_file` option is
