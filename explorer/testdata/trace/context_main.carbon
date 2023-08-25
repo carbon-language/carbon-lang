@@ -38,10 +38,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> resolving decl `fn Main` (context_main.carbon:11)
 // CHECK:STDOUT: ==> marked `Main` declared but not usable in `package`
 // CHECK:STDOUT: ==> marked `Main` usable in `package`
-// CHECK:STDOUT: ->> resolving stmt `{return ...;}` (context_main.carbon:11)
-// CHECK:STDOUT: ->> resolving stmt `return ...;` (context_main.carbon:10)
-// CHECK:STDOUT: <<- finished resolving stmt `return ...;` (context_main.carbon:10)
-// CHECK:STDOUT: <<- finished resolving stmt `{return ...;}` (context_main.carbon:11)
+// CHECK:STDOUT: ->> resolving stmt `{return 0}` (context_main.carbon:11)
+// CHECK:STDOUT: ->> resolving stmt `return 0` (context_main.carbon:10)
+// CHECK:STDOUT: <<- finished resolving stmt `return 0` (context_main.carbon:10)
+// CHECK:STDOUT: <<- finished resolving stmt `{return 0}` (context_main.carbon:11)
 // CHECK:STDOUT: <<- finished resolving decl `fn Main` (context_main.carbon:11)
 // CHECK:STDOUT: ==> resolved `Main` as `fn Main` in `package` (<Main()>:0)
 // CHECK:STDOUT:
@@ -204,13 +204,13 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: ->> checking Block `{return ...;}` (context_main.carbon:11)
+// CHECK:STDOUT: ->> checking Block `{return 0}` (context_main.carbon:11)
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking stmt at (context_main.carbon:10)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: return 0;
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: ->> checking ReturnExpression `return ...;` (context_main.carbon:10)
+// CHECK:STDOUT: ->> checking ReturnExpression `return 0` (context_main.carbon:10)
 // CHECK:STDOUT: ->> checking IntLiteral `0` (context_main.carbon:10)
 // CHECK:STDOUT: ->> finished checking function `Main` (context_main.carbon:11)
 // CHECK:STDOUT: ->> checking CallExpression `Main()` (<Main()>:0)
@@ -225,8 +225,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ----------------------------------------------------------------------
 // CHECK:STDOUT: ->> resolving-unformed in decl `interface TestInterface` (context_main.carbon:7)
 // CHECK:STDOUT: ->> resolving-unformed in decl `fn Main` (context_main.carbon:11)
-// CHECK:STDOUT: ->> resolving-unformed in stmt `{return ...;}` (context_main.carbon:11)
-// CHECK:STDOUT: ->> resolving-unformed in stmt `return ...;` (context_main.carbon:10)
+// CHECK:STDOUT: ->> resolving-unformed in stmt `{return 0}` (context_main.carbon:11)
+// CHECK:STDOUT: ->> resolving-unformed in stmt `return 0` (context_main.carbon:10)
 // CHECK:STDOUT:
 // CHECK:STDOUT:
 // CHECK:STDOUT: * * * * * * * * * *  printing declarations  * * * * * * * * * *
@@ -284,8 +284,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: === match pattern `()`
 // CHECK:STDOUT:     from value expression with value `()`
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [] (None)
-// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{return ...;}` (context_main.carbon:11)
-// CHECK:STDOUT: ->> step StatementAction pos: 0 `{return ...;}` (context_main.carbon:11) --->
+// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{return 0}` (context_main.carbon:11)
+// CHECK:STDOUT: ->> step StatementAction pos: 0 `{return 0}` (context_main.carbon:11) --->
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (context_main.carbon:11)
 // CHECK:STDOUT: ```
@@ -293,8 +293,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `return ...;` (context_main.carbon:10)
-// CHECK:STDOUT: ->> step StatementAction pos: 0 `return ...;` (context_main.carbon:10) --->
+// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `return 0` (context_main.carbon:10)
+// CHECK:STDOUT: ->> step StatementAction pos: 0 `return 0` (context_main.carbon:10) --->
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (context_main.carbon:10)
 // CHECK:STDOUT: ```
@@ -307,14 +307,14 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <[] stack-pop:  ExpressionAction pos: 0 `0` (context_main.carbon:10)
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `0` results: [`0`]  (context_main.carbon:10) --->
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `0` results: [`0`]  (context_main.carbon:10)
-// CHECK:STDOUT: ->> step StatementAction pos: 1 `return ...;` results: [`0`]  (context_main.carbon:10) --->
+// CHECK:STDOUT: ->> step StatementAction pos: 1 `return 0` results: [`0`]  (context_main.carbon:10) --->
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (context_main.carbon:10)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: return 0;
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `return ...;` results: [`0`]  (context_main.carbon:10)
-// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `{return ...;}` scope: [] (context_main.carbon:11)
+// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `return 0` results: [`0`]  (context_main.carbon:10)
+// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `{return 0}` scope: [] (context_main.carbon:11)
 // CHECK:STDOUT: <[] stack-pop:  ScopeAction pos: 0  scope: [] (None)
 // CHECK:STDOUT: >[] stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
 // CHECK:STDOUT: >[] stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
