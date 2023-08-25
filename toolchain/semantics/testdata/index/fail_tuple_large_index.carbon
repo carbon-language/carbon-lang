@@ -55,7 +55,7 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   {kind: Assign, arg0: node+11, arg1: node+12},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+11, arg1: node+15, type: typeError},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+11, arg1: nodeError, type: typeError},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+14, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -109,6 +109,6 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   assign %b, %.loc7_5
 // CHECK:STDOUT:   %c: i32 = var "c"
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal -1
-// CHECK:STDOUT:   %.loc12_35: <error> = tuple_index %b, %.loc12_16
+// CHECK:STDOUT:   %.loc12_35: <error> = tuple_index %b, <error>
 // CHECK:STDOUT:   assign %c, <error>
 // CHECK:STDOUT: }
