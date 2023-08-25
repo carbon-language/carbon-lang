@@ -187,7 +187,7 @@ The following options can be passed as a comma-separated list to the
 
 **Note (for developers):** Two
 [RAII](https://en.cppreference.com/w/cpp/language/raii) classes
-`SetProgramPhase` and `SetFileContext`, are there for setting program phase and
+`SetProgramPhase` and `SetFileContext` are provided for setting program phase and
 file context dynamically in the code.
 
 ### State of the Program
