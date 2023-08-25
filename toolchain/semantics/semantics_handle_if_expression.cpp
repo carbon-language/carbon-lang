@@ -9,7 +9,7 @@ namespace Carbon::Check {
 auto HandleIfExpressionIf(Context& context, ParseTree::Node parse_node)
     -> bool {
   // Alias parse_node for if/then/else consistency.
-  auto if_node = parse_node;
+  auto& if_node = parse_node;
 
   auto cond_value_id = context.node_stack().PopExpression();
 
@@ -32,7 +32,7 @@ auto HandleIfExpressionIf(Context& context, ParseTree::Node parse_node)
 auto HandleIfExpressionThen(Context& context, ParseTree::Node parse_node)
     -> bool {
   // Alias parse_node for if/then/else consistency.
-  auto then_node = parse_node;
+  auto& then_node = parse_node;
 
   // Convert the first operand to a value.
   auto [then_value_node, then_value_id] =
@@ -48,7 +48,7 @@ auto HandleIfExpressionThen(Context& context, ParseTree::Node parse_node)
 auto HandleIfExpressionElse(Context& context, ParseTree::Node parse_node)
     -> bool {
   // Alias parse_node for if/then/else consistency.
-  auto else_node = parse_node;
+  auto& else_node = parse_node;
 
   auto else_value_id = context.node_stack().PopExpression();
   auto [then_node, then_end_block_id] =

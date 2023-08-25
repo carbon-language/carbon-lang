@@ -536,7 +536,7 @@ class TokenizedBuffer::Lexer {
       // Too short to form one of these tokens.
       return LexResult::NoMatch();
     }
-    if (word[1] < '1' || '9' < word[1]) {
+    if (word[1] < '1' || word[1] > '9') {
       // Doesn't start with a valid initial digit.
       return LexResult::NoMatch();
     }
