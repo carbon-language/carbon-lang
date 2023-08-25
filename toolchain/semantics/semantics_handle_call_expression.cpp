@@ -5,10 +5,10 @@
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleCallExpression(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
+auto HandleCallExpression(Context& context, ParseTree::Node parse_node)
+    -> bool {
   auto refs_id = context.ParamOrArgEnd(
       /*for_args=*/true, ParseNodeKind::CallExpressionStart);
 
@@ -17,7 +17,7 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
       context.node_stack()
           .PopWithParseNode<ParseNodeKind::CallExpressionStart>();
   auto name_node = context.semantics_ir().GetNode(name_id);
-  if (name_node.kind() != SemanticsNodeKind::FunctionDeclaration) {
+  if (name_node.kind() != SemIR::NodeKind::FunctionDeclaration) {
     // TODO: Work on error.
     context.TODO(parse_node, "Not a callable name");
     context.node_stack().Push(parse_node, name_id);
@@ -33,7 +33,7 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
   if (!context.ImplicitAsForArgs(refs_id, name_node.parse_node(),
                                  callable.param_refs_id, &diagnostic)) {
     diagnostic.Emit();
-    context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinError);
+    context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
     return true;
   }
 
@@ -41,33 +41,44 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
                                          callable.param_refs_id,
                                          /*diagnostic=*/nullptr));
 
-  // TODO: Propagate return types from callable.
-  SemanticsTypeId type_id = callable.return_type_id;
-  // For functions with an implicit return type, set the return type to empty
+  // For functions with an implicit return type, the return type is the empty
   // tuple type.
-  if (type_id == SemanticsTypeId::Invalid) {
+  SemIR::TypeId type_id = callable.return_type_id;
+  if (!type_id.is_valid()) {
     type_id = context.CanonicalizeTupleType(call_expr_parse_node, {});
   }
-  auto call_node_id = context.AddNode(SemanticsNode::Call::Make(
+
+  // If there is a return slot, add a corresponding argument.
+  if (callable.return_slot_id.is_valid()) {
+    if (refs_id == SemIR::NodeBlockId::Empty) {
+      refs_id = context.semantics_ir().AddNodeBlock();
+    }
+    // Tentatively put a materialized temporary in the function's return slot.
+    // This will be replaced if necessary when we perform initialization.
+    auto return_slot_id =
+        context.AddNode(SemIR::Node::MaterializeTemporary::Make(
+            call_expr_parse_node, callable.return_type_id));
+    context.semantics_ir().GetNodeBlock(refs_id).push_back(return_slot_id);
+  }
+  auto call_node_id = context.AddNode(SemIR::Node::Call::Make(
       call_expr_parse_node, type_id, refs_id, function_id));
 
   context.node_stack().Push(parse_node, call_node_id);
   return true;
 }
 
-auto SemanticsHandleCallExpressionComma(SemanticsContext& context,
-                                        ParseTree::Node /*parse_node*/)
+auto HandleCallExpressionComma(Context& context, ParseTree::Node /*parse_node*/)
     -> bool {
   context.ParamOrArgComma(/*for_args=*/true);
   return true;
 }
 
-auto SemanticsHandleCallExpressionStart(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
+auto HandleCallExpressionStart(Context& context, ParseTree::Node parse_node)
+    -> bool {
   auto name_id = context.node_stack().PopExpression();
   context.node_stack().Push(parse_node, name_id);
   context.ParamOrArgStart();
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

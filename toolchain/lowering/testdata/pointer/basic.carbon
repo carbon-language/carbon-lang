@@ -18,7 +18,8 @@ fn F() -> i32 {
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @G(ptr %p) {
-// CHECK:STDOUT:   ret ptr %p
+// CHECK:STDOUT:   %1 = load i32, ptr %p, align 4
+// CHECK:STDOUT:   ret i32 %1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F() {
@@ -26,5 +27,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   store i32 0, ptr %n, align 4
 // CHECK:STDOUT:   %1 = load ptr, ptr %n, align 8
 // CHECK:STDOUT:   %G = call i32 @G(ptr %1)
-// CHECK:STDOUT:   ret i32 %G
+// CHECK:STDOUT:   %temp = alloca i32, align 4
+// CHECK:STDOUT:   store i32 %G, ptr %temp, align 4
+// CHECK:STDOUT:   %2 = load i32, ptr %temp, align 4
+// CHECK:STDOUT:   ret i32 %2
 // CHECK:STDOUT: }

@@ -4,20 +4,19 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleCodeBlockStart(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
+auto HandleCodeBlockStart(Context& context, ParseTree::Node parse_node)
+    -> bool {
   context.node_stack().Push(parse_node);
   context.PushScope();
   return true;
 }
 
-auto SemanticsHandleCodeBlock(SemanticsContext& context,
-                              ParseTree::Node /*parse_node*/) -> bool {
+auto HandleCodeBlock(Context& context, ParseTree::Node /*parse_node*/) -> bool {
   context.PopScope();
   context.node_stack().PopForSoloParseNode<ParseNodeKind::CodeBlockStart>();
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

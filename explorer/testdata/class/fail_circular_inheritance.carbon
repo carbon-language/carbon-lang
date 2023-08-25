@@ -7,10 +7,9 @@
 package ExplorerTest api;
 
 class C {
-  // CHECK:STDERR: COMPILATION ERROR: fail_circular_inheritance.carbon:[[@LINE+4]]: could not find `class C {
-  // CHECK:STDERR: extend base: C;
-  // CHECK:STDERR: }
-  // CHECK:STDERR: `
+  // CHECK:STDERR: COMPILATION ERROR: fail_circular_inheritance.carbon:[[@LINE+3]]: could not find `class C {
+  // CHECK:STDERR:   extend base: C;
+  // CHECK:STDERR: }`
   extend base: C;
 }
 

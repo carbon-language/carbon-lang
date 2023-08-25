@@ -19,10 +19,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT: --------------------------------------------------------
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: fn Main ()-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: return 0;
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn Main () -> i32
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: result: 0

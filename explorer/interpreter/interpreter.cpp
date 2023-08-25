@@ -2334,7 +2334,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
 
   if (trace_stream_->is_enabled()) {
     trace_stream_->Source() << "declaration at (" << decl.source_loc() << ")\n";
-    *trace_stream_ << "```\n" << decl << "```\n";
+    *trace_stream_ << "```\n" << decl << "\n```\n";
   }
 
   switch (decl.kind()) {
