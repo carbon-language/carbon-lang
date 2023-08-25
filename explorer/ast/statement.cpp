@@ -18,15 +18,19 @@ Statement::~Statement() = default;
 void Statement::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
     case StatementKind::Match: {
-      out << "match (...) { ... }";
+      const auto& match = cast<Match>(*this);
+      out << "match (" << PrintAsID(match.expression()) << ") { ... }";
       break;
     }
     case StatementKind::While: {
-      out << "while (...) { ... }";
+      const auto& while_stmt = cast<While>(*this);
+      out << "while (" << PrintAsID(while_stmt.condition()) << ") { ... }";
       break;
     }
     case StatementKind::For: {
-      out << "for (...) { ... }";
+      const auto& for_stmt = cast<For>(*this);
+      out << "for (" << for_stmt.variable_declaration() << " in "
+          << for_stmt.loop_target() << ") { ... }";
       break;
     }
     case StatementKind::Break:
@@ -40,9 +44,9 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       if (var.is_returned()) {
         out << "returned ";
       }
-      out << "var " << var.pattern();
+      out << "var " << PrintAsID(var.pattern());
       if (var.has_init()) {
-        out << " = ...";
+        out << " = " << PrintAsID(var.init());
       }
       out << ";";
       break;
@@ -52,8 +56,8 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       break;
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*this);
-      out << "... " << AssignOperatorToString(assign.op()) << " "
-          << "...;";
+      out << PrintAsID(assign.lhs()) << " " << AssignOperatorToString(assign.op()) << " "
+          << PrintAsID(assign.rhs()) << ";";
       break;
     }
     case StatementKind::IncrementDecrement: {
@@ -65,6 +69,7 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
     case StatementKind::If: {
       const auto& if_stmt = cast<If>(*this);
       out << "if (...) { ... }";
+      out << "if (" << PrintAsID(if_stmt.condition()) << ") { ... }";
       if (if_stmt.else_block()) {
         out << " else { ... }";
       }
@@ -79,19 +84,24 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       if (ret.is_omitted_expression()) {
         out << "return;";
       } else {
-        out << "return ...;";
+        out << "return " << PrintAsID(ret.expression());
       }
       break;
     }
     case StatementKind::Block: {
       const auto& block = cast<Block>(*this);
       const auto statements = block.statements();
-      out << "{";
       llvm::ListSeparator sep(" ");
-      for (const auto& statement : statements) {
-        out << sep << PrintAsID(*statement);
+      if (statements.empty()) {
+        out << "{}";
+      } else {
+        out << "{" << PrintAsID(*statements.front())
+            << (statements.size() > 1
+                    ? " ... [" + std::to_string(statements.size() - 1) +
+                          "] statements"
+                    : "")
+            << "}";
       }
-      out << "}";
       break;
     }
   }
