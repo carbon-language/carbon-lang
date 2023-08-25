@@ -28,11 +28,15 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
 
   if (trace_stream->is_enabled()) {
     trace_stream->Heading("source program");
+    llvm::ListSeparator sep("\n\n");
     for (auto& declaration : ast.declarations) {
       set_file_ctx.update_source_loc(declaration->source_loc());
       if (trace_stream->is_enabled()) {
-        *trace_stream << *declaration;
+        *trace_stream << sep << *declaration;
       }
+    }
+    if (trace_stream->is_enabled()) {
+      *trace_stream << "\n";
     }
   }
 
@@ -71,11 +75,15 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   set_prog_phase.update_phase(ProgramPhase::Declarations);
   if (trace_stream->is_enabled()) {
     trace_stream->Heading("printing declarations");
+    llvm::ListSeparator sep("\n\n");
     for (auto& declaration : ast.declarations) {
       set_file_ctx.update_source_loc(declaration->source_loc());
       if (trace_stream->is_enabled()) {
-        *trace_stream << *declaration;
+        *trace_stream << sep << *declaration;
       }
+    }
+    if (trace_stream->is_enabled()) {
+      *trace_stream << "\n";
     }
   }
   return ast;
