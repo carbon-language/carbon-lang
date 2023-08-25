@@ -50,12 +50,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <variant>
 
-#include "common/ostream.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace Carbon::Testing::Yaml {
 

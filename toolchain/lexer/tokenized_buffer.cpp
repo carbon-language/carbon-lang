@@ -7,13 +7,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <iterator>
-#include <string>
 
 #include "common/check.h"
 #include "common/string_helpers.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -540,7 +536,7 @@ class TokenizedBuffer::Lexer {
       // Too short to form one of these tokens.
       return LexResult::NoMatch();
     }
-    if (!('1' <= word[1] && word[1] <= '9')) {
+    if (word[1] < '1' || word[1] > '9') {
       // Doesn't start with a valid initial digit.
       return LexResult::NoMatch();
     }
@@ -683,6 +679,8 @@ class TokenizedBuffer::Lexer {
         case '\t':
         case '\n':
           return false;
+        default:
+          break;
       }
       return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) .StartsWith(Spelling, false)

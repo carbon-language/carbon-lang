@@ -7,8 +7,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <cstring>
-
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon::Testing {

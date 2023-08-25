@@ -23,6 +23,8 @@ static auto PrintArgs(llvm::raw_ostream& out, std::pair<T0, T1> args) -> void {
 auto operator<<(llvm::raw_ostream& out, const Node& node)
     -> llvm::raw_ostream& {
   out << "{kind: " << node.kind_;
+  // clang warns on unhandled enum values; clang-tidy is incorrect here.
+  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (node.kind_) {
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
   case NodeKind::Name:                   \

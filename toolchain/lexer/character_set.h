@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_LEXER_CHARACTER_SET_H_
 
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
 

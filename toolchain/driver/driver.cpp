@@ -7,12 +7,9 @@
 #include "common/command_line.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/Path.h"
 #include "llvm/TargetParser/Host.h"
 #include "toolchain/codegen/codegen.h"
@@ -43,7 +40,7 @@ can be written to standard output as these phases progress.
 )""",
   };
 
-  enum class Phase {
+  enum class Phase : int8_t {
     Lex,
     Parse,
     Check,
@@ -287,7 +284,7 @@ For questions, issues, or bug reports, please use our GitHub project:
 )""",
   };
 
-  enum class Subcommand {
+  enum class Subcommand : int8_t {
     Compile,
   };
 

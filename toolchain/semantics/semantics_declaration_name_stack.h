@@ -52,7 +52,7 @@ class DeclarationNameStack {
  public:
   // Context for declaration name construction.
   struct NameContext {
-    enum class State {
+    enum class State : int8_t {
       // A new context which has not processed any parts of the qualifier.
       New,
 

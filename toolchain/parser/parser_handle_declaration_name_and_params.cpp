@@ -56,7 +56,7 @@ auto ParserHandleDeclarationNameAndParamsAsRequired(ParserContext& context)
       context, ParserState::DeclarationNameAndParamsAfterNameAsRequired);
 }
 
-enum class Params {
+enum class Params : int8_t {
   None,
   Optional,
   Required,

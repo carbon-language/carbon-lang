@@ -4,8 +4,6 @@
 
 #include "toolchain/parser/precedence.h"
 
-#include <utility>
-
 #include "common/check.h"
 
 namespace Carbon {
