@@ -168,13 +168,13 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: ->> checking Block `{return 0}` (phase_type_checking.carbon:11)
+// CHECK:STDOUT: ->> checking Block `{ ... }` (phase_type_checking.carbon:11)
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking stmt at (phase_type_checking.carbon:10)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: return 0;
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: ->> checking ReturnExpression `return 0` (phase_type_checking.carbon:10)
+// CHECK:STDOUT: ->> checking ReturnExpression `return ...;` (phase_type_checking.carbon:10)
 // CHECK:STDOUT: ->> checking IntLiteral `0` (phase_type_checking.carbon:10)
 // CHECK:STDOUT: ->> finished checking function `Main` (phase_type_checking.carbon:11)
 // CHECK:STDOUT: ->> checking CallExpression `Main()` (<Main()>:0)
