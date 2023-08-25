@@ -51,8 +51,7 @@ namespace Carbon::Internal {
 //   #include ".../my_kind.def"
 //   };
 //   ```
-using EnumBaseNamesT = const llvm::StringLiteral[];
-template <typename DerivedT, typename EnumT, EnumBaseNamesT Names>
+template <typename DerivedT, typename EnumT, const llvm::StringLiteral Names[]>
 class EnumBase {
  public:
   // An alias for the raw enum type. This is an implementation detail and
