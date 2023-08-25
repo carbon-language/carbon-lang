@@ -56,7 +56,8 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       break;
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*this);
-      out << PrintAsID(assign.lhs()) << " " << AssignOperatorToString(assign.op()) << " "
+      out << PrintAsID(assign.lhs()) << " "
+          << AssignOperatorToString(assign.op()) << " "
           << PrintAsID(assign.rhs()) << ";";
       break;
     }
