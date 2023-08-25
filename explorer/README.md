@@ -136,7 +136,7 @@ Please refer to
 ## Explorer's Trace Output
 
 Explorer's Trace Output refers to a detailed record of program phases and their
-internal processes a program goes through when executed using the `explorer`, it
+internal processes a program goes through when executed using the `explorer`. It
 also records things like changes in memory and action stack that describes the
 state of the program.
 
