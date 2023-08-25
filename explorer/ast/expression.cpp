@@ -343,12 +343,12 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::TypeTypeLiteral:
       out << "type";
       break;
-    case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::StructLiteral:
-    case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::ValueLiteral:
       out << cast<ConstantValueLiteral>(*this).constant_value();
       break;
+    case ExpressionKind::ArrayTypeLiteral:
+    case ExpressionKind::FunctionTypeLiteral:
+    case ExpressionKind::StructLiteral:
     case ExpressionKind::IndexExpression:
     case ExpressionKind::SimpleMemberAccessExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
