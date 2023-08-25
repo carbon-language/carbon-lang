@@ -26,8 +26,8 @@ class TreeTest : public ::testing::Test {
   auto GetSourceBuffer(llvm::StringRef t) -> SourceBuffer& {
     CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
                             llvm::MemoryBuffer::getMemBuffer(t)));
-    source_storage.push_front(
-        std::move(*SourceBuffer::CreateFromFile(fs, "test.carbon")));
+    source_storage.push_front(std::move(
+        *SourceBuffer::CreateFromFile(fs, llvm::errs(), "test.carbon")));
     return source_storage.front();
   }
 

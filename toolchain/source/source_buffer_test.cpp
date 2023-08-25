@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include "common/check.h"
 #include "llvm/Support/VirtualFileSystem.h"
 
 namespace Carbon::Testing {
@@ -15,8 +16,8 @@ static constexpr llvm::StringLiteral TestFileName = "test.carbon";
 
 TEST(SourceBufferTest, MissingFile) {
   llvm::vfs::InMemoryFileSystem fs;
-  auto buffer = SourceBuffer::CreateFromFile(fs, TestFileName);
-  EXPECT_FALSE(buffer.ok());
+  auto buffer = SourceBuffer::CreateFromFile(fs, llvm::errs(), TestFileName);
+  EXPECT_FALSE(buffer);
 }
 
 TEST(SourceBufferTest, SimpleFile) {
@@ -24,8 +25,8 @@ TEST(SourceBufferTest, SimpleFile) {
   CARBON_CHECK(fs.addFile(TestFileName, /*ModificationTime=*/0,
                           llvm::MemoryBuffer::getMemBuffer("Hello World")));
 
-  auto buffer = SourceBuffer::CreateFromFile(fs, TestFileName);
-  ASSERT_TRUE(buffer.ok()) << "Error message: " << buffer.error();
+  auto buffer = SourceBuffer::CreateFromFile(fs, llvm::errs(), TestFileName);
+  ASSERT_TRUE(buffer);
 
   EXPECT_EQ(TestFileName, buffer->filename());
   EXPECT_EQ("Hello World", buffer->text());
@@ -40,8 +41,8 @@ TEST(SourceBufferTest, NoNull) {
                                        /*BufferName=*/"",
                                        /*RequiresNullTerminator=*/false)));
 
-  auto buffer = SourceBuffer::CreateFromFile(fs, TestFileName);
-  ASSERT_TRUE(buffer.ok()) << "Error message: " << buffer.error();
+  auto buffer = SourceBuffer::CreateFromFile(fs, llvm::errs(), TestFileName);
+  ASSERT_TRUE(buffer);
 
   EXPECT_EQ(TestFileName, buffer->filename());
   EXPECT_EQ("abc", buffer->text());
@@ -52,8 +53,8 @@ TEST(SourceBufferTest, EmptyFile) {
   CARBON_CHECK(fs.addFile(TestFileName, /*ModificationTime=*/0,
                           llvm::MemoryBuffer::getMemBuffer("")));
 
-  auto buffer = SourceBuffer::CreateFromFile(fs, TestFileName);
-  ASSERT_TRUE(buffer.ok()) << "Error message: " << buffer.error();
+  auto buffer = SourceBuffer::CreateFromFile(fs, llvm::errs(), TestFileName);
+  ASSERT_TRUE(buffer);
 
   EXPECT_EQ(TestFileName, buffer->filename());
   EXPECT_EQ("", buffer->text());
