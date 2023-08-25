@@ -15,7 +15,7 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'empty_struct.carbon'
 // CHECK:STDOUT: source_filename = "empty_struct.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Echo({} %a) {
+// CHECK:STDOUT: define void @Echo() {
 // CHECK:STDOUT:   %struct = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -24,7 +24,6 @@ fn Main() {
 // CHECK:STDOUT:   %struct = alloca {}, align 8
 // CHECK:STDOUT:   %b = alloca {}, align 8
 // CHECK:STDOUT:   %struct1 = alloca {}, align 8
-// CHECK:STDOUT:   %1 = load {}, ptr %struct1, align 1
-// CHECK:STDOUT:   call void @Echo({} %1)
+// CHECK:STDOUT:   call void @Echo()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

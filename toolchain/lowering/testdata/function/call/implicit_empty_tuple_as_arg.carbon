@@ -20,7 +20,7 @@ fn Main() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Bar({} %a) {
+// CHECK:STDOUT: define void @Bar() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -29,6 +29,6 @@ fn Main() {
 // CHECK:STDOUT:   %x = alloca {}, align 8
 // CHECK:STDOUT:   call void @Foo()
 // CHECK:STDOUT:   %temp = alloca {}, align 8
-// CHECK:STDOUT:   call void @Bar({} poison)
+// CHECK:STDOUT:   call void @Bar()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

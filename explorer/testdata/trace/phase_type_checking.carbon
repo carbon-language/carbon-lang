@@ -22,7 +22,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> declaring `interface TestInterface` (phase_type_checking.carbon:7)
 // CHECK:STDOUT: <<- finished declaring `interface TestInterface` (phase_type_checking.carbon:7)
@@ -31,7 +30,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> checking InterfaceDeclaration `interface TestInterface` (phase_type_checking.carbon:7)
 // CHECK:STDOUT: ->> checking `interface TestInterface` (phase_type_checking.carbon:7)
@@ -88,13 +86,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_type_checking.carbon:11)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main ()-> i32 {
+// CHECK:STDOUT: fn Main () -> i32
 // CHECK:STDOUT: {
-// CHECK:STDOUT: return 0;
+// CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> declaring function `Main` (phase_type_checking.carbon:11)
 // CHECK:STDOUT: ->> checking TuplePattern `()` (phase_type_checking.carbon:9)
@@ -110,13 +105,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking declaration at (phase_type_checking.carbon:11)
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: fn Main ()-> i32 {
+// CHECK:STDOUT: fn Main () -> i32
 // CHECK:STDOUT: {
-// CHECK:STDOUT: return 0;
+// CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: ->> checking FunctionDeclaration `fn Main` (phase_type_checking.carbon:11)
 // CHECK:STDOUT: ->> checking function `Main` (phase_type_checking.carbon:11)
@@ -173,17 +165,16 @@ fn Main() -> i32 {
 // CHECK:STDOUT: *** type checking stmt at (phase_type_checking.carbon:11)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: {
-// CHECK:STDOUT: return 0;
+// CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: ->> checking Block `{return 0;}` (phase_type_checking.carbon:11)
+// CHECK:STDOUT: ->> checking Block `{ ... }` (phase_type_checking.carbon:11)
 // CHECK:STDOUT:
 // CHECK:STDOUT: *** type checking stmt at (phase_type_checking.carbon:10)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: return 0;
 // CHECK:STDOUT: ```
-// CHECK:STDOUT: ->> checking ReturnExpression `return 0;` (phase_type_checking.carbon:10)
+// CHECK:STDOUT: ->> checking ReturnExpression `return ...;` (phase_type_checking.carbon:10)
 // CHECK:STDOUT: ->> checking IntLiteral `0` (phase_type_checking.carbon:10)
 // CHECK:STDOUT: ->> finished checking function `Main` (phase_type_checking.carbon:11)
 // CHECK:STDOUT: ->> checking CallExpression `Main()` (<Main()>:0)

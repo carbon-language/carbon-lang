@@ -215,7 +215,19 @@ auto LoweringHandleCall(LoweringFunctionContext& context, SemIR::NodeId node_id,
   }
 
   for (auto ref_id : arg_ids) {
-    args.push_back(context.GetLocalLoaded(ref_id));
+    auto arg_type_id = context.semantics_ir().GetNode(ref_id).type_id();
+    switch (SemIR::GetValueRepresentation(context.semantics_ir(), arg_type_id)
+                .kind) {
+      case SemIR::ValueRepresentation::None:
+        break;
+      case SemIR::ValueRepresentation::Copy:
+      case SemIR::ValueRepresentation::Custom:
+        args.push_back(context.GetLocalLoaded(ref_id));
+        break;
+      case SemIR::ValueRepresentation::Pointer:
+        args.push_back(context.GetLocal(ref_id));
+        break;
+    }
   }
 
   if (llvm_function->getReturnType()->isVoidTy()) {
