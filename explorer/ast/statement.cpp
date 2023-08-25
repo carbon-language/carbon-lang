@@ -17,22 +17,15 @@ Statement::~Statement() = default;
 
 void Statement::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case StatementKind::Match: {
-      const auto& match = cast<Match>(*this);
-      out << "match (" << PrintAsID(match.expression()) << ") { ... }";
+    case StatementKind::Match:
+      out << "match (...) { ... }";
       break;
-    }
-    case StatementKind::While: {
-      const auto& while_stmt = cast<While>(*this);
-      out << "while (" << PrintAsID(while_stmt.condition()) << ") { ... }";
+    case StatementKind::While:
+      out << "while (...) { ... }";
       break;
-    }
-    case StatementKind::For: {
-      const auto& for_stmt = cast<For>(*this);
-      out << "for (" << for_stmt.variable_declaration() << " in "
-          << for_stmt.loop_target() << ") { ... }";
+    case StatementKind::For:
+      out << "for (...) { ... }";
       break;
-    }
     case StatementKind::Break:
       out << "break;";
       break;
@@ -44,67 +37,49 @@ void Statement::PrintID(llvm::raw_ostream& out) const {
       if (var.is_returned()) {
         out << "returned ";
       }
-      out << "var " << PrintAsID(var.pattern());
+      out << "var ...";
       if (var.has_init()) {
-        out << " = " << PrintAsID(var.init());
+        out << " = ...";
       }
       out << ";";
       break;
     }
     case StatementKind::ExpressionStatement:
-      out << PrintAsID(cast<ExpressionStatement>(*this).expression()) << ";";
+      out << "<expression>;";
       break;
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*this);
-      out << PrintAsID(assign.lhs()) << " "
-          << AssignOperatorToString(assign.op()) << " "
-          << PrintAsID(assign.rhs()) << ";";
+      out << "... " << AssignOperatorToString(assign.op()) << " ...;";
       break;
     }
     case StatementKind::IncrementDecrement: {
       const auto& inc_dec = cast<IncrementDecrement>(*this);
-      out << (inc_dec.is_increment() ? "++" : "--")
-          << PrintAsID(inc_dec.argument()) << ";";
+      out << (inc_dec.is_increment() ? "++" : "--") << "...;";
       break;
     }
     case StatementKind::If: {
       const auto& if_stmt = cast<If>(*this);
       out << "if (...) { ... }";
-      out << "if (" << PrintAsID(if_stmt.condition()) << ") { ... }";
       if (if_stmt.else_block()) {
         out << " else { ... }";
       }
       break;
     }
-    case StatementKind::ReturnVar: {
+    case StatementKind::ReturnVar:
       out << "return var;";
       break;
-    }
     case StatementKind::ReturnExpression: {
       const auto& ret = cast<ReturnExpression>(*this);
       if (ret.is_omitted_expression()) {
         out << "return;";
       } else {
-        out << "return " << PrintAsID(ret.expression());
+        out << "return ...;";
       }
       break;
     }
-    case StatementKind::Block: {
-      const auto& block = cast<Block>(*this);
-      const auto statements = block.statements();
-      llvm::ListSeparator sep(" ");
-      if (statements.empty()) {
-        out << "{}";
-      } else {
-        out << "{" << PrintAsID(*statements.front())
-            << (statements.size() > 1
-                    ? " ... [" + std::to_string(statements.size() - 1) +
-                          "] statements"
-                    : "")
-            << "}";
-      }
+    case StatementKind::Block:
+      out << "{ ... }";
       break;
-    }
   }
 }
 
