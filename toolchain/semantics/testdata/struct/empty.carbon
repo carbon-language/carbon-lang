@@ -26,14 +26,13 @@ var y: {} = x;
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructType, arg0: block0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
-// CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type0},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+4},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+3},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
-// CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+7, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+2},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+2, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+7},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -48,17 +47,17 @@ var y: {} = x;
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7_9.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc7_9.2: {} = struct_value ()
-// CHECK:STDOUT:   %x: {} = var
+// CHECK:STDOUT:   %x: {} = var "x"
 // CHECK:STDOUT:   %.loc7_14: {} = struct_value ()
 // CHECK:STDOUT:   assign %x, %.loc7_14
 // CHECK:STDOUT:   %.loc8: {} = struct_value ()
-// CHECK:STDOUT:   %y: {} = var
-// CHECK:STDOUT:   assign %y, %x
+// CHECK:STDOUT:   %y: {} = var "y"
+// CHECK:STDOUT:   %.loc7_5: {} = bind_value %x
+// CHECK:STDOUT:   assign %y, %.loc7_5
 // CHECK:STDOUT: }

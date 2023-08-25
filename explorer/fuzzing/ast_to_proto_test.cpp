@@ -15,8 +15,8 @@
 #include <variant>
 
 #include "explorer/syntax/parse.h"
+#include "testing/base/test_raw_ostream.h"
 #include "testing/fuzzing/proto_to_carbon.h"
-#include "testing/util/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {

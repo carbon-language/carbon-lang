@@ -6,26 +6,32 @@
 
 namespace Carbon {
 
+auto LoweringHandleArrayType(LoweringFunctionContext& context,
+                             SemIR::NodeId node_id, SemIR::Node /*node*/)
+    -> void {
+  context.SetLocal(node_id, context.GetTypeAsValue());
+}
+
 auto LoweringHandleConstType(LoweringFunctionContext& context,
-                             SemanticsNodeId node_id, SemanticsNode /*node*/)
+                             SemIR::NodeId node_id, SemIR::Node /*node*/)
     -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
 auto LoweringHandlePointerType(LoweringFunctionContext& context,
-                               SemanticsNodeId node_id, SemanticsNode /*node*/)
+                               SemIR::NodeId node_id, SemIR::Node /*node*/)
     -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
 auto LoweringHandleStructType(LoweringFunctionContext& context,
-                              SemanticsNodeId node_id, SemanticsNode /*node*/)
+                              SemIR::NodeId node_id, SemIR::Node /*node*/)
     -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
 auto LoweringHandleTupleType(LoweringFunctionContext& context,
-                             SemanticsNodeId node_id, SemanticsNode /*node*/)
+                             SemIR::NodeId node_id, SemIR::Node /*node*/)
     -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }

@@ -2,9 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/file_test:rules.bzl", "file_test")
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -117,8 +118,8 @@ cc_test(
     size = "small",
     srcs = ["semantics_ir_test.cpp"],
     deps = [
-        "//testing/util:gtest_main",
-        "//testing/util:test_raw_ostream",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
         "//toolchain/base:yaml_test_helpers",
         "//toolchain/driver",
         "@com_google_googletest//:gtest",

@@ -24,7 +24,6 @@ class TraceStream;
 // Enumerates the phases of the program used for tracing and controlling which
 // program phases are included for tracing.
 enum class ProgramPhase {
-  Unknown,                     // Represents an unknown program phase.
   SourceProgram,               // Phase for the source program.
   NameResolution,              // Phase for name resolution.
   ControlFlowResolution,       // Phase for control flow resolution.
@@ -33,6 +32,7 @@ enum class ProgramPhase {
   Declarations,                // Phase for printing declarations.
   Execution,                   // Phase for program execution.
   Timing,                      // Phase for timing logs.
+  Unknown,                     // Represents an unknown program phase.
   All,                         // Represents all program phases.
   Last = All                   // Last program phase indicator.
 };
@@ -101,10 +101,22 @@ class TraceStream {
 
   auto current_phase() const -> ProgramPhase { return current_phase_; }
 
+  auto add_blank_lines(int num_blank_lines) const -> void {
+    CARBON_CHECK(is_enabled() && stream_);
+    if (!is_trace_empty_) {
+      for (int i = 0; i < num_blank_lines; ++i) {
+        **stream_ << "\n";
+      }
+    }
+  }
+
   // Outputs a trace message. Requires is_enabled.
   template <typename T>
   auto operator<<(T&& message) const -> llvm::raw_ostream& {
     CARBON_CHECK(is_enabled() && stream_);
+    if (is_trace_empty_) {
+      is_trace_empty_ = false;
+    }
     **stream_ << message;
     return **stream_;
   }
@@ -127,27 +139,33 @@ class TraceStream {
   auto Pop() const -> llvm::raw_ostream& { return *this << "<[] "; }
   auto Not() const -> llvm::raw_ostream& { return *this << "-!- "; }
   auto Skip() const -> llvm::raw_ostream& { return *this << ">>> "; }
-  auto Source() const -> llvm::raw_ostream& { return *this << "*** "; }
+  auto Source() const -> llvm::raw_ostream& {
+    // add a blank line before prefix.
+    add_blank_lines(1);
+    return *this << "*** ";
+  }
 
   // Format utility methods
   void Heading(std::string_view heading) const {
-    CARBON_CHECK(is_enabled() && stream_);
+    add_blank_lines(2);
     const std::string_view stars = "* * * * * * * * * *";
     const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
-    **stream_ << stars << "  " << heading << "  " << stars << "\n"
-              << dashed_line << "\n";
+    *this << stars << "  " << heading << "  " << stars << "\n"
+          << dashed_line << "\n";
   }
 
-  void SubHeading(std::string_view heading) const {
-    CARBON_CHECK(is_enabled() && stream_);
+  void SubHeading(std::string_view sub_heading) const {
+    add_blank_lines(1);
     const std::string_view dashes = "- - - - -";
-    const std::string dashed_line(dashes.size() * 2 + heading.size() + 4, '-');
-    **stream_ << dashes << "  " << heading << "  " << dashes << "\n"
-              << dashed_line << "\n";
+    const std::string dashed_line(dashes.size() * 2 + sub_heading.size() + 4,
+                                  '-');
+    *this << dashes << "  " << sub_heading << "  " << dashes << "\n"
+          << dashed_line << "\n";
   }
 
  private:
   bool in_prelude_ = false;
+  mutable bool is_trace_empty_ = true;
   ProgramPhase current_phase_ = ProgramPhase::Unknown;
   std::optional<SourceLocation> source_loc_ = std::nullopt;
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;

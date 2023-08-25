@@ -23,6 +23,5 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Baz() {
 // CHECK:STDOUT:   call void @Wiz()
-// CHECK:STDOUT:   %call.result = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

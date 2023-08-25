@@ -4,11 +4,10 @@
 
 #include "toolchain/parser/parser_context.h"
 
-#include <cstdlib>
-#include <memory>
 #include <optional>
 
 #include "common/check.h"
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -77,15 +76,18 @@ auto ParserContext::AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
 }
 
 auto ParserContext::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
-                                           ParseNodeKind start_kind) -> void {
+                                           ParseNodeKind start_kind)
+    -> std::optional<TokenizedBuffer::Token> {
   if (auto open_paren = ConsumeIf(TokenKind::OpenParen)) {
     AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
+    return open_paren;
   } else {
     CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
                       TokenKind);
     emitter_->Emit(*position_, ExpectedParenAfter,
                    tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
+    return std::nullopt;
   }
 }
 
@@ -445,8 +447,7 @@ auto ParserContext::EmitExpectedDeclarationSemiOrDefinition(
 
 auto ParserContext::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   output << "Parser stack:\n";
-  for (int i = 0; i < static_cast<int>(state_stack_.size()); ++i) {
-    const auto& entry = state_stack_[i];
+  for (auto [i, entry] : llvm::enumerate(state_stack_)) {
     output << "\t" << i << ".\t" << entry.state;
     PrintTokenForStackDump(output, entry.token);
   }

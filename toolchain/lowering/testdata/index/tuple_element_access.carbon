@@ -11,8 +11,8 @@ fn Run() -> i32 {
   return 0;
 }
 
-// CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
-// CHECK:STDOUT: source_filename = "member_access.carbon"
+// CHECK:STDOUT: ; ModuleID = 'tuple_element_access.carbon'
+// CHECK:STDOUT: source_filename = "tuple_element_access.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
@@ -24,7 +24,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   store %type zeroinitializer, ptr %2, align 1
 // CHECK:STDOUT:   %3 = getelementptr inbounds { %type, %type, %type }, ptr %tuple, i32 0, i32 2
 // CHECK:STDOUT:   store %type zeroinitializer, ptr %3, align 1
-// CHECK:STDOUT:   %var = alloca { i32, i32, i32 }, align 8
+// CHECK:STDOUT:   %a = alloca { i32, i32, i32 }, align 8
 // CHECK:STDOUT:   %tuple1 = alloca { i32, i32, i32 }, align 8
 // CHECK:STDOUT:   %4 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple1, i32 0, i32 0
 // CHECK:STDOUT:   store i32 0, ptr %4, align 4
@@ -32,15 +32,19 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   store i32 1, ptr %5, align 4
 // CHECK:STDOUT:   %6 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple1, i32 0, i32 2
 // CHECK:STDOUT:   store i32 2, ptr %6, align 4
-// CHECK:STDOUT:   %7 = load { i32, i32, i32 }, ptr %tuple1, align 4
-// CHECK:STDOUT:   store { i32, i32, i32 } %7, ptr %var, align 4
-// CHECK:STDOUT:   %var2 = alloca i32, align 4
-// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32, i32 }, ptr %var, i32 0, i32 0
-// CHECK:STDOUT:   %8 = load i32, ptr %tuple.index, align 4
-// CHECK:STDOUT:   store i32 %8, ptr %var2, align 4
-// CHECK:STDOUT:   %var3 = alloca i32, align 4
-// CHECK:STDOUT:   %tuple.index4 = getelementptr inbounds { i32, i32, i32 }, ptr %var, i32 0, i32 2
-// CHECK:STDOUT:   %9 = load i32, ptr %tuple.index4, align 4
-// CHECK:STDOUT:   store i32 %9, ptr %var3, align 4
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a, ptr align 4 %tuple1, i64 12, i1 false)
+// CHECK:STDOUT:   %b = alloca i32, align 4
+// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32, i32 }, ptr %a, i32 0, i32 0
+// CHECK:STDOUT:   %7 = load i32, ptr %tuple.index, align 4
+// CHECK:STDOUT:   store i32 %7, ptr %b, align 4
+// CHECK:STDOUT:   %c = alloca i32, align 4
+// CHECK:STDOUT:   %tuple.index2 = getelementptr inbounds { i32, i32, i32 }, ptr %a, i32 0, i32 2
+// CHECK:STDOUT:   %8 = load i32, ptr %tuple.index2, align 4
+// CHECK:STDOUT:   store i32 %8, ptr %c, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }

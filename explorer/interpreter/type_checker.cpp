@@ -5,7 +5,6 @@
 #include "explorer/interpreter/type_checker.h"
 
 #include <deque>
-#include <iterator>
 #include <map>
 #include <optional>
 #include <set>
@@ -32,11 +31,11 @@
 #include "explorer/interpreter/pattern_match.h"
 #include "explorer/interpreter/type_structure.h"
 #include "explorer/interpreter/type_utils.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Error.h"
 #include "llvm/Support/SaveAndRestore.h"
 
 using llvm::cast;
@@ -469,11 +468,11 @@ auto TypeChecker::IsBuiltinConversion(SourceLocation source_loc,
             break;
           }
           bool all_ok = true;
-          for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
+          for (const auto [source_elem, dest_elem] : llvm::zip_equal(
+                   source_tuple.elements(), destination_tuple.elements())) {
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(source_loc, source_tuple.elements()[i],
-                                        destination_tuple.elements()[i],
+                IsImplicitlyConvertible(source_loc, source_elem, dest_elem,
                                         impl_scope,
                                         allow_user_defined_conversions));
             if (!convertible) {
@@ -680,7 +679,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
             return conversion_failed();
           }
           std::vector<Nonnull<Expression*>> converted_elements;
-          for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
+          for (const auto [i, dest_elem] :
+               llvm::enumerate(destination_tuple.elements())) {
             auto* elem = arena_->New<IndexExpression>(
                 source->source_loc(), source,
                 arena_->New<IntLiteral>(source->source_loc(), i));
@@ -688,7 +688,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<Expression*> converted,
                 ImplicitlyConvert("implicit conversion", impl_scope, elem,
-                                  destination_tuple.elements()[i]));
+                                  dest_elem));
             converted_elements.push_back(converted);
           }
           auto* result = arena_->New<TupleLiteral>(
@@ -853,12 +853,12 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
                << "`" << *destination << "` of different length";
       }
       std::vector<Nonnull<Expression*>> converted_elements;
-      for (size_t i = 0; i < source_tuple->fields().size(); ++i) {
+      for (const auto [source_field, dest_elem] : llvm::zip_equal(
+               source_tuple->fields(), destination_tuple->elements())) {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<Expression*> converted,
-            ImplicitlyConvert("implicit conversion", impl_scope,
-                              source_tuple->fields()[i],
-                              destination_tuple->elements()[i]));
+            ImplicitlyConvert("implicit conversion", impl_scope, source_field,
+                              dest_elem));
         converted_elements.push_back(converted);
       }
       auto* result = arena_->New<TupleLiteral>(source->source_loc(),
@@ -1163,10 +1163,10 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
                << param_tup.elements().size() << " but got "
                << arg_tup.elements().size();
       }
-      for (size_t i = 0; i < param_tup.elements().size(); ++i) {
-        CARBON_RETURN_IF_ERROR(Deduce(param_tup.elements()[i],
-                                      arg_tup.elements()[i],
-                                      allow_implicit_conversion));
+      for (const auto [param_elem, arg_elem] :
+           llvm::zip_equal(param_tup.elements(), arg_tup.elements())) {
+        CARBON_RETURN_IF_ERROR(
+            Deduce(param_elem, arg_elem, allow_implicit_conversion));
       }
       return Success();
     }
@@ -1207,10 +1207,8 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
                          << "duplicate field name?";
         }
       } else {
-        size_t smaller_size = std::min(param_fields.size(), arg_fields.size());
-        for (size_t i = 0; i < smaller_size; ++i) {
-          NamedValue param_field = param_fields[i];
-          NamedValue arg_field = arg_fields[i];
+        for (const auto [param_field, arg_field] :
+             llvm::zip(param_fields, arg_fields)) {
           if (param_field.name != arg_field.name) {
             return ProgramError(source_loc_)
                    << "mismatch in field names, `" << param_field.name
@@ -1592,8 +1590,7 @@ class TypeChecker::ConstraintTypeBuilder {
   // Adds an `impls` constraint -- `T impls C` if not already present.
   // Returns the index of the impls constraint within the self witness.
   auto AddImplsConstraint(ImplsConstraint impls) -> int {
-    for (int i = 0; i != static_cast<int>(impls_constraints_.size()); ++i) {
-      ImplsConstraint& existing = impls_constraints_[i];
+    for (const auto [i, existing] : llvm::enumerate(impls_constraints_)) {
       if (TypeEqual(existing.type, impls.type, std::nullopt) &&
           TypeEqual(existing.interface, impls.interface, std::nullopt)) {
         return i;
@@ -2378,7 +2375,6 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
   MatchingImplSet::Match match(&matching_impl_set_, &impl, impl_type, &iface);
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "\n";
     trace_stream_->SubHeading("match impl");
     trace_stream_->Start() << "looking for `" << *impl_type << "` as `" << iface
                            << "`\n";
@@ -2509,9 +2505,7 @@ auto TypeChecker::DeduceCallBindings(
 
   // Deduce and/or convert each argument to the corresponding
   // parameter.
-  for (size_t i = 0; i < params.size(); ++i) {
-    const Value* param = params[i];
-    Expression* arg = args[i];
+  for (const auto [i, param, arg] : llvm::enumerate(params, args)) {
     if (!generic_params.empty() && generic_params.front().index == i) {
       // The parameter is a `:!` binding. Collect its argument so we can
       // evaluate it when we're done with deduction.
@@ -3659,11 +3653,10 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
 
           // Collect the top-level generic parameters and their constraints.
           std::vector<FunctionType::GenericParameter> generic_parameters;
-          llvm::ArrayRef<Nonnull<const Pattern*>> params =
-              param_name.params().fields();
-          for (size_t i = 0; i != params.size(); ++i) {
+          for (const auto [i, param] :
+               llvm::enumerate(param_name.params().fields())) {
             // TODO: Should we disallow all other kinds of top-level params?
-            if (const auto* binding = dyn_cast<GenericBinding>(params[i])) {
+            if (const auto* binding = dyn_cast<GenericBinding>(param)) {
               generic_parameters.push_back({{}, i, binding});
             }
           }
@@ -4391,8 +4384,7 @@ auto TypeChecker::TypeCheckPattern(
                           cast<TupleType>(**expected).elements().size()) {
         return ProgramError(tuple.source_loc()) << "tuples of different length";
       }
-      for (size_t i = 0; i < tuple.fields().size(); ++i) {
-        Nonnull<Pattern*> field = tuple.fields()[i];
+      for (const auto [i, field] : llvm::enumerate(tuple.fields())) {
         std::optional<Nonnull<const Value*>> expected_field_type;
         if (expected) {
           expected_field_type = cast<TupleType>(**expected).elements()[i];
@@ -4947,9 +4939,8 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   // Keep track of any generic parameters and nested generic bindings in the
   // parameter pattern.
   std::vector<FunctionType::GenericParameter> generic_parameters;
-  for (size_t i = 0; i != f->param_pattern().fields().size(); ++i) {
-    Pattern* param_pattern = f->param_pattern().fields()[i];
-
+  for (const auto [i, param_pattern] :
+       llvm::enumerate(f->param_pattern().fields())) {
     size_t old_size = all_bindings.size();
     CollectAndNumberGenericBindingsInPattern(param_pattern, all_bindings);
 

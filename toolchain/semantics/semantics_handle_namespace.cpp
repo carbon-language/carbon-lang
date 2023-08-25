@@ -5,21 +5,20 @@
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleNamespaceStart(SemanticsContext& context,
-                                   ParseTree::Node /*parse_node*/) -> bool {
+auto HandleNamespaceStart(Context& context, ParseTree::Node /*parse_node*/)
+    -> bool {
   context.declaration_name_stack().Push();
   return true;
 }
 
-auto SemanticsHandleNamespace(SemanticsContext& context,
-                              ParseTree::Node parse_node) -> bool {
+auto HandleNamespace(Context& context, ParseTree::Node parse_node) -> bool {
   auto name_context = context.declaration_name_stack().Pop();
-  auto namespace_id = context.AddNode(SemanticsNode::Namespace::Make(
+  auto namespace_id = context.AddNode(SemIR::Node::Namespace::Make(
       parse_node, context.semantics_ir().AddNameScope()));
   context.declaration_name_stack().AddNameToLookup(name_context, namespace_id);
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

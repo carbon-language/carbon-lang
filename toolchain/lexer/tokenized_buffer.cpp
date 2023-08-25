@@ -13,6 +13,7 @@
 #include "common/check.h"
 #include "common/string_helpers.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -23,6 +24,10 @@
 #include "toolchain/lexer/lex_helpers.h"
 #include "toolchain/lexer/numeric_literal.h"
 #include "toolchain/lexer/string_literal.h"
+
+#if __x86_64__
+#include <x86intrin.h>
+#endif
 
 namespace Carbon {
 
@@ -46,6 +51,167 @@ Overload(Fs...) -> Overload<Fs...>;
 template <typename V, typename... Fs>
 auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
   return std::visit(Overload{std::forward<Fs&&>(fs)...}, std::forward<V&&>(v));
+}
+
+// Scans the provided text and returns the prefix `StringRef` of contiguous
+// identifier characters.
+//
+// This is a performance sensitive function and so uses vectorized code
+// sequences to optimize its scanning. When modifying, the identifier lexing
+// benchmarks should be checked for regressions.
+//
+// Identifier characters here are currently the ASCII characters `[0-9A-Za-z_]`.
+//
+// TODO: Currently, this code does not implement Carbon's design for Unicode
+// characters in identifiers. It does work on UTF-8 code unit sequences, but
+// currently considers non-ASCII characters to be non-identifier characters.
+// Some work has been done to ensure the hot loop, while optimized, retains
+// enough information to add Unicode handling without completely destroying the
+// relevant optimizations.
+static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
+  // A table of booleans that we can use to classify bytes as being valid
+  // identifier (or keyword) characters. This is used in the generic,
+  // non-vectorized fallback code to scan for length of an identifier.
+  constexpr std::array<bool, 256> IsIdentifierByteTable = []() constexpr {
+    std::array<bool, 256> table = {};
+    for (char c = '0'; c <= '9'; ++c) {
+      table[c] = true;
+    }
+    for (char c = 'A'; c <= 'Z'; ++c) {
+      table[c] = true;
+    }
+    for (char c = 'a'; c <= 'z'; ++c) {
+      table[c] = true;
+    }
+    table['_'] = true;
+    return table;
+  }();
+
+#if __x86_64__
+  // This code uses a scheme derived from the techniques in Geoff Langdale and
+  // Daniel Lemire's work on parsing JSON[1]. Specifically, that paper outlines
+  // a technique of using two 4-bit indexed in-register look-up tables (LUTs) to
+  // classify bytes in a branchless SIMD code sequence.
+  //
+  // [1]: https://arxiv.org/pdf/1902.08318.pdf
+  //
+  // The goal is to get a bit mask classifying different sets of bytes. For each
+  // input byte, we first test for a high bit indicating a UTF-8 encoded Unicode
+  // character. Otherwise, we want the mask bits to be set with the following
+  // logic derived by inspecting the high nibble and low nibble of the input:
+  // bit0 = 1 for `_`: high `0x5` and low `0xF`
+  // bit1 = 1 for `0-9`: high `0x3` and low `0x0` - `0x9`
+  // bit2 = 1 for `A-O` and `a-o`: high `0x4` or `0x6` and low `0x1` - `0xF`
+  // bit3 = 1 for `P-Z` and 'p-z': high `0x5` or `0x7` and low `0x0` - `0xA`
+  // bit4 = unused
+  // bit5 = unused
+  // bit6 = unused
+  // bit7 = unused
+  //
+  // No bits set means definitively non-ID ASCII character.
+  //
+  // bits 4-7 remain unused if we need to classify more characters.
+  const auto high_lut = _mm_setr_epi8(
+      /*0x0:*/ 0b0000'0000,
+      /*0x1:*/ 0b0000'0000,
+      /*0x2:*/ 0b0000'0000,
+      /*0x3:*/ 0b0000'0010,
+      /*0x4:*/ 0b0000'0100,
+      /*0x5:*/ 0b0000'1001,
+      /*0x6:*/ 0b0000'0100,
+      /*0x7:*/ 0b0000'1000,
+      /*0x8:*/ 0b0000'0000,
+      /*0x9:*/ 0b0000'0000,
+      /*0xA:*/ 0b0000'0000,
+      /*0xB:*/ 0b0000'0000,
+      /*0xC:*/ 0b0000'0000,
+      /*0xD:*/ 0b0000'0000,
+      /*0xE:*/ 0b0000'0000,
+      /*0xF:*/ 0b0000'0000);
+  const auto low_lut = _mm_setr_epi8(
+      /*0x0:*/ 0b0000'1010,
+      /*0x1:*/ 0b0000'1110,
+      /*0x2:*/ 0b0000'1110,
+      /*0x3:*/ 0b0000'1110,
+      /*0x4:*/ 0b0000'1110,
+      /*0x5:*/ 0b0000'1110,
+      /*0x6:*/ 0b0000'1110,
+      /*0x7:*/ 0b0000'1110,
+      /*0x8:*/ 0b0000'1110,
+      /*0x9:*/ 0b0000'1110,
+      /*0xA:*/ 0b0000'1100,
+      /*0xB:*/ 0b0000'0100,
+      /*0xC:*/ 0b0000'0100,
+      /*0xD:*/ 0b0000'0100,
+      /*0xE:*/ 0b0000'0100,
+      /*0xF:*/ 0b0000'0101);
+
+  // Use `ssize_t` for performance here as we index memory in a tight loop.
+  ssize_t i = 0;
+  const ssize_t size = text.size();
+  while ((i + 16) <= size) {
+    __m128i input =
+        _mm_loadu_si128(reinterpret_cast<const __m128i*>(text.data() + i));
+
+    // The high bits of each byte indicate a non-ASCII character encoded using
+    // UTF-8. Test those and fall back to the scalar code if present. These
+    // bytes will also cause spurious zeros in the LUT results, but we can
+    // ignore that because we track them independently here.
+#if __SSE4_1__
+    if (!_mm_test_all_zeros(_mm_set1_epi8(0x80), input)) {
+      break;
+    }
+#else
+    if (_mm_movemask_epi8(input) != 0) {
+      break;
+    }
+#endif
+
+    // Do two LUT lookups and mask the results together to get the results for
+    // both low and high nibbles. Note that we don't need to mask out the high
+    // bit of input here because we track that above for UTF-8 handling.
+    __m128i low_mask = _mm_shuffle_epi8(low_lut, input);
+    // Note that the input needs to be masked to only include the high nibble or
+    // we could end up with bit7 set forcing the result to a zero byte.
+    __m128i input_high =
+        _mm_and_si128(_mm_srli_epi32(input, 4), _mm_set1_epi8(0x0f));
+    __m128i high_mask = _mm_shuffle_epi8(high_lut, input_high);
+    __m128i mask = _mm_and_si128(low_mask, high_mask);
+
+    // Now compare to find the completely zero bytes.
+    __m128i id_byte_mask_vec = _mm_cmpeq_epi8(mask, _mm_setzero_si128());
+    int tail_ascii_mask = _mm_movemask_epi8(id_byte_mask_vec);
+
+    // Check if there are bits in the tail mask, which means zero bytes and the
+    // end of the identifier. We could do this without materializing the scalar
+    // mask on more recent CPUs, but we generally expect the median length we
+    // encounter to be <16 characters and so we avoid the extra instruction in
+    // that case and predict this branch to succeed so it is laid out in a
+    // reasonable way.
+    if (LLVM_LIKELY(tail_ascii_mask != 0)) {
+      // Move past the definitively classified bytes that are part of the
+      // identifier, and return the complete identifier text.
+      i += __builtin_ctz(tail_ascii_mask);
+      return text.substr(0, i);
+    }
+    i += 16;
+  }
+
+  // Fallback to scalar loop. We only end up here when we don't have >=16
+  // bytes to scan or we find a UTF-8 unicode character.
+  // TODO: This assumes all Unicode characters are non-identifiers.
+  while (i < size &&
+         IsIdentifierByteTable[static_cast<unsigned char>(text[i])]) {
+    ++i;
+  }
+
+  return text.substr(0, i);
+#else
+  // TODO: Optimize this with SIMD for other architectures.
+  return text.take_while([](char c) {
+    return IsIdentifierByteTable[static_cast<unsigned char>(c)];
+  });
+#endif
 }
 
 // Implementation of the lexer logic itself.
@@ -81,6 +247,10 @@ class TokenizedBuffer::Lexer {
 
     bool formed_token_;
   };
+
+  using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef& source_text)
+      -> LexResult;
+  using DispatchTableT = std::array<DispatchFunctionT*, 256>;
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer_(&buffer),
@@ -186,7 +356,7 @@ class TokenizedBuffer::Lexer {
     std::optional<LexedNumericLiteral> literal =
         LexedNumericLiteral::Lex(source_text);
     if (!literal) {
-      return LexResult::NoMatch();
+      return LexError(source_text);
     }
 
     int int_column = current_column_;
@@ -237,7 +407,7 @@ class TokenizedBuffer::Lexer {
     std::optional<LexedStringLiteral> literal =
         LexedStringLiteral::Lex(source_text);
     if (!literal) {
-      return LexResult::NoMatch();
+      return LexError(source_text);
     }
 
     Line string_line = current_line_;
@@ -288,14 +458,30 @@ class TokenizedBuffer::Lexer {
     }
   }
 
-  auto LexSymbolToken(llvm::StringRef& source_text) -> LexResult {
-    TokenKind kind = llvm::StringSwitch<TokenKind>(source_text)
+  auto LexSymbolToken(llvm::StringRef& source_text,
+                      TokenKind kind = TokenKind::Error) -> LexResult {
+    auto compute_symbol_kind = [](llvm::StringRef source_text) {
+      return llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
   .StartsWith(Spelling, TokenKind::Name)
 #include "toolchain/lexer/token_kind.def"
-                         .Default(TokenKind::Error);
-    if (kind == TokenKind::Error) {
-      return LexResult::NoMatch();
+          .Default(TokenKind::Error);
+    };
+
+    // We use the `error` token as a place-holder for cases where one character
+    // isn't enough to pick a definitive symbol token. Recompute the kind using
+    // the full symbol set.
+    if (LLVM_UNLIKELY(kind == TokenKind::Error)) {
+      kind = compute_symbol_kind(source_text);
+      if (kind == TokenKind::Error) {
+        return LexError(source_text);
+      }
+    } else {
+      // Verify in a debug build that the incoming token kind is correct.
+      CARBON_DCHECK(kind == compute_symbol_kind(source_text))
+          << "Incoming token kind '" << kind
+          << "' does not match computed kind '"
+          << compute_symbol_kind(source_text) << "'!";
     }
 
     if (!set_indent_) {
@@ -444,9 +630,11 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexKeywordOrIdentifier(llvm::StringRef& source_text) -> LexResult {
-    if (!IsAlpha(source_text.front()) && source_text.front() != '_') {
-      return LexResult::NoMatch();
+    if (static_cast<unsigned char>(source_text.front()) > 0x7F) {
+      // TODO: Need to add support for Unicode lexing.
+      return LexError(source_text);
     }
+    CARBON_CHECK(IsAlpha(source_text.front()) || source_text.front() == '_');
 
     if (!set_indent_) {
       current_line_info_->indent = current_column_;
@@ -454,8 +642,7 @@ class TokenizedBuffer::Lexer {
     }
 
     // Take the valid characters off the front of the source buffer.
-    llvm::StringRef identifier_text =
-        source_text.take_while([](char c) { return IsAlnum(c) || c == '_'; });
+    llvm::StringRef identifier_text = ScanForIdentifierPrefix(source_text);
     CARBON_CHECK(!identifier_text.empty())
         << "Must have at least one character!";
     int identifier_column = current_column_;
@@ -528,6 +715,76 @@ class TokenizedBuffer::Lexer {
                        .column = current_column_});
   }
 
+  constexpr static auto MakeDispatchTable() -> DispatchTableT {
+    DispatchTableT table = {};
+    auto dispatch_lex_error = +[](Lexer& lexer, llvm::StringRef& source_text) {
+      return lexer.LexError(source_text);
+    };
+    for (int i = 0; i < 256; ++i) {
+      table[i] = dispatch_lex_error;
+    }
+
+    // Symbols have some special dispatching. First, set the first character of
+    // each symbol token spelling to dispatch to the symbol lexer. We don't
+    // provide a pre-computed token here, so the symbol lexer will compute the
+    // exact symbol token kind.
+    auto dispatch_lex_symbol = +[](Lexer& lexer, llvm::StringRef& source_text) {
+      return lexer.LexSymbolToken(source_text);
+    };
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
+  table[(Spelling)[0]] = dispatch_lex_symbol;
+#include "toolchain/lexer/token_kind.def"
+
+    // Now special cased single-character symbols that are guaranteed to not
+    // join with another symbol. These are grouping symbols, terminators,
+    // or separators in the grammar and have a good reason to be
+    // orthogonal to any other punctuation. We do this separately because this
+    // needs to override some of the generic handling above, and provide a
+    // custom token.
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)                  \
+  table[(Spelling)[0]] = +[](Lexer& lexer, llvm::StringRef& source_text) { \
+    return lexer.LexSymbolToken(source_text, TokenKind::TokenName);        \
+  };
+#include "toolchain/lexer/token_kind.def"
+
+    auto dispatch_lex_word = +[](Lexer& lexer, llvm::StringRef& source_text) {
+      return lexer.LexKeywordOrIdentifier(source_text);
+    };
+    table['_'] = dispatch_lex_word;
+    // Note that we don't use `llvm::seq` because this needs to be `constexpr`
+    // evaluated.
+    for (unsigned char c = 'a'; c <= 'z'; ++c) {
+      table[c] = dispatch_lex_word;
+    }
+    for (unsigned char c = 'A'; c <= 'Z'; ++c) {
+      table[c] = dispatch_lex_word;
+    }
+    // We dispatch all non-ASCII UTF-8 characters to the identifier lexing
+    // as whitespace characters should already have been skipped and the
+    // only remaining valid Unicode characters would be part of an
+    // identifier. That code can either accept or reject.
+    for (int i = 0x80; i < 0x100; ++i) {
+      table[i] = dispatch_lex_word;
+    }
+
+    auto dispatch_lex_numeric =
+        +[](Lexer& lexer, llvm::StringRef& source_text) {
+          return lexer.LexNumericLiteral(source_text);
+        };
+    for (unsigned char c = '0'; c <= '9'; ++c) {
+      table[c] = dispatch_lex_numeric;
+    }
+
+    auto dispatch_lex_string = +[](Lexer& lexer, llvm::StringRef& source_text) {
+      return lexer.LexStringLiteral(source_text);
+    };
+    table['\''] = dispatch_lex_string;
+    table['"'] = dispatch_lex_string;
+    table['#'] = dispatch_lex_string;
+
+    return table;
+  };
+
  private:
   TokenizedBuffer* buffer_;
 
@@ -552,24 +809,40 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   ErrorTrackingDiagnosticConsumer error_tracking_consumer(consumer);
   Lexer lexer(buffer, error_tracking_consumer);
 
+  // Build a table of function pointers that we can use to dispatch to the
+  // correct lexer routine based on the first byte of source text.
+  //
+  // While it is tempting to simply use a `switch` on the first byte and
+  // dispatch with cases into this, in practice that doesn't produce great code.
+  // There seem to be two issues that are the root cause.
+  //
+  // First, there are lots of different values of bytes that dispatch to a
+  // fairly small set of routines, and then some byte values that dispatch
+  // differently for each byte. This pattern isn't one that the compiler-based
+  // lowering of switches works well with -- it tries to balance all the cases,
+  // and in doing so emits several compares and other control flow rather than a
+  // simple jump table.
+  //
+  // Second, with a `case`, it isn't as obvious how to create a single, uniform
+  // interface that is effective for *every* byte value, and thus makes for a
+  // single consistent table-based dispatch. By forcing these to be function
+  // pointers, we also coerce the code to use a strictly homogeneous structure
+  // that can form a single dispatch table.
+  //
+  // These two actually interact -- the second issue is part of what makes the
+  // non-table lowering in the first one desirable for many switches and cases.
+  //
+  // Ultimately, when table-based dispatch is such an important technique, we
+  // get better results by taking full control and manually creating the
+  // dispatch structures.
+  constexpr Lexer::DispatchTableT DispatchTable = Lexer::MakeDispatchTable();
+
   llvm::StringRef source_text = source.text();
   while (lexer.SkipWhitespace(source_text)) {
-    // Each time we find non-whitespace characters, try each kind of token we
-    // support lexing, from simplest to most complex.
-    Lexer::LexResult result = lexer.LexSymbolToken(source_text);
-    if (!result) {
-      result = lexer.LexKeywordOrIdentifier(source_text);
-    }
-    if (!result) {
-      result = lexer.LexNumericLiteral(source_text);
-    }
-    if (!result) {
-      result = lexer.LexStringLiteral(source_text);
-    }
-    if (!result) {
-      result = lexer.LexError(source_text);
-    }
-    CARBON_CHECK(result) << "No token was lexed.";
+    Lexer::LexResult result =
+        DispatchTable[static_cast<unsigned char>(source_text.front())](
+            lexer, source_text);
+    CARBON_CHECK(result) << "Failed to form a token!";
   }
 
   // The end-of-file token is always considered to be whitespace.

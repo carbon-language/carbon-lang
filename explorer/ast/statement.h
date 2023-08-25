@@ -29,9 +29,10 @@ class Statement : public AstNode {
  public:
   ~Statement() override = 0;
 
-  void Print(llvm::raw_ostream& out) const override { PrintDepth(-1, out); }
-  void PrintID(llvm::raw_ostream& out) const override { PrintDepth(1, out); }
-  void PrintDepth(int depth, llvm::raw_ostream& out) const;
+  void Print(llvm::raw_ostream& out) const override { PrintIndent(0, out); }
+  void PrintID(llvm::raw_ostream& out) const override;
+
+  void PrintIndent(int indent_num_spaces, llvm::raw_ostream& out) const;
 
   static auto classof(const AstNode* node) {
     return InheritsFromStatement(node->kind());

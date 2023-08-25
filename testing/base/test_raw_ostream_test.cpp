@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "testing/util/test_raw_ostream.h"
+#include "testing/base/test_raw_ostream.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

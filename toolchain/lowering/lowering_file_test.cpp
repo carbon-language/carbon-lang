@@ -15,7 +15,7 @@ class LoweringFileTest : public DriverFileTestBase {
   using DriverFileTestBase::DriverFileTestBase;
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    return {"dump", "llvm-ir", "%s"};
+    return {"compile", "--phase=lower", "--dump-llvm-ir", "%s"};
   }
 };
 

@@ -37,7 +37,7 @@ class DriverFileTestBase : public FileTestBase {
     }
 
     Driver driver(fs, stdout, stderr);
-    return driver.RunFullCommand(test_args);
+    return driver.RunCommand(test_args);
   }
 };
 

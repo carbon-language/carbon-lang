@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(default_visibility = ["//explorer:__subpackages__"])
 
 cc_library(
@@ -18,7 +20,7 @@ cc_test(
     srcs = ["arena_test.cpp"],
     deps = [
         ":arena",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -36,7 +38,7 @@ cc_test(
     srcs = ["decompose_test.cpp"],
     deps = [
         ":decompose",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -56,8 +58,8 @@ cc_test(
     deps = [
         ":error_builders",
         ":source_location",
-        "//testing/util:gtest_main",
-        "//testing/util:test_raw_ostream",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -96,7 +98,7 @@ cc_test(
     srcs = ["set_program_phase_raii_test.cpp"],
     deps = [
         ":trace_stream",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -107,7 +109,7 @@ cc_test(
     deps = [
         ":source_location",
         ":trace_stream",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

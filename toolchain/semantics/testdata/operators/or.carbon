@@ -13,9 +13,9 @@ fn Or() -> bool {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
-// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type0, body: {block3}}},
-// CHECK:STDOUT:   {name: str2, param_refs: block0, return_type: type0, body: {block4, block5, block6}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: [block3]},
+// CHECK:STDOUT:   {name: str2, param_refs: block0, return_type: type0, body: [block5]},
+// CHECK:STDOUT:   {name: str3, param_refs: block0, return_type: type0, body: [block7, block8, block9]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -23,6 +23,7 @@ fn Or() -> bool {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   F,
+// CHECK:STDOUT:   return,
 // CHECK:STDOUT:   G,
 // CHECK:STDOUT:   Or,
 // CHECK:STDOUT: ]
@@ -32,53 +33,77 @@ fn Or() -> bool {
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+6},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+7, type: type0},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+11, arg1: node+10},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+11, type: type0},
+// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+13, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+8},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block6, arg1: node+9},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+14},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+15},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block6, arg1: node+12},
-// CHECK:STDOUT:   {kind: BlockArg, arg0: block6, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+14},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+19, arg1: node+18},
+// CHECK:STDOUT:   {kind: BindValue, arg0: node+19, type: type0},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+21},
+// CHECK:STDOUT:   {kind: BlockArg, arg0: block9, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+23},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+18,
+// CHECK:STDOUT:     node+19,
+// CHECK:STDOUT:     node+20,
+// CHECK:STDOUT:     node+21,
+// CHECK:STDOUT:     node+22,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+23,
+// CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -102,14 +127,20 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11: bool = call @F()
-// CHECK:STDOUT:   %.loc11_14.1: bool = not %.loc11_11
+// CHECK:STDOUT:   %.loc11_11.1: bool = call @F()
+// CHECK:STDOUT:   %.loc11_11.2: bool = materialize_temporary
+// CHECK:STDOUT:   assign %.loc11_11.2, %.loc11_11.1
+// CHECK:STDOUT:   %.loc11_11.3: bool = bind_value %.loc11_11.2
+// CHECK:STDOUT:   %.loc11_14.1: bool = not %.loc11_11.3
 // CHECK:STDOUT:   %.loc11_14.2: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc11_14.1 br !or.rhs else br !or.result(%.loc11_14.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
-// CHECK:STDOUT:   %.loc11_18: bool = call @G()
-// CHECK:STDOUT:   br !or.result(%.loc11_18)
+// CHECK:STDOUT:   %.loc11_18.1: bool = call @G()
+// CHECK:STDOUT:   %.loc11_18.2: bool = materialize_temporary
+// CHECK:STDOUT:   assign %.loc11_18.2, %.loc11_18.1
+// CHECK:STDOUT:   %.loc11_18.3: bool = bind_value %.loc11_18.2
+// CHECK:STDOUT:   br !or.result(%.loc11_18.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.result:
 // CHECK:STDOUT:   %.loc11_14.3: bool = block_arg !or.result

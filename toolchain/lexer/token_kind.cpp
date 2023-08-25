@@ -79,6 +79,15 @@ auto TokenKind::opening_symbol() const -> TokenKind {
   return result;
 }
 
+auto TokenKind::is_one_char_symbol() const -> bool {
+  static constexpr bool Table[] = {
+#define CARBON_TOKEN(TokenName) false,
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) true,
+#include "toolchain/lexer/token_kind.def"
+  };
+  return Table[AsInt()];
+}
+
 auto TokenKind::is_keyword() const -> bool {
   static constexpr bool Table[] = {
 #define CARBON_TOKEN(TokenName) false,
@@ -107,7 +116,7 @@ auto TokenKind::fixed_spelling() const -> llvm::StringRef {
 auto TokenKind::expected_parse_tree_size() const -> int {
   static constexpr int8_t Table[] = {
 #define CARBON_TOKEN(Name) 1,
-#define CARBON_TOKEN_WITH_VIRTUAL_NODE(size) 1 + size
+#define CARBON_TOKEN_WITH_VIRTUAL_NODE(size) 2,
 #include "toolchain/lexer/token_kind.def"
   };
   return Table[AsInt()];

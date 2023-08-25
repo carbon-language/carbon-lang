@@ -2,12 +2,37 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "bazel_working_dir",
     hdrs = ["bazel_working_dir.h"],
     deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "command_line",
+    srcs = ["command_line.cpp"],
+    hdrs = ["command_line.h"],
+    deps = [
+        ":check",
+        ":ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "command_line_test",
+    srcs = ["command_line_test.cpp"],
+    deps = [
+        ":command_line",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -20,6 +45,7 @@ cc_library(
     ],
     hdrs = ["check.h"],
     deps = [
+        ":ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -29,7 +55,7 @@ cc_test(
     srcs = ["check_test.cpp"],
     deps = [
         ":check",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -54,8 +80,8 @@ cc_test(
     deps = [
         ":enum_base",
         ":enum_base_test_def",
-        "//testing/util:gtest_main",
-        "//testing/util:test_raw_ostream",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -75,8 +101,8 @@ cc_test(
     srcs = ["error_test.cpp"],
     deps = [
         ":error",
-        "//testing/util:gtest_main",
-        "//testing/util:test_raw_ostream",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -91,7 +117,7 @@ cc_test(
     srcs = ["indirect_value_test.cpp"],
     deps = [
         ":indirect_value",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -106,7 +132,7 @@ cc_test(
     srcs = ["metaprogramming_test.cpp"],
     deps = [
         ":metaprogramming",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -137,7 +163,7 @@ cc_test(
     srcs = ["string_helpers_test.cpp"],
     deps = [
         ":string_helpers",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -157,8 +183,8 @@ cc_test(
     srcs = ["vlog_test.cpp"],
     deps = [
         ":vlog",
-        "//testing/util:gtest_main",
-        "//testing/util:test_raw_ostream",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
 )

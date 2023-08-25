@@ -14,7 +14,7 @@ fn F(p: const i32**) -> const (const i32)** {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type3, body: {block4}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type3, body: [block4]},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -23,6 +23,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   F,
 // CHECK:STDOUT:   p,
+// CHECK:STDOUT:   return,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
@@ -36,12 +37,12 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type3},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+3, type: type3},
+// CHECK:STDOUT:   {kind: Parameter, arg0: str1, type: type3},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type3},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3},
 // CHECK:STDOUT: ]
@@ -54,15 +55,15 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
@@ -71,11 +72,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc11_32: type = const_type i32
-// CHECK:STDOUT:   %.loc11_25: type = const_type const i32
-// CHECK:STDOUT:   %.loc11_42: type = ptr_type const i32
-// CHECK:STDOUT:   %.loc11_43: type = ptr_type const i32*
-// CHECK:STDOUT:   %.loc11_1 = fn_decl @F
+// CHECK:STDOUT:   %.loc11 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {

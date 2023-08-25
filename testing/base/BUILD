@@ -5,6 +5,8 @@
 # Trivial, single-file testing libraries. More complex libraries should get
 # their own directory.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(default_visibility = ["//visibility:public"])
 
 # This does extra initialization on top of googletest's gtest_main in order to
@@ -39,7 +41,7 @@ cc_test(
     srcs = ["test_raw_ostream_test.cpp"],
     deps = [
         ":test_raw_ostream",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

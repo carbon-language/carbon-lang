@@ -305,15 +305,12 @@ Past Carbon focused talks from the community:
 
 ### 2023
 
-Press `S` when viewing slides to see speaker notes.
-
--   [Carbon’s Successor Strategy: From C++ interop to memory safety (Slides)](https://chandlerc.blog/slides/2023-cppnow-carbon-strategy/index.html#/),
+-   [Carbon’s Successor Strategy: From C++ interop to memory safety](https://www.youtube.com/watch?v=1ZTJ9omXOQ0),
     C++Now
 -   Definition-Checked Generics
-    [(Part 1, Slides)](https://chandlerc.blog/slides/2023-cppnow-generics-1/#/),
-    [(Part 2, Slides)](https://chandlerc.blog/slides/2023-cppnow-generics-2/#/),
-    C++Now
--   [Modernizing Compiler Design for Carbon’s Toolchain (Slides)](https://chandlerc.blog/slides/2023-cppnow-compiler/index.html#/),
+    ([Part 1](https://www.youtube.com/watch?v=FKC8WACSMP0),
+    [Part 2](https://www.youtube.com/watch?v=VxQ3PwxiSzk)), C++Now
+-   [Modernizing Compiler Design for Carbon’s Toolchain](https://www.youtube.com/watch?v=ZI198eFghJk),
     C++Now
 
 ## Join us

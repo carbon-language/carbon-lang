@@ -10,18 +10,20 @@
 namespace Carbon::Testing {
 namespace {
 
-class SemanticsFileTest : public DriverFileTestBase {
+class CheckFileTest : public DriverFileTestBase {
  public:
   using DriverFileTestBase::DriverFileTestBase;
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    // TODO: Remove the "--include_raw" once the textual IR format stabilizes.
-    return {"dump", "semantics-ir", "--include_raw", "%s"};
+    // TODO: Remove the "--dump-raw-semantics-ir" once the textual IR format
+    // stabilizes.
+    return {"compile", "--phase=check", "--dump-raw-semantics-ir",
+            "--dump-semantics-ir", "%s"};
   }
 };
 
 }  // namespace
 
-CARBON_FILE_TEST_FACTORY(SemanticsFileTest);
+CARBON_FILE_TEST_FACTORY(CheckFileTest);
 
 }  // namespace Carbon::Testing

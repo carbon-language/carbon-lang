@@ -25,23 +25,23 @@ class LoweringFunctionContext {
 
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
-  auto GetBlock(SemanticsNodeBlockId block_id) -> llvm::BasicBlock*;
+  auto GetBlock(SemIR::NodeBlockId block_id) -> llvm::BasicBlock*;
 
   // If we have not yet allocated a `BasicBlock` for this `block_id`, set it to
   // `block`, and enqueue `block_id` for emission. Returns whether we set the
   // block.
-  auto TryToReuseBlock(SemanticsNodeBlockId block_id, llvm::BasicBlock* block)
+  auto TryToReuseBlock(SemIR::NodeBlockId block_id, llvm::BasicBlock* block)
       -> bool;
 
   // Returns a phi node corresponding to the block argument of the given basic
   // block.
-  auto GetBlockArg(SemanticsNodeBlockId block_id, SemanticsTypeId type_id)
+  auto GetBlockArg(SemIR::NodeBlockId block_id, SemIR::TypeId type_id)
       -> llvm::PHINode*;
 
   // Returns a local (versus global) value for the given node.
-  auto GetLocal(SemanticsNodeId node_id) -> llvm::Value* {
+  auto GetLocal(SemIR::NodeId node_id) -> llvm::Value* {
     // All builtins are types, with the same empty lowered value.
-    if (node_id.index < SemanticsBuiltinKind::ValidCount) {
+    if (node_id.index < SemIR::BuiltinKind::ValidCount) {
       return GetTypeAsValue();
     }
 
@@ -52,21 +52,31 @@ class LoweringFunctionContext {
 
   // Returns a local (versus global) value for the given node in loaded state.
   // Loads will only be inserted on an as-needed basis.
-  auto GetLocalLoaded(SemanticsNodeId node_id) -> llvm::Value*;
+  auto GetLocalLoaded(SemIR::NodeId node_id) -> llvm::Value*;
 
   // Sets the value for the given node.
-  auto SetLocal(SemanticsNodeId node_id, llvm::Value* value) {
+  auto SetLocal(SemIR::NodeId node_id, llvm::Value* value) {
     bool added = locals_.insert({node_id, value}).second;
     CARBON_CHECK(added) << "Duplicate local insert: " << node_id;
   }
 
+  // Returns the requested index into val based on whether val is a pointer
+  // type.
+  auto GetIndexFromStructOrArray(llvm::Type* llvm_type, llvm::Value* val,
+                                 unsigned idx, const llvm::Twine& name)
+      -> llvm::Value* {
+    return val->getType()->isPointerTy()
+               ? builder().CreateStructGEP(llvm_type, val, idx, name)
+               : builder().CreateExtractValue(val, idx, name);
+  }
+
   // Gets a callable's function.
-  auto GetFunction(SemanticsFunctionId function_id) -> llvm::Function* {
+  auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
     return lowering_context_->GetFunction(function_id);
   }
 
   // Returns a lowered type for the given type_id.
-  auto GetType(SemanticsTypeId type_id) -> llvm::Type* {
+  auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
     return lowering_context_->GetType(type_id);
   }
 
@@ -75,10 +85,10 @@ class LoweringFunctionContext {
     return lowering_context_->GetTypeAsValue();
   }
 
-  // Create a synthetic block that corresponds to no SemanticsNodeBlockId. Such
+  // Create a synthetic block that corresponds to no SemIR::NodeBlockId. Such
   // a block should only ever have a single predecessor, and is used when we
   // need multiple `llvm::BasicBlock`s to model the linear control flow in a
-  // single SemanticsIR block.
+  // single SemIR::File block.
   auto CreateSyntheticBlock() -> llvm::BasicBlock*;
 
   // Determine whether block is the most recently created synthetic block.
@@ -93,7 +103,7 @@ class LoweringFunctionContext {
     return lowering_context_->llvm_module();
   }
   auto builder() -> llvm::IRBuilder<>& { return builder_; }
-  auto semantics_ir() -> const SemanticsIR& {
+  auto semantics_ir() -> const SemIR::File& {
     return lowering_context_->semantics_ir();
   }
 
@@ -106,23 +116,23 @@ class LoweringFunctionContext {
 
   llvm::IRBuilder<> builder_;
 
-  // Maps a function's SemanticsIR blocks to lowered blocks.
-  llvm::DenseMap<SemanticsNodeBlockId, llvm::BasicBlock*> blocks_;
+  // Maps a function's SemIR::File blocks to lowered blocks.
+  llvm::DenseMap<SemIR::NodeBlockId, llvm::BasicBlock*> blocks_;
 
   // The synthetic block we most recently created. May be null if there is no
   // such block.
   llvm::BasicBlock* synthetic_block_ = nullptr;
 
-  // Maps a function's SemanticsIR nodes to lowered values.
+  // Maps a function's SemIR::File nodes to lowered values.
   // TODO: Handle nested scopes. Right now this is just cleared at the end of
   // every block.
-  llvm::DenseMap<SemanticsNodeId, llvm::Value*> locals_;
+  llvm::DenseMap<SemIR::NodeId, llvm::Value*> locals_;
 };
 
-// Declare handlers for each SemanticsIR node.
-#define CARBON_SEMANTICS_NODE_KIND(Name)                                 \
-  auto LoweringHandle##Name(LoweringFunctionContext& context,            \
-                            SemanticsNodeId node_id, SemanticsNode node) \
+// Declare handlers for each SemIR::File node.
+#define CARBON_SEMANTICS_NODE_KIND(Name)                             \
+  auto LoweringHandle##Name(LoweringFunctionContext& context,        \
+                            SemIR::NodeId node_id, SemIR::Node node) \
       ->void;
 #include "toolchain/semantics/semantics_node_kind.def"
 
