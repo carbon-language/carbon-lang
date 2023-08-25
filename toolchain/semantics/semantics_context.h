@@ -255,7 +255,7 @@ class Context {
 
  private:
   // For CanImplicitAs, the detected conversion to apply.
-  enum ImplicitAsKind {
+  enum ImplicitAsKind : int8_t {
     // Incompatible types.
     Incompatible,
     // No conversion required.
@@ -295,7 +295,7 @@ class Context {
       -> SemIR::NodeId;
 
   // Marks the initializer `init_id` as initializing `target_id`.
-  auto MarkInitializerFor(SemIR::NodeId target_id, SemIR::NodeId init_id)
+  auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
       -> void;
 
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the

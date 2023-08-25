@@ -35,6 +35,8 @@ auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   }
 
   while (!context.state_stack().empty()) {
+    // clang warns on unhandled enum values; clang-tidy is incorrect here.
+    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (context.state_stack().back().state) {
 #define CARBON_PARSER_STATE(Name) \
   case ParserState::Name:         \

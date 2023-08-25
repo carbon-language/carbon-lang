@@ -13,7 +13,7 @@
 namespace Carbon::SemIR {
 
 // Whether a node produces or represents a value, and if so, what kind of value.
-enum class NodeValueKind {
+enum class NodeValueKind : int8_t {
   // This node doesn't produce a value, and shouldn't be referenced by other
   // nodes.
   None,
@@ -28,7 +28,7 @@ enum class NodeValueKind {
 // Whether a node is a terminator or part of the terminator sequence. The nodes
 // in a block appear in the order NotTerminator, then TerminatorSequence, then
 // Terminator, which is also the numerical order of these values.
-enum class TerminatorKind {
+enum class TerminatorKind : int8_t {
   // This node is not a terminator.
   NotTerminator,
   // This node is not itself a terminator, but forms part of a terminator

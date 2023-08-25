@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_
 
-#include <optional>
-
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"

@@ -343,7 +343,7 @@ class File {
 
 // The expression category of a semantics node. See /docs/design/values.md for
 // details.
-enum class ExpressionCategory {
+enum class ExpressionCategory : int8_t {
   // This node does not correspond to an expression, and as such has no
   // category.
   NotExpression,
@@ -366,7 +366,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
 
 // The value representation to use when passing by value.
 struct ValueRepresentation {
-  enum Kind {
+  enum Kind : int8_t {
     // The type has no value representation. This is used for empty types, such
     // as `()`, where there is no value.
     None,
@@ -396,7 +396,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
 
 // The initializing representation to use when returning by value.
 struct InitializingRepresentation {
-  enum Kind {
+  enum Kind : int8_t {
     // The type has no initializing representation. This is used for empty
     // types, where no initialization is necessary.
     None,
@@ -414,7 +414,7 @@ struct InitializingRepresentation {
   Kind kind;
 
   // Returns whether a return slot is used when returning this type.
-  bool has_return_slot() const { return kind == InPlace; }
+  auto has_return_slot() const -> bool { return kind == InPlace; }
 };
 
 // Returns information about the initializing representation to use for a type.

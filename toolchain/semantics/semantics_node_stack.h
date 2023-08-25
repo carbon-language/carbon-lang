@@ -174,7 +174,7 @@ class NodeStack {
 
  private:
   // Possible associated ID types.
-  enum class IdKind {
+  enum class IdKind : int8_t {
     NodeId,
     NodeBlockId,
     FunctionId,

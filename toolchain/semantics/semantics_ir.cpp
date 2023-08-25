@@ -73,6 +73,8 @@ auto File::MakeFromParseTree(const File& builtin_ir,
   // Loops over all nodes in the tree. On some errors, this may return early,
   // for example if an unrecoverable state is encountered.
   for (auto parse_node : parse_tree.postorder()) {
+    // clang warns on unhandled enum values; clang-tidy is incorrect here.
+    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (auto parse_kind = parse_tree.node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name)                 \
   case ParseNodeKind::Name: {                        \
@@ -198,6 +200,8 @@ auto File::Print(llvm::raw_ostream& out, bool include_builtins) const -> void {
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
 static auto GetTypePrecedence(NodeKind kind) -> int {
+  // clang warns on unhandled enum values; clang-tidy is incorrect here.
+  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
     case NodeKind::ArrayType:
     case NodeKind::Builtin:
@@ -285,6 +289,8 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
     }
 
     auto node = GetNode(step.node_id);
+    // clang warns on unhandled enum values; clang-tidy is incorrect here.
+    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
       case NodeKind::ArrayType: {
         auto [bound_id, type_id] = node.GetAsArrayType();
@@ -434,6 +440,8 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
   const File* ir = &file;
   while (true) {
     auto node = ir->GetNode(node_id);
+    // clang warns on unhandled enum values; clang-tidy is incorrect here.
+    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
       case NodeKind::Invalid:
       case NodeKind::Assign:
@@ -524,6 +532,8 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
   NodeId node_id = ir->GetTypeAllowBuiltinTypes(type_id);
   while (true) {
     auto node = ir->GetNode(node_id);
+    // clang warns on unhandled enum values; clang-tidy is incorrect here.
+    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
       case NodeKind::AddressOf:
       case NodeKind::ArrayIndex:
@@ -577,7 +587,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
         return {.kind = ValueRepresentation::Pointer, .type = type_id};
 
       case NodeKind::StructType: {
-        auto& fields = ir->GetNodeBlock(node.GetAsStructType());
+        const auto& fields = ir->GetNodeBlock(node.GetAsStructType());
         if (fields.empty()) {
           // An empty struct has an empty representation.
           return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
@@ -594,7 +604,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       }
 
       case NodeKind::TupleType: {
-        auto& elements = ir->GetTypeBlock(node.GetAsTupleType());
+        const auto& elements = ir->GetTypeBlock(node.GetAsTupleType());
         if (elements.empty()) {
           // An empty tuple has an empty representation.
           return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
@@ -609,6 +619,8 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       }
 
       case NodeKind::Builtin:
+        // clang warns on unhandled enum values; clang-tidy is incorrect here.
+        // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
         switch (node.GetAsBuiltin()) {
           case BuiltinKind::TypeType:
           case BuiltinKind::Error:

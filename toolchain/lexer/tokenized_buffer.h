@@ -7,7 +7,6 @@
 
 #include <cstdint>
 #include <iterator>
-#include <optional>
 
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"

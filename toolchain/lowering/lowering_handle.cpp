@@ -95,7 +95,7 @@ auto LoweringHandleAssign(LoweringFunctionContext& context,
                                     context.GetLocal(storage_id));
       break;
     case SemIR::ValueRepresentation::Pointer: {
-      auto& layout = context.llvm_module().getDataLayout();
+      const auto& layout = context.llvm_module().getDataLayout();
       auto* type = context.GetType(storage_type_id);
       // TODO: Compute known alignment of the source and destination, which may
       // be greater than the alignment computed by LLVM.

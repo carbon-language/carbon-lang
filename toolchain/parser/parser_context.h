@@ -23,16 +23,16 @@ namespace Carbon {
 class ParserContext {
  public:
   // Possible operator fixities for errors.
-  enum class OperatorFixity { Prefix, Infix, Postfix };
+  enum class OperatorFixity : int8_t { Prefix, Infix, Postfix };
 
   // Possible return values for FindListToken.
-  enum class ListTokenKind { Comma, Close, CommaClose };
+  enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
   // Supported kinds for HandlePattern.
-  enum class PatternKind { DeducedParameter, Parameter, Variable };
+  enum class PatternKind : int8_t { DeducedParameter, Parameter, Variable };
 
   // Supported return values for GetDeclarationContext.
-  enum class DeclarationContext {
+  enum class DeclarationContext : int8_t {
     File,  // Top-level context.
     Class,
     Interface,

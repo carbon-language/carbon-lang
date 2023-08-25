@@ -177,6 +177,8 @@ auto LoweringContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     for (const auto& node_id : semantics_ir().GetNodeBlock(block_id)) {
       auto node = semantics_ir().GetNode(node_id);
       CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
+      // clang warns on unhandled enum values; clang-tidy is incorrect here.
+      // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
       switch (node.kind()) {
 #define CARBON_SEMANTICS_NODE_KIND(Name)                    \
   case SemIR::NodeKind::Name:                               \
@@ -200,6 +202,9 @@ auto LoweringContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       // TODO: We may want to have different representations for `bool` storage
       // (`i8`) versus for `bool` values (`i1`).
       return llvm::Type::getInt1Ty(*llvm_context_);
+    default:
+      // Handled below.
+      break;
   }
 
   auto node = semantics_ir_->GetNode(node_id);

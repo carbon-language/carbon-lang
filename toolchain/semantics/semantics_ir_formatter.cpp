@@ -492,6 +492,8 @@ class Formatter {
   }
 
   auto FormatInstruction(NodeId node_id, Node node) -> void {
+    // clang warns on unhandled enum values; clang-tidy is incorrect here.
+    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
 #define CARBON_SEMANTICS_NODE_KIND(Name)          \
   case NodeKind::Name:                            \
