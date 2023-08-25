@@ -4,31 +4,29 @@
 
 #include "toolchain/semantics/semantics_context.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandlePackageApi(SemanticsContext& context,
-                               ParseTree::Node parse_node) -> bool {
+auto HandlePackageApi(Context& context, ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandlePackageApi");
 }
 
-auto SemanticsHandlePackageDirective(SemanticsContext& context,
-                                     ParseTree::Node parse_node) -> bool {
+auto HandlePackageDirective(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandlePackageDirective");
 }
 
-auto SemanticsHandlePackageImpl(SemanticsContext& context,
-                                ParseTree::Node parse_node) -> bool {
+auto HandlePackageImpl(Context& context, ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandlePackageImpl");
 }
 
-auto SemanticsHandlePackageIntroducer(SemanticsContext& context,
-                                      ParseTree::Node parse_node) -> bool {
+auto HandlePackageIntroducer(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandlePackageIntroducer");
 }
 
-auto SemanticsHandlePackageLibrary(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
+auto HandlePackageLibrary(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandlePackageLibrary");
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

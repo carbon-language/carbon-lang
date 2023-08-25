@@ -5,61 +5,58 @@
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Check {
 
-auto SemanticsHandleBreakStatement(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
+auto HandleBreakStatement(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleBreakStatement");
 }
 
-auto SemanticsHandleBreakStatementStart(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
+auto HandleBreakStatementStart(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleBreakStatementStart");
 }
 
-auto SemanticsHandleContinueStatement(SemanticsContext& context,
-                                      ParseTree::Node parse_node) -> bool {
+auto HandleContinueStatement(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleContinueStatement");
 }
 
-auto SemanticsHandleContinueStatementStart(SemanticsContext& context,
-                                           ParseTree::Node parse_node) -> bool {
+auto HandleContinueStatementStart(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleContinueStatementStart");
 }
 
-auto SemanticsHandleForHeader(SemanticsContext& context,
-                              ParseTree::Node parse_node) -> bool {
+auto HandleForHeader(Context& context, ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleForHeader");
 }
 
-auto SemanticsHandleForHeaderStart(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
+auto HandleForHeaderStart(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleForHeaderStart");
 }
 
-auto SemanticsHandleForIn(SemanticsContext& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandleForIn(Context& context, ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleForIn");
 }
 
-auto SemanticsHandleForStatement(SemanticsContext& context,
-                                 ParseTree::Node parse_node) -> bool {
+auto HandleForStatement(Context& context, ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleForStatement");
 }
 
-auto SemanticsHandleWhileCondition(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
+auto HandleWhileCondition(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleWhileCondition");
 }
 
-auto SemanticsHandleWhileConditionStart(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
+auto HandleWhileConditionStart(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleWhileConditionStart");
 }
 
-auto SemanticsHandleWhileStatement(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
+auto HandleWhileStatement(Context& context, ParseTree::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleWhileStatement");
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Check

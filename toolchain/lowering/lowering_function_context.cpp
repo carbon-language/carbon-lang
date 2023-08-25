@@ -14,7 +14,7 @@ LoweringFunctionContext::LoweringFunctionContext(
       function_(function),
       builder_(lowering_context.llvm_context()) {}
 
-auto LoweringFunctionContext::GetBlock(SemanticsNodeBlockId block_id)
+auto LoweringFunctionContext::GetBlock(SemIR::NodeBlockId block_id)
     -> llvm::BasicBlock* {
   llvm::BasicBlock*& entry = blocks_[block_id];
   if (!entry) {
@@ -23,7 +23,7 @@ auto LoweringFunctionContext::GetBlock(SemanticsNodeBlockId block_id)
   return entry;
 }
 
-auto LoweringFunctionContext::TryToReuseBlock(SemanticsNodeBlockId block_id,
+auto LoweringFunctionContext::TryToReuseBlock(SemIR::NodeBlockId block_id,
                                               llvm::BasicBlock* block) -> bool {
   if (!blocks_.insert({block_id, block}).second) {
     return false;
@@ -34,8 +34,8 @@ auto LoweringFunctionContext::TryToReuseBlock(SemanticsNodeBlockId block_id,
   return true;
 }
 
-auto LoweringFunctionContext::GetBlockArg(SemanticsNodeBlockId block_id,
-                                          SemanticsTypeId type_id)
+auto LoweringFunctionContext::GetBlockArg(SemIR::NodeBlockId block_id,
+                                          SemIR::TypeId type_id)
     -> llvm::PHINode* {
   llvm::BasicBlock* block = GetBlock(block_id);
 
@@ -60,7 +60,7 @@ auto LoweringFunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
   return synthetic_block_;
 }
 
-auto LoweringFunctionContext::GetLocalLoaded(SemanticsNodeId node_id)
+auto LoweringFunctionContext::GetLocalLoaded(SemIR::NodeId node_id)
     -> llvm::Value* {
   auto* value = GetLocal(node_id);
   if (llvm::isa<llvm::AllocaInst, llvm::GetElementPtrInst>(value)) {
