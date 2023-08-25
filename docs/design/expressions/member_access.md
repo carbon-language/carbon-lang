@@ -19,6 +19,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Constant bindings](#constant-bindings)
             -   [Lookup ambiguity](#lookup-ambiguity)
 -   [`impl` lookup](#impl-lookup)
+    -   [`impl` lookup for simple member access](#impl-lookup-for-simple-member-access)
+    -   [`impl` lookup for compound member access](#impl-lookup-for-compound-member-access)
 -   [Instance binding](#instance-binding)
 -   [Non-instance members](#non-instance-members)
 -   [Non-vacuous member access restriction](#non-vacuous-member-access-restriction)
@@ -406,9 +408,12 @@ relevant `impl`. It is performed when member access names an interface member,
 except when the member was found by a search of a facet type scope in a simple
 member access expression.
 
+### `impl` lookup for simple member access
+
 For a simple member access `a.b` where `b` names a member of an interface `I`:
 
--   If the interface member was found by searching a non-facet-type scope `T`,
+-   If the interface member was found by searching a
+    non-[facet-type](/docs/design/generics/terminology.md#facet-type) scope `T`,
     for example a class or an adapter, then `impl` lookup is performed for
     `T as I`.
     -   In the case where the member was found in a base class of the class that
@@ -419,10 +424,7 @@ For a simple member access `a.b` where `b` names a member of an interface `I`:
         searched, not what it extended.
 -   Otherwise, `impl` lookup is not performed.
 
-[Instance binding](#instance-binding) may also apply if the member is an
-instance member.
-
-For example:
+For the following examples, consider these definitions:
 
 ```carbon
 interface Addable {
@@ -447,6 +449,39 @@ class Integer {
 }
 ```
 
+The type `T` that is expected to implement `I` depends on the first operand of
+the member access expression, `V`:
+
+-   If `V` can be evaluated and evaluates to a
+    [type](/docs/design/generics/terminology.md#types-and-type), then `T` is
+    `V`.
+    ```carbon
+    // `V` is `Integer`. `T` is `V`, which is `Integer`.
+    // Alias refers to #2.
+    alias AddIntegers = Integer.Add;
+    ```
+-   Otherwise, `T` is the type of `V`.
+
+    ```carbon
+    let a: Integer = {};
+    // `V` is `a`. `T` is the type of `V`, which is `Integer`.
+    // `a.Add` refers to #2.
+    let twice_a: Integer = a.Add(a);
+    ```
+
+The appropriate `impl T as I` implementation is located. The program is invalid
+if no such `impl` exists. When `T` or `I` depends on a checked generic binding,
+a suitable constraint must be specified to ensure that such an `impl` will
+exist. When `T` or `I` depends on a template binding, this check is deferred
+until the value for the template binding is known.
+
+`M` is replaced by the member of the `impl` that corresponds to `M`.
+
+[Instance binding](#instance-binding) may also apply if the member is an
+instance member.
+
+Following the above example:
+
 -   For `Integer.Sum`, member resolution resolves the name `Sum` to \#2, which
     is not an instance member. `impl` lookup then locates the
     `impl Integer as Addable`, and determines that the member access refers to
@@ -459,95 +494,14 @@ class Integer {
     `Integer as Addable`, not \#1, the interface member `Addable.Add`.
 -   `my_int.AliasForAdd`, with `my_int: Integer`, finds \#3, the `Add` member of
     the facet type `Integer as Addable`, and performs
-    [instance binding](#instance-binding) if the member is an instance member.
+    [instance binding](#instance-binding) since the member is an instance
+    member.
 -   `Addable.AliasForSum` finds \#2, the member in the interface `Addable`, and
     does not perform `impl` lookup.
 
-For a compound member access `a.(b)` where `b` names a member of an interface
-`I`, `impl` lookup is performed for `T as I`, where:
+FIXME: Is the following example still needed?
 
--   If `b` is an instance member, `T` is the type of `a`. In this case,
-    [instance binding](#instance-binding) is always performed.
--   Otherwise, `a` is implicitly converted to `I`, and `T` is the result of
-    symbolically evaluating the converted expression. In this case,
-    [instance binding](#instance-binding) is never performed.
-
-For example:
-
-```carbon
-interface Interface {
-  fn InstanceInterfaceMember[self: Self]();
-  fn NonInstanceInterfaceMember();
-}
-
-class MyClass {}
-impl MyClass as Interface;
-
-fn F(my_value: MyClass) {
-  // Since `Interface.InstanceInterfaceMember` is an instance
-  // member of `Interface`, `T` is set to the type of `my_value`,
-  // and so uses `MyClass as Interface`.
-  my_value.(Interface.InstanceInterfaceMember)();
-
-  // ❌ By the same logic, `T` is set to the type of `MyClass`,
-  // and so uses `type as Interface`, which isn't implemented.
-  MyClass.(Interface.InstanceInterfaceMember)();
-
-  // Since `Interface.NonInstanceInterfaceMember` is a
-  // non-instance member of `Interface`, `MyClass` is implicitly
-  // converted to `Interface`, and so uses `MyClass as Interface`.
-  MyClass.(Interface.NonInstanceInterfaceMember)();
-
-  // ❌ This is an error unless `my_value` implicitly converts to
-  // a type.
-  my_value.(Interface.NonInstanceInterfaceMember)();
-}
-```
-
-FIXME: Maybe instead continue the previous example?
-
-```carbon
-fn AddTwoIntegers(a: Integer, b: Integer) -> Integer {
-  // Since `Addable.Add` is an instance member of `Addable`, `T`
-  // is set to the type of `a`, and so uses `Integer as Addable`.
-  return a.(Addable.Add)(b);
-  //      ^ impl lookup and instance binding here
-  // Impl lookup transforms this into:
-  //   return a.((Integer as Addable).Add)(b);
-  // which no longer requires impl lookup.
-
-  // ❌ By the same logic, in this example, `T` is set to the
-  // type of `Integer`, and so uses `type as Addable`, which
-  // isn't implemented.
-  return Integer.(Addable.Add)(...);
-}
-
-fn SumIntegers(v: Vector(Integer)) -> Integer {
-  // Since `Addable.Sum` is a  non-instance member of `Addable`,
-  // `Integer` is implicitly converted to `Addable`, and so uses
-  // `Integer as Addable`.
-  Integer.(Addable.Sum)(v);
-  //     ^ impl lookup but no instance binding here
-  // Impl lookup transforms this into:
-  //   ((Integer as Addable).Sum)(v);
-  // which no longer requires impl lookup.
-
-  var a: Integer;
-  // ❌ This is an error since `a` does not implicitly convert to
-  // a type.
-  a.(Addable.Sum)(...);
-}
-```
-
-The appropriate `impl T as I` implementation is located. The program is invalid
-if no such `impl` exists. When `T` or `I` depends on a checked generic binding,
-a suitable constraint must be specified to ensure that such an `impl` will
-exist. When `T` or `I` depends on a template binding, this check is deferred
-until the value for the template binding is known.
-
-`M` is replaced by the member of the `impl` that corresponds to `M`.
-
-FIXME: Left off here
+Here is another example:
 
 ```carbon
 interface I {
@@ -562,7 +516,7 @@ class C {
   }
 }
 
-// `V` is `I` and `M` is `I.F`. Because `V` is a facet type,
+// `V` is `I` and `M` is `I.F`. Because `I` is a facet type,
 // `impl` lookup is not performed, and the alias binds to #5.
 alias A1 = I.F;
 
@@ -578,19 +532,6 @@ let c: C = {};
 // The value of `Z` is 5.
 let Z: i32 = c.N;
 ```
-
-[Instance binding](#instance-binding) may also apply if the member is an
-instance member.
-
-```carbon
-var c: C;
-// `V` is `c` and `M` is `I.F`. Because `V` is not a type, `T` is the
-// type of `c`, which is `C`. `impl` lookup is performed, and `M` is
-// replaced with #6. Then instance binding is performed.
-c.F();
-```
-
-FIXME: Okay after this
 
 **Note:** When an interface member is added to a class by an alias, `impl`
 lookup is not performed as part of handling the alias, but will happen when
@@ -680,7 +621,105 @@ fn DrawTriangle(t: TriangleWidget) {
 }
 ```
 
+### `impl` lookup for compound member access
+
+For a compound member access `a.(b)` where `b` names a member of an interface
+`I`, `impl` lookup is performed for `T as I`, where:
+
+-   If `b` is an instance member, `T` is the type of `a`. In this case,
+    [instance binding](#instance-binding) is always performed.
+-   Otherwise, `a` is implicitly converted to `I`, and `T` is the result of
+    symbolically evaluating the converted expression. In this case,
+    [instance binding](#instance-binding) is never performed.
+
+For example:
+
+```carbon
+interface Interface {
+  fn InstanceInterfaceMember[self: Self]();
+  fn NonInstanceInterfaceMember();
+}
+
+class MyClass {}
+impl MyClass as Interface;
+
+fn F(my_value: MyClass) {
+  // Since `Interface.InstanceInterfaceMember` is an instance
+  // member of `Interface`, `T` is set to the type of `my_value`,
+  // and so uses `MyClass as Interface`.
+  my_value.(Interface.InstanceInterfaceMember)();
+
+  // ❌ By the same logic, `T` is set to the type of `MyClass`,
+  // and so uses `type as Interface`, which isn't implemented.
+  MyClass.(Interface.InstanceInterfaceMember)();
+
+  // Since `Interface.NonInstanceInterfaceMember` is a
+  // non-instance member of `Interface`, `MyClass` is implicitly
+  // converted to `Interface`, and so uses `MyClass as Interface`.
+  MyClass.(Interface.NonInstanceInterfaceMember)();
+
+  // ❌ This is an error unless `my_value` implicitly converts to
+  // a type.
+  my_value.(Interface.NonInstanceInterfaceMember)();
+}
+```
+
+FIXME: Maybe instead continue the previous example?
+
+```carbon
+fn AddTwoIntegers(a: Integer, b: Integer) -> Integer {
+  // Since `Addable.Add` is an instance member of `Addable`, `T`
+  // is set to the type of `a`, and so uses `Integer as Addable`.
+  return a.(Addable.Add)(b);
+  //      ^ impl lookup and instance binding here
+  // Impl lookup transforms this into:
+  //   return a.((Integer as Addable).Add)(b);
+  // which no longer requires impl lookup.
+
+  // ❌ By the same logic, in this example, `T` is set to the
+  // type of `Integer`, and so uses `type as Addable`, which
+  // isn't implemented.
+  return Integer.(Addable.Add)(...);
+}
+
+fn SumIntegers(v: Vector(Integer)) -> Integer {
+  // Since `Addable.Sum` is a  non-instance member of `Addable`,
+  // `Integer` is implicitly converted to `Addable`, and so uses
+  // `Integer as Addable`.
+  Integer.(Addable.Sum)(v);
+  //     ^ impl lookup but no instance binding here
+  // Impl lookup transforms this into:
+  //   ((Integer as Addable).Sum)(v);
+  // which no longer requires impl lookup.
+
+  var a: Integer;
+  // ❌ This is an error since `a` does not implicitly convert to
+  // a type.
+  a.(Addable.Sum)(...);
+}
+```
+
 ## Instance binding
+
+FIXME: new text
+
+Next, _instance binding_ may be performed. This associates an expression with a
+particular object instance. For example, this is the value bound to `self` when
+calling a method.
+
+For the simple member access syntax `x.y`, if `x` is an entity that has member
+names, such as a namespace or a type, then `y` is looked up within `x`, and
+instance binding is not performed. Otherwise, `y` is looked up within the type
+of `x` and instance binding is performed if an instance member is found.
+
+The compound member access syntax `x.(Y)`, where `Y` names an instance member,
+always performs instance binding. Therefore, for a suitable `DebugPrintable`:
+
+-   `1.(DebugPrintable.Print)()` prints `1`.
+-   `i32.(DebugPrintable.Print)()` prints `i32`.
+-   `1.(i32.(DebugPrintable.Print))()` is an error.
+
+FIXME: old text
 
 If member resolution and `impl` lookup produce a member `M` that is an instance
 member -- that is, a field or a method -- and the first operand `V` of `.` is a
