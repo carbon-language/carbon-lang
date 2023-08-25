@@ -61,10 +61,10 @@ cc_library(
 cc_library(
     name = "semantics_ir",
     srcs = [
-        "semantics_ir.cpp",
         "semantics_context.cpp",
-        "semantics_node_block_stack.cpp",
         "semantics_declaration_name_stack.cpp",
+        "semantics_ir.cpp",
+        "semantics_node_block_stack.cpp",
     ] +
     # Glob handler files to avoid missing any.
     glob([
