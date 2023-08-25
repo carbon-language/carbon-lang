@@ -648,6 +648,7 @@ fn F(my_value: MyClass) {
   // member of `Interface`, `T` is set to the type of `my_value`,
   // and so uses `MyClass as Interface`.
   my_value.(Interface.InstanceInterfaceMember)();
+  //      ^ impl lookup and instance binding here
 
   // ❌ By the same logic, `T` is set to the type of `MyClass`,
   // and so uses `type as Interface`, which isn't implemented.
@@ -701,8 +702,6 @@ fn SumIntegers(v: Vector(Integer)) -> Integer {
 
 ## Instance binding
 
-FIXME: new text
-
 Next, _instance binding_ may be performed. This associates an expression with a
 particular object instance. For example, this is the value bound to `self` when
 calling a method.
@@ -712,18 +711,7 @@ names, such as a namespace or a type, then `y` is looked up within `x`, and
 instance binding is not performed. Otherwise, `y` is looked up within the type
 of `x` and instance binding is performed if an instance member is found.
 
-The compound member access syntax `x.(Y)`, where `Y` names an instance member,
-always performs instance binding. Therefore, for a suitable `DebugPrintable`:
-
--   `1.(DebugPrintable.Print)()` prints `1`.
--   `i32.(DebugPrintable.Print)()` prints `i32`.
--   `1.(i32.(DebugPrintable.Print))()` is an error.
-
-FIXME: old text
-
-If member resolution and `impl` lookup produce a member `M` that is an instance
-member -- that is, a field or a method -- and the first operand `V` of `.` is a
-value other than a type, then _instance binding_ is performed, as follows:
+If instance binding is performed:
 
 -   For a field member in class `C`, `V` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `V`.
@@ -764,10 +752,35 @@ value other than a type, then _instance binding_ is performed, as follows:
     }
     ```
 
-If `M` is an instance member, then compound member access `V.(M)` always
-performs instance binding, whether or not `V` is a type. To get the `M` member
-of interface `I` for a type `T`, use `(T as I).M`, as this doesn't attempt to
-perform instance binding on `T`, in contrast to `T.(I.M)`.
+The compound member access syntax `x.(Y)`, where `Y` names an instance member,
+always performs instance binding. It is an error if `Y` is already bound to an
+instance member. For example:
+
+```carbon
+interface DebugPrint {
+  // instance member
+  fn Print[self:Self]();
+}
+impl i32 as DebugPrint;
+impl type as DebugPrint;
+
+fn Debug() {
+  var i: i32 = 1;
+
+  // Prints `1` using `(i32 as DebugPrint).Print` bound to `i`.
+  i.(DebugPrintable.Print)();
+
+  // Prints `i32` using `(type as DebugPrint).Print` bound to `i32`.
+  i32.(DebugPrintable.Print)();
+
+  // ❌ This is an error since `i32.(DebugPrintable.Print)` is
+  // already bound, and may not be bound again to `i`.
+  i.(i32.(DebugPrintable.Print))();
+}
+```
+
+To get the `M` member of interface `I` for a type `T`, use `(T as I).M`, as this
+doesn't attempt to perform instance binding on `T`, in contrast to `T.(I.M)`.
 
 ## Non-instance members
 
@@ -818,30 +831,34 @@ always used for lookup.
 interface Printable {
   fn Print[self: Self]();
 }
-impl i32 as Printable {
-  fn Print[self: Self]();
-}
-fn MemberAccess(n: i32) {
-  // ✅ OK: `Printable.Print` is the interface member.
-  // `i32.(Printable.Print)` is the corresponding member of the `impl`.
-  // `n.(i32.(Printable.Print))` is a bound member function naming that member.
-  n.(i32.(Printable.Print))();
+impl i32 as Printable;
 
-  // ✅ Same as above, `n.(Printable.Print)` is effectively interpreted as
-  // `n.(T.(Printable.Print))()`, where `T` is the type of `n`,
-  // because `n` does not evaluate to a type. Performs impl lookup
-  // and then instance binding.
+fn MemberAccess(n: i32) {
+  // ✅ OK: `(i32 as Printable).Print` is the `Print` member of the
+  // `i32 as Printable` facet corresponding to the `Printable.Print`
+  // interface member.
+  // `n.((i32 as Printable).Print)` is that member function bound to `n`.
+  n.((i32 as Printable).Print)();
+
+  // ✅ Same as above, `n.(Printable.Print)` is effectively interpreted
+  // as `n.((T as Printable).Print)()`, where `T` is the type of `n`.
+  // Performs impl lookup and then instance binding.
   n.(Printable.Print)();
 }
 
-// ✅ OK, member `Print` of interface `Printable`.
-alias X1 = Printable.Print;
-// ❌ Error, compound access doesn't perform impl lookup or instance binding.
-alias X2 = Printable.(Printable.Print);
-// ✅ OK, member `Print` of `impl i32 as Printable`.
-alias X3 = i32.(Printable.Print);
-// ❌ Error, compound access doesn't perform impl lookup or instance binding.
-alias X4 = i32.(i32.(Printable.Print));
+interface Factory {
+  fn Make() -> Self;
+}
+impl i32 as Factory;
+
+// ✅ OK, member `Make` of interface `Factory`.
+alias X1 = Factory.Make;
+// ❌ Error, compound access without impl lookup or instance binding.
+alias X2 = Factory.(Factory.Make);
+// ✅ OK, member `Make` of `impl i32 as Factory`.
+alias X3 = (i32 as Factory).Make;
+// ❌ Error, compound access without impl lookup or instance binding.
+alias X4 = i32.((i32 as Factory).Make);
 ```
 
 ## Precedence and associativity
