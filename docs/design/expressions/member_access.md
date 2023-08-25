@@ -159,7 +159,7 @@ between different `Foo` definitions, as in:
 // This defines `package.Foo`
 class Foo {}
 class Bar {
-  // This defines `Bar.Foo` or `package.Bar.Foo`.
+  // This defines `Bar.Foo`, or equivalently `package.Bar.Foo`.
   class Foo {}
   fn F() {
     // ✅ OK, `x` has type `Foo` from the outer scope.
