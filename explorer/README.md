@@ -140,8 +140,8 @@ internal processes a program goes through when executed using the `explorer`. It
 also records things like changes in memory and action stack that describes the
 state of the program.
 
-Tracing can be turned on using the `--trace_file=...` option. Explorer tests
-can be run with tracing enabled by using the `<testname>.verbose` test target.
+Tracing can be turned on using the `--trace_file=...` option. Explorer tests can
+be run with tracing enabled by using the `<testname>.verbose` test target.
 
 By default, `explorer` prints the state of the program and each step that is
 performed during execution for the file containing the main function when
@@ -187,8 +187,8 @@ The following options can be passed as a comma-separated list to the
 
 **Note (for developers):** Two
 [RAII](https://en.cppreference.com/w/cpp/language/raii) classes
-`SetProgramPhase` and `SetFileContext` are provided for setting program phase and
-file context dynamically in the code.
+`SetProgramPhase` and `SetFileContext` are provided for setting program phase
+and file context dynamically in the code.
 
 ### State of the Program
 
