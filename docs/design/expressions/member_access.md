@@ -151,6 +151,27 @@ fn CallMyFunction2() {
 }
 ```
 
+The first operand may also be the keyword `package`, as in `package.Foo`, to
+name the `Foo` member of the current package. This can be used to disambiguate
+between different `Foo` definitions, as in:
+
+```carbon
+// This defines `package.Foo`
+class Foo {}
+class Bar {
+  // This defines `Bar.Foo` or `package.Bar.Foo`.
+  class Foo {}
+  fn F() {
+    // ✅ OK, `x` has type `Foo` from the outer scope.
+    var x: package.Foo = {};
+
+    // ❌ Error: ambiguous;
+    // `Foo` could mean `package.Foo` or `Bar.Foo`.
+    var y: Foo = {};
+  }
+}
+```
+
 ### Types and facets
 
 Like the previous case, types (including
@@ -908,4 +929,6 @@ var n: i32 = 1 + X.Y;
     [#989: member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 -   [Question for leads: constrained template name lookup](https://github.com/carbon-language/carbon-lang/issues/949)
 -   Proposal
-    [#2360: Types are values of type `type``](https://github.com/carbon-language/carbon-lang/pull/2360)
+    [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
+-   Proposal
+    [#2550: Simplified package declaration for the `Main` package](https://github.com/carbon-language/carbon-lang/pull/2550)
