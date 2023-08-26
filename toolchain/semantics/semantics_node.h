@@ -233,13 +233,10 @@ class Node {
   // Factory base classes are private, then used for public classes. This class
   // has two public and two private sections to prevent accidents.
  private:
-  // Factory templates need to use the raw enum instead of the class wrapper.
-  using KindTemplateEnum = Internal::SemanticsNodeKindRawEnum;
-
   // Provides Make and Get to support 0, 1, or 2 arguments for a Node.
   // These are protected so that child factories can opt in to what pieces they
   // want to use.
-  template <KindTemplateEnum Kind, typename... ArgTypes>
+  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
   class FactoryBase {
    protected:
     static auto Make(ParseTree::Node parse_node, TypeId type_id,
@@ -273,7 +270,7 @@ class Node {
   };
 
   // Provide Get along with a Make that requires a type.
-  template <KindTemplateEnum Kind, typename... ArgTypes>
+  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
   class Factory : public FactoryBase<Kind, ArgTypes...> {
    public:
     using FactoryBase<Kind, ArgTypes...>::Make;
@@ -282,7 +279,7 @@ class Node {
 
   // Provides Get along with a Make that assumes the node doesn't produce a
   // typed value.
-  template <KindTemplateEnum Kind, typename... ArgTypes>
+  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
   class FactoryNoType : public FactoryBase<Kind, ArgTypes...> {
    public:
     static auto Make(ParseTree::Node parse_node, ArgTypes... args) {
@@ -436,9 +433,7 @@ class Node {
   // Gets the type of the value produced by evaluating this node.
   auto type_id() const -> TypeId { return type_id_; }
 
-  friend auto operator<<(llvm::raw_ostream& out, const Node& node)
-      -> llvm::raw_ostream&;
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
+  auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
   // Builtins have peculiar construction, so they are a friend rather than using

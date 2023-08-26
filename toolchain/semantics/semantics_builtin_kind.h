@@ -9,15 +9,15 @@
 
 #include "common/enum_base.h"
 
-namespace Carbon {
+namespace Carbon::SemIR {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(SemanticsBuiltinKind, uint8_t) {
+CARBON_DEFINE_RAW_ENUM_CLASS(BuiltinKind, uint8_t) {
 #define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
   CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 };
 
-class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
+class BuiltinKind : public CARBON_ENUM_BASE(BuiltinKind) {
  public:
 #define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
   CARBON_ENUM_CONSTANT_DECLARATION(Name)
@@ -37,26 +37,20 @@ class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
 };
 
 #define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
-  CARBON_ENUM_CONSTANT_DEFINITION(SemanticsBuiltinKind, Name)
+  CARBON_ENUM_CONSTANT_DEFINITION(BuiltinKind, Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
-constexpr uint8_t SemanticsBuiltinKind::ValidCount = Invalid.AsInt();
+constexpr uint8_t BuiltinKind::ValidCount = Invalid.AsInt();
 
 static_assert(
-    SemanticsBuiltinKind::ValidCount != 0,
+    BuiltinKind::ValidCount != 0,
     "The above `constexpr` definition of `ValidCount` makes it available in "
     "a `constexpr` context despite being declared as merely `const`. We use it "
     "in a static assert here to ensure that.");
 
 // We expect the builtin kind to fit compactly into 8 bits.
-static_assert(sizeof(SemanticsBuiltinKind) == 1,
-              "Kind objects include padding!");
+static_assert(sizeof(BuiltinKind) == 1, "Kind objects include padding!");
 
-// TODO: Refactor EnumBase to remove the need for this alias.
-namespace SemIR {
-using BuiltinKind = SemanticsBuiltinKind;
-}  // namespace SemIR
-
-}  // namespace Carbon
+}  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_BUILTIN_KIND_H_

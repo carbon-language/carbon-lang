@@ -4,15 +4,15 @@
 
 #include "toolchain/semantics/semantics_builtin_kind.h"
 
-namespace Carbon {
+namespace Carbon::SemIR {
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(SemanticsBuiltinKind) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinKind) = {
 #define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
   CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 };
 
-auto SemanticsBuiltinKind::label() -> llvm::StringRef {
+auto BuiltinKind::label() -> llvm::StringRef {
   static constexpr llvm::StringLiteral Labels[] = {
 #define CARBON_SEMANTICS_BUILTIN_KIND(Name, Label) Label,
 #include "toolchain/semantics/semantics_builtin_kind.def"
@@ -20,4 +20,4 @@ auto SemanticsBuiltinKind::label() -> llvm::StringRef {
   return Labels[AsInt()];
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::SemIR
