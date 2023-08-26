@@ -11,15 +11,15 @@
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Lower {
 
 // Context and shared functionality for lowering handlers.
-class LoweringContext {
+class FileContext {
  public:
-  explicit LoweringContext(llvm::LLVMContext& llvm_context,
-                           llvm::StringRef module_name,
-                           const SemIR::File& semantics_ir,
-                           llvm::raw_ostream* vlog_stream);
+  explicit FileContext(llvm::LLVMContext& llvm_context,
+                       llvm::StringRef module_name,
+                       const SemIR::File& semantics_ir,
+                       llvm::raw_ostream* vlog_stream);
 
   // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
   // the main execution loop.
@@ -94,6 +94,6 @@ class LoweringContext {
   llvm::StructType* type_type_ = nullptr;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Lower
 
 #endif  // CARBON_TOOLCHAIN_LOWERING_LOWERING_CONTEXT_H_

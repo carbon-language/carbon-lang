@@ -4,10 +4,10 @@
 
 #include "toolchain/lowering/lowering_function_context.h"
 
-namespace Carbon {
+namespace Carbon::Lower {
 
-auto LoweringHandleBindValue(LoweringFunctionContext& context,
-                             SemIR::NodeId node_id, SemIR::Node node) -> void {
+auto HandleBindValue(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::Node node) -> void {
   switch (auto rep = SemIR::GetValueRepresentation(context.semantics_ir(),
                                                    node.type_id());
           rep.kind) {
@@ -30,12 +30,11 @@ auto LoweringHandleBindValue(LoweringFunctionContext& context,
   }
 }
 
-auto LoweringHandleMaterializeTemporary(LoweringFunctionContext& context,
-                                        SemIR::NodeId node_id, SemIR::Node node)
-    -> void {
+auto HandleMaterializeTemporary(FunctionContext& context, SemIR::NodeId node_id,
+                                SemIR::Node node) -> void {
   context.SetLocal(
       node_id, context.builder().CreateAlloca(context.GetType(node.type_id()),
                                               nullptr, "temp"));
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lower
