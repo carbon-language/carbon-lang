@@ -11,6 +11,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/base/nonnull.h"
+#include "explorer/base/print_as_id.h"
 #include "explorer/interpreter/stack_space.h"
 
 using llvm::cast;

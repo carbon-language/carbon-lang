@@ -8,8 +8,8 @@
 
 #include "common/ostream.h"
 #include "explorer/base/error_builders.h"
+#include "explorer/base/print_as_id.h"
 #include "llvm/ADT/ScopeExit.h"
-#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
