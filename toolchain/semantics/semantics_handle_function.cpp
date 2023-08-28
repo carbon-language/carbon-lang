@@ -23,8 +23,8 @@ static auto BuildFunctionDeclaration(Context& context)
   auto return_type_id = SemIR::TypeId::Invalid;
   auto return_slot_id = SemIR::NodeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      ParseNodeKind::ReturnType) {
-    return_slot_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
+      Parse::NodeKind::ReturnType) {
+    return_slot_id = context.node_stack().Pop<Parse::NodeKind::ReturnType>();
     return_type_id = context.semantics_ir().GetNode(return_slot_id).type_id();
 
     // The function only has a return slot if it uses in-place initialization.
@@ -36,10 +36,11 @@ static auto BuildFunctionDeclaration(Context& context)
   }
 
   SemIR::NodeBlockId param_refs_id =
-      context.node_stack().Pop<ParseNodeKind::ParameterList>();
+      context.node_stack().Pop<Parse::NodeKind::ParameterList>();
   auto name_context = context.declaration_name_stack().Pop();
-  auto fn_node = context.node_stack()
-                     .PopForSoloParseNode<ParseNodeKind::FunctionIntroducer>();
+  auto fn_node =
+      context.node_stack()
+          .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
   // TODO: Support out-of-line definitions, which will have a resolved
   // name_context. Right now, those become errors in AddNameToLookup.
@@ -60,16 +61,16 @@ static auto BuildFunctionDeclaration(Context& context)
   return {function_id, decl_id};
 }
 
-auto HandleFunctionDeclaration(Context& context, ParseTree::Node /*parse_node*/)
+auto HandleFunctionDeclaration(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   BuildFunctionDeclaration(context);
   return true;
 }
 
-auto HandleFunctionDefinition(Context& context, ParseTree::Node parse_node)
+auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
     -> bool {
   SemIR::FunctionId function_id =
-      context.node_stack().Pop<ParseNodeKind::FunctionDefinitionStart>();
+      context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
@@ -92,7 +93,7 @@ auto HandleFunctionDefinition(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleFunctionDefinitionStart(Context& context, ParseTree::Node parse_node)
+auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] = BuildFunctionDeclaration(context);
@@ -116,7 +117,7 @@ auto HandleFunctionDefinitionStart(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleFunctionIntroducer(Context& context, ParseTree::Node parse_node)
+auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
   // Create a node block to hold the nodes created as part of the function
   // signature, such as parameter and return types.
@@ -128,7 +129,7 @@ auto HandleFunctionIntroducer(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleReturnType(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
       context.node_stack().PopExpressionWithParseNode();

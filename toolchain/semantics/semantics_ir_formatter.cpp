@@ -31,7 +31,7 @@ class NodeNamer {
   static_assert(sizeof(ScopeIndex) == sizeof(FunctionId));
 
   NodeNamer(const TokenizedBuffer& tokenized_buffer,
-            const ParseTree& parse_tree, const File& semantics_ir)
+            const Parse::Tree& parse_tree, const File& semantics_ir)
       : tokenized_buffer_(tokenized_buffer),
         parse_tree_(parse_tree),
         semantics_ir_(semantics_ir) {
@@ -51,7 +51,7 @@ class NodeNamer {
       const auto& fn = semantics_ir.GetFunction(fn_id);
       // TODO: Provide a location for the function for use as a
       // disambiguator.
-      auto fn_loc = ParseTree::Node::Invalid;
+      auto fn_loc = Parse::Node::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this, fn_loc,
           fn.name_id.is_valid() ? semantics_ir.GetString(fn.name_id).str()
@@ -174,7 +174,7 @@ class NodeNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const NodeNamer& namer, ParseTree::Node node,
+    auto AllocateName(const NodeNamer& namer, Parse::Node node,
                       std::string name = "") -> Name {
       // The best (shortest) name for this node so far, and the current name
       // for it.
@@ -250,13 +250,12 @@ class NodeNamer {
 
   auto AddBlockLabel(ScopeIndex scope_idx, NodeBlockId block_id,
                      std::string name = "",
-                     ParseTree::Node parse_node = ParseTree::Node::Invalid)
-      -> void {
+                     Parse::Node parse_node = Parse::Node::Invalid) -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
 
-    if (parse_node == ParseTree::Node::Invalid) {
+    if (parse_node == Parse::Node::Invalid) {
       if (const auto& block = semantics_ir_.GetNodeBlock(block_id);
           !block.empty()) {
         parse_node = semantics_ir_.GetNode(block.front()).parse_node();
@@ -274,7 +273,7 @@ class NodeNamer {
       -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(node.parse_node())) {
-      case ParseNodeKind::IfExpressionIf:
+      case Parse::NodeKind::IfExpressionIf:
         switch (node.kind()) {
           case NodeKind::BranchIf:
             name = "if.expr.then";
@@ -290,7 +289,7 @@ class NodeNamer {
         }
         break;
 
-      case ParseNodeKind::IfCondition:
+      case Parse::NodeKind::IfCondition:
         switch (node.kind()) {
           case NodeKind::BranchIf:
             name = "if.then";
@@ -303,11 +302,11 @@ class NodeNamer {
         }
         break;
 
-      case ParseNodeKind::IfStatement:
+      case Parse::NodeKind::IfStatement:
         name = "if.done";
         break;
 
-      case ParseNodeKind::ShortCircuitOperand: {
+      case Parse::NodeKind::ShortCircuitOperand: {
         bool is_rhs = node.kind() == NodeKind::BranchIf;
         bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
                           node.parse_node())) == TokenKind::And;
@@ -384,7 +383,7 @@ class NodeNamer {
   }
 
   const TokenizedBuffer& tokenized_buffer_;
-  const ParseTree& parse_tree_;
+  const Parse::Tree& parse_tree_;
   const File& semantics_ir_;
 
   Namespace globals = {.prefix = "@"};
@@ -398,7 +397,7 @@ class NodeNamer {
 class Formatter {
  public:
   explicit Formatter(const TokenizedBuffer& tokenized_buffer,
-                     const ParseTree& parse_tree, const File& semantics_ir,
+                     const Parse::Tree& parse_tree, const File& semantics_ir,
                      llvm::raw_ostream& out)
       : semantics_ir_(semantics_ir),
         out_(out),
@@ -760,7 +759,7 @@ class Formatter {
 };
 
 auto FormatFile(const TokenizedBuffer& tokenized_buffer,
-                const ParseTree& parse_tree, const File& semantics_ir,
+                const Parse::Tree& parse_tree, const File& semantics_ir,
                 llvm::raw_ostream& out) -> void {
   Formatter(tokenized_buffer, parse_tree, semantics_ir, out).Format();
 }

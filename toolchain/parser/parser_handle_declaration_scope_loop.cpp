@@ -4,11 +4,10 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 // Handles an unrecognized declaration, adding an error node.
-static auto ParserHandleUnrecognizedDeclaration(ParserContext& context)
-    -> void {
+static auto HandleUnrecognizedDeclaration(Context& context) -> void {
   CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
                     "Unrecognized declaration introducer.");
   context.emitter().Emit(*context.position(), UnrecognizedDeclaration);
@@ -16,11 +15,11 @@ static auto ParserHandleUnrecognizedDeclaration(ParserContext& context)
   auto semi = context.SkipPastLikelyEnd(cursor);
   // Locate the EmptyDeclaration at the semi when found, but use the
   // original cursor location for an error when not.
-  context.AddLeafNode(ParseNodeKind::EmptyDeclaration, semi ? *semi : cursor,
+  context.AddLeafNode(NodeKind::EmptyDeclaration, semi ? *semi : cursor,
                       /*has_error=*/true);
 }
 
-auto ParserHandleDeclarationScopeLoop(ParserContext& context) -> void {
+auto HandleDeclarationScopeLoop(Context& context) -> void {
   // This maintains the current state unless we're at the end of the scope.
 
   switch (context.PositionKind()) {
@@ -31,38 +30,38 @@ auto ParserHandleDeclarationScopeLoop(ParserContext& context) -> void {
       break;
     }
     case TokenKind::Class: {
-      context.PushState(ParserState::TypeIntroducerAsClass);
+      context.PushState(State::TypeIntroducerAsClass);
       break;
     }
     case TokenKind::Constraint: {
-      context.PushState(ParserState::TypeIntroducerAsNamedConstraint);
+      context.PushState(State::TypeIntroducerAsNamedConstraint);
       break;
     }
     case TokenKind::Fn: {
-      context.PushState(ParserState::FunctionIntroducer);
+      context.PushState(State::FunctionIntroducer);
       break;
     }
     case TokenKind::Interface: {
-      context.PushState(ParserState::TypeIntroducerAsInterface);
+      context.PushState(State::TypeIntroducerAsInterface);
       break;
     }
     case TokenKind::Namespace: {
-      context.PushState(ParserState::Namespace);
+      context.PushState(State::Namespace);
       break;
     }
     case TokenKind::Semi: {
-      context.AddLeafNode(ParseNodeKind::EmptyDeclaration, context.Consume());
+      context.AddLeafNode(NodeKind::EmptyDeclaration, context.Consume());
       break;
     }
     case TokenKind::Var: {
-      context.PushState(ParserState::VarAsSemicolon);
+      context.PushState(State::VarAsSemicolon);
       break;
     }
     default: {
-      ParserHandleUnrecognizedDeclaration(context);
+      HandleUnrecognizedDeclaration(context);
       break;
     }
   }
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

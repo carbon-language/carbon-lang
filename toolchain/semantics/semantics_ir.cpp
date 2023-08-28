@@ -41,7 +41,7 @@ auto File::MakeBuiltinIR() -> File {
 
 auto File::MakeFromParseTree(const File& builtin_ir,
                              const TokenizedBuffer& tokens,
-                             const ParseTree& parse_tree,
+                             const Parse::Tree& parse_tree,
                              DiagnosticConsumer& consumer,
                              llvm::raw_ostream* vlog_stream) -> File {
   File semantics_ir(&builtin_ir);
@@ -57,16 +57,16 @@ auto File::MakeFromParseTree(const File& builtin_ir,
         Node::CrossReference::Make(type, BuiltinIR, NodeId(i));
   }
 
-  ParseTreeNodeLocationTranslator translator(&tokens, &parse_tree);
+  Parse::NodeLocationTranslator translator(&tokens, &parse_tree);
   ErrorTrackingDiagnosticConsumer err_tracker(consumer);
-  DiagnosticEmitter<ParseTree::Node> emitter(translator, err_tracker);
+  DiagnosticEmitter<Parse::Node> emitter(translator, err_tracker);
 
   Check::Context context(tokens, emitter, parse_tree, semantics_ir,
                          vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
-  // Add a block for the ParseTree.
+  // Add a block for the Parse::Tree.
   context.node_block_stack().Push();
   context.PushScope();
 
@@ -77,7 +77,7 @@ auto File::MakeFromParseTree(const File& builtin_ir,
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (auto parse_kind = parse_tree.node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name)                 \
-  case ParseNodeKind::Name: {                        \
+  case Parse::NodeKind::Name: {                      \
     if (!Check::Handle##Name(context, parse_node)) { \
       semantics_ir.has_errors_ = true;               \
       return semantics_ir;                           \

@@ -4,72 +4,71 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParserHandleFunctionIntroducer(ParserContext& context) -> void {
+auto HandleFunctionIntroducer(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddLeafNode(ParseNodeKind::FunctionIntroducer, context.Consume());
+  context.AddLeafNode(NodeKind::FunctionIntroducer, context.Consume());
 
-  state.state = ParserState::FunctionAfterParameters;
+  state.state = State::FunctionAfterParameters;
   context.PushState(state);
-  context.PushState(ParserState::DeclarationNameAndParamsAsRequired,
-                    state.token);
+  context.PushState(State::DeclarationNameAndParamsAsRequired, state.token);
 }
 
-auto ParserHandleFunctionAfterParameters(ParserContext& context) -> void {
+auto HandleFunctionAfterParameters(Context& context) -> void {
   auto state = context.PopState();
 
   // Regardless of whether there's a return type, we'll finish the signature.
-  state.state = ParserState::FunctionSignatureFinish;
+  state.state = State::FunctionSignatureFinish;
   context.PushState(state);
 
   // If there is a return type, parse the expression before adding the return
   // type nod.e
   if (context.PositionIs(TokenKind::MinusGreater)) {
-    context.PushState(ParserState::FunctionReturnTypeFinish);
+    context.PushState(State::FunctionReturnTypeFinish);
     ++context.position();
     context.PushStateForExpression(PrecedenceGroup::ForType());
   }
 }
 
-auto ParserHandleFunctionReturnTypeFinish(ParserContext& context) -> void {
+auto HandleFunctionReturnTypeFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::ReturnType, state.token, state.subtree_start,
+  context.AddNode(NodeKind::ReturnType, state.token, state.subtree_start,
                   state.has_error);
 }
 
-auto ParserHandleFunctionSignatureFinish(ParserContext& context) -> void {
+auto HandleFunctionSignatureFinish(Context& context) -> void {
   auto state = context.PopState();
 
   switch (context.PositionKind()) {
     case TokenKind::Semi: {
-      context.AddNode(ParseNodeKind::FunctionDeclaration, context.Consume(),
+      context.AddNode(NodeKind::FunctionDeclaration, context.Consume(),
                       state.subtree_start, state.has_error);
       break;
     }
     case TokenKind::OpenCurlyBrace: {
       if (auto decl_context = context.GetDeclarationContext();
-          decl_context == ParserContext::DeclarationContext::Interface ||
-          decl_context == ParserContext::DeclarationContext::NamedConstraint) {
+          decl_context == Context::DeclarationContext::Interface ||
+          decl_context == Context::DeclarationContext::NamedConstraint) {
         CARBON_DIAGNOSTIC(
             MethodImplNotAllowed, Error,
             "Method implementations are not allowed in interfaces.");
         context.emitter().Emit(*context.position(), MethodImplNotAllowed);
         context.RecoverFromDeclarationError(state,
-                                            ParseNodeKind::FunctionDeclaration,
+                                            NodeKind::FunctionDeclaration,
                                             /*skip_past_likely_end=*/true);
         break;
       }
 
-      context.AddNode(ParseNodeKind::FunctionDefinitionStart, context.Consume(),
+      context.AddNode(NodeKind::FunctionDefinitionStart, context.Consume(),
                       state.subtree_start, state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.
       state.has_error = false;
-      state.state = ParserState::FunctionDefinitionFinish;
+      state.state = State::FunctionDefinitionFinish;
       context.PushState(state);
-      context.PushState(ParserState::StatementScopeLoop);
+      context.PushState(State::StatementScopeLoop);
       break;
     }
     default: {
@@ -80,17 +79,17 @@ auto ParserHandleFunctionSignatureFinish(ParserContext& context) -> void {
       bool skip_past_likely_end =
           context.tokens().GetLine(*context.position()) ==
           context.tokens().GetLine(state.token);
-      context.RecoverFromDeclarationError(
-          state, ParseNodeKind::FunctionDeclaration, skip_past_likely_end);
+      context.RecoverFromDeclarationError(state, NodeKind::FunctionDeclaration,
+                                          skip_past_likely_end);
       break;
     }
   }
 }
 
-auto ParserHandleFunctionDefinitionFinish(ParserContext& context) -> void {
+auto HandleFunctionDefinitionFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(ParseNodeKind::FunctionDefinition, context.Consume(),
+  context.AddNode(NodeKind::FunctionDefinition, context.Consume(),
                   state.subtree_start, state.has_error);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

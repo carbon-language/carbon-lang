@@ -421,10 +421,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return !has_errors;
   }
 
-  CARBON_VLOG() << "*** ParseTree::Parse ***\n";
-  auto parse_tree = ParseTree::Parse(tokenized_source, *consumer, vlog_stream_);
+  CARBON_VLOG() << "*** Parse::Tree::Parse ***\n";
+  auto parse_tree =
+      Parse::Tree::Parse(tokenized_source, *consumer, vlog_stream_);
   has_errors |= parse_tree.has_errors();
-  CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
+  CARBON_VLOG() << "*** Parse::Tree::Parse done ***\n";
   if (options.dump_parse_tree) {
     consumer->Flush();
     parse_tree.Print(output_stream_, options.preorder_parse_tree);

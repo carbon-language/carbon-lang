@@ -7,13 +7,13 @@
 
 namespace Carbon::Check {
 
-auto HandleNamespaceStart(Context& context, ParseTree::Node /*parse_node*/)
+auto HandleNamespaceStart(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   context.declaration_name_stack().Push();
   return true;
 }
 
-auto HandleNamespace(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleNamespace(Context& context, Parse::Node parse_node) -> bool {
   auto name_context = context.declaration_name_stack().Pop();
   auto namespace_id = context.AddNode(SemIR::Node::Namespace::Make(
       parse_node, context.semantics_ir().AddNameScope()));

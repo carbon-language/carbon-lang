@@ -17,7 +17,24 @@
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
+
+// A lightweight handle representing a node in the tree.
+//
+// Objects of this type are small and cheap to copy and store. They don't
+// contain any of the information about the node, and serve as a handle that
+// can be used with the underlying tree to query for detailed information.
+//
+// That said, nodes can be compared and are part of a depth-first pre-order
+// sequence across all nodes in the parse tree.
+struct Node : public ComparableIndexBase {
+  // An explicitly invalid instance.
+  static const Node Invalid;
+
+  using ComparableIndexBase::ComparableIndexBase;
+};
+
+constexpr Node Node::Invalid = Node(Node::InvalidIndex);
 
 // A tree of parsed tokens based on the language grammar.
 //
@@ -40,17 +57,16 @@ namespace Carbon {
 // The tree is immutable once built, but is designed to support reasonably
 // efficient patterns that build a new tree with a specific transformation
 // applied.
-class ParseTree {
+class Tree {
  public:
-  struct Node;
   class PostorderIterator;
   class SiblingIterator;
 
-  // Parses the token buffer into a `ParseTree`.
+  // Parses the token buffer into a `Tree`.
   //
   // This is the factory function which is used to build parse trees.
   static auto Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
-                    llvm::raw_ostream* vlog_stream) -> ParseTree;
+                    llvm::raw_ostream* vlog_stream) -> Tree;
 
   // Tests whether there are any errors in the parse tree.
   [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
@@ -84,7 +100,7 @@ class ParseTree {
   [[nodiscard]] auto node_has_error(Node n) const -> bool;
 
   // Returns the kind of the given parse tree node.
-  [[nodiscard]] auto node_kind(Node n) const -> ParseNodeKind;
+  [[nodiscard]] auto node_kind(Node n) const -> NodeKind;
 
   // Returns the token the given parse tree node models.
   [[nodiscard]] auto node_token(Node n) const -> TokenizedBuffer::Token;
@@ -149,12 +165,12 @@ class ParseTree {
   [[nodiscard]] auto Verify() const -> ErrorOr<Success>;
 
  private:
-  friend class ParserContext;
+  friend class Context;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
-    explicit NodeImpl(ParseNodeKind kind, bool has_error,
+    explicit NodeImpl(NodeKind kind, bool has_error,
                       TokenizedBuffer::Token token, int subtree_size)
         : kind(kind),
           has_error(has_error),
@@ -162,7 +178,7 @@ class ParseTree {
           subtree_size(subtree_size) {}
 
     // The kind of this node. Note that this is only a single byte.
-    ParseNodeKind kind;
+    NodeKind kind;
 
     // We have 3 bytes of padding here that we can pack flags or other compact
     // data into.
@@ -207,7 +223,7 @@ class ParseTree {
 
   // Wires up the reference to the tokenized buffer. The `Parse` function should
   // be used to actually parse the tokens into a tree.
-  explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
+  explicit Tree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
     // If the tree is valid, there will be one node per token, so reserve once.
     node_impls_.reserve(tokens_->expected_parse_tree_size());
   }
@@ -233,28 +249,10 @@ class ParseTree {
   bool has_errors_ = false;
 };
 
-// A lightweight handle representing a node in the tree.
-//
-// Objects of this type are small and cheap to copy and store. They don't
-// contain any of the information about the node, and serve as a handle that
-// can be used with the underlying tree to query for detailed information.
-//
-// That said, nodes can be compared and are part of a depth-first pre-order
-// sequence across all nodes in the parse tree.
-struct ParseTree::Node : public ComparableIndexBase {
-  // An explicitly invalid instance.
-  static const Node Invalid;
-
-  using ComparableIndexBase::ComparableIndexBase;
-};
-
-constexpr ParseTree::Node ParseTree::Node::Invalid =
-    ParseTree::Node(ParseTree::Node::InvalidIndex);
-
 // A random-access iterator to the depth-first postorder sequence of parse nodes
-// in the parse tree. It produces `ParseTree::Node` objects which are opaque
-// handles and must be used in conjunction with the `ParseTree` itself.
-class ParseTree::PostorderIterator
+// in the parse tree. It produces `Tree::Node` objects which are opaque
+// handles and must be used in conjunction with the `Tree` itself.
+class Tree::PostorderIterator
     : public llvm::iterator_facade_base<PostorderIterator,
                                         std::random_access_iterator_tag, Node,
                                         int, Node*, Node> {
@@ -287,7 +285,7 @@ class ParseTree::PostorderIterator
   auto Print(llvm::raw_ostream& output) const -> void;
 
  private:
-  friend class ParseTree;
+  friend class Tree;
 
   explicit PostorderIterator(Node n) : node_(n) {}
 
@@ -295,17 +293,17 @@ class ParseTree::PostorderIterator
 };
 
 // A forward iterator across the siblings at a particular level in the parse
-// tree. It produces `ParseTree::Node` objects which are opaque handles and must
-// be used in conjunction with the `ParseTree` itself.
+// tree. It produces `Tree::Node` objects which are opaque handles and must
+// be used in conjunction with the `Tree` itself.
 //
 // While this is a forward iterator and may not have good locality within the
-// `ParseTree` data structure, it is still constant time to increment and
+// `Tree` data structure, it is still constant time to increment and
 // suitable for algorithms relying on that property.
 //
 // The siblings are discovered through a reverse postorder (RPO) tree traversal
 // (which is made constant time through cached distance information), and so the
 // relative order of siblings matches their RPO order.
-class ParseTree::SiblingIterator
+class Tree::SiblingIterator
     : public llvm::iterator_facade_base<
           SiblingIterator, std::forward_iterator_tag, Node, int, Node*, Node> {
  public:
@@ -332,16 +330,16 @@ class ParseTree::SiblingIterator
   auto Print(llvm::raw_ostream& output) const -> void;
 
  private:
-  friend class ParseTree;
+  friend class Tree;
 
-  explicit SiblingIterator(const ParseTree& tree_arg, Node n)
+  explicit SiblingIterator(const Tree& tree_arg, Node n)
       : tree_(&tree_arg), node_(n) {}
 
-  const ParseTree* tree_;
+  const Tree* tree_;
 
   Node node_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSER_PARSE_TREE_H_

@@ -83,6 +83,14 @@ class EnumBase {
   // Prints this value using its name.
   auto Print(llvm::raw_ostream& out) const -> void { out << name(); }
 
+  // TODO: common/ostream.h tries to provide this, but does not reliably work on
+  // EnumBase children. Try to find a more generic solution.
+  friend auto operator<<(llvm::raw_ostream& out, const DerivedT& obj)
+      -> llvm::raw_ostream& {
+    obj.Print(out);
+    return out;
+  }
+
  protected:
   // The default constructor is explicitly defaulted (and constexpr) as a
   // protected constructor to allow derived classes to be constructed but not

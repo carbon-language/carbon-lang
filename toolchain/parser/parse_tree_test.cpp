@@ -18,9 +18,10 @@
 namespace Carbon::Testing {
 namespace {
 
+using Parse::Tree;
 using ::testing::ElementsAre;
 
-class ParseTreeTest : public ::testing::Test {
+class TreeTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::StringRef t) -> SourceBuffer& {
     CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
@@ -42,15 +43,15 @@ class ParseTreeTest : public ::testing::Test {
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };
 
-TEST_F(ParseTreeTest, IsValid) {
+TEST_F(TreeTest, IsValid) {
   TokenizedBuffer tokens = GetTokenizedBuffer("");
-  ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_TRUE((*tree.postorder().begin()).is_valid());
 }
 
-TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
+TEST_F(TreeTest, PrintPostorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   TestRawOstream print_stream;
   tree.Print(print_stream);
@@ -70,9 +71,9 @@ TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
   EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
 }
 
-TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
+TEST_F(TreeTest, PrintPreorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   TestRawOstream print_stream;
   tree.Print(print_stream, /*preorder=*/true);
@@ -106,7 +107,7 @@ TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
   EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
 }
 
-TEST_F(ParseTreeTest, HighRecursion) {
+TEST_F(TreeTest, HighRecursion) {
   std::string code = "fn Foo() { return ";
   code.append(10000, '(');
   code.append(10000, ')');
@@ -114,7 +115,7 @@ TEST_F(ParseTreeTest, HighRecursion) {
   TokenizedBuffer tokens = GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
-  ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
 }
 

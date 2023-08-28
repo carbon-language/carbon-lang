@@ -4,38 +4,38 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParserHandleCodeBlock(ParserContext& context) -> void {
+auto HandleCodeBlock(Context& context) -> void {
   context.PopAndDiscardState();
 
-  context.PushState(ParserState::CodeBlockFinish);
+  context.PushState(State::CodeBlockFinish);
   if (context.ConsumeAndAddLeafNodeIf(TokenKind::OpenCurlyBrace,
-                                      ParseNodeKind::CodeBlockStart)) {
-    context.PushState(ParserState::StatementScopeLoop);
+                                      NodeKind::CodeBlockStart)) {
+    context.PushState(State::StatementScopeLoop);
   } else {
-    context.AddLeafNode(ParseNodeKind::CodeBlockStart, *context.position(),
+    context.AddLeafNode(NodeKind::CodeBlockStart, *context.position(),
                         /*has_error=*/true);
 
     // Recover by parsing a single statement.
     CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "Expected braced code block.");
     context.emitter().Emit(*context.position(), ExpectedCodeBlock);
 
-    context.PushState(ParserState::Statement);
+    context.PushState(State::Statement);
   }
 }
 
-auto ParserHandleCodeBlockFinish(ParserContext& context) -> void {
+auto HandleCodeBlockFinish(Context& context) -> void {
   auto state = context.PopState();
 
   // If the block started with an open curly, this is a close curly.
   if (context.tokens().GetKind(state.token) == TokenKind::OpenCurlyBrace) {
-    context.AddNode(ParseNodeKind::CodeBlock, context.Consume(),
-                    state.subtree_start, state.has_error);
+    context.AddNode(NodeKind::CodeBlock, context.Consume(), state.subtree_start,
+                    state.has_error);
   } else {
-    context.AddNode(ParseNodeKind::CodeBlock, state.token, state.subtree_start,
+    context.AddNode(NodeKind::CodeBlock, state.token, state.subtree_start,
                     /*has_error=*/true);
   }
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse
