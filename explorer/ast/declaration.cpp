@@ -5,6 +5,7 @@
 #include "explorer/ast/declaration.h"
 
 #include "explorer/ast/value.h"
+#include "explorer/base/print_as_id.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 

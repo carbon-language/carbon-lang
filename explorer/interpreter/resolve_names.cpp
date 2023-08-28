@@ -11,10 +11,10 @@
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
 #include "explorer/ast/static_scope.h"
+#include "explorer/base/print_as_id.h"
 #include "explorer/interpreter/stack_space.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Error.h"
 
 using llvm::cast;
 using llvm::dyn_cast;
