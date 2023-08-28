@@ -29,7 +29,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [String literals](#string-literals)
 -   [Values, objects, and expressions](#values-objects-and-expressions)
     -   [Expression categories](#expression-categories)
-    -   [Value phases](#value-phases)
+    -   [Expression phases](#expression-phases)
 -   [Composite types](#composite-types)
     -   [Tuples](#tuples)
     -   [Struct types](#struct-types)
@@ -399,7 +399,7 @@ Some values, such as `()` and `{}`, may even be used as types, but only act like
 types when they are in a type position, like after a `:` in a variable
 declaration or the return type after a `->` in a function declaration. Any
 expression in a type position must be
-[a constant or symbolic value](#value-phases) so the compiler can resolve
+[a compile-time constant](#expression-phases) so the compiler can resolve
 whether the value can be used as a type. This also puts limits on how much
 operators can do different things for types. This is good for consistency, but
 is a significant restriction on Carbon's design.
@@ -688,18 +688,18 @@ The primitive conversion steps used are:
 > -   Proposal
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
-### Value phases
+### Expression phases
 
-Value expressions are also broken down into three _value phases_:
+Value expressions are further broken down into three _expression phases_:
 
--   A _constant_ has a value known at compile time, and that value is available
-    during type checking, for example to use as the size of an array. These
-    include literals ([integer](#integer-literals),
+-   A _template constant_ has a value known at compile time, and that value is
+    available during type checking, for example to use as the size of an array.
+    These include literals ([integer](#integer-literals),
     [floating-point](#floating-point-literals), [string](#string-literals)),
     concrete type values (like `f64` or `Optional(i32*)`), expressions in terms
     of constants, and values of
     [`template` parameters](#checked-and-template-parameters).
--   A _symbolic value_ has a value that will be known at the code generation
+-   A _symbolic constant_ has a value that will be known at the code generation
     stage of compilation when
     [monomorphization](https://en.wikipedia.org/wiki/Monomorphization) happens,
     but is not known during type checking. This includes
@@ -707,19 +707,23 @@ Value expressions are also broken down into three _value phases_:
     expressions with checked-generic arguments, like `Optional(T*)`.
 -   A _runtime value_ has a dynamic value only known at runtime.
 
-Carbon will automatically convert a constant to a symbolic value, or any value
-to a runtime value:
+Template constants together with symbolic constants are referred to as
+_compile-time constants_.
+
+Carbon will automatically convert a template constant to a symbolic constant, or
+any value to a runtime value:
 
 ```mermaid
 graph TD;
-    A(constant)-->B(symbolic value)-->C(runtime value);
+    A(template constant)-->B(symbolic constant)-->C(runtime value);
     D(reference expression)-->C;
 ```
 
-Constants convert to symbolic values and to runtime values. Symbolic values will
-generally convert into runtime values if an operation that inspects the value is
-performed on them. Runtime values will convert into constants or to symbolic
-values if constant evaluation of the runtime expression succeeds.
+Template constants convert to symbolic constants and to runtime values. Symbolic
+constants will generally convert into runtime values if an operation that
+inspects the value is performed on them. Runtime values will convert into
+template or symbolic constants if constant evaluation of the runtime expression
+succeeds.
 
 > **Note:** Conversion of runtime values to other phases is provisional.
 
@@ -1006,7 +1010,7 @@ the program's correctness must not depend on which option the Carbon
 implementation chooses.
 
 A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
-colon (`:`) and can only match [constant or symbolic values](#value-phases), not
+colon (`:`) and can only match [compile-time constant](#expression-phases), not
 run-time values.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
@@ -2723,8 +2727,9 @@ templates. Constraints can then be added incrementally, with the compiler
 verifying that the semantics stay the same. Once all constraints have been
 added, removing the word `template` to switch to a checked parameter is safe.
 
-The [value phase](#value-phases) of a checked parameter is a symbolic value
-whereas the value phase of a template parameter is constant.
+The [expression phase](#expression-phases) of a checked parameter is a symbolic
+constant whereas the expression phase of a template parameter is template
+constant.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
