@@ -625,45 +625,12 @@ For a compound member access `a.(b)` where `b` names a member of an interface
 For example:
 
 ```carbon
-interface Interface {
-  fn InstanceInterfaceMember[self: Self]();
-  fn NonInstanceInterfaceMember();
-}
-
-class MyClass {}
-impl MyClass as Interface;
-
-fn F(my_value: MyClass) {
-  // Since `Interface.InstanceInterfaceMember` is an instance
-  // member of `Interface`, `T` is set to the type of `my_value`,
-  // and so uses `MyClass as Interface`.
-  my_value.(Interface.InstanceInterfaceMember)();
-  //      ^ impl lookup and instance binding here
-
-  // ❌ By the same logic, `T` is set to the type of `MyClass`,
-  // and so uses `type as Interface`, which isn't implemented.
-  MyClass.(Interface.InstanceInterfaceMember)();
-
-  // Since `Interface.NonInstanceInterfaceMember` is a
-  // non-instance member of `Interface`, `MyClass` is implicitly
-  // converted to `Interface`, and so uses `MyClass as Interface`.
-  MyClass.(Interface.NonInstanceInterfaceMember)();
-
-  // ❌ This is an error unless `my_value` implicitly converts to
-  // a type.
-  my_value.(Interface.NonInstanceInterfaceMember)();
-}
-```
-
-FIXME: Maybe instead continue the previous example?
-
-```carbon
 fn AddTwoIntegers(a: Integer, b: Integer) -> Integer {
   // Since `Addable.Add` is an instance member of `Addable`, `T`
   // is set to the type of `a`, and so uses `Integer as Addable`.
   return a.(Addable.Add)(b);
   //      ^ impl lookup and instance binding here
-  // Impl lookup transforms this into:
+  // Impl lookup transforms this into #3:
   //   return a.((Integer as Addable).Add)(b);
   // which no longer requires impl lookup.
 
@@ -679,14 +646,14 @@ fn SumIntegers(v: Vector(Integer)) -> Integer {
   // `Integer as Addable`.
   Integer.(Addable.Sum)(v);
   //     ^ impl lookup but no instance binding here
-  // Impl lookup transforms this into:
+  // Impl lookup transforms this into #4:
   //   ((Integer as Addable).Sum)(v);
   // which no longer requires impl lookup.
 
   var a: Integer;
   // ❌ This is an error since `a` does not implicitly convert to
   // a type.
-  a.(Addable.Sum)(...);
+  a.(Addable.Sum)(v);
 }
 ```
 
