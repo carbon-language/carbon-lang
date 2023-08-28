@@ -26,11 +26,11 @@ auto HandleNamespaceFinish(Context& context) -> void {
     return;
   }
 
-  if (auto semi = context.ConsumeIf(TokenKind::Semi)) {
+  if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
     context.AddNode(NodeKind::Namespace, *semi, state.subtree_start,
                     state.has_error);
   } else {
-    context.EmitExpectedDeclarationSemi(TokenKind::Namespace);
+    context.EmitExpectedDeclarationSemi(Lex::TokenKind::Namespace);
     context.RecoverFromDeclarationError(state, NodeKind::Namespace,
                                         /*skip_past_likely_end=*/true);
   }

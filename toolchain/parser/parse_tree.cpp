@@ -15,10 +15,10 @@
 
 namespace Carbon::Parse {
 
-auto Tree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
                  llvm::raw_ostream* vlog_stream) -> Tree {
-  TokenizedBuffer::TokenLocationTranslator translator(&tokens);
-  TokenDiagnosticEmitter emitter(translator, consumer);
+  Lex::TokenizedBuffer::TokenLocationTranslator translator(&tokens);
+  Lex::TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
   Tree tree(tokens);
@@ -30,7 +30,7 @@ auto Tree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
 
   // The package should always be the first token, if it's present. Any other
   // use is invalid.
-  if (context.PositionIs(TokenKind::Package)) {
+  if (context.PositionIs(Lex::TokenKind::Package)) {
     context.PushState(State::Package);
   }
 
@@ -95,7 +95,7 @@ auto Tree::node_kind(Node n) const -> NodeKind {
   return node_impls_[n.index].kind;
 }
 
-auto Tree::node_token(Node n) const -> TokenizedBuffer::Token {
+auto Tree::node_token(Node n) const -> Lex::TokenizedBuffer::Token {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].token;
 }
@@ -281,7 +281,7 @@ auto Tree::Verify() const -> ErrorOr<Success> {
                           tokens_->expected_parse_tree_size()) {
     return Error(
         llvm::formatv("Tree has {0} nodes and no errors, but "
-                      "TokenizedBuffer expected {1} nodes for {2} tokens.",
+                      "Lex::TokenizedBuffer expected {1} nodes for {2} tokens.",
                       node_impls_.size(), tokens_->expected_parse_tree_size(),
                       tokens_->size()));
   }

@@ -10,6 +10,8 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::LexedStringLiteral;
+
 static void BM_ValidString(benchmark::State& state, std::string_view introducer,
                            std::string_view terminator) {
   std::string x(introducer);

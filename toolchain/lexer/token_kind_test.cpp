@@ -12,6 +12,7 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::TokenKind;
 using ::testing::MatchesRegex;
 
 // We restrict symbols to punctuation characters that are expected to be widely

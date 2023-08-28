@@ -14,10 +14,11 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   auto state = context.PopState();
 
   // `.` identifier
-  auto dot = context.ConsumeChecked(is_arrow ? TokenKind::MinusGreater
-                                             : TokenKind::Period);
+  auto dot = context.ConsumeChecked(is_arrow ? Lex::TokenKind::MinusGreater
+                                             : Lex::TokenKind::Period);
 
-  if (!context.ConsumeAndAddLeafNodeIf(TokenKind::Identifier, NodeKind::Name)) {
+  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
+                                       NodeKind::Name)) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
                       "Expected identifier after `{0}`.", llvm::StringRef);
     context.emitter().Emit(*context.position(),

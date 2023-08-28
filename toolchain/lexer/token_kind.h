@@ -13,7 +13,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadicDetails.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 CARBON_DEFINE_RAW_ENUM_CLASS(TokenKind, uint8_t) {
 #define CARBON_TOKEN(TokenName) CARBON_RAW_ENUM_ENUMERATOR(TokenName)
@@ -138,15 +138,15 @@ constexpr TokenKind TokenKind::KeywordTokensStorage[] = {
 constexpr llvm::ArrayRef<TokenKind> TokenKind::KeywordTokens =
     KeywordTokensStorage;
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex
 
 namespace llvm {
 
 // We use formatv primarily for diagnostics. In these cases, it's expected that
 // the spelling in source code should be used.
 template <>
-struct format_provider<Carbon::TokenKind> {
-  static void format(const Carbon::TokenKind& kind, raw_ostream& out,
+struct format_provider<Carbon::Lex::TokenKind> {
+  static void format(const Carbon::Lex::TokenKind& kind, raw_ostream& out,
                      StringRef /*style*/) {
     auto spelling = kind.fixed_spelling();
     if (!spelling.empty()) {

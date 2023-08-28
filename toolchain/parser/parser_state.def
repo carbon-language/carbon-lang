@@ -21,7 +21,7 @@
 // the stack.
 //
 // Where state output is conditional on a lexed token, the name of
-// the TokenKind should be used rather than the string name in order to make it
+// the Lex::TokenKind should be used rather than the string name in order to make it
 // easier to compare with code.
 
 #ifndef CARBON_PARSE_STATE

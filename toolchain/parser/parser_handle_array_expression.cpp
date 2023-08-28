@@ -14,7 +14,7 @@ auto HandleArrayExpression(Context& context) -> void {
   auto state = context.PopState();
   state.state = State::ArrayExpressionSemi;
   context.AddLeafNode(NodeKind::ArrayExpressionStart,
-                      context.ConsumeChecked(TokenKind::OpenSquareBracket),
+                      context.ConsumeChecked(Lex::TokenKind::OpenSquareBracket),
                       state.has_error);
   context.PushState(state);
   context.PushState(State::Expression);
@@ -22,7 +22,7 @@ auto HandleArrayExpression(Context& context) -> void {
 
 auto HandleArrayExpressionSemi(Context& context) -> void {
   auto state = context.PopState();
-  auto semi = context.ConsumeIf(TokenKind::Semi);
+  auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
   if (!semi) {
     context.AddNode(NodeKind::ArrayExpressionSemi, *context.position(),
                     state.subtree_start, true);
@@ -35,7 +35,7 @@ auto HandleArrayExpressionSemi(Context& context) -> void {
   }
   state.state = State::ArrayExpressionFinish;
   context.PushState(state);
-  if (!context.PositionIs(TokenKind::CloseSquareBracket)) {
+  if (!context.PositionIs(Lex::TokenKind::CloseSquareBracket)) {
     context.PushState(State::Expression);
   }
 }
@@ -43,7 +43,7 @@ auto HandleArrayExpressionSemi(Context& context) -> void {
 auto HandleArrayExpressionFinish(Context& context) -> void {
   auto state = context.PopState();
   context.ConsumeAndAddCloseSymbol(
-      *(TokenizedBuffer::TokenIterator(state.token)), state,
+      *(Lex::TokenizedBuffer::TokenIterator(state.token)), state,
       NodeKind::ArrayExpression);
 }
 

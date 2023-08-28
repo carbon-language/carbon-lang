@@ -21,9 +21,7 @@
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/source/source_buffer.h"
 
-namespace Carbon {
-
-class TokenizedBuffer;
+namespace Carbon::Lex {
 
 // A buffer of tokenized Carbon source code.
 //
@@ -422,6 +420,6 @@ using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 // A diagnostic emitter that uses tokens as its source of location information.
 using TokenDiagnosticEmitter = DiagnosticEmitter<TokenizedBuffer::Token>;
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex
 
 #endif  // CARBON_TOOLCHAIN_LEXER_TOKENIZED_BUFFER_H_

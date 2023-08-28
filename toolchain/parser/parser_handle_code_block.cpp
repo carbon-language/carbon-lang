@@ -10,7 +10,7 @@ auto HandleCodeBlock(Context& context) -> void {
   context.PopAndDiscardState();
 
   context.PushState(State::CodeBlockFinish);
-  if (context.ConsumeAndAddLeafNodeIf(TokenKind::OpenCurlyBrace,
+  if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::OpenCurlyBrace,
                                       NodeKind::CodeBlockStart)) {
     context.PushState(State::StatementScopeLoop);
   } else {
@@ -29,7 +29,7 @@ auto HandleCodeBlockFinish(Context& context) -> void {
   auto state = context.PopState();
 
   // If the block started with an open curly, this is a close curly.
-  if (context.tokens().GetKind(state.token) == TokenKind::OpenCurlyBrace) {
+  if (context.tokens().GetKind(state.token) == Lex::TokenKind::OpenCurlyBrace) {
     context.AddNode(NodeKind::CodeBlock, context.Consume(), state.subtree_start,
                     state.has_error);
   } else {

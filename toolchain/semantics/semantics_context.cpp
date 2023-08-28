@@ -20,7 +20,7 @@
 
 namespace Carbon::Check {
 
-Context::Context(const TokenizedBuffer& tokens,
+Context::Context(const Lex::TokenizedBuffer& tokens,
                  DiagnosticEmitter<Parse::Node>& emitter,
                  const Parse::Tree& parse_tree, SemIR::File& semantics_ir,
                  llvm::raw_ostream* vlog_stream)

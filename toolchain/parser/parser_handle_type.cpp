@@ -46,13 +46,13 @@ static auto HandleTypeAfterParams(Context& context, NodeKind declaration_kind,
     return;
   }
 
-  if (auto semi = context.ConsumeIf(TokenKind::Semi)) {
+  if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
     context.AddNode(declaration_kind, *semi, state.subtree_start,
                     state.has_error);
     return;
   }
 
-  if (!context.PositionIs(TokenKind::OpenCurlyBrace)) {
+  if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     context.EmitExpectedDeclarationSemiOrDefinition(
         context.tokens().GetKind(state.token));
     context.RecoverFromDeclarationError(state, declaration_kind,

@@ -40,7 +40,7 @@ struct ExpectedToken {
     return output;
   }
 
-  TokenKind kind;
+  Lex::TokenKind kind;
   int line = -1;
   int column = -1;
   int indent_column = -1;
@@ -54,7 +54,7 @@ struct ExpectedToken {
 // mismatches first.
 // NOLINTNEXTLINE: Expands from GoogleTest.
 MATCHER_P(HasTokens, raw_all_expected, "") {
-  const TokenizedBuffer& buffer = arg;
+  const Lex::TokenizedBuffer& buffer = arg;
   llvm::ArrayRef<ExpectedToken> all_expected = raw_all_expected;
 
   bool matches = true;
@@ -68,7 +68,7 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
     int index = buffer_it - buffer.tokens().begin();
     auto token = *buffer_it++;
 
-    TokenKind actual_kind = buffer.GetKind(token);
+    Lex::TokenKind actual_kind = buffer.GetKind(token);
     if (actual_kind != expected.kind) {
       *result_listener << "\nToken " << index << " is a " << actual_kind
                        << ", expected a " << expected.kind << ".";
@@ -119,8 +119,9 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
     }
 
     CARBON_CHECK(!expected.string_contents ||
-                 expected.kind == TokenKind::StringLiteral);
-    if (expected.string_contents && actual_kind == TokenKind::StringLiteral) {
+                 expected.kind == Lex::TokenKind::StringLiteral);
+    if (expected.string_contents &&
+        actual_kind == Lex::TokenKind::StringLiteral) {
       llvm::StringRef actual_contents = buffer.GetStringLiteral(token);
       if (actual_contents != *expected.string_contents) {
         *result_listener << "\nToken " << index << " has contents `"

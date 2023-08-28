@@ -30,7 +30,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   auto source = SourceBuffer::CreateFromFile(fs, TestFileName);
 
   // Lex the input.
-  auto tokens = TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
+  auto tokens = Lex::TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
   if (tokens.has_errors()) {
     return 0;
   }

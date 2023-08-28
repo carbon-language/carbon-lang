@@ -12,7 +12,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 // A numeric literal token that has been extracted from a source buffer.
 class LexedNumericLiteral {
@@ -71,6 +71,6 @@ class LexedNumericLiteral {
   int exponent_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex
 
 #endif  // CARBON_TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_

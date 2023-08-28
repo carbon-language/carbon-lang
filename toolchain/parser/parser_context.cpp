@@ -40,8 +40,8 @@ static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
   return out;
 }
 
-Context::Context(Tree& tree, TokenizedBuffer& tokens,
-                 TokenDiagnosticEmitter& emitter,
+Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
+                 Lex::TokenDiagnosticEmitter& emitter,
                  llvm::raw_ostream* vlog_stream)
     : tree_(&tree),
       tokens_(&tokens),
@@ -49,14 +49,14 @@ Context::Context(Tree& tree, TokenizedBuffer& tokens,
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
       end_(tokens_->tokens().end()) {
-  CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
+  CARBON_CHECK(position_ != end_) << "Empty Lex::TokenizedBuffer";
   --end_;
-  CARBON_CHECK(tokens_->GetKind(*end_) == TokenKind::EndOfFile)
-      << "TokenizedBuffer should end with EndOfFile, ended with "
+  CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::EndOfFile)
+      << "Lex::TokenizedBuffer should end with EndOfFile, ended with "
       << tokens_->GetKind(*end_);
 }
 
-auto Context::AddLeafNode(NodeKind kind, TokenizedBuffer::Token token,
+auto Context::AddLeafNode(NodeKind kind, Lex::TokenizedBuffer::Token token,
                           bool has_error) -> void {
   tree_->node_impls_.push_back(
       Tree::NodeImpl(kind, has_error, token, /*subtree_size=*/1));
@@ -65,7 +65,7 @@ auto Context::AddLeafNode(NodeKind kind, TokenizedBuffer::Token token,
   }
 }
 
-auto Context::AddNode(NodeKind kind, TokenizedBuffer::Token token,
+auto Context::AddNode(NodeKind kind, Lex::TokenizedBuffer::Token token,
                       int subtree_start, bool has_error) -> void {
   int subtree_size = tree_->size() - subtree_start + 1;
   tree_->node_impls_.push_back(
@@ -75,15 +75,15 @@ auto Context::AddNode(NodeKind kind, TokenizedBuffer::Token token,
   }
 }
 
-auto Context::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
+auto Context::ConsumeAndAddOpenParen(Lex::TokenizedBuffer::Token default_token,
                                      NodeKind start_kind)
-    -> std::optional<TokenizedBuffer::Token> {
-  if (auto open_paren = ConsumeIf(TokenKind::OpenParen)) {
+    -> std::optional<Lex::TokenizedBuffer::Token> {
+  if (auto open_paren = ConsumeIf(Lex::TokenKind::OpenParen)) {
     AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
     return open_paren;
   } else {
     CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
-                      TokenKind);
+                      Lex::TokenKind);
     emitter_->Emit(*position_, ExpectedParenAfter,
                    tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
@@ -91,10 +91,10 @@ auto Context::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
   }
 }
 
-auto Context::ConsumeAndAddCloseSymbol(TokenizedBuffer::Token expected_open,
-                                       StateStackEntry state,
-                                       NodeKind close_kind) -> void {
-  TokenKind open_token_kind = tokens().GetKind(expected_open);
+auto Context::ConsumeAndAddCloseSymbol(
+    Lex::TokenizedBuffer::Token expected_open, StateStackEntry state,
+    NodeKind close_kind) -> void {
+  Lex::TokenKind open_token_kind = tokens().GetKind(expected_open);
 
   if (!open_token_kind.is_opening_symbol()) {
     AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
@@ -113,8 +113,8 @@ auto Context::ConsumeAndAddCloseSymbol(TokenizedBuffer::Token expected_open,
   }
 }
 
-auto Context::ConsumeAndAddLeafNodeIf(TokenKind token_kind, NodeKind node_kind)
-    -> bool {
+auto Context::ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind,
+                                      NodeKind node_kind) -> bool {
   auto token = ConsumeIf(token_kind);
   if (!token) {
     return false;
@@ -124,21 +124,22 @@ auto Context::ConsumeAndAddLeafNodeIf(TokenKind token_kind, NodeKind node_kind)
   return true;
 }
 
-auto Context::ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token {
+auto Context::ConsumeChecked(Lex::TokenKind kind)
+    -> Lex::TokenizedBuffer::Token {
   CARBON_CHECK(PositionIs(kind))
       << "Required " << kind << ", found " << PositionKind();
   return Consume();
 }
 
-auto Context::ConsumeIf(TokenKind kind)
-    -> std::optional<TokenizedBuffer::Token> {
+auto Context::ConsumeIf(Lex::TokenKind kind)
+    -> std::optional<Lex::TokenizedBuffer::Token> {
   if (!PositionIs(kind)) {
     return std::nullopt;
   }
   return Consume();
 }
 
-auto Context::ConsumeIfPatternKeyword(TokenKind keyword_token,
+auto Context::ConsumeIfPatternKeyword(Lex::TokenKind keyword_token,
                                       State keyword_state, int subtree_start)
     -> void {
   if (auto token = ConsumeIf(keyword_token)) {
@@ -148,22 +149,22 @@ auto Context::ConsumeIfPatternKeyword(TokenKind keyword_token,
   }
 }
 
-auto Context::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
-    -> std::optional<TokenizedBuffer::Token> {
+auto Context::FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
+    -> std::optional<Lex::TokenizedBuffer::Token> {
   auto new_position = position_;
   while (true) {
-    TokenizedBuffer::Token token = *new_position;
-    TokenKind kind = tokens().GetKind(token);
+    Lex::TokenizedBuffer::Token token = *new_position;
+    Lex::TokenKind kind = tokens().GetKind(token);
     if (kind.IsOneOf(desired_kinds)) {
       return token;
     }
 
     // Step to the next token at the current bracketing level.
-    if (kind.is_closing_symbol() || kind == TokenKind::EndOfFile) {
+    if (kind.is_closing_symbol() || kind == Lex::TokenKind::EndOfFile) {
       // There are no more tokens at this level.
       return std::nullopt;
     } else if (kind.is_opening_symbol()) {
-      new_position = TokenizedBuffer::TokenIterator(
+      new_position = Lex::TokenizedBuffer::TokenIterator(
           tokens().GetMatchedClosingToken(token));
       // Advance past the closing token.
       ++new_position;
@@ -183,20 +184,20 @@ auto Context::SkipMatchingGroup() -> bool {
   return true;
 }
 
-auto Context::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
-    -> std::optional<TokenizedBuffer::Token> {
+auto Context::SkipPastLikelyEnd(Lex::TokenizedBuffer::Token skip_root)
+    -> std::optional<Lex::TokenizedBuffer::Token> {
   if (position_ == end_) {
     return std::nullopt;
   }
 
-  TokenizedBuffer::Line root_line = tokens().GetLine(skip_root);
+  Lex::TokenizedBuffer::Line root_line = tokens().GetLine(skip_root);
   int root_line_indent = tokens().GetIndentColumnNumber(root_line);
 
   // We will keep scanning through tokens on the same line as the root or
   // lines with greater indentation than root's line.
   auto is_same_line_or_indent_greater_than_root =
-      [&](TokenizedBuffer::Token t) {
-        TokenizedBuffer::Line l = tokens().GetLine(t);
+      [&](Lex::TokenizedBuffer::Token t) {
+        Lex::TokenizedBuffer::Line l = tokens().GetLine(t);
         if (l == root_line) {
           return true;
         }
@@ -205,7 +206,7 @@ auto Context::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
       };
 
   do {
-    if (PositionIs(TokenKind::CloseCurlyBrace)) {
+    if (PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
       // Immediately bail out if we hit an unmatched close curly, this will
       // pop us up a level of the syntax grouping.
       return std::nullopt;
@@ -213,7 +214,7 @@ auto Context::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
 
     // We assume that a semicolon is always intended to be the end of the
     // current construct.
-    if (auto semi = ConsumeIf(TokenKind::Semi)) {
+    if (auto semi = ConsumeIf(Lex::TokenKind::Semi)) {
       return semi;
     }
 
@@ -230,37 +231,41 @@ auto Context::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
   return std::nullopt;
 }
 
-auto Context::SkipTo(TokenizedBuffer::Token t) -> void {
-  CARBON_CHECK(t >= *position_) << "Tried to skip backwards from " << position_
-                                << " to " << TokenizedBuffer::TokenIterator(t);
-  position_ = TokenizedBuffer::TokenIterator(t);
+auto Context::SkipTo(Lex::TokenizedBuffer::Token t) -> void {
+  CARBON_CHECK(t >= *position_)
+      << "Tried to skip backwards from " << position_ << " to "
+      << Lex::TokenizedBuffer::TokenIterator(t);
+  position_ = Lex::TokenizedBuffer::TokenIterator(t);
   CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
 }
 
 // Determines whether the given token is considered to be the start of an
 // operand according to the rules for infix operator parsing.
-static auto IsAssumedStartOfOperand(TokenKind kind) -> bool {
-  return kind.IsOneOf({TokenKind::OpenParen, TokenKind::Identifier,
-                       TokenKind::IntegerLiteral, TokenKind::RealLiteral,
-                       TokenKind::StringLiteral});
+static auto IsAssumedStartOfOperand(Lex::TokenKind kind) -> bool {
+  return kind.IsOneOf({Lex::TokenKind::OpenParen, Lex::TokenKind::Identifier,
+                       Lex::TokenKind::IntegerLiteral,
+                       Lex::TokenKind::RealLiteral,
+                       Lex::TokenKind::StringLiteral});
 }
 
 // Determines whether the given token is considered to be the end of an
 // operand according to the rules for infix operator parsing.
-static auto IsAssumedEndOfOperand(TokenKind kind) -> bool {
-  return kind.IsOneOf({TokenKind::CloseParen, TokenKind::CloseCurlyBrace,
-                       TokenKind::CloseSquareBracket, TokenKind::Identifier,
-                       TokenKind::IntegerLiteral, TokenKind::RealLiteral,
-                       TokenKind::StringLiteral});
+static auto IsAssumedEndOfOperand(Lex::TokenKind kind) -> bool {
+  return kind.IsOneOf(
+      {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseCurlyBrace,
+       Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::Identifier,
+       Lex::TokenKind::IntegerLiteral, Lex::TokenKind::RealLiteral,
+       Lex::TokenKind::StringLiteral});
 }
 
 // Determines whether the given token could possibly be the start of an
 // operand. This is conservatively correct, and will never incorrectly return
 // `false`, but can incorrectly return `true`.
-static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
-  return !kind.IsOneOf({TokenKind::CloseParen, TokenKind::CloseCurlyBrace,
-                        TokenKind::CloseSquareBracket, TokenKind::Comma,
-                        TokenKind::Semi, TokenKind::Colon});
+static auto IsPossibleStartOfOperand(Lex::TokenKind kind) -> bool {
+  return !kind.IsOneOf(
+      {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseCurlyBrace,
+       Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::Comma,
+       Lex::TokenKind::Semi, Lex::TokenKind::Colon});
 }
 
 auto Context::IsLexicallyValidInfixOperator() -> bool {
@@ -359,19 +364,19 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   }
 }
 
-auto Context::ConsumeListToken(NodeKind comma_kind, TokenKind close_kind,
+auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
                                bool already_has_error) -> ListTokenKind {
-  if (!PositionIs(TokenKind::Comma) && !PositionIs(close_kind)) {
+  if (!PositionIs(Lex::TokenKind::Comma) && !PositionIs(close_kind)) {
     // Don't error a second time on the same element.
     if (!already_has_error) {
       CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
-                        "Expected `,` or `{0}`.", TokenKind);
+                        "Expected `,` or `{0}`.", Lex::TokenKind);
       emitter_->Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
       ReturnErrorOnState();
     }
 
     // Recover from the invalid token.
-    auto end_of_element = FindNextOf({TokenKind::Comma, close_kind});
+    auto end_of_element = FindNextOf({Lex::TokenKind::Comma, close_kind});
     // The lexer guarantees that parentheses are balanced.
     CARBON_CHECK(end_of_element)
         << "missing matching `" << close_kind.opening_symbol() << "` for `"
@@ -426,18 +431,19 @@ auto Context::RecoverFromDeclarationError(StateStackEntry state,
           /*has_error=*/true);
 }
 
-auto Context::EmitExpectedDeclarationSemi(TokenKind expected_kind) -> void {
+auto Context::EmitExpectedDeclarationSemi(Lex::TokenKind expected_kind)
+    -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclarationSemi, Error,
-                    "`{0}` declarations must end with a `;`.", TokenKind);
+                    "`{0}` declarations must end with a `;`.", Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclarationSemi, expected_kind);
 }
 
-auto Context::EmitExpectedDeclarationSemiOrDefinition(TokenKind expected_kind)
-    -> void {
+auto Context::EmitExpectedDeclarationSemiOrDefinition(
+    Lex::TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclarationSemiOrDefinition, Error,
                     "`{0}` declarations must either end with a `;` or "
                     "have a `{{ ... }` block for a definition.",
-                    TokenKind);
+                    Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclarationSemiOrDefinition,
                  expected_kind);
 }
@@ -453,7 +459,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
 }
 
 auto Context::PrintTokenForStackDump(llvm::raw_ostream& output,
-                                     TokenizedBuffer::Token token) const
+                                     Lex::TokenizedBuffer::Token token) const
     -> void {
   output << " @ " << tokens_->GetLineNumber(tokens_->GetLine(token)) << ":"
          << tokens_->GetColumnNumber(token) << ": token " << token << " : "

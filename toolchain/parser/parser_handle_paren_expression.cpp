@@ -11,9 +11,9 @@ auto HandleParenExpression(Context& context) -> void {
 
   // Advance past the open paren.
   context.AddLeafNode(NodeKind::ParenExpressionOrTupleLiteralStart,
-                      context.ConsumeChecked(TokenKind::OpenParen));
+                      context.ConsumeChecked(Lex::TokenKind::OpenParen));
 
-  if (context.PositionIs(TokenKind::CloseParen)) {
+  if (context.PositionIs(Lex::TokenKind::CloseParen)) {
     state.state = State::ParenExpressionFinishAsTuple;
     context.PushState(state);
   } else {
@@ -30,7 +30,7 @@ static auto HandleParenExpressionParameterFinish(Context& context,
   auto state = context.PopState();
 
   auto list_token_kind = context.ConsumeListToken(
-      NodeKind::TupleLiteralComma, TokenKind::CloseParen, state.has_error);
+      NodeKind::TupleLiteralComma, Lex::TokenKind::CloseParen, state.has_error);
   if (list_token_kind == Context::ListTokenKind::Close) {
     return;
   }

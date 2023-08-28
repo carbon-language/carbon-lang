@@ -12,7 +12,7 @@
 #include "toolchain/lexer/character_set.h"
 #include "toolchain/lexer/lex_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
@@ -455,4 +455,4 @@ auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
                                               indent);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex

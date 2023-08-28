@@ -11,6 +11,8 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::LexedNumericLiteral;
+
 static void BM_Lex_Float(benchmark::State& state) {
   for (auto _ : state) {
     CARBON_CHECK(LexedNumericLiteral::Lex("0.000001"));

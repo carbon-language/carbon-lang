@@ -11,7 +11,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 class LexedStringLiteral {
  public:
@@ -70,6 +70,6 @@ class LexedStringLiteral {
   bool is_terminated_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex
 
 #endif  // CARBON_TOOLCHAIN_LEXER_STRING_LITERAL_H_

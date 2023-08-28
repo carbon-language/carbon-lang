@@ -13,7 +13,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
-    case TokenKind::Plus:
+    case Lex::TokenKind::Plus:
       // TODO: This should search for a compatible interface. For now, it's a
       // very trivial check of validity on the operation.
       lhs_id = context.ConvertToValueOfType(
@@ -27,8 +27,8 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
               lhs_id, rhs_id));
       return true;
 
-    case TokenKind::And:
-    case TokenKind::Or: {
+    case Lex::TokenKind::And:
+    case Lex::TokenKind::Or: {
       // The first operand is wrapped in a ShortCircuitOperand, which we
       // already handled by creating a RHS block and a resumption block, which
       // are the current block and its enclosing block.
@@ -51,7 +51,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
               resume_block_id));
       return true;
     }
-    case TokenKind::Equal: {
+    case Lex::TokenKind::Equal: {
       // TODO: handle complex assignment expression such as `a += 1`.
       if (SemIR::GetExpressionCategory(context.semantics_ir(), lhs_id) !=
           SemIR::ExpressionCategory::DurableReference) {
@@ -81,7 +81,7 @@ auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
-    case TokenKind::Star: {
+    case Lex::TokenKind::Star: {
       auto inner_type_id = context.ExpressionAsType(parse_node, value_id);
       context.AddNodeAndPush(
           parse_node, SemIR::Node::PointerType::Make(
@@ -100,7 +100,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
-    case TokenKind::Amp: {
+    case Lex::TokenKind::Amp: {
       // Only durable reference expressions can have their address taken.
       switch (SemIR::GetExpressionCategory(context.semantics_ir(), value_id)) {
         case SemIR::ExpressionCategory::DurableReference:
@@ -128,7 +128,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       return true;
     }
 
-    case TokenKind::Const: {
+    case Lex::TokenKind::Const: {
       // `const (const T)` is probably not what the developer intended.
       // TODO: Detect `const (const T)*` and suggest moving the `*` inside the
       // parentheses.
@@ -146,7 +146,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       return true;
     }
 
-    case TokenKind::Not:
+    case Lex::TokenKind::Not:
       value_id = context.ConvertToBoolValue(parse_node, value_id);
       context.AddNodeAndPush(
           parse_node,
@@ -155,7 +155,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
               value_id));
       return true;
 
-    case TokenKind::Star: {
+    case Lex::TokenKind::Star: {
       auto type_id = context.GetUnqualifiedType(
           context.semantics_ir().GetNode(value_id).type_id());
       auto type_node = context.semantics_ir().GetNode(
@@ -204,13 +204,13 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
   SemIR::NodeId branch_value_id = SemIR::NodeId::Invalid;
   auto short_circuit_result_id = SemIR::NodeId::Invalid;
   switch (auto token_kind = context.tokens().GetKind(token)) {
-    case TokenKind::And:
+    case Lex::TokenKind::And:
       branch_value_id = cond_value_id;
       short_circuit_result_id = context.AddNode(SemIR::Node::BoolLiteral::Make(
           parse_node, bool_type_id, SemIR::BoolValue::False));
       break;
 
-    case TokenKind::Or:
+    case Lex::TokenKind::Or:
       branch_value_id = context.AddNode(SemIR::Node::UnaryOperatorNot::Make(
           parse_node, bool_type_id, cond_value_id));
       short_circuit_result_id = context.AddNode(SemIR::Node::BoolLiteral::Make(

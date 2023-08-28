@@ -30,7 +30,7 @@ class NodeNamer {
   };
   static_assert(sizeof(ScopeIndex) == sizeof(FunctionId));
 
-  NodeNamer(const TokenizedBuffer& tokenized_buffer,
+  NodeNamer(const Lex::TokenizedBuffer& tokenized_buffer,
             const Parse::Tree& parse_tree, const File& semantics_ir)
       : tokenized_buffer_(tokenized_buffer),
         parse_tree_(parse_tree),
@@ -309,7 +309,7 @@ class NodeNamer {
       case Parse::NodeKind::ShortCircuitOperand: {
         bool is_rhs = node.kind() == NodeKind::BranchIf;
         bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
-                          node.parse_node())) == TokenKind::And;
+                          node.parse_node())) == Lex::TokenKind::And;
         name = is_and ? (is_rhs ? "and.rhs" : "and.result")
                       : (is_rhs ? "or.rhs" : "or.result");
         break;
@@ -382,7 +382,7 @@ class NodeNamer {
     }
   }
 
-  const TokenizedBuffer& tokenized_buffer_;
+  const Lex::TokenizedBuffer& tokenized_buffer_;
   const Parse::Tree& parse_tree_;
   const File& semantics_ir_;
 
@@ -396,7 +396,7 @@ class NodeNamer {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
-  explicit Formatter(const TokenizedBuffer& tokenized_buffer,
+  explicit Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
                      const Parse::Tree& parse_tree, const File& semantics_ir,
                      llvm::raw_ostream& out)
       : semantics_ir_(semantics_ir),
@@ -770,7 +770,7 @@ class Formatter {
   bool in_terminator_sequence = false;
 };
 
-auto FormatFile(const TokenizedBuffer& tokenized_buffer,
+auto FormatFile(const Lex::TokenizedBuffer& tokenized_buffer,
                 const Parse::Tree& parse_tree, const File& semantics_ir,
                 llvm::raw_ostream& out) -> void {
   Formatter(tokenized_buffer, parse_tree, semantics_ir, out).Format();

@@ -25,7 +25,7 @@ auto HandleFunctionAfterParameters(Context& context) -> void {
 
   // If there is a return type, parse the expression before adding the return
   // type nod.e
-  if (context.PositionIs(TokenKind::MinusGreater)) {
+  if (context.PositionIs(Lex::TokenKind::MinusGreater)) {
     context.PushState(State::FunctionReturnTypeFinish);
     ++context.position();
     context.PushStateForExpression(PrecedenceGroup::ForType());
@@ -43,12 +43,12 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
   auto state = context.PopState();
 
   switch (context.PositionKind()) {
-    case TokenKind::Semi: {
+    case Lex::TokenKind::Semi: {
       context.AddNode(NodeKind::FunctionDeclaration, context.Consume(),
                       state.subtree_start, state.has_error);
       break;
     }
-    case TokenKind::OpenCurlyBrace: {
+    case Lex::TokenKind::OpenCurlyBrace: {
       if (auto decl_context = context.GetDeclarationContext();
           decl_context == Context::DeclarationContext::Interface ||
           decl_context == Context::DeclarationContext::NamedConstraint) {
@@ -73,7 +73,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
     }
     default: {
       if (!state.has_error) {
-        context.EmitExpectedDeclarationSemiOrDefinition(TokenKind::Fn);
+        context.EmitExpectedDeclarationSemiOrDefinition(Lex::TokenKind::Fn);
       }
       // Only need to skip if we've not already found a new line.
       bool skip_past_likely_end =

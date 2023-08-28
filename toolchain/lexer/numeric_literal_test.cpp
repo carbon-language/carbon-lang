@@ -14,6 +14,7 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::LexedNumericLiteral;
 using ::testing::_;
 using ::testing::Field;
 using ::testing::Matcher;
