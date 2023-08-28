@@ -705,17 +705,32 @@ If instance binding is performed:
 
 -   For a field member in class `C`, `V` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `V`.
-    The result is a
-    [reference expression](/docs/design/values.md#reference-expressions) if `V`
-    is a reference expression.
+    If `V` is an
+    [initializing expression](/docs/design/values.md#initializing-expressions),
+    then a
+    [temporary is materialized](/docs/design/values.md#temporary-materialization)
+    for `V`. The result of `x.y` has the same
+    [expression category](/docs/design/values.md#expression-categories) as the
+    possibly materialized `V`.
 
     ```carbon
-    var dims: auto = {.width = 1, .height = 2};
+    class Size {
+      var width: i32;
+      var height: i32;
+    }
+
+    var dims: Size = {.width = 1, .height = 2};
     // `dims.width` denotes the field `width` of the object `dims`.
     Print(dims.width);
     // `dims` is a reference expression, so `dims.height` is a
     // reference expression.
     dims.height = 3;
+
+    fn GetSize() -> Size;
+    // `GetSize()` returns an initializing expression, which is
+    // materialized as a temporary on member access, so
+    // `GetSize().width` is an ephemeral reference expression.
+    Print(GetSize().width);
     ```
 
 -   For a method, the result is a _bound method_, which is a value `F` such that
