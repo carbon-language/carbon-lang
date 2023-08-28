@@ -523,61 +523,27 @@ Following the above example:
 -   `Addable.AliasForSum` finds \#2, the member in the interface `Addable`, and
     does not perform `impl` lookup.
 
-FIXME: Is the following example still needed?
-
-Here is another example:
-
-```carbon
-interface I {
-  // #5
-  default fn F[self: Self]() {}
-  let N:! i32;
-}
-class C {
-  extend impl as I where .N = 5 {
-    // #6
-    fn F[self: C]() {}
-  }
-}
-
-// `V` is `I` and `M` is `I.F`. Because `I` is a facet type,
-// `impl` lookup is not performed, and the alias binds to #5.
-alias A1 = I.F;
-
-// `V` is `C` and `M` is `I.F`. Because `V` is a type, `impl`
-// lookup is performed with `T` being `C`, and the alias binds to #6.
-alias A2 = C.F;
-
-let c: C = {};
-
-// `V` is `c` and `M` is `I.N`. Because `V` is a non-type, `impl`
-// lookup is performed with `T` being the type of `c`, namely `C`, and
-// `M` becomes the associated constant from `impl C as I`.
-// The value of `Z` is 5.
-let Z: i32 = c.N;
-```
-
 **Note:** When an interface member is added to a class by an alias, `impl`
 lookup is not performed as part of handling the alias, but will happen when
 naming the interface member as a member of the class.
 
 ```carbon
 interface Renderable {
-  // #7
+  // #5
   fn Draw[self: Self]();
 }
 
 class RoundWidget {
   impl as Renderable {
-    // #8
+    // #6
     fn Draw[self: Self]();
   }
-  // `Draw` names #7, the member of the `Renderable` interface.
+  // `Draw` names #5, the member of the `Renderable` interface.
   alias Draw = Renderable.Draw;
 }
 
 class SquareWidget {
-  // #9
+  // #7
   fn Draw[self: Self]() {}
   impl as Renderable {
     alias Draw = Self.Draw;
@@ -586,29 +552,29 @@ class SquareWidget {
 
 fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   // ✅ OK: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `Renderable`, #7, which `impl` lookup replaces with
-  // the member `Draw` of `impl RoundWidget as Renderable`, #8.
+  // member `Draw` of `Renderable`, #5, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #6.
   // The outer member access then forms a bound member function that
-  // calls #8 on `r`, as described in "Instance binding".
+  // calls #6 on `r`, as described in "Instance binding".
   r.(RoundWidget.Draw)();
 
   // ✅ OK: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `SquareWidget`, #9.
+  // member `Draw` of `SquareWidget`, #7.
   // The outer member access then forms a bound member function that
-  // calls #9 on `s`.
+  // calls #7 on `s`.
   s.(SquareWidget.Draw)();
 
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `SquareWidget`, #9.
+  // member `Draw` of `SquareWidget`, #7.
   // The outer member access fails because we can't call
-  // #9, `Draw[self: SquareWidget]()`, on a `RoundWidget` object `r`.
+  // #7, `Draw[self: SquareWidget]()`, on a `RoundWidget` object `r`.
   r.(SquareWidget.Draw)();
 
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `Renderable`, #7, which `impl` lookup replaces with
-  // the member `Draw` of `impl RoundWidget as Renderable`, #8.
+  // member `Draw` of `Renderable`, #5, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #6.
   // The outer member access fails because we can't call
-  // #8, `Draw[self: RoundWidget]()`, on a `SquareWidget` object `s`.
+  // #6, `Draw[self: RoundWidget]()`, on a `SquareWidget` object `s`.
   s.(RoundWidget.Draw)();
 }
 
@@ -792,14 +758,14 @@ fn Debug() {
   var i: i32 = 1;
 
   // Prints `1` using `(i32 as DebugPrint).Print` bound to `i`.
-  i.(DebugPrintable.Print)();
+  i.(DebugPrint.Print)();
 
   // Prints `i32` using `(type as DebugPrint).Print` bound to `i32`.
-  i32.(DebugPrintable.Print)();
+  i32.(DebugPrint.Print)();
 
-  // ❌ This is an error since `i32.(DebugPrintable.Print)` is
-  // already bound, and may not be bound again to `i`.
-  i.(i32.(DebugPrintable.Print))();
+  // ❌ This is an error since `i32.(DebugPrint.Print)` is already
+  // bound, and may not be bound again to `i`.
+  i.(i32.(DebugPrint.Print))();
 }
 ```
 
