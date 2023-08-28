@@ -7,12 +7,12 @@
 
 namespace Carbon::Check {
 
-auto HandleIfConditionStart(Context& /*context*/,
-                            ParseTree::Node /*parse_node*/) -> bool {
+auto HandleIfConditionStart(Context& /*context*/, Parse::Node /*parse_node*/)
+    -> bool {
   return true;
 }
 
-auto HandleIfCondition(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleIfCondition(Context& context, Parse::Node parse_node) -> bool {
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().PopExpression();
   cond_value_id = context.ConvertToBoolValue(parse_node, cond_value_id);
@@ -34,9 +34,9 @@ auto HandleIfCondition(Context& context, ParseTree::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleIfStatementElse(Context& context, ParseTree::Node parse_node)
-    -> bool {
-  context.node_stack().PopAndDiscardSoloParseNode<ParseNodeKind::IfCondition>();
+auto HandleIfStatementElse(Context& context, Parse::Node parse_node) -> bool {
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::IfCondition>();
 
   // Switch to emitting the else block.
   auto then_block_id = context.node_block_stack().PopForAdd();
@@ -45,17 +45,17 @@ auto HandleIfStatementElse(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleIfStatement(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleIfStatement(Context& context, Parse::Node parse_node) -> bool {
   // Either the then or else block, depending on whether there's an `else` node
   // on the top of the node stack.
   auto sub_block_id = context.node_block_stack().PopForAdd();
 
   switch (auto kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
-    case ParseNodeKind::IfCondition: {
+    case Parse::NodeKind::IfCondition: {
       // Branch from then block to else block.
       context.node_stack()
-          .PopAndDiscardSoloParseNode<ParseNodeKind::IfCondition>();
+          .PopAndDiscardSoloParseNode<Parse::NodeKind::IfCondition>();
       context.AddNodeToBlock(
           sub_block_id,
           SemIR::Node::Branch::Make(parse_node,
@@ -63,10 +63,10 @@ auto HandleIfStatement(Context& context, ParseTree::Node parse_node) -> bool {
       break;
     }
 
-    case ParseNodeKind::IfStatementElse: {
+    case Parse::NodeKind::IfStatementElse: {
       // Branch from the then and else blocks to a new resumption block.
       SemIR::NodeBlockId then_block_id =
-          context.node_stack().Pop<ParseNodeKind::IfStatementElse>();
+          context.node_stack().Pop<Parse::NodeKind::IfStatementElse>();
       context.AddConvergenceBlockAndPush(parse_node,
                                          {then_block_id, sub_block_id});
       break;

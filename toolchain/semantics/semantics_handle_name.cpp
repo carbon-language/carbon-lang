@@ -8,9 +8,9 @@
 
 namespace Carbon::Check {
 
-auto HandleMemberAccessExpression(Context& context, ParseTree::Node parse_node)
+auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  SemIR::StringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
+  SemIR::StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
 
   auto base_id = context.node_stack().PopExpression();
 
@@ -74,11 +74,11 @@ auto HandleMemberAccessExpression(Context& context, ParseTree::Node parse_node)
 }
 
 auto HandlePointerMemberAccessExpression(Context& context,
-                                         ParseTree::Node parse_node) -> bool {
+                                         Parse::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandlePointerMemberAccessExpression");
 }
 
-auto HandleName(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleName(Context& context, Parse::Node parse_node) -> bool {
   auto name_str = context.parse_tree().GetNodeText(parse_node);
   auto name_id = context.semantics_ir().AddString(name_str);
   // The parent is responsible for binding the name.
@@ -86,8 +86,7 @@ auto HandleName(Context& context, ParseTree::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleNameExpression(Context& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   auto name_str = context.parse_tree().GetNodeText(parse_node);
   auto name_id = context.semantics_ir().AddString(name_str);
   context.node_stack().Push(
@@ -97,11 +96,11 @@ auto HandleNameExpression(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleQualifiedDeclaration(Context& context, ParseTree::Node parse_node)
+auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
   auto pop_and_apply_first_child = [&]() {
     if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-        ParseNodeKind::QualifiedDeclaration) {
+        Parse::NodeKind::QualifiedDeclaration) {
       // First QualifiedDeclaration in a chain.
       auto [parse_node1, node_id1] =
           context.node_stack().PopExpressionWithParseNode();
@@ -115,9 +114,10 @@ auto HandleQualifiedDeclaration(Context& context, ParseTree::Node parse_node)
     }
   };
 
-  ParseTree::Node parse_node2 = context.node_stack().PeekParseNode();
-  if (context.parse_tree().node_kind(parse_node2) == ParseNodeKind::Name) {
-    SemIR::StringId name_id2 = context.node_stack().Pop<ParseNodeKind::Name>();
+  Parse::Node parse_node2 = context.node_stack().PeekParseNode();
+  if (context.parse_tree().node_kind(parse_node2) == Parse::NodeKind::Name) {
+    SemIR::StringId name_id2 =
+        context.node_stack().Pop<Parse::NodeKind::Name>();
     pop_and_apply_first_child();
     context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
   } else {
@@ -130,12 +130,12 @@ auto HandleQualifiedDeclaration(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleSelfTypeNameExpression(Context& context, ParseTree::Node parse_node)
+auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleSelfTypeNameExpression");
 }
 
-auto HandleSelfValueName(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleSelfValueName");
 }
 

@@ -4,12 +4,11 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 // Handles ParenConditionAs(If|While).
-static auto ParserHandleParenCondition(ParserContext& context,
-                                       ParseNodeKind start_kind,
-                                       ParserState finish_state) -> void {
+static auto HandleParenCondition(Context& context, NodeKind start_kind,
+                                 State finish_state) -> void {
   auto state = context.PopState();
 
   std::optional<TokenizedBuffer::Token> open_paren =
@@ -24,35 +23,34 @@ static auto ParserHandleParenCondition(ParserContext& context,
     // For an open curly, assume the condition was completely omitted.
     // Expression parsing would treat the { as a struct, but instead assume it's
     // a code block and just emit an invalid parse.
-    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
   } else {
-    context.PushState(ParserState::Expression);
+    context.PushState(State::Expression);
   }
 }
 
-auto ParserHandleParenConditionAsIf(ParserContext& context) -> void {
-  ParserHandleParenCondition(context, ParseNodeKind::IfConditionStart,
-                             ParserState::ParenConditionFinishAsIf);
+auto HandleParenConditionAsIf(Context& context) -> void {
+  HandleParenCondition(context, NodeKind::IfConditionStart,
+                       State::ParenConditionFinishAsIf);
 }
 
-auto ParserHandleParenConditionAsWhile(ParserContext& context) -> void {
-  ParserHandleParenCondition(context, ParseNodeKind::WhileConditionStart,
-                             ParserState::ParenConditionFinishAsWhile);
+auto HandleParenConditionAsWhile(Context& context) -> void {
+  HandleParenCondition(context, NodeKind::WhileConditionStart,
+                       State::ParenConditionFinishAsWhile);
 }
 
-auto ParserHandleParenConditionFinishAsIf(ParserContext& context) -> void {
+auto HandleParenConditionFinishAsIf(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::IfCondition);
+}
+
+auto HandleParenConditionFinishAsWhile(Context& context) -> void {
   auto state = context.PopState();
 
   context.ConsumeAndAddCloseSymbol(state.token, state,
-                                   ParseNodeKind::IfCondition);
+                                   NodeKind::WhileCondition);
 }
 
-auto ParserHandleParenConditionFinishAsWhile(ParserContext& context) -> void {
-  auto state = context.PopState();
-
-  context.ConsumeAndAddCloseSymbol(state.token, state,
-                                   ParseNodeKind::WhileCondition);
-}
-
-}  // namespace Carbon
+}  // namespace Carbon::Parse

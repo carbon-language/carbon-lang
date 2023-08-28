@@ -4,11 +4,11 @@
 
 #include "toolchain/parser/parser_state.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(ParserState) = {
-#define CARBON_PARSER_STATE(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
+CARBON_DEFINE_ENUM_CLASS_NAMES(State) = {
+#define CARBON_PARSE_STATE(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/parser/parser_state.def"
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

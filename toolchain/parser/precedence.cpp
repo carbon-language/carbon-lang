@@ -6,7 +6,7 @@
 
 #include "common/check.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 namespace {
 enum PrecedenceLevel : int8_t {
@@ -329,4 +329,4 @@ auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)
   return Lookup.table[left.level_][right.level_];
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

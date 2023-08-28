@@ -421,10 +421,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return !has_errors;
   }
 
-  CARBON_VLOG() << "*** ParseTree::Parse ***\n";
-  auto parse_tree = ParseTree::Parse(tokenized_source, *consumer, vlog_stream_);
+  CARBON_VLOG() << "*** Parse::Tree::Parse ***\n";
+  auto parse_tree =
+      Parse::Tree::Parse(tokenized_source, *consumer, vlog_stream_);
   has_errors |= parse_tree.has_errors();
-  CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
+  CARBON_VLOG() << "*** Parse::Tree::Parse done ***\n";
   if (options.dump_parse_tree) {
     consumer->Flush();
     parse_tree.Print(output_stream_, options.preorder_parse_tree);
@@ -436,7 +437,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
 
   const SemIR::File builtin_ir = SemIR::File::MakeBuiltinIR();
-  CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
+  CARBON_VLOG() << "*** SemanticsIR::MakeFromParse::Tree ***\n";
   const SemIR::File semantics_ir = SemIR::File::MakeFromParseTree(
       builtin_ir, tokenized_source, parse_tree, *consumer, vlog_stream_);
 
@@ -446,7 +447,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   consumer->Flush();
 
   has_errors |= semantics_ir.has_errors();
-  CARBON_VLOG() << "*** SemIR::File::MakeFromParseTree done ***\n";
+  CARBON_VLOG() << "*** SemIR::File::MakeFromParse::Tree done ***\n";
   if (options.dump_raw_semantics_ir) {
     semantics_ir.Print(output_stream_, options.builtin_semantics_ir);
     if (options.dump_semantics_ir) {

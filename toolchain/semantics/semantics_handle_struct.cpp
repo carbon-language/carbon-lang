@@ -6,47 +6,44 @@
 
 namespace Carbon::Check {
 
-auto HandleStructComma(Context& context, ParseTree::Node /*parse_node*/)
-    -> bool {
+auto HandleStructComma(Context& context, Parse::Node /*parse_node*/) -> bool {
   context.ParamOrArgComma(
       /*for_args=*/context.parse_tree().node_kind(
           context.node_stack().PeekParseNode()) !=
-      ParseNodeKind::StructFieldType);
+      Parse::NodeKind::StructFieldType);
   return true;
 }
 
-auto HandleStructFieldDesignator(Context& context,
-                                 ParseTree::Node /*parse_node*/) -> bool {
+auto HandleStructFieldDesignator(Context& context, Parse::Node /*parse_node*/)
+    -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
   CARBON_CHECK(
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      ParseNodeKind::Name);
+      Parse::NodeKind::Name);
   return true;
 }
 
-auto HandleStructFieldType(Context& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandleStructFieldType(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, type_id] = context.node_stack().PopExpressionWithParseNode();
   SemIR::TypeId cast_type_id = context.ExpressionAsType(type_node, type_id);
 
   auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<ParseNodeKind::Name>();
+      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
   context.AddNodeAndPush(parse_node, SemIR::Node::StructTypeField::Make(
                                          name_node, name_id, cast_type_id));
   return true;
 }
 
-auto HandleStructFieldUnknown(Context& context, ParseTree::Node parse_node)
+auto HandleStructFieldUnknown(Context& context, Parse::Node parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleStructFieldUnknown");
 }
 
-auto HandleStructFieldValue(Context& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   auto [value_parse_node, value_node_id] =
       context.node_stack().PopExpressionWithParseNode();
-  SemIR::StringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
+  SemIR::StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
 
   // Convert the operand to a value.
   // TODO: We need to decide how struct literals interact with expression
@@ -66,14 +63,15 @@ auto HandleStructFieldValue(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleStructLiteral(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/true, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+      /*for_args=*/true,
+      Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
   context.node_stack()
       .PopAndDiscardSoloParseNode<
-          ParseNodeKind::StructLiteralOrStructTypeLiteralStart>();
+          Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
 
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
@@ -85,7 +83,7 @@ auto HandleStructLiteral(Context& context, ParseTree::Node parse_node) -> bool {
 }
 
 auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
-                                                 ParseTree::Node parse_node)
+                                                 Parse::Node parse_node)
     -> bool {
   context.PushScope();
   context.node_stack().Push(parse_node);
@@ -97,15 +95,15 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
   return true;
 }
 
-auto HandleStructTypeLiteral(Context& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/false, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+      /*for_args=*/false,
+      Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
   context.node_stack()
       .PopAndDiscardSoloParseNode<
-          ParseNodeKind::StructLiteralOrStructTypeLiteralStart>();
+          Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   // This is only used for value literals.
   context.args_type_info_stack().Pop();
 

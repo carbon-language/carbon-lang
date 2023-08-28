@@ -4,48 +4,46 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParserHandleStatement(ParserContext& context) -> void {
+auto HandleStatement(Context& context) -> void {
   context.PopAndDiscardState();
 
   switch (context.PositionKind()) {
     case TokenKind::Break: {
-      context.PushState(ParserState::StatementBreakFinish);
-      context.AddLeafNode(ParseNodeKind::BreakStatementStart,
-                          context.Consume());
+      context.PushState(State::StatementBreakFinish);
+      context.AddLeafNode(NodeKind::BreakStatementStart, context.Consume());
       break;
     }
     case TokenKind::Continue: {
-      context.PushState(ParserState::StatementContinueFinish);
-      context.AddLeafNode(ParseNodeKind::ContinueStatementStart,
-                          context.Consume());
+      context.PushState(State::StatementContinueFinish);
+      context.AddLeafNode(NodeKind::ContinueStatementStart, context.Consume());
       break;
     }
     case TokenKind::For: {
-      context.PushState(ParserState::StatementForFinish);
-      context.PushState(ParserState::StatementForHeader);
+      context.PushState(State::StatementForFinish);
+      context.PushState(State::StatementForHeader);
       ++context.position();
       break;
     }
     case TokenKind::If: {
-      context.PushState(ParserState::StatementIf);
+      context.PushState(State::StatementIf);
       break;
     }
     case TokenKind::Return: {
-      context.PushState(ParserState::StatementReturn);
+      context.PushState(State::StatementReturn);
       break;
     }
     case TokenKind::Var: {
-      context.PushState(ParserState::VarAsSemicolon);
+      context.PushState(State::VarAsSemicolon);
       break;
     }
     case TokenKind::While: {
-      context.PushState(ParserState::StatementWhile);
+      context.PushState(State::StatementWhile);
       break;
     }
     default: {
-      context.PushState(ParserState::ExpressionStatementFinish);
+      context.PushState(State::ExpressionStatementFinish);
       context.PushStateForExpression(PrecedenceGroup::ForExpressionStatement());
       break;
     }
@@ -53,8 +51,7 @@ auto ParserHandleStatement(ParserContext& context) -> void {
 }
 
 // Handles the `;` after a keyword statement.
-static auto ParserHandleStatementKeywordFinish(ParserContext& context,
-                                               ParseNodeKind node_kind)
+static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
     -> void {
   auto state = context.PopState();
 
@@ -75,28 +72,27 @@ static auto ParserHandleStatementKeywordFinish(ParserContext& context,
   context.AddNode(node_kind, *semi, state.subtree_start, state.has_error);
 }
 
-auto ParserHandleStatementBreakFinish(ParserContext& context) -> void {
-  ParserHandleStatementKeywordFinish(context, ParseNodeKind::BreakStatement);
+auto HandleStatementBreakFinish(Context& context) -> void {
+  HandleStatementKeywordFinish(context, NodeKind::BreakStatement);
 }
 
-auto ParserHandleStatementContinueFinish(ParserContext& context) -> void {
-  ParserHandleStatementKeywordFinish(context, ParseNodeKind::ContinueStatement);
+auto HandleStatementContinueFinish(Context& context) -> void {
+  HandleStatementKeywordFinish(context, NodeKind::ContinueStatement);
 }
 
-auto ParserHandleStatementForHeader(ParserContext& context) -> void {
+auto HandleStatementForHeader(Context& context) -> void {
   auto state = context.PopState();
 
   std::optional<TokenizedBuffer::Token> open_paren =
-      context.ConsumeAndAddOpenParen(state.token,
-                                     ParseNodeKind::ForHeaderStart);
+      context.ConsumeAndAddOpenParen(state.token, NodeKind::ForHeaderStart);
   if (open_paren) {
     state.token = *open_paren;
   }
-  state.state = ParserState::StatementForHeaderIn;
+  state.state = State::StatementForHeaderIn;
 
   if (context.PositionIs(TokenKind::Var)) {
     context.PushState(state);
-    context.PushState(ParserState::VarAsFor);
+    context.PushState(State::VarAsFor);
   } else {
     CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
                       "Expected `var` declaration.");
@@ -111,85 +107,83 @@ auto ParserHandleStatementForHeader(ParserContext& context) -> void {
   }
 }
 
-auto ParserHandleStatementForHeaderIn(ParserContext& context) -> void {
+auto HandleStatementForHeaderIn(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = ParserState::StatementForHeaderFinish;
+  state.state = State::StatementForHeaderFinish;
   context.PushState(state);
-  context.PushState(ParserState::Expression);
+  context.PushState(State::Expression);
 }
 
-auto ParserHandleStatementForHeaderFinish(ParserContext& context) -> void {
+auto HandleStatementForHeaderFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state,
-                                   ParseNodeKind::ForHeader);
+  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::ForHeader);
 
-  context.PushState(ParserState::CodeBlock);
+  context.PushState(State::CodeBlock);
 }
 
-auto ParserHandleStatementForFinish(ParserContext& context) -> void {
+auto HandleStatementForFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::ForStatement, state.token, state.subtree_start,
+  context.AddNode(NodeKind::ForStatement, state.token, state.subtree_start,
                   state.has_error);
 }
 
-auto ParserHandleStatementIf(ParserContext& context) -> void {
+auto HandleStatementIf(Context& context) -> void {
   context.PopAndDiscardState();
 
-  context.PushState(ParserState::StatementIfConditionFinish);
-  context.PushState(ParserState::ParenConditionAsIf);
+  context.PushState(State::StatementIfConditionFinish);
+  context.PushState(State::ParenConditionAsIf);
   ++context.position();
 }
 
-auto ParserHandleStatementIfConditionFinish(ParserContext& context) -> void {
+auto HandleStatementIfConditionFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = ParserState::StatementIfThenBlockFinish;
+  state.state = State::StatementIfThenBlockFinish;
   context.PushState(state);
-  context.PushState(ParserState::CodeBlock);
+  context.PushState(State::CodeBlock);
 }
 
-auto ParserHandleStatementIfThenBlockFinish(ParserContext& context) -> void {
+auto HandleStatementIfThenBlockFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (context.ConsumeAndAddLeafNodeIf(TokenKind::Else,
-                                      ParseNodeKind::IfStatementElse)) {
-    state.state = ParserState::StatementIfElseBlockFinish;
+                                      NodeKind::IfStatementElse)) {
+    state.state = State::StatementIfElseBlockFinish;
     context.PushState(state);
     // `else if` is permitted as a special case.
-    context.PushState(context.PositionIs(TokenKind::If)
-                          ? ParserState::StatementIf
-                          : ParserState::CodeBlock);
+    context.PushState(context.PositionIs(TokenKind::If) ? State::StatementIf
+                                                        : State::CodeBlock);
   } else {
-    context.AddNode(ParseNodeKind::IfStatement, state.token,
-                    state.subtree_start, state.has_error);
+    context.AddNode(NodeKind::IfStatement, state.token, state.subtree_start,
+                    state.has_error);
   }
 }
 
-auto ParserHandleStatementIfElseBlockFinish(ParserContext& context) -> void {
+auto HandleStatementIfElseBlockFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(ParseNodeKind::IfStatement, state.token, state.subtree_start,
+  context.AddNode(NodeKind::IfStatement, state.token, state.subtree_start,
                   state.has_error);
 }
 
-auto ParserHandleStatementReturn(ParserContext& context) -> void {
+auto HandleStatementReturn(Context& context) -> void {
   auto state = context.PopState();
-  state.state = ParserState::StatementReturnFinish;
+  state.state = State::StatementReturnFinish;
   context.PushState(state);
 
-  context.AddLeafNode(ParseNodeKind::ReturnStatementStart, context.Consume());
+  context.AddLeafNode(NodeKind::ReturnStatementStart, context.Consume());
   if (!context.PositionIs(TokenKind::Semi)) {
-    context.PushState(ParserState::Expression);
+    context.PushState(State::Expression);
   }
 }
 
-auto ParserHandleStatementReturnFinish(ParserContext& context) -> void {
-  ParserHandleStatementKeywordFinish(context, ParseNodeKind::ReturnStatement);
+auto HandleStatementReturnFinish(Context& context) -> void {
+  HandleStatementKeywordFinish(context, NodeKind::ReturnStatement);
 }
 
-auto ParserHandleStatementScopeLoop(ParserContext& context) -> void {
+auto HandleStatementScopeLoop(Context& context) -> void {
   // This maintains the current state until we're at the end of the scope.
 
   auto token_kind = context.PositionKind();
@@ -199,31 +193,31 @@ auto ParserHandleStatementScopeLoop(ParserContext& context) -> void {
       context.ReturnErrorOnState();
     }
   } else {
-    context.PushState(ParserState::Statement);
+    context.PushState(State::Statement);
   }
 }
 
-auto ParserHandleStatementWhile(ParserContext& context) -> void {
+auto HandleStatementWhile(Context& context) -> void {
   context.PopAndDiscardState();
 
-  context.PushState(ParserState::StatementWhileConditionFinish);
-  context.PushState(ParserState::ParenConditionAsWhile);
+  context.PushState(State::StatementWhileConditionFinish);
+  context.PushState(State::ParenConditionAsWhile);
   ++context.position();
 }
 
-auto ParserHandleStatementWhileConditionFinish(ParserContext& context) -> void {
+auto HandleStatementWhileConditionFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = ParserState::StatementWhileBlockFinish;
+  state.state = State::StatementWhileBlockFinish;
   context.PushState(state);
-  context.PushState(ParserState::CodeBlock);
+  context.PushState(State::CodeBlock);
 }
 
-auto ParserHandleStatementWhileBlockFinish(ParserContext& context) -> void {
+auto HandleStatementWhileBlockFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::WhileStatement, state.token,
-                  state.subtree_start, state.has_error);
+  context.AddNode(NodeKind::WhileStatement, state.token, state.subtree_start,
+                  state.has_error);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

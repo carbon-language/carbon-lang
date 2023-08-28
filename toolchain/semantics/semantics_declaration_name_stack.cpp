@@ -18,15 +18,15 @@ auto DeclarationNameStack::Push() -> void {
 auto DeclarationNameStack::Pop() -> NameContext {
   if (context_->parse_tree().node_kind(
           context_->node_stack().PeekParseNode()) ==
-      ParseNodeKind::QualifiedDeclaration) {
+      Parse::NodeKind::QualifiedDeclaration) {
     // Any parts from a QualifiedDeclaration will already have been processed
     // into the name.
     context_->node_stack()
-        .PopAndDiscardSoloParseNode<ParseNodeKind::QualifiedDeclaration>();
+        .PopAndDiscardSoloParseNode<Parse::NodeKind::QualifiedDeclaration>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
     auto [parse_node, name_id] =
-        context_->node_stack().PopWithParseNode<ParseNodeKind::Name>();
+        context_->node_stack().PopWithParseNode<Parse::NodeKind::Name>();
     ApplyNameQualifier(parse_node, name_id);
   }
 
@@ -68,7 +68,7 @@ auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
   }
 }
 
-auto DeclarationNameStack::ApplyExpressionQualifier(ParseTree::Node parse_node,
+auto DeclarationNameStack::ApplyExpressionQualifier(Parse::Node parse_node,
                                                     SemIR::NodeId node_id)
     -> void {
   auto& name_context = declaration_name_stack_.back();
@@ -88,7 +88,7 @@ auto DeclarationNameStack::ApplyExpressionQualifier(ParseTree::Node parse_node,
   }
 }
 
-auto DeclarationNameStack::ApplyNameQualifier(ParseTree::Node parse_node,
+auto DeclarationNameStack::ApplyNameQualifier(Parse::Node parse_node,
                                               SemIR::StringId name_id) -> void {
   auto& name_context = declaration_name_stack_.back();
   if (CanResolveQualifier(name_context, parse_node)) {
@@ -129,8 +129,7 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
 }
 
 auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
-                                               ParseTree::Node parse_node)
-    -> bool {
+                                               Parse::Node parse_node) -> bool {
   switch (name_context.state) {
     case NameContext::State::Error:
       // Already in an error state, so return without examining.

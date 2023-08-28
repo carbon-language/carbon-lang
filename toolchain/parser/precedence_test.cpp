@@ -12,6 +12,9 @@
 namespace Carbon::Testing {
 namespace {
 
+using Parse::Associativity;
+using Parse::OperatorPriority;
+using Parse::PrecedenceGroup;
 using ::testing::Eq;
 
 TEST(PrecedenceTest, OperatorsAreRecognized) {

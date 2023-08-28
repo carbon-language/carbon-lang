@@ -4,36 +4,36 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParserHandleNamespace(ParserContext& context) -> void {
+auto HandleNamespace(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddLeafNode(ParseNodeKind::NamespaceStart, context.Consume());
+  context.AddLeafNode(NodeKind::NamespaceStart, context.Consume());
 
-  state.state = ParserState::NamespaceFinish;
+  state.state = State::NamespaceFinish;
   context.PushState(state);
 
-  context.PushState(ParserState::DeclarationNameAndParamsAsNone, state.token);
+  context.PushState(State::DeclarationNameAndParamsAsNone, state.token);
 }
 
-auto ParserHandleNamespaceFinish(ParserContext& context) -> void {
+auto HandleNamespaceFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
-    context.RecoverFromDeclarationError(state, ParseNodeKind::Namespace,
+    context.RecoverFromDeclarationError(state, NodeKind::Namespace,
                                         /*skip_past_likely_end=*/true);
     return;
   }
 
   if (auto semi = context.ConsumeIf(TokenKind::Semi)) {
-    context.AddNode(ParseNodeKind::Namespace, *semi, state.subtree_start,
+    context.AddNode(NodeKind::Namespace, *semi, state.subtree_start,
                     state.has_error);
   } else {
     context.EmitExpectedDeclarationSemi(TokenKind::Namespace);
-    context.RecoverFromDeclarationError(state, ParseNodeKind::Namespace,
+    context.RecoverFromDeclarationError(state, NodeKind::Namespace,
                                         /*skip_past_likely_end=*/true);
   }
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

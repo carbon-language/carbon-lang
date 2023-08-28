@@ -5,9 +5,7 @@
 #ifndef CARBON_COMMON_VLOG_INTERNAL_H_
 #define CARBON_COMMON_VLOG_INTERNAL_H_
 
-#include <cstdlib>
-
-#include "llvm/Support/raw_ostream.h"
+#include "common/ostream.h"
 
 namespace Carbon::Internal {
 

@@ -7,14 +7,13 @@
 
 namespace Carbon::Check {
 
-auto HandleExpressionStatement(Context& context, ParseTree::Node /*parse_node*/)
+auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   context.HandleDiscardedExpression(context.node_stack().PopExpression());
   return true;
 }
 
-auto HandleReturnStatement(Context& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
   const auto& fn_node =
       context.semantics_ir().GetNode(context.return_scope_stack().back());
@@ -22,9 +21,9 @@ auto HandleReturnStatement(Context& context, ParseTree::Node parse_node)
       context.semantics_ir().GetFunction(fn_node.GetAsFunctionDeclaration());
 
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      ParseNodeKind::ReturnStatementStart) {
+      Parse::NodeKind::ReturnStatementStart) {
     context.node_stack()
-        .PopAndDiscardSoloParseNode<ParseNodeKind::ReturnStatementStart>();
+        .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
 
     if (callable.return_type_id.is_valid()) {
       // TODO: Add a note pointing at the return type's parse node.
@@ -40,7 +39,7 @@ auto HandleReturnStatement(Context& context, ParseTree::Node parse_node)
   } else {
     auto arg = context.node_stack().PopExpression();
     context.node_stack()
-        .PopAndDiscardSoloParseNode<ParseNodeKind::ReturnStatementStart>();
+        .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
 
     if (!callable.return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(
@@ -80,7 +79,7 @@ auto HandleReturnStatement(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleReturnStatementStart(Context& context, ParseTree::Node parse_node)
+auto HandleReturnStatementStart(Context& context, Parse::Node parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);

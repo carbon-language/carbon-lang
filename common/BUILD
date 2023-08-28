@@ -174,6 +174,7 @@ cc_library(
     srcs = ["vlog_internal.h"],
     hdrs = ["vlog.h"],
     deps = [
+        ":ostream",
         "@llvm-project//llvm:Support",
     ],
 )

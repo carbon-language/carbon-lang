@@ -67,16 +67,16 @@ struct RealLiteral {
   bool is_decimal;
 };
 
-// Provides semantic analysis on a ParseTree.
+// Provides semantic analysis on a Parse::Tree.
 class File {
  public:
   // Produces the builtins.
   static auto MakeBuiltinIR() -> File;
 
-  // Adds the IR for the provided ParseTree.
+  // Adds the IR for the provided Parse::Tree.
   static auto MakeFromParseTree(const File& builtin_ir,
                                 const TokenizedBuffer& tokens,
-                                const ParseTree& parse_tree,
+                                const Parse::Tree& parse_tree,
                                 DiagnosticConsumer& consumer,
                                 llvm::raw_ostream* vlog_stream) -> File;
 

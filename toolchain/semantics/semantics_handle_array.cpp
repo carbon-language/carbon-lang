@@ -10,21 +10,20 @@
 namespace Carbon::Check {
 
 auto HandleArrayExpressionStart(Context& /*context*/,
-                                ParseTree::Node /*parse_node*/) -> bool {
+                                Parse::Node /*parse_node*/) -> bool {
   return true;
 }
 
-auto HandleArrayExpressionSemi(Context& context, ParseTree::Node parse_node)
+auto HandleArrayExpressionSemi(Context& context, Parse::Node parse_node)
     -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleArrayExpression(Context& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
   // TODO: Handle array type with undefined bound.
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      ParseNodeKind::ArrayExpressionSemi) {
+      Parse::NodeKind::ArrayExpressionSemi) {
     context.node_stack().PopAndIgnore();
     context.node_stack().PopAndIgnore();
     return context.TODO(parse_node, "HandleArrayExpressionWithoutBounds");
@@ -32,7 +31,7 @@ auto HandleArrayExpression(Context& context, ParseTree::Node parse_node)
 
   auto bound_node_id = context.node_stack().PopExpression();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<ParseNodeKind::ArrayExpressionSemi>();
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExpressionSemi>();
   auto element_type_node_id = context.node_stack().PopExpression();
   auto bound_node = context.semantics_ir().GetNode(bound_node_id);
   if (bound_node.kind() == SemIR::NodeKind::IntegerLiteral) {
