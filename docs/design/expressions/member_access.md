@@ -116,10 +116,10 @@ A member access expression is processed using the following steps:
 The process of _member resolution_ determines which member `M` a member access
 expression is referring to.
 
-For a simple member access, the second operand is a word. If the first operand is
-a type, facet, package, or namespace, a search for the word is performed in the first
-operand. Otherwise, a search for the word is performed in the type of the first
-operand. In either case, the search must succeed.
+For a simple member access, the second operand is a word. If the first operand
+is a type, facet, package, or namespace, a search for the word is performed in
+the first operand. Otherwise, a search for the word is performed in the type of
+the first operand. In either case, the search must succeed.
 
 For a compound member access, the second operand is evaluated as a constant to
 determine the member being accessed. The evaluation is required to succeed and
@@ -188,8 +188,8 @@ Unlike the previous case, both simple and compound member access is allowed.
 
 Facets, such as `T as Cowboy`, also have members. Specifically, the members of
 the `impl` or `impl`s that form the implementation of `T as Cowboy`. Being part
-of the `impl` rather than the interface, no further [`impl` lookup](#impl-lookup)
-is needed.
+of the `impl` rather than the interface, no further
+[`impl` lookup](#impl-lookup) is needed.
 
 ```carbon
 interface Cowboy {
@@ -212,8 +212,8 @@ implementation for `Avatar`, ignoring `Renderable.Draw`.
 ### Values
 
 If the first operand is not a type, package, namespace, or facet it does not
-have member names, and a search is performed into the type of the first
-operand instead.
+have member names, and a search is performed into the type of the first operand
+instead.
 
 ```carbon
 interface Printable {
