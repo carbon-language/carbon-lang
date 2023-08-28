@@ -437,7 +437,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
 
   const SemIR::File builtin_ir = SemIR::File::MakeBuiltinIR();
-  CARBON_VLOG() << "*** SemanticsIR::MakeFromParse::Tree ***\n";
+  CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
   const SemIR::File semantics_ir = SemIR::File::MakeFromParseTree(
       builtin_ir, tokenized_source, parse_tree, *consumer, vlog_stream_);
 
