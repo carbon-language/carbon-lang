@@ -5,23 +5,23 @@
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParserHandleIndexExpression(ParserContext& context) -> void {
+auto HandleIndexExpression(Context& context) -> void {
   auto state = context.PopState();
-  state.state = ParserState::IndexExpressionFinish;
+  state.state = State::IndexExpressionFinish;
   context.PushState(state);
-  context.AddNode(ParseNodeKind::IndexExpressionStart,
+  context.AddNode(NodeKind::IndexExpressionStart,
                   context.ConsumeChecked(TokenKind::OpenSquareBracket),
                   state.subtree_start, state.has_error);
-  context.PushState(ParserState::Expression);
+  context.PushState(State::Expression);
 }
 
-auto ParserHandleIndexExpressionFinish(ParserContext& context) -> void {
+auto HandleIndexExpressionFinish(Context& context) -> void {
   auto state = context.PopState();
 
   context.ConsumeAndAddCloseSymbol(state.token, state,
-                                   ParseNodeKind::IndexExpression);
+                                   NodeKind::IndexExpression);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

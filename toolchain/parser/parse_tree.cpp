@@ -13,38 +13,40 @@
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
-                      llvm::raw_ostream* vlog_stream) -> ParseTree {
+auto Tree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+                 llvm::raw_ostream* vlog_stream) -> Tree {
   TokenizedBuffer::TokenLocationTranslator translator(&tokens);
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
-  ParseTree tree(tokens);
-  ParserContext context(tree, tokens, emitter, vlog_stream);
+  Tree tree(tokens);
+  Context context(tree, tokens, emitter, vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
-  context.PushState(ParserState::DeclarationScopeLoop);
+  context.PushState(State::DeclarationScopeLoop);
 
   // The package should always be the first token, if it's present. Any other
   // use is invalid.
   if (context.PositionIs(TokenKind::Package)) {
-    context.PushState(ParserState::Package);
+    context.PushState(State::Package);
   }
 
   while (!context.state_stack().empty()) {
+    // clang warns on unhandled enum values; clang-tidy is incorrect here.
+    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (context.state_stack().back().state) {
-#define CARBON_PARSER_STATE(Name) \
-  case ParserState::Name:         \
-    ParserHandle##Name(context);  \
+#define CARBON_PARSE_STATE(Name) \
+  case State::Name:              \
+    Handle##Name(context);       \
     break;
 #include "toolchain/parser/parser_state.def"
     }
   }
 
-  context.AddLeafNode(ParseNodeKind::FileEnd, *context.position());
+  context.AddLeafNode(NodeKind::FileEnd, *context.position());
 
   if (auto verify = tree.Verify(); !verify.ok()) {
     if (vlog_stream) {
@@ -55,13 +57,12 @@ auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   return tree;
 }
 
-auto ParseTree::postorder() const -> llvm::iterator_range<PostorderIterator> {
+auto Tree::postorder() const -> llvm::iterator_range<PostorderIterator> {
   return {PostorderIterator(Node(0)),
           PostorderIterator(Node(node_impls_.size()))};
 }
 
-auto ParseTree::postorder(Node n) const
-    -> llvm::iterator_range<PostorderIterator> {
+auto Tree::postorder(Node n) const -> llvm::iterator_range<PostorderIterator> {
   CARBON_CHECK(n.is_valid());
   // The postorder ends after this node, the root, and begins at the start of
   // its subtree.
@@ -71,47 +72,46 @@ auto ParseTree::postorder(Node n) const
           PostorderIterator(Node(end_index))};
 }
 
-auto ParseTree::children(Node n) const
-    -> llvm::iterator_range<SiblingIterator> {
+auto Tree::children(Node n) const -> llvm::iterator_range<SiblingIterator> {
   CARBON_CHECK(n.is_valid());
   int end_index = n.index - node_impls_[n.index].subtree_size;
   return {SiblingIterator(*this, Node(n.index - 1)),
           SiblingIterator(*this, Node(end_index))};
 }
 
-auto ParseTree::roots() const -> llvm::iterator_range<SiblingIterator> {
+auto Tree::roots() const -> llvm::iterator_range<SiblingIterator> {
   return {
       SiblingIterator(*this, Node(static_cast<int>(node_impls_.size()) - 1)),
       SiblingIterator(*this, Node(-1))};
 }
 
-auto ParseTree::node_has_error(Node n) const -> bool {
+auto Tree::node_has_error(Node n) const -> bool {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].has_error;
 }
 
-auto ParseTree::node_kind(Node n) const -> ParseNodeKind {
+auto Tree::node_kind(Node n) const -> NodeKind {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].kind;
 }
 
-auto ParseTree::node_token(Node n) const -> TokenizedBuffer::Token {
+auto Tree::node_token(Node n) const -> TokenizedBuffer::Token {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].token;
 }
 
-auto ParseTree::node_subtree_size(Node n) const -> int32_t {
+auto Tree::node_subtree_size(Node n) const -> int32_t {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].subtree_size;
 }
 
-auto ParseTree::GetNodeText(Node n) const -> llvm::StringRef {
+auto Tree::GetNodeText(Node n) const -> llvm::StringRef {
   CARBON_CHECK(n.is_valid());
   return tokens_->GetTokenText(node_impls_[n.index].token);
 }
 
-auto ParseTree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
-                          bool preorder) const -> bool {
+auto Tree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
+                     bool preorder) const -> bool {
   const auto& n_impl = node_impls_[n.index];
   output.indent(2 * depth);
   output << "{";
@@ -138,7 +138,7 @@ auto ParseTree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
   return false;
 }
 
-auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
+auto Tree::Print(llvm::raw_ostream& output) const -> void {
   // Walk the tree just to calculate depths for each node.
   llvm::SmallVector<int> indents;
   indents.append(size(), 0);
@@ -166,7 +166,7 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
   output << "]\n";
 }
 
-auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
+auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
   if (!preorder) {
     Print(output);
     return;
@@ -213,8 +213,8 @@ auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
   output << "]\n";
 }
 
-auto ParseTree::Verify() const -> ErrorOr<Success> {
-  llvm::SmallVector<ParseTree::Node> nodes;
+auto Tree::Verify() const -> ErrorOr<Success> {
+  llvm::SmallVector<Node> nodes;
   // Traverse the tree in postorder.
   for (Node n : postorder()) {
     const auto& n_impl = node_impls_[n.index];
@@ -280,7 +280,7 @@ auto ParseTree::Verify() const -> ErrorOr<Success> {
   if (!has_errors_ && static_cast<int32_t>(node_impls_.size()) !=
                           tokens_->expected_parse_tree_size()) {
     return Error(
-        llvm::formatv("ParseTree has {0} nodes and no errors, but "
+        llvm::formatv("Tree has {0} nodes and no errors, but "
                       "TokenizedBuffer expected {1} nodes for {2} tokens.",
                       node_impls_.size(), tokens_->expected_parse_tree_size(),
                       tokens_->size()));
@@ -288,14 +288,12 @@ auto ParseTree::Verify() const -> ErrorOr<Success> {
   return Success();
 }
 
-auto ParseTree::PostorderIterator::Print(llvm::raw_ostream& output) const
-    -> void {
+auto Tree::PostorderIterator::Print(llvm::raw_ostream& output) const -> void {
   output << node_;
 }
 
-auto ParseTree::SiblingIterator::Print(llvm::raw_ostream& output) const
-    -> void {
+auto Tree::SiblingIterator::Print(llvm::raw_ostream& output) const -> void {
   output << node_;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

@@ -8,13 +8,15 @@
 
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/character_set.h"
 #include "toolchain/lexer/lex_helpers.h"
 
 namespace Carbon {
 
 // Adapts Radix for use with formatv.
+// NOTE: clangd may see this as unused, but it will be invoked by diagnostics.
+// We don't do anything to disable the warning because clang compile invocations
+// should warn if it's actually unused.
 static auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
     -> llvm::raw_ostream& {
   switch (radix) {

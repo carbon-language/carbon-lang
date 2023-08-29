@@ -13,7 +13,7 @@
 namespace Carbon::SemIR {
 
 // Whether a node produces or represents a value, and if so, what kind of value.
-enum class NodeValueKind {
+enum class NodeValueKind : int8_t {
   // This node doesn't produce a value, and shouldn't be referenced by other
   // nodes.
   None,
@@ -28,7 +28,7 @@ enum class NodeValueKind {
 // Whether a node is a terminator or part of the terminator sequence. The nodes
 // in a block appear in the order NotTerminator, then TerminatorSequence, then
 // Terminator, which is also the numerical order of these values.
-enum class TerminatorKind {
+enum class TerminatorKind : int8_t {
   // This node is not a terminator.
   NotTerminator,
   // This node is not itself a terminator, but forms part of a terminator
@@ -38,16 +38,12 @@ enum class TerminatorKind {
   Terminator,
 };
 
-}  // namespace Carbon::SemIR
-
-namespace Carbon {
-
-CARBON_DEFINE_RAW_ENUM_CLASS(SemanticsNodeKind, uint8_t) {
+CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
 #define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/semantics/semantics_node_kind.def"
 };
 
-class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
+class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
  public:
 #define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/semantics/semantics_node_kind.def"
@@ -58,14 +54,14 @@ class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
   [[nodiscard]] auto ir_name() const -> llvm::StringRef;
 
   // Returns whether this kind of node is expected to produce a value.
-  [[nodiscard]] auto value_kind() const -> SemIR::NodeValueKind;
+  [[nodiscard]] auto value_kind() const -> NodeValueKind;
 
   // Returns whether this node kind is a code block terminator, such as an
   // unconditional branch instruction, or part of the termination sequence,
   // such as a conditional branch instruction. The termination sequence of a
   // code block appears after all other instructions, and ends with a
   // terminator instruction.
-  [[nodiscard]] auto terminator_kind() const -> SemIR::TerminatorKind;
+  [[nodiscard]] auto terminator_kind() const -> TerminatorKind;
 
   // Compute a fingerprint for this node kind, allowing its use as part of the
   // key in a `FoldingSet`.
@@ -73,17 +69,12 @@ class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
 };
 
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
-  CARBON_ENUM_CONSTANT_DEFINITION(SemanticsNodeKind, Name)
+  CARBON_ENUM_CONSTANT_DEFINITION(NodeKind, Name)
 #include "toolchain/semantics/semantics_node_kind.def"
 
 // We expect the node kind to fit compactly into 8 bits.
-static_assert(sizeof(SemanticsNodeKind) == 1, "Kind objects include padding!");
+static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
 
-// TODO: Refactor EnumBase to remove the need for this alias.
-namespace SemIR {
-using NodeKind = SemanticsNodeKind;
-}  // namespace SemIR
-
-}  // namespace Carbon
+}  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_KIND_H_

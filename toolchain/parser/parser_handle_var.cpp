@@ -4,32 +4,31 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 // Handles VarAs(Semicolon|For).
-static auto ParserHandleVar(ParserContext& context, ParserState finish_state)
-    -> void {
+static auto HandleVar(Context& context, State finish_state) -> void {
   context.PopAndDiscardState();
 
   // These will start at the `var`.
   context.PushState(finish_state);
-  context.PushState(ParserState::VarAfterPattern);
+  context.PushState(State::VarAfterPattern);
 
-  context.AddLeafNode(ParseNodeKind::VariableIntroducer, context.Consume());
+  context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
 
   // This will start at the pattern.
-  context.PushState(ParserState::PatternAsVariable);
+  context.PushState(State::PatternAsVariable);
 }
 
-auto ParserHandleVarAsSemicolon(ParserContext& context) -> void {
-  ParserHandleVar(context, ParserState::VarFinishAsSemicolon);
+auto HandleVarAsSemicolon(Context& context) -> void {
+  HandleVar(context, State::VarFinishAsSemicolon);
 }
 
-auto ParserHandleVarAsFor(ParserContext& context) -> void {
-  ParserHandleVar(context, ParserState::VarFinishAsFor);
+auto HandleVarAsFor(Context& context) -> void {
+  HandleVar(context, State::VarFinishAsFor);
 }
 
-auto ParserHandleVarAfterPattern(ParserContext& context) -> void {
+auto HandleVarAfterPattern(Context& context) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -40,12 +39,12 @@ auto ParserHandleVarAfterPattern(ParserContext& context) -> void {
   }
 
   if (auto equals = context.ConsumeIf(TokenKind::Equal)) {
-    context.AddLeafNode(ParseNodeKind::VariableInitializer, *equals);
-    context.PushState(ParserState::Expression);
+    context.AddLeafNode(NodeKind::VariableInitializer, *equals);
+    context.PushState(State::Expression);
   }
 }
 
-auto ParserHandleVarFinishAsSemicolon(ParserContext& context) -> void {
+auto HandleVarFinishAsSemicolon(Context& context) -> void {
   auto state = context.PopState();
 
   auto end_token = state.token;
@@ -59,11 +58,11 @@ auto ParserHandleVarFinishAsSemicolon(ParserContext& context) -> void {
       end_token = *semi_token;
     }
   }
-  context.AddNode(ParseNodeKind::VariableDeclaration, end_token,
-                  state.subtree_start, state.has_error);
+  context.AddNode(NodeKind::VariableDeclaration, end_token, state.subtree_start,
+                  state.has_error);
 }
 
-auto ParserHandleVarFinishAsFor(ParserContext& context) -> void {
+auto HandleVarFinishAsFor(Context& context) -> void {
   auto state = context.PopState();
 
   auto end_token = state.token;
@@ -82,8 +81,8 @@ auto ParserHandleVarFinishAsFor(ParserContext& context) -> void {
     state.has_error = true;
   }
 
-  context.AddNode(ParseNodeKind::ForIn, end_token, state.subtree_start,
+  context.AddNode(NodeKind::ForIn, end_token, state.subtree_start,
                   state.has_error);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

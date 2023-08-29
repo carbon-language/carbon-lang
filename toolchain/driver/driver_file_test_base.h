@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_DRIVER_DRIVER_FILE_TEST_BASE_H_
 
 #include <cstdio>
-#include <fstream>
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"

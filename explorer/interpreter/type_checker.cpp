@@ -23,6 +23,7 @@
 #include "explorer/ast/value_transform.h"
 #include "explorer/base/arena.h"
 #include "explorer/base/error_builders.h"
+#include "explorer/base/print_as_id.h"
 #include "explorer/base/source_location.h"
 #include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/impl_scope.h"

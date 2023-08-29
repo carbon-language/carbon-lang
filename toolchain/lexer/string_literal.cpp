@@ -9,7 +9,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/character_set.h"
 #include "toolchain/lexer/lex_helpers.h"
 
@@ -162,6 +161,9 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
           return LexedStringLiteral(text, content, hash_level, introducer->kind,
                                     /*is_terminated=*/true);
         }
+        break;
+      default:
+        // No action for non-terminators.
         break;
     }
   }

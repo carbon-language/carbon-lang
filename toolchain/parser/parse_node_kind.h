@@ -9,16 +9,16 @@
 
 #include "common/enum_base.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(ParseNodeKind, uint8_t) {
+CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/parser/parse_node_kind.def"
 };
 
 // A class wrapping an enumeration of the different kinds of nodes in the parse
 // tree.
-class ParseNodeKind : public CARBON_ENUM_BASE(ParseNodeKind) {
+class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
  public:
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/parser/parse_node_kind.def"
@@ -28,7 +28,7 @@ class ParseNodeKind : public CARBON_ENUM_BASE(ParseNodeKind) {
 
   // Returns the bracketing node kind for the current node kind. Requires that
   // has_bracket is true.
-  auto bracket() const -> ParseNodeKind;
+  auto bracket() const -> NodeKind;
 
   // Returns the number of children that the node must have, often 0. Requires
   // that has_bracket is false.
@@ -38,12 +38,12 @@ class ParseNodeKind : public CARBON_ENUM_BASE(ParseNodeKind) {
 };
 
 #define CARBON_PARSE_NODE_KIND(Name) \
-  CARBON_ENUM_CONSTANT_DEFINITION(ParseNodeKind, Name)
+  CARBON_ENUM_CONSTANT_DEFINITION(NodeKind, Name)
 #include "toolchain/parser/parse_node_kind.def"
 
 // We expect the parse node kind to fit compactly into 8 bits.
-static_assert(sizeof(ParseNodeKind) == 1, "Kind objects include padding!");
+static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSER_PARSE_NODE_KIND_H_

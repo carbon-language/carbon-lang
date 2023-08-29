@@ -6,22 +6,22 @@
 
 namespace Carbon::Check {
 
-auto HandleInterfaceDeclaration(Context& context, ParseTree::Node parse_node)
+auto HandleInterfaceDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInterfaceDeclaration");
 }
 
-auto HandleInterfaceDefinition(Context& context, ParseTree::Node parse_node)
+auto HandleInterfaceDefinition(Context& context, Parse::Node parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInterfaceDefinition");
 }
 
-auto HandleInterfaceDefinitionStart(Context& context,
-                                    ParseTree::Node parse_node) -> bool {
+auto HandleInterfaceDefinitionStart(Context& context, Parse::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleInterfaceDefinitionStart");
 }
 
-auto HandleInterfaceIntroducer(Context& context, ParseTree::Node parse_node)
+auto HandleInterfaceIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInterfaceIntroducer");
 }

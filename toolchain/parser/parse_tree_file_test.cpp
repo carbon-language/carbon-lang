@@ -10,7 +10,7 @@
 namespace Carbon::Testing {
 namespace {
 
-class ParseTreeFileTest : public DriverFileTestBase {
+class TreeFileTest : public DriverFileTestBase {
  public:
   using DriverFileTestBase::DriverFileTestBase;
 
@@ -21,6 +21,6 @@ class ParseTreeFileTest : public DriverFileTestBase {
 
 }  // namespace
 
-CARBON_FILE_TEST_FACTORY(ParseTreeFileTest);
+CARBON_FILE_TEST_FACTORY(TreeFileTest);
 
 }  // namespace Carbon::Testing

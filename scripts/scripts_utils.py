@@ -17,7 +17,7 @@ import time
 from typing import Optional
 import urllib.request
 
-_URL = "https://github.com/bazelbuild/buildtools/releases/download/5.1.0/"
+_URL = "https://github.com/bazelbuild/buildtools/releases/download/v6.3.3/"
 
 """Version SHAs.
 
@@ -27,25 +27,25 @@ Gather shas with:
         for v in darwin-amd64 darwin-arm64 linux-amd64 linux-arm64 \
             windows-amd64.exe
         do
-            echo "\"$v\": \"$(wget -q -O - https://github.com/bazelbuild/buildtools/releases/download/5.1.0/$f-$v | sha256sum | cut -d ' ' -f1)\", # noqa: E501"
+            echo "\"$v\": \"$(wget -q -O - https://github.com/bazelbuild/buildtools/releases/download/v6.3.3/$f-$v | sha256sum | cut -d ' ' -f1)\", # noqa: E501"
         done
         echo },
     done
 """
 _VERSION_SHAS = {
     "buildozer": {
-        "darwin-amd64": "294f4d0790f4dba18c9b7617f57563e07c2c7e529a8915bcbc49170dc3c08eb9",  # noqa: E501
-        "darwin-arm64": "57f8d90fac6b111bd0859b97847d3db2ce71419f44588b0e91250892037cf638",  # noqa: E501
-        "linux-amd64": "7346ce1396dfa9344a5183c8e3e6329f067699d71c4391bd28317391228666bf",  # noqa: E501
-        "linux-arm64": "0b08e384709ec4d4f5320bf31510d2cefe8f9e425a6565b31db06b2398ff9dc4",  # noqa: E501
-        "windows-amd64.exe": "d62bc159729fad9500fd20c7375e0ab53695376f1e358737af74bc1f03fb196b",  # noqa: E501
+        "darwin-amd64": "9b0bbecb3745250e5ad5a9c36da456699cb55e52999451c3c74047d2b1f0085f",  # noqa: E501
+        "darwin-arm64": "085928dd4deffa1a7fd38c66c4475e37326b2d4942408e8e3d993953ae4c626c",  # noqa: E501
+        "linux-amd64": "1dcdc668d7c775e5bca2d43ac37e036468ca4d139a78fe48ae207d41411c5100",  # noqa: E501
+        "linux-arm64": "94b96d6a3c52d6ef416f0eb96c8a9fe7f6a0757f0458cc8cf190dfc4a5c2d8e7",  # noqa: E501
+        "windows-amd64.exe": "fc1c4f5de391ec6d66f2119c5bd6131d572ae35e92ddffe720e42b619ab158e0",  # noqa: E501
     },
     "buildifier": {
-        "darwin-amd64": "c9378d9f4293fc38ec54a08fbc74e7a9d28914dae6891334401e59f38f6e65dc",  # noqa: E501
-        "darwin-arm64": "745feb5ea96cb6ff39a76b2821c57591fd70b528325562486d47b5d08900e2e4",  # noqa: E501
-        "linux-amd64": "52bf6b102cb4f88464e197caac06d69793fa2b05f5ad50a7e7bf6fbd656648a3",  # noqa: E501
-        "linux-arm64": "917d599dbb040e63ae7a7e1adb710d2057811902fdc9e35cce925ebfd966eeb8",  # noqa: E501
-        "windows-amd64.exe": "2f039125e2fbef4c804e43dc11c71866cf444306ac6d0f5e38c592854458f425",  # noqa: E501
+        "darwin-amd64": "3c36a3217bd793815a907a8e5bf81c291e2d35d73c6073914640a5f42e65f73f",  # noqa: E501
+        "darwin-arm64": "9bb366432d515814766afcf6f9010294c13876686fbbe585d5d6b4ff0ca3e982",  # noqa: E501
+        "linux-amd64": "42f798ec532c58e34401985043e660cb19d5ae994e108d19298c7d229547ffca",  # noqa: E501
+        "linux-arm64": "6a03a1cf525045cb686fc67cd5d64cface5092ebefca3c4c93fb6e97c64e07db",  # noqa: E501
+        "windows-amd64.exe": "2761bebc7392d47c2862c43d85201d93efa57249ed09405fd82708867caa787b",  # noqa: E501
     },
 }
 

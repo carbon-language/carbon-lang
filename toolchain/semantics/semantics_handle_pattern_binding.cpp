@@ -7,34 +7,33 @@
 
 namespace Carbon::Check {
 
-auto HandleAddress(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleAddress");
 }
 
-auto HandleGenericPatternBinding(Context& context, ParseTree::Node parse_node)
+auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
     -> bool {
   return context.TODO(parse_node, "GenericPatternBinding");
 }
 
-auto HandlePatternBinding(Context& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExpressionWithParseNode();
   auto cast_type_id = context.ExpressionAsType(type_node, parsed_type_id);
 
   // Get the name.
   auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<ParseNodeKind::Name>();
+      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
   // Allocate a node of the appropriate kind, linked to the name for error
   // locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
-    case ParseNodeKind::VariableIntroducer:
+    case Parse::NodeKind::VariableIntroducer:
       context.AddNodeAndPush(parse_node, SemIR::Node::VarStorage::Make(
                                              name_node, cast_type_id, name_id));
       break;
-    case ParseNodeKind::ParameterListStart:
+    case Parse::NodeKind::ParameterListStart:
       context.AddNodeAndPush(parse_node, SemIR::Node::Parameter::Make(
                                              name_node, cast_type_id, name_id));
       break;
@@ -45,7 +44,7 @@ auto HandlePatternBinding(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleTemplate(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleTemplate(Context& context, Parse::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleTemplate");
 }
 

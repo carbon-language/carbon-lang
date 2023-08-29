@@ -9,7 +9,7 @@
 
 #include "toolchain/lexer/token_kind.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 // Given two operators `$` and `@`, and an expression `a $ b @ c`, how should
 // the expression be parsed?
@@ -101,6 +101,6 @@ struct PrecedenceGroup::Trailing {
   bool is_binary;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSER_PRECEDENCE_H_

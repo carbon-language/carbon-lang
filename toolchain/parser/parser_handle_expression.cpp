@@ -4,10 +4,9 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-static auto DiagnoseStatementOperatorAsSubexpression(ParserContext& context)
-    -> void {
+static auto DiagnoseStatementOperatorAsSubexpression(Context& context) -> void {
   CARBON_DIAGNOSTIC(StatementOperatorAsSubexpression, Error,
                     "Operator `{0}` can only be used as a complete statement.",
                     TokenKind);
@@ -15,7 +14,7 @@ static auto DiagnoseStatementOperatorAsSubexpression(ParserContext& context)
                          context.PositionKind());
 }
 
-auto ParserHandleExpression(ParserContext& context) -> void {
+auto HandleExpression(Context& context) -> void {
   auto state = context.PopState();
 
   // Check for a prefix operator.
@@ -42,14 +41,14 @@ auto ParserHandleExpression(ParserContext& context) -> void {
       }
     } else {
       // Check that this operator follows the proper whitespace rules.
-      context.DiagnoseOperatorFixity(ParserContext::OperatorFixity::Prefix);
+      context.DiagnoseOperatorFixity(Context::OperatorFixity::Prefix);
     }
 
     if (context.PositionIs(TokenKind::If)) {
-      context.PushState(ParserState::IfExpressionFinish);
-      context.PushState(ParserState::IfExpressionFinishCondition);
+      context.PushState(State::IfExpressionFinish);
+      context.PushState(State::IfExpressionFinishCondition);
     } else {
-      context.PushStateForExpressionLoop(ParserState::ExpressionLoopForPrefix,
+      context.PushStateForExpressionLoop(State::ExpressionLoopForPrefix,
                                          state.ambient_precedence,
                                          *operator_precedence);
     }
@@ -57,25 +56,25 @@ auto ParserHandleExpression(ParserContext& context) -> void {
     ++context.position();
     context.PushStateForExpression(*operator_precedence);
   } else {
-    context.PushStateForExpressionLoop(ParserState::ExpressionLoop,
+    context.PushStateForExpressionLoop(State::ExpressionLoop,
                                        state.ambient_precedence,
                                        PrecedenceGroup::ForPostfixExpression());
-    context.PushState(ParserState::ExpressionInPostfix);
+    context.PushState(State::ExpressionInPostfix);
   }
 }
 
-auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
+auto HandleExpressionInPostfix(Context& context) -> void {
   auto state = context.PopState();
 
   // Continue to the loop state.
-  state.state = ParserState::ExpressionInPostfixLoop;
+  state.state = State::ExpressionInPostfixLoop;
 
   // Parses a primary expression, which is either a terminal portion of an
   // expression tree, such as an identifier or literal, or a parenthesized
   // expression.
   switch (context.PositionKind()) {
     case TokenKind::Identifier: {
-      context.AddLeafNode(ParseNodeKind::NameExpression, context.Consume());
+      context.AddLeafNode(NodeKind::NameExpression, context.Consume());
       context.PushState(state);
       break;
     }
@@ -90,39 +89,38 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
     case TokenKind::FloatingPointTypeLiteral:
     case TokenKind::StringTypeLiteral:
     case TokenKind::Type: {
-      context.AddLeafNode(ParseNodeKind::Literal, context.Consume());
+      context.AddLeafNode(NodeKind::Literal, context.Consume());
       context.PushState(state);
       break;
     }
     case TokenKind::OpenCurlyBrace: {
       context.PushState(state);
-      context.PushState(ParserState::BraceExpression);
+      context.PushState(State::BraceExpression);
       break;
     }
     case TokenKind::OpenParen: {
       context.PushState(state);
-      context.PushState(ParserState::ParenExpression);
+      context.PushState(State::ParenExpression);
       break;
     }
     case TokenKind::OpenSquareBracket: {
       context.PushState(state);
-      context.PushState(ParserState::ArrayExpression);
+      context.PushState(State::ArrayExpression);
       break;
     }
     case TokenKind::SelfValueIdentifier: {
-      context.AddLeafNode(ParseNodeKind::SelfValueName, context.Consume());
+      context.AddLeafNode(NodeKind::SelfValueName, context.Consume());
       context.PushState(state);
       break;
     }
     case TokenKind::SelfTypeIdentifier: {
-      context.AddLeafNode(ParseNodeKind::SelfTypeNameExpression,
-                          context.Consume());
+      context.AddLeafNode(NodeKind::SelfTypeNameExpression, context.Consume());
       context.PushState(state);
       break;
     }
     default: {
       // Add a node to keep the parse tree balanced.
-      context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+      context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                           /*has_error=*/true);
       CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
       context.emitter().Emit(*context.position(), ExpectedExpression);
@@ -132,7 +130,7 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
   }
 }
 
-auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
+auto HandleExpressionInPostfixLoop(Context& context) -> void {
   // This is a cyclic state that repeats, so this state is typically pushed back
   // on.
   auto state = context.PopState();
@@ -140,25 +138,25 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
   switch (context.PositionKind()) {
     case TokenKind::Period: {
       context.PushState(state);
-      state.state = ParserState::PeriodAsExpression;
+      state.state = State::PeriodAsExpression;
       context.PushState(state);
       break;
     }
     case TokenKind::MinusGreater: {
       context.PushState(state);
-      state.state = ParserState::ArrowExpression;
+      state.state = State::ArrowExpression;
       context.PushState(state);
       break;
     }
     case TokenKind::OpenParen: {
       context.PushState(state);
-      state.state = ParserState::CallExpression;
+      state.state = State::CallExpression;
       context.PushState(state);
       break;
     }
     case TokenKind::OpenSquareBracket: {
       context.PushState(state);
-      state.state = ParserState::IndexExpression;
+      state.state = State::IndexExpression;
       context.PushState(state);
       break;
     }
@@ -171,7 +169,7 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
   }
 }
 
-auto ParserHandleExpressionLoop(ParserContext& context) -> void {
+auto HandleExpressionLoop(Context& context) -> void {
   auto state = context.PopState();
 
   auto operator_kind = context.PositionKind();
@@ -217,9 +215,9 @@ auto ParserHandleExpressionLoop(ParserContext& context) -> void {
     }
     state.has_error = true;
   } else {
-    context.DiagnoseOperatorFixity(
-        is_binary ? ParserContext::OperatorFixity::Infix
-                  : ParserContext::OperatorFixity::Postfix);
+    context.DiagnoseOperatorFixity(is_binary
+                                       ? Context::OperatorFixity::Infix
+                                       : Context::OperatorFixity::Postfix);
   }
 
   state.token = context.Consume();
@@ -229,49 +227,49 @@ auto ParserHandleExpressionLoop(ParserContext& context) -> void {
     if (operator_kind == TokenKind::And || operator_kind == TokenKind::Or) {
       // For `and` and `or`, wrap the first operand in a virtual parse tree
       // node so that semantics can insert control flow here.
-      context.AddNode(ParseNodeKind::ShortCircuitOperand, state.token,
+      context.AddNode(NodeKind::ShortCircuitOperand, state.token,
                       state.subtree_start, state.has_error);
     }
 
-    state.state = ParserState::ExpressionLoopForBinary;
+    state.state = State::ExpressionLoopForBinary;
     context.PushState(state);
     context.PushStateForExpression(operator_precedence);
   } else {
-    context.AddNode(ParseNodeKind::PostfixOperator, state.token,
-                    state.subtree_start, state.has_error);
+    context.AddNode(NodeKind::PostfixOperator, state.token, state.subtree_start,
+                    state.has_error);
     state.has_error = false;
     context.PushState(state);
   }
 }
 
-auto ParserHandleExpressionLoopForBinary(ParserContext& context) -> void {
+auto HandleExpressionLoopForBinary(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::InfixOperator, state.token,
-                  state.subtree_start, state.has_error);
-  state.state = ParserState::ExpressionLoop;
+  context.AddNode(NodeKind::InfixOperator, state.token, state.subtree_start,
+                  state.has_error);
+  state.state = State::ExpressionLoop;
   state.has_error = false;
   context.PushState(state);
 }
 
-auto ParserHandleExpressionLoopForPrefix(ParserContext& context) -> void {
+auto HandleExpressionLoopForPrefix(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::PrefixOperator, state.token,
-                  state.subtree_start, state.has_error);
-  state.state = ParserState::ExpressionLoop;
+  context.AddNode(NodeKind::PrefixOperator, state.token, state.subtree_start,
+                  state.has_error);
+  state.state = State::ExpressionLoop;
   state.has_error = false;
   context.PushState(state);
 }
 
-auto ParserHandleIfExpressionFinishCondition(ParserContext& context) -> void {
+auto HandleIfExpressionFinishCondition(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::IfExpressionIf, state.token,
-                  state.subtree_start, state.has_error);
+  context.AddNode(NodeKind::IfExpressionIf, state.token, state.subtree_start,
+                  state.has_error);
 
   if (context.PositionIs(TokenKind::Then)) {
-    context.PushState(ParserState::IfExpressionFinishThen);
+    context.PushState(State::IfExpressionFinishThen);
     context.ConsumeChecked(TokenKind::Then);
     context.PushStateForExpression(*PrecedenceGroup::ForLeading(TokenKind::If));
   } else {
@@ -282,22 +280,22 @@ auto ParserHandleIfExpressionFinishCondition(ParserContext& context) -> void {
       context.emitter().Emit(*context.position(), ExpectedThenAfterIf);
     }
     // Add placeholders for `IfExpressionThen` and final `Expression`.
-    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
-    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
     context.ReturnErrorOnState();
   }
 }
 
-auto ParserHandleIfExpressionFinishThen(ParserContext& context) -> void {
+auto HandleIfExpressionFinishThen(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::IfExpressionThen, state.token,
-                  state.subtree_start, state.has_error);
+  context.AddNode(NodeKind::IfExpressionThen, state.token, state.subtree_start,
+                  state.has_error);
 
   if (context.PositionIs(TokenKind::Else)) {
-    context.PushState(ParserState::IfExpressionFinishElse);
+    context.PushState(State::IfExpressionFinishElse);
     context.ConsumeChecked(TokenKind::Else);
     context.PushStateForExpression(*PrecedenceGroup::ForLeading(TokenKind::If));
   } else {
@@ -308,13 +306,13 @@ auto ParserHandleIfExpressionFinishThen(ParserContext& context) -> void {
       context.emitter().Emit(*context.position(), ExpectedElseAfterIf);
     }
     // Add placeholder for the final `Expression`.
-    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
     context.ReturnErrorOnState();
   }
 }
 
-auto ParserHandleIfExpressionFinishElse(ParserContext& context) -> void {
+auto HandleIfExpressionFinishElse(Context& context) -> void {
   auto else_state = context.PopState();
 
   // Propagate the location of `else`.
@@ -324,19 +322,19 @@ auto ParserHandleIfExpressionFinishElse(ParserContext& context) -> void {
   context.PushState(if_state);
 }
 
-auto ParserHandleIfExpressionFinish(ParserContext& context) -> void {
+auto HandleIfExpressionFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::IfExpressionElse, state.token,
-                  state.subtree_start, state.has_error);
+  context.AddNode(NodeKind::IfExpressionElse, state.token, state.subtree_start,
+                  state.has_error);
 }
 
-auto ParserHandleExpressionStatementFinish(ParserContext& context) -> void {
+auto HandleExpressionStatementFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (auto semi = context.ConsumeIf(TokenKind::Semi)) {
-    context.AddNode(ParseNodeKind::ExpressionStatement, *semi,
-                    state.subtree_start, state.has_error);
+    context.AddNode(NodeKind::ExpressionStatement, *semi, state.subtree_start,
+                    state.has_error);
     return;
   }
 
@@ -347,7 +345,7 @@ auto ParserHandleExpressionStatementFinish(ParserContext& context) -> void {
   }
 
   if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
-    context.AddNode(ParseNodeKind::ExpressionStatement, *semi_token,
+    context.AddNode(NodeKind::ExpressionStatement, *semi_token,
                     state.subtree_start,
                     /*has_error=*/true);
     return;
@@ -357,4 +355,4 @@ auto ParserHandleExpressionStatementFinish(ParserContext& context) -> void {
   context.ReturnErrorOnState();
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

@@ -7,13 +7,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <iterator>
-#include <string>
 
 #include "common/check.h"
 #include "common/string_helpers.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -72,7 +68,7 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
   // A table of booleans that we can use to classify bytes as being valid
   // identifier (or keyword) characters. This is used in the generic,
   // non-vectorized fallback code to scan for length of an identifier.
-  constexpr std::array<bool, 256> IsIdentifierByteTable = []() constexpr {
+  static constexpr std::array<bool, 256> IsIdByteTable = ([]() constexpr {
     std::array<bool, 256> table = {};
     for (char c = '0'; c <= '9'; ++c) {
       table[c] = true;
@@ -85,7 +81,7 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
     }
     table['_'] = true;
     return table;
-  }();
+  })();
 
 #if __x86_64__
   // This code uses a scheme derived from the techniques in Geoff Langdale and
@@ -112,39 +108,39 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
   //
   // bits 4-7 remain unused if we need to classify more characters.
   const auto high_lut = _mm_setr_epi8(
-      /*0x0:*/ 0b0000'0000,
-      /*0x1:*/ 0b0000'0000,
-      /*0x2:*/ 0b0000'0000,
-      /*0x3:*/ 0b0000'0010,
-      /*0x4:*/ 0b0000'0100,
-      /*0x5:*/ 0b0000'1001,
-      /*0x6:*/ 0b0000'0100,
-      /*0x7:*/ 0b0000'1000,
-      /*0x8:*/ 0b0000'0000,
-      /*0x9:*/ 0b0000'0000,
-      /*0xA:*/ 0b0000'0000,
-      /*0xB:*/ 0b0000'0000,
-      /*0xC:*/ 0b0000'0000,
-      /*0xD:*/ 0b0000'0000,
-      /*0xE:*/ 0b0000'0000,
-      /*0xF:*/ 0b0000'0000);
+      /* __b0=*/0b0000'0000,
+      /* __b1=*/0b0000'0000,
+      /* __b2=*/0b0000'0000,
+      /* __b3=*/0b0000'0010,
+      /* __b4=*/0b0000'0100,
+      /* __b5=*/0b0000'1001,
+      /* __b6=*/0b0000'0100,
+      /* __b7=*/0b0000'1000,
+      /* __b8=*/0b0000'0000,
+      /* __b9=*/0b0000'0000,
+      /*__b10=*/0b0000'0000,
+      /*__b11=*/0b0000'0000,
+      /*__b12=*/0b0000'0000,
+      /*__b13=*/0b0000'0000,
+      /*__b14=*/0b0000'0000,
+      /*__b15=*/0b0000'0000);
   const auto low_lut = _mm_setr_epi8(
-      /*0x0:*/ 0b0000'1010,
-      /*0x1:*/ 0b0000'1110,
-      /*0x2:*/ 0b0000'1110,
-      /*0x3:*/ 0b0000'1110,
-      /*0x4:*/ 0b0000'1110,
-      /*0x5:*/ 0b0000'1110,
-      /*0x6:*/ 0b0000'1110,
-      /*0x7:*/ 0b0000'1110,
-      /*0x8:*/ 0b0000'1110,
-      /*0x9:*/ 0b0000'1110,
-      /*0xA:*/ 0b0000'1100,
-      /*0xB:*/ 0b0000'0100,
-      /*0xC:*/ 0b0000'0100,
-      /*0xD:*/ 0b0000'0100,
-      /*0xE:*/ 0b0000'0100,
-      /*0xF:*/ 0b0000'0101);
+      /* __b0=*/0b0000'1010,
+      /* __b1=*/0b0000'1110,
+      /* __b2=*/0b0000'1110,
+      /* __b3=*/0b0000'1110,
+      /* __b4=*/0b0000'1110,
+      /* __b5=*/0b0000'1110,
+      /* __b6=*/0b0000'1110,
+      /* __b7=*/0b0000'1110,
+      /* __b8=*/0b0000'1110,
+      /* __b9=*/0b0000'1110,
+      /*__b10=*/0b0000'1100,
+      /*__b11=*/0b0000'0100,
+      /*__b12=*/0b0000'0100,
+      /*__b13=*/0b0000'0100,
+      /*__b14=*/0b0000'0100,
+      /*__b15=*/0b0000'0101);
 
   // Use `ssize_t` for performance here as we index memory in a tight loop.
   ssize_t i = 0;
@@ -200,17 +196,15 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
   // Fallback to scalar loop. We only end up here when we don't have >=16
   // bytes to scan or we find a UTF-8 unicode character.
   // TODO: This assumes all Unicode characters are non-identifiers.
-  while (i < size &&
-         IsIdentifierByteTable[static_cast<unsigned char>(text[i])]) {
+  while (i < size && IsIdByteTable[static_cast<unsigned char>(text[i])]) {
     ++i;
   }
 
   return text.substr(0, i);
 #else
   // TODO: Optimize this with SIMD for other architectures.
-  return text.take_while([](char c) {
-    return IsIdentifierByteTable[static_cast<unsigned char>(c)];
-  });
+  return text.take_while(
+      [](char c) { return IsIdByteTable[static_cast<unsigned char>(c)]; });
 #endif
 }
 
@@ -540,7 +534,7 @@ class TokenizedBuffer::Lexer {
       // Too short to form one of these tokens.
       return LexResult::NoMatch();
     }
-    if (!('1' <= word[1] && word[1] <= '9')) {
+    if (word[1] < '1' || word[1] > '9') {
       // Doesn't start with a valid initial digit.
       return LexResult::NoMatch();
     }
@@ -683,6 +677,8 @@ class TokenizedBuffer::Lexer {
         case '\t':
         case '\n':
           return false;
+        default:
+          break;
       }
       return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) .StartsWith(Spelling, false)

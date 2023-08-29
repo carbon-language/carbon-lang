@@ -52,7 +52,7 @@ class DeclarationNameStack {
  public:
   // Context for declaration name construction.
   struct NameContext {
-    enum class State {
+    enum class State : int8_t {
       // A new context which has not processed any parts of the qualifier.
       New,
 
@@ -80,7 +80,7 @@ class DeclarationNameStack {
     SemIR::NameScopeId target_scope_id = SemIR::NameScopeId::Invalid;
 
     // The last parse node used.
-    ParseTree::Node parse_node = ParseTree::Node::Invalid;
+    Parse::Node parse_node = Parse::Node::Invalid;
 
     union {
       // The ID of a resolved qualifier, including both identifiers and
@@ -105,12 +105,12 @@ class DeclarationNameStack {
 
   // Applies an expression from the node stack to the top of the declaration
   // name stack.
-  auto ApplyExpressionQualifier(ParseTree::Node parse_node,
-                                SemIR::NodeId node_id) -> void;
+  auto ApplyExpressionQualifier(Parse::Node parse_node, SemIR::NodeId node_id)
+      -> void;
 
   // Applies a Name from the node stack to the top of the declaration name
   // stack.
-  auto ApplyNameQualifier(ParseTree::Node parse_node, SemIR::StringId name_id)
+  auto ApplyNameQualifier(Parse::Node parse_node, SemIR::StringId name_id)
       -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
@@ -120,8 +120,8 @@ class DeclarationNameStack {
  private:
   // Returns true if the context is in a state where it can resolve qualifiers.
   // Updates name_context as needed.
-  auto CanResolveQualifier(NameContext& name_context,
-                           ParseTree::Node parse_node) -> bool;
+  auto CanResolveQualifier(NameContext& name_context, Parse::Node parse_node)
+      -> bool;
 
   // Updates the scope on name_context as needed. This is called after
   // resolution is complete, whether for Name or expression.

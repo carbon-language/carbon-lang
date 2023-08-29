@@ -6,7 +6,10 @@
 
 namespace Carbon::Check {
 
-auto HandleIfExpressionIf(Context& context, ParseTree::Node if_node) -> bool {
+auto HandleIfExpressionIf(Context& context, Parse::Node parse_node) -> bool {
+  // Alias parse_node for if/then/else consistency.
+  auto& if_node = parse_node;
+
   auto cond_value_id = context.node_stack().PopExpression();
 
   context.node_stack().Push(if_node);
@@ -25,8 +28,10 @@ auto HandleIfExpressionIf(Context& context, ParseTree::Node if_node) -> bool {
   return true;
 }
 
-auto HandleIfExpressionThen(Context& context, ParseTree::Node then_node)
-    -> bool {
+auto HandleIfExpressionThen(Context& context, Parse::Node parse_node) -> bool {
+  // Alias parse_node for if/then/else consistency.
+  auto& then_node = parse_node;
+
   // Convert the first operand to a value.
   auto [then_value_node, then_value_id] =
       context.node_stack().PopExpressionWithParseNode();
@@ -38,14 +43,17 @@ auto HandleIfExpressionThen(Context& context, ParseTree::Node then_node)
   return true;
 }
 
-auto HandleIfExpressionElse(Context& context, ParseTree::Node else_node)
-    -> bool {
+auto HandleIfExpressionElse(Context& context, Parse::Node parse_node) -> bool {
+  // Alias parse_node for if/then/else consistency.
+  auto& else_node = parse_node;
+
   auto else_value_id = context.node_stack().PopExpression();
   auto [then_node, then_end_block_id] =
-      context.node_stack().PopWithParseNode<ParseNodeKind::IfExpressionThen>();
+      context.node_stack()
+          .PopWithParseNode<Parse::NodeKind::IfExpressionThen>();
   auto then_value_id = context.node_stack().PopExpression();
-  auto if_node =
-      context.node_stack().PopForSoloParseNode<ParseNodeKind::IfExpressionIf>();
+  auto if_node = context.node_stack()
+                     .PopForSoloParseNode<Parse::NodeKind::IfExpressionIf>();
 
   // Convert the `else` value to the `then` value's type, and finish the `else`
   // block.

@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_BLOCK_STACK_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_BLOCK_STACK_H_
 
-#include <type_traits>
-
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"

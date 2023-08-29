@@ -4,42 +4,42 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParserHandleCallExpression(ParserContext& context) -> void {
+auto HandleCallExpression(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = ParserState::CallExpressionFinish;
+  state.state = State::CallExpressionFinish;
   context.PushState(state);
 
-  context.AddNode(ParseNodeKind::CallExpressionStart, context.Consume(),
+  context.AddNode(NodeKind::CallExpressionStart, context.Consume(),
                   state.subtree_start, state.has_error);
   if (!context.PositionIs(TokenKind::CloseParen)) {
-    context.PushState(ParserState::CallExpressionParameterFinish);
-    context.PushState(ParserState::Expression);
+    context.PushState(State::CallExpressionParameterFinish);
+    context.PushState(State::Expression);
   }
 }
 
-auto ParserHandleCallExpressionParameterFinish(ParserContext& context) -> void {
+auto HandleCallExpressionParameterFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
     context.ReturnErrorOnState();
   }
 
-  if (context.ConsumeListToken(ParseNodeKind::CallExpressionComma,
+  if (context.ConsumeListToken(NodeKind::CallExpressionComma,
                                TokenKind::CloseParen, state.has_error) ==
-      ParserContext::ListTokenKind::Comma) {
-    context.PushState(ParserState::CallExpressionParameterFinish);
-    context.PushState(ParserState::Expression);
+      Context::ListTokenKind::Comma) {
+    context.PushState(State::CallExpressionParameterFinish);
+    context.PushState(State::Expression);
   }
 }
 
-auto ParserHandleCallExpressionFinish(ParserContext& context) -> void {
+auto HandleCallExpressionFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::CallExpression, context.Consume(),
+  context.AddNode(NodeKind::CallExpression, context.Consume(),
                   state.subtree_start, state.has_error);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

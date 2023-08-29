@@ -4,62 +4,58 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 // Handles ParameterAs(Deduced|Regular).
-static auto ParserHandleParameter(ParserContext& context,
-                                  ParserState pattern_state,
-                                  ParserState finish_state) -> void {
+static auto HandleParameter(Context& context, State pattern_state,
+                            State finish_state) -> void {
   context.PopAndDiscardState();
 
   context.PushState(finish_state);
   context.PushState(pattern_state);
 }
 
-auto ParserHandleParameterAsDeduced(ParserContext& context) -> void {
-  ParserHandleParameter(context, ParserState::PatternAsDeducedParameter,
-                        ParserState::ParameterFinishAsDeduced);
+auto HandleParameterAsDeduced(Context& context) -> void {
+  HandleParameter(context, State::PatternAsDeducedParameter,
+                  State::ParameterFinishAsDeduced);
 }
 
-auto ParserHandleParameterAsRegular(ParserContext& context) -> void {
-  ParserHandleParameter(context, ParserState::PatternAsParameter,
-                        ParserState::ParameterFinishAsRegular);
+auto HandleParameterAsRegular(Context& context) -> void {
+  HandleParameter(context, State::PatternAsParameter,
+                  State::ParameterFinishAsRegular);
 }
 
 // Handles ParameterFinishAs(Deduced|Regular).
-static auto ParserHandleParameterFinish(ParserContext& context,
-                                        TokenKind close_token,
-                                        ParserState param_state) -> void {
+static auto HandleParameterFinish(Context& context, TokenKind close_token,
+                                  State param_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
     context.ReturnErrorOnState();
   }
 
-  if (context.ConsumeListToken(ParseNodeKind::ParameterListComma, close_token,
+  if (context.ConsumeListToken(NodeKind::ParameterListComma, close_token,
                                state.has_error) ==
-      ParserContext::ListTokenKind::Comma) {
+      Context::ListTokenKind::Comma) {
     context.PushState(param_state);
   }
 }
 
-auto ParserHandleParameterFinishAsDeduced(ParserContext& context) -> void {
-  ParserHandleParameterFinish(context, TokenKind::CloseSquareBracket,
-                              ParserState::ParameterAsDeduced);
+auto HandleParameterFinishAsDeduced(Context& context) -> void {
+  HandleParameterFinish(context, TokenKind::CloseSquareBracket,
+                        State::ParameterAsDeduced);
 }
 
-auto ParserHandleParameterFinishAsRegular(ParserContext& context) -> void {
-  ParserHandleParameterFinish(context, TokenKind::CloseParen,
-                              ParserState::ParameterAsRegular);
+auto HandleParameterFinishAsRegular(Context& context) -> void {
+  HandleParameterFinish(context, TokenKind::CloseParen,
+                        State::ParameterAsRegular);
 }
 
 // Handles ParameterListAs(Deduced|Regular).
-static auto ParserHandleParameterList(ParserContext& context,
-                                      ParseNodeKind parse_node_kind,
-                                      TokenKind open_token_kind,
-                                      TokenKind close_token_kind,
-                                      ParserState param_state,
-                                      ParserState finish_state) -> void {
+static auto HandleParameterList(Context& context, NodeKind parse_node_kind,
+                                TokenKind open_token_kind,
+                                TokenKind close_token_kind, State param_state,
+                                State finish_state) -> void {
   context.PopAndDiscardState();
 
   context.PushState(finish_state);
@@ -70,39 +66,38 @@ static auto ParserHandleParameterList(ParserContext& context,
   }
 }
 
-auto ParserHandleParameterListAsDeduced(ParserContext& context) -> void {
-  ParserHandleParameterList(context, ParseNodeKind::DeducedParameterListStart,
-                            TokenKind::OpenSquareBracket,
-                            TokenKind::CloseSquareBracket,
-                            ParserState::ParameterAsDeduced,
-                            ParserState::ParameterListFinishAsDeduced);
+auto HandleParameterListAsDeduced(Context& context) -> void {
+  HandleParameterList(context, NodeKind::DeducedParameterListStart,
+                      TokenKind::OpenSquareBracket,
+                      TokenKind::CloseSquareBracket, State::ParameterAsDeduced,
+                      State::ParameterListFinishAsDeduced);
 }
 
-auto ParserHandleParameterListAsRegular(ParserContext& context) -> void {
-  ParserHandleParameterList(context, ParseNodeKind::ParameterListStart,
-                            TokenKind::OpenParen, TokenKind::CloseParen,
-                            ParserState::ParameterAsRegular,
-                            ParserState::ParameterListFinishAsRegular);
+auto HandleParameterListAsRegular(Context& context) -> void {
+  HandleParameterList(context, NodeKind::ParameterListStart,
+                      TokenKind::OpenParen, TokenKind::CloseParen,
+                      State::ParameterAsRegular,
+                      State::ParameterListFinishAsRegular);
 }
 
 // Handles ParameterListFinishAs(Deduced|Regular).
-static auto ParserHandleParameterListFinish(ParserContext& context,
-                                            ParseNodeKind parse_node_kind,
-                                            TokenKind token_kind) -> void {
+static auto HandleParameterListFinish(Context& context,
+                                      NodeKind parse_node_kind,
+                                      TokenKind token_kind) -> void {
   auto state = context.PopState();
 
   context.AddNode(parse_node_kind, context.ConsumeChecked(token_kind),
                   state.subtree_start, state.has_error);
 }
 
-auto ParserHandleParameterListFinishAsDeduced(ParserContext& context) -> void {
-  ParserHandleParameterListFinish(context, ParseNodeKind::DeducedParameterList,
-                                  TokenKind::CloseSquareBracket);
+auto HandleParameterListFinishAsDeduced(Context& context) -> void {
+  HandleParameterListFinish(context, NodeKind::DeducedParameterList,
+                            TokenKind::CloseSquareBracket);
 }
 
-auto ParserHandleParameterListFinishAsRegular(ParserContext& context) -> void {
-  ParserHandleParameterListFinish(context, ParseNodeKind::ParameterList,
-                                  TokenKind::CloseParen);
+auto HandleParameterListFinishAsRegular(Context& context) -> void {
+  HandleParameterListFinish(context, NodeKind::ParameterList,
+                            TokenKind::CloseParen);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse
