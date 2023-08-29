@@ -877,8 +877,7 @@ Carbon.Print(a[0]);
 > **TODO:** Slices
 
 > **Note:** This is provisional, no design for arrays has been through the
-> proposal process yet. See pending proposal
-> [#1928: Arrays](https://github.com/carbon-language/carbon-lang/pull/1928).
+> proposal process yet.
 
 ## Expressions
 
@@ -1425,6 +1424,8 @@ for (var name: String in names) {
 > -   [`for` loops](control_flow/loops.md#for)
 > -   Proposal
 >     [#353: Add C++-like `for` loops](https://github.com/carbon-language/carbon-lang/pull/353)
+> -   Proposal
+>     [#1885: ranged-based `for` for user-defined types](https://github.com/carbon-language/carbon-lang/pull/1885)
 
 ##### `break`
 
@@ -2703,8 +2704,8 @@ not itself a type.
 
 ### Checked and template parameters
 
-The `:!` indicates that the `T` parameter is generic, and therefore bound at
-compile time. Generic parameters may either be _checked_ or _template_, and
+The `:!` marks it as a compile-time binding, and so `T` is a compile-time
+parameter. Compile-time parameters may either be _checked_ or _template_, and
 default to checked.
 
 "Checked" here means that the body of `Min` is type checked when the function is
@@ -2757,6 +2758,9 @@ class Array(template T:! type, template N:! i64)
     if N >= 0 and N < MaxArraySize / sizeof(T);
 ```
 
+> **TODO:** The design for template constraints is still under development. The
+> `if` clause approach here is provisional.
+
 Member lookup into a template parameter is done in the actual value provided by
 the caller, _in addition_ to any constraints. This means member name lookup and
 type checking for anything [dependent](generics/terminology.md#dependent-names)
@@ -2789,9 +2793,9 @@ rigor of checked generics are problematic.
 
 ### Interfaces and implementations
 
-_Interfaces_ specify a set of requirements that a types might satisfy.
-Interfaces act both as constraints on types a caller might supply and
-capabilities that may be assumed of types that satisfy that constraint.
+_Interfaces_ specify a set of requirements that a type might satisfy. Interfaces
+act both as constraints on types a caller might supply and capabilities that may
+be assumed of types that satisfy that constraint.
 
 ```carbon
 interface Printable {
@@ -2873,8 +2877,8 @@ by replacing the definition scope in curly braces (`{`...`}`) with a semicolon.
 
 ### Combining constraints
 
-A function can require calling types to implement multiple interfaces by
-combining them using an ampersand (`&`):
+A function can require calling types to implement multiple interfaces (or other
+facet types) by combining them using an ampersand (`&`):
 
 ```carbon
 fn PrintMin[T:! Ordered & Printable](x: T, y: T) {
@@ -2966,9 +2970,9 @@ Many Carbon entities, not just functions, may be made generic by adding
 #### Generic Classes
 
 Classes may be defined with an optional explicit parameter list. All parameters
-to a class must be generic, and so defined with `:!`, either with or without the
-`template` prefix. For example, to define a stack that can hold values of any
-type `T`:
+to a class must be compile-time, and so defined with `:!`, either with or
+without the `template` prefix. For example, to define a stack that can hold
+values of any type `T`:
 
 ```carbon
 class Stack(T:! type) {
@@ -3045,7 +3049,7 @@ _determined by_ the implementation of an interface for a type.
 
 #### Generic implementations
 
-An `impl` declaration may be parameterized by adding `forall [`_generic
+An `impl` declaration may be parameterized by adding `forall [`_compile-time
 parameter list_`]` after the `impl` keyword introducer, as in:
 
 ```carbon
@@ -3095,7 +3099,8 @@ Carbon generics have a number of other features, including:
 
 -   [Named constraints](generics/details.md#named-constraints) may be used to
     disambiguate when combining two interfaces that have name conflicts. Named
-    constraints may be implemented and otherwise used in place of an interface.
+    constraints define facet types, and may be implemented and otherwise used in
+    place of an interface.
 -   [Template constraints](generics/details.md#named-constraints) are a kind of
     named constraint that can contain structural requirements. For example, a
     template constraint could match any type that has a function with a specific
@@ -3111,13 +3116,13 @@ Carbon generics have a number of other features, including:
     [`where` constraints](generics/details.md#where-constraints).
 -   [Implied constraints](generics/details.md#implied-constraints) allows some
     constraints to be deduced and omitted from a function signature.
--   [Dynamic erased types](generics/details.md#runtime-type-fields) can hold any
-    value with a type implementing an interface, and allows the functions in
-    that interface to be called using
+-   _Planned_ [dynamic erased types](generics/details.md#runtime-type-fields)
+    can hold any value with a type implementing an interface, and allows the
+    functions in that interface to be called using
     [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch), for some
     interfaces marked "`dyn`-safe". **Note:** Provisional.
--   [Variadics](generics/details.md#variadic-arguments) supports variable-length
-    parameter lists. **Note:** Provisional.
+-   _Planned_ [variadics](generics/details.md#variadic-arguments) supports
+    variable-length parameter lists. **Note:** Provisional.
 
 > References:
 >
