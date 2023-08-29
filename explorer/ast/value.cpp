@@ -761,7 +761,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       if (member_name.interface().has_value()) {
         out << *member_name.interface().value();
       }
-      out << "." << member_name;
+      out << "." << member_name.member();
       if (member_name.base_type().has_value() &&
           member_name.interface().has_value()) {
         out << ")";
