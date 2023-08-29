@@ -19,7 +19,7 @@
 namespace Carbon {
 
 // A Heap represents the abstract machine's dynamically allocated memory.
-class Heap : public Printable<Heap, HeapAllocationInterface> {
+class Heap : public HeapAllocationInterface, public Printable<Heap> {
  public:
   enum class ValueState {
     Uninitialized,

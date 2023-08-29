@@ -12,13 +12,14 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"  // IWYU pragma: export
 
+namespace Carbon {
 namespace Internal {
 template <typename DerivedT>
 class EmptyParent {};
 }  // namespace Internal
 
-template <typename DerivedT, typename ParentT = Internal::EmptyParent<DerivedT>>
-class Printable : public ParentT {
+template <typename DerivedT>
+class Printable {
   // Provides simple printing for debuggers.
   LLVM_DUMP_METHOD void Dump() const {
     reinterpret_cast<const DerivedT*>(this)->Print(llvm::errs());
@@ -47,6 +48,8 @@ class Printable : public ParentT {
     }
   }
 };
+
+}  // namespace Carbon
 
 namespace llvm {
 

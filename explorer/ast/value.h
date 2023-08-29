@@ -1061,9 +1061,19 @@ struct ImplsConstraint : public HashFromDecompose<ImplsConstraint> {
 };
 
 // A constraint that requires an intrinsic property of a type.
-struct IntrinsicConstraint
-    : public Printable<IntrinsicConstraint,
-                       HashFromDecompose<IntrinsicConstraint>> {
+struct IntrinsicConstraint : public HashFromDecompose<IntrinsicConstraint>,
+                             public Printable<IntrinsicConstraint> {
+  enum Kind {
+    // `type` intrinsically implicitly converts to `parameters[0]`.
+    // TODO: Split ImplicitAs into more specific constraints (such as
+    // derived-to-base pointer conversions).
+    ImplicitAs,
+  };
+
+  explicit IntrinsicConstraint(Nonnull<const Value*> type, Kind kind,
+                               std::vector<Nonnull<const Value*>> arguments)
+      : type(type), kind(kind), arguments(std::move(arguments)) {}
+
   template <typename F>
   auto Decompose(F f) const {
     return f(type, kind, arguments);
@@ -1075,12 +1085,6 @@ struct IntrinsicConstraint
   // The type that is required to satisfy the intrinsic property.
   Nonnull<const Value*> type;
   // The kind of the intrinsic property.
-  enum Kind {
-    // `type` intrinsically implicitly converts to `parameters[0]`.
-    // TODO: Split ImplicitAs into more specific constraints (such as
-    // derived-to-base pointer conversions).
-    ImplicitAs,
-  };
   Kind kind;
   // Arguments for the intrinsic property. The meaning of these depends on
   // `kind`.
