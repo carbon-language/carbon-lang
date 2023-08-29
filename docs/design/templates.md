@@ -103,8 +103,8 @@ Because we consider only specific _parameters_ to be templated and they could be
 individually migrated to a constrained interface using the
 [checked-generics system](README.md#generics), constraining templates themselves
 may be less critical. Instead, we expect parameterized types and functions may
-use a mixture of checked-generic parameters and templated parameters based on
-where they are constrained.
+use a mixture of checked and template generic parameters based on where they are
+constrained.
 
 However, if there are still use cases, we would like to explore applying the
 interface constraints of the checked-generics system directly to template
