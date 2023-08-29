@@ -24,7 +24,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Access](#access)
 -   [Checked generics](#checked-generics)
     -   [Return type](#return-type)
-    -   [Implementation model](#implementation-model)
 -   [Interfaces recap](#interfaces-recap)
 -   [Facet types](#facet-types)
 -   [Named constraints](#named-constraints)
@@ -46,7 +45,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
 -   [Associated facets](#associated-facets)
-    -   [Implementation model](#implementation-model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
     -   [Parameterized named constraints](#parameterized-named-constraints)
@@ -77,7 +75,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other implementations](#example-creating-an-impl-out-of-other-implementations)
     -   [Sized types and facet types](#sized-types-and-facet-types)
-        -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
     -   [Destructor constraints](#destructor-constraints)
 -   [Generic `let`](#generic-let)
@@ -142,7 +139,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 This document goes into the details of the design of Carbon's
 [generics](terminology.md#generic-means-compile-time-parameterized), by which we
-mean parameterizing some language construct with compile-time parameters. These
+mean generalizing some language construct with compile-time parameters. These
 parameters can be types, [facets](terminology.md#facet), or other values.
 
 Imagine we want to write a function parameterized by a type argument. Maybe our
@@ -164,35 +161,31 @@ doc). Basically, the user passes in a value for `val`, and the type of `val`
 determines `T`. `T` still gets passed into the function though, and it plays an
 important role -- it defines the key used to look up interface implementations.
 
-We can think of the interface as defining a struct type whose members are
-function pointers, and an implementation of an interface as a value of that
-struct with actual function pointer values. An implementation is a table mapping
-the interface's functions to function pointers. For more on this, see
-[the implementation model section](#implementation-model).
+That interface implementation has the definitions of the functions declared in
+the interface. For example, the types `i32` and `String` would have different
+implementations of the `ToString` method of the `ConvertibleToString` interface.
 
-In addition to function pointer members, interfaces can include any constants
-that belong to a type. For example, the
-[type's size](#sized-types-and-facet-types) (represented by an integer constant
-member of the type) could be a member of an interface and its implementation.
-There are a few cases why we would include another interface implementation as a
-member:
+In addition to function members, interfaces can include other members that
+associate a constant value for any implementing type, called _associated
+constants_. For example, this can allow a container interface to include the
+type of iterators that are returned from and passed to various container
+methods.
 
--   [associated facets](#associated-facets)
--   [type parameters](#parameterized-interfaces)
--   [interface requirements](#interface-requiring-other-interfaces)
-
-The function expresses that the type argument is passed in
-[statically](terminology.md#static-dispatch-witness-table), basically generating
-a separate function body for every different type passed in, by using the
-"generic argument" syntax `:!`, see
-[the checked-generics section](#checked-generics) below. The interface contains
-enough information to
+The function expresses that the type argument is passed in statically, basically
+generating a separate function body for every different type passed in, by using
+the "compile-time parameter" syntax `:!`. By default, this defines a
+[checked-generics parameter](#checked-generics) below. In this case, the
+interface contains enough information to
 [type and definition check](terminology.md#complete-definition-checking) the
 function body -- you can only call functions defined in the interface in the
-function body. Contrast this with making the type a template argument, where you
-could just use `type` instead of an interface and it will work as long as the
-function is only called with types that allow the definition of the function to
-compile. The interface bound has other benefits:
+function body.
+
+Alternatively, the `template` keyword can be included in the signature to make
+the type a template parameter. In this case, you could just use `type` instead
+of an interface and it will work as long as the function is only called with
+types that allow the definition of the function to compile.
+
+The interface bound has other benefits:
 
 -   allows the compiler to deliver clearer error messages,
 -   documents expectations, and
@@ -223,6 +216,12 @@ implementations we want. However, Carbon won't implicitly convert to that other
 type, the user will have to explicitly cast to that type in order to select
 those alternate implementations. For more on this, see
 [the adapting type section](#adapting-types) below.
+
+We originally considered following Swift and using a witness table
+implementation strategy for checked generics, but ultimately decided to only use
+that for the dynamic-dispatch case. This is because of the limitations of that
+strategy prevent some features that we considered important, as described in
+[the witness-table appendix](appendix-witness.md).
 
 ## Interfaces
 
@@ -799,62 +798,6 @@ type `GeneralPoint(C)` and so has a `Get` method and a `Vector.Scale` method.
 But, in contrast to how `DoubleThreeTimes` works, since `Vector` is implemented
 without `extend` the return value in this case does not directly have a `Scale`
 method.
-
-### Implementation model
-
-A possible model for generating code for a generic function is to use a
-[witness table](terminology.md#witness-tables) to represent how a type
-implements an interface:
-
--   [Interfaces](#interfaces) are types of witness tables.
--   An [impl](#implementing-interfaces) is a witness table value.
-
-Type checking is done with just the interface. The impl is used during code
-generation time, possibly using
-[monomorphization](https://en.wikipedia.org/wiki/Monomorphization) to have a
-separate instantiation of the function for each combination of the generic
-argument values. The compiler is free to use other implementation strategies,
-such as passing the witness table for any needed implementations, if that can be
-predicted.
-
-For the example above, [the Vector interface](#interfaces) could be thought of
-defining a witness table type like:
-
-```
-class Vector {
-  // `Self` is the representation type, which is only
-  // known at compile time.
-  var Self:! type;
-  // `fnty` is **placeholder** syntax for a "function type",
-  // so `Add` is a function that takes two `Self` parameters
-  // and returns a value of type `Self`.
-  var Add: fnty(a: Self, b: Self) -> Self;
-  var Scale: fnty(a: Self, v: f64) -> Self;
-}
-```
-
-The [impl of Vector for Point_Inline](#inline-impl) would be a value of this
-type:
-
-```
-var VectorForPoint_Inline: Vector  = {
-    .Self = Point_Inline,
-    // `lambda` is **placeholder** syntax for defining a
-    // function value.
-    .Add = lambda(a: Point_Inline, b: Point_Inline) -> Point_Inline {
-      return {.x = a.x + b.x, .y = a.y + b.y};
-    },
-    .Scale = lambda(a: Point_Inline, v: f64) -> Point_Inline {
-      return {.x = a.x * v, .y = a.y * v};
-    },
-};
-```
-
-Since generic arguments (where the parameter is declared using `:!`) are passed
-at compile time, so the actual value of `VectorForPoint_Inline` can be used to
-generate the code for functions using that impl. This is the
-[static-dispatch witness table](terminology.md#static-dispatch-witness-table)
-approach.
 
 ## Interfaces recap
 
@@ -2278,41 +2221,6 @@ For context, see
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support these, but call them "associated types."
 
-### Implementation model
-
-The associated facet can be modeled by a witness table field in the interface's
-witness table.
-
-```
-interface Iterator {
-  fn Advance[addr self: Self*]();
-}
-
-interface Container {
-  let IteratorType:! Iterator;
-  fn Begin[addr self: Self*]() -> IteratorType;
-}
-```
-
-is represented by:
-
-```
-class Iterator(Self:! type) {
-  var Advance: fnty(this: Self*);
-  ...
-}
-class Container(Self:! type) {
-  // Representation type for the iterator.
-  let IteratorType:! type;
-  // Witness that IteratorType implements Iterator.
-  var iterator_impl: Iterator(IteratorType)*;
-
-  // Method
-  var Begin: fnty (this: Self*) -> IteratorType;
-  ...
-}
-```
-
 ## Parameterized interfaces
 
 Associated constants don't change the fact that a type can only implement an
@@ -3681,13 +3589,6 @@ where the compiler won't necessarily use the dynamic strategy?
 with the size? So you could say `T.ByteSize` in the above example to get a
 generic int value with the size of `T`. Similarly you might say `T.ByteStride`
 to get the number of bytes used for each element of an array of `T`.
-
-#### Implementation model
-
-This requires a special integer field be included in the witness table type to
-hold the size of the type. This field will only be known generically, so if its
-value is used for type checking, we need some way of evaluating those type tests
-symbolically.
 
 ### `TypeId`
 
