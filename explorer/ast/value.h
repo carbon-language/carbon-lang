@@ -64,7 +64,7 @@ inline auto EmptyVTable() -> Nonnull<const VTable*> {
 // As a result, all Values must be immutable, and all their constructor
 // arguments must be copyable, equality-comparable, and hashable. See
 // Arena's documentation for details.
-class Value {
+class Value : Printable<Value> {
  public:
   using EnableCanonicalizedAllocation = void;
   enum class Kind {
@@ -81,7 +81,6 @@ class Value {
   auto Visit(F f) const -> R;
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Returns the sub-Value specified by `path`, which must be a valid element
   // path for *this. If the sub-Value is a method and its self_pattern is an
@@ -1062,7 +1061,9 @@ struct ImplsConstraint : public HashFromDecompose<ImplsConstraint> {
 };
 
 // A constraint that requires an intrinsic property of a type.
-struct IntrinsicConstraint : public HashFromDecompose<IntrinsicConstraint> {
+struct IntrinsicConstraint
+    : public Printable<IntrinsicConstraint,
+                       HashFromDecompose<IntrinsicConstraint>> {
   template <typename F>
   auto Decompose(F f) const {
     return f(type, kind, arguments);
@@ -1466,7 +1467,7 @@ class ParameterizedEntityName : public Value {
 // These values are used to represent the second operand of a compound member
 // access expression: `x.(A.B)`, and can also be the value of an alias
 // declaration, but cannot be used in most other contexts.
-class MemberName : public Value {
+class MemberName : public Value, Printable<MemberName> {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
              std::optional<Nonnull<const InterfaceType*>> interface,
