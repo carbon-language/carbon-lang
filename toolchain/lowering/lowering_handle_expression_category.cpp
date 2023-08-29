@@ -37,4 +37,10 @@ auto HandleMaterializeTemporary(FunctionContext& context, SemIR::NodeId node_id,
                                               nullptr, "temp"));
 }
 
+auto HandleTemporary(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::Node node) -> void {
+  auto [temporary_id, init_id] = node.GetAsTemporary();
+  context.SetLocal(node_id, context.GetLocal(temporary_id));
+}
+
 }  // namespace Carbon::Lower

@@ -26,8 +26,8 @@ fn Main() {
 // CHECK:STDOUT:   store ptr %tuple.index1, ptr %2, align 8
 // CHECK:STDOUT:   %3 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 2
 // CHECK:STDOUT:   store ptr %tuple.index2, ptr %3, align 8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 %tuple, i64 12, i1 false)
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   %4 = load { i32, i32, i32 }, ptr %tuple, align 4
+// CHECK:STDOUT:   ret { i32, i32, i32 } %4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
@@ -45,8 +45,3 @@ fn Main() {
 // CHECK:STDOUT:   call void @F(ptr %temp, { i32 } %4, ptr %tuple2)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
-// CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }

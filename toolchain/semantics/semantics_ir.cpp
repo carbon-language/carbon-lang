@@ -247,6 +247,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::StructTypeField:
     case NodeKind::StructValue:
     case NodeKind::StubReference:
+    case NodeKind::Temporary:
     case NodeKind::TupleIndex:
     case NodeKind::TupleValue:
     case NodeKind::UnaryOperatorNot:
@@ -407,6 +408,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::StructAccess:
       case NodeKind::StructValue:
       case NodeKind::StubReference:
+      case NodeKind::Temporary:
       case NodeKind::TupleIndex:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
@@ -521,6 +523,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         return ExpressionCategory::DurableReference;
 
       case NodeKind::MaterializeTemporary:
+      case NodeKind::Temporary:
         return ExpressionCategory::EphemeralReference;
     }
   }
@@ -562,6 +565,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::StructAccess:
       case NodeKind::StructTypeField:
       case NodeKind::StructValue:
+      case NodeKind::Temporary:
       case NodeKind::TupleIndex:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:

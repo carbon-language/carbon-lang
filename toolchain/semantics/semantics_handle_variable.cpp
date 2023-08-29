@@ -10,12 +10,12 @@ namespace Carbon::Check {
 auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
   // Handle the optional initializer.
-  auto expr_node_id = SemIR::NodeId::Invalid;
+  auto init_id = SemIR::NodeId::Invalid;
   bool has_init =
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
       Parse::NodeKind::PatternBinding;
   if (has_init) {
-    expr_node_id = context.node_stack().PopExpression();
+    init_id = context.node_stack().PopExpression();
     context.node_stack()
         .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
   }
@@ -28,7 +28,10 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
   context.AddNameToLookup(var.parse_node(), name_id, var_id);
   // If there was an initializer, assign it to storage.
   if (has_init) {
-    context.Initialize(parse_node, var_id, expr_node_id);
+    init_id = context.Initialize(parse_node, var_id, init_id);
+    // TODO: Consider using different node kinds for assignment versus
+    // initialization.
+    context.AddNode(SemIR::Node::Assign::Make(parse_node, var_id, init_id));
   }
 
   context.node_stack()

@@ -87,6 +87,7 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(StructValue, "struct_value", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(StubReference, "stub_reference", Typed,
                                 NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Temporary, "temporary", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleIndex, "tuple_index", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleType, "tuple_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleValue, "tuple_value", Typed, NotTerminator)

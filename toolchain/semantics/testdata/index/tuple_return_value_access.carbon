@@ -55,8 +55,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: MaterializeTemporary, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+14, arg1: node+12},
-// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+14, arg1: node+13, type: type1},
+// CHECK:STDOUT:   {kind: Temporary, arg0: node+14, arg1: node+12, type: type2},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+15, arg1: node+13, type: type1},
 // CHECK:STDOUT:   {kind: BindValue, arg0: node+16, type: type1},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+17},
 // CHECK:STDOUT: ]
@@ -118,8 +118,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc10_11.1: (i32,) = call @F()
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc10_11.2: (i32,) = materialize_temporary
-// CHECK:STDOUT:   assign %.loc10_11.2, %.loc10_11.1
-// CHECK:STDOUT:   %.loc10_15.1: i32 = tuple_index %.loc10_11.2, %.loc10_14
+// CHECK:STDOUT:   %.loc10_11.3: (i32,) = temporary %.loc10_11.2, %.loc10_11.1
+// CHECK:STDOUT:   %.loc10_15.1: i32 = tuple_index %.loc10_11.3, %.loc10_14
 // CHECK:STDOUT:   %.loc10_15.2: i32 = bind_value %.loc10_15.1
 // CHECK:STDOUT:   return %.loc10_15.2
 // CHECK:STDOUT: }

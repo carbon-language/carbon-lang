@@ -16,7 +16,7 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "empty_tuple.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Echo() {
-// CHECK:STDOUT:   ret void
+// CHECK:STDOUT:   ret {} poison
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {

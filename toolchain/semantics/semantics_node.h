@@ -405,6 +405,9 @@ class Node {
 
   using StubReference = Factory<NodeKind::StubReference, NodeId /*node_id*/>;
 
+  using Temporary = Factory<NodeKind::Temporary, NodeId /*materialize_id*/,
+                            NodeId /*init_id*/>;
+
   using TupleIndex =
       Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;
 

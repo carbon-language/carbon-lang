@@ -40,6 +40,7 @@ fn Main() {
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+6},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -58,6 +59,7 @@ fn Main() {
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -77,5 +79,6 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_11.2: () = tuple_value ()
 // CHECK:STDOUT:   %b: () = var "b"
 // CHECK:STDOUT:   %.loc11_37: () = call @MakeImplicitEmptyTuple()
+// CHECK:STDOUT:   assign %b, %.loc11_37
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
