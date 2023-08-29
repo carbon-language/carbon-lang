@@ -63,8 +63,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Generally speaking, when we talk about _generics_, either
 [checked or template](#checked-versus-template-parameters), we are talking about
-generalizing some language construct by adding a compile-time parameter, called
-a _generic parameter_, to it. So:
+generalizing some language construct by adding a _compile-time parameter_, also
+called a _generic parameter_, to it. So:
 
 -   a _generic function_ is a function with at least one compile-time parameter,
     which could be an explicit argument to the function or
@@ -285,8 +285,9 @@ complete definition checking. This occurs for
 
 _Binding patterns_ associate a name with a type and a value. This is used to
 declare function parameters, in `let` and `var` declarations, as well as to
-declare [generic parameters](#generic-means-compile-time-parameterized). There
-are three kinds of binding patterns, corresponding to
+declare [compile-time parameters](#generic-means-compile-time-parameterized) for
+classes, interfaces, and so on. There are three kinds of binding patterns,
+corresponding to
 [the three expression phases](/docs/design/README.md#expression-phases):
 
 -   A _runtime binding pattern_ binds to a dynamic value at runtime, and is
@@ -847,9 +848,10 @@ that specifies an array bound might have an integer type.
 
 ## Type constraints
 
-Type constraints restrict which types are legal for generic parameters or
-associated facets. They help define semantics under which they should be called,
-and prevent incorrect calls.
+Type constraints restrict which types are legal for a
+[facet binding](#facet-binding), like a facet parameter or associated facet.
+They help define semantics under which they should be called, and prevent
+incorrect calls.
 
 In general there are a number of different type relationships we would like to
 express, for example:
