@@ -68,7 +68,7 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
   // A table of booleans that we can use to classify bytes as being valid
   // identifier (or keyword) characters. This is used in the generic,
   // non-vectorized fallback code to scan for length of an identifier.
-  constexpr std::array<bool, 256> IsIdentifierByteTable = []() constexpr {
+  static constexpr std::array<bool, 256> IsIdByteTable = ([]() constexpr {
     std::array<bool, 256> table = {};
     for (char c = '0'; c <= '9'; ++c) {
       table[c] = true;
@@ -81,7 +81,7 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
     }
     table['_'] = true;
     return table;
-  }();
+  })();
 
 #if __x86_64__
   // This code uses a scheme derived from the techniques in Geoff Langdale and
@@ -196,17 +196,15 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
   // Fallback to scalar loop. We only end up here when we don't have >=16
   // bytes to scan or we find a UTF-8 unicode character.
   // TODO: This assumes all Unicode characters are non-identifiers.
-  while (i < size &&
-         IsIdentifierByteTable[static_cast<unsigned char>(text[i])]) {
+  while (i < size && IsIdByteTable[static_cast<unsigned char>(text[i])]) {
     ++i;
   }
 
   return text.substr(0, i);
 #else
   // TODO: Optimize this with SIMD for other architectures.
-  return text.take_while([](char c) {
-    return IsIdentifierByteTable[static_cast<unsigned char>(c)];
-  });
+  return text.take_while(
+      [](char c) { return IsIdByteTable[static_cast<unsigned char>(c)]; });
 #endif
 }
 
