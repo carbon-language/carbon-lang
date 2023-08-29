@@ -13,23 +13,21 @@
 #include "llvm/Support/raw_ostream.h"  // IWYU pragma: export
 
 namespace Carbon {
-namespace Internal {
-template <typename DerivedT>
-class EmptyParent {};
-}  // namespace Internal
 
 template <typename DerivedT>
 class Printable {
   // Provides simple printing for debuggers.
   LLVM_DUMP_METHOD void Dump() const {
-    reinterpret_cast<const DerivedT*>(this)->Print(llvm::errs());
+    static_cast<const DerivedT*>(this)->Print(llvm::errs());
   }
+
   // Supports printing to llvm::raw_ostream.
   friend auto operator<<(llvm::raw_ostream& out, const DerivedT& obj)
       -> llvm::raw_ostream& {
     obj.Print(out);
     return out;
   }
+
   // Supports printing to std::ostream.
   friend auto operator<<(std::ostream& out, const DerivedT& obj)
       -> std::ostream& {
@@ -37,12 +35,13 @@ class Printable {
     obj.Print(raw_os);
     return out;
   }
+
   // Allows GoogleTest and GoogleMock to print pointers by dereferencing them.
   // This is important to allow automatic printing of arguments of mocked
   // APIs.
   friend auto PrintTo(DerivedT* p, std::ostream* out) -> void {
-    *out << static_cast<const void*>(
-        p); /* Also print the object if non-null. */
+    *out << static_cast<const void*>(p);
+    // Also print the object if non-null.
     if (p) {
       *out << " pointing to " << *p;
     }
