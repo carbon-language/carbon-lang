@@ -70,7 +70,7 @@ class Heap : public HeapAllocationInterface {
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;
 
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(Heap);
 
   auto arena() const -> Arena& override { return *arena_; }
 

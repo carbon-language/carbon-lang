@@ -36,7 +36,7 @@ class ActionStack {
         trace_stream_(trace_stream) {}
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(ActionStack)
 
   // Starts execution with `action` at the top of the stack. Cannot be called
   // when IsEmpty() is false.

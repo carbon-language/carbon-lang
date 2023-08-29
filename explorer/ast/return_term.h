@@ -80,7 +80,7 @@ class ReturnTerm {
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(ReturnTerm);
 
  private:
   enum class ReturnKind { Omitted, Auto, Expression };

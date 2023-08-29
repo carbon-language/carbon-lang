@@ -12,7 +12,6 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/element_path.h"
-#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -37,6 +36,7 @@ class AllocationId {
   void Print(llvm::raw_ostream& out) const {
     out << "Allocation(" << index_ << ")";
   }
+  CARBON_PRINTABLE(AllocationId);
 
  private:
   // The representation of AllocationId describes how to locate an object within
@@ -69,8 +69,7 @@ class Address {
   void Print(llvm::raw_ostream& out) const {
     out << allocation_ << element_path_;
   }
-
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(Address)
 
   // If *this represents the address of an object with a field named
   // `field_name`, this method returns the address of that field.

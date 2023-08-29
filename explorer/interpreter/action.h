@@ -24,7 +24,6 @@
 #include "explorer/interpreter/stack.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/MapVector.h"
-#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -48,7 +47,7 @@ class RuntimeScope {
   auto operator=(RuntimeScope&&) noexcept -> RuntimeScope&;
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(RuntimeScope);
 
   // Allocates storage for `value_node` in `heap`, and initializes it with
   // `value`.
@@ -131,7 +130,7 @@ class Action {
   virtual ~Action() = default;
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(Action);
 
   // Resets this Action to its initial state.
   void Clear() {

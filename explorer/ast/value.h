@@ -20,7 +20,6 @@
 #include "explorer/ast/statement.h"
 #include "explorer/base/nonnull.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -81,7 +80,7 @@ class Value {
   auto Visit(F f) const -> R;
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(Value)
 
   // Returns the sub-Value specified by `path`, which must be a valid element
   // path for *this. If the sub-Value is a method and its self_pattern is an
@@ -1070,6 +1069,7 @@ struct IntrinsicConstraint : public HashFromDecompose<IntrinsicConstraint> {
 
   // Print the intrinsic constraint.
   void Print(llvm::raw_ostream& out) const;
+  CARBON_PRINTABLE(IntrinsicConstraint);
 
   // The type that is required to satisfy the intrinsic property.
   Nonnull<const Value*> type;

@@ -9,7 +9,6 @@
 
 #include "common/ostream.h"
 #include "explorer/base/nonnull.h"
-#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -66,8 +65,7 @@ class TypeStructureSortKey {
   }
 
   void Print(llvm::raw_ostream& out) const;
-
-  LLVM_DUMP_METHOD void Dump() const;
+  CARBON_PRINTABLE(TypeStructureSortKey);
 
  private:
   // Positions of holes (`?`s) in the structure. Each hole is described as a

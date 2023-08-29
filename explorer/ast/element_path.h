@@ -15,7 +15,6 @@
 #include "common/ostream.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/value_node.h"
-#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -76,6 +75,7 @@ class ElementPath {
     }
 
     void Print(llvm::raw_ostream& out) const { return element_->Print(out); }
+    CARBON_PRINTABLE(Component);
 
    private:
     Nonnull<const Element*> element_;
@@ -127,8 +127,7 @@ class ElementPath {
       out << "." << component;
     }
   }
-
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(ElementPath);
 
  private:
   // The representation of ElementPath describes how to locate a Value within

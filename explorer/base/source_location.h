@@ -62,7 +62,7 @@ class SourceLocation {
     return result;
   }
 
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(SourceLocation)
 
  private:
   std::string_view filename_;

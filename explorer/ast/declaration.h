@@ -23,7 +23,6 @@
 #include "explorer/base/nonnull.h"
 #include "explorer/base/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
@@ -154,6 +153,7 @@ class DeclaredName {
       : components_{{loc, std::move(name)}} {}
 
   void Print(llvm::raw_ostream& out) const;
+  CARBON_PRINTABLE(DeclaredName);
 
   void Append(SourceLocation loc, std::string name) {
     components_.push_back({loc, std::move(name)});

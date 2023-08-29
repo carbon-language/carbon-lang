@@ -59,6 +59,7 @@ class Element {
 
   // Prints the Member
   virtual void Print(llvm::raw_ostream& out) const = 0;
+  CARBON_PRINTABLE(Element);
 
   // Return whether the member's name matches `name`.
   virtual auto IsNamed(std::string_view name) const -> bool = 0;

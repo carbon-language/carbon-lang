@@ -113,6 +113,7 @@ class ValueNodeView {
   }
 
   void Print(llvm::raw_ostream& out) const { print_(*base_, out); }
+  CARBON_PRINTABLE(ValueNodeView);
 
   // Returns node->static_type()
   auto static_type() const -> const Value& { return static_type_(*base_); }

@@ -56,7 +56,7 @@ class AstNode {
   virtual void Print(llvm::raw_ostream& out) const = 0;
   // Print identifying information about the node, such as its name.
   virtual void PrintID(llvm::raw_ostream& out) const = 0;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+  CARBON_PRINTABLE(AstNode)
 
   // Returns an enumerator specifying the concrete type of this node.
   //

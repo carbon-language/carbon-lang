@@ -49,6 +49,7 @@ class [[nodiscard]] Error {
     }
     out << message();
   }
+  CARBON_PRINTABLE(Error);
 
   // Returns a string describing the location of the error, such as
   // "file.cc:123".

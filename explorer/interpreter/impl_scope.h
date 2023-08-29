@@ -137,6 +137,7 @@ class ImplScope {
       llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
 
   void Print(llvm::raw_ostream& out) const;
+  CARBON_PRINTABLE(ImplScope);
 
  private:
   // Returns the associated impl for the given `iface` and `type` in

@@ -138,6 +138,4 @@ void TypeStructureSortKey::Print(llvm::raw_ostream& out) const {
   }
 }
 
-void TypeStructureSortKey::Dump() const { Print(llvm::errs()); }
-
 }  // namespace Carbon

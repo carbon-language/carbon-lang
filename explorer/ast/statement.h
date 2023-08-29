@@ -19,7 +19,6 @@
 #include "explorer/base/arena.h"
 #include "explorer/base/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
