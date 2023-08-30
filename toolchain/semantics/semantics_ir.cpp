@@ -5,105 +5,53 @@
 #include "toolchain/semantics/semantics_ir.h"
 
 #include "common/check.h"
-#include "llvm/ADT/Sequence.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
-#include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
-#include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon::SemIR {
 
-auto File::MakeBuiltinIR() -> File {
-  File semantics_ir(/*builtin_ir=*/nullptr);
-  semantics_ir.nodes_.reserve(BuiltinKind::ValidCount);
+File::File()
+    // Builtins are always the first IR, even when self-referential.
+    : cross_reference_irs_({this}),
+      // Default entry for NodeBlockId::Empty.
+      node_blocks_(1) {
+  nodes_.reserve(BuiltinKind::ValidCount);
 
   // Error uses a self-referential type so that it's not accidentally treated as
   // a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...)                 \
-  semantics_ir.nodes_.push_back(Node::Builtin::Make(             \
-      BuiltinKind::Name, BuiltinKind::Name == BuiltinKind::Error \
-                             ? TypeId::Error                     \
-                             : TypeId::TypeType));
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...)                               \
+  nodes_.push_back(Node::Builtin::Make(BuiltinKind::Name,                      \
+                                       BuiltinKind::Name == BuiltinKind::Error \
+                                           ? TypeId::Error                     \
+                                           : TypeId::TypeType));
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
-  CARBON_CHECK(semantics_ir.node_blocks_.size() == 1)
-      << "BuildBuiltins should only have the empty block, actual: "
-      << semantics_ir.node_blocks_.size();
-  CARBON_CHECK(semantics_ir.nodes_.size() == BuiltinKind::ValidCount)
-      << "BuildBuiltins should produce " << BuiltinKind::ValidCount
-      << " nodes, actual: " << semantics_ir.nodes_.size();
-  return semantics_ir;
+  CARBON_CHECK(nodes_.size() == BuiltinKind::ValidCount)
+      << "Builtins should produce " << BuiltinKind::ValidCount
+      << " nodes, actual: " << nodes_.size();
 }
 
-auto File::MakeFromParseTree(const File& builtin_ir,
-                             const TokenizedBuffer& tokens,
-                             const Parse::Tree& parse_tree,
-                             DiagnosticConsumer& consumer,
-                             llvm::raw_ostream* vlog_stream) -> File {
-  File semantics_ir(&builtin_ir);
+File::File(const File* builtins)
+    // Builtins are always the first IR.
+    : cross_reference_irs_({builtins}),
+      // Default entry for NodeBlockId::Empty.
+      node_blocks_(1) {
+  CARBON_CHECK(builtins != nullptr);
+  CARBON_CHECK(builtins->cross_reference_irs_[0] == builtins)
+      << "Not called with builtins!";
 
   // Copy builtins over.
-  semantics_ir.nodes_.resize_for_overwrite(BuiltinKind::ValidCount);
+  nodes_.reserve(BuiltinKind::ValidCount);
   static constexpr auto BuiltinIR = CrossReferenceIRId(0);
-  for (int i : llvm::seq(BuiltinKind::ValidCount)) {
-    // We can reuse the type node ID because the offsets of cross-references
-    // will be the same in this IR.
-    auto type = builtin_ir.nodes_[i].type_id();
-    semantics_ir.nodes_[i] =
-        Node::CrossReference::Make(type, BuiltinIR, NodeId(i));
+  for (auto [i, node] : llvm::enumerate(builtins->nodes_)) {
+    // We can reuse builtin type IDs because they're special-cased values.
+    nodes_.push_back(Node::CrossReference::Make(node.type_id(), BuiltinIR,
+                                                SemIR::NodeId(i)));
   }
-
-  Parse::NodeLocationTranslator translator(&tokens, &parse_tree);
-  ErrorTrackingDiagnosticConsumer err_tracker(consumer);
-  DiagnosticEmitter<Parse::Node> emitter(translator, err_tracker);
-
-  Check::Context context(tokens, emitter, parse_tree, semantics_ir,
-                         vlog_stream);
-  PrettyStackTraceFunction context_dumper(
-      [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
-
-  // Add a block for the Parse::Tree.
-  context.node_block_stack().Push();
-  context.PushScope();
-
-  // Loops over all nodes in the tree. On some errors, this may return early,
-  // for example if an unrecoverable state is encountered.
-  for (auto parse_node : parse_tree.postorder()) {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (auto parse_kind = parse_tree.node_kind(parse_node)) {
-#define CARBON_PARSE_NODE_KIND(Name)                 \
-  case Parse::NodeKind::Name: {                      \
-    if (!Check::Handle##Name(context, parse_node)) { \
-      semantics_ir.has_errors_ = true;               \
-      return semantics_ir;                           \
-    }                                                \
-    break;                                           \
-  }
-#include "toolchain/parser/parse_node_kind.def"
-    }
-  }
-
-  // Pop information for the file-level scope.
-  semantics_ir.top_node_block_id_ = context.node_block_stack().Pop();
-  context.PopScope();
-
-  context.VerifyOnFinish();
-
-  semantics_ir.has_errors_ = err_tracker.seen_error();
-
-#ifndef NDEBUG
-  if (auto verify = semantics_ir.Verify(); !verify.ok()) {
-    CARBON_FATAL() << semantics_ir
-                   << "Built invalid semantics IR: " << verify.error() << "\n";
-  }
-#endif
-
-  return semantics_ir;
 }
 
 auto File::Verify() const -> ErrorOr<Success> {

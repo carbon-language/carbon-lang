@@ -9,7 +9,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon::SemIR {
@@ -68,15 +67,11 @@ struct RealLiteral : public Printable<RealLiteral> {
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
-  // Produces the builtins.
-  static auto MakeBuiltinIR() -> File;
+  // Produces a file for the builtins.
+  explicit File();
 
-  // Adds the IR for the provided Parse::Tree.
-  static auto MakeFromParseTree(const File& builtin_ir,
-                                const TokenizedBuffer& tokens,
-                                const Parse::Tree& parse_tree,
-                                DiagnosticConsumer& consumer,
-                                llvm::raw_ostream* vlog_stream) -> File;
+  // Starts a new file for Check::CheckParseTree. Builtins are required.
+  explicit File(const File* builtins);
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
@@ -286,17 +281,15 @@ class File : public Printable<File> {
   }
 
   auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
+  auto set_top_node_block_id(NodeBlockId block_id) -> void {
+    top_node_block_id_ = block_id;
+  }
 
   // Returns true if there were errors creating the semantics IR.
   auto has_errors() const -> bool { return has_errors_; }
+  auto set_has_errors(bool has_errors) -> void { has_errors_ = has_errors; }
 
  private:
-  explicit File(const File* builtin_ir)
-      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
-    // For NodeBlockId::Empty.
-    node_blocks_.resize(1);
-  }
-
   bool has_errors_ = false;
 
   // Storage for callable objects.
