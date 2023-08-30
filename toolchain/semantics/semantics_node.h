@@ -403,8 +403,8 @@ class Node {
 
   using StubReference = Factory<NodeKind::StubReference, NodeId /*node_id*/>;
 
-  using Temporary = Factory<NodeKind::Temporary, NodeId /*storage_id*/,
-                            NodeId /*init_id*/>;
+  using Temporary =
+      Factory<NodeKind::Temporary, NodeId /*storage_id*/, NodeId /*init_id*/>;
 
   using TemporaryStorage = Factory<NodeKind::TemporaryStorage>;
 
