@@ -14,6 +14,8 @@
 
 namespace Carbon {
 
+// CRTP base class for printable types. Children (DerivedT) must implement:
+// - auto Print(llvm::raw_ostream& out) -> void
 template <typename DerivedT>
 class Printable {
   // Provides simple printing for debuggers.
