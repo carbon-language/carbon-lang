@@ -8,7 +8,6 @@
 #include <gmock/gmock.h>
 
 #include "common/check.h"
-#include "llvm/Support/YAMLParser.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 
 namespace Carbon::Testing {

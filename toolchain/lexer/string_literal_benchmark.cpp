@@ -10,7 +10,7 @@
 namespace Carbon::Testing {
 namespace {
 
-using Lex::LexedStringLiteral;
+using Lex::StringLiteral;
 
 static void BM_ValidString(benchmark::State& state, std::string_view introducer,
                            std::string_view terminator) {
@@ -18,7 +18,7 @@ static void BM_ValidString(benchmark::State& state, std::string_view introducer,
   x.append(100000, 'a');
   x.append(terminator);
   for (auto _ : state) {
-    LexedStringLiteral::Lex(x);
+    StringLiteral::Lex(x);
   }
 }
 
@@ -58,7 +58,7 @@ static void BM_IncompleteWithRepeatedEscapes(benchmark::State& state,
     x.append("n ");
   }
   for (auto _ : state) {
-    LexedStringLiteral::Lex(x);
+    StringLiteral::Lex(x);
   }
 }
 
@@ -91,8 +91,7 @@ static void BM_SimpleStringValue(benchmark::State& state,
   x.append(100000, 'a');
   x.append(terminator);
   for (auto _ : state) {
-    LexedStringLiteral::Lex(x)->ComputeValue(
-        NullDiagnosticEmitter<const char*>());
+    StringLiteral::Lex(x)->ComputeValue(NullDiagnosticEmitter<const char*>());
   }
 }
 

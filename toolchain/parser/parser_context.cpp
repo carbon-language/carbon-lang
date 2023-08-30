@@ -56,8 +56,8 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
       << tokens_->GetKind(*end_);
 }
 
-auto Context::AddLeafNode(NodeKind kind, Lex::TokenizedBuffer::Token token,
-                          bool has_error) -> void {
+auto Context::AddLeafNode(NodeKind kind, Lex::Token token, bool has_error)
+    -> void {
   tree_->node_impls_.push_back(
       Tree::NodeImpl(kind, has_error, token, /*subtree_size=*/1));
   if (has_error) {
@@ -65,8 +65,8 @@ auto Context::AddLeafNode(NodeKind kind, Lex::TokenizedBuffer::Token token,
   }
 }
 
-auto Context::AddNode(NodeKind kind, Lex::TokenizedBuffer::Token token,
-                      int subtree_start, bool has_error) -> void {
+auto Context::AddNode(NodeKind kind, Lex::Token token, int subtree_start,
+                      bool has_error) -> void {
   int subtree_size = tree_->size() - subtree_start + 1;
   tree_->node_impls_.push_back(
       Tree::NodeImpl(kind, has_error, token, subtree_size));
@@ -75,9 +75,9 @@ auto Context::AddNode(NodeKind kind, Lex::TokenizedBuffer::Token token,
   }
 }
 
-auto Context::ConsumeAndAddOpenParen(Lex::TokenizedBuffer::Token default_token,
+auto Context::ConsumeAndAddOpenParen(Lex::Token default_token,
                                      NodeKind start_kind)
-    -> std::optional<Lex::TokenizedBuffer::Token> {
+    -> std::optional<Lex::Token> {
   if (auto open_paren = ConsumeIf(Lex::TokenKind::OpenParen)) {
     AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
     return open_paren;
@@ -91,9 +91,9 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenizedBuffer::Token default_token,
   }
 }
 
-auto Context::ConsumeAndAddCloseSymbol(
-    Lex::TokenizedBuffer::Token expected_open, StateStackEntry state,
-    NodeKind close_kind) -> void {
+auto Context::ConsumeAndAddCloseSymbol(Lex::Token expected_open,
+                                       StateStackEntry state,
+                                       NodeKind close_kind) -> void {
   Lex::TokenKind open_token_kind = tokens().GetKind(expected_open);
 
   if (!open_token_kind.is_opening_symbol()) {
@@ -124,15 +124,13 @@ auto Context::ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind,
   return true;
 }
 
-auto Context::ConsumeChecked(Lex::TokenKind kind)
-    -> Lex::TokenizedBuffer::Token {
+auto Context::ConsumeChecked(Lex::TokenKind kind) -> Lex::Token {
   CARBON_CHECK(PositionIs(kind))
       << "Required " << kind << ", found " << PositionKind();
   return Consume();
 }
 
-auto Context::ConsumeIf(Lex::TokenKind kind)
-    -> std::optional<Lex::TokenizedBuffer::Token> {
+auto Context::ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::Token> {
   if (!PositionIs(kind)) {
     return std::nullopt;
   }
@@ -150,10 +148,10 @@ auto Context::ConsumeIfPatternKeyword(Lex::TokenKind keyword_token,
 }
 
 auto Context::FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
-    -> std::optional<Lex::TokenizedBuffer::Token> {
+    -> std::optional<Lex::Token> {
   auto new_position = position_;
   while (true) {
-    Lex::TokenizedBuffer::Token token = *new_position;
+    Lex::Token token = *new_position;
     Lex::TokenKind kind = tokens().GetKind(token);
     if (kind.IsOneOf(desired_kinds)) {
       return token;
@@ -164,8 +162,7 @@ auto Context::FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
       // There are no more tokens at this level.
       return std::nullopt;
     } else if (kind.is_opening_symbol()) {
-      new_position = Lex::TokenizedBuffer::TokenIterator(
-          tokens().GetMatchedClosingToken(token));
+      new_position = Lex::TokenIterator(tokens().GetMatchedClosingToken(token));
       // Advance past the closing token.
       ++new_position;
     } else {
@@ -184,26 +181,25 @@ auto Context::SkipMatchingGroup() -> bool {
   return true;
 }
 
-auto Context::SkipPastLikelyEnd(Lex::TokenizedBuffer::Token skip_root)
-    -> std::optional<Lex::TokenizedBuffer::Token> {
+auto Context::SkipPastLikelyEnd(Lex::Token skip_root)
+    -> std::optional<Lex::Token> {
   if (position_ == end_) {
     return std::nullopt;
   }
 
-  Lex::TokenizedBuffer::Line root_line = tokens().GetLine(skip_root);
+  Lex::Line root_line = tokens().GetLine(skip_root);
   int root_line_indent = tokens().GetIndentColumnNumber(root_line);
 
   // We will keep scanning through tokens on the same line as the root or
   // lines with greater indentation than root's line.
-  auto is_same_line_or_indent_greater_than_root =
-      [&](Lex::TokenizedBuffer::Token t) {
-        Lex::TokenizedBuffer::Line l = tokens().GetLine(t);
-        if (l == root_line) {
-          return true;
-        }
+  auto is_same_line_or_indent_greater_than_root = [&](Lex::Token t) {
+    Lex::Line l = tokens().GetLine(t);
+    if (l == root_line) {
+      return true;
+    }
 
-        return tokens().GetIndentColumnNumber(l) > root_line_indent;
-      };
+    return tokens().GetIndentColumnNumber(l) > root_line_indent;
+  };
 
   do {
     if (PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
@@ -231,11 +227,10 @@ auto Context::SkipPastLikelyEnd(Lex::TokenizedBuffer::Token skip_root)
   return std::nullopt;
 }
 
-auto Context::SkipTo(Lex::TokenizedBuffer::Token t) -> void {
-  CARBON_CHECK(t >= *position_)
-      << "Tried to skip backwards from " << position_ << " to "
-      << Lex::TokenizedBuffer::TokenIterator(t);
-  position_ = Lex::TokenizedBuffer::TokenIterator(t);
+auto Context::SkipTo(Lex::Token t) -> void {
+  CARBON_CHECK(t >= *position_) << "Tried to skip backwards from " << position_
+                                << " to " << Lex::TokenIterator(t);
+  position_ = Lex::TokenIterator(t);
   CARBON_CHECK(position_ != end_) << "Skipped past EOF.";
 }
 
@@ -459,8 +454,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
 }
 
 auto Context::PrintTokenForStackDump(llvm::raw_ostream& output,
-                                     Lex::TokenizedBuffer::Token token) const
-    -> void {
+                                     Lex::Token token) const -> void {
   output << " @ " << tokens_->GetLineNumber(tokens_->GetLine(token)) << ":"
          << tokens_->GetColumnNumber(token) << ": token " << token << " : "
          << tokens_->GetKind(token) << "\n";

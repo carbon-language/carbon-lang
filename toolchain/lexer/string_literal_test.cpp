@@ -14,21 +14,21 @@
 namespace Carbon::Testing {
 namespace {
 
-using Lex::LexedStringLiteral;
+using Lex::StringLiteral;
 
 class StringLiteralTest : public ::testing::Test {
  protected:
   StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
 
-  auto Lex(llvm::StringRef text) -> LexedStringLiteral {
-    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
+  auto Lex(llvm::StringRef text) -> StringLiteral {
+    std::optional<StringLiteral> result = StringLiteral::Lex(text);
     CARBON_CHECK(result);
     EXPECT_EQ(result->text(), text);
     return *result;
   }
 
   auto Parse(llvm::StringRef text) -> std::string {
-    LexedStringLiteral token = Lex(text);
+    StringLiteral token = Lex(text);
     Testing::SingleTokenDiagnosticTranslator translator(text);
     DiagnosticEmitter<const char*> emitter(translator, error_tracker);
     return token.ComputeValue(emitter);
@@ -93,7 +93,7 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 
   for (llvm::StringLiteral test : valid) {
     SCOPED_TRACE(test);
-    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    std::optional<StringLiteral> result = StringLiteral::Lex(test);
     EXPECT_TRUE(result.has_value());
     if (result) {
       EXPECT_EQ(result->text(), test);
@@ -118,7 +118,7 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 
   for (llvm::StringLiteral test : invalid) {
     SCOPED_TRACE(test);
-    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    std::optional<StringLiteral> result = StringLiteral::Lex(test);
     EXPECT_TRUE(result.has_value());
     if (result) {
       EXPECT_FALSE(result->is_terminated());

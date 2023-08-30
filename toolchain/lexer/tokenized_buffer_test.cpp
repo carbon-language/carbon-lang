@@ -20,6 +20,7 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::Token;
 using Lex::TokenizedBuffer;
 using Lex::TokenKind;
 using ::testing::_;
@@ -543,7 +544,7 @@ TEST_F(LexerTest, Whitespace) {
                   // EOF
                   false};
   int pos = 0;
-  for (TokenizedBuffer::Token token : buffer.tokens()) {
+  for (Token token : buffer.tokens()) {
     ASSERT_LT(pos, std::size(space));
     EXPECT_THAT(buffer.HasLeadingWhitespace(token), Eq(space[pos]));
     ++pos;
@@ -791,7 +792,7 @@ TEST_F(LexerTest, InvalidStringLiterals) {
 
     // We should have formed at least one error token.
     bool found_error = false;
-    for (TokenizedBuffer::Token token : buffer.tokens()) {
+    for (Token token : buffer.tokens()) {
       if (buffer.GetKind(token) == TokenKind::Error) {
         found_error = true;
         break;

@@ -103,7 +103,7 @@ class Tree : public Printable<Tree> {
   [[nodiscard]] auto node_kind(Node n) const -> NodeKind;
 
   // Returns the token the given parse tree node models.
-  [[nodiscard]] auto node_token(Node n) const -> Lex::TokenizedBuffer::Token;
+  [[nodiscard]] auto node_token(Node n) const -> Lex::Token;
 
   [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
 
@@ -170,8 +170,8 @@ class Tree : public Printable<Tree> {
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
-    explicit NodeImpl(NodeKind kind, bool has_error,
-                      Lex::TokenizedBuffer::Token token, int subtree_size)
+    explicit NodeImpl(NodeKind kind, bool has_error, Lex::Token token,
+                      int subtree_size)
         : kind(kind),
           has_error(has_error),
           token(token),
@@ -199,7 +199,7 @@ class Tree : public Printable<Tree> {
     bool has_error = false;
 
     // The token root of this node.
-    Lex::TokenizedBuffer::Token token;
+    Lex::Token token;
 
     // The size of this node's subtree of the parse tree. This is the number of
     // nodes (and thus tokens) that are covered by this node (and its

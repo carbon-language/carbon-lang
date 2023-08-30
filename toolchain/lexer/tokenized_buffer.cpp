@@ -347,8 +347,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
-    std::optional<LexedNumericLiteral> literal =
-        LexedNumericLiteral::Lex(source_text);
+    std::optional<NumericLiteral> literal = NumericLiteral::Lex(source_text);
     if (!literal) {
       return LexError(source_text);
     }
@@ -365,7 +364,7 @@ class TokenizedBuffer::Lexer {
 
     return VariantMatch(
         literal->ComputeValue(emitter_),
-        [&](LexedNumericLiteral::IntegerValue&& value) {
+        [&](NumericLiteral::IntegerValue&& value) {
           auto token = buffer_->AddToken({.kind = TokenKind::IntegerLiteral,
                                           .token_line = current_line_,
                                           .column = int_column});
@@ -374,7 +373,7 @@ class TokenizedBuffer::Lexer {
           buffer_->literal_int_storage_.push_back(std::move(value.value));
           return token;
         },
-        [&](LexedNumericLiteral::RealValue&& value) {
+        [&](NumericLiteral::RealValue&& value) {
           auto token = buffer_->AddToken({.kind = TokenKind::RealLiteral,
                                           .token_line = current_line_,
                                           .column = int_column});
@@ -383,10 +382,10 @@ class TokenizedBuffer::Lexer {
           buffer_->literal_int_storage_.push_back(std::move(value.mantissa));
           buffer_->literal_int_storage_.push_back(std::move(value.exponent));
           CARBON_CHECK(buffer_->GetRealLiteral(token).IsDecimal() ==
-                       (value.radix == LexedNumericLiteral::Radix::Decimal));
+                       (value.radix == NumericLiteral::Radix::Decimal));
           return token;
         },
-        [&](LexedNumericLiteral::UnrecoverableError) {
+        [&](NumericLiteral::UnrecoverableError) {
           auto token = buffer_->AddToken({
               .kind = TokenKind::Error,
               .token_line = current_line_,
@@ -398,8 +397,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
-    std::optional<LexedStringLiteral> literal =
-        LexedStringLiteral::Lex(source_text);
+    std::optional<StringLiteral> literal = StringLiteral::Lex(source_text);
     if (!literal) {
       return LexError(source_text);
     }
@@ -889,8 +887,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
       token_info.kind == TokenKind::RealLiteral) {
     const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    std::optional<LexedNumericLiteral> relexed_token =
-        LexedNumericLiteral::Lex(source_->text().substr(token_start));
+    std::optional<NumericLiteral> relexed_token =
+        NumericLiteral::Lex(source_->text().substr(token_start));
     CARBON_CHECK(relexed_token) << "Could not reform numeric literal token.";
     return relexed_token->text();
   }
@@ -900,8 +898,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   if (token_info.kind == TokenKind::StringLiteral) {
     const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    std::optional<LexedStringLiteral> relexed_token =
-        LexedStringLiteral::Lex(source_->text().substr(token_start));
+    std::optional<StringLiteral> relexed_token =
+        StringLiteral::Lex(source_->text().substr(token_start));
     CARBON_CHECK(relexed_token) << "Could not reform string literal token.";
     return relexed_token->text();
   }
@@ -949,7 +947,8 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   char second_char = source_->text()[token_start + 1];
   bool is_decimal = second_char != 'x' && second_char != 'b';
 
-  return RealLiteralValue(this, token_info.literal_index, is_decimal);
+  return RealLiteralValue(&literal_int_storage_, token_info.literal_index,
+                          is_decimal);
 }
 
 auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
@@ -1149,8 +1148,7 @@ auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
   return Token(static_cast<int>(token_infos_.size()) - 1);
 }
 
-auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
-    -> void {
+auto TokenIterator::Print(llvm::raw_ostream& output) const -> void {
   output << token_.index;
 }
 
@@ -1199,8 +1197,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
           .column_number = column_number + 1};
 }
 
-auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
-    -> DiagnosticLocation {
+auto TokenLocationTranslator::GetLocation(Token token) -> DiagnosticLocation {
   // Map the token location into a position within the source buffer.
   const auto& token_info = buffer_->GetTokenInfo(token);
   const auto& line_info = buffer_->GetLineInfo(token_info.token_line);
@@ -1210,7 +1207,8 @@ auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  return SourceBufferLocationTranslator(buffer_).GetLocation(token_start);
+  return TokenizedBuffer::SourceBufferLocationTranslator(buffer_).GetLocation(
+      token_start);
 }
 
 }  // namespace Carbon::Lex
