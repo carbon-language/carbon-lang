@@ -19,11 +19,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Associated constants](#associated-constants)
     -   [Blanket implementations](#blanket-implementations)
     -   [Specialization](#specialization)
--   [Examples of how you might implement Carbon's generics with witness tables](#examples-of-how-you-might-implement-carbons-generics-with-witness-tables)
-    -   [FIXME: old text from details.md "Overview" section](#fixme-old-text-from-detailsmd-overview-section)
-    -   [FIXME: Checked-generics implementation model](#fixme-checked-generics-implementation-model)
-    -   [FIXME: Associated facets implementation model](#fixme-associated-facets-implementation-model)
-        -   [FIXME: Sized type implementation model](#fixme-sized-type-implementation-model)
+-   [Implementing some Carbon generic features with witness tables](#implementing-some-carbon-generic-features-with-witness-tables)
+    -   [Overview](#overview-1)
+    -   [Example](#example)
+    -   [Associated facets example](#associated-facets-example)
 
 <!-- tocstop -->
 
@@ -37,8 +36,8 @@ parameters. They have some nice properties:
 -   They can support separate compilation even with compile-time dispatch.
 
 However, it can be a challenge to implement some features of a generic system
-with witness tables. This leads to either limitations on the generic system or
-additional runtime overhead.
+with witness tables. This leads to limitations on the generic system, additional
+runtime overhead, or both.
 
 Swift uses witness tables for both static and dynamic dispatch, accepting both
 limitations and overhead. Carbon and Rust only use witness tables for dynamic
@@ -91,36 +90,64 @@ may not retain the witness table.
 
 ### Associated constants
 
-FIXME
+An interface with associated constants can use that to allow the signature of a
+function to vary. A similar issue arises with argument and return values
+involving `Self`. This adds to the cost of calling such functions, for example
+if they are not passed by pointer, then the generated code must support
+arguments and return values with a size only known at runtime.
+
+For this reason, Rust's dynamic trait dispatch system, trait objects, only works
+with traits that are
+["object safe,"](https://doc.rust-lang.org/reference/items/traits.html#object-safety)
+which includes a requirement that
+[all the associated types have specified values](https://github.com/rust-lang/rfcs/blob/master/text/0195-associated-items.md#trait-objects).
+This reduces the expressivity of Rust traits to the subset that could be
+supported by a C++ abstract base class.
+
+Swift instead supports types with size only known at runtime for its
+[ABI stability and dynamic linking features](https://faultlore.com/blah/swift-abi/#what-is-abi-stability-and-dynamic-linking),
+and can use that to
+[support more generic features with dynamic dispatch](https://faultlore.com/blah/swift-abi/#polymorphic-generics).
+This comes with runtime overhead.
 
 ### Blanket implementations
 
-FIXME
+[Blanket implementations](details.md#blanket-impl-declarations) allow you define
+an implementation of interface `Y` for any type implementing interface `X`. This
+allows a function to use the functionality of `Y` while only having a
+requirement that `X` be implemented. This creates the problem of how to go from
+a witness table for `X` to a witness table for `Y`.
+
+Rust supports blanket implementations using monomorphization, but this only
+works with static dispatch. Swift does not support blanket implementations. This
+is possibly a result of the limitations of using witness tables to implement
+generics.
 
 ### Specialization
 
-FIXME
+Specialization compounds the difficulty of the previous two issues.
 
-## Examples of how you might implement Carbon's generics with witness tables
+An interface with an associated type might be implemented using witness tables
+by including a reference to the associated type's witness table in the witness
+table for the interface. This doesn't give you a witness table for parameterized
+types using the associated type as an argument. Synthesizing those witness
+tables is particularly tricky if the implementation is different for specific
+types due to specialization.
 
-### FIXME: old text from details.md "Overview" section
+Similarly, a blanket implementation can guarantee that some implementation of an
+interface exists. Specialization means that actual implementation of that
+interface for specific types is not the one given by the blanket implementation.
+Furthermore, that specialized implementation may be in an unrelated library.
+They may be found anywhere in the program, not necessarily in the dependencies
+of the code that needs to use a particular witness table.
 
-We can think of the interface as defining a struct type whose members are
-function pointers, and an implementation of an interface as a value of that
-struct with actual function pointer values. An implementation is a table mapping
-the interface's functions to function pointers. For more on this, see
-[the implementation model section](#fixme-checked-generics-implementation-model).
+As a result, specialization is not supported by Swift, which uses witness
+tables. Specialization is being considered for Rust, and is compatible with its
+monomorphization model used for static dispatch.
 
-For example, the [type's size](#fixme-sized-type-implementation-model)
-(represented by an integer constant member of the type) could be a member of an
-interface and its implementation. There are a few cases why we would include
-another interface implementation as a member:
+## Implementing some Carbon generic features with witness tables
 
--   [associated facets](details.md#associated-facets)
--   [type parameters](details.md#parameterized-interfaces)
--   [interface requirements](details.md#interface-requiring-other-interfaces)
-
-### FIXME: Checked-generics implementation model
+### Overview
 
 A possible model for generating code for a generic function is to use a
 [witness table](#witness-tables) to represent how a type implements an
@@ -129,23 +156,46 @@ interface:
 -   [Interfaces](details.md#interfaces) are types of witness tables.
 -   An [impl](details.md#implementing-interfaces) is a witness table value.
 
-Type checking is done with just the interface. The impl is used during code
-generation time, possibly using
-[monomorphization](https://en.wikipedia.org/wiki/Monomorphization) to have a
-separate instantiation of the function for each combination of the generic
-argument values. The compiler is free to use other implementation strategies,
-such as passing the witness table for any needed implementations, if that can be
-predicted.
+We can think of the interface as defining a struct type with a field for every
+interface member. An implementation of that interface for a type is a value of
+that struct type, which we call a witness or witness table. For example, the
+function and method members of an interface correspond to function pointer
+fields. An implementation will have function pointer values pointing to the
+functions defining the implementation of that interface for a given type. This
+is like a [vtable](https://en.wikipedia.org/wiki/Virtual_method_table), except
+stored separately from the object.
 
-For the example above, [the Vector interface](details.md#interfaces) could be
-thought of defining a witness table type like:
+A witness might
+[have references to other witness tables](#associated-facets-example), in order
+to support these interface features and members:
+
+-   [associated facets](details.md#associated-facets)
+-   [type parameters](details.md#parameterized-interfaces)
+-   [interface requirements](details.md#interface-requiring-other-interfaces)
+
+It also could contain constants, to store the values of
+[associated constants](details.md#associated-constants), or the type's size.
+
+### Example
+
+For example, given this `Vector` interface:
+
+```carbon
+interface Vector {
+  fn Add[self: Self](b: Self) -> Self;
+  fn Scale[self: Self](v: f64) -> Self;
+}
+```
+
+from [the generic details design](details.md#interfaces) could be thought of
+defining a witness table type like:
 
 ```
 class Vector {
   // `Self` is the representation type, which is only
   // known at compile time.
   var Self:! type;
-  // `fnty` is **placeholder** syntax for a "function type",
+  // `fnty` is placeholder syntax for a "function type",
   // so `Add` is a function that takes two `Self` parameters
   // and returns a value of type `Self`.
   var Add: fnty(a: Self, b: Self) -> Self;
@@ -159,7 +209,7 @@ of this type:
 ```
 var VectorForPoint_Inline: Vector  = {
     .Self = Point_Inline,
-    // `lambda` is **placeholder** syntax for defining a
+    // `lambda` is placeholder syntax for defining a
     // function value.
     .Add = lambda(a: Point_Inline, b: Point_Inline) -> Point_Inline {
       return {.x = a.x + b.x, .y = a.y + b.y};
@@ -171,11 +221,10 @@ var VectorForPoint_Inline: Vector  = {
 ```
 
 Since generic arguments (where the parameter is declared using `:!`) are passed
-at compile time, so the actual value of `VectorForPoint_Inline` can be used to
-generate the code for functions using that impl. This is the
-[static-dispatch witness table](#static-dispatch-witness-table) approach.
+at compile time, the actual value of `VectorForPoint_Inline` can be used to
+generate the code for functions using that impl.
 
-### FIXME: Associated facets implementation model
+### Associated facets example
 
 The associated facet can be modeled by a witness table field in the interface's
 witness table.
@@ -209,10 +258,3 @@ class Container(Self:! type) {
   ...
 }
 ```
-
-#### FIXME: Sized type implementation model
-
-This requires a special integer field be included in the witness table type to
-hold the size of the type. This field will only be known generically, so if its
-value is used for type checking, we need some way of evaluating those type tests
-symbolically.
