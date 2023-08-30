@@ -123,39 +123,24 @@ class TokenIterator
 // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
 // fraction (mantissa * 10^exponent).
 //
-// The `TokenizedBuffer` must outlive any `RealLiteralValue`s referring to
-// its tokens.
+// `RealLiteralValue` carries a reference back to `TokenizedBuffer` which can be
+// invalidated if the buffer is edited or destroyed.
 class RealLiteralValue : public Printable<RealLiteralValue> {
  public:
+  auto Print(llvm::raw_ostream& output_stream) const -> void {
+    output_stream << mantissa << "*" << (is_decimal ? "10" : "2") << "^"
+                  << exponent;
+  }
+
   // The mantissa, represented as an unsigned integer.
-  [[nodiscard]] auto Mantissa() const -> const llvm::APInt& {
-    return (*literal_int_storage_)[literal_index_];
-  }
+  const llvm::APInt& mantissa;
+
   // The exponent, represented as a signed integer.
-  [[nodiscard]] auto Exponent() const -> const llvm::APInt& {
-    return (*literal_int_storage_)[literal_index_ + 1];
-  }
+  const llvm::APInt& exponent;
+
   // If false, the value is mantissa * 2^exponent.
   // If true, the value is mantissa * 10^exponent.
-  [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal_; }
-
-  auto Print(llvm::raw_ostream& output_stream) const -> void {
-    output_stream << Mantissa() << "*" << (is_decimal_ ? "10" : "2") << "^"
-                  << Exponent();
-  }
-
- private:
-  friend class TokenizedBuffer;
-
-  RealLiteralValue(const llvm::SmallVector<llvm::APInt>* literal_int_storage,
-                   int32_t literal_index, bool is_decimal)
-      : literal_int_storage_(literal_int_storage),
-        literal_index_(literal_index),
-        is_decimal_(is_decimal) {}
-
-  const llvm::SmallVector<llvm::APInt>* literal_int_storage_;
-  int32_t literal_index_;
-  bool is_decimal_;
+  bool is_decimal;
 };
 
 // A diagnostic location translator that maps token locations into source

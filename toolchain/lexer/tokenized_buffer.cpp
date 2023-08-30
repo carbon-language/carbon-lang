@@ -381,7 +381,7 @@ class TokenizedBuffer::Lexer {
               buffer_->literal_int_storage_.size();
           buffer_->literal_int_storage_.push_back(std::move(value.mantissa));
           buffer_->literal_int_storage_.push_back(std::move(value.exponent));
-          CARBON_CHECK(buffer_->GetRealLiteral(token).IsDecimal() ==
+          CARBON_CHECK(buffer_->GetRealLiteral(token).is_decimal ==
                        (value.radix == NumericLiteral::Radix::Decimal));
           return token;
         },
@@ -947,8 +947,9 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   char second_char = source_->text()[token_start + 1];
   bool is_decimal = second_char != 'x' && second_char != 'b';
 
-  return RealLiteralValue(&literal_int_storage_, token_info.literal_index,
-                          is_decimal);
+  return {.mantissa = literal_int_storage_[token_info.literal_index],
+          .exponent = literal_int_storage_[token_info.literal_index + 1],
+          .is_decimal = is_decimal};
 }
 
 auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {

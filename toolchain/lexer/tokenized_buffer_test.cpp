@@ -157,9 +157,9 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_1_234_567), 1'234'567);
   auto token_1_5e9 = buffer.tokens().begin() + 8;
   auto value_1_5e9 = buffer.GetRealLiteral(*token_1_5e9);
-  EXPECT_EQ(value_1_5e9.Mantissa().getZExtValue(), 15);
-  EXPECT_EQ(value_1_5e9.Exponent().getSExtValue(), 8);
-  EXPECT_EQ(value_1_5e9.IsDecimal(), true);
+  EXPECT_EQ(value_1_5e9.mantissa.getZExtValue(), 15);
+  EXPECT_EQ(value_1_5e9.exponent.getSExtValue(), 8);
+  EXPECT_EQ(value_1_5e9.is_decimal, true);
 }
 
 TEST_F(LexerTest, HandlesInvalidNumericLiterals) {
