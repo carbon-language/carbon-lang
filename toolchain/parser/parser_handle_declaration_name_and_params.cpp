@@ -4,11 +4,10 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 // Handles DeclarationNameAndParamsAs(Optional|Required).
-static auto ParserHandleDeclarationNameAndParams(ParserContext& context,
-                                                 ParserState after_name)
+static auto HandleDeclarationNameAndParams(Context& context, State after_name)
     -> void {
   auto state = context.PopState();
 
@@ -21,11 +20,11 @@ static auto ParserHandleDeclarationNameAndParams(ParserContext& context,
       // Because there's a qualifier, we process the first segment as an
       // expression for simplicity. This just means semantics has one less thing
       // to handle here.
-      context.AddLeafNode(ParseNodeKind::NameExpression, *identifier);
-      state.state = ParserState::PeriodAsDeclaration;
+      context.AddLeafNode(NodeKind::NameExpression, *identifier);
+      state.state = State::PeriodAsDeclaration;
       context.PushState(state);
     } else {
-      context.AddLeafNode(ParseNodeKind::Name, *identifier);
+      context.AddLeafNode(NodeKind::Name, *identifier);
     }
   } else {
     CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
@@ -34,42 +33,39 @@ static auto ParserHandleDeclarationNameAndParams(ParserContext& context,
     context.emitter().Emit(*context.position(), ExpectedDeclarationName,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
-    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position());
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position());
   }
 }
 
-auto ParserHandleDeclarationNameAndParamsAsNone(ParserContext& context)
-    -> void {
-  ParserHandleDeclarationNameAndParams(
-      context, ParserState::DeclarationNameAndParamsAfterNameAsNone);
+auto HandleDeclarationNameAndParamsAsNone(Context& context) -> void {
+  HandleDeclarationNameAndParams(
+      context, State::DeclarationNameAndParamsAfterNameAsNone);
 }
 
-auto ParserHandleDeclarationNameAndParamsAsOptional(ParserContext& context)
-    -> void {
-  ParserHandleDeclarationNameAndParams(
-      context, ParserState::DeclarationNameAndParamsAfterNameAsOptional);
+auto HandleDeclarationNameAndParamsAsOptional(Context& context) -> void {
+  HandleDeclarationNameAndParams(
+      context, State::DeclarationNameAndParamsAfterNameAsOptional);
 }
 
-auto ParserHandleDeclarationNameAndParamsAsRequired(ParserContext& context)
-    -> void {
-  ParserHandleDeclarationNameAndParams(
-      context, ParserState::DeclarationNameAndParamsAfterNameAsRequired);
+auto HandleDeclarationNameAndParamsAsRequired(Context& context) -> void {
+  HandleDeclarationNameAndParams(
+      context, State::DeclarationNameAndParamsAfterNameAsRequired);
 }
 
-enum class Params {
+enum class Params : int8_t {
   None,
   Optional,
   Required,
 };
 
-static auto ParserHandleDeclarationNameAndParamsAfterName(
-    ParserContext& context, Params params) -> void {
+static auto HandleDeclarationNameAndParamsAfterName(Context& context,
+                                                    Params params) -> void {
   auto state = context.PopState();
 
   if (context.PositionIs(TokenKind::Period)) {
     // Continue designator processing.
     context.PushState(state);
-    state.state = ParserState::PeriodAsDeclaration;
+    state.state = State::PeriodAsDeclaration;
     context.PushState(state);
     return;
   }
@@ -79,10 +75,10 @@ static auto ParserHandleDeclarationNameAndParamsAfterName(
   }
 
   if (context.PositionIs(TokenKind::OpenSquareBracket)) {
-    context.PushState(ParserState::DeclarationNameAndParamsAfterDeduced);
-    context.PushState(ParserState::ParameterListAsDeduced);
+    context.PushState(State::DeclarationNameAndParamsAfterDeduced);
+    context.PushState(State::ParameterListAsDeduced);
   } else if (context.PositionIs(TokenKind::OpenParen)) {
-    context.PushState(ParserState::ParameterListAsRegular);
+    context.PushState(State::ParameterListAsRegular);
   } else if (params == Params::Required) {
     CARBON_DIAGNOSTIC(ParametersRequiredByIntroducer, Error,
                       "`{0}` requires a `(` for parameters.", TokenKind);
@@ -92,27 +88,25 @@ static auto ParserHandleDeclarationNameAndParamsAfterName(
   }
 }
 
-auto ParserHandleDeclarationNameAndParamsAfterNameAsNone(ParserContext& context)
+auto HandleDeclarationNameAndParamsAfterNameAsNone(Context& context) -> void {
+  HandleDeclarationNameAndParamsAfterName(context, Params::None);
+}
+
+auto HandleDeclarationNameAndParamsAfterNameAsOptional(Context& context)
     -> void {
-  ParserHandleDeclarationNameAndParamsAfterName(context, Params::None);
+  HandleDeclarationNameAndParamsAfterName(context, Params::Optional);
 }
 
-auto ParserHandleDeclarationNameAndParamsAfterNameAsOptional(
-    ParserContext& context) -> void {
-  ParserHandleDeclarationNameAndParamsAfterName(context, Params::Optional);
-}
-
-auto ParserHandleDeclarationNameAndParamsAfterNameAsRequired(
-    ParserContext& context) -> void {
-  ParserHandleDeclarationNameAndParamsAfterName(context, Params::Required);
-}
-
-auto ParserHandleDeclarationNameAndParamsAfterDeduced(ParserContext& context)
+auto HandleDeclarationNameAndParamsAfterNameAsRequired(Context& context)
     -> void {
+  HandleDeclarationNameAndParamsAfterName(context, Params::Required);
+}
+
+auto HandleDeclarationNameAndParamsAfterDeduced(Context& context) -> void {
   context.PopAndDiscardState();
 
   if (context.PositionIs(TokenKind::OpenParen)) {
-    context.PushState(ParserState::ParameterListAsRegular);
+    context.PushState(State::ParameterListAsRegular);
   } else {
     CARBON_DIAGNOSTIC(
         ParametersRequiredByDeduced, Error,
@@ -122,4 +116,4 @@ auto ParserHandleDeclarationNameAndParamsAfterDeduced(ParserContext& context)
   }
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

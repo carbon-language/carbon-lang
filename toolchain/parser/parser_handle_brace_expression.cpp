@@ -4,32 +4,33 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParserHandleBraceExpression(ParserContext& context) -> void {
+auto HandleBraceExpression(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = ParserState::BraceExpressionFinishAsUnknown;
+  state.state = State::BraceExpressionFinishAsUnknown;
   context.PushState(state);
 
   CARBON_CHECK(context.ConsumeAndAddLeafNodeIf(
       TokenKind::OpenCurlyBrace,
-      ParseNodeKind::StructLiteralOrStructTypeLiteralStart));
+      NodeKind::StructLiteralOrStructTypeLiteralStart));
   if (!context.PositionIs(TokenKind::CloseCurlyBrace)) {
-    context.PushState(ParserState::BraceExpressionParameterAsUnknown);
+    context.PushState(State::BraceExpressionParameterAsUnknown);
   }
 }
 
 // Prints a diagnostic for brace expression syntax errors.
-static auto ParserHandleBraceExpressionParameterError(
-    ParserContext& context, ParserContext::StateStackEntry state,
-    ParserState param_finish_state) -> void {
+static auto HandleBraceExpressionParameterError(Context& context,
+                                                Context::StateStackEntry state,
+                                                State param_finish_state)
+    -> void {
   bool is_type =
-      param_finish_state == ParserState::BraceExpressionParameterFinishAsType;
+      param_finish_state == State::BraceExpressionParameterFinishAsType;
   bool is_value =
-      param_finish_state == ParserState::BraceExpressionParameterFinishAsValue;
-  bool is_unknown = param_finish_state ==
-                    ParserState::BraceExpressionParameterFinishAsUnknown;
+      param_finish_state == State::BraceExpressionParameterFinishAsValue;
+  bool is_unknown =
+      param_finish_state == State::BraceExpressionParameterFinishAsUnknown;
   CARBON_CHECK(is_type || is_value || is_unknown);
   CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
                     llvm::StringRef, llvm::StringRef, llvm::StringRef);
@@ -44,46 +45,42 @@ static auto ParserHandleBraceExpressionParameterError(
 }
 
 // Handles BraceExpressionParameterAs(Type|Value|Unknown).
-static auto ParserHandleBraceExpressionParameter(
-    ParserContext& context, ParserState after_designator_state,
-    ParserState param_finish_state) -> void {
+static auto HandleBraceExpressionParameter(Context& context,
+                                           State after_designator_state,
+                                           State param_finish_state) -> void {
   auto state = context.PopState();
 
   if (!context.PositionIs(TokenKind::Period)) {
-    ParserHandleBraceExpressionParameterError(context, state,
-                                              param_finish_state);
+    HandleBraceExpressionParameterError(context, state, param_finish_state);
     return;
   }
 
   state.state = after_designator_state;
   context.PushState(state);
-  context.PushState(ParserState::PeriodAsStruct);
+  context.PushState(State::PeriodAsStruct);
 }
 
-auto ParserHandleBraceExpressionParameterAsType(ParserContext& context)
-    -> void {
-  ParserHandleBraceExpressionParameter(
-      context, ParserState::BraceExpressionParameterAfterDesignatorAsType,
-      ParserState::BraceExpressionParameterFinishAsType);
+auto HandleBraceExpressionParameterAsType(Context& context) -> void {
+  HandleBraceExpressionParameter(
+      context, State::BraceExpressionParameterAfterDesignatorAsType,
+      State::BraceExpressionParameterFinishAsType);
 }
 
-auto ParserHandleBraceExpressionParameterAsValue(ParserContext& context)
-    -> void {
-  ParserHandleBraceExpressionParameter(
-      context, ParserState::BraceExpressionParameterAfterDesignatorAsValue,
-      ParserState::BraceExpressionParameterFinishAsValue);
+auto HandleBraceExpressionParameterAsValue(Context& context) -> void {
+  HandleBraceExpressionParameter(
+      context, State::BraceExpressionParameterAfterDesignatorAsValue,
+      State::BraceExpressionParameterFinishAsValue);
 }
 
-auto ParserHandleBraceExpressionParameterAsUnknown(ParserContext& context)
-    -> void {
-  ParserHandleBraceExpressionParameter(
-      context, ParserState::BraceExpressionParameterAfterDesignatorAsUnknown,
-      ParserState::BraceExpressionParameterFinishAsUnknown);
+auto HandleBraceExpressionParameterAsUnknown(Context& context) -> void {
+  HandleBraceExpressionParameter(
+      context, State::BraceExpressionParameterAfterDesignatorAsUnknown,
+      State::BraceExpressionParameterFinishAsUnknown);
 }
 
 // Handles BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown).
-static auto ParserHandleBraceExpressionParameterAfterDesignator(
-    ParserContext& context, ParserState param_finish_state) -> void {
+static auto HandleBraceExpressionParameterAfterDesignator(
+    Context& context, State param_finish_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -105,33 +102,29 @@ static auto ParserHandleBraceExpressionParameterAfterDesignator(
   } else if (context.PositionIs(TokenKind::Equal)) {
     is_type = false;
   } else {
-    ParserHandleBraceExpressionParameterError(context, state,
-                                              param_finish_state);
+    HandleBraceExpressionParameterError(context, state, param_finish_state);
     return;
   }
 
   // If we're changing from unknown, update the related finish states.
-  if (param_finish_state ==
-      ParserState::BraceExpressionParameterFinishAsUnknown) {
+  if (param_finish_state == State::BraceExpressionParameterFinishAsUnknown) {
     auto finish_state = context.PopState();
-    CARBON_CHECK(finish_state.state ==
-                 ParserState::BraceExpressionFinishAsUnknown);
+    CARBON_CHECK(finish_state.state == State::BraceExpressionFinishAsUnknown);
     if (is_type) {
-      finish_state.state = ParserState::BraceExpressionFinishAsType;
-      param_finish_state = ParserState::BraceExpressionParameterFinishAsType;
+      finish_state.state = State::BraceExpressionFinishAsType;
+      param_finish_state = State::BraceExpressionParameterFinishAsType;
     } else {
-      finish_state.state = ParserState::BraceExpressionFinishAsValue;
-      param_finish_state = ParserState::BraceExpressionParameterFinishAsValue;
+      finish_state.state = State::BraceExpressionFinishAsValue;
+      param_finish_state = State::BraceExpressionParameterFinishAsValue;
     }
     context.PushState(finish_state);
   }
 
   auto want_param_finish_state =
-      is_type ? ParserState::BraceExpressionParameterFinishAsType
-              : ParserState::BraceExpressionParameterFinishAsValue;
+      is_type ? State::BraceExpressionParameterFinishAsType
+              : State::BraceExpressionParameterFinishAsValue;
   if (param_finish_state != want_param_finish_state) {
-    ParserHandleBraceExpressionParameterError(context, state,
-                                              param_finish_state);
+    HandleBraceExpressionParameterError(context, state, param_finish_state);
     return;
   }
 
@@ -140,90 +133,83 @@ static auto ParserHandleBraceExpressionParameterAfterDesignator(
   state.state = param_finish_state;
   state.token = context.Consume();
   context.PushState(state);
-  context.PushState(ParserState::Expression);
+  context.PushState(State::Expression);
 }
 
-auto ParserHandleBraceExpressionParameterAfterDesignatorAsType(
-    ParserContext& context) -> void {
-  ParserHandleBraceExpressionParameterAfterDesignator(
-      context, ParserState::BraceExpressionParameterFinishAsType);
+auto HandleBraceExpressionParameterAfterDesignatorAsType(Context& context)
+    -> void {
+  HandleBraceExpressionParameterAfterDesignator(
+      context, State::BraceExpressionParameterFinishAsType);
 }
 
-auto ParserHandleBraceExpressionParameterAfterDesignatorAsValue(
-    ParserContext& context) -> void {
-  ParserHandleBraceExpressionParameterAfterDesignator(
-      context, ParserState::BraceExpressionParameterFinishAsValue);
+auto HandleBraceExpressionParameterAfterDesignatorAsValue(Context& context)
+    -> void {
+  HandleBraceExpressionParameterAfterDesignator(
+      context, State::BraceExpressionParameterFinishAsValue);
 }
 
-auto ParserHandleBraceExpressionParameterAfterDesignatorAsUnknown(
-    ParserContext& context) -> void {
-  ParserHandleBraceExpressionParameterAfterDesignator(
-      context, ParserState::BraceExpressionParameterFinishAsUnknown);
+auto HandleBraceExpressionParameterAfterDesignatorAsUnknown(Context& context)
+    -> void {
+  HandleBraceExpressionParameterAfterDesignator(
+      context, State::BraceExpressionParameterFinishAsUnknown);
 }
 
 // Handles BraceExpressionParameterFinishAs(Type|Value|Unknown).
-static auto ParserHandleBraceExpressionParameterFinish(ParserContext& context,
-                                                       ParseNodeKind node_kind,
-                                                       ParserState param_state)
-    -> void {
+static auto HandleBraceExpressionParameterFinish(Context& context,
+                                                 NodeKind node_kind,
+                                                 State param_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
-    context.AddLeafNode(ParseNodeKind::StructFieldUnknown, state.token,
+    context.AddLeafNode(NodeKind::StructFieldUnknown, state.token,
                         /*has_error=*/true);
   } else {
     context.AddNode(node_kind, state.token, state.subtree_start,
                     /*has_error=*/false);
   }
 
-  if (context.ConsumeListToken(ParseNodeKind::StructComma,
+  if (context.ConsumeListToken(NodeKind::StructComma,
                                TokenKind::CloseCurlyBrace, state.has_error) ==
-      ParserContext::ListTokenKind::Comma) {
+      Context::ListTokenKind::Comma) {
     context.PushState(param_state);
   }
 }
 
-auto ParserHandleBraceExpressionParameterFinishAsType(ParserContext& context)
-    -> void {
-  ParserHandleBraceExpressionParameterFinish(
-      context, ParseNodeKind::StructFieldType,
-      ParserState::BraceExpressionParameterAsType);
+auto HandleBraceExpressionParameterFinishAsType(Context& context) -> void {
+  HandleBraceExpressionParameterFinish(context, NodeKind::StructFieldType,
+                                       State::BraceExpressionParameterAsType);
 }
 
-auto ParserHandleBraceExpressionParameterFinishAsValue(ParserContext& context)
-    -> void {
-  ParserHandleBraceExpressionParameterFinish(
-      context, ParseNodeKind::StructFieldValue,
-      ParserState::BraceExpressionParameterAsValue);
+auto HandleBraceExpressionParameterFinishAsValue(Context& context) -> void {
+  HandleBraceExpressionParameterFinish(context, NodeKind::StructFieldValue,
+                                       State::BraceExpressionParameterAsValue);
 }
 
-auto ParserHandleBraceExpressionParameterFinishAsUnknown(ParserContext& context)
-    -> void {
-  ParserHandleBraceExpressionParameterFinish(
-      context, ParseNodeKind::StructFieldUnknown,
-      ParserState::BraceExpressionParameterAsUnknown);
+auto HandleBraceExpressionParameterFinishAsUnknown(Context& context) -> void {
+  HandleBraceExpressionParameterFinish(
+      context, NodeKind::StructFieldUnknown,
+      State::BraceExpressionParameterAsUnknown);
 }
 
 // Handles BraceExpressionFinishAs(Type|Value|Unknown).
-static auto ParserHandleBraceExpressionFinish(ParserContext& context,
-                                              ParseNodeKind node_kind) -> void {
+static auto HandleBraceExpressionFinish(Context& context, NodeKind node_kind)
+    -> void {
   auto state = context.PopState();
 
   context.AddNode(node_kind, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 
-auto ParserHandleBraceExpressionFinishAsType(ParserContext& context) -> void {
-  ParserHandleBraceExpressionFinish(context, ParseNodeKind::StructTypeLiteral);
+auto HandleBraceExpressionFinishAsType(Context& context) -> void {
+  HandleBraceExpressionFinish(context, NodeKind::StructTypeLiteral);
 }
 
-auto ParserHandleBraceExpressionFinishAsValue(ParserContext& context) -> void {
-  ParserHandleBraceExpressionFinish(context, ParseNodeKind::StructLiteral);
+auto HandleBraceExpressionFinishAsValue(Context& context) -> void {
+  HandleBraceExpressionFinish(context, NodeKind::StructLiteral);
 }
 
-auto ParserHandleBraceExpressionFinishAsUnknown(ParserContext& context)
-    -> void {
-  ParserHandleBraceExpressionFinish(context, ParseNodeKind::StructLiteral);
+auto HandleBraceExpressionFinishAsUnknown(Context& context) -> void {
+  HandleBraceExpressionFinish(context, NodeKind::StructLiteral);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

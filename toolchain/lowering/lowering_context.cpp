@@ -12,12 +12,12 @@
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
-namespace Carbon {
+namespace Carbon::Lower {
 
-LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
-                                 llvm::StringRef module_name,
-                                 const SemIR::File& semantics_ir,
-                                 llvm::raw_ostream* vlog_stream)
+FileContext::FileContext(llvm::LLVMContext& llvm_context,
+                         llvm::StringRef module_name,
+                         const SemIR::File& semantics_ir,
+                         llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       semantics_ir_(&semantics_ir),
@@ -27,7 +27,7 @@ LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
 }
 
 // TODO: Move this to lower_to_llvm.cpp.
-auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
+auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
   // Lower types.
@@ -55,7 +55,7 @@ auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
   return std::move(llvm_module_);
 }
 
-auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
+auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = semantics_ir().GetFunction(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
@@ -129,7 +129,7 @@ auto LoweringContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   return llvm_function;
 }
 
-auto LoweringContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
+auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     -> void {
   const auto& function = semantics_ir().GetFunction(function_id);
   const auto& body_block_ids = function.body_block_ids;
@@ -139,7 +139,7 @@ auto LoweringContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 
   llvm::Function* llvm_function = GetFunction(function_id);
-  LoweringFunctionContext function_lowering(*this, llvm_function);
+  FunctionContext function_lowering(*this, llvm_function);
 
   const bool has_return_slot = function.return_slot_id.is_valid();
 
@@ -177,10 +177,12 @@ auto LoweringContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     for (const auto& node_id : semantics_ir().GetNodeBlock(block_id)) {
       auto node = semantics_ir().GetNode(node_id);
       CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
+      // clang warns on unhandled enum values; clang-tidy is incorrect here.
+      // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
       switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name)                    \
-  case SemIR::NodeKind::Name:                               \
-    LoweringHandle##Name(function_lowering, node_id, node); \
+#define CARBON_SEMANTICS_NODE_KIND(Name)            \
+  case SemIR::NodeKind::Name:                       \
+    Handle##Name(function_lowering, node_id, node); \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
       }
@@ -188,7 +190,7 @@ auto LoweringContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 }
 
-auto LoweringContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
+auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
   switch (node_id.index) {
     case SemIR::BuiltinKind::FloatingPointType.AsInt():
       // TODO: Handle different sizes.
@@ -200,6 +202,9 @@ auto LoweringContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       // TODO: We may want to have different representations for `bool` storage
       // (`i8`) versus for `bool` values (`i1`).
       return llvm::Type::getInt1Ty(*llvm_context_);
+    default:
+      // Handled below.
+      break;
   }
 
   auto node = semantics_ir_->GetNode(node_id);
@@ -247,4 +252,4 @@ auto LoweringContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
   }
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lower

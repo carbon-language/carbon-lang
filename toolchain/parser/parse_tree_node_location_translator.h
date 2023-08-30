@@ -7,25 +7,24 @@
 
 #include "toolchain/parser/parse_tree.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-class ParseTreeNodeLocationTranslator
-    : public DiagnosticLocationTranslator<ParseTree::Node> {
+class NodeLocationTranslator : public DiagnosticLocationTranslator<Node> {
  public:
-  explicit ParseTreeNodeLocationTranslator(const TokenizedBuffer* tokens,
-                                           const ParseTree* parse_tree)
+  explicit NodeLocationTranslator(const TokenizedBuffer* tokens,
+                                  const Tree* parse_tree)
       : token_translator_(tokens), parse_tree_(parse_tree) {}
 
   // Map the given token into a diagnostic location.
-  auto GetLocation(ParseTree::Node node) -> DiagnosticLocation override {
+  auto GetLocation(Node node) -> DiagnosticLocation override {
     return token_translator_.GetLocation(parse_tree_->node_token(node));
   }
 
  private:
   TokenizedBuffer::TokenLocationTranslator token_translator_;
-  const ParseTree* parse_tree_;
+  const Tree* parse_tree_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSER_PARSE_TREE_NODE_LOCATION_TRANSLATOR_H_

@@ -16,6 +16,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/value.h"
 #include "explorer/base/arena.h"
+#include "explorer/base/print_as_id.h"
 #include "explorer/base/source_location.h"
 #include "explorer/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"

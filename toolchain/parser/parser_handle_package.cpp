@@ -4,23 +4,22 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParserHandlePackage(ParserContext& context) -> void {
+auto HandlePackage(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddLeafNode(ParseNodeKind::PackageIntroducer, context.Consume());
+  context.AddLeafNode(NodeKind::PackageIntroducer, context.Consume());
 
   auto exit_on_parse_error = [&]() {
     auto semi_token = context.SkipPastLikelyEnd(state.token);
-    return context.AddNode(ParseNodeKind::PackageDirective,
+    return context.AddNode(NodeKind::PackageDirective,
                            semi_token ? *semi_token : state.token,
                            state.subtree_start,
                            /*has_error=*/true);
   };
 
-  if (!context.ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
-                                       ParseNodeKind::Name)) {
+  if (!context.ConsumeAndAddLeafNodeIf(TokenKind::Identifier, NodeKind::Name)) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
                       "Expected identifier after `package`.");
     context.emitter().Emit(*context.position(), ExpectedIdentifierAfterPackage);
@@ -33,7 +32,7 @@ auto ParserHandlePackage(ParserContext& context) -> void {
     auto library_start = context.tree().size();
 
     if (!context.ConsumeAndAddLeafNodeIf(TokenKind::StringLiteral,
-                                         ParseNodeKind::Literal)) {
+                                         NodeKind::Literal)) {
       CARBON_DIAGNOSTIC(
           ExpectedLibraryName, Error,
           "Expected a string literal to specify the library name.");
@@ -42,8 +41,7 @@ auto ParserHandlePackage(ParserContext& context) -> void {
       return;
     }
 
-    context.AddNode(ParseNodeKind::PackageLibrary, *library_token,
-                    library_start,
+    context.AddNode(NodeKind::PackageLibrary, *library_token, library_start,
                     /*has_error=*/false);
     library_parsed = true;
   }
@@ -51,11 +49,11 @@ auto ParserHandlePackage(ParserContext& context) -> void {
   switch (auto api_or_impl_token =
               context.tokens().GetKind(*(context.position()))) {
     case TokenKind::Api: {
-      context.AddLeafNode(ParseNodeKind::PackageApi, context.Consume());
+      context.AddLeafNode(NodeKind::PackageApi, context.Consume());
       break;
     }
     case TokenKind::Impl: {
-      context.AddLeafNode(ParseNodeKind::PackageImpl, context.Consume());
+      context.AddLeafNode(NodeKind::PackageImpl, context.Consume());
       break;
     }
     default: {
@@ -82,9 +80,9 @@ auto ParserHandlePackage(ParserContext& context) -> void {
     return;
   }
 
-  context.AddNode(ParseNodeKind::PackageDirective, context.Consume(),
+  context.AddNode(NodeKind::PackageDirective, context.Consume(),
                   state.subtree_start,
                   /*has_error=*/false);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

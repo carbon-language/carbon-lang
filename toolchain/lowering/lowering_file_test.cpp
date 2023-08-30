@@ -10,7 +10,7 @@
 namespace Carbon::Testing {
 namespace {
 
-class LoweringFileTest : public DriverFileTestBase {
+class LowerFileTest : public DriverFileTestBase {
  public:
   using DriverFileTestBase::DriverFileTestBase;
 
@@ -21,6 +21,6 @@ class LoweringFileTest : public DriverFileTestBase {
 
 }  // namespace
 
-CARBON_FILE_TEST_FACTORY(LoweringFileTest);
+CARBON_FILE_TEST_FACTORY(LowerFileTest);
 
 }  // namespace Carbon::Testing

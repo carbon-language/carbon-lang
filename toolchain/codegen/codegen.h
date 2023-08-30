@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_
 #define CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_
 
-#include <cstdint>
-
 #include "llvm/IR/Module.h"
 #include "llvm/Target/TargetMachine.h"
 

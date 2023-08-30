@@ -6,7 +6,7 @@
 
 namespace Carbon::Check {
 
-auto HandleLiteral(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case TokenKind::False:

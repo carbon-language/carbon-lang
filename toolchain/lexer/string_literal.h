@@ -38,7 +38,11 @@ class LexedStringLiteral {
   [[nodiscard]] auto is_terminated() const -> bool { return is_terminated_; }
 
  private:
-  enum MultiLineKind { NotMultiLine, MultiLine, MultiLineWithDoubleQuotes };
+  enum MultiLineKind : int8_t {
+    NotMultiLine,
+    MultiLine,
+    MultiLineWithDoubleQuotes
+  };
 
   struct Introducer;
 

@@ -8,8 +8,6 @@
 #include <gmock/gmock.h>
 
 #include "common/check.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/YAMLParser.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 

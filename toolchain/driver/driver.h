@@ -5,15 +5,11 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_DRIVER_H_
 #define CARBON_TOOLCHAIN_DRIVER_DRIVER_H_
 
-#include <cstdint>
-
 #include "common/command_line.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon {
 

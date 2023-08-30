@@ -23,12 +23,12 @@ class Context {
  public:
   // Stores references for work.
   explicit Context(const TokenizedBuffer& tokens,
-                   DiagnosticEmitter<ParseTree::Node>& emitter,
-                   const ParseTree& parse_tree, SemIR::File& semantics,
+                   DiagnosticEmitter<Parse::Node>& emitter,
+                   const Parse::Tree& parse_tree, SemIR::File& semantics,
                    llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(ParseTree::Node parse_node, std::string label) -> bool;
+  auto TODO(Parse::Node parse_node, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
@@ -42,24 +42,24 @@ class Context {
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Node as the
   // result.
-  auto AddNodeAndPush(ParseTree::Node parse_node, SemIR::Node node) -> void;
+  auto AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(ParseTree::Node name_node, SemIR::StringId name_id,
+  auto AddNameToLookup(Parse::Node name_node, SemIR::StringId name_id,
                        SemIR::NodeId target_id) -> void;
 
   // Performs name lookup in a specified scope, returning the referenced node.
   // If scope_id is invalid, uses the current contextual scope.
-  auto LookupName(ParseTree::Node parse_node, SemIR::StringId name_id,
+  auto LookupName(Parse::Node parse_node, SemIR::StringId name_id,
                   SemIR::NameScopeId scope_id, bool print_diagnostics)
       -> SemIR::NodeId;
 
   // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(ParseTree::Node parse_node,
-                             SemIR::NodeId prev_def_id) -> void;
+  auto DiagnoseDuplicateName(Parse::Node parse_node, SemIR::NodeId prev_def_id)
+      -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(ParseTree::Node parse_node, SemIR::StringId name_id)
+  auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::StringId name_id)
       -> void;
 
   // Pushes a new scope onto scope_stack_.
@@ -71,20 +71,19 @@ class Context {
   // Adds a `Branch` node branching to a new node block, and returns the ID of
   // the new block. All paths to the branch target must go through the current
   // block, though not necessarily through this branch.
-  auto AddDominatedBlockAndBranch(ParseTree::Node parse_node)
-      -> SemIR::NodeBlockId;
+  auto AddDominatedBlockAndBranch(Parse::Node parse_node) -> SemIR::NodeBlockId;
 
   // Adds a `Branch` node branching to a new node block with a value, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block.
-  auto AddDominatedBlockAndBranchWithArg(ParseTree::Node parse_node,
+  auto AddDominatedBlockAndBranchWithArg(Parse::Node parse_node,
                                          SemIR::NodeId arg_id)
       -> SemIR::NodeBlockId;
 
   // Adds a `BranchIf` node branching to a new node block, and returns the ID
   // of the new block. All paths to the branch target must go through the
   // current block.
-  auto AddDominatedBlockAndBranchIf(ParseTree::Node parse_node,
+  auto AddDominatedBlockAndBranchIf(Parse::Node parse_node,
                                     SemIR::NodeId cond_id)
       -> SemIR::NodeBlockId;
 
@@ -92,15 +91,15 @@ class Context {
   // reconvergence of control flow, and pushes the new block onto the node
   // block stack.
   auto AddConvergenceBlockAndPush(
-      ParseTree::Node parse_node,
-      std::initializer_list<SemIR::NodeBlockId> blocks) -> void;
+      Parse::Node parse_node, std::initializer_list<SemIR::NodeBlockId> blocks)
+      -> void;
 
   // Adds branches from the given list of blocks and values to a new block, for
   // reconvergence of control flow with a result value, and pushes the new
   // block onto the node block stack. Returns a node referring to the result
   // value.
   auto AddConvergenceBlockWithArgAndPush(
-      ParseTree::Node parse_node,
+      Parse::Node parse_node,
       std::initializer_list<std::pair<SemIR::NodeBlockId, SemIR::NodeId>>
           blocks_and_args) -> SemIR::NodeId;
 
@@ -124,18 +123,18 @@ class Context {
   auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
 
   // Performs initialization of `target_id` from `value_id`.
-  auto Initialize(ParseTree::Node parse_node, SemIR::NodeId target_id,
+  auto Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                   SemIR::NodeId value_id) -> void;
 
   // Converts `value_id` to a value expression of type `type_id`.
-  auto ConvertToValueOfType(ParseTree::Node parse_node, SemIR::NodeId value_id,
+  auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
                             SemIR::TypeId type_id) -> SemIR::NodeId {
     return ConvertToValueExpression(
         ImplicitAsRequired(parse_node, value_id, type_id));
   }
 
   // Converts `value_id` to a value expression of type `bool`.
-  auto ConvertToBoolValue(ParseTree::Node parse_node, SemIR::NodeId value_id)
+  auto ConvertToBoolValue(Parse::Node parse_node, SemIR::NodeId value_id)
       -> SemIR::NodeId {
     return ConvertToValueOfType(
         parse_node, value_id, CanonicalizeType(SemIR::NodeId::BuiltinBoolType));
@@ -152,15 +151,14 @@ class Context {
   // future we may want to remember the right implicit conversions to do for
   // valid cases in order to efficiently handle generics.
   auto ImplicitAsForArgs(
-      SemIR::NodeBlockId arg_refs_id, ParseTree::Node param_parse_node,
+      SemIR::NodeBlockId arg_refs_id, Parse::Node param_parse_node,
       SemIR::NodeBlockId param_refs_id,
-      DiagnosticEmitter<ParseTree::Node>::DiagnosticBuilder* diagnostic)
-      -> bool;
+      DiagnosticEmitter<Parse::Node>::DiagnosticBuilder* diagnostic) -> bool;
 
   // Runs ImplicitAsImpl for a situation where a cast is required, returning the
   // updated `value_id`. Prints a diagnostic and returns an Error if
   // unsupported.
-  auto ImplicitAsRequired(ParseTree::Node parse_node, SemIR::NodeId value_id,
+  auto ImplicitAsRequired(Parse::Node parse_node, SemIR::NodeId value_id,
                           SemIR::TypeId as_type_id) -> SemIR::NodeId;
 
   // Canonicalizes a type which is tracked as a single node.
@@ -174,22 +172,22 @@ class Context {
   // Individual struct type fields aren't canonicalized because they may have
   // name conflicts or other diagnostics during creation, which can use the
   // parse node.
-  auto CanonicalizeStructType(ParseTree::Node parse_node,
+  auto CanonicalizeStructType(Parse::Node parse_node,
                               SemIR::NodeBlockId refs_id) -> SemIR::TypeId;
 
   // Handles canonicalization of tuple types. This may create a new tuple type
   // if the `type_ids` doesn't match an existing tuple type.
-  auto CanonicalizeTupleType(ParseTree::Node parse_node,
+  auto CanonicalizeTupleType(Parse::Node parse_node,
                              llvm::SmallVector<SemIR::TypeId>&& type_ids)
       -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
-  auto GetPointerType(ParseTree::Node parse_node, SemIR::TypeId pointee_type_id)
+  auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)
       -> SemIR::TypeId;
 
   // Converts an expression for use as a type.
   // TODO: This should eventually return a type ID.
-  auto ExpressionAsType(ParseTree::Node parse_node, SemIR::NodeId value_id)
+  auto ExpressionAsType(Parse::Node parse_node, SemIR::NodeId value_id)
       -> SemIR::TypeId {
     auto node = semantics_ir_->GetNode(value_id);
     if (node.kind() == SemIR::NodeKind::StubReference) {
@@ -216,7 +214,7 @@ class Context {
   // Detects whether there's an entry to push. On return, the top of
   // node_stack_ will be start_kind, and the caller should do type-specific
   // processing. Returns refs_id.
-  auto ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
+  auto ParamOrArgEnd(bool for_args, Parse::NodeKind start_kind)
       -> SemIR::NodeBlockId;
 
   // Saves a parameter from the top block in node_stack_ to the top block in
@@ -231,9 +229,9 @@ class Context {
 
   auto tokens() -> const TokenizedBuffer& { return *tokens_; }
 
-  auto emitter() -> DiagnosticEmitter<ParseTree::Node>& { return *emitter_; }
+  auto emitter() -> DiagnosticEmitter<Parse::Node>& { return *emitter_; }
 
-  auto parse_tree() -> const ParseTree& { return *parse_tree_; }
+  auto parse_tree() -> const Parse::Tree& { return *parse_tree_; }
 
   auto semantics_ir() -> SemIR::File& { return *semantics_ir_; }
 
@@ -255,7 +253,7 @@ class Context {
 
  private:
   // For CanImplicitAs, the detected conversion to apply.
-  enum ImplicitAsKind {
+  enum ImplicitAsKind : int8_t {
     // Incompatible types.
     Incompatible,
     // No conversion required.
@@ -295,7 +293,7 @@ class Context {
       -> SemIR::NodeId;
 
   // Marks the initializer `init_id` as initializing `target_id`.
-  auto MarkInitializerFor(SemIR::NodeId target_id, SemIR::NodeId init_id)
+  auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
       -> void;
 
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
@@ -336,10 +334,10 @@ class Context {
   const TokenizedBuffer* tokens_;
 
   // Handles diagnostics.
-  DiagnosticEmitter<ParseTree::Node>* emitter_;
+  DiagnosticEmitter<Parse::Node>* emitter_;
 
   // The file's parse tree.
-  const ParseTree* parse_tree_;
+  const Parse::Tree* parse_tree_;
 
   // The SemIR::File being added to.
   SemIR::File* semantics_ir_;
@@ -398,7 +396,7 @@ class Context {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, ParseTree::Node parse_node)->bool;
+  auto Handle##Name(Context& context, Parse::Node parse_node)->bool;
 #include "toolchain/parser/parse_node_kind.def"
 
 }  // namespace Carbon::Check

@@ -4,8 +4,6 @@
 
 #include "toolchain/lexer/lex_helpers.h"
 
-#include "llvm/Support/FormatVariadic.h"
-
 namespace Carbon {
 
 auto CanLexInteger(DiagnosticEmitter<const char*>& emitter,

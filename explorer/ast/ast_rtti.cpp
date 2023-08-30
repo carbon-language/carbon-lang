@@ -15,6 +15,5 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(AstRttiNodeKind) = {
   CARBON_ENUM_NAME_FUNCTION(C##Kind) {                                 \
     return AstRttiNodeKind(static_cast<const C##Kind&>(*this)).name(); \
   }
-CARBON_AST_FOR_EACH_ABSTRACT_CLASS(DEFINE_NAME_FUNCTION)
 
 }  // namespace Carbon

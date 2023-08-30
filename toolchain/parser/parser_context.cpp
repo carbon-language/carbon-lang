@@ -7,13 +7,14 @@
 #include <optional>
 
 #include "common/check.h"
+#include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_tree.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 // A relative location for characters in errors.
 enum class RelativeLocation : int8_t {
@@ -39,9 +40,9 @@ static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
   return out;
 }
 
-ParserContext::ParserContext(ParseTree& tree, TokenizedBuffer& tokens,
-                             TokenDiagnosticEmitter& emitter,
-                             llvm::raw_ostream* vlog_stream)
+Context::Context(Tree& tree, TokenizedBuffer& tokens,
+                 TokenDiagnosticEmitter& emitter,
+                 llvm::raw_ostream* vlog_stream)
     : tree_(&tree),
       tokens_(&tokens),
       emitter_(&emitter),
@@ -55,28 +56,27 @@ ParserContext::ParserContext(ParseTree& tree, TokenizedBuffer& tokens,
       << tokens_->GetKind(*end_);
 }
 
-auto ParserContext::AddLeafNode(ParseNodeKind kind,
-                                TokenizedBuffer::Token token, bool has_error)
-    -> void {
+auto Context::AddLeafNode(NodeKind kind, TokenizedBuffer::Token token,
+                          bool has_error) -> void {
   tree_->node_impls_.push_back(
-      ParseTree::NodeImpl(kind, has_error, token, /*subtree_size=*/1));
+      Tree::NodeImpl(kind, has_error, token, /*subtree_size=*/1));
   if (has_error) {
     tree_->has_errors_ = true;
   }
 }
 
-auto ParserContext::AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
-                            int subtree_start, bool has_error) -> void {
+auto Context::AddNode(NodeKind kind, TokenizedBuffer::Token token,
+                      int subtree_start, bool has_error) -> void {
   int subtree_size = tree_->size() - subtree_start + 1;
   tree_->node_impls_.push_back(
-      ParseTree::NodeImpl(kind, has_error, token, subtree_size));
+      Tree::NodeImpl(kind, has_error, token, subtree_size));
   if (has_error) {
     tree_->has_errors_ = true;
   }
 }
 
-auto ParserContext::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
-                                           ParseNodeKind start_kind)
+auto Context::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
+                                     NodeKind start_kind)
     -> std::optional<TokenizedBuffer::Token> {
   if (auto open_paren = ConsumeIf(TokenKind::OpenParen)) {
     AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
@@ -91,9 +91,9 @@ auto ParserContext::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
   }
 }
 
-auto ParserContext::ConsumeAndAddCloseSymbol(
-    TokenizedBuffer::Token expected_open, StateStackEntry state,
-    ParseNodeKind close_kind) -> void {
+auto Context::ConsumeAndAddCloseSymbol(TokenizedBuffer::Token expected_open,
+                                       StateStackEntry state,
+                                       NodeKind close_kind) -> void {
   TokenKind open_token_kind = tokens().GetKind(expected_open);
 
   if (!open_token_kind.is_opening_symbol()) {
@@ -113,8 +113,8 @@ auto ParserContext::ConsumeAndAddCloseSymbol(
   }
 }
 
-auto ParserContext::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
-                                            ParseNodeKind node_kind) -> bool {
+auto Context::ConsumeAndAddLeafNodeIf(TokenKind token_kind, NodeKind node_kind)
+    -> bool {
   auto token = ConsumeIf(token_kind);
   if (!token) {
     return false;
@@ -124,13 +124,13 @@ auto ParserContext::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
   return true;
 }
 
-auto ParserContext::ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token {
+auto Context::ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token {
   CARBON_CHECK(PositionIs(kind))
       << "Required " << kind << ", found " << PositionKind();
   return Consume();
 }
 
-auto ParserContext::ConsumeIf(TokenKind kind)
+auto Context::ConsumeIf(TokenKind kind)
     -> std::optional<TokenizedBuffer::Token> {
   if (!PositionIs(kind)) {
     return std::nullopt;
@@ -138,17 +138,17 @@ auto ParserContext::ConsumeIf(TokenKind kind)
   return Consume();
 }
 
-auto ParserContext::ConsumeIfPatternKeyword(TokenKind keyword_token,
-                                            ParserState keyword_state,
-                                            int subtree_start) -> void {
+auto Context::ConsumeIfPatternKeyword(TokenKind keyword_token,
+                                      State keyword_state, int subtree_start)
+    -> void {
   if (auto token = ConsumeIf(keyword_token)) {
-    PushState(ParserContext::StateStackEntry(
+    PushState(Context::StateStackEntry(
         keyword_state, PrecedenceGroup::ForTopLevelExpression(),
         PrecedenceGroup::ForTopLevelExpression(), *token, subtree_start));
   }
 }
 
-auto ParserContext::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
+auto Context::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
     -> std::optional<TokenizedBuffer::Token> {
   auto new_position = position_;
   while (true) {
@@ -173,7 +173,7 @@ auto ParserContext::FindNextOf(std::initializer_list<TokenKind> desired_kinds)
   }
 }
 
-auto ParserContext::SkipMatchingGroup() -> bool {
+auto Context::SkipMatchingGroup() -> bool {
   if (!PositionKind().is_opening_symbol()) {
     return false;
   }
@@ -183,7 +183,7 @@ auto ParserContext::SkipMatchingGroup() -> bool {
   return true;
 }
 
-auto ParserContext::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
+auto Context::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
     -> std::optional<TokenizedBuffer::Token> {
   if (position_ == end_) {
     return std::nullopt;
@@ -230,7 +230,7 @@ auto ParserContext::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root)
   return std::nullopt;
 }
 
-auto ParserContext::SkipTo(TokenizedBuffer::Token t) -> void {
+auto Context::SkipTo(TokenizedBuffer::Token t) -> void {
   CARBON_CHECK(t >= *position_) << "Tried to skip backwards from " << position_
                                 << " to " << TokenizedBuffer::TokenIterator(t);
   position_ = TokenizedBuffer::TokenIterator(t);
@@ -263,7 +263,7 @@ static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
                         TokenKind::Semi, TokenKind::Colon});
 }
 
-auto ParserContext::IsLexicallyValidInfixOperator() -> bool {
+auto Context::IsLexicallyValidInfixOperator() -> bool {
   CARBON_CHECK(position_ != end_) << "Expected an operator token.";
 
   bool leading_space = tokens().HasLeadingWhitespace(*position_);
@@ -291,7 +291,7 @@ auto ParserContext::IsLexicallyValidInfixOperator() -> bool {
   return true;
 }
 
-auto ParserContext::IsTrailingOperatorInfix() -> bool {
+auto Context::IsTrailingOperatorInfix() -> bool {
   if (position_ == end_) {
     return false;
   }
@@ -315,7 +315,7 @@ auto ParserContext::IsTrailingOperatorInfix() -> bool {
   return false;
 }
 
-auto ParserContext::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
+auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   if (!PositionKind().is_symbol()) {
     // Whitespace-based fixity rules only apply to symbolic operators.
     return;
@@ -359,9 +359,8 @@ auto ParserContext::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   }
 }
 
-auto ParserContext::ConsumeListToken(ParseNodeKind comma_kind,
-                                     TokenKind close_kind,
-                                     bool already_has_error) -> ListTokenKind {
+auto Context::ConsumeListToken(NodeKind comma_kind, TokenKind close_kind,
+                               bool already_has_error) -> ListTokenKind {
   if (!PositionIs(TokenKind::Comma) && !PositionIs(close_kind)) {
     // Don't error a second time on the same element.
     if (!already_has_error) {
@@ -390,19 +389,19 @@ auto ParserContext::ConsumeListToken(ParseNodeKind comma_kind,
   }
 }
 
-auto ParserContext::GetDeclarationContext() -> DeclarationContext {
+auto Context::GetDeclarationContext() -> DeclarationContext {
   // i == 0 is the file-level DeclarationScopeLoop. Additionally, i == 1 can be
   // skipped because it will never be a DeclarationScopeLoop.
   for (int i = state_stack_.size() - 1; i > 1; --i) {
     // The declaration context is always the state _above_ a
     // DeclarationScopeLoop.
-    if (state_stack_[i].state == ParserState::DeclarationScopeLoop) {
+    if (state_stack_[i].state == State::DeclarationScopeLoop) {
       switch (state_stack_[i - 1].state) {
-        case ParserState::TypeDefinitionFinishAsClass:
+        case State::TypeDefinitionFinishAsClass:
           return DeclarationContext::Class;
-        case ParserState::TypeDefinitionFinishAsInterface:
+        case State::TypeDefinitionFinishAsInterface:
           return DeclarationContext::Interface;
-        case ParserState::TypeDefinitionFinishAsNamedConstraint:
+        case State::TypeDefinitionFinishAsNamedConstraint:
           return DeclarationContext::NamedConstraint;
         default:
           llvm_unreachable("Missing handling for a declaration scope");
@@ -410,14 +409,13 @@ auto ParserContext::GetDeclarationContext() -> DeclarationContext {
     }
   }
   CARBON_CHECK(!state_stack_.empty() &&
-               state_stack_[0].state == ParserState::DeclarationScopeLoop);
+               state_stack_[0].state == State::DeclarationScopeLoop);
   return DeclarationContext::File;
 }
 
-auto ParserContext::RecoverFromDeclarationError(StateStackEntry state,
-                                                ParseNodeKind parse_node_kind,
-                                                bool skip_past_likely_end)
-    -> void {
+auto Context::RecoverFromDeclarationError(StateStackEntry state,
+                                          NodeKind parse_node_kind,
+                                          bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {
     if (auto semi = SkipPastLikelyEnd(token)) {
@@ -428,15 +426,14 @@ auto ParserContext::RecoverFromDeclarationError(StateStackEntry state,
           /*has_error=*/true);
 }
 
-auto ParserContext::EmitExpectedDeclarationSemi(TokenKind expected_kind)
-    -> void {
+auto Context::EmitExpectedDeclarationSemi(TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclarationSemi, Error,
                     "`{0}` declarations must end with a `;`.", TokenKind);
   emitter().Emit(*position(), ExpectedDeclarationSemi, expected_kind);
 }
 
-auto ParserContext::EmitExpectedDeclarationSemiOrDefinition(
-    TokenKind expected_kind) -> void {
+auto Context::EmitExpectedDeclarationSemiOrDefinition(TokenKind expected_kind)
+    -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclarationSemiOrDefinition, Error,
                     "`{0}` declarations must either end with a `;` or "
                     "have a `{{ ... }` block for a definition.",
@@ -445,7 +442,7 @@ auto ParserContext::EmitExpectedDeclarationSemiOrDefinition(
                  expected_kind);
 }
 
-auto ParserContext::PrintForStackDump(llvm::raw_ostream& output) const -> void {
+auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   output << "Parser stack:\n";
   for (auto [i, entry] : llvm::enumerate(state_stack_)) {
     output << "\t" << i << ".\t" << entry.state;
@@ -455,12 +452,12 @@ auto ParserContext::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   PrintTokenForStackDump(output, *position_);
 }
 
-auto ParserContext::PrintTokenForStackDump(llvm::raw_ostream& output,
-                                           TokenizedBuffer::Token token) const
+auto Context::PrintTokenForStackDump(llvm::raw_ostream& output,
+                                     TokenizedBuffer::Token token) const
     -> void {
   output << " @ " << tokens_->GetLineNumber(tokens_->GetLine(token)) << ":"
          << tokens_->GetColumnNumber(token) << ": token " << token << " : "
          << tokens_->GetKind(token) << "\n";
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

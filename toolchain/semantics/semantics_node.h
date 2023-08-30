@@ -233,16 +233,13 @@ class Node {
   // Factory base classes are private, then used for public classes. This class
   // has two public and two private sections to prevent accidents.
  private:
-  // Factory templates need to use the raw enum instead of the class wrapper.
-  using KindTemplateEnum = Internal::SemanticsNodeKindRawEnum;
-
   // Provides Make and Get to support 0, 1, or 2 arguments for a Node.
   // These are protected so that child factories can opt in to what pieces they
   // want to use.
-  template <KindTemplateEnum Kind, typename... ArgTypes>
+  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
   class FactoryBase {
    protected:
-    static auto Make(ParseTree::Node parse_node, TypeId type_id,
+    static auto Make(Parse::Node parse_node, TypeId type_id,
                      ArgTypes... arg_ids) -> Node {
       return Node(parse_node, NodeKind::Create(Kind), type_id,
                   arg_ids.index...);
@@ -273,7 +270,7 @@ class Node {
   };
 
   // Provide Get along with a Make that requires a type.
-  template <KindTemplateEnum Kind, typename... ArgTypes>
+  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
   class Factory : public FactoryBase<Kind, ArgTypes...> {
    public:
     using FactoryBase<Kind, ArgTypes...>::Make;
@@ -282,10 +279,10 @@ class Node {
 
   // Provides Get along with a Make that assumes the node doesn't produce a
   // typed value.
-  template <KindTemplateEnum Kind, typename... ArgTypes>
+  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
   class FactoryNoType : public FactoryBase<Kind, ArgTypes...> {
    public:
-    static auto Make(ParseTree::Node parse_node, ArgTypes... args) {
+    static auto Make(Parse::Node parse_node, ArgTypes... args) {
       return FactoryBase<Kind, ArgTypes...>::Make(parse_node, TypeId::Invalid,
                                                   args...);
     }
@@ -335,11 +332,11 @@ class Node {
   class Builtin {
    public:
     static auto Make(BuiltinKind builtin_kind, TypeId type_id) -> Node {
-      // Builtins won't have a ParseTree node associated, so we provide the
+      // Builtins won't have a Parse::Tree node associated, so we provide the
       // default invalid one.
       // This can't use the standard Make function because of the `AsInt()` cast
       // instead of `.index`.
-      return Node(ParseTree::Node::Invalid, NodeKind::Builtin, type_id,
+      return Node(Parse::Node::Invalid, NodeKind::Builtin, type_id,
                   builtin_kind.AsInt());
     }
     static auto Get(Node node) -> BuiltinKind {
@@ -361,8 +358,7 @@ class Node {
       // A node's parse tree node must refer to a node in the current parse
       // tree. This cannot use the cross-referenced node's parse tree node
       // because it will be in a different parse tree.
-      return FactoryBase::Make(ParseTree::Node::Invalid, type_id, ir_id,
-                               node_id);
+      return FactoryBase::Make(Parse::Node::Invalid, type_id, ir_id, node_id);
     }
     using FactoryBase::Get;
   };
@@ -422,7 +418,7 @@ class Node {
   using VarStorage = Factory<NodeKind::VarStorage, StringId /*name_id*/>;
 
   explicit Node()
-      : Node(ParseTree::Node::Invalid, NodeKind::Invalid, TypeId::Invalid) {}
+      : Node(Parse::Node::Invalid, NodeKind::Invalid, TypeId::Invalid) {}
 
   // Provide `node.GetAsKind()` as an instance method for all kinds, essentially
   // an alias for`Node::Kind::Get(node)`.
@@ -430,22 +426,20 @@ class Node {
   auto GetAs##Name() const { return Name::Get(*this); }
 #include "toolchain/semantics/semantics_node_kind.def"
 
-  auto parse_node() const -> ParseTree::Node { return parse_node_; }
+  auto parse_node() const -> Parse::Node { return parse_node_; }
   auto kind() const -> NodeKind { return kind_; }
 
   // Gets the type of the value produced by evaluating this node.
   auto type_id() const -> TypeId { return type_id_; }
 
-  friend auto operator<<(llvm::raw_ostream& out, const Node& node)
-      -> llvm::raw_ostream&;
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
+  auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
   // Builtins have peculiar construction, so they are a friend rather than using
   // a factory base class.
   friend struct NodeForBuiltin;
 
-  explicit Node(ParseTree::Node parse_node, NodeKind kind, TypeId type_id,
+  explicit Node(Parse::Node parse_node, NodeKind kind, TypeId type_id,
                 int32_t arg0 = NodeId::InvalidIndex,
                 int32_t arg1 = NodeId::InvalidIndex)
       : parse_node_(parse_node),
@@ -454,7 +448,7 @@ class Node {
         arg0_(arg0),
         arg1_(arg1) {}
 
-  ParseTree::Node parse_node_;
+  Parse::Node parse_node_;
   NodeKind kind_;
   TypeId type_id_;
 

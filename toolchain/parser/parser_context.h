@@ -16,23 +16,23 @@
 #include "toolchain/parser/parser_state.h"
 #include "toolchain/parser/precedence.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 // Context and shared functionality for parser handlers. See parser_state.def
 // for state documentation.
-class ParserContext {
+class Context {
  public:
   // Possible operator fixities for errors.
-  enum class OperatorFixity { Prefix, Infix, Postfix };
+  enum class OperatorFixity : int8_t { Prefix, Infix, Postfix };
 
   // Possible return values for FindListToken.
-  enum class ListTokenKind { Comma, Close, CommaClose };
+  enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
   // Supported kinds for HandlePattern.
-  enum class PatternKind { DeducedParameter, Parameter, Variable };
+  enum class PatternKind : int8_t { DeducedParameter, Parameter, Variable };
 
   // Supported return values for GetDeclarationContext.
-  enum class DeclarationContext {
+  enum class DeclarationContext : int8_t {
     File,  // Top-level context.
     Class,
     Interface,
@@ -41,8 +41,7 @@ class ParserContext {
 
   // Used to track state on state_stack_.
   struct StateStackEntry {
-    explicit StateStackEntry(ParserState state,
-                             PrecedenceGroup ambient_precedence,
+    explicit StateStackEntry(State state, PrecedenceGroup ambient_precedence,
                              PrecedenceGroup lhs_precedence,
                              TokenizedBuffer::Token token,
                              int32_t subtree_start)
@@ -59,7 +58,7 @@ class ParserContext {
     };
 
     // The state.
-    ParserState state;
+    State state;
     // Set to true to indicate that an error was found, and that contextual
     // error recovery may be needed.
     bool has_error = false;
@@ -75,7 +74,7 @@ class ParserContext {
     // the first token in the subtree, but may sometimes be a token within. It
     // will typically be used for the subtree's root node.
     TokenizedBuffer::Token token;
-    // The offset within the ParseTree of the subtree start.
+    // The offset within the Tree of the subtree start.
     int32_t subtree_start;
   };
 
@@ -91,17 +90,17 @@ class ParserContext {
   static_assert(sizeof(StateStackEntry) == 12,
                 "StateStackEntry has unexpected size!");
 
-  explicit ParserContext(ParseTree& tree, TokenizedBuffer& tokens,
-                         TokenDiagnosticEmitter& emitter,
-                         llvm::raw_ostream* vlog_stream);
+  explicit Context(Tree& tree, TokenizedBuffer& tokens,
+                   TokenDiagnosticEmitter& emitter,
+                   llvm::raw_ostream* vlog_stream);
 
   // Adds a node to the parse tree that has no children (a leaf).
-  auto AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
+  auto AddLeafNode(NodeKind kind, TokenizedBuffer::Token token,
                    bool has_error = false) -> void;
 
   // Adds a node to the parse tree that has children.
-  auto AddNode(ParseNodeKind kind, TokenizedBuffer::Token token,
-               int subtree_start, bool has_error) -> void;
+  auto AddNode(NodeKind kind, TokenizedBuffer::Token token, int subtree_start,
+               bool has_error) -> void;
 
   // Returns the current position and moves past it.
   auto Consume() -> TokenizedBuffer::Token { return *(position_++); }
@@ -110,7 +109,7 @@ class ParserContext {
   // leaf parse node of the specified start kind. The default_token is used when
   // there's no open paren. Returns the open paren token if it was found.
   auto ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
-                              ParseNodeKind start_kind)
+                              NodeKind start_kind)
       -> std::optional<TokenizedBuffer::Token>;
 
   // Parses a closing symbol corresponding to the opening symbol
@@ -119,12 +118,12 @@ class ParserContext {
   // an opening symbol, the parse node will be associated with `state.token`,
   // no input will be consumed, and no diagnostic will be emitted.
   auto ConsumeAndAddCloseSymbol(TokenizedBuffer::Token expected_open,
-                                StateStackEntry state, ParseNodeKind close_kind)
+                                StateStackEntry state, NodeKind close_kind)
       -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
-  auto ConsumeAndAddLeafNodeIf(TokenKind token_kind, ParseNodeKind node_kind)
+  auto ConsumeAndAddLeafNodeIf(TokenKind token_kind, NodeKind node_kind)
       -> bool;
 
   // Returns the current position and moves past it. Requires the token is the
@@ -185,7 +184,7 @@ class ParserContext {
   // `,)`). Handles cases where invalid tokens are present by advancing the
   // position, and may emit errors. Pass already_has_error in order to suppress
   // duplicate errors.
-  auto ConsumeListToken(ParseNodeKind comma_kind, TokenKind close_kind,
+  auto ConsumeListToken(NodeKind comma_kind, TokenKind close_kind,
                         bool already_has_error) -> ListTokenKind;
 
   // Gets the kind of the next token to be consumed.
@@ -213,7 +212,7 @@ class ParserContext {
   }
 
   // Pushes a new state with the current position for context.
-  auto PushState(ParserState state) -> void {
+  auto PushState(State state) -> void {
     PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
                               PrecedenceGroup::ForTopLevelExpression(),
                               *position_, tree_->size()));
@@ -221,7 +220,7 @@ class ParserContext {
 
   // Pushes a new state with a specific token for context. Used when forming a
   // new subtree with a token that isn't the start of the subtree.
-  auto PushState(ParserState state, TokenizedBuffer::Token token) -> void {
+  auto PushState(State state, TokenizedBuffer::Token token) -> void {
     PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
                               PrecedenceGroup::ForTopLevelExpression(), token,
                               tree_->size()));
@@ -229,13 +228,13 @@ class ParserContext {
 
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
-    PushState(StateStackEntry(ParserState::Expression, ambient_precedence,
+    PushState(StateStackEntry(State::Expression, ambient_precedence,
                               PrecedenceGroup::ForTopLevelExpression(),
                               *position_, tree_->size()));
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
-  auto PushStateForExpressionLoop(ParserState state,
+  auto PushStateForExpressionLoop(State state,
                                   PrecedenceGroup ambient_precedence,
                                   PrecedenceGroup lhs_precedence) -> void {
     PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
@@ -262,10 +261,9 @@ class ParserContext {
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
-  // For ParserHandlePattern, tries to consume a wrapping keyword.
-  auto ConsumeIfPatternKeyword(TokenKind keyword_token,
-                               ParserState keyword_state, int subtree_start)
-      -> void;
+  // For HandlePattern, tries to consume a wrapping keyword.
+  auto ConsumeIfPatternKeyword(TokenKind keyword_token, State keyword_state,
+                               int subtree_start) -> void;
 
   // Emits a diagnostic for a declaration missing a semi.
   auto EmitExpectedDeclarationSemi(TokenKind expected_kind) -> void;
@@ -278,13 +276,13 @@ class ParserContext {
   // semicolon when it makes sense as a possible end, otherwise use the
   // introducer token for the error.
   auto RecoverFromDeclarationError(StateStackEntry state,
-                                   ParseNodeKind parse_node_kind,
+                                   NodeKind parse_node_kind,
                                    bool skip_past_likely_end) -> void;
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
-  auto tree() const -> const ParseTree& { return *tree_; }
+  auto tree() const -> const Tree& { return *tree_; }
 
   auto tokens() const -> const TokenizedBuffer& { return *tokens_; }
 
@@ -306,7 +304,7 @@ class ParserContext {
   auto PrintTokenForStackDump(llvm::raw_ostream& output,
                               TokenizedBuffer::Token token) const -> void;
 
-  ParseTree* tree_;
+  Tree* tree_;
   TokenizedBuffer* tokens_;
   TokenDiagnosticEmitter* emitter_;
 
@@ -323,10 +321,9 @@ class ParserContext {
 
 // `clang-format` has a bug with spacing around `->` returns in macros. See
 // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_PARSER_STATE(Name) \
-  auto ParserHandle##Name(ParserContext& context)->void;
+#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context)->void;
 #include "toolchain/parser/parser_state.def"
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSER_PARSER_CONTEXT_H_

@@ -6,33 +6,33 @@
 
 namespace Carbon::Check {
 
-auto HandleDeducedParameterList(Context& context, ParseTree::Node parse_node)
+auto HandleDeducedParameterList(Context& context, Parse::Node parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleDeducedParameterList");
 }
 
-auto HandleDeducedParameterListStart(Context& context,
-                                     ParseTree::Node parse_node) -> bool {
+auto HandleDeducedParameterListStart(Context& context, Parse::Node parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleDeducedParameterListStart");
 }
 
-auto HandleParameterList(Context& context, ParseTree::Node parse_node) -> bool {
+auto HandleParameterList(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/false, ParseNodeKind::ParameterListStart);
+      /*for_args=*/false, Parse::NodeKind::ParameterListStart);
   context.PopScope();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<ParseNodeKind::ParameterListStart>();
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::ParameterListStart>();
   context.node_stack().Push(parse_node, refs_id);
   return true;
 }
 
-auto HandleParameterListComma(Context& context, ParseTree::Node /*parse_node*/)
+auto HandleParameterListComma(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   context.ParamOrArgComma(/*for_args=*/false);
   return true;
 }
 
-auto HandleParameterListStart(Context& context, ParseTree::Node parse_node)
+auto HandleParameterListStart(Context& context, Parse::Node parse_node)
     -> bool {
   context.PushScope();
   context.node_stack().Push(parse_node);

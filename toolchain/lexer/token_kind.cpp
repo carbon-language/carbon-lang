@@ -4,9 +4,6 @@
 
 #include "toolchain/lexer/token_kind.h"
 
-#include "common/check.h"
-#include "llvm/ADT/StringRef.h"
-
 namespace Carbon {
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(TokenKind) = {
@@ -14,112 +11,72 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(TokenKind) = {
 #include "toolchain/lexer/token_kind.def"
 };
 
-auto TokenKind::is_symbol() const -> bool {
-  static constexpr bool Table[] = {
+constexpr bool TokenKind::IsSymbol[] = {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) true,
 #include "toolchain/lexer/token_kind.def"
-  };
-  return Table[AsInt()];
-}
+};
 
-auto TokenKind::is_grouping_symbol() const -> bool {
-  static constexpr bool Table[] = {
+constexpr bool TokenKind::IsGroupingSymbol[] = {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
   true,
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
   true,
 #include "toolchain/lexer/token_kind.def"
-  };
-  return Table[AsInt()];
-}
+};
 
-auto TokenKind::is_opening_symbol() const -> bool {
-  static constexpr bool Table[] = {
+constexpr bool TokenKind::IsOpeningSymbol[] = {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
   true,
 #include "toolchain/lexer/token_kind.def"
-  };
-  return Table[AsInt()];
-}
+};
 
-auto TokenKind::closing_symbol() const -> TokenKind {
-  static constexpr TokenKind Table[] = {
+constexpr TokenKind TokenKind::ClosingSymbol[] = {
 #define CARBON_TOKEN(TokenName) Error,
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
   ClosingName,
 #include "toolchain/lexer/token_kind.def"
-  };
-  auto result = Table[AsInt()];
-  CARBON_CHECK(result != Error) << "Only opening symbols are valid!";
-  return result;
-}
+};
 
-auto TokenKind::is_closing_symbol() const -> bool {
-  static constexpr bool Table[] = {
+constexpr bool TokenKind::IsClosingSymbol[] = {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
   true,
 #include "toolchain/lexer/token_kind.def"
-  };
-  return Table[AsInt()];
-}
+};
 
-auto TokenKind::opening_symbol() const -> TokenKind {
-  static constexpr TokenKind Table[] = {
+constexpr TokenKind TokenKind::OpeningSymbol[] = {
 #define CARBON_TOKEN(TokenName) Error,
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
   OpeningName,
 #include "toolchain/lexer/token_kind.def"
-  };
-  auto result = Table[AsInt()];
-  CARBON_CHECK(result != Error) << "Only closing symbols are valid!";
-  return result;
-}
+};
 
-auto TokenKind::is_one_char_symbol() const -> bool {
-  static constexpr bool Table[] = {
+constexpr bool TokenKind::IsOneCharSymbol[] = {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) true,
 #include "toolchain/lexer/token_kind.def"
-  };
-  return Table[AsInt()];
-}
+};
 
-auto TokenKind::is_keyword() const -> bool {
-  static constexpr bool Table[] = {
+constexpr bool TokenKind::IsKeyword[] = {
 #define CARBON_TOKEN(TokenName) false,
 #define CARBON_KEYWORD_TOKEN(TokenName, Spelling) true,
 #include "toolchain/lexer/token_kind.def"
-  };
-  return Table[AsInt()];
-}
+};
 
-auto TokenKind::is_sized_type_literal() const -> bool {
-  return *this == TokenKind::IntegerTypeLiteral ||
-         *this == TokenKind::UnsignedIntegerTypeLiteral ||
-         *this == TokenKind::FloatingPointTypeLiteral;
-}
-
-auto TokenKind::fixed_spelling() const -> llvm::StringRef {
-  static constexpr llvm::StringLiteral Table[] = {
+constexpr llvm::StringLiteral TokenKind::FixedSpelling[] = {
 #define CARBON_TOKEN(TokenName) "",
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) Spelling,
 #define CARBON_KEYWORD_TOKEN(TokenName, Spelling) Spelling,
 #include "toolchain/lexer/token_kind.def"
-  };
-  return Table[AsInt()];
-}
+};
 
-auto TokenKind::expected_parse_tree_size() const -> int {
-  static constexpr int8_t Table[] = {
+constexpr int8_t TokenKind::ExpectedParseTreeSize[] = {
 #define CARBON_TOKEN(Name) 1,
 #define CARBON_TOKEN_WITH_VIRTUAL_NODE(size) 2,
 #include "toolchain/lexer/token_kind.def"
-  };
-  return Table[AsInt()];
-}
+};
 
 }  // namespace Carbon

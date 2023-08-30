@@ -4,45 +4,40 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
 // Handles processing of a type's introducer.
-static auto ParserHandleTypeIntroducer(ParserContext& context,
-                                       ParseNodeKind introducer_kind,
-                                       ParserState after_params_state) -> void {
+static auto HandleTypeIntroducer(Context& context, NodeKind introducer_kind,
+                                 State after_params_state) -> void {
   auto state = context.PopState();
 
   context.AddLeafNode(introducer_kind, context.Consume());
 
   state.state = after_params_state;
   context.PushState(state);
-  context.PushState(ParserState::DeclarationNameAndParamsAsOptional,
-                    state.token);
+  context.PushState(State::DeclarationNameAndParamsAsOptional, state.token);
 }
 
-auto ParserHandleTypeIntroducerAsClass(ParserContext& context) -> void {
-  ParserHandleTypeIntroducer(context, ParseNodeKind::ClassIntroducer,
-                             ParserState::TypeAfterParamsAsClass);
+auto HandleTypeIntroducerAsClass(Context& context) -> void {
+  HandleTypeIntroducer(context, NodeKind::ClassIntroducer,
+                       State::TypeAfterParamsAsClass);
 }
 
-auto ParserHandleTypeIntroducerAsInterface(ParserContext& context) -> void {
-  ParserHandleTypeIntroducer(context, ParseNodeKind::InterfaceIntroducer,
-                             ParserState::TypeAfterParamsAsInterface);
+auto HandleTypeIntroducerAsInterface(Context& context) -> void {
+  HandleTypeIntroducer(context, NodeKind::InterfaceIntroducer,
+                       State::TypeAfterParamsAsInterface);
 }
 
-auto ParserHandleTypeIntroducerAsNamedConstraint(ParserContext& context)
-    -> void {
-  ParserHandleTypeIntroducer(context, ParseNodeKind::NamedConstraintIntroducer,
-                             ParserState::TypeAfterParamsAsNamedConstraint);
+auto HandleTypeIntroducerAsNamedConstraint(Context& context) -> void {
+  HandleTypeIntroducer(context, NodeKind::NamedConstraintIntroducer,
+                       State::TypeAfterParamsAsNamedConstraint);
 }
 
 // Handles processing after params, deciding whether it's a declaration or
 // definition.
-static auto ParserHandleTypeAfterParams(ParserContext& context,
-                                        ParseNodeKind declaration_kind,
-                                        ParseNodeKind definition_start_kind,
-                                        ParserState definition_finish_state)
-    -> void {
+static auto HandleTypeAfterParams(Context& context, NodeKind declaration_kind,
+                                  NodeKind definition_start_kind,
+                                  State definition_finish_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -67,54 +62,48 @@ static auto ParserHandleTypeAfterParams(ParserContext& context,
 
   state.state = definition_finish_state;
   context.PushState(state);
-  context.PushState(ParserState::DeclarationScopeLoop);
+  context.PushState(State::DeclarationScopeLoop);
   context.AddNode(definition_start_kind, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 
-auto ParserHandleTypeAfterParamsAsClass(ParserContext& context) -> void {
-  ParserHandleTypeAfterParams(context, ParseNodeKind::ClassDeclaration,
-                              ParseNodeKind::ClassDefinitionStart,
-                              ParserState::TypeDefinitionFinishAsClass);
+auto HandleTypeAfterParamsAsClass(Context& context) -> void {
+  HandleTypeAfterParams(context, NodeKind::ClassDeclaration,
+                        NodeKind::ClassDefinitionStart,
+                        State::TypeDefinitionFinishAsClass);
 }
 
-auto ParserHandleTypeAfterParamsAsInterface(ParserContext& context) -> void {
-  ParserHandleTypeAfterParams(context, ParseNodeKind::InterfaceDeclaration,
-                              ParseNodeKind::InterfaceDefinitionStart,
-                              ParserState::TypeDefinitionFinishAsInterface);
+auto HandleTypeAfterParamsAsInterface(Context& context) -> void {
+  HandleTypeAfterParams(context, NodeKind::InterfaceDeclaration,
+                        NodeKind::InterfaceDefinitionStart,
+                        State::TypeDefinitionFinishAsInterface);
 }
 
-auto ParserHandleTypeAfterParamsAsNamedConstraint(ParserContext& context)
-    -> void {
-  ParserHandleTypeAfterParams(
-      context, ParseNodeKind::NamedConstraintDeclaration,
-      ParseNodeKind::NamedConstraintDefinitionStart,
-      ParserState::TypeDefinitionFinishAsNamedConstraint);
+auto HandleTypeAfterParamsAsNamedConstraint(Context& context) -> void {
+  HandleTypeAfterParams(context, NodeKind::NamedConstraintDeclaration,
+                        NodeKind::NamedConstraintDefinitionStart,
+                        State::TypeDefinitionFinishAsNamedConstraint);
 }
 
 // Handles parsing after the declaration scope of a type.
-static auto ParserHandleTypeDefinitionFinish(ParserContext& context,
-                                             ParseNodeKind definition_kind)
-    -> void {
+static auto HandleTypeDefinitionFinish(Context& context,
+                                       NodeKind definition_kind) -> void {
   auto state = context.PopState();
 
   context.AddNode(definition_kind, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 
-auto ParserHandleTypeDefinitionFinishAsClass(ParserContext& context) -> void {
-  ParserHandleTypeDefinitionFinish(context, ParseNodeKind::ClassDefinition);
+auto HandleTypeDefinitionFinishAsClass(Context& context) -> void {
+  HandleTypeDefinitionFinish(context, NodeKind::ClassDefinition);
 }
 
-auto ParserHandleTypeDefinitionFinishAsInterface(ParserContext& context)
-    -> void {
-  ParserHandleTypeDefinitionFinish(context, ParseNodeKind::InterfaceDefinition);
+auto HandleTypeDefinitionFinishAsInterface(Context& context) -> void {
+  HandleTypeDefinitionFinish(context, NodeKind::InterfaceDefinition);
 }
 
-auto ParserHandleTypeDefinitionFinishAsNamedConstraint(ParserContext& context)
-    -> void {
-  ParserHandleTypeDefinitionFinish(context,
-                                   ParseNodeKind::NamedConstraintDefinition);
+auto HandleTypeDefinitionFinishAsNamedConstraint(Context& context) -> void {
+  HandleTypeDefinitionFinish(context, NodeKind::NamedConstraintDefinition);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse

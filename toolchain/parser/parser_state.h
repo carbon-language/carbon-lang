@@ -9,26 +9,25 @@
 
 #include "common/enum_base.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(ParserState, uint8_t) {
-#define CARBON_PARSER_STATE(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
+CARBON_DEFINE_RAW_ENUM_CLASS(State, uint8_t) {
+#define CARBON_PARSE_STATE(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/parser/parser_state.def"
 };
 
-class ParserState : public CARBON_ENUM_BASE(ParserState) {
+class State : public CARBON_ENUM_BASE(State) {
  public:
-#define CARBON_PARSER_STATE(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_PARSE_STATE(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/parser/parser_state.def"
 };
 
-#define CARBON_PARSER_STATE(Name) \
-  CARBON_ENUM_CONSTANT_DEFINITION(ParserState, Name)
+#define CARBON_PARSE_STATE(Name) CARBON_ENUM_CONSTANT_DEFINITION(State, Name)
 #include "toolchain/parser/parser_state.def"
 
-// We expect ParserState to fit compactly into 8 bits.
-static_assert(sizeof(ParserState) == 1, "ParserState includes padding!");
+// We expect State to fit compactly into 8 bits.
+static_assert(sizeof(State) == 1, "State includes padding!");
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSER_PARSER_STATE_H_

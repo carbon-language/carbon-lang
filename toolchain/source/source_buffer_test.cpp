@@ -6,9 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/VirtualFileSystem.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {

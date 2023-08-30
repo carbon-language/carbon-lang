@@ -7,15 +7,14 @@
 
 namespace Carbon::Check {
 
-auto HandleCallExpression(Context& context, ParseTree::Node parse_node)
-    -> bool {
+auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/true, ParseNodeKind::CallExpressionStart);
+      /*for_args=*/true, Parse::NodeKind::CallExpressionStart);
 
   // TODO: Convert to call expression.
   auto [call_expr_parse_node, name_id] =
       context.node_stack()
-          .PopWithParseNode<ParseNodeKind::CallExpressionStart>();
+          .PopWithParseNode<Parse::NodeKind::CallExpressionStart>();
   auto name_node = context.semantics_ir().GetNode(name_id);
   if (name_node.kind() != SemIR::NodeKind::FunctionDeclaration) {
     // TODO: Work on error.
@@ -67,13 +66,13 @@ auto HandleCallExpression(Context& context, ParseTree::Node parse_node)
   return true;
 }
 
-auto HandleCallExpressionComma(Context& context, ParseTree::Node /*parse_node*/)
+auto HandleCallExpressionComma(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   context.ParamOrArgComma(/*for_args=*/true);
   return true;
 }
 
-auto HandleCallExpressionStart(Context& context, ParseTree::Node parse_node)
+auto HandleCallExpressionStart(Context& context, Parse::Node parse_node)
     -> bool {
   auto name_id = context.node_stack().PopExpression();
   context.node_stack().Push(parse_node, name_id);

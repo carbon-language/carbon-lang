@@ -7,12 +7,9 @@
 #include "common/command_line.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/Path.h"
 #include "llvm/TargetParser/Host.h"
 #include "toolchain/codegen/codegen.h"
@@ -43,7 +40,7 @@ can be written to standard output as these phases progress.
 )""",
   };
 
-  enum class Phase {
+  enum class Phase : int8_t {
     Lex,
     Parse,
     Check,
@@ -287,7 +284,7 @@ For questions, issues, or bug reports, please use our GitHub project:
 )""",
   };
 
-  enum class Subcommand {
+  enum class Subcommand : int8_t {
     Compile,
   };
 
@@ -424,10 +421,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return !has_errors;
   }
 
-  CARBON_VLOG() << "*** ParseTree::Parse ***\n";
-  auto parse_tree = ParseTree::Parse(tokenized_source, *consumer, vlog_stream_);
+  CARBON_VLOG() << "*** Parse::Tree::Parse ***\n";
+  auto parse_tree =
+      Parse::Tree::Parse(tokenized_source, *consumer, vlog_stream_);
   has_errors |= parse_tree.has_errors();
-  CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
+  CARBON_VLOG() << "*** Parse::Tree::Parse done ***\n";
   if (options.dump_parse_tree) {
     consumer->Flush();
     parse_tree.Print(output_stream_, options.preorder_parse_tree);
@@ -472,11 +470,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return false;
   }
 
-  CARBON_VLOG() << "*** LowerToLLVM ***\n";
+  CARBON_VLOG() << "*** Lower::LowerToLLVM ***\n";
   llvm::LLVMContext llvm_context;
-  const std::unique_ptr<llvm::Module> module = LowerToLLVM(
+  const std::unique_ptr<llvm::Module> module = Lower::LowerToLLVM(
       llvm_context, options.input_file_name, semantics_ir, vlog_stream_);
-  CARBON_VLOG() << "*** LowerToLLVM done ***\n";
+  CARBON_VLOG() << "*** Lower::LowerToLLVM done ***\n";
   if (options.dump_llvm_ir) {
     module->print(output_stream_, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/true);

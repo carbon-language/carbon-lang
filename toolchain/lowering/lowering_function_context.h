@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_
 
-#include <optional>
-
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -14,14 +12,13 @@
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon {
+namespace Carbon::Lower {
 
 // Context and shared functionality for lowering handlers that produce an
 // `llvm::Function` definition.
-class LoweringFunctionContext {
+class FunctionContext {
  public:
-  explicit LoweringFunctionContext(LoweringContext& lowering_context,
-                                   llvm::Function* function);
+  explicit FunctionContext(FileContext& file_context, llvm::Function* function);
 
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
@@ -72,17 +69,17 @@ class LoweringFunctionContext {
 
   // Gets a callable's function.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
-    return lowering_context_->GetFunction(function_id);
+    return file_context_->GetFunction(function_id);
   }
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
-    return lowering_context_->GetType(type_id);
+    return file_context_->GetType(type_id);
   }
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {
-    return lowering_context_->GetTypeAsValue();
+    return file_context_->GetTypeAsValue();
   }
 
   // Create a synthetic block that corresponds to no SemIR::NodeBlockId. Such
@@ -97,19 +94,17 @@ class LoweringFunctionContext {
   }
 
   auto llvm_context() -> llvm::LLVMContext& {
-    return lowering_context_->llvm_context();
+    return file_context_->llvm_context();
   }
-  auto llvm_module() -> llvm::Module& {
-    return lowering_context_->llvm_module();
-  }
+  auto llvm_module() -> llvm::Module& { return file_context_->llvm_module(); }
   auto builder() -> llvm::IRBuilder<>& { return builder_; }
   auto semantics_ir() -> const SemIR::File& {
-    return lowering_context_->semantics_ir();
+    return file_context_->semantics_ir();
   }
 
  private:
   // Context for the overall lowering process.
-  LoweringContext* lowering_context_;
+  FileContext* file_context_;
 
   // The IR function we're generating.
   llvm::Function* function_;
@@ -131,11 +126,11 @@ class LoweringFunctionContext {
 
 // Declare handlers for each SemIR::File node.
 #define CARBON_SEMANTICS_NODE_KIND(Name)                             \
-  auto LoweringHandle##Name(LoweringFunctionContext& context,        \
-                            SemIR::NodeId node_id, SemIR::Node node) \
+  auto Handle##Name(FunctionContext& context, SemIR::NodeId node_id, \
+                    SemIR::Node node)                                \
       ->void;
 #include "toolchain/semantics/semantics_node_kind.def"
 
-}  // namespace Carbon
+}  // namespace Carbon::Lower
 
 #endif  // CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_

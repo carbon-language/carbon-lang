@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_
 
 #include <optional>
-#include <utility>
 #include <variant>
 
 #include "llvm/ADT/APInt.h"

@@ -4,34 +4,34 @@
 
 #include "toolchain/parser/parser_context.h"
 
-namespace Carbon {
+namespace Carbon::Parse {
 
-auto ParserHandleParenExpression(ParserContext& context) -> void {
+auto HandleParenExpression(Context& context) -> void {
   auto state = context.PopState();
 
   // Advance past the open paren.
-  context.AddLeafNode(ParseNodeKind::ParenExpressionOrTupleLiteralStart,
+  context.AddLeafNode(NodeKind::ParenExpressionOrTupleLiteralStart,
                       context.ConsumeChecked(TokenKind::OpenParen));
 
   if (context.PositionIs(TokenKind::CloseParen)) {
-    state.state = ParserState::ParenExpressionFinishAsTuple;
+    state.state = State::ParenExpressionFinishAsTuple;
     context.PushState(state);
   } else {
-    state.state = ParserState::ParenExpressionFinishAsNormal;
+    state.state = State::ParenExpressionFinishAsNormal;
     context.PushState(state);
-    context.PushState(ParserState::ParenExpressionParameterFinishAsUnknown);
-    context.PushState(ParserState::Expression);
+    context.PushState(State::ParenExpressionParameterFinishAsUnknown);
+    context.PushState(State::Expression);
   }
 }
 
 // Handles ParenExpressionParameterFinishAs(Unknown|Tuple).
-static auto ParserHandleParenExpressionParameterFinish(ParserContext& context,
-                                                       bool as_tuple) -> void {
+static auto HandleParenExpressionParameterFinish(Context& context,
+                                                 bool as_tuple) -> void {
   auto state = context.PopState();
 
   auto list_token_kind = context.ConsumeListToken(
-      ParseNodeKind::TupleLiteralComma, TokenKind::CloseParen, state.has_error);
-  if (list_token_kind == ParserContext::ListTokenKind::Close) {
+      NodeKind::TupleLiteralComma, TokenKind::CloseParen, state.has_error);
+  if (list_token_kind == Context::ListTokenKind::Close) {
     return;
   }
 
@@ -39,45 +39,42 @@ static auto ParserHandleParenExpressionParameterFinish(ParserContext& context,
   // Note this could be `(expr,)` so we may not reuse the current state, but
   // it's still necessary to switch the parent.
   if (!as_tuple) {
-    state.state = ParserState::ParenExpressionParameterFinishAsTuple;
+    state.state = State::ParenExpressionParameterFinishAsTuple;
 
     auto finish_state = context.PopState();
-    CARBON_CHECK(finish_state.state ==
-                 ParserState::ParenExpressionFinishAsNormal)
+    CARBON_CHECK(finish_state.state == State::ParenExpressionFinishAsNormal)
         << "Unexpected parent state, found: " << finish_state.state;
-    finish_state.state = ParserState::ParenExpressionFinishAsTuple;
+    finish_state.state = State::ParenExpressionFinishAsTuple;
     context.PushState(finish_state);
   }
 
   // On a comma, push another expression handler.
-  if (list_token_kind == ParserContext::ListTokenKind::Comma) {
+  if (list_token_kind == Context::ListTokenKind::Comma) {
     context.PushState(state);
-    context.PushState(ParserState::Expression);
+    context.PushState(State::Expression);
   }
 }
 
-auto ParserHandleParenExpressionParameterFinishAsUnknown(ParserContext& context)
-    -> void {
-  ParserHandleParenExpressionParameterFinish(context, /*as_tuple=*/false);
+auto HandleParenExpressionParameterFinishAsUnknown(Context& context) -> void {
+  HandleParenExpressionParameterFinish(context, /*as_tuple=*/false);
 }
 
-auto ParserHandleParenExpressionParameterFinishAsTuple(ParserContext& context)
-    -> void {
-  ParserHandleParenExpressionParameterFinish(context, /*as_tuple=*/true);
+auto HandleParenExpressionParameterFinishAsTuple(Context& context) -> void {
+  HandleParenExpressionParameterFinish(context, /*as_tuple=*/true);
 }
 
-auto ParserHandleParenExpressionFinishAsNormal(ParserContext& context) -> void {
+auto HandleParenExpressionFinishAsNormal(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::ParenExpression, context.Consume(),
+  context.AddNode(NodeKind::ParenExpression, context.Consume(),
                   state.subtree_start, state.has_error);
 }
 
-auto ParserHandleParenExpressionFinishAsTuple(ParserContext& context) -> void {
+auto HandleParenExpressionFinishAsTuple(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::TupleLiteral, context.Consume(),
+  context.AddNode(NodeKind::TupleLiteral, context.Consume(),
                   state.subtree_start, state.has_error);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Parse
