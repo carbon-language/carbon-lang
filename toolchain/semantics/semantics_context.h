@@ -122,9 +122,11 @@ class Context {
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
 
-  // Performs initialization of `target_id` from `value_id`.
+  // Performs initialization of `target_id` from `value_id`. Returns the
+  // possibly-converted initialization expression, which should be assigned to
+  // the target using a suitable node for the kind of initialization.
   auto Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
-                  SemIR::NodeId value_id) -> void;
+                  SemIR::NodeId value_id) -> SemIR::NodeId;
 
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
