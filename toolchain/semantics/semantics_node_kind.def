@@ -66,8 +66,6 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(FunctionDeclaration, "fn_decl", Untyped,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_literal", Typed,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(MaterializeTemporary, "materialize_temporary",
-                                Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Namespace, "namespace", Untyped, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(NoOp, "no_op", None, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Parameter, "parameter", Typed, NotTerminator)
@@ -88,6 +86,8 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(StructValue, "struct_value", Typed,
 CARBON_SEMANTICS_NODE_KIND_IMPL(StubReference, "stub_reference", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Temporary, "temporary", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(TemporaryStorage, "temporary_storage", Typed,
+                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleIndex, "tuple_index", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleType, "tuple_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleValue, "tuple_value", Typed, NotTerminator)

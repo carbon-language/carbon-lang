@@ -185,7 +185,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+35, arg1: node+36, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+37, type: type2},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type1},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type1},
+// CHECK:STDOUT:   {kind: TemporaryStorage, type: type1},
 // CHECK:STDOUT:   {kind: Temporary, arg0: node+40, arg1: node+39, type: type1},
 // CHECK:STDOUT:   {kind: StructAccess, arg0: node+41, arg1: member0, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+42, type: type2},
@@ -394,7 +394,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc42_7: i32 = add %.loc42_5, %.loc42_9
 // CHECK:STDOUT:   %.loc42_3: i32* = address_of %.loc42_7
 // CHECK:STDOUT:   %.loc46_5.1: {.a: i32} = call @H()
-// CHECK:STDOUT:   %.loc46_5.2: {.a: i32} = materialize_temporary
+// CHECK:STDOUT:   %.loc46_5.2: {.a: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc46_5.3: {.a: i32} = temporary %.loc46_5.2, %.loc46_5.1
 // CHECK:STDOUT:   %.loc46_7: i32 = struct_access %.loc46_5.3, member0
 // CHECK:STDOUT:   %.loc46_3: i32* = address_of %.loc46_7

@@ -351,7 +351,7 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
           // The return slot should have a materialized temporary in it.
           auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
           CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
-                       SemIR::NodeKind::MaterializeTemporary)
+                       SemIR::NodeKind::TemporaryStorage)
               << "Return slot for function call does not contain a temporary; "
               << "initialized multiple times? Have "
               << semantics_ir().GetNode(temporary_id);
@@ -369,7 +369,7 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
         // TODO: Consider using an invalid ID to mean that we immediately
         // materialize and initialize a temporary, rather than two separate
         // nodes.
-        auto temporary_id = AddNode(SemIR::Node::MaterializeTemporary::Make(
+        auto temporary_id = AddNode(SemIR::Node::TemporaryStorage::Make(
             init.parse_node(), init.type_id()));
         return AddNode(SemIR::Node::Temporary::Make(
             init.parse_node(), init.type_id(), temporary_id, init_id));
@@ -406,8 +406,7 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
           auto temporary_id = std::exchange(
               semantics_ir().GetNodeBlock(refs_id).back(), target_id);
           auto temporary = semantics_ir().GetNode(temporary_id);
-          CARBON_CHECK(temporary.kind() ==
-                       SemIR::NodeKind::MaterializeTemporary)
+          CARBON_CHECK(temporary.kind() == SemIR::NodeKind::TemporaryStorage)
               << "Return slot for function call does not contain a temporary; "
               << "initialized multiple times? Have " << temporary;
           semantics_ir().ReplaceNode(

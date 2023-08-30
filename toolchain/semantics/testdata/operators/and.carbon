@@ -44,14 +44,14 @@ fn And() -> bool {
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: TemporaryStorage, type: type0},
 // CHECK:STDOUT:   {kind: Temporary, arg0: node+11, arg1: node+10, type: type0},
 // CHECK:STDOUT:   {kind: BindValue, arg0: node+12, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: false, type: type0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+13},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+14},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: TemporaryStorage, type: type0},
 // CHECK:STDOUT:   {kind: Temporary, arg0: node+18, arg1: node+17, type: type0},
 // CHECK:STDOUT:   {kind: BindValue, arg0: node+19, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+20},
@@ -126,7 +126,7 @@ fn And() -> bool {
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_11.1: bool = call @F()
-// CHECK:STDOUT:   %.loc11_11.2: bool = materialize_temporary
+// CHECK:STDOUT:   %.loc11_11.2: bool = temporary_storage
 // CHECK:STDOUT:   %.loc11_11.3: bool = temporary %.loc11_11.2, %.loc11_11.1
 // CHECK:STDOUT:   %.loc11_11.4: bool = bind_value %.loc11_11.3
 // CHECK:STDOUT:   %.loc11_14.1: bool = bool_literal false
@@ -134,7 +134,7 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
 // CHECK:STDOUT:   %.loc11_19.1: bool = call @G()
-// CHECK:STDOUT:   %.loc11_19.2: bool = materialize_temporary
+// CHECK:STDOUT:   %.loc11_19.2: bool = temporary_storage
 // CHECK:STDOUT:   %.loc11_19.3: bool = temporary %.loc11_19.2, %.loc11_19.1
 // CHECK:STDOUT:   %.loc11_19.4: bool = bind_value %.loc11_19.3
 // CHECK:STDOUT:   br !and.result(%.loc11_19.4)

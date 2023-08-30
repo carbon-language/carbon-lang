@@ -56,11 +56,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+10},
 // CHECK:STDOUT:   {kind: Branch, arg0: block9},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: TemporaryStorage, type: type0},
 // CHECK:STDOUT:   {kind: Temporary, arg0: node+14, arg1: node+13, type: type0},
 // CHECK:STDOUT:   {kind: BindValue, arg0: node+15, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: TemporaryStorage, type: type0},
 // CHECK:STDOUT:   {kind: Temporary, arg0: node+18, arg1: node+17, type: type0},
 // CHECK:STDOUT:   {kind: BindValue, arg0: node+19, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block10, arg1: node+16},
@@ -73,11 +73,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block13, arg1: node+27},
 // CHECK:STDOUT:   {kind: Branch, arg0: block14},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: TemporaryStorage, type: type0},
 // CHECK:STDOUT:   {kind: Temporary, arg0: node+31, arg1: node+30, type: type0},
 // CHECK:STDOUT:   {kind: BindValue, arg0: node+32, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type0},
+// CHECK:STDOUT:   {kind: TemporaryStorage, type: type0},
 // CHECK:STDOUT:   {kind: Temporary, arg0: node+35, arg1: node+34, type: type0},
 // CHECK:STDOUT:   {kind: BindValue, arg0: node+36, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block15, arg1: node+33},
@@ -188,14 +188,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %.loc11_24.1: i32 = call @A()
-// CHECK:STDOUT:   %.loc11_24.2: i32 = materialize_temporary
+// CHECK:STDOUT:   %.loc11_24.2: i32 = temporary_storage
 // CHECK:STDOUT:   %.loc11_24.3: i32 = temporary %.loc11_24.2, %.loc11_24.1
 // CHECK:STDOUT:   %.loc11_24.4: i32 = bind_value %.loc11_24.3
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_24.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc11_33.1: i32 = call @B()
-// CHECK:STDOUT:   %.loc11_33.2: i32 = materialize_temporary
+// CHECK:STDOUT:   %.loc11_33.2: i32 = temporary_storage
 // CHECK:STDOUT:   %.loc11_33.3: i32 = temporary %.loc11_33.2, %.loc11_33.1
 // CHECK:STDOUT:   %.loc11_33.4: i32 = bind_value %.loc11_33.3
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_33.4)
@@ -212,14 +212,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %.loc15_25.1: i32 = call @A()
-// CHECK:STDOUT:   %.loc15_25.2: i32 = materialize_temporary
+// CHECK:STDOUT:   %.loc15_25.2: i32 = temporary_storage
 // CHECK:STDOUT:   %.loc15_25.3: i32 = temporary %.loc15_25.2, %.loc15_25.1
 // CHECK:STDOUT:   %.loc15_25.4: i32 = bind_value %.loc15_25.3
 // CHECK:STDOUT:   br !if.expr.result(%.loc15_25.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc15_34.1: i32 = call @B()
-// CHECK:STDOUT:   %.loc15_34.2: i32 = materialize_temporary
+// CHECK:STDOUT:   %.loc15_34.2: i32 = temporary_storage
 // CHECK:STDOUT:   %.loc15_34.3: i32 = temporary %.loc15_34.2, %.loc15_34.1
 // CHECK:STDOUT:   %.loc15_34.4: i32 = bind_value %.loc15_34.3
 // CHECK:STDOUT:   br !if.expr.result(%.loc15_34.4)

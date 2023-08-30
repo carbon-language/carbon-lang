@@ -57,7 +57,7 @@ fn Run() {
 // CHECK:STDOUT:   {kind: ArrayType, arg0: node+11, arg1: type1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str3, type: type3},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
-// CHECK:STDOUT:   {kind: MaterializeTemporary, type: type2},
+// CHECK:STDOUT:   {kind: TemporaryStorage, type: type2},
 // CHECK:STDOUT:   {kind: Temporary, arg0: node+15, arg1: node+14, type: type2},
 // CHECK:STDOUT:   {kind: BindValue, arg0: node+16, type: type2},
 // CHECK:STDOUT:   {kind: ArrayValue, arg0: node+17, type: type3},
@@ -123,7 +123,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
 // CHECK:STDOUT:   %t: [i32; 1] = var "t"
 // CHECK:STDOUT:   %.loc10_22.1: (i32,) = call @F()
-// CHECK:STDOUT:   %.loc10_22.2: (i32,) = materialize_temporary
+// CHECK:STDOUT:   %.loc10_22.2: (i32,) = temporary_storage
 // CHECK:STDOUT:   %.loc10_22.3: (i32,) = temporary %.loc10_22.2, %.loc10_22.1
 // CHECK:STDOUT:   %.loc10_22.4: (i32,) = bind_value %.loc10_22.3
 // CHECK:STDOUT:   %.loc10_22.5: [i32; 1] = array_value %.loc10_22.4
