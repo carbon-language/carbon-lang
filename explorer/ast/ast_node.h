@@ -46,7 +46,7 @@ class CloneContext;
 //
 // TODO: To support generic traversal, add children() method, and ensure that
 //   all AstNodes are reachable from a root AstNode.
-class AstNode : Printable<AstNode> {
+class AstNode : public Printable<AstNode> {
  public:
   AstNode(AstNode&&) = delete;
   auto operator=(AstNode&&) -> AstNode& = delete;

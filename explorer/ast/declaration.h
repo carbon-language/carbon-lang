@@ -143,7 +143,7 @@ inline auto DeclaresSameEntity(const Declaration& first,
 }
 
 // A name being declared in a named declaration.
-class DeclaredName : Printable<DeclaredName> {
+class DeclaredName : public Printable<DeclaredName> {
  public:
   struct NameComponent {
     SourceLocation source_loc;

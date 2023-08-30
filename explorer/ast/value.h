@@ -64,7 +64,7 @@ inline auto EmptyVTable() -> Nonnull<const VTable*> {
 // As a result, all Values must be immutable, and all their constructor
 // arguments must be copyable, equality-comparable, and hashable. See
 // Arena's documentation for details.
-class Value : Printable<Value> {
+class Value : public Printable<Value> {
  public:
   using EnableCanonicalizedAllocation = void;
   enum class Kind {
@@ -1471,7 +1471,7 @@ class ParameterizedEntityName : public Value {
 // These values are used to represent the second operand of a compound member
 // access expression: `x.(A.B)`, and can also be the value of an alias
 // declaration, but cannot be used in most other contexts.
-class MemberName : public Value, Printable<MemberName> {
+class MemberName : public Value, public Printable<MemberName> {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
              std::optional<Nonnull<const InterfaceType*>> interface,

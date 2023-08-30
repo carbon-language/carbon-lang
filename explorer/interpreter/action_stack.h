@@ -21,7 +21,7 @@ namespace Carbon {
 enum class Phase { CompileTime, RunTime };
 
 // The stack of Actions currently being executed by the interpreter.
-class ActionStack : Printable<ActionStack> {
+class ActionStack : public Printable<ActionStack> {
  public:
   // Constructs an empty compile-time ActionStack.
   explicit ActionStack(Nonnull<TraceStream*> trace_stream)

@@ -17,7 +17,7 @@
 namespace Carbon::SemIR {
 
 // The ID of a node.
-struct NodeId : public IndexBase {
+struct NodeId : public IndexBase, public Printable<NodeId> {
   // An explicitly invalid node ID.
   static const NodeId Invalid;
 
@@ -50,7 +50,7 @@ constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
 // The ID of a function.
-struct FunctionId : public IndexBase {
+struct FunctionId : public IndexBase, public Printable<FunctionId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "function";
@@ -59,7 +59,8 @@ struct FunctionId : public IndexBase {
 };
 
 // The ID of a cross-referenced IR.
-struct CrossReferenceIRId : public IndexBase {
+struct CrossReferenceIRId : public IndexBase,
+                            public Printable<CrossReferenceIRId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "ir";
@@ -68,7 +69,7 @@ struct CrossReferenceIRId : public IndexBase {
 };
 
 // A boolean value.
-struct BoolValue : public IndexBase {
+struct BoolValue : public IndexBase, public Printable<BoolValue> {
   static const BoolValue False;
   static const BoolValue True;
 
@@ -91,7 +92,7 @@ constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
 // The ID of an integer literal.
-struct IntegerLiteralId : public IndexBase {
+struct IntegerLiteralId : public IndexBase, public Printable<IntegerLiteralId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "int";
@@ -100,7 +101,7 @@ struct IntegerLiteralId : public IndexBase {
 };
 
 // The ID of a name scope.
-struct NameScopeId : public IndexBase {
+struct NameScopeId : public IndexBase, public Printable<NameScopeId> {
   // An explicitly invalid ID.
   static const NameScopeId Invalid;
 
@@ -115,7 +116,7 @@ constexpr NameScopeId NameScopeId::Invalid =
     NameScopeId(NameScopeId::InvalidIndex);
 
 // The ID of a node block.
-struct NodeBlockId : public IndexBase {
+struct NodeBlockId : public IndexBase, public Printable<NodeBlockId> {
   // All File instances must provide the 0th node block as empty.
   static const NodeBlockId Empty;
 
@@ -143,7 +144,7 @@ constexpr NodeBlockId NodeBlockId::Unreachable =
     NodeBlockId(NodeBlockId::InvalidIndex - 1);
 
 // The ID of a real literal.
-struct RealLiteralId : public IndexBase {
+struct RealLiteralId : public IndexBase, public Printable<RealLiteralId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "real";
@@ -152,7 +153,7 @@ struct RealLiteralId : public IndexBase {
 };
 
 // The ID of a string.
-struct StringId : public IndexBase {
+struct StringId : public IndexBase, public Printable<StringId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "str";
@@ -161,7 +162,7 @@ struct StringId : public IndexBase {
 };
 
 // The ID of a node block.
-struct TypeId : public IndexBase {
+struct TypeId : public IndexBase, public Printable<TypeId> {
   // The builtin TypeType.
   static const TypeId TypeType;
 
@@ -189,7 +190,7 @@ constexpr TypeId TypeId::Error = TypeId(TypeId::InvalidIndex - 1);
 constexpr TypeId TypeId::Invalid = TypeId(TypeId::InvalidIndex);
 
 // The ID of a type block.
-struct TypeBlockId : public IndexBase {
+struct TypeBlockId : public IndexBase, public Printable<TypeBlockId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "typeBlock";
@@ -198,7 +199,7 @@ struct TypeBlockId : public IndexBase {
 };
 
 // An index for member access.
-struct MemberIndex : public IndexBase {
+struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "member";
@@ -226,7 +227,7 @@ struct MemberIndex : public IndexBase {
 //
 // Internally, each Kind uses the `Factory*` types to provide a boilerplate
 // `Make` and `Get` methods.
-class Node {
+class Node : public Printable<Node> {
  public:
   struct NoArgs {};
 

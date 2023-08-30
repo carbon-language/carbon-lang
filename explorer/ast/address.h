@@ -18,7 +18,7 @@ namespace Carbon {
 // An AllocationId identifies an _allocation_ produced by a Heap. An allocation
 // is analogous to the C++ notion of a complete object: the `Value` in an
 // allocation is not a sub-part of any other `Value`.
-class AllocationId : Printable<AllocationId> {
+class AllocationId : public Printable<AllocationId> {
  public:
   AllocationId(const AllocationId&) = default;
   auto operator=(const AllocationId&) -> AllocationId& = default;
@@ -51,7 +51,7 @@ class AllocationId : Printable<AllocationId> {
 // An Address represents a memory address in the Carbon virtual machine.
 // Addresses are used to access values stored in a Heap. Unlike an
 // AllocationId, an Address can refer to a sub-Value of some larger Value.
-class Address : Printable<Address> {
+class Address : public Printable<Address> {
  public:
   // Constructs an `Address` that refers to the value stored in `allocation`.
   explicit Address(AllocationId allocation) : allocation_(allocation) {}

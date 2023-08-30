@@ -18,7 +18,7 @@ class DataIterator;
 //
 // DataIndex is designed to be passed by value, not reference or pointer. They
 // are also designed to be small and efficient to store in data structures.
-struct IndexBase {
+struct IndexBase : Printable<IndexBase> {
   static constexpr int32_t InvalidIndex = -1;
 
   IndexBase() = delete;

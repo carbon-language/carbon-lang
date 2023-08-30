@@ -52,7 +52,7 @@ namespace Carbon::Internal {
 //   };
 //   ```
 template <typename DerivedT, typename EnumT, const llvm::StringLiteral Names[]>
-class EnumBase : Printable<DerivedT> {
+class EnumBase : public Printable<DerivedT> {
  public:
   // An alias for the raw enum type. This is an implementation detail and
   // should rarely be used directly, only when an actual enum type is needed.

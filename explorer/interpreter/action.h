@@ -30,7 +30,7 @@ namespace Carbon {
 
 // A RuntimeScope manages and provides access to the storage for names that are
 // not compile-time constants.
-class RuntimeScope : Printable<RuntimeScope> {
+class RuntimeScope : public Printable<RuntimeScope> {
  public:
   // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
@@ -108,7 +108,7 @@ class RuntimeScope : Printable<RuntimeScope> {
 // The actual behavior of an Action step is defined by Interpreter::Step, not by
 // Action or its subclasses.
 // TODO: consider moving this logic to a virtual method `Step`.
-class Action : Printable<Action> {
+class Action : public Printable<Action> {
  public:
   enum class Kind {
     LocationAction,

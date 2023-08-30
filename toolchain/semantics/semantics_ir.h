@@ -15,7 +15,7 @@
 namespace Carbon::SemIR {
 
 // A function.
-struct Function {
+struct Function : public Printable<Function> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", "
         << "param_refs: " << param_refs_id;
@@ -32,7 +32,6 @@ struct Function {
     }
     out << "}";
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
   // The function name.
   StringId name_id;
@@ -52,12 +51,11 @@ struct Function {
   llvm::SmallVector<NodeBlockId> body_block_ids;
 };
 
-struct RealLiteral {
+struct RealLiteral : public Printable<RealLiteral> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{mantissa: " << mantissa << ", exponent: " << exponent
         << ", is_decimal: " << is_decimal << "}";
   }
-  LLVM_DUMP_METHOD void Dump() const { llvm::errs() << *this; }
 
   llvm::APInt mantissa;
   llvm::APInt exponent;
@@ -68,7 +66,7 @@ struct RealLiteral {
 };
 
 // Provides semantic analysis on a Parse::Tree.
-class File {
+class File : public Printable<File> {
  public:
   // Produces the builtins.
   static auto MakeBuiltinIR() -> File;

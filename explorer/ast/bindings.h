@@ -31,7 +31,7 @@ using ImplWitnessMap =
 // These are shared by a context and all unparameterized entities within that
 // context. For example, a class and the name of a method within that class
 // will have the same set of bindings.
-class Bindings : Printable<Bindings> {
+class Bindings : public Printable<Bindings> {
  public:
   // Gets an empty set of bindings.
   static auto None() -> Nonnull<const Bindings*>;

@@ -25,7 +25,7 @@ class Value;
 // - An _auto_ term consists of `-> auto`.
 // - An _omitted_ term consists of no tokens at all.
 // Each of these forms has a corresponding factory function.
-class ReturnTerm : Printable<ReturnTerm> {
+class ReturnTerm : public Printable<ReturnTerm> {
  public:
   explicit ReturnTerm(CloneContext& context, const ReturnTerm& other)
       : kind_(other.kind_),
