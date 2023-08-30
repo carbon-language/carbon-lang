@@ -57,7 +57,7 @@ constexpr Node Node::Invalid = Node(Node::InvalidIndex);
 // The tree is immutable once built, but is designed to support reasonably
 // efficient patterns that build a new tree with a specific transformation
 // applied.
-class Tree {
+class Tree : public Printable<Tree> {
  public:
   class PostorderIterator;
   class SiblingIterator;
@@ -255,7 +255,8 @@ class Tree {
 class Tree::PostorderIterator
     : public llvm::iterator_facade_base<PostorderIterator,
                                         std::random_access_iterator_tag, Node,
-                                        int, Node*, Node> {
+                                        int, Node*, Node>,
+      public Printable<Tree::PostorderIterator> {
  public:
   PostorderIterator() = delete;
 
@@ -305,7 +306,8 @@ class Tree::PostorderIterator
 // relative order of siblings matches their RPO order.
 class Tree::SiblingIterator
     : public llvm::iterator_facade_base<
-          SiblingIterator, std::forward_iterator_tag, Node, int, Node*, Node> {
+          SiblingIterator, std::forward_iterator_tag, Node, int, Node*, Node>,
+      public Printable<Tree::SiblingIterator> {
  public:
   explicit SiblingIterator() = delete;
 

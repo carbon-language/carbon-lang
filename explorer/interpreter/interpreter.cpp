@@ -1723,10 +1723,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           self_binding->set_symbolic_identity(self);
           self_binding->set_value(self);
           self_binding->set_impl_binding(impl_binding);
-          IntrinsicConstraint constraint = {
-              .type = self,
-              .kind = IntrinsicConstraint::ImplicitAs,
-              .arguments = args};
+          IntrinsicConstraint constraint(self, IntrinsicConstraint::ImplicitAs,
+                                         args);
           auto* result = arena_->New<ConstraintType>(
               self_binding, std::vector<ImplsConstraint>{},
               std::vector<IntrinsicConstraint>{std::move(constraint)},

@@ -20,7 +20,7 @@ namespace Carbon {
 struct Success {};
 
 // Tracks an error message.
-class [[nodiscard]] Error {
+class [[nodiscard]] Error : public Printable<Error> {
  public:
   // Represents an error state.
   explicit Error(llvm::Twine location, llvm::Twine message)

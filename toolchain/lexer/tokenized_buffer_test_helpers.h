@@ -11,17 +11,7 @@
 #include "llvm/Support/YAMLParser.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 
-namespace Carbon {
-
-inline void PrintTo(const TokenizedBuffer& buffer, std::ostream* output) {
-  std::string message;
-  llvm::raw_string_ostream message_stream(message);
-  message_stream << "\n";
-  buffer.Print(message_stream);
-  *output << message_stream.str();
-}
-
-namespace Testing {
+namespace Carbon::Testing {
 
 struct ExpectedToken {
   friend auto operator<<(std::ostream& output, const ExpectedToken& expected)
@@ -150,7 +140,6 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
   return matches;
 }
 
-}  // namespace Testing
-}  // namespace Carbon
+}  // namespace Carbon::Testing
 
 #endif  // CARBON_TOOLCHAIN_LEXER_TOKENIZED_BUFFER_TEST_HELPERS_H_

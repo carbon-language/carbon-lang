@@ -33,7 +33,7 @@ class TokenizedBuffer;
 //
 // Lexing errors result in a potentially incomplete sequence of tokens and
 // `HasError` returning true.
-class TokenizedBuffer {
+class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
   // A lightweight handle to a lexed token in a `TokenizedBuffer`.
   //
@@ -87,7 +87,8 @@ class TokenizedBuffer {
   // Random-access iterator over tokens within the buffer.
   class TokenIterator
       : public llvm::iterator_facade_base<
-            TokenIterator, std::random_access_iterator_tag, const Token, int> {
+            TokenIterator, std::random_access_iterator_tag, const Token, int>,
+        public Printable<TokenIterator> {
    public:
     TokenIterator() = delete;
 
@@ -132,7 +133,7 @@ class TokenizedBuffer {
   //
   // The `TokenizedBuffer` must outlive any `RealLiteralValue`s referring to
   // its tokens.
-  class RealLiteralValue {
+  class RealLiteralValue : public Printable<RealLiteralValue> {
    public:
     // The mantissa, represented as an unsigned integer.
     [[nodiscard]] auto Mantissa() const -> const llvm::APInt& {
