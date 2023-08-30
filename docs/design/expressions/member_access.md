@@ -119,11 +119,13 @@ expression is referring to.
 For a simple member access, the second operand is a word. If the first operand
 is a type, facet, package, or namespace, a search for the word is performed in
 the first operand. Otherwise, a search for the word is performed in the type of
-the first operand. In either case, the search must succeed.
+the first operand. In either case, the search must succeed. In the latter case,
+if the result is an instance member, then [instance binding](#instance-binding)
+is performed on the first operand.
 
 For a compound member access, the second operand is evaluated as a compile-time
 constant to determine the member being accessed. The evaluation is required to
-succeed and to result in a member of a facet, type, or interface. If the result
+succeed and to result in a member of a type, interface, or non-type facet. If the result
 is an instance member, then [instance binding](#instance-binding) is always
 performed on the first operand.
 
@@ -248,9 +250,9 @@ fn PrintPointTwice() {
 
 ### Facet binding
 
-If any of the above lookups ever looks for members of a
-[facet binding](/docs/design/generics/terminology.md#facet-binding), it should
-consider members of the facet type, treating the facet binding as an
+If any of the above lookups would search for members of a
+[facet binding](/docs/design/generics/terminology.md#facet-binding), it
+searches the facet type instead, treating the facet binding as an
 [archetype](/docs/design/generics/terminology.md#archetype).
 
 For example:
