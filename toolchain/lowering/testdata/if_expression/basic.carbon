@@ -28,12 +28,14 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT: 1:                                                ; preds = %0
 // CHECK:STDOUT:   %F = call i32 @F()
 // CHECK:STDOUT:   %temp = alloca i32, align 4
+// CHECK:STDOUT:   store i32 %F, ptr %temp, align 4
 // CHECK:STDOUT:   %2 = load i32, ptr %temp, align 4
 // CHECK:STDOUT:   br label %5
 // CHECK:STDOUT:
 // CHECK:STDOUT: 3:                                                ; preds = %0
 // CHECK:STDOUT:   %G = call i32 @G()
 // CHECK:STDOUT:   %temp1 = alloca i32, align 4
+// CHECK:STDOUT:   store i32 %G, ptr %temp1, align 4
 // CHECK:STDOUT:   %4 = load i32, ptr %temp1, align 4
 // CHECK:STDOUT:   br label %5
 // CHECK:STDOUT:

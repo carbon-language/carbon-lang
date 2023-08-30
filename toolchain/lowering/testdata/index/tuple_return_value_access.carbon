@@ -19,8 +19,7 @@ fn Run() {
 // CHECK:STDOUT:   store i32 12, ptr %1, align 4
 // CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32 }, ptr %tuple, i32 0, i32 1
 // CHECK:STDOUT:   store i32 24, ptr %2, align 4
-// CHECK:STDOUT:   %3 = load { i32, i32 }, ptr %tuple, align 4
-// CHECK:STDOUT:   ret { i32, i32 } %3
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Run() {

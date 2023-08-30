@@ -17,8 +17,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Echo() {
 // CHECK:STDOUT:   %struct = alloca {}, align 8
-// CHECK:STDOUT:   %1 = load {}, ptr %struct, align 1
-// CHECK:STDOUT:   ret {} %1
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {

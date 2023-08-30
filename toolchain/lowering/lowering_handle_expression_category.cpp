@@ -40,6 +40,7 @@ auto HandleMaterializeTemporary(FunctionContext& context, SemIR::NodeId node_id,
 auto HandleTemporary(FunctionContext& context, SemIR::NodeId node_id,
                      SemIR::Node node) -> void {
   auto [temporary_id, init_id] = node.GetAsTemporary();
+  context.FinishInitialization(node.type_id(), temporary_id, init_id);
   context.SetLocal(node_id, context.GetLocal(temporary_id));
 }
 

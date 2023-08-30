@@ -26,8 +26,7 @@ fn Main() {
 // CHECK:STDOUT:   store ptr %tuple.index1, ptr %2, align 8
 // CHECK:STDOUT:   %3 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 2
 // CHECK:STDOUT:   store ptr %tuple.index2, ptr %3, align 8
-// CHECK:STDOUT:   %4 = load { i32, i32, i32 }, ptr %tuple, align 4
-// CHECK:STDOUT:   ret { i32, i32, i32 } %4
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
