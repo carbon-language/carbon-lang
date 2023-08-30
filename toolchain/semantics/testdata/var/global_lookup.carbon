@@ -46,10 +46,10 @@ var y: i32 = x;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %x: i32 = var "x"
+// CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x, %.loc7_14
-// CHECK:STDOUT:   %y: i32 = var "y"
+// CHECK:STDOUT:   %y: ref i32 = var "y"
 // CHECK:STDOUT:   %.loc7_5: i32 = bind_value %x
 // CHECK:STDOUT:   assign %y, %.loc7_5
 // CHECK:STDOUT: }

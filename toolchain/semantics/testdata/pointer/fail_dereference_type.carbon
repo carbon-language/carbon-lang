@@ -40,6 +40,6 @@ var p: *i32;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc13: <error> = dereference i32
-// CHECK:STDOUT:   %p: <error> = var "p"
+// CHECK:STDOUT:   %.loc13: ref <error> = dereference i32
+// CHECK:STDOUT:   %p: ref <error> = var "p"
 // CHECK:STDOUT: }

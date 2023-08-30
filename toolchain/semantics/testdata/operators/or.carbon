@@ -127,8 +127,8 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11.1: bool = call @F()
-// CHECK:STDOUT:   %.loc11_11.2: bool = materialize_temporary
+// CHECK:STDOUT:   %.loc11_11.1: init bool = call @F()
+// CHECK:STDOUT:   %.loc11_11.2: ref bool = materialize_temporary
 // CHECK:STDOUT:   assign %.loc11_11.2, %.loc11_11.1
 // CHECK:STDOUT:   %.loc11_11.3: bool = bind_value %.loc11_11.2
 // CHECK:STDOUT:   %.loc11_14.1: bool = not %.loc11_11.3
@@ -136,8 +136,8 @@ fn Or() -> bool {
 // CHECK:STDOUT:   if %.loc11_14.1 br !or.rhs else br !or.result(%.loc11_14.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
-// CHECK:STDOUT:   %.loc11_18.1: bool = call @G()
-// CHECK:STDOUT:   %.loc11_18.2: bool = materialize_temporary
+// CHECK:STDOUT:   %.loc11_18.1: init bool = call @G()
+// CHECK:STDOUT:   %.loc11_18.2: ref bool = materialize_temporary
 // CHECK:STDOUT:   assign %.loc11_18.2, %.loc11_18.1
 // CHECK:STDOUT:   %.loc11_18.3: bool = bind_value %.loc11_18.2
 // CHECK:STDOUT:   br !or.result(%.loc11_18.3)

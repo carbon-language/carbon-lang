@@ -75,7 +75,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_11.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc11_11.2: () = tuple_value ()
-// CHECK:STDOUT:   %b: () = var "b"
-// CHECK:STDOUT:   %.loc11_37: () = call @MakeImplicitEmptyTuple()
+// CHECK:STDOUT:   %b: ref () = var "b"
+// CHECK:STDOUT:   %.loc11_37: init () = call @MakeImplicitEmptyTuple()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -125,16 +125,16 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11.1: bool = call @F()
-// CHECK:STDOUT:   %.loc11_11.2: bool = materialize_temporary
+// CHECK:STDOUT:   %.loc11_11.1: init bool = call @F()
+// CHECK:STDOUT:   %.loc11_11.2: ref bool = materialize_temporary
 // CHECK:STDOUT:   assign %.loc11_11.2, %.loc11_11.1
 // CHECK:STDOUT:   %.loc11_11.3: bool = bind_value %.loc11_11.2
 // CHECK:STDOUT:   %.loc11_14.1: bool = bool_literal false
 // CHECK:STDOUT:   if %.loc11_11.3 br !and.rhs else br !and.result(%.loc11_14.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %.loc11_19.1: bool = call @G()
-// CHECK:STDOUT:   %.loc11_19.2: bool = materialize_temporary
+// CHECK:STDOUT:   %.loc11_19.1: init bool = call @G()
+// CHECK:STDOUT:   %.loc11_19.2: ref bool = materialize_temporary
 // CHECK:STDOUT:   assign %.loc11_19.2, %.loc11_19.1
 // CHECK:STDOUT:   %.loc11_19.3: bool = bind_value %.loc11_19.2
 // CHECK:STDOUT:   br !and.result(%.loc11_19.3)

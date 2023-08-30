@@ -41,7 +41,7 @@ var x: type = 42;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %x: type = var "x"
+// CHECK:STDOUT:   %x: ref type = var "x"
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 42
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

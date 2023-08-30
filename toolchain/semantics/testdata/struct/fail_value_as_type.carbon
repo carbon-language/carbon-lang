@@ -58,5 +58,5 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %.loc10_12: i32 = stub_reference %.loc10_14
 // CHECK:STDOUT:   %.loc10_15.1: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %.loc10_15.2: {.a: i32} = struct_value (%.loc10_12)
-// CHECK:STDOUT:   %x: <error> = var "x"
+// CHECK:STDOUT:   %x: ref <error> = var "x"
 // CHECK:STDOUT: }

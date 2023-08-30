@@ -68,6 +68,6 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_6.2: () = call @Foo()
+// CHECK:STDOUT:   %.loc10_6.2: init () = call @Foo()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

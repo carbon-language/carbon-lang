@@ -121,9 +121,9 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
-// CHECK:STDOUT:   %t: [i32; 1] = var "t"
-// CHECK:STDOUT:   %.loc10_22.1: (i32,) = call @F()
-// CHECK:STDOUT:   %.loc10_22.2: (i32,) = materialize_temporary
+// CHECK:STDOUT:   %t: ref [i32; 1] = var "t"
+// CHECK:STDOUT:   %.loc10_22.1: init (i32,) = call @F()
+// CHECK:STDOUT:   %.loc10_22.2: ref (i32,) = materialize_temporary
 // CHECK:STDOUT:   assign %.loc10_22.2, %.loc10_22.1
 // CHECK:STDOUT:   %.loc10_22.3: (i32,) = bind_value %.loc10_22.2
 // CHECK:STDOUT:   %.loc10_22.4: [i32; 1] = array_value %.loc10_22.3

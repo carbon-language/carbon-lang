@@ -71,7 +71,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   %.loc10_14.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_14.2: {} = struct_value ()
 // CHECK:STDOUT:   %.loc10_15: type = struct_type {.a: {}}
-// CHECK:STDOUT:   %x: {.a: {}} = var "x"
+// CHECK:STDOUT:   %x: ref {.a: {}} = var "x"
 // CHECK:STDOUT:   %.loc10_26: {} = struct_value ()
 // CHECK:STDOUT:   %.loc10_23: {} = stub_reference %.loc10_26
 // CHECK:STDOUT:   %.loc10_27.1: type = struct_type {.b: {}}

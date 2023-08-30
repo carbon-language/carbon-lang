@@ -59,6 +59,6 @@ fn G() { F(); }
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_11.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc9_11.2: () = call @F()
+// CHECK:STDOUT:   %.loc9_11.2: init () = call @F()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
