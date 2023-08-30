@@ -127,18 +127,18 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11.1: bool = call @F()
-// CHECK:STDOUT:   %.loc11_11.2: bool = temporary_storage
-// CHECK:STDOUT:   %.loc11_11.3: bool = temporary %.loc11_11.2, %.loc11_11.1
+// CHECK:STDOUT:   %.loc11_11.1: init bool = call @F()
+// CHECK:STDOUT:   %.loc11_11.2: ref bool = temporary_storage
+// CHECK:STDOUT:   %.loc11_11.3: ref bool = temporary %.loc11_11.2, %.loc11_11.1
 // CHECK:STDOUT:   %.loc11_11.4: bool = bind_value %.loc11_11.3
 // CHECK:STDOUT:   %.loc11_14.1: bool = not %.loc11_11.4
 // CHECK:STDOUT:   %.loc11_14.2: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc11_14.1 br !or.rhs else br !or.result(%.loc11_14.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
-// CHECK:STDOUT:   %.loc11_18.1: bool = call @G()
-// CHECK:STDOUT:   %.loc11_18.2: bool = temporary_storage
-// CHECK:STDOUT:   %.loc11_18.3: bool = temporary %.loc11_18.2, %.loc11_18.1
+// CHECK:STDOUT:   %.loc11_18.1: init bool = call @G()
+// CHECK:STDOUT:   %.loc11_18.2: ref bool = temporary_storage
+// CHECK:STDOUT:   %.loc11_18.3: ref bool = temporary %.loc11_18.2, %.loc11_18.1
 // CHECK:STDOUT:   %.loc11_18.4: bool = bind_value %.loc11_18.3
 // CHECK:STDOUT:   br !or.result(%.loc11_18.4)
 // CHECK:STDOUT:
