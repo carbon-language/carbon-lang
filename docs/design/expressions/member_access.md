@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Types and facets](#types-and-facets)
     -   [Values](#values)
     -   [Facet binding](#facet-binding)
-        -   [Constant bindings](#constant-bindings)
+        -   [Compile-time bindings](#compile-time-bindings)
             -   [Lookup ambiguity](#lookup-ambiguity)
 -   [`impl` lookup](#impl-lookup)
     -   [`impl` lookup for simple member access](#impl-lookup-for-simple-member-access)
@@ -121,11 +121,11 @@ is a type, facet, package, or namespace, a search for the word is performed in
 the first operand. Otherwise, a search for the word is performed in the type of
 the first operand. In either case, the search must succeed.
 
-For a compound member access, the second operand is evaluated as a constant to
-determine the member being accessed. The evaluation is required to succeed and
-to result in a member of a facet, type, or interface. If the result is an
-instance member, then [instance binding](#instance-binding) is always performed
-on the first operand.
+For a compound member access, the second operand is evaluated as a compile-time
+constant to determine the member being accessed. The evaluation is required to
+succeed and to result in a member of a facet, type, or interface. If the result
+is an instance member, then [instance binding](#instance-binding) is always
+performed on the first operand.
 
 ### Package and namespace members
 
@@ -270,16 +270,17 @@ fn GenericPrint[T:! Printable](a: T) {
 **Note:** If lookup is performed into a type that involves a template binding,
 the lookup will be performed both in the context of the template definition and
 in the context of the template instantiation, as described in
-[constant bindings](#constant-bindings). The results of these lookups are
-[combined](#lookup-ambiguity).
+[the "compile-time bindings" section](#compile-time-bindings). The results of
+these lookups are [combined](#lookup-ambiguity).
 
-#### Constant bindings
+#### Compile-time bindings
 
 If the value or type of the first operand depends on a checked or template
-generic parameter, or in fact any constant binding, the lookup is performed from
-a context where the value of that parameter is unknown. Evaluation of an
-expression involving the parameter may still succeed, but will result in a
-symbolic value involving that parameter.
+generic parameter, or in fact any
+[compile-time binding](/docs/design/generics/terminology.md#bindings), the
+lookup is performed from a context where the value of that binding is unknown.
+Evaluation of an expression involving the binding may still succeed, but will
+result in a symbolic value involving that binding.
 
 ```carbon
 class GenericWrapper(T:! type) {
@@ -354,8 +355,8 @@ resolution.
 ##### Lookup ambiguity
 
 Multiple lookups can be performed when resolving a member access expression with
-a [template binding](#constant-bindings). We resolve this the same way as when
-looking in multiple interfaces that are
+a [template binding](#compile-time-bindings). We resolve this the same way as
+when looking in multiple interfaces that are
 [combined with `&`](/docs/design/generics/details.md#combining-interfaces-by-anding-type-of-types):
 
 -   If more than one distinct member is found, after performing
@@ -494,10 +495,10 @@ the member access expression, `V`:
     ```
 
 The appropriate `impl T as I` implementation is located. The program is invalid
-if no such `impl` exists. When `T` or `I` depends on a checked generic binding,
-a suitable constraint must be specified to ensure that such an `impl` will
-exist. When `T` or `I` depends on a template binding, this check is deferred
-until the value for the template binding is known.
+if no such `impl` exists. When `T` or `I` depends on a symbolic binding, a
+suitable constraint must be specified to ensure that such an `impl` will exist.
+When `T` or `I` depends on a template binding, this check is deferred until the
+value for the template binding is known.
 
 `M` is replaced by the member of the `impl` that corresponds to `M`.
 
