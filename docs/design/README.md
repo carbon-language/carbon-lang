@@ -30,7 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [String literals](#string-literals)
 -   [Values, objects, and expressions](#values-objects-and-expressions)
     -   [Expression categories](#expression-categories)
-    -   [Value phases](#value-phases)
+    -   [Expression phases](#expression-phases)
 -   [Composite types](#composite-types)
     -   [Tuples](#tuples)
     -   [Struct types](#struct-types)
@@ -401,8 +401,8 @@ themselves modeled as values; specifically, compile-time-constant values of type
 A value used in a type position, like after a `:` in a variable declaration or
 the return type after a `->` in a function declaration, must be:
 
--   [a constant value](#value-phases), so the compiler can evaluate it at
-    compile time, and
+-   [a compile-time constant](#expression-phases), so the compiler can evaluate
+    it at compile time, and
 -   have a defined implicit conversion to type `type`.
 
 The actual type used is the result of the conversion to type `type`. Of course
@@ -718,9 +718,9 @@ The primitive conversion steps used are:
 > -   Proposal
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
-### Value phases
+### Expression phases
 
-Value expressions are also broken down into three _value phases_:
+Value expressions are further broken down into three _expression phases_:
 
 -   A _template constant_ has a value known at compile time, and that value is
     available during type checking, for example to use as the size of an array.
@@ -737,6 +737,9 @@ Value expressions are also broken down into three _value phases_:
     expressions with checked-generic arguments, like `Optional(T*)`.
 -   A _runtime value_ has a dynamic value only known at runtime.
 
+Template constants and symbolic constants are collectively called _compile-time
+constants_ and correspond to declarations using `:!`.
+
 Carbon will automatically convert a template constant to a symbolic constant, or
 any value to a runtime value:
 
@@ -749,10 +752,8 @@ graph TD;
 Template constants convert to symbolic constants and to runtime values. Symbolic
 constants will generally convert into runtime values if an operation that
 inspects the value is performed on them. Runtime values will convert into
-constants if constant evaluation of the runtime expression succeeds.
-
-Template constants and symbolic constants are collectively called _constants_
-and correspond to declarations using `:!`.
+template or symbolic constants if constant evaluation of the runtime expression
+succeeds.
 
 > **Note:** Conversion of runtime values to other phases is provisional.
 
@@ -1037,10 +1038,10 @@ example through side effects of the destructor, copy, and move operations, but
 the program's correctness must not depend on which option the Carbon
 implementation chooses.
 
-A [constant binding](#checked-and-template-parameters) uses `:!` instead of a
-colon (`:`) and can only match [constant values](#value-phases), not run-time
-values. A `template` keyword before the binding selects a template constant
-binding instead of a symbolic constant binding.
+A [compile-time binding](#checked-and-template-parameters) uses `:!` instead of
+a colon (`:`) and can only match [compile-time constants](#expression-phases),
+not run-time values. A `template` keyword before the binding selects a template
+constant binding instead of a symbolic constant binding.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -2771,11 +2772,11 @@ with the compiler verifying that the semantics stay the same. Once all
 constraints have been added, removing the word `template` to switch to a checked
 parameter is safe.
 
-The [value phase](#value-phases) of a checked parameter is "symbolic constant"
-whereas the value phase of a template parameter is "template constant." A
-binding pattern using `:!` is a _constant binding pattern_; more specifically a
-_template binding pattern_ if it uses `template`, and a _symbolic binding
-pattern_ if it does not.
+The [expression phase](#expression-phases) of a checked parameter is a symbolic
+constant whereas the expression phase of a template parameter is template
+constant. A binding pattern using `:!` is a _compile-time binding pattern_; more
+specifically a _template binding pattern_ if it uses `template`, and a _symbolic
+binding pattern_ if it does not.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking

@@ -61,8 +61,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Generally speaking, when we talk about _generics_, either
 [checked or template](#checked-versus-template-parameters), we are talking about
-generalizing some language construct by adding a compile-time parameter, called
-a _generic parameter_, to it. So:
+generalizing some language construct by adding a _compile-time parameter_, also
+called a _generic parameter_, to it. So:
 
 -   a _generic function_ is a function with at least one compile-time parameter,
     which could be an explicit argument to the function or
@@ -283,28 +283,28 @@ complete definition checking. This occurs for
 
 _Binding patterns_ associate a name with a type and a value. This is used to
 declare function parameters, in `let` and `var` declarations, as well as to
-declare [generic parameters](#generic-means-compile-time-parameterized). There
-are three kinds of binding patterns, corresponding to
-[the three value phases](/docs/design/README.md#value-phases):
+declare [compile-time parameters](#generic-means-compile-time-parameterized) for
+classes, interfaces, and so on. There are three kinds of binding patterns,
+corresponding to
+[the three expression phases](/docs/design/README.md#expression-phases):
 
 -   A _runtime binding pattern_ binds to a dynamic value at runtime, and is
     written using a `:`, as in `x: i32`.
--   A _symbolic constant binding pattern_ or _symbolic binding pattern_ binds to
-    a compile-time value that is not known when type checking, and is used to
-    declare [checked generic](#checked-versus-template-parameters) parameters.
-    These binding use `:!`, as in `T:! type`.
--   A _template constant binding pattern_ or _template binding pattern_ binds to
-    a compile-time value that is known when type checking, and is used to
-    declare [template](#checked-versus-template-parameters) parameters. These
-    bindings use the keyword `template` in addition to `:!`, as in
-    `template T:! type`.
+-   A _symbolic binding pattern_ binds to a compile-time value that is not known
+    when type checking, and is used to declare
+    [checked generic](#checked-versus-template-parameters) parameters. These
+    binding use `:!`, as in `T:! type`.
+-   A _template binding pattern_ binds to a compile-time value that is known
+    when type checking, and is used to declare
+    [template](#checked-versus-template-parameters) parameters. These bindings
+    use the keyword `template` in addition to `:!`, as in `template T:! type`.
 
 The last two binding patterns, which are about binding a compile-time value, are
-called _constant binding patterns_, and correspond to those binding patterns
+called _compile-time binding patterns_, and correspond to those binding patterns
 that use `:!`.
 
 The name being declared, which is the identifier to the left of the `:` or `:!`,
-is called a _binding_, or more specifically a _runtime binding_, _constant
+is called a _binding_, or more specifically a _runtime binding_, _compile-time
 binding_, _symbolic binding_, or _template binding_. The expression to the right
 defining the type of the binding pattern is called the _binding type
 expression_, a kind of [type expression](#type-expression). For example, in
@@ -363,10 +363,10 @@ cases, we are concerned with the type value after the implicit conversion.
 ## Facet binding
 
 We use the term _facet binding_ to refer to the name introduced by a
-[constant binding pattern](#bindings) (using `:!` with or without the `template`
-modifier) where the declared type is a [facet type](#facet-type). In the binding
-pattern `T:! Hashable`, `T` is a facet binding, and the value of `T` is a
-[facet](#facet).
+[compile-time binding pattern](#bindings) (using `:!` with or without the
+`template` modifier) where the declared type is a [facet type](#facet-type). In
+the binding pattern `T:! Hashable`, `T` is a facet binding, and the value of `T`
+is a [facet](#facet).
 
 ## Deduced parameter
 
@@ -824,9 +824,10 @@ that specifies an array bound might have an integer type.
 
 ## Type constraints
 
-Type constraints restrict which types are legal for generic parameters or
-associated facets. They help define semantics under which they should be called,
-and prevent incorrect calls.
+Type constraints restrict which types are legal for a
+[facet binding](#facet-binding), like a facet parameter or associated facet.
+They help define semantics under which they should be called, and prevent
+incorrect calls.
 
 In general there are a number of different type relationships we would like to
 express, for example:

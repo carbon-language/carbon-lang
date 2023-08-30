@@ -1488,9 +1488,6 @@ class MemberName : public Value {
     return f(base_type_, interface_, member_);
   }
 
-  // Prints the member name or identifier.
-  void Print(llvm::raw_ostream& out) const { member_->Print(out); }
-
   // The type for which `name` is a member or a member of an `impl`.
   auto base_type() const -> std::optional<Nonnull<const Value*>> {
     return base_type_;

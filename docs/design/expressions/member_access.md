@@ -814,7 +814,7 @@ fn CallStaticMethod(c: C) {
 
   // ✅ OK
   let T:! type = C.Nested;
-  // ❌ Error: value of `:!` binding is not constant because it
+  // ❌ Error: value of `:!` binding is not compile-time because it
   // refers to local variable `c`.
   let U:! type = c.Nested;
 }
