@@ -39,7 +39,7 @@ fn Main() {
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: Return},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+8, type: type0},
@@ -84,7 +84,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: {}) -> {} {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   return %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

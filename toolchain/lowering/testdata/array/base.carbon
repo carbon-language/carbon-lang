@@ -27,7 +27,6 @@ fn Run() {
 // CHECK:STDOUT:   %2 = load i32, ptr %array.element, align 4
 // CHECK:STDOUT:   %3 = getelementptr inbounds [1 x i32], ptr %array, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %2, ptr %3, align 4
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a, ptr align 4 %array, i64 4, i1 false)
 // CHECK:STDOUT:   %b = alloca [2 x double], align 8
 // CHECK:STDOUT:   %tuple1 = alloca { double, double }, align 8
 // CHECK:STDOUT:   %4 = getelementptr inbounds { double, double }, ptr %tuple1, i32 0, i32 0
@@ -43,7 +42,6 @@ fn Run() {
 // CHECK:STDOUT:   %8 = load double, ptr %array.element4, align 8
 // CHECK:STDOUT:   %9 = getelementptr inbounds [2 x double], ptr %array2, i32 0, i32 1
 // CHECK:STDOUT:   store double %8, ptr %9, align 8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %b, ptr align 8 %array2, i64 16, i1 false)
 // CHECK:STDOUT:   %tuple5 = alloca {}, align 8
 // CHECK:STDOUT:   %c = alloca [5 x {}], align 8
 // CHECK:STDOUT:   %tuple6 = alloca {}, align 8
@@ -83,7 +81,6 @@ fn Run() {
 // CHECK:STDOUT:   %23 = load {}, ptr %array.element17, align 1
 // CHECK:STDOUT:   %24 = getelementptr inbounds [5 x {}], ptr %array12, i32 0, i32 4
 // CHECK:STDOUT:   store {} %23, ptr %24, align 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c, ptr align 1 %array12, i64 0, i1 false)
 // CHECK:STDOUT:   %tuple18 = alloca { %type, %type, %type }, align 8
 // CHECK:STDOUT:   %25 = getelementptr inbounds { %type, %type, %type }, ptr %tuple18, i32 0, i32 0
 // CHECK:STDOUT:   store %type zeroinitializer, ptr %25, align 1
@@ -99,7 +96,6 @@ fn Run() {
 // CHECK:STDOUT:   store i32 2, ptr %29, align 4
 // CHECK:STDOUT:   %30 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple19, i32 0, i32 2
 // CHECK:STDOUT:   store i32 3, ptr %30, align 4
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %d, ptr align 4 %tuple19, i64 12, i1 false)
 // CHECK:STDOUT:   %e = alloca [3 x i32], align 4
 // CHECK:STDOUT:   %array20 = alloca [3 x i32], align 4
 // CHECK:STDOUT:   %array.element21 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 0
@@ -114,14 +110,5 @@ fn Run() {
 // CHECK:STDOUT:   %35 = load i32, ptr %array.element23, align 4
 // CHECK:STDOUT:   %36 = getelementptr inbounds [3 x i32], ptr %array20, i32 0, i32 2
 // CHECK:STDOUT:   store i32 %35, ptr %36, align 4
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %e, ptr align 4 %array20, i64 12, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 4, 3, 2, 1, 0 }
-// CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }

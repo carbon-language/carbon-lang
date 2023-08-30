@@ -93,6 +93,13 @@ class FunctionContext {
     return synthetic_block_ == block;
   }
 
+  // After emitting an initializer `init_id`, finishes performing the
+  // initialization of `dest_id` from that initializer. This is a no-op if the
+  // initialization was performed in-place, and otherwise performs a store or a
+  // copy.
+  auto FinishInitialization(SemIR::TypeId type_id, SemIR::NodeId dest_id,
+                            SemIR::NodeId init_id) -> void;
+
   auto llvm_context() -> llvm::LLVMContext& {
     return file_context_->llvm_context();
   }
@@ -103,6 +110,12 @@ class FunctionContext {
   }
 
  private:
+  // Emits a value copy for type `type_id` from `source_id` to `dest_id`.
+  // `source_id` must produce a value representation for `type_id`, and
+  // `dest_id` must be a pointer to a `type_id` object.
+  auto CopyValue(SemIR::TypeId type_id, SemIR::NodeId source_id,
+                 SemIR::NodeId dest_id) -> void;
+
   // Context for the overall lowering process.
   FileContext* file_context_;
 

@@ -59,6 +59,46 @@ auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
   return synthetic_block_;
 }
 
+auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
+                                           SemIR::NodeId dest_id,
+                                           SemIR::NodeId source_id) -> void {
+  switch (SemIR::GetInitializingRepresentation(semantics_ir(), type_id).kind) {
+    case SemIR::InitializingRepresentation::None:
+    case SemIR::InitializingRepresentation::InPlace:
+      break;
+    case SemIR::InitializingRepresentation::ByCopy:
+      CopyValue(type_id, source_id, dest_id);
+      break;
+  }
+}
+
+auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::NodeId source_id,
+                                SemIR::NodeId dest_id) -> void {
+  switch (auto rep = SemIR::GetValueRepresentation(semantics_ir(), type_id);
+          rep.kind) {
+    case SemIR::ValueRepresentation::None:
+      break;
+    case SemIR::ValueRepresentation::Copy:
+      builder().CreateStore(GetLocalLoaded(source_id), GetLocal(dest_id));
+      break;
+    case SemIR::ValueRepresentation::Pointer: {
+      const auto& layout = llvm_module().getDataLayout();
+      auto* type = GetType(type_id);
+      // TODO: Compute known alignment of the source and destination, which may
+      // be greater than the alignment computed by LLVM.
+      auto align = layout.getABITypeAlign(type);
+
+      // TODO: Attach !tbaa.struct metadata indicating which portions of the
+      // type we actually need to copy and which are padding.
+      builder().CreateMemCpy(GetLocal(dest_id), align, GetLocal(source_id),
+                             align, layout.getTypeAllocSize(type));
+      break;
+    }
+    case SemIR::ValueRepresentation::Custom:
+      CARBON_FATAL() << "TODO: Add support for CopyValue with custom value rep";
+  }
+}
+
 auto FunctionContext::GetLocalLoaded(SemIR::NodeId node_id) -> llvm::Value* {
   auto* value = GetLocal(node_id);
   if (llvm::isa<llvm::AllocaInst, llvm::GetElementPtrInst>(value)) {

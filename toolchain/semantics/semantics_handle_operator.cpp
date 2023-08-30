@@ -59,7 +59,10 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
                           "Expression is not assignable.");
         context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
       }
-      context.Initialize(parse_node, lhs_id, rhs_id);
+      // TODO: Destroy the old value before reinitializing. This will require
+      // building the destruction code before we build the RHS subexpression.
+      rhs_id = context.Initialize(parse_node, lhs_id, rhs_id);
+      context.AddNode(SemIR::Node::Assign::Make(parse_node, lhs_id, rhs_id));
       // We model assignment as an expression, so we need to push a value for
       // it, even though it doesn't produce a value.
       // TODO: Consider changing our parse tree to model assignment as a

@@ -51,24 +51,14 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
           .Build(parse_node, ReturnStatementDisallowExpression)
           .Note(fn_node.parse_node(), ReturnStatementImplicitNote)
           .Emit();
-
-      context.AddNode(SemIR::Node::ReturnExpression::Make(parse_node, arg));
     } else if (callable.return_slot_id.is_valid()) {
-      context.Initialize(parse_node, callable.return_slot_id, arg);
-
-      context.AddNode(SemIR::Node::Return::Make(parse_node));
+      arg = context.Initialize(parse_node, callable.return_slot_id, arg);
     } else {
       arg = context.ConvertToValueOfType(parse_node, arg,
                                          callable.return_type_id);
-
-      if (SemIR::GetInitializingRepresentation(context.semantics_ir(),
-                                               callable.return_type_id)
-              .kind == SemIR::InitializingRepresentation::None) {
-        context.AddNode(SemIR::Node::Return::Make(parse_node));
-      } else {
-        context.AddNode(SemIR::Node::ReturnExpression::Make(parse_node, arg));
-      }
     }
+
+    context.AddNode(SemIR::Node::ReturnExpression::Make(parse_node, arg));
   }
 
   // Switch to a new, unreachable, empty node block. This typically won't

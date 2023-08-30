@@ -372,8 +372,6 @@ class Node : public Printable<Node> {
   using IntegerLiteral =
       Factory<NodeKind::IntegerLiteral, IntegerLiteralId /*integer_id*/>;
 
-  using MaterializeTemporary = Factory<NodeKind::MaterializeTemporary>;
-
   using Namespace =
       FactoryNoType<NodeKind::Namespace, NameScopeId /*name_scope_id*/>;
 
@@ -405,6 +403,11 @@ class Node : public Printable<Node> {
   using StructValue = Factory<NodeKind::StructValue, NodeBlockId /*refs_id*/>;
 
   using StubReference = Factory<NodeKind::StubReference, NodeId /*node_id*/>;
+
+  using Temporary =
+      Factory<NodeKind::Temporary, NodeId /*storage_id*/, NodeId /*init_id*/>;
+
+  using TemporaryStorage = Factory<NodeKind::TemporaryStorage>;
 
   using TupleIndex =
       Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;
