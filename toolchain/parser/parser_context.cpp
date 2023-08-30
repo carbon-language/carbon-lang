@@ -49,10 +49,10 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
       end_(tokens_->tokens().end()) {
-  CARBON_CHECK(position_ != end_) << "Empty Lex::TokenizedBuffer";
+  CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
   --end_;
   CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::EndOfFile)
-      << "Lex::TokenizedBuffer should end with EndOfFile, ended with "
+      << "TokenizedBuffer should end with EndOfFile, ended with "
       << tokens_->GetKind(*end_);
 }
 
