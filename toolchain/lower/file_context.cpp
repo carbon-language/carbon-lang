@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lowering/lowering_context.h"
+#include "toolchain/lower/file_context.h"
 
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
-#include "toolchain/lowering/lowering_function_context.h"
+#include "toolchain/lower/function_context.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_kind.h"
@@ -26,7 +26,7 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
       << "Generating LLVM IR from invalid SemIR::File is unsupported.";
 }
 
-// TODO: Move this to lower_to_llvm.cpp.
+// TODO: Move this to lower.cpp.
 auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 

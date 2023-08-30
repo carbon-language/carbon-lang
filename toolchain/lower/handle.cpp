@@ -4,7 +4,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
-#include "toolchain/lowering/lowering_function_context.h"
+#include "toolchain/lower/function_context.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon::Lower {
