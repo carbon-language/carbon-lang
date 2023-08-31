@@ -7,7 +7,7 @@
 
 #include <optional>
 
-#include "toolchain/lexer/token_kind.h"
+#include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Parse {
 

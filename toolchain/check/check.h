@@ -7,7 +7,7 @@
 
 #include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 

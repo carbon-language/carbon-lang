@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lexer/token_kind.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 
 namespace Carbon::Parse {

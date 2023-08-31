@@ -249,8 +249,8 @@ cc_binary(
 )
 
 file_test(
-    name = "lexer_file_test",
-    srcs = ["lexer_file_test.cpp"],
+    name = "lex_file_test",
+    srcs = ["lex_file_test.cpp"],
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
         "//toolchain/driver:driver_file_test_base",

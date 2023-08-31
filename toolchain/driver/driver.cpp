@@ -16,7 +16,7 @@
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/formatter.h"

@@ -2,13 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LEXER_TOKENIZED_BUFFER_TEST_HELPERS_H_
-#define CARBON_TOOLCHAIN_LEXER_TOKENIZED_BUFFER_TEST_HELPERS_H_
+#ifndef CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_TEST_HELPERS_H_
+#define CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_TEST_HELPERS_H_
 
 #include <gmock/gmock.h>
 
 #include "common/check.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Testing {
 
@@ -142,4 +142,4 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
 
 }  // namespace Carbon::Testing
 
-#endif  // CARBON_TOOLCHAIN_LEXER_TOKENIZED_BUFFER_TEST_HELPERS_H_
+#endif  // CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_TEST_HELPERS_H_

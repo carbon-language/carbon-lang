@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_
-#define CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_
+#ifndef CARBON_TOOLCHAIN_LEX_TOKEN_KIND_H_
+#define CARBON_TOOLCHAIN_LEX_TOKEN_KIND_H_
 
 #include <cstdint>
 
@@ -17,13 +17,13 @@ namespace Carbon::Lex {
 
 CARBON_DEFINE_RAW_ENUM_CLASS(TokenKind, uint8_t) {
 #define CARBON_TOKEN(TokenName) CARBON_RAW_ENUM_ENUMERATOR(TokenName)
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
 };
 
 class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
  public:
 #define CARBON_TOKEN(TokenName) CARBON_ENUM_CONSTANT_DECLARATION(TokenName)
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
 
   // An array of all the keyword tokens.
   static const llvm::ArrayRef<TokenKind> KeywordTokens;
@@ -129,11 +129,11 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 
 #define CARBON_TOKEN(TokenName) \
   CARBON_ENUM_CONSTANT_DEFINITION(TokenKind, TokenName)
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
 
 constexpr TokenKind TokenKind::KeywordTokensStorage[] = {
 #define CARBON_KEYWORD_TOKEN(TokenName, Spelling) TokenKind::TokenName,
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
 };
 constexpr llvm::ArrayRef<TokenKind> TokenKind::KeywordTokens =
     KeywordTokensStorage;
@@ -160,4 +160,4 @@ struct format_provider<Carbon::Lex::TokenKind> {
 
 }  // namespace llvm
 
-#endif  // CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_
+#endif  // CARBON_TOOLCHAIN_LEX_TOKEN_KIND_H_

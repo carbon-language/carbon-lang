@@ -6,7 +6,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
-#include "toolchain/lexer/numeric_literal.h"
+#include "toolchain/lex/numeric_literal.h"
 
 namespace Carbon::Testing {
 

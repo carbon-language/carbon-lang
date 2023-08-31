@@ -50,7 +50,7 @@ cc_library(
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:diagnostic_kind",
-        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/parse:tree_node_location_translator",

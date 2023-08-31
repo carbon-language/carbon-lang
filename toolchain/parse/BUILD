@@ -50,8 +50,8 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/lexer:token_kind",
-        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/lex:token_kind",
+        "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -69,7 +69,7 @@ cc_test(
         "//toolchain/base:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
-        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/lex:tokenized_buffer",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -85,7 +85,7 @@ cc_fuzz_test(
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
-        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -102,7 +102,7 @@ cc_library(
     hdrs = ["precedence.h"],
     deps = [
         "//common:check",
-        "//toolchain/lexer:token_kind",
+        "//toolchain/lex:token_kind",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -114,7 +114,7 @@ cc_test(
     deps = [
         ":precedence",
         "//testing/base:gtest_main",
-        "//toolchain/lexer:token_kind",
+        "//toolchain/lex:token_kind",
         "@com_google_googletest//:gtest",
     ],
 )

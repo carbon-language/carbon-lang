@@ -7,7 +7,7 @@
 #include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Testing {
 

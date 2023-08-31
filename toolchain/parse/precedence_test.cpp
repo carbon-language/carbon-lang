@@ -7,7 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "toolchain/lexer/token_kind.h"
+#include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Testing {
 namespace {

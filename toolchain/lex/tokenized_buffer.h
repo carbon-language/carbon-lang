@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LEXER_TOKENIZED_BUFFER_H_
-#define CARBON_TOOLCHAIN_LEXER_TOKENIZED_BUFFER_H_
+#ifndef CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_
+#define CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_
 
 #include <cstdint>
 #include <iterator>
@@ -18,7 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/lexer/token_kind.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::Lex {
@@ -410,4 +410,4 @@ using TokenDiagnosticEmitter = DiagnosticEmitter<Token>;
 
 }  // namespace Carbon::Lex
 
-#endif  // CARBON_TOOLCHAIN_LEXER_TOKENIZED_BUFFER_H_
+#endif  // CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_

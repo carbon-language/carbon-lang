@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lexer/numeric_literal.h"
+#include "toolchain/lex/numeric_literal.h"
 
 #include <bitset>
 
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
-#include "toolchain/lexer/character_set.h"
-#include "toolchain/lexer/lex_helpers.h"
+#include "toolchain/lex/character_set.h"
+#include "toolchain/lex/lex_helpers.h"
 
 namespace Carbon::Lex {
 
