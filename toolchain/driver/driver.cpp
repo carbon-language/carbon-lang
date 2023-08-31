@@ -406,10 +406,10 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
   CARBON_VLOG() << "*** file:\n```\n" << source->text() << "\n```\n";
 
-  CARBON_VLOG() << "*** TokenizedBuffer::Lex ***\n";
-  auto tokenized_source = TokenizedBuffer::Lex(*source, *consumer);
+  CARBON_VLOG() << "*** Lex::TokenizedBuffer::Lex ***\n";
+  auto tokenized_source = Lex::TokenizedBuffer::Lex(*source, *consumer);
   bool has_errors = tokenized_source.has_errors();
-  CARBON_VLOG() << "*** TokenizedBuffer::Lex done ***\n";
+  CARBON_VLOG() << "*** Lex::TokenizedBuffer::Lex done ***\n";
   if (options.dump_tokens) {
     CARBON_VLOG() << "Finishing output.";
     consumer->Flush();

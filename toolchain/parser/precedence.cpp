@@ -193,30 +193,30 @@ auto PrecedenceGroup::ForType() -> PrecedenceGroup {
   return ForTopLevelExpression();
 }
 
-auto PrecedenceGroup::ForLeading(TokenKind kind)
+auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
     -> std::optional<PrecedenceGroup> {
   switch (kind) {
-    case TokenKind::Star:
-    case TokenKind::Amp:
+    case Lex::TokenKind::Star:
+    case Lex::TokenKind::Amp:
       return PrecedenceGroup(TermPrefix);
 
-    case TokenKind::Not:
+    case Lex::TokenKind::Not:
       return PrecedenceGroup(LogicalPrefix);
 
-    case TokenKind::Minus:
+    case Lex::TokenKind::Minus:
       return PrecedenceGroup(NumericPrefix);
 
-    case TokenKind::MinusMinus:
-    case TokenKind::PlusPlus:
+    case Lex::TokenKind::MinusMinus:
+    case Lex::TokenKind::PlusPlus:
       return PrecedenceGroup(IncrementDecrement);
 
-    case TokenKind::Caret:
+    case Lex::TokenKind::Caret:
       return PrecedenceGroup(BitwisePrefix);
 
-    case TokenKind::If:
+    case Lex::TokenKind::If:
       return PrecedenceGroup(If);
 
-    case TokenKind::Const:
+    case Lex::TokenKind::Const:
       return PrecedenceGroup(TypePrefix);
 
     default:
@@ -224,96 +224,96 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
   }
 }
 
-auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
+auto PrecedenceGroup::ForTrailing(Lex::TokenKind kind, bool infix)
     -> std::optional<Trailing> {
   switch (kind) {
     // Assignment operators.
-    case TokenKind::Equal:
-    case TokenKind::PlusEqual:
-    case TokenKind::MinusEqual:
-    case TokenKind::StarEqual:
-    case TokenKind::SlashEqual:
-    case TokenKind::PercentEqual:
-    case TokenKind::AmpEqual:
-    case TokenKind::PipeEqual:
-    case TokenKind::CaretEqual:
-    case TokenKind::GreaterGreaterEqual:
-    case TokenKind::LessLessEqual:
+    case Lex::TokenKind::Equal:
+    case Lex::TokenKind::PlusEqual:
+    case Lex::TokenKind::MinusEqual:
+    case Lex::TokenKind::StarEqual:
+    case Lex::TokenKind::SlashEqual:
+    case Lex::TokenKind::PercentEqual:
+    case Lex::TokenKind::AmpEqual:
+    case Lex::TokenKind::PipeEqual:
+    case Lex::TokenKind::CaretEqual:
+    case Lex::TokenKind::GreaterGreaterEqual:
+    case Lex::TokenKind::LessLessEqual:
       return Trailing{.level = Assignment, .is_binary = true};
 
     // Logical operators.
-    case TokenKind::And:
+    case Lex::TokenKind::And:
       return Trailing{.level = LogicalAnd, .is_binary = true};
-    case TokenKind::Or:
+    case Lex::TokenKind::Or:
       return Trailing{.level = LogicalOr, .is_binary = true};
 
     // Bitwise operators.
-    case TokenKind::Amp:
+    case Lex::TokenKind::Amp:
       return Trailing{.level = BitwiseAnd, .is_binary = true};
-    case TokenKind::Pipe:
+    case Lex::TokenKind::Pipe:
       return Trailing{.level = BitwiseOr, .is_binary = true};
-    case TokenKind::Caret:
+    case Lex::TokenKind::Caret:
       return Trailing{.level = BitwiseXor, .is_binary = true};
-    case TokenKind::GreaterGreater:
-    case TokenKind::LessLess:
+    case Lex::TokenKind::GreaterGreater:
+    case Lex::TokenKind::LessLess:
       return Trailing{.level = BitShift, .is_binary = true};
 
     // Relational operators.
-    case TokenKind::EqualEqual:
-    case TokenKind::ExclaimEqual:
-    case TokenKind::Less:
-    case TokenKind::LessEqual:
-    case TokenKind::Greater:
-    case TokenKind::GreaterEqual:
-    case TokenKind::LessEqualGreater:
+    case Lex::TokenKind::EqualEqual:
+    case Lex::TokenKind::ExclaimEqual:
+    case Lex::TokenKind::Less:
+    case Lex::TokenKind::LessEqual:
+    case Lex::TokenKind::Greater:
+    case Lex::TokenKind::GreaterEqual:
+    case Lex::TokenKind::LessEqualGreater:
       return Trailing{.level = Relational, .is_binary = true};
 
     // Additive operators.
-    case TokenKind::Plus:
-    case TokenKind::Minus:
+    case Lex::TokenKind::Plus:
+    case Lex::TokenKind::Minus:
       return Trailing{.level = Additive, .is_binary = true};
 
     // Multiplicative operators.
-    case TokenKind::Slash:
+    case Lex::TokenKind::Slash:
       return Trailing{.level = Multiplicative, .is_binary = true};
-    case TokenKind::Percent:
+    case Lex::TokenKind::Percent:
       return Trailing{.level = Modulo, .is_binary = true};
 
     // `*` could be multiplication or pointer type formation.
-    case TokenKind::Star:
+    case Lex::TokenKind::Star:
       return infix ? Trailing{.level = Multiplicative, .is_binary = true}
                    : Trailing{.level = TypePostfix, .is_binary = false};
 
     // Cast operator.
-    case TokenKind::As:
+    case Lex::TokenKind::As:
       return Trailing{.level = As, .is_binary = true};
 
     // Prefix-only operators.
-    case TokenKind::Const:
-    case TokenKind::MinusMinus:
-    case TokenKind::Not:
-    case TokenKind::PlusPlus:
+    case Lex::TokenKind::Const:
+    case Lex::TokenKind::MinusMinus:
+    case Lex::TokenKind::Not:
+    case Lex::TokenKind::PlusPlus:
       break;
 
     // Symbolic tokens that might be operators eventually.
-    case TokenKind::Tilde:
-    case TokenKind::Backslash:
-    case TokenKind::Comma:
-    case TokenKind::TildeEqual:
-    case TokenKind::Exclaim:
-    case TokenKind::LessGreater:
-    case TokenKind::Question:
-    case TokenKind::Colon:
+    case Lex::TokenKind::Tilde:
+    case Lex::TokenKind::Backslash:
+    case Lex::TokenKind::Comma:
+    case Lex::TokenKind::TildeEqual:
+    case Lex::TokenKind::Exclaim:
+    case Lex::TokenKind::LessGreater:
+    case Lex::TokenKind::Question:
+    case Lex::TokenKind::Colon:
       break;
 
     // Symbolic tokens that are intentionally not operators.
-    case TokenKind::At:
-    case TokenKind::LessMinus:
-    case TokenKind::MinusGreater:
-    case TokenKind::EqualGreater:
-    case TokenKind::ColonEqual:
-    case TokenKind::Period:
-    case TokenKind::Semi:
+    case Lex::TokenKind::At:
+    case Lex::TokenKind::LessMinus:
+    case Lex::TokenKind::MinusGreater:
+    case Lex::TokenKind::EqualGreater:
+    case Lex::TokenKind::ColonEqual:
+    case Lex::TokenKind::Period:
+    case Lex::TokenKind::Semi:
       break;
 
     default:

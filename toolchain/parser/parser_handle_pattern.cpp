@@ -14,9 +14,9 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
   // Parameters may have keywords prefixing the pattern. They become the parent
   // for the full PatternBinding.
   if (pattern_kind != Context::PatternKind::Variable) {
-    context.ConsumeIfPatternKeyword(TokenKind::Template, State::PatternTemplate,
-                                    state.subtree_start);
-    context.ConsumeIfPatternKeyword(TokenKind::Addr, State::PatternAddress,
+    context.ConsumeIfPatternKeyword(
+        Lex::TokenKind::Template, State::PatternTemplate, state.subtree_start);
+    context.ConsumeIfPatternKeyword(Lex::TokenKind::Addr, State::PatternAddress,
                                     state.subtree_start);
   }
 
@@ -47,11 +47,11 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
 
   // The first item should be an identifier or, for deduced parameters, `self`.
   bool has_name = false;
-  if (auto identifier = context.ConsumeIf(TokenKind::Identifier)) {
+  if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
     context.AddLeafNode(NodeKind::Name, *identifier);
     has_name = true;
   } else if (pattern_kind == Context::PatternKind::DeducedParameter) {
-    if (auto self = context.ConsumeIf(TokenKind::SelfValueIdentifier)) {
+    if (auto self = context.ConsumeIf(Lex::TokenKind::SelfValueIdentifier)) {
       context.AddLeafNode(NodeKind::SelfValueName, *self);
       has_name = true;
     }
@@ -65,9 +65,9 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
   }
 
   if (auto kind = context.PositionKind();
-      kind == TokenKind::Colon || kind == TokenKind::ColonExclaim) {
-    state.state = kind == TokenKind::Colon ? State::PatternFinishAsRegular
-                                           : State::PatternFinishAsGeneric;
+      kind == Lex::TokenKind::Colon || kind == Lex::TokenKind::ColonExclaim) {
+    state.state = kind == Lex::TokenKind::Colon ? State::PatternFinishAsRegular
+                                                : State::PatternFinishAsGeneric;
     // Use the `:` or `:!` for the root node.
     state.token = context.Consume();
     context.PushState(state);

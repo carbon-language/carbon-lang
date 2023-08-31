@@ -31,26 +31,26 @@ class TreeTest : public ::testing::Test {
     return source_storage.front();
   }
 
-  auto GetTokenizedBuffer(llvm::StringRef t) -> TokenizedBuffer& {
+  auto GetTokenizedBuffer(llvm::StringRef t) -> Lex::TokenizedBuffer& {
     token_storage.push_front(
-        TokenizedBuffer::Lex(GetSourceBuffer(t), consumer));
+        Lex::TokenizedBuffer::Lex(GetSourceBuffer(t), consumer));
     return token_storage.front();
   }
 
   llvm::vfs::InMemoryFileSystem fs;
   std::forward_list<SourceBuffer> source_storage;
-  std::forward_list<TokenizedBuffer> token_storage;
+  std::forward_list<Lex::TokenizedBuffer> token_storage;
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };
 
 TEST_F(TreeTest, IsValid) {
-  TokenizedBuffer tokens = GetTokenizedBuffer("");
+  Lex::TokenizedBuffer tokens = GetTokenizedBuffer("");
   Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_TRUE((*tree.postorder().begin()).is_valid());
 }
 
 TEST_F(TreeTest, PrintPostorderAsYAML) {
-  TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
+  Lex::TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
   Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   TestRawOstream print_stream;
@@ -72,7 +72,7 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
 }
 
 TEST_F(TreeTest, PrintPreorderAsYAML) {
-  TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
+  Lex::TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
   Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   TestRawOstream print_stream;
@@ -112,7 +112,7 @@ TEST_F(TreeTest, HighRecursion) {
   code.append(10000, '(');
   code.append(10000, ')');
   code += "; }";
-  TokenizedBuffer tokens = GetTokenizedBuffer(code);
+  Lex::TokenizedBuffer tokens = GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
   Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);

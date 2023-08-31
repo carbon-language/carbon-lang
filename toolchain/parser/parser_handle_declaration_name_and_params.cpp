@@ -12,11 +12,11 @@ static auto HandleDeclarationNameAndParams(Context& context, State after_name)
   auto state = context.PopState();
 
   // TODO: Should handle designated names.
-  if (auto identifier = context.ConsumeIf(TokenKind::Identifier)) {
+  if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
     state.state = after_name;
     context.PushState(state);
 
-    if (context.PositionIs(TokenKind::Period)) {
+    if (context.PositionIs(Lex::TokenKind::Period)) {
       // Because there's a qualifier, we process the first segment as an
       // expression for simplicity. This just means semantics has one less thing
       // to handle here.
@@ -29,7 +29,7 @@ static auto HandleDeclarationNameAndParams(Context& context, State after_name)
   } else {
     CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
                       "`{0}` introducer should be followed by a name.",
-                      TokenKind);
+                      Lex::TokenKind);
     context.emitter().Emit(*context.position(), ExpectedDeclarationName,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
@@ -62,7 +62,7 @@ static auto HandleDeclarationNameAndParamsAfterName(Context& context,
                                                     Params params) -> void {
   auto state = context.PopState();
 
-  if (context.PositionIs(TokenKind::Period)) {
+  if (context.PositionIs(Lex::TokenKind::Period)) {
     // Continue designator processing.
     context.PushState(state);
     state.state = State::PeriodAsDeclaration;
@@ -74,14 +74,14 @@ static auto HandleDeclarationNameAndParamsAfterName(Context& context,
     return;
   }
 
-  if (context.PositionIs(TokenKind::OpenSquareBracket)) {
+  if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
     context.PushState(State::DeclarationNameAndParamsAfterDeduced);
     context.PushState(State::ParameterListAsDeduced);
-  } else if (context.PositionIs(TokenKind::OpenParen)) {
+  } else if (context.PositionIs(Lex::TokenKind::OpenParen)) {
     context.PushState(State::ParameterListAsRegular);
   } else if (params == Params::Required) {
     CARBON_DIAGNOSTIC(ParametersRequiredByIntroducer, Error,
-                      "`{0}` requires a `(` for parameters.", TokenKind);
+                      "`{0}` requires a `(` for parameters.", Lex::TokenKind);
     context.emitter().Emit(*context.position(), ParametersRequiredByIntroducer,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
@@ -105,7 +105,7 @@ auto HandleDeclarationNameAndParamsAfterNameAsRequired(Context& context)
 auto HandleDeclarationNameAndParamsAfterDeduced(Context& context) -> void {
   context.PopAndDiscardState();
 
-  if (context.PositionIs(TokenKind::OpenParen)) {
+  if (context.PositionIs(Lex::TokenKind::OpenParen)) {
     context.PushState(State::ParameterListAsRegular);
   } else {
     CARBON_DIAGNOSTIC(

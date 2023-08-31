@@ -23,37 +23,37 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
   // This maintains the current state unless we're at the end of the scope.
 
   switch (context.PositionKind()) {
-    case TokenKind::CloseCurlyBrace:
-    case TokenKind::EndOfFile: {
+    case Lex::TokenKind::CloseCurlyBrace:
+    case Lex::TokenKind::EndOfFile: {
       // This is the end of the scope, so the loop state ends.
       context.PopAndDiscardState();
       break;
     }
-    case TokenKind::Class: {
+    case Lex::TokenKind::Class: {
       context.PushState(State::TypeIntroducerAsClass);
       break;
     }
-    case TokenKind::Constraint: {
+    case Lex::TokenKind::Constraint: {
       context.PushState(State::TypeIntroducerAsNamedConstraint);
       break;
     }
-    case TokenKind::Fn: {
+    case Lex::TokenKind::Fn: {
       context.PushState(State::FunctionIntroducer);
       break;
     }
-    case TokenKind::Interface: {
+    case Lex::TokenKind::Interface: {
       context.PushState(State::TypeIntroducerAsInterface);
       break;
     }
-    case TokenKind::Namespace: {
+    case Lex::TokenKind::Namespace: {
       context.PushState(State::Namespace);
       break;
     }
-    case TokenKind::Semi: {
+    case Lex::TokenKind::Semi: {
       context.AddLeafNode(NodeKind::EmptyDeclaration, context.Consume());
       break;
     }
-    case TokenKind::Var: {
+    case Lex::TokenKind::Var: {
       context.PushState(State::VarAsSemicolon);
       break;
     }

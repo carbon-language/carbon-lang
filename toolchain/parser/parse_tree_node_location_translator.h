@@ -11,7 +11,7 @@ namespace Carbon::Parse {
 
 class NodeLocationTranslator : public DiagnosticLocationTranslator<Node> {
  public:
-  explicit NodeLocationTranslator(const TokenizedBuffer* tokens,
+  explicit NodeLocationTranslator(const Lex::TokenizedBuffer* tokens,
                                   const Tree* parse_tree)
       : token_translator_(tokens), parse_tree_(parse_tree) {}
 
@@ -21,7 +21,7 @@ class NodeLocationTranslator : public DiagnosticLocationTranslator<Node> {
   }
 
  private:
-  TokenizedBuffer::TokenLocationTranslator token_translator_;
+  Lex::TokenizedBuffer::TokenLocationTranslator token_translator_;
   const Tree* parse_tree_;
 };
 

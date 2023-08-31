@@ -9,7 +9,7 @@ namespace Carbon::Parse {
 static auto DiagnoseStatementOperatorAsSubexpression(Context& context) -> void {
   CARBON_DIAGNOSTIC(StatementOperatorAsSubexpression, Error,
                     "Operator `{0}` can only be used as a complete statement.",
-                    TokenKind);
+                    Lex::TokenKind);
   context.emitter().Emit(*context.position(), StatementOperatorAsSubexpression,
                          context.PositionKind());
 }
@@ -31,7 +31,7 @@ auto HandleExpression(Context& context) -> void {
         CARBON_DIAGNOSTIC(
             UnaryOperatorRequiresParentheses, Error,
             "Parentheses are required around this unary `{0}` operator.",
-            TokenKind);
+            Lex::TokenKind);
         context.emitter().Emit(*context.position(),
                                UnaryOperatorRequiresParentheses,
                                context.PositionKind());
@@ -44,7 +44,7 @@ auto HandleExpression(Context& context) -> void {
       context.DiagnoseOperatorFixity(Context::OperatorFixity::Prefix);
     }
 
-    if (context.PositionIs(TokenKind::If)) {
+    if (context.PositionIs(Lex::TokenKind::If)) {
       context.PushState(State::IfExpressionFinish);
       context.PushState(State::IfExpressionFinishCondition);
     } else {
@@ -73,47 +73,47 @@ auto HandleExpressionInPostfix(Context& context) -> void {
   // expression tree, such as an identifier or literal, or a parenthesized
   // expression.
   switch (context.PositionKind()) {
-    case TokenKind::Identifier: {
+    case Lex::TokenKind::Identifier: {
       context.AddLeafNode(NodeKind::NameExpression, context.Consume());
       context.PushState(state);
       break;
     }
-    case TokenKind::False:
-    case TokenKind::True:
-    case TokenKind::IntegerLiteral:
-    case TokenKind::RealLiteral:
-    case TokenKind::StringLiteral:
-    case TokenKind::Bool:
-    case TokenKind::IntegerTypeLiteral:
-    case TokenKind::UnsignedIntegerTypeLiteral:
-    case TokenKind::FloatingPointTypeLiteral:
-    case TokenKind::StringTypeLiteral:
-    case TokenKind::Type: {
+    case Lex::TokenKind::False:
+    case Lex::TokenKind::True:
+    case Lex::TokenKind::IntegerLiteral:
+    case Lex::TokenKind::RealLiteral:
+    case Lex::TokenKind::StringLiteral:
+    case Lex::TokenKind::Bool:
+    case Lex::TokenKind::IntegerTypeLiteral:
+    case Lex::TokenKind::UnsignedIntegerTypeLiteral:
+    case Lex::TokenKind::FloatingPointTypeLiteral:
+    case Lex::TokenKind::StringTypeLiteral:
+    case Lex::TokenKind::Type: {
       context.AddLeafNode(NodeKind::Literal, context.Consume());
       context.PushState(state);
       break;
     }
-    case TokenKind::OpenCurlyBrace: {
+    case Lex::TokenKind::OpenCurlyBrace: {
       context.PushState(state);
       context.PushState(State::BraceExpression);
       break;
     }
-    case TokenKind::OpenParen: {
+    case Lex::TokenKind::OpenParen: {
       context.PushState(state);
       context.PushState(State::ParenExpression);
       break;
     }
-    case TokenKind::OpenSquareBracket: {
+    case Lex::TokenKind::OpenSquareBracket: {
       context.PushState(state);
       context.PushState(State::ArrayExpression);
       break;
     }
-    case TokenKind::SelfValueIdentifier: {
+    case Lex::TokenKind::SelfValueIdentifier: {
       context.AddLeafNode(NodeKind::SelfValueName, context.Consume());
       context.PushState(state);
       break;
     }
-    case TokenKind::SelfTypeIdentifier: {
+    case Lex::TokenKind::SelfTypeIdentifier: {
       context.AddLeafNode(NodeKind::SelfTypeNameExpression, context.Consume());
       context.PushState(state);
       break;
@@ -136,25 +136,25 @@ auto HandleExpressionInPostfixLoop(Context& context) -> void {
   auto state = context.PopState();
   state.token = *context.position();
   switch (context.PositionKind()) {
-    case TokenKind::Period: {
+    case Lex::TokenKind::Period: {
       context.PushState(state);
       state.state = State::PeriodAsExpression;
       context.PushState(state);
       break;
     }
-    case TokenKind::MinusGreater: {
+    case Lex::TokenKind::MinusGreater: {
       context.PushState(state);
       state.state = State::ArrowExpression;
       context.PushState(state);
       break;
     }
-    case TokenKind::OpenParen: {
+    case Lex::TokenKind::OpenParen: {
       context.PushState(state);
       state.state = State::CallExpression;
       context.PushState(state);
       break;
     }
-    case TokenKind::OpenSquareBracket: {
+    case Lex::TokenKind::OpenSquareBracket: {
       context.PushState(state);
       state.state = State::IndexExpression;
       context.PushState(state);
@@ -224,7 +224,8 @@ auto HandleExpressionLoop(Context& context) -> void {
   state.lhs_precedence = operator_precedence;
 
   if (is_binary) {
-    if (operator_kind == TokenKind::And || operator_kind == TokenKind::Or) {
+    if (operator_kind == Lex::TokenKind::And ||
+        operator_kind == Lex::TokenKind::Or) {
       // For `and` and `or`, wrap the first operand in a virtual parse tree
       // node so that semantics can insert control flow here.
       context.AddNode(NodeKind::ShortCircuitOperand, state.token,
@@ -268,10 +269,11 @@ auto HandleIfExpressionFinishCondition(Context& context) -> void {
   context.AddNode(NodeKind::IfExpressionIf, state.token, state.subtree_start,
                   state.has_error);
 
-  if (context.PositionIs(TokenKind::Then)) {
+  if (context.PositionIs(Lex::TokenKind::Then)) {
     context.PushState(State::IfExpressionFinishThen);
-    context.ConsumeChecked(TokenKind::Then);
-    context.PushStateForExpression(*PrecedenceGroup::ForLeading(TokenKind::If));
+    context.ConsumeChecked(Lex::TokenKind::Then);
+    context.PushStateForExpression(
+        *PrecedenceGroup::ForLeading(Lex::TokenKind::If));
   } else {
     // TODO: Include the location of the `if` token.
     CARBON_DIAGNOSTIC(ExpectedThenAfterIf, Error,
@@ -294,10 +296,11 @@ auto HandleIfExpressionFinishThen(Context& context) -> void {
   context.AddNode(NodeKind::IfExpressionThen, state.token, state.subtree_start,
                   state.has_error);
 
-  if (context.PositionIs(TokenKind::Else)) {
+  if (context.PositionIs(Lex::TokenKind::Else)) {
     context.PushState(State::IfExpressionFinishElse);
-    context.ConsumeChecked(TokenKind::Else);
-    context.PushStateForExpression(*PrecedenceGroup::ForLeading(TokenKind::If));
+    context.ConsumeChecked(Lex::TokenKind::Else);
+    context.PushStateForExpression(
+        *PrecedenceGroup::ForLeading(Lex::TokenKind::If));
   } else {
     // TODO: Include the location of the `if` token.
     CARBON_DIAGNOSTIC(ExpectedElseAfterIf, Error,
@@ -332,7 +335,7 @@ auto HandleIfExpressionFinish(Context& context) -> void {
 auto HandleExpressionStatementFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  if (auto semi = context.ConsumeIf(TokenKind::Semi)) {
+  if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
     context.AddNode(NodeKind::ExpressionStatement, *semi, state.subtree_start,
                     state.has_error);
     return;

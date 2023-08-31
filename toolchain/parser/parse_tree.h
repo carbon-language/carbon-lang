@@ -65,7 +65,7 @@ class Tree : public Printable<Tree> {
   // Parses the token buffer into a `Tree`.
   //
   // This is the factory function which is used to build parse trees.
-  static auto Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+  static auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
                     llvm::raw_ostream* vlog_stream) -> Tree;
 
   // Tests whether there are any errors in the parse tree.
@@ -103,7 +103,7 @@ class Tree : public Printable<Tree> {
   [[nodiscard]] auto node_kind(Node n) const -> NodeKind;
 
   // Returns the token the given parse tree node models.
-  [[nodiscard]] auto node_token(Node n) const -> TokenizedBuffer::Token;
+  [[nodiscard]] auto node_token(Node n) const -> Lex::TokenizedBuffer::Token;
 
   [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
 
@@ -171,7 +171,7 @@ class Tree : public Printable<Tree> {
   // tree.
   struct NodeImpl {
     explicit NodeImpl(NodeKind kind, bool has_error,
-                      TokenizedBuffer::Token token, int subtree_size)
+                      Lex::TokenizedBuffer::Token token, int subtree_size)
         : kind(kind),
           has_error(has_error),
           token(token),
@@ -199,7 +199,7 @@ class Tree : public Printable<Tree> {
     bool has_error = false;
 
     // The token root of this node.
-    TokenizedBuffer::Token token;
+    Lex::TokenizedBuffer::Token token;
 
     // The size of this node's subtree of the parse tree. This is the number of
     // nodes (and thus tokens) that are covered by this node (and its
@@ -223,7 +223,7 @@ class Tree : public Printable<Tree> {
 
   // Wires up the reference to the tokenized buffer. The `Parse` function should
   // be used to actually parse the tokens into a tree.
-  explicit Tree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
+  explicit Tree(Lex::TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
     // If the tree is valid, there will be one node per token, so reserve once.
     node_impls_.reserve(tokens_->expected_parse_tree_size());
   }
@@ -236,7 +236,7 @@ class Tree : public Printable<Tree> {
   // Depth-first postorder sequence of node implementation data.
   llvm::SmallVector<NodeImpl> node_impls_;
 
-  TokenizedBuffer* tokens_;
+  Lex::TokenizedBuffer* tokens_;
 
   // Indicates if any errors were encountered while parsing.
   //

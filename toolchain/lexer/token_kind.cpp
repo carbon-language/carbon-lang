@@ -4,7 +4,7 @@
 
 #include "toolchain/lexer/token_kind.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(TokenKind) = {
 #define CARBON_TOKEN(TokenName) CARBON_ENUM_CLASS_NAME_STRING(TokenName)
@@ -79,4 +79,4 @@ constexpr int8_t TokenKind::ExpectedParseTreeSize[] = {
 #include "toolchain/lexer/token_kind.def"
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex

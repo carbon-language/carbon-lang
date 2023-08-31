@@ -20,6 +20,8 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::TokenizedBuffer;
+using Lex::TokenKind;
 using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;

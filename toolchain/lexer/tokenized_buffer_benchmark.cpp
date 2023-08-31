@@ -17,6 +17,9 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::TokenizedBuffer;
+using Lex::TokenKind;
+
 // A large value for measurement stability without making benchmarking too slow.
 // Needs to be a multiple of 100 so we can easily divide it up into percentages,
 // and 1% itself needs to not be too tiny. This makes 100,000 a great balance.

@@ -19,7 +19,8 @@ auto HandlePackage(Context& context) -> void {
                            /*has_error=*/true);
   };
 
-  if (!context.ConsumeAndAddLeafNodeIf(TokenKind::Identifier, NodeKind::Name)) {
+  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
+                                       NodeKind::Name)) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
                       "Expected identifier after `package`.");
     context.emitter().Emit(*context.position(), ExpectedIdentifierAfterPackage);
@@ -28,10 +29,10 @@ auto HandlePackage(Context& context) -> void {
   }
 
   bool library_parsed = false;
-  if (auto library_token = context.ConsumeIf(TokenKind::Library)) {
+  if (auto library_token = context.ConsumeIf(Lex::TokenKind::Library)) {
     auto library_start = context.tree().size();
 
-    if (!context.ConsumeAndAddLeafNodeIf(TokenKind::StringLiteral,
+    if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::StringLiteral,
                                          NodeKind::Literal)) {
       CARBON_DIAGNOSTIC(
           ExpectedLibraryName, Error,
@@ -48,16 +49,17 @@ auto HandlePackage(Context& context) -> void {
 
   switch (auto api_or_impl_token =
               context.tokens().GetKind(*(context.position()))) {
-    case TokenKind::Api: {
+    case Lex::TokenKind::Api: {
       context.AddLeafNode(NodeKind::PackageApi, context.Consume());
       break;
     }
-    case TokenKind::Impl: {
+    case Lex::TokenKind::Impl: {
       context.AddLeafNode(NodeKind::PackageImpl, context.Consume());
       break;
     }
     default: {
-      if (!library_parsed && api_or_impl_token == TokenKind::StringLiteral) {
+      if (!library_parsed &&
+          api_or_impl_token == Lex::TokenKind::StringLiteral) {
         // If we come acroess a string literal and we didn't parse `library
         // "..."` yet, then most probably the user forgot to add `library`
         // before the library name.
@@ -74,8 +76,8 @@ auto HandlePackage(Context& context) -> void {
     }
   }
 
-  if (!context.PositionIs(TokenKind::Semi)) {
-    context.EmitExpectedDeclarationSemi(TokenKind::Package);
+  if (!context.PositionIs(Lex::TokenKind::Semi)) {
+    context.EmitExpectedDeclarationSemi(Lex::TokenKind::Package);
     exit_on_parse_error();
     return;
   }

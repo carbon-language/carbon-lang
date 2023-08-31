@@ -22,7 +22,7 @@ namespace Carbon::Check {
 class Context {
  public:
   // Stores references for work.
-  explicit Context(const TokenizedBuffer& tokens,
+  explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter<Parse::Node>& emitter,
                    const Parse::Tree& parse_tree, SemIR::File& semantics,
                    llvm::raw_ostream* vlog_stream);
@@ -229,7 +229,7 @@ class Context {
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
-  auto tokens() -> const TokenizedBuffer& { return *tokens_; }
+  auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
 
   auto emitter() -> DiagnosticEmitter<Parse::Node>& { return *emitter_; }
 
@@ -333,7 +333,7 @@ class Context {
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
   // Tokens for getting data on literals.
-  const TokenizedBuffer* tokens_;
+  const Lex::TokenizedBuffer* tokens_;
 
   // Handles diagnostics.
   DiagnosticEmitter<Parse::Node>* emitter_;

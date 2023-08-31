@@ -12,7 +12,7 @@ auto HandleIndexExpression(Context& context) -> void {
   state.state = State::IndexExpressionFinish;
   context.PushState(state);
   context.AddNode(NodeKind::IndexExpressionStart,
-                  context.ConsumeChecked(TokenKind::OpenSquareBracket),
+                  context.ConsumeChecked(Lex::TokenKind::OpenSquareBracket),
                   state.subtree_start, state.has_error);
   context.PushState(State::Expression);
 }

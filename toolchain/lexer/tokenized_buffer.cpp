@@ -25,7 +25,7 @@
 #include <x86intrin.h>
 #endif
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 // TODO: Move Overload and VariantMatch somewhere more central.
 
@@ -1213,4 +1213,4 @@ auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
   return SourceBufferLocationTranslator(buffer_).GetLocation(token_start);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex

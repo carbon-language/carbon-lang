@@ -14,6 +14,8 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::LexedStringLiteral;
+
 class StringLiteralTest : public ::testing::Test {
  protected:
   StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}

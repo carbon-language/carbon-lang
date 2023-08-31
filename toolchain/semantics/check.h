@@ -19,7 +19,7 @@ inline auto MakeBuiltins() -> SemIR::File { return SemIR::File(); }
 
 // Produces and checks the IR for the provided Parse::Tree.
 extern auto CheckParseTree(const SemIR::File& builtin_ir,
-                           const TokenizedBuffer& tokens,
+                           const Lex::TokenizedBuffer& tokens,
                            const Parse::Tree& parse_tree,
                            DiagnosticConsumer& consumer,
                            llvm::raw_ostream* vlog_stream) -> SemIR::File;

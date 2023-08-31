@@ -11,7 +11,7 @@
 #include "toolchain/lexer/character_set.h"
 #include "toolchain/lexer/lex_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 // Adapts Radix for use with formatv.
 // NOTE: clangd may see this as unused, but it will be invoked by diagnostics.
@@ -461,4 +461,4 @@ auto LexedNumericLiteral::ComputeValue(
       .exponent = parser.GetExponent()};
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex

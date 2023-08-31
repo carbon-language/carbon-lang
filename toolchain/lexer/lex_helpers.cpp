@@ -4,7 +4,7 @@
 
 #include "toolchain/lexer/lex_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 auto CanLexInteger(DiagnosticEmitter<const char*>& emitter,
                    llvm::StringRef text) -> bool {
@@ -29,4 +29,4 @@ auto CanLexInteger(DiagnosticEmitter<const char*>& emitter,
   return true;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex

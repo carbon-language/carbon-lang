@@ -10,35 +10,35 @@ auto HandleStatement(Context& context) -> void {
   context.PopAndDiscardState();
 
   switch (context.PositionKind()) {
-    case TokenKind::Break: {
+    case Lex::TokenKind::Break: {
       context.PushState(State::StatementBreakFinish);
       context.AddLeafNode(NodeKind::BreakStatementStart, context.Consume());
       break;
     }
-    case TokenKind::Continue: {
+    case Lex::TokenKind::Continue: {
       context.PushState(State::StatementContinueFinish);
       context.AddLeafNode(NodeKind::ContinueStatementStart, context.Consume());
       break;
     }
-    case TokenKind::For: {
+    case Lex::TokenKind::For: {
       context.PushState(State::StatementForFinish);
       context.PushState(State::StatementForHeader);
       ++context.position();
       break;
     }
-    case TokenKind::If: {
+    case Lex::TokenKind::If: {
       context.PushState(State::StatementIf);
       break;
     }
-    case TokenKind::Return: {
+    case Lex::TokenKind::Return: {
       context.PushState(State::StatementReturn);
       break;
     }
-    case TokenKind::Var: {
+    case Lex::TokenKind::Var: {
       context.PushState(State::VarAsSemicolon);
       break;
     }
-    case TokenKind::While: {
+    case Lex::TokenKind::While: {
       context.PushState(State::StatementWhile);
       break;
     }
@@ -55,10 +55,10 @@ static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
     -> void {
   auto state = context.PopState();
 
-  auto semi = context.ConsumeIf(TokenKind::Semi);
+  auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
   if (!semi) {
     CARBON_DIAGNOSTIC(ExpectedStatementSemi, Error,
-                      "`{0}` statements must end with a `;`.", TokenKind);
+                      "`{0}` statements must end with a `;`.", Lex::TokenKind);
     context.emitter().Emit(*context.position(), ExpectedStatementSemi,
                            context.tokens().GetKind(state.token));
     state.has_error = true;
@@ -83,14 +83,14 @@ auto HandleStatementContinueFinish(Context& context) -> void {
 auto HandleStatementForHeader(Context& context) -> void {
   auto state = context.PopState();
 
-  std::optional<TokenizedBuffer::Token> open_paren =
+  std::optional<Lex::TokenizedBuffer::Token> open_paren =
       context.ConsumeAndAddOpenParen(state.token, NodeKind::ForHeaderStart);
   if (open_paren) {
     state.token = *open_paren;
   }
   state.state = State::StatementForHeaderIn;
 
-  if (context.PositionIs(TokenKind::Var)) {
+  if (context.PositionIs(Lex::TokenKind::Var)) {
     context.PushState(state);
     context.PushState(State::VarAsFor);
   } else {
@@ -98,7 +98,7 @@ auto HandleStatementForHeader(Context& context) -> void {
                       "Expected `var` declaration.");
     context.emitter().Emit(*context.position(), ExpectedVariableDeclaration);
 
-    if (auto next_in = context.FindNextOf({TokenKind::In})) {
+    if (auto next_in = context.FindNextOf({Lex::TokenKind::In})) {
       context.SkipTo(*next_in);
       ++context.position();
     }
@@ -149,13 +149,14 @@ auto HandleStatementIfConditionFinish(Context& context) -> void {
 auto HandleStatementIfThenBlockFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  if (context.ConsumeAndAddLeafNodeIf(TokenKind::Else,
+  if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Else,
                                       NodeKind::IfStatementElse)) {
     state.state = State::StatementIfElseBlockFinish;
     context.PushState(state);
     // `else if` is permitted as a special case.
-    context.PushState(context.PositionIs(TokenKind::If) ? State::StatementIf
-                                                        : State::CodeBlock);
+    context.PushState(context.PositionIs(Lex::TokenKind::If)
+                          ? State::StatementIf
+                          : State::CodeBlock);
   } else {
     context.AddNode(NodeKind::IfStatement, state.token, state.subtree_start,
                     state.has_error);
@@ -174,7 +175,7 @@ auto HandleStatementReturn(Context& context) -> void {
   context.PushState(state);
 
   context.AddLeafNode(NodeKind::ReturnStatementStart, context.Consume());
-  if (!context.PositionIs(TokenKind::Semi)) {
+  if (!context.PositionIs(Lex::TokenKind::Semi)) {
     context.PushState(State::Expression);
   }
 }
@@ -187,7 +188,7 @@ auto HandleStatementScopeLoop(Context& context) -> void {
   // This maintains the current state until we're at the end of the scope.
 
   auto token_kind = context.PositionKind();
-  if (token_kind == TokenKind::CloseCurlyBrace) {
+  if (token_kind == Lex::TokenKind::CloseCurlyBrace) {
     auto state = context.PopState();
     if (state.has_error) {
       context.ReturnErrorOnState();

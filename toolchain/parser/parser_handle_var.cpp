@@ -33,12 +33,12 @@ auto HandleVarAfterPattern(Context& context) -> void {
 
   if (state.has_error) {
     if (auto after_pattern =
-            context.FindNextOf({TokenKind::Equal, TokenKind::Semi})) {
+            context.FindNextOf({Lex::TokenKind::Equal, Lex::TokenKind::Semi})) {
       context.SkipTo(*after_pattern);
     }
   }
 
-  if (auto equals = context.ConsumeIf(TokenKind::Equal)) {
+  if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::VariableInitializer, *equals);
     context.PushState(State::Expression);
   }
@@ -48,11 +48,11 @@ auto HandleVarFinishAsSemicolon(Context& context) -> void {
   auto state = context.PopState();
 
   auto end_token = state.token;
-  if (context.PositionIs(TokenKind::Semi)) {
+  if (context.PositionIs(Lex::TokenKind::Semi)) {
     end_token = context.Consume();
   } else {
     // TODO: Disambiguate between statement and member declaration.
-    context.EmitExpectedDeclarationSemi(TokenKind::Var);
+    context.EmitExpectedDeclarationSemi(Lex::TokenKind::Var);
     state.has_error = true;
     if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
       end_token = *semi_token;
@@ -66,9 +66,9 @@ auto HandleVarFinishAsFor(Context& context) -> void {
   auto state = context.PopState();
 
   auto end_token = state.token;
-  if (context.PositionIs(TokenKind::In)) {
+  if (context.PositionIs(Lex::TokenKind::In)) {
     end_token = context.Consume();
-  } else if (context.PositionIs(TokenKind::Colon)) {
+  } else if (context.PositionIs(Lex::TokenKind::Colon)) {
     CARBON_DIAGNOSTIC(ExpectedInNotColon, Error,
                       "`:` should be replaced by `in`.");
     context.emitter().Emit(*context.position(), ExpectedInNotColon);

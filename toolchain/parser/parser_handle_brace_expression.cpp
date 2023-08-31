@@ -13,9 +13,9 @@ auto HandleBraceExpression(Context& context) -> void {
   context.PushState(state);
 
   CARBON_CHECK(context.ConsumeAndAddLeafNodeIf(
-      TokenKind::OpenCurlyBrace,
+      Lex::TokenKind::OpenCurlyBrace,
       NodeKind::StructLiteralOrStructTypeLiteralStart));
-  if (!context.PositionIs(TokenKind::CloseCurlyBrace)) {
+  if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
     context.PushState(State::BraceExpressionParameterAsUnknown);
   }
 }
@@ -50,7 +50,7 @@ static auto HandleBraceExpressionParameter(Context& context,
                                            State param_finish_state) -> void {
   auto state = context.PopState();
 
-  if (!context.PositionIs(TokenKind::Period)) {
+  if (!context.PositionIs(Lex::TokenKind::Period)) {
     HandleBraceExpressionParameterError(context, state, param_finish_state);
     return;
   }
@@ -85,9 +85,9 @@ static auto HandleBraceExpressionParameterAfterDesignator(
 
   if (state.has_error) {
     auto recovery_pos = context.FindNextOf(
-        {TokenKind::Equal, TokenKind::Colon, TokenKind::Comma});
+        {Lex::TokenKind::Equal, Lex::TokenKind::Colon, Lex::TokenKind::Comma});
     if (!recovery_pos ||
-        context.tokens().GetKind(*recovery_pos) == TokenKind::Comma) {
+        context.tokens().GetKind(*recovery_pos) == Lex::TokenKind::Comma) {
       state.state = param_finish_state;
       context.PushState(state);
       return;
@@ -97,9 +97,9 @@ static auto HandleBraceExpressionParameterAfterDesignator(
 
   // Work out the kind of this element.
   bool is_type;
-  if (context.PositionIs(TokenKind::Colon)) {
+  if (context.PositionIs(Lex::TokenKind::Colon)) {
     is_type = true;
-  } else if (context.PositionIs(TokenKind::Equal)) {
+  } else if (context.PositionIs(Lex::TokenKind::Equal)) {
     is_type = false;
   } else {
     HandleBraceExpressionParameterError(context, state, param_finish_state);
@@ -168,9 +168,9 @@ static auto HandleBraceExpressionParameterFinish(Context& context,
                     /*has_error=*/false);
   }
 
-  if (context.ConsumeListToken(NodeKind::StructComma,
-                               TokenKind::CloseCurlyBrace, state.has_error) ==
-      Context::ListTokenKind::Comma) {
+  if (context.ConsumeListToken(
+          NodeKind::StructComma, Lex::TokenKind::CloseCurlyBrace,
+          state.has_error) == Context::ListTokenKind::Comma) {
     context.PushState(param_state);
   }
 }
