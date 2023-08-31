@@ -12,7 +12,7 @@
 namespace Carbon::Check {
 
 auto CheckParseTree(const SemIR::File& builtin_ir,
-                    const TokenizedBuffer& tokens,
+                    const Lex::TokenizedBuffer& tokens,
                     const Parse::Tree& parse_tree, DiagnosticConsumer& consumer,
                     llvm::raw_ostream* vlog_stream) -> SemIR::File {
   auto semantics_ir = SemIR::File(&builtin_ir);
