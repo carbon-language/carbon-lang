@@ -20,6 +20,7 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::Token;
 using Lex::TokenizedBuffer;
 using Lex::TokenKind;
 using ::testing::_;
@@ -156,9 +157,9 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_1_234_567), 1'234'567);
   auto token_1_5e9 = buffer.tokens().begin() + 8;
   auto value_1_5e9 = buffer.GetRealLiteral(*token_1_5e9);
-  EXPECT_EQ(value_1_5e9.Mantissa().getZExtValue(), 15);
-  EXPECT_EQ(value_1_5e9.Exponent().getSExtValue(), 8);
-  EXPECT_EQ(value_1_5e9.IsDecimal(), true);
+  EXPECT_EQ(value_1_5e9.mantissa.getZExtValue(), 15);
+  EXPECT_EQ(value_1_5e9.exponent.getSExtValue(), 8);
+  EXPECT_EQ(value_1_5e9.is_decimal, true);
 }
 
 TEST_F(LexerTest, HandlesInvalidNumericLiterals) {
@@ -543,7 +544,7 @@ TEST_F(LexerTest, Whitespace) {
                   // EOF
                   false};
   int pos = 0;
-  for (TokenizedBuffer::Token token : buffer.tokens()) {
+  for (Token token : buffer.tokens()) {
     ASSERT_LT(pos, std::size(space));
     EXPECT_THAT(buffer.HasLeadingWhitespace(token), Eq(space[pos]));
     ++pos;
@@ -791,7 +792,7 @@ TEST_F(LexerTest, InvalidStringLiterals) {
 
     // We should have formed at least one error token.
     bool found_error = false;
-    for (TokenizedBuffer::Token token : buffer.tokens()) {
+    for (Token token : buffer.tokens()) {
       if (buffer.GetKind(token) == TokenKind::Error) {
         found_error = true;
         break;

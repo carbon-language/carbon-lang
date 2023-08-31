@@ -42,9 +42,8 @@ auto HandleArrayExpressionSemi(Context& context) -> void {
 
 auto HandleArrayExpressionFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.ConsumeAndAddCloseSymbol(
-      *(Lex::TokenizedBuffer::TokenIterator(state.token)), state,
-      NodeKind::ArrayExpression);
+  context.ConsumeAndAddCloseSymbol(*(Lex::TokenIterator(state.token)), state,
+                                   NodeKind::ArrayExpression);
 }
 
 }  // namespace Carbon::Parse

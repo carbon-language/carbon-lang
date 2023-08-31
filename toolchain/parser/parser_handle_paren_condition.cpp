@@ -11,7 +11,7 @@ static auto HandleParenCondition(Context& context, NodeKind start_kind,
                                  State finish_state) -> void {
   auto state = context.PopState();
 
-  std::optional<Lex::TokenizedBuffer::Token> open_paren =
+  std::optional<Lex::Token> open_paren =
       context.ConsumeAndAddOpenParen(state.token, start_kind);
   if (open_paren) {
     state.token = *open_paren;

@@ -33,9 +33,9 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
     case Lex::TokenKind::RealLiteral: {
       auto token_value = context.tokens().GetRealLiteral(token);
       auto id = context.semantics_ir().AddRealLiteral(
-          {.mantissa = token_value.Mantissa(),
-           .exponent = token_value.Exponent(),
-           .is_decimal = token_value.IsDecimal()});
+          {.mantissa = token_value.mantissa,
+           .exponent = token_value.exponent,
+           .is_decimal = token_value.is_decimal});
       context.AddNodeAndPush(
           parse_node,
           SemIR::Node::RealLiteral::Make(

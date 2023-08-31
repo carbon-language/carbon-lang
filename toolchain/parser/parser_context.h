@@ -42,8 +42,7 @@ class Context {
   // Used to track state on state_stack_.
   struct StateStackEntry : public Printable<StateStackEntry> {
     explicit StateStackEntry(State state, PrecedenceGroup ambient_precedence,
-                             PrecedenceGroup lhs_precedence,
-                             Lex::TokenizedBuffer::Token token,
+                             PrecedenceGroup lhs_precedence, Lex::Token token,
                              int32_t subtree_start)
         : state(state),
           ambient_precedence(ambient_precedence),
@@ -73,7 +72,7 @@ class Context {
     // A token providing context based on the subtree. This will typically be
     // the first token in the subtree, but may sometimes be a token within. It
     // will typically be used for the subtree's root node.
-    Lex::TokenizedBuffer::Token token;
+    Lex::Token token;
     // The offset within the Tree of the subtree start.
     int32_t subtree_start;
   };
@@ -95,31 +94,29 @@ class Context {
                    llvm::raw_ostream* vlog_stream);
 
   // Adds a node to the parse tree that has no children (a leaf).
-  auto AddLeafNode(NodeKind kind, Lex::TokenizedBuffer::Token token,
-                   bool has_error = false) -> void;
+  auto AddLeafNode(NodeKind kind, Lex::Token token, bool has_error = false)
+      -> void;
 
   // Adds a node to the parse tree that has children.
-  auto AddNode(NodeKind kind, Lex::TokenizedBuffer::Token token,
-               int subtree_start, bool has_error) -> void;
+  auto AddNode(NodeKind kind, Lex::Token token, int subtree_start,
+               bool has_error) -> void;
 
   // Returns the current position and moves past it.
-  auto Consume() -> Lex::TokenizedBuffer::Token { return *(position_++); }
+  auto Consume() -> Lex::Token { return *(position_++); }
 
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
   // there's no open paren. Returns the open paren token if it was found.
-  auto ConsumeAndAddOpenParen(Lex::TokenizedBuffer::Token default_token,
-                              NodeKind start_kind)
-      -> std::optional<Lex::TokenizedBuffer::Token>;
+  auto ConsumeAndAddOpenParen(Lex::Token default_token, NodeKind start_kind)
+      -> std::optional<Lex::Token>;
 
   // Parses a closing symbol corresponding to the opening symbol
   // `expected_open`, possibly skipping forward and diagnosing if necessary.
   // Creates a parse node of the specified close kind. If `expected_open` is not
   // an opening symbol, the parse node will be associated with `state.token`,
   // no input will be consumed, and no diagnostic will be emitted.
-  auto ConsumeAndAddCloseSymbol(Lex::TokenizedBuffer::Token expected_open,
-                                StateStackEntry state, NodeKind close_kind)
-      -> void;
+  auto ConsumeAndAddCloseSymbol(Lex::Token expected_open, StateStackEntry state,
+                                NodeKind close_kind) -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
@@ -128,17 +125,16 @@ class Context {
 
   // Returns the current position and moves past it. Requires the token is the
   // expected kind.
-  auto ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenizedBuffer::Token;
+  auto ConsumeChecked(Lex::TokenKind kind) -> Lex::Token;
 
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
-  auto ConsumeIf(Lex::TokenKind kind)
-      -> std::optional<Lex::TokenizedBuffer::Token>;
+  auto ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::Token>;
 
   // Find the next token of any of the given kinds at the current bracketing
   // level.
   auto FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
-      -> std::optional<Lex::TokenizedBuffer::Token>;
+      -> std::optional<Lex::Token>;
 
   // If the token is an opening symbol for a matched group, skips to the matched
   // closing symbol and returns true. Otherwise, returns false.
@@ -160,11 +156,10 @@ class Context {
   //   declarations or statements across multiple lines should be indented.
   //
   // Returns a semicolon token if one is the likely end.
-  auto SkipPastLikelyEnd(Lex::TokenizedBuffer::Token skip_root)
-      -> std::optional<Lex::TokenizedBuffer::Token>;
+  auto SkipPastLikelyEnd(Lex::Token skip_root) -> std::optional<Lex::Token>;
 
   // Skip forward to the given token. Verifies that it is actually forward.
-  auto SkipTo(Lex::TokenizedBuffer::Token t) -> void;
+  auto SkipTo(Lex::Token t) -> void;
 
   // Returns true if the current token satisfies the lexical validity rules
   // for an infix operator.
@@ -221,7 +216,7 @@ class Context {
 
   // Pushes a new state with a specific token for context. Used when forming a
   // new subtree with a token that isn't the start of the subtree.
-  auto PushState(State state, Lex::TokenizedBuffer::Token token) -> void {
+  auto PushState(State state, Lex::Token token) -> void {
     PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
                               PrecedenceGroup::ForTopLevelExpression(), token,
                               tree_->size()));
@@ -290,10 +285,8 @@ class Context {
 
   auto emitter() -> Lex::TokenDiagnosticEmitter& { return *emitter_; }
 
-  auto position() -> Lex::TokenizedBuffer::TokenIterator& { return position_; }
-  auto position() const -> Lex::TokenizedBuffer::TokenIterator {
-    return position_;
-  }
+  auto position() -> Lex::TokenIterator& { return position_; }
+  auto position() const -> Lex::TokenIterator { return position_; }
 
   auto state_stack() -> llvm::SmallVector<StateStackEntry>& {
     return state_stack_;
@@ -305,8 +298,8 @@ class Context {
 
  private:
   // Prints a single token for a stack dump. Used by PrintForStackDump.
-  auto PrintTokenForStackDump(llvm::raw_ostream& output,
-                              Lex::TokenizedBuffer::Token token) const -> void;
+  auto PrintTokenForStackDump(llvm::raw_ostream& output, Lex::Token token) const
+      -> void;
 
   Tree* tree_;
   Lex::TokenizedBuffer* tokens_;
@@ -316,9 +309,9 @@ class Context {
   llvm::raw_ostream* vlog_stream_;
 
   // The current position within the token buffer.
-  Lex::TokenizedBuffer::TokenIterator position_;
+  Lex::TokenIterator position_;
   // The EndOfFile token.
-  Lex::TokenizedBuffer::TokenIterator end_;
+  Lex::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
 };

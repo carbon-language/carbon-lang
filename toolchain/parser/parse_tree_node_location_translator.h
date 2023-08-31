@@ -21,7 +21,7 @@ class NodeLocationTranslator : public DiagnosticLocationTranslator<Node> {
   }
 
  private:
-  Lex::TokenizedBuffer::TokenLocationTranslator token_translator_;
+  Lex::TokenLocationTranslator token_translator_;
   const Tree* parse_tree_;
 };
 

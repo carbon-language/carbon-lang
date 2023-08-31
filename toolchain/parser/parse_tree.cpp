@@ -17,7 +17,7 @@ namespace Carbon::Parse {
 
 auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
                  llvm::raw_ostream* vlog_stream) -> Tree {
-  Lex::TokenizedBuffer::TokenLocationTranslator translator(&tokens);
+  Lex::TokenLocationTranslator translator(&tokens);
   Lex::TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
@@ -95,7 +95,7 @@ auto Tree::node_kind(Node n) const -> NodeKind {
   return node_impls_[n.index].kind;
 }
 
-auto Tree::node_token(Node n) const -> Lex::TokenizedBuffer::Token {
+auto Tree::node_token(Node n) const -> Lex::Token {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].token;
 }
