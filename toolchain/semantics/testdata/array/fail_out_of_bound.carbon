@@ -76,7 +76,7 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32
-// CHECK:STDOUT:   %a: [i32; 1] = var "a"
+// CHECK:STDOUT:   %a: ref [i32; 1] = var "a"
 // CHECK:STDOUT:   %.loc10_20.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_20.2: i32 = stub_reference %.loc10_20.1
 // CHECK:STDOUT:   %.loc10_23.1: i32 = int_literal 2

@@ -16,7 +16,7 @@ namespace Carbon {
 // Describes the kind of file that the source location is within.
 enum class FileKind { Main, Prelude, Import, Unknown, Last = Unknown };
 
-class SourceLocation {
+class SourceLocation : public Printable<SourceLocation> {
  public:
   // Produce a source location that is known to not be used, because it is fed
   // into an operation that creates no AST nodes and whose diagnostics are
@@ -61,8 +61,6 @@ class SourceLocation {
     Print(out);
     return result;
   }
-
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
   std::string_view filename_;

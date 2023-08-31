@@ -31,7 +31,7 @@ using ImplWitnessMap =
 // These are shared by a context and all unparameterized entities within that
 // context. For example, a class and the name of a method within that class
 // will have the same set of bindings.
-class Bindings {
+class Bindings : public Printable<Bindings> {
  public:
   // Gets an empty set of bindings.
   static auto None() -> Nonnull<const Bindings*>;
@@ -66,7 +66,6 @@ class Bindings {
   }
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Add a value, and perhaps a witness, for a generic binding.
   void Add(Nonnull<const GenericBinding*> binding, Nonnull<const Value*> value,

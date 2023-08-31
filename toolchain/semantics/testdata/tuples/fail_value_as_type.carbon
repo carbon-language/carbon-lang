@@ -63,5 +63,5 @@ var x: (1, );
 // CHECK:STDOUT:   %.loc10_12.1: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc10_12.2: (i32,) = tuple_value (%.loc10_9.2)
 // CHECK:STDOUT:   %.loc10_12.3: type = tuple_type (<error>)
-// CHECK:STDOUT:   %x: (<error>,) = var "x"
+// CHECK:STDOUT:   %x: ref (<error>,) = var "x"
 // CHECK:STDOUT: }

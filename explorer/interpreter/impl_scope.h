@@ -41,7 +41,7 @@ class TypeChecker;
 //
 // `ImplScope` also tracks the type equalities that are known in a particular
 // scope.
-class ImplScope {
+class ImplScope : public Printable<ImplScope> {
  public:
   // The `ImplFact` struct is a key-value pair where the key is the
   // combination of a type and an interface, e.g., `List` and `Container`,

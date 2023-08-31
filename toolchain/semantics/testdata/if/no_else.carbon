@@ -110,10 +110,10 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc12_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc12_6.2: () = call @F()
+// CHECK:STDOUT:   %.loc12_6.2: init () = call @F()
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc14: () = call @G()
+// CHECK:STDOUT:   %.loc14: init () = call @G()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

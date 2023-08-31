@@ -33,5 +33,5 @@ var x: i32;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %x: i32 = var "x"
+// CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT: }

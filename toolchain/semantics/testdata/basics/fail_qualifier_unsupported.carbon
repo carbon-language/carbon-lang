@@ -43,7 +43,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %x: i32 = var "x"
-// CHECK:STDOUT:   %y: i32 = var "y"
+// CHECK:STDOUT:   %x: ref i32 = var "x"
+// CHECK:STDOUT:   %y: ref i32 = var "y"
 // CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }

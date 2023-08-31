@@ -1744,8 +1744,7 @@ class TypeChecker::ConstraintTypeBuilder {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
           type_checker.Substitute(local_bindings, intrinsic_constraint.type));
-      IntrinsicConstraint converted = {
-          .type = type, .kind = intrinsic_constraint.kind, .arguments = {}};
+      IntrinsicConstraint converted(type, intrinsic_constraint.kind, {});
       converted.arguments.reserve(intrinsic_constraint.arguments.size());
       for (Nonnull<const Value*> argument : intrinsic_constraint.arguments) {
         CARBON_ASSIGN_OR_RETURN(

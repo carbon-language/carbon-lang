@@ -19,7 +19,7 @@
 namespace Carbon {
 
 // A Heap represents the abstract machine's dynamically allocated memory.
-class Heap : public HeapAllocationInterface {
+class Heap : public HeapAllocationInterface, public Printable<Heap> {
  public:
   enum class ValueState {
     Uninitialized,
@@ -69,8 +69,6 @@ class Heap : public HeapAllocationInterface {
 
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;
-
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   auto arena() const -> Arena& override { return *arena_; }
 

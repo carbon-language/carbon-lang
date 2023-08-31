@@ -89,7 +89,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %x: {.a: i32, .b: i32} = var "x"
+// CHECK:STDOUT:   %x: ref {.a: i32, .b: i32} = var "x"
 // CHECK:STDOUT:   %.loc7_35: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_33: i32 = stub_reference %.loc7_35
 // CHECK:STDOUT:   %.loc7_43: i32 = int_literal 2
@@ -97,7 +97,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc7_44: {.a: i32, .b: i32} = struct_value (%.loc7_33, %.loc7_41)
 // CHECK:STDOUT:   assign %x, %.loc7_44
 // CHECK:STDOUT:   %.loc8: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %y: {.a: i32, .b: i32} = var "y"
+// CHECK:STDOUT:   %y: ref {.a: i32, .b: i32} = var "y"
 // CHECK:STDOUT:   %.loc7_5: {.a: i32, .b: i32} = bind_value %x
 // CHECK:STDOUT:   assign %y, %.loc7_5
 // CHECK:STDOUT: }

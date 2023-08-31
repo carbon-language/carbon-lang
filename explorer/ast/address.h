@@ -12,14 +12,13 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/element_path.h"
-#include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 // An AllocationId identifies an _allocation_ produced by a Heap. An allocation
 // is analogous to the C++ notion of a complete object: the `Value` in an
 // allocation is not a sub-part of any other `Value`.
-class AllocationId {
+class AllocationId : public Printable<AllocationId> {
  public:
   AllocationId(const AllocationId&) = default;
   auto operator=(const AllocationId&) -> AllocationId& = default;
@@ -52,7 +51,7 @@ class AllocationId {
 // An Address represents a memory address in the Carbon virtual machine.
 // Addresses are used to access values stored in a Heap. Unlike an
 // AllocationId, an Address can refer to a sub-Value of some larger Value.
-class Address {
+class Address : public Printable<Address> {
  public:
   // Constructs an `Address` that refers to the value stored in `allocation`.
   explicit Address(AllocationId allocation) : allocation_(allocation) {}
@@ -69,8 +68,6 @@ class Address {
   void Print(llvm::raw_ostream& out) const {
     out << allocation_ << element_path_;
   }
-
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // If *this represents the address of an object with a field named
   // `field_name`, this method returns the address of that field.

@@ -81,8 +81,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x: i32 = var "x"
-// CHECK:STDOUT:   %.loc13: f64 = call @Foo()
+// CHECK:STDOUT:   %x: ref i32 = var "x"
+// CHECK:STDOUT:   %.loc13: init f64 = call @Foo()
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

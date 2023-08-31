@@ -27,7 +27,7 @@ class Value;
 // This class extracts the relevant information needed to order type
 // structures, and provides a weak ordering over type structures in which type
 // structures that provide a better match compare earlier.
-class TypeStructureSortKey {
+class TypeStructureSortKey : public Printable<TypeStructureSortKey> {
  public:
   // Compute the sort key for `impl type as interface`.
   static auto ForImpl(Nonnull<const Value*> type,

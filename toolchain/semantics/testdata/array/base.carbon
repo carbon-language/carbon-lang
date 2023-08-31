@@ -159,7 +159,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
-// CHECK:STDOUT:   %a: [i32; 1] = var "a"
+// CHECK:STDOUT:   %a: ref [i32; 1] = var "a"
 // CHECK:STDOUT:   %.loc7_20.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_20.2: i32 = stub_reference %.loc7_20.1
 // CHECK:STDOUT:   %.loc7_22.1: type = tuple_type (i32)
@@ -168,7 +168,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   assign %a, %.loc7_22.3
 // CHECK:STDOUT:   %.loc8_14: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc8_15: type = array_type %.loc8_14, f64
-// CHECK:STDOUT:   %b: [f64; 2] = var "b"
+// CHECK:STDOUT:   %b: ref [f64; 2] = var "b"
 // CHECK:STDOUT:   %.loc8_20.1: f64 = real_literal 111e-1
 // CHECK:STDOUT:   %.loc8_20.2: f64 = stub_reference %.loc8_20.1
 // CHECK:STDOUT:   %.loc8_26.1: f64 = real_literal 22e-1
@@ -181,7 +181,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc9_10.2: () = tuple_value ()
 // CHECK:STDOUT:   %.loc9_13: i32 = int_literal 5
 // CHECK:STDOUT:   %.loc9_14: type = array_type %.loc9_13, ()
-// CHECK:STDOUT:   %c: [(); 5] = var "c"
+// CHECK:STDOUT:   %c: ref [(); 5] = var "c"
 // CHECK:STDOUT:   %.loc9_20.1: () = tuple_value ()
 // CHECK:STDOUT:   %.loc9_20.2: () = stub_reference %.loc9_20.1
 // CHECK:STDOUT:   %.loc9_24.1: () = tuple_value ()

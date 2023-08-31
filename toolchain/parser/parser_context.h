@@ -40,7 +40,7 @@ class Context {
   };
 
   // Used to track state on state_stack_.
-  struct StateStackEntry {
+  struct StateStackEntry : public Printable<StateStackEntry> {
     explicit StateStackEntry(State state, PrecedenceGroup ambient_precedence,
                              PrecedenceGroup lhs_precedence,
                              TokenizedBuffer::Token token,

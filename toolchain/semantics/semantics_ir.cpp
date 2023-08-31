@@ -235,7 +235,6 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::FunctionDeclaration:
     case NodeKind::IntegerLiteral:
     case NodeKind::Invalid:
-    case NodeKind::MaterializeTemporary:
     case NodeKind::Namespace:
     case NodeKind::NoOp:
     case NodeKind::Parameter:
@@ -247,6 +246,8 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::StructTypeField:
     case NodeKind::StructValue:
     case NodeKind::StubReference:
+    case NodeKind::Temporary:
+    case NodeKind::TemporaryStorage:
     case NodeKind::TupleIndex:
     case NodeKind::TupleValue:
     case NodeKind::UnaryOperatorNot:
@@ -396,7 +397,6 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::Dereference:
       case NodeKind::FunctionDeclaration:
       case NodeKind::IntegerLiteral:
-      case NodeKind::MaterializeTemporary:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
       case NodeKind::Parameter:
@@ -407,6 +407,8 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::StructAccess:
       case NodeKind::StructValue:
       case NodeKind::StubReference:
+      case NodeKind::Temporary:
+      case NodeKind::TemporaryStorage:
       case NodeKind::TupleIndex:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
@@ -520,7 +522,8 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case NodeKind::VarStorage:
         return ExpressionCategory::DurableReference;
 
-      case NodeKind::MaterializeTemporary:
+      case NodeKind::Temporary:
+      case NodeKind::TemporaryStorage:
         return ExpressionCategory::EphemeralReference;
     }
   }
@@ -551,7 +554,6 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::FunctionDeclaration:
       case NodeKind::IntegerLiteral:
       case NodeKind::Invalid:
-      case NodeKind::MaterializeTemporary:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
       case NodeKind::Parameter:
@@ -562,6 +564,8 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::StructAccess:
       case NodeKind::StructTypeField:
       case NodeKind::StructValue:
+      case NodeKind::Temporary:
+      case NodeKind::TemporaryStorage:
       case NodeKind::TupleIndex:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:

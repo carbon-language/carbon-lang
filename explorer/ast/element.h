@@ -44,7 +44,7 @@ struct NamedValue : HashFromDecompose<NamedValue> {
 // types. As a result, all Elements must be immutable, and all their constructor
 // arguments must be copyable, equality-comparable, and hashable. See
 // Arena's documentation for details.
-class Element {
+class Element : public Printable<Element> {
  protected:
   explicit Element(ElementKind kind) : kind_(kind) {}
 

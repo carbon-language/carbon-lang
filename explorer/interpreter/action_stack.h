@@ -21,7 +21,7 @@ namespace Carbon {
 enum class Phase { CompileTime, RunTime };
 
 // The stack of Actions currently being executed by the interpreter.
-class ActionStack {
+class ActionStack : public Printable<ActionStack> {
  public:
   // Constructs an empty compile-time ActionStack.
   explicit ActionStack(Nonnull<TraceStream*> trace_stream)
@@ -36,7 +36,6 @@ class ActionStack {
         trace_stream_(trace_stream) {}
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Starts execution with `action` at the top of the stack. Cannot be called
   // when IsEmpty() is false.

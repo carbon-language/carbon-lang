@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Types and facets](#types-and-facets)
     -   [Values](#values)
     -   [Facet binding](#facet-binding)
-        -   [Constant bindings](#constant-bindings)
+        -   [Compile-time bindings](#compile-time-bindings)
             -   [Lookup ambiguity](#lookup-ambiguity)
 -   [`impl` lookup](#impl-lookup)
     -   [`impl` lookup for simple member access](#impl-lookup-for-simple-member-access)
@@ -116,14 +116,18 @@ A member access expression is processed using the following steps:
 The process of _member resolution_ determines which member `M` a member access
 expression is referring to.
 
-For a simple member access, the second operand is a word, which must name a
-member of the first operand.
+For a simple member access, the second operand is a word. If the first operand
+is a type, facet, package, or namespace, a search for the word is performed in
+the first operand. Otherwise, a search for the word is performed in the type of
+the first operand. In either case, the search must succeed. In the latter case,
+if the result is an instance member, then [instance binding](#instance-binding)
+is performed on the first operand.
 
-For a compound member access, the second operand is evaluated as a constant to
-determine the member being accessed. The evaluation is required to succeed and
-to result in a member of a facet, type, or interface. If the result is an
-instance member, then [instance binding](#instance-binding) is always performed
-on the first operand.
+For a compound member access, the second operand is evaluated as a compile-time
+constant to determine the member being accessed. The evaluation is required to
+succeed and to result in a member of a type, interface, or non-type facet. If
+the result is an instance member, then [instance binding](#instance-binding) is
+always performed on the first operand.
 
 ### Package and namespace members
 
@@ -151,7 +155,32 @@ fn CallMyFunction2() {
 }
 ```
 
+The first operand may also be the keyword `package`, as in `package.Foo`, to
+name the `Foo` member of the current package. This can be used to disambiguate
+between different `Foo` definitions, as in:
+
+```carbon
+// This defines `package.Foo`
+class Foo {}
+class Bar {
+  // This defines `Bar.Foo`, or equivalently `package.Bar.Foo`.
+  class Foo {}
+  fn F() {
+    // ✅ OK, `x` has type `Foo` from the outer scope.
+    var x: package.Foo = {};
+
+    // ❌ Error: ambiguous;
+    // `Foo` could mean `package.Foo` or `Bar.Foo`.
+    var y: Foo = {};
+  }
+}
+```
+
 ### Types and facets
+
+If the first operand is a type or facet, it must be a compile-time constant.
+This disallows member access into a type except during compile-time, see leads
+issue [#1293](https://github.com/carbon-language/carbon-lang/issues/1293).
 
 Like the previous case, types (including
 [facet types](/docs/design/generics/terminology.md#facet-type)) have member
@@ -163,9 +192,10 @@ names, and lookup searches those names. For example:
 
 Unlike the previous case, both simple and compound member access is allowed.
 
-Facets, such as `T as Cowboy`, also have members. Specifically, the members of
-the `impl`, `T as Cowboy`. Being part of the `impl` rather than the interface,
-no further [`impl` lookup](#impl-lookup) is needed.
+Non-type facets, such as `T as Cowboy`, also have members. Specifically, the
+members of the `impl` or `impl`s that form the implementation of `T as Cowboy`.
+Being part of the `impl` rather than the interface, no further
+[`impl` lookup](#impl-lookup) is needed.
 
 ```carbon
 interface Cowboy {
@@ -188,8 +218,8 @@ implementation for `Avatar`, ignoring `Renderable.Draw`.
 ### Values
 
 If the first operand is not a type, package, namespace, or facet it does not
-have member names, and member lookup is performed into the type of the first
-operand instead.
+have member names, and a search is performed into the type of the first operand
+instead.
 
 ```carbon
 interface Printable {
@@ -224,9 +254,9 @@ fn PrintPointTwice() {
 
 ### Facet binding
 
-If any of the above lookups ever looks for members of a
-[facet binding](/docs/design/generics/terminology.md#facet-binding), it should
-consider members of the facet type, treating the facet binding as an
+If any of the above lookups would search for members of a
+[facet binding](/docs/design/generics/terminology.md#facet-binding) `T:! C`, it
+searches the facet `T as C` instead, treating the facet binding as an
 [archetype](/docs/design/generics/terminology.md#archetype).
 
 For example:
@@ -238,7 +268,7 @@ interface Printable {
 
 fn GenericPrint[T:! Printable](a: T) {
   // ✅ OK, type of `a` is the facet binding `T`;
-  // `Print` found in the type of `T`, namely `Printable`.
+  // `Print` found in the facet `T as Printable`.
   a.Print();
 }
 ```
@@ -246,16 +276,17 @@ fn GenericPrint[T:! Printable](a: T) {
 **Note:** If lookup is performed into a type that involves a template binding,
 the lookup will be performed both in the context of the template definition and
 in the context of the template instantiation, as described in
-[constant bindings](#constant-bindings). The results of these lookups are
-[combined](#lookup-ambiguity).
+[the "compile-time bindings" section](#compile-time-bindings). The results of
+these lookups are [combined](#lookup-ambiguity).
 
-#### Constant bindings
+#### Compile-time bindings
 
 If the value or type of the first operand depends on a checked or template
-generic parameter, or in fact any constant binding, the lookup is performed from
-a context where the value of that parameter is unknown. Evaluation of an
-expression involving the parameter may still succeed, but will result in a
-symbolic value involving that parameter.
+generic parameter, or in fact any
+[compile-time binding](/docs/design/generics/terminology.md#bindings), the
+lookup is performed from a context where the value of that binding is unknown.
+Evaluation of an expression involving the binding may still succeed, but will
+result in a symbolic value involving that binding.
 
 ```carbon
 class GenericWrapper(T:! type) {
@@ -285,8 +316,8 @@ fn CallsDrawChecked(c: Cowboy) {
 }
 ```
 
-If the value or type depends on any template binding, the lookup is redone from
-a context where the values of those binding are known, but where the values of
+If the value or type depends on any template bindings, the lookup is redone from
+a context where the values of those bindings are known, but where the values of
 any symbolic bindings are still unknown. The lookup results from these two
 contexts are [combined](#lookup-ambiguity).
 
@@ -330,8 +361,8 @@ resolution.
 ##### Lookup ambiguity
 
 Multiple lookups can be performed when resolving a member access expression with
-a [template binding](#constant-bindings). We resolve this the same way as when
-looking in multiple interfaces that are
+a [template binding](#compile-time-bindings). We resolve this the same way as
+when looking in multiple interfaces that are
 [combined with `&`](/docs/design/generics/details.md#combining-interfaces-by-anding-facet-types):
 
 -   If more than one distinct member is found, after performing
@@ -424,7 +455,18 @@ For a simple member access `a.b` where `b` names a member of an interface `I`:
         searched, not what it extended.
 -   Otherwise, `impl` lookup is not performed.
 
-For the following examples, consider these definitions:
+The appropriate `impl T as I` implementation is located. The program is invalid
+if no such `impl` exists. When `T` or `I` depends on a symbolic binding, a
+suitable constraint must be specified to ensure that such an `impl` will exist.
+When `T` or `I` depends on a template binding, this check is deferred until the
+value for the template binding is known.
+
+`M` is replaced by the member of the `impl` that corresponds to `M`.
+
+[Instance binding](#instance-binding) may also apply if the member is an
+instance member.
+
+For example:
 
 ```carbon
 interface Addable {
@@ -449,89 +491,22 @@ class Integer {
 }
 ```
 
-The type `T` that is expected to implement `I` depends on the first operand of
-the member access expression, `V`:
-
--   If `V` can be evaluated and evaluates to a
-    [type](/docs/design/generics/terminology.md#types-and-type), then `T` is
-    `V`.
-    ```carbon
-    // `V` is `Integer`. `T` is `V`, which is `Integer`.
-    // Alias refers to #2.
-    alias AddIntegers = Integer.Add;
-    ```
--   Otherwise, `T` is the type of `V`.
-
-    ```carbon
-    let a: Integer = {};
-    // `V` is `a`. `T` is the type of `V`, which is `Integer`.
-    // `a.Add` refers to #2.
-    let twice_a: Integer = a.Add(a);
-    ```
-
-The appropriate `impl T as I` implementation is located. The program is invalid
-if no such `impl` exists. When `T` or `I` depends on a checked generic binding,
-a suitable constraint must be specified to ensure that such an `impl` will
-exist. When `T` or `I` depends on a template binding, this check is deferred
-until the value for the template binding is known.
-
-`M` is replaced by the member of the `impl` that corresponds to `M`.
-
-[Instance binding](#instance-binding) may also apply if the member is an
-instance member.
-
-Following the above example:
-
 -   For `Integer.Sum`, member resolution resolves the name `Sum` to \#2, which
     is not an instance member. `impl` lookup then locates the
     `impl Integer as Addable`, and determines that the member access refers to
     \#4.
--   For `a.Add(b)` where `a: Integer`, member resolution resolves the name `Add`
+-   For `i.Add(j)` where `i: Integer`, member resolution resolves the name `Add`
     to \#1, which is an instance member. `impl` lookup then locates the
     `impl Integer as Addable`, and determines that the member access refers to
     \#3. Finally, instance binding will be performed as described later.
 -   `Integer.AliasForAdd` finds \#3, the `Add` member of the facet type
     `Integer as Addable`, not \#1, the interface member `Addable.Add`.
--   `my_int.AliasForAdd`, with `my_int: Integer`, finds \#3, the `Add` member of
-    the facet type `Integer as Addable`, and performs
+-   `i.AliasForAdd`, with `i: Integer`, finds \#3, the `Add` member of the facet
+    type `Integer as Addable`, and performs
     [instance binding](#instance-binding) since the member is an instance
     member.
 -   `Addable.AliasForSum` finds \#2, the member in the interface `Addable`, and
     does not perform `impl` lookup.
-
-FIXME: Is the following example still needed?
-
-Here is another example:
-
-```carbon
-interface I {
-  // #5
-  default fn F[self: Self]() {}
-  let N:! i32;
-}
-class C {
-  extend impl as I where .N = 5 {
-    // #6
-    fn F[self: C]() {}
-  }
-}
-
-// `V` is `I` and `M` is `I.F`. Because `I` is a facet type,
-// `impl` lookup is not performed, and the alias binds to #5.
-alias A1 = I.F;
-
-// `V` is `C` and `M` is `I.F`. Because `V` is a type, `impl`
-// lookup is performed with `T` being `C`, and the alias binds to #6.
-alias A2 = C.F;
-
-let c: C = {};
-
-// `V` is `c` and `M` is `I.N`. Because `V` is a non-type, `impl`
-// lookup is performed with `T` being the type of `c`, namely `C`, and
-// `M` becomes the associated constant from `impl C as I`.
-// The value of `Z` is 5.
-let Z: i32 = c.N;
-```
 
 **Note:** When an interface member is added to a class by an alias, `impl`
 lookup is not performed as part of handling the alias, but will happen when
@@ -539,21 +514,21 @@ naming the interface member as a member of the class.
 
 ```carbon
 interface Renderable {
-  // #7
+  // #5
   fn Draw[self: Self]();
 }
 
 class RoundWidget {
   impl as Renderable {
-    // #8
+    // #6
     fn Draw[self: Self]();
   }
-  // `Draw` names #7, the member of the `Renderable` interface.
+  // `Draw` names #5, the member of the `Renderable` interface.
   alias Draw = Renderable.Draw;
 }
 
 class SquareWidget {
-  // #9
+  // #7
   fn Draw[self: Self]() {}
   impl as Renderable {
     alias Draw = Self.Draw;
@@ -562,29 +537,29 @@ class SquareWidget {
 
 fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   // ✅ OK: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `Renderable`, #7, which `impl` lookup replaces with
-  // the member `Draw` of `impl RoundWidget as Renderable`, #8.
+  // member `Draw` of `Renderable`, #5, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #6.
   // The outer member access then forms a bound member function that
-  // calls #8 on `r`, as described in "Instance binding".
+  // calls #6 on `r`, as described in "Instance binding".
   r.(RoundWidget.Draw)();
 
   // ✅ OK: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `SquareWidget`, #9.
+  // member `Draw` of `SquareWidget`, #7.
   // The outer member access then forms a bound member function that
-  // calls #9 on `s`.
+  // calls #7 on `s`.
   s.(SquareWidget.Draw)();
 
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `SquareWidget`, #9.
+  // member `Draw` of `SquareWidget`, #7.
   // The outer member access fails because we can't call
-  // #9, `Draw[self: SquareWidget]()`, on a `RoundWidget` object `r`.
+  // #7, `Draw[self: SquareWidget]()`, on a `RoundWidget` object `r`.
   r.(SquareWidget.Draw)();
 
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
-  // member `Draw` of `Renderable`, #7, which `impl` lookup replaces with
-  // the member `Draw` of `impl RoundWidget as Renderable`, #8.
+  // member `Draw` of `Renderable`, #5, which `impl` lookup replaces with
+  // the member `Draw` of `impl RoundWidget as Renderable`, #6.
   // The outer member access fails because we can't call
-  // #8, `Draw[self: RoundWidget]()`, on a `SquareWidget` object `s`.
+  // #6, `Draw[self: RoundWidget]()`, on a `SquareWidget` object `s`.
   s.(RoundWidget.Draw)();
 }
 
@@ -635,45 +610,12 @@ For a compound member access `a.(b)` where `b` names a member of an interface
 For example:
 
 ```carbon
-interface Interface {
-  fn InstanceInterfaceMember[self: Self]();
-  fn NonInstanceInterfaceMember();
-}
-
-class MyClass {}
-impl MyClass as Interface;
-
-fn F(my_value: MyClass) {
-  // Since `Interface.InstanceInterfaceMember` is an instance
-  // member of `Interface`, `T` is set to the type of `my_value`,
-  // and so uses `MyClass as Interface`.
-  my_value.(Interface.InstanceInterfaceMember)();
-  //      ^ impl lookup and instance binding here
-
-  // ❌ By the same logic, `T` is set to the type of `MyClass`,
-  // and so uses `type as Interface`, which isn't implemented.
-  MyClass.(Interface.InstanceInterfaceMember)();
-
-  // Since `Interface.NonInstanceInterfaceMember` is a
-  // non-instance member of `Interface`, `MyClass` is implicitly
-  // converted to `Interface`, and so uses `MyClass as Interface`.
-  MyClass.(Interface.NonInstanceInterfaceMember)();
-
-  // ❌ This is an error unless `my_value` implicitly converts to
-  // a type.
-  my_value.(Interface.NonInstanceInterfaceMember)();
-}
-```
-
-FIXME: Maybe instead continue the previous example?
-
-```carbon
 fn AddTwoIntegers(a: Integer, b: Integer) -> Integer {
   // Since `Addable.Add` is an instance member of `Addable`, `T`
   // is set to the type of `a`, and so uses `Integer as Addable`.
   return a.(Addable.Add)(b);
   //      ^ impl lookup and instance binding here
-  // Impl lookup transforms this into:
+  // Impl lookup transforms this into #3:
   //   return a.((Integer as Addable).Add)(b);
   // which no longer requires impl lookup.
 
@@ -689,14 +631,14 @@ fn SumIntegers(v: Vector(Integer)) -> Integer {
   // `Integer as Addable`.
   Integer.(Addable.Sum)(v);
   //     ^ impl lookup but no instance binding here
-  // Impl lookup transforms this into:
+  // Impl lookup transforms this into #4:
   //   ((Integer as Addable).Sum)(v);
   // which no longer requires impl lookup.
 
   var a: Integer;
   // ❌ This is an error since `a` does not implicitly convert to
   // a type.
-  a.(Addable.Sum)(...);
+  a.(Addable.Sum)(v);
 }
 ```
 
@@ -713,19 +655,34 @@ of `x` and instance binding is performed if an instance member is found.
 
 If instance binding is performed:
 
--   For a field member in class `C`, `V` is required to be of type `C` or of a
-    type derived from `C`. The result is the corresponding subobject within `V`.
-    The result is a
-    [reference expression](/docs/design/values.md#reference-expressions) if `V`
-    is a reference expression.
+-   For a field member in class `C`, `x` is required to be of type `C` or of a
+    type derived from `C`. The result is the corresponding subobject within `x`.
+    If `x` is an
+    [initializing expression](/docs/design/values.md#initializing-expressions),
+    then a
+    [temporary is materialized](/docs/design/values.md#temporary-materialization)
+    for `x`. The result of `x.y` has the same
+    [expression category](/docs/design/values.md#expression-categories) as the
+    possibly materialized `x`.
 
     ```carbon
-    var dims: auto = {.width = 1, .height = 2};
+    class Size {
+      var width: i32;
+      var height: i32;
+    }
+
+    var dims: Size = {.width = 1, .height = 2};
     // `dims.width` denotes the field `width` of the object `dims`.
     Print(dims.width);
     // `dims` is a reference expression, so `dims.height` is a
     // reference expression.
     dims.height = 3;
+
+    fn GetSize() -> Size;
+    // `GetSize()` returns an initializing expression, which is
+    // materialized as a temporary on member access, so
+    // `GetSize().width` is an ephemeral reference expression.
+    Print(GetSize().width);
     ```
 
 -   For a method, the result is a _bound method_, which is a value `F` such that
@@ -733,8 +690,8 @@ If instance binding is performed:
     `self` parameter initialized by a corresponding recipient argument:
 
     -   If the method declares its `self` parameter with `addr`, the recipient
-        argument is `&V`.
-    -   Otherwise, the recipient argument is `V`.
+        argument is `&x`.
+    -   Otherwise, the recipient argument is `x`.
 
     ```carbon
     class Blob {
@@ -768,14 +725,14 @@ fn Debug() {
   var i: i32 = 1;
 
   // Prints `1` using `(i32 as DebugPrint).Print` bound to `i`.
-  i.(DebugPrintable.Print)();
+  i.(DebugPrint.Print)();
 
   // Prints `i32` using `(type as DebugPrint).Print` bound to `i32`.
-  i32.(DebugPrintable.Print)();
+  i32.(DebugPrint.Print)();
 
-  // ❌ This is an error since `i32.(DebugPrintable.Print)` is
-  // already bound, and may not be bound again to `i`.
-  i.(i32.(DebugPrintable.Print))();
+  // ❌ This is an error since `i32.(DebugPrint.Print)` is already
+  // bound, and may not be bound again to `i`.
+  i.(i32.(DebugPrint.Print))();
 }
 ```
 
@@ -786,7 +743,7 @@ doesn't attempt to perform instance binding on `T`, in contrast to `T.(I.M)`.
 
 If instance binding is not performed, the result is the member `M` determined by
 member resolution and `impl` lookup. Evaluating the member access expression
-evaluates `V` and discards the result.
+evaluates the first argument and discards the result.
 
 An expression that names an instance member, but for which instance binding is
 not performed, can only be used as the second operand of a compound member
@@ -802,11 +759,12 @@ fn CallStaticMethod(c: C) {
   // ✅ OK, calls `C.StaticMethod`.
   C.StaticMethod();
 
-  // ✅ OK, evaluates expression `c` then calls `C.StaticMethod`.
+  // ✅ OK, evaluates expression `c`, discards the result, then
+  // calls `C.StaticMethod`.
   c.StaticMethod();
 
-  // ❌ Error: name of instance member `C.field` can only be used in a
-  // member access or alias.
+  // ❌ Error: name of instance member `C.field` can only be used in
+  // a member access or alias.
   C.field = 1;
   // ✅ OK, instance binding is performed by outer member access,
   // same as `c.field = 1;`
@@ -908,4 +866,6 @@ var n: i32 = 1 + X.Y;
     [#989: member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 -   [Question for leads: constrained template name lookup](https://github.com/carbon-language/carbon-lang/issues/949)
 -   Proposal
-    [#2360: Types are values of type `type``](https://github.com/carbon-language/carbon-lang/pull/2360)
+    [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
+-   Proposal
+    [#2550: Simplified package declaration for the `Main` package](https://github.com/carbon-language/carbon-lang/pull/2550)
