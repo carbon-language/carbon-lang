@@ -18,7 +18,7 @@
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/semantics_ir.h"
+#include "toolchain/semantics/check.h"
 #include "toolchain/semantics/semantics_ir_formatter.h"
 #include "toolchain/source/source_buffer.h"
 
@@ -436,9 +436,9 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return !has_errors;
   }
 
-  const SemIR::File builtin_ir = SemIR::File::MakeBuiltinIR();
+  const SemIR::File builtin_ir = Check::MakeBuiltins();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
-  const SemIR::File semantics_ir = SemIR::File::MakeFromParseTree(
+  const SemIR::File semantics_ir = Check::CheckParseTree(
       builtin_ir, tokenized_source, parse_tree, *consumer, vlog_stream_);
 
   // We've finished all steps that can produce diagnostics. Emit the

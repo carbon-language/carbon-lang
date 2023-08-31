@@ -59,11 +59,11 @@ cc_library(
 )
 
 cc_library(
-    name = "semantics_ir",
+    name = "check",
     srcs = [
+        "check.cpp",
         "semantics_context.cpp",
         "semantics_declaration_name_stack.cpp",
-        "semantics_ir.cpp",
         "semantics_node_block_stack.cpp",
     ] +
     # Glob handler files to avoid missing any.
@@ -71,13 +71,14 @@ cc_library(
         "semantics_handle*.cpp",
     ]),
     hdrs = [
+        "check.h",
         "semantics_context.h",
         "semantics_declaration_name_stack.h",
-        "semantics_ir.h",
         "semantics_node_block_stack.h",
     ],
     deps = [
         ":semantics_builtin_kind",
+        ":semantics_ir",
         ":semantics_node",
         ":semantics_node_kind",
         ":semantics_node_stack",
@@ -85,9 +86,8 @@ cc_library(
         "//common:ostream",
         "//common:vlog",
         "//toolchain/base:pretty_stack_trace_function",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:diagnostic_kind",
-        "//toolchain/lexer:numeric_literal",
-        "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
@@ -97,13 +97,22 @@ cc_library(
 )
 
 cc_library(
+    name = "semantics_ir",
+    srcs = ["semantics_ir.cpp"],
+    hdrs = ["semantics_ir.h"],
+    deps = [
+        ":semantics_builtin_kind",
+        ":semantics_node",
+        ":semantics_node_kind",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "semantics_ir_formatter",
-    srcs = [
-        "semantics_ir_formatter.cpp",
-    ],
-    hdrs = [
-        "semantics_ir_formatter.h",
-    ],
+    srcs = ["semantics_ir_formatter.cpp"],
+    hdrs = ["semantics_ir_formatter.h"],
     deps = [
         ":semantics_ir",
         ":semantics_node_kind",

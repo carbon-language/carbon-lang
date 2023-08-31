@@ -23,6 +23,7 @@ cc_library(
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/lower",
         "//toolchain/parser:parse_tree",
+        "//toolchain/semantics:check",
         "//toolchain/semantics:semantics_ir",
         "//toolchain/semantics:semantics_ir_formatter",
         "//toolchain/source:source_buffer",
