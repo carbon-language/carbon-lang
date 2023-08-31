@@ -33,7 +33,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//toolchain/base:index_base",
-        "//toolchain/parser:parse_tree",
+        "//toolchain/parse:tree",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:node_kind",
         "@llvm-project//llvm:Support",
@@ -59,7 +59,7 @@ cc_library(
     hdrs = ["formatter.h"],
     deps = [
         "//toolchain/lexer:tokenized_buffer",
-        "//toolchain/parser:parse_tree",
+        "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:node_kind",
         "@llvm-project//llvm:Support",

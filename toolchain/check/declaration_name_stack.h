@@ -6,7 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_DECLARATION_NAME_STACK_H_
 
 #include "llvm/ADT/SmallVector.h"
-#include "toolchain/parser/parse_tree.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {
