@@ -91,6 +91,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Checked and template parameters](#checked-and-template-parameters)
     -   [Interfaces and implementations](#interfaces-and-implementations)
     -   [Combining constraints](#combining-constraints)
+    -   [Template name lookup](#template-name-lookup)
     -   [Associated constants](#associated-constants)
     -   [Generic entities](#generic-entities)
         -   [Generic Classes](#generic-classes)
@@ -1041,7 +1042,7 @@ implementation chooses.
 A [compile-time binding](#checked-and-template-parameters) uses `:!` instead of
 a colon (`:`) and can only match [compile-time constants](#expression-phases),
 not run-time values. A `template` keyword before the binding selects a template
-constant binding instead of a symbolic constant binding.
+binding instead of a symbolic binding.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -2569,8 +2570,9 @@ The general principle of Carbon name lookup is that we look up names in all
 relevant scopes, and report an error if the name is found to refer to more than
 one different entity. So Carbon requires disambiguation by adding qualifiers
 instead of doing any
-[shadowing](https://en.wikipedia.org/wiki/Variable_shadowing) of names. For an
-example, see [the "package scope" section](#package-scope).
+[shadowing](https://en.wikipedia.org/wiki/Variable_shadowing) of names.
+[Member name lookup](expressions/member_access.md) follows a similar philosophy.
+For an example, see [the "package scope" section](#package-scope).
 
 Unqualified name lookup walks the semantically-enclosing scopes, not only the
 lexically-enclosing ones. So when a lookup is performed within
@@ -2590,21 +2592,6 @@ fn C.G() {
   F();
 }
 ```
-
-**FIXME: "symbolic facet binding" is the technically correct combination of
-terms, but probably needs more context here.**
-
-[Member name lookup](expressions/member_access.md) follows a similar philosophy.
-If a [symbolic facet binding](#checked-and-template-parameters) is known to
-implement multiple interfaces due to a constraint using
-[`&`](#combining-constraints) or
-[`where` clauses](generics/details.md#where-constraints), member name lookup
-into that facet will look in all of the interfaces. If it is found in multiple,
-the name must be disambiguated by qualifying using compound member access
-([1](expressions/member_access.md),
-[2](generics/details.md#qualified-member-names-and-compound-member-access)). A
-[template-generic type parameter](#checked-and-template-parameters) performs
-look up into the caller's type in addition to the constraint.
 
 Carbon also rejects cases that would be invalid if all declarations in the file,
 including ones appearing later, were visible everywhere, not only after their
@@ -2661,10 +2648,10 @@ like `i32` and `bool` refer to types defined within this package, based on the
 ## Generics
 
 Generics allow Carbon constructs like [functions](#functions) and
-[classes](#classes) to be written with compile-time parameters and apply
-generically to different types using those parameters. For example, this `Min`
-function has a type\* parameter `T` that can be any type that implements the
-`Ordered` interface.
+[classes](#classes) to be written with compile-time parameters to generalize
+across different values of those parameters. For example, this `Min` function
+has a type\* parameter `T` that can be any type that implements the `Ordered`
+interface.
 
 ```carbon
 fn Min[T:! Ordered](x: T, y: T) -> T {
@@ -2705,9 +2692,9 @@ not itself a type.
 
 ### Checked and template parameters
 
-The `:!` marks it as a compile-time binding, and so `T` is a compile-time
-parameter. Compile-time parameters may either be _checked_ or _template_, and
-default to checked.
+The `:!` marks it as a compile-time binding pattern, and so `T` is a
+compile-time parameter. Compile-time parameters may either be _checked_ or
+_template_, and default to checked.
 
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific values `T` is instantiated with, and name
@@ -2736,7 +2723,7 @@ A template parameter can still use a constraint. The `Min` example could have
 been declared as:
 
 ```carbon
-fn Min[template T:! Ordered](x: T, y: T) -> T {
+fn TemplatedMin[template T:! Ordered](x: T, y: T) -> T {
   return if x <= y then x else y;
 }
 ```
@@ -2751,7 +2738,7 @@ controlled by the SFINAE rule of C++
 ([1](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error),
 [2](https://en.cppreference.com/w/cpp/language/sfinae)) but by explicit `if`
 clauses evaluated at compile-time. The `if` clause is at the end of the
-declaration, and the condition can only use constant values known at
+declaration, and the condition can only use compile-time constants known at
 type-checking time, including `template` parameters.
 
 ```carbon
@@ -2761,16 +2748,6 @@ class Array(template T:! type, template N:! i64)
 
 > **TODO:** The design for template constraints is still under development. The
 > `if` clause approach here is provisional.
-
-Member lookup into a template parameter is done in the actual value provided by
-the caller, _in addition_ to any constraints. This means member name lookup and
-type checking for anything [dependent](generics/terminology.md#dependent-names)
-on the template parameter can't be completed until the template is instantiated
-with a specific concrete type. When the constraint is just `type`, this gives
-semantics similar to C++ templates. Constraints can then be added incrementally,
-with the compiler verifying that the semantics stay the same. Once all
-constraints have been added, removing the word `template` to switch to a checked
-parameter is safe.
 
 The [expression phase](#expression-phases) of a checked parameter is a symbolic
 constant whereas the expression phase of a template parameter is template
@@ -2789,8 +2766,6 @@ rigor of checked generics are problematic.
 >     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 > -   Question-for-leads issue
 >     [#949: Constrained template name lookup](https://github.com/carbon-language/carbon-lang/issues/949)
-> -   Proposal
->     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 
 ### Interfaces and implementations
 
@@ -2825,9 +2800,16 @@ that they do. Simply having a `Print` function with the right signature is not
 sufficient.
 
 ```carbon
+// Class `Text` does not implement the `Printable` interface.
+class Text {
+  fn Print[self: Self]();
+}
+
 class Circle {
   var radius: f32;
 
+  // This `impl` declaration establishes that `Circle` implements
+  // `Printable`.
   impl as Printable {
     fn Print[self: Self]() {
       Carbon.Print("Circle with radius: {0}", self.radius);
@@ -2839,11 +2821,27 @@ class Circle {
 In this case, `Print` is not a direct member of `Circle`, but:
 
 -   `Circle` may be passed to functions expecting a type that implements
-    `Printable`, and
--   the members of `Printable` such as `Print` may be called using compound
+    `Printable`.
+
+    ```carbon
+    fn GenericPrint[T:! Printable](x: T) {
+      // Look up into `T` delegates to `Printable`, so this
+      // finds `Printable.Print`:
+      x.Print();
+    }
+    ```
+
+-   The members of `Printable` such as `Print` may be called using compound
     member access syntax ([1](expressions/member_access.md),
     [2](generics/details.md#qualified-member-names-and-compound-member-access))
-    to qualify the name of the member, as in `c.(Printable.Print)()`.
+    to qualify the name of the member, as in:
+
+    ```carbon
+    fn CirclePrint(c: Circle) {
+      // Succeeds, even though `c.Print()` would not.
+      c.(Printable.Print)();
+    }
+    ```
 
 To include the members of the interface as direct members of the type, use the
 [`extend`](generics/details.md#extend-impl) keyword, as in
@@ -2869,6 +2867,8 @@ by replacing the definition scope in curly braces (`{`...`}`) with a semicolon.
 >     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 > -   Proposal
 >     [#624: Coherence: terminology, rationale, alternatives considered](https://github.com/carbon-language/carbon-lang/pull/624)
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 > -   Proposal
 >     [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 > -   Proposal
@@ -2915,14 +2915,60 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 > -   Proposal
 >     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 
+### Template name lookup
+
+Member lookup into a template parameter is done in the actual value provided by
+the caller, _in addition_ to any constraints. This means member name lookup and
+type checking for anything [dependent](generics/terminology.md#dependent-names)
+on the template parameter can't be completed until the template is instantiated
+with a specific concrete type. When the constraint is just `type`, this gives
+semantics similar to C++ templates.
+
+```carbon
+class Game {
+  fn Draw[self: Self]() -> bool;
+  impl as Renderable {
+    fn Draw[self: Self]();
+  }
+}
+
+fn TemplateDraw[template T:! type](x: T) {
+  // Calls `Game.Draw` when `T` is `Game`:
+  x.Draw();
+}
+
+fn ConstrainedTemplateDraw[template T:! Renderable](x: T) {
+  // ❌ Error when `T` is `Game`: Finds both `T.Draw` and
+  // `Renderable.Draw`, and they are different.
+  x.Draw();
+}
+
+fn CheckedGenericDraw[T:! Renderable](x: T) {
+  // Always calls `Renderable.Draw`, even when `T` is `Game`:
+  x.Draw();
+}
+```
+
+This allows a safe transition from template to checked generics. Constraints can
+be added incrementally, with the compiler verifying that the semantics stay the
+same. If adding the constraint would change which function gets called, an error
+is triggered, as in `ConstrainedTemplateDraw` from the example. Once all
+constraints have been added, removing the word `template` to switch to a checked
+parameter is safe.
+
+> References:
+>
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+
 ### Associated constants
 
 An associated constant is a member of an interface whose value is determined by
 the implementation of that interface for a specific type. These values are set
 to compile-time values in implementations, and so use the
-[`:!` generic syntax](#checked-and-template-parameters) inside a
-[`let` declaration](#constant-let-declarations) without an initializer. This
-allows types in the signatures of functions in the interface to vary. For
+[`:!` compile-time binding pattern syntax](#checked-and-template-parameters)
+inside a [`let` declaration](#constant-let-declarations) without an initializer.
+This allows types in the signatures of functions in the interface to vary. For
 example, an interface describing a
 [stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) might use an
 associated constant to represent the type of elements stored in the stack.
@@ -2932,7 +2978,7 @@ interface StackInterface {
   let ElementType:! Movable;
   fn Push[addr self: Self*](value: ElementType);
   fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> bool;
+  fn IsEmpty[self: Self]() -> bool;
 }
 ```
 
@@ -3004,7 +3050,7 @@ fn PeekTopOfStack[T:! type](s: Stack(T)*) -> T {
   return top;
 }
 
-// `int_stack` has type `Stack(i32)`, so `T` is deduced to be `i32`.
+// `int_stack` has type `Stack(i32)`, so `T` is deduced to be `i32`:
 PeekTopOfStack(&int_stack);
 ```
 
@@ -3072,7 +3118,7 @@ pick which definition is selected. These rules ensure:
     same implementation is always selected for a given query.
 -   Libraries will work together as long as they pass their separate checks.
 -   A generic function can assume that some impl will be successfully selected
-    if it can see an impl that applies, even though another more specific impl
+    if it can see an impl that applies, even though another more-specific impl
     may be selected.
 
 Implementations may be marked
@@ -3241,7 +3287,7 @@ reference expression.
 
 Operators that can take multiple arguments, such as function calling operator
 `f(4)`, have a [variadic](generics/details.md#variadic-arguments) parameter
-list.
+list. **TODO: Variadics are still provisional.**
 
 Whether and how a value supports other operations, such as being copied,
 swapped, or set into an [unformed state](#unformed-state), is also determined by
