@@ -301,7 +301,7 @@ interface Renderable {
   fn Draw[self: Self]();
 }
 fn DrawChecked[T:! Renderable](c: T) {
-  // `Draw` resolves to `Renderable.Draw`.
+  // `Draw` resolves to `(T as Renderable).Draw`.
   c.Draw();
 }
 
@@ -378,8 +378,8 @@ interface Renderable {
 }
 
 fn DrawTemplate2[template T:! Renderable](c: T) {
-  // Member lookup finds `Renderable.Draw` and the `Draw`
-  // member of the actual deduced value of `T`, if any.
+  // Member lookup finds `(T as Renderable).Draw` and the
+  // `Draw` member of the actual deduced value of `T`, if any.
   c.Draw();
 }
 
