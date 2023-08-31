@@ -346,7 +346,7 @@ class TemplateWrapper(template T:! type) {
   var field: T;
 }
 fn G[template T:! type](x: TemplateWrapper(T)) -> T {
-  // 🤷 Not yet decided.
+  // ✅ Allowed, finds `TemplateWrapper(T).field`.
   return x.field;
 }
 ```
