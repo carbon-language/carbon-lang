@@ -9,8 +9,8 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "toolchain/lower/file_context.h"
-#include "toolchain/semantics/semantics_ir.h"
-#include "toolchain/semantics/semantics_node.h"
+#include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Lower {
 
@@ -142,7 +142,7 @@ class FunctionContext {
   auto Handle##Name(FunctionContext& context, SemIR::NodeId node_id, \
                     SemIR::Node node)                                \
       ->void;
-#include "toolchain/semantics/semantics_node_kind.def"
+#include "toolchain/sem_ir/node_kind.def"
 
 }  // namespace Carbon::Lower
 

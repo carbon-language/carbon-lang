@@ -8,8 +8,8 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "toolchain/semantics/semantics_ir.h"
-#include "toolchain/semantics/semantics_node.h"
+#include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Lower {
 

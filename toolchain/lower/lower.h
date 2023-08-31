@@ -7,7 +7,7 @@
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "toolchain/semantics/semantics_ir.h"
+#include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Lower {
 

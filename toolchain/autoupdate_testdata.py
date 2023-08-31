@@ -12,12 +12,12 @@ import argparse
 import subprocess
 
 TARGETS = {
+    "check": "//toolchain/check:check_file_test",
     "codegen": "//toolchain/codegen:codegen_file_test",
     "driver": "//toolchain/driver:driver_file_test",
     "lexer": "//toolchain/lexer:lexer_file_test",
     "lower": "//toolchain/lower:lower_file_test",
     "parser": "//toolchain/parser:parse_tree_file_test",
-    "semantics": "//toolchain/semantics:semantics_file_test",
 }
 
 

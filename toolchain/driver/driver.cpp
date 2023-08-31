@@ -12,14 +12,14 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Path.h"
 #include "llvm/TargetParser/Host.h"
+#include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/check.h"
-#include "toolchain/semantics/semantics_ir_formatter.h"
+#include "toolchain/sem_ir/formatter.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
