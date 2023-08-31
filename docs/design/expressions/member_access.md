@@ -17,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Values](#values)
     -   [Facet binding](#facet-binding)
         -   [Compile-time bindings](#compile-time-bindings)
-            -   [Lookup ambiguity](#lookup-ambiguity)
+        -   [Lookup ambiguity](#lookup-ambiguity)
 -   [`impl` lookup](#impl-lookup)
     -   [`impl` lookup for simple member access](#impl-lookup-for-simple-member-access)
     -   [`impl` lookup for compound member access](#impl-lookup-for-compound-member-access)
@@ -254,10 +254,9 @@ fn PrintPointTwice() {
 
 ### Facet binding
 
-If any of the above lookups would search for members of a
-[facet binding](/docs/design/generics/terminology.md#facet-binding) `T:! C`, it
-searches the facet `T as C` instead, treating the facet binding as an
-[archetype](/docs/design/generics/terminology.md#archetype).
+A search for members of a facet binding `T:! C` treats the facet binding as an
+[archetype](/docs/design/generics/terminology.md#archetype), and finds members
+of the facet `T` of facet type `C`.
 
 For example:
 
@@ -358,7 +357,7 @@ bindings that are in scope are unknown. Unlike for a template binding, the
 actual value of a symbolic binding never affects the result of member
 resolution.
 
-##### Lookup ambiguity
+#### Lookup ambiguity
 
 Multiple lookups can be performed when resolving a member access expression with
 a [template binding](#compile-time-bindings). We resolve this the same way as

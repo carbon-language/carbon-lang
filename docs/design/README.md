@@ -3037,7 +3037,7 @@ In this example:
 -   `Stack` is a type parameterized by a type `T`.
 -   `T` may be used within the definition of `Stack` anywhere a normal type
     would be used.
--   `Array(T)` instantiates generic type `Array` with its parameter set to `T`.
+-   `Array(T)` instantiates generic type `Array` with its argument set to `T`.
 -   `Stack(i32)` instantiates `Stack` with `T` set to `i32`.
 
 The values of type parameters are part of a type's value, and so may be deduced
@@ -3184,8 +3184,8 @@ Carbon generics have a number of other features, including:
 
 ### Generic type equality and `observe` declarations
 
-Determining whether two types must be equal in a generic context is in general
-undecidable, as
+Determining whether two types must be equal in a checked-generic context is in
+general undecidable, as
 [has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
 
 To make compilation fast, the Carbon compiler will limit its search to a depth
@@ -3618,11 +3618,12 @@ language features like checked generics in their design and implementation.
 
 Where possible, we will also try to provide implementations of Carbon's standard
 library container _interfaces_ for the relevant C++ container types so that they
-can be directly used with generic Carbon code. This should allow generic code in
-Carbon to work seamlessly with both Carbon and C++ containers without
-performance loss or constraining the Carbon container implementations. In the
-other direction, Carbon containers will satisfy C++ container requirements, so
-templated C++ code can operate directly on Carbon containers as well.
+can be directly used with checked-generic Carbon code. This should allow
+checked-generic code in Carbon to work seamlessly with both Carbon and C++
+containers without performance loss or constraining the Carbon container
+implementations. In the other direction, Carbon containers will satisfy C++
+container requirements, so templated C++ code can operate directly on Carbon
+containers as well.
 
 ### Inheritance
 
@@ -3686,7 +3687,7 @@ existing languages like Rust and Swift to understand what fundamental
 capabilities they ended up needing. The two components that stand out are:
 
 -   Expanded type system that includes more semantic information.
--   More pervasive use of type system abstractions (typically generics).
+-   More pervasive use of type system abstractions (typically checked generics).
 
 For migrating C++ code, we also need the ability to add features and migrate
 code to use those new features incrementally and over time. This requires
