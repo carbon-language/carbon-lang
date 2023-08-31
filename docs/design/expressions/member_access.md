@@ -125,9 +125,9 @@ is performed on the first operand.
 
 For a compound member access, the second operand is evaluated as a compile-time
 constant to determine the member being accessed. The evaluation is required to
-succeed and to result in a member of a type, interface, or non-type facet. If the result
-is an instance member, then [instance binding](#instance-binding) is always
-performed on the first operand.
+succeed and to result in a member of a type, interface, or non-type facet. If
+the result is an instance member, then [instance binding](#instance-binding) is
+always performed on the first operand.
 
 ### Package and namespace members
 
@@ -178,6 +178,10 @@ class Bar {
 
 ### Types and facets
 
+If the first operand is a type or facet, it must be a compile-time constant.
+This disallows member access into a type except during compile-time, see leads
+issue [#1293](https://github.com/carbon-language/carbon-lang/issues/1293).
+
 Like the previous case, types (including
 [facet types](/docs/design/generics/terminology.md#facet-type)) have member
 names, and lookup searches those names. For example:
@@ -188,9 +192,9 @@ names, and lookup searches those names. For example:
 
 Unlike the previous case, both simple and compound member access is allowed.
 
-Facets, such as `T as Cowboy`, also have members. Specifically, the members of
-the `impl` or `impl`s that form the implementation of `T as Cowboy`. Being part
-of the `impl` rather than the interface, no further
+Non-type facets, such as `T as Cowboy`, also have members. Specifically, the
+members of the `impl` or `impl`s that form the implementation of `T as Cowboy`.
+Being part of the `impl` rather than the interface, no further
 [`impl` lookup](#impl-lookup) is needed.
 
 ```carbon
@@ -251,8 +255,8 @@ fn PrintPointTwice() {
 ### Facet binding
 
 If any of the above lookups would search for members of a
-[facet binding](/docs/design/generics/terminology.md#facet-binding), it
-searches the facet type instead, treating the facet binding as an
+[facet binding](/docs/design/generics/terminology.md#facet-binding) `T:! C`, it
+searches the facet `T as C` instead, treating the facet binding as an
 [archetype](/docs/design/generics/terminology.md#archetype).
 
 For example:
@@ -264,7 +268,7 @@ interface Printable {
 
 fn GenericPrint[T:! Printable](a: T) {
   // ✅ OK, type of `a` is the facet binding `T`;
-  // `Print` found in the type of `T`, namely `Printable`.
+  // `Print` found in the facet `T as Printable`.
   a.Print();
 }
 ```
@@ -451,7 +455,18 @@ For a simple member access `a.b` where `b` names a member of an interface `I`:
         searched, not what it extended.
 -   Otherwise, `impl` lookup is not performed.
 
-For the following examples, consider these definitions:
+The appropriate `impl T as I` implementation is located. The program is invalid
+if no such `impl` exists. When `T` or `I` depends on a symbolic binding, a
+suitable constraint must be specified to ensure that such an `impl` will exist.
+When `T` or `I` depends on a template binding, this check is deferred until the
+value for the template binding is known.
+
+`M` is replaced by the member of the `impl` that corresponds to `M`.
+
+[Instance binding](#instance-binding) may also apply if the member is an
+instance member.
+
+For example:
 
 ```carbon
 interface Addable {
@@ -476,51 +491,18 @@ class Integer {
 }
 ```
 
-The type `T` that is expected to implement `I` depends on the first operand of
-the member access expression, `V`:
-
--   If `V` can be evaluated and evaluates to a
-    [type](/docs/design/generics/terminology.md#types-and-type), then `T` is
-    `V`.
-    ```carbon
-    // `V` is `Integer`. `T` is `V`, which is `Integer`.
-    // Alias refers to #2.
-    alias AddIntegers = Integer.Add;
-    ```
--   Otherwise, `T` is the type of `V`.
-
-    ```carbon
-    let a: Integer = {};
-    // `V` is `a`. `T` is the type of `V`, which is `Integer`.
-    // `a.Add` refers to #2.
-    let twice_a: Integer = a.Add(a);
-    ```
-
-The appropriate `impl T as I` implementation is located. The program is invalid
-if no such `impl` exists. When `T` or `I` depends on a symbolic binding, a
-suitable constraint must be specified to ensure that such an `impl` will exist.
-When `T` or `I` depends on a template binding, this check is deferred until the
-value for the template binding is known.
-
-`M` is replaced by the member of the `impl` that corresponds to `M`.
-
-[Instance binding](#instance-binding) may also apply if the member is an
-instance member.
-
-Following the above example:
-
 -   For `Integer.Sum`, member resolution resolves the name `Sum` to \#2, which
     is not an instance member. `impl` lookup then locates the
     `impl Integer as Addable`, and determines that the member access refers to
     \#4.
--   For `a.Add(b)` where `a: Integer`, member resolution resolves the name `Add`
+-   For `i.Add(j)` where `i: Integer`, member resolution resolves the name `Add`
     to \#1, which is an instance member. `impl` lookup then locates the
     `impl Integer as Addable`, and determines that the member access refers to
     \#3. Finally, instance binding will be performed as described later.
 -   `Integer.AliasForAdd` finds \#3, the `Add` member of the facet type
     `Integer as Addable`, not \#1, the interface member `Addable.Add`.
--   `my_int.AliasForAdd`, with `my_int: Integer`, finds \#3, the `Add` member of
-    the facet type `Integer as Addable`, and performs
+-   `i.AliasForAdd`, with `i: Integer`, finds \#3, the `Add` member of the facet
+    type `Integer as Addable`, and performs
     [instance binding](#instance-binding) since the member is an instance
     member.
 -   `Addable.AliasForSum` finds \#2, the member in the interface `Addable`, and
@@ -673,15 +655,15 @@ of `x` and instance binding is performed if an instance member is found.
 
 If instance binding is performed:
 
--   For a field member in class `C`, `V` is required to be of type `C` or of a
-    type derived from `C`. The result is the corresponding subobject within `V`.
-    If `V` is an
+-   For a field member in class `C`, `x` is required to be of type `C` or of a
+    type derived from `C`. The result is the corresponding subobject within `x`.
+    If `x` is an
     [initializing expression](/docs/design/values.md#initializing-expressions),
     then a
     [temporary is materialized](/docs/design/values.md#temporary-materialization)
-    for `V`. The result of `x.y` has the same
+    for `x`. The result of `x.y` has the same
     [expression category](/docs/design/values.md#expression-categories) as the
-    possibly materialized `V`.
+    possibly materialized `x`.
 
     ```carbon
     class Size {
@@ -708,8 +690,8 @@ If instance binding is performed:
     `self` parameter initialized by a corresponding recipient argument:
 
     -   If the method declares its `self` parameter with `addr`, the recipient
-        argument is `&V`.
-    -   Otherwise, the recipient argument is `V`.
+        argument is `&x`.
+    -   Otherwise, the recipient argument is `x`.
 
     ```carbon
     class Blob {
@@ -761,7 +743,7 @@ doesn't attempt to perform instance binding on `T`, in contrast to `T.(I.M)`.
 
 If instance binding is not performed, the result is the member `M` determined by
 member resolution and `impl` lookup. Evaluating the member access expression
-evaluates `V` and discards the result.
+evaluates the first argument and discards the result.
 
 An expression that names an instance member, but for which instance binding is
 not performed, can only be used as the second operand of a compound member
@@ -777,11 +759,12 @@ fn CallStaticMethod(c: C) {
   // ✅ OK, calls `C.StaticMethod`.
   C.StaticMethod();
 
-  // ✅ OK, evaluates expression `c` then calls `C.StaticMethod`.
+  // ✅ OK, evaluates expression `c`, discards the result, then
+  // calls `C.StaticMethod`.
   c.StaticMethod();
 
-  // ❌ Error: name of instance member `C.field` can only be used in a
-  // member access or alias.
+  // ❌ Error: name of instance member `C.field` can only be used in
+  // a member access or alias.
   C.field = 1;
   // ✅ OK, instance binding is performed by outer member access,
   // same as `c.field = 1;`
