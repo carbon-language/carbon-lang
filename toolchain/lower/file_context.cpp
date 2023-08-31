@@ -8,9 +8,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/lower/function_context.h"
-#include "toolchain/semantics/semantics_ir.h"
-#include "toolchain/semantics/semantics_node.h"
-#include "toolchain/semantics/semantics_node_kind.h"
+#include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/node_kind.h"
 
 namespace Carbon::Lower {
 
@@ -184,7 +184,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   case SemIR::NodeKind::Name:                       \
     Handle##Name(function_lowering, node_id, node); \
     break;
-#include "toolchain/semantics/semantics_node_kind.def"
+#include "toolchain/sem_ir/node_kind.def"
       }
     }
   }

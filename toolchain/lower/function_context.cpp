@@ -4,7 +4,7 @@
 
 #include "toolchain/lower/function_context.h"
 
-#include "toolchain/semantics/semantics_ir.h"
+#include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Lower {
 

@@ -5,52 +5,80 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/file_test:rules.bzl", "file_test")
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "lower",
-    srcs = ["lower.cpp"],
-    hdrs = ["lower.h"],
+    name = "node_stack",
+    srcs = ["node_stack.cpp"],
+    hdrs = ["node_stack.h"],
     deps = [
-        ":context",
-        "//toolchain/sem_ir:file",
-        "@llvm-project//llvm:Core",
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/parser:parse_node_kind",
+        "//toolchain/parser:parse_tree",
+        "//toolchain/sem_ir:node",
         "@llvm-project//llvm:Support",
     ],
 )
 
 cc_library(
-    name = "context",
+    name = "check",
     srcs = [
-        "file_context.cpp",
-        "function_context.cpp",
+        "check.cpp",
+        "context.cpp",
+        "declaration_name_stack.cpp",
+        "node_block_stack.cpp",
     ] +
     # Glob handler files to avoid missing any.
     glob([
         "handle*.cpp",
     ]),
     hdrs = [
-        "file_context.h",
-        "function_context.h",
+        "check.h",
+        "context.h",
+        "declaration_name_stack.h",
+        "node_block_stack.h",
     ],
     deps = [
+        ":node_stack",
         "//common:check",
+        "//common:ostream",
         "//common:vlog",
+        "//toolchain/base:pretty_stack_trace_function",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:diagnostic_kind",
+        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_node_kind",
+        "//toolchain/parser:parse_tree",
+        "//toolchain/parser:parse_tree_node_location_translator",
+        "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:node",
         "//toolchain/sem_ir:node_kind",
-        "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
 )
 
 file_test(
-    name = "lower_file_test",
-    srcs = ["lower_file_test.cpp"],
+    name = "check_file_test",
+    srcs = ["check_file_test.cpp"],
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
         "//toolchain/driver:driver_file_test_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_fuzz_test(
+    name = "check_fuzzer",
+    size = "small",
+    srcs = ["check_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/*"]),
+    deps = [
+        "//toolchain/driver",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -59,7 +87,7 @@ glob_sh_run(
     args = [
         "$(location //toolchain/driver:carbon)",
         "dump",
-        "llvm-ir",
+        "semantics-ir",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],
@@ -70,7 +98,7 @@ glob_sh_run(
         "$(location //toolchain/driver:carbon)",
         "-v",
         "dump",
-        "llvm-ir",
+        "semantics-ir",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],
