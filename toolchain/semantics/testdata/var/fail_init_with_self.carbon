@@ -53,7 +53,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x: i32 = var "x"
+// CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

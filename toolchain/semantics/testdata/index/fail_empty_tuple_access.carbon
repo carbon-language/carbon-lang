@@ -81,10 +81,10 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc13_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc13_4.2: () = call @F()
+// CHECK:STDOUT:   %.loc13_4.2: init () = call @F()
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc13_4.3: () = temporary_storage
-// CHECK:STDOUT:   %.loc13_4.4: () = temporary %.loc13_4.3, %.loc13_4.2
-// CHECK:STDOUT:   %.loc13_8: <error> = tuple_index %.loc13_4.4, <error>
+// CHECK:STDOUT:   %.loc13_4.3: ref () = temporary_storage
+// CHECK:STDOUT:   %.loc13_4.4: ref () = temporary %.loc13_4.3, %.loc13_4.2
+// CHECK:STDOUT:   %.loc13_8: ref <error> = tuple_index %.loc13_4.4, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

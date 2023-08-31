@@ -516,6 +516,18 @@ class Formatter {
       case NodeValueKind::Typed:
         FormatNodeName(node_id);
         out_ << ": ";
+        switch (GetExpressionCategory(semantics_ir_, node_id)) {
+          case ExpressionCategory::NotExpression:
+          case ExpressionCategory::Value:
+            break;
+          case ExpressionCategory::DurableReference:
+          case ExpressionCategory::EphemeralReference:
+            out_ << "ref ";
+            break;
+          case ExpressionCategory::Initializing:
+            out_ << "init ";
+            break;
+        }
         FormatType(node.type_id());
         out_ << " = ";
         break;

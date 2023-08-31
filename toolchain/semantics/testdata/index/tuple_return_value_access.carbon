@@ -115,11 +115,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_11.1: (i32,) = call @F()
+// CHECK:STDOUT:   %.loc10_11.1: init (i32,) = call @F()
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc10_11.2: (i32,) = temporary_storage
-// CHECK:STDOUT:   %.loc10_11.3: (i32,) = temporary %.loc10_11.2, %.loc10_11.1
-// CHECK:STDOUT:   %.loc10_15.1: i32 = tuple_index %.loc10_11.3, %.loc10_14
+// CHECK:STDOUT:   %.loc10_11.2: ref (i32,) = temporary_storage
+// CHECK:STDOUT:   %.loc10_11.3: ref (i32,) = temporary %.loc10_11.2, %.loc10_11.1
+// CHECK:STDOUT:   %.loc10_15.1: ref i32 = tuple_index %.loc10_11.3, %.loc10_14
 // CHECK:STDOUT:   %.loc10_15.2: i32 = bind_value %.loc10_15.1
 // CHECK:STDOUT:   return %.loc10_15.2
 // CHECK:STDOUT: }

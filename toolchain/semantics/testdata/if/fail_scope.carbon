@@ -88,7 +88,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %n: i32 = var "n"
+// CHECK:STDOUT:   %n: ref i32 = var "n"
 // CHECK:STDOUT:   %.loc9_18: i32 = int_literal 2
 // CHECK:STDOUT:   assign %n, %.loc9_18
 // CHECK:STDOUT:   %.loc9_9: i32 = bind_value %n

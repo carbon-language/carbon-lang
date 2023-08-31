@@ -139,16 +139,16 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %.loc11_21.1: i32 = call @A()
-// CHECK:STDOUT:   %.loc11_21.2: i32 = temporary_storage
-// CHECK:STDOUT:   %.loc11_21.3: i32 = temporary %.loc11_21.2, %.loc11_21.1
+// CHECK:STDOUT:   %.loc11_21.1: init i32 = call @A()
+// CHECK:STDOUT:   %.loc11_21.2: ref i32 = temporary_storage
+// CHECK:STDOUT:   %.loc11_21.3: ref i32 = temporary %.loc11_21.2, %.loc11_21.1
 // CHECK:STDOUT:   %.loc11_21.4: i32 = bind_value %.loc11_21.3
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_21.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %.loc11_30.1: i32 = call @B()
-// CHECK:STDOUT:   %.loc11_30.2: i32 = temporary_storage
-// CHECK:STDOUT:   %.loc11_30.3: i32 = temporary %.loc11_30.2, %.loc11_30.1
+// CHECK:STDOUT:   %.loc11_30.1: init i32 = call @B()
+// CHECK:STDOUT:   %.loc11_30.2: ref i32 = temporary_storage
+// CHECK:STDOUT:   %.loc11_30.3: ref i32 = temporary %.loc11_30.2, %.loc11_30.1
 // CHECK:STDOUT:   %.loc11_30.4: i32 = bind_value %.loc11_30.3
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_30.4)
 // CHECK:STDOUT:

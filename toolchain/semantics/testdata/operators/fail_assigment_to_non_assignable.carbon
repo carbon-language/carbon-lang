@@ -308,7 +308,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc13_3: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 2
 // CHECK:STDOUT:   assign %.loc13_3, %.loc13_7
-// CHECK:STDOUT:   %.loc17_4: i32 = call @F()
+// CHECK:STDOUT:   %.loc17_4: init i32 = call @F()
 // CHECK:STDOUT:   %.loc17_9: i32 = int_literal 1
 // CHECK:STDOUT:   assign %.loc17_4, %.loc17_9
 // CHECK:STDOUT:   %.loc21_4.1: i32 = int_literal 1
@@ -323,7 +323,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc21_16.2: i32 = stub_reference %.loc21_16.1
 // CHECK:STDOUT:   %.loc21_17: (i32, i32) = tuple_value (%.loc21_13.2, %.loc21_16.2)
 // CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_17
-// CHECK:STDOUT:   %n: i32 = var "n"
+// CHECK:STDOUT:   %n: ref i32 = var "n"
 // CHECK:STDOUT:   %.loc22_16: i32 = int_literal 0
 // CHECK:STDOUT:   assign %n, %.loc22_16
 // CHECK:STDOUT:   %.loc22_7.1: i32 = bind_value %n
@@ -366,7 +366,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc38_4: i32 = block_arg !if.expr.result.loc38
 // CHECK:STDOUT:   %.loc38_29: i32 = int_literal 3
 // CHECK:STDOUT:   assign %.loc38_4, %.loc38_29
-// CHECK:STDOUT:   %a: i32 = var "a"
+// CHECK:STDOUT:   %a: ref i32 = var "a"
 // CHECK:STDOUT:   %.loc45_7: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc45_7 br !if.expr.then.loc45 else br !if.expr.else.loc45
 // CHECK:STDOUT:

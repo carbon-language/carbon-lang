@@ -80,6 +80,6 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_14.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc14_14.2: () = call @Wiz()
+// CHECK:STDOUT:   %.loc14_14.2: init () = call @Wiz()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

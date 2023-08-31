@@ -63,7 +63,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a: i32 = var "a"
+// CHECK:STDOUT:   %a: ref i32 = var "a"
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 3
 // CHECK:STDOUT:   assign %a, %.loc8
 // CHECK:STDOUT:   %.loc12: f64 = real_literal 56e-1

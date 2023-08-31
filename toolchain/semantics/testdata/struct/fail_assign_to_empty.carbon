@@ -63,7 +63,7 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc10_9.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_9.2: {} = struct_value ()
-// CHECK:STDOUT:   %x: {} = var "x"
+// CHECK:STDOUT:   %x: ref {} = var "x"
 // CHECK:STDOUT:   %.loc10_19: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_17: i32 = stub_reference %.loc10_19
 // CHECK:STDOUT:   %.loc10_20.1: type = struct_type {.a: i32}

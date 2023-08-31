@@ -125,17 +125,17 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11.1: bool = call @F()
-// CHECK:STDOUT:   %.loc11_11.2: bool = temporary_storage
-// CHECK:STDOUT:   %.loc11_11.3: bool = temporary %.loc11_11.2, %.loc11_11.1
+// CHECK:STDOUT:   %.loc11_11.1: init bool = call @F()
+// CHECK:STDOUT:   %.loc11_11.2: ref bool = temporary_storage
+// CHECK:STDOUT:   %.loc11_11.3: ref bool = temporary %.loc11_11.2, %.loc11_11.1
 // CHECK:STDOUT:   %.loc11_11.4: bool = bind_value %.loc11_11.3
 // CHECK:STDOUT:   %.loc11_14.1: bool = bool_literal false
 // CHECK:STDOUT:   if %.loc11_11.4 br !and.rhs else br !and.result(%.loc11_14.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %.loc11_19.1: bool = call @G()
-// CHECK:STDOUT:   %.loc11_19.2: bool = temporary_storage
-// CHECK:STDOUT:   %.loc11_19.3: bool = temporary %.loc11_19.2, %.loc11_19.1
+// CHECK:STDOUT:   %.loc11_19.1: init bool = call @G()
+// CHECK:STDOUT:   %.loc11_19.2: ref bool = temporary_storage
+// CHECK:STDOUT:   %.loc11_19.3: ref bool = temporary %.loc11_19.2, %.loc11_19.1
 // CHECK:STDOUT:   %.loc11_19.4: bool = bind_value %.loc11_19.3
 // CHECK:STDOUT:   br !and.result(%.loc11_19.4)
 // CHECK:STDOUT:

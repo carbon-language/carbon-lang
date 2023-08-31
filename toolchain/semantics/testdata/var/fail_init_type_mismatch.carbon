@@ -57,7 +57,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x: i32 = var "x"
+// CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT:   %.loc11: f64 = real_literal 10e-1
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
