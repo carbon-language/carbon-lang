@@ -2,13 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_
-#define CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_
+#ifndef CARBON_TOOLCHAIN_LOWER_FUNCTION_CONTEXT_H_
+#define CARBON_TOOLCHAIN_LOWER_FUNCTION_CONTEXT_H_
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "toolchain/lowering/lowering_context.h"
+#include "toolchain/lower/file_context.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 
@@ -146,4 +146,4 @@ class FunctionContext {
 
 }  // namespace Carbon::Lower
 
-#endif  // CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_
+#endif  // CARBON_TOOLCHAIN_LOWER_FUNCTION_CONTEXT_H_

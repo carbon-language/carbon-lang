@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LOWERING_LOWERING_CONTEXT_H_
-#define CARBON_TOOLCHAIN_LOWERING_LOWERING_CONTEXT_H_
+#ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
+#define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
@@ -96,4 +96,4 @@ class FileContext {
 
 }  // namespace Carbon::Lower
 
-#endif  // CARBON_TOOLCHAIN_LOWERING_LOWERING_CONTEXT_H_
+#endif  // CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_

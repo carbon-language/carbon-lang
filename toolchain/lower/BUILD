@@ -9,11 +9,11 @@ load("//testing/file_test:rules.bzl", "file_test")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "lower_to_llvm",
-    srcs = ["lower_to_llvm.cpp"],
-    hdrs = ["lower_to_llvm.h"],
+    name = "lower",
+    srcs = ["lower.cpp"],
+    hdrs = ["lower.h"],
     deps = [
-        ":lowering_context",
+        ":context",
         "//toolchain/semantics:semantics_ir",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
@@ -21,18 +21,18 @@ cc_library(
 )
 
 cc_library(
-    name = "lowering_context",
+    name = "context",
     srcs = [
-        "lowering_context.cpp",
-        "lowering_function_context.cpp",
+        "file_context.cpp",
+        "function_context.cpp",
     ] +
     # Glob handler files to avoid missing any.
     glob([
-        "lowering_handle*.cpp",
+        "handle*.cpp",
     ]),
     hdrs = [
-        "lowering_context.h",
-        "lowering_function_context.h",
+        "file_context.h",
+        "function_context.h",
     ],
     deps = [
         "//common:check",
@@ -46,8 +46,8 @@ cc_library(
 )
 
 file_test(
-    name = "lowering_file_test",
-    srcs = ["lowering_file_test.cpp"],
+    name = "lower_file_test",
+    srcs = ["lower_file_test.cpp"],
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
         "//toolchain/driver:driver_file_test_base",
