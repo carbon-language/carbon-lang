@@ -17,7 +17,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lex/character_set.h"
-#include "toolchain/lex/lex_helpers.h"
+#include "toolchain/lex/helpers.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
 

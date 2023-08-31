@@ -9,7 +9,7 @@
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 #include "toolchain/lex/character_set.h"
-#include "toolchain/lex/lex_helpers.h"
+#include "toolchain/lex/helpers.h"
 
 namespace Carbon::Lex {
 

@@ -10,7 +10,7 @@
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "toolchain/lex/character_set.h"
-#include "toolchain/lex/lex_helpers.h"
+#include "toolchain/lex/helpers.h"
 
 namespace Carbon::Lex {
 
