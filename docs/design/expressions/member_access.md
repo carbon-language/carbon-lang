@@ -351,7 +351,29 @@ fn G[template T:! type](x: TemplateWrapper(T)) -> T {
 }
 ```
 
-In addition, the lookup will be performed again when `T` is known.
+In addition, the lookup will be performed again when `T` is known. This allows
+cases where the lookup only succeeds for specific values of `T`:
+
+```carbon
+class HasField {
+  var field: i32;
+}
+class DerivingWrapper(template T:! type) {
+  extend base: T;
+}
+fn H[template T:! type](x: DerivingWrapper(T)) -> i32 {
+  // ✅ Allowed, but no name `field` found in template
+  // definition of `DerivingWrapper`.
+  return x.field;
+}
+fn CallH(a: DerivingWrapper(HasField),
+         b: DerivingWrapper(i32)) {
+  // ✅ Member `field` in base class found in instantiation.
+  var x: i32 = H(a);
+  // ❌ Error, no member `field` in type of `b`.
+  var y: i32 = H(b);
+}
+```
 
 **Note:** All lookups are done from a context where the values of any symbolic
 bindings that are in scope are unknown. Unlike for a template binding, the
