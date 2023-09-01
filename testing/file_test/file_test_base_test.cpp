@@ -7,33 +7,40 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "common/ostream.h"
 #include "llvm/ADT/StringExtras.h"
 
 namespace Carbon::Testing {
 namespace {
 
-using ::testing::AllOf;
-using ::testing::ElementsAre;
 using ::testing::Eq;
-using ::testing::Field;
-using ::testing::Matcher;
+
+// Helper to validate file content.
+static auto CheckFileContent(llvm::vfs::InMemoryFileSystem& fs,
+                             llvm::StringRef filename,
+                             llvm::StringRef expected_content)
+    -> ErrorOr<Success> {
+  auto file = fs.getBufferForFile(filename, /*FileSize=*/-1,
+                                  /*RequiresNullTerminator=*/false);
+  if (file.getError()) {
+    return ErrorBuilder() << "Missing " << filename;
+  }
+  if (file->get()->getBuffer() != expected_content) {
+    return ErrorBuilder() << "Unexpected file content for " << filename
+                          << ".\n--- Actual:\n"
+                          << file->get()->getBuffer() << "\n--- Expected:\n"
+                          << expected_content << "\n---";
+  }
+  return Success();
+}
 
 class FileTestBaseTest : public FileTestBase {
  public:
   using FileTestBase::FileTestBase;
 
-  static auto HasFilename(std::string filename) -> Matcher<TestFile> {
-    return Field("filename", &TestFile::filename, Eq(filename));
-  }
-
-  static auto HasContent(std::string content) -> Matcher<TestFile> {
-    return Field("content", &TestFile::content, Eq(content));
-  }
-
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-           const llvm::SmallVector<TestFile>& test_files,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
-      -> ErrorOr<bool> override {
+           llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> override {
     if (!test_args.empty()) {
       llvm::ListSeparator sep;
       stdout << test_args.size() << " args: ";
@@ -43,7 +50,20 @@ class FileTestBaseTest : public FileTestBase {
       stdout << "\n";
     }
 
-    auto filename = path().filename();
+    auto filename = path().filename().string();
+    if (filename == "two_files.carbon") {
+      // Verify the split.
+      CARBON_RETURN_IF_ERROR(CheckFileContent(
+          fs, "a.carbon", "aaa\n// CHECK:STDOUT: a.carbon:[[@LINE-1]]: 1\n\n"));
+      CARBON_RETURN_IF_ERROR(CheckFileContent(
+          fs, "b.carbon", "bbb\n// CHECK:STDOUT: b.carbon:[[@LINE-1]]: 2\n"));
+    } else {
+      // Other files should be copied directly, so aren't as interesting.
+      if (!fs.exists(filename)) {
+        return ErrorBuilder() << "Missing file: " << filename;
+      }
+    }
+
     if (filename == "args.carbon") {
       return true;
     } else if (filename == "example.carbon") {
@@ -59,32 +79,11 @@ class FileTestBaseTest : public FileTestBase {
       stderr << "Oops\n";
       return false;
     } else if (filename == "two_files.carbon") {
-      int i = 0;
-      for (const auto& file : test_files) {
-        // Prints line numbers to validate per-file.
-        stdout << file.filename << ":2: " << ++i << "\n";
-      }
+      // Prints line numbers to validate per-file.
+      stdout << "a.carbon:1: 1\nb.carbon:1: 2\n";
       return true;
     } else {
       return ErrorBuilder() << "Unexpected file: " << filename;
-    }
-  }
-
-  auto ValidateRun(const llvm::SmallVector<TestFile>& test_files)
-      -> void override {
-    auto filename = path().filename();
-    if (filename == "two_files.carbon") {
-      EXPECT_THAT(
-          test_files,
-          ElementsAre(
-              AllOf(HasFilename("a.carbon"),
-                    HasContent(
-                        "// CHECK:STDOUT: a.carbon:[[@LINE+1]]: 1\naaa\n\n")),
-              AllOf(HasFilename("b.carbon"),
-                    HasContent(
-                        "// CHECK:STDOUT: b.carbon:[[@LINE+1]]: 2\nbbb\n"))));
-    } else {
-      EXPECT_THAT(test_files, ElementsAre(HasFilename(filename)));
     }
   }
 

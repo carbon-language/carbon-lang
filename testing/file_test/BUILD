@@ -47,6 +47,7 @@ file_test(
     tests = glob(["testdata/**"]),
     deps = [
         ":file_test_base",
+        "//common:ostream",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
