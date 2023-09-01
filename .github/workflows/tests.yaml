@@ -180,7 +180,8 @@ jobs:
       # Build and run all targets on branch pushes to ensure we always have a
       # clean tree. We don't expect this to be an interactive path.
       - name: Test (${{ matrix.build_mode }})
-        if: steps.filter.outputs.ignore == 'false' && github.event_name == 'push'
+        if:
+          steps.filter.outputs.ignore == 'false' && github.event_name == 'push'
         env:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
@@ -221,7 +222,8 @@ jobs:
 
       # Build and run tests impacted by the PR or merge.
       - name: Test (${{ matrix.build_mode }})
-        if: steps.filter.outputs.ignore == 'false' && github.event_name != 'push'
+        if:
+          steps.filter.outputs.ignore == 'false' && github.event_name != 'push'
         env:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
