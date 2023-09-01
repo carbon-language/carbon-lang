@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/tokenized_buffer.h"
 
 #include <algorithm>
 #include <array>
@@ -16,10 +16,10 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
-#include "toolchain/lexer/character_set.h"
-#include "toolchain/lexer/lex_helpers.h"
-#include "toolchain/lexer/numeric_literal.h"
-#include "toolchain/lexer/string_literal.h"
+#include "toolchain/lex/character_set.h"
+#include "toolchain/lex/helpers.h"
+#include "toolchain/lex/numeric_literal.h"
+#include "toolchain/lex/string_literal.h"
 
 #if __x86_64__
 #include <x86intrin.h>
@@ -456,7 +456,7 @@ class TokenizedBuffer::Lexer {
       return llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
   .StartsWith(Spelling, TokenKind::Name)
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
           .Default(TokenKind::Error);
     };
 
@@ -650,7 +650,7 @@ class TokenizedBuffer::Lexer {
     // Check if the text matches a keyword token, and if so use that.
     TokenKind kind = llvm::StringSwitch<TokenKind>(identifier_text)
 #define CARBON_KEYWORD_TOKEN(Name, Spelling) .Case(Spelling, TokenKind::Name)
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
                          .Default(TokenKind::Error);
     if (kind != TokenKind::Error) {
       return buffer_->AddToken({.kind = kind,
@@ -680,7 +680,7 @@ class TokenizedBuffer::Lexer {
       }
       return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) .StartsWith(Spelling, false)
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
           .Default(true);
     });
     if (error_text.empty()) {
@@ -727,7 +727,7 @@ class TokenizedBuffer::Lexer {
     };
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
   table[(Spelling)[0]] = dispatch_lex_symbol;
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
 
     // Now special cased single-character symbols that are guaranteed to not
     // join with another symbol. These are grouping symbols, terminators,
@@ -739,7 +739,7 @@ class TokenizedBuffer::Lexer {
   table[(Spelling)[0]] = +[](Lexer& lexer, llvm::StringRef& source_text) { \
     return lexer.LexSymbolToken(source_text, TokenKind::TokenName);        \
   };
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
 
     auto dispatch_lex_word = +[](Lexer& lexer, llvm::StringRef& source_text) {
       return lexer.LexKeywordOrIdentifier(source_text);

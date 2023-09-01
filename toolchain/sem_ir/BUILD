@@ -58,7 +58,7 @@ cc_library(
     srcs = ["formatter.cpp"],
     hdrs = ["formatter.h"],
     deps = [
-        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:node_kind",

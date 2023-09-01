@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/tokenized_buffer.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -15,7 +15,7 @@
 #include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
-#include "toolchain/lexer/tokenized_buffer_test_helpers.h"
+#include "toolchain/lex/tokenized_buffer_test_helpers.h"
 
 namespace Carbon::Testing {
 namespace {

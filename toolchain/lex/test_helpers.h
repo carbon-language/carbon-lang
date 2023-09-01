@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LEXER_TEST_HELPERS_H_
-#define CARBON_TOOLCHAIN_LEXER_TEST_HELPERS_H_
+#ifndef CARBON_TOOLCHAIN_LEX_TEST_HELPERS_H_
+#define CARBON_TOOLCHAIN_LEX_TEST_HELPERS_H_
 
 #include <gmock/gmock.h>
 
@@ -50,4 +50,4 @@ class SingleTokenDiagnosticTranslator
 
 }  // namespace Carbon::Testing
 
-#endif  // CARBON_TOOLCHAIN_LEXER_TEST_HELPERS_H_
+#endif  // CARBON_TOOLCHAIN_LEX_TEST_HELPERS_H_

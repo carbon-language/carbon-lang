@@ -9,7 +9,7 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/node_kind.h"
 

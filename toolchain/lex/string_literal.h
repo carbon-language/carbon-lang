@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LEXER_STRING_LITERAL_H_
-#define CARBON_TOOLCHAIN_LEXER_STRING_LITERAL_H_
+#ifndef CARBON_TOOLCHAIN_LEX_STRING_LITERAL_H_
+#define CARBON_TOOLCHAIN_LEX_STRING_LITERAL_H_
 
 #include <optional>
 #include <string>
@@ -71,4 +71,4 @@ class StringLiteral {
 
 }  // namespace Carbon::Lex
 
-#endif  // CARBON_TOOLCHAIN_LEXER_STRING_LITERAL_H_
+#endif  // CARBON_TOOLCHAIN_LEX_STRING_LITERAL_H_

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lexer/token_kind.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/token_kind.h"
+#include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/state.h"

@@ -9,8 +9,8 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
-#include "toolchain/lexer/token_kind.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/token_kind.h"
+#include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
 
