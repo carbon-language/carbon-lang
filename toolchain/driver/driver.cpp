@@ -448,18 +448,25 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
 
   has_errors |= semantics_ir.has_errors();
   CARBON_VLOG() << "*** SemIR::File::MakeFromParseTree done ***\n";
+
+  CARBON_VLOG() << "*** raw semantics_ir ***\n" << semantics_ir << "\n";
   if (options.dump_raw_semantics_ir) {
     semantics_ir.Print(output_stream_, options.builtin_semantics_ir);
     if (options.dump_semantics_ir) {
       output_stream_ << "\n";
     }
   }
+
+  if (vlog_stream_) {
+    CARBON_VLOG() << "*** semantics_ir ***\n";
+    SemIR::FormatFile(tokenized_source, parse_tree, semantics_ir,
+                      *vlog_stream_);
+  }
   if (options.dump_semantics_ir) {
-    consumer->Flush();
     SemIR::FormatFile(tokenized_source, parse_tree, semantics_ir,
                       output_stream_);
   }
-  CARBON_VLOG() << "semantics_ir: " << semantics_ir;
+
   if (options.phase == Phase::Check) {
     return !has_errors;
   }

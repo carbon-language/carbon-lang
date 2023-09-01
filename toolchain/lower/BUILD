@@ -58,8 +58,9 @@ file_test(
 glob_sh_run(
     args = [
         "$(location //toolchain/driver:carbon)",
-        "dump",
-        "llvm-ir",
+        "compile",
+        "--phase=lower",
+        "--dump-llvm-ir",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],
@@ -69,8 +70,8 @@ glob_sh_run(
     args = [
         "$(location //toolchain/driver:carbon)",
         "-v",
-        "dump",
-        "llvm-ir",
+        "compile",
+        "--phase=lower",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],

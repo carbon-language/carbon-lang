@@ -262,9 +262,22 @@ file_test(
 glob_sh_run(
     args = [
         "$(location //toolchain/driver:carbon)",
-        "dump",
-        "tokens",
+        "compile",
+        "--phase=lex",
+        "--dump-tokens",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],
+)
+
+glob_sh_run(
+    args = [
+        "$(location //toolchain/driver:carbon)",
+        "-v",
+        "compile",
+        "--phase=lex",
+    ],
+    data = ["//toolchain/driver:carbon"],
+    file_exts = ["carbon"],
+    run_ext = "verbose",
 )
