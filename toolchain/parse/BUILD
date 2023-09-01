@@ -132,8 +132,9 @@ file_test(
 glob_sh_run(
     args = [
         "$(location //toolchain/driver:carbon)",
-        "dump",
-        "parse-tree",
+        "compile",
+        "--phase=parse",
+        "--dump-parse-tree",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],
@@ -143,8 +144,8 @@ glob_sh_run(
     args = [
         "$(location //toolchain/driver:carbon)",
         "-v",
-        "dump",
-        "parse-tree",
+        "compile",
+        "--phase=parse",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],

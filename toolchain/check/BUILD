@@ -86,8 +86,10 @@ cc_fuzz_test(
 glob_sh_run(
     args = [
         "$(location //toolchain/driver:carbon)",
-        "dump",
-        "semantics-ir",
+        "compile",
+        "--phase=check",
+        "--dump-semantics-ir",
+        "--dump-raw-semantics-ir",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],
@@ -97,8 +99,8 @@ glob_sh_run(
     args = [
         "$(location //toolchain/driver:carbon)",
         "-v",
-        "dump",
-        "semantics-ir",
+        "compile",
+        "--phase=check",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],
