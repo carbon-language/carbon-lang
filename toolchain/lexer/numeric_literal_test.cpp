@@ -7,18 +7,14 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <iterator>
-#include <memory>
-#include <vector>
-
 #include "common/check.h"
-#include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/test_helpers.h"
 
 namespace Carbon::Testing {
 namespace {
 
+using Lex::NumericLiteral;
 using ::testing::_;
 using ::testing::Field;
 using ::testing::Matcher;
@@ -30,14 +26,14 @@ class NumericLiteralTest : public ::testing::Test {
  protected:
   NumericLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
 
-  auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
-    std::optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
+  auto Lex(llvm::StringRef text) -> NumericLiteral {
+    std::optional<NumericLiteral> result = NumericLiteral::Lex(text);
     CARBON_CHECK(result);
     EXPECT_EQ(result->text(), text);
     return *result;
   }
 
-  auto Parse(llvm::StringRef text) -> LexedNumericLiteral::Value {
+  auto Parse(llvm::StringRef text) -> NumericLiteral::Value {
     Testing::SingleTokenDiagnosticTranslator translator(text);
     DiagnosticEmitter<const char*> emitter(translator, error_tracker);
     return Lex(text).ComputeValue(emitter);
@@ -59,9 +55,9 @@ auto IsUnsignedInteger(uint64_t value) -> Matcher<llvm::APInt> {
 // Matcher for an integer literal value.
 template <typename ValueMatcher>
 auto HasIntValue(const ValueMatcher& value_matcher)
-    -> Matcher<LexedNumericLiteral::Value> {
-  return VariantWith<LexedNumericLiteral::IntegerValue>(
-      Field(&LexedNumericLiteral::IntegerValue::value, value_matcher));
+    -> Matcher<NumericLiteral::Value> {
+  return VariantWith<NumericLiteral::IntegerValue>(
+      Field(&NumericLiteral::IntegerValue::value, value_matcher));
 }
 
 struct RealMatcher {
@@ -72,16 +68,16 @@ struct RealMatcher {
 
 // Matcher for a real literal value.
 auto HasRealValue(const RealMatcher& real_matcher)
-    -> Matcher<LexedNumericLiteral::Value> {
-  return VariantWith<LexedNumericLiteral::RealValue>(AllOf(
-      Field(&LexedNumericLiteral::RealValue::radix, real_matcher.radix),
-      Field(&LexedNumericLiteral::RealValue::mantissa, real_matcher.mantissa),
-      Field(&LexedNumericLiteral::RealValue::exponent, real_matcher.exponent)));
+    -> Matcher<NumericLiteral::Value> {
+  return VariantWith<NumericLiteral::RealValue>(AllOf(
+      Field(&NumericLiteral::RealValue::radix, real_matcher.radix),
+      Field(&NumericLiteral::RealValue::mantissa, real_matcher.mantissa),
+      Field(&NumericLiteral::RealValue::exponent, real_matcher.exponent)));
 }
 
 // Matcher for an unrecoverable parse error.
-auto HasUnrecoverableError() -> Matcher<LexedNumericLiteral::Value> {
-  return VariantWith<LexedNumericLiteral::UnrecoverableError>(_);
+auto HasUnrecoverableError() -> Matcher<NumericLiteral::Value> {
+  return VariantWith<NumericLiteral::UnrecoverableError>(_);
 }
 
 TEST_F(NumericLiteralTest, HandlesIntegerLiteral) {

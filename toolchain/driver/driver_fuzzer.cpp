@@ -2,9 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <cstdint>
 #include <cstring>
-#include <numeric>
 #include <string>
 
 #include "llvm/ADT/SmallVector.h"

@@ -41,7 +41,7 @@ enum class DiagnosticLevel : int8_t {
 // See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
 #define CARBON_DIAGNOSTIC(DiagnosticName, Level, Format, ...) \
   static constexpr auto DiagnosticName =                      \
-      Internal::DiagnosticBase<__VA_ARGS__>(                  \
+      ::Carbon::Internal::DiagnosticBase<__VA_ARGS__>(        \
           ::Carbon::DiagnosticKind::DiagnosticName,           \
           ::Carbon::DiagnosticLevel::Level, Format)
 

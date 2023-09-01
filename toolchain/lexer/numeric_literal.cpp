@@ -8,32 +8,34 @@
 
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/character_set.h"
 #include "toolchain/lexer/lex_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 // Adapts Radix for use with formatv.
-static auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
+// NOTE: clangd may see this as unused, but it will be invoked by diagnostics.
+// We don't do anything to disable the warning because clang compile invocations
+// should warn if it's actually unused.
+static auto operator<<(llvm::raw_ostream& out, NumericLiteral::Radix radix)
     -> llvm::raw_ostream& {
   switch (radix) {
-    case LexedNumericLiteral::Radix::Binary:
+    case NumericLiteral::Radix::Binary:
       out << "binary";
       break;
-    case LexedNumericLiteral::Radix::Decimal:
+    case NumericLiteral::Radix::Decimal:
       out << "decimal";
       break;
-    case LexedNumericLiteral::Radix::Hexadecimal:
+    case NumericLiteral::Radix::Hexadecimal:
       out << "hexadecimal";
       break;
   }
   return out;
 }
 
-auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
-    -> std::optional<LexedNumericLiteral> {
-  LexedNumericLiteral result;
+auto NumericLiteral::Lex(llvm::StringRef source_text)
+    -> std::optional<NumericLiteral> {
+  NumericLiteral result;
 
   if (source_text.empty() || !IsDecimalDigit(source_text.front())) {
     return std::nullopt;
@@ -101,9 +103,9 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
 //
 // Responsible for checking that a numeric literal is valid and meaningful and
 // either diagnosing or extracting its meaning.
-class LexedNumericLiteral::Parser {
+class NumericLiteral::Parser {
  public:
-  Parser(DiagnosticEmitter<const char*>& emitter, LexedNumericLiteral literal);
+  Parser(DiagnosticEmitter<const char*>& emitter, NumericLiteral literal);
 
   auto IsInteger() -> bool {
     return literal_.radix_point_ == static_cast<int>(literal_.text_.size());
@@ -142,7 +144,7 @@ class LexedNumericLiteral::Parser {
   auto CheckExponentPart() -> bool;
 
   DiagnosticEmitter<const char*>& emitter_;
-  LexedNumericLiteral literal_;
+  NumericLiteral literal_;
 
   // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
   // or '0x', respectively.
@@ -164,8 +166,8 @@ class LexedNumericLiteral::Parser {
   bool exponent_is_negative_ = false;
 };
 
-LexedNumericLiteral::Parser::Parser(DiagnosticEmitter<const char*>& emitter,
-                                    LexedNumericLiteral literal)
+NumericLiteral::Parser::Parser(DiagnosticEmitter<const char*>& emitter,
+                               NumericLiteral literal)
     : emitter_(emitter), literal_(literal) {
   int_part_ = literal.text_.substr(0, literal.radix_point_);
   if (int_part_.consume_front("0x")) {
@@ -185,7 +187,7 @@ LexedNumericLiteral::Parser::Parser(DiagnosticEmitter<const char*>& emitter,
 
 // Check that the numeric literal token is syntactically valid and meaningful,
 // and diagnose if not.
-auto LexedNumericLiteral::Parser::Check() -> bool {
+auto NumericLiteral::Parser::Check() -> bool {
   return CheckLeadingZero() && CheckIntPart() && CheckFractionalPart() &&
          CheckExponentPart();
 }
@@ -198,9 +200,8 @@ auto LexedNumericLiteral::Parser::Check() -> bool {
 // parsing 123.456e7, we want to decompose it into an integer mantissa
 // (123456) and an exponent (7 - 3 = 4), and this routine is given the
 // "123.456" to parse as the mantissa.
-static auto ParseInteger(llvm::StringRef digits,
-                         LexedNumericLiteral::Radix radix, bool needs_cleaning)
-    -> llvm::APInt {
+static auto ParseInteger(llvm::StringRef digits, NumericLiteral::Radix radix,
+                         bool needs_cleaning) -> llvm::APInt {
   llvm::SmallString<32> cleaned;
   if (needs_cleaning) {
     cleaned.reserve(digits.size());
@@ -217,13 +218,13 @@ static auto ParseInteger(llvm::StringRef digits,
   return value;
 }
 
-auto LexedNumericLiteral::Parser::GetMantissa() -> llvm::APInt {
+auto NumericLiteral::Parser::GetMantissa() -> llvm::APInt {
   const char* end = IsInteger() ? int_part_.end() : fract_part_.end();
   llvm::StringRef digits(int_part_.begin(), end - int_part_.begin());
   return ParseInteger(digits, radix_, mantissa_needs_cleaning_);
 }
 
-auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
+auto NumericLiteral::Parser::GetExponent() -> llvm::APInt {
   // Compute the effective exponent from the specified exponent, if any,
   // and the position of the radix point.
   llvm::APInt exponent(64, 0);
@@ -263,8 +264,9 @@ auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
 // Check that a digit sequence is valid: that it contains one or more digits,
 // contains only digits in the specified base, and that any digit separators
 // are present and correctly positioned.
-auto LexedNumericLiteral::Parser::CheckDigitSequence(
-    llvm::StringRef text, Radix radix, bool allow_digit_separators)
+auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
+                                                Radix radix,
+                                                bool allow_digit_separators)
     -> CheckDigitSequenceResult {
   std::bitset<256> valid_digits;
   switch (radix) {
@@ -308,7 +310,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
 
     CARBON_DIAGNOSTIC(InvalidDigit, Error,
                       "Invalid digit '{0}' in {1} numeric literal.", char,
-                      LexedNumericLiteral::Radix);
+                      NumericLiteral::Radix);
     emitter_.Emit(text.begin() + i, InvalidDigit, c, radix);
     return {.ok = false};
   }
@@ -334,7 +336,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
 
 // Given a number with digit separators, check that the digit separators are
 // correctly positioned.
-auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
+auto NumericLiteral::Parser::CheckDigitSeparatorPlacement(
     llvm::StringRef text, Radix radix, int num_digit_separators) -> void {
   CARBON_DCHECK(std::count(text.begin(), text.end(), '_') ==
                 num_digit_separators)
@@ -351,7 +353,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
         IrregularDigitSeparators, Error,
         "Digit separators in {0} number should appear every {1} characters "
         "from the right.",
-        LexedNumericLiteral::Radix, int);
+        NumericLiteral::Radix, int);
     emitter_.Emit(text.begin(), IrregularDigitSeparators, radix,
                   radix == Radix::Decimal ? 3 : 4);
   };
@@ -378,7 +380,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
 };
 
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
-auto LexedNumericLiteral::Parser::CheckLeadingZero() -> bool {
+auto NumericLiteral::Parser::CheckLeadingZero() -> bool {
   if (radix_ == Radix::Decimal && int_part_.startswith("0") &&
       int_part_ != "0") {
     CARBON_DIAGNOSTIC(UnknownBaseSpecifier, Error,
@@ -390,7 +392,7 @@ auto LexedNumericLiteral::Parser::CheckLeadingZero() -> bool {
 }
 
 // Check the integer part (before the '.', if any) is valid.
-auto LexedNumericLiteral::Parser::CheckIntPart() -> bool {
+auto NumericLiteral::Parser::CheckIntPart() -> bool {
   auto int_result = CheckDigitSequence(int_part_, radix_);
   mantissa_needs_cleaning_ |= int_result.has_digit_separators;
   return int_result.ok;
@@ -398,7 +400,7 @@ auto LexedNumericLiteral::Parser::CheckIntPart() -> bool {
 
 // Check the fractional part (after the '.' and before the exponent, if any)
 // is valid.
-auto LexedNumericLiteral::Parser::CheckFractionalPart() -> bool {
+auto NumericLiteral::Parser::CheckFractionalPart() -> bool {
   if (IsInteger()) {
     return true;
   }
@@ -420,7 +422,7 @@ auto LexedNumericLiteral::Parser::CheckFractionalPart() -> bool {
 }
 
 // Check the exponent part (if any) is valid.
-auto LexedNumericLiteral::Parser::CheckExponentPart() -> bool {
+auto NumericLiteral::Parser::CheckExponentPart() -> bool {
   if (literal_.exponent_ == static_cast<int>(literal_.text_.size())) {
     return true;
   }
@@ -440,8 +442,8 @@ auto LexedNumericLiteral::Parser::CheckExponentPart() -> bool {
 }
 
 // Parse the token and compute its value.
-auto LexedNumericLiteral::ComputeValue(
-    DiagnosticEmitter<const char*>& emitter) const -> Value {
+auto NumericLiteral::ComputeValue(DiagnosticEmitter<const char*>& emitter) const
+    -> Value {
   Parser parser(emitter, *this);
 
   if (!parser.Check()) {
@@ -459,4 +461,4 @@ auto LexedNumericLiteral::ComputeValue(
       .exponent = parser.GetExponent()};
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex

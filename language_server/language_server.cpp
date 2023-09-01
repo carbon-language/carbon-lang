@@ -7,8 +7,8 @@
 #include "clang-tools-extra/clangd/Protocol.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/parser/parse_node_kind.h"
-#include "toolchain/parser/parse_tree.h"
+#include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::LS {
@@ -75,11 +75,11 @@ auto LanguageServer::onReply(llvm::json::Value /*id*/,
   return true;
 }
 
-// Returns the text of first child of kind ParseNodeKind::Name.
-static auto getName(ParseTree& p, ParseTree::Node node)
+// Returns the text of first child of kind Parse::NodeKind::Name.
+static auto getName(Parse::Tree& p, Parse::Node node)
     -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
-    if (p.node_kind(ch) == ParseNodeKind::Name) {
+    if (p.node_kind(ch) == Parse::NodeKind::Name) {
       return p.GetNodeText(ch);
     }
   }
@@ -95,24 +95,24 @@ void LanguageServer::OnDocumentSymbol(
               llvm::MemoryBuffer::getMemBufferCopy(files_.at(file)));
 
   auto buf = SourceBuffer::CreateFromFile(vfs, file);
-  auto lexed = TokenizedBuffer::Lex(*buf, NullDiagnosticConsumer());
-  auto parsed = ParseTree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
+  auto lexed = Lex::TokenizedBuffer::Lex(*buf, NullDiagnosticConsumer());
+  auto parsed = Parse::Tree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;
   for (const auto& node : parsed.postorder()) {
     clang::clangd::SymbolKind symbol_kind;
     switch (parsed.node_kind(node)) {
-      case ParseNodeKind::FunctionDeclaration:
-      case ParseNodeKind::FunctionDefinitionStart:
+      case Parse::NodeKind::FunctionDeclaration:
+      case Parse::NodeKind::FunctionDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Function;
         break;
-      case ParseNodeKind::Namespace:
+      case Parse::NodeKind::Namespace:
         symbol_kind = clang::clangd::SymbolKind::Namespace;
         break;
-      case ParseNodeKind::InterfaceDefinitionStart:
-      case ParseNodeKind::NamedConstraintDefinitionStart:
+      case Parse::NodeKind::InterfaceDefinitionStart:
+      case Parse::NodeKind::NamedConstraintDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Interface;
         break;
-      case ParseNodeKind::ClassDefinitionStart:
+      case Parse::NodeKind::ClassDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Class;
         break;
       default:

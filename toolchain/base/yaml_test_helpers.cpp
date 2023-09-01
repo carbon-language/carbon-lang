@@ -14,7 +14,8 @@ static auto Parse(llvm::yaml::Node* node) -> Value {
     return Value{ErrorValue()};
   }
 
-  switch (node->getType()) {
+  // getType returns an unsigned int which should map to the enum.
+  switch (static_cast<llvm::yaml::Node::NodeKind>(node->getType())) {
     case llvm::yaml::Node::NK_Null:
       return Value{NullValue()};
 
@@ -53,7 +54,6 @@ static auto Parse(llvm::yaml::Node* node) -> Value {
     case llvm::yaml::Node::NK_KeyValue:
       llvm_unreachable("should only exist as child of mapping");
   }
-
   llvm_unreachable("unknown yaml node kind");
 }
 

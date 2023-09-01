@@ -11,20 +11,22 @@
 namespace Carbon::Testing {
 namespace {
 
+using Lex::NumericLiteral;
+
 static void BM_Lex_Float(benchmark::State& state) {
   for (auto _ : state) {
-    CARBON_CHECK(LexedNumericLiteral::Lex("0.000001"));
+    CARBON_CHECK(NumericLiteral::Lex("0.000001"));
   }
 }
 
 static void BM_Lex_Integer(benchmark::State& state) {
   for (auto _ : state) {
-    CARBON_CHECK(LexedNumericLiteral::Lex("1_234_567_890"));
+    CARBON_CHECK(NumericLiteral::Lex("1_234_567_890"));
   }
 }
 
 static void BM_ComputeValue_Float(benchmark::State& state) {
-  auto val = LexedNumericLiteral::Lex("0.000001");
+  auto val = NumericLiteral::Lex("0.000001");
   CARBON_CHECK(val);
   auto emitter = NullDiagnosticEmitter<const char*>();
   for (auto _ : state) {
@@ -33,7 +35,7 @@ static void BM_ComputeValue_Float(benchmark::State& state) {
 }
 
 static void BM_ComputeValue_Integer(benchmark::State& state) {
-  auto val = LexedNumericLiteral::Lex("1_234_567_890");
+  auto val = NumericLiteral::Lex("1_234_567_890");
   auto emitter = NullDiagnosticEmitter<const char*>();
   CARBON_CHECK(val);
   for (auto _ : state) {

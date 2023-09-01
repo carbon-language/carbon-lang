@@ -45,6 +45,7 @@ cc_library(
     ],
     hdrs = ["check.h"],
     deps = [
+        ":ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -122,26 +123,9 @@ cc_test(
 )
 
 cc_library(
-    name = "metaprogramming",
-    hdrs = ["metaprogramming.h"],
-)
-
-cc_test(
-    name = "metaprogramming_test",
-    srcs = ["metaprogramming_test.cpp"],
-    deps = [
-        ":metaprogramming",
-        "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
     deps = [
-        ":metaprogramming",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -173,6 +157,7 @@ cc_library(
     srcs = ["vlog_internal.h"],
     hdrs = ["vlog.h"],
     deps = [
+        ":ostream",
         "@llvm-project//llvm:Support",
     ],
 )

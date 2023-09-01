@@ -23,6 +23,7 @@
 #include "explorer/ast/value_transform.h"
 #include "explorer/base/arena.h"
 #include "explorer/base/error_builders.h"
+#include "explorer/base/print_as_id.h"
 #include "explorer/base/source_location.h"
 #include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/impl_scope.h"
@@ -1743,8 +1744,7 @@ class TypeChecker::ConstraintTypeBuilder {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
           type_checker.Substitute(local_bindings, intrinsic_constraint.type));
-      IntrinsicConstraint converted = {
-          .type = type, .kind = intrinsic_constraint.kind, .arguments = {}};
+      IntrinsicConstraint converted(type, intrinsic_constraint.kind, {});
       converted.arguments.reserve(intrinsic_constraint.arguments.size());
       for (Nonnull<const Value*> argument : intrinsic_constraint.arguments) {
         CARBON_ASSIGN_OR_RETURN(

@@ -46,7 +46,7 @@ class CloneContext;
 //
 // TODO: To support generic traversal, add children() method, and ensure that
 //   all AstNodes are reachable from a root AstNode.
-class AstNode {
+class AstNode : public Printable<AstNode> {
  public:
   AstNode(AstNode&&) = delete;
   auto operator=(AstNode&&) -> AstNode& = delete;
@@ -56,7 +56,6 @@ class AstNode {
   virtual void Print(llvm::raw_ostream& out) const = 0;
   // Print identifying information about the node, such as its name.
   virtual void PrintID(llvm::raw_ostream& out) const = 0;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Returns an enumerator specifying the concrete type of this node.
   //

@@ -23,6 +23,7 @@
 #include "explorer/ast/value.h"
 #include "explorer/base/arena.h"
 #include "explorer/base/error_builders.h"
+#include "explorer/base/print_as_id.h"
 #include "explorer/base/source_location.h"
 #include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/action.h"
@@ -181,8 +182,17 @@ class Interpreter {
                     std::optional<AllocationId> location_received)
       -> ErrorOr<Success>;
 
+  // Call the destructor method in `fun`, with any self argument bound to
+  // `receiver`.
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
-                      Nonnull<const Value*> receiver) -> ErrorOr<Success>;
+                      ExpressionResult receiver) -> ErrorOr<Success>;
+
+  // If the given method or destructor `decl` has a self argument, bind it to
+  // `receiver`.
+  void BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
+                         ExpressionResult receiver, RuntimeScope& method_scope,
+                         BindingMap& generic_args,
+                         const SourceLocation& source_location);
 
   auto phase() const -> Phase { return phase_; }
 
@@ -847,39 +857,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   }
 }
 
-auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
-                                 Nonnull<const Value*> receiver)
-    -> ErrorOr<Success> {
-  const DestructorDeclaration& method = *fun;
-  CARBON_CHECK(method.is_method());
-  RuntimeScope method_scope(&heap_);
-  BindingMap generic_args;
-
-  // TODO: move this logic into PatternMatch, and call it here.
-  const auto* p = &method.self_pattern().value();
-  const auto* placeholder = dyn_cast<BindingPlaceholderValue>(p);
-  if (!placeholder) {
-    // TODO: Fix this, probably merging logic with CallFunction.
-    // https://github.com/carbon-language/carbon-lang/issues/2802
-    return ProgramError(fun->source_loc())
-           << "destructors currently don't support `addr self` bindings";
-  }
-  if (auto& value_node = placeholder->value_node()) {
-    if (value_node->expression_category() == ExpressionCategory::Value) {
-      method_scope.BindValue(*placeholder->value_node(), receiver);
-    } else {
-      CARBON_FATAL()
-          << "TODO: [self addr: Self*] destructors not implemented yet";
-    }
-  }
-  CARBON_CHECK(method.body().has_value())
-      << "Calling a method that's missing a body";
-
-  auto act = std::make_unique<StatementAction>(*method.body(), std::nullopt);
-  return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
-                     std::move(method_scope));
-}
-
 auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
@@ -940,25 +917,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
 
       // Bind the receiver to the `self` parameter, if there is one.
       if (const auto* method_val = dyn_cast<BoundMethodValue>(func_val)) {
-        CARBON_CHECK(function.is_method());
-        const auto* self_pattern = &function.self_pattern().value();
-        if (const auto* placeholder =
-                dyn_cast<BindingPlaceholderValue>(self_pattern)) {
-          // Immutable self with `[self: Self]`
-          // TODO: move this logic into PatternMatch
-          if (placeholder->value_node().has_value()) {
-            function_scope.BindValue(*placeholder->value_node(),
-                                     method_val->receiver());
-          }
-        } else {
-          // Mutable self with `[addr self: Self*]`
-          CARBON_CHECK(isa<AddrValue>(self_pattern));
-          bool success = PatternMatch(
-              self_pattern, ExpressionResult::Value(method_val->receiver()),
-              call.source_loc(), &function_scope, generic_args, trace_stream_,
-              this->arena_);
-          CARBON_CHECK(success) << "Failed to bind addr self";
-        }
+        BindSelfIfPresent(&function,
+                          ExpressionResult::Value(method_val->receiver()),
+                          function_scope, generic_args, call.source_loc());
       }
 
       CARBON_ASSIGN_OR_RETURN(
@@ -1009,6 +970,60 @@ auto Interpreter::CallFunction(const CallExpression& call,
     default:
       return ProgramError(call.source_loc())
              << "in call, expected a function, not " << *fun;
+  }
+}
+
+auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
+                                 ExpressionResult receiver)
+    -> ErrorOr<Success> {
+  const DestructorDeclaration& method = *fun;
+  CARBON_CHECK(method.is_method());
+
+  RuntimeScope method_scope(&heap_);
+  BindingMap generic_args;
+  BindSelfIfPresent(fun, receiver, method_scope, generic_args,
+                    SourceLocation::DiagnosticsIgnored());
+
+  CARBON_CHECK(method.body().has_value())
+      << "Calling a method that's missing a body";
+
+  auto act = std::make_unique<StatementAction>(*method.body(), std::nullopt);
+  return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
+                     std::move(method_scope));
+}
+
+void Interpreter::BindSelfIfPresent(Nonnull<const CallableDeclaration*> decl,
+                                    ExpressionResult receiver,
+                                    RuntimeScope& method_scope,
+                                    BindingMap& generic_args,
+                                    const SourceLocation& source_location) {
+  CARBON_CHECK(decl->is_method());
+  const auto* self_pattern = &decl->self_pattern().value();
+  if (const auto* placeholder =
+          dyn_cast<BindingPlaceholderValue>(self_pattern)) {
+    // Immutable self with `[self: Self]`
+    if (placeholder->value_node().has_value()) {
+      bool success =
+          PatternMatch(placeholder, receiver, source_location, &method_scope,
+                       generic_args, trace_stream_, this->arena_);
+      CARBON_CHECK(success) << "Failed to bind self";
+    }
+  } else {
+    // Mutable self with `[addr self: Self*]`
+    CARBON_CHECK(isa<AddrValue>(self_pattern));
+    ExpressionResult v = receiver;
+    // See if we need to make a LocationValue from the address provided in the
+    // ExpressionResult
+    if (receiver.value()->kind() != Value::Kind::LocationValue) {
+      CARBON_CHECK(receiver.expression_category() ==
+                   ExpressionCategory::Reference);
+      CARBON_CHECK(receiver.address().has_value());
+      v = ExpressionResult::Value(
+          arena_->New<LocationValue>(receiver.address().value()));
+    }
+    bool success = PatternMatch(self_pattern, v, source_location, &method_scope,
+                                generic_args, trace_stream_, this->arena_);
+    CARBON_CHECK(success) << "Failed to bind addr self";
   }
 }
 
@@ -1708,10 +1723,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           self_binding->set_symbolic_identity(self);
           self_binding->set_value(self);
           self_binding->set_impl_binding(impl_binding);
-          IntrinsicConstraint constraint = {
-              .type = self,
-              .kind = IntrinsicConstraint::ImplicitAs,
-              .arguments = args};
+          IntrinsicConstraint constraint(self, IntrinsicConstraint::ImplicitAs,
+                                         args);
           auto* result = arena_->New<ConstraintType>(
               self_binding, std::vector<ImplsConstraint>{},
               std::vector<IntrinsicConstraint>{std::move(constraint)},
@@ -2334,7 +2347,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
 
   if (trace_stream_->is_enabled()) {
     trace_stream_->Source() << "declaration at (" << decl.source_loc() << ")\n";
-    *trace_stream_ << "```\n" << decl << "```\n";
+    *trace_stream_ << "```\n" << decl << "\n```\n";
   }
 
   switch (decl.kind()) {
@@ -2394,7 +2407,9 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         // Run the destructor, if there is one.
         if (auto destructor = class_decl.destructor()) {
-          return CallDestructor(*destructor, class_obj);
+          return CallDestructor(
+              *destructor, ExpressionResult::Reference(
+                               class_obj, destroy_act.location()->address()));
         } else {
           return todo_.RunAgain();
         }

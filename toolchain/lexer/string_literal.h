@@ -11,17 +11,16 @@
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
-class LexedStringLiteral {
+class StringLiteral {
  public:
   // Extract a string literal token from the given text, if it has a suitable
   // form. Returning std::nullopt indicates no string literal was found;
   // returning an invalid literal indicates a string prefix was found, but it's
   // malformed and is returning a partial string literal to assist error
   // construction.
-  static auto Lex(llvm::StringRef source_text)
-      -> std::optional<LexedStringLiteral>;
+  static auto Lex(llvm::StringRef source_text) -> std::optional<StringLiteral>;
 
   // Expand any escape sequences in the given string literal and compute the
   // resulting value. This handles error recovery internally and cannot fail.
@@ -38,13 +37,17 @@ class LexedStringLiteral {
   [[nodiscard]] auto is_terminated() const -> bool { return is_terminated_; }
 
  private:
-  enum MultiLineKind { NotMultiLine, MultiLine, MultiLineWithDoubleQuotes };
+  enum MultiLineKind : int8_t {
+    NotMultiLine,
+    MultiLine,
+    MultiLineWithDoubleQuotes
+  };
 
   struct Introducer;
 
-  explicit LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,
-                              int hash_level, MultiLineKind multi_line,
-                              bool is_terminated)
+  explicit StringLiteral(llvm::StringRef text, llvm::StringRef content,
+                         int hash_level, MultiLineKind multi_line,
+                         bool is_terminated)
       : text_(text),
         content_(content),
         hash_level_(hash_level),
@@ -66,6 +69,6 @@ class LexedStringLiteral {
   bool is_terminated_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex
 
 #endif  // CARBON_TOOLCHAIN_LEXER_STRING_LITERAL_H_

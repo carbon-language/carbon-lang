@@ -7,7 +7,6 @@
 
 #include <cstdint>
 #include <iterator>
-#include <optional>
 
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
@@ -22,9 +21,141 @@
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/source/source_buffer.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 class TokenizedBuffer;
+
+// A lightweight handle to a lexed token in a `TokenizedBuffer`.
+//
+// `Token` objects are designed to be passed by value, not reference or
+// pointer. They are also designed to be small and efficient to store in data
+// structures.
+//
+// `Token` objects from the same `TokenizedBuffer` can be compared with each
+// other, both for being the same token within the buffer, and to establish
+// relative position within the token stream that has been lexed out of the
+// buffer. `Token` objects from different `TokenizedBuffer`s cannot be
+// meaningfully compared.
+//
+// All other APIs to query a `Token` are on the `TokenizedBuffer`.
+struct Token : public ComparableIndexBase {
+  using ComparableIndexBase::ComparableIndexBase;
+};
+
+// A lightweight handle to a lexed line in a `TokenizedBuffer`.
+//
+// `Line` objects are designed to be passed by value, not reference or
+// pointer. They are also designed to be small and efficient to store in data
+// structures.
+//
+// Each `Line` object refers to a specific line in the source code that was
+// lexed. They can be compared directly to establish that they refer to the
+// same line or the relative position of different lines within the source.
+//
+// All other APIs to query a `Line` are on the `TokenizedBuffer`.
+struct Line : public ComparableIndexBase {
+  using ComparableIndexBase::ComparableIndexBase;
+};
+
+// A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
+//
+// `Identifier` objects are designed to be passed by value, not reference or
+// pointer. They are also designed to be small and efficient to store in data
+// structures.
+//
+// Each identifier lexed is canonicalized to a single entry in the identifier
+// table. `Identifier` objects will compare equal if they refer to the same
+// identifier spelling. Where the identifier was written is not preserved.
+//
+// All other APIs to query a `Identifier` are on the `TokenizedBuffer`.
+struct Identifier : public IndexBase {
+  using IndexBase::IndexBase;
+
+  static const Identifier Invalid;
+};
+
+constexpr Identifier Identifier::Invalid = Identifier(Identifier::InvalidIndex);
+
+// Random-access iterator over tokens within the buffer.
+class TokenIterator
+    : public llvm::iterator_facade_base<
+          TokenIterator, std::random_access_iterator_tag, const Token, int>,
+      public Printable<TokenIterator> {
+ public:
+  TokenIterator() = delete;
+
+  explicit TokenIterator(Token token) : token_(token) {}
+
+  auto operator==(const TokenIterator& rhs) const -> bool {
+    return token_ == rhs.token_;
+  }
+  auto operator<(const TokenIterator& rhs) const -> bool {
+    return token_ < rhs.token_;
+  }
+
+  auto operator*() const -> const Token& { return token_; }
+
+  using iterator_facade_base::operator-;
+  auto operator-(const TokenIterator& rhs) const -> int {
+    return token_.index - rhs.token_.index;
+  }
+
+  auto operator+=(int n) -> TokenIterator& {
+    token_.index += n;
+    return *this;
+  }
+  auto operator-=(int n) -> TokenIterator& {
+    token_.index -= n;
+    return *this;
+  }
+
+  // Prints the raw token index.
+  auto Print(llvm::raw_ostream& output) const -> void;
+
+ private:
+  friend class TokenizedBuffer;
+
+  Token token_;
+};
+
+// The value of a real literal.
+//
+// This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
+// fraction (mantissa * 10^exponent).
+//
+// `RealLiteralValue` carries a reference back to `TokenizedBuffer` which can be
+// invalidated if the buffer is edited or destroyed.
+class RealLiteralValue : public Printable<RealLiteralValue> {
+ public:
+  auto Print(llvm::raw_ostream& output_stream) const -> void {
+    output_stream << mantissa << "*" << (is_decimal ? "10" : "2") << "^"
+                  << exponent;
+  }
+
+  // The mantissa, represented as an unsigned integer.
+  const llvm::APInt& mantissa;
+
+  // The exponent, represented as a signed integer.
+  const llvm::APInt& exponent;
+
+  // If false, the value is mantissa * 2^exponent.
+  // If true, the value is mantissa * 10^exponent.
+  bool is_decimal;
+};
+
+// A diagnostic location translator that maps token locations into source
+// buffer locations.
+class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
+ public:
+  explicit TokenLocationTranslator(const TokenizedBuffer* buffer)
+      : buffer_(buffer) {}
+
+  // Map the given token into a diagnostic location.
+  auto GetLocation(Token token) -> DiagnosticLocation override;
+
+ private:
+  const TokenizedBuffer* buffer_;
+};
 
 // A buffer of tokenized Carbon source code.
 //
@@ -34,152 +165,8 @@ class TokenizedBuffer;
 //
 // Lexing errors result in a potentially incomplete sequence of tokens and
 // `HasError` returning true.
-class TokenizedBuffer {
+class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
-  // A lightweight handle to a lexed token in a `TokenizedBuffer`.
-  //
-  // `Token` objects are designed to be passed by value, not reference or
-  // pointer. They are also designed to be small and efficient to store in data
-  // structures.
-  //
-  // `Token` objects from the same `TokenizedBuffer` can be compared with each
-  // other, both for being the same token within the buffer, and to establish
-  // relative position within the token stream that has been lexed out of the
-  // buffer. `Token` objects from different `TokenizedBuffer`s cannot be
-  // meaningfully compared.
-  //
-  // All other APIs to query a `Token` are on the `TokenizedBuffer`.
-  struct Token : public ComparableIndexBase {
-    using ComparableIndexBase::ComparableIndexBase;
-  };
-
-  // A lightweight handle to a lexed line in a `TokenizedBuffer`.
-  //
-  // `Line` objects are designed to be passed by value, not reference or
-  // pointer. They are also designed to be small and efficient to store in data
-  // structures.
-  //
-  // Each `Line` object refers to a specific line in the source code that was
-  // lexed. They can be compared directly to establish that they refer to the
-  // same line or the relative position of different lines within the source.
-  //
-  // All other APIs to query a `Line` are on the `TokenizedBuffer`.
-  struct Line : public ComparableIndexBase {
-    using ComparableIndexBase::ComparableIndexBase;
-  };
-
-  // A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
-  //
-  // `Identifier` objects are designed to be passed by value, not reference or
-  // pointer. They are also designed to be small and efficient to store in data
-  // structures.
-  //
-  // Each identifier lexed is canonicalized to a single entry in the identifier
-  // table. `Identifier` objects will compare equal if they refer to the same
-  // identifier spelling. Where the identifier was written is not preserved.
-  //
-  // All other APIs to query a `Identifier` are on the `TokenizedBuffer`.
-  struct Identifier : public IndexBase {
-    using IndexBase::IndexBase;
-
-    static const Identifier Invalid;
-  };
-
-  // Random-access iterator over tokens within the buffer.
-  class TokenIterator
-      : public llvm::iterator_facade_base<
-            TokenIterator, std::random_access_iterator_tag, const Token, int> {
-   public:
-    TokenIterator() = delete;
-
-    explicit TokenIterator(Token token) : token_(token) {}
-
-    auto operator==(const TokenIterator& rhs) const -> bool {
-      return token_ == rhs.token_;
-    }
-    auto operator<(const TokenIterator& rhs) const -> bool {
-      return token_ < rhs.token_;
-    }
-
-    auto operator*() const -> const Token& { return token_; }
-
-    using iterator_facade_base::operator-;
-    auto operator-(const TokenIterator& rhs) const -> int {
-      return token_.index - rhs.token_.index;
-    }
-
-    auto operator+=(int n) -> TokenIterator& {
-      token_.index += n;
-      return *this;
-    }
-    auto operator-=(int n) -> TokenIterator& {
-      token_.index -= n;
-      return *this;
-    }
-
-    // Prints the raw token index.
-    auto Print(llvm::raw_ostream& output) const -> void;
-
-   private:
-    friend class TokenizedBuffer;
-
-    Token token_;
-  };
-
-  // The value of a real literal.
-  //
-  // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
-  // fraction (mantissa * 10^exponent).
-  //
-  // The `TokenizedBuffer` must outlive any `RealLiteralValue`s referring to
-  // its tokens.
-  class RealLiteralValue {
-   public:
-    // The mantissa, represented as an unsigned integer.
-    [[nodiscard]] auto Mantissa() const -> const llvm::APInt& {
-      return buffer_->literal_int_storage_[literal_index_];
-    }
-    // The exponent, represented as a signed integer.
-    [[nodiscard]] auto Exponent() const -> const llvm::APInt& {
-      return buffer_->literal_int_storage_[literal_index_ + 1];
-    }
-    // If false, the value is mantissa * 2^exponent.
-    // If true, the value is mantissa * 10^exponent.
-    [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal_; }
-
-    auto Print(llvm::raw_ostream& output_stream) const -> void {
-      output_stream << Mantissa() << "*" << (is_decimal_ ? "10" : "2") << "^"
-                    << Exponent();
-    }
-
-   private:
-    friend class TokenizedBuffer;
-
-    RealLiteralValue(const TokenizedBuffer* buffer, int32_t literal_index,
-                     bool is_decimal)
-        : buffer_(buffer),
-          literal_index_(literal_index),
-          is_decimal_(is_decimal) {}
-
-    const TokenizedBuffer* buffer_;
-    int32_t literal_index_;
-    bool is_decimal_;
-  };
-
-  // A diagnostic location translator that maps token locations into source
-  // buffer locations.
-  class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
-   public:
-    explicit TokenLocationTranslator(const TokenizedBuffer* buffer)
-        : buffer_(buffer) {}
-
-    // Map the given token into a diagnostic location.
-    auto GetLocation(Token token) -> DiagnosticLocation override;
-
-   private:
-    const TokenizedBuffer* buffer_;
-  };
-
   // Lexes a buffer of source code into a tokenized buffer.
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`
@@ -288,6 +275,8 @@ class TokenizedBuffer {
   // Implementation detail struct implementing the actual lexer logic.
   class Lexer;
   friend Lexer;
+
+  friend class TokenLocationTranslator;
 
   // A diagnostic location translator that maps token locations into source
   // buffer locations.
@@ -412,16 +401,13 @@ class TokenizedBuffer {
   bool has_errors_ = false;
 };
 
-constexpr TokenizedBuffer::Identifier TokenizedBuffer::Identifier::Invalid =
-    TokenizedBuffer::Identifier(TokenizedBuffer::Identifier::InvalidIndex);
-
 // A diagnostic emitter that uses positions within a source buffer's text as
 // its source of location information.
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
 // A diagnostic emitter that uses tokens as its source of location information.
-using TokenDiagnosticEmitter = DiagnosticEmitter<TokenizedBuffer::Token>;
+using TokenDiagnosticEmitter = DiagnosticEmitter<Token>;
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex
 
 #endif  // CARBON_TOOLCHAIN_LEXER_TOKENIZED_BUFFER_H_

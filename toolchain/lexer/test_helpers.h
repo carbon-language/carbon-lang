@@ -8,12 +8,9 @@
 #include <gmock/gmock.h>
 
 #include <array>
-#include <string>
 
 #include "common/check.h"
 #include "common/string_helpers.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Testing {

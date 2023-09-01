@@ -9,18 +9,17 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/lexer/character_set.h"
 #include "toolchain/lexer/lex_helpers.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
 static constexpr char MultiLineIndicator[] = R"(''')";
 static constexpr char DoubleQuotedMultiLineIndicator[] = R"(""")";
 
-struct LexedStringLiteral::Introducer {
+struct StringLiteral::Introducer {
   // The kind of string being introduced.
   MultiLineKind kind;
   // The terminator for the string, without any '#' suffixes.
@@ -37,7 +36,7 @@ struct LexedStringLiteral::Introducer {
 //
 // We lex multi-line literals when spelled with either ''' or """ for error
 // recovery purposes, and reject """ literals after lexing.
-auto LexedStringLiteral::Introducer::Lex(llvm::StringRef source_text)
+auto StringLiteral::Introducer::Lex(llvm::StringRef source_text)
     -> std::optional<Introducer> {
   MultiLineKind kind = NotMultiLine;
   llvm::StringRef indicator;
@@ -87,8 +86,8 @@ struct alignas(8) CharSet {
 };
 }  // namespace
 
-auto LexedStringLiteral::Lex(llvm::StringRef source_text)
-    -> std::optional<LexedStringLiteral> {
+auto StringLiteral::Lex(llvm::StringRef source_text)
+    -> std::optional<StringLiteral> {
   int64_t cursor = 0;
   const int64_t source_text_size = source_text.size();
 
@@ -138,18 +137,18 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
           if (cursor >= source_text_size || (introducer->kind == NotMultiLine &&
                                              source_text[cursor] == '\n')) {
             llvm::StringRef text = source_text.take_front(cursor);
-            return LexedStringLiteral(text, text.drop_front(prefix_len),
-                                      hash_level, introducer->kind,
-                                      /*is_terminated=*/false);
+            return StringLiteral(text, text.drop_front(prefix_len), hash_level,
+                                 introducer->kind,
+                                 /*is_terminated=*/false);
           }
         }
         break;
       case '\n':
         if (introducer->kind == NotMultiLine) {
           llvm::StringRef text = source_text.take_front(cursor);
-          return LexedStringLiteral(text, text.drop_front(prefix_len),
-                                    hash_level, introducer->kind,
-                                    /*is_terminated=*/false);
+          return StringLiteral(text, text.drop_front(prefix_len), hash_level,
+                               introducer->kind,
+                               /*is_terminated=*/false);
         }
         break;
       case '"':
@@ -159,16 +158,19 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
               source_text.substr(0, cursor + terminator.size());
           llvm::StringRef content =
               source_text.substr(prefix_len, cursor - prefix_len);
-          return LexedStringLiteral(text, content, hash_level, introducer->kind,
-                                    /*is_terminated=*/true);
+          return StringLiteral(text, content, hash_level, introducer->kind,
+                               /*is_terminated=*/true);
         }
+        break;
+      default:
+        // No action for non-terminators.
         break;
     }
   }
   // No terminator was found.
-  return LexedStringLiteral(source_text, source_text.drop_front(prefix_len),
-                            hash_level, introducer->kind,
-                            /*is_terminated=*/false);
+  return StringLiteral(source_text, source_text.drop_front(prefix_len),
+                       hash_level, introducer->kind,
+                       /*is_terminated=*/false);
 }
 
 // Given a string that contains at least one newline, find the indent (the
@@ -436,7 +438,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
   }
 }
 
-auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
+auto StringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> std::string {
   if (!is_terminated_) {
     return "";
@@ -453,4 +455,4 @@ auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
                                               indent);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex

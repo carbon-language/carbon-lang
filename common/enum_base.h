@@ -51,8 +51,8 @@ namespace Carbon::Internal {
 //   #include ".../my_kind.def"
 //   };
 //   ```
-template <typename DerivedT, typename EnumT>
-class EnumBase {
+template <typename DerivedT, typename EnumT, const llvm::StringLiteral Names[]>
+class EnumBase : public Printable<DerivedT> {
  public:
   // An alias for the raw enum type. This is an implementation detail and
   // should rarely be used directly, only when an actual enum type is needed.
@@ -78,12 +78,10 @@ class EnumBase {
   // This method will be automatically defined using the static `names` string
   // table in the base class, which is in turn will be populated for each
   // derived type using the macro helpers in this file.
-  [[nodiscard]] auto name() const -> llvm::StringRef;
+  [[nodiscard]] auto name() const -> llvm::StringRef { return Names[AsInt()]; }
 
   // Prints this value using its name.
-  void Print(llvm::raw_ostream& out) const {
-    out << static_cast<const EnumType*>(this)->name();
-  }
+  auto Print(llvm::raw_ostream& out) const -> void { out << name(); }
 
  protected:
   // The default constructor is explicitly defaulted (and constexpr) as a
@@ -112,22 +110,27 @@ class EnumBase {
   }
 
  private:
-  static llvm::StringLiteral names[];
-
   RawEnumType value_;
 };
 
 }  // namespace Carbon::Internal
+
+// For use when multiple enums use the same list of names.
+#define CARBON_DEFINE_RAW_ENUM_CLASS_NO_NAMES(EnumClassName, UnderlyingType) \
+  namespace Internal {                                                       \
+  /* NOLINTNEXTLINE(bugprone-macro-parentheses) */                           \
+  enum class EnumClassName##RawEnum : UnderlyingType;                        \
+  }                                                                          \
+  enum class Internal::EnumClassName##RawEnum : UnderlyingType
 
 // Use this before defining a class that derives from `EnumBase` to begin the
 // definition of the raw `enum class`. It should be followed by the body of that
 // raw enum class.
 #define CARBON_DEFINE_RAW_ENUM_CLASS(EnumClassName, UnderlyingType) \
   namespace Internal {                                              \
-  /* NOLINTNEXTLINE(bugprone-macro-parentheses) */                  \
-  enum class EnumClassName##RawEnum : UnderlyingType;               \
+  extern const llvm::StringLiteral EnumClassName##Names[];          \
   }                                                                 \
-  enum class ::Carbon::Internal::EnumClassName##RawEnum : UnderlyingType
+  CARBON_DEFINE_RAW_ENUM_CLASS_NO_NAMES(EnumClassName, UnderlyingType)
 
 // In CARBON_DEFINE_RAW_ENUM_CLASS block, use this to generate each enumerator.
 #define CARBON_RAW_ENUM_ENUMERATOR(Name) Name,
@@ -136,12 +139,14 @@ class EnumBase {
 // class. It both computes the name of the raw enum and ensures all the
 // namespaces are correct.
 #define CARBON_ENUM_BASE(EnumClassName) \
-  CARBON_ENUM_BASE_CRTP(EnumClassName, EnumClassName)
+  CARBON_ENUM_BASE_CRTP(EnumClassName, EnumClassName, EnumClassName)
 // This variant handles the case where the external name for the Carbon enum is
 // not the same as the name by which we refer to it from this context.
-#define CARBON_ENUM_BASE_CRTP(EnumClassName, LocalTypeNameForEnumClass) \
+#define CARBON_ENUM_BASE_CRTP(EnumClassName, LocalTypeNameForEnumClass, \
+                              EnumClassNameForNames)                    \
   ::Carbon::Internal::EnumBase<LocalTypeNameForEnumClass,               \
-                               ::Carbon::Internal::EnumClassName##RawEnum>
+                               Internal::EnumClassName##RawEnum,        \
+                               Internal::EnumClassNameForNames##Names>
 
 // Use this within the Carbon enum class body to generate named constant
 // declarations for each value.
@@ -163,43 +168,14 @@ class EnumBase {
   static constexpr const typename Base::EnumType& Name = \
       Base::Create(Base::RawEnumType::Name);
 
-// Use this to define a custom `name()` function for an enum-like class. Usage:
-//
-//   CARBON_ENUM_NAME_FUNCTION(MyEnum) {
-//     // Return a StringRef based on the value of *this.
-//   }
-//
-// You should usually use CARBON_DEFINE_ENUM_CLASS_NAMES instead.
-#define CARBON_ENUM_NAME_FUNCTION(EnumClassName)                              \
-  template <>                                                                 \
-  auto                                                                        \
-  Internal::EnumBase<EnumClassName, Internal::EnumClassName##RawEnum>::name() \
-      const->llvm::StringRef
-
 // Use this in the `.cpp` file for an enum class to start the definition of the
 // constant names array for each enumerator. It is followed by the desired
 // constant initializer.
 //
 // `clang-format` has a bug with spacing around `->` returns in macros. See
 // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_DEFINE_ENUM_CLASS_NAMES(EnumClassName)                         \
-  /* First declare an explicit specialization of the names array so we can    \
-   * reference it from an explicit function specialization. */                \
-  template <>                                                                 \
-  llvm::StringLiteral Internal::EnumBase<                                     \
-      EnumClassName, Internal::EnumClassName##RawEnum>::names[];              \
-                                                                              \
-  /* Now define an explicit function specialization for the `name` method, as \
-   * it can now reference our specialized array. */                           \
-  CARBON_ENUM_NAME_FUNCTION(EnumClassName) {                                  \
-    return names[static_cast<int>(value_)];                                   \
-  }                                                                           \
-                                                                              \
-  /* Finally, open up the definition of our specialized array for the user to \
-   * populate using the x-macro include. */                                   \
-  template <>                                                                 \
-  llvm::StringLiteral Internal::EnumBase<                                     \
-      EnumClassName, Internal::EnumClassName##RawEnum>::names[]
+#define CARBON_DEFINE_ENUM_CLASS_NAMES(EnumClassName) \
+  constexpr llvm::StringLiteral Internal::EnumClassName##Names[]
 
 // Use this within the names array initializer to generate a string for each
 // name.

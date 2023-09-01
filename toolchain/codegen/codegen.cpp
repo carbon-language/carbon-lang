@@ -4,7 +4,6 @@
 
 #include "toolchain/codegen/codegen.h"
 
-#include <cstdio>
 #include <memory>
 
 #include "llvm/IR/LegacyPassManager.h"

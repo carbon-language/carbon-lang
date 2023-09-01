@@ -6,9 +6,8 @@
 #define CARBON_TOOLCHAIN_LEXER_CHARACTER_SET_H_
 
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringRef.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 // TODO: These definitions need to be updated to match whatever Unicode lexical
 // rules we pick. The function interfaces will need to change to accommodate
@@ -72,6 +71,6 @@ inline auto IsSpace(char c) -> bool {
   return IsHorizontalWhitespace(c) || IsVerticalWhitespace(c);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex
 
 #endif  // CARBON_TOOLCHAIN_LEXER_CHARACTER_SET_H_

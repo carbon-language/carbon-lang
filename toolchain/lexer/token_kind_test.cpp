@@ -7,13 +7,12 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <cstring>
-
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon::Testing {
 namespace {
 
+using Lex::TokenKind;
 using ::testing::MatchesRegex;
 
 // We restrict symbols to punctuation characters that are expected to be widely

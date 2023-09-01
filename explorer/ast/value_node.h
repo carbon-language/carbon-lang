@@ -56,7 +56,7 @@ template <typename T>
 static constexpr bool
     ImplementsValueNode<T, typename T::ImplementsCarbonValueNode> = true;
 
-class ValueNodeView {
+class ValueNodeView : public Printable<ValueNodeView> {
  public:
   template <typename NodeType,
             typename = std::enable_if_t<ImplementsValueNode<NodeType>>>

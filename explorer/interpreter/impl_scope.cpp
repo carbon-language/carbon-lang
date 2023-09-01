@@ -183,8 +183,7 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> type,
             type_checker.Substitute(local_bindings, intrinsic.type));
-        IntrinsicConstraint converted = {
-            .type = type, .kind = intrinsic.kind, .arguments = {}};
+        IntrinsicConstraint converted(type, intrinsic.kind, {});
         converted.arguments.reserve(intrinsic.arguments.size());
         for (Nonnull<const Value*> argument : intrinsic.arguments) {
           CARBON_ASSIGN_OR_RETURN(

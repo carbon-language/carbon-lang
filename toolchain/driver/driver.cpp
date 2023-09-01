@@ -7,22 +7,19 @@
 #include "common/command_line.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/Path.h"
 #include "llvm/TargetParser/Host.h"
+#include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/lowering/lower_to_llvm.h"
-#include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/semantics_ir.h"
-#include "toolchain/semantics/semantics_ir_formatter.h"
+#include "toolchain/lower/lower.h"
+#include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/formatter.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -43,7 +40,7 @@ can be written to standard output as these phases progress.
 )""",
   };
 
-  enum class Phase {
+  enum class Phase : int8_t {
     Lex,
     Parse,
     Check,
@@ -287,7 +284,7 @@ For questions, issues, or bug reports, please use our GitHub project:
 )""",
   };
 
-  enum class Subcommand {
+  enum class Subcommand : int8_t {
     Compile,
   };
 
@@ -409,10 +406,10 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
   CARBON_VLOG() << "*** file:\n```\n" << source->text() << "\n```\n";
 
-  CARBON_VLOG() << "*** TokenizedBuffer::Lex ***\n";
-  auto tokenized_source = TokenizedBuffer::Lex(*source, *consumer);
+  CARBON_VLOG() << "*** Lex::TokenizedBuffer::Lex ***\n";
+  auto tokenized_source = Lex::TokenizedBuffer::Lex(*source, *consumer);
   bool has_errors = tokenized_source.has_errors();
-  CARBON_VLOG() << "*** TokenizedBuffer::Lex done ***\n";
+  CARBON_VLOG() << "*** Lex::TokenizedBuffer::Lex done ***\n";
   if (options.dump_tokens) {
     CARBON_VLOG() << "Finishing output.";
     consumer->Flush();
@@ -424,10 +421,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return !has_errors;
   }
 
-  CARBON_VLOG() << "*** ParseTree::Parse ***\n";
-  auto parse_tree = ParseTree::Parse(tokenized_source, *consumer, vlog_stream_);
+  CARBON_VLOG() << "*** Parse::Tree::Parse ***\n";
+  auto parse_tree =
+      Parse::Tree::Parse(tokenized_source, *consumer, vlog_stream_);
   has_errors |= parse_tree.has_errors();
-  CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
+  CARBON_VLOG() << "*** Parse::Tree::Parse done ***\n";
   if (options.dump_parse_tree) {
     consumer->Flush();
     parse_tree.Print(output_stream_, options.preorder_parse_tree);
@@ -438,9 +436,9 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return !has_errors;
   }
 
-  const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
+  const SemIR::File builtin_ir = Check::MakeBuiltins();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
-  const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
+  const SemIR::File semantics_ir = Check::CheckParseTree(
       builtin_ir, tokenized_source, parse_tree, *consumer, vlog_stream_);
 
   // We've finished all steps that can produce diagnostics. Emit the
@@ -449,7 +447,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   consumer->Flush();
 
   has_errors |= semantics_ir.has_errors();
-  CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
+  CARBON_VLOG() << "*** SemIR::File::MakeFromParseTree done ***\n";
   if (options.dump_raw_semantics_ir) {
     semantics_ir.Print(output_stream_, options.builtin_semantics_ir);
     if (options.dump_semantics_ir) {
@@ -458,7 +456,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
   if (options.dump_semantics_ir) {
     consumer->Flush();
-    FormatSemanticsIR(tokenized_source, parse_tree, semantics_ir,
+    SemIR::FormatFile(tokenized_source, parse_tree, semantics_ir,
                       output_stream_);
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;
@@ -472,11 +470,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return false;
   }
 
-  CARBON_VLOG() << "*** LowerToLLVM ***\n";
+  CARBON_VLOG() << "*** Lower::LowerToLLVM ***\n";
   llvm::LLVMContext llvm_context;
-  const std::unique_ptr<llvm::Module> module = LowerToLLVM(
+  const std::unique_ptr<llvm::Module> module = Lower::LowerToLLVM(
       llvm_context, options.input_file_name, semantics_ir, vlog_stream_);
-  CARBON_VLOG() << "*** LowerToLLVM done ***\n";
+  CARBON_VLOG() << "*** Lower::LowerToLLVM done ***\n";
   if (options.dump_llvm_ir) {
     module->print(output_stream_, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/true);

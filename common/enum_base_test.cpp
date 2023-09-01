@@ -8,7 +8,8 @@
 
 #include "testing/base/test_raw_ostream.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
+namespace {
 
 // These are directly in the Carbon namespace because the defines require it.
 CARBON_DEFINE_RAW_ENUM_CLASS(TestKind, uint8_t) {
@@ -34,8 +35,8 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(TestKind) = {
 #include "common/enum_base_test.def"
 };
 
-namespace Testing {
-namespace {
+static_assert(sizeof(TestKind) == sizeof(uint8_t),
+              "Class size doesn't match enum size!");
 
 TEST(EnumBaseTest, NamesAndConstants) {
   EXPECT_EQ("Beep", TestKind::Beep.name());
@@ -108,5 +109,4 @@ TEST(EnumBaseTest, IntConversion) {
 }
 
 }  // namespace
-}  // namespace Testing
-}  // namespace Carbon
+}  // namespace Carbon::Testing

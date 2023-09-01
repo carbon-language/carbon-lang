@@ -8,8 +8,8 @@
 #include "explorer/ast/return_term.h"
 #include "explorer/ast/statement.h"
 #include "explorer/base/error_builders.h"
+#include "explorer/base/print_as_id.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Error.h"
 
 using llvm::cast;
 

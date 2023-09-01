@@ -64,7 +64,7 @@ inline auto EmptyVTable() -> Nonnull<const VTable*> {
 // As a result, all Values must be immutable, and all their constructor
 // arguments must be copyable, equality-comparable, and hashable. See
 // Arena's documentation for details.
-class Value {
+class Value : public Printable<Value> {
  public:
   using EnableCanonicalizedAllocation = void;
   enum class Kind {
@@ -81,7 +81,6 @@ class Value {
   auto Visit(F f) const -> R;
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Returns the sub-Value specified by `path`, which must be a valid element
   // path for *this. If the sub-Value is a method and its self_pattern is an
@@ -1062,7 +1061,19 @@ struct ImplsConstraint : public HashFromDecompose<ImplsConstraint> {
 };
 
 // A constraint that requires an intrinsic property of a type.
-struct IntrinsicConstraint : public HashFromDecompose<IntrinsicConstraint> {
+struct IntrinsicConstraint : public HashFromDecompose<IntrinsicConstraint>,
+                             public Printable<IntrinsicConstraint> {
+  enum Kind {
+    // `type` intrinsically implicitly converts to `parameters[0]`.
+    // TODO: Split ImplicitAs into more specific constraints (such as
+    // derived-to-base pointer conversions).
+    ImplicitAs,
+  };
+
+  explicit IntrinsicConstraint(Nonnull<const Value*> type, Kind kind,
+                               std::vector<Nonnull<const Value*>> arguments)
+      : type(type), kind(kind), arguments(std::move(arguments)) {}
+
   template <typename F>
   auto Decompose(F f) const {
     return f(type, kind, arguments);
@@ -1074,12 +1085,6 @@ struct IntrinsicConstraint : public HashFromDecompose<IntrinsicConstraint> {
   // The type that is required to satisfy the intrinsic property.
   Nonnull<const Value*> type;
   // The kind of the intrinsic property.
-  enum Kind {
-    // `type` intrinsically implicitly converts to `parameters[0]`.
-    // TODO: Split ImplicitAs into more specific constraints (such as
-    // derived-to-base pointer conversions).
-    ImplicitAs,
-  };
   Kind kind;
   // Arguments for the intrinsic property. The meaning of these depends on
   // `kind`.
@@ -1466,7 +1471,7 @@ class ParameterizedEntityName : public Value {
 // These values are used to represent the second operand of a compound member
 // access expression: `x.(A.B)`, and can also be the value of an alias
 // declaration, but cannot be used in most other contexts.
-class MemberName : public Value {
+class MemberName : public Value, public Printable<MemberName> {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
              std::optional<Nonnull<const InterfaceType*>> interface,
@@ -1487,9 +1492,6 @@ class MemberName : public Value {
   auto Decompose(F f) const {
     return f(base_type_, interface_, member_);
   }
-
-  // Prints the member name or identifier.
-  void Print(llvm::raw_ostream& out) const { member_->Print(out); }
 
   // The type for which `name` is a member or a member of an `impl`.
   auto base_type() const -> std::optional<Nonnull<const Value*>> {

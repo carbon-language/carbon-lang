@@ -6,17 +6,16 @@
 #define CARBON_TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_
 
 #include <optional>
-#include <utility>
 #include <variant>
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon {
+namespace Carbon::Lex {
 
 // A numeric literal token that has been extracted from a source buffer.
-class LexedNumericLiteral {
+class NumericLiteral {
  public:
   enum class Radix : int8_t { Binary = 2, Decimal = 10, Hexadecimal = 16 };
 
@@ -43,8 +42,7 @@ class LexedNumericLiteral {
   // Extract a numeric literal from the given text, if it has a suitable form.
   //
   // The supplied `source_text` must outlive the return value.
-  static auto Lex(llvm::StringRef source_text)
-      -> std::optional<LexedNumericLiteral>;
+  static auto Lex(llvm::StringRef source_text) -> std::optional<NumericLiteral>;
 
   // Compute the value of the token, if possible. Emit diagnostics to the given
   // emitter if the token is not valid.
@@ -56,7 +54,7 @@ class LexedNumericLiteral {
  private:
   class Parser;
 
-  LexedNumericLiteral() = default;
+  NumericLiteral() = default;
 
   // The text of the token.
   llvm::StringRef text_;
@@ -72,6 +70,6 @@ class LexedNumericLiteral {
   int exponent_;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Lex
 
 #endif  // CARBON_TOOLCHAIN_LEXER_NUMERIC_LITERAL_H_

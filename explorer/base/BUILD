@@ -73,6 +73,14 @@ cc_library(
 )
 
 cc_library(
+    name = "print_as_id",
+    hdrs = ["print_as_id.h"],
+    deps = [
+        "//common:ostream",
+    ],
+)
+
+cc_library(
     name = "source_location",
     hdrs = ["source_location.h"],
     deps = [
