@@ -177,6 +177,17 @@ jobs:
         if: steps.filter.outputs.ignore == 'false'
         run: df -h
 
+      # Build and run all targets on branch pushes to ensure we always have a
+      # clean tree. We don't expect this to be an interactive path.
+      - name: Test (${{ matrix.build_mode }})
+        if: steps.filter.outputs.ignore == 'false' && github.event_name == 'push'
+        env:
+          # 'libtool_check_unique failed to generate' workaround.
+          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
+          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
+        run: |
+          bazelisk test -c ${{ matrix.build_mode }} //...
+
       # Compute the set of possible rules impacted by this change using
       # Bazel-based diffing.
       # TODO: This isn't used yet until we are confident it is computing the
@@ -191,38 +202,26 @@ jobs:
           echo "$EVENT_CONTEXT"
           git rev-parse ${{ github.sha }}^
           ./scripts/bazel_diff.py \
-            --baseline=${{ github.base_ref }} \
-            --current=${{ github.head_ref }} \
+            --baseline=${{ github.event.pull_request.base.sha }} \
+            --current=${{ github.event.pull_request.head.sha }} \
             >targets
 
       - name: Compute impacted branch targets
         if:
-          steps.filter.outputs.ignore == 'false' && github.event_name !=
-          'pull_request_target'
+          steps.filter.outputs.ignore == 'false' && github.event_name ==
+          'merge_group'
         env:
           EVENT_CONTEXT: ${{ toJson(github.event) }}
         run: |
           echo "$EVENT_CONTEXT"
           ./scripts/bazel_diff.py \
-            --baseline=${{ github.event.before }} \
-            --current=${{ github.event.after }} \
+            --baseline=${{ github.event.merge_group.base_sha }} \
+            --current=${{ github.event.merge_group.head_sha }} \
             >targets
 
-      # Build all targets first to isolate build failures.
-      - name: Build (${{ matrix.build_mode }})
-        if: steps.filter.outputs.ignore == 'false'
-        env:
-          # 'libtool_check_unique failed to generate' workaround.
-          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
-          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
-        run: |
-          cat targets
-          bazelisk build -c ${{ matrix.build_mode }} \
-            --target_pattern_file=targets
-
-      # Run all test targets.
+      # Build and run tests impacted by the PR or merge.
       - name: Test (${{ matrix.build_mode }})
-        if: steps.filter.outputs.ignore == 'false'
+        if: steps.filter.outputs.ignore == 'false' && github.event_name != 'push'
         env:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
