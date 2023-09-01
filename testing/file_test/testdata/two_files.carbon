@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 // AUTOUPDATE
-
 // CHECK:STDOUT: 3 args: `default_args`, `a.carbon`, `b.carbon`
+
 // --- a.carbon
 aaa
 // CHECK:STDOUT: a.carbon:[[@LINE-1]]: 1
