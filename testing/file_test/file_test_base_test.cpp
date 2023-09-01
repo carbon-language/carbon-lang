@@ -62,29 +62,31 @@ class FileTestBaseTest : public FileTestBase {
       int i = 0;
       for (const auto& file : test_files) {
         // Prints line numbers to validate per-file.
-        stdout << file.filename << ":2: " << ++i << "\n";
+        stdout << file.filename << ":1: " << ++i << "\n";
       }
+      return true;
+    } else if (filename == "alternating_files.carbon") {
+      stdout << "unattached message 1\n"
+             << "a.carbon:2: message 2\n"
+             << "b.carbon:5: message 3\n"
+             << "a.carbon:2: message 4\n"
+             << "b.carbon:5: message 5\n"
+             << "unattached message 6\n";
+      stderr << "unattached message 1\n"
+             << "a.carbon:2: message 2\n"
+             << "b.carbon:5: message 3\n"
+             << "a.carbon:2: message 4\n"
+             << "b.carbon:5: message 5\n"
+             << "unattached message 6\n";
+      return true;
+    } else if (filename == "unattached_multi_file.carbon") {
+      stdout << "unattached message 1\n"
+             << "unattached message 2\n";
+      stderr << "unattached message 3\n"
+             << "unattached message 4\n";
       return true;
     } else {
       return ErrorBuilder() << "Unexpected file: " << filename;
-    }
-  }
-
-  auto ValidateRun(const llvm::SmallVector<TestFile>& test_files)
-      -> void override {
-    auto filename = path().filename();
-    if (filename == "two_files.carbon") {
-      EXPECT_THAT(
-          test_files,
-          ElementsAre(
-              AllOf(HasFilename("a.carbon"),
-                    HasContent(
-                        "// CHECK:STDOUT: a.carbon:[[@LINE+1]]: 1\naaa\n\n")),
-              AllOf(HasFilename("b.carbon"),
-                    HasContent(
-                        "// CHECK:STDOUT: b.carbon:[[@LINE+1]]: 2\nbbb\n"))));
-    } else {
-      EXPECT_THAT(test_files, ElementsAre(HasFilename(filename)));
     }
   }
 
