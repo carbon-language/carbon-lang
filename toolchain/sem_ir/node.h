@@ -10,7 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
-#include "toolchain/parser/parse_tree.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/node_kind.h"
 

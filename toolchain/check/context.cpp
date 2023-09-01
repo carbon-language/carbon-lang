@@ -13,7 +13,7 @@
 #include "toolchain/check/node_block_stack.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/node.h"
 #include "toolchain/sem_ir/node_kind.h"

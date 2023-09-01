@@ -17,7 +17,7 @@ TARGETS = {
     "driver": "//toolchain/driver:driver_file_test",
     "lexer": "//toolchain/lexer:lexer_file_test",
     "lower": "//toolchain/lower:lower_file_test",
-    "parser": "//toolchain/parser:parse_tree_file_test",
+    "parse": "//toolchain/parse:parse_file_test",
 }
 
 
