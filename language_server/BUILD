@@ -20,7 +20,7 @@ cc_binary(
     deps = [
         "//common:error",
         "//toolchain/diagnostics:null_diagnostics",
-        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/source:source_buffer",

@@ -14,7 +14,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {

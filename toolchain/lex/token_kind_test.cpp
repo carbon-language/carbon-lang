@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lexer/token_kind.h"
+#include "toolchain/lex/token_kind.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -69,7 +69,7 @@ constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+|Self|String";
     EXPECT_EQ(Spelling, TokenKind::TokenName.fixed_spelling()); \
     EXPECT_THAT(Spelling, MatchesRegex(KeywordRegex.str()));    \
   }
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
 
 // Verify that the symbol tokens are sorted from longest to shortest. This is
 // important to ensure that simply in-order testing will identify tokens
@@ -80,7 +80,7 @@ TEST(TokenKindTest, SymbolsInDescendingLength) {
   EXPECT_LE(llvm::StringRef(Spelling).size(), previous_length)          \
       << "Symbol token not in descending length order: " << #TokenName; \
   previous_length = llvm::StringRef(Spelling).size();
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
   EXPECT_GT(previous_length, 0);
 }
 

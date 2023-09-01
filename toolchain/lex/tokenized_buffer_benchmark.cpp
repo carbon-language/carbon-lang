@@ -11,8 +11,8 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
-#include "toolchain/lexer/token_kind.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/token_kind.h"
+#include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -210,7 +210,7 @@ auto GetSymbolTokenTable() -> llvm::ArrayRef<TokenKind> {
   table.push_back(TokenKind::TokenName);
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)
-#include "toolchain/lexer/token_kind.def"
+#include "toolchain/lex/token_kind.def"
     table.insert(table.end(), 32, TokenKind::Semi);
     table.insert(table.end(), 16, TokenKind::Comma);
     table.insert(table.end(), 12, TokenKind::Period);

@@ -9,8 +9,8 @@
 
 #include "common/check.h"
 #include "common/vlog.h"
-#include "toolchain/lexer/token_kind.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/token_kind.h"
+#include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/precedence.h"
 #include "toolchain/parse/state.h"

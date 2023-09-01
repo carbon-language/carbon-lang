@@ -13,7 +13,7 @@
 #include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Testing {
 namespace {

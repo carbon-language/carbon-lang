@@ -40,9 +40,9 @@ cc_library(
 )
 
 cc_library(
-    name = "lex_helpers",
-    srcs = ["lex_helpers.cpp"],
-    hdrs = ["lex_helpers.h"],
+    name = "helpers",
+    srcs = ["helpers.cpp"],
+    hdrs = ["helpers.h"],
     deps = [
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
@@ -68,7 +68,7 @@ cc_library(
     hdrs = ["numeric_literal.h"],
     deps = [
         ":character_set",
-        ":lex_helpers",
+        ":helpers",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
@@ -122,7 +122,7 @@ cc_library(
     hdrs = ["string_literal.h"],
     deps = [
         ":character_set",
-        ":lex_helpers",
+        ":helpers",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
@@ -176,7 +176,7 @@ cc_library(
     hdrs = ["tokenized_buffer.h"],
     deps = [
         ":character_set",
-        ":lex_helpers",
+        ":helpers",
         ":numeric_literal",
         ":string_literal",
         ":token_kind",
@@ -249,8 +249,8 @@ cc_binary(
 )
 
 file_test(
-    name = "lexer_file_test",
-    srcs = ["lexer_file_test.cpp"],
+    name = "lex_file_test",
+    srcs = ["lex_file_test.cpp"],
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
         "//toolchain/driver:driver_file_test_base",

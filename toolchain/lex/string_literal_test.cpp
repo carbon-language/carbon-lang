@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lexer/string_literal.h"
+#include "toolchain/lex/string_literal.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "common/check.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/lexer/test_helpers.h"
+#include "toolchain/lex/test_helpers.h"
 
 namespace Carbon::Testing {
 namespace {
