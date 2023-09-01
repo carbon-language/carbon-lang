@@ -12,14 +12,14 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Path.h"
 #include "llvm/TargetParser/Host.h"
+#include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
-#include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/lowering/lower_to_llvm.h"
-#include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/semantics_ir.h"
-#include "toolchain/semantics/semantics_ir_formatter.h"
+#include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/lower/lower.h"
+#include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/formatter.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -406,10 +406,10 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
   CARBON_VLOG() << "*** file:\n```\n" << source->text() << "\n```\n";
 
-  CARBON_VLOG() << "*** TokenizedBuffer::Lex ***\n";
-  auto tokenized_source = TokenizedBuffer::Lex(*source, *consumer);
+  CARBON_VLOG() << "*** Lex::TokenizedBuffer::Lex ***\n";
+  auto tokenized_source = Lex::TokenizedBuffer::Lex(*source, *consumer);
   bool has_errors = tokenized_source.has_errors();
-  CARBON_VLOG() << "*** TokenizedBuffer::Lex done ***\n";
+  CARBON_VLOG() << "*** Lex::TokenizedBuffer::Lex done ***\n";
   if (options.dump_tokens) {
     CARBON_VLOG() << "Finishing output.";
     consumer->Flush();
@@ -436,9 +436,9 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return !has_errors;
   }
 
-  const SemIR::File builtin_ir = SemIR::File::MakeBuiltinIR();
+  const SemIR::File builtin_ir = Check::MakeBuiltins();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
-  const SemIR::File semantics_ir = SemIR::File::MakeFromParseTree(
+  const SemIR::File semantics_ir = Check::CheckParseTree(
       builtin_ir, tokenized_source, parse_tree, *consumer, vlog_stream_);
 
   // We've finished all steps that can produce diagnostics. Emit the
@@ -448,18 +448,25 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
 
   has_errors |= semantics_ir.has_errors();
   CARBON_VLOG() << "*** SemIR::File::MakeFromParseTree done ***\n";
+
+  CARBON_VLOG() << "*** raw semantics_ir ***\n" << semantics_ir << "\n";
   if (options.dump_raw_semantics_ir) {
     semantics_ir.Print(output_stream_, options.builtin_semantics_ir);
     if (options.dump_semantics_ir) {
       output_stream_ << "\n";
     }
   }
+
+  if (vlog_stream_) {
+    CARBON_VLOG() << "*** semantics_ir ***\n";
+    SemIR::FormatFile(tokenized_source, parse_tree, semantics_ir,
+                      *vlog_stream_);
+  }
   if (options.dump_semantics_ir) {
-    consumer->Flush();
     SemIR::FormatFile(tokenized_source, parse_tree, semantics_ir,
                       output_stream_);
   }
-  CARBON_VLOG() << "semantics_ir: " << semantics_ir;
+
   if (options.phase == Phase::Check) {
     return !has_errors;
   }

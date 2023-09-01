@@ -11,8 +11,8 @@
 #include "clang-tools-extra/clangd/Protocol.h"
 #include "clang-tools-extra/clangd/Transport.h"
 #include "clang-tools-extra/clangd/support/Function.h"
-#include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/parser/parse_tree.h"
+#include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::LS {
