@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Associated constants](#associated-constants)
     -   [Blanket implementations](#blanket-implementations)
     -   [Specialization](#specialization)
+    -   [Calling templated functions](#calling-templated-functions)
 -   [Implementing some Carbon generic features with witness tables](#implementing-some-carbon-generic-features-with-witness-tables)
     -   [Overview](#overview-1)
     -   [Example](#example)
@@ -144,6 +145,15 @@ of the code that needs to use a particular witness table.
 As a result, specialization is not supported by Swift, which uses witness
 tables. Specialization is being considered for Rust, and is compatible with its
 monomorphization model used for static dispatch.
+
+### Calling templated functions
+
+Carbon's planned approach to support calling a templated function from a
+checked-generic function, decided in
+[issue #2153](https://github.com/carbon-language/carbon-lang/issues/2153),
+relies on monomorphization. Trying to rely on witness tables would result in
+different semantics for calling the same function with the same types, depending
+on which witness tables were available at the callsite.
 
 ## Implementing some Carbon generic features with witness tables
 

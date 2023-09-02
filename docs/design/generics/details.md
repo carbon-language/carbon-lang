@@ -130,7 +130,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Field requirements](#field-requirements)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
-    -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
+    -   [Range constraints on symbolic integers](#range-constraints-on-symbolic-integers)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -142,7 +142,7 @@ This document goes into the details of the design of Carbon's
 mean generalizing some language construct with compile-time parameters. These
 parameters can be types, [facets](terminology.md#facet), or other values.
 
-Imagine we want to write a function parameterized by a type argument. Maybe our
+Imagine we want to write a function with a type (or facet) parameter. Maybe our
 function is `PrintToStdout` and let's say we want to operate on values that have
 a type for which we have an implementation of the `ConvertibleToString`
 interface. The `ConvertibleToString` interface has a `ToString` method returning
@@ -166,10 +166,10 @@ the interface. For example, the types `i32` and `String` would have different
 implementations of the `ToString` method of the `ConvertibleToString` interface.
 
 In addition to function members, interfaces can include other members that
-associate a constant value for any implementing type, called _associated
-constants_. For example, this can allow a container interface to include the
-type of iterators that are returned from and passed to various container
-methods.
+associate a [compile-time value](/docs/design/README.md#expression-phases) for
+any implementing type, called _associated constants_. For example, this can
+allow a container interface to include the type of iterators that are returned
+from and passed to various container methods.
 
 The function expresses that the type argument is passed in statically, basically
 generating a separate function body for every different type passed in, by using
@@ -244,9 +244,12 @@ Each declaration in the interface defines an
 [associated entity](terminology.md#associated-entity). In this example, `Vector`
 has two associated methods, `Add` and `Scale`.
 
-An interface defines a facet type, that is a type whose values are types. The
-values of an interface are any types implementing the interface, and so provide
-definitions for all the functions (and other members) declared in the interface.
+An interface defines a [facet type](terminology.md#facet-type), that is a type
+whose values are [facets](terminology.md#facet). Every type implementing the
+interface, and so has definitions for all the functions (and other members)
+declared in the interface, has a corresponding facet value. So if the type
+`Point` implements interface `Vector`, the facet value `Point as Vector` has
+type `Vector`.
 
 ## Implementing interfaces
 
@@ -663,18 +666,22 @@ fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: f64) -> T {
 var v: Point_Extend = AddAndScaleGeneric(a, w, 2.5);
 ```
 
-Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
-_[constant binding](terminology.md#bindings)_, here specifically a _symbolic
-constant binding_. Since this binding pattern is in a function declaration, it
-marks a _checked
-[generic parameter](terminology.md#generic-means-compile-time-parameterized)_.
-That means it must be known to the caller, but we will only use the information
-present in the signature of the function to type check the body of
-`AddAndScaleGeneric`'s definition. In this case, we know that any value of type
-`T` implements the `Vector` interface and so has an `Add` and a `Scale` method.
+Here `T` is a facet whose type is `Vector`. The `:!` syntax means that `T` is a
+_[compile-time binding](terminology.md#bindings)_. Here specifically it declares
+a _symbolic binding_ since it did not use the `template` keyword to mark it as a
+_template binding_.
 
 **References:** The `:!` syntax was accepted in
 [proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
+
+Since this symbolic binding pattern is in a function declaration, it marks a
+_[checked](terminology.md#checked-versus-template-parameters)
+[generic parameter](terminology.md#generic-means-compile-time-parameterized)_.
+That means its value must be known to the caller at compile-time, but we will
+only use the information present in the signature of the function to type check
+the body of `AddAndScaleGeneric`'s definition. In this case, we know that any
+value of facet `T` implements the `Vector` interface and so has an `Add` and a
+`Scale` method.
 
 Names are looked up in the body of `AddAndScaleGeneric` for values of type `T`
 in `Vector`. This means that `AddAndScaleGeneric` is interpreted as equivalent
@@ -725,7 +732,9 @@ like `Point_NoExtend`:
 
 ```
 // AddAndScaleGeneric with T = Point_NoExtend
-fn AddAndScaleForPoint_NoExtend(a: Point_NoExtend, b: Point_NoExtend, s: Double) -> Point_NoExtend {
+fn AddAndScaleForPoint_NoExtend(
+    a: Point_NoExtend, b: Point_NoExtend, s: Double)
+    -> Point_NoExtend {
   // ✅ This works even though `a.Add(b).Scale(s)` wouldn't.
   return a.(Vector.Add)(b).(Vector.Scale)(s);
 }
@@ -746,11 +755,12 @@ In this example, `AddAndScaleGeneric` can be substituted for
 `AddAndScaleForPoint_Extend` and `AddAndScaleForPoint_NoExtend` without
 affecting the return types. This requires the return value to be converted to
 the type that the caller expects instead of the erased type used inside the
-generic function.
+checked-generic function.
 
-A generic caller of a generic function performs the same substitution process to
-determine the return type, but the result may be generic. In this example of
-calling a generic from another generic,
+A checked-generic caller of a checked-generic function performs the same
+substitution process to determine the return type, but the result may be a
+symbolic value. In this example of calling a checked generic from another
+checked generic,
 
 ```
 fn DoubleThreeTimes[U:! Vector](a: U) -> U {
@@ -841,10 +851,24 @@ An interface is one particularly simple example of a facet type. For example,
 interface `Vector`. Its set of names consists of `Add` and `Scale` which are
 aliases for the corresponding qualified names inside `Vector` as a namespace.
 
-The requirements determine which types are values of a given facet type. The set
-of names in a facet type determines the API of a generic type value and define
-the result of [member access](/docs/design/expressions/member_access.md) into
-the facet type.
+The requirements determine which types may be implicitly converted to a given
+facet type. The result of this conversion is a [facet](terminology.md#facet).
+For example, `Point_Inline` from [the "Inline `impl`" section](#inline-impl)
+implements `Vector`, so `Point_Inline` may be implicitly converted to `Vector`
+as considered as a type. The result is `Point_Inline as Vector`, which has the
+members of `Vector` instead of the members of `Point_Inline`. If the facet
+`Point_Inline as Vector` is used in a type position, it is implicitly converted
+back to type `type`, see
+["values usable as types" in the design overview](/docs/design/README.md#values-usable-as-types).
+This recovers the original type for the facet, so
+`(Point_Inline as Vector) as type` is `Point_Inline` again.
+
+However, when a facet type like `Vector` is used as the binding type of a
+symbolic binding, as in `T:! Vector`, the symbolic facet binding `T` is
+disassociated with whatever facet value `T` is eventually bound to. Instead, `T`
+is treated as an [archetype](terminology.md#archetype), with the members and
+[member access](/docs/design/expressions/member_access.md) determined by the
+names of the facet type.
 
 This general structure of facet types holds not just for interfaces, but others
 described in the rest of this document.
@@ -852,11 +876,11 @@ described in the rest of this document.
 ## Named constraints
 
 If the interfaces discussed above are the building blocks for facet types,
-[generic named constraints](terminology.md#named-constraints) describe how they
-may be composed together. Unlike interfaces which are nominal, the name of a
-named constraint is not a part of its value. Two different named constraints
-with the same definition are equivalent even if they have different names. This
-is because types don't have to explicitly specify which named constraints they
+[named constraints](terminology.md#named-constraints) describe how they may be
+composed together. Unlike interfaces which are nominal, the name of a named
+constraint is not a part of its value. Two different named constraints with the
+same definition are equivalent even if they have different names. This is
+because types don't have to explicitly specify which named constraints they
 implement, types automatically implement any named constraints they can satisfy.
 
 A named constraint definition can contain interface requirements using `impl`
@@ -935,15 +959,16 @@ type." This is consistent with the
 [use of `auto` in the C++20 Abbreviated function template feature](https://en.cppreference.com/w/cpp/language/function_template#Abbreviated_function_template).
 
 In general, the declarations in `constraint` definition match a subset of the
-declarations in an `interface`. Named constraints used with generics, as opposed
-to templates, should only include required interfaces and aliases to named
-members of those interfaces.
+declarations in an `interface`. Named constraints used with checked generics, as
+opposed to templates, should only include required interfaces and aliases to
+named members of those interfaces.
 
 To declare a named constraint that includes other declarations for use with
 template parameters, use the `template` keyword before `constraint`. Method,
 associated constant, and associated function requirements may only be declared
-inside a `template constraint`. Note that a generic constraint ignores the names
-of members defined for a type, but a template constraint can depend on them.
+inside a `template constraint`. Note that a checked-generic constraint ignores
+the names of members defined for a type, but a template constraint can depend on
+them.
 
 There is an analogy between declarations used in a `constraint` and in an
 `interface` definition. If an `interface` `I` has (non-`alias`) declarations
@@ -1001,10 +1026,10 @@ design document, once it exists.
 There is a subtyping relationship between facet types that allows calls of one
 generic function from another as long as it has a subset of the requirements.
 
-Given a generic type variable `T` with facet type `I1`, it satisfies a facet
+Given a symbolic facet binding `T` with facet type `I1`, it satisfies a facet
 type `I2` as long as the requirements of `I1` are a superset of the requirements
-of `I2`. This means a value `x` of type `T` may be passed to functions requiring
-types to satisfy `I2`, as in this example:
+of `I2`. This means a value `x: T` may be passed to functions requiring types to
+satisfy `I2`, as in this example:
 
 ```
 interface Printable { fn Print[self: Self](); }
@@ -1687,9 +1712,9 @@ var thriller_count: Optional(i32) =
     play_count.Find(Song("Thriller"));
 ```
 
-Since the `Find` function is generic, it can only use the capabilities that
-`HashMap` requires of `KeyT` and `ValueT`. This allows us to evaluate when we
-can convert between two different arguments to a parameterized type. Consider
+Since the `Find` function is a checked generic, it can only use the capabilities
+that `HashMap` requires of `KeyT` and `ValueT`. This allows us to evaluate when
+we can convert between two different arguments to a parameterized type. Consider
 two adapters of `Song` that implement `Hashable`:
 
 ```
@@ -1778,7 +1803,7 @@ class SongRenderToPrintDriver {
 ### Use case: Using independent libraries together
 
 Imagine we have two packages that are developed independently. Package
-`CompareLib` defines an interface `CompareLib.Comparable` and a generic
+`CompareLib` defines an interface `CompareLib.Comparable` and a checked-generic
 algorithm `CompareLib.Sort` that operates on types that implement
 `CompareLib.Comparable`. Package `SongLib` defines a type `SongLib.Song`.
 Neither has a dependency on the other, so neither package defines an
@@ -1978,10 +2003,10 @@ and an adapter to address this use case.
 
 In addition to associated methods, we allow other kinds of
 [associated entities](terminology.md#associated-entity). For consistency, we use
-the same syntax to describe a constant in an interface as in a type without
-assigning a value. As constants, they are declared using the `let` introducer.
-For example, a fixed-dimensional point type could have the dimension as an
-associated constant.
+the same syntax to describe a compile-time constant in an interface as in a type
+without assigning a value. As constants, they are declared using the `let`
+introducer. For example, a fixed-dimensional point type could have the dimension
+as an associated constant.
 
 ```
 interface NSpacePoint {
@@ -2161,8 +2186,9 @@ In particular, it was deemed that
 [Swift's approach of inferring an associated facet from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
 was unneeded complexity.
 
-The definition of the `StackAssociatedFacet` is sufficient for writing a generic
-function that operates on anything implementing that interface, for example:
+The definition of the `StackAssociatedFacet` is sufficient for writing a
+checked-generic function that operates on anything implementing that interface,
+for example:
 
 ```
 fn PeekAtTopOfStack[StackType:! StackAssociatedFacet](s: StackType*)
@@ -2173,14 +2199,14 @@ fn PeekAtTopOfStack[StackType:! StackAssociatedFacet](s: StackType*)
 }
 ```
 
-Inside the generic function `PeekAtTopOfStack`, the `ElementType` associated
-facet member of `StackType` is erased. This means `StackType.ElementType` has
-the API dictated by the declaration of `ElementType` in the interface
-`StackAssociatedFacet`.
+Inside the checked-generic function `PeekAtTopOfStack`, the `ElementType`
+associated facet member of `StackType` is erased. This means
+`StackType.ElementType` has the API dictated by the declaration of `ElementType`
+in the interface `StackAssociatedFacet`.
 
-Outside the generic, associated facets have the concrete facet values determined
-by impl lookup, rather than the erased version of that type used inside a
-generic.
+Outside the checked-generic, associated facets have the concrete facet values
+determined by impl lookup, rather than the erased version of that type used
+inside a checked-generic.
 
 ```
 var my_array: DynamicArray(i32) = (1, 2, 3);
@@ -2330,17 +2356,17 @@ class Complex {
 }
 ```
 
-All interface parameters must be marked as "generic", using the `:!` syntax.
-This reflects these two properties of these parameters:
+All interface parameters must be marked as "symbolic", using the `:!` binding
+pattern syntax. This reflects these two properties of these parameters:
 
 -   They must be resolved at compile-time, and so can't be passed regular
     dynamic values.
--   We allow either generic or template values to be passed in.
+-   We allow either symbolic or template values to be passed in.
 
-**Note:** Interface parameters aren't required to be types, but that is the vast
-majority of cases. As an example, if we had an interface that allowed a type to
-define how the tuple-member-read operator would work, the index of the member
-could be an interface parameter:
+**Note:** Interface parameters aren't required to be facets, but that is the
+vast majority of cases. As an example, if we had an interface that allowed a
+type to define how the tuple-member-read operator would work, the index of the
+member could be an interface parameter:
 
 ```
 interface ReadTupleMember(index:! u32) {
@@ -2351,7 +2377,7 @@ interface ReadTupleMember(index:! u32) {
 ```
 
 This requires that the index be known at compile time, but allows different
-indices to be associated with different types.
+indices to be associated with different values of `T`.
 
 **Caveat:** When implementing an interface twice for a type, the interface
 parameters are required to always be different. For example:
@@ -2364,7 +2390,7 @@ class Bijection(FromType:! type, ToType:! type) {
   extend impl as Map(FromType, ToType) { ... }
   extend impl as Map(ToType, FromType) { ... }
 }
-// ❌ Error: Bijection has twodifferent impl definitions of
+// ❌ Error: Bijection has two different impl definitions of
 // interface Map(String, String)
 var oops: Bijection(String, String) = ...;
 ```
@@ -2552,9 +2578,9 @@ interface PointCloud {
 
 ##### Set an associated facet to a specific value
 
-Functions accepting a generic type might also want to constrain one of its
-associated facets to be a specific, concrete type. For example, we might want to
-have a function only accept stacks containing integers:
+Functions accepting a symbolic facet parameter might also want to constrain one
+of its associated facets to be a specific, concrete type. For example, we might
+want to have a function only accept stacks containing integers:
 
 ```
 fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
@@ -2882,7 +2908,7 @@ fn F[T:! InterfaceA where .A impls
 
 #### Parameterized type implements interface
 
-There are times when a function will pass a generic type parameter of the
+There are times when a function will pass a symbolic facet parameter of the
 function as an argument to a parameterized type, as in the previous case, and in
 addition the function needs the result to implement a specific interface.
 
@@ -2908,7 +2934,7 @@ fn PrintThree
 #### Another type implements parameterized interface
 
 In this case, we need some other type to implement an interface parameterized by
-a generic type parameter. The syntax for this case follows the previous case,
+a symbolic facet parameter. The syntax for this case follows the previous case,
 except now the `.Self` parameter is on the interface to the right of the
 `impls`. For example, we might need a type parameter `T` to support explicit
 conversion from an integer type like `i32`:
@@ -2970,7 +2996,7 @@ redundant ways to express a restriction, following the
 
 ### Implied constraints
 
-Imagine we have a generic function that accepts an arbitrary `HashMap`:
+Imagine we have a checked-generic function that accepts an arbitrary `HashMap`:
 
 ```
 fn LookUp[KeyType:! type](hm: HashMap(KeyType, i32)*,
@@ -3008,7 +3034,7 @@ fn PrintValueOrDefault[KeyType:! Printable,
 ```
 
 In this case, Carbon will accept the definition and infer the needed constraints
-on the generic type parameter. This is both more concise for the author of the
+on the symbolic facet parameter. This is both more concise for the author of the
 code and follows the
 ["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
 This redundancy is undesirable since it means if the needed constraints for
@@ -3020,8 +3046,8 @@ will have already satisfied these constraints.
 This implied constraint is equivalent to the explicit constraint that each
 parameter and return type [is legal](#must-be-legal-type-argument-constraints).
 
-**Note:** These implied constraints affect the _requirements_ of a generic type
-parameter, but not its _member names_. This way you can always look at the
+**Note:** These implied constraints affect the _requirements_ of a symbolic
+facet parameter, but not its _member names_. This way you can always look at the
 declaration to see how name resolution works, without having to look up the
 definitions of everything it is used as an argument to.
 
@@ -3056,8 +3082,8 @@ support some form of this feature as part of their type inference (and
 
 #### Must be legal type argument constraints
 
-Now consider the case that the generic type parameter is going to be used as an
-argument to a parameterized type in a function body, not in the signature. If
+Now consider the case that the symbolic facet parameter is going to be used as
+an argument to a parameterized type in a function body, not in the signature. If
 the parameterized type was explicitly mentioned in the signature, the implied
 constraint feature would ensure all of its requirements were met. The developer
 can create a trivial
@@ -3097,7 +3123,7 @@ interface Graph {
 
 ### Manual type equality
 
-Imagine we have some function with generic parameters:
+Imagine we have some function with symbolic parameters:
 
 ```
 fn F[T:! SomeInterface](x: T) {
@@ -3332,7 +3358,7 @@ fn F[T:! Transitive](t: T) {
 ```
 
 Since adding an `observe` declaration only adds non-extending implementations of
-interfaces to generic types, they may be added without breaking existing code.
+interfaces to symbolic facets, they may be added without breaking existing code.
 
 ## Other constraints as facet types
 
@@ -3515,7 +3541,7 @@ What is the size of a type?
 -   It could be fully known and fixed at compile time -- this is true of
     primitive types (`i32`, `f64`, and so on), most
     [classes](/docs/design/classes.md), and most other concrete types.
--   It could be known generically. This means that it will be known at codegen
+-   It could be known symbolically. This means that it will be known at codegen
     time, but not at type-checking time.
 -   It could be dynamic. For example, it could be a
     [dynamic type](#runtime-type-fields), a slice, variable-sized type (such as
@@ -3530,7 +3556,7 @@ otherwise. Note: something with size 0 is still considered "sized". The facet
 type `Sized` is defined as follows:
 
 > `Sized` is a type whose values are types `T` that are "sized" -- that is the
-> size of `T` is known, though possibly only generically.
+> size of `T` is known, though possibly only symbolically
 
 Knowing a type is sized is a precondition to declaring variables of that type,
 taking values of that type as parameters, returning values of that type, and
@@ -3566,7 +3592,7 @@ fn F[T:! type](x: T*) {  // T is unsized.
   var z: T;
 }
 
-// T is sized, but its size is only known generically.
+// T is sized, but its size is only known symbolically.
 fn G[T: DefaultConstructible](x: T*) {
   // ✅ Allowed: T is default constructible, which means sized.
   var y: T = T.Default();
@@ -3577,18 +3603,11 @@ var z: Name = Name.Default();;
 G(&z);
 ```
 
-**Open question:** Even if the size is fixed, it won't be known at the time of
-compiling the generic function if we are using the dynamic strategy. Should we
-automatically
-[box](<https://en.wikipedia.org/wiki/Object_type_(object-oriented_programming)#Boxing>)
-local variables when using the dynamic strategy? Or should we only allow
-`MaybeBox` values to be instantiated locally? Or should this just be a case
-where the compiler won't necessarily use the dynamic strategy?
-
 **Open question:** Should the `Sized` facet type expose an associated constant
 with the size? So you could say `T.ByteSize` in the above example to get a
-generic int value with the size of `T`. Similarly you might say `T.ByteStride`
-to get the number of bytes used for each element of an array of `T`.
+symbolic integer value with the size of `T`. Similarly you might say
+`T.ByteStride` to get the number of bytes used for each element of an array of
+`T`.
 
 ### `TypeId`
 
@@ -3596,11 +3615,11 @@ There are some capabilities every type can provide. For example, every type
 should be able to return its name or identify whether it is equal to another
 type. It is rare, however, for code to need to access these capabilities, so we
 relegate these capabilities to an interface called `TypeId` that all types
-automatically implement. This way generic code can indicate that it needs those
-capabilities by including `TypeId` in the list of requirements. In the case
-where no type capabilities are needed, for example the code is only manipulating
-pointers to the type, you would write `T:! type` and get the efficiency of
-`void*` but without giving up type safety.
+automatically implement. This way checked-generic code can indicate that it
+needs those capabilities by including `TypeId` in the list of requirements. In
+the case where no type capabilities are needed, for example the code is only
+manipulating pointers to the type, you would write `T:! type` and get the
+efficiency of `void*` but without giving up type safety.
 
 ```
 fn SortByAddress[T:! type](v: Vector(T*)*) { ... }
@@ -3638,8 +3657,8 @@ conform to the decision on
 The facet types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
 `Destructible`. Combinations of them may be formed using
 [the `&` operator](#combining-interfaces-by-anding-facet-types). For example, a
-generic function that both instantiates and deletes values of a type `T` would
-require `T` implement `Concrete & Deletable`.
+checked-generic function that both instantiates and deletes values of a type `T`
+would require `T` implement `Concrete & Deletable`.
 
 Types are forbidden from explicitly implementing these facet types directly.
 Instead they use
@@ -3663,7 +3682,7 @@ fn F(...) {
 }
 ```
 
-gets rewritten to:
+is generally equivalent to:
 
 ```
 fn F(...) {
@@ -3996,9 +4015,9 @@ and for selecting which impl to use that achieve these three goals:
     [a goal for Carbon](goals.md#coherence). More detail can be found in
     [this appendix with the rationale and alternatives considered](appendix-coherence.md).
 -   Libraries will work together as long as they pass their separate checks.
--   A generic function can assume that some impl will be successfully selected
-    if it can see an impl that applies, even though another more specific impl
-    may be selected.
+-   A checked-generic function can assume that some impl will be successfully
+    selected if it can see an impl that applies, even though another more
+    specific impl may be selected.
 
 For this to work, we need a rule that picks a single `impl` in the case where
 there are multiple `impl` definitions that match a particular type and interface
@@ -4270,9 +4289,9 @@ this time there are no known alternatives. Unfortunately, the approach Carbon
 uses to avoid undecidability for type equality,
 [providing an explicit proof in the source](#manual-type-equality), can't be
 used here. The code triggering the query asking whether some type implements an
-interface will typically be generic code with know specific knowledge about the
-types involved, and won't be in a position to provide a manual proof that the
-implementation should exist.
+interface will typically be checked-generic code with no specific knowledge
+about the types involved, and won't be in a position to provide a manual proof
+that the implementation should exist.
 
 **Open question:** Is there some restriction on `impl` declarations that would
 allow our desired use cases, but allow the compiler to detect non-terminating
@@ -4446,9 +4465,9 @@ differences between the Carbon and Rust plans:
     declared `final`.
 -   Since a Rust impl is not specializable by default, generic functions can
     assume that if a matching blanket impl declaration is found, the associated
-    constants from that impl will be used. In Carbon, if a generic function
-    requires an associated constant to have a particular value, the function
-    commonly will need to state that using an explicit constraint.
+    constants from that impl will be used. In Carbon, if a checked-generic
+    function requires an associated constant to have a particular value, the
+    function commonly will need to state that using an explicit constraint.
 -   Carbon will not have the "fundamental" attribute used by Rust on types or
     traits, as described in
     [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html).
@@ -5632,10 +5651,10 @@ impl forall [T:! IntLike] like T
 
 ## Parameterized types
 
-Types may have generic parameters. Those parameters may be used to specify types
-in the declarations of its members, such as data fields, member functions, and
-even interfaces being implemented. For example, a container type might be
-parameterized by the type of its elements:
+Generic types may be defined by giving them compile-time parameters. Those
+parameters may be used to specify types in the declarations of its members, such
+as data fields, member functions, and even interfaces being implemented. For
+example, a container type might be parameterized by the type of its elements:
 
 ```
 class HashMap(
@@ -5655,8 +5674,9 @@ class HashMap(
 }
 ```
 
-Note that, unlike functions, every parameter to a type must either be generic or
-template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
+Note that, unlike functions, every parameter to a type must be compile-time,
+either symbolic using `:!` or template using `template...:!`, not dynamic, with
+a plain `:`.
 
 Two types are the same if they have the same name and the same arguments.
 Carbon's [manual type equality](#manual-type-equality) approach means that the
@@ -5762,8 +5782,8 @@ Note that the constraint on `T` is just `Movable`, not
 `Movable & OptionalStorage`, since the `Movable` requirement is
 [sufficient to guarantee](#lookup-resolution-and-specialization) that some
 implementation of `OptionalStorage` exists for `T`. Carbon does not require
-callers of `Optional`, even generic callers, to specify that the argument type
-implements `OptionalStorage`:
+callers of `Optional`, even checked-generic callers, to specify that the
+argument type implements `OptionalStorage`:
 
 ```
 // ✅ Allowed: `T` just needs to be `Movable` to form `Optional(T)`.
@@ -5797,15 +5817,15 @@ class Optional(T:! Movable) {
 
 ### Dynamic types
 
-Generics provide enough structure to support runtime dispatch for values with
-types that vary at runtime, without giving up type safety. Both Rust and Swift
-have demonstrated the value of this feature.
+Checked-generics provide enough structure to support runtime dispatch for values
+with types that vary at runtime, without giving up type safety. Both Rust and
+Swift have demonstrated the value of this feature.
 
 #### Runtime type parameters
 
 This feature is about allowing a function's type parameter to be passed in as a
-dynamic (non-generic) parameter. All values of that type would still be required
-to have the same type.
+dynamic (non-compile-time) parameter. All values of that type would still be
+required to have the same type.
 
 #### Runtime type fields
 
@@ -5834,8 +5854,8 @@ There are a collection of use cases for making different changes to interfaces
 that are already in use. These should be addressed either by describing how they
 can be accomplished with existing generics features, or by adding features.
 
-In addition, evolution from (C++ or Carbon) templates to generics needs to be
-supported and made safe.
+In addition, evolution from (C++ or Carbon) templates to checked generics needs
+to be supported and made safe.
 
 ### Testing
 
@@ -5878,13 +5898,14 @@ See details in [the goals document](goals.md#bridge-for-c-customization-points).
 
 ### Variadic arguments
 
-Some facility for allowing a function to generically take a variable number of
-arguments.
+Some facility for allowing a function to take a variable number of arguments,
+with the [definition checked](terminology.md#complete-definition-checking)
+independent of calls.
 
-### Range constraints on generic integers
+### Range constraints on symbolic integers
 
 We currently only support `where` clauses on facet types. We may want to also
-support constraints on generic integers. The constraint with the most expected
+support constraints on symbolic integers. The constraint with the most expected
 value is the ability to do comparisons like `<`, or `>=`. For example, you might
 constrain the `N` member of [`NSpacePoint`](#associated-constants) using an
 expression like `PointT:! NSpacePoint where 2 <= .N and .N <= 3`.
@@ -5892,7 +5913,7 @@ expression like `PointT:! NSpacePoint where 2 <= .N and .N <= 3`.
 The concern here is supporting this at compile time with more benefit than
 complexity. For example, we probably don't want to support integer-range based
 types at runtime, and there are also concerns about reasoning about comparisons
-between multiple generic integer parameters. For example, if `J < K` and
+between multiple symbolic integer parameters. For example, if `J < K` and
 `K <= L`, can we call a function that requires `J < L`? There is also a
 secondary syntactic concern about how to write this kind of constraint on a
 parameter, as opposed to an associated facet, as in `N:! u32 where ___ >= 2`.
