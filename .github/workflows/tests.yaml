@@ -201,7 +201,7 @@ jobs:
           EVENT_CONTEXT: ${{ toJson(github.event) }}
         run: |
           echo "$EVENT_CONTEXT"
-          git rev-parse ${{ github.sha }}^
+          git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
           ./scripts/bazel_diff.py \
             --baseline=${{ github.event.pull_request.base.sha }} \
             --current=${{ github.event.pull_request.head.sha }} \
@@ -215,6 +215,7 @@ jobs:
           EVENT_CONTEXT: ${{ toJson(github.event) }}
         run: |
           echo "$EVENT_CONTEXT"
+          git fetch --depth=1 origin ${{ github.event.merge_group.base_sha }}
           ./scripts/bazel_diff.py \
             --baseline=${{ github.event.merge_group.base_sha }} \
             --current=${{ github.event.merge_group.head_sha }} \
