@@ -13,6 +13,8 @@
 
 namespace Carbon::Check {
 
+// Isolated change to test CI
+
 // Constructs builtins. A single instance should be reused with CheckParseTree
 // calls associated with a given compilation.
 inline auto MakeBuiltins() -> SemIR::File { return SemIR::File(); }

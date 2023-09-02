@@ -20,6 +20,8 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass, field, asdict
 from collections import Counter
 
+# Test commit with a no-op comment.
+
 BLANK_RE = re.compile(r"\s*")
 COMMENT_RE = re.compile(r"\s*///*\s*")
 LINE_RE = re.compile(
