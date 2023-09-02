@@ -7,6 +7,8 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/driver/driver_file_test_base.h"
 
+// Test commit with a no-op comment.
+
 namespace Carbon::Testing {
 namespace {
 
