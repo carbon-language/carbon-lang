@@ -5173,6 +5173,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     switch (fun->virt_override()) {
       case VirtualOverride::Abstract:
         // Not supported yet.
+        // TODO: sheil (https://github.com/carbon-language/carbon-lang/issues/2512)
         return ProgramError(fun->source_loc())
                << "Error declaring `" << fun->name() << "`"
                << ": `abstract` methods are not yet supported.";
