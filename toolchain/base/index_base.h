@@ -14,6 +14,8 @@ namespace Carbon {
 template <typename DataType>
 class DataIterator;
 
+// Test commit with a no-op comment.
+
 // A lightweight handle to an item in a vector.
 //
 // DataIndex is designed to be passed by value, not reference or pointer. They
