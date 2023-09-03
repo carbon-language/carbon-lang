@@ -17,6 +17,7 @@ import argparse
 import tempfile
 import os
 import sys
+from pathlib import Path
 
 import scripts_utils
 
@@ -25,10 +26,10 @@ def log(s: str) -> None:
     print(s, file=sys.stderr)
 
 
-def make_bazel_diff_script(bazel: str, tmpdir: str) -> str:
-    bazel_diff_path = os.path.join(tmpdir, "bazel_diff")
+def make_bazel_diff_script(bazel: Path, tmpdir: Path) -> Path:
+    bazel_diff_path = tmpdir / "bazel_diff"
     args = [
-        bazel,
+        str(bazel),
         "run",
         f"--script_path={bazel_diff_path}",
         "//bazel/diff:bazel-diff",
@@ -37,36 +38,36 @@ def make_bazel_diff_script(bazel: str, tmpdir: str) -> str:
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8"
     )
     if p.returncode != 0:
-        print(p.stderr)
+        log(p.stderr)
         exit(f"Bazel run returned {p.returncode}")
     return bazel_diff_path
 
 
 def compute_hashes(
-    bazel: str, bazel_diff: str, tmpdir: str, prefix: str
-) -> str:
-    hashes_path = os.path.join(tmpdir, f"{prefix}_hashes")
+    bazel: Path, bazel_diff: Path, tmpdir: Path, prefix: str
+) -> Path:
+    hashes_path = tmpdir / f"{prefix}_hashes"
     args = [
-        bazel_diff,
+        str(bazel_diff),
         "generate-hashes",
         f"-b={bazel}",
         f"-w={os.getcwd()}",
-        hashes_path,
+        str(hashes_path),
     ]
     p = subprocess.run(
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8"
     )
     if p.returncode != 0:
-        print(p.stderr)
+        log(p.stderr)
         exit(f"Bazel diff returned {p.returncode}")
     return hashes_path
 
 
 def impacted_targets(
-    bazel_diff: str, baseline_hashes: str, current_hashes: str
+    bazel_diff: Path, baseline_hashes: Path, current_hashes: Path
 ) -> str:
     args = [
-        bazel_diff,
+        str(bazel_diff),
         "get-impacted-targets",
         f"-sh={baseline_hashes}",
         f"-fh={current_hashes}",
@@ -75,19 +76,19 @@ def impacted_targets(
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8"
     )
     if p.returncode != 0:
-        print(p.stderr)
+        log(p.stderr)
         exit(f"Bazel diff returned {p.returncode}")
     return p.stdout
 
 
-def filter_targets(bazel: str, targets: str) -> str:
+def filter_targets(bazel: Path, targets: str) -> str:
     with tempfile.NamedTemporaryFile(mode="w") as tmp:
         tmp.write(
             f"let t = set({targets}) in "
             "kind(rule, $t) except attr(tags, manual, $t)\n"
         )
         args = [
-            bazel,
+            str(bazel),
             "query",
             f"--query_file={tmp.name}",
         ]
@@ -98,37 +99,43 @@ def filter_targets(bazel: str, targets: str) -> str:
             encoding="utf-8",
         )
         if p.returncode != 0:
-            print(p.stderr)
+            log(p.stderr)
             exit(f"Bazel run returned {p.returncode}")
         return p.stdout
 
 
-def git_checkout(commit: str) -> None:
-    subprocess.run(
-        [
-            "git",
-            "checkout",
-            "--quiet",
-            commit,
-        ],
-        check=True,
+def git_is_dirty() -> bool:
+    output = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
         encoding="utf-8",
     )
+    return len(output) > 0
+
+
+def git_current_head() -> str:
+    # Try to get and preserve symbolic-ref if HEAD point at one.
+    if p := subprocess.run(
+        ["git", "symbolic-ref", "--quiet", "--short", "HEAD"],
+        encoding="utf-8",
+        stdout=subprocess.PIPE,
+    ):
+        return p.stdout
+
+    # Otherwise, just extract the commit.
+    return subprocess.check_output(
+        ["git", "rev-parse", "--short", "HEAD"], encoding="utf-8"
+    )
+
+
+def git_checkout(commit: str) -> None:
+    subprocess.check_call(["git", "checkout", "--quiet", commit])
 
 
 def git_diff(baseline: str, current: str) -> None:
-    p = subprocess.run(
-        [
-            "git",
-            "diff",
-            "--stat",
-            f"{baseline}..{current}",
-        ],
-        check=True,
-        encoding="utf-8",
-        stdout=subprocess.PIPE,
+    output = subprocess.check_output(
+        ["git", "diff", "--stat", f"{baseline}..{current}"], encoding="utf-8"
     )
-    log(p.stdout)
+    log(output)
 
 
 def main() -> None:
@@ -136,21 +143,21 @@ def main() -> None:
     parser.add_argument(
         "--baseline", required=True, help="Git commit of the diff baseline."
     )
-    parser.add_argument(
-        "--current", required=True, help="Git commit of the current state."
-    )
     parsed_args = parser.parse_args()
 
     scripts_utils.chdir_repo_root()
-    bazel = scripts_utils.locate_bazel()
+    bazel = Path(scripts_utils.locate_bazel())
+
+    if git_is_dirty():
+        exit("Cannot operate on a dirty repository!")
 
     baseline = parsed_args.baseline
-    current = parsed_args.current
+    current = git_current_head()
     log(f"Diffing Bazel targets for {baseline}..{current}")
     git_diff(baseline, current)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = tempfile.mkdtemp()
+    with tempfile.TemporaryDirectory() as tmpdir_handle:
+        tmpdir = Path(tmpdir_handle)
         bazel_diff = make_bazel_diff_script(bazel, tmpdir)
         log(f"Wrote bazel-diff script: {bazel_diff}")
 

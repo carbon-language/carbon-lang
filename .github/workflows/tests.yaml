@@ -23,10 +23,8 @@ jobs:
         # At present, these images are newer than "latest". We use them to test
         # against more recent tooling versions.
         # https://github.com/actions/runner-images
-        #os: [ubuntu-22.04, macos-12]
-        #build_mode: [fastbuild, opt]
-        os: [ubuntu-22.04]
-        build_mode: [opt]
+        os: [ubuntu-22.04, macos-12]
+        build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
 
     steps:
