@@ -196,15 +196,11 @@ jobs:
         if:
           steps.filter.outputs.ignore == 'false' && github.event_name != 'push'
         env:
-          # Compute the base and head SHAs from the different event structures.
+          # Compute the base SHA from the different event structures.
           GIT_BASE_SHA:
             ${{ github.event_name == 'pull_request_target' &&
             github.event.pull_request.base.sha ||
             github.event.merge_group.base_sha }}
-          GIT_HEAD_SHA:
-            ${{ github.event_name == 'pull_request_target' &&
-            github.event.pull_request.head.sha ||
-            github.event.merge_group.head_sha }}
         run: |
           # First fetch the relevant base into the git repository.
           git fetch --depth=1 origin $GIT_BASE_SHA
@@ -212,7 +208,6 @@ jobs:
           # Then use our script to drive the bazel-diff tool.
           ./scripts/bazel_diff.py \
             --baseline=$GIT_BASE_SHA \
-            --current=$GIT_HEAD_SHA \
             >targets
 
       # Build and run just the tests impacted by the PR or merge group.
