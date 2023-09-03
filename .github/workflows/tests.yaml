@@ -178,7 +178,8 @@ jobs:
         run: df -h
 
       # Build and run all targets on branch pushes to ensure we always have a
-      # clean tree. We don't expect this to be an interactive path.
+      # clean tree. We don't expect this to be an interactive path and so don't
+      # optimize the latency of this step.
       - name: Test (${{ matrix.build_mode }})
         if:
           steps.filter.outputs.ignore == 'false' && github.event_name == 'push'
@@ -190,38 +191,33 @@ jobs:
           bazelisk test -c ${{ matrix.build_mode }} //...
 
       # Compute the set of possible rules impacted by this change using
-      # Bazel-based diffing.
-      # TODO: This isn't used yet until we are confident it is computing the
-      # correct baseline git reference and target set.
+      # Bazel-based diffing. This lets PRs and the merge queue have a much more
+      # efficient test CI action by avoiding even enumerating (and downloading)
+      # all of the unaffected Bazel targets
       - name: Compute impacted pull request targets
         if:
-          steps.filter.outputs.ignore == 'false' && github.event_name ==
-          'pull_request_target'
+          steps.filter.outputs.ignore == 'false' && github.event_name != 'push'
         env:
-          EVENT_CONTEXT: ${{ toJson(github.event) }}
+          # Compute the base and head SHAs from the different event structures.
+          GIT_BASE_SHA:
+            ${{ github.event_name == 'pull_request_target' &&
+            github.event.pull_request.base.sha ||
+            github.event.merge_group.base_sha }}
+          GIT_HEAD_SHA:
+            ${{ github.event_name == 'pull_request_target' &&
+            github.event.pull_request.head.sha ||
+            github.event.merge_group.head_sha }}
         run: |
-          echo "$EVENT_CONTEXT"
-          git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
+          # First fetch the relevant base into the git repository.
+          git fetch --depth=1 origin $GIT_BASE_SHA
+
+          # Then use our script to drive the bazel-diff tool.
           ./scripts/bazel_diff.py \
-            --baseline=${{ github.event.pull_request.base.sha }} \
-            --current=${{ github.event.pull_request.head.sha }} \
+            --baseline=$GIT_BASE_SHA \
+            --current=$GIT_HEAD_SHA \
             >targets
 
-      - name: Compute impacted branch targets
-        if:
-          steps.filter.outputs.ignore == 'false' && github.event_name ==
-          'merge_group'
-        env:
-          EVENT_CONTEXT: ${{ toJson(github.event) }}
-        run: |
-          echo "$EVENT_CONTEXT"
-          git fetch --depth=1 origin ${{ github.event.merge_group.base_sha }}
-          ./scripts/bazel_diff.py \
-            --baseline=${{ github.event.merge_group.base_sha }} \
-            --current=${{ github.event.merge_group.head_sha }} \
-            >targets
-
-      # Build and run tests impacted by the PR or merge.
+      # Build and run just the tests impacted by the PR or merge group.
       - name: Test (${{ matrix.build_mode }})
         if:
           steps.filter.outputs.ignore == 'false' && github.event_name != 'push'
