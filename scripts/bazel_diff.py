@@ -119,12 +119,12 @@ def git_current_head() -> str:
         encoding="utf-8",
         stdout=subprocess.PIPE,
     ):
-        return p.stdout
+        return p.stdout.trim()
 
     # Otherwise, just extract the commit.
     return subprocess.check_output(
         ["git", "rev-parse", "--short", "HEAD"], encoding="utf-8"
-    )
+    ).trim()
 
 
 def git_checkout(commit: str) -> None:
