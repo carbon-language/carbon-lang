@@ -99,11 +99,13 @@ def impacted_targets(
 
 
 def filter_targets(bazel: Path, targets: str) -> str:
-    with tempfile.NamedTemporaryFile(mode="w") as tmp:
+    with tempfile.NamedTemporaryFile(mode="w+") as tmp:
         tmp.write(
             f"let t = set({targets}) in "
             "kind(rule, $t) except attr(tags, manual, $t)\n"
         )
+        tmp.seek(0)
+        log(f"Bazel query file:\n{tmp.read()}---")
         return quiet_run_output(
             [
                 str(bazel),
@@ -189,6 +191,7 @@ def main() -> None:
         log(f"Current hashes: {current_hashes}")
 
         targets = impacted_targets(bazel_diff, baseline_hashes, current_hashes)
+        log(f"Impacted targets:\n{targets}---")
         if targets != "":
             targets = filter_targets(bazel, targets)
         log(f"Found {len(targets.splitlines())} impacted targets!")
