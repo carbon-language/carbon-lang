@@ -105,7 +105,10 @@ def filter_targets(bazel: Path, targets: str) -> str:
             "kind(rule, $t) except attr(tags, manual, $t)\n"
         )
         tmp.seek(0)
-        log(f"Bazel query file:\n{tmp.read()}---")
+        tmp_head = "".join(line for (line, _) in zip(tmp, range(10)))
+        if tmp.read(1) != "":
+            tmp_head += "...\n"
+        log(f"Bazel query file's first 10 lines:\n{tmp_head}---")
         return quiet_run_output(
             [
                 str(bazel),
@@ -191,8 +194,7 @@ def main() -> None:
         log(f"Current hashes: {current_hashes}")
 
         targets = impacted_targets(bazel_diff, baseline_hashes, current_hashes)
-        log(f"Impacted targets:\n{targets}---")
-        if targets != "":
+        if targets.strip() != "":
             targets = filter_targets(bazel, targets)
         log(f"Found {len(targets.splitlines())} impacted targets!")
 
