@@ -123,11 +123,12 @@ def git_is_dirty() -> bool:
 
 def git_current_head() -> str:
     # Try to get and preserve symbolic-ref if HEAD point at one.
-    if p := subprocess.run(
+    p = subprocess.run(
         ["git", "symbolic-ref", "--quiet", "--short", "HEAD"],
         encoding="utf-8",
         stdout=subprocess.PIPE,
-    ):
+    )
+    if p.returncode == 0:
         return p.stdout.strip()
 
     # Otherwise, just extract the commit.
