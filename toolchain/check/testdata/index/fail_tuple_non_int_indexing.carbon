@@ -24,9 +24,12 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc7_27: (i32, i32) = tuple_literal (%.loc7_22.2, %.loc7_26.2)
 // CHECK:STDOUT:   %.loc7_28.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_28.2: ref i32 = tuple_index %a, %.loc7_28.1
+// CHECK:STDOUT:   assign %.loc7_28.2, %.loc7_22.2
 // CHECK:STDOUT:   %.loc7_28.3: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_28.4: ref i32 = tuple_index %a, %.loc7_28.3
-// CHECK:STDOUT:   assign %a, %.loc7_27
+// CHECK:STDOUT:   assign %.loc7_28.4, %.loc7_26.2
+// CHECK:STDOUT:   %.loc7_28.5: init (i32, i32) = tuple_literal_as_init %.loc7_27, (%.loc7_22.2, %.loc7_26.2)
+// CHECK:STDOUT:   assign %a, %.loc7_28.5
 // CHECK:STDOUT:   %b: ref i32 = var "b"
 // CHECK:STDOUT:   %.loc11_16: f64 = real_literal 26e-1
 // CHECK:STDOUT:   %.loc11_19: ref <error> = tuple_index %a, <error>

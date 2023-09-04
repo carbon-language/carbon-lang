@@ -18,16 +18,14 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %tuple = alloca {}, align 8
-// CHECK:STDOUT:   %tuple1 = alloca { i32 }, align 8
-// CHECK:STDOUT:   %1 = getelementptr inbounds { i32 }, ptr %tuple1, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %1, align 4
-// CHECK:STDOUT:   %tuple2 = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32 }, ptr %tuple2, i32 0, i32 0
-// CHECK:STDOUT:   store i32 2, ptr %2, align 4
-// CHECK:STDOUT:   %3 = getelementptr inbounds { i32, i32 }, ptr %tuple2, i32 0, i32 1
-// CHECK:STDOUT:   store i32 3, ptr %3, align 4
-// CHECK:STDOUT:   %4 = load { i32 }, ptr %tuple1, align 4
-// CHECK:STDOUT:   call void @F({ i32 } %4, ptr %tuple2)
+// CHECK:STDOUT:   %tuple = alloca { i32, i32 }, align 8
+// CHECK:STDOUT:   %1 = getelementptr inbounds { i32, i32 }, ptr %tuple, i32 0, i32 0
+// CHECK:STDOUT:   store i32 2, ptr %1, align 4
+// CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32 }, ptr %tuple, i32 0, i32 1
+// CHECK:STDOUT:   store i32 3, ptr %2, align 4
+// CHECK:STDOUT:   call void @F({ i32 } { i32 1 }, ptr %tuple)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder i32 1, { 2, 0, 1 }

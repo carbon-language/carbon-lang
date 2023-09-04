@@ -21,9 +21,12 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc7_28: (i32, i32) = tuple_literal (%.loc7_22.2, %.loc7_25.2)
 // CHECK:STDOUT:   %.loc7_29.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_29.2: ref i32 = tuple_index %x, %.loc7_29.1
+// CHECK:STDOUT:   assign %.loc7_29.2, %.loc7_22.2
 // CHECK:STDOUT:   %.loc7_29.3: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_29.4: ref i32 = tuple_index %x, %.loc7_29.3
-// CHECK:STDOUT:   assign %x, %.loc7_28
+// CHECK:STDOUT:   assign %.loc7_29.4, %.loc7_25.2
+// CHECK:STDOUT:   %.loc7_29.5: init (i32, i32) = tuple_literal_as_init %.loc7_28, (%.loc7_22.2, %.loc7_25.2)
+// CHECK:STDOUT:   assign %x, %.loc7_29.5
 // CHECK:STDOUT:   %.loc8_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_14: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_17: (type, type) = tuple_literal (%.loc8_9, %.loc8_14)

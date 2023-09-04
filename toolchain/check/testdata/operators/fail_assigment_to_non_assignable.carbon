@@ -73,9 +73,13 @@ fn Main() {
 // CHECK:STDOUT:   %.loc21_17: (i32, i32) = tuple_literal (%.loc21_13.2, %.loc21_16.2)
 // CHECK:STDOUT:   %.loc21_10.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc21_10.2: i32 = tuple_index %.loc21_8.2, %.loc21_10.1
+// CHECK:STDOUT:   assign %.loc21_10.2, %.loc21_13.2
 // CHECK:STDOUT:   %.loc21_10.3: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc21_10.4: i32 = tuple_index %.loc21_8.2, %.loc21_10.3
-// CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_17
+// CHECK:STDOUT:   assign %.loc21_10.4, %.loc21_16.2
+// CHECK:STDOUT:   %.loc21_10.5: init (i32, i32) = tuple_literal_as_init %.loc21_17, (%.loc21_13.2, %.loc21_16.2)
+// CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_10.5
+// CHECK:STDOUT:   %.loc21_8.3: (i32, i32) = tuple_literal_as_value %.loc21_8.2, (%.loc21_4.2, %.loc21_7.2)
 // CHECK:STDOUT:   %n: ref i32 = var "n"
 // CHECK:STDOUT:   %.loc22_16: i32 = int_literal 0
 // CHECK:STDOUT:   assign %n, %.loc22_16
@@ -83,17 +87,21 @@ fn Main() {
 // CHECK:STDOUT:   %.loc26_4: i32 = stub_reference %.loc22_7.1
 // CHECK:STDOUT:   %.loc22_7.2: i32 = bind_value %n
 // CHECK:STDOUT:   %.loc26_7: i32 = stub_reference %.loc22_7.2
-// CHECK:STDOUT:   %.loc26_8: (i32, i32) = tuple_literal (%.loc26_4, %.loc26_7)
+// CHECK:STDOUT:   %.loc26_8.1: (i32, i32) = tuple_literal (%.loc26_4, %.loc26_7)
 // CHECK:STDOUT:   %.loc26_13.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc26_13.2: i32 = stub_reference %.loc26_13.1
 // CHECK:STDOUT:   %.loc26_16.1: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc26_16.2: i32 = stub_reference %.loc26_16.1
 // CHECK:STDOUT:   %.loc26_17: (i32, i32) = tuple_literal (%.loc26_13.2, %.loc26_16.2)
 // CHECK:STDOUT:   %.loc26_10.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc26_10.2: i32 = tuple_index %.loc26_8, %.loc26_10.1
+// CHECK:STDOUT:   %.loc26_10.2: i32 = tuple_index %.loc26_8.1, %.loc26_10.1
+// CHECK:STDOUT:   assign %.loc26_10.2, %.loc26_13.2
 // CHECK:STDOUT:   %.loc26_10.3: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc26_10.4: i32 = tuple_index %.loc26_8, %.loc26_10.3
-// CHECK:STDOUT:   assign %.loc26_8, %.loc26_17
+// CHECK:STDOUT:   %.loc26_10.4: i32 = tuple_index %.loc26_8.1, %.loc26_10.3
+// CHECK:STDOUT:   assign %.loc26_10.4, %.loc26_16.2
+// CHECK:STDOUT:   %.loc26_10.5: init (i32, i32) = tuple_literal_as_init %.loc26_17, (%.loc26_13.2, %.loc26_16.2)
+// CHECK:STDOUT:   assign %.loc26_8.1, %.loc26_10.5
+// CHECK:STDOUT:   %.loc26_8.2: (i32, i32) = tuple_literal_as_value %.loc26_8.1, (%.loc26_4, %.loc26_7)
 // CHECK:STDOUT:   %.loc30: type = ptr_type i32
 // CHECK:STDOUT:   assign i32, %.loc30
 // CHECK:STDOUT:   %.loc34_9: i32 = int_literal 1
@@ -108,8 +116,12 @@ fn Main() {
 // CHECK:STDOUT:   %.loc34_34: i32 = stub_reference %.loc34_36
 // CHECK:STDOUT:   %.loc34_37: {.x: i32, .y: i32} = struct_literal (%.loc34_26, %.loc34_34)
 // CHECK:STDOUT:   %.loc34_20.1: i32 = struct_access %.loc34_18.2, member0
+// CHECK:STDOUT:   assign %.loc34_20.1, %.loc34_26
 // CHECK:STDOUT:   %.loc34_20.2: i32 = struct_access %.loc34_18.2, member1
-// CHECK:STDOUT:   assign %.loc34_18.2, %.loc34_37
+// CHECK:STDOUT:   assign %.loc34_20.2, %.loc34_34
+// CHECK:STDOUT:   %.loc34_20.3: init {.x: i32, .y: i32} = struct_literal_as_init %.loc34_37, (%.loc34_26, %.loc34_34)
+// CHECK:STDOUT:   assign %.loc34_18.2, %.loc34_20.3
+// CHECK:STDOUT:   %.loc34_18.3: {.x: i32, .y: i32} = struct_literal_as_value %.loc34_18.2, (%.loc34_7, %.loc34_15)
 // CHECK:STDOUT:   %.loc38_7: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc38_7 br !if.expr.then.loc38 else br !if.expr.else.loc38
 // CHECK:STDOUT:

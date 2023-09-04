@@ -410,6 +410,14 @@ class Node : public Printable<Node> {
   using StructLiteral =
       Factory<NodeKind::StructLiteral, NodeBlockId /*refs_id*/>;
 
+  using StructLiteralAsInit =
+      Factory<NodeKind::StructLiteralAsInit, NodeId /*literal_id*/,
+              NodeBlockId /*converted_refs_id*/>;
+
+  using StructLiteralAsValue =
+      Factory<NodeKind::StructLiteralAsValue, NodeId /*literal_id*/,
+              NodeBlockId /*converted_refs_id*/>;
+
   using StructType = Factory<NodeKind::StructType, NodeBlockId /*refs_id*/>;
 
   using StructTypeField =
@@ -427,6 +435,14 @@ class Node : public Printable<Node> {
       Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;
 
   using TupleLiteral = Factory<NodeKind::TupleLiteral, NodeBlockId /*refs_id*/>;
+
+  using TupleLiteralAsInit =
+      Factory<NodeKind::TupleLiteralAsInit, NodeId /*literal_id*/,
+              NodeBlockId /*converted_refs_id*/>;
+
+  using TupleLiteralAsValue =
+      Factory<NodeKind::TupleLiteralAsValue, NodeId /*literal_id*/,
+              NodeBlockId /*converted_refs_id*/>;
 
   using TupleType = Factory<NodeKind::TupleType, TypeBlockId /*refs_id*/>;
 

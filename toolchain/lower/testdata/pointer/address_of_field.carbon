@@ -19,15 +19,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() {
 // CHECK:STDOUT:   %s = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %struct = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %struct, i32 0, i32 0
+// CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %a, align 4
-// CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %struct, i32 0, i32 1
+// CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
 // CHECK:STDOUT:   store i32 2, ptr %b, align 4
-// CHECK:STDOUT:   %a1 = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 0
-// CHECK:STDOUT:   %b2 = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
-// CHECK:STDOUT:   %b3 = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
-// CHECK:STDOUT:   %1 = load ptr, ptr %b3, align 8
+// CHECK:STDOUT:   %b1 = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
+// CHECK:STDOUT:   %1 = load ptr, ptr %b1, align 8
 // CHECK:STDOUT:   call void @G(ptr %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
