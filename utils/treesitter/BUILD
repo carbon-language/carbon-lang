@@ -13,6 +13,7 @@ tree_sitter_cc_library(
 
 cc_binary(
     name = "test_runner",
+    testonly = 1,
     srcs = ["test_runner.cpp"],
     deps = [
         ":treesitter",
