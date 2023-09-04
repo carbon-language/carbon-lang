@@ -45,3 +45,9 @@ cc_test(
         "@com_google_googletest//:gtest",
     ],
 )
+
+py_test(
+    name = "no_op_test",
+    srcs = ["no_op_test.py"],
+    main = "no_op_test.py",
+)
