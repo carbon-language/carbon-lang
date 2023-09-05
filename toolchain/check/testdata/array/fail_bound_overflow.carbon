@@ -42,7 +42,7 @@ var a: [1; 39999999999999999993];
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7_9: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc7_12: i32 = int_literal 39999999999999999993
+// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 39999999999999999993
 // CHECK:STDOUT:   %a: ref <error> = var "a"
 // CHECK:STDOUT: }
