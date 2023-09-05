@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Name bindings](#name-bindings)
         -   [Unused bindings](#unused-bindings)
             -   [Alternatives considered](#alternatives-considered-1)
-        -   [Generic bindings](#generic-bindings)
+        -   [Compile-time bindings](#compile-time-bindings)
         -   [`auto` and type deduction](#auto-and-type-deduction)
         -   [Alternatives considered](#alternatives-considered-2)
     -   [`var`](#var)
@@ -214,39 +214,43 @@ fn J(unused n: i32);
 -   [Anonymous, named identifiers](/proposals/p2022.md#anonymous-named-identifiers)
 -   [Attributes](/proposals/p2022.md#attributes)
 
-#### Generic bindings
+#### Compile-time bindings
 
 A `:!` can be used in place of `:` for a binding that is usable at compile time.
 
--   _generic-pattern_ ::= `unused`? `template`? _identifier_ `:!` _expression_
--   _generic-pattern_ ::= `template`? _identifier_ `:!` _expression_
--   _generic-pattern_ ::= `template`? `_` `:!` _expression_
--   _generic-pattern_ ::= `unused` `template`? _identifier_ `:!` _expression_
--   _proper-pattern_ ::= _generic-pattern_
+-   _compile-time-pattern_ ::= `unused`? `template`? _identifier_ `:!`
+    _expression_
+-   _compile-time-pattern_ ::= `template`? _identifier_ `:!` _expression_
+-   _compile-time-pattern_ ::= `template`? `_` `:!` _expression_
+-   _compile-time-pattern_ ::= `unused` `template`? _identifier_ `:!`
+    _expression_
+-   _proper-pattern_ ::= _compile-time-pattern_
 
 **FIXME:** Maybe this should just be:
 
--   _generic-pattern_ ::= `unused`? `template`? _identifier_ `:!` _expression_
--   _generic-pattern_ ::= `template`? `_` `:!` _expression_
--   _proper-pattern_ ::= _generic-pattern_
+-   _compile-time-pattern_ ::= `unused`? `template`? _identifier_ `:!`
+    _expression_
+-   _compile-time-pattern_ ::= `template`? `_` `:!` _expression_
+-   _proper-pattern_ ::= _compile-time-pattern_
 
-**FIXME:** Or:
+**FIXME:** Or, if we want to keep the "unused" patterns separate:
 
--   _generic-pattern_ ::= `template`? _identifier_ `:!` _expression_
--   _generic-pattern_ ::= `template`? `_` `:!` _expression_
--   _generic-pattern_ ::= `unused` `template`? _identifier_ `:!` _expression_
--   _proper-pattern_ ::= _generic-pattern_
+-   _compile-time-pattern_ ::= `template`? _identifier_ `:!` _expression_
+-   _compile-time-pattern_ ::= `template`? `_` `:!` _expression_
+-   _compile-time-pattern_ ::= `unused` `template`? _identifier_ `:!`
+    _expression_
+-   _proper-pattern_ ::= _compile-time-pattern_
 
 ```carbon
-// ✅ `F` takes a generic type parameter `T` and a parameter `x` of type `T`.
+// ✅ `F` takes a symbolic facet parameter `T` and a parameter `x` of type `T`.
 fn F(T:! type, x: T) {
   var v: T = x;
 }
 ```
 
-The `template` keyword indicates the binding is introducing a template
-parameter, so name lookups into the parameter should be deferred until its value
-is known.
+The `template` keyword indicates the binding pattern is introducing a template
+binding, so name lookups into the binding will not be fully resolved until its
+value is known.
 
 #### `auto` and type deduction
 

@@ -67,7 +67,7 @@ called a _generic parameter_, to it. So:
 -   a _generic function_ is a function with at least one compile-time parameter,
     which could be an explicit argument to the function or
     [deduced](#deduced-parameter);
--   a _generic type_ is a function with a compile-time parameter, for example a
+-   a _generic type_ is a type with a compile-time parameter, for example a
     container type parameterized by the type of the contained elements;
 -   a _generic interface_ is an [interface](#interface) with
     [a compile-time parameter](#interface-parameters-and-associated-constants).

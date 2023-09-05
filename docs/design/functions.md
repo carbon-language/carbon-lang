@@ -151,7 +151,7 @@ the `a` and `b` parameters of `Add`.
 Other designs build upon basic function syntax to add advanced features:
 
 -   [Generic functions](generics/overview.md#generic-functions) adds support for
-    deduced parameters and generic type parameters.
+    deduced parameters and compile-time parameters.
 -   [Class member functions](classes.md#member-functions) adds support for
     methods and class functions.
 

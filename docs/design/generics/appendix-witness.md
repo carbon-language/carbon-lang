@@ -53,10 +53,10 @@ document is to state the limitations and obstacles of doing that.
 ### Witness tables
 
 [Witness tables](https://forums.swift.org/t/where-does-the-term-witness-table-come-from/54334/4)
-are an implementation strategy where values passed to a generic type parameter
-are compiled into a table of required functionality. That table is then filled
-in for a given passed-in type with references to the implementation on the
-original type. The generic is implemented using calls into entries in the
+are an implementation strategy where values passed to a compile-time type
+binding are compiled into a table of required functionality. That table is then
+filled in for a given passed-in type with references to the implementation on
+the original type. The generic is implemented using calls into entries in the
 witness table, which turn into calls to the original type. This doesn't
 necessarily imply a runtime indirection: it may be a purely compile-time
 separation of concerns. However, it insists on a full abstraction boundary
