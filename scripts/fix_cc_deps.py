@@ -14,6 +14,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import sys
 import re
 import subprocess
 from typing import Callable, Dict, List, NamedTuple, Optional, Set, Tuple
@@ -94,9 +95,11 @@ def remap_file(label: str) -> str:
     repo, _, path = label.partition("//")
     if not repo:
         return path.replace(":", "/")
-    assert repo in EXTERNAL_REPOS, repo
-    return EXTERNAL_REPOS[repo].remap(path)
-    exit(f"Don't know how to remap label '{label}'")
+
+    if repo in EXTERNAL_REPOS:
+        return EXTERNAL_REPOS[repo].remap(path)
+    else:
+        sys.exit(f"Don't know how to remap label '{label}'")
 
 
 def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
