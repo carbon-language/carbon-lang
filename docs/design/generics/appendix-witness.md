@@ -128,12 +128,12 @@ generics.
 
 Specialization compounds the difficulty of the previous two issues.
 
-An interface with an associated type might be implemented using witness tables
-by including a reference to the associated type's witness table in the witness
-table for the interface. This doesn't give you a witness table for parameterized
-types using the associated type as an argument. Synthesizing those witness
-tables is particularly tricky if the implementation is different for specific
-types due to specialization.
+An interface with an associated facet might be implemented using witness tables
+by including a reference to the associated facet's witness table in the witness
+table for the interface. This doesn't, though, give you a witness table for
+parameterized types using the associated facet as an argument. Synthesizing
+those witness tables is particularly tricky if the implementation is different
+for specific types due to specialization.
 
 Similarly, a blanket implementation can guarantee that some implementation of an
 interface exists. Specialization means that actual implementation of that

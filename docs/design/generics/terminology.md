@@ -663,7 +663,8 @@ value is not known. This is the implementation strategy for
 and
 [trait objects in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
 Note that this often comes with limitations, since for example it is much more
-difficult to support when the associated types of the interface are not known.
+difficult to support when the associated constants of the interface are not
+known.
 
 Typically a reference to the witness table will be passed separately from the
 object, unlike a

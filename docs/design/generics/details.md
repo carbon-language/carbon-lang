@@ -2482,7 +2482,7 @@ class S(T:! B where ...) {
 
 // Constraints on an interface parameter:
 interface A(T:! B where ...) {
-  // Constraints on an associated type:
+  // Constraints on an associated facet:
   let U:! C where ...;
   // Constraints on an associated method:
   fn G[self: Self, V:! D where ...](v: V);
@@ -5874,7 +5874,8 @@ a type to an implementation of an interface parameterized by that type.
 #### Generic associated facets
 
 Generic associated facets are about when this is a requirement of an interface.
-These are also called "associated type constructors."
+These are also called
+"[associated type constructors](https://smallcultfollowing.com/babysteps/blog/2016/11/02/associated-type-constructors-part-1-basic-concepts-and-introduction/)."
 
 Rust has
 [stabilized this feature](https://github.com/rust-lang/rust/pull/96709).
