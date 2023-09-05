@@ -14,8 +14,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Pattern Syntax and Semantics](#pattern-syntax-and-semantics)
     -   [Expression patterns](#expression-patterns)
         -   [Alternatives considered](#alternatives-considered)
-    -   [Bindings](#bindings)
-        -   [Name bindings](#name-bindings)
+    -   [Binding patterns](#binding-patterns)
+        -   [Name binding patterns](#name-binding-patterns)
         -   [Unused bindings](#unused-bindings)
             -   [Alternatives considered](#alternatives-considered-1)
         -   [Compile-time bindings](#compile-time-bindings)
@@ -46,16 +46,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 A _pattern_ is an expression-like syntax that describes the structure of some
 value. The pattern may contain unknowns, so it can potentially match multiple
 values, and those unknowns may have names, in which case they are called
-_bindings_. When a pattern is executed by giving it a value called the
+_binding patterns_. When a pattern is executed by giving it a value called the
 _scrutinee_, it determines whether the scrutinee matches the pattern, and if so,
 determines the values of the bindings.
 
 ## Pattern Syntax and Semantics
 
 Expressions are patterns, as described below. A pattern that is not an
-expression, because it contains pattern-specific syntax such as a binding, is a
-_proper pattern_. Many expression forms, such as arbitrary function calls, are
-not permitted as proper patterns, so cannot contain bindings.
+expression, because it contains pattern-specific syntax such as a binding
+pattern, is a _proper pattern_. Many expression forms, such as arbitrary
+function calls, are not permitted as proper patterns, so cannot contain binding
+patterns.
 
 -   _pattern_ ::= _proper-pattern_
 
@@ -116,24 +117,28 @@ fn F() {
 
 -   [Introducer syntax for expression patterns](/proposals/p2188.md#introducer-syntax-for-expression-patterns)
 
-### Bindings
+### Binding patterns
 
-#### Name bindings
+#### Name binding patterns
 
-A name binding is a pattern.
+A name binding pattern is a pattern.
 
 -   _binding-pattern_ ::= _identifier_ `:` _expression_
 -   _proper-pattern_ ::= _binding-pattern_
 
-The type of the _identifier_ is specified by the _expression_. The scrutinee is
-implicitly converted to that type if necessary.
+The _identifier_ specifies the name of the _binding_. The type of the binding is
+specified by the _expression_. The scrutinee is implicitly converted to that
+type if necessary. The binding is then _bound_ to the converted value.
 
 ```carbon
 fn F() -> i32 {
   match (5) {
     // ✅ `5` is implicitly converted to `i32`.
-    // Returns `5 as i32`.
-    case n: i32 => { return n; }
+    case n: i32 => {
+      // The binding `n` has the value `5 as i32`,
+      // which is the value returned.
+      return n;
+    }
   }
 }
 ```
@@ -305,8 +310,8 @@ scrutinee.
 -   _proper-pattern_ ::= `var` _proper-pattern_
 
 A `var` pattern matches when its nested pattern matches. The type of the storage
-is the resolved type of the nested _pattern_. Any bindings within the nested
-pattern refer to portions of the corresponding storage rather than to the
+is the resolved type of the nested _pattern_. Any binding patterns within the
+nested pattern refer to portions of the corresponding storage rather than to the
 scrutinee.
 
 ```carbon
