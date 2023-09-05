@@ -12,7 +12,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "re2/re2.h"
 
@@ -46,8 +45,6 @@ class CheckLine : public FileTestLineBase {
   auto Print(llvm::raw_ostream& out) const -> void override {
     out << indent_ << line_;
   }
-
-  int file_number() const { return file_number_; }
 
   // When the location of the CHECK in output is known, we can set the indent
   // and its line.
@@ -108,6 +105,8 @@ class CheckLine : public FileTestLineBase {
     }
   }
 
+  int file_number() const { return file_number_; }
+
   auto is_blank() const -> bool override { return false; }
 
  private:
@@ -135,7 +134,7 @@ static auto BuildCheckLines(
   }
 
   // Prepare to look for filenames in lines.
-  llvm::StringMap<int> file_to_number_map;
+  llvm::DenseMap<llvm::StringRef, int> file_to_number_map;
   for (auto [number, name] : llvm::enumerate(filenames)) {
     file_to_number_map.insert({name, number});
   }
@@ -250,9 +249,9 @@ auto AutoupdateFileTest(
                                const llvm::SmallVector<CheckLine>& lines,
                                CheckLine*& line, int to_line_number,
                                llvm::StringRef indent) {
-      for (; line != lines.end() && line->file_number() <= file_number &&
-             (line->file_number() < file_number ||
-              line->line_number() <= to_line_number);
+      for (; line != lines.end() && (line->file_number() < file_number ||
+                                     (line->file_number() == file_number &&
+                                      line->line_number() <= to_line_number));
            ++line) {
         new_lines.push_back(line);
         line->SetOutputLine(indent, file_number, ++output_line_number);

@@ -22,14 +22,6 @@ class FileTestBaseTest : public FileTestBase {
  public:
   using FileTestBase::FileTestBase;
 
-  static auto HasFilename(std::string filename) -> Matcher<TestFile> {
-    return Field("filename", &TestFile::filename, Eq(filename));
-  }
-
-  static auto HasContent(std::string content) -> Matcher<TestFile> {
-    return Field("content", &TestFile::content, Eq(content));
-  }
-
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            const llvm::SmallVector<TestFile>& test_files,
            llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
@@ -58,11 +50,13 @@ class FileTestBaseTest : public FileTestBase {
     } else if (filename == "fail_example.carbon") {
       stderr << "Oops\n";
       return false;
-    } else if (filename == "two_files.carbon") {
-      int i = 0;
+    } else if (filename == "two_files.carbon" ||
+               filename == "not_split.carbon") {
       for (const auto& file : test_files) {
-        // Prints line numbers to validate per-file.
-        stdout << file.filename << ":1: " << ++i << "\n";
+        // Describe file contents to stdout to validate splitting.
+        stdout << file.filename << ":1: starts with \"";
+        stdout.write_escaped(file.content.take_front(40));
+        stdout << "\", length " << file.content.count('\n') << " lines\n";
       }
       return true;
     } else if (filename == "alternating_files.carbon") {

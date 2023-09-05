@@ -22,3 +22,4 @@ bbb
 // CHECK:STDOUT: a.carbon:2: message 4
 // CHECK:STDOUT: b.carbon:[[@LINE-3]]: message 5
 // CHECK:STDOUT: unattached message 6
+bbbbbb
