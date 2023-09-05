@@ -15,6 +15,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
           "A comma-separated list of tests for file_test infrastructure.");
@@ -61,7 +62,7 @@ auto FileTestBase::TestBody() -> void {
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
   ASSERT_TRUE(run_result.ok()) << run_result.error();
-  ValidateRun(context.test_files);
+  ValidateRun();
   EXPECT_THAT(!llvm::StringRef(path().filename()).starts_with("fail_"),
               Eq(context.exit_with_success))
       << "Tests should be prefixed with `fail_` if and only if running them "
@@ -145,12 +146,22 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
     test_args_ref.push_back(arg);
   }
 
+  // Create the files in-memory.
+  llvm::vfs::InMemoryFileSystem fs;
+  for (const auto& test_file : context.test_files) {
+    if (!fs.addFile(test_file.filename, /*ModificationTime=*/0,
+                    llvm::MemoryBuffer::getMemBuffer(
+                        test_file.content, test_file.filename,
+                        /*RequiresNullTerminator=*/false))) {
+      return ErrorBuilder() << "File is repeated: " << test_file.filename;
+    }
+  }
+
   // Capture trace streaming, but only when in debug mode.
   llvm::raw_svector_ostream stdout(context.stdout);
   llvm::raw_svector_ostream stderr(context.stderr);
-  CARBON_ASSIGN_OR_RETURN(
-      context.exit_with_success,
-      Run(test_args_ref, context.test_files, stdout, stderr));
+  CARBON_ASSIGN_OR_RETURN(context.exit_with_success,
+                          Run(test_args_ref, fs, stdout, stderr));
   return Success();
 }
 
