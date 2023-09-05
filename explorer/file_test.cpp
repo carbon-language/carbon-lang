@@ -27,18 +27,8 @@ class ExplorerFileTest : public FileTestBase {
   }
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-           const llvm::SmallVector<TestFile>& test_files,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
-      -> ErrorOr<bool> override {
-    // Create the files in-memory.
-    llvm::vfs::InMemoryFileSystem fs;
-    for (const auto& test_file : test_files) {
-      if (!fs.addFile(test_file.filename, /*ModificationTime=*/0,
-                      llvm::MemoryBuffer::getMemBuffer(test_file.content))) {
-        return ErrorBuilder() << "File is repeated: " << test_file.filename;
-      }
-    }
-
+           llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> override {
     // Add the prelude.
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
         llvm::MemoryBuffer::getFile("explorer/data/prelude.carbon");
@@ -66,8 +56,7 @@ class ExplorerFileTest : public FileTestBase {
     return exit_code == EXIT_SUCCESS;
   }
 
-  auto ValidateRun(const llvm::SmallVector<TestFile>& /*test_files*/)
-      -> void override {
+  auto ValidateRun() -> void override {
     // Skip trace test check as they use stdout stream instead of
     // trace_stream_ostream
     if (absl::GetFlag(FLAGS_trace)) {
