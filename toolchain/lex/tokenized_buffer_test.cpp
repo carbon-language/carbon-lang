@@ -35,7 +35,7 @@ class LexerTest : public ::testing::Test {
     CARBON_CHECK(fs_.addFile(filename, /*ModificationTime=*/0,
                              llvm::MemoryBuffer::getMemBuffer(text)));
     source_storage_.push_front(
-        std::move(*SourceBuffer::CreateFromFile(fs_, filename)));
+        std::move(*SourceBuffer::CreateFromFile(fs_, llvm::errs(), filename)));
     return source_storage_.front();
   }
 
