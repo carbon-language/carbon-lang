@@ -19,7 +19,7 @@ fn Main() {
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   %a = alloca i32, align 4
 // CHECK:STDOUT:   store i32 12, ptr %a, align 4
-// CHECK:STDOUT:   store i32 -7, ptr %a, align 4
+// CHECK:STDOUT:   store i32 9, ptr %a, align 4
 // CHECK:STDOUT:   %tuple = alloca { %type, %type }, align 8
 // CHECK:STDOUT:   %1 = getelementptr inbounds { %type, %type }, ptr %tuple, i32 0, i32 0
 // CHECK:STDOUT:   store %type zeroinitializer, ptr %1, align 1
