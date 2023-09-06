@@ -20,9 +20,9 @@ cc_binary(
     deps = [
         "//common:error",
         "//toolchain/diagnostics:null_diagnostics",
-        "//toolchain/lexer:tokenized_buffer",
-        "//toolchain/parser:parse_node_kind",
-        "//toolchain/parser:parse_tree",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse:node_kind",
+        "//toolchain/parse:tree",
         "//toolchain/source:source_buffer",
         "@llvm-project//clang-tools-extra/clangd:clangd_library",
         "@llvm-project//llvm:Support",

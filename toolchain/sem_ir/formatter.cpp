@@ -7,8 +7,8 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/SaveAndRestore.h"
-#include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/parser/parse_tree.h"
+#include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/tree.h"
 
 namespace Carbon::SemIR {
 

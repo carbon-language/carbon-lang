@@ -6,7 +6,7 @@
 
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/context.h"
-#include "toolchain/parser/parse_tree_node_location_translator.h"
+#include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Check {
@@ -46,7 +46,7 @@ auto CheckParseTree(const SemIR::File& builtin_ir,
     }                                                                        \
     break;                                                                   \
   }
-#include "toolchain/parser/parse_node_kind.def"
+#include "toolchain/parse/node_kind.def"
     }
   }
 

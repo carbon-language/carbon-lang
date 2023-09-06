@@ -9,8 +9,8 @@
 
 #include "common/vlog.h"
 #include "llvm/ADT/SmallVector.h"
-#include "toolchain/parser/parse_node_kind.h"
-#include "toolchain/parser/parse_tree.h"
+#include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {

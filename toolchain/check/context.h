@@ -12,7 +12,7 @@
 #include "toolchain/check/declaration_name_stack.h"
 #include "toolchain/check/node_block_stack.h"
 #include "toolchain/check/node_stack.h"
-#include "toolchain/parser/parse_tree.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/node.h"
 
@@ -399,7 +399,7 @@ class Context {
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
   auto Handle##Name(Context& context, Parse::Node parse_node)->bool;
-#include "toolchain/parser/parse_node_kind.def"
+#include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Check
 
