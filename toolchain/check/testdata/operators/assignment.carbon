@@ -241,7 +241,7 @@ fn Main() {
 // CHECK:STDOUT:   %a: ref i32 = var "a"
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 12
 // CHECK:STDOUT:   assign %a, %.loc8
-// CHECK:STDOUT:   %.loc9: i32 = int_literal -7
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 9
 // CHECK:STDOUT:   assign %a, %.loc9
 // CHECK:STDOUT:   %.loc11_11: type = stub_reference i32
 // CHECK:STDOUT:   %.loc11_16: type = stub_reference i32
