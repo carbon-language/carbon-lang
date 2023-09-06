@@ -14,7 +14,6 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import sys
 import re
 import subprocess
 from typing import Callable, Dict, List, NamedTuple, Optional, Set, Tuple
