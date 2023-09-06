@@ -9,7 +9,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
@@ -23,18 +22,8 @@ class DriverFileTestBase : public FileTestBase {
   using FileTestBase::FileTestBase;
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-           const llvm::SmallVector<TestFile>& test_files,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
-      -> ErrorOr<bool> override {
-    // Create the files in-memory.
-    llvm::vfs::InMemoryFileSystem fs;
-    for (const auto& test_file : test_files) {
-      if (!fs.addFile(test_file.filename, /*ModificationTime=*/0,
-                      llvm::MemoryBuffer::getMemBuffer(test_file.content))) {
-        return ErrorBuilder() << "File is repeated: " << test_file.filename;
-      }
-    }
-
+           llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> override {
     Driver driver(fs, stdout, stderr);
     return driver.RunCommand(test_args);
   }

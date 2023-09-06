@@ -4,4 +4,5 @@
 
 // ARGS: abc file=%t %s
 // AUTOUPDATE
+
 // CHECK:STDOUT: 3 args: `abc`, `file={{.+}}/temp_file`, `args.carbon`

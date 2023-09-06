@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "testing/file_test/autoupdate.h"
 
 namespace Carbon::Testing {
@@ -45,7 +46,8 @@ class FileTestBase : public testing::Test {
   explicit FileTestBase(std::filesystem::path path) : path_(std::move(path)) {}
 
   // Implemented by children to run the test. For example, TestBody validates
-  // stdout and stderr.
+  // stdout and stderr. Children should use fs for file content, and may add
+  // more files.
   //
   // Any test expectations should be called from ValidateRun, not Run.
   //
@@ -53,15 +55,14 @@ class FileTestBase : public testing::Test {
   // should be true if a binary would return EXIT_SUCCESS, and false for
   // EXIT_FAILURE (which is a test success for `fail_*` tests).
   virtual auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-                   const llvm::SmallVector<TestFile>& test_files,
+                   llvm::vfs::InMemoryFileSystem& fs,
                    llvm::raw_pwrite_stream& stdout,
                    llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> = 0;
 
   // Implemented by children to do post-Run test expectations. Only called when
   // testing. Does not need to be provided if only CHECK test expectations are
   // used.
-  virtual auto ValidateRun(const llvm::SmallVector<TestFile>& /*test_files*/)
-      -> void {}
+  virtual auto ValidateRun() -> void {}
 
   // Returns default arguments. Only called when a file doesn't set ARGS.
   virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;
