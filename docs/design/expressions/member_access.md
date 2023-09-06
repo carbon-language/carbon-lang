@@ -300,7 +300,8 @@ interface Renderable {
   fn Draw[self: Self]();
 }
 fn DrawChecked[T:! Renderable](c: T) {
-  // `Draw` resolves to `(T as Renderable).Draw`.
+  // `Draw` resolves to `(T as Renderable).Draw` or
+  // `T.(Renderable.Draw)`.
   c.Draw();
 }
 
@@ -335,22 +336,44 @@ fn CallsDrawTemplate(c: Cowboy) {
 }
 ```
 
-> **TODO:** The behavior of this code depends on whether we decide to allow
-> class templates to be specialized:
->
-> ```carbon
-> class TemplateWrapper(template T:! type) {
->   var field: T;
-> }
-> fn G[template T:! type](x: TemplateWrapper(T)) -> T {
->   // 🤷 Not yet decided.
->   return x.field;
-> }
-> ```
->
-> If class specialization is allowed, then we cannot know the members of
-> `TemplateWrapper(T)` without knowing `T`, so this first lookup will find
-> nothing. In any case, the lookup will be performed again when `T` is known.
+Since we have decided to forbid specialization of class templates, see
+[proposal #2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200),
+the compiler can assume the body of a templated class will be the same for all
+argument values:
+
+```carbon
+class TemplateWrapper(template T:! type) {
+  var field: T;
+}
+fn G[template T:! type](x: TemplateWrapper(T)) -> T {
+  // ✅ Allowed, finds `TemplateWrapper(T).field`.
+  return x.field;
+}
+```
+
+In addition, the lookup will be performed again when `T` is known. This allows
+cases where the lookup only succeeds for specific values of `T`:
+
+```carbon
+class HasField {
+  var field: i32;
+}
+class DerivingWrapper(template T:! type) {
+  extend base: T;
+}
+fn H[template T:! type](x: DerivingWrapper(T)) -> i32 {
+  // ✅ Allowed, but no name `field` found in template
+  // definition of `DerivingWrapper`.
+  return x.field;
+}
+fn CallH(a: DerivingWrapper(HasField),
+         b: DerivingWrapper(i32)) {
+  // ✅ Member `field` in base class found in instantiation.
+  var x: i32 = H(a);
+  // ❌ Error, no member `field` in type of `b`.
+  var y: i32 = H(b);
+}
+```
 
 **Note:** All lookups are done from a context where the values of any symbolic
 bindings that are in scope are unknown. Unlike for a template binding, the

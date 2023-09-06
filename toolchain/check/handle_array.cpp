@@ -37,7 +37,8 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
   if (bound_node.kind() == SemIR::NodeKind::IntegerLiteral) {
     auto bound_value = context.semantics_ir().GetIntegerLiteral(
         bound_node.GetAsIntegerLiteral());
-    if (!bound_value.isNegative()) {
+    // TODO: Produce an error if the array type is too large.
+    if (bound_value.getBitWidth() <= 64) {
       context.AddNodeAndPush(
           parse_node,
           SemIR::Node::ArrayType::Make(
