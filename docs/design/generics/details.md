@@ -23,6 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
     -   [Access](#access)
 -   [Checked generics](#checked-generics)
+    -   [Symbolic facet bindings](#symbolic-facet-bindings)
     -   [Return type](#return-type)
 -   [Interfaces recap](#interfaces-recap)
 -   [Facet types](#facet-types)
@@ -658,8 +659,6 @@ declaration of the `impl`.
 
 ## Checked generics
 
-**FIXME: Left off here.**
-
 Here is a function that can accept values of any type that has implemented the
 `Vector` interface:
 
@@ -683,9 +682,18 @@ _[checked](terminology.md#checked-versus-template-parameters)
 [generic parameter](terminology.md#generic-means-compile-time-parameterized)_.
 That means its value must be known to the caller at compile-time, but we will
 only use the information present in the signature of the function to type check
-the body of `AddAndScaleGeneric`'s definition. In this case, we know that any
-value of facet `T` implements the `Vector` interface and so has an `Add` and a
-`Scale` method.
+the body of `AddAndScaleGeneric`'s definition.
+
+### Symbolic facet bindings
+
+In our example, `T` is a facet which may be used in type position in the rest of
+the function. Furthermore, since it omits the keyword `template` prefix, this is
+a symbolic binding. so we need to be able to typecheck the body of the function
+without knowing the specific value `T` from the caller.
+
+This typechecking is done by looking at the constraint on `T`. In the example,
+the constraint on `T` says that every value of `T` implements the `Vector`
+interface and so has a `Vector.Add` and a `Vector.Scale` method.
 
 Names are looked up in the body of `AddAndScaleGeneric` for values of type `T`
 in `Vector`. This means that `AddAndScaleGeneric` is interpreted as equivalent
@@ -757,8 +765,8 @@ This is part of realizing
 [the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions).
 In this example, `AddAndScaleGeneric` can be substituted for
 `AddAndScaleForPoint_Extend` and `AddAndScaleForPoint_NoExtend` without
-affecting the return types. This requires the return value to be converted to
-the type that the caller expects instead of the erased type used inside the
+affecting the return types. This may require a conversion of the return value to
+the type that the caller expects, from the erased type used inside a
 checked-generic function.
 
 A checked-generic caller of a checked-generic function performs the same
@@ -838,7 +846,7 @@ An interface's name may be used in a few different contexts:
 -   as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access), and
 -   as a [facet type](terminology.md#facet-type) for
-    [a facet binding](#checked-generics).
+    [a facet binding](#symbolic-facet-bindings).
 
 While interfaces are examples of facet types, facet types are a more general
 concept, for which interfaces are a building block.
@@ -868,9 +876,10 @@ This recovers the original type for the facet, so
 `(Point_Inline as Vector) as type` is `Point_Inline` again.
 
 However, when a facet type like `Vector` is used as the binding type of a
-symbolic binding, as in `T:! Vector`, the symbolic facet binding `T` is
-disassociated with whatever facet value `T` is eventually bound to. Instead, `T`
-is treated as an [archetype](terminology.md#archetype), with the members and
+symbolic binding, as in `T:! Vector`, the
+[symbolic facet binding](#symbolic-facet-bindings) `T` is disassociated with
+whatever facet value `T` is eventually bound to. Instead, `T` is treated as an
+[archetype](terminology.md#archetype), with the members and
 [member access](/docs/design/expressions/member_access.md) determined by the
 names of the facet type.
 
@@ -887,9 +896,9 @@ same definition are equivalent even if they have different names. This is
 because types don't have to explicitly specify which named constraints they
 implement, types automatically implement any named constraints they can satisfy.
 
-A named constraint definition can contain interface requirements using `impl`
-declarations and names using `alias` declarations. Note that this allows us to
-declare the aspects of a facet type directly.
+A named constraint definition can contain interface requirements using
+`require Self impls` declarations and names using `alias` declarations. Note
+that this allows us to declare the aspects of a facet type directly.
 
 ```
 constraint VectorLegoFish {
@@ -903,9 +912,9 @@ constraint VectorLegoFish {
 }
 ```
 
-An `impl` requirement may alternatively be on a named constraint, instead of an
-interface, to add all the requirements of another named constraint without
-adding any of the names:
+A `require Self impls` requirement may alternatively be on a named constraint,
+instead of an interface, to add all the requirements of another named constraint
+without adding any of the names:
 
 ```
 constraint DrawVectorLegoFish {
@@ -929,7 +938,7 @@ whenever an interface may be. This includes all of these
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
 -   A named constraint may be used as a [facet type](terminology.md#facet-type)
-    for [a facet binding](#checked-generics).
+    for [a facet binding](#symbolic-facet-bindings).
 
 We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
@@ -954,13 +963,7 @@ var i: i32 = Identity(3);
 var s: String = Identity("string");
 ```
 
-**Aside:** We can define `auto` as syntactic sugar for `(template _:! type)`.
-This definition allows you to use `auto` as the type for a local variable whose
-type can be statically determined by the compiler. It also allows you to use
-`auto` as the type of a function parameter, to mean "accepts a value of any
-type, and this function will be instantiated separately for every different
-type." This is consistent with the
-[use of `auto` in the C++20 Abbreviated function template feature](https://en.cppreference.com/w/cpp/language/function_template#Abbreviated_function_template).
+**FIXME: Left off here**
 
 In general, the declarations in `constraint` definition match a subset of the
 declarations in an `interface`. Named constraints used with checked generics, as
