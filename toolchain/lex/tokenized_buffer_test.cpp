@@ -34,8 +34,8 @@ class LexerTest : public ::testing::Test {
     std::string filename = llvm::formatv("test{0}.carbon", ++file_index_);
     CARBON_CHECK(fs_.addFile(filename, /*ModificationTime=*/0,
                              llvm::MemoryBuffer::getMemBuffer(text)));
-    source_storage_.push_front(
-        std::move(*SourceBuffer::CreateFromFile(fs_, llvm::errs(), filename)));
+    source_storage_.push_front(std::move(*SourceBuffer::CreateFromFile(
+        fs_, filename, ConsoleDiagnosticConsumer())));
     return source_storage_.front();
   }
 
