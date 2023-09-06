@@ -6,7 +6,6 @@
 # their own directory.
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
-load("@rules_python//python:defs.bzl", "py_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -45,10 +44,4 @@ cc_test(
         "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
-)
-
-py_test(
-    name = "no_op_test",
-    srcs = ["no_op_test.py"],
-    main = "no_op_test.py",
 )

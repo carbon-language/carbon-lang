@@ -240,7 +240,7 @@ jobs:
           # Bazel requires a test target to run the test command. There may be
           # no targets or there may only be non-test targets that we want to
           # build, so simply inject an explicit no-op test target.
-          echo "//testing/base:no_op_test" >> targets
+          echo "//scripts:no_op_test" >> targets
 
           bazelisk test -c ${{ matrix.build_mode }} \
             --target_pattern_file=targets

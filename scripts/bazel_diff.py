@@ -119,11 +119,13 @@ def filter_targets(bazel: Path, targets: str) -> str:
 
 
 def git_is_dirty() -> bool:
-    output = subprocess.check_output(
+    p = subprocess.run(
         ["git", "status", "--porcelain", "--untracked-files=no"],
+        stdout=subprocess.PIPE,
+        check=True,
         encoding="utf-8",
     )
-    return len(output) > 0
+    return len(p.stdout) > 0
 
 
 def git_current_head() -> str:
@@ -137,20 +139,26 @@ def git_current_head() -> str:
         return p.stdout.strip()
 
     # Otherwise, just extract the commit.
-    return subprocess.check_output(
-        ["git", "rev-parse", "--short", "HEAD"], encoding="utf-8"
-    ).strip()
+    return subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"],
+        stdout=subprocess.PIPE,
+        check=True,
+        encoding="utf-8",
+    ).stdout.strip()
 
 
 def git_checkout(commit: str) -> None:
-    subprocess.check_call(["git", "checkout", "--quiet", commit])
+    subprocess.run(["git", "checkout", "--quiet", commit], check=True)
 
 
 def git_diff(baseline: str, current: str) -> None:
-    output = subprocess.check_output(
-        ["git", "diff", "--stat", f"{baseline}..{current}"], encoding="utf-8"
+    p = subprocess.run(
+        ["git", "diff", "--stat", f"{baseline}..{current}"],
+        stdout=subprocess.PIPE,
+        check=True,
+        encoding="utf-8",
     )
-    log(output)
+    log(p.stdout)
 
 
 def main() -> None:
