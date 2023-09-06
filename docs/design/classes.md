@@ -910,7 +910,7 @@ which must be an
 then match pattern '`self:` _type_' against it".
 
 If the method declaration also includes
-[deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
+[deduced compile-time parameters](/docs/design/generics/overview.md#deduced-parameters),
 the `self` parameter must be in the same list in square brackets `[`...`]`. The
 `self` parameter may appear in any position in that list, as long as it appears
 after any names needed to describe its type.
@@ -1644,8 +1644,9 @@ interface Allocator {
 }
 ```
 
-To pass a pointer to a base class without a virtual destructor to a generic
-function expecting a `Deletable` type, use the `UnsafeAllowDelete`
+To pass a pointer to a base class without a virtual destructor to a
+checked-generic function expecting a `Deletable` type, use the
+`UnsafeAllowDelete`
 [type adapter](/docs/design/generics/details.md#adapting-types).
 
 ```
