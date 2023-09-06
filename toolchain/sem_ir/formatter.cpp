@@ -674,7 +674,7 @@ class Formatter {
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 
   auto FormatArg(IntegerLiteralId id) -> void {
-    out_ << semantics_ir_.GetIntegerLiteral(id);
+    semantics_ir_.GetIntegerLiteral(id).print(out_, /*isSigned=*/false);
   }
 
   auto FormatArg(MemberIndex index) -> void { out_ << index; }

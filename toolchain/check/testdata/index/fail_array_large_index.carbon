@@ -85,7 +85,7 @@ var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc7_23.3: [i32; 1] = array_value %.loc7_23.2
 // CHECK:STDOUT:   assign %a, %.loc7_23.3
 // CHECK:STDOUT:   %b: ref i32 = var "b"
-// CHECK:STDOUT:   %.loc11_16: i32 = int_literal -1
+// CHECK:STDOUT:   %.loc11_16: i32 = int_literal 295147905179352825855
 // CHECK:STDOUT:   %.loc11_35.1: ref i32 = array_index %a, <error>
 // CHECK:STDOUT:   %.loc11_35.2: i32 = bind_value %.loc11_35.1
 // CHECK:STDOUT:   assign %b, %.loc11_35.2
