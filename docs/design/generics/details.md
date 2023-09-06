@@ -963,12 +963,10 @@ var i: i32 = Identity(3);
 var s: String = Identity("string");
 ```
 
-**FIXME: Left off here**
-
 In general, the declarations in `constraint` definition match a subset of the
-declarations in an `interface`. Named constraints used with checked generics, as
-opposed to templates, should only include required interfaces and aliases to
-named members of those interfaces.
+declarations in an `interface`. These named constraints can be used with checked
+generics, as opposed to templates, and only include required interfaces and
+aliases to named members of those interfaces.
 
 To declare a named constraint that includes other declarations for use with
 template parameters, use the `template` keyword before `constraint`. Method,
@@ -977,9 +975,9 @@ inside a `template constraint`. Note that a checked-generic constraint ignores
 the names of members defined for a type, but a template constraint can depend on
 them.
 
-There is an analogy between declarations used in a `constraint` and in an
-`interface` definition. If an `interface` `I` has (non-`alias`) declarations
-`X`, `Y`, and `Z`, like so:
+There is an analogy between declarations used in a `template constraint` and in
+an `interface` definition. If an `interface` `I` has (non-`alias`,
+non-`require`) declarations `X`, `Y`, and `Z`, like so:
 
 ```
 interface I {
@@ -995,7 +993,7 @@ Then a type implementing `I` would have `impl as I` with definitions for `X`,
 ```
 class ImplementsI {
   // ...
-  extend impl as I {
+  impl as I {
     X { ... }
     Y { ... }
     Z { ... }
@@ -1003,11 +1001,10 @@ class ImplementsI {
 }
 ```
 
-But the corresponding `constraint` or `template constraint`, `S`:
+But a `template constraint`, `S`:
 
 ```
-// or template constraint S {
-constraint S {
+template constraint S {
   X;
   Y;
   Z;
@@ -1024,9 +1021,6 @@ class ImplementsS {
   Z { ... }
 }
 ```
-
-**TODO:** Move the `template constraint` and `auto` content to the template
-design document, once it exists.
 
 ### Subtyping between facet types
 
@@ -1109,8 +1103,7 @@ var s: Sprite = ...;
 PrintThenDraw(s);
 ```
 
-Any conflicting names between the two types are replaced with a name that is an
-error to use.
+It is an error to use any names that conflict between the two interfaces.
 
 ```
 interface Renderable {
@@ -1121,15 +1114,10 @@ interface EndOfGame {
   fn Draw[self: Self]();
   fn Winner[self: Self](player: i32);
 }
-// `Renderable & EndOfGame` is syntactic sugar for this facet type:
-constraint {
-  require Self impls Renderable;
-  require Self impls EndOfGame;
-  alias Center = Renderable.Center;
-  // Open question: `forbidden`, `invalid`, or something else?
-  forbidden Draw
-    message "Ambiguous, use either `(Renderable.Draw)` or `(EndOfGame.Draw)`.";
-  alias Winner = EndOfGame.Winner;
+fn F[T:! Renderable & EndOfGame](x: T) {
+  // ❌ Error: Ambiguous, use either `(Renderable.Draw)`
+  //           or `(EndOfGame.Draw)`.
+  x.Draw();
 }
 ```
 
@@ -1148,30 +1136,21 @@ constraint RenderableAndEndOfGame {
 }
 
 fn RenderTieGame[T:! RenderableAndEndOfGame](x: T) {
-  // Calls Renderable.Draw()
+  // ✅ Calls `Renderable.Draw`:
   x.RenderableDraw();
-  // Calls EndOfGame.Draw()
+  // ✅ Calls `EndOfGame.Draw`:
   x.TieGame();
 }
 ```
 
-Reserving the name when there is a conflict is part of resolving what happens
-when you combine more than two facet types. If `x` is forbidden in `A`, it is
-forbidden in `A & B`, whether or not `B` defines the name `x`. This makes `&`
-associative and commutative, and so it is well defined on sets of interfaces, or
-other facet types, independent of order.
+Note that `&` is associative and commutative, and so it is well defined on sets
+of interfaces, or other facet types, independent of order.
 
 Note that we do _not_ consider two facet types using the same name to mean the
 same thing to be a conflict. For example, combining a facet type with itself
 gives itself, `MyTypeOfType & MyTypeOfType == MyTypeOfType`. Also, given two
 [interface extensions](#interface-extension) of a common base interface, the
 combination should not conflict on any names in the common base.
-
-**Rejected alternative:** Instead of using `&` as the combining operator, we
-considered using `+`,
-[like Rust](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html).
-See [#531](https://github.com/carbon-language/carbon-lang/issues/531) for the
-discussion.
 
 **Future work:** We may want to define another operator on facet types for
 adding requirements to a facet type without affecting the names, and so avoid
@@ -1210,9 +1189,13 @@ interface is enough to be able to use the operator to access the functionality.
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/17IXDdu384x1t9RimQ01bhx4-nWzs4ZEeke4eO6ImQNc/edit?resourcekey=0-Fe44R-0DhQBlw0gs2ujNJA).
 
-**Comparison with other languages:** This `&` operation on interfaces works very
-similarly to Rust's `+` operation, with the main difference being how you
+**Rejected alternative:** Instead of using `&` as the combining operator, we
+considered using `+`,
+[like Rust](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html).
+The main difference from Rust's `+` is how you
 [qualify names when there is a conflict](https://doc.rust-lang.org/rust-by-example/trait/disambiguating.html).
+See [issue #531](https://github.com/carbon-language/carbon-lang/issues/531) for
+the discussion.
 
 ## Interface requiring other interfaces
 
@@ -1223,7 +1206,8 @@ requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `EqualityComparable`, and
 `Swappable`. This is already a capability for
 [facet types in general](#facet-types). For consistency we will use the same
-semantics and syntax as we do for [named constraints](#named-constraints):
+semantics and `require Self impls` syntax as we do for
+[named constraints](#named-constraints):
 
 ```
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
@@ -1299,7 +1283,8 @@ benefits:
     place.
 -   This reduces the boilerplate for types implementing `Hashable`.
 
-We expect this concept to be common enough to warrant dedicated syntax:
+We expect this concept to be common enough to warrant dedicated `interface`
+syntax:
 
 ```
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
@@ -1357,13 +1342,16 @@ interface SetAlgebra {
 body in parameters or constraints of the interface being extended.
 
 ```
-// A type can implement `ConvertibleTo` many times, using
-// different values of `T`.
+// A type can implement `ConvertibleTo` many times,
+// using different values of `T`.
 interface ConvertibleTo(T:! type) { ... }
 
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
   let AssociatedFacet:! type;
+  // `extend` is in the body of an `interface`
+  // definition. This allows extending an expression
+  // that uses an associated facet.
   extend ConvertibleTo(AssociatedFacet);
 }
 ```
@@ -1560,6 +1548,8 @@ eventually be provided.
 **Open question:** We could require that the `impl` of the required interface be
 declared lexically in the class scope in this case. That would allow earlier
 detection of missing definitions.
+
+**FIXME: Left off here.**
 
 ### Use case: overload resolution
 
