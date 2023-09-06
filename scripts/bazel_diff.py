@@ -154,11 +154,9 @@ def git_checkout(commit: str) -> None:
 def git_diff(baseline: str, current: str) -> None:
     p = subprocess.run(
         ["git", "diff", "--stat", f"{baseline}..{current}"],
-        stdout=subprocess.PIPE,
+        stdout=sys.stderr.buffer,
         check=True,
-        encoding="utf-8",
     )
-    log(p.stdout)
 
 
 def main() -> None:
