@@ -51,7 +51,7 @@ pointer, and do not automatically chain with customized dereference interfaces.
 
 **Open question:** It's not clear that the lack of chaining is necessary, and it
 might be more expressive for the pointer type returned by the `Addr` methods to
-be an associated type with a default to allow types to produce custom
+be an associated facet with a default to allow types to produce custom
 pointer-like types on their indexing boundary and have them still be
 automatically dereferenced.
 

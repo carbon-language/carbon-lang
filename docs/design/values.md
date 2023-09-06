@@ -1010,8 +1010,8 @@ placeholder `value_rep = T;`, we need to explore exactly what the best
 relationship is with the customization point. For example, should this syntax
 immediately forward declare `impl as ReferenceImplicitAs where .T = T`, thereby
 allowing an out-of-line definition of the `Convert` method and `... where _` to
-pick up the associated type from the syntax. Alternatively, the syntactic marker
-might be integrated into the `impl` declaration for `ReferenceImplicitAs`
+pick up the associated constant from the syntax. Alternatively, the syntactic
+marker might be integrated into the `impl` declaration for `ReferenceImplicitAs`
 itself.
 
 ## Alternatives considered

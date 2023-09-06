@@ -325,7 +325,7 @@ that support dynamic dispatch are called _object-safe_, following
 
 -   They don't have a `Self` in the signature of a method in a contravariant
     position like a parameter.
--   They don't have free associated types or other associated items used in a
+-   They don't have free associated facets or other associated items used in a
     method signature.
 
 The restrictions on object-safe interfaces match the restrictions on base class
