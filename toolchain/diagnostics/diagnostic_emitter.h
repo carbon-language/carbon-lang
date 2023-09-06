@@ -314,9 +314,9 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
     *stream_ << message.location.file_name;
     if (message.location.line_number > 0) {
       *stream_ << ":" << message.location.line_number;
-    }
-    if (message.location.column_number > 0) {
-      *stream_ << ":" << message.location.column_number;
+      if (message.location.column_number > 0) {
+        *stream_ << ":" << message.location.column_number;
+      }
     }
     *stream_ << ": " << message.format_fn(message) << "\n";
     if (message.location.column_number > 0) {
