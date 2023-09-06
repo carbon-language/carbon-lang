@@ -35,6 +35,7 @@ class SourceBuffer {
  public:
   // Opens the requested file. Returns a SourceBuffer on success. Prints an
   // error and returns nullopt on failure.
+  // TODO: Switch to using diagnostics.
   static auto CreateFromFile(llvm::vfs::FileSystem& fs,
                              llvm::raw_ostream& error_stream,
                              llvm::StringRef filename)
