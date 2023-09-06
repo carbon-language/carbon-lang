@@ -11,6 +11,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon {
 
@@ -35,10 +36,9 @@ class SourceBuffer {
  public:
   // Opens the requested file. Returns a SourceBuffer on success. Prints an
   // error and returns nullopt on failure.
-  // TODO: Switch to using diagnostics.
   static auto CreateFromFile(llvm::vfs::FileSystem& fs,
-                             llvm::raw_ostream& error_stream,
-                             llvm::StringRef filename)
+                             llvm::StringRef filename,
+                             DiagnosticConsumer& consumer)
       -> std::optional<SourceBuffer>;
 
   // Use one of the factory functions above to create a source buffer.

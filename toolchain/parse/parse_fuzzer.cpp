@@ -27,7 +27,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
       TestFileName, /*ModificationTime=*/0,
       llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
                                        /*RequiresNullTerminator=*/false)));
-  auto source = SourceBuffer::CreateFromFile(fs, llvm::nulls(), TestFileName);
+  auto source =
+      SourceBuffer::CreateFromFile(fs, TestFileName, NullDiagnosticConsumer());
 
   // Lex the input.
   auto tokens = Lex::TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
