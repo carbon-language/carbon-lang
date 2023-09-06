@@ -242,14 +242,14 @@ The syntax here is to match
 [how the same members would be defined in a type](/docs/design/classes.md#methods).
 Each declaration in the interface defines an
 [associated entity](terminology.md#associated-entity). In this example, `Vector`
-has two associated methods, `Add` and `Scale`.
+has two associated methods, `Add` and `Scale`. A type
+[implements an interface](#implementing-interfaces) by providing definitions for
+all the associated entities declared in the interface,
 
 An interface defines a [facet type](terminology.md#facet-type), that is a type
 whose values are [facets](terminology.md#facet). Every type implementing the
-interface, and so has definitions for all the functions (and other members)
-declared in the interface, has a corresponding facet value. So if the type
-`Point` implements interface `Vector`, the facet value `Point as Vector` has
-type `Vector`.
+interface has a corresponding facet value. So if the type `Point` implements
+interface `Vector`, the facet value `Point as Vector` has type `Vector`.
 
 ## Implementing interfaces
 
@@ -274,10 +274,10 @@ class Point_Inline {
     // In this scope, the `Self` keyword is an
     // alias for `Point_Inline`.
     fn Add[self: Self](b: Self) -> Self {
-      return {.x = a.x + b.x, .y = a.y + b.y};
+      return {.x = self.x + b.x, .y = self.y + b.y};
     }
     fn Scale[self: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
+      return {.x = self.x * v, .y = self.y * v};
     }
   }
 }
@@ -294,10 +294,10 @@ class Point_Extend {
   var y: f64;
   extend impl as Vector {
     fn Add[self: Self](b: Self) -> Self {
-      return {.x = a.x + b.x, .y = a.y + b.y};
+      return {.x = self.x + b.x, .y = self.y + b.y};
     }
     fn Scale[self: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
+      return {.x = self.x * v, .y = self.y * v};
     }
   }
 }
@@ -324,8 +324,8 @@ entity affect a class' API, then that is mentioned with an `extend` declaration
 in the `class` definition.
 
 **Comparison with other languages:** Rust only defines implementations lexically
-outside of the `class` definition. This Carbon approach means that a type's API
-is described by declarations inside the `class` definition and doesn't change
+outside of the `class` definition. Carbon's approach results in every type's API
+is described by declarations inside its `class` definition and doesn't change
 afterwards.
 
 **References:** Carbon's interface implementation syntax was first defined in
@@ -334,6 +334,8 @@ particular, see
 [the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
 This syntax was changed to use `extend` in
 [proposal #2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760).
+
+**FIXME: Left off here.**
 
 ### Out-of-line `impl`
 
@@ -350,10 +352,10 @@ impl Point_OutOfLine as Vector {
   // In this scope, the `Self` keyword is an
   // alias for `Point_OutOfLine`.
   fn Add[self: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
+    return {.x = self.x + b.x, .y = self.y + b.y};
   }
   fn Scale[self: Self](v: f64) -> Self {
-    return {.x = a.x * v, .y = a.y * v};
+    return {.x = self.x * v, .y = self.y * v};
   }
 }
 ```
@@ -437,10 +439,10 @@ class Point_ExtendForward {
 // Definition outside class definition does not.
 impl Point_ExtendForward as Vector {
   fn Add[self: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
+    return {.x = self.x + b.x, .y = self.y + b.y};
   }
   fn Scale[self: Self](v: f64) -> Self {
-    return {.x = a.x * v, .y = a.y * v};
+    return {.x = self.x * v, .y = self.y * v};
   }
 }
 ```
@@ -534,7 +536,8 @@ class Point_ReuseMethodInImpl {
   // No `extend`, so other members of `Vector` are not
   // part of `Point_ReuseMethodInImpl`'s API.
   impl as Vector {
-    alias Add = Point4a.Add;  // Syntax TBD
+    // Syntax TBD:
+    alias Add = Point_ReuseMethodInImpl.Add;
     fn Scale[self: Self](v: f64) -> Self {
       return {.x = self.x * v, .y = self.y * v};
     }
@@ -573,7 +576,8 @@ class Point_ReuseByOutOfLine {
 }
 
 impl Point_ReuseByOutOfLine as Vector {
-  alias Add = Point_ReuseByOutOfLine.Add;  // Syntax TBD
+  // Syntax TBD:
+  alias Add = Point_ReuseByOutOfLine.Add;
   fn Scale[self: Self](v: f64) -> Self {
     return {.x = self.x * v, .y = self.y * v};
   }
