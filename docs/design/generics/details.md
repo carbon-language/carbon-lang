@@ -335,8 +335,6 @@ particular, see
 This syntax was changed to use `extend` in
 [proposal #2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760).
 
-**FIXME: Left off here.**
-
 ### Out-of-line `impl`
 
 An impl may also be defined after the type definition, by naming the type
@@ -651,14 +649,16 @@ interface being implemented:
 -   Otherwise, if the type or interface is private but declared in an API file,
     then the `impl` must be declared in the same file so the existence of that
     `impl` is visible to all files in that library.
--   Otherwise, the `impl` must be defined in the public API file of the library,
-    so it is visible in all places that might use it.
+-   Otherwise, the `impl` must be declared in the public API file of the
+    library, so it is visible in all places that might use it.
 
 No access control modifiers are allowed on `impl` declarations, an `impl` is
 always visible to the intersection of the visibility of all names used in the
 declaration of the `impl`.
 
 ## Checked generics
+
+**FIXME: Left off here.**
 
 Here is a function that can accept values of any type that has implemented the
 `Vector` interface:
