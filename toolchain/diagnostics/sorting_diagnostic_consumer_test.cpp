@@ -31,12 +31,12 @@ TEST(SortedDiagnosticEmitterTest, SortErrors) {
   SortingDiagnosticConsumer sorting_consumer(consumer);
   DiagnosticEmitter<DiagnosticLocation> emitter(translator, sorting_consumer);
 
-  emitter.Emit({"f", "line", 2, 1}, TestDiagnostic, "M1");
-  emitter.Emit({"f", "line", 1, 1}, TestDiagnostic, "M2");
-  emitter.Emit({"f", "line", 1, 3}, TestDiagnostic, "M3");
-  emitter.Emit({"f", "line", 3, 4}, TestDiagnostic, "M4");
-  emitter.Emit({"f", "line", 3, 2}, TestDiagnostic, "M5");
-  emitter.Emit({"f", "line", 3, 2}, TestDiagnostic, "M6");
+  TestDiagnostic.Emit(emitter, {"f", "line", 2, 1}, "M1");
+  TestDiagnostic.Emit(emitter, {"f", "line", 1, 1}, "M2");
+  TestDiagnostic.Emit(emitter, {"f", "line", 1, 3}, "M3");
+  TestDiagnostic.Emit(emitter, {"f", "line", 3, 4}, "M4");
+  TestDiagnostic.Emit(emitter, {"f", "line", 3, 2}, "M5");
+  TestDiagnostic.Emit(emitter, {"f", "line", 3, 2}, "M6");
 
   InSequence s;
   EXPECT_CALL(consumer, HandleDiagnostic(

@@ -146,12 +146,65 @@ class DiagnosticLocationTranslator {
       -> DiagnosticLocation = 0;
 };
 
+// Manages the creation of reports, the testing if diagnostics are enabled, and
+// the collection of reports.
+//
+// This class is parameterized by a location type, allowing different
+// diagnostic clients to provide location information in whatever form is most
+// convenient for them, such as a position within a buffer when lexing, a token
+// when parsing, or a parse tree node when type-checking, and to allow unit
+// tests to be decoupled from any concrete location representation.
+template <typename LocationT>
+struct DiagnosticEmitter {
+  // The `translator` and `consumer` are required to outlive the diagnostic
+  // emitter.
+  explicit DiagnosticEmitter(
+      DiagnosticLocationTranslator<LocationT>& translator,
+      DiagnosticConsumer& consumer)
+      : translator(&translator), consumer(&consumer) {}
+  ~DiagnosticEmitter() = default;
+
+  DiagnosticLocationTranslator<LocationT>* const translator;
+  DiagnosticConsumer* const consumer;
+};
+
 namespace Internal {
 
 // Use the DIAGNOSTIC macro to instantiate this.
 // This stores static information about a diagnostic category.
 template <typename... Args>
-struct DiagnosticBase {
+class DiagnosticBase {
+ public:
+  // A builder-pattern type to provide a fluent interface for constructing
+  // a more complex diagnostic. See `DiagnosticEmitter::Build` for the
+  // expected usage.
+  template <typename LocationT>
+  class DiagnosticBuilder {
+   public:
+    // Emits the built diagnostic and its attached notes.
+    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
+    auto Emit() -> void {
+      emitter_->consumer->HandleDiagnostic(std::move(diagnostic_));
+    }
+
+   private:
+    friend class DiagnosticBase;
+
+    explicit DiagnosticBuilder(DiagnosticEmitter<LocationT>& emitter,
+                               LocationT location,
+                               const DiagnosticBase<Args...>& diagnostic_base,
+                               llvm::SmallVector<llvm::Any> args)
+        : emitter_(&emitter),
+          diagnostic_({.level = diagnostic_base.Level,
+                       .message = diagnostic_base.MakeMessage<LocationT>(
+                           emitter, location, std::move(args))}) {
+      CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
+    }
+
+    DiagnosticEmitter<LocationT>* emitter_;
+    Diagnostic diagnostic_;
+  };
+
   explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
                                     llvm::StringLiteral format)
       : Kind(kind), Level(level), Format(format) {}
@@ -161,6 +214,42 @@ struct DiagnosticBase {
     return FormatFnImpl(message, std::make_index_sequence<sizeof...(Args)>());
   };
 
+  // Emits an error.
+  //
+  // When passing arguments, they may be buffered. As a consequence, lifetimes
+  // may outlive the `Emit` call.
+  template <typename LocationT>
+  auto Emit(DiagnosticEmitter<LocationT>& emitter, LocationT location,
+            Args... args) const -> void {
+    DiagnosticBuilder<LocationT>(emitter, location, *this,
+                                 {llvm::Any(std::move(args))...})
+        .Emit();
+  }
+
+  // A fluent interface for building a diagnostic and attaching notes for added
+  // context or information. For example:
+  //
+  //   emitter_.Build(location1, MyDiagnostic)
+  //     .Note(location2, MyDiagnosticNote)
+  //     .Emit();
+  template <typename LocationT>
+  auto Build(DiagnosticEmitter<LocationT>& emitter, LocationT location,
+             Args... args) const -> DiagnosticBuilder<LocationT> {
+    return DiagnosticBuilder<LocationT>(emitter, location, *this,
+                                        {llvm::Any(std::move(args))...});
+  }
+
+  // Adds a note diagnostic attached to the main diagnostic being built.
+  // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
+  // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
+  template <typename LocationT>
+  auto Note(DiagnosticBuilder<LocationT>& builder, LocationT location,
+            Args... args) const -> void {
+    CARBON_CHECK(Level == DiagnosticLevel::Note) << static_cast<int>(Level);
+    builder.diagnostic_.notes.push_back(MakeMessage(
+        *builder.emitter_, location, {llvm::Any(std::move(args))...}));
+  }
+
   // The diagnostic's kind.
   DiagnosticKind Kind;
   // The diagnostic's level.
@@ -169,6 +258,17 @@ struct DiagnosticBase {
   llvm::StringLiteral Format;
 
  private:
+  template <typename LocationT>
+  auto MakeMessage(DiagnosticEmitter<LocationT>& emitter, LocationT location,
+                   llvm::SmallVector<llvm::Any> args) const
+      -> DiagnosticMessage {
+    return DiagnosticMessage(
+        Kind, emitter.translator->GetLocation(location), Format, args,
+        [this](const DiagnosticMessage& message) -> std::string {
+          return FormatFn(message);
+        });
+  }
+
   // Handles the cast of llvm::Any to Args types for formatv.
   // TODO: Custom formatting can be provided with an format_provider, but that
   // affects all formatv calls. Consider replacing formatv with a custom call
@@ -183,121 +283,7 @@ struct DiagnosticBase {
   }
 };
 
-// Disable type deduction based on `args`; the type of `diagnostic_base`
-// determines the diagnostic's parameter types.
-template <typename Arg>
-using NoTypeDeduction = std::common_type_t<Arg>;
-
 }  // namespace Internal
-
-// Manages the creation of reports, the testing if diagnostics are enabled, and
-// the collection of reports.
-//
-// This class is parameterized by a location type, allowing different
-// diagnostic clients to provide location information in whatever form is most
-// convenient for them, such as a position within a buffer when lexing, a token
-// when parsing, or a parse tree node when type-checking, and to allow unit
-// tests to be decoupled from any concrete location representation.
-template <typename LocationT>
-class DiagnosticEmitter {
- public:
-  // A builder-pattern type to provide a fluent interface for constructing
-  // a more complex diagnostic. See `DiagnosticEmitter::Build` for the
-  // expected usage.
-  class DiagnosticBuilder {
-   public:
-    // Adds a note diagnostic attached to the main diagnostic being built.
-    // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
-    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
-    template <typename... Args>
-    auto Note(LocationT location,
-              const Internal::DiagnosticBase<Args...>& diagnostic_base,
-              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
-      CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note)
-          << static_cast<int>(diagnostic_base.Level);
-      diagnostic_.notes.push_back(MakeMessage(
-          emitter_, location, diagnostic_base, {llvm::Any(args)...}));
-      return *this;
-    }
-
-    // Emits the built diagnostic and its attached notes.
-    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
-    template <typename... Args>
-    auto Emit() -> void {
-      emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
-    }
-
-   private:
-    friend class DiagnosticEmitter<LocationT>;
-
-    template <typename... Args>
-    explicit DiagnosticBuilder(
-        DiagnosticEmitter<LocationT>* emitter, LocationT location,
-        const Internal::DiagnosticBase<Args...>& diagnostic_base,
-        llvm::SmallVector<llvm::Any> args)
-        : emitter_(emitter),
-          diagnostic_(
-              {.level = diagnostic_base.Level,
-               .message = MakeMessage(emitter, location, diagnostic_base,
-                                      std::move(args))}) {
-      CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
-    }
-
-    template <typename... Args>
-    static auto MakeMessage(
-        DiagnosticEmitter<LocationT>* emitter, LocationT location,
-        const Internal::DiagnosticBase<Args...>& diagnostic_base,
-        llvm::SmallVector<llvm::Any> args) -> DiagnosticMessage {
-      return DiagnosticMessage(
-          diagnostic_base.Kind, emitter->translator_->GetLocation(location),
-          diagnostic_base.Format, std::move(args),
-          [&diagnostic_base](const DiagnosticMessage& message) -> std::string {
-            return diagnostic_base.FormatFn(message);
-          });
-    }
-
-    DiagnosticEmitter<LocationT>* emitter_;
-    Diagnostic diagnostic_;
-  };
-
-  // The `translator` and `consumer` are required to outlive the diagnostic
-  // emitter.
-  explicit DiagnosticEmitter(
-      DiagnosticLocationTranslator<LocationT>& translator,
-      DiagnosticConsumer& consumer)
-      : translator_(&translator), consumer_(&consumer) {}
-  ~DiagnosticEmitter() = default;
-
-  // Emits an error.
-  //
-  // When passing arguments, they may be buffered. As a consequence, lifetimes
-  // may outlive the `Emit` call.
-  template <typename... Args>
-  auto Emit(LocationT location,
-            const Internal::DiagnosticBase<Args...>& diagnostic_base,
-            Internal::NoTypeDeduction<Args>... args) -> void {
-    DiagnosticBuilder(this, location, diagnostic_base, {llvm::Any(args)...})
-        .Emit();
-  }
-
-  // A fluent interface for building a diagnostic and attaching notes for added
-  // context or information. For example:
-  //
-  //   emitter_.Build(location1, MyDiagnostic)
-  //     .Note(location2, MyDiagnosticNote)
-  //     .Emit();
-  template <typename... Args>
-  auto Build(LocationT location,
-             const Internal::DiagnosticBase<Args...>& diagnostic_base,
-             Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
-    return DiagnosticBuilder(this, location, diagnostic_base,
-                             {llvm::Any(args)...});
-  }
-
- private:
-  DiagnosticLocationTranslator<LocationT>* translator_;
-  DiagnosticConsumer* consumer_;
-};
 
 class StreamDiagnosticConsumer : public DiagnosticConsumer {
  public:

@@ -36,8 +36,8 @@ TEST_F(DiagnosticEmitterTest, EmitSimpleError) {
   EXPECT_CALL(consumer_, HandleDiagnostic(IsDiagnostic(
                              DiagnosticKind::TestDiagnostic,
                              DiagnosticLevel::Error, 1, 2, "simple error")));
-  emitter_.Emit(1, TestDiagnostic);
-  emitter_.Emit(2, TestDiagnostic);
+  TestDiagnostic.Emit(emitter_, 1);
+  TestDiagnostic.Emit(emitter_, 2);
 }
 
 TEST_F(DiagnosticEmitterTest, EmitSimpleWarning) {
@@ -46,7 +46,7 @@ TEST_F(DiagnosticEmitterTest, EmitSimpleWarning) {
               HandleDiagnostic(IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                             DiagnosticLevel::Warning, 1, 1,
                                             "simple warning")));
-  emitter_.Emit(1, TestDiagnostic);
+  TestDiagnostic.Emit(emitter_, 1);
 }
 
 TEST_F(DiagnosticEmitterTest, EmitOneArgDiagnostic) {
@@ -54,7 +54,7 @@ TEST_F(DiagnosticEmitterTest, EmitOneArgDiagnostic) {
   EXPECT_CALL(consumer_, HandleDiagnostic(IsDiagnostic(
                              DiagnosticKind::TestDiagnostic,
                              DiagnosticLevel::Error, 1, 1, "arg: `str`")));
-  emitter_.Emit(1, TestDiagnostic, "str");
+  TestDiagnostic.Emit(emitter_, 1, "str");
 }
 
 TEST_F(DiagnosticEmitterTest, EmitNote) {
@@ -64,7 +64,30 @@ TEST_F(DiagnosticEmitterTest, EmitNote) {
               HandleDiagnostic(IsDiagnostic(DiagnosticKind::TestDiagnostic,
                                             DiagnosticLevel::Warning, 1, 1,
                                             "simple warning")));
-  emitter_.Build(1, TestDiagnostic).Note(2, TestDiagnosticNote).Emit();
+  auto diag = TestDiagnostic.Build(emitter_, 1);
+  TestDiagnosticNote.Note(diag, 2);
+  diag.Emit();
+}
+
+TEST_F(DiagnosticEmitterTest, EmitStringByRef) {
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "{0}", std::string);
+  EXPECT_CALL(consumer_,
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::TestDiagnostic,
+                                            DiagnosticLevel::Warning, 1, 1,
+                                            "simple warning")));
+  std::string s = "simple warning";
+  auto ref = [&]() -> std::string& { return s; };
+  TestDiagnostic.Emit(emitter_, 1, ref());
+}
+
+TEST_F(DiagnosticEmitterTest, EmitString) {
+  CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "{0}", std::string);
+  EXPECT_CALL(consumer_,
+              HandleDiagnostic(IsDiagnostic(DiagnosticKind::TestDiagnostic,
+                                            DiagnosticLevel::Warning, 1, 1,
+                                            "simple warning")));
+  auto ref = [&]() -> std::string { return "simple warning"; };
+  TestDiagnostic.Emit(emitter_, 1, ref());
 }
 
 }  // namespace
