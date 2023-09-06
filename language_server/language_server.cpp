@@ -6,9 +6,9 @@
 
 #include "clang-tools-extra/clangd/Protocol.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
-#include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/parser/parse_node_kind.h"
-#include "toolchain/parser/parse_tree.h"
+#include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::LS {
@@ -95,7 +95,7 @@ void LanguageServer::OnDocumentSymbol(
               llvm::MemoryBuffer::getMemBufferCopy(files_.at(file)));
 
   auto buf = SourceBuffer::CreateFromFile(vfs, file);
-  auto lexed = TokenizedBuffer::Lex(*buf, NullDiagnosticConsumer());
+  auto lexed = Lex::TokenizedBuffer::Lex(*buf, NullDiagnosticConsumer());
   auto parsed = Parse::Tree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;
   for (const auto& node : parsed.postorder()) {

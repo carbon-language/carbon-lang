@@ -7,38 +7,49 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "common/ostream.h"
 #include "llvm/ADT/StringExtras.h"
 
 namespace Carbon::Testing {
 namespace {
 
-using ::testing::AllOf;
-using ::testing::ElementsAre;
 using ::testing::Eq;
-using ::testing::Field;
-using ::testing::Matcher;
 
 class FileTestBaseTest : public FileTestBase {
  public:
   using FileTestBase::FileTestBase;
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-           const llvm::SmallVector<TestFile>& test_files,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
-      -> ErrorOr<bool> override {
-    if (!test_args.empty()) {
-      llvm::ListSeparator sep;
-      stdout << test_args.size() << " args: ";
-      for (const auto& arg : test_args) {
-        stdout << sep << "`" << arg << "`";
-      }
-      stdout << "\n";
+           llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> override {
+    llvm::ArrayRef<llvm::StringRef> args = test_args;
+
+    llvm::ListSeparator sep;
+    stdout << args.size() << " args: ";
+    for (auto arg : args) {
+      stdout << sep << "`" << arg << "`";
     }
+    stdout << "\n";
 
     auto filename = path().filename();
     if (filename == "args.carbon") {
+      // 'args.carbon' has custom arguments, so don't do regular argument
+      // validation for it.
       return true;
-    } else if (filename == "example.carbon") {
+    }
+
+    if (args.empty() || args.front() != "default_args") {
+      return ErrorBuilder() << "missing `default_args` argument";
+    }
+    args = args.drop_front();
+
+    for (auto arg : args) {
+      if (!fs.exists(arg)) {
+        return ErrorBuilder() << "Missing file: " << arg;
+      }
+    }
+
+    if (filename == "example.carbon") {
       int delta_line = 10;
       stdout << "something\n"
              << "\n"
@@ -52,11 +63,17 @@ class FileTestBaseTest : public FileTestBase {
       return false;
     } else if (filename == "two_files.carbon" ||
                filename == "not_split.carbon") {
-      for (const auto& file : test_files) {
+      for (auto arg : args) {
         // Describe file contents to stdout to validate splitting.
-        stdout << file.filename << ":1: starts with \"";
-        stdout.write_escaped(file.content.take_front(40));
-        stdout << "\", length " << file.content.count('\n') << " lines\n";
+        auto file = fs.getBufferForFile(arg, /*FileSize=*/-1,
+                                        /*RequiresNullTerminator=*/false);
+        if (file.getError()) {
+          return Error(file.getError().message());
+        }
+        llvm::StringRef content = file.get()->getBuffer();
+        stdout << arg << ":1: starts with \"";
+        stdout.write_escaped(content.take_front(40));
+        stdout << "\", length " << content.count('\n') << " lines\n";
       }
       return true;
     } else if (filename == "alternating_files.carbon") {
