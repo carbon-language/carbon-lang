@@ -191,7 +191,7 @@ jobs:
       # Compute the set of possible rules impacted by this change using
       # Bazel-based diffing. This lets PRs and the merge queue have a much more
       # efficient test CI action by avoiding even enumerating (and downloading)
-      # all of the unaffected Bazel targets
+      # all of the unaffected Bazel targets.
       - name: Compute impacted pull request targets
         if:
           steps.filter.outputs.ignore == 'false' && github.event_name != 'push'
