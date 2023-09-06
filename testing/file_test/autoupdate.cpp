@@ -289,6 +289,14 @@ auto AutoupdateFileTest(
       // STDOUT check lines are placed after the line they refer to, or at the
       // end of the file if none of them refers to a line.
       if (reached_autoupdate && any_attached_stdout_lines) {
+        // Include any early STDERR lines now, so that the initial batch of
+        // CHECK lines have STDERR before STDOUT.
+        if (autoupdate_line_number == non_check_line.line_number()) {
+          add_check_lines(stderr_check_lines, stderr_check_line,
+                          non_check_line.line_number(),
+                          non_check_line.indent());
+        }
+
         add_check_lines(stdout_check_lines, stdout_check_line,
                         non_check_line.line_number(), non_check_line.indent());
       }
