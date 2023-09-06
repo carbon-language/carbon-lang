@@ -95,11 +95,8 @@ def remap_file(label: str) -> str:
     repo, _, path = label.partition("//")
     if not repo:
         return path.replace(":", "/")
-
-    if repo in EXTERNAL_REPOS:
-        return EXTERNAL_REPOS[repo].remap(path)
-    else:
-        sys.exit(f"Don't know how to remap label '{label}'")
+    assert repo in EXTERNAL_REPOS, repo
+    return EXTERNAL_REPOS[repo].remap(path)
 
 
 def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
