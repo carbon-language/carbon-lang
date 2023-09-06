@@ -235,18 +235,16 @@ auto AutoupdateFileTest(
 
   // Stitch together content.
   llvm::SmallVector<const FileTestLineBase*> new_lines;
-  for (auto [file_number, filename, non_check_file] :
+  for (auto [file_number_as_size_t, filename, non_check_file] :
        llvm::enumerate(filenames, non_check_lines)) {
+    auto file_number = static_cast<int>(file_number_as_size_t);
     llvm::DenseMap<int, int> output_line_remap;
     llvm::SmallVector<CheckLine*> check_lines_this_file;
     int output_line_number = 0;
 
     // Add all check lines from the given vector until we reach a check line
     // attached to a line later than `to_line_number`.
-    // Explicit capture of file_number is a workaround for the inability for
-    // lambdas to implicitly capture a structured binding.
-    auto add_check_lines = [&, file_number = static_cast<int>(file_number)](
-                               const llvm::SmallVector<CheckLine>& lines,
+    auto add_check_lines = [&](const llvm::SmallVector<CheckLine>& lines,
                                CheckLine*& line, int to_line_number,
                                llvm::StringRef indent) {
       for (; line != lines.end() && (line->file_number() < file_number ||
@@ -301,7 +299,7 @@ auto AutoupdateFileTest(
 
     // At the end of the last file, print remaining check lines which -- for
     // whatever reason -- come after all original lines.
-    if (file_number == filenames.size() - 1 &&
+    if (file_number == static_cast<int>(filenames.size()) - 1 &&
         (stderr_check_line != stderr_check_lines.end() ||
          stdout_check_line != stdout_check_lines.end())) {
       // Ensure there's a blank line before any trailing CHECKs.
