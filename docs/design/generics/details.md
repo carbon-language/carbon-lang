@@ -1682,10 +1682,11 @@ var thriller_count: Optional(i32) =
     play_count.Find(Song("Thriller"));
 ```
 
-Since the `Find` function is a checked generic, it can only use the capabilities
-that `HashMap` requires of `KeyT` and `ValueT`. This allows us to evaluate when
-we can convert between two different arguments to a parameterized type. Consider
-two adapters of `Song` that implement `Hashable`:
+Since the `KeyT` and `ValueT` are symbolic parameters, the `Find` function is a
+checked generic, and it can only use the capabilities of `KeyT` and `ValueT`
+specified as requirements. This allows us to evaluate when we can convert
+between two different arguments to a parameterized type. Consider two adapters
+of `Song` that implement `Hashable`:
 
 ```
 class PlayableSong {
@@ -1743,6 +1744,13 @@ The resulting type `SongByArtist` would:
 -   implement `Hashable`, but differently than `Song`, and
 -   implement `Printable`, inherited from `Song`.
 
+The rule is that when looking up if `SongByArtist` implements an interface `I`
+and no implementation is found, the compiler repeats the search to see if `Song`
+implements `I`. If that is found, it is reused if possible. The reuse will be
+successful if all types that reference `Self` in the signatures of interface's
+functions can be cast to the corresponding type with `SongByArtist` substituted
+in for `Song`.
+
 Unlike the similar `class B { extend base: A; }` notation,
 `class B { extend adapt A; }` is permitted even if `A` is a final class. Also,
 there is no implicit conversion from `B` to `A`, matching `adapt` without
@@ -1769,6 +1777,8 @@ class SongRenderToPrintDriver {
   alias PrintToScreen = Printable.Print;
 }
 ```
+
+**FIXME: Left off here.**
 
 ### Use case: Using independent libraries together
 
