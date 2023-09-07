@@ -25,7 +25,6 @@ import argparse
 import tempfile
 import sys
 from pathlib import Path
-from typing import List
 
 import scripts_utils
 
@@ -46,7 +45,13 @@ def filter_targets(bazel: Path, targets: str) -> str:
         log(f"Bazel query snippet:\n```\n{query_snippet}```")
         tmp.write(query)
         try:
-            p = subprocess.run([str(bazel), "query", f"--query_file={tmp.name}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, encoding="utf-8")
+            p = subprocess.run(
+                [str(bazel), "query", f"--query_file={tmp.name}"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True,
+                encoding="utf-8",
+            )
             return p.stdout
         except subprocess.CalledProcessError as err:
             log(err.stderr)
