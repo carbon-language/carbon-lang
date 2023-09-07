@@ -241,10 +241,8 @@ jobs:
           # First fetch the relevant base into the git repository.
           git fetch --depth=1 origin $GIT_BASE_SHA
 
-          # Then use our script to drive the bazel-diff tool.
-          ./scripts/bazel_diff.py \
-            --baseline=$GIT_BASE_SHA \
-            >targets
+          # Then use `target-determinator` as wrapped by our script.
+          ./scripts/target_determinator.py $GIT_BASE_SHA >targets
 
       # Build and run just the tests impacted by the PR or merge group.
       - name: Test (${{ matrix.build_mode }})
