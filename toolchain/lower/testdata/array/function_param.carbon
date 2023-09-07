@@ -16,10 +16,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: source_filename = "function_param.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F(ptr %arr, i32 %i) {
-// CHECK:STDOUT:   %1 = load i32, i32 %i, align 4
-// CHECK:STDOUT:   %array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 %1
-// CHECK:STDOUT:   %2 = load i32, ptr %array.index, align 4
-// CHECK:STDOUT:   ret i32 %2
+// CHECK:STDOUT:   %array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i
+// CHECK:STDOUT:   %1 = load i32, ptr %array.index, align 4
+// CHECK:STDOUT:   ret i32 %1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @G() {

@@ -59,7 +59,7 @@ fn Run() {
 // CHECK:STDOUT:   store i32 %3, ptr %b, align 4
 // CHECK:STDOUT:   %c = alloca i32, align 4
 // CHECK:STDOUT:   %4 = load i32, ptr %b, align 4
-// CHECK:STDOUT:   %array.index5 = getelementptr inbounds [2 x i32], ptr %a, i32 %4
+// CHECK:STDOUT:   %array.index5 = getelementptr inbounds [2 x i32], ptr %a, i32 0, i32 %4
 // CHECK:STDOUT:   %5 = load i32, ptr %array.index5, align 4
 // CHECK:STDOUT:   store i32 %5, ptr %c, align 4
 // CHECK:STDOUT:   %d = alloca i32, align 4
