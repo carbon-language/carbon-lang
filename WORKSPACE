@@ -301,17 +301,3 @@ http_archive(
 load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_register_toolchains")
 
 tree_sitter_register_toolchains()
-
-###############################################################################
-# bazel-diff
-###############################################################################
-
-bazel_diff_version = "4.8.1"
-
-http_jar(
-    name = "bazel_diff",
-    sha256 = "1a7afe747558a217670a60f51f4d0d5bd3a99cb843f9abd4db6b5af9a4920dc1",
-    urls = [
-        "https://github.com/Tinder/bazel-diff/releases/download/{0}/bazel-diff_deploy.jar".format(bazel_diff_version),
-    ],
-)

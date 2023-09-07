@@ -2,8 +2,16 @@
 
 """Computes the potentially differing rules from some git commit.
 
-Computes the rules that differ between a provided baseline commit and the
-current git commit.
+Wraps the "target-determinator" Go program here:
+https://github.com/bazel-contrib/target-determinator
+
+The purpose is to compute the potentially impacted set of targets from some
+provided Git commit to the current checkout.
+
+This script will ensure a cached version of the latest release is available, and
+then forward a limited set of flags to it. This script also filters the
+resulting targets using `bazel query` to make it the most relevant list for
+continuous integration.
 """
 
 __copyright__ = """
@@ -162,49 +170,34 @@ def git_diff(baseline: str, current: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument(
-        "--baseline", required=True, help="Git commit of the diff baseline."
+        "baseline", nargs=1, help="Git commit of the diff baseline."
+    )
+    parser.add_argument(
+        "args", nargs="*", help="Remaining args to forward to the underlying tool."
     )
     parsed_args = parser.parse_args()
 
     scripts_utils.chdir_repo_root()
     bazel = Path(scripts_utils.locate_bazel())
+    target_determinator = scripts_utils.get_target_determinator()
 
-    if git_is_dirty():
-        exit("Cannot operate on a dirty repository!")
+    p = subprocess.run(
+        [
+            target_determinator,
+            f"--bazel={bazel}",
+            parsed_args.baseline,
+        ] + parsed_args.args,
+        check=True,
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+    )
 
-    baseline = parsed_args.baseline
-    current = git_current_head()
-    log(f"Diffing Bazel targets for {baseline}..{current}")
-    git_diff(baseline, current)
+    targets = p.stdout
+    if targets.strip() != "":
+        targets = filter_targets(bazel, targets)
+    log(f"Found {len(targets.splitlines())} impacted targets!")
 
-    with tempfile.TemporaryDirectory() as tmpdir_handle:
-        tmpdir = Path(tmpdir_handle)
-        bazel_diff = make_bazel_diff_script(bazel, tmpdir)
-        log(f"Wrote bazel-diff script: {bazel_diff}")
-
-        # Checkout the baseline revision to compute those hashes. But if we hit
-        # any errors, make sure to re-checkout the current state.
-        try:
-            log(f"Checking out commit: {baseline}")
-            git_checkout(baseline)
-
-            baseline_hashes = compute_hashes(
-                bazel, bazel_diff, tmpdir, "baseline"
-            )
-            log(f"Baseline hashes: {baseline_hashes}")
-        finally:
-            log(f"Checking out original commit: {current}")
-            git_checkout(current)
-
-        current_hashes = compute_hashes(bazel, bazel_diff, tmpdir, "current")
-        log(f"Current hashes: {current_hashes}")
-
-        targets = impacted_targets(bazel_diff, baseline_hashes, current_hashes)
-        if targets.strip() != "":
-            targets = filter_targets(bazel, targets)
-        log(f"Found {len(targets.splitlines())} impacted targets!")
-
-        print(targets.rstrip())
+    print(targets.rstrip())
 
 
 if __name__ == "__main__":
