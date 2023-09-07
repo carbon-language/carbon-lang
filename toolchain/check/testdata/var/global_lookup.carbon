@@ -7,44 +7,6 @@
 var x: i32 = 0;
 var y: i32 = x;
 
-// CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: functions: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   0,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: real_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   x,
-// CHECK:STDOUT:   y,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: type_blocks: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type0},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+1},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type0},
-// CHECK:STDOUT:   {kind: BindValue, arg0: node+0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: node+4},
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 0
