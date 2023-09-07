@@ -35,20 +35,6 @@ def log(s: str) -> None:
     print(s, file=sys.stderr)
 
 
-def quiet_run(args: List[str]) -> None:
-    try:
-        subprocess.run(
-            args,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            check=True,
-            encoding="utf-8",
-        )
-    except subprocess.CalledProcessError as err:
-        log(err.stderr)
-        raise
-
-
 def quiet_run_output(args: List[str]) -> str:
     try:
         p = subprocess.run(
@@ -62,48 +48,6 @@ def quiet_run_output(args: List[str]) -> str:
     except subprocess.CalledProcessError as err:
         log(err.stderr)
         raise
-
-
-def make_bazel_diff_script(bazel: Path, tmpdir: Path) -> Path:
-    bazel_diff_path = tmpdir / "bazel_diff"
-    quiet_run(
-        [
-            str(bazel),
-            "run",
-            f"--script_path={bazel_diff_path}",
-            "//bazel/diff:bazel-diff",
-        ]
-    )
-    return bazel_diff_path
-
-
-def compute_hashes(
-    bazel: Path, bazel_diff: Path, tmpdir: Path, prefix: str
-) -> Path:
-    hashes_path = tmpdir / f"{prefix}_hashes"
-    quiet_run(
-        [
-            str(bazel_diff),
-            "generate-hashes",
-            f"-b={bazel}",
-            f"-w={os.getcwd()}",
-            str(hashes_path),
-        ]
-    )
-    return hashes_path
-
-
-def impacted_targets(
-    bazel_diff: Path, baseline_hashes: Path, current_hashes: Path
-) -> str:
-    return quiet_run_output(
-        [
-            str(bazel_diff),
-            "get-impacted-targets",
-            f"-sh={baseline_hashes}",
-            f"-fh={current_hashes}",
-        ]
-    )
 
 
 def filter_targets(bazel: Path, targets: str) -> str:
@@ -126,47 +70,6 @@ def filter_targets(bazel: Path, targets: str) -> str:
         )
 
 
-def git_is_dirty() -> bool:
-    p = subprocess.run(
-        ["git", "status", "--porcelain", "--untracked-files=no"],
-        stdout=subprocess.PIPE,
-        check=True,
-        encoding="utf-8",
-    )
-    return len(p.stdout) > 0
-
-
-def git_current_head() -> str:
-    # Try to get and preserve symbolic-ref if HEAD point at one.
-    p = subprocess.run(
-        ["git", "symbolic-ref", "--quiet", "--short", "HEAD"],
-        encoding="utf-8",
-        stdout=subprocess.PIPE,
-    )
-    if p.returncode == 0:
-        return p.stdout.strip()
-
-    # Otherwise, just extract the commit.
-    return subprocess.run(
-        ["git", "rev-parse", "--short", "HEAD"],
-        stdout=subprocess.PIPE,
-        check=True,
-        encoding="utf-8",
-    ).stdout.strip()
-
-
-def git_checkout(commit: str) -> None:
-    subprocess.run(["git", "checkout", "--quiet", commit], check=True)
-
-
-def git_diff(baseline: str, current: str) -> None:
-    subprocess.run(
-        ["git", "diff", "--stat", f"{baseline}..{current}"],
-        stdout=sys.stderr.buffer,
-        check=True,
-    )
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument(
@@ -185,7 +88,7 @@ def main() -> None:
         [
             target_determinator,
             f"--bazel={bazel}",
-            parsed_args.baseline,
+            parsed_args.baseline[0],
         ] + parsed_args.args,
         check=True,
         stdout=subprocess.PIPE,
