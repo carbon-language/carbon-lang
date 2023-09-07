@@ -60,19 +60,14 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc9_38.3: ref [(); 5] = stub_reference %c
 // CHECK:STDOUT:   %.loc9_38.4: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc9_38.5: ref () = array_index %.loc9_38.3, %.loc9_38.4
-// CHECK:STDOUT:   %.loc9_38.6 = initialize_from %.loc9_38.5 to %.loc9_20.2
-// CHECK:STDOUT:   %.loc9_38.7: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc9_38.8: ref () = array_index %.loc9_38.3, %.loc9_38.7
-// CHECK:STDOUT:   %.loc9_38.9 = initialize_from %.loc9_38.8 to %.loc9_24.2
-// CHECK:STDOUT:   %.loc9_38.10: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc9_38.6: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc9_38.7: ref () = array_index %.loc9_38.3, %.loc9_38.6
+// CHECK:STDOUT:   %.loc9_38.8: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc9_38.9: ref () = array_index %.loc9_38.3, %.loc9_38.8
+// CHECK:STDOUT:   %.loc9_38.10: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc9_38.11: ref () = array_index %.loc9_38.3, %.loc9_38.10
-// CHECK:STDOUT:   %.loc9_38.12 = initialize_from %.loc9_38.11 to %.loc9_28.2
-// CHECK:STDOUT:   %.loc9_38.13: i32 = int_literal 3
-// CHECK:STDOUT:   %.loc9_38.14: ref () = array_index %.loc9_38.3, %.loc9_38.13
-// CHECK:STDOUT:   %.loc9_38.15 = initialize_from %.loc9_38.14 to %.loc9_32.2
-// CHECK:STDOUT:   %.loc9_38.16: i32 = int_literal 4
-// CHECK:STDOUT:   %.loc9_38.17: ref () = array_index %.loc9_38.3, %.loc9_38.16
-// CHECK:STDOUT:   %.loc9_38.18 = initialize_from %.loc9_38.17 to %.loc9_36.2
-// CHECK:STDOUT:   %.loc9_38.19: init [(); 5] = array_init %.loc9_38.2, (%.loc9_38.6, %.loc9_38.9, %.loc9_38.12, %.loc9_38.15, %.loc9_38.18) to %.loc9_38.3
-// CHECK:STDOUT:   assign %c, %.loc9_38.19
+// CHECK:STDOUT:   %.loc9_38.12: i32 = int_literal 4
+// CHECK:STDOUT:   %.loc9_38.13: ref () = array_index %.loc9_38.3, %.loc9_38.12
+// CHECK:STDOUT:   %.loc9_38.14: init [(); 5] = array_init %.loc9_38.2, (%.loc9_20.2, %.loc9_24.2, %.loc9_28.2, %.loc9_32.2, %.loc9_36.2) to %.loc9_38.3
+// CHECK:STDOUT:   assign %c, %.loc9_38.14
 // CHECK:STDOUT: }

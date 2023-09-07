@@ -124,6 +124,24 @@ class Context {
   auto Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                   SemIR::NodeId value_id) -> SemIR::NodeId;
 
+  // Performs and finalizes initialization of `target_id` from `value_id`. This
+  // is the same as `Initialize`, except that it also performs the final store
+  // from the initializer to the target if the initialization is not in-place.
+  // That final store is often undesirable as it is performed by the consumer
+  // of the initializer, such as an `Assign` or `ReturnExpression` node. The
+  // resulting node describes the initialization operation that was performed.
+  auto InitializeAndFinalize(Parse::Node parse_node, SemIR::NodeId target_id,
+                             SemIR::NodeId value_id) -> SemIR::NodeId {
+    auto init_id = Initialize(parse_node, target_id, value_id);
+    if (SemIR::GetInitializingRepresentation(
+            semantics_ir(), semantics_ir().GetNode(target_id).type_id())
+            .kind == SemIR::InitializingRepresentation::ByCopy) {
+      init_id = AddNode(
+          SemIR::Node::InitializeFrom::Make(parse_node, target_id, init_id));
+    }
+    return init_id;
+  }
+
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
                             SemIR::TypeId type_id) -> SemIR::NodeId {
