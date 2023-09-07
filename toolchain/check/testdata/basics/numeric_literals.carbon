@@ -186,48 +186,48 @@ fn F() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc8 = fn_decl @F
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_19: i32 = int_literal 5
-// CHECK:STDOUT:   %.loc16_20: type = array_type %.loc16_19, i32
+// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 5
+// CHECK:STDOUT:   %.loc10_20: type = array_type %.loc10_19, i32
 // CHECK:STDOUT:   %ints: ref [i32; 5] = var "ints"
-// CHECK:STDOUT:   %.loc27_5.1: i32 = int_literal 8
-// CHECK:STDOUT:   %.loc27_5.2: i32 = stub_reference %.loc27_5.1
-// CHECK:STDOUT:   %.loc30_5.1: i32 = int_literal 9
-// CHECK:STDOUT:   %.loc30_5.2: i32 = stub_reference %.loc30_5.1
-// CHECK:STDOUT:   %.loc33_5.1: i32 = int_literal 8
-// CHECK:STDOUT:   %.loc33_5.2: i32 = stub_reference %.loc33_5.1
-// CHECK:STDOUT:   %.loc36_5.1: i32 = int_literal 8
-// CHECK:STDOUT:   %.loc36_5.2: i32 = stub_reference %.loc36_5.1
-// CHECK:STDOUT:   %.loc39_5.1: i32 = int_literal 39999999999999999993
-// CHECK:STDOUT:   %.loc39_5.2: i32 = stub_reference %.loc39_5.1
-// CHECK:STDOUT:   %.loc42_3.1: type = tuple_type (i32, i32, i32, i32, i32)
-// CHECK:STDOUT:   %.loc42_3.2: (i32, i32, i32, i32, i32) = tuple_value (%.loc27_5.2, %.loc30_5.2, %.loc33_5.2, %.loc36_5.2, %.loc39_5.2)
-// CHECK:STDOUT:   %.loc42_3.3: [i32; 5] = array_value %.loc42_3.2
-// CHECK:STDOUT:   assign %ints, %.loc42_3.3
-// CHECK:STDOUT:   %.loc45_21: i32 = int_literal 7
-// CHECK:STDOUT:   %.loc45_22: type = array_type %.loc45_21, f64
+// CHECK:STDOUT:   %.loc11_5.1: i32 = int_literal 8
+// CHECK:STDOUT:   %.loc11_5.2: i32 = stub_reference %.loc11_5.1
+// CHECK:STDOUT:   %.loc12_5.1: i32 = int_literal 9
+// CHECK:STDOUT:   %.loc12_5.2: i32 = stub_reference %.loc12_5.1
+// CHECK:STDOUT:   %.loc13_5.1: i32 = int_literal 8
+// CHECK:STDOUT:   %.loc13_5.2: i32 = stub_reference %.loc13_5.1
+// CHECK:STDOUT:   %.loc14_5.1: i32 = int_literal 8
+// CHECK:STDOUT:   %.loc14_5.2: i32 = stub_reference %.loc14_5.1
+// CHECK:STDOUT:   %.loc15_5.1: i32 = int_literal 39999999999999999993
+// CHECK:STDOUT:   %.loc15_5.2: i32 = stub_reference %.loc15_5.1
+// CHECK:STDOUT:   %.loc16_3.1: type = tuple_type (i32, i32, i32, i32, i32)
+// CHECK:STDOUT:   %.loc16_3.2: (i32, i32, i32, i32, i32) = tuple_value (%.loc11_5.2, %.loc12_5.2, %.loc13_5.2, %.loc14_5.2, %.loc15_5.2)
+// CHECK:STDOUT:   %.loc16_3.3: [i32; 5] = array_value %.loc16_3.2
+// CHECK:STDOUT:   assign %ints, %.loc16_3.3
+// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 7
+// CHECK:STDOUT:   %.loc17_22: type = array_type %.loc17_21, f64
 // CHECK:STDOUT:   %floats: ref [f64; 7] = var "floats"
-// CHECK:STDOUT:   %.loc56_5.1: f64 = real_literal 9e-1
-// CHECK:STDOUT:   %.loc56_5.2: f64 = stub_reference %.loc56_5.1
-// CHECK:STDOUT:   %.loc59_5.1: f64 = real_literal 80e-1
-// CHECK:STDOUT:   %.loc59_5.2: f64 = stub_reference %.loc59_5.1
-// CHECK:STDOUT:   %.loc62_5.1: f64 = real_literal 800e-1
-// CHECK:STDOUT:   %.loc62_5.2: f64 = stub_reference %.loc62_5.1
-// CHECK:STDOUT:   %.loc65_5.1: f64 = real_literal 10e6
-// CHECK:STDOUT:   %.loc65_5.2: f64 = stub_reference %.loc65_5.1
-// CHECK:STDOUT:   %.loc68_5.1: f64 = real_literal 10e7
-// CHECK:STDOUT:   %.loc68_5.2: f64 = stub_reference %.loc68_5.1
-// CHECK:STDOUT:   %.loc71_5.1: f64 = real_literal 10e-9
-// CHECK:STDOUT:   %.loc71_5.2: f64 = stub_reference %.loc71_5.1
-// CHECK:STDOUT:   %.loc74_5.1: f64 = real_literal 399999999999999999930e39999999999999999992
-// CHECK:STDOUT:   %.loc74_5.2: f64 = stub_reference %.loc74_5.1
-// CHECK:STDOUT:   %.loc77_3.1: type = tuple_type (f64, f64, f64, f64, f64, f64, f64)
-// CHECK:STDOUT:   %.loc77_3.2: (f64, f64, f64, f64, f64, f64, f64) = tuple_value (%.loc56_5.2, %.loc59_5.2, %.loc62_5.2, %.loc65_5.2, %.loc68_5.2, %.loc71_5.2, %.loc74_5.2)
-// CHECK:STDOUT:   %.loc77_3.3: [f64; 7] = array_value %.loc77_3.2
-// CHECK:STDOUT:   assign %floats, %.loc77_3.3
+// CHECK:STDOUT:   %.loc18_5.1: f64 = real_literal 9e-1
+// CHECK:STDOUT:   %.loc18_5.2: f64 = stub_reference %.loc18_5.1
+// CHECK:STDOUT:   %.loc19_5.1: f64 = real_literal 80e-1
+// CHECK:STDOUT:   %.loc19_5.2: f64 = stub_reference %.loc19_5.1
+// CHECK:STDOUT:   %.loc20_5.1: f64 = real_literal 800e-1
+// CHECK:STDOUT:   %.loc20_5.2: f64 = stub_reference %.loc20_5.1
+// CHECK:STDOUT:   %.loc21_5.1: f64 = real_literal 10e6
+// CHECK:STDOUT:   %.loc21_5.2: f64 = stub_reference %.loc21_5.1
+// CHECK:STDOUT:   %.loc22_5.1: f64 = real_literal 10e7
+// CHECK:STDOUT:   %.loc22_5.2: f64 = stub_reference %.loc22_5.1
+// CHECK:STDOUT:   %.loc23_5.1: f64 = real_literal 10e-9
+// CHECK:STDOUT:   %.loc23_5.2: f64 = stub_reference %.loc23_5.1
+// CHECK:STDOUT:   %.loc24_5.1: f64 = real_literal 399999999999999999930e39999999999999999992
+// CHECK:STDOUT:   %.loc24_5.2: f64 = stub_reference %.loc24_5.1
+// CHECK:STDOUT:   %.loc25_3.1: type = tuple_type (f64, f64, f64, f64, f64, f64, f64)
+// CHECK:STDOUT:   %.loc25_3.2: (f64, f64, f64, f64, f64, f64, f64) = tuple_value (%.loc18_5.2, %.loc19_5.2, %.loc20_5.2, %.loc21_5.2, %.loc22_5.2, %.loc23_5.2, %.loc24_5.2)
+// CHECK:STDOUT:   %.loc25_3.3: [f64; 7] = array_value %.loc25_3.2
+// CHECK:STDOUT:   assign %floats, %.loc25_3.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
