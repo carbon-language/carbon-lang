@@ -28,29 +28,13 @@ auto HandleParenExpressionOrTupleLiteralStart(Context& context,
   return true;
 }
 
-static auto HandleTupleLiteralElement(Context& context) -> void {
-  // Convert the operand to a value.
-  // TODO: We need to decide how tuple literals interact with expression
-  // categories.
-  auto [value_node, value_id] =
-      context.node_stack().PopExpressionWithParseNode();
-  value_id = context.ConvertToValueExpression(value_id);
-  context.node_stack().Push(value_node, value_id);
-}
-
 auto HandleTupleLiteralComma(Context& context, Parse::Node /*parse_node*/)
     -> bool {
-  HandleTupleLiteralElement(context);
   context.ParamOrArgComma(/*for_args=*/true);
   return true;
 }
 
 auto HandleTupleLiteral(Context& context, Parse::Node parse_node) -> bool {
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-      Parse::NodeKind::ParenExpressionOrTupleLiteralStart) {
-    HandleTupleLiteralElement(context);
-  }
-
   auto refs_id = context.ParamOrArgEnd(
       /*for_args=*/true, Parse::NodeKind::ParenExpressionOrTupleLiteralStart);
 

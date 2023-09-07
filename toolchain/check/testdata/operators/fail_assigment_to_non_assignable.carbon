@@ -81,12 +81,10 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_10.5
 // CHECK:STDOUT:   %.loc21_8.3: (i32, i32) = tuple_literal_as_value %.loc21_8.2, (%.loc21_4.2, %.loc21_7.2)
 // CHECK:STDOUT:   %n: ref i32 = var "n"
-// CHECK:STDOUT:   %.loc22_16: i32 = int_literal 0
-// CHECK:STDOUT:   assign %n, %.loc22_16
-// CHECK:STDOUT:   %.loc22_7.1: i32 = bind_value %n
-// CHECK:STDOUT:   %.loc26_4: i32 = stub_reference %.loc22_7.1
-// CHECK:STDOUT:   %.loc22_7.2: i32 = bind_value %n
-// CHECK:STDOUT:   %.loc26_7: i32 = stub_reference %.loc22_7.2
+// CHECK:STDOUT:   %.loc22: i32 = int_literal 0
+// CHECK:STDOUT:   assign %n, %.loc22
+// CHECK:STDOUT:   %.loc26_4: ref i32 = stub_reference %n
+// CHECK:STDOUT:   %.loc26_7: ref i32 = stub_reference %n
 // CHECK:STDOUT:   %.loc26_8.1: (i32, i32) = tuple_literal (%.loc26_4, %.loc26_7)
 // CHECK:STDOUT:   %.loc26_13.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc26_13.2: i32 = stub_reference %.loc26_13.1

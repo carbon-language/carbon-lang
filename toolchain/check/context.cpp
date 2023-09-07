@@ -852,6 +852,8 @@ auto Context::ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
           // TODO: Eventually ExpressionAsType will insert implicit cast
           // instructions. When that happens, this will need to verify the full
           // tuple conversion will work before calling it.
+          // TODO: This call recurses back to this function. Switch to an
+          // iterative approach.
           type_ids.push_back(
               ExpressionAsType(value.parse_node(), tuple_node_id));
         }

@@ -4,37 +4,41 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: nested_tuple.carbon:[[@LINE+6]]:24: Cannot implicitly convert from `(type, type) as type` to `type`.
-// CHECK:STDERR: var x: ((i32, i32), i32) = ((12, 76), 6);
-// CHECK:STDERR:                        ^
-// CHECK:STDERR: nested_tuple.carbon:[[@LINE+3]]:41: Cannot implicitly convert from `((i32, i32), i32) as type` to `(<error>, i32) as type`.
-// CHECK:STDERR: var x: ((i32, i32), i32) = ((12, 76), 6);
-// CHECK:STDERR:                                         ^
 var x: ((i32, i32), i32) = ((12, 76), 6);
 
 // CHECK:STDOUT: file "nested_tuple.carbon" {
-// CHECK:STDOUT:   %.loc13_10: type = stub_reference i32
-// CHECK:STDOUT:   %.loc13_15: type = stub_reference i32
-// CHECK:STDOUT:   %.loc13_18.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc13_18.2: (type, type) = tuple_literal (%.loc13_10, %.loc13_15)
-// CHECK:STDOUT:   %.loc13_18.3: (type, type) = tuple_literal_as_value %.loc13_18.2, (%.loc13_10, %.loc13_15)
-// CHECK:STDOUT:   %.loc13_18.4: (type, type) = stub_reference %.loc13_18.3
-// CHECK:STDOUT:   %.loc13_21: type = stub_reference i32
-// CHECK:STDOUT:   %.loc13_24.1: type = tuple_type ((type, type), type)
-// CHECK:STDOUT:   %.loc13_24.2: ((type, type), type) = tuple_literal (%.loc13_18.4, %.loc13_21)
-// CHECK:STDOUT:   %.loc13_24.3: type = tuple_type (<error>, i32)
-// CHECK:STDOUT:   %x: ref (<error>, i32) = var "x"
-// CHECK:STDOUT:   %.loc13_30.1: i32 = int_literal 12
-// CHECK:STDOUT:   %.loc13_30.2: i32 = stub_reference %.loc13_30.1
-// CHECK:STDOUT:   %.loc13_34.1: i32 = int_literal 76
-// CHECK:STDOUT:   %.loc13_34.2: i32 = stub_reference %.loc13_34.1
-// CHECK:STDOUT:   %.loc13_36.1: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc13_36.2: (i32, i32) = tuple_literal (%.loc13_30.2, %.loc13_34.2)
-// CHECK:STDOUT:   %.loc13_36.3: (i32, i32) = tuple_literal_as_value %.loc13_36.2, (%.loc13_30.2, %.loc13_34.2)
-// CHECK:STDOUT:   %.loc13_36.4: (i32, i32) = stub_reference %.loc13_36.3
-// CHECK:STDOUT:   %.loc13_39.1: i32 = int_literal 6
-// CHECK:STDOUT:   %.loc13_39.2: i32 = stub_reference %.loc13_39.1
-// CHECK:STDOUT:   %.loc13_40.1: type = tuple_type ((i32, i32), i32)
-// CHECK:STDOUT:   %.loc13_40.2: ((i32, i32), i32) = tuple_literal (%.loc13_36.4, %.loc13_39.2)
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   %.loc7_10: type = stub_reference i32
+// CHECK:STDOUT:   %.loc7_15: type = stub_reference i32
+// CHECK:STDOUT:   %.loc7_18.1: type = tuple_type (type, type)
+// CHECK:STDOUT:   %.loc7_18.2: (type, type) = tuple_literal (%.loc7_10, %.loc7_15)
+// CHECK:STDOUT:   %.loc7_18.3: (type, type) = stub_reference %.loc7_18.2
+// CHECK:STDOUT:   %.loc7_21: type = stub_reference i32
+// CHECK:STDOUT:   %.loc7_24.1: type = tuple_type ((type, type), type)
+// CHECK:STDOUT:   %.loc7_24.2: ((type, type), type) = tuple_literal (%.loc7_18.3, %.loc7_21)
+// CHECK:STDOUT:   %.loc7_18.4: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc7_24.3: type = tuple_type ((i32, i32), i32)
+// CHECK:STDOUT:   %x: ref ((i32, i32), i32) = var "x"
+// CHECK:STDOUT:   %.loc7_30.1: i32 = int_literal 12
+// CHECK:STDOUT:   %.loc7_30.2: i32 = stub_reference %.loc7_30.1
+// CHECK:STDOUT:   %.loc7_34.1: i32 = int_literal 76
+// CHECK:STDOUT:   %.loc7_34.2: i32 = stub_reference %.loc7_34.1
+// CHECK:STDOUT:   %.loc7_36.1: (i32, i32) = tuple_literal (%.loc7_30.2, %.loc7_34.2)
+// CHECK:STDOUT:   %.loc7_36.2: (i32, i32) = stub_reference %.loc7_36.1
+// CHECK:STDOUT:   %.loc7_39.1: i32 = int_literal 6
+// CHECK:STDOUT:   %.loc7_39.2: i32 = stub_reference %.loc7_39.1
+// CHECK:STDOUT:   %.loc7_40: ((i32, i32), i32) = tuple_literal (%.loc7_36.2, %.loc7_39.2)
+// CHECK:STDOUT:   %.loc7_41.1: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7_41.2: ref (i32, i32) = tuple_index %x, %.loc7_41.1
+// CHECK:STDOUT:   %.loc7_41.3: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7_41.4: ref i32 = tuple_index %.loc7_41.2, %.loc7_41.3
+// CHECK:STDOUT:   assign %.loc7_41.4, %.loc7_30.2
+// CHECK:STDOUT:   %.loc7_41.5: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7_41.6: ref i32 = tuple_index %.loc7_41.2, %.loc7_41.5
+// CHECK:STDOUT:   assign %.loc7_41.6, %.loc7_34.2
+// CHECK:STDOUT:   %.loc7_41.7: init (i32, i32) = tuple_literal_as_init %.loc7_36.1, (%.loc7_30.2, %.loc7_34.2)
+// CHECK:STDOUT:   %.loc7_41.8: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7_41.9: ref i32 = tuple_index %x, %.loc7_41.8
+// CHECK:STDOUT:   assign %.loc7_41.9, %.loc7_39.2
+// CHECK:STDOUT:   %.loc7_41.10: init ((i32, i32), i32) = tuple_literal_as_init %.loc7_40, (%.loc7_41.7, %.loc7_39.2)
+// CHECK:STDOUT:   assign %x, %.loc7_41.10
 // CHECK:STDOUT: }
