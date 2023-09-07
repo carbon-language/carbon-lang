@@ -23,7 +23,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import subprocess
 import argparse
 import tempfile
-import os
 import sys
 from pathlib import Path
 from typing import List

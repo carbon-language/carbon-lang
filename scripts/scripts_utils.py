@@ -51,7 +51,7 @@ _BAZEL_TOOLS_VERSION_SHAS = {
     },
 }
 
-_TARGET_DETERMINATOR_URL = "https://github.com/bazel-contrib/target-determinator/releases/download/v0.23.0/"
+_TARGET_DETERMINATOR_URL = "https://github.com/bazel-contrib/target-determinator/releases/download/v0.23.0/"  # noqa: E501
 
 """Version SHAs.
 
