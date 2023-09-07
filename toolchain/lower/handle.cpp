@@ -251,7 +251,7 @@ auto HandleRealLiteral(FunctionContext& context, SemIR::NodeId node_id,
       context.semantics_ir().GetRealLiteral(node.GetAsRealLiteral());
   // TODO: This will probably have overflow issues, and should be fixed.
   double val =
-      real.mantissa.getSExtValue() *
+      real.mantissa.getZExtValue() *
       std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
   llvm::APFloat llvm_val(val);
   context.SetLocal(node_id, llvm::ConstantFP::get(

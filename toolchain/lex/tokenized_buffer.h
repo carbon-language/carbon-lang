@@ -128,8 +128,8 @@ class TokenIterator
 class RealLiteralValue : public Printable<RealLiteralValue> {
  public:
   auto Print(llvm::raw_ostream& output_stream) const -> void {
-    output_stream << mantissa << "*" << (is_decimal ? "10" : "2") << "^"
-                  << exponent;
+    mantissa.print(output_stream, /*isSigned=*/false);
+    output_stream << "*" << (is_decimal ? "10" : "2") << "^" << exponent;
   }
 
   // The mantissa, represented as an unsigned integer.

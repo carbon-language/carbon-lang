@@ -717,7 +717,8 @@ class Formatter {
   auto FormatArg(RealLiteralId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
     const auto& real = semantics_ir_.GetRealLiteral(id);
-    out_ << real.mantissa << (real.is_decimal ? 'e' : 'p') << real.exponent;
+    real.mantissa.print(out_, /*isSigned=*/false);
+    out_ << (real.is_decimal ? 'e' : 'p') << real.exponent;
   }
 
   auto FormatArg(StringId id) -> void {

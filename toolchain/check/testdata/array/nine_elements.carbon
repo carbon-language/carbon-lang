@@ -10,7 +10,7 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   -7,
+// CHECK:STDOUT:   9,
 // CHECK:STDOUT:   1,
 // CHECK:STDOUT:   2,
 // CHECK:STDOUT:   3,
@@ -18,8 +18,8 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   5,
 // CHECK:STDOUT:   6,
 // CHECK:STDOUT:   7,
-// CHECK:STDOUT:   -8,
-// CHECK:STDOUT:   -7,
+// CHECK:STDOUT:   8,
+// CHECK:STDOUT:   9,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]

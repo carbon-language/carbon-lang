@@ -16,7 +16,7 @@ var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
 // CHECK:STDOUT:   12,
-// CHECK:STDOUT:   -1,
+// CHECK:STDOUT:   295147905179352825855,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
