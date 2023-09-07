@@ -34,7 +34,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Interface extension](#interface-extension)
         -   [`extend` and `impl` with named constraints](#extend-and-impl-with-named-constraints)
         -   [Diamond dependency issue](#diamond-dependency-issue)
-    -   [Use case: overload resolution](#use-case-overload-resolution)
+    -   [Use case: detecting unreachable matches](#use-case-detecting-unreachable-matches)
 -   [Adapting types](#adapting-types)
     -   [Adapter compatibility](#adapter-compatibility)
     -   [Extending adapter](#extending-adapter)
@@ -1549,45 +1549,18 @@ eventually be provided.
 declared lexically in the class scope in this case. That would allow earlier
 detection of missing definitions.
 
-**FIXME: Left off here.**
+### Use case: detecting unreachable matches
 
-### Use case: overload resolution
+If one interface extends another, that gives the information to the compiler
+that the extending interface is implemented for a subset of types as the
+extended interface. This can be used to detect unreachable code.
 
-Implementing an extended interface is an example of a more specific match for
-[lookup resolution](#lookup-resolution-and-specialization). For example, this
-could be used to provide different implementations of an algorithm depending on
-the capabilities of the iterator being passed in:
-
-```
-interface ForwardIntIterator {
-  fn Advance[addr self: Self*]();
-  fn Get[self: Self]() -> i32;
-}
-interface BidirectionalIntIterator {
-  extend ForwardIntIterator;
-  fn Back[addr self: Self*]();
-}
-interface RandomAccessIntIterator {
-  extend BidirectionalIntIterator;
-  fn Skip[addr self: Self*](offset: i32);
-  fn Difference[self: Self](rhs: Self) -> i32;
-}
-
-fn SearchInSortedList[IterT:! ForwardIntIterator]
-    (begin: IterT, end: IterT, needle: i32) -> bool {
-  ... // does linear search
-}
-// Will prefer the following overload when it matches
-// since it is more specific.
-fn SearchInSortedList[IterT:! RandomAccessIntIterator]
-    (begin: IterT, end: IterT, needle: i32) -> bool {
-  ... // does binary search
-}
-```
-
-This would be an example of the more general rule that an interface `A`
-requiring an implementation of interface `B` means `A` is more specific than
-`B`.
+For example, the [`impl` prioritization rule](#prioritization-rule) is used to
+pick between `impl` declarations based on an explicit priority ordering given by
+the user. If the broader interface is prioritized over the more specific
+interface, the compiler can conclude that the more specific declaration will
+never be selected and report an error. Similar situations could be detected in
+function overloading.
 
 ## Adapting types
 

@@ -1009,6 +1009,8 @@ patterns.
 > -   [Pattern matching](pattern_matching.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+> -   Proposal
+>     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
 
 ### Binding patterns
 
@@ -1588,14 +1590,13 @@ fn Foo() -> f32 {
 }
 ```
 
-> **Note:** This is provisional, no design for `match` statements has been
-> through the proposal process yet.
-
 > References:
 >
 > -   [Pattern matching](pattern_matching.md)
 > -   Question-for-leads issue
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
+> -   Proposal
+>     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
 
 ## User-defined types
 
