@@ -54,9 +54,9 @@ struct DiagnosticLocation {
   // A reference to the line of the error.
   llvm::StringRef line;
   // 1-based line number.
-  int32_t line_number;
+  int32_t line_number = -1;
   // 1-based column number.
-  int32_t column_number;
+  int32_t column_number = -1;
 };
 
 // A message composing a diagnostic. This may be the main message, but can also
@@ -215,8 +215,8 @@ class DiagnosticEmitter {
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
       CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note)
           << static_cast<int>(diagnostic_base.Level);
-      diagnostic_.notes.push_back(
-          MakeMessage(location, diagnostic_base, std::move(args)...));
+      diagnostic_.notes.push_back(MakeMessage(
+          emitter_, location, diagnostic_base, {llvm::Any(args)...}));
       return *this;
     }
 
@@ -234,22 +234,23 @@ class DiagnosticEmitter {
     explicit DiagnosticBuilder(
         DiagnosticEmitter<LocationT>* emitter, LocationT location,
         const Internal::DiagnosticBase<Args...>& diagnostic_base,
-        Internal::NoTypeDeduction<Args>... args)
+        llvm::SmallVector<llvm::Any> args)
         : emitter_(emitter),
-          diagnostic_({.level = diagnostic_base.Level,
-                       .message = MakeMessage(location, diagnostic_base,
-                                              std::move(args)...)}) {
+          diagnostic_(
+              {.level = diagnostic_base.Level,
+               .message = MakeMessage(emitter, location, diagnostic_base,
+                                      std::move(args))}) {
       CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
     }
 
     template <typename... Args>
-    auto MakeMessage(LocationT location,
-                     const Internal::DiagnosticBase<Args...>& diagnostic_base,
-                     Internal::NoTypeDeduction<Args>... args)
-        -> DiagnosticMessage {
+    static auto MakeMessage(
+        DiagnosticEmitter<LocationT>* emitter, LocationT location,
+        const Internal::DiagnosticBase<Args...>& diagnostic_base,
+        llvm::SmallVector<llvm::Any> args) -> DiagnosticMessage {
       return DiagnosticMessage(
-          diagnostic_base.Kind, emitter_->translator_->GetLocation(location),
-          diagnostic_base.Format, {std::move(args)...},
+          diagnostic_base.Kind, emitter->translator_->GetLocation(location),
+          diagnostic_base.Format, std::move(args),
           [&diagnostic_base](const DiagnosticMessage& message) -> std::string {
             return diagnostic_base.FormatFn(message);
           });
@@ -275,7 +276,7 @@ class DiagnosticEmitter {
   auto Emit(LocationT location,
             const Internal::DiagnosticBase<Args...>& diagnostic_base,
             Internal::NoTypeDeduction<Args>... args) -> void {
-    DiagnosticBuilder(this, location, diagnostic_base, std::move(args)...)
+    DiagnosticBuilder(this, location, diagnostic_base, {llvm::Any(args)...})
         .Emit();
   }
 
@@ -290,7 +291,7 @@ class DiagnosticEmitter {
              const Internal::DiagnosticBase<Args...>& diagnostic_base,
              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
     return DiagnosticBuilder(this, location, diagnostic_base,
-                             std::move(args)...);
+                             {llvm::Any(args)...});
   }
 
  private:
@@ -310,13 +311,19 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
     }
   }
   auto Print(const DiagnosticMessage& message) -> void {
-    *stream_ << message.location.file_name << ":"
-             << message.location.line_number << ":"
-             << message.location.column_number << ": "
-             << message.format_fn(message) << "\n"
-             << message.location.line << "\n";
-    stream_->indent(message.location.column_number - 1);
-    *stream_ << "^\n";
+    *stream_ << message.location.file_name;
+    if (message.location.line_number > 0) {
+      *stream_ << ":" << message.location.line_number;
+      if (message.location.column_number > 0) {
+        *stream_ << ":" << message.location.column_number;
+      }
+    }
+    *stream_ << ": " << message.format_fn(message) << "\n";
+    if (message.location.column_number > 0) {
+      *stream_ << message.location.line << "\n";
+      stream_->indent(message.location.column_number - 1);
+      *stream_ << "^\n";
+    }
   }
 
  private:

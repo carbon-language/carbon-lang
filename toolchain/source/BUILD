@@ -12,6 +12,7 @@ cc_library(
     hdrs = ["source_buffer.h"],
     deps = [
         "//common:error",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -24,6 +25,7 @@ cc_test(
         ":source_buffer",
         "//common:check",
         "//testing/base:gtest_main",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

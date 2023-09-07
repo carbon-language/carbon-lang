@@ -401,8 +401,8 @@ class Driver::CompilationUnit {
   // Loads source and lexes it. Returns true on success.
   auto RunLex() -> bool {
     LogCall("SourceBuffer::CreateFromFile", [&] {
-      source_ = SourceBuffer::CreateFromFile(
-          driver_->fs_, driver_->error_stream_, input_file_name_);
+      source_ = SourceBuffer::CreateFromFile(driver_->fs_, input_file_name_,
+                                             *consumer_);
     });
     if (!source_) {
       return false;

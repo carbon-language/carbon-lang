@@ -241,6 +241,7 @@ cc_binary(
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@com_github_google_benchmark//:benchmark_main",
         "@com_google_absl//absl/random",
