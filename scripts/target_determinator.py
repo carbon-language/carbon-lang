@@ -34,39 +34,23 @@ def log(s: str) -> None:
     print(s, file=sys.stderr)
 
 
-def quiet_run_output(args: List[str]) -> str:
-    try:
-        p = subprocess.run(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True,
-            encoding="utf-8",
-        )
-        return p.stdout
-    except subprocess.CalledProcessError as err:
-        log(err.stderr)
-        raise
-
-
 def filter_targets(bazel: Path, targets: str) -> str:
     with tempfile.NamedTemporaryFile(mode="w+") as tmp:
-        tmp.write(
+        query = (
             f"let t = set({targets}) in "
             "kind(rule, $t) except attr(tags, manual, $t)\n"
         )
-        tmp.seek(0)
-        tmp_head = "".join(line for (line, _) in zip(tmp, range(10)))
-        if tmp.read(1) != "":
-            tmp_head += "...\n"
-        log(f"Bazel query file's first 10 lines:\n{tmp_head}---")
-        return quiet_run_output(
-            [
-                str(bazel),
-                "query",
-                f"--query_file={tmp.name}",
-            ]
-        )
+        query_snippet_list = query.splitlines()
+        del query_snippet_list[5:-5]
+        query_snippet = "\n".join(query_snippet_list)
+        log(f"Bazel query snippet:\n```\n{query_snippet}```")
+        tmp.write(query)
+        try:
+            p = subprocess.run([str(bazel), "query", f"--query_file={tmp.name}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, encoding="utf-8")
+            return p.stdout
+        except subprocess.CalledProcessError as err:
+            log(err.stderr)
+            raise
 
 
 def main() -> None:

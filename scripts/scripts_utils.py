@@ -14,7 +14,7 @@ from pathlib import Path
 import platform
 import shutil
 import time
-from typing import Optional
+from typing import Dict, Optional
 import urllib.request
 
 _BAZEL_TOOLS_URL = (
@@ -156,20 +156,21 @@ def _get_platform_ext() -> str:
     return ".exe" if platform.system() == "Windows" else ""
 
 
+def _select_hash(hashes: Dict[str, str], version: str) -> str:
+    # Ensure the platform version is supported and has a hash.
+    if version not in hashes:
+        # If this because a platform support issue, we may need to print errors.
+        exit(f"No release available for platform: {version}")
+    return hashes[version]
+
+
 def get_target_determinator() -> str:
     """Install the Bazel target-determinator tool to carbon-lang's cache."""
     # Translate platform information into this tool's release binary form.
     version = f"{platform.system().lower()}.{_get_machine()}"
     ext = _get_platform_ext()
     url = f"{_TARGET_DETERMINATOR_URL}/target-determinator.{version}{ext}"
-
-    # Ensure the platform is supported, and grab its hash.
-    if version not in _TARGET_DETERMINATOR_SHAS:
-        # If this because a platform support issue, we may need to print errors.
-        exit(
-            f"No target-determinator release available for platform: {version}"
-        )
-    want_hash = _TARGET_DETERMINATOR_SHAS[version]
+    want_hash = _select_hash(_TARGET_DETERMINATOR_SHAS, version)
 
     return _get_cached_binary(f"target-determinator{ext}", url, want_hash)
 
@@ -183,12 +184,7 @@ def get_release(release: Release) -> str:
     version = f"{platform.system().lower()}-{_get_machine()}"
     ext = _get_platform_ext()
     url = f"{_BAZEL_TOOLS_URL}/{release.value}-{version}{ext}"
-
-    # Ensure the platform is supported, and grab its hash.
-    if version not in _BAZEL_TOOLS_VERSION_SHAS[release.value]:
-        # If this because a platform support issue, we may need to print errors.
-        exit(f"No {release.value} release available for platform: {version}")
-    want_hash = _BAZEL_TOOLS_VERSION_SHAS[release.value][version]
+    want_hash = _select_hash(_BAZEL_TOOLS_VERSION_SHAS[release.value], version)
 
     return _get_cached_binary(f"{release.value}{ext}", url, want_hash)
 
