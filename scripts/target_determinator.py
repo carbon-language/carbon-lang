@@ -39,10 +39,9 @@ def filter_targets(bazel: Path, targets: str) -> str:
             f"let t = set({targets}) in "
             "kind(rule, $t) except attr(tags, manual, $t)\n"
         )
-        query_snippet_list = query.splitlines()
-        del query_snippet_list[5:-5]
-        query_snippet = "\n".join(query_snippet_list)
-        log(f"Bazel query snippet:\n```\n{query_snippet}```")
+        query_lines = query.splitlines()
+        query_snippet = "\n".join(query_lines[:5] + ["..."] + query_lines[-5:])
+        log(f"Bazel query snippet:\n```\n{query_snippet}\n```")
         tmp.write(query)
         try:
             p = subprocess.run(
