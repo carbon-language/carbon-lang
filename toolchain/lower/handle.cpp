@@ -309,11 +309,12 @@ auto HandleStructLiteral(FunctionContext& context, SemIR::NodeId node_id,
                    llvm::PoisonValue::get(context.GetType(node.type_id())));
 }
 
+// Emits the value representation for a struct or tuple whose elements are the
+// contents of `refs_id`.
 auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
                                           SemIR::TypeId type_id,
                                           SemIR::NodeBlockId refs_id,
-                                          llvm::Twine name)
-    -> llvm::Value* {
+                                          llvm::Twine name) -> llvm::Value* {
   auto* llvm_type = context.GetType(type_id);
 
   switch (SemIR::GetValueRepresentation(context.semantics_ir(), type_id).kind) {
@@ -324,7 +325,7 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
     case SemIR::ValueRepresentation::Copy: {
       auto refs = context.semantics_ir().GetNodeBlock(refs_id);
       CARBON_CHECK(refs.size() == 1)
-          << "Unexpected size for struct with by-copy value representation";
+          << "Unexpected size for aggregate with by-copy value representation";
       // TODO: Remove the LLVM StructType wrapper in this case, so we don't
       // need this `insert_value` wrapping.
       return context.builder().CreateInsertValue(
@@ -339,13 +340,16 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
       for (auto [i, ref] :
            llvm::enumerate(context.semantics_ir().GetNodeBlock(refs_id))) {
         auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
+        // TODO: We are loading a value representation here and storing an
+        // object representation!
         context.builder().CreateStore(context.GetLocal(ref), gep);
       }
       return alloca;
     }
 
     case SemIR::ValueRepresentation::Custom:
-      CARBON_FATAL() << "Struct should nver have custom value representation";
+      CARBON_FATAL()
+          << "Aggregate should never have custom value representation";
   }
 }
 

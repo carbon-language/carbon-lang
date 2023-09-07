@@ -589,9 +589,9 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
       default:
         CARBON_FATAL() << "Initialization from unexpected node " << init;
 
-      case SemIR::NodeKind::StructLiteral:
-      case SemIR::NodeKind::TupleLiteral:
-        CARBON_FATAL() << init << " is not modeled as initializing yet";
+      case SemIR::NodeKind::StructInit:
+      case SemIR::NodeKind::TupleInit:
+        CARBON_FATAL() << init << " should already have a destination";
 
       case SemIR::NodeKind::StubReference:
         init_id = init.GetAsStubReference();
