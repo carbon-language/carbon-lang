@@ -103,11 +103,11 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, f64) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_15: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc15_13.1: i32 = add %n, %.loc15_15
-// CHECK:STDOUT:   %.loc15_13.2: i32 = stub_reference %.loc15_13.1
-// CHECK:STDOUT:   %.loc15_18.1: f64 = real_literal 34e-1
-// CHECK:STDOUT:   %.loc15_18.2: f64 = stub_reference %.loc15_18.1
-// CHECK:STDOUT:   %.loc15_21: (i32, f64) = tuple_value (%.loc15_13.2, %.loc15_18.2)
-// CHECK:STDOUT:   return %.loc15_21
+// CHECK:STDOUT:   %.loc12_15: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc12_13.1: i32 = add %n, %.loc12_15
+// CHECK:STDOUT:   %.loc12_13.2: i32 = stub_reference %.loc12_13.1
+// CHECK:STDOUT:   %.loc12_18.1: f64 = real_literal 34e-1
+// CHECK:STDOUT:   %.loc12_18.2: f64 = stub_reference %.loc12_18.1
+// CHECK:STDOUT:   %.loc12_21: (i32, f64) = tuple_value (%.loc12_13.2, %.loc12_18.2)
+// CHECK:STDOUT:   return %.loc12_21
 // CHECK:STDOUT: }
