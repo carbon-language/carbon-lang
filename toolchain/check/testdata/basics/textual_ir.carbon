@@ -30,6 +30,6 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   %.loc12_22.3: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_22.4: ref f64 = tuple_index %return, %.loc12_22.3
 // CHECK:STDOUT:   assign %.loc12_22.4, %.loc12_18.2
-// CHECK:STDOUT:   %.loc12_22.5: init (i32, f64) = tuple_literal_as_init %.loc12_21, (%.loc12_13.2, %.loc12_18.2)
+// CHECK:STDOUT:   %.loc12_22.5: init (i32, f64) = tuple_init %.loc12_21, (%.loc12_13.2, %.loc12_18.2)
 // CHECK:STDOUT:   return %.loc12_22.5
 // CHECK:STDOUT: }

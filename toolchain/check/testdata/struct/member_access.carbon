@@ -20,7 +20,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   assign %.loc7_47.1, %.loc7_33
 // CHECK:STDOUT:   %.loc7_47.2: ref i32 = struct_access %x, member1
 // CHECK:STDOUT:   assign %.loc7_47.2, %.loc7_43
-// CHECK:STDOUT:   %.loc7_47.3: init {.a: f64, .b: i32} = struct_literal_as_init %.loc7_46, (%.loc7_33, %.loc7_43)
+// CHECK:STDOUT:   %.loc7_47.3: init {.a: f64, .b: i32} = struct_init %.loc7_46, (%.loc7_33, %.loc7_43)
 // CHECK:STDOUT:   assign %x, %.loc7_47.3
 // CHECK:STDOUT:   %y: ref i32 = var "y"
 // CHECK:STDOUT:   %.loc8_15.1: ref i32 = struct_access %x, member1

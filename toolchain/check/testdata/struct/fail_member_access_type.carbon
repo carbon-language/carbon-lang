@@ -17,7 +17,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %.loc7_24: f64 = stub_reference %.loc7_26
 // CHECK:STDOUT:   %.loc7_29: {.a: f64} = struct_literal (%.loc7_24)
 // CHECK:STDOUT:   %.loc7_30.1: ref f64 = struct_access %x, member0
-// CHECK:STDOUT:   %.loc7_30.2: init {.a: f64} = struct_literal_as_init %.loc7_29, (%.loc7_24)
+// CHECK:STDOUT:   %.loc7_30.2: init {.a: f64} = struct_init %.loc7_29, (%.loc7_24)
 // CHECK:STDOUT:   assign %x, %.loc7_30.2
 // CHECK:STDOUT:   %y: ref i32 = var "y"
 // CHECK:STDOUT:   assign %y, <error>

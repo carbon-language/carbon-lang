@@ -26,6 +26,6 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc9_18.3: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc9_18.4: ref i32 = tuple_index %return, %.loc9_18.3
 // CHECK:STDOUT:   assign %.loc9_18.4, %.loc9_15.2
-// CHECK:STDOUT:   %.loc9_18.5: init (i32, i32) = tuple_literal_as_init %.loc9_17, (%.loc9_11.2, %.loc9_15.2)
+// CHECK:STDOUT:   %.loc9_18.5: init (i32, i32) = tuple_init %.loc9_17, (%.loc9_11.2, %.loc9_15.2)
 // CHECK:STDOUT:   return %.loc9_18.5
 // CHECK:STDOUT: }

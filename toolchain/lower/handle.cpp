@@ -303,8 +303,8 @@ auto HandleStructAccess(FunctionContext& context, SemIR::NodeId node_id,
 
 auto HandleStructLiteral(FunctionContext& context, SemIR::NodeId node_id,
                          SemIR::Node node) -> void {
-  // A StructLiteral should always be converted to a StructLiteralAsInit or
-  // StructLiteralAsValue if its value is needed.
+  // A StructLiteral should always be converted to a StructInit or StructValue
+  // if its value is needed.
   context.SetLocal(node_id,
                    llvm::PoisonValue::get(context.GetType(node.type_id())));
 }
@@ -349,7 +349,7 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
   }
 }
 
-auto HandleStructLiteralAsInit(FunctionContext& context, SemIR::NodeId node_id,
+auto HandleStructInit(FunctionContext& context, SemIR::NodeId node_id,
                                SemIR::Node node) -> void {
   auto* llvm_type = context.GetType(node.type_id());
 
@@ -363,7 +363,7 @@ auto HandleStructLiteralAsInit(FunctionContext& context, SemIR::NodeId node_id,
       break;
 
     case SemIR::InitializingRepresentation::ByCopy: {
-      auto [struct_literal_id, refs_id] = node.GetAsStructLiteralAsInit();
+      auto [struct_literal_id, refs_id] = node.GetAsStructInit();
       context.SetLocal(node_id,
                        EmitStructOrTupleValueRepresentation(
                            context, node.type_id(), refs_id, "struct.init"));
@@ -372,10 +372,10 @@ auto HandleStructLiteralAsInit(FunctionContext& context, SemIR::NodeId node_id,
   }
 }
 
-auto HandleStructLiteralAsValue(FunctionContext& context,
+auto HandleStructValue(FunctionContext& context,
                                 SemIR::NodeId node_id, SemIR::Node node)
     -> void {
-  auto [struct_literal_id, refs_id] = node.GetAsStructLiteralAsValue();
+  auto [struct_literal_id, refs_id] = node.GetAsStructValue();
   context.SetLocal(node_id, EmitStructOrTupleValueRepresentation(
                                 context, node.type_id(), refs_id, "struct"));
 }
@@ -407,13 +407,13 @@ auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
 
 auto HandleTupleLiteral(FunctionContext& context, SemIR::NodeId node_id,
                         SemIR::Node node) -> void {
-  // A TupleLiteral should always be converted to a TupleLiteralAsInit or
-  // TupleLiteralAsValue if its value is needed.
+  // A TupleLiteral should always be converted to a TupleInit or TupleValue if
+  // its value is needed.
   context.SetLocal(node_id,
                    llvm::PoisonValue::get(context.GetType(node.type_id())));
 }
 
-auto HandleTupleLiteralAsInit(FunctionContext& context,
+auto HandleTupleInit(FunctionContext& context,
                               SemIR::NodeId node_id, SemIR::Node node)
     -> void {
   auto* llvm_type = context.GetType(node.type_id());
@@ -428,7 +428,7 @@ auto HandleTupleLiteralAsInit(FunctionContext& context,
       break;
 
     case SemIR::InitializingRepresentation::ByCopy: {
-      auto [struct_literal_id, refs_id] = node.GetAsTupleLiteralAsInit();
+      auto [struct_literal_id, refs_id] = node.GetAsTupleInit();
       context.SetLocal(
           node_id, EmitStructOrTupleValueRepresentation(context, node.type_id(),
                                                         refs_id, "tuple.init"));
@@ -437,10 +437,10 @@ auto HandleTupleLiteralAsInit(FunctionContext& context,
   }
 }
 
-auto HandleTupleLiteralAsValue(FunctionContext& context,
+auto HandleTupleValue(FunctionContext& context,
                                SemIR::NodeId node_id, SemIR::Node node)
     -> void {
-  auto [struct_literal_id, refs_id] = node.GetAsTupleLiteralAsValue();
+  auto [struct_literal_id, refs_id] = node.GetAsTupleValue();
   context.SetLocal(node_id, EmitStructOrTupleValueRepresentation(
                                 context, node.type_id(), refs_id, "tuple"));
 }

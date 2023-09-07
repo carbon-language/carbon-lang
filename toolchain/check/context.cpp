@@ -357,7 +357,7 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
             }
             new_block.Set(i, new_id);
           }
-          return AddNode(SemIR::Node::TupleLiteralAsInit::Make(
+          return AddNode(SemIR::Node::TupleInit::Make(
               parse_node, type_id, expr_id, new_block.id()));
         }
 
@@ -392,7 +392,7 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
             }
             new_block.Set(i, new_id);
           }
-          return AddNode(SemIR::Node::StructLiteralAsInit::Make(
+          return AddNode(SemIR::Node::StructInit::Make(
               parse_node, type_id, expr_id, new_block.id()));
           }
 
@@ -469,7 +469,7 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
           for (auto [i, elem_id] : llvm::enumerate(elements)) {
             new_block.Set(i,  ConvertToValueExpression(elem_id));
           }
-          return AddNode(SemIR::Node::TupleLiteralAsValue::Make(
+          return AddNode(SemIR::Node::TupleValue::Make(
               expr.parse_node(), expr.type_id(), expr_id, new_block.id()));
         }
 
@@ -480,7 +480,7 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
           for (auto [i, elem_id] : llvm::enumerate(elements)) {
             new_block.Set(i, ConvertToValueExpression(elem_id));
           }
-          return AddNode(SemIR::Node::StructLiteralAsValue::Make(
+          return AddNode(SemIR::Node::StructValue::Make(
               expr.parse_node(), expr.type_id(), expr_id, new_block.id()));
         }
 
@@ -517,7 +517,7 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
           new_block.Set(i, MaterializeIfInitializing(elem_id, discarded));
         }
         // TODO: This tuple value can contain elements that are references.
-        return AddNode(SemIR::Node::TupleLiteralAsValue::Make(
+        return AddNode(SemIR::Node::TupleValue::Make(
             init.parse_node(), init.type_id(), init_id, new_block.id()));
       }
 
@@ -528,7 +528,7 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
           new_block.Set(i, MaterializeIfInitializing(elem_id, discarded));
         }
         // TODO: This struct value can contain elements that are references.
-        return AddNode(SemIR::Node::StructLiteralAsValue::Make(
+        return AddNode(SemIR::Node::StructValue::Make(
             init.parse_node(), init.type_id(), init_id, new_block.id()));
       }
 

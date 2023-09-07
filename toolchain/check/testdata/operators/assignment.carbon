@@ -50,7 +50,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_29.3: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc11_29.4: ref i32 = tuple_index %b, %.loc11_29.3
 // CHECK:STDOUT:   assign %.loc11_29.4, %.loc11_27.2
-// CHECK:STDOUT:   %.loc11_29.5: init (i32, i32) = tuple_literal_as_init %.loc11_28, (%.loc11_24.2, %.loc11_27.2)
+// CHECK:STDOUT:   %.loc11_29.5: init (i32, i32) = tuple_init %.loc11_28, (%.loc11_24.2, %.loc11_27.2)
 // CHECK:STDOUT:   assign %b, %.loc11_29.5
 // CHECK:STDOUT:   %.loc12_5: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc12_6: ref i32 = tuple_index %b, %.loc12_5
@@ -71,7 +71,7 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc15_47.1, %.loc15_35
 // CHECK:STDOUT:   %.loc15_47.2: ref i32 = struct_access %c, member1
 // CHECK:STDOUT:   assign %.loc15_47.2, %.loc15_43
-// CHECK:STDOUT:   %.loc15_47.3: init {.a: i32, .b: i32} = struct_literal_as_init %.loc15_46, (%.loc15_35, %.loc15_43)
+// CHECK:STDOUT:   %.loc15_47.3: init {.a: i32, .b: i32} = struct_init %.loc15_46, (%.loc15_35, %.loc15_43)
 // CHECK:STDOUT:   assign %c, %.loc15_47.3
 // CHECK:STDOUT:   %.loc16_4: ref i32 = struct_access %c, member0
 // CHECK:STDOUT:   %.loc16_9: i32 = int_literal 3

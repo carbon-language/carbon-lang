@@ -68,7 +68,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int2, type: type0},
 // CHECK:STDOUT:       {kind: TupleIndex, arg0: node+6, arg1: node+17, type: type2},
 // CHECK:STDOUT:       {kind: Assign, arg0: node+18, arg1: node+12},
-// CHECK:STDOUT:       {kind: TupleLiteralAsInit, arg0: node+13, arg1: block5, type: type3},
+// CHECK:STDOUT:       {kind: TupleInit, arg0: node+13, arg1: block5, type: type3},
 // CHECK:STDOUT:       {kind: ReturnExpression, arg0: node+20},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     node_blocks: [

@@ -35,10 +35,10 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   %.loc7_41.5: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_41.6: ref i32 = tuple_index %.loc7_41.2, %.loc7_41.5
 // CHECK:STDOUT:   assign %.loc7_41.6, %.loc7_34.2
-// CHECK:STDOUT:   %.loc7_41.7: init (i32, i32) = tuple_literal_as_init %.loc7_36.1, (%.loc7_30.2, %.loc7_34.2)
+// CHECK:STDOUT:   %.loc7_41.7: init (i32, i32) = tuple_init %.loc7_36.1, (%.loc7_30.2, %.loc7_34.2)
 // CHECK:STDOUT:   %.loc7_41.8: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_41.9: ref i32 = tuple_index %x, %.loc7_41.8
 // CHECK:STDOUT:   assign %.loc7_41.9, %.loc7_39.2
-// CHECK:STDOUT:   %.loc7_41.10: init ((i32, i32), i32) = tuple_literal_as_init %.loc7_40, (%.loc7_41.7, %.loc7_39.2)
+// CHECK:STDOUT:   %.loc7_41.10: init ((i32, i32), i32) = tuple_init %.loc7_40, (%.loc7_41.7, %.loc7_39.2)
 // CHECK:STDOUT:   assign %x, %.loc7_41.10
 // CHECK:STDOUT: }
