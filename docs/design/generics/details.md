@@ -42,7 +42,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
     -   [Use case: Private impl](#use-case-private-impl)
     -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
-    -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
+    -   [Future work: Adapter with stricter invariants](#future-work-adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
 -   [Associated facets](#associated-facets)
@@ -1778,8 +1778,6 @@ class SongRenderToPrintDriver {
 }
 ```
 
-**FIXME: Left off here.**
-
 ### Use case: Using independent libraries together
 
 Imagine we have two packages that are developed independently. Package
@@ -1859,12 +1857,12 @@ class ComparableFromDifference(T:! Difference) {
 }
 class IntWrapper {
   var x: i32;
-  extend impl as Difference {
+  impl as Difference {
     fn Sub[self: Self](rhs: Self) -> i32 {
       return left.x - right.x;
     }
   }
-  extend impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
+  impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
 }
 ```
 
@@ -1877,7 +1875,7 @@ class ComparableFromDifferenceFn
   adapt T;
   extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
-      return Difference(self, rhs) < 0;
+      return Difference(self as T, rhs as T) < 0;
     }
   }
 }
@@ -1886,7 +1884,7 @@ class IntWrapper {
   fn Difference(left: Self, right: Self) {
     return left.x - right.x;
   }
-  extend impl as Comparable =
+  impl as Comparable =
       ComparableFromDifferenceFn(IntWrapper, Difference);
 }
 ```
@@ -1924,9 +1922,9 @@ class ByReal {
 }
 
 fn Complex64.CloserToOrigin[self: Self](them: Self) -> bool {
-  var me_mag: ByReal = self * self.Conj() as ByReal;
+  var self_mag: ByReal = self * self.Conj() as ByReal;
   var them_mag: ByReal = them * them.Conj() as ByReal;
-  return me_mag.Less(them_mag);
+  return self_mag.Less(them_mag);
 }
 ```
 
@@ -1966,7 +1964,20 @@ fn Render(w: Window) {
 }
 ```
 
-### Adapter with stricter invariants
+**Note:** Another way to achieve this is to use a local symbolic facet constant:
+
+```carbon
+fn Render(w: Window) {
+  let DrawInWindow:! Draw = Window;
+  let d: DrawInWindow = w as DrawInWindow;
+  d.SetPen(...);
+  d.SetFill(...);
+  d.DrawRectangle(...);
+  ...
+}
+```
+
+### Future work: Adapter with stricter invariants
 
 **Future work:** Rust also uses the newtype idiom to create types with
 additional invariants or other information encoded in the type
@@ -2037,17 +2048,21 @@ Assert(Point2D.N == 2);
 Assert(Point3D.N == 3);
 
 fn PrintPoint[PointT:! NSpacePoint](p: PointT) {
-  for (var i: i32 = 0; i < PointT.N; ++i) {
+  var i: i32 = 0
+  while (i < PointT.N) {
     if (i > 0) { Print(", "); }
     Print(p.Get(i));
+    ++i;
   }
 }
 
 fn ExtractPoint[PointT:! NSpacePoint](
     p: PointT,
     dest: Array(f64, PointT.N)*) {
-  for (var i: i32 = 0; i < PointT.N; ++i) {
+  var i: i32 = 0;
+  while (i < PointT.N) {
     (*dest)[i] = p.Get(i);
+    ++i;
   }
 }
 ```
@@ -2055,8 +2070,8 @@ fn ExtractPoint[PointT:! NSpacePoint](
 **Comparison with other languages:** This feature is also called
 [associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
 
-**Aside:** In general, the use of `:!` here means these `let` declarations will
-only have compile-time and not runtime storage associated with them.
+**Aside:** The use of `:!` here means these `let` declarations will only have
+compile-time and not runtime storage associated with them.
 
 ### Associated class functions
 
@@ -2074,7 +2089,7 @@ class MySerializableType {
 
   extend impl as DeserializeFromString {
     fn Deserialize(serialized: String) -> Self {
-      return (.i = StringToInt(serialized));
+      return {.i = StringToInt(serialized)};
     }
   }
 }
@@ -2096,14 +2111,14 @@ called [member functions](/docs/design/classes.md#member-functions).
 
 ## Associated facets
 
-Associated facets are [associated entities](terminology.md#associated-entity)
-that happen to have a [facet type](terminology.md#facet-type). These are
-particularly interesting since they can be used in the signatures of associated
-methods or functions, to allow the signatures of methods to vary from
-implementation to implementation. We already have one example of this: the
-`Self` type discussed [in the "Interfaces" section](#interfaces). For other
-cases, we can say that the interface declares that each implementation will
-provide a facet under a specific name. For example:
+Associated facets are [associated constants](#associated-constants) that happen
+to have a [facet type](terminology.md#facet-type). These are particularly
+interesting since they can be used in the signatures of associated methods or
+functions, to allow the signatures of methods to vary from implementation to
+implementation. We already have one example of this: the `Self` type discussed
+[in the "Interfaces" section](#interfaces). For other cases, we can say that the
+interface declares that each implementation will provide a facet constant under
+a specified name. For example:
 
 ```
 interface StackAssociatedFacet {
@@ -2160,11 +2175,11 @@ impl VeryLongTypeName as Add
 }
 ```
 
-**Alternatives considered:** See
-[other syntax options considered in #731 for specifying associated facets](/proposals/p0731.md#syntax-for-associated-constants).
-In particular, it was deemed that
-[Swift's approach of inferring an associated facet from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
-was unneeded complexity.
+> **Alternatives considered:** See
+> [other syntax options considered in #731 for specifying associated facets](/proposals/p0731.md#syntax-for-associated-constants).
+> In particular, it was deemed that
+> [Swift's approach of inferring an associated facet from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
+> was unneeded complexity.
 
 The definition of the `StackAssociatedFacet` is sufficient for writing a
 checked-generic function that operates on anything implementing that interface,
@@ -2180,12 +2195,14 @@ fn PeekAtTopOfStack[StackType:! StackAssociatedFacet](s: StackType*)
 ```
 
 Inside the checked-generic function `PeekAtTopOfStack`, the `ElementType`
-associated facet member of `StackType` is erased. This means
+associated facet member of `StackType` is an
+[archetype](terminology.md#archetype), like other
+[symbolic facet bindings](#symbolic-facet-bindings). This means
 `StackType.ElementType` has the API dictated by the declaration of `ElementType`
 in the interface `StackAssociatedFacet`.
 
 Outside the checked-generic, associated facets have the concrete facet values
-determined by impl lookup, rather than the erased version of that type used
+determined by impl lookup, rather than the erased version of that facet used
 inside a checked-generic.
 
 ```
@@ -2235,10 +2252,10 @@ interface at most once.
 If instead you want a family of related interfaces, one per possible value of a
 type parameter, multiple of which could be implemented for a single type, you
 would use
-[parameterized interfaces](terminology.md#interface-parameters-and-associated-constants).
-To write a parameterized version of the stack interface, instead of using
-associated constants, write a parameter list after the name of the interface
-instead of the associated constant declaration:
+[_parameterized interfaces_](terminology.md#interface-parameters-and-associated-constants),
+also known as _generic interfaces_. To write a parameterized version of the
+stack interface, instead of using associated constants, write a parameter list
+after the name of the interface:
 
 ```
 interface StackParameterized(ElementType:! type) {
@@ -2293,14 +2310,31 @@ fn BrokenPeekAtTopOfStackParameterized
 ```
 
 This error is because the compiler can not determine if `T` should be `Fruit` or
-`Veggie` when passing in argument of type `Produce*`. The function's signature
-would have to be changed so that the value for `T` could be determined from the
-explicit parameters.
+`Veggie` when passing in argument of type `Produce*`. Either `T` should be
+replaced by a concrete type, like `Fruit`:
 
 ```
-fn PeekAtTopOfStackParameterized
-    [T:! type, StackType:! StackParameterized(T)]
-    (s: StackType*, _:! singleton_type_of(T)) -> T { ... }
+fn PeekAtTopOfFruitStack
+    [StackType:! StackParameterized(Fruit)]
+    (s: StackType*) -> T { ... }
+
+var produce: Produce = ...;
+var top_fruit: Fruit =
+    PeekAtTopOfFruitStack(&produce);
+```
+
+Or the value for `T` would be passed explicitly, using `where` constraints
+described [in this section](#another-type-implements-parameterized-interface):
+
+```
+fn PeekAtTopOfStackParameterizedImpl
+    (T:! type, StackType:! StackParameterized(T), s: StackType*) -> T {
+  ...
+}
+fn PeekAtTopOfStackParameterized[StackType:! type]
+    (s: StackType*, T:! type where StackType is StackParameterized(T)) -> T {
+  return PeekAtTopOfStackParameterizedImpl(T, StackType, s);
+}
 
 var produce: Produce = ...;
 var top_fruit: Fruit =
@@ -2309,12 +2343,11 @@ var top_veggie: Veggie =
     PeekAtTopOfStackParameterized(&produce, Veggie);
 ```
 
-The pattern `_:! singleton_type_of(T)` is a placeholder syntax for an expression
-that will only match `T`, until issue
-[#578: Value patterns as function parameters](https://github.com/carbon-language/carbon-lang/issues/578)
-is resolved. Using that pattern in the explicit parameter list allows us to make
-`T` available earlier in the declaration so it can be passed as the argument to
-the parameterized interface `StackParameterized`.
+> **Note:** Alternative ways of declaraing `PeekAtTopOfStackParameterized` are
+> described and discussed in
+> [#578: Value patterns as function parameters](https://github.com/carbon-language/carbon-lang/issues/578).
+
+**FIXME: Left off here.**
 
 This approach is useful for the `ComparableTo(T)` interface, where a type might
 be comparable with multiple other types, and in fact interfaces for
@@ -2342,6 +2375,9 @@ pattern syntax. This reflects these two properties of these parameters:
 -   They must be resolved at compile-time, and so can't be passed regular
     dynamic values.
 -   We allow either symbolic or template values to be passed in.
+
+**Future work:** We might also allow `template` bindings for interface
+parameters, once we have a use case.
 
 **Note:** Interface parameters aren't required to be facets, but that is the
 vast majority of cases. As an example, if we had an interface that allowed a
