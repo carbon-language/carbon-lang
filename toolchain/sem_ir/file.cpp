@@ -195,7 +195,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
 
     case NodeKind::AddressOf:
     case NodeKind::ArrayIndex:
-    case NodeKind::ArrayValue:
+    case NodeKind::ArrayInit:
     case NodeKind::Assign:
     case NodeKind::BinaryOperatorAdd:
     case NodeKind::BindValue:
@@ -207,6 +207,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::Call:
     case NodeKind::Dereference:
     case NodeKind::FunctionDeclaration:
+    case NodeKind::InitializeFrom:
     case NodeKind::IntegerLiteral:
     case NodeKind::Invalid:
     case NodeKind::Namespace:
@@ -356,7 +357,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       }
       case NodeKind::AddressOf:
       case NodeKind::ArrayIndex:
-      case NodeKind::ArrayValue:
+      case NodeKind::ArrayInit:
       case NodeKind::Assign:
       case NodeKind::BinaryOperatorAdd:
       case NodeKind::BindValue:
@@ -370,6 +371,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::CrossReference:
       case NodeKind::Dereference:
       case NodeKind::FunctionDeclaration:
+      case NodeKind::InitializeFrom:
       case NodeKind::IntegerLiteral:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
@@ -480,7 +482,6 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         continue;
       }
 
-      case NodeKind::ArrayValue:
       case NodeKind::StructLiteral:
       case NodeKind::TupleLiteral:
         // TODO: Eventually these will depend on the context in which the value
@@ -489,7 +490,9 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         // struct/tuple value construction.
         return ExpressionCategory::Value;
 
+      case NodeKind::ArrayInit:
       case NodeKind::Call:
+      case NodeKind::InitializeFrom:
         return ExpressionCategory::Initializing;
 
       case NodeKind::Dereference:
@@ -514,7 +517,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
     switch (node.kind()) {
       case NodeKind::AddressOf:
       case NodeKind::ArrayIndex:
-      case NodeKind::ArrayValue:
+      case NodeKind::ArrayInit:
       case NodeKind::Assign:
       case NodeKind::BinaryOperatorAdd:
       case NodeKind::BindValue:
@@ -526,6 +529,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::Call:
       case NodeKind::Dereference:
       case NodeKind::FunctionDeclaration:
+      case NodeKind::InitializeFrom:
       case NodeKind::IntegerLiteral:
       case NodeKind::Invalid:
       case NodeKind::Namespace:

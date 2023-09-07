@@ -376,6 +376,19 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
         return AddNode(SemIR::Node::Temporary::Make(
             init.parse_node(), init.type_id(), temporary_id, init_id));
       }
+
+      case SemIR::NodeKind::ArrayInit: {
+        auto [src_id, refs_id] = init.GetAsArrayInit();
+        // The return slot should have a materialized temporary in it.
+        auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
+        CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
+                     SemIR::NodeKind::TemporaryStorage)
+            << "Return slot for array init does not contain a temporary; "
+            << "initialized multiple times? Have "
+            << semantics_ir().GetNode(temporary_id);
+        return AddNode(SemIR::Node::Temporary::Make(
+            init.parse_node(), init.type_id(), temporary_id, orig_init_id));
+      }
     }
   }
 }
@@ -414,6 +427,20 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
           semantics_ir().ReplaceNode(
               temporary_id, SemIR::Node::NoOp::Make(temporary.parse_node()));
         }
+        return;
+      }
+
+      case SemIR::NodeKind::ArrayInit: {
+        // Rewrite the return slot as a reference to our target. We can't just
+        // update the index in `refs_id`, like we do for a Call, because there
+        // will be other references to the return slot for the individual array
+        // element initializers.
+        auto [src_id, refs_id] = init.GetAsArrayInit();
+        semantics_ir().ReplaceNode(
+            semantics_ir().GetNodeBlock(refs_id).back(),
+            SemIR::Node::StubReference::Make(
+                init.parse_node(), semantics_ir().GetNode(target_id).type_id(),
+                target_id));
         return;
       }
     }
@@ -520,24 +547,65 @@ auto Context::ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
 
   auto as_type = semantics_ir_->GetTypeAllowBuiltinTypes(as_type_id);
   auto as_type_node = semantics_ir_->GetNode(as_type);
+
+  // A tuple (T1, T2, ..., Tn) converts to [T; n] if each Ti converts to T.
   if (as_type_node.kind() == SemIR::NodeKind::ArrayType) {
     auto [bound_node_id, element_type_id] = as_type_node.GetAsArrayType();
-    // To resolve lambda issue.
-    auto element_type = element_type_id;
     auto value_type_node = semantics_ir_->GetNode(
         semantics_ir_->GetTypeAllowBuiltinTypes(value_type_id));
     if (value_type_node.kind() == SemIR::NodeKind::TupleType) {
       auto tuple_type_block_id = value_type_node.GetAsTupleType();
       const auto& type_block = semantics_ir_->GetTypeBlock(tuple_type_block_id);
       if (type_block.size() ==
-              semantics_ir_->GetArrayBoundValue(bound_node_id) &&
-          std::all_of(type_block.begin(), type_block.end(),
-                      [&](auto type) { return type == element_type; })) {
-        // TODO: We should convert an initializing expression of tuple type
-        // to an initializing expression of array type.
-        value_id = ConvertToValueExpression(value_id);
-        return AddNode(SemIR::Node::ArrayValue::Make(value.parse_node(),
-                                                     as_type_id, value_id));
+              semantics_ir_->GetArrayBoundValue(bound_node_id)) {
+        // For a tuple literal, use its elements directly. Otherwise, index into
+        // the elements of the tuple expression.
+        llvm::ArrayRef<SemIR::NodeId> literal_elems;
+        if (value.kind() == SemIR::NodeKind::TupleLiteral) {
+          literal_elems =
+              semantics_ir().GetNodeBlock(value.GetAsTupleLiteral());
+        } else {
+          value_id = MaterializeIfInitializing(value_id);
+        }
+
+        // Array initialization is modeled analogously to a function call.
+        // Tentatively allocate a temporary as our result.
+        auto return_slot_id = AddNode(SemIR::Node::TemporaryStorage::Make(
+            value.parse_node(), as_type_id));
+        bool is_in_place =
+            SemIR::GetInitializingRepresentation(semantics_ir(),
+                                                 element_type_id)
+                .kind == SemIR::InitializingRepresentation::InPlace;
+
+        // Initialize each element of the array from the corresponding element
+        // of the tuple.
+        llvm::SmallVector<SemIR::NodeId> refs;
+        refs.reserve(type_block.size() + 1);
+        for (auto [i, src_type_id] : llvm::enumerate(type_block)) {
+          // TODO: Add a new node kind for indexing an array at a constant index
+          // so that we don't need an integer literal node here.
+          auto int_id = AddNode(SemIR::Node::IntegerLiteral::Make(
+              value.parse_node(),
+              CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
+              semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
+          auto target_id = AddNode(SemIR::Node::ArrayIndex::Make(
+              value.parse_node(), element_type_id, return_slot_id, int_id));
+          auto src_id =
+              !literal_elems.empty()
+                  ? literal_elems[i]
+                  : AddNode(SemIR::Node::TupleIndex::Make(
+                        value.parse_node(), src_type_id, value_id, int_id));
+          auto init_id = Initialize(value.parse_node(), target_id, src_id);
+          if (!is_in_place) {
+            init_id = AddNode(SemIR::Node::InitializeFrom::Make(
+                value.parse_node(), target_id, init_id));
+          }
+          refs.push_back(init_id);
+        }
+        refs.push_back(return_slot_id);
+        return AddNode(SemIR::Node::ArrayInit::Make(
+            value.parse_node(), as_type_id, value_id,
+            semantics_ir_->AddNodeBlock(refs)));
       }
     }
   }

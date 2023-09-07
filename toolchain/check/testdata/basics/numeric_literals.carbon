@@ -46,8 +46,24 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_5.2: i32 = stub_reference %.loc15_5.1
 // CHECK:STDOUT:   %.loc16_3.1: type = tuple_type (i32, i32, i32, i32, i32)
 // CHECK:STDOUT:   %.loc16_3.2: (i32, i32, i32, i32, i32) = tuple_literal (%.loc11_5.2, %.loc12_5.2, %.loc13_5.2, %.loc14_5.2, %.loc15_5.2)
-// CHECK:STDOUT:   %.loc16_3.3: [i32; 5] = array_value %.loc16_3.2
-// CHECK:STDOUT:   assign %ints, %.loc16_3.3
+// CHECK:STDOUT:   %.loc16_3.3: ref [i32; 5] = stub_reference %ints
+// CHECK:STDOUT:   %.loc16_3.4: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc16_3.5: ref i32 = array_index %.loc16_3.3, %.loc16_3.4
+// CHECK:STDOUT:   %.loc16_3.6 = initialize_from %.loc16_3.5 to %.loc11_5.2
+// CHECK:STDOUT:   %.loc16_3.7: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc16_3.8: ref i32 = array_index %.loc16_3.3, %.loc16_3.7
+// CHECK:STDOUT:   %.loc16_3.9 = initialize_from %.loc16_3.8 to %.loc12_5.2
+// CHECK:STDOUT:   %.loc16_3.10: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc16_3.11: ref i32 = array_index %.loc16_3.3, %.loc16_3.10
+// CHECK:STDOUT:   %.loc16_3.12 = initialize_from %.loc16_3.11 to %.loc13_5.2
+// CHECK:STDOUT:   %.loc16_3.13: i32 = int_literal 3
+// CHECK:STDOUT:   %.loc16_3.14: ref i32 = array_index %.loc16_3.3, %.loc16_3.13
+// CHECK:STDOUT:   %.loc16_3.15 = initialize_from %.loc16_3.14 to %.loc14_5.2
+// CHECK:STDOUT:   %.loc16_3.16: i32 = int_literal 4
+// CHECK:STDOUT:   %.loc16_3.17: ref i32 = array_index %.loc16_3.3, %.loc16_3.16
+// CHECK:STDOUT:   %.loc16_3.18 = initialize_from %.loc16_3.17 to %.loc15_5.2
+// CHECK:STDOUT:   %.loc16_3.19: init [i32; 5] = array_init %.loc16_3.2, (%.loc16_3.6, %.loc16_3.9, %.loc16_3.12, %.loc16_3.15, %.loc16_3.18) to %.loc16_3.3
+// CHECK:STDOUT:   assign %ints, %.loc16_3.19
 // CHECK:STDOUT:   %.loc17_21: i32 = int_literal 7
 // CHECK:STDOUT:   %.loc17_22: type = array_type %.loc17_21, f64
 // CHECK:STDOUT:   %floats: ref [f64; 7] = var "floats"
@@ -67,7 +83,29 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_5.2: f64 = stub_reference %.loc24_5.1
 // CHECK:STDOUT:   %.loc25_3.1: type = tuple_type (f64, f64, f64, f64, f64, f64, f64)
 // CHECK:STDOUT:   %.loc25_3.2: (f64, f64, f64, f64, f64, f64, f64) = tuple_literal (%.loc18_5.2, %.loc19_5.2, %.loc20_5.2, %.loc21_5.2, %.loc22_5.2, %.loc23_5.2, %.loc24_5.2)
-// CHECK:STDOUT:   %.loc25_3.3: [f64; 7] = array_value %.loc25_3.2
-// CHECK:STDOUT:   assign %floats, %.loc25_3.3
+// CHECK:STDOUT:   %.loc25_3.3: ref [f64; 7] = stub_reference %floats
+// CHECK:STDOUT:   %.loc25_3.4: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc25_3.5: ref f64 = array_index %.loc25_3.3, %.loc25_3.4
+// CHECK:STDOUT:   %.loc25_3.6 = initialize_from %.loc25_3.5 to %.loc18_5.2
+// CHECK:STDOUT:   %.loc25_3.7: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc25_3.8: ref f64 = array_index %.loc25_3.3, %.loc25_3.7
+// CHECK:STDOUT:   %.loc25_3.9 = initialize_from %.loc25_3.8 to %.loc19_5.2
+// CHECK:STDOUT:   %.loc25_3.10: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc25_3.11: ref f64 = array_index %.loc25_3.3, %.loc25_3.10
+// CHECK:STDOUT:   %.loc25_3.12 = initialize_from %.loc25_3.11 to %.loc20_5.2
+// CHECK:STDOUT:   %.loc25_3.13: i32 = int_literal 3
+// CHECK:STDOUT:   %.loc25_3.14: ref f64 = array_index %.loc25_3.3, %.loc25_3.13
+// CHECK:STDOUT:   %.loc25_3.15 = initialize_from %.loc25_3.14 to %.loc21_5.2
+// CHECK:STDOUT:   %.loc25_3.16: i32 = int_literal 4
+// CHECK:STDOUT:   %.loc25_3.17: ref f64 = array_index %.loc25_3.3, %.loc25_3.16
+// CHECK:STDOUT:   %.loc25_3.18 = initialize_from %.loc25_3.17 to %.loc22_5.2
+// CHECK:STDOUT:   %.loc25_3.19: i32 = int_literal 5
+// CHECK:STDOUT:   %.loc25_3.20: ref f64 = array_index %.loc25_3.3, %.loc25_3.19
+// CHECK:STDOUT:   %.loc25_3.21 = initialize_from %.loc25_3.20 to %.loc23_5.2
+// CHECK:STDOUT:   %.loc25_3.22: i32 = int_literal 6
+// CHECK:STDOUT:   %.loc25_3.23: ref f64 = array_index %.loc25_3.3, %.loc25_3.22
+// CHECK:STDOUT:   %.loc25_3.24 = initialize_from %.loc25_3.23 to %.loc24_5.2
+// CHECK:STDOUT:   %.loc25_3.25: init [f64; 7] = array_init %.loc25_3.2, (%.loc25_3.6, %.loc25_3.9, %.loc25_3.12, %.loc25_3.15, %.loc25_3.18, %.loc25_3.21, %.loc25_3.24) to %.loc25_3.3
+// CHECK:STDOUT:   assign %floats, %.loc25_3.25
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -304,11 +304,18 @@ class Node : public Printable<Node> {
   using ArrayIndex =
       Factory<NodeKind::ArrayIndex, NodeId /*array_id*/, NodeId /*index*/>;
 
+  // Initializes an array from a tuple. `tuple_id` is the source tuple
+  // expression. `refs_id` contains one initializer per array element, plus a
+  // final element that is the return slot for the initialization.
+  using ArrayInit = Factory<NodeKind::ArrayInit, NodeId /*tuple_id*/,
+                            NodeBlockId /*refs_id*/>;
+
   using ArrayType = Node::Factory<NodeKind::ArrayType, NodeId /*bound_node_id*/,
                                   TypeId /*array_element_type_id*/>;
 
-  using ArrayValue = Factory<NodeKind::ArrayValue, NodeId /*tuple_value_id*/>;
-
+  // Performs a source-level initialization or assignment of `lhs_id` from
+  // `rhs_id`. This finishes initialization of `lhs_id` in the same way as
+  // `InitializeFrom`.
   using Assign = Node::FactoryNoType<NodeKind::Assign, NodeId /*lhs_id*/,
                                      NodeId /*rhs_id*/>;
 
@@ -368,6 +375,12 @@ class Node : public Printable<Node> {
 
   using FunctionDeclaration =
       FactoryNoType<NodeKind::FunctionDeclaration, FunctionId /*function_id*/>;
+
+  // Finalizes the initialization of `dest_id` from the initializer expression
+  // `src_id`, by performing a final copy from source to destination, for types
+  // whose initialization is not in-place.
+  using InitializeFrom =
+      FactoryNoType<NodeKind::InitializeFrom, NodeId /*src_id*/, NodeId /*dest_id*/>;
 
   using IntegerLiteral =
       Factory<NodeKind::IntegerLiteral, IntegerLiteralId /*integer_id*/>;
