@@ -226,7 +226,7 @@ auto HandleIntegerLiteral(FunctionContext& context, SemIR::NodeId node_id,
       context.semantics_ir().GetIntegerLiteral(node.GetAsIntegerLiteral());
   // TODO: This won't offer correct semantics, but seems close enough for now.
   llvm::Value* v =
-      llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getSExtValue());
+      llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());
   context.SetLocal(node_id, v);
 }
 

@@ -39,6 +39,7 @@ class Driver {
  private:
   struct Options;
   struct CompileOptions;
+  class CompilationUnit;
 
   // Delegates to the command line library to parse the arguments and store the
   // results in a custom `Options` structure that the rest of the driver uses.
