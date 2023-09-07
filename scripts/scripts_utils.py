@@ -17,7 +17,9 @@ import time
 from typing import Optional
 import urllib.request
 
-_BAZEL_TOOLS_URL = "https://github.com/bazelbuild/buildtools/releases/download/v6.3.3/"
+_BAZEL_TOOLS_URL = (
+    "https://github.com/bazelbuild/buildtools/releases/download/v6.3.3/"
+)
 
 """Version SHAs.
 
@@ -61,11 +63,11 @@ Gather shas with:
     done
 """
 _TARGET_DETERMINATOR_SHAS = {
-    "darwin.amd64": "aba6dce8a978d2174b37dd1355eecba86db93be1ff77742d0753d8efd6a8a316", # noqa: E501
-    "darwin.arm64": "6c3c308dcfc651408ed5490245ea3e0180fc49d4cc9b762ab84a4b979bcb07b8", # noqa: E501
-    "linux.amd64": "5200dbca0dd4980690d5060cf8e04abac927efaca143567c51fe24cf973364d2", # noqa: E501
-    "linux.arm64": "3c04f8bb2742219eb3415c6d675dcfe9175745eb7b1d6c3706085a9987f9f719", # noqa: E501
-    "windows.amd64.exe": "3aea5bd52fdf29bfe6995ffcacc2b2c2299af02dc58f1039022ff758b58214c3", # noqa: E501
+    "darwin.amd64": "aba6dce8a978d2174b37dd1355eecba86db93be1ff77742d0753d8efd6a8a316",  # noqa: E501
+    "darwin.arm64": "6c3c308dcfc651408ed5490245ea3e0180fc49d4cc9b762ab84a4b979bcb07b8",  # noqa: E501
+    "linux.amd64": "5200dbca0dd4980690d5060cf8e04abac927efaca143567c51fe24cf973364d2",  # noqa: E501
+    "linux.arm64": "3c04f8bb2742219eb3415c6d675dcfe9175745eb7b1d6c3706085a9987f9f719",  # noqa: E501
+    "windows.amd64.exe": "3aea5bd52fdf29bfe6995ffcacc2b2c2299af02dc58f1039022ff758b58214c3",  # noqa: E501
 }
 
 
@@ -127,9 +129,7 @@ def _get_cached_binary(name: str, url: str, want_hash: str) -> str:
                 break
             retries -= 1
             if retries == 0:
-                exit(
-                    f"Failed to download {url}: HTTP {err}."
-                )
+                exit(f"Failed to download {url}: HTTP {err}.")
             time.sleep(1)
         local_path.chmod(0o755)
 
@@ -166,7 +166,9 @@ def get_target_determinator() -> str:
     # Ensure the platform is supported, and grab its hash.
     if version not in _TARGET_DETERMINATOR_SHAS:
         # If this because a platform support issue, we may need to print errors.
-        exit(f"No target-determinator release available for platform: {version}")
+        exit(
+            f"No target-determinator release available for platform: {version}"
+        )
     want_hash = _TARGET_DETERMINATOR_SHAS[version]
 
     return _get_cached_binary(f"target-determinator{ext}", url, want_hash)

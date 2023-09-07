@@ -76,7 +76,9 @@ def main() -> None:
         "baseline", nargs=1, help="Git commit of the diff baseline."
     )
     parser.add_argument(
-        "args", nargs="*", help="Remaining args to forward to the underlying tool."
+        "args",
+        nargs="*",
+        help="Remaining args to forward to the underlying tool.",
     )
     parsed_args = parser.parse_args()
 
@@ -89,7 +91,8 @@ def main() -> None:
             target_determinator,
             f"--bazel={bazel}",
             parsed_args.baseline[0],
-        ] + parsed_args.args,
+        ]
+        + parsed_args.args,
         check=True,
         stdout=subprocess.PIPE,
         encoding="utf-8",
