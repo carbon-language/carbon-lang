@@ -28,7 +28,7 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   12,
-// CHECK:STDOUT:   -7,
+// CHECK:STDOUT:   9,
 // CHECK:STDOUT:   1,
 // CHECK:STDOUT:   2,
 // CHECK:STDOUT:   0,

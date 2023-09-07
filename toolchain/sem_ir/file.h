@@ -52,8 +52,9 @@ struct Function : public Printable<Function> {
 
 struct RealLiteral : public Printable<RealLiteral> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{mantissa: " << mantissa << ", exponent: " << exponent
-        << ", is_decimal: " << is_decimal << "}";
+    out << "{mantissa: ";
+    mantissa.print(out, /*isSigned=*/false);
+    out << ", exponent: " << exponent << ", is_decimal: " << is_decimal << "}";
   }
 
   llvm::APInt mantissa;

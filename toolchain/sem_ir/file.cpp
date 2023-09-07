@@ -92,13 +92,17 @@ auto File::Verify() const -> ErrorOr<Success> {
 
 static constexpr int Indent = 2;
 
-template <typename T>
-static auto PrintList(llvm::raw_ostream& out, llvm::StringLiteral name,
-                      const llvm::SmallVector<T>& list) {
+template <typename T, typename PrintT =
+                          std::function<void(llvm::raw_ostream&, const T& val)>>
+static auto PrintList(
+    llvm::raw_ostream& out, llvm::StringLiteral name,
+    const llvm::SmallVector<T>& list,
+    PrintT print = [](llvm::raw_ostream& out, const T& val) { out << val; }) {
   out << name << ": [\n";
   for (const auto& element : list) {
     out.indent(Indent);
-    out << element << ",\n";
+    print(out, element);
+    out << ",\n";
   }
   out << "]\n";
 }
@@ -125,7 +129,12 @@ auto File::Print(llvm::raw_ostream& out, bool include_builtins) const -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
   PrintList(out, "functions", functions_);
-  PrintList(out, "integer_literals", integer_literals_);
+  // Integer literals are an APInt, and default to a signed print, but the
+  // ZExtValue print is correct.
+  PrintList(out, "integer_literals", integer_literals_,
+            [](llvm::raw_ostream& out, const llvm::APInt& val) {
+              val.print(out, /*isSigned=*/false);
+            });
   PrintList(out, "real_literals", real_literals_);
   PrintList(out, "strings", strings_);
   PrintList(out, "types", types_);
