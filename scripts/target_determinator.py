@@ -48,6 +48,7 @@ def filter_targets(bazel: Path, targets: str) -> str:
             )
         log(f"Bazel query snippet:\n```\n{query_snippet}\n```")
         tmp.write(query)
+        tmp.flush()
         try:
             p = subprocess.run(
                 [str(bazel), "query", f"--query_file={tmp.name}"],
@@ -59,6 +60,10 @@ def filter_targets(bazel: Path, targets: str) -> str:
             return p.stdout
         except subprocess.CalledProcessError as err:
             log(err.stderr)
+            log("Query file:\n```")
+            with open(tmp.name) as f:
+                log(f.read())
+            log("```")
             raise
 
 
