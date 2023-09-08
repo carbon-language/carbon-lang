@@ -2513,6 +2513,9 @@ using multiple must use round parens `(`...`)` to specify grouping.
 > clauses that write a boolean expression that evaluates to `true` when the
 > constraint is satisfied.
 
+**References:** Rewrite constraints were introduced with
+[proposal #2173](https://github.com/carbon-language/carbon-lang/pull/2173).
+
 #### Same-type constraints
 
 **FIXME: Write this.**
@@ -5966,6 +5969,7 @@ parameter, as opposed to an associated facet, as in `N:! u32 where ___ >= 2`.
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
+-   [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
 -   [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
@@ -5974,7 +5978,13 @@ parameter, as opposed to an associated facet, as in `N:! u32 where ___ >= 2`.
 -   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
 -   [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+-   [#2138: Checked and template generic terminology](https://github.com/carbon-language/carbon-lang/pull/2138)
+-   [#2173: Associated constant assignment versus equality](https://github.com/carbon-language/carbon-lang/pull/2173)
+-   [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
 -   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)
+-   [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 -   [#2376: Constraints must use `Self`](https://github.com/carbon-language/carbon-lang/pull/2376)
 -   [#2483: Replace keyword `is` with `impls`](https://github.com/carbon-language/carbon-lang/pull/2483)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+-   [#2964: Expression phase terminology](https://github.com/carbon-language/carbon-lang/pull/2964)
+-   [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
