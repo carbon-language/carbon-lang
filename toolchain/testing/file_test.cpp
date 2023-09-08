@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
@@ -47,16 +48,25 @@ class ToolchainFileTest : public FileTestBase {
     }
   }
 
-  auto GetLineNumberReplacement(llvm::ArrayRef<llvm::StringRef> filenames)
-      -> LineNumberReplacement override {
+  auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames)
+      -> std::optional<RE2> override {
     if (component_ == "lex") {
-      return {.has_file = false,
-              .pattern = R"(line: (\s*\d+))",
-              // The `{{{{` becomes `{{`.
-              .line_formatv = "{{{{ *}}{0}"};
-    } else {
-      return FileTestBase::GetLineNumberReplacement(filenames);
+      return std::make_optional<RE2>(
+          llvm::formatv(R"(^- filename: ({0})$)", llvm::join(filenames, "|")));
     }
+    return FileTestBase::GetDefaultFileRE(filenames);
+  }
+
+  auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)
+      -> llvm::SmallVector<LineNumberReplacement> override {
+    auto replacements = FileTestBase::GetLineNumberReplacements(filenames);
+    if (component_ == "lex") {
+      replacements.push_back({.has_file = false,
+                              .re = std::make_shared<RE2>(R"(line: (\s*\d+))"),
+                              // The `{{{{` becomes `{{`.
+                              .line_formatv = "{{{{ *}}{0}"});
+    }
+    return replacements;
   }
 
   auto DoExtraCheckReplacements(std::string& check_line) -> void override {

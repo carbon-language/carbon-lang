@@ -3,14 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 // AUTOUPDATE
-// CHECK:STDERR: unattached message 3
-// CHECK:STDERR: unattached message 4
-
-// CHECK:STDOUT: 3 args: `default_args`, `a.carbon`, `b.carbon`
+// CHECK:STDOUT: 2 args: `default_args`, `file_only_re_one_file.carbon`
 // CHECK:STDOUT: unattached message 1
+// CHECK:STDOUT: file: file_only_re_one_file.carbon
+// CHECK:STDOUT: line: [[@LINE-8]]
 // CHECK:STDOUT: unattached message 2
-// --- a.carbon
-aaa
-
-// --- b.carbon
-bbb

@@ -66,10 +66,19 @@ class FileTestBase : public testing::Test {
   // Returns default arguments. Only called when a file doesn't set ARGS.
   virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;
 
+  // Returns a regex to match the default file when a line may not be present.
+  // May return nullptr if unused. If GetLineNumberReplacements returns an entry
+  // with has_file=false, this is required.
+  virtual auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> /*filenames*/)
+      -> std::optional<RE2> {
+    return std::nullopt;
+  }
+
   // Returns replacement information for line numbers. See LineReplacement for
   // construction.
-  virtual auto GetLineNumberReplacement(
-      llvm::ArrayRef<llvm::StringRef> filenames) -> LineNumberReplacement;
+  virtual auto GetLineNumberReplacements(
+      llvm::ArrayRef<llvm::StringRef> filenames)
+      -> llvm::SmallVector<LineNumberReplacement>;
 
   // Optionally allows children to provide extra replacements for autoupdate.
   virtual auto DoExtraCheckReplacements(std::string& /*check_line*/) -> void {}
