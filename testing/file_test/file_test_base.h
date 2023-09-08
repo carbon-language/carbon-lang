@@ -162,9 +162,9 @@ struct FileTestFactory {
 extern auto GetFileTestFactory() -> FileTestFactory;
 
 // Provides a standard GetFileTestFactory implementation.
-#define CARBON_FILE_TEST_FACTORY(Name)                                     \
-  auto GetFileTestFactory()->FileTestFactory {                             \
-    return {(#Name), [](llvm::StringRef path) { return new Name(path); }}; \
+#define CARBON_FILE_TEST_FACTORY(Name)                                   \
+  auto GetFileTestFactory()->FileTestFactory {                           \
+    return {#Name, [](llvm::StringRef path) { return new Name(path); }}; \
   }
 
 }  // namespace Carbon::Testing

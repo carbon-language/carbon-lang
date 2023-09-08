@@ -6,6 +6,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <string>
 #include <utility>
 
 #include "absl/flags/flag.h"
@@ -18,9 +19,10 @@
 #include "llvm/Support/MemoryBuffer.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
-          "A comma-separated list of tests for file_test infrastructure.");
+          "A comma-separated list of repo-relative names of test files. "
+          "Overrides test_targets_file.");
 ABSL_FLAG(std::string, test_targets_file, "",
-          "A path to a file containing target names of the files.");
+          "A path to a file containing repo-relative names of test files.");
 ABSL_FLAG(bool, autoupdate, false,
           "Instead of verifying files match test output, autoupdate files "
           "based on test output.");
@@ -334,8 +336,9 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
                                  file_content.end() - current_file_start)));
   } else {
     // If no file splitting happened, use the main file as the test file.
-    context.test_files.push_back(
-        TestFile(test_name_.rsplit("/").second.str(), file_content));
+    // There will always be a `/` unless tests are in the repo root.
+    context.test_files.push_back(TestFile(
+        test_name_.drop_front(test_name_.rfind("/") + 1).str(), file_content));
   }
 
   // Assume there is always a suffix `\n` in output.
@@ -435,8 +438,16 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
   return Matcher<std::string>{MatchesRegex(str)};
 }
 
-// Extracts tests from the target file.
-static auto GetAllTests() -> llvm::SmallVector<std::string> {
+// Returns the tests to run.
+static auto GetTests() -> llvm::SmallVector<std::string> {
+  // Prefer a user-specified list if present.
+  auto specific_tests = absl::GetFlag(FLAGS_file_tests);
+  if (!specific_tests.empty()) {
+    return llvm::SmallVector<std::string>(specific_tests.begin(),
+                                          specific_tests.end());
+  }
+
+  // Extracts tests from the target file.
   CARBON_CHECK(!absl::GetFlag(FLAGS_test_targets_file).empty())
       << "Missing --test_targets_file.";
   auto content = ReadFile(absl::GetFlag(FLAGS_test_targets_file));
@@ -448,21 +459,6 @@ static auto GetAllTests() -> llvm::SmallVector<std::string> {
     all_tests.push_back(file_ref.str());
   }
   return all_tests;
-}
-
-// Uses --file_tests, verifying entries are valid.
-static auto FilterFileTests(const llvm::SmallVector<std::string>& tests)
-    -> llvm::SmallVector<std::string> {
-  auto flag_vals = absl::GetFlag(FLAGS_file_tests);
-  llvm::SmallVector<std::string> filtered_tests(flag_vals.begin(),
-                                                flag_vals.end());
-  for (const auto& test : filtered_tests) {
-    if (std::find(tests.begin(), tests.end(), test) == tests.end()) {
-      llvm::errs() << "Not a valid test: " << test << "\n";
-      exit(EXIT_FAILURE);
-    }
-  }
-  return filtered_tests;
 }
 
 // Implements main() within the Carbon::Testing namespace for convenience.
@@ -480,11 +476,7 @@ static auto Main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
-  llvm::SmallVector<std::string> tests = GetAllTests();
-  if (!absl::GetFlag(FLAGS_file_tests).empty()) {
-    tests = FilterFileTests(tests);
-  }
-
+  llvm::SmallVector<std::string> tests = GetTests();
   auto test_factory = GetFileTestFactory();
   if (absl::GetFlag(FLAGS_autoupdate)) {
     for (const auto& test_name : tests) {
