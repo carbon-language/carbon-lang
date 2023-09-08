@@ -153,7 +153,10 @@ def _get_machine() -> str:
 
 
 def _get_platform_ext() -> str:
-    return ".exe" if platform.system() == "Windows" else ""
+    if platform.system() == "Windows":
+        return ".exe"
+    else:
+        return ""
 
 
 def _select_hash(hashes: Dict[str, str], version: str) -> str:
