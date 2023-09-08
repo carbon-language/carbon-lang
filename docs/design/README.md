@@ -407,8 +407,8 @@ themselves modeled as values; specifically, compile-time-constant values of type
 A value used in a type position, like after a `:` in a variable declaration or
 the return type after a `->` in a function declaration, must:
 
--   be [a compile-time constant](#expression-phases), so the compiler can evaluate
-    it at compile time, and
+-   be [a compile-time constant](#expression-phases), so the compiler can
+    evaluate it at compile time, and
 -   have a defined implicit conversion to type `type`.
 
 The actual type used is the result of the conversion to type `type`. Of course
