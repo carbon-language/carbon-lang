@@ -40,10 +40,12 @@ def filter_targets(bazel: Path, targets: str) -> str:
             "kind(rule, $t) except attr(tags, manual, $t)\n"
         )
         query_lines = query.splitlines()
-        if len(query_lines <= 10):
+        if len(query_lines) <= 10:
             query_snippet = "\n".join(query_lines)
         else:
-            query_snippet = "\n".join(query_lines[:5] + ["..."] + query_lines[-5:])
+            query_snippet = "\n".join(
+                query_lines[:5] + ["..."] + query_lines[-5:]
+            )
         log(f"Bazel query snippet:\n```\n{query_snippet}\n```")
         tmp.write(query)
         try:
