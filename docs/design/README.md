@@ -2897,7 +2897,7 @@ by replacing the definition scope in curly braces (`{`...`}`) with a semicolon.
 
 ### Combining constraints
 
-A function can require calling types to implement multiple interfaces (or other
+A function can require type arguments to implement multiple interfaces (or other
 facet types) by combining them using an ampersand (`&`):
 
 ```carbon
