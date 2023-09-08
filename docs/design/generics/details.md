@@ -49,9 +49,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Parameterized named constraints](#parameterized-named-constraints)
 -   [Where constraints](#where-constraints)
+    -   [Kinds of `where` constraints](#kinds-of-where-constraints)
+        -   [Rewrite constraints](#rewrite-constraints)
+        -   [Same-type constraints](#same-type-constraints)
+        -   [`impls` constraints](#impls-constraints)
     -   [Constraint use cases](#constraint-use-cases)
         -   [Set an associated constant to a specific value](#set-an-associated-constant-to-a-specific-value)
-        -   [Same type constraints](#same-type-constraints)
+        -   [Same type constraints](#same-type-constraints-1)
             -   [Set an associated facet to a specific value](#set-an-associated-facet-to-a-specific-value)
             -   [Equal facet bindings](#equal-facet-bindings)
                 -   [Satisfying both facet types](#satisfying-both-facet-types)
@@ -2497,7 +2501,25 @@ using multiple must use round parens `(`...`)` to specify grouping.
 > [tracking issue](https://github.com/rust-lang/rust/issues/41517)) to support
 > naming some classes of constraints.
 
-**FIXME: Left off here.**
+### Kinds of `where` constraints
+
+**FIXME: Write this.**
+
+#### Rewrite constraints
+
+**FIXME: Write this.**
+
+> **Concern:** Using `=` for this use case is not consistent with other `where`
+> clauses that write a boolean expression that evaluates to `true` when the
+> constraint is satisfied.
+
+#### Same-type constraints
+
+**FIXME: Write this.**
+
+#### `impls` constraints
+
+**FIXME: Write this.**
 
 ### Constraint use cases
 
@@ -2540,9 +2562,7 @@ This syntax is also used to specify the values of
 [associated constants](#associated-constants) when implementing an interface for
 a type.
 
-**Concern:** Using `=` for this use case is not consistent with other `where`
-clauses that write a boolean expression that evaluates to `true` when the
-constraint is satisfied.
+**FIXME: Update this.**
 
 A constraint to say that two associated constants should have the same value
 without specifying what specific value they should have must use `==` instead of
@@ -2554,6 +2574,9 @@ interface PointCloud {
   let PointT:! NSpacePoint where .N == Dim;
 }
 ```
+
+**References:** The `=` and `==` options were last updated in
+[proposal #2173](https://github.com/carbon-language/carbon-lang/pull/2173).
 
 #### Same type constraints
 
@@ -2712,7 +2735,7 @@ fn SortContainer
     (container_to_sort: ContainerType*);
 ```
 
-In contrast to [a same type constraint](#same-type-constraints), this does not
+In contrast to [a same type constraint](#same-type-constraints-1), this does not
 say what type `ElementType` exactly is, just that it must satisfy some facet
 type.
 
