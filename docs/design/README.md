@@ -2850,9 +2850,8 @@ To include the members of the interface as direct members of the type, use the
 body of a class definition.
 
 Without `extend`, implementations don't have to be in the same library as the
-type definition, subject to the orphan rule
-([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)) for
-[coherence](generics/terminology.md#coherence).
+type definition, subject to the [orphan rule](generics/details.md#orphan-rule)
+for [coherence](generics/terminology.md#coherence).
 
 Interfaces and implementations may be
 [forward declared](generics/details.md#forward-declarations-and-cyclic-references)
@@ -3538,17 +3537,13 @@ function.
 
 Carbon interfaces with no C++ equivalent, such as
 [`CommonTypeWith(U)`](#common-type), may be implemented for C++ types
-out-of-line in Carbon code. To satisfy the orphan rule
-([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)),
-each C++ library will have a corresponding Carbon wrapper library that must be
-imported instead of the C++ library if the Carbon wrapper exists. **TODO:**
-Perhaps it will automatically be imported, so a wrapper may be added without
-requiring changes to importers?
+out-of-line in Carbon code. To satisfy the
+[orphan rule](generics/details.md#orphan-rule), each C++ library will have a
+corresponding Carbon wrapper library that must be imported instead of the C++
+library if the Carbon wrapper exists. **TODO:** Perhaps it will automatically be
+imported, so a wrapper may be added without requiring changes to importers?
 
 ### Templates
-
-> **Note:** This is provisional, no design for this has been through the
-> proposal process yet.
 
 Carbon supports both
 [checked and template generics](#checked-and-template-parameters). This provides
@@ -3575,6 +3570,11 @@ We expect the best interop in these areas to be based on a Carbon-provided C++
 toolchain. However, even when using Carbon's generated C++ headers for interop,
 we will include the ability where possible to use a Carbon generic from C++ as
 if it were a C++ template.
+
+> References:
+>
+> -   Proposal
+>     [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
 
 ### Standard types
 

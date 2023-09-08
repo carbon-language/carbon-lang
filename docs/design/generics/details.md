@@ -47,7 +47,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Associated class functions](#associated-class-functions)
 -   [Associated facets](#associated-facets)
 -   [Parameterized interfaces](#parameterized-interfaces)
-    -   [Impl lookup](#impl-lookup)
     -   [Parameterized named constraints](#parameterized-named-constraints)
 -   [Where constraints](#where-constraints)
     -   [Constraint use cases](#constraint-use-cases)
@@ -386,7 +385,7 @@ unlike Swift and Rust.
 
 An out-of-line `impl` declaration is allowed to be defined in a different
 library from `Point_OutOfLine`, restricted by
-[the coherence/orphan rules](#impl-lookup) that ensure that the implementation
+[the coherence/orphan rules](#orphan-rule) that ensure that the implementation
 of an interface can't change based on imports. In particular, the `impl`
 declaration is allowed in the library defining the interface (`Vector` in this
 case) in addition to the library that defines the type (`Point_OutOfLine` here).
@@ -2347,15 +2346,14 @@ var top_veggie: Veggie =
 > described and discussed in
 > [#578: Value patterns as function parameters](https://github.com/carbon-language/carbon-lang/issues/578).
 
-**FIXME: Left off here.**
-
-This approach is useful for the `ComparableTo(T)` interface, where a type might
-be comparable with multiple other types, and in fact interfaces for
-[operator overloads](#operator-overloading) more generally. Example:
+Parameterized interfaces are useful for
+[operator overloads](#operator-overloading). For example, the `EqWith(T)` and
+`OrderedWith(T)` interfaces have a parameter that allows type to be comparable
+with multiple other types, as in:
 
 ```
-interface EquatableWith(T:! type) {
-  fn Equals[self: Self](rhs: T) -> bool;
+interface EqWith(T:! type) {
+  fn Equal[self: Self](rhs: T) -> bool;
   ...
 }
 class Complex {
@@ -2363,9 +2361,9 @@ class Complex {
   var imag: f64;
   // Can implement this interface more than once
   // as long as it has different arguments.
-  extend impl as EquatableWith(f64) { ... }
-  // Same as: impl as EquatableWith(Complex) { ... }
-  extend impl as EquatableWith(Self) { ... }
+  extend impl as EqWith(f64) { ... }
+  // Same as: impl as EqWith(Complex) { ... }
+  extend impl as EqWith(Self) { ... }
 }
 ```
 
@@ -2436,53 +2434,18 @@ that interface parameters are "inputs" since they _determine_ which `impl` to
 use, and associated constants are "outputs" since they are determined _by_ the
 `impl`, but play no role in selecting the `impl`.
 
-### Impl lookup
-
-Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. To satisfy the [orphan rule for coherence](#orphan-rule), that
-`impl` must be defined in some library that must be imported in any code that
-looks up whether that interface is implemented for that type. This requires that
-`impl` is defined in the same library that defines the interface or one of the
-names needed by the type. That is, the `impl` must be defined with one of `I`,
-`T`, `U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking
-up this `impl` to import the _definitions_ of all of those names. Seeing a
-forward declaration of these names is insufficient, since you can presumably see
-forward declarations without seeing an `impl` with the definition. This
-accomplishes a few goals:
-
--   The compiler can check that there is only one definition of any `impl` that
-    is actually used, avoiding
-    [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
-    problems.
--   Every attempt to use an `impl` will see the exact same `impl`, making the
-    interpretation and semantics of code consistent no matter its context, in
-    accordance with the
-    [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
--   Allowing the `impl` to be defined with either the interface or the type
-    addresses the
-    [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
-
-Note that [the rules for specialization](#lookup-resolution-and-specialization)
-do allow there to be more than one `impl` to be defined for a type, by
-unambiguously picking one as most specific.
-
-**References:** Implementation coherence is
-[defined in terminology](terminology.md#coherence), and is
-[a goal for Carbon](goals.md#coherence). More detail can be found in
-[this appendix with the rationale and alternatives considered](appendix-coherence.md).
-
 ### Parameterized named constraints
 
-We should also allow the [named constraint](#named-constraints) construct to
-support parameters. Parameters would work the same way as for interfaces.
+Carbon also allows the [named constraint](#named-constraints) construct to
+support parameters. Those parameters work the same way as for interfaces.
 
 ## Where constraints
 
-So far, we have restricted a generic facet parameter by saying it has to
-implement an interface or a set of interfaces. There are a variety of other
-constraints we would like to be able to express, such as applying restrictions
-to its associated constants. This is done using the `where` operator that adds
-constraints to a facet type.
+So far, we have restricted a [symbolic facet binding](#symbolic-facet-bindings)
+by saying it has to implement an interface or a set of interfaces. There are a
+variety of other constraints we would like to be able to express, such as
+applying restrictions to associated constants. This is done using the `where`
+operator that adds constraints to a facet type.
 
 The where operator can be applied to a facet type in a declaration context:
 
@@ -2518,21 +2481,23 @@ between different type variables, such as that a member of one is equal to the
 member of another. The `where` operator is not associative, so a type expression
 using multiple must use round parens `(`...`)` to specify grouping.
 
-**Comparison with other languages:** Both Swift and Rust use `where` clauses on
-declarations instead of in the expression syntax. These happen after the type
-that is being constrained has been given a name and use that name to express the
-constraint.
+> **Comparison with other languages:** Both Swift and Rust use `where` clauses
+> on declarations instead of in the expression syntax. These happen after the
+> type that is being constrained has been given a name and use that name to
+> express the constraint.
+>
+> Rust also supports
+> [directly passing in the values for associated types](https://rust-lang.github.io/rfcs/0195-associated-items.html#constraining-associated-types)
+> when using a trait as a constraint. This is helpful when specifying concrete
+> types for all associated types in a trait in order to
+> [make it object safe so it can be used to define a trait object type](https://rust-lang.github.io/rfcs/0195-associated-items.html#trait-objects).
+>
+> Rust is adding trait aliases
+> ([RFC](https://github.com/rust-lang/rfcs/blob/master/text/1733-trait-alias.md),
+> [tracking issue](https://github.com/rust-lang/rust/issues/41517)) to support
+> naming some classes of constraints.
 
-Rust also supports
-[directly passing in the values for associated types](https://rust-lang.github.io/rfcs/0195-associated-items.html#constraining-associated-types)
-when using a trait as a constraint. This is helpful when specifying concrete
-types for all associated types in a trait in order to
-[make it object safe so it can be used to define a trait object type](https://rust-lang.github.io/rfcs/0195-associated-items.html#trait-objects).
-
-Rust is adding trait aliases
-([RFC](https://github.com/rust-lang/rfcs/blob/master/text/1733-trait-alias.md),
-[tracking issue](https://github.com/rust-lang/rust/issues/41517)) to support
-naming some classes of constraints.
+**FIXME: Left off here.**
 
 ### Constraint use cases
 
@@ -4085,6 +4050,39 @@ interface. This is achieved with the _orphan rule_.
 **Orphan rule:** Some name from the type structure of an `impl` declaration must
 be defined in the same library as the `impl`, that is some name must be _local_.
 
+Let's say you have some interface `I(T, U(V))` being implemented for some type
+`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl` must be
+defined in some library that must be imported in any code that looks up whether
+that interface is implemented for that type. This requires that `impl` is
+defined in the same library that defines the interface or one of the names
+needed by the type. That is, the `impl` must be defined with one of `I`, `T`,
+`U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking up
+this `impl` to import the _definitions_ of all of those names. Seeing a forward
+declaration of these names is insufficient, since you can presumably see forward
+declarations without seeing an `impl` with the definition. This accomplishes a
+few goals:
+
+-   The compiler can check that there is only one definition of any `impl` that
+    is actually used, avoiding
+    [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
+    problems.
+-   Every attempt to use an `impl` will see the exact same `impl`, making the
+    interpretation and semantics of code consistent no matter its context, in
+    accordance with the
+    [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
+-   Allowing the `impl` to be defined with either the interface or the type
+    partially addresses the
+    [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+
+Note that [the rules for specialization](#lookup-resolution-and-specialization)
+do allow there to be more than one `impl` to be defined for a type, by
+unambiguously picking one as most specific.
+
+**References:** Implementation coherence is
+[defined in terminology](terminology.md#coherence), and is
+[a goal for Carbon generics](goals.md#coherence). More detail can be found in
+[this appendix with the rationale and alternatives considered](appendix-coherence.md).
+
 Only the implementing interface and types (self type and type parameters) in the
 type structure are relevant here; an interface mentioned in a constraint is not
 sufficient since it
@@ -4663,10 +4661,11 @@ these rules:
     in the scope of the class definition, but member function bodies defined
     inline are processed
     [as if they appeared immediately after the end of the outermost enclosing class](/docs/project/principles/information_accumulation.md#exceptions).
--   For [coherence](goals.md#coherence), we require that any impl that matches
-    an [impl lookup](#impl-lookup) query in the same file, must be declared
-    before the query. This can be done with a definition or a forward
-    declaration.
+-   For [coherence](goals.md#coherence), we require that any `impl` declaration
+    that matches an impl lookup query in the same file, must be declared before
+    the query. This can be done with a definition or a forward declaration. This
+    matches the
+    [information accumulation principle](/docs/project/principles/information_accumulation.md).
 
 ### Matching and agreeing
 

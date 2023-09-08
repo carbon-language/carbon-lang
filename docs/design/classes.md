@@ -311,8 +311,8 @@ implemented in descendants.
 While it is typical for this case to be associated with single-level inheritance
 hierarchies, there are some cases where there is an interface at the root of a
 type hierarchy and polymorphic types as interior branches of the tree. The case
-of generic interfaces extending or requiring other interface would also be
-modeled by deeper inheritance hierarchies.
+of interfaces extending or requiring other interface would also be modeled by
+deeper inheritance hierarchies.
 
 An interface as base class needs to either have a virtual destructor or forbid
 deallocation.

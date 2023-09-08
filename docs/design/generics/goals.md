@@ -626,10 +626,10 @@ Checked generics don't need to provide full flexibility of C++ templates:
 
 -   [Carbon templates](#templates) will cover those cases that don't fit inside
     checked generics, such as code that relies on compile-time duck typing.
--   We won't allow a specialization of some generic interface for some
-    particular type to actually expose a _different_ interface, with different
-    methods or different types in method signatures. This would break modular
-    type checking.
+-   We won't allow a specialization of some interface for some particular type
+    to actually expose a _different_ interface, with different methods or
+    different types in method signatures. This would break modular type
+    checking.
 -   [Template metaprogramming](https://en.wikipedia.org/wiki/Template_metaprogramming)
     will not be supported by Carbon checked generics. We expect to address those
     use cases with metaprogramming or [templates](#templates) in Carbon.
