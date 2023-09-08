@@ -405,9 +405,9 @@ themselves modeled as values; specifically, compile-time-constant values of type
 ### Values usable as types
 
 A value used in a type position, like after a `:` in a variable declaration or
-the return type after a `->` in a function declaration, must be:
+the return type after a `->` in a function declaration, must:
 
--   [a compile-time constant](#expression-phases), so the compiler can evaluate
+-   be [a compile-time constant](#expression-phases), so the compiler can evaluate
     it at compile time, and
 -   have a defined implicit conversion to type `type`.
 
@@ -2766,7 +2766,7 @@ binding pattern_ if it does not.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
-rigor of checked generics are problematic.
+rigor of checked generics is problematic.
 
 > References:
 >
@@ -2973,8 +2973,8 @@ This allows a safe transition from template to checked generics. Constraints can
 be added incrementally, with the compiler verifying that the semantics stay the
 same. If adding the constraint would change which function gets called, an error
 is triggered, as in `ConstrainedTemplateDraw` from the example. Once all
-constraints have been added, removing the word `template` to switch to a checked
-parameter is safe.
+constraints have been added, it is safe to remove the word `template` to switch
+to a checked parameter.
 
 > References:
 >
@@ -3180,13 +3180,13 @@ Carbon generics have a number of other features, including:
     same data representation as an existing type, so you may cast between the
     two types, but can implement different interfaces or implement interfaces
     differently.
--   Additional requirements can be placed on the associated constants of an
+-   Additional requirements can be placed on the associated facets of an
     interface using
     [`where` constraints](generics/details.md#where-constraints).
--   [Implied constraints](generics/details.md#implied-constraints) allows some
+-   [Implied constraints](generics/details.md#implied-constraints) allow some
     constraints to be deduced and omitted from a function signature.
 -   _Planned_ [dynamic erased types](generics/details.md#runtime-type-fields)
-    can hold any value with a type implementing an interface, and allows the
+    can hold any value with a type implementing an interface, and allow the
     functions in that interface to be called using
     [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch), for some
     interfaces marked "`dyn`-safe". **Note:** Provisional.
