@@ -60,7 +60,7 @@ def filter_targets(bazel: Path, targets: str) -> str:
             return p.stdout
         except subprocess.CalledProcessError as err:
             log(err.stderr)
-            log("Query file:\n```")
+            log("Full query file:\n```")
             with open(tmp.name) as f:
                 log(f.read())
             log("```")
