@@ -4,10 +4,14 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
-load("//testing/file_test:rules.bzl", "file_test")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "testdata",
+    data = glob(["testdata/**/*.carbon"]),
+)
 
 cc_library(
     name = "driver",
@@ -30,16 +34,6 @@ cc_library(
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
-    ],
-)
-
-file_test(
-    name = "driver_file_test",
-    srcs = ["driver_file_test.cpp"],
-    tests = glob(["testdata/**/*.carbon"]),
-    deps = [
-        ":driver_file_test_base",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -68,17 +62,6 @@ cc_fuzz_test(
     deps = [
         ":driver",
         "//testing/base:test_raw_ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "driver_file_test_base",
-    testonly = 1,
-    hdrs = ["driver_file_test_base.h"],
-    deps = [
-        ":driver",
-        "//testing/file_test:file_test_base",
         "@llvm-project//llvm:Support",
     ],
 )
