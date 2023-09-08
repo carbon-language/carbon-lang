@@ -17,6 +17,15 @@
 #endif
 
 // ============================================================================
+// SourceBuffer diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(ErrorOpeningFile)
+CARBON_DIAGNOSTIC_KIND(ErrorStattingFile)
+CARBON_DIAGNOSTIC_KIND(FileTooLarge)
+CARBON_DIAGNOSTIC_KIND(ErrorReadingFile)
+
+// ============================================================================
 // Lexer diagnostics
 // ============================================================================
 

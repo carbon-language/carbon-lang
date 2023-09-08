@@ -397,13 +397,18 @@ themselves modeled as values; specifically, compile-time-constant values of type
 -   Function call syntax is used to specify parameters to a type, like
     `HashMap(String, i64)`.
 
+> References:
+>
+> -   Proposal
+>     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
+
 ### Values usable as types
 
 A value used in a type position, like after a `:` in a variable declaration or
-the return type after a `->` in a function declaration, must be:
+the return type after a `->` in a function declaration, must:
 
--   [a compile-time constant](#expression-phases), so the compiler can evaluate
-    it at compile time, and
+-   be [a compile-time constant](#expression-phases), so the compiler can
+    evaluate it at compile time, and
 -   have a defined implicit conversion to type `type`.
 
 The actual type used is the result of the conversion to type `type`. Of course
@@ -429,11 +434,6 @@ different types: the first has type `type`, and the second has type
 
 In addition to the types of [tuples](#tuples), this also comes up with
 [struct types](#struct-types) and [facets](generics/terminology.md#facet).
-
-> References:
->
-> -   Proposal
->     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 
 ## Primitive types
 
@@ -758,6 +758,15 @@ succeeds.
 
 > **Note:** Conversion of runtime values to other phases is provisional.
 
+> References:
+>
+> -   Proposal
+>     [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
+> -   Proposal
+>     [#2964: Expression phase terminology](https://github.com/carbon-language/carbon-lang/pull/2964)
+> -   Proposal
+>     [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
+
 ## Composite types
 
 ### Tuples
@@ -1050,6 +1059,11 @@ The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
 declaration.
 
+> References:
+>
+> -   Proposal
+>     [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
+
 ### Destructuring patterns
 
 There are also irrefutable _destructuring patterns_, such as _tuple
@@ -1244,10 +1258,10 @@ The bindings in the parameter list default to
 parameters. This binding will be implemented using a pointer, unless it is legal
 to copy and copying is cheaper.
 
-If the `var` keyword is added before the binding, then the arguments will be
-copied (or moved from a temporary) to new storage, and so can be mutated in the
-function body. The copy ensures that any mutations will not be visible to the
-caller.
+If the `var` keyword is added before the binding pattern, then the arguments
+will be copied (or moved from a temporary) to new storage, and so can be mutated
+in the function body. The copy ensures that any mutations will not be visible to
+the caller.
 
 Use a [pointer](#pointer-types) parameter type to represent an
 [input/output parameter](<https://en.wikipedia.org/wiki/Parameter_(computer_programming)#Output_parameters>),
@@ -2737,18 +2751,10 @@ binding.
 One difference from C++ templates, Carbon template instantiation is not
 controlled by the SFINAE rule of C++
 ([1](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error),
-[2](https://en.cppreference.com/w/cpp/language/sfinae)) but by explicit `if`
-clauses evaluated at compile-time. The `if` clause is at the end of the
-declaration, and the condition can only use compile-time constants known at
-type-checking time, including `template` parameters.
+[2](https://en.cppreference.com/w/cpp/language/sfinae)) but by explicit
+constraints declared in the function signature and evaluated at compile-time.
 
-```carbon
-class Array(template T:! type, template N:! i64)
-    if N >= 0 and N < MaxArraySize / sizeof(T);
-```
-
-> **TODO:** The design for template constraints is still under development. The
-> `if` clause approach here is provisional.
+> **TODO:** The design for template constraints is still under development.
 
 The [expression phase](#expression-phases) of a checked parameter is a symbolic
 constant whereas the expression phase of a template parameter is template
@@ -2758,7 +2764,7 @@ binding pattern_ if it does not.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
-rigor of checked generics are problematic.
+rigor of checked generics is problematic.
 
 > References:
 >
@@ -2767,6 +2773,10 @@ rigor of checked generics are problematic.
 >     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 > -   Question-for-leads issue
 >     [#949: Constrained template name lookup](https://github.com/carbon-language/carbon-lang/issues/949)
+> -   Proposal
+>     [#2138: Checked and template generic terminology](https://github.com/carbon-language/carbon-lang/pull/2138)
+> -   Proposal
+>     [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
 
 ### Interfaces and implementations
 
@@ -2875,10 +2885,14 @@ by replacing the definition scope in curly braces (`{`...`}`) with a semicolon.
 >     [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
 > -   Question-for-leads issue
 >     [#1132: How do we match forward declarations with their definitions?](https://github.com/carbon-language/carbon-lang/issues/1132)
+> -   Proposal
+>     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
+> -   Proposal
+>     [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 
 ### Combining constraints
 
-A function can require calling types to implement multiple interfaces (or other
+A function can require type arguments to implement multiple interfaces (or other
 facet types) by combining them using an ampersand (`&`):
 
 ```carbon
@@ -2953,13 +2967,15 @@ This allows a safe transition from template to checked generics. Constraints can
 be added incrementally, with the compiler verifying that the semantics stay the
 same. If adding the constraint would change which function gets called, an error
 is triggered, as in `ConstrainedTemplateDraw` from the example. Once all
-constraints have been added, removing the word `template` to switch to a checked
-parameter is safe.
+constraints have been added, it is safe to remove the word `template` to switch
+to a checked parameter.
 
 > References:
 >
 > -   Proposal
 >     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+> -   Proposal
+>     [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
 
 ### Associated constants
 
@@ -3158,13 +3174,13 @@ Carbon generics have a number of other features, including:
     same data representation as an existing type, so you may cast between the
     two types, but can implement different interfaces or implement interfaces
     differently.
--   Additional requirements can be placed on the associated constants of an
+-   Additional requirements can be placed on the associated facets of an
     interface using
     [`where` constraints](generics/details.md#where-constraints).
--   [Implied constraints](generics/details.md#implied-constraints) allows some
+-   [Implied constraints](generics/details.md#implied-constraints) allow some
     constraints to be deduced and omitted from a function signature.
 -   _Planned_ [dynamic erased types](generics/details.md#runtime-type-fields)
-    can hold any value with a type implementing an interface, and allows the
+    can hold any value with a type implementing an interface, and allow the
     functions in that interface to be called using
     [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch), for some
     interfaces marked "`dyn`-safe". **Note:** Provisional.
