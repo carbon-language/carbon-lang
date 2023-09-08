@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Code and comments](#code-and-comments)
 -   [Build modes](#build-modes)
 -   [Types are values](#types-are-values)
+    -   [Values usable as types](#values-usable-as-types)
 -   [Primitive types](#primitive-types)
     -   [`bool`](#bool)
     -   [Integer types](#integer-types)
@@ -90,7 +91,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Checked and template parameters](#checked-and-template-parameters)
     -   [Interfaces and implementations](#interfaces-and-implementations)
     -   [Combining constraints](#combining-constraints)
-    -   [Associated types](#associated-types)
+    -   [Template name lookup](#template-name-lookup)
+    -   [Associated constants](#associated-constants)
     -   [Generic entities](#generic-entities)
         -   [Generic Classes](#generic-classes)
         -   [Generic choice types](#generic-choice-types)
@@ -383,8 +385,8 @@ The behavior of the Carbon compiler depends on the _build mode_:
 
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
-themselves modeled as values; specifically, compile-time-constant values. This
-has a number of consequences:
+themselves modeled as values; specifically, compile-time-constant values of type
+`type`. This has a number of consequences:
 
 -   Names for types are in the same namespace shared with functions, variables,
     namespaces, and so on.
@@ -395,14 +397,43 @@ has a number of consequences:
 -   Function call syntax is used to specify parameters to a type, like
     `HashMap(String, i64)`.
 
-Some values, such as `()` and `{}`, may even be used as types, but only act like
-types when they are in a type position, like after a `:` in a variable
-declaration or the return type after a `->` in a function declaration. Any
-expression in a type position must be
-[a compile-time constant](#expression-phases) so the compiler can resolve
-whether the value can be used as a type. This also puts limits on how much
-operators can do different things for types. This is good for consistency, but
-is a significant restriction on Carbon's design.
+> References:
+>
+> -   Proposal
+>     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
+
+### Values usable as types
+
+A value used in a type position, like after a `:` in a variable declaration or
+the return type after a `->` in a function declaration, must:
+
+-   be [a compile-time constant](#expression-phases), so the compiler can
+    evaluate it at compile time, and
+-   have a defined implicit conversion to type `type`.
+
+The actual type used is the result of the conversion to type `type`. Of course
+this includes values that already are of type `type`, but also allows some
+non-type values to be used in a type position.
+
+For example, the value `(bool, bool)` represents a [tuple](#tuples) of types,
+but is not itself a type, since it doesn't have type `type`. It does have a
+defined implicit conversion to type `type`, which results in the value
+`(bool, bool) as type`. This means `(bool, bool)` may be used in a type
+position. `(bool, bool) as type` is the type of the value `(true, false)` (among
+others), so this code is legal:
+
+```carbon
+var b: (bool, bool) = (true, false);`
+```
+
+There is some need to be careful here, since the declaration makes it look like
+the type of `b` is `(bool, bool)`, when in fact it is `(bool, bool) as type`.
+`(bool, bool) as type` and `(bool, bool)` are different values since they have
+different types: the first has type `type`, and the second has type
+`(type, type) as type`.
+
+In addition to the types of [tuples](#tuples), this also comes up with
+[struct types](#struct-types) and [facets](generics/terminology.md#facet).
 
 ## Primitive types
 
@@ -707,8 +738,8 @@ Value expressions are further broken down into three _expression phases_:
     expressions with checked-generic arguments, like `Optional(T*)`.
 -   A _runtime value_ has a dynamic value only known at runtime.
 
-Template constants together with symbolic constants are referred to as
-_compile-time constants_.
+Template constants and symbolic constants are collectively called _compile-time
+constants_ and correspond to declarations using `:!`.
 
 Carbon will automatically convert a template constant to a symbolic constant, or
 any value to a runtime value:
@@ -726,6 +757,15 @@ template or symbolic constants if constant evaluation of the runtime expression
 succeeds.
 
 > **Note:** Conversion of runtime values to other phases is provisional.
+
+> References:
+>
+> -   Proposal
+>     [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
+> -   Proposal
+>     [#2964: Expression phase terminology](https://github.com/carbon-language/carbon-lang/pull/2964)
+> -   Proposal
+>     [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
 
 ## Composite types
 
@@ -848,8 +888,7 @@ Carbon.Print(a[0]);
 > **TODO:** Slices
 
 > **Note:** This is provisional, no design for arrays has been through the
-> proposal process yet. See pending proposal
-> [#1928: Arrays](https://github.com/carbon-language/carbon-lang/pull/1928).
+> proposal process yet.
 
 ## Expressions
 
@@ -979,6 +1018,8 @@ patterns.
 > -   [Pattern matching](pattern_matching.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+> -   Proposal
+>     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
 
 ### Binding patterns
 
@@ -1009,13 +1050,19 @@ example through side effects of the destructor, copy, and move operations, but
 the program's correctness must not depend on which option the Carbon
 implementation chooses.
 
-A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
-colon (`:`) and can only match [compile-time constant](#expression-phases), not
-run-time values.
+A [compile-time binding](#checked-and-template-parameters) uses `:!` instead of
+a colon (`:`) and can only match [compile-time constants](#expression-phases),
+not run-time values. A `template` keyword before the binding selects a template
+binding instead of a symbolic binding.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
 declaration.
+
+> References:
+>
+> -   Proposal
+>     [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
 
 ### Destructuring patterns
 
@@ -1211,10 +1258,10 @@ The bindings in the parameter list default to
 parameters. This binding will be implemented using a pointer, unless it is legal
 to copy and copying is cheaper.
 
-If the `var` keyword is added before the binding, then the arguments will be
-copied (or moved from a temporary) to new storage, and so can be mutated in the
-function body. The copy ensures that any mutations will not be visible to the
-caller.
+If the `var` keyword is added before the binding pattern, then the arguments
+will be copied (or moved from a temporary) to new storage, and so can be mutated
+in the function body. The copy ensures that any mutations will not be visible to
+the caller.
 
 Use a [pointer](#pointer-types) parameter type to represent an
 [input/output parameter](<https://en.wikipedia.org/wiki/Parameter_(computer_programming)#Output_parameters>),
@@ -1395,6 +1442,8 @@ for (var name: String in names) {
 > -   [`for` loops](control_flow/loops.md#for)
 > -   Proposal
 >     [#353: Add C++-like `for` loops](https://github.com/carbon-language/carbon-lang/pull/353)
+> -   Proposal
+>     [#1885: ranged-based `for` for user-defined types](https://github.com/carbon-language/carbon-lang/pull/1885)
 
 ##### `break`
 
@@ -1765,8 +1814,9 @@ two methods `Distance` and `Offset`:
 The philosophy of inheritance support in Carbon is to focus on use cases where
 inheritance is a good match, and use other features for other cases. For
 example, [mixins](#mixins) for implementation reuse and [generics](#generics)
-for separating interface from implementation. This allows Carbon to move away
-from [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance),
+for [separating interface from implementation](#interfaces-and-implementations).
+This allows Carbon to move away from
+[multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance),
 which doesn't have as efficient of an implementation strategy.
 
 Classes by default are
@@ -2519,7 +2569,8 @@ class ContactInfo {
 >
 > -   [Aliases](aliases.md)
 > -   ["Aliasing" in "Code and name organization"](code_and_name_organization/README.md#aliasing)
-> -   [`alias` a name from an external impl](generics/details.md#external-impl)
+> -   <!-- [`alias` a name from an interface impl](generics/details.md#avoiding-name-collisions) -->
+>     [`alias` a name from an interface impl](generics/details.md#external-impl)
 > -   [`alias` a name in a named constraint](generics/details.md#named-constraints)
 > -   Proposal
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
@@ -2536,8 +2587,9 @@ The general principle of Carbon name lookup is that we look up names in all
 relevant scopes, and report an error if the name is found to refer to more than
 one different entity. So Carbon requires disambiguation by adding qualifiers
 instead of doing any
-[shadowing](https://en.wikipedia.org/wiki/Variable_shadowing) of names. For an
-example, see [the "package scope" section](#package-scope).
+[shadowing](https://en.wikipedia.org/wiki/Variable_shadowing) of names.
+[Member name lookup](expressions/member_access.md) follows a similar philosophy.
+For an example, see [the "package scope" section](#package-scope).
 
 Unqualified name lookup walks the semantically-enclosing scopes, not only the
 lexically-enclosing ones. So when a lookup is performed within
@@ -2557,18 +2609,6 @@ fn C.G() {
   F();
 }
 ```
-
-[Member name lookup](expressions/member_access.md) follows a similar philosophy.
-If a [checked-generic type parameter](#checked-and-template-parameters) is known
-to implement multiple interfaces due to a constraint using
-[`&`](#combining-constraints) or
-[`where` clauses](generics/details.md#where-constraints), member name lookup
-into that type will look in all of the interfaces. If it is found in multiple,
-the name must be disambiguated by qualifying using compound member access
-([1](expressions/member_access.md),
-[2](generics/details.md#qualified-member-names-and-compound-member-access)). A
-[template-generic type parameter](#checked-and-template-parameters) performs
-look up into the caller's type in addition to the constraint.
 
 Carbon also rejects cases that would be invalid if all declarations in the file,
 including ones appearing later, were visible everywhere, not only after their
@@ -2625,10 +2665,10 @@ like `i32` and `bool` refer to types defined within this package, based on the
 ## Generics
 
 Generics allow Carbon constructs like [functions](#functions) and
-[classes](#classes) to be written with compile-time parameters and apply
-generically to different types using those parameters. For example, this `Min`
-function has a type parameter `T` that can be any type that implements the
-`Ordered` interface.
+[classes](#classes) to be written with compile-time parameters to generalize
+across different values of those parameters. For example, this `Min` function
+has a type\* parameter `T` that can be any type that implements the `Ordered`
+interface.
 
 ```carbon
 fn Min[T:! Ordered](x: T, y: T) -> T {
@@ -2645,10 +2685,15 @@ Assert(Min(a, b) == 1);
 Assert(Min("abc", "xyz") == "abc");
 ```
 
-Since the `T` type parameter is in the deduced parameter list in square brackets
+Since the `T` parameter is in the deduced parameter list in square brackets
 (`[`...`]`) before the explicit parameter list in parentheses (`(`...`)`), the
 value of `T` is determined from the types of the explicit arguments instead of
 being passed as a separate explicit argument.
+
+(\*) Note: `T` here may be thought of as a type parameter, but its values are
+actually [facets](generics/terminology.md#facet), which are
+[values usable as types](#values-usable-as-types). The `T` in this example is
+not itself a type.
 
 > References: **TODO:** Revisit
 >
@@ -2659,20 +2704,21 @@ being passed as a separate explicit argument.
 >     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 > -   Proposal
 >     [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
+> -   Proposal
+>     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 
 ### Checked and template parameters
 
-The `:!` indicates that the `T` parameter is generic, and therefore bound at
-compile time. Generic parameters may either be _checked_ or _template_, and
-default to checked.
+The `:!` marks it as a compile-time binding pattern, and so `T` is a
+compile-time parameter. Compile-time parameters may either be _checked_ or
+_template_, and default to checked.
 
 "Checked" here means that the body of `Min` is type checked when the function is
-defined, independent of the specific type values `T` is instantiated with, and
-name lookup is delegated to the constraint on `T` (`Ordered` in this case). This
-type checking is equivalent to saying the function would pass type checking
-given any type `T` that implements the `Ordered` interface. Subsequent calls to
-`Min` only need to check that the deduced type value of `T` implements
-`Ordered`.
+defined, independent of the specific values `T` is instantiated with, and name
+lookup is delegated to the constraint on `T` (`Ordered` in this case). This type
+checking is equivalent to saying the function would pass type checking given any
+type `T` that implements the `Ordered` interface. Subsequent calls to `Min` only
+need to check that the deduced value of `T` implements `Ordered`.
 
 The parameter could alternatively be declared to be a _template_ generic
 parameter by prefixing with the `template` keyword, as in `template T:! type`.
@@ -2694,7 +2740,7 @@ A template parameter can still use a constraint. The `Min` example could have
 been declared as:
 
 ```carbon
-fn Min[template T:! Ordered](x: T, y: T) -> T {
+fn TemplatedMin[template T:! Ordered](x: T, y: T) -> T {
   return if x <= y then x else y;
 }
 ```
@@ -2707,33 +2753,20 @@ binding.
 One difference from C++ templates, Carbon template instantiation is not
 controlled by the SFINAE rule of C++
 ([1](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error),
-[2](https://en.cppreference.com/w/cpp/language/sfinae)) but by explicit `if`
-clauses evaluated at compile-time. The `if` clause is at the end of the
-declaration, and the condition can only use constant values known at
-type-checking time, including `template` parameters.
+[2](https://en.cppreference.com/w/cpp/language/sfinae)) but by explicit
+constraints declared in the function signature and evaluated at compile-time.
 
-```carbon
-class Array(template T:! type, template N:! i64)
-    if N >= 0 and N < MaxArraySize / sizeof(T);
-```
-
-Member lookup into a template type parameter is done in the actual type value
-provided by the caller, _in addition_ to any constraints. This means member name
-lookup and type checking for anything
-[dependent](generics/terminology.md#dependent-names) on the template parameter
-can't be completed until the template is instantiated with a specific concrete
-type. When the constraint is just `type`, this gives semantics similar to C++
-templates. Constraints can then be added incrementally, with the compiler
-verifying that the semantics stay the same. Once all constraints have been
-added, removing the word `template` to switch to a checked parameter is safe.
+> **TODO:** The design for template constraints is still under development.
 
 The [expression phase](#expression-phases) of a checked parameter is a symbolic
 constant whereas the expression phase of a template parameter is template
-constant.
+constant. A binding pattern using `:!` is a _compile-time binding pattern_; more
+specifically a _template binding pattern_ if it uses `template`, and a _symbolic
+binding pattern_ if it does not.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
-rigor of generics are problematic.
+rigor of checked generics is problematic.
 
 > References:
 >
@@ -2743,13 +2776,15 @@ rigor of generics are problematic.
 > -   Question-for-leads issue
 >     [#949: Constrained template name lookup](https://github.com/carbon-language/carbon-lang/issues/949)
 > -   Proposal
->     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+>     [#2138: Checked and template generic terminology](https://github.com/carbon-language/carbon-lang/pull/2138)
+> -   Proposal
+>     [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
 
 ### Interfaces and implementations
 
-_Interfaces_ specify a set of requirements that a types might satisfy.
-Interfaces act both as constraints on types a caller might supply and
-capabilities that may be assumed of types that satisfy that constraint.
+_Interfaces_ specify a set of requirements that a type might satisfy. Interfaces
+act both as constraints on types a caller might supply and capabilities that may
+be assumed of types that satisfy that constraint.
 
 ```carbon
 interface Printable {
@@ -2759,12 +2794,17 @@ interface Printable {
 }
 ```
 
+An interface is kind of [facet type](generics/terminology.md#facet-type), and
+the values of this type are [facets](generics/terminology.md#facet), which are
+[values usable as types](#values-usable-as-types).
+
 In addition to function requirements, interfaces can contain:
 
 -   [requirements that other interfaces be implemented](generics/details.md#interface-requiring-other-interfaces)
     or
     [interfaces that this interface extends](generics/details.md#interface-extension)
--   [associated types](generics/details.md#associated-types) and other
+-   <!-- [associated facets](generics/details.md#associated-facets) -->
+    [associated facets](generics/details.md#associated-types) and other
     [associated constants](generics/details.md#associated-constants)
 -   [interface defaults](generics/details.md#interface-defaults)
 -   [`final` interface members](generics/details.md#final-members)
@@ -2774,10 +2814,17 @@ that they do. Simply having a `Print` function with the right signature is not
 sufficient.
 
 ```carbon
+// Class `Text` does not implement the `Printable` interface.
+class Text {
+  fn Print[self: Self]();
+}
+
 class Circle {
   var radius: f32;
 
-  extend impl as Printable {
+  // This `impl` declaration establishes that `Circle` implements
+  // `Printable`.
+  impl as Printable {
     fn Print[self: Self]() {
       Carbon.Print("Circle with radius: {0}", self.radius);
     }
@@ -2785,16 +2832,40 @@ class Circle {
 }
 ```
 
-In this case, `Print` is a member of `Circle`. Interfaces may also be
-implemented [externally](generics/details.md#external-impl), which means the
-members of the interface are not direct members of the type. Those methods may
-still be called using compound member access syntax
-([1](expressions/member_access.md),
-[2](generics/details.md#qualified-member-names-and-compound-member-access)) to
-qualify the name of the member, as in `x.(Printable.Print)()`. External
-implementations don't have to be in the same library as the type definition,
-subject to the orphan rule ([1](generics/details.md#impl-lookup),
-[2](generics/details.md#orphan-rule)) for
+In this case, `Print` is not a direct member of `Circle`, but:
+
+-   `Circle` may be passed to functions expecting a type that implements
+    `Printable`.
+
+    ```carbon
+    fn GenericPrint[T:! Printable](x: T) {
+      // Look up into `T` delegates to `Printable`, so this
+      // finds `Printable.Print`:
+      x.Print();
+    }
+    ```
+
+-   The members of `Printable` such as `Print` may be called using compound
+    member access syntax ([1](expressions/member_access.md),
+    [2](generics/details.md#qualified-member-names-and-compound-member-access))
+    to qualify the name of the member, as in:
+
+    ```carbon
+    fn CirclePrint(c: Circle) {
+      // Succeeds, even though `c.Print()` would not.
+      c.(Printable.Print)();
+    }
+    ```
+
+<!-- [`extend`](generics/details.md#extend-impl) keyword... -->
+
+To include the members of the interface as direct members of the type, use the
+`extend` keyword, as in `extend impl as Printable`. This is only permitted on
+`impl` declarations in the body of a class definition.
+
+Without `extend`, implementations don't have to be in the same library as the
+type definition, subject to the orphan rule
+([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)) for
 [coherence](generics/terminology.md#coherence).
 
 Interfaces and implementations may be
@@ -2812,16 +2883,22 @@ by replacing the definition scope in curly braces (`{`...`}`) with a semicolon.
 > -   Proposal
 >     [#624: Coherence: terminology, rationale, alternatives considered](https://github.com/carbon-language/carbon-lang/pull/624)
 > -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+> -   Proposal
 >     [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 > -   Proposal
 >     [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
 > -   Question-for-leads issue
 >     [#1132: How do we match forward declarations with their definitions?](https://github.com/carbon-language/carbon-lang/issues/1132)
+> -   Proposal
+>     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
+> -   Proposal
+>     [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 
 ### Combining constraints
 
-A function can require calling types to implement multiple interfaces by
-combining them using an ampersand (`&`):
+A function can require type arguments to implement multiple interfaces (or other
+facet types) by combining them using an ampersand (`&`):
 
 ```carbon
 fn PrintMin[T:! Ordered & Printable](x: T, y: T) {
@@ -2851,35 +2928,84 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 
 > References:
 >
-> -   [Combining interfaces by anding type-of-types](generics/details.md#combining-interfaces-by-anding-type-of-types)
+> -   <!-- [Combining interfaces by anding facet types](generics/details.md#combining-interfaces-by-anding-facet-types) -->
+>     [Combining interfaces by anding type-of-types](generics/details.md#combining-interfaces-by-anding-type-of-types)
 > -   Question-for-leads issue
 >     [#531: Combine interfaces with `+` or `&`](https://github.com/carbon-language/carbon-lang/issues/531)
 > -   Proposal
 >     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 
-### Associated types
+### Template name lookup
 
-An associated type is a type member of an interface whose value is determined by
+Member lookup into a template parameter is done in the actual value provided by
+the caller, _in addition_ to any constraints. This means member name lookup and
+type checking for anything [dependent](generics/terminology.md#dependent-names)
+on the template parameter can't be completed until the template is instantiated
+with a specific concrete type. When the constraint is just `type`, this gives
+semantics similar to C++ templates.
+
+```carbon
+class Game {
+  fn Draw[self: Self]() -> bool;
+  impl as Renderable {
+    fn Draw[self: Self]();
+  }
+}
+
+fn TemplateDraw[template T:! type](x: T) {
+  // Calls `Game.Draw` when `T` is `Game`:
+  x.Draw();
+}
+
+fn ConstrainedTemplateDraw[template T:! Renderable](x: T) {
+  // ❌ Error when `T` is `Game`: Finds both `T.Draw` and
+  // `Renderable.Draw`, and they are different.
+  x.Draw();
+}
+
+fn CheckedGenericDraw[T:! Renderable](x: T) {
+  // Always calls `Renderable.Draw`, even when `T` is `Game`:
+  x.Draw();
+}
+```
+
+This allows a safe transition from template to checked generics. Constraints can
+be added incrementally, with the compiler verifying that the semantics stay the
+same. If adding the constraint would change which function gets called, an error
+is triggered, as in `ConstrainedTemplateDraw` from the example. Once all
+constraints have been added, it is safe to remove the word `template` to switch
+to a checked parameter.
+
+> References:
+>
+> -   Proposal
+>     [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
+> -   Proposal
+>     [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
+
+### Associated constants
+
+An associated constant is a member of an interface whose value is determined by
 the implementation of that interface for a specific type. These values are set
 to compile-time values in implementations, and so use the
-[`:!` generic syntax](#checked-and-template-parameters) inside a
-[`let` declaration](#constant-let-declarations) without an initializer. This
-allows types in the signatures of functions in the interface to vary. For
+[`:!` compile-time binding pattern syntax](#checked-and-template-parameters)
+inside a [`let` declaration](#constant-let-declarations) without an initializer.
+This allows types in the signatures of functions in the interface to vary. For
 example, an interface describing a
 [stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) might use an
-associated type to represent the type of elements stored in the stack.
+associated constant to represent the type of elements stored in the stack.
 
 ```
 interface StackInterface {
   let ElementType:! Movable;
   fn Push[addr self: Self*](value: ElementType);
   fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> bool;
+  fn IsEmpty[self: Self]() -> bool;
 }
 ```
 
-Then different types implementing `StackInterface` can specify different type
-values for the `ElementType` member of the interface using a `where` clause:
+Then different types implementing `StackInterface` can specify different values
+for the `ElementType` member of the interface using a `where` clause:
 
 ```carbon
 class IntStack {
@@ -2899,7 +3025,7 @@ class FruitStack {
 
 > References:
 >
-> -   [Generics: Associated types](generics/details.md#associated-types)
+> -   [Generics: Associated constants](generics/details.md#associated-constants)
 > -   Proposal
 >     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 > -   Proposal
@@ -2913,9 +3039,9 @@ Many Carbon entities, not just functions, may be made generic by adding
 #### Generic Classes
 
 Classes may be defined with an optional explicit parameter list. All parameters
-to a class must be generic, and so defined with `:!`, either with or without the
-`template` prefix. For example, to define a stack that can hold values of any
-type `T`:
+to a class must be compile-time, and so defined with `:!`, either with or
+without the `template` prefix. For example, to define a stack that can hold
+values of any type `T`:
 
 ```carbon
 class Stack(T:! type) {
@@ -2933,7 +3059,7 @@ In this example:
 -   `Stack` is a type parameterized by a type `T`.
 -   `T` may be used within the definition of `Stack` anywhere a normal type
     would be used.
--   `Array(T)` instantiates generic type `Array` with its parameter set to `T`.
+-   `Array(T)` instantiates generic type `Array` with its argument set to `T`.
 -   `Stack(i32)` instantiates `Stack` with `T` set to `i32`.
 
 The values of type parameters are part of a type's value, and so may be deduced
@@ -2946,7 +3072,7 @@ fn PeekTopOfStack[T:! type](s: Stack(T)*) -> T {
   return top;
 }
 
-// `int_stack` has type `Stack(i32)`, so `T` is deduced to be `i32`.
+// `int_stack` has type `Stack(i32)`, so `T` is deduced to be `i32`:
 PeekTopOfStack(&int_stack);
 ```
 
@@ -2981,8 +3107,8 @@ a type can have distinct implementations of `AddWith(i32)` and
 `AddWith(BigInt)`.
 
 Parameters to an interface _determine_ which implementation is selected for a
-type, in contrast to [associated types](#associated-types) which are _determined
-by_ the implementation of an interface for a type.
+type, in contrast to [associated constants](#associated-constants) which are
+_determined by_ the implementation of an interface for a type.
 
 > References:
 >
@@ -2992,7 +3118,7 @@ by_ the implementation of an interface for a type.
 
 #### Generic implementations
 
-An `impl` declaration may be parameterized by adding `forall [`_generic
+An `impl` declaration may be parameterized by adding `forall [`_compile-time
 parameter list_`]` after the `impl` keyword introducer, as in:
 
 ```carbon
@@ -3014,7 +3140,7 @@ pick which definition is selected. These rules ensure:
     same implementation is always selected for a given query.
 -   Libraries will work together as long as they pass their separate checks.
 -   A generic function can assume that some impl will be successfully selected
-    if it can see an impl that applies, even though another more specific impl
+    if it can see an impl that applies, even though another more-specific impl
     may be selected.
 
 Implementations may be marked
@@ -3042,7 +3168,8 @@ Carbon generics have a number of other features, including:
 
 -   [Named constraints](generics/details.md#named-constraints) may be used to
     disambiguate when combining two interfaces that have name conflicts. Named
-    constraints may be implemented and otherwise used in place of an interface.
+    constraints define facet types, and may be implemented and otherwise used in
+    place of an interface.
 -   [Template constraints](generics/details.md#named-constraints) are a kind of
     named constraint that can contain structural requirements. For example, a
     template constraint could match any type that has a function with a specific
@@ -3053,18 +3180,18 @@ Carbon generics have a number of other features, including:
     same data representation as an existing type, so you may cast between the
     two types, but can implement different interfaces or implement interfaces
     differently.
--   Additional requirements can be placed on the associated types of an
+-   Additional requirements can be placed on the associated facets of an
     interface using
     [`where` constraints](generics/details.md#where-constraints).
--   [Implied constraints](generics/details.md#implied-constraints) allows some
+-   [Implied constraints](generics/details.md#implied-constraints) allow some
     constraints to be deduced and omitted from a function signature.
--   [Dynamic erased types](generics/details.md#runtime-type-fields) can hold any
-    value with a type implementing an interface, and allows the functions in
-    that interface to be called using
+-   _Planned_ [dynamic erased types](generics/details.md#runtime-type-fields)
+    can hold any value with a type implementing an interface, and allow the
+    functions in that interface to be called using
     [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch), for some
     interfaces marked "`dyn`-safe". **Note:** Provisional.
--   [Variadics](generics/details.md#variadic-arguments) supports variable-length
-    parameter lists. **Note:** Provisional.
+-   _Planned_ [variadics](generics/details.md#variadic-arguments) supports
+    variable-length parameter lists. **Note:** Provisional.
 
 > References:
 >
@@ -3079,8 +3206,8 @@ Carbon generics have a number of other features, including:
 
 ### Generic type equality and `observe` declarations
 
-Determining whether two types must be equal in a generic context is in general
-undecidable, as
+Determining whether two types must be equal in a checked-generic context is in
+general undecidable, as
 [has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
 
 To make compilation fast, the Carbon compiler will limit its search to a depth
@@ -3182,7 +3309,7 @@ reference expression.
 
 Operators that can take multiple arguments, such as function calling operator
 `f(4)`, have a [variadic](generics/details.md#variadic-arguments) parameter
-list.
+list. **TODO: Variadics are still provisional.**
 
 Whether and how a value supports other operations, such as being copied,
 swapped, or set into an [unformed state](#unformed-state), is also determined by
@@ -3431,8 +3558,8 @@ need to be overridden for a Carbon type, that can be done with a nonmember C++
 function.
 
 Carbon interfaces with no C++ equivalent, such as
-[`CommonTypeWith(U)`](#common-type), may be implemented for C++ types externally
-in Carbon code. To satisfy the orphan rule
+[`CommonTypeWith(U)`](#common-type), may be implemented for C++ types
+out-of-line in Carbon code. To satisfy the orphan rule
 ([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)),
 each C++ library will have a corresponding Carbon wrapper library that must be
 imported instead of the C++ library if the Carbon wrapper exists. **TODO:**
@@ -3513,11 +3640,12 @@ language features like checked generics in their design and implementation.
 
 Where possible, we will also try to provide implementations of Carbon's standard
 library container _interfaces_ for the relevant C++ container types so that they
-can be directly used with generic Carbon code. This should allow generic code in
-Carbon to work seamlessly with both Carbon and C++ containers without
-performance loss or constraining the Carbon container implementations. In the
-other direction, Carbon containers will satisfy C++ container requirements, so
-templated C++ code can operate directly on Carbon containers as well.
+can be directly used with checked-generic Carbon code. This should allow
+checked-generic code in Carbon to work seamlessly with both Carbon and C++
+containers without performance loss or constraining the Carbon container
+implementations. In the other direction, Carbon containers will satisfy C++
+container requirements, so templated C++ code can operate directly on Carbon
+containers as well.
 
 ### Inheritance
 
@@ -3581,7 +3709,7 @@ existing languages like Rust and Swift to understand what fundamental
 capabilities they ended up needing. The two components that stand out are:
 
 -   Expanded type system that includes more semantic information.
--   More pervasive use of type system abstractions (typically generics).
+-   More pervasive use of type system abstractions (typically checked generics).
 
 For migrating C++ code, we also need the ability to add features and migrate
 code to use those new features incrementally and over time. This requires
@@ -3601,7 +3729,7 @@ just values and [pointers](#pointer-types).
 Rust also shows the value of functions parameterized by lifetimes. Since
 lifetimes are only used to establish safety properties of the code, there is no
 reason to pay the cost of monomorphization for those parameters. So we need a
-[generics system](#generics) that can reason about code before it is
+[checked-generics system](#generics) that can reason about code before it is
 instantiated, unlike C++ templates.
 
 In conclusion, there are two patterns in how Carbon diverges from C++:
