@@ -31,17 +31,17 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc7_5.3: ref i32 = array_index %.loc7_5.1, %.loc7_5.2
 // CHECK:STDOUT:   %.loc7_5.4: ref i32 = tuple_index %a, %.loc7_5.2
 // CHECK:STDOUT:   %.loc7_5.5: i32 = bind_value %.loc7_5.4
-// CHECK:STDOUT:   %.loc7_5.6 = initialize_from %.loc7_5.3 to %.loc7_5.5
+// CHECK:STDOUT:   %.loc7_5.6 = initialize_from %.loc7_5.5 to %.loc7_5.3
 // CHECK:STDOUT:   %.loc7_5.7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_5.8: ref i32 = array_index %.loc7_5.1, %.loc7_5.7
 // CHECK:STDOUT:   %.loc7_5.9: ref i32 = tuple_index %a, %.loc7_5.7
 // CHECK:STDOUT:   %.loc7_5.10: i32 = bind_value %.loc7_5.9
-// CHECK:STDOUT:   %.loc7_5.11 = initialize_from %.loc7_5.8 to %.loc7_5.10
+// CHECK:STDOUT:   %.loc7_5.11 = initialize_from %.loc7_5.10 to %.loc7_5.8
 // CHECK:STDOUT:   %.loc7_5.12: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_5.13: ref i32 = array_index %.loc7_5.1, %.loc7_5.12
 // CHECK:STDOUT:   %.loc7_5.14: ref i32 = tuple_index %a, %.loc7_5.12
 // CHECK:STDOUT:   %.loc7_5.15: i32 = bind_value %.loc7_5.14
-// CHECK:STDOUT:   %.loc7_5.16 = initialize_from %.loc7_5.13 to %.loc7_5.15
+// CHECK:STDOUT:   %.loc7_5.16 = initialize_from %.loc7_5.15 to %.loc7_5.13
 // CHECK:STDOUT:   %.loc7_5.17: init [i32; 3] = array_init %a, (%.loc7_5.6, %.loc7_5.11, %.loc7_5.16) to %.loc7_5.1
 // CHECK:STDOUT:   assign %b, %.loc7_5.17
 // CHECK:STDOUT: }

@@ -39,13 +39,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc12_20.4: ref [i32; 3] = temporary_storage
 // CHECK:STDOUT:   %.loc12_20.5: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc12_20.6: ref i32 = array_index %.loc12_20.4, %.loc12_20.5
-// CHECK:STDOUT:   %.loc12_20.7 = initialize_from %.loc12_20.6 to %.loc12_13.2
+// CHECK:STDOUT:   %.loc12_20.7 = initialize_from %.loc12_13.2 to %.loc12_20.6
 // CHECK:STDOUT:   %.loc12_20.8: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_20.9: ref i32 = array_index %.loc12_20.4, %.loc12_20.8
-// CHECK:STDOUT:   %.loc12_20.10 = initialize_from %.loc12_20.9 to %.loc12_16.2
+// CHECK:STDOUT:   %.loc12_20.10 = initialize_from %.loc12_16.2 to %.loc12_20.9
 // CHECK:STDOUT:   %.loc12_20.11: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc12_20.12: ref i32 = array_index %.loc12_20.4, %.loc12_20.11
-// CHECK:STDOUT:   %.loc12_20.13 = initialize_from %.loc12_20.12 to %.loc12_19.2
+// CHECK:STDOUT:   %.loc12_20.13 = initialize_from %.loc12_19.2 to %.loc12_20.12
 // CHECK:STDOUT:   %.loc12_20.14: init [i32; 3] = array_init %.loc12_20.2, (%.loc12_20.7, %.loc12_20.10, %.loc12_20.13) to %.loc12_20.4
 // CHECK:STDOUT:   %.loc12_20.15: ref [i32; 3] = temporary %.loc12_20.4, %.loc12_20.14
 // CHECK:STDOUT:   %.loc12_20.16: [i32; 3] = bind_value %.loc12_20.15

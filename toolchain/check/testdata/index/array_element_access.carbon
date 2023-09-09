@@ -22,10 +22,10 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_26.3: ref [i32; 2] = stub_reference %a
 // CHECK:STDOUT:   %.loc7_26.4: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_26.5: ref i32 = array_index %.loc7_26.3, %.loc7_26.4
-// CHECK:STDOUT:   %.loc7_26.6 = initialize_from %.loc7_26.5 to %.loc7_20.2
+// CHECK:STDOUT:   %.loc7_26.6 = initialize_from %.loc7_20.2 to %.loc7_26.5
 // CHECK:STDOUT:   %.loc7_26.7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_26.8: ref i32 = array_index %.loc7_26.3, %.loc7_26.7
-// CHECK:STDOUT:   %.loc7_26.9 = initialize_from %.loc7_26.8 to %.loc7_24.2
+// CHECK:STDOUT:   %.loc7_26.9 = initialize_from %.loc7_24.2 to %.loc7_26.8
 // CHECK:STDOUT:   %.loc7_26.10: init [i32; 2] = array_init %.loc7_26.2, (%.loc7_26.6, %.loc7_26.9) to %.loc7_26.3
 // CHECK:STDOUT:   assign %a, %.loc7_26.10
 // CHECK:STDOUT:   %b: ref i32 = var "b"

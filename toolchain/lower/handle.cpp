@@ -207,9 +207,9 @@ auto HandleFunctionDeclaration(FunctionContext& /*context*/,
 
 auto HandleInitializeFrom(FunctionContext& context, SemIR::NodeId /*node_id*/,
                           SemIR::Node node) -> void {
-  auto [storage_id, value_id] = node.GetAsInitializeFrom();
+  auto [init_id, storage_id] = node.GetAsInitializeFrom();
   auto storage_type_id = context.semantics_ir().GetNode(storage_id).type_id();
-  context.FinishInitialization(storage_type_id, storage_id, value_id);
+  context.FinishInitialization(storage_type_id, storage_id, init_id);
 }
 
 auto HandleIntegerLiteral(FunctionContext& context, SemIR::NodeId node_id,

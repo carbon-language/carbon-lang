@@ -133,11 +133,14 @@ class Context {
   auto InitializeAndFinalize(Parse::Node parse_node, SemIR::NodeId target_id,
                              SemIR::NodeId value_id) -> SemIR::NodeId {
     auto init_id = Initialize(parse_node, target_id, value_id);
-    if (SemIR::GetInitializingRepresentation(
-            semantics_ir(), semantics_ir().GetNode(target_id).type_id())
-            .kind == SemIR::InitializingRepresentation::ByCopy) {
+    if (init_id == SemIR::NodeId::BuiltinError) {
+      return init_id;
+    }
+    if (auto init_rep = SemIR::GetInitializingRepresentation(
+            semantics_ir(), semantics_ir().GetNode(target_id).type_id());
+        init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
       init_id = AddNode(
-          SemIR::Node::InitializeFrom::Make(parse_node, target_id, init_id));
+          SemIR::Node::InitializeFrom::Make(parse_node, init_id, target_id));
     }
     return init_id;
   }

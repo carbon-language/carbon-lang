@@ -436,8 +436,14 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
         // will be other references to the return slot for the individual array
         // element initializers.
         auto [src_id, refs_id] = init.GetAsArrayInit();
+        auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
+        CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
+                     SemIR::NodeKind::TemporaryStorage)
+            << "Return slot for array init does not contain a temporary; "
+            << "initialized multiple times? Have "
+            << semantics_ir().GetNode(temporary_id);
         semantics_ir().ReplaceNode(
-            semantics_ir().GetNodeBlock(refs_id).back(),
+            temporary_id,
             SemIR::Node::StubReference::Make(
                 init.parse_node(), semantics_ir().GetNode(target_id).type_id(),
                 target_id));
@@ -536,31 +542,43 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
   const auto& tuple_elem_types =
       context.semantics_ir().GetTypeBlock(tuple_elem_types_id);
 
-  auto array_bound = context.semantics_ir().GetArrayBoundValue(array_bound_id);
-  if (tuple_elem_types.size() != array_bound) {
-    CARBON_DIAGNOSTIC(
-        ArrayInitArgCountMismatch, Error,
-        "Cannot initialize array of {0} element(s) from {1} initializer(s).",
-        decltype(array_bound), size_t);
-    context.emitter().Emit(
-        context.semantics_ir().GetNode(value_id).parse_node(),
-        ArrayInitArgCountMismatch, array_bound, tuple_elem_types.size());
-    return SemIR::NodeId::BuiltinError;
-  }
-
-  llvm::ArrayRef<SemIR::NodeId> literal_elems;
-
-  // If we're initializing from a tuple literal, use its elements directly.
-  // Otherwise, materialize a temporary if needed and index into the result.
+  // Skip back over StubReferences to find if we're being initialized from a
+  // tuple literal.
   auto value = context.semantics_ir().GetNode(value_id);
   while (value.kind() == SemIR::NodeKind::StubReference) {
     value_id = value.GetAsStubReference();
     value = context.semantics_ir().GetNode(value_id);
   }
+
+  llvm::ArrayRef<SemIR::NodeId> literal_elems;
   if (value.kind() == SemIR::NodeKind::TupleLiteral) {
     literal_elems =
         context.semantics_ir().GetNodeBlock(value.GetAsTupleLiteral());
-  } else {
+  }
+
+  // Check that the tuple is the right size.
+  auto array_bound = context.semantics_ir().GetArrayBoundValue(array_bound_id);
+  if (tuple_elem_types.size() != array_bound) {
+    CARBON_DIAGNOSTIC(
+        ArrayInitFromLiteralArgCountMismatch, Error,
+        "Cannot initialize array of {0} element(s) from {1} initializer(s).",
+        decltype(array_bound), size_t);
+    CARBON_DIAGNOSTIC(ArrayInitFromExpressionArgCountMismatch, Error,
+                      "Cannot initialize array of {0} element(s) from tuple "
+                      "with {1} element(s).",
+                      decltype(array_bound), size_t);
+    context.emitter().Emit(
+        context.semantics_ir().GetNode(value_id).parse_node(),
+        literal_elems.empty() ? ArrayInitFromExpressionArgCountMismatch
+                              : ArrayInitFromLiteralArgCountMismatch,
+        array_bound, tuple_elem_types.size());
+    return SemIR::NodeId::BuiltinError;
+  }
+
+  // If we're initializing from a tuple literal, we will use its elements
+  // directly. Otherwise, materialize a temporary if needed and index into the
+  // result.
+  if (literal_elems.empty()) {
     value_id = context.MaterializeIfInitializing(value_id);
   }
 
