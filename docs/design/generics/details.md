@@ -50,12 +50,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Parameterized named constraints](#parameterized-named-constraints)
 -   [Where constraints](#where-constraints)
     -   [Kinds of `where` constraints](#kinds-of-where-constraints)
-        -   [Rewrite constraints](#rewrite-constraints)
-        -   [Same-type constraints](#same-type-constraints)
-        -   [`impls` constraints](#impls-constraints)
     -   [Constraint use cases](#constraint-use-cases)
         -   [Set an associated constant to a specific value](#set-an-associated-constant-to-a-specific-value)
-        -   [Same type constraints](#same-type-constraints-1)
+        -   [Same type constraints](#same-type-constraints)
             -   [Set an associated facet to a specific value](#set-an-associated-facet-to-a-specific-value)
             -   [Equal facet bindings](#equal-facet-bindings)
                 -   [Satisfying both facet types](#satisfying-both-facet-types)
@@ -2503,26 +2500,29 @@ using multiple must use round parens `(`...`)` to specify grouping.
 
 ### Kinds of `where` constraints
 
-**FIXME: Write this.**
+There are three kinds of `where` constraints, each of which uses a different
+binary operator:
 
-#### Rewrite constraints
+-   _Rewrite constraints_: `where`...`=`...
+-   _Same-type constraints_: `where`...`==`...
+-   _Implements constraints_: `where`...`impls`...
 
-**FIXME: Write this.**
+A rewrite constraint is written `where .A = B`, where `A` is the name of an
+[associated constant](#associated-constants) which is rewritten to `B`.
 
 > **Concern:** Using `=` for this use case is not consistent with other `where`
 > clauses that write a boolean expression that evaluates to `true` when the
 > constraint is satisfied.
 
-**References:** Rewrite constraints were introduced with
+A same-type constraint is written `where X == Y`, where `X` and `Y` both name
+facets. The constraint is that `X as type` must be the same as `Y as type`.
+
+An implements constraint is written `where T impls C`, where `T` is a facet and
+`C` is a facet type. The constraint is that `T` satisfies the requirements of
+`C`.
+
+**References:** Rewrite and same-type constraints were defined in
 [proposal #2173](https://github.com/carbon-language/carbon-lang/pull/2173).
-
-#### Same-type constraints
-
-**FIXME: Write this.**
-
-#### `impls` constraints
-
-**FIXME: Write this.**
 
 ### Constraint use cases
 
@@ -2738,7 +2738,7 @@ fn SortContainer
     (container_to_sort: ContainerType*);
 ```
 
-In contrast to [a same type constraint](#same-type-constraints-1), this does not
+In contrast to [a same type constraint](#same-type-constraints), this does not
 say what type `ElementType` exactly is, just that it must satisfy some facet
 type.
 
