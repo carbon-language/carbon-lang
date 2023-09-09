@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 
@@ -190,6 +191,9 @@ using NoTypeDeduction = std::common_type_t<Arg>;
 
 }  // namespace Internal
 
+template <typename LocationT, typename MakeNoteFn>
+class DiagnosticAnnotationScope;
+
 // Manages the creation of reports, the testing if diagnostics are enabled, and
 // the collection of reports.
 //
@@ -229,6 +233,13 @@ class DiagnosticEmitter {
 
    private:
     friend class DiagnosticEmitter<LocationT>;
+    template <typename LocT, typename MakeNoteFn>
+    friend class DiagnosticAnnotationScope;
+
+    template <typename... Args>
+    explicit DiagnosticBuilder(DiagnosticEmitter<LocationT>* emitter,
+                               Diagnostic diagnostic)
+        : emitter_(emitter), diagnostic_(std::move(diagnostic)) {}
 
     template <typename... Args>
     explicit DiagnosticBuilder(
@@ -295,6 +306,9 @@ class DiagnosticEmitter {
   }
 
  private:
+  template <typename LocT, typename MakeNoteFn>
+  friend class DiagnosticAnnotationScope;
+
   DiagnosticLocationTranslator<LocationT>* translator_;
   DiagnosticConsumer* consumer_;
 };
@@ -357,6 +371,55 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
   DiagnosticConsumer* next_consumer_;
   bool seen_error_ = false;
 };
+
+// An RAII object that denotes a scope in which any diagnostic produced should
+// be annotated in some way.
+//
+// This object is given a function `make_note` that will be called with a
+// `DiagnosticBuilder& builder` for any diagnostic that is emitted through the
+// given emitter. That function can annotate the diagnostic by calling
+// `builder.Note` to add notes.
+template <typename LocationT, typename MakeNoteFn>
+class DiagnosticAnnotationScope {
+ public:
+  DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
+                            MakeNoteFn make_note)
+      : consumer_(emitter, emitter->consumer_, std::move(make_note)),
+        saved_consumer_(emitter->consumer_, &consumer_) {}
+
+  DiagnosticAnnotationScope(const DiagnosticAnnotationScope&) = delete;
+  DiagnosticAnnotationScope& operator=(const DiagnosticAnnotationScope&) =
+      delete;
+
+ private:
+  // Custom diagnostic consumer that modifies the in-flight diagnostic.
+  struct Consumer : DiagnosticConsumer {
+    Consumer(DiagnosticEmitter<LocationT>* emitter,
+             DiagnosticConsumer* next_consumer, MakeNoteFn make_note)
+        : emitter_(emitter),
+          next_consumer_(next_consumer),
+          make_note_(std::move(make_note)) {}
+
+    auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
+      typename DiagnosticEmitter<LocationT>::DiagnosticBuilder builder(
+          emitter_, std::move(diagnostic));
+      make_note_(builder);
+      next_consumer_->HandleDiagnostic(std::move(builder.diagnostic_));
+    }
+
+    DiagnosticEmitter<LocationT>* emitter_;
+    DiagnosticConsumer* next_consumer_;
+    MakeNoteFn make_note_;
+  };
+
+  Consumer consumer_;
+  llvm::SaveAndRestore<DiagnosticConsumer*> saved_consumer_;
+};
+
+template <typename LocationT, typename MakeNoteFn>
+DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
+                          MakeNoteFn make_note)
+    -> DiagnosticAnnotationScope<LocationT, MakeNoteFn>;
 
 }  // namespace Carbon
 
