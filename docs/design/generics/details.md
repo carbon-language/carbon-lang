@@ -50,6 +50,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Parameterized named constraints](#parameterized-named-constraints)
 -   [Where constraints](#where-constraints)
     -   [Kinds of `where` constraints](#kinds-of-where-constraints)
+    -   [Named constraint constants](#named-constraint-constants)
     -   [Constraint use cases](#constraint-use-cases)
         -   [Set an associated constant to a specific value](#set-an-associated-constant-to-a-specific-value)
         -   [Same type constraints](#same-type-constraints)
@@ -2446,7 +2447,7 @@ So far, we have restricted a [symbolic facet binding](#symbolic-facet-bindings)
 by saying it has to implement an interface or a set of interfaces. There are a
 variety of other constraints we would like to be able to express, such as
 applying restrictions to associated constants. This is done using the `where`
-operator that adds constraints to a facet type.
+operator that adds constraints to a [facet type](#facet-types).
 
 The where operator can be applied to a facet type in a declaration context:
 
@@ -2498,6 +2499,9 @@ using multiple must use round parens `(`...`)` to specify grouping.
 > [tracking issue](https://github.com/rust-lang/rust/issues/41517)) to support
 > naming some classes of constraints.
 
+**References:** `where` constraints were added in proposal
+[#818: Constraints for generics (generics details 3)](https://github.com/carbon-language/carbon-lang/pull/818).
+
 ### Kinds of `where` constraints
 
 There are three kinds of `where` constraints, each of which uses a different
@@ -2510,19 +2514,59 @@ binary operator:
 A rewrite constraint is written `where .A = B`, where `A` is the name of an
 [associated constant](#associated-constants) which is rewritten to `B`.
 
+The "dot followed by the name of a member" construct, like `.A`, is called a
+_designator_. The name of the designator is looked up in the constraint, and
+refers to the value of that member for whatever type is to satisfy this
+constraint.
+
 > **Concern:** Using `=` for this use case is not consistent with other `where`
 > clauses that write a boolean expression that evaluates to `true` when the
 > constraint is satisfied.
 
 A same-type constraint is written `where X == Y`, where `X` and `Y` both name
-facets. The constraint is that `X as type` must be the same as `Y as type`.
+facets. The constraint is that `X as type` must be the same as `Y as type`. In
+cases where a constraint may be written in either form, prefer a rewrite
+constraint over a same-type constraint.
 
 An implements constraint is written `where T impls C`, where `T` is a facet and
 `C` is a facet type. The constraint is that `T` satisfies the requirements of
 `C`.
 
-**References:** Rewrite and same-type constraints were defined in
+**References:** The definition of rewrite and same-type constraints were
 [proposal #2173](https://github.com/carbon-language/carbon-lang/pull/2173).
+Implements constraints switched using the `impls` keyword in
+[proposal #2483](https://github.com/carbon-language/carbon-lang/pull/2483).
+
+### Named constraint constants
+
+A facet type with a `where` constraint, such as `C where <condition>`, can be
+named two different ways:
+
+-   Using `let template` as in:
+
+    ```carbon
+    let template NameOfConstraint:! auto = C where <condition>;
+    ```
+
+    or, since the type of a facet type is `type`:
+
+    ```carbon
+    let template NameOfConstraint:! type = C where <condition>;
+    ```
+
+-   Using a [named constraint](#named-constraints) with the `constraint` keyword
+    introducer:
+
+    ```carbon
+    constraint NameOfConstraint {
+      extend C where <condition>;
+    }
+    ```
+
+Whichever approach is used, the result is `NameOfConstraint` is a compile-time
+constant that is equivalent to `C where <condition>`.
+
+**FIXME: Left off here.**
 
 ### Constraint use cases
 
@@ -2547,39 +2591,19 @@ interface Has2DPoint {
 }
 ```
 
-The "dot followed by the name of a member" construct, `.N` in the examples
-above, is called a _designator_. A designator refers to the value of that member
-for whatever type is to satisfy this constraint.
-
-To name such a constraint, you may use a `let template` or a `constraint`
-declaration:
-
-```
-let template Point2DInterface:! auto = NSpacePoint where .N = 2;
-constraint Point2DInterface {
-  extend NSpacePoint where .N = 2;
-}
-```
-
 This syntax is also used to specify the values of
 [associated constants](#associated-constants) when implementing an interface for
 a type.
 
-**FIXME: Update this.**
-
 A constraint to say that two associated constants should have the same value
-without specifying what specific value they should have must use `==` instead of
-`=`:
+without specifying what specific value they should have also uses `=`:
 
 ```
 interface PointCloud {
   let Dim:! i32;
-  let PointT:! NSpacePoint where .N == Dim;
+  let PointT:! NSpacePoint where .N = Dim;
 }
 ```
-
-**References:** The `=` and `==` options were last updated in
-[proposal #2173](https://github.com/carbon-language/carbon-lang/pull/2173).
 
 #### Same type constraints
 
@@ -2597,16 +2621,6 @@ fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
     sum += s->Pop();
   }
   return sum;
-}
-```
-
-To name these sorts of constraints, we could use `let template` declarations or
-`constraint` definitions:
-
-```
-let template IntStack:! auto = Stack where .ElementType = i32;
-constraint IntStack {
-  extend Stack where .ElementType = i32;
 }
 ```
 
@@ -2655,16 +2669,6 @@ or in an interface definition:
 ```
 interface HasEqualPair {
   let P:! PairInterface where .Left == .Right;
-}
-```
-
-This kind of constraint can be named:
-
-```
-let template EqualPair:! auto =
-    PairInterface where .Left == .Right;
-constraint EqualPair {
-  extend PairInterface where .Left == .Right;
 }
 ```
 
@@ -2774,27 +2778,6 @@ fn F[ContainerType:! ContainerInterface
     (c: ContainerType);
 ```
 
-We would like to be able to name this constraint, defining a
-`RandomAccessContainer` to be a facet type whose types satisfy
-`ContainerInterface` with an `IteratorType` satisfying `RandomAccessIterator`.
-
-```
-let template RandomAccessContainer:! auto =
-    ContainerInterface where .IteratorType impls RandomAccessIterator;
-// or
-constraint RandomAccessContainer {
-  extend ContainerInterface
-      where .IteratorType impls RandomAccessIterator;
-}
-
-// With the above definition:
-fn F[ContainerType:! RandomAccessContainer](c: ContainerType);
-// is equivalent to:
-fn F[ContainerType:! ContainerInterface
-     where .IteratorType impls RandomAccessIterator]
-    (c: ContainerType);
-```
-
 #### Combining constraints
 
 Constraints can be combined by separating constraint clauses with the `and`
@@ -2873,22 +2856,24 @@ interface Container {
 }
 ```
 
-These recursive constraints can be named:
+Note that [naming](#named-constraint-constants) a recursive constraint using
+using the [`constraint` introducer](#named-constraints) approach, we can name
+the implementing type using `Self` instead of `.Self`, since they refer to the
+same type:
 
 ```
-let template RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
 constraint RealAbs {
   extend HasAbs where .MagnitudeType == Self;
+  // Equivalent to:
+  extend HasAbs where .MagnitudeType == .Self;
 }
-let template ContainerIsSlice:! auto =
-    Container where .SliceType == .Self;
+
 constraint ContainerIsSlice {
   extend Container where .SliceType == Self;
+  // Equivalent to:
+  extend Container where .SliceType == .Self;
 }
 ```
-
-Note that using the `constraint` approach we can name these constraints using
-`Self` instead of `.Self`, since they refer to the same type.
 
 The `.Self` construct follows these rules:
 
@@ -2901,6 +2886,7 @@ The `.Self` construct follows these rules:
 -   You get the innermost, most-specific type for `.Self` if it is introduced
     twice in a scope. By the previous rule, it is only legal if they all refer
     to the same facet binding.
+-   `.Self` may not be on the left side of the `=` in a rewrite constraint.
 
 So in `X:! A where ...`, `.Self` is introduced twice, after the `:!` and the
 `where`. This is allowed since both times it means `X`. After the `:!`, `.Self`
@@ -2960,8 +2946,8 @@ fn Double[T:! Mul where i32 impls As(.Self)](x: T) -> T {
 
 We don't allow a `where` constraint unless it applies a restriction to the
 current type. This means referring to some
-[designator](#set-an-associated-constant-to-a-specific-value), like
-`.MemberName`, or [`.Self`](#recursive-constraints). Examples:
+[designator](#kinds-of-where-constraints), like `.MemberName`, or
+[`.Self`](#recursive-constraints). Examples:
 
 -   `Container where .ElementType = i32`
 -   `type where Vector(.Self) impls Sortable`
@@ -3371,23 +3357,45 @@ interfaces to symbolic facets, they may be added without breaking existing code.
 
 There are some constraints that we will naturally represent as named facet
 types. These can either be used directly to constrain a facet binding, or in a
-`where ... impls ...` clause to constrain an associated facet.
+`where ... impls ...` [implements constraint](#kinds-of-where-constraints) to
+constrain an associated facet.
 
 The compiler determines which types implement these interfaces, developers can
-not explicitly implement these interfaces for their own types.
+not explicitly implement these interfaces for their own types. To support these,
+we extend the requirements that facet types are allowed to include beyond
+interfaces implemented and [`where` clauses](#where-constraints).
 
 **Open question:** Are these names part of the prelude or in a standard library?
 
 ### Is a derived class
 
-Given a type `T`, `Extends(T)` is a facet type whose values are types that are
-derived from `T`. That is, `Extends(T)` is the set of all types `U` that are
-subtypes of `T`.
+Given a type `T`, `Extends(T)` is a facet type whose values are facets that are
+(transitively) [derived from](/docs/design/classes.md#inheritance) `T`. That is,
+`U:! Extends(T)` means `U` has an `extend base: T;` declaration, or there is a
+chain `extend base` declarations connecting `T` to `U`.
 
 ```
+base class BaseType { ... }
+
 fn F[T:! Extends(BaseType)](p: T*);
-fn UpCast[T:! type](p: T*, U:! type where T impls Extends(.Self)) -> U*;
-fn DownCast[T:! type](p: T*, U:! Extends(T)) -> U*;
+fn UpCast[U:! type]
+    (p: U*, V:! type where U impls Extends(.Self)) -> V*;
+fn DownCast[X:! type](p: X*, Y:! Extends(X)) -> Y*;
+
+class DerivedType {
+  extend base: BaseType;
+}
+var d: DerivedType = {};
+// `T` is set to `DerivedType`
+// `DerivedType impls Extends(BaseType)`
+F(&d);
+
+// `U` is set to `DerivedType`
+let p: BaseType* = UpCast(&d, BaseType);
+
+// `X` is set to `BaseType`
+// `Y` is set to facet `DerivedType as Extends(BaseType)`.
+Assert(DownCast(p, DerivedType) == &d);
 ```
 
 **Open question:** Alternatively, we could define a new `extends` operator:
@@ -3405,13 +3413,11 @@ fn DownCast[T:! type](p: T*, U:! type where .Self extends T) -> U*;
 
 Given a type `U`, define the facet type `CompatibleWith(U)` as follows:
 
-> `CompatibleWith(U)` is a type whose values are types `T` such that `T` and `U`
-> are [compatible](terminology.md#compatible-types). That is values of types `T`
-> and `U` can be cast back and forth without any change in representation (for
-> example `T` is an [adapter](#adapting-types) for `U`).
-
-To support this, we extend the requirements that facet types are allowed to have
-to include a "data representation requirement" option.
+> `CompatibleWith(U)` is a facet type whose values are facets `T` such that
+> `T as type` and `U as type` are [compatible](terminology.md#compatible-types).
+> That is values of `T` and `U` as types can be cast back and forth without any
+> change in representation (for example `T` is an [adapter](#adapting-types) for
+> `U`).
 
 `CompatibleWith` determines an equivalence relationship between types.
 Specifically, given two types `T1` and `T2`, they are equivalent if
