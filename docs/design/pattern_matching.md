@@ -223,23 +223,6 @@ fn J(unused n: i32);
 
 A `:!` can be used in place of `:` for a binding that is usable at compile time.
 
--   _compile-time-pattern_ ::= `unused`? `template`? _identifier_ `:!`
-    _expression_
--   _compile-time-pattern_ ::= `template`? _identifier_ `:!` _expression_
--   _compile-time-pattern_ ::= `template`? `_` `:!` _expression_
--   _compile-time-pattern_ ::= `unused` `template`? _identifier_ `:!`
-    _expression_
--   _proper-pattern_ ::= _compile-time-pattern_
-
-**FIXME:** Maybe this should just be:
-
--   _compile-time-pattern_ ::= `unused`? `template`? _identifier_ `:!`
-    _expression_
--   _compile-time-pattern_ ::= `template`? `_` `:!` _expression_
--   _proper-pattern_ ::= _compile-time-pattern_
-
-**FIXME:** Or, if we want to keep the "unused" patterns separate:
-
 -   _compile-time-pattern_ ::= `template`? _identifier_ `:!` _expression_
 -   _compile-time-pattern_ ::= `template`? `_` `:!` _expression_
 -   _compile-time-pattern_ ::= `unused` `template`? _identifier_ `:!`

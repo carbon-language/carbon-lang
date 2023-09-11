@@ -22,7 +22,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Avoiding name collisions](#avoiding-name-collisions)
     -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
     -   [Access](#access)
--   [Checked generics](#checked-generics)
+-   [Checked-generic functions](#checked-generic-functions)
     -   [Symbolic facet bindings](#symbolic-facet-bindings)
     -   [Return type](#return-type)
 -   [Interfaces recap](#interfaces-recap)
@@ -50,26 +50,34 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Parameterized named constraints](#parameterized-named-constraints)
 -   [Where constraints](#where-constraints)
     -   [Kinds of `where` constraints](#kinds-of-where-constraints)
-    -   [Named constraint constants](#named-constraint-constants)
-    -   [Constraint use cases](#constraint-use-cases)
-        -   [Set an associated constant to a specific value](#set-an-associated-constant-to-a-specific-value)
-        -   [Same type constraints](#same-type-constraints)
-            -   [Set an associated facet to a specific value](#set-an-associated-facet-to-a-specific-value)
-            -   [Equal facet bindings](#equal-facet-bindings)
-                -   [Satisfying both facet types](#satisfying-both-facet-types)
-        -   [Type bound for associated facet](#type-bound-for-associated-facet)
-            -   [Type bounds on associated facets in declarations](#type-bounds-on-associated-facets-in-declarations)
-            -   [Type bounds on associated facets in interfaces](#type-bounds-on-associated-facets-in-interfaces)
+        -   [Rewrite constraints](#rewrite-constraints)
+            -   [Combining constraints with `&`](#combining-constraints-with-)
+            -   [Combining constraints with `and`](#combining-constraints-with-and)
+            -   [Combining constraints with `extends`](#combining-constraints-with-extends)
+            -   [Combining constraints with `impl as` and `is`](#combining-constraints-with-impl-as-and-is)
+            -   [Constraint resolution](#constraint-resolution)
+            -   [Precise rules and termination](#precise-rules-and-termination)
+                -   [Qualified name lookup](#qualified-name-lookup)
+                -   [Type substitution](#type-substitution)
+                -   [Examples](#examples)
+                -   [Termination](#termination)
+        -   [Same-type constraints](#same-type-constraints)
+            -   [Implementation of same-type `ImplicitAs`](#implementation-of-same-type-implicitas)
+            -   [Manual type equality](#manual-type-equality)
+            -   [Observe declarations](#observe-declarations)
+            -   [`observe` declarations](#observe-declarations-1)
+        -   [Implements constraints](#implements-constraints)
+            -   [Implied constraints](#implied-constraints)
         -   [Combining constraints](#combining-constraints)
         -   [Recursive constraints](#recursive-constraints)
+    -   [Satisfying both facet types](#satisfying-both-facet-types)
+    -   [Constraints must use a designator](#constraints-must-use-a-designator)
+    -   [Referencing names in the interface being defined](#referencing-names-in-the-interface-being-defined)
+    -   [Constraint examples and use cases](#constraint-examples-and-use-cases)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
         -   [Another type implements parameterized interface](#another-type-implements-parameterized-interface)
-    -   [Constraints must use a designator](#constraints-must-use-a-designator)
-    -   [Implied constraints](#implied-constraints)
         -   [Must be legal type argument constraints](#must-be-legal-type-argument-constraints)
-    -   [Referencing names in the interface being defined](#referencing-names-in-the-interface-being-defined)
-    -   [Manual type equality](#manual-type-equality)
-        -   [`observe` declarations](#observe-declarations)
+    -   [Named constraint constants](#named-constraint-constants)
 -   [Other constraints as facet types](#other-constraints-as-facet-types)
     -   [Is a derived class](#is-a-derived-class)
     -   [Type compatible with another type](#type-compatible-with-another-type)
@@ -176,8 +184,8 @@ from and passed to various container methods.
 The function expresses that the type argument is passed in statically, basically
 generating a separate function body for every different type passed in, by using
 the "compile-time parameter" syntax `:!`. By default, this defines a
-[checked-generics parameter](#checked-generics) below. In this case, the
-interface contains enough information to
+[checked-generics parameter](#checked-generic-functions) below. In this case,
+the interface contains enough information to
 [type and definition check](terminology.md#complete-definition-checking) the
 function body -- you can only call functions defined in the interface in the
 function body.
@@ -658,7 +666,7 @@ No access control modifiers are allowed on `impl` declarations, an `impl` is
 always visible to the intersection of the visibility of all names used in the
 declaration of the `impl`.
 
-## Checked generics
+## Checked-generic functions
 
 Here is a function that can accept values of any type that has implemented the
 `Vector` interface:
@@ -675,8 +683,8 @@ _[compile-time binding](terminology.md#bindings)_. Here specifically it declares
 a _symbolic binding_ since it did not use the `template` keyword to mark it as a
 _template binding_.
 
-**References:** The `:!` syntax was accepted in
-[proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
+> **References:** The `:!` syntax was accepted in
+> [proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
 
 Since this symbolic binding pattern is in a function declaration, it marks a
 _[checked](terminology.md#checked-versus-template-parameters)
@@ -684,6 +692,9 @@ _[checked](terminology.md#checked-versus-template-parameters)
 That means its value must be known to the caller at compile-time, but we will
 only use the information present in the signature of the function to type check
 the body of `AddAndScaleGeneric`'s definition.
+
+Note that types may also be given compile-time parameters, see the
+["parameterized types" section](#parameterized-types).
 
 ### Symbolic facet bindings
 
@@ -2133,8 +2144,8 @@ interface StackAssociatedFacet {
 Here we have an interface called `StackAssociatedFacet` which defines two
 methods, `Push` and `Pop`. The signatures of those two methods declare them as
 accepting or returning values with the type `ElementType`, which any implementer
-of `StackAssociatedFacet` must also define. For example, maybe `DynamicArray`
-implements `StackAssociatedFacet`:
+of `StackAssociatedFacet` must also define. For example, maybe a `DynamicArray`
+[parameterized type](#parameterized-types) implements `StackAssociatedFacet`:
 
 ```
 class DynamicArray(T:! type) {
@@ -2472,8 +2483,9 @@ interface A(T:! B where ...) {
 
 We also allow you to name constraints using a `where` operator in a `let` or
 `constraint` definition. The expressions that can follow the `where` keyword are
-described in the ["constraint use cases"](#constraint-use-cases) section, but
-generally look like boolean expressions that should evaluate to `true`.
+described in the ["kinds of `where` constraints"](#kinds-of-where-constraints)
+section, but generally look like boolean expressions that should evaluate to
+`true`.
 
 The result of applying a `where` operator to a facet type is another facet type.
 Note that this expands the kinds of requirements that facet types can have from
@@ -2526,7 +2538,9 @@ constraint.
 A same-type constraint is written `where X == Y`, where `X` and `Y` both name
 facets. The constraint is that `X as type` must be the same as `Y as type`. In
 cases where a constraint may be written in either form, prefer a rewrite
-constraint over a same-type constraint.
+constraint over a same-type constraint. Note that switching between the two
+forms does not change which types satisfies the constraint, and so is a
+compatible change for callers.
 
 An implements constraint is written `where T impls C`, where `T` is a facet and
 `C` is a facet type. The constraint is that `T` satisfies the requirements of
@@ -2537,584 +2551,745 @@ An implements constraint is written `where T impls C`, where `T` is a facet and
 Implements constraints switched using the `impls` keyword in
 [proposal #2483](https://github.com/carbon-language/carbon-lang/pull/2483).
 
-### Named constraint constants
-
-A facet type with a `where` constraint, such as `C where <condition>`, can be
-named two different ways:
-
--   Using `let template` as in:
-
-    ```carbon
-    let template NameOfConstraint:! auto = C where <condition>;
-    ```
-
-    or, since the type of a facet type is `type`:
-
-    ```carbon
-    let template NameOfConstraint:! type = C where <condition>;
-    ```
-
--   Using a [named constraint](#named-constraints) with the `constraint` keyword
-    introducer:
-
-    ```carbon
-    constraint NameOfConstraint {
-      extend C where <condition>;
-    }
-    ```
-
-Whichever approach is used, the result is `NameOfConstraint` is a compile-time
-constant that is equivalent to `C where <condition>`.
-
 **FIXME: Left off here.**
 
-### Constraint use cases
+#### Rewrite constraints
 
-#### Set an associated constant to a specific value
-
-We might need to write a function that only works with a specific value of an
-[associated constant](#associated-constants) `N`. In this case, the name of the
-associated constant is written after a `.`, followed by an `=`, and then the
-value:
+In a rewrite constraint, the left-hand operand of `=` must be a `.` followed by
+the name of an associated constant. `.Self` is not permitted.
 
 ```
-fn PrintPoint2D[PointT:! NSpacePoint where .N = 2](p: PointT) {
-  Print(p.Get(0), ", ", p.Get(1));
+interface RewriteSelf {
+  // ❌ Error: `.Self` is not the name of an associated constant.
+  let Me:! type where .Self = Self;
+}
+interface HasAssoc {
+  let Assoc:! type;
+}
+interface RewriteSingleLevel {
+  // ✅ Uses of `A.Assoc` will be rewritten to `i32`.
+  let A:! HasAssoc where .Assoc = i32;
+}
+interface RewriteMultiLevel {
+  // ❌ Error: Only one level of associated constant is permitted.
+  let B:! RewriteSingleLevel where .A.Assoc = i32;
 }
 ```
 
-Similarly in an interface definition:
+This notation is permitted anywhere a constraint can be written, and results in
+a new constraint with a different interface: the named member effectively no
+longer names an associated constant of the constrained type, and is instead
+treated as a rewrite rule that expands to the right-hand side of the constraint,
+with any mentioned parameters substituted into that type.
 
 ```
-interface Has2DPoint {
-  let PointT:! NSpacePoint where .N = 2;
+interface Container {
+  let Element:! type;
+  let Slice:! Container where .Element = Element;
+  fn Add[addr me: Self*](x: Element);
+}
+// `T.Slice.Element` rewritten to `T.Element`
+//     because type of `T.Slice` says `.Element = Element`.
+// `T.Element` rewritten to `i32`
+//     because type of `T` says `.Element = i32`.
+fn Add[T:! Container where .Element = i32](p: T*, y: T.Slice.Element) {
+  // ✅ Argument `y` has the same type `i32` as parameter `x` of
+  // `T.(Container.Add)`, which is also rewritten to `i32`.
+  p->Add(y);
 }
 ```
 
-This syntax is also used to specify the values of
-[associated constants](#associated-constants) when implementing an interface for
-a type.
+Rewrites aren't performed on the left-hand side of such an `=`, so
+`where .A = .B and .A = C` is not rewritten to `where .A = .B and .B = C`.
+Instead, such a `where` clause is invalid when the constraint is
+[resolved](#constraint-resolution) unless each rule for `.A` specifies the same
+rewrite.
 
-A constraint to say that two associated constants should have the same value
-without specifying what specific value they should have also uses `=`:
+Note that `T:! C where .R = i32` can result in a type `T.R` whose behavior is
+different from the behavior of `T.R` given `T:! C`. For example, member lookup
+into `T.R` can find different results and operations can therefore have
+different behavior. However, this does not violate coherence because the facet
+types `C` and `C where .R = i32` don't differ by merely having more type
+information; rather, they are different facet types that have an isomorphic set
+of values, somewhat like `i32` and `u32`. An `=` constraint is not merely
+learning a new fact about a type, it is requesting different behavior.
+
+This approach addresses a few problems we have with same-type constraints:
+
+-   [Equal types with different interfaces](/proposals/p2173.md#equal-types-with-different-interfaces)
+-   [Type canonicalization](/proposals/p2173.md#type-canonicalization)
+-   [Transitivity of equality](/proposals/p2173.md#transitivity-of-equality)
+
+##### Combining constraints with `&`
+
+Suppose we have `X = C where .R = A` and `Y = C where .R = B`. What should
+`C & X` produce? What should `X & Y` produce?
+
+We could perhaps say that `X & Y` results in a facet type where the type of `R`
+has the union of the interface of `A` and the interface of `B`, and that `C & X`
+similarly results in a facet type where the type of `R` has the union of the
+interface of `A` and the interface originally specified by `C`. However, this
+proposal suggests a simpler rule:
+
+-   Combining two rewrite rules with different rewrite targets results in a
+    facet type where the associated constant is ambiguous. Given `T:! X & Y`,
+    the type expression `T.R` is ambiguous between a rewrite to `A` and a
+    rewrite to `B`. But given `T:! X & X`, `T.R` is unambiguously rewritten to
+    `A`.
+-   Combining a constraint with a rewrite rule with a constraint with no rewrite
+    rule preserves the rewrite rule. For example, supposing that
+    `interface Container` extends `interface Iterable`, and `Iterable` has an
+    associated constant `Element`, the constraint
+    `Container & (Iterable where .Element = i32)` is the same as the constraint
+    `(Container & Iterable) where .Element = i32` which is the same as the
+    constraint `Container where .Element = i32`.
+
+If the rewrite for an associated constant is ambiguous, the facet type is
+rejected during [constraint resolution](#constraint-resolution).
+
+##### Combining constraints with `and`
+
+It's possible for one `=` constraint in a `where` to refer to another. When this
+happens, the facet type `C where A and B` is interpreted as
+`(C where A) where B`, so rewrites in `A` are applied immediately to names in
+`B`, but rewrites in `B` are not applied to names in `A` until the facet type is
+[resolved](#constraint-resolution):
 
 ```
-interface PointCloud {
-  let Dim:! i32;
-  let PointT:! NSpacePoint where .N = Dim;
+interface C {
+  let T:! type;
+  let U:! type;
+  let V:! type;
+}
+class M {
+  alias Me = Self;
+}
+// ✅ Same as `C where .T = M and .U = M.Me`, which is
+// the same as `C where .T = M and .U = M`.
+fn F[A:! C where .T = M and .U = .T.Me]() {}
+// ❌ No member `Me` in `A.T:! type`.
+fn F[A:! C where .U = .T.Me and .T = M]() {}
+```
+
+##### Combining constraints with `extends`
+
+Within an interface or named constraint, `extends` can be used to extend a
+constraint that has rewrites.
+
+```
+interface A {
+  let T:! type;
+  let U:! type;
+}
+interface B {
+  extends A where .T = .U and .U = i32;
+}
+
+var n: i32;
+
+// ✅ Resolved constraint on `T` is
+// `B where .(A.T) = i32 and .(A.U) = i32`.
+// `T.(A.T)` is rewritten to `i32`.
+fn F(T:! B) -> T.(A.T) { return n; }
+```
+
+##### Combining constraints with `impl as` and `is`
+
+Within an interface or named constraint, the `impl T as C` syntax does not
+permit `=` constraints to be specified directly. However, such constraints can
+be specified indirectly, for example if `C` is a named constraint that contains
+rewrites. Because these constraints don't change the type of `T`, rewrite
+constraints in this context will never result in a rewrite being performed, and
+instead are equivalent to `==` constraints.
+
+```
+interface A {
+  let T:! type;
+  let U:! type;
+}
+constraint C {
+  extends A where .T = .U and .U = i32;
+}
+constraint D {
+  extends A where .T == .U and .U == i32;
+}
+interface B {
+  // OK, equivalent to `impl as D;` or
+  // `impl as A where .T == .U and .U == i32;`.
+  impl as C;
+}
+
+var n: i32;
+
+// ❌ No implicit conversion from `i32` to `T.(A.T)`.
+// Resolved constraint on `T` is
+// `B where T.(A.T) == T.(A.U) and T.(A.U) = i32`.
+// `T.(A.T)` is single-step equal to `T.(A.U)`, and
+// `T.(A.U)` is single-step equal to `i32`, but
+// `T.(A.T)` is not single-step equal to `i32`.
+fn F(T:! B) -> T.(A.T) { return n; }
+```
+
+A purely syntactic check is used to determine if an `=` is specified directly in
+an expression:
+
+-   An `=` constraint is specified directly in its enclosing `where` expression.
+-   If an `=` constraint is specified directly in an operand of an `&` or
+    `(`...`)`, then it is specified directly in that enclosing expression.
+
+In an `impl as C` or `impl T as C` declaration in an interface or named
+constraint, `C` is not allowed to directly specify any `=` constraints:
+
+```
+// Compile-time identity function.
+fn Identity[T:! type](x:! T) -> T { return x; }
+
+interface E {
+  // ❌ Rewrite constraint specified directly.
+  impl as A where .T = .U and .U = i32;
+  // ❌ Rewrite constraint specified directly.
+  impl as type & (A where .T = .U and .U = i32);
+  // ✅ Not specified directly, but does not result
+  // in any rewrites being performed.
+  impl as Identity(A where .T = .U and .U = i32);
 }
 ```
 
-#### Same type constraints
-
-##### Set an associated facet to a specific value
-
-Functions accepting a symbolic facet parameter might also want to constrain one
-of its associated facets to be a specific, concrete type. For example, we might
-want to have a function only accept stacks containing integers:
+The same rules apply to `is` constraints. Note that `.T == U` constraints are
+also not allowed in this context, because the reference to `.T` is rewritten to
+`.Self.T`, and `.Self` is ambiguous.
 
 ```
-fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
-  var sum: i32 = 0;
-  while (!s->IsEmpty()) {
-    // s->Pop() has type `T.ElementType` == i32:
-    sum += s->Pop();
-  }
-  return sum;
+// ❌ Rewrite constraint specified directly in `is`.
+fn F[T:! A where .U is (A where .T = i32)]();
+
+// ❌ Reference to `.T` in same-type constraint is ambiguous:
+// does this mean the outer or inner `.Self.T`?
+fn G[T:! A where .U is (A where .T == i32)]();
+
+// ✅ Not specified directly, but does not result
+// in any rewrites being performed. Return type
+// is not rewritten to `i32`.
+fn H[T:! type where .Self is C]() -> T.(A.U);
+
+// ✅ Return type is rewritten to `i32`.
+fn I[T:! C]() -> T.(A.U);
+```
+
+##### Constraint resolution
+
+When a facet type is used as the declared type of a type `T`, the constraints
+that were specified within that facet type are _resolved_ to determine the
+constraints that apply to `T`. This happens:
+
+-   When the constraint is used explicitly, when declaring a generic parameter
+    or associated constant of the form `T:! Constraint`.
+-   When declaring that a type implements a constraint with an `impl`
+    declaration, such as `impl T as Constraint`. Note that this does not include
+    `impl ... as` constraints appearing in `interface` or `constraint`
+    declarations.
+
+In each case, the following steps are performed to resolve the facet type's
+abstract constraints into a set of constraints on `T`:
+
+-   If multiple rewrites are specified for the same associated constant, they
+    are required to be identical, and duplicates are discarded.
+-   Rewrites are performed on other rewrites in order to find a fixed point,
+    where no rewrite applies within any other rewrite. If no fixed point exists,
+    the generic parameter declaration or `impl` declaration is invalid.
+-   Rewrites are performed throughout the other constraints in the facet type --
+    that is, in any `==` constraints and `is` constraints -- and the type
+    `.Self` is replaced by `T` throughout the constraint.
+
+```
+// ✅ `.T` in `.U = .T` is rewritten to `i32` when initially
+// forming the facet type.
+// Nothing to do during constraint resolution.
+fn InOrder[A:! C where .T = i32 and .U = .T]() {}
+// ✅ Facet type has `.T = .U` before constraint resolution.
+// That rewrite is resolved to `.T = i32`.
+fn Reordered[A:! C where .T = .U and .U = i32]() {}
+// ✅ Facet type has `.U = .T` before constraint resolution.
+// That rewrite is resolved to `.U = i32`.
+fn ReorderedIndirect[A:! (C where .T = i32) & (C where .U = .T)]() {}
+// ❌ Constraint resolution fails because
+// no fixed point of rewrites exists.
+fn Cycle[A:! C where .T = .U and .U = .T]() {}
+```
+
+To find a fixed point, we can perform rewrites on other rewrites, cycling
+between them until they don't change or until a rewrite would apply to itself.
+In the latter case, we have found a cycle and can reject the constraint. Note
+that it's not sufficient to expand only a single rewrite until we hit this
+condition:
+
+```
+// ❌ Constraint resolution fails because
+// no fixed point of rewrites exists.
+// If we only expand the right-hand side of `.T`,
+// we find `.U`, then `.U*`, then `.U**`, and so on,
+// and never detect a cycle.
+// If we alternate between them, we find
+// `.T = .U*`, then `.U = .U**`, then `.V = .U***`,
+// then `.T = .U**`, then detect that the `.U` rewrite
+// would apply to itself.
+fn IndirectCycle[A:! C where .T = .U and .U = .V* and .V = .U*]();
+```
+
+After constraint resolution, no references to rewritten associated constants
+remain in the constraints on `T`.
+
+If a facet type is never used to constrain a type, it is never subject to
+constraint resolution, and it is possible for a facet type to be formed for
+which constraint resolution would always fail. For example:
+
+```
+package Broken api;
+
+interface X {
+  let T:! type;
+  let U:! type;
 }
+let Bad:! auto = (X where .T = .U) & (X where .U = .T);
+// Bad is not used here.
 ```
 
-This syntax is also used to specify the values of
-[associated facets](#associated-facets) when implementing an interface for a
+In such cases, the facet type `Broken.Bad` is not usable: any attempt to use
+that facet type to constrain a type would perform constraint resolution, which
+would always fail because it would discover a cycle between the rewrites for
+`.T` and for `.U`. In order to ensure that such cases are diagnosed, a trial
+constraint resolution is performed for all facet types. Note that this trial
+resolution can be skipped for facet types that are actually used, which is the
+common case.
+
+##### Precise rules and termination
+
+This section explains the detailed rules used to implement rewrites. There are
+two properties we aim to satisfy:
+
+1.  After type-checking, no symbolic references to associated constants that
+    have an associated rewrite rule remain.
+2.  Type-checking always terminates in a reasonable amount of time, ideally
+    linear in the size of the problem.
+
+Rewrites are applied in two different phases of program analysis.
+
+-   During qualified name lookup and type checking for qualified member access,
+    if a rewritten member is looked up, the right-hand side's value and type are
+    used for subsequent checks.
+-   During substitution, if the symbolic name of an associated constant is
+    substituted into, and substitution into the left-hand side results in a
+    value with a rewrite for that constant, that rewrite is applied.
+
+In each case, we always rewrite to a value that satisfies property 1 above, and
+these two steps are the only places where we might form a symbolic reference to
+an associated cosntant, so property 1 is recursively satisfied. Moreover, we
+apply only one rewrite in each of the above cases, satisfying property 2.
+
+###### Qualified name lookup
+
+Qualified name lookup into either a type parameter or into an expression whose
+type is a symbolic type `T` -- either a type parameter or an associated type --
+considers names from the facet type `C` of `T`, that is, from `T`’s declared
 type.
 
-##### Equal facet bindings
+```
+interface C {
+  let M:! i32;
+  let U:! C;
+}
+fn F[T:! C](x: T) {
+  // Value is C.M in all four of these
+  let a: i32 = x.M;
+  let b: i32 = T.M;
+  let c: i32 = x.U.M;
+  let d: i32 = T.U.M;
+}
+```
 
-Alternatively, two [facet bindings](terminology.md#facet-binding) could be
-constrained to be equal to each other, without specifying what the facet value
-is. This uses `==` instead of `=`. For example, we could make the `ElementType`
-of an `Iterator` interface equal to the `ElementType` of a `Container` interface
-as follows:
+When looking up the name `N`, if `C` is an interface `I` and `N` is the name of
+an associated constant in that interface, the result is a symbolic value
+representing "the member `N` of `I`". If `C` is formed by combining interfaces
+with `&`, all such results are required to find the same associated constant,
+otherwise we reject for ambiguity.
+
+If a member of a class or interface is named in a qualified name lookup, the
+type of the result is determined by performing a substitution. For an interface,
+`Self` is substituted for the self type, and any parameters for that class or
+interface (and enclosing classes or interfaces, if any) are substituted into the
+declared type.
 
 ```
-interface Iterator {
-  let ElementType:! type;
-  ...
+interface SelfIface {
+  fn Get[me: Self]() -> Self;
 }
+class UsesSelf(T:! type) {
+  // Equivalent to `fn Make() -> UsesSelf(T)*;`
+  fn Make() -> Self*;
+  impl as SelfIface;
+}
+
+// ✅ `T = i32` is substituted into the type of `UsesSelf(T).Make`,
+// so the type of `UsesSelf(i32).Make` is `fn () -> UsesSelf(i32)*`.
+let x: UsesSelf(i32)* = UsesSelf(i32).Make();
+
+// ✅ `Self = UsesSelf(i32)` is substituted into the type
+// of `SelfIface.Get`, so the type of `UsesSelf(i32).(SelfIface.Get)`
+// is `fn [me: UsesSelf(i32)]() -> UsesSelf(i32)`.
+let y: UsesSelf(i32) = x->Get();
+```
+
+None of this is new in this proposal. This proposal adds the rule:
+
+If a facet type `C` into which lookup is performed includes a `where` clause
+saying `.N = U`, and the result of qualified name lookup is the associated
+constant `N`, that result is replaced by `U`, and the type of the result is the
+type of `U`. No substitution is performed in this step, not even a `Self`
+substitution -- any necessary substitutions were already performed when forming
+the facet type `C`, and we don’t consider either the declared type or value of
+the associated constant at all for this kind of constraint. Going through an
+example in detail:
+
+```
+interface A {
+  let T:! type;
+}
+interface B {
+  let U:! type;
+  // More explicitly, this is of type `A where .(A.T) = Self.(B.U)`
+  let V:! A where .T = U;
+}
+// Type of T is B.
+fn F[T:! B](x: T) {
+  // The type of the expression `T` is `B`.
+  // `T.V` finds `B.V` with type `A where .(A.T) = Self.(B.U)`.
+  // We substitute `Self` = `T` giving the type of `u` as
+  // `A where .(A.T) = T.(B.U)`.
+  let u:! auto = T.V;
+  // The type of `u` is `A where .(A.T) = T.(B.U)`.
+  // Lookup for `u.T` resolves it to `u.(A.T)`.
+  // So the result of the qualified member access is `T.(B.U)`,
+  // and the type of `v` is the type of `T.(B.U)`, namely `type`.
+  // No substitution is performed in this step.
+  let v:! auto = u.T;
+}
+```
+
+The more complex case of
+
+```
+fn F2[T:! B where .U = i32](x: T);
+```
+
+is discussed later.
+
+###### Type substitution
+
+At various points during the type-checking of a Carbon program, we need to
+substitute a set of (binding, value) pairs into a symbolic value. We saw an
+example above: substituting `Self = T` into the type `A where .(A.T) = Self.U`
+to produce the value `A where .(A.T) = T.U`. Another important case is the
+substitution of inferred parameter values into the type of a function when
+type-checking a function call:
+
+```
+fn F[T:! C](x: T) -> T;
+fn G(n: i32) -> i32 {
+  // Deduces T = i32, which is substituted
+  // into the type `fn (x: T) -> T` to produce
+  // `fn (x: i32) -> i32`, giving `i32` as the type
+  // of the call expression.
+  return F(n);
+}
+```
+
+Qualified name lookup is not re-done as a result of type substitution. For a
+template, we imagine there’s a completely separate step that happens before type
+substitution, where qualified name lookup is redone based on the actual value of
+template arguments; this proceeds as described in the previous section.
+Otherwise, we performed the qualified name lookup when type-checking the
+generic, and do not do it again:
+
+```
+interface IfaceHasX {
+  let X:! type;
+}
+class ClassHasX {
+  class X {}
+}
+interface HasAssoc {
+  let Assoc:! IfaceHasX;
+}
+
+// Qualified name lookup finds `T.(HasAssoc.Assoc).(IfaceHasX.X)`.
+fn F(T:! HasAssoc) -> T.Assoc.X;
+
+fn G(T:! HasAssoc where .Assoc = ClassHasX) {
+  // `T.Assoc` rewritten to `ClassHasX` by qualified name lookup.
+  // Names `ClassHasX.X`.
+  var a: T.Assoc.X = {};
+  // Substitution produces `ClassHasX.(IfaceHasX.X)`,
+  // not `ClassHasX.X`.
+  var b: auto = F(T);
+}
+```
+
+During substitution, we might find a member access that named an opaque symbolic
+associated constant in the original value can now be resolved to some specific
+value. It’s important that we perform this resolution:
+
+```
+interface A {
+  let T:! type;
+}
+class K { fn Member(); }
+fn H[U:! A](x: U) -> U.T;
+fn J[V:! A where .T = K](y: V) {
+  // We need the interface of `H(y)` to include
+  // `K.Member` in order for this lookup to succeed.
+  H(y).Member();
+}
+```
+
+The values being substituted into the symbolic value are themselves already
+fully substituted and resolved, and in particular, satisfy property 1 given
+above.
+
+Substitution proceeds by recursively rebuilding each symbolic value, bottom-up,
+replacing each substituted binding with its value. Doing this naively will
+propagate values like `i32` in the `F`/`G` case earlier in this section, but
+will not propagate rewrite constants like in the `H`/`J` case. The reason is
+that the `.T = K` constraint is in the _type_ of the substituted value, rather
+than in the substituted value itself: deducing `T = i32` and converting `i32` to
+the type `C` of `T` preserves the value `i32`, but deducing `U = V` and
+converting `V` to the type `A` of `U` discards the rewrite constraint.
+
+In order to apply rewrites during substitution, we associate a set of rewrites
+with each value produced by the recursive rebuilding procedure. This is somewhat
+like having substitution track a refined facet type for the type of each value,
+but we don’t need -- or want -- for the type to change during this process, only
+for the rewrites to be properly applied. For a substituted binding, this set of
+rewrites is the rewrites found on the type of the corresponding value prior to
+conversion to the type of the binding. When rebuilding a member access
+expression, if we have a rewrite corresponding to the accessed member, then the
+resulting value is the target of the rewrite, and its set of rewrites is that
+found in the type of the target of the rewrite, if any. Because the target of
+the rewrite is fully resolved already, we can ask for its type without
+triggering additional work. In other cases, the rewrite set is empty; all
+necessary rewrites were performed when type-checking the value we're
+substituting into.
+
+Continuing an example from [qualified name lookup](#qualified-name-lookup):
+
+```
+interface A {
+  let T:! type;
+}
+interface B {
+  let U:! type;
+  let V:! A where .T = U;
+}
+
+// Type of the expression `T` is `B where .(B.U) = i32`
+fn F2[T:! B where .U = i32](x: T) {
+  // The type of the expression `T` is `B where .U = i32`.
+  // `T.V` is looked up and finds the associated type `(B.V)`.
+  // The declared type is `A where .(A.T) = Self.U`.
+  // We substitute `Self = T` with rewrite `.U = i32`.
+  // The resulting type is `A where .(A.T) = i32`.
+  // So `u` is `T.V` with type `A where .(A.T) = i32`.
+  let u:! auto = T.V;
+  // The type of `u` is `A where .(A.T) = i32`.
+  // Lookup for `u.T` resolves it to `u.(A.T)`.
+  // So the result of the qualified member access is `i32`,
+  // and the type of `v` is the type of `i32`, namely `type`.
+  // No substitution is performed in this step.
+  let v:! auto = u.T;
+}
+```
+
+###### Examples
+
+```
 interface Container {
-  let ElementType:! type;
-  let IteratorType:! Iterator where .ElementType == ElementType;
-  ...
+  let Element:! type;
+}
+interface SliceableContainer {
+  extends Container;
+  let Slice:! Container where .Element = Self.(Container.Element);
+}
+// ❌ Qualified name lookup rewrites this facet type to
+// `SliceableContainer where .(Container.Element) = .Self.(Container.Element)`.
+// Constraint resolution rejects this because this rewrite forms a cycle.
+fn Bad[T:! SliceableContainer where .Element = .Slice.Element](x: T.Element) {}
+```
+
+```
+interface Helper {
+  let D:! type;
+}
+interface Example {
+  let B:! type;
+  let C:! Helper where .D = B;
+}
+// ✅ `where .D = ...` by itself is fine.
+// `T.C.D` is rewritten to `T.B`.
+fn Allowed(T:! Example, x: T.C.D);
+// ❌ But combined with another rewrite, creates an infinite loop.
+// `.C.D` is rewritten to `.B`, resulting in `where .B = .B`,
+// which causes an error during constraint resolution.
+// Using `==` instead of `=` would make this constraint redundant,
+// rather than it being an error.
+fn Error(T:! Example where .B = .C.D, x: T.C.D);
+```
+
+```
+interface Allowed;
+interface AllowedBase {
+  let A:! Allowed;
+}
+interface Allowed {
+  extends AllowedBase where .A = .Self;
+}
+// ✅ The final type of `x` is `T`. It is computed as follows:
+// In `((T.A).A).A`, the inner `T.A` is rewritten to `T`,
+// resulting in `((T).A).A`, which is then rewritten to
+// `(T).A`, which is then rewritten to `T`.
+fn F(T:! Allowed, x: ((T.A).A).A);
+```
+
+```
+interface MoveYsRight;
+constraint ForwardDeclaredConstraint(X:! MoveYsRight);
+interface MoveYsRight {
+  let X:! MoveYsRight;
+  // Means `Y:! MoveYsRight where .X = X.Y`
+  let Y:! ForwardDeclaredConstraint(X);
+}
+constraint ForwardDeclaredConstraint(X:! MoveYsRight) {
+  extends MoveYsRight where .X = X.Y;
+}
+// ✅ The final type of `x` is `T.X.Y.Y`. It is computed as follows:
+// The type of `T` is `MoveYsRight`.
+// The type of `T.Y` is determined as follows:
+// -   Qualified name lookup finds `MoveYsRight.Y`.
+// -   The declared type is `ForwardDeclaredConstraint(Self.X)`.
+// -   That is a named constraint, for which we perform substitution.
+//     Substituting `X = Self.X` gives the type
+//     `MoveYsRight where .X = Self.X.Y`.
+// -   Substituting `Self = T` gives the type
+//     `MoveYsRight where .X = T.X.Y`.
+// The type of `T.Y.Y` is determined as follows:
+// -   Qualified name lookup finds `MoveYsRight.Y`.
+// -   The declared type is `ForwardDeclaredConstraint(Self.X)`.
+// -   That is a named constraint, for which we perform substitution.
+//     Substituting `X = Self.X` gives the type
+//     `MoveYsRight where .X = Self.X.Y`.
+// -   Substituting `Self = T.Y` with
+//     rewrite `.X = T.X.Y` gives the type
+//     `MoveYsRight where .X = T.Y.X.Y`, but
+//     `T.Y.X` is replaced by `T.X.Y`, giving
+//     `MoveYsRight where .X = T.X.Y.Y`.
+// The type of `T.Y.Y.X` is determined as follows:
+// -   Qualified name lookup finds `MoveYsRight.X`.
+// -   The type of `T.Y.Y` says to rewrite that to `T.X.Y.Y`.
+// -   The result is `T.X.Y.Y`, of type `MoveYsRight`.
+fn F4(T:! MoveYsRight, x: T.Y.Y.X);
+```
+
+###### Termination
+
+Each of the above steps performs at most one rewrite, and doesn't introduce any
+new recursive type-checking steps, so should not introduce any new forms of
+non-termination. Rewrite constraints thereby give us a deterministic,
+terminating type canonicalization mechanism for associated constants: in `A.B`,
+if the type of `A` specifies that `.B = C`, then `A.B` is replaced by `C`.
+Equality of types constrained in this way is transitive.
+
+However, some existing forms of non-termination may remain, such as template
+instantiation triggering another template instantiation. Such cases will need to
+be detected and handled in some way, such as by a depth limit, but doing so
+doesn't compromise the soundness of the type system.
+
+#### Same-type constraints
+
+**FIXME**
+
+A same-type constraint describes that two type expressions are known to evaluate
+to the same value. Unlike a rewrite constraint, however, the two type
+expressions are treated as distinct types when type-checking a generic that
+refers to them.
+
+Same-type constraints are brought into scope, looked up, and resolved exactly as
+if there were a `SameAs(U:! type)` interface and a `T == U` impl corresponded to
+`T is SameAs(U)`, except that `==` is commutative. As such, it's not possible to
+ask for a list of types that are the same as a given type, nor to ask whether
+there exists a type that is the same as a given type and has some property. But
+it is possible to ask whether two types are (non-transitively) the same.
+
+In order for same-type constraints to be useful, they must allow the two types
+to be treated as actually being the same in some context. This can be
+accomplished by the use of `==` constraints in an `impl`, such as in the
+built-in implementation of `ImplicitAs`:
+
+```
+final impl forall [T:! type, U:! type where .Self == T] T as ImplicitAs(U) {
+  fn Convert[me: Self](other: U) -> U { ... }
 }
 ```
 
-Given an interface with two associated facets
+It superficially seems like it would be convenient if such implementations were
+made available implicitly – for example, by writing
+`impl forall [T:! type] T as ImplicitAs(T)` – but in more complex examples that
+turns out to be problematic. Consider:
 
 ```
-interface PairInterface {
-  let Left:! type;
-  let Right:! type;
+interface CommonTypeWith(U:! type) {
+  let Result:! type;
+}
+final impl forall [T:! type] T as CommonTypeWith(T) where .Result = T {}
+
+fn F[T:! Potato, U:! Hashable where .Self == T](x: T, y: U) -> auto {
+  // What is T.CommonTypeWith(U).Result? Is it T or U?
+  return (if cond then x else y).Hash();
 }
 ```
 
-we can constrain them to be equal in a function signature:
+With this proposal, `impl` validation for `T as CommonTypeWith(U)` fails: we
+cannot pick a common type when given two distinct type expressions, even if we
+know they evaluate to the same type, because we would not know which API the
+result should have.
+
+##### Implementation of same-type `ImplicitAs`
+
+It is possible to implement the above `impl` of `ImplicitAs` directly in Carbon,
+without a compiler builtin, by taking advantage of the built-in conversion
+between `C where .A = X` and `C where .A == X`:
 
 ```
-fn F[MatchedPairType:! PairInterface where .Left == .Right]
-    (x: MatchedPairType*);
-```
+interface EqualConverter {
+  let T:! type;
+  fn Convert(t: T) -> Self;
+}
+fn EqualConvert[T:! type](t: T, U:! EqualConverter where .T = T) -> U {
+  return U.Convert(t);
+}
+impl forall [U:! type] U as EqualConverter where .T = U {
+  fn Convert(u: U) -> U { return u; }
+}
 
-or in an interface definition:
-
-```
-interface HasEqualPair {
-  let P:! PairInterface where .Left == .Right;
+impl forall [T:! type, U:! type where .Self == T] T as ImplicitAs(U) {
+  fn Convert[self: Self]() -> U { return EqualConvert(self, U); }
 }
 ```
 
-Another example of same type constraints is when associated facets of two
-different interfaces are constrained to be equal:
+The transition from `(T as ImplicitAs(U)).Convert`, where we know that `U == T`,
+to `EqualConverter.Convert`, where we know that `.T = U`, allows a same-type
+constraint to be used to perform a rewrite.
 
-```
-fn Map[CT:! Container,
-       FT:! Function where .InputType == CT.ElementType]
-      (c: CT, f: FT) -> Vector(FT.OutputType);
-```
+This implementation is in use in Carbon Explorer.
 
-###### Satisfying both facet types
-
-If the two types being constrained to be equal have been declared with different
-facet types, then the actual type value they are set to will have to satisfy
-both constraints. For example, if `SortedContainer.ElementType` is declared to
-be `Comparable`, then in this declaration:
-
-```
-fn Contains
-    [SC:! SortedContainer,
-     CT:! Container where .ElementType == SC.ElementType]
-    (haystack: SC, needles: CT) -> bool;
-```
-
-the `where` constraint means `CT.ElementType` must satisfy `Comparable` as well.
-However, inside the body of `Contains`, `CT.ElementType` will act like the
-implementation of `Comparable` is declared without [`extend`](#extend-impl).
-That is, items from the `needles` container won't directly have a `Compare`
-method member, but can still be implicitly converted to `Comparable` and can
-still call `Compare` using the compound member access syntax,
-`needle.(Comparable.Compare)(elt)`. The rule is that an `==` `where` constraint
-between two type variables does not modify the set of member names of either
-type. (If you write `where .ElementType = String` with a `=` and a concrete
-type, then `.ElementType` is actually set to `String` including the complete
-`String` API.)
-
-Note that `==` constraints are symmetric, so the previous declaration of
-`Contains` is equivalent to an alternative declaration where `CT` is declared
-first and the `where` clause is attached to `SortedContainer`:
-
-```
-fn Contains
-    [CT:! Container,
-     SC:! SortedContainer where .ElementType == CT.ElementType]
-    (haystack: SC, needles: CT) -> bool;
-```
-
-#### Type bound for associated facet
-
-A `where` clause can express that a facet binding must implement an interface.
-This is more flexible than the usual approach of including that interface in the
-type since it can be applied to associated facet members as well.
-
-##### Type bounds on associated facets in declarations
-
-In the following example, normally the `ElementType` of a `Container` can be any
-type. The `SortContainer` function, however, takes a pointer to a type
-satisfying `Container` with the additional constraint that its `ElementType`
-must satisfy the `Comparable` interface, using an `impls` constraint:
-
-```
-interface Container {
-  let ElementType:! type;
-  ...
-}
-
-fn SortContainer
-    [ContainerType:! Container where .ElementType impls Comparable]
-    (container_to_sort: ContainerType*);
-```
-
-In contrast to [a same type constraint](#same-type-constraints), this does not
-say what type `ElementType` exactly is, just that it must satisfy some facet
-type.
-
-**Note:** `Container` defines `ElementType` as having type `type`, but
-`ContainerType.ElementType` has type `Comparable`. This is because
-`ContainerType` has type `Container where .ElementType impls Comparable`, not
-`Container`. This means we need to be a bit careful when talking about the type
-of `ContainerType` when there is a `where` clause modifying it.
-
-##### Type bounds on associated facets in interfaces
-
-Given these definitions (omitting `ElementType` for brevity):
-
-```
-interface IteratorInterface { ... }
-interface ContainerInterface {
-  let IteratorType:! IteratorInterface;
-  ...
-}
-interface RandomAccessIterator {
-  extend IteratorInterface;
-  ...
-}
-```
-
-We can then define a function that only accepts types that implement
-`ContainerInterface` where its `IteratorType` associated facet implements
-`RandomAccessIterator`:
-
-```
-fn F[ContainerType:! ContainerInterface
-     where .IteratorType impls RandomAccessIterator]
-    (c: ContainerType);
-```
-
-#### Combining constraints
-
-Constraints can be combined by separating constraint clauses with the `and`
-keyword. This example expresses a constraint that two associated facets are
-equal and satisfy an interface:
-
-```
-fn EqualContainers
-    [CT1:! Container,
-     CT2:! Container where .ElementType impls HasEquality
-                       and .ElementType == CT1.ElementType]
-    (c1: CT1*, c2: CT2*) -> bool;
-```
-
-**Comparison with other languages:** Swift and Rust use commas `,` to separate
-constraint clauses, but that only works because they place the `where` in a
-different position in a declaration. In Carbon, the `where` is attached to a
-type in a parameter list that is already using commas to separate parameters.
-
-#### Recursive constraints
-
-We sometimes need to constrain a type to equal one of its associated facets. In
-this first example, we want to represent the function `Abs` which will return
-`Self` for some but not all types, so we use an associated facet `MagnitudeType`
-to encode the return type:
-
-```
-interface HasAbs {
-  extend Numeric;
-  let MagnitudeType:! Numeric;
-  fn Abs[self: Self]() -> MagnitudeType;
-}
-```
-
-For types representing subsets of the real numbers, such as `i32` or `f32`, the
-`MagnitudeType` will match `Self`, the type implementing an interface. For types
-representing complex numbers, the types will be different. For example, the
-`Abs()` applied to a `Complex64` value would produce a `f32` result. The goal is
-to write a constraint to restrict to the first case.
-
-In a second example, when you take the slice of a type implementing `Container`
-you get a type implementing `Container` which may or may not be the same type as
-the original container type. However, taking the slice of a slice always gives
-you the same type, and some functions want to only operate on containers whose
-slice type is the same as the container type.
-
-To solve this problem, we think of `Self` as an actual associated facet member
-of every interface. We can then address it using `.Self` in a `where` clause,
-like any other associated facet member.
-
-```
-fn Relu[T:! HasAbs where .MagnitudeType == .Self](x: T) {
-  // T.MagnitudeType == T so the following is allowed:
-  return (x.Abs() + x) / 2;
-}
-fn UseContainer[T:! Container where .SliceType == .Self](c: T) -> bool {
-  // T.SliceType == T so `c` and `c.Slice(...)` can be compared:
-  return c == c.Slice(...);
-}
-```
-
-Notice that in an interface definition, `Self` refers to the type implementing
-this interface while `.Self` refers to the associated facet currently being
-defined.
-
-```
-interface Container {
-  let ElementType:! type;
-
-  let SliceType:! Container
-      where .ElementType == ElementType and
-            .SliceType == .Self;
-
-  fn GetSlice[addr self: Self*]
-      (start: IteratorType, end: IteratorType) -> SliceType;
-}
-```
-
-Note that [naming](#named-constraint-constants) a recursive constraint using
-using the [`constraint` introducer](#named-constraints) approach, we can name
-the implementing type using `Self` instead of `.Self`, since they refer to the
-same type:
-
-```
-constraint RealAbs {
-  extend HasAbs where .MagnitudeType == Self;
-  // Equivalent to:
-  extend HasAbs where .MagnitudeType == .Self;
-}
-
-constraint ContainerIsSlice {
-  extend Container where .SliceType == Self;
-  // Equivalent to:
-  extend Container where .SliceType == .Self;
-}
-```
-
-The `.Self` construct follows these rules:
-
--   `X :!` introduces `.Self:! type`, where references to `.Self` are resolved
-    to `X`. This allows you to use `.Self` as an interface parameter as in
-    `X:! I(.Self)`.
--   `A where` introduces `.Self:! A` and `.Foo` for each member `Foo` of `A`
--   It's an error to reference `.Self` if it refers to more than one different
-    thing or isn't a type.
--   You get the innermost, most-specific type for `.Self` if it is introduced
-    twice in a scope. By the previous rule, it is only legal if they all refer
-    to the same facet binding.
--   `.Self` may not be on the left side of the `=` in a rewrite constraint.
-
-So in `X:! A where ...`, `.Self` is introduced twice, after the `:!` and the
-`where`. This is allowed since both times it means `X`. After the `:!`, `.Self`
-has the type `type`, which gets refined to `A` after the `where`. In contrast,
-it is an error if `.Self` could mean two different things, as in:
-
-```
-// ❌ Illegal: `.Self` could mean `T` or `T.A`.
-fn F[T:! InterfaceA where .A impls
-           (InterfaceB where .B == .Self)](x: T);
-```
-
-#### Parameterized type implements interface
-
-There are times when a function will pass a symbolic facet parameter of the
-function as an argument to a parameterized type, as in the previous case, and in
-addition the function needs the result to implement a specific interface.
-
-```
-// Some parameterized type.
-class Vector(T:! type) { ... }
-
-// Parameterized type implements interface only for some arguments.
-impl Vector(String) as Printable { ... }
-
-// Constraint: `T` such that `Vector(T)` implements `Printable`
-fn PrintThree
-    [T:! type where Vector(.Self) impls Printable]
-    (a: T, b: T, c: T) {
-  var v: Vector(T) = (a, b, c);
-  Print(v);
-}
-```
-
-**Comparison with other languages:** This use case was part of the
-[Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html#motivation).
-
-#### Another type implements parameterized interface
-
-In this case, we need some other type to implement an interface parameterized by
-a symbolic facet parameter. The syntax for this case follows the previous case,
-except now the `.Self` parameter is on the interface to the right of the
-`impls`. For example, we might need a type parameter `T` to support explicit
-conversion from an integer type like `i32`:
-
-```
-interface As(T:! type) {
-  fn Convert[self: Self]() -> T;
-}
-
-fn Double[T:! Mul where i32 impls As(.Self)](x: T) -> T {
-  return x * (2 as T);
-}
-```
-
-### Constraints must use a designator
-
-We don't allow a `where` constraint unless it applies a restriction to the
-current type. This means referring to some
-[designator](#kinds-of-where-constraints), like `.MemberName`, or
-[`.Self`](#recursive-constraints). Examples:
-
--   `Container where .ElementType = i32`
--   `type where Vector(.Self) impls Sortable`
--   `Addable where i32 impls AddableWith(.Result)`
-
-Constraints that only refer to other types should be moved to the type that is
-declared last. So:
-
-```carbon
-// ❌ Error: `where A == B` does not use `.Self` or a designator
-fn F[A:! type, B:! type, C:! type where A == B](a: A, b: B, c: C);
-```
-
-must be replaced by:
-
-```carbon
-// ✅ Allowed
-fn F[A:! type, B:! type where A == .Self, C:! type](a: A, b: B, c: C);
-```
-
-This includes `where` clauses used in an `impl` declaration:
-
-```
-// ❌ Error: `where T impls B` does not use `.Self` or a designator
-impl forall [T:! type] T as A where T impls B {}
-// ✅ Allowed
-impl forall [T:! type where .Self impls B] T as A {}
-// ✅ Allowed
-impl forall [T:! B] T as A {}
-```
-
-This clarifies the meaning of the `where` clause and reduces the number of
-redundant ways to express a restriction, following the
-[one-way principle](/docs/project/principles/one_way.md).
-
-**Alternative considered:** This rule was added in proposal
-[#2376](https://github.com/carbon-language/carbon-lang/pull/2376), which
-[considered whether this rule should be added](/proposals/p2376.md#alternatives-considered).
-
-### Implied constraints
-
-Imagine we have a checked-generic function that accepts an arbitrary `HashMap`:
-
-```
-fn LookUp[KeyType:! type](hm: HashMap(KeyType, i32)*,
-                          k: KeyType) -> i32;
-
-fn PrintValueOrDefault[KeyType:! Printable,
-                       ValueT:! Printable & HasDefault]
-    (map: HashMap(KeyType, ValueT), key: KeyT);
-```
-
-The `KeyType` in these declarations does not visibly satisfy the requirements of
-`HashMap`, which requires the type implement `Hashable` and other interfaces:
-
-```
-class HashMap(
-    KeyType:! Hashable & EqualityComparable & Movable,
-    ...) { ... }
-```
-
-In this case, `KeyType` gets `Hashable` and so on as _implied constraints_.
-Effectively that means that these functions are automatically rewritten to add a
-`where` constraint on `KeyType` attached to the `HashMap` type:
-
-```
-fn LookUp[KeyType:! type]
-    (hm: HashMap(KeyType, i32)*
-        where KeyType impls Hashable & EqualityComparable & Movable,
-     k: KeyType) -> i32;
-
-fn PrintValueOrDefault[KeyType:! Printable,
-                       ValueT:! Printable & HasDefault]
-    (map: HashMap(KeyType, ValueT)
-        where KeyType impls Hashable & EqualityComparable & Movable,
-     key: KeyT);
-```
-
-In this case, Carbon will accept the definition and infer the needed constraints
-on the symbolic facet parameter. This is both more concise for the author of the
-code and follows the
-["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
-This redundancy is undesirable since it means if the needed constraints for
-`HashMap` are changed, then the code has to be updated in more locations.
-Further it can add noise that obscures relevant information. In practice, any
-user of these functions will have to pass in a valid `HashMap` instance, and so
-will have already satisfied these constraints.
-
-This implied constraint is equivalent to the explicit constraint that each
-parameter and return type [is legal](#must-be-legal-type-argument-constraints).
-
-**Note:** These implied constraints affect the _requirements_ of a symbolic
-facet parameter, but not its _member names_. This way you can always look at the
-declaration to see how name resolution works, without having to look up the
-definitions of everything it is used as an argument to.
-
-**Limitation:** To limit readability concerns and ambiguity, this feature is
-limited to a single signature. Consider this interface declaration:
-
-```
-interface GraphNode {
-  let Edge:! type;
-  fn EdgesFrom[self: Self]() -> HashSet(Edge);
-}
-```
-
-One approach would be to say the use of `HashSet(Edge)` in the signature of the
-`EdgesFrom` function would imply that `Edge` satisfies the requirements of an
-argument to `HashSet`, such as being `Hashable`. Another approach would be to
-say that the `EdgesFrom` would only be conditionally available when `Edge` does
-satisfy the constraints on `HashSet` arguments. Instead, Carbon will reject this
-definition, requiring the user to include all the constraints required for the
-other declarations in the interface in the declaration of the `Edge` associated
-facet. Similarly, a parameter to a class must be declared with all the
-constraints needed to declare the members of the class that depend on that
-parameter.
-
-**Comparison with other languages:** Both Swift
-([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
-[2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference))
-and
-[Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
-support some form of this feature as part of their type inference (and
-[the Rust community is considering expanding support](http://smallcultfollowing.com/babysteps//blog/2022/04/12/implied-bounds-and-perfect-derive/#expanded-implied-bounds)).
-
-#### Must be legal type argument constraints
-
-Now consider the case that the symbolic facet parameter is going to be used as
-an argument to a parameterized type in a function body, not in the signature. If
-the parameterized type was explicitly mentioned in the signature, the implied
-constraint feature would ensure all of its requirements were met. The developer
-can create a trivial
-[parameterized type implements interface](#parameterized-type-implements-interface)
-`where` constraint to just say the type is a legal with this argument, by saying
-that the parameterized type implements `type`, which all types do.
-
-For example, a function that adds its parameters to a `HashSet` to deduplicate
-them, needs them to be `Hashable` and so on. To say "`T` is a type where
-`HashSet(T)` is legal," we can write:
-
-```
-fn NumDistinct[T:! type where HashSet(.Self) impls type]
-    (a: T, b: T, c: T) -> i32 {
-  var set: HashSet(T);
-  set.Add(a);
-  set.Add(b);
-  set.Add(c);
-  return set.Size();
-}
-```
-
-This has the same advantages over repeating the constraints on `HashSet`
-arguments in the type of `T` as the general implied constraints above.
-
-### Referencing names in the interface being defined
-
-The constraint in a `where` clause is required to only reference earlier names
-from this scope, as in this example:
-
-```
-interface Graph {
-  let E: Edge;
-  let V: Vert where .E == E and .Self == E.V;
-}
-```
-
-### Manual type equality
+##### Manual type equality
 
 Imagine we have some function with symbolic parameters:
 
@@ -3271,7 +3446,25 @@ changes to the source code when a single equality constraint is not sufficient
 to show two type expressions are equal, but a more extensive automated search
 can find a sequence that prove they are equal.
 
-#### `observe` declarations
+##### Observe declarations
+
+Same-type constraints are non-transitive, just like other constraints such as
+`ImplicitAs`. The developer can use an `observe` declaration to bring a new
+same-type constraint into scope:
+
+```
+observe A == B == C;
+```
+
+notionally does much the same thing as
+
+```
+impl A as SameAs(C) { ... }
+```
+
+where the `impl` makes use of `A is SameAs(B)` and `B is SameAs(C)`.
+
+##### `observe` declarations
 
 An `observe` declaration lists a sequence of
 [type expressions](terminology.md#type-expression) that are equal by some
@@ -3352,6 +3545,581 @@ fn F[T:! Transitive](t: T) {
 
 Since adding an `observe` declaration only adds non-extending implementations of
 interfaces to symbolic facets, they may be added without breaking existing code.
+
+#### Implements constraints
+
+**FIXME**
+
+A `where` clause can express that a facet binding must implement an interface.
+This is more flexible than the usual approach of including that interface in the
+type since it can be applied to associated facet members as well.
+
+In the following example, normally the `ElementType` of a `Container` can be any
+type. The `SortContainer` function, however, takes a pointer to a type
+satisfying `Container` with the additional constraint that its `ElementType`
+must satisfy the `Comparable` interface, using an `impls` constraint:
+
+```
+interface Container {
+  let ElementType:! type;
+  ...
+}
+
+fn SortContainer
+    [ContainerType:! Container where .ElementType impls Comparable]
+    (container_to_sort: ContainerType*);
+```
+
+In contrast to a [rewrite constraint](#rewrite-constraints) or a
+[same-type constraint](#same-type-constraints), this does not say what type
+`ElementType` exactly is, just that it must satisfy some facet type.
+
+**Note:** `Container` defines `ElementType` as having type `type`, but
+`ContainerType.ElementType` has type `Comparable`. This is because
+`ContainerType` has type `Container where .ElementType impls Comparable`, not
+`Container`. This means we need to be a bit careful when talking about the type
+of `ContainerType` when there is a `where` clause modifying it.
+
+**FIXME: can also be used to say a facet implements an interface without
+including that interface's API.**
+
+##### Implied constraints
+
+Imagine we have a checked-generic function that accepts an arbitrary `HashMap`
+[parameterized type](#parameterized-types):
+
+```
+fn LookUp[KeyType:! type](hm: HashMap(KeyType, i32)*,
+                          k: KeyType) -> i32;
+
+fn PrintValueOrDefault[KeyType:! Printable,
+                       ValueT:! Printable & HasDefault]
+    (map: HashMap(KeyType, ValueT), key: KeyT);
+```
+
+The `KeyType` in these declarations does not visibly satisfy the requirements of
+`HashMap`, which requires the type implement `Hashable` and other interfaces:
+
+```
+class HashMap(
+    KeyType:! Hashable & EqualityComparable & Movable,
+    ...) { ... }
+```
+
+In this case, `KeyType` gets `Hashable` and so on as _implied constraints_.
+Effectively that means that these functions are automatically rewritten to add a
+`where`...`impls` constraint on `KeyType`:
+
+```
+fn LookUp[
+    KeyType:! type
+        where .Self impls Hashable & EqualityComparable & Movable]
+    (hm: HashMap(KeyType, i32)*, k: KeyType) -> i32;
+
+fn PrintValueOrDefault[
+    KeyType:! Printable
+        where .Self impls Hashable & EqualityComparable & Movable,
+    ValueT:! Printable & HasDefault]
+    (map: HashMap(KeyType, ValueT), key: KeyT);
+```
+
+In this case, Carbon will accept the definition and infer the needed constraints
+on the symbolic facet parameter. This is both more concise for the author of the
+code and follows the
+["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
+This redundancy is undesirable since it means if the needed constraints for
+`HashMap` are changed, then the code has to be updated in more locations.
+Further it can add noise that obscures relevant information. In practice, any
+user of these functions will have to pass in a valid `HashMap` instance, and so
+will have already satisfied these constraints.
+
+This implied constraint is equivalent to the explicit constraint that each
+parameter and return type [is legal](#must-be-legal-type-argument-constraints).
+
+**Note:** These implied constraints affect the _requirements_ of a symbolic
+facet parameter, but not its _member names_. This way you can always look at the
+declaration to see how name resolution works, without having to look up the
+definitions of everything it is used as an argument to.
+
+**Limitation:** To limit readability concerns and ambiguity, this feature is
+limited to a single signature. Consider this interface declaration:
+
+```
+interface GraphNode {
+  let Edge:! type;
+  fn EdgesFrom[self: Self]() -> HashSet(Edge);
+}
+```
+
+One approach would be to say the use of `HashSet(Edge)` in the signature of the
+`EdgesFrom` function would imply that `Edge` satisfies the requirements of an
+argument to `HashSet`, such as being `Hashable`. Another approach would be to
+say that the `EdgesFrom` would only be conditionally available when `Edge` does
+satisfy the constraints on `HashSet` arguments. Instead, Carbon will reject this
+definition, requiring the user to include all the constraints required for the
+other declarations in the interface in the declaration of the `Edge` associated
+facet. Similarly, a parameter to a class must be declared with all the
+constraints needed to declare the members of the class that depend on that
+parameter.
+
+**Comparison with other languages:** Both Swift
+([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
+[2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference))
+and
+[Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
+support some form of this feature as part of their type inference (and
+[the Rust community is considering expanding support](http://smallcultfollowing.com/babysteps//blog/2022/04/12/implied-bounds-and-perfect-derive/#expanded-implied-bounds)).
+
+#### Combining constraints
+
+Constraints can be combined by separating constraint clauses with the `and`
+keyword. This example expresses a constraint that two associated facets are
+equal and satisfy an interface:
+
+```
+fn EqualContainers
+    [CT1:! Container,
+     CT2:! Container where .ElementType impls HasEquality
+                       and .ElementType = CT1.ElementType]
+    (c1: CT1*, c2: CT2*) -> bool;
+```
+
+**Comparison with other languages:** Swift and Rust use commas `,` to separate
+constraint clauses, but that only works because they place the `where` in a
+different position in a declaration. In Carbon, the `where` is attached to a
+type in a parameter list that is already using commas to separate parameters.
+
+#### Recursive constraints
+
+**FIXME: LINKED**
+
+We sometimes need to constrain a type to equal one of its associated facets. In
+this first example, we want to represent the function `Abs` which will return
+`Self` for some but not all types, so we use an associated facet `MagnitudeType`
+to encode the return type:
+
+```
+interface HasAbs {
+  extend Numeric;
+  let MagnitudeType:! Numeric;
+  fn Abs[self: Self]() -> MagnitudeType;
+}
+```
+
+For types representing subsets of the real numbers, such as `i32` or `f32`, the
+`MagnitudeType` will match `Self`, the type implementing an interface. For types
+representing complex numbers, the types will be different. For example, the
+`Abs()` applied to a `Complex64` value would produce a `f32` result. The goal is
+to write a constraint to restrict to the first case.
+
+In a second example, when you take the slice of a type implementing `Container`
+you get a type implementing `Container` which may or may not be the same type as
+the original container type. However, taking the slice of a slice always gives
+you the same type, and some functions want to only operate on containers whose
+slice type is the same as the container type.
+
+To solve this problem, we think of `Self` as an actual associated facet member
+of every interface. We can then address it using `.Self` in a `where` clause,
+like any other associated facet member.
+
+```
+fn Relu[T:! HasAbs where .MagnitudeType = .Self](x: T) {
+  // T.MagnitudeType == T so the following is allowed:
+  return (x.Abs() + x) / 2;
+}
+fn UseContainer[T:! Container where .SliceType = .Self](c: T) -> bool {
+  // T.SliceType == T so `c` and `c.Slice(...)` can be compared:
+  return c == c.Slice(...);
+}
+```
+
+Notice that in an interface definition, `Self` refers to the type implementing
+this interface while `.Self` refers to the associated facet currently being
+defined.
+
+```
+interface Container {
+  let ElementType:! type;
+
+  let SliceType:! Container
+      where .ElementType = ElementType and
+            .SliceType = .Self;
+
+  fn GetSlice[addr self: Self*]
+      (start: IteratorType, end: IteratorType) -> SliceType;
+}
+```
+
+Note that [naming](#named-constraint-constants) a recursive constraint using
+using the [`constraint` introducer](#named-constraints) approach, we can name
+the implementing type using `Self` instead of `.Self`, since they refer to the
+same type:
+
+```
+constraint RealAbs {
+  extend HasAbs where .MagnitudeType = Self;
+  // Equivalent to:
+  extend HasAbs where .MagnitudeType = .Self;
+}
+
+constraint ContainerIsSlice {
+  extend Container where .SliceType = Self;
+  // Equivalent to:
+  extend Container where .SliceType = .Self;
+}
+```
+
+The `.Self` construct follows these rules:
+
+-   `X :!` introduces `.Self:! type`, where references to `.Self` are resolved
+    to `X`. This allows you to use `.Self` as an interface parameter as in
+    `X:! I(.Self)`.
+-   `A where` introduces `.Self:! A` and `.Foo` for each member `Foo` of `A`
+-   It's an error to reference `.Self` if it refers to more than one different
+    thing or isn't a type.
+-   You get the innermost, most-specific type for `.Self` if it is introduced
+    twice in a scope. By the previous rule, it is only legal if they all refer
+    to the same facet binding.
+-   `.Self` may not be on the left side of the `=` in a rewrite constraint.
+
+So in `X:! A where ...`, `.Self` is introduced twice, after the `:!` and the
+`where`. This is allowed since both times it means `X`. After the `:!`, `.Self`
+has the type `type`, which gets refined to `A` after the `where`. In contrast,
+it is an error if `.Self` could mean two different things, as in:
+
+```
+// ❌ Illegal: `.Self` could mean `T` or `T.A`.
+fn F[T:! InterfaceA where .A impls
+           (InterfaceB where .B = .Self)](x: T);
+```
+
+### Satisfying both facet types
+
+If the two types being constrained to be equal have been declared with different
+facet types, then the actual type value they are set to will have to satisfy
+both constraints. For example, if `SortedContainer.ElementType` is declared to
+be `Comparable`, then in these declarations:
+
+```
+fn Contains_Rewrite
+    [SC:! SortedContainer,
+     CT:! Container where .ElementType = SC.ElementType]
+    (haystack: SC, needles: CT) -> bool;
+
+// Similarly with `==` same-type constraints:
+fn Contains_SameType
+    [SC:! SortedContainer,
+     CT:! Container where .ElementType == SC.ElementType]
+    (haystack: SC, needles: CT) -> bool;
+```
+
+the `where` constraints in both cases mean `CT.ElementType` must satisfy
+`Comparable` as well.
+
+**FIXME: Separate rewrite and `==` behavior.**
+
+However, inside the body of `Contains`, `CT.ElementType` will act like the
+implementation of `Comparable` is declared without [`extend`](#extend-impl).
+That is, items from the `needles` container won't directly have a `Compare`
+method member, but can still be implicitly converted to `Comparable` and can
+still call `Compare` using the compound member access syntax,
+`needle.(Comparable.Compare)(elt)`. The rule is that an `==` `where` constraint
+between two type variables does not modify the set of member names of either
+type. (If you write `where .ElementType = String` with a `=` and a concrete
+type, then `.ElementType` is actually set to `String` including the complete
+`String` API.)
+
+Note that `==` constraints are symmetric, so the previous declaration of
+`Contains` is equivalent to an alternative declaration where `CT` is declared
+first and the `where` clause is attached to `SortedContainer`:
+
+```
+fn Contains
+    [CT:! Container,
+     SC:! SortedContainer where .ElementType == CT.ElementType]
+    (haystack: SC, needles: CT) -> bool;
+```
+
+### Constraints must use a designator
+
+We don't allow a `where` constraint unless it applies a restriction to the
+current type. This means referring to some
+[designator](#kinds-of-where-constraints), like `.MemberName`, or
+[`.Self`](#recursive-constraints). Examples:
+
+-   `Container where .ElementType = i32`
+-   `type where Vector(.Self) impls Sortable`
+-   `Addable where i32 impls AddableWith(.Result)`
+
+Constraints that only refer to other types should be moved to the type that is
+declared last. So:
+
+```carbon
+// ❌ Error: `where A == B` does not use `.Self` or a designator
+fn F[A:! type, B:! type, C:! type where A == B](a: A, b: B, c: C);
+```
+
+must be replaced by:
+
+```carbon
+// ✅ Allowed
+fn F[A:! type, B:! type where A == .Self, C:! type](a: A, b: B, c: C);
+```
+
+This includes `where` clauses used in an `impl` declaration:
+
+```
+// ❌ Error: `where T impls B` does not use `.Self` or a designator
+impl forall [T:! type] T as A where T impls B {}
+// ✅ Allowed
+impl forall [T:! type where .Self impls B] T as A {}
+// ✅ Allowed
+impl forall [T:! B] T as A {}
+```
+
+This clarifies the meaning of the `where` clause and reduces the number of
+redundant ways to express a restriction, following the
+[one-way principle](/docs/project/principles/one_way.md).
+
+**Alternative considered:** This rule was added in proposal
+[#2376](https://github.com/carbon-language/carbon-lang/pull/2376), which
+[considered whether this rule should be added](/proposals/p2376.md#alternatives-considered).
+
+### Referencing names in the interface being defined
+
+The constraint in a `where` clause is required to only reference earlier names
+from this scope, as in this example:
+
+```
+// ❌ Illegal: `E` references `V` declared later.
+interface Graph {
+  let E: Edge where .V = V;
+  let V: Vert where .E = E;
+}
+
+// ✅ Allowed: Only references to earlier names.
+interface Graph {
+  let E: Edge;
+  let V: Vert where .E = E and .Self == E.V;
+}
+```
+
+### Constraint examples and use cases
+
+-   **Set [associated constant](#associated-constants) to a constant:** For
+    example in `NSpacePoint where .N = 2`, the associated constant `N` of
+    `NSpacePoint` must be `2`. This syntax is also used to specify the values of
+    associated constants when implementing an interface for a type, as in
+    `impl MyPoint as NSpacePoint where .N = 2 {`...`}`.
+
+-   **Set an [associated facet](#associated-facets) to a specific value:**
+    Associated facets are treated like any other associated constant. So
+    `Stack where .ElementType = i32` is a facet type that restricts to types
+    that implement the `Stack` interface with integer elements, as in:
+
+    ```
+    fn SumIntStack[T:! Stack where .ElementType = i32]
+        (s: T*) -> i32 {
+      var sum: i32 = 0;
+      while (!s->IsEmpty()) {
+        // s->Pop() returns a value of type
+        // `T.ElementType` which is `i32`:
+        sum += s->Pop();
+      }
+      return sum;
+    }
+    ```
+
+    Note that this is a case that can use an `==` same-type constraint instead
+    of an `=` rewrite constraint.
+
+-   **One [associated constant](#associated-constants) must equal another:** For
+    example with this definition of the interface `PointCloud`:
+
+    ```
+    interface PointCloud {
+      let Dim:! i32;
+      let PointT:! NSpacePoint where .N = Dim;
+    }
+    ```
+
+    an implementation of `PointCloud` for a type `T` will have
+    `T.PointT.N == T.Dim`.
+
+-   **Equal facet bindings:**
+
+    For example, we could make the `ElementType` of an `Iterator` interface
+    equal to the `ElementType` of a `Container` interface as follows:
+
+    ```
+    interface Iterator {
+      let ElementType:! type;
+      ...
+    }
+    interface Container {
+      let ElementType:! type;
+      let IteratorType:! Iterator where .ElementType = ElementType;
+      ...
+    }
+    ```
+
+    In a function signature, this may be done by referencing an earlier
+    parameter:
+
+    ```
+    fn Map[CT:! Container,
+           FT:! Function where .InputType = CT.ElementType]
+          (c: CT, f: FT) -> Vector(FT.OutputType);
+    ```
+
+    In that example, `FT.InputType` is constrained to equal `CT.InputType`.
+    Given an interface with two associated facets
+
+    ```
+    interface PairInterface {
+      let Left:! type;
+      let Right:! type;
+    }
+    ```
+
+    we can constrain them to be equal using
+    `PairInterface where .Left = .Right`.
+
+    Note that this is a case that can use an `==` same-type constraint instead
+    of an `=` rewrite constraint.
+
+-   **Associated facet implements interface:** Given these definitions (omitting
+    `ElementType` for brevity):
+
+    ```carbon
+    interface IteratorInterface { ... }
+    interface ContainerInterface {
+      let IteratorType:! IteratorInterface;
+      // ...
+    }
+    interface RandomAccessIterator {
+      extend IteratorInterface;
+      // ...
+    }
+    ```
+
+    We can then define a function that only accepts types that implement
+    `ContainerInterface` where its `IteratorType` associated facet implements
+    `RandomAccessIterator`:
+
+    ```carbon
+    fn F[ContainerType:! ContainerInterface
+         where .IteratorType impls RandomAccessIterator]
+        (c: ContainerType);
+    ```
+
+#### Parameterized type implements interface
+
+**FIXME: LINKED**
+
+There are times when a function will pass a symbolic facet parameter of the
+function as an argument to a [parameterized type](#parameterized-types), as in
+the previous case, and in addition the function needs the result to implement a
+specific interface.
+
+```
+// Some parameterized type.
+class Vector(T:! type) { ... }
+
+// Parameterized type implements interface only for some arguments.
+impl Vector(String) as Printable { ... }
+
+// Constraint: `T` such that `Vector(T)` implements `Printable`
+fn PrintThree
+    [T:! type where Vector(.Self) impls Printable]
+    (a: T, b: T, c: T) {
+  var v: Vector(T) = (a, b, c);
+  Print(v);
+}
+```
+
+**Comparison with other languages:** This use case was part of the
+[Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html#motivation).
+
+#### Another type implements parameterized interface
+
+**FIXME: LINKED**
+
+In this case, we need some other type to implement an interface parameterized by
+a symbolic facet parameter. The syntax for this case follows the previous case,
+except now the `.Self` parameter is on the interface to the right of the
+`impls`. For example, we might need a type parameter `T` to support explicit
+conversion from an integer type like `i32`:
+
+```
+interface As(T:! type) {
+  fn Convert[self: Self]() -> T;
+}
+
+fn Double[T:! Mul where i32 impls As(.Self)](x: T) -> T {
+  return x * (2 as T);
+}
+```
+
+#### Must be legal type argument constraints
+
+**FIXME: LINKED**
+
+Now consider the case that the symbolic facet parameter is going to be used as
+an argument to a parameterized type in a function body, not in the signature. If
+the parameterized type was explicitly mentioned in the signature, the
+[implied constraint](#implied-constraints) feature would ensure all of its
+requirements were met. The developer can create a trivial
+[parameterized type implements interface](#parameterized-type-implements-interface)
+`where` constraint to just say the type is a legal with this argument, by saying
+that the parameterized type implements `type`, which all types do.
+
+For example, a function that adds its parameters to a `HashSet` to deduplicate
+them, needs them to be `Hashable` and so on. To say "`T` is a type where
+`HashSet(T)` is legal," we can write:
+
+```
+fn NumDistinct[T:! type where HashSet(.Self) impls type]
+    (a: T, b: T, c: T) -> i32 {
+  var set: HashSet(T);
+  set.Add(a);
+  set.Add(b);
+  set.Add(c);
+  return set.Size();
+}
+```
+
+This has the same advantages over repeating the constraints on `HashSet`
+arguments in the type of `T` as the general implied constraints above.
+
+### Named constraint constants
+
+A facet type with a `where` constraint, such as `C where <condition>`, can be
+named two different ways:
+
+-   Using `let template` as in:
+
+    ```carbon
+    let template NameOfConstraint:! auto = C where <condition>;
+    ```
+
+    or, since the type of a facet type is `type`:
+
+    ```carbon
+    let template NameOfConstraint:! type = C where <condition>;
+    ```
+
+-   Using a [named constraint](#named-constraints) with the `constraint` keyword
+    introducer:
+
+    ```carbon
+    constraint NameOfConstraint {
+      extend C where <condition>;
+    }
+    ```
+
+Whichever approach is used, the result is `NameOfConstraint` is a compile-time
+constant that is equivalent to `C where <condition>`.
 
 ## Other constraints as facet types
 
@@ -3735,8 +4503,8 @@ so it applies to a family of types, interfaces, or both. This includes:
 
 ### Impl for a parameterized type
 
-Interfaces may be implemented for a parameterized type. This can be done
-lexically in the class' scope:
+Interfaces may be implemented for a [parameterized type](#parameterized-types).
+This can be done lexically in the class' scope:
 
 ```
 class Vector(T:! type) {
@@ -5702,6 +6470,8 @@ Generic types may be defined by giving them compile-time parameters. Those
 parameters may be used to specify types in the declarations of its members, such
 as data fields, member functions, and even interfaces being implemented. For
 example, a container type might be parameterized by the type of its elements:
+
+**FIXME: member functions may have additional parameters.**
 
 ```
 class HashMap(
