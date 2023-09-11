@@ -450,8 +450,8 @@ auto Context::ImplicitAsForArgs(Parse::Node call_parse_node,
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
-                      "Function cannot be used: Received {0} argument(s), but "
-                      "require {1} argument(s).",
+                      "{0} argument(s) passed to function expecting "
+                      "{1} argument(s).",
                       int, int);
     CARBON_DIAGNOSTIC(InCallToFunction, Note,
                       "Calling function declared here.");
@@ -463,21 +463,26 @@ auto Context::ImplicitAsForArgs(Parse::Node call_parse_node,
     return false;
   }
 
+  if (param_refs.empty()) {
+    return true;
+  }
+
+  int diag_param_index;
+  DiagnosticAnnotationScope annotate_diagnostics(emitter_, [&](auto& builder) {
+    CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
+                      "Initializing parameter {0} of function declared here.",
+                      int);
+    builder.Note(param_parse_node, InCallToFunctionParam, diag_param_index + 1);
+  });
+
   // Check type conversions per-element.
   for (auto [i, value_id, param_ref] : llvm::enumerate(arg_refs, param_refs)) {
-    DiagnosticAnnotationScope annotate_diagnostics(
-        emitter_, [param_parse_node, i = i](auto& builder) {
-          CARBON_DIAGNOSTIC(
-              InCallToFunctionParam, Note,
-              "Initializing parameter {0} of function declared here.", size_t);
-          builder.Note(param_parse_node, InCallToFunctionParam, i + 1);
-        });
+    diag_param_index = i;
 
     auto as_type_id = semantics_ir_->GetNode(param_ref).type_id();
-    value_id = ImplicitAs(call_parse_node, value_id, as_type_id);
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.
-    value_id = ConvertToValueExpression(value_id);
+    value_id = ConvertToValueOfType(call_parse_node, value_id, as_type_id);
     if (value_id == SemIR::NodeId::BuiltinError) {
       return false;
     }
