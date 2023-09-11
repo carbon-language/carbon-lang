@@ -19,6 +19,6 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc9_11.2: i32 = stub_reference %.loc9_11.1
 // CHECK:STDOUT:   %.loc9_15.1: i32 = int_literal 35
 // CHECK:STDOUT:   %.loc9_15.2: i32 = stub_reference %.loc9_15.1
-// CHECK:STDOUT:   %.loc9_17: (i32, i32) = tuple_value (%.loc9_11.2, %.loc9_15.2)
+// CHECK:STDOUT:   %.loc9_17: (i32, i32) = tuple_literal (%.loc9_11.2, %.loc9_15.2)
 // CHECK:STDOUT:   return %.loc9_17
 // CHECK:STDOUT: }

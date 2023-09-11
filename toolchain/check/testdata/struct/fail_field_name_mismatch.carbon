@@ -15,6 +15,6 @@ var x: {.a: i32} = {.b = 1};
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_24: i32 = stub_reference %.loc10_26
 // CHECK:STDOUT:   %.loc10_27.1: type = struct_type {.b: i32}
-// CHECK:STDOUT:   %.loc10_27.2: {.b: i32} = struct_value (%.loc10_24)
+// CHECK:STDOUT:   %.loc10_27.2: {.b: i32} = struct_literal (%.loc10_24)
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

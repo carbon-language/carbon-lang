@@ -23,6 +23,6 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   %.loc12_13.2: i32 = stub_reference %.loc12_13.1
 // CHECK:STDOUT:   %.loc12_18.1: f64 = real_literal 34e-1
 // CHECK:STDOUT:   %.loc12_18.2: f64 = stub_reference %.loc12_18.1
-// CHECK:STDOUT:   %.loc12_21: (i32, f64) = tuple_value (%.loc12_13.2, %.loc12_18.2)
+// CHECK:STDOUT:   %.loc12_21: (i32, f64) = tuple_literal (%.loc12_13.2, %.loc12_18.2)
 // CHECK:STDOUT:   return %.loc12_21
 // CHECK:STDOUT: }

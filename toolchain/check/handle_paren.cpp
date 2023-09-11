@@ -66,7 +66,7 @@ auto HandleTupleLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto type_id = context.CanonicalizeTupleType(parse_node, std::move(type_ids));
 
   auto value_id = context.AddNode(
-      SemIR::Node::TupleValue::Make(parse_node, type_id, refs_id));
+      SemIR::Node::TupleLiteral::Make(parse_node, type_id, refs_id));
   context.node_stack().Push(parse_node, value_id);
   return true;
 }

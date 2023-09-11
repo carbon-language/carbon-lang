@@ -27,10 +27,10 @@ fn Deref(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11: ref <error> = dereference %n
 // CHECK:STDOUT:   %.loc15_5.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value ()
+// CHECK:STDOUT:   %.loc15_5.2: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_3: ref <error> = dereference %.loc15_5.2
 // CHECK:STDOUT:   %.loc19_5.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value ()
+// CHECK:STDOUT:   %.loc19_5.2: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc19_3: ref <error> = dereference %.loc19_5.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

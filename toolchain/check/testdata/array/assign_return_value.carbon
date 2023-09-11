@@ -19,7 +19,7 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_28.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_28.2: i32 = stub_reference %.loc7_28.1
-// CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_value (%.loc7_28.2)
+// CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_literal (%.loc7_28.2)
 // CHECK:STDOUT:   return %.loc7_30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
