@@ -574,16 +574,17 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
   }
 
   // Check that the tuple is the right size.
-  auto array_bound = context.semantics_ir().GetArrayBoundValue(array_bound_id);
+  uint64_t array_bound =
+      context.semantics_ir().GetArrayBoundValue(array_bound_id);
   if (tuple_elem_types.size() != array_bound) {
     CARBON_DIAGNOSTIC(
         ArrayInitFromLiteralArgCountMismatch, Error,
         "Cannot initialize array of {0} element(s) from {1} initializer(s).",
-        decltype(array_bound), size_t);
+        uint64_t, size_t);
     CARBON_DIAGNOSTIC(ArrayInitFromExpressionArgCountMismatch, Error,
                       "Cannot initialize array of {0} element(s) from tuple "
                       "with {1} element(s).",
-                      decltype(array_bound), size_t);
+                      uint64_t, size_t);
     context.emitter().Emit(
         context.semantics_ir().GetNode(value_id).parse_node(),
         literal_elems.empty() ? ArrayInitFromExpressionArgCountMismatch
