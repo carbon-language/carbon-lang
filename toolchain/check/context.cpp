@@ -611,16 +611,17 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
   for (auto [i, src_type_id] : llvm::enumerate(tuple_elem_types)) {
     // TODO: Add a new node kind for indexing an array at a constant index
     // so that we don't need an integer literal node here.
-    auto int_id = context.AddNode(SemIR::Node::IntegerLiteral::Make(
+    auto index_id = context.AddNode(SemIR::Node::IntegerLiteral::Make(
         value.parse_node(),
         context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
         context.semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
     auto target_id = context.AddNode(SemIR::Node::ArrayIndex::Make(
-        value.parse_node(), element_type_id, return_slot_id, int_id));
-    auto src_id = !literal_elems.empty()
-                      ? literal_elems[i]
-                      : context.AddNode(SemIR::Node::TupleIndex::Make(
-                            value.parse_node(), src_type_id, value_id, int_id));
+        value.parse_node(), element_type_id, return_slot_id, index_id));
+    auto src_id =
+        !literal_elems.empty()
+            ? literal_elems[i]
+            : context.AddNode(SemIR::Node::TupleIndex::Make(
+                  value.parse_node(), src_type_id, value_id, index_id));
     auto init_id =
         context.InitializeAndFinalize(value.parse_node(), target_id, src_id);
     if (init_id == SemIR::NodeId::BuiltinError) {
