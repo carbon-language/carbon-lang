@@ -49,19 +49,19 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_3.3: ref [i32; 5] = stub_reference %ints
 // CHECK:STDOUT:   %.loc16_3.4: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc16_3.5: ref i32 = array_index %.loc16_3.3, %.loc16_3.4
-// CHECK:STDOUT:   %.loc16_3.6 = initialize_from %.loc11_5.2 to %.loc16_3.5
+// CHECK:STDOUT:   %.loc16_3.6: init i32 = initialize_from %.loc11_5.2 to %.loc16_3.5
 // CHECK:STDOUT:   %.loc16_3.7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc16_3.8: ref i32 = array_index %.loc16_3.3, %.loc16_3.7
-// CHECK:STDOUT:   %.loc16_3.9 = initialize_from %.loc12_5.2 to %.loc16_3.8
+// CHECK:STDOUT:   %.loc16_3.9: init i32 = initialize_from %.loc12_5.2 to %.loc16_3.8
 // CHECK:STDOUT:   %.loc16_3.10: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc16_3.11: ref i32 = array_index %.loc16_3.3, %.loc16_3.10
-// CHECK:STDOUT:   %.loc16_3.12 = initialize_from %.loc13_5.2 to %.loc16_3.11
+// CHECK:STDOUT:   %.loc16_3.12: init i32 = initialize_from %.loc13_5.2 to %.loc16_3.11
 // CHECK:STDOUT:   %.loc16_3.13: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc16_3.14: ref i32 = array_index %.loc16_3.3, %.loc16_3.13
-// CHECK:STDOUT:   %.loc16_3.15 = initialize_from %.loc14_5.2 to %.loc16_3.14
+// CHECK:STDOUT:   %.loc16_3.15: init i32 = initialize_from %.loc14_5.2 to %.loc16_3.14
 // CHECK:STDOUT:   %.loc16_3.16: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc16_3.17: ref i32 = array_index %.loc16_3.3, %.loc16_3.16
-// CHECK:STDOUT:   %.loc16_3.18 = initialize_from %.loc15_5.2 to %.loc16_3.17
+// CHECK:STDOUT:   %.loc16_3.18: init i32 = initialize_from %.loc15_5.2 to %.loc16_3.17
 // CHECK:STDOUT:   %.loc16_3.19: init [i32; 5] = array_init %.loc16_3.2, (%.loc16_3.6, %.loc16_3.9, %.loc16_3.12, %.loc16_3.15, %.loc16_3.18) to %.loc16_3.3
 // CHECK:STDOUT:   assign %ints, %.loc16_3.19
 // CHECK:STDOUT:   %.loc17_21: i32 = int_literal 7
@@ -86,25 +86,25 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_3.3: ref [f64; 7] = stub_reference %floats
 // CHECK:STDOUT:   %.loc25_3.4: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc25_3.5: ref f64 = array_index %.loc25_3.3, %.loc25_3.4
-// CHECK:STDOUT:   %.loc25_3.6 = initialize_from %.loc18_5.2 to %.loc25_3.5
+// CHECK:STDOUT:   %.loc25_3.6: init f64 = initialize_from %.loc18_5.2 to %.loc25_3.5
 // CHECK:STDOUT:   %.loc25_3.7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc25_3.8: ref f64 = array_index %.loc25_3.3, %.loc25_3.7
-// CHECK:STDOUT:   %.loc25_3.9 = initialize_from %.loc19_5.2 to %.loc25_3.8
+// CHECK:STDOUT:   %.loc25_3.9: init f64 = initialize_from %.loc19_5.2 to %.loc25_3.8
 // CHECK:STDOUT:   %.loc25_3.10: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc25_3.11: ref f64 = array_index %.loc25_3.3, %.loc25_3.10
-// CHECK:STDOUT:   %.loc25_3.12 = initialize_from %.loc20_5.2 to %.loc25_3.11
+// CHECK:STDOUT:   %.loc25_3.12: init f64 = initialize_from %.loc20_5.2 to %.loc25_3.11
 // CHECK:STDOUT:   %.loc25_3.13: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc25_3.14: ref f64 = array_index %.loc25_3.3, %.loc25_3.13
-// CHECK:STDOUT:   %.loc25_3.15 = initialize_from %.loc21_5.2 to %.loc25_3.14
+// CHECK:STDOUT:   %.loc25_3.15: init f64 = initialize_from %.loc21_5.2 to %.loc25_3.14
 // CHECK:STDOUT:   %.loc25_3.16: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc25_3.17: ref f64 = array_index %.loc25_3.3, %.loc25_3.16
-// CHECK:STDOUT:   %.loc25_3.18 = initialize_from %.loc22_5.2 to %.loc25_3.17
+// CHECK:STDOUT:   %.loc25_3.18: init f64 = initialize_from %.loc22_5.2 to %.loc25_3.17
 // CHECK:STDOUT:   %.loc25_3.19: i32 = int_literal 5
 // CHECK:STDOUT:   %.loc25_3.20: ref f64 = array_index %.loc25_3.3, %.loc25_3.19
-// CHECK:STDOUT:   %.loc25_3.21 = initialize_from %.loc23_5.2 to %.loc25_3.20
+// CHECK:STDOUT:   %.loc25_3.21: init f64 = initialize_from %.loc23_5.2 to %.loc25_3.20
 // CHECK:STDOUT:   %.loc25_3.22: i32 = int_literal 6
 // CHECK:STDOUT:   %.loc25_3.23: ref f64 = array_index %.loc25_3.3, %.loc25_3.22
-// CHECK:STDOUT:   %.loc25_3.24 = initialize_from %.loc24_5.2 to %.loc25_3.23
+// CHECK:STDOUT:   %.loc25_3.24: init f64 = initialize_from %.loc24_5.2 to %.loc25_3.23
 // CHECK:STDOUT:   %.loc25_3.25: init [f64; 7] = array_init %.loc25_3.2, (%.loc25_3.6, %.loc25_3.9, %.loc25_3.12, %.loc25_3.15, %.loc25_3.18, %.loc25_3.21, %.loc25_3.24) to %.loc25_3.3
 // CHECK:STDOUT:   assign %floats, %.loc25_3.25
 // CHECK:STDOUT:   return

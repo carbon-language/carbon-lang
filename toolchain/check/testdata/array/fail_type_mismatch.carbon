@@ -41,7 +41,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc10_39.3: ref [i32; 3] = temporary_storage
 // CHECK:STDOUT:   %.loc10_39.4: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc10_39.5: ref i32 = array_index %.loc10_39.3, %.loc10_39.4
-// CHECK:STDOUT:   %.loc10_39.6 = initialize_from %.loc10_20.2 to %.loc10_39.5
+// CHECK:STDOUT:   %.loc10_39.6: init i32 = initialize_from %.loc10_20.2 to %.loc10_39.5
 // CHECK:STDOUT:   %.loc10_39.7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_39.8: ref i32 = array_index %.loc10_39.3, %.loc10_39.7
 // CHECK:STDOUT:   assign %a, <error>
@@ -59,7 +59,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc15_5.3: ref i32 = array_index %.loc15_5.1, %.loc15_5.2
 // CHECK:STDOUT:   %.loc15_5.4: ref i32 = tuple_index %t1, %.loc15_5.2
 // CHECK:STDOUT:   %.loc15_5.5: i32 = bind_value %.loc15_5.4
-// CHECK:STDOUT:   %.loc15_5.6 = initialize_from %.loc15_5.5 to %.loc15_5.3
+// CHECK:STDOUT:   %.loc15_5.6: init i32 = initialize_from %.loc15_5.5 to %.loc15_5.3
 // CHECK:STDOUT:   %.loc15_5.7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc15_5.8: ref i32 = array_index %.loc15_5.1, %.loc15_5.7
 // CHECK:STDOUT:   %.loc15_5.9: ref String = tuple_index %t1, %.loc15_5.7

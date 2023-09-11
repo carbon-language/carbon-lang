@@ -21,7 +21,7 @@ var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc7_23.3: ref [i32; 1] = stub_reference %a
 // CHECK:STDOUT:   %.loc7_23.4: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_23.5: ref i32 = array_index %.loc7_23.3, %.loc7_23.4
-// CHECK:STDOUT:   %.loc7_23.6 = initialize_from %.loc7_20.2 to %.loc7_23.5
+// CHECK:STDOUT:   %.loc7_23.6: init i32 = initialize_from %.loc7_20.2 to %.loc7_23.5
 // CHECK:STDOUT:   %.loc7_23.7: init [i32; 1] = array_init %.loc7_23.2, (%.loc7_23.6) to %.loc7_23.3
 // CHECK:STDOUT:   assign %a, %.loc7_23.7
 // CHECK:STDOUT:   %b: ref i32 = var "b"

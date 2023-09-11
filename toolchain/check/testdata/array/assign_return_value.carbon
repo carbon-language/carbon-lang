@@ -36,7 +36,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_22.6: ref i32 = array_index %.loc10_22.4, %.loc10_22.5
 // CHECK:STDOUT:   %.loc10_22.7: ref i32 = tuple_index %.loc10_22.3, %.loc10_22.5
 // CHECK:STDOUT:   %.loc10_22.8: i32 = bind_value %.loc10_22.7
-// CHECK:STDOUT:   %.loc10_22.9 = initialize_from %.loc10_22.8 to %.loc10_22.6
+// CHECK:STDOUT:   %.loc10_22.9: init i32 = initialize_from %.loc10_22.8 to %.loc10_22.6
 // CHECK:STDOUT:   %.loc10_22.10: init [i32; 1] = array_init %.loc10_22.3, (%.loc10_22.9) to %.loc10_22.4
 // CHECK:STDOUT:   assign %t, %.loc10_22.10
 // CHECK:STDOUT:   return

@@ -293,6 +293,23 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
   }
 }
 
+auto Context::InitializeAndFinalize(Parse::Node parse_node,
+                                    SemIR::NodeId target_id,
+                                    SemIR::NodeId value_id) -> SemIR::NodeId {
+  auto init_id = Initialize(parse_node, target_id, value_id);
+  if (init_id == SemIR::NodeId::BuiltinError) {
+    return init_id;
+  }
+  auto target_type_id = semantics_ir().GetNode(target_id).type_id();
+  if (auto init_rep =
+          SemIR::GetInitializingRepresentation(semantics_ir(), target_type_id);
+      init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
+    init_id = AddNode(SemIR::Node::InitializeFrom::Make(
+        parse_node, target_type_id, init_id, target_id));
+  }
+  return init_id;
+}
+
 auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
   if (expr_id == SemIR::NodeId::BuiltinError) {
     return expr_id;

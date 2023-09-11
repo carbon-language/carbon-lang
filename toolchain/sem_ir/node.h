@@ -379,8 +379,8 @@ class Node : public Printable<Node> {
   // Finalizes the initialization of `dest_id` from the initializer expression
   // `src_id`, by performing a final copy from source to destination, for types
   // whose initialization is not in-place.
-  using InitializeFrom = FactoryNoType<NodeKind::InitializeFrom,
-                                       NodeId /*src_id*/, NodeId /*dest_id*/>;
+  using InitializeFrom =
+      Factory<NodeKind::InitializeFrom, NodeId /*src_id*/, NodeId /*dest_id*/>;
 
   using IntegerLiteral =
       Factory<NodeKind::IntegerLiteral, IntegerLiteralId /*integer_id*/>;

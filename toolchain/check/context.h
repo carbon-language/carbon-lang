@@ -131,19 +131,7 @@ class Context {
   // of the initializer, such as an `Assign` or `ReturnExpression` node. The
   // resulting node describes the initialization operation that was performed.
   auto InitializeAndFinalize(Parse::Node parse_node, SemIR::NodeId target_id,
-                             SemIR::NodeId value_id) -> SemIR::NodeId {
-    auto init_id = Initialize(parse_node, target_id, value_id);
-    if (init_id == SemIR::NodeId::BuiltinError) {
-      return init_id;
-    }
-    if (auto init_rep = SemIR::GetInitializingRepresentation(
-            semantics_ir(), semantics_ir().GetNode(target_id).type_id());
-        init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
-      init_id = AddNode(
-          SemIR::Node::InitializeFrom::Make(parse_node, init_id, target_id));
-    }
-    return init_id;
-  }
+                             SemIR::NodeId value_id) -> SemIR::NodeId;
 
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
