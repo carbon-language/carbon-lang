@@ -18,8 +18,8 @@ namespace {
 
 class ExplorerFileTest : public FileTestBase {
  public:
-  explicit ExplorerFileTest(std::filesystem::path path)
-      : FileTestBase(std::move(path)),
+  explicit ExplorerFileTest(llvm::StringRef test_name)
+      : FileTestBase(test_name),
         prelude_line_re_(R"(prelude.carbon:(\d+))"),
         timing_re_(R"((Time elapsed in \w+: )\d+(ms))") {
     CARBON_CHECK(prelude_line_re_.ok()) << prelude_line_re_.error();
@@ -100,7 +100,7 @@ class ExplorerFileTest : public FileTestBase {
  private:
   // Trace output is directly checked for a few tests.
   auto check_trace_output() -> bool {
-    return path().string().find("/trace/") != std::string::npos;
+    return test_name().find("/trace/") != std::string::npos;
   }
 
   TestRawOstream trace_stream_;
