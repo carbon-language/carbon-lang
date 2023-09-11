@@ -31,7 +31,7 @@ class FileTestBaseTest : public FileTestBase {
     }
     stdout << "\n";
 
-    auto filename = path().filename();
+    auto filename = std::filesystem::path(test_name().str()).filename();
     if (filename == "args.carbon") {
       // 'args.carbon' has custom arguments, so don't do regular argument
       // validation for it.
