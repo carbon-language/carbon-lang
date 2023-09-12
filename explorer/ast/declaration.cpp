@@ -421,7 +421,7 @@ void CallableDeclaration::PrintIndent(int indent_num_spaces,
     for (Nonnull<const GenericBinding*> deduced : deduced_parameters_) {
       out << sep << *deduced;
     }
-    if(self_pattern_) {
+    if (self_pattern_) {
       out << sep << **self_pattern_;
     }
     out << "]";
