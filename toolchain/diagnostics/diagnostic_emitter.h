@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 
@@ -190,6 +191,9 @@ using NoTypeDeduction = std::common_type_t<Arg>;
 
 }  // namespace Internal
 
+template <typename LocationT, typename AnnotateFn>
+class DiagnosticAnnotationScope;
+
 // Manages the creation of reports, the testing if diagnostics are enabled, and
 // the collection of reports.
 //
@@ -206,6 +210,10 @@ class DiagnosticEmitter {
   // expected usage.
   class DiagnosticBuilder {
    public:
+    // DiagnosticBuilder is move-only and cannot be copied.
+    DiagnosticBuilder(DiagnosticBuilder&&) = default;
+    DiagnosticBuilder& operator=(DiagnosticBuilder&&) = default;
+
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
@@ -224,6 +232,9 @@ class DiagnosticEmitter {
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Emit() -> void {
+      for (auto* annotator_ : emitter_->annotators_) {
+        annotator_->Annotate(*this);
+      }
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
     }
 
@@ -295,8 +306,37 @@ class DiagnosticEmitter {
   }
 
  private:
+  // Base class for scopes in which we perform diagnostic annotation, such as
+  // adding notes with contextual information.
+  class DiagnosticAnnotationScopeBase {
+   public:
+    virtual auto Annotate(DiagnosticBuilder& builder) -> void = 0;
+
+    DiagnosticAnnotationScopeBase(const DiagnosticAnnotationScopeBase&) =
+        delete;
+    DiagnosticAnnotationScopeBase& operator=(
+        const DiagnosticAnnotationScopeBase&) = delete;
+
+   protected:
+    DiagnosticAnnotationScopeBase(DiagnosticEmitter* emitter)
+        : emitter_(emitter) {
+      emitter_->annotators_.push_back(this);
+    }
+    ~DiagnosticAnnotationScopeBase() {
+      CARBON_CHECK(emitter_->annotators_.back() == this);
+      emitter_->annotators_.pop_back();
+    }
+
+   private:
+    DiagnosticEmitter* emitter_;
+  };
+
+  template <typename LocT, typename AnnotateFn>
+  friend class DiagnosticAnnotationScope;
+
   DiagnosticLocationTranslator<LocationT>* translator_;
   DiagnosticConsumer* consumer_;
+  llvm::SmallVector<DiagnosticAnnotationScopeBase*> annotators_;
 };
 
 class StreamDiagnosticConsumer : public DiagnosticConsumer {
@@ -357,6 +397,39 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
   DiagnosticConsumer* next_consumer_;
   bool seen_error_ = false;
 };
+
+// An RAII object that denotes a scope in which any diagnostic produced should
+// be annotated in some way.
+//
+// This object is given a function `annotate` that will be called with a
+// `DiagnosticBuilder& builder` for any diagnostic that is emitted through the
+// given emitter. That function can annotate the diagnostic by calling
+// `builder.Note` to add notes.
+template <typename LocationT, typename AnnotateFn>
+class DiagnosticAnnotationScope
+    : private DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase {
+  using Base =
+      typename DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase;
+
+ public:
+  DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
+                            AnnotateFn annotate)
+      : Base(emitter), annotate_(annotate) {}
+
+ private:
+  auto Annotate(
+      typename DiagnosticEmitter<LocationT>::DiagnosticBuilder& builder)
+      -> void override {
+    annotate_(builder);
+  }
+
+  AnnotateFn annotate_;
+};
+
+template <typename LocationT, typename AnnotateFn>
+DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
+                          AnnotateFn annotate)
+    -> DiagnosticAnnotationScope<LocationT, AnnotateFn>;
 
 }  // namespace Carbon
 

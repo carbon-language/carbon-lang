@@ -131,8 +131,7 @@ class Context {
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
                             SemIR::TypeId type_id) -> SemIR::NodeId {
-    return ConvertToValueExpression(
-        ImplicitAsRequired(parse_node, value_id, type_id));
+    return ConvertToValueExpression(ImplicitAs(parse_node, value_id, type_id));
   }
 
   // Converts `value_id` to a value expression of type `bool`.
@@ -145,23 +144,11 @@ class Context {
   // Handles an expression whose result is discarded.
   auto HandleDiscardedExpression(SemIR::NodeId id) -> void;
 
-  // Runs ImplicitAsImpl for a set of arguments and parameters.
-  //
-  // This will eventually need to support checking against multiple possible
-  // overloads, multiple of which may be possible but not "best". While this can
-  // currently be done by calling twice, toggling `apply_implicit_as`, in the
-  // future we may want to remember the right implicit conversions to do for
-  // valid cases in order to efficiently handle generics.
-  auto ImplicitAsForArgs(
-      SemIR::NodeBlockId arg_refs_id, Parse::Node param_parse_node,
-      SemIR::NodeBlockId param_refs_id,
-      DiagnosticEmitter<Parse::Node>::DiagnosticBuilder* diagnostic) -> bool;
-
-  // Runs ImplicitAsImpl for a situation where a cast is required, returning the
-  // updated `value_id`. Prints a diagnostic and returns an Error if
-  // unsupported.
-  auto ImplicitAsRequired(Parse::Node parse_node, SemIR::NodeId value_id,
-                          SemIR::TypeId as_type_id) -> SemIR::NodeId;
+  // Runs ImplicitAs for a set of arguments and parameters in a function call.
+  auto ImplicitAsForArgs(Parse::Node call_parse_node,
+                         SemIR::NodeBlockId arg_refs_id,
+                         Parse::Node param_parse_node,
+                         SemIR::NodeBlockId param_refs_id) -> bool;
 
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.
@@ -254,16 +241,6 @@ class Context {
   }
 
  private:
-  // For CanImplicitAs, the detected conversion to apply.
-  enum ImplicitAsKind : int8_t {
-    // Incompatible types.
-    Incompatible,
-    // No conversion required.
-    Identical,
-    // ImplicitAs is required.
-    Compatible,
-  };
-
   // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
    public:
@@ -299,15 +276,10 @@ class Context {
       -> void;
 
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
-  // result type. The result will be the node to use to replace `value`.
-  //
-  // If `output_value_id` is null, then this only checks if the conversion is
-  // possible.
-  //
-  // If `output_value_id` is not null, then it will be set if there is a need to
-  // cast.
-  auto ImplicitAsImpl(SemIR::NodeId value_id, SemIR::TypeId as_type_id,
-                      SemIR::NodeId* output_value_id) -> ImplicitAsKind;
+  // converted result. Prints a diagnostic and returns an Error if the
+  // conversion cannot be performed.
+  auto ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
+                  SemIR::TypeId as_type_id) -> SemIR::NodeId;
 
   // Forms a canonical type ID for a type. This function is given two
   // callbacks:

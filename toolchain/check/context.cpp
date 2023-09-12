@@ -265,7 +265,7 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                          SemIR::NodeId value_id) -> SemIR::NodeId {
   // Implicitly convert the value to the type of the target.
   auto type_id = semantics_ir().GetNode(target_id).type_id();
-  auto expr_id = ImplicitAsRequired(parse_node, value_id, type_id);
+  auto expr_id = ImplicitAs(parse_node, value_id, type_id);
   SemIR::Node expr = semantics_ir().GetNode(expr_id);
 
   // Perform initialization now that we have an expression of the right type.
@@ -296,6 +296,10 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
 }
 
 auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
+  if (expr_id == SemIR::NodeId::BuiltinError) {
+    return expr_id;
+  }
+
   switch (SemIR::GetExpressionCategory(semantics_ir(), expr_id)) {
     case SemIR::ExpressionCategory::NotExpression:
       CARBON_FATAL() << "Converting non-expression node "
@@ -429,10 +433,10 @@ auto Context::HandleDiscardedExpression(SemIR::NodeId expr_id) -> void {
   (void)expr_id;
 }
 
-auto Context::ImplicitAsForArgs(
-    SemIR::NodeBlockId arg_refs_id, Parse::Node param_parse_node,
-    SemIR::NodeBlockId param_refs_id,
-    DiagnosticEmitter<Parse::Node>::DiagnosticBuilder* diagnostic) -> bool {
+auto Context::ImplicitAsForArgs(Parse::Node call_parse_node,
+                                SemIR::NodeBlockId arg_refs_id,
+                                Parse::Node param_parse_node,
+                                SemIR::NodeBlockId param_refs_id) -> bool {
   // If both arguments and parameters are empty, return quickly. Otherwise,
   // we'll fetch both so that errors are consistent.
   if (arg_refs_id == SemIR::NodeBlockId::Empty &&
@@ -445,95 +449,66 @@ auto Context::ImplicitAsForArgs(
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
-    CARBON_CHECK(diagnostic != nullptr) << "Should have validated first";
-    CARBON_DIAGNOSTIC(CallArgCountMismatch, Note,
-                      "Function cannot be used: Received {0} argument(s), but "
-                      "require {1} argument(s).",
+    CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
+                      "{0} argument(s) passed to function expecting "
+                      "{1} argument(s).",
                       int, int);
-    diagnostic->Note(param_parse_node, CallArgCountMismatch, arg_refs.size(),
-                     param_refs.size());
+    CARBON_DIAGNOSTIC(InCallToFunction, Note,
+                      "Calling function declared here.");
+    emitter_
+        ->Build(call_parse_node, CallArgCountMismatch, arg_refs.size(),
+                param_refs.size())
+        .Note(param_parse_node, InCallToFunction)
+        .Emit();
     return false;
   }
 
-  // Check type conversions per-element.
-  // TODO: arg_ir_id is passed so that implicit conversions can be inserted.
-  // It's currently not supported, but will be needed.
-  for (auto [i, value_id, param_ref] : llvm::enumerate(arg_refs, param_refs)) {
-    auto as_type_id = semantics_ir_->GetNode(param_ref).type_id();
-    if (ImplicitAsImpl(value_id, as_type_id,
-                       diagnostic == nullptr ? &value_id : nullptr) ==
-        ImplicitAsKind::Incompatible) {
-      CARBON_CHECK(diagnostic != nullptr) << "Should have validated first";
-      CARBON_DIAGNOSTIC(CallArgTypeMismatch, Note,
-                        "Function cannot be used: Cannot implicitly convert "
-                        "argument {0} from `{1}` to `{2}`.",
-                        size_t, std::string, std::string);
-      diagnostic->Note(param_parse_node, CallArgTypeMismatch, i,
-                       semantics_ir_->StringifyType(
-                           semantics_ir_->GetNode(value_id).type_id()),
-                       semantics_ir_->StringifyType(as_type_id));
-      return false;
-    }
+  if (param_refs.empty()) {
+    return true;
+  }
 
+  int diag_param_index;
+  DiagnosticAnnotationScope annotate_diagnostics(emitter_, [&](auto& builder) {
+    CARBON_DIAGNOSTIC(InCallToFunctionParam, Note,
+                      "Initializing parameter {0} of function declared here.",
+                      int);
+    builder.Note(param_parse_node, InCallToFunctionParam, diag_param_index + 1);
+  });
+
+  // Check type conversions per-element.
+  for (auto [i, value_id, param_ref] : llvm::enumerate(arg_refs, param_refs)) {
+    diag_param_index = i;
+
+    auto as_type_id = semantics_ir_->GetNode(param_ref).type_id();
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.
-    if (!diagnostic) {
-      // TODO: Insert the conversion in the proper place in the node block.
-      arg_refs[i] = ConvertToValueExpression(value_id);
+    value_id = ConvertToValueOfType(call_parse_node, value_id, as_type_id);
+    if (value_id == SemIR::NodeId::BuiltinError) {
+      return false;
     }
+    arg_refs[i] = value_id;
   }
 
   return true;
 }
 
-auto Context::ImplicitAsRequired(Parse::Node parse_node, SemIR::NodeId value_id,
-                                 SemIR::TypeId as_type_id) -> SemIR::NodeId {
-  SemIR::NodeId output_value_id = value_id;
-  if (ImplicitAsImpl(value_id, as_type_id, &output_value_id) ==
-      ImplicitAsKind::Incompatible) {
-    // Only error when the system is trying to use the result.
-    CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                      "Cannot implicitly convert from `{0}` to `{1}`.",
-                      std::string, std::string);
-    emitter_
-        ->Build(parse_node, ImplicitAsConversionFailure,
-                semantics_ir_->StringifyType(
-                    semantics_ir_->GetNode(value_id).type_id()),
-                semantics_ir_->StringifyType(as_type_id))
-        .Emit();
-  }
-  return output_value_id;
-}
-
-auto Context::ImplicitAsImpl(SemIR::NodeId value_id, SemIR::TypeId as_type_id,
-                             SemIR::NodeId* output_value_id) -> ImplicitAsKind {
+auto Context::ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
+                         SemIR::TypeId as_type_id) -> SemIR::NodeId {
   // Start by making sure both sides are valid. If any part is invalid, the
   // result is invalid and we shouldn't error.
   if (value_id == SemIR::NodeId::BuiltinError) {
     // If the value is invalid, we can't do much, but do "succeed".
-    return ImplicitAsKind::Identical;
+    return value_id;
   }
   auto value = semantics_ir_->GetNode(value_id);
   auto value_type_id = value.type_id();
-  if (value_type_id == SemIR::TypeId::Error) {
-    // Although the source type is invalid, this still changes the value.
-    if (output_value_id != nullptr) {
-      *output_value_id = SemIR::NodeId::BuiltinError;
-    }
-    return ImplicitAsKind::Compatible;
-  }
-
-  if (as_type_id == SemIR::TypeId::Error) {
-    // Although the target type is invalid, this still changes the value.
-    if (output_value_id != nullptr) {
-      *output_value_id = SemIR::NodeId::BuiltinError;
-    }
-    return ImplicitAsKind::Compatible;
+  if (value_type_id == SemIR::TypeId::Error ||
+      as_type_id == SemIR::TypeId::Error) {
+    return SemIR::NodeId::BuiltinError;
   }
 
   if (value_type_id == as_type_id) {
-    // Type doesn't need to change.
-    return ImplicitAsKind::Identical;
+    return value_id;
   }
 
   auto as_type = semantics_ir_->GetTypeAllowBuiltinTypes(as_type_id);
@@ -551,14 +526,11 @@ auto Context::ImplicitAsImpl(SemIR::NodeId value_id, SemIR::TypeId as_type_id,
               semantics_ir_->GetArrayBoundValue(bound_node_id) &&
           std::all_of(type_block.begin(), type_block.end(),
                       [&](auto type) { return type == element_type; })) {
-        if (output_value_id != nullptr) {
-          // TODO: We should convert an initializing expression of tuple type
-          // to an initializing expression of array type.
-          value_id = ConvertToValueExpression(value_id);
-          *output_value_id = AddNode(SemIR::Node::ArrayValue::Make(
-              value.parse_node(), as_type_id, value_id));
-        }
-        return ImplicitAsKind::Compatible;
+        // TODO: We should convert an initializing expression of tuple type
+        // to an initializing expression of array type.
+        value_id = ConvertToValueExpression(value_id);
+        return AddNode(SemIR::Node::ArrayValue::Make(value.parse_node(),
+                                                     as_type_id, value_id));
       }
     }
   }
@@ -580,28 +552,27 @@ auto Context::ImplicitAsImpl(SemIR::NodeId value_id, SemIR::TypeId as_type_id,
       }
       auto tuple_type_id =
           CanonicalizeTupleType(value.parse_node(), std::move(type_ids));
-      if (output_value_id != nullptr) {
-        *output_value_id =
-            semantics_ir_->GetTypeAllowBuiltinTypes(tuple_type_id);
-      }
-      return ImplicitAsKind::Compatible;
+      return semantics_ir_->GetTypeAllowBuiltinTypes(tuple_type_id);
     }
     // When converting `{}` to a type, the result is `{} as Type`.
     if (value.kind() == SemIR::NodeKind::StructLiteral &&
         value.GetAsStructLiteral() == SemIR::NodeBlockId::Empty) {
-      if (output_value_id != nullptr) {
-        *output_value_id = semantics_ir_->GetType(value_type_id);
-      }
-      return ImplicitAsKind::Compatible;
+      return semantics_ir_->GetType(value_type_id);
     }
   }
 
   // TODO: Handle ImplicitAs for compatible structs and tuples.
 
-  if (output_value_id != nullptr) {
-    *output_value_id = SemIR::NodeId::BuiltinError;
-  }
-  return ImplicitAsKind::Incompatible;
+  CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
+                    "Cannot implicitly convert from `{0}` to `{1}`.",
+                    std::string, std::string);
+  emitter_
+      ->Build(parse_node, ImplicitAsConversionFailure,
+              semantics_ir_->StringifyType(
+                  semantics_ir_->GetNode(value_id).type_id()),
+              semantics_ir_->StringifyType(as_type_id))
+      .Emit();
+  return SemIR::NodeId::BuiltinError;
 }
 
 auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
