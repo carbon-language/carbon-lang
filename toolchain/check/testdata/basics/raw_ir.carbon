@@ -48,7 +48,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeFloatingPointType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type1},
+// CHECK:STDOUT:   {kind: TupleLiteral, arg0: block3, type: type1},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, arg0: str2, type: type3},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
@@ -57,7 +57,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: type0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type2},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+11, type: type2},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block6, type: type3},
+// CHECK:STDOUT:   {kind: TupleLiteral, arg0: block6, type: type3},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+13},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

@@ -394,13 +394,14 @@ class Node : public Printable<Node> {
   using StructAccess = Factory<NodeKind::StructAccess, NodeId /*struct_id*/,
                                MemberIndex /*ref_index*/>;
 
+  using StructLiteral =
+      Factory<NodeKind::StructLiteral, NodeBlockId /*refs_id*/>;
+
   using StructType = Factory<NodeKind::StructType, NodeBlockId /*refs_id*/>;
 
   using StructTypeField =
       FactoryNoType<NodeKind::StructTypeField, StringId /*name_id*/,
                     TypeId /*type_id*/>;
-
-  using StructValue = Factory<NodeKind::StructValue, NodeBlockId /*refs_id*/>;
 
   using StubReference = Factory<NodeKind::StubReference, NodeId /*node_id*/>;
 
@@ -412,9 +413,9 @@ class Node : public Printable<Node> {
   using TupleIndex =
       Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;
 
-  using TupleType = Factory<NodeKind::TupleType, TypeBlockId /*refs_id*/>;
+  using TupleLiteral = Factory<NodeKind::TupleLiteral, NodeBlockId /*refs_id*/>;
 
-  using TupleValue = Factory<NodeKind::TupleValue, NodeBlockId /*refs_id*/>;
+  using TupleType = Factory<NodeKind::TupleType, TypeBlockId /*refs_id*/>;
 
   using UnaryOperatorNot =
       Factory<NodeKind::UnaryOperatorNot, NodeId /*operand_id*/>;

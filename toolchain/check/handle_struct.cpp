@@ -77,7 +77,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
   auto value_id = context.AddNode(
-      SemIR::Node::StructValue::Make(parse_node, type_id, refs_id));
+      SemIR::Node::StructLiteral::Make(parse_node, type_id, refs_id));
   context.node_stack().Push(parse_node, value_id);
   return true;
 }

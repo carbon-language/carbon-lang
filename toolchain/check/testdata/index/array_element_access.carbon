@@ -18,7 +18,7 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_24.1: i32 = int_literal 24
 // CHECK:STDOUT:   %.loc7_24.2: i32 = stub_reference %.loc7_24.1
 // CHECK:STDOUT:   %.loc7_26.1: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc7_26.2: (i32, i32) = tuple_value (%.loc7_20.2, %.loc7_24.2)
+// CHECK:STDOUT:   %.loc7_26.2: (i32, i32) = tuple_literal (%.loc7_20.2, %.loc7_24.2)
 // CHECK:STDOUT:   %.loc7_26.3: [i32; 2] = array_value %.loc7_26.2
 // CHECK:STDOUT:   assign %a, %.loc7_26.3
 // CHECK:STDOUT:   %b: ref i32 = var "b"

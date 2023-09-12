@@ -201,12 +201,12 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::StringLiteral:
     case NodeKind::StructAccess:
     case NodeKind::StructTypeField:
-    case NodeKind::StructValue:
+    case NodeKind::StructLiteral:
     case NodeKind::StubReference:
     case NodeKind::Temporary:
     case NodeKind::TemporaryStorage:
     case NodeKind::TupleIndex:
-    case NodeKind::TupleValue:
+    case NodeKind::TupleLiteral:
     case NodeKind::UnaryOperatorNot:
     case NodeKind::VarStorage:
       CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
@@ -362,12 +362,12 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::ReturnExpression:
       case NodeKind::StringLiteral:
       case NodeKind::StructAccess:
-      case NodeKind::StructValue:
+      case NodeKind::StructLiteral:
       case NodeKind::StubReference:
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
       case NodeKind::TupleIndex:
-      case NodeKind::TupleValue:
+      case NodeKind::TupleLiteral:
       case NodeKind::UnaryOperatorNot:
       case NodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
@@ -464,8 +464,8 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       }
 
       case NodeKind::ArrayValue:
-      case NodeKind::StructValue:
-      case NodeKind::TupleValue:
+      case NodeKind::StructLiteral:
+      case NodeKind::TupleLiteral:
         // TODO: Eventually these will depend on the context in which the value
         // is used, and could be either Value or Initializing. We may want
         // different node kinds for a struct/tuple initializer versus a
@@ -520,11 +520,11 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::StringLiteral:
       case NodeKind::StructAccess:
       case NodeKind::StructTypeField:
-      case NodeKind::StructValue:
+      case NodeKind::StructLiteral:
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
       case NodeKind::TupleIndex:
-      case NodeKind::TupleValue:
+      case NodeKind::TupleLiteral:
       case NodeKind::UnaryOperatorNot:
       case NodeKind::VarStorage:
         CARBON_FATAL() << "Type refers to non-type node " << node;

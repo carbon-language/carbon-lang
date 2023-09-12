@@ -18,6 +18,6 @@ var a: [i32; 2] = (1, 2.5);
 // CHECK:STDOUT:   %.loc10_23.1: f64 = real_literal 25e-1
 // CHECK:STDOUT:   %.loc10_23.2: f64 = stub_reference %.loc10_23.1
 // CHECK:STDOUT:   %.loc10_26.1: type = tuple_type (i32, f64)
-// CHECK:STDOUT:   %.loc10_26.2: (i32, f64) = tuple_value (%.loc10_20.2, %.loc10_23.2)
+// CHECK:STDOUT:   %.loc10_26.2: (i32, f64) = tuple_literal (%.loc10_20.2, %.loc10_23.2)
 // CHECK:STDOUT:   assign %a, <error>
 // CHECK:STDOUT: }

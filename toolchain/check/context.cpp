@@ -340,8 +340,8 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
       default:
         CARBON_FATAL() << "Initialization from unexpected node " << init;
 
-      case SemIR::NodeKind::StructValue:
-      case SemIR::NodeKind::TupleValue:
+      case SemIR::NodeKind::StructLiteral:
+      case SemIR::NodeKind::TupleLiteral:
         CARBON_FATAL() << init << " is not modeled as initializing yet";
 
       case SemIR::NodeKind::StubReference: {
@@ -393,8 +393,8 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
       default:
         CARBON_FATAL() << "Initialization from unexpected node " << init;
 
-      case SemIR::NodeKind::StructValue:
-      case SemIR::NodeKind::TupleValue:
+      case SemIR::NodeKind::StructLiteral:
+      case SemIR::NodeKind::TupleLiteral:
         CARBON_FATAL() << init << " is not modeled as initializing yet";
 
       case SemIR::NodeKind::StubReference:
@@ -536,8 +536,8 @@ auto Context::ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
   }
 
   if (as_type_id == SemIR::TypeId::TypeType) {
-    if (value.kind() == SemIR::NodeKind::TupleValue) {
-      auto tuple_block_id = value.GetAsTupleValue();
+    if (value.kind() == SemIR::NodeKind::TupleLiteral) {
+      auto tuple_block_id = value.GetAsTupleLiteral();
       llvm::SmallVector<SemIR::TypeId> type_ids;
       // If it is empty tuple type, we don't fetch anything.
       if (tuple_block_id != SemIR::NodeBlockId::Empty) {
@@ -555,8 +555,8 @@ auto Context::ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
       return semantics_ir_->GetTypeAllowBuiltinTypes(tuple_type_id);
     }
     // When converting `{}` to a type, the result is `{} as Type`.
-    if (value.kind() == SemIR::NodeKind::StructValue &&
-        value.GetAsStructValue() == SemIR::NodeBlockId::Empty) {
+    if (value.kind() == SemIR::NodeKind::StructLiteral &&
+        value.GetAsStructLiteral() == SemIR::NodeBlockId::Empty) {
       return semantics_ir_->GetType(value_type_id);
     }
   }
