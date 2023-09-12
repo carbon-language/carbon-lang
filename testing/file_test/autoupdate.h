@@ -35,7 +35,7 @@ auto AutoupdateFileTest(
     int autoupdate_line_number,
     const llvm::SmallVector<llvm::SmallVector<FileTestLine>>& non_check_lines,
     llvm::StringRef stdout, llvm::StringRef stderr,
-    const std::optional<RE2>& default_file_re,
+    const llvm::SmallVector<std::shared_ptr<RE2>>& default_file_res,
     const llvm::SmallVector<FileTestLineNumberReplacement>&
         line_number_replacements,
     std::function<void(std::string&)> do_extra_check_replacements) -> bool;

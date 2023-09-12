@@ -3,24 +3,23 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-
-var x: i32 = 0;
-
-fn Main() {
-  var y: i32 = x;
-}
-
 // CHECK:STDOUT: file "global_lookup_in_scope.carbon" {
 // CHECK:STDOUT:   %x: ref i32 = var "x"
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 0
-// CHECK:STDOUT:   assign %x, %.loc7
-// CHECK:STDOUT:   %.loc9 = fn_decl @Main
+
+var x: i32 = 0;
+// CHECK:STDOUT:   %.loc[[@LINE-1]]: i32 = int_literal 0
+// CHECK:STDOUT:   assign %x, %.loc[[@LINE-2]]
+
+fn Main() {
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %y: ref i32 = var "y"
-// CHECK:STDOUT:   %.loc7: i32 = bind_value package.%x
-// CHECK:STDOUT:   assign %y, %.loc7
+// CHECK:STDOUT:   %.loc[[@LINE-11]]: i32 = bind_value package.%x
+// CHECK:STDOUT:   assign %y, %.loc[[@LINE-12]]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+  var y: i32 = x;
+}

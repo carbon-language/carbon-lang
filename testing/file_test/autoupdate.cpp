@@ -191,7 +191,7 @@ static auto GetFileAndLineNumber(
 static auto BuildCheckLines(
     llvm::StringRef output, const char* label,
     const llvm::SmallVector<llvm::StringRef>& filenames,
-    const std::optional<RE2>& default_file_re,
+    const llvm::SmallVector<std::shared_ptr<RE2>>& default_file_res,
     const llvm::SmallVector<FileTestLineNumberReplacement>& replacements,
     std::function<void(std::string&)> do_extra_check_replacements)
     -> llvm::SmallVector<CheckLine> {
@@ -241,14 +241,15 @@ static auto BuildCheckLines(
 
     do_extra_check_replacements(check_line);
 
-    if (default_file_re) {
+    for (const auto& re : default_file_res) {
       absl::string_view filename;
-      if (RE2::PartialMatch(line, *default_file_re, &filename)) {
+      if (RE2::PartialMatch(line, *re, &filename)) {
         auto it = file_to_number_map.find(filename);
         CARBON_CHECK(it != file_to_number_map.end())
             << "default_file_re had unexpected match in '" << line << "' (`"
-            << default_file_re->pattern() << "`)";
+            << re->pattern() << "`)";
         default_file_number = it->second;
+        break;
       }
     }
     auto file_and_line = GetFileAndLineNumber(replacements, file_to_number_map,
@@ -265,12 +266,12 @@ auto AutoupdateFileTest(
     int autoupdate_line_number,
     const llvm::SmallVector<llvm::SmallVector<FileTestLine>>& non_check_lines,
     llvm::StringRef stdout, llvm::StringRef stderr,
-    const std::optional<RE2>& default_file_re,
+    const llvm::SmallVector<std::shared_ptr<RE2>>& default_file_res,
     const llvm::SmallVector<FileTestLineNumberReplacement>&
         line_number_replacements,
     std::function<void(std::string&)> do_extra_check_replacements) -> bool {
   for (const auto& replacement : line_number_replacements) {
-    CARBON_CHECK(replacement.has_file || default_file_re)
+    CARBON_CHECK(replacement.has_file || !default_file_res.empty())
         << "For replacement with pattern `" << replacement.re->pattern()
         << "` to have has_file=false, override GetDefaultFileRE.";
     CARBON_CHECK(replacement.re->ok())
@@ -279,10 +280,10 @@ auto AutoupdateFileTest(
 
   // Prepare CHECK lines.
   llvm::SmallVector<CheckLine> stdout_check_lines =
-      BuildCheckLines(stdout, "STDOUT", filenames, default_file_re,
+      BuildCheckLines(stdout, "STDOUT", filenames, default_file_res,
                       line_number_replacements, do_extra_check_replacements);
   llvm::SmallVector<CheckLine> stderr_check_lines =
-      BuildCheckLines(stderr, "STDERR", filenames, default_file_re,
+      BuildCheckLines(stderr, "STDERR", filenames, default_file_res,
                       line_number_replacements, do_extra_check_replacements);
   auto* stdout_check_line = stdout_check_lines.begin();
   auto* stderr_check_line = stderr_check_lines.begin();

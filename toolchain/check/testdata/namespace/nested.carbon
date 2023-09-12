@@ -3,22 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: file "nested.carbon" {
 
 namespace Foo;
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = namespace {.Bar = %.loc[[@LINE+1]]}
 namespace Foo.Bar;
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = namespace {.Wiz = %.loc[[@LINE+2]], .Baz = %.loc[[@LINE+6]]}
 
 fn Foo.Bar.Wiz() {
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @Wiz
 }
 
 fn Foo.Bar.Baz() {
-  Foo.Bar.Wiz();
-}
-
-// CHECK:STDOUT: file "nested.carbon" {
-// CHECK:STDOUT:   %.loc7 = namespace {.Bar = %.loc8}
-// CHECK:STDOUT:   %.loc8 = namespace {.Wiz = %.loc10, .Baz = %.loc13}
-// CHECK:STDOUT:   %.loc10 = fn_decl @Wiz
-// CHECK:STDOUT:   %.loc13 = fn_decl @Baz
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
@@ -28,7 +25,9 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_14.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc14_14.2: init () = call @Wiz()
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+  Foo.Bar.Wiz();
+  // CHECK:STDOUT:   %.loc[[@LINE-1]]_14.1: type = tuple_type ()
+  // CHECK:STDOUT:   %.loc[[@LINE-2]]_14.2: init () = call @Wiz()
+  // CHECK:STDOUT:   return
+  // CHECK:STDOUT: }
+}

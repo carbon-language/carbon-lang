@@ -3,13 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: file "same_param_name.carbon" {
 
 fn Foo(a: i32) {}
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @Foo
 fn Bar(a: i32) {}
-
-// CHECK:STDOUT: file "same_param_name.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
-// CHECK:STDOUT:   %.loc8 = fn_decl @Bar
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {

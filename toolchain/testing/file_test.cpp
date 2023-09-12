@@ -49,12 +49,18 @@ class ToolchainFileTest : public FileTestBase {
   }
 
   auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames)
-      -> std::optional<RE2> override {
-    if (component_ == "lex") {
-      return std::make_optional<RE2>(
-          llvm::formatv(R"(^- filename: ({0})$)", llvm::join(filenames, "|")));
+      -> llvm::SmallVector<std::shared_ptr<RE2>> override {
+    llvm::SmallVector<std::shared_ptr<RE2>> res;
+    if (component_ == "lex" || component_ == "parse" || component_ == "check") {
+      res.push_back(std::make_shared<RE2>(
+          llvm::formatv(R"(^- filename: ({0})$)", llvm::join(filenames, "|"))));
     }
-    return FileTestBase::GetDefaultFileRE(filenames);
+    if (component_ == "check") {
+      // SemIR formats files differently for textual versus raw.
+      res.push_back(std::make_shared<RE2>(llvm::formatv(
+          R"re(^file "({0})" {$)re", llvm::join(filenames, "|"))));
+    }
+    return res;
   }
 
   auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)
@@ -65,6 +71,10 @@ class ToolchainFileTest : public FileTestBase {
                               .re = std::make_shared<RE2>(R"(line: (\s*\d+))"),
                               // The `{{{{` becomes `{{`.
                               .line_formatv = "{{{{ *}}{0}"});
+    } else if (component_ == "check") {
+      replacements.push_back({.has_file = false,
+                              .re = std::make_shared<RE2>(R"(\Wloc(\d+))"),
+                              .line_formatv = "{0}"});
     }
     return replacements;
   }

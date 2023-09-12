@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-
-var x: i32 = 0;
-
 // CHECK:STDOUT: file "global_decl_with_init.carbon" {
 // CHECK:STDOUT:   %x: ref i32 = var "x"
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 0
-// CHECK:STDOUT:   assign %x, %.loc7
+
+var x: i32 = 0;
+// CHECK:STDOUT:   %.loc[[@LINE-1]]: i32 = int_literal 0
+// CHECK:STDOUT:   assign %x, %.loc[[@LINE-2]]
 // CHECK:STDOUT: }

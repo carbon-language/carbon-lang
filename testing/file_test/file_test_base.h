@@ -67,11 +67,11 @@ class FileTestBase : public testing::Test {
   virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;
 
   // Returns a regex to match the default file when a line may not be present.
-  // May return nullptr if unused. If GetLineNumberReplacements returns an entry
-  // with has_file=false, this is required.
+  // May return none if unused. If GetLineNumberReplacements returns an entry
+  // with has_file=false, at least one is required.
   virtual auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> /*filenames*/)
-      -> std::optional<RE2> {
-    return std::nullopt;
+      -> llvm::SmallVector<std::shared_ptr<RE2>> {
+    return {};
   }
 
   // Returns replacement information for line numbers. See LineReplacement for

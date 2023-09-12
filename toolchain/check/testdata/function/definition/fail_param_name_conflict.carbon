@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: file "fail_param_name_conflict.carbon" {
 
 // CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+6]]:16: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Bar(a: i32, a: i32) {}
@@ -11,12 +12,10 @@
 // CHECK:STDERR: fn Bar(a: i32, a: i32) {}
 // CHECK:STDERR:        ^
 fn Bar(a: i32, a: i32) {}
-
-// CHECK:STDOUT: file "fail_param_name_conflict.carbon" {
-// CHECK:STDOUT:   %.loc13 = fn_decl @Bar
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.loc13_8: i32, %a.loc13_16: i32) {
+// CHECK:STDOUT: fn @Bar(%a.loc[[@LINE-4]]_8: i32, %a.loc[[@LINE-4]]_16: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

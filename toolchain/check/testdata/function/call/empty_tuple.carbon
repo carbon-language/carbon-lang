@@ -3,18 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: file "empty_tuple.carbon" {
 
 fn Echo(a: ()) -> () {
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @Echo
   return a;
 }
 
 fn Main() {
-  Echo(());
-}
-
-// CHECK:STDOUT: file "empty_tuple.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Echo
-// CHECK:STDOUT:   %.loc11 = fn_decl @Main
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
@@ -24,8 +21,10 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: () = stub_reference %.loc12_9.1
-// CHECK:STDOUT:   %.loc12_7: init () = call @Echo(%.loc12_9.2)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+  Echo(());
+  // CHECK:STDOUT:   %.loc[[@LINE-1]]_9.1: () = tuple_literal ()
+  // CHECK:STDOUT:   %.loc[[@LINE-2]]_9.2: () = stub_reference %.loc[[@LINE-2]]_9.1
+  // CHECK:STDOUT:   %.loc[[@LINE-3]]_7: init () = call @Echo(%.loc[[@LINE-3]]_9.2)
+  // CHECK:STDOUT:   return
+  // CHECK:STDOUT: }
+}

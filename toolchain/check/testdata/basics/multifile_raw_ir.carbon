@@ -8,6 +8,9 @@
 //
 // AUTOUPDATE
 
+// --- a.carbon
+fn A() {}
+
 // CHECK:STDOUT: - filename: a.carbon
 // CHECK:STDOUT:   sem_ir:
 // CHECK:STDOUT:   - cross_reference_irs_size: 1
@@ -39,6 +42,9 @@
 // CHECK:STDOUT:         node+1,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:     ]
+// --- b.carbon
+fn B() {}
+
 // CHECK:STDOUT: - filename: b.carbon
 // CHECK:STDOUT:   sem_ir:
 // CHECK:STDOUT:   - cross_reference_irs_size: 1
@@ -70,8 +76,3 @@
 // CHECK:STDOUT:         node+1,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:     ]
-// --- a.carbon
-fn A() {}
-
-// --- b.carbon
-fn B() {}

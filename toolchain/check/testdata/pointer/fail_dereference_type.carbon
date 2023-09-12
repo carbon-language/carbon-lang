@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: file "fail_dereference_type.carbon" {
 
 // CHECK:STDERR: fail_dereference_type.carbon:[[@LINE+6]]:8: Cannot dereference operand of non-pointer type `type`.
 // CHECK:STDERR: var p: *i32;
@@ -11,8 +12,6 @@
 // CHECK:STDERR: var p: *i32;
 // CHECK:STDERR:        ^
 var p: *i32;
-
-// CHECK:STDOUT: file "fail_dereference_type.carbon" {
-// CHECK:STDOUT:   %.loc13: ref <error> = dereference i32
+// CHECK:STDOUT:   %.loc[[@LINE-1]]: ref <error> = dereference i32
 // CHECK:STDOUT:   %p: ref <error> = var "p"
 // CHECK:STDOUT: }

@@ -126,9 +126,9 @@ class FileTestBaseTest : public FileTestBase {
   }
 
   auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames)
-      -> std::optional<RE2> override {
-    return std::make_optional<RE2>(
-        llvm::formatv(R"(file: ({0}))", llvm::join(filenames, "|")));
+      -> llvm::SmallVector<std::shared_ptr<RE2>> override {
+    return {std::make_shared<RE2>(
+        llvm::formatv(R"(file: ({0}))", llvm::join(filenames, "|")))};
   }
 
   auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)

@@ -3,13 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: file "decl.carbon" {
 
 fn Main() {
-  var x: i32;
-}
-
-// CHECK:STDOUT: file "decl.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -17,3 +14,5 @@ fn Main() {
 // CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+  var x: i32;
+}

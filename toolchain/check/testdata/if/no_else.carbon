@@ -3,21 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: file "no_else.carbon" {
 
 fn F() {}
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @F
 fn G() {}
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @G
 
 fn If(b: bool) {
-  if (b) {
-    F();
-  }
-  G();
-}
-
-// CHECK:STDOUT: file "no_else.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc8 = fn_decl @G
-// CHECK:STDOUT:   %.loc10 = fn_decl @If
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -35,11 +29,16 @@ fn If(b: bool) {
 // CHECK:STDOUT:   if %b br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc12_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc12_6.2: init () = call @F()
-// CHECK:STDOUT:   br !if.else
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc14: init () = call @G()
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+  if (b) {
+    F();
+    // CHECK:STDOUT:   %.loc[[@LINE-1]]_6.1: type = tuple_type ()
+    // CHECK:STDOUT:   %.loc[[@LINE-2]]_6.2: init () = call @F()
+    // CHECK:STDOUT:   br !if.else
+    // CHECK:STDOUT:
+    // CHECK:STDOUT: !if.else:
+  }
+  G();
+  // CHECK:STDOUT:   %.loc[[@LINE-1]]: init () = call @G()
+  // CHECK:STDOUT:   return
+  // CHECK:STDOUT: }
+}

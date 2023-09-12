@@ -3,17 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: file "fail_missing_return_empty_tuple.carbon" {
 
 fn F() -> () {
-// CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-}
-
-// CHECK:STDOUT: file "fail_missing_return_empty_tuple.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> () {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
+// CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+}

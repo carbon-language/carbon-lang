@@ -3,18 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: file "fail_unresolved_scope.carbon" {
 
 // CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: Name `Foo` not found.
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR:    ^
 fn Foo.Baz() {
-}
-
-// CHECK:STDOUT: file "fail_unresolved_scope.carbon" {
-// CHECK:STDOUT:   %.loc10 = fn_decl @.1
+// CHECK:STDOUT:   %.loc[[@LINE-1]] = fn_decl @.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+}
