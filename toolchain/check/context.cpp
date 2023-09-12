@@ -662,9 +662,9 @@ auto Context::CanonicalizeTypeImpl(
 }
 
 // Compute a fingerprint for a tuple type, for use as a key in a folding set.
-static auto ProfileTupleType(const llvm::SmallVector<SemIR::TypeId>& type_ids,
+static auto ProfileTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids,
                              llvm::FoldingSetNodeID& canonical_id) -> void {
-  for (const auto& type_id : type_ids) {
+  for (auto type_id : type_ids) {
     canonical_id.AddInteger(type_id.index);
   }
 }
@@ -760,18 +760,16 @@ auto Context::CanonicalizeStructType(Parse::Node parse_node,
 }
 
 auto Context::CanonicalizeTupleType(Parse::Node parse_node,
-                                    llvm::SmallVector<SemIR::TypeId>&& type_ids)
+                                    llvm::ArrayRef<SemIR::TypeId> type_ids)
     -> SemIR::TypeId {
   // Defer allocating a SemIR::TypeBlockId until we know this is a new type.
   auto profile_tuple = [&](llvm::FoldingSetNodeID& canonical_id) {
     ProfileTupleType(type_ids, canonical_id);
   };
   auto make_tuple_node = [&] {
-    auto type_block_id = semantics_ir_->AddTypeBlock();
-    auto& type_block = semantics_ir_->GetTypeBlock(type_block_id);
-    type_block = std::move(type_ids);
-    return AddNode(SemIR::Node::TupleType::Make(
-        parse_node, SemIR::TypeId::TypeType, type_block_id));
+    return AddNode(
+        SemIR::Node::TupleType::Make(parse_node, SemIR::TypeId::TypeType,
+                                     semantics_ir_->AddTypeBlock(type_ids)));
   };
   return CanonicalizeTypeImpl(SemIR::NodeKind::TupleType, profile_tuple,
                               make_tuple_node);

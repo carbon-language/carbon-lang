@@ -238,7 +238,7 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       // can be collectively replaced with LLVM's void, particularly around
       // function returns. LLVM doesn't allow declaring variables with a void
       // type, so that may require significant special casing.
-      auto& refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
+      auto refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
       for (auto ref_id : refs) {

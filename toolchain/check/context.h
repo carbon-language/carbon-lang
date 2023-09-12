@@ -172,7 +172,7 @@ class Context {
   // Handles canonicalization of tuple types. This may create a new tuple type
   // if the `type_ids` doesn't match an existing tuple type.
   auto CanonicalizeTupleType(Parse::Node parse_node,
-                             llvm::SmallVector<SemIR::TypeId>&& type_ids)
+                             llvm::ArrayRef<SemIR::TypeId> type_ids)
       -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.

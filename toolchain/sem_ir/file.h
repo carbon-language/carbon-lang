@@ -258,21 +258,21 @@ class File : public Printable<File> {
     }
   }
 
-  // Adds an empty type block, returning an ID to reference it.
-  auto AddTypeBlock() -> TypeBlockId {
+  // Adds a type block with the given content, returning an ID to reference it.
+  auto AddTypeBlock(llvm::ArrayRef<TypeId> content) -> TypeBlockId {
     TypeBlockId id(type_blocks_.size());
     type_blocks_.push_back({});
+    type_blocks_.back().assign(content.begin(), content.end());
     return id;
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) const
-      -> const llvm::SmallVector<TypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) const -> llvm::ArrayRef<TypeId> {
     return type_blocks_[block_id.index];
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) -> llvm::SmallVector<TypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) -> llvm::MutableArrayRef<TypeId> {
     return type_blocks_[block_id.index];
   }
 
