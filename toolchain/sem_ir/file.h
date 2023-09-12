@@ -187,8 +187,7 @@ class File : public Printable<File> {
   }
 
   // Returns the requested node block.
-  auto GetNodeBlock(NodeBlockId block_id) const
-      -> llvm::ArrayRef<NodeId> {
+  auto GetNodeBlock(NodeBlockId block_id) const -> llvm::ArrayRef<NodeId> {
     CARBON_CHECK(block_id != NodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
