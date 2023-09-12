@@ -59,7 +59,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = semantics_ir().GetFunction(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
-  auto& param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
 
   SemIR::InitializingRepresentation return_rep =
       function.return_type_id.is_valid()
@@ -147,7 +147,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // TODO: This duplicates the mapping between semantics nodes and LLVM
   // function parameters that was already computed in BuildFunctionDeclaration.
   // We should only do that once.
-  auto& param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
     function_lowering.SetLocal(function.return_slot_id,
@@ -219,7 +219,7 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
     case SemIR::NodeKind::PointerType:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
     case SemIR::NodeKind::StructType: {
-      auto& refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
+      auto refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
       for (auto ref_id : refs) {

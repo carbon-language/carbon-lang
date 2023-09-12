@@ -69,6 +69,11 @@ auto Context::AddNodeToBlock(SemIR::NodeBlockId block, SemIR::Node node)
   return semantics_ir_->AddNode(block, node);
 }
 
+auto Context::AddNodeIdToBlock(SemIR::NodeBlockId block, SemIR::NodeId node_id)
+    -> void {
+  semantics_ir_->AddNodeId(block, node_id);
+}
+
 auto Context::AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void {
   auto node_id = AddNode(node);
   node_stack_.Push(parse_node, node_id);
@@ -436,7 +441,8 @@ auto Context::HandleDiscardedExpression(SemIR::NodeId expr_id) -> void {
 auto Context::ImplicitAsForArgs(Parse::Node call_parse_node,
                                 SemIR::NodeBlockId arg_refs_id,
                                 Parse::Node param_parse_node,
-                                SemIR::NodeBlockId param_refs_id) -> bool {
+                                SemIR::NodeBlockId param_refs_id,
+                                bool has_return_slot) -> bool {
   // If both arguments and parameters are empty, return quickly. Otherwise,
   // we'll fetch both so that errors are consistent.
   if (arg_refs_id == SemIR::NodeBlockId::Empty &&
@@ -444,8 +450,16 @@ auto Context::ImplicitAsForArgs(Parse::Node call_parse_node,
     return true;
   }
 
-  auto& arg_refs = semantics_ir_->GetNodeBlock(arg_refs_id);
-  const auto& param_refs = semantics_ir_->GetNodeBlock(param_refs_id);
+  auto arg_refs = semantics_ir_->GetNodeBlock(arg_refs_id);
+  auto param_refs = semantics_ir_->GetNodeBlock(param_refs_id);
+
+  if (has_return_slot) {
+    // There's no entry in the parameter block for the return slot, so ignore
+    // the corresponding entry in the argument block.
+    // TODO: Consider adding the return slot to the parameter list.
+    CARBON_CHECK(!arg_refs.empty()) << "missing return slot";
+    arg_refs = arg_refs.drop_back();
+  }
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
@@ -581,12 +595,21 @@ auto Context::ParamOrArgComma(bool for_args) -> void {
   ParamOrArgSave(for_args);
 }
 
-auto Context::ParamOrArgEnd(bool for_args, Parse::NodeKind start_kind)
-    -> SemIR::NodeBlockId {
+auto Context::ParamOrArgEndNoPop(bool for_args, Parse::NodeKind start_kind)
+    -> void {
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) != start_kind) {
     ParamOrArgSave(for_args);
   }
+}
+
+auto Context::ParamOrArgPop() -> SemIR::NodeBlockId {
   return params_or_args_stack_.Pop();
+}
+
+auto Context::ParamOrArgEnd(bool for_args, Parse::NodeKind start_kind)
+    -> SemIR::NodeBlockId {
+  ParamOrArgEndNoPop(for_args, start_kind);
+  return ParamOrArgPop();
 }
 
 auto Context::ParamOrArgSave(bool for_args) -> void {
@@ -601,9 +624,7 @@ auto Context::ParamOrArgSave(bool for_args) -> void {
   }
 
   // Save the param or arg ID.
-  auto& params_or_args =
-      semantics_ir_->GetNodeBlock(params_or_args_stack_.PeekForAdd());
-  params_or_args.push_back(entry_node_id);
+  AddNodeIdToBlock(params_or_args_stack_.PeekForAdd(), entry_node_id);
 }
 
 auto Context::CanonicalizeTypeImpl(
