@@ -40,9 +40,9 @@ auto HandleArrayIndex(FunctionContext& context, SemIR::NodeId node_id,
     array_element_value = context.GetIndexFromStructOrArray(
         llvm_type, array_value, index, "array.index");
   } else {
-    auto* index = context.builder().CreateLoad(llvm_type->getArrayElementType(),
-                                               context.GetLocal(index_node_id));
+    auto* index = context.GetLocalLoaded(index_node_id);
     // TODO: Handle return value or call such as `F()[a]`.
+    // TODO: The GEP indexes here are wrong; we should pass {0, index}.
     array_element_value = context.builder().CreateInBoundsGEP(
         llvm_type, array_value, index, "array.index");
   }
