@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --phase=check --dump-semantics-ir %s
+// ARGS: compile --phase=check --dump-sem-ir %s
 //
 // Check that the command-line flag to dump textual IR works.
 //
