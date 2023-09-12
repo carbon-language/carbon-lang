@@ -8,7 +8,7 @@ fn Main() -> i32 {
   return 12 + 34;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "binary_op.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

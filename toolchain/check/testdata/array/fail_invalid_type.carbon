@@ -9,7 +9,7 @@
 // CHECK:STDERR:             ^
 var a: [1; 1];
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_invalid_type.carbon" {
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_13: type = array_type %.loc10_12, <error>

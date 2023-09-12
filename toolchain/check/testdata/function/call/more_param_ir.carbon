@@ -11,7 +11,7 @@ fn Main() {
   Foo(1 + 2 + 3, 4 + 5, 6);
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "more_param_ir.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Foo
 // CHECK:STDOUT:   %.loc9 = fn_decl @Main
 // CHECK:STDOUT: }

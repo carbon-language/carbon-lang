@@ -16,7 +16,7 @@ fn Main() {
   var x: i32 = 0;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_duplicate_decl.carbon" {
 // CHECK:STDOUT:   %.loc8 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

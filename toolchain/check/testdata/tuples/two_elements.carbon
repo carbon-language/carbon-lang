@@ -7,7 +7,7 @@
 var x: (i32, i32) = (4, 102);
 var y: (i32, i32) = x;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "two_elements.carbon" {
 // CHECK:STDOUT:   %.loc7_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_14: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)

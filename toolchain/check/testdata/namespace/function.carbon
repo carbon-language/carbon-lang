@@ -17,7 +17,7 @@ fn Bar() {
   Foo.Baz();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "function.carbon" {
 // CHECK:STDOUT:   %.loc7 = namespace {.Baz = %.loc13}
 // CHECK:STDOUT:   %.loc10 = fn_decl @Baz.1
 // CHECK:STDOUT:   %.loc13 = fn_decl @Baz.2

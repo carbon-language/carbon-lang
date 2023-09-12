@@ -82,7 +82,7 @@ fn AddressOfParameter(param: i32) {
   var param_addr: i32* = &param;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_address_of_value.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @G
 // CHECK:STDOUT:   %.loc9 = fn_decl @H
 // CHECK:STDOUT:   %.loc11 = fn_decl @AddressOfLiteral

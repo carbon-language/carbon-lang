@@ -11,7 +11,7 @@ fn Or() -> bool {
   return F() or G();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "or.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc8 = fn_decl @G
 // CHECK:STDOUT:   %.loc10 = fn_decl @Or

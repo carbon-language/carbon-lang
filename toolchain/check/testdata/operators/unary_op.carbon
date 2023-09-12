@@ -8,7 +8,7 @@ fn Not(b: bool) -> bool {
   return not b;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "unary_op.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Not
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

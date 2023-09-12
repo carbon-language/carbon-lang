@@ -10,7 +10,7 @@
 fn Foo.Baz() {
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_unresolved_scope.carbon" {
 // CHECK:STDOUT:   %.loc10 = fn_decl @.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

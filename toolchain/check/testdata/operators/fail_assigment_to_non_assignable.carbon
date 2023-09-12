@@ -45,7 +45,7 @@ fn Main() {
   (if true then a else a) = 10;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_assigment_to_non_assignable.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc9 = fn_decl @Main
 // CHECK:STDOUT: }

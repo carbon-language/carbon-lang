@@ -12,7 +12,7 @@ fn Main() {
   var b: i32 = Echo(1);
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "i32.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Echo
 // CHECK:STDOUT:   %.loc11 = fn_decl @Main
 // CHECK:STDOUT: }

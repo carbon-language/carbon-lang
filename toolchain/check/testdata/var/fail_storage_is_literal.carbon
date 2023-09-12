@@ -11,7 +11,7 @@ fn Main() {
   var x: 1 = 1;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_storage_is_literal.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

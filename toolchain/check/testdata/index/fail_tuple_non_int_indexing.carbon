@@ -10,7 +10,7 @@ var a: (i32, i32) = (12, 6);
 // CHECK:STDERR:                   ^
 var b: i32 = a[2.6];
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_tuple_non_int_indexing.carbon" {
 // CHECK:STDOUT:   %.loc7_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_14: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)

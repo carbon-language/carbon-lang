@@ -10,7 +10,7 @@
 // CHECK:STDERR:          ^
 fn F() { a.b; }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_access_into_invalid.carbon" {
 // CHECK:STDOUT:   %.loc11 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

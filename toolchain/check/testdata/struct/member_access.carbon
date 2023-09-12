@@ -8,7 +8,7 @@ var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
 var y: i32 = x.b;
 var z: i32 = y;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "member_access.carbon" {
 // CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: f64, .b: i32}
 // CHECK:STDOUT:   %x: ref {.a: f64, .b: i32} = var "x"
 // CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1

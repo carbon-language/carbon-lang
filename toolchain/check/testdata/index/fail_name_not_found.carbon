@@ -11,7 +11,7 @@ fn Main() {
   var b: i32 = a[0];
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_name_not_found.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

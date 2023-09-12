@@ -12,7 +12,7 @@ fn Foo(n: i32) -> (i32, f64) {
   return (n + 2, 3.4);
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "textual_ir.carbon" {
 // CHECK:STDOUT:   %.loc11 = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

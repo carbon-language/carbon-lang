@@ -9,7 +9,7 @@
 // CHECK:STDERR:                           ^
 var a: [i32; 2] = (1, 2.5);
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_type_mismatch.carbon" {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32
 // CHECK:STDOUT:   %a: ref [i32; 2] = var "a"

@@ -8,7 +8,7 @@ fn F();
 
 fn G() { F(); }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "simple.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc9 = fn_decl @G
 // CHECK:STDOUT: }

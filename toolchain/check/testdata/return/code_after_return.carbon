@@ -9,7 +9,7 @@ fn Main() {
   var n: i32 = 1 + 1;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "code_after_return.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -15,7 +15,7 @@ fn VarScope(b: bool) -> i32 {
   return n;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_scope.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @VarScope
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

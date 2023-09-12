@@ -11,7 +11,7 @@ fn Main() -> i32 {
   return 1.0;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_type_mismatch.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

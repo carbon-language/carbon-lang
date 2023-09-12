@@ -11,7 +11,7 @@ fn Main() {
   var b: () = MakeImplicitEmptyTuple();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "return_implicit.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @MakeImplicitEmptyTuple
 // CHECK:STDOUT:   %.loc10 = fn_decl @Main
 // CHECK:STDOUT: }

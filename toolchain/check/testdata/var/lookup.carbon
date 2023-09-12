@@ -9,7 +9,7 @@ fn Main() {
   x;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "lookup.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

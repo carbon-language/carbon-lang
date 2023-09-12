@@ -9,7 +9,7 @@
 // CHECK:STDERR:                                     ^
 var x: {.a: i32, .b: i32} = {.a = 1};
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_too_few_values.carbon" {
 // CHECK:STDOUT:   %.loc10_25: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: i32} = var "x"
 // CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1

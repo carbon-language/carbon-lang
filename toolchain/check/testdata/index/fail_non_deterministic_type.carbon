@@ -11,7 +11,7 @@ var b: i32 = 0;
 // CHECK:STDERR:                 ^
 var c: i32 = a[b];
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_non_deterministic_type.carbon" {
 // CHECK:STDOUT:   %.loc7_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_14: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)

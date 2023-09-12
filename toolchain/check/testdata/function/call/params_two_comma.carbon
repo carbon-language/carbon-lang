@@ -11,7 +11,7 @@ fn Main() {
   Foo(1, 2,);
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "params_two_comma.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Foo
 // CHECK:STDOUT:   %.loc9 = fn_decl @Main
 // CHECK:STDOUT: }

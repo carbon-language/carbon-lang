@@ -11,7 +11,7 @@ fn And() -> bool {
   return F() and G();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "and.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc8 = fn_decl @G
 // CHECK:STDOUT:   %.loc10 = fn_decl @And

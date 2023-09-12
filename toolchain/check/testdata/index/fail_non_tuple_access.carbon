@@ -11,7 +11,7 @@ fn Main() {
   0[1];
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_non_tuple_access.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

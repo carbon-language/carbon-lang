@@ -9,7 +9,7 @@
 // CHECK:STDERR:                                                         ^
 var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_assign_nested.carbon" {
 // CHECK:STDOUT:   %.loc10_10: type = stub_reference i32
 // CHECK:STDOUT:   %.loc10_15: type = stub_reference i32
 // CHECK:STDOUT:   %.loc10_18.1: type = tuple_type (type, type)

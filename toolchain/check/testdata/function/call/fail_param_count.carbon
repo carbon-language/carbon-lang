@@ -55,7 +55,7 @@ fn Main() {
   Run2(0);
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_param_count.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Run0
 // CHECK:STDOUT:   %.loc8 = fn_decl @Run1
 // CHECK:STDOUT:   %.loc9 = fn_decl @Run2
