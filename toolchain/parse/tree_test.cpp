@@ -68,7 +68,14 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
       Yaml::MappingValue{{"kind", "FileEnd"}, {"text", ""}},
   };
 
-  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
+  auto root = Yaml::SequenceValue{
+      Yaml::MappingValue{
+          {"filename", "test.carbon"},
+          {"parse_tree", file},
+      },
+  };
+
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(root));
 }
 
 TEST_F(TreeTest, PrintPreorderAsYAML) {
@@ -104,7 +111,14 @@ TEST_F(TreeTest, PrintPreorderAsYAML) {
           {"node_index", "5"}, {"kind", "FileEnd"}, {"text", ""}},
   };
 
-  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
+  auto root = Yaml::SequenceValue{
+      Yaml::MappingValue{
+          {"filename", "test.carbon"},
+          {"parse_tree", file},
+      },
+  };
+
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(root));
 }
 
 TEST_F(TreeTest, HighRecursion) {

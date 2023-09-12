@@ -9,15 +9,16 @@
 // CHECK:STDERR:               ^
 var n: i8 = n *n;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'Name', text: 'n'},
-// CHECK:STDOUT:     {kind: 'Literal', text: 'i8'},
-// CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:     {kind: 'NameExpression', text: 'n'},
-// CHECK:STDOUT:     {kind: 'NameExpression', text: 'n'},
-// CHECK:STDOUT:   {kind: 'InfixOperator', text: '*', subtree_size: 3},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 9},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: recover_infix_uneven_space_before.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'n'},
+// CHECK:STDOUT:         {kind: 'Literal', text: 'i8'},
+// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'NameExpression', text: 'n'},
+// CHECK:STDOUT:         {kind: 'NameExpression', text: 'n'},
+// CHECK:STDOUT:       {kind: 'InfixOperator', text: '*', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

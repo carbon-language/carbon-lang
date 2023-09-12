@@ -9,16 +9,17 @@
 // CHECK:STDERR:                ^
 var n: i8 = n* *p;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'Name', text: 'n'},
-// CHECK:STDOUT:     {kind: 'Literal', text: 'i8'},
-// CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'NameExpression', text: 'n'},
-// CHECK:STDOUT:     {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'NameExpression', text: 'p'},
-// CHECK:STDOUT:   {kind: 'InfixOperator', text: '*', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 10},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_precedence_star_star.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'n'},
+// CHECK:STDOUT:         {kind: 'Literal', text: 'i8'},
+// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:           {kind: 'NameExpression', text: 'n'},
+// CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'NameExpression', text: 'p'},
+// CHECK:STDOUT:       {kind: 'InfixOperator', text: '*', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

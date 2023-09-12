@@ -6,7 +6,8 @@
 
 ;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT: {kind: 'EmptyDeclaration', text: ';'},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: empty_declaration.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'EmptyDeclaration', text: ';'},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

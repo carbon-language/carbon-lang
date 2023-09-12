@@ -9,9 +9,10 @@
 // CHECK:STDERR:          ^
 namespace;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:   {kind: 'InvalidParse', text: ';'},
-// CHECK:STDOUT: {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_no_name.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: ';'},
+// CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
