@@ -67,10 +67,13 @@ class NodeBlockStack {
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
   auto empty() const -> bool { return size() == 0; }
-  auto size() const -> size_t { return size_; }
+  auto size() const -> int { return size_; }
 
  private:
   struct StackEntry {
+    // Preallocate an arbitrary size for the stack entries.
+    // TODO: Perform measurements to pick a good starting size to avoid
+    // reallocation.
     StackEntry() { content.reserve(32); }
 
     auto Reset(SemIR::NodeBlockId new_id) {
@@ -101,7 +104,7 @@ class NodeBlockStack {
 
   // The size of the stack. Entries after this in `stack_` are kept around so
   // that we can reuse the allocated buffer for their content.
-  size_t size_ = 0;
+  int size_ = 0;
 };
 
 }  // namespace Carbon::Check
