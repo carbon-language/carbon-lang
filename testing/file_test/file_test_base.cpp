@@ -17,6 +17,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PrettyStackTrace.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
           "A comma-separated list of repo-relative names of test files. "
@@ -63,6 +64,10 @@ auto FileTestBase::TestBody() -> void {
   llvm::errs() << "\nTo test this file alone, run:\n  bazel test " << target
                << " --test_arg=--file_tests=" << test_name_ << "\n\n";
 
+  // Add a crash trace entry that runs this test in isolation.
+  llvm::PrettyStackTraceFormat stack_trace_entry(
+      "bazel test %s --test_arg=--file_tests=%s", target, test_name_);
+
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
   ASSERT_TRUE(run_result.ok()) << run_result.error();
@@ -89,6 +94,10 @@ auto FileTestBase::TestBody() -> void {
 }
 
 auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
+  // Add a crash trace entry that runs this test in isolation.
+  llvm::PrettyStackTraceFormat stack_trace_entry("performing autoupdate for %s",
+                                                 test_name_);
+
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
   if (!run_result.ok()) {
@@ -147,9 +156,11 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
 
   // Pass arguments as StringRef.
   llvm::SmallVector<llvm::StringRef> test_args_ref;
+  llvm::SmallVector<const char*> test_argv_ref;
   test_args_ref.reserve(context.test_args.size());
   for (const auto& arg : context.test_args) {
     test_args_ref.push_back(arg);
+    test_argv_ref.push_back(arg.c_str());
   }
 
   // Create the files in-memory.
@@ -162,6 +173,10 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
       return ErrorBuilder() << "File is repeated: " << test_file.filename;
     }
   }
+
+  // Add a stack trace entry for the test invocation.
+  llvm::PrettyStackTraceProgram stack_trace_entry(test_argv_ref.size(),
+                                                  test_argv_ref.data());
 
   // Capture trace streaming, but only when in debug mode.
   llvm::raw_svector_ostream stdout(context.stdout);
