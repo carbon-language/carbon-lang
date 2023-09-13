@@ -153,7 +153,7 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
   if (!context.node_block_stack().is_current_block_reachable()) {
     return SemIR::NodeBlockId::Unreachable;
   }
-  auto block_id = context.semantics_ir().AddNodeBlock();
+  auto block_id = context.semantics_ir().AddNodeBlockId();
   context.AddNode(BranchNode::Make(parse_node, block_id, args...));
   return block_id;
 }
@@ -185,7 +185,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
   for ([[maybe_unused]] auto _ : llvm::seq(num_blocks)) {
     if (node_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
-        new_block_id = semantics_ir().AddNodeBlock();
+        new_block_id = semantics_ir().AddNodeBlockId();
       }
       AddNode(SemIR::Node::Branch::Make(parse_node, new_block_id));
     }
@@ -203,7 +203,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
   for (auto arg_id : block_args) {
     if (node_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
-        new_block_id = semantics_ir().AddNodeBlock();
+        new_block_id = semantics_ir().AddNodeBlockId();
       }
       AddNode(
           SemIR::Node::BranchWithArg::Make(parse_node, new_block_id, arg_id));
