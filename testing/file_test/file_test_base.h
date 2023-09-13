@@ -40,7 +40,7 @@ class FileTestBase : public testing::Test {
   };
 
   // Provided for child class convenience.
-  using LineNumberReplacement = FileTestLineNumberReplacement;
+  using LineNumberReplacement = FileTestAutoupdater::LineNumberReplacement;
 
   explicit FileTestBase(llvm::StringRef test_name) : test_name_(test_name) {}
 
@@ -100,12 +100,15 @@ class FileTestBase : public testing::Test {
     std::string input_content;
 
     // Lines which don't contain CHECKs, and thus need to be retained by
-    // autoupdate. Their line number in the file is attached.
+    // autoupdate. Their file and line numbers are attached.
     //
-    // If there are splits, then the line is in the respective file. For N
-    // splits, there will be one vector for the parts of the input file which
-    // are not in any split, plus one vector per split file.
-    llvm::SmallVector<llvm::SmallVector<FileTestLine>> non_check_lines;
+    // If there are splits, then the splitting line is in the respective file.
+    // For N splits, the 0th file is the parts of the input file which are not
+    // in any split, plus one file per split file.
+    llvm::SmallVector<FileTestLine> non_check_lines;
+
+    // Whether there are splits.
+    bool has_splits = false;
 
     // Arguments for the test, generated from ARGS.
     llvm::SmallVector<std::string> test_args;

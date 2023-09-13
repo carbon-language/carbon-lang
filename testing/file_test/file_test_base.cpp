@@ -19,6 +19,7 @@
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "testing/file_test/autoupdate.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
           "A comma-separated list of repo-relative names of test files. "
@@ -111,7 +112,7 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
 
   llvm::SmallVector<llvm::StringRef> filenames;
   filenames.reserve(context.non_check_lines.size());
-  if (context.non_check_lines.size() > 1) {
+  if (context.has_splits) {
     // There are splits, so we provide an empty name for the first file.
     filenames.push_back({});
   }
@@ -124,12 +125,14 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
     expected_filenames = expected_filenames.drop_front();
   }
 
-  return AutoupdateFileTest(
-      std::filesystem::absolute(test_name_.str()), context.input_content,
-      filenames, *context.autoupdate_line_number, context.non_check_lines,
-      context.stdout, context.stderr, GetDefaultFileRE(expected_filenames),
-      GetLineNumberReplacements(expected_filenames),
-      [&](std::string& line) { DoExtraCheckReplacements(line); });
+  return FileTestAutoupdater(
+             std::filesystem::absolute(test_name_.str()), context.input_content,
+             filenames, *context.autoupdate_line_number,
+             context.non_check_lines, context.stdout, context.stderr,
+             GetDefaultFileRE(expected_filenames),
+             GetLineNumberReplacements(expected_filenames),
+             [&](std::string& line) { DoExtraCheckReplacements(line); })
+      .Run();
 }
 
 auto FileTestBase::GetLineNumberReplacements(
@@ -253,7 +256,7 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
   // The current file's start.
   const char* current_file_start = nullptr;
 
-  context.non_check_lines.resize(1);
+  int file_number = 0;
   while (!cursor.empty()) {
     auto [line, next_cursor] = cursor.split("\n");
     cursor = next_cursor;
@@ -269,7 +272,9 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
                << "AUTOUPDATE/NOAUTOUPDATE setting must be in the first file.";
       }
 
-      context.non_check_lines.push_back({FileTestLine(0, line)});
+      context.has_splits = true;
+      ++file_number;
+      context.non_check_lines.push_back(FileTestLine(file_number, 0, line));
       // On a file split, add the previous file, then start a new one.
       if (current_file_start) {
         context.test_files.push_back(TestFile(
@@ -311,7 +316,8 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
         expected->push_back(check_matcher);
       }
     } else {
-      context.non_check_lines.back().push_back(FileTestLine(line_index, line));
+      context.non_check_lines.push_back(
+          FileTestLine(file_number, line_index, line));
       if (line_trimmed.consume_front("// ARGS: ")) {
         if (context.test_args.empty()) {
           // Split the line into arguments.
