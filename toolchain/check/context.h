@@ -83,14 +83,14 @@ class Context {
                                     SemIR::NodeId cond_id)
       -> SemIR::NodeBlockId;
 
-  // Adds branches from the top `num_blocks` on the node block stack to a new
-  // block, for reconvergence of control flow, pops the existing blocks, and
-  // pushes the new block onto the node block stack.
+  // Handles recovergence of control flow. Adds branches from the top
+  // `num_blocks` on the node block stack to a new block, pops the existing
+  // blocks, and pushes the new block onto the node block stack.
   auto AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
       -> void;
 
-  // Adds branches from the top few blocks on the node block stack to a new
-  // block, for reconvergence of control flow with a result value, pops the
+  // Handles recovergence of control flow with a result value. Adds branches
+  // from the top few blocks on the node block stack to a new block, pops the
   // existing blocks, and pushes the new block onto the node block stack. The
   // number of blocks popped is the size of `block_args`, and the corresponding
   // result values are the elements of `block_args`. Returns a node referring

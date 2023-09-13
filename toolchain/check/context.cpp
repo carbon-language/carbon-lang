@@ -61,7 +61,7 @@ auto Context::VerifyOnFinish() -> void {
 }
 
 auto Context::AddNode(SemIR::Node node) -> SemIR::NodeId {
-  auto node_id = semantics_ir_->AddNodeNoBlock(node);
+  auto node_id = semantics_ir_->AddNodeInNoBlock(node);
   node_block_stack_.AddNodeId(node_id);
   CARBON_VLOG() << "AddNode " << node_block_stack_.Peek() << ": " << node
                 << "\n";
