@@ -7,7 +7,7 @@
 var a: (i32, i32, i32) = (1, 2, 3);
 var b: [i32; 3] = a;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "assign_var.carbon" {
 // CHECK:STDOUT:   %.loc7_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_14: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_19: type = stub_reference i32

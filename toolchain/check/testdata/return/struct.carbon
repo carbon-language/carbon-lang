@@ -8,7 +8,7 @@ fn Main() -> {.a: i32} {
   return {.a = 3};
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "struct.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

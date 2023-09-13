@@ -6,6 +6,6 @@
 
 var x: i32;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "global_decl.carbon" {
 // CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT: }

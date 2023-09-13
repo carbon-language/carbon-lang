@@ -10,7 +10,7 @@ var x: i32;
 // CHECK:STDERR:               ^
 var y: i32 = x.b;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_qualifier_unsupported.carbon" {
 // CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT:   %y: ref i32 = var "y"
 // CHECK:STDOUT:   assign %y, <error>

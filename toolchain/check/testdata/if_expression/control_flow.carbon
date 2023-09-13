@@ -11,7 +11,7 @@ fn F(b: bool) -> i32 {
   return if b then A() else B();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "control_flow.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @A
 // CHECK:STDOUT:   %.loc8 = fn_decl @B
 // CHECK:STDOUT:   %.loc10 = fn_decl @F

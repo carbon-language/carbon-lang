@@ -9,7 +9,7 @@
 // CHECK:STDERR:                               ^
 var x: (i32, i32) = (2, 65.89);
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_element_type_mismatch.carbon" {
 // CHECK:STDOUT:   %.loc10_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc10_14: type = stub_reference i32
 // CHECK:STDOUT:   %.loc10_17.1: type = tuple_type (type, type)

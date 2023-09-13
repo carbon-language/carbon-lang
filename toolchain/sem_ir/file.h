@@ -72,7 +72,7 @@ class File : public Printable<File> {
   explicit File();
 
   // Starts a new file for Check::CheckParseTree. Builtins are required.
-  explicit File(const File* builtins);
+  explicit File(std::string filename, const File* builtins);
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
@@ -290,8 +290,14 @@ class File : public Printable<File> {
   auto has_errors() const -> bool { return has_errors_; }
   auto set_has_errors(bool has_errors) -> void { has_errors_ = has_errors; }
 
+  auto filename() const -> llvm::StringRef { return filename_; }
+
  private:
   bool has_errors_ = false;
+
+  // The associated filename.
+  // TODO: If SemIR starts linking back to tokens, reuse its filename.
+  std::string filename_;
 
   // Storage for callable objects.
   llvm::SmallVector<Function> functions_;

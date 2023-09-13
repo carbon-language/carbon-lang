@@ -10,7 +10,7 @@ fn Main() {
   Foo();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "params_zero.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Foo
 // CHECK:STDOUT:   %.loc9 = fn_decl @Main
 // CHECK:STDOUT: }

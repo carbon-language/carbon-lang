@@ -13,7 +13,7 @@ fn Run() {
   var x: i32 = Foo();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_return_type_mismatch.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Foo
 // CHECK:STDOUT:   %.loc9 = fn_decl @Run
 // CHECK:STDOUT: }

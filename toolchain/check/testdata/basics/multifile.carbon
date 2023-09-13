@@ -4,20 +4,24 @@
 //
 // AUTOUPDATE
 
-fn Foo(a: i32) {}
-fn Bar(a: i32) {}
+// CHECK:STDOUT: file "a.carbon" {
+// CHECK:STDOUT:   %.loc1 = fn_decl @A
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT: file "b.carbon" {
+// CHECK:STDOUT:   %.loc1 = fn_decl @B
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// --- a.carbon
+fn A() {}
 
-// CHECK:STDOUT: file "same_param_name.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
-// CHECK:STDOUT:   %.loc8 = fn_decl @Bar
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: i32) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a: i32) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// --- b.carbon
+fn B() {}

@@ -18,7 +18,7 @@ fn Foo.Baz() {
 fn Foo.Baz() {
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_duplicate.carbon" {
 // CHECK:STDOUT:   %.loc7 = namespace {.Baz = %.loc9}
 // CHECK:STDOUT:   %.loc9 = fn_decl @Baz
 // CHECK:STDOUT:   %.loc18 = fn_decl @.1

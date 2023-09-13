@@ -132,7 +132,7 @@ MATCHER_P(Sequence, contents,
 // Same as testing::VariantWith<ScalarValue>(contents).
 // NOLINTNEXTLINE: Expands from GoogleTest.
 MATCHER_P(Scalar, value,
-          "has scalar value " + ::testing::PrintToString(value)) {
+          "has scalar value " + DescribeMatcher<std::string>(value)) {
   ::testing::Matcher<ScalarValue> value_matcher = value;
 
   if (auto* map = std::get_if<ScalarValue>(&arg)) {

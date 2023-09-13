@@ -404,9 +404,9 @@ class Formatter {
         node_namer_(tokenized_buffer, parse_tree, semantics_ir) {}
 
   auto Format() -> void {
-    // TODO: Include information from the package declaration, once we fully
-    // support it.
-    out_ << "package {\n";
+    out_ << "file \"" << semantics_ir_.filename() << "\" {\n";
+    // TODO: Include information from the package declaration, once we
+    // fully support it.
     // TODO: Handle the case where there are multiple top-level node blocks.
     // For example, there may be branching in the initializer of a global or a
     // type expression.

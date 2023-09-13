@@ -11,7 +11,7 @@ var b: (i32,) = a;
 // CHECK:STDERR:                                   ^
 var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_tuple_large_index.carbon" {
 // CHECK:STDOUT:   %.loc7_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc7_13.2: (type,) = tuple_literal (%.loc7_9)

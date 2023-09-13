@@ -6,7 +6,7 @@
 
 fn Foo() {}
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "params_zero.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -14,7 +14,7 @@ fn Foo.Bar.Baz() {
   Foo.Bar.Wiz();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "nested.carbon" {
 // CHECK:STDOUT:   %.loc7 = namespace {.Bar = %.loc8}
 // CHECK:STDOUT:   %.loc8 = namespace {.Wiz = %.loc10, .Baz = %.loc13}
 // CHECK:STDOUT:   %.loc10 = fn_decl @Wiz

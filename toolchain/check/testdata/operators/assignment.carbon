@@ -22,7 +22,7 @@ fn Main() {
   *(if true then p else &a) = 10;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "assignment.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
