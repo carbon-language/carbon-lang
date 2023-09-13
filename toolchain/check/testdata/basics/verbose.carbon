@@ -8,7 +8,7 @@
 // NOAUTOUPDATE
 // SET-CHECK-SUBSET
 // CHECK:STDERR: Node Push 0: FunctionIntroducer -> <none>
-// CHECK:STDERR: AddNode block{{[0-9]+}}: {kind: FunctionDeclaration, arg0: function{{[0-9]+}}}
+// CHECK:STDERR: AddNode block{{[0-9]+}}: {kind: Return}
 
 fn Foo() {
   return;
