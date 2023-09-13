@@ -165,8 +165,10 @@ class File : public Printable<File> {
   // Returns the requested node.
   auto GetNode(NodeId node_id) const -> Node { return nodes_[node_id.index]; }
 
-  // Adds an empty node block, returning an ID to reference it.
-  auto AddNodeBlock() -> NodeBlockId {
+  // Reserves and returns a node block ID. The contents of the node block
+  // should be specified by calling SetNodeBlock, or by pushing the ID onto the
+  // NodeBlockStack.
+  auto AddNodeBlockId() -> NodeBlockId {
     NodeBlockId id(node_blocks_.size());
     node_blocks_.push_back({});
     return id;
