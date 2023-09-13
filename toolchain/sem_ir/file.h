@@ -152,10 +152,15 @@ class File : public Printable<File> {
   auto AddNode(NodeBlockId block_id, Node node) -> NodeId {
     NodeId node_id(nodes_.size());
     nodes_.push_back(node);
+    AddNodeId(block_id, node_id);
+    return node_id;
+  }
+
+  // Adds the ID of an existing node to the specified block.
+  auto AddNodeId(NodeBlockId block_id, NodeId node_id) -> void {
     if (block_id != NodeBlockId::Unreachable) {
       node_blocks_[block_id.index].push_back(node_id);
     }
-    return node_id;
   }
 
   // Overwrites a given node with a new value.
@@ -173,15 +178,22 @@ class File : public Printable<File> {
     return id;
   }
 
+  // Adds a node block with the given content, returning an ID to reference it.
+  auto AddNodeBlock(llvm::ArrayRef<NodeId> content) -> NodeBlockId {
+    NodeBlockId id(node_blocks_.size());
+    node_blocks_.push_back({});
+    node_blocks_.back().assign(content.begin(), content.end());
+    return id;
+  }
+
   // Returns the requested node block.
-  auto GetNodeBlock(NodeBlockId block_id) const
-      -> const llvm::SmallVector<NodeId>& {
+  auto GetNodeBlock(NodeBlockId block_id) const -> llvm::ArrayRef<NodeId> {
     CARBON_CHECK(block_id != NodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
 
   // Returns the requested node block.
-  auto GetNodeBlock(NodeBlockId block_id) -> llvm::SmallVector<NodeId>& {
+  auto GetNodeBlock(NodeBlockId block_id) -> llvm::MutableArrayRef<NodeId> {
     CARBON_CHECK(block_id != NodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
@@ -245,21 +257,21 @@ class File : public Printable<File> {
     }
   }
 
-  // Adds an empty type block, returning an ID to reference it.
-  auto AddTypeBlock() -> TypeBlockId {
+  // Adds a type block with the given content, returning an ID to reference it.
+  auto AddTypeBlock(llvm::ArrayRef<TypeId> content) -> TypeBlockId {
     TypeBlockId id(type_blocks_.size());
     type_blocks_.push_back({});
+    type_blocks_.back().assign(content.begin(), content.end());
     return id;
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) const
-      -> const llvm::SmallVector<TypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) const -> llvm::ArrayRef<TypeId> {
     return type_blocks_[block_id.index];
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) -> llvm::SmallVector<TypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) -> llvm::MutableArrayRef<TypeId> {
     return type_blocks_[block_id.index];
   }
 

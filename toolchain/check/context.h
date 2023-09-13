@@ -40,6 +40,10 @@ class Context {
   auto AddNodeToBlock(SemIR::NodeBlockId block, SemIR::Node node)
       -> SemIR::NodeId;
 
+  // Adds the ID of an existing node to the given block.
+  auto AddNodeIdToBlock(SemIR::NodeBlockId block, SemIR::NodeId node_id)
+      -> void;
+
   // Pushes a parse tree node onto the stack, storing the SemIR::Node as the
   // result.
   auto AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void;
@@ -148,7 +152,8 @@ class Context {
   auto ImplicitAsForArgs(Parse::Node call_parse_node,
                          SemIR::NodeBlockId arg_refs_id,
                          Parse::Node param_parse_node,
-                         SemIR::NodeBlockId param_refs_id) -> bool;
+                         SemIR::NodeBlockId param_refs_id, bool has_return_slot)
+      -> bool;
 
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.
@@ -167,7 +172,7 @@ class Context {
   // Handles canonicalization of tuple types. This may create a new tuple type
   // if the `type_ids` doesn't match an existing tuple type.
   auto CanonicalizeTupleType(Parse::Node parse_node,
-                             llvm::SmallVector<SemIR::TypeId>&& type_ids)
+                             llvm::ArrayRef<SemIR::TypeId> type_ids)
       -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
@@ -200,9 +205,19 @@ class Context {
   // start_kind.
   auto ParamOrArgComma(bool for_args) -> void;
 
-  // Detects whether there's an entry to push. On return, the top of
-  // node_stack_ will be start_kind, and the caller should do type-specific
-  // processing. Returns refs_id.
+  // Detects whether there's an entry to push from the end of a parameter or
+  // argument list, and if so, moves it to the current parameter or argument
+  // list. Does not pop the list. `start_kind` is the node kind at the start
+  // of the parameter or argument list, and will be at the top of the parse node
+  // stack when this function returns.
+  auto ParamOrArgEndNoPop(bool for_args, Parse::NodeKind start_kind) -> void;
+
+  // Pops the current parameter or argument list. Should only be called after
+  // `ParamOrArgEndNoPop`.
+  auto ParamOrArgPop() -> SemIR::NodeBlockId;
+
+  // Detects whether there's an entry to push. Pops and returns the argument
+  // list. This is the same as `ParamOrArgEndNoPop` followed by `ParamOrArgPop`.
   auto ParamOrArgEnd(bool for_args, Parse::NodeKind start_kind)
       -> SemIR::NodeBlockId;
 

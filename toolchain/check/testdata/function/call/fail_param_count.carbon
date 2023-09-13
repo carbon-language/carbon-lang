@@ -81,6 +81,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc18_8.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc18_8.2: i32 = stub_reference %.loc18_8.1
+// CHECK:STDOUT:   %.loc18_7: type = tuple_type ()
 // CHECK:STDOUT:   %.loc25_8.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc25_8.2: i32 = stub_reference %.loc25_8.1
 // CHECK:STDOUT:   %.loc25_11.1: i32 = int_literal 1
