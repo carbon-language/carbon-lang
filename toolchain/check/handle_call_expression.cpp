@@ -8,6 +8,8 @@
 namespace Carbon::Check {
 
 auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
+  // Process the final explicit call argument, but leave the arguments block on
+  // the stack until we add the return slot argument.
   context.ParamOrArgEndNoPop(
       /*for_args=*/true, Parse::NodeKind::CallExpressionStart);
 
@@ -20,6 +22,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
     // TODO: Work on error.
     context.TODO(parse_node, "Not a callable name");
     context.node_stack().Push(parse_node, name_id);
+    context.ParamOrArgPop();
     return true;
   }
 
