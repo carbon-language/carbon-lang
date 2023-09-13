@@ -24,25 +24,23 @@ auto HandleIfCondition(Context& context, Parse::Node parse_node) -> bool {
       context.AddDominatedBlockAndBranchIf(parse_node, cond_value_id);
   auto else_block_id = context.AddDominatedBlockAndBranch(parse_node);
 
-  // Push the resume, else, and then blocks, and start emitting code in the then
-  // block.
+  // Start emitting the `then` block.
   context.node_block_stack().Pop();
-  context.node_block_stack().Push(else_block_id);
   context.node_block_stack().Push(then_block_id);
   context.AddCurrentCodeBlockToFunction();
 
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(parse_node, else_block_id);
   return true;
 }
 
 auto HandleIfStatementElse(Context& context, Parse::Node parse_node) -> bool {
-  context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::IfCondition>();
+  auto else_block_id = context.node_stack().Pop<Parse::NodeKind::IfCondition>();
 
-  // Switch to emitting the else block.
-  context.node_block_stack().SwapTopBlocks();
-  context.node_stack().Push(parse_node);
+  // Switch to emitting the `else` block.
+  context.node_block_stack().Push(else_block_id);
   context.AddCurrentCodeBlockToFunction();
+
+  context.node_stack().Push(parse_node);
   return true;
 }
 
@@ -52,11 +50,11 @@ auto HandleIfStatement(Context& context, Parse::Node parse_node) -> bool {
     case Parse::NodeKind::IfCondition: {
       // Branch from then block to else block, and start emitting the else
       // block.
-      context.node_stack()
-          .PopAndDiscardSoloParseNode<Parse::NodeKind::IfCondition>();
-      context.AddNode(SemIR::Node::Branch::Make(
-          parse_node, context.node_block_stack().PeekForAdd(/*depth=*/1)));
+      auto else_block_id =
+          context.node_stack().Pop<Parse::NodeKind::IfCondition>();
+      context.AddNode(SemIR::Node::Branch::Make(parse_node, else_block_id));
       context.node_block_stack().Pop();
+      context.node_block_stack().Push(else_block_id);
       break;
     }
 

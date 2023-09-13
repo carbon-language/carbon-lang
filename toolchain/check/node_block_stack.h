@@ -59,12 +59,6 @@ class NodeBlockStack {
     return Pop();
   }
 
-  // Swaps the two blocks on the top of the stack.
-  auto SwapTopBlocks() -> void {
-    CARBON_CHECK(size() >= 2) << "not enough blocks on stack";
-    std::swap(stack_[size() - 1], stack_[size() - 2]);
-  }
-
   // Adds the given node ID to the block at the top of the stack.
   auto AddNodeId(SemIR::NodeId node_id) -> void {
     semantics_ir_->AddNodeIdForNodeBlockStack(PeekForAdd(), node_id);
