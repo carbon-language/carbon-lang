@@ -21,7 +21,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: ref i32 = var "x"
-// CHECK:STDOUT:   %.loc11: String = string_literal "hello"
+// CHECK:STDOUT:   %.loc14: String = string_literal "hello"
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
