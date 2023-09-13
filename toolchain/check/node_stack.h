@@ -242,6 +242,7 @@ class NodeStack {
       case Parse::NodeKind::ArrayExpression:
       case Parse::NodeKind::CallExpression:
       case Parse::NodeKind::CallExpressionStart:
+      case Parse::NodeKind::IfExpressionThen:
       case Parse::NodeKind::IfExpressionElse:
       case Parse::NodeKind::IndexExpression:
       case Parse::NodeKind::InfixOperator:
@@ -260,8 +261,8 @@ class NodeStack {
       case Parse::NodeKind::StructTypeLiteral:
       case Parse::NodeKind::TupleLiteral:
         return IdKind::NodeId;
-      case Parse::NodeKind::IfExpressionThen:
-      case Parse::NodeKind::IfStatementElse:
+      case Parse::NodeKind::IfCondition:
+      case Parse::NodeKind::IfExpressionIf:
       case Parse::NodeKind::ParameterList:
         return IdKind::NodeBlockId;
       case Parse::NodeKind::FunctionDefinitionStart:
@@ -271,8 +272,7 @@ class NodeStack {
       case Parse::NodeKind::ArrayExpressionSemi:
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::FunctionIntroducer:
-      case Parse::NodeKind::IfCondition:
-      case Parse::NodeKind::IfExpressionIf:
+      case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ParameterListStart:
       case Parse::NodeKind::ParenExpressionOrTupleLiteralStart:
       case Parse::NodeKind::QualifiedDeclaration:

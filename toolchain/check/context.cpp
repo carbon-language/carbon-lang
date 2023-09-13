@@ -9,6 +9,7 @@
 #include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "toolchain/check/declaration_name_stack.h"
 #include "toolchain/check/node_block_stack.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
@@ -60,18 +61,11 @@ auto Context::VerifyOnFinish() -> void {
 }
 
 auto Context::AddNode(SemIR::Node node) -> SemIR::NodeId {
-  return AddNodeToBlock(node_block_stack_.PeekForAdd(), node);
-}
-
-auto Context::AddNodeToBlock(SemIR::NodeBlockId block, SemIR::Node node)
-    -> SemIR::NodeId {
-  CARBON_VLOG() << "AddNode " << block << ": " << node << "\n";
-  return semantics_ir_->AddNode(block, node);
-}
-
-auto Context::AddNodeIdToBlock(SemIR::NodeBlockId block, SemIR::NodeId node_id)
-    -> void {
-  semantics_ir_->AddNodeId(block, node_id);
+  auto node_id = semantics_ir_->AddNodeInNoBlock(node);
+  node_block_stack_.AddNodeId(node_id);
+  CARBON_VLOG() << "AddNode " << node_block_stack_.Peek() << ": " << node
+                << "\n";
+  return node_id;
 }
 
 auto Context::AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void {
@@ -183,45 +177,44 @@ auto Context::AddDominatedBlockAndBranchIf(Parse::Node parse_node,
       *this, parse_node, cond_id);
 }
 
-auto Context::AddConvergenceBlockAndPush(
-    Parse::Node parse_node, std::initializer_list<SemIR::NodeBlockId> blocks)
+auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
     -> void {
-  CARBON_CHECK(blocks.size() >= 2) << "no convergence";
+  CARBON_CHECK(num_blocks >= 2) << "no convergence";
 
   SemIR::NodeBlockId new_block_id = SemIR::NodeBlockId::Unreachable;
-  for (SemIR::NodeBlockId block_id : blocks) {
-    if (block_id != SemIR::NodeBlockId::Unreachable) {
+  for ([[maybe_unused]] auto _ : llvm::seq(num_blocks)) {
+    if (node_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
         new_block_id = semantics_ir().AddNodeBlock();
       }
-      AddNodeToBlock(block_id,
-                     SemIR::Node::Branch::Make(parse_node, new_block_id));
+      AddNode(SemIR::Node::Branch::Make(parse_node, new_block_id));
     }
+    node_block_stack().Pop();
   }
   node_block_stack().Push(new_block_id);
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
-    Parse::Node parse_node,
-    std::initializer_list<std::pair<SemIR::NodeBlockId, SemIR::NodeId>>
-        blocks_and_args) -> SemIR::NodeId {
-  CARBON_CHECK(blocks_and_args.size() >= 2) << "no convergence";
+    Parse::Node parse_node, std::initializer_list<SemIR::NodeId> block_args)
+    -> SemIR::NodeId {
+  CARBON_CHECK(block_args.size() >= 2) << "no convergence";
 
   SemIR::NodeBlockId new_block_id = SemIR::NodeBlockId::Unreachable;
-  for (auto [block_id, arg_id] : blocks_and_args) {
-    if (block_id != SemIR::NodeBlockId::Unreachable) {
+  for (auto arg_id : block_args) {
+    if (node_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
         new_block_id = semantics_ir().AddNodeBlock();
       }
-      AddNodeToBlock(block_id, SemIR::Node::BranchWithArg::Make(
-                                   parse_node, new_block_id, arg_id));
+      AddNode(
+          SemIR::Node::BranchWithArg::Make(parse_node, new_block_id, arg_id));
     }
+    node_block_stack().Pop();
   }
   node_block_stack().Push(new_block_id);
 
   // Acquire the result value.
   SemIR::TypeId result_type_id =
-      semantics_ir().GetNode(blocks_and_args.begin()->second).type_id();
+      semantics_ir().GetNode(*block_args.begin()).type_id();
   return AddNode(
       SemIR::Node::BlockArg::Make(parse_node, result_type_id, new_block_id));
 }
@@ -624,7 +617,7 @@ auto Context::ParamOrArgSave(bool for_args) -> void {
   }
 
   // Save the param or arg ID.
-  AddNodeIdToBlock(params_or_args_stack_.PeekForAdd(), entry_node_id);
+  params_or_args_stack_.AddNodeId(entry_node_id);
 }
 
 auto Context::CanonicalizeTypeImpl(

@@ -43,8 +43,10 @@ class NodeBlockStack {
     return stack_.back();
   }
 
-  // Returns the top node block, allocating one if it's still invalid.
-  auto PeekForAdd() -> SemIR::NodeBlockId;
+  // Returns the top node block, allocating one if it's still invalid. If
+  // `depth` is specified, returns the node at `depth` levels from the top of
+  // the stack, where the top block is at depth 0.
+  auto PeekForAdd(int depth = 0) -> SemIR::NodeBlockId;
 
   // Pops the top node block. This will always return a valid node block;
   // SemIR::NodeBlockId::Empty is returned if one wasn't allocated.
@@ -55,6 +57,11 @@ class NodeBlockStack {
   auto PopForAdd() -> SemIR::NodeBlockId {
     PeekForAdd();
     return Pop();
+  }
+
+  // Adds the given node ID to the block at the top of the stack.
+  auto AddNodeId(SemIR::NodeId node_id) -> void {
+    semantics_ir_->AddNodeIdForNodeBlockStack(PeekForAdd(), node_id);
   }
 
   // Returns whether the current block is statically reachable.

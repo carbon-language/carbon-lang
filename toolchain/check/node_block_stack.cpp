@@ -17,15 +17,15 @@ auto NodeBlockStack::Push(SemIR::NodeBlockId id) -> void {
   stack_.push_back(id);
 }
 
-auto NodeBlockStack::PeekForAdd() -> SemIR::NodeBlockId {
-  CARBON_CHECK(!stack_.empty()) << "no current block";
-  auto& back = stack_.back();
-  if (!back.is_valid()) {
-    back = semantics_ir_->AddNodeBlock();
-    CARBON_VLOG() << name_ << " Add " << stack_.size() - 1 << ": " << back
-                  << "\n";
+auto NodeBlockStack::PeekForAdd(int depth) -> SemIR::NodeBlockId {
+  CARBON_CHECK(static_cast<int>(stack_.size()) > depth) << "no such block";
+  int index = stack_.size() - depth - 1;
+  auto& slot = stack_[index];
+  if (!slot.is_valid()) {
+    slot = semantics_ir_->AddNodeBlock();
+    CARBON_VLOG() << name_ << " Add " << index << ": " << slot << "\n";
   }
-  return back;
+  return slot;
 }
 
 auto NodeBlockStack::Pop() -> SemIR::NodeBlockId {
