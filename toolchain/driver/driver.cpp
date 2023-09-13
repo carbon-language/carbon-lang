@@ -422,6 +422,11 @@ class Driver::CompilationUnit {
 
   // Parses tokens. Returns true on success.
   auto RunParse() -> bool {
+    // Can be called when the file fails to load, so ensure there's source.
+    if (!source_) {
+      return false;
+    }
+
     LogCall("Parse::Tree::Parse", [&] {
       parse_tree_ = Parse::Tree::Parse(*tokens_, *consumer_, vlog_stream_);
     });
@@ -435,6 +440,11 @@ class Driver::CompilationUnit {
 
   // Check the parse tree and produce SemIR. Returns true on success.
   auto RunCheck(const SemIR::File& builtins) -> bool {
+    // Can be called when the file fails to load, so ensure there's source.
+    if (!source_) {
+      return false;
+    }
+
     LogCall("Check::CheckParseTree", [&] {
       sem_ir_ = Check::CheckParseTree(builtins, *tokens_, *parse_tree_,
                                       *consumer_, vlog_stream_);
