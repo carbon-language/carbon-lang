@@ -4900,10 +4900,10 @@ Note that [the rules for specialization](#lookup-resolution-and-specialization)
 do allow there to be more than one `impl` to be defined for a type, by
 unambiguously picking one as most specific.
 
-**References:** Implementation coherence is
-[defined in terminology](terminology.md#coherence), and is
-[a goal for Carbon generics](goals.md#coherence). More detail can be found in
-[this appendix with the rationale and alternatives considered](appendix-coherence.md).
+> **References:** Implementation coherence is
+> [defined in terminology](terminology.md#coherence), and is
+> [a goal for Carbon generics](goals.md#coherence). More detail can be found in
+> [this appendix with the rationale and alternatives considered](appendix-coherence.md).
 
 Only the implementing interface and types (self type and type parameters) in the
 type structure are relevant here; an interface mentioned in a constraint is not
