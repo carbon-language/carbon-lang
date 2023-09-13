@@ -182,25 +182,7 @@ jobs:
           # There is a new effort (yay!) but until then it seems worth using the
           # workaround of a high jobs value. The biggest downside (increased
           # heap usage) seems like it isn't currently a big loss for our builds.
-          build --jobs=200
-
-          # Set an artificially high jobs count. This flag controls the number
-          # of concurrency Bazel itself uses, which is essential for actions
-          # that are internally blocked on for example downloading results form
-          # the cache above. Without setting this high, Bazel will pick a small
-          # number based on the available host CPUs and the reality will be a
-          # long chain of largely serialized download events with little or no
-          # usage of the host machine. Fortunately, local actions are
-          # *separately* gated on `--local_*_resources` that will avoid a large
-          # jobs value overwhelming the host. There is a bug to make downloads
-          # behave completely asynchronously and remove the need for this filed
-          # back in 2018 but work seemed to not finish:
-          # https://github.com/bazelbuild/bazel/issues/6394
-          #
-          # There is a new effort (yay!) but until then it seems worth using the
-          # workaround of a high jobs value. The biggest downside (increased
-          # heap usage) seems like it isn't currently a big loss for our builds.
-          build --jobs=200
+          build --jobs=50
 
           # General build options.
           build --verbose_failures
