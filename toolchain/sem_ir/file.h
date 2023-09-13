@@ -148,16 +148,17 @@ class File : public Printable<File> {
     return name_scopes_[scope_id.index];
   }
 
-  // Adds a node to a specified block, returning an ID to reference the node.
-  auto AddNode(NodeBlockId block_id, Node node) -> NodeId {
+  // Adds a node to the node list, returning an ID to reference the node.
+  auto AddNodeNoBlock(Node node) -> NodeId {
     NodeId node_id(nodes_.size());
     nodes_.push_back(node);
-    AddNodeId(block_id, node_id);
     return node_id;
   }
 
-  // Adds the ID of an existing node to the specified block.
-  auto AddNodeId(NodeBlockId block_id, NodeId node_id) -> void {
+  // Adds the ID of an existing node to the specified block. Temporary, should
+  // only be called by Check::NodeBlockStack.
+  auto AddNodeIdForNodeBlockStack(NodeBlockId block_id, NodeId node_id)
+      -> void {
     if (block_id != NodeBlockId::Unreachable) {
       node_blocks_[block_id.index].push_back(node_id);
     }

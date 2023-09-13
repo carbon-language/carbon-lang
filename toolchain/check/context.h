@@ -36,14 +36,6 @@ class Context {
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemIR::Node node) -> SemIR::NodeId;
 
-  // Adds a node to the given block, returning the produced ID.
-  auto AddNodeToBlock(SemIR::NodeBlockId block, SemIR::Node node)
-      -> SemIR::NodeId;
-
-  // Adds the ID of an existing node to the given block.
-  auto AddNodeIdToBlock(SemIR::NodeBlockId block, SemIR::NodeId node_id)
-      -> void;
-
   // Pushes a parse tree node onto the stack, storing the SemIR::Node as the
   // result.
   auto AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void;
@@ -91,21 +83,21 @@ class Context {
                                     SemIR::NodeId cond_id)
       -> SemIR::NodeBlockId;
 
-  // Adds branches from the given list of blocks to a new block, for
-  // reconvergence of control flow, and pushes the new block onto the node
-  // block stack.
-  auto AddConvergenceBlockAndPush(
-      Parse::Node parse_node, std::initializer_list<SemIR::NodeBlockId> blocks)
+  // Adds branches from the top `num_blocks` on the node block stack to a new
+  // block, for reconvergence of control flow, pops the existing blocks, and
+  // pushes the new block onto the node block stack.
+  auto AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
       -> void;
 
-  // Adds branches from the given list of blocks and values to a new block, for
-  // reconvergence of control flow with a result value, and pushes the new
-  // block onto the node block stack. Returns a node referring to the result
-  // value.
+  // Adds branches from the top few blocks on the node block stack to a new
+  // block, for reconvergence of control flow with a result value, pops the
+  // existing blocks, and pushes the new block onto the node block stack. The
+  // number of blocks popped is the size of `block_args`, and the corresponding
+  // result values are the elements of `block_args`. Returns a node referring
+  // to the result value.
   auto AddConvergenceBlockWithArgAndPush(
       Parse::Node parse_node,
-      std::initializer_list<std::pair<SemIR::NodeBlockId, SemIR::NodeId>>
-          blocks_and_args) -> SemIR::NodeId;
+      std::initializer_list<SemIR::NodeId> blocks_and_args) -> SemIR::NodeId;
 
   // Add the current code block to the enclosing function.
   auto AddCurrentCodeBlockToFunction() -> void;
