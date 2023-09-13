@@ -154,15 +154,6 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   CARBON_RETURN_IF_ERROR(
       DoArgReplacements(context.test_args, context.test_files));
 
-  // Pass arguments as StringRef.
-  llvm::SmallVector<llvm::StringRef> test_args_ref;
-  llvm::SmallVector<const char*> test_argv_ref;
-  test_args_ref.reserve(context.test_args.size());
-  for (const auto& arg : context.test_args) {
-    test_args_ref.push_back(arg);
-    test_argv_ref.push_back(arg.c_str());
-  }
-
   // Create the files in-memory.
   llvm::vfs::InMemoryFileSystem fs;
   for (const auto& test_file : context.test_files) {
@@ -174,9 +165,22 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
     }
   }
 
+  // Convert the arguments to StringRef and const char* to match the
+  // expectations of PrettyStackTraceProgram and Run.
+  llvm::SmallVector<llvm::StringRef> test_args_ref;
+  llvm::SmallVector<const char*> test_argv_for_stack_trace;
+  test_args_ref.reserve(context.test_args.size());
+  test_argv_for_stack_trace.reserve(context.test_args.size() + 1);
+  for (const auto& arg : context.test_args) {
+    test_args_ref.push_back(arg);
+    test_argv_for_stack_trace.push_back(arg.c_str());
+  }
+  // Add a trailing null so that this is a proper argv.
+  test_argv_for_stack_trace.push_back(nullptr);
+
   // Add a stack trace entry for the test invocation.
-  llvm::PrettyStackTraceProgram stack_trace_entry(test_argv_ref.size(),
-                                                  test_argv_ref.data());
+  llvm::PrettyStackTraceProgram stack_trace_entry(
+      test_argv_for_stack_trace.size(), test_argv_for_stack_trace.data());
 
   // Capture trace streaming, but only when in debug mode.
   llvm::raw_svector_ostream stdout(context.stdout);
