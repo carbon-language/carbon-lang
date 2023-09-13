@@ -9,10 +9,10 @@
 // CHECK:STDERR:                      ^
 var x: {.a: i32} = {};
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_assign_empty.carbon" {
 // CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: ref {.a: i32} = var "x"
 // CHECK:STDOUT:   %.loc10_21.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc10_21.2: {} = struct_value ()
+// CHECK:STDOUT:   %.loc10_21.2: {} = struct_literal ()
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

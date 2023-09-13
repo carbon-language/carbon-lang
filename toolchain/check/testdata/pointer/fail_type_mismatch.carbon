@@ -11,7 +11,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
   return p;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_type_mismatch.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

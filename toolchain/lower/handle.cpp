@@ -40,9 +40,9 @@ auto HandleArrayIndex(FunctionContext& context, SemIR::NodeId node_id,
     array_element_value = context.GetIndexFromStructOrArray(
         llvm_type, array_value, index, "array.index");
   } else {
-    auto* index = context.builder().CreateLoad(llvm_type->getArrayElementType(),
-                                               context.GetLocal(index_node_id));
+    auto* index = context.GetLocalLoaded(index_node_id);
     // TODO: Handle return value or call such as `F()[a]`.
+    // TODO: The GEP indexes here are wrong; we should pass {0, index}.
     array_element_value = context.builder().CreateInBoundsGEP(
         llvm_type, array_value, index, "array.index");
   }
@@ -323,13 +323,13 @@ auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
                                 llvm_type, tuple_value, index, "tuple.index"));
 }
 
-auto HandleTupleValue(FunctionContext& context, SemIR::NodeId node_id,
-                      SemIR::Node node) -> void {
+auto HandleTupleLiteral(FunctionContext& context, SemIR::NodeId node_id,
+                        SemIR::Node node) -> void {
   auto* llvm_type = context.GetType(node.type_id());
   auto* alloca =
       context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "tuple");
   context.SetLocal(node_id, alloca);
-  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsTupleValue());
+  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsTupleLiteral());
   for (auto [i, ref] : llvm::enumerate(refs)) {
     auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
     context.builder().CreateStore(context.GetLocal(ref), gep);
@@ -342,14 +342,14 @@ auto HandleStructTypeField(FunctionContext& /*context*/,
   // No action to take.
 }
 
-auto HandleStructValue(FunctionContext& context, SemIR::NodeId node_id,
-                       SemIR::Node node) -> void {
+auto HandleStructLiteral(FunctionContext& context, SemIR::NodeId node_id,
+                         SemIR::Node node) -> void {
   auto* llvm_type = context.GetType(node.type_id());
   auto* alloca = context.builder().CreateAlloca(
       llvm_type, /*ArraySize=*/nullptr, "struct");
   context.SetLocal(node_id, alloca);
 
-  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructValue());
+  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructLiteral());
   // Get type information for member names.
   auto type_refs = context.semantics_ir().GetNodeBlock(
       context.semantics_ir()

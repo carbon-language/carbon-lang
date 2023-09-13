@@ -8,7 +8,7 @@ fn Main() -> {.a: i32} {
   return {.a = 3};
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "struct.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -16,6 +16,6 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_16: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc8_14: i32 = stub_reference %.loc8_16
-// CHECK:STDOUT:   %.loc8_17: {.a: i32} = struct_value (%.loc8_14)
+// CHECK:STDOUT:   %.loc8_17: {.a: i32} = struct_literal (%.loc8_14)
 // CHECK:STDOUT:   return %.loc8_17
 // CHECK:STDOUT: }

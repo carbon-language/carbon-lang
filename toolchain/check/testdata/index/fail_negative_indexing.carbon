@@ -10,5 +10,5 @@ var a: (i32, i32) = (12, 6);
 // CHECK:STDERR:                ^
 var b: i32 = a[-10];
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_negative_indexing.carbon" {
 // CHECK:STDOUT: }

@@ -10,7 +10,7 @@ fn Main() -> i32 {
 // CHECK:STDERR: ^
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_missing_return.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

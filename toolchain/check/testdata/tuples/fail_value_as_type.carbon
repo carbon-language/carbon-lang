@@ -9,11 +9,11 @@
 // CHECK:STDERR:            ^
 var x: (1, );
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_value_as_type.carbon" {
 // CHECK:STDOUT:   %.loc10_9.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_9.2: i32 = stub_reference %.loc10_9.1
 // CHECK:STDOUT:   %.loc10_12.1: type = tuple_type (i32)
-// CHECK:STDOUT:   %.loc10_12.2: (i32,) = tuple_value (%.loc10_9.2)
+// CHECK:STDOUT:   %.loc10_12.2: (i32,) = tuple_literal (%.loc10_9.2)
 // CHECK:STDOUT:   %.loc10_12.3: type = tuple_type (<error>)
 // CHECK:STDOUT:   %x: ref (<error>,) = var "x"
 // CHECK:STDOUT: }

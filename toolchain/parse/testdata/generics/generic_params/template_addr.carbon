@@ -6,16 +6,17 @@
 
 fn foo(template addr a:! i32);
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {kind: 'Name', text: 'foo'},
-// CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'Name', text: 'a'},
-// CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'GenericPatternBinding', text: ':!', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'Address', text: 'addr', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'Template', text: 'template', subtree_size: 5},
-// CHECK:STDOUT:   {kind: 'ParameterList', text: ')', subtree_size: 7},
-// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', subtree_size: 10},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: template_addr.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'Name', text: 'foo'},
+// CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:               {kind: 'Name', text: 'a'},
+// CHECK:STDOUT:               {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'GenericPatternBinding', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'Address', text: 'addr', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'Template', text: 'template', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

@@ -16,7 +16,7 @@ fn F(b: bool) -> i32 {
   // Unreachable, no error on missing return.
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "code_after_return_value.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

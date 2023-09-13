@@ -8,7 +8,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
   return if a then if b then 1 else 2 else if c then 3 else 4;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "nested.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

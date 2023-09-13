@@ -12,7 +12,7 @@ fn Main() {
   Echo(());
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "empty_tuple.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Echo
 // CHECK:STDOUT:   %.loc11 = fn_decl @Main
 // CHECK:STDOUT: }
@@ -24,7 +24,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_9.1: () = tuple_value ()
+// CHECK:STDOUT:   %.loc12_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: () = stub_reference %.loc12_9.1
 // CHECK:STDOUT:   %.loc12_7: init () = call @Echo(%.loc12_9.2)
 // CHECK:STDOUT:   return

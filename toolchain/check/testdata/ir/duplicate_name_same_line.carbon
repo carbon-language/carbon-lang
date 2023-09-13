@@ -6,7 +6,7 @@
 
 fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "duplicate_name_same_line.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

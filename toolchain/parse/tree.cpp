@@ -113,7 +113,7 @@ auto Tree::GetNodeText(Node n) const -> llvm::StringRef {
 auto Tree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
                      bool preorder) const -> bool {
   const auto& n_impl = node_impls_[n.index];
-  output.indent(2 * depth);
+  output.indent(2 * (depth + 2));
   output << "{";
   // If children are being added, include node_index in order to disambiguate
   // nodes.
@@ -139,6 +139,9 @@ auto Tree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
 }
 
 auto Tree::Print(llvm::raw_ostream& output) const -> void {
+  output << "- filename: " << tokens_->filename() << "\n"
+         << "  parse_tree: [\n";
+
   // Walk the tree just to calculate depths for each node.
   llvm::SmallVector<int> indents;
   indents.append(size(), 0);
@@ -158,12 +161,11 @@ auto Tree::Print(llvm::raw_ostream& output) const -> void {
     }
   }
 
-  output << "[\n";
   for (Node n : postorder()) {
     PrintNode(output, n, indents[n.index], /*preorder=*/false);
     output << ",\n";
   }
-  output << "]\n";
+  output << "  ]\n";
 }
 
 auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
@@ -172,7 +174,9 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
     return;
   }
 
-  output << "[\n";
+  output << "- filename: " << tokens_->filename() << "\n"
+         << "  parse_tree: [\n";
+
   // The parse tree is stored in postorder. The preorder can be constructed
   // by reversing the order of each level of siblings within an RPO. The
   // sibling iterators are directly built around RPO and so can be used with a
@@ -208,9 +212,9 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
 
     // We always end with a comma and a new line as we'll move to the next
     // node at whatever the current level ends up being.
-    output << ",\n";
+    output << "  ,\n";
   }
-  output << "]\n";
+  output << "  ]\n";
 }
 
 auto Tree::Verify() const -> ErrorOr<Success> {

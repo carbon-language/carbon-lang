@@ -4,10 +4,14 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
-load("//testing/file_test:rules.bzl", "file_test")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "testdata",
+    data = glob(["testdata/**/*.carbon"]),
+)
 
 cc_library(
     name = "node_stack",
@@ -62,16 +66,6 @@ cc_library(
     ],
 )
 
-file_test(
-    name = "check_file_test",
-    srcs = ["check_file_test.cpp"],
-    tests = glob(["testdata/**/*.carbon"]),
-    deps = [
-        "//toolchain/driver:driver_file_test_base",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 cc_fuzz_test(
     name = "check_fuzzer",
     size = "small",
@@ -88,8 +82,8 @@ glob_sh_run(
         "$(location //toolchain/driver:carbon)",
         "compile",
         "--phase=check",
-        "--dump-semantics-ir",
-        "--dump-raw-semantics-ir",
+        "--dump-sem-ir",
+        "--dump-raw-sem-ir",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],

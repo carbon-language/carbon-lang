@@ -33,7 +33,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDERR: ^
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_reachable_fallthrough.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @If1
 // CHECK:STDOUT:   %.loc17 = fn_decl @If2
 // CHECK:STDOUT:   %.loc27 = fn_decl @If3

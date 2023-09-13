@@ -271,6 +271,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     return expected_parse_tree_size_;
   }
 
+  auto filename() const -> llvm::StringRef { return source_->filename(); }
+
  private:
   // Implementation detail struct implementing the actual lexer logic.
   class Lexer;

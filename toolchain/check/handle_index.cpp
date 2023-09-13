@@ -58,7 +58,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
               context.semantics_ir().GetArrayBoundValue(bound_id))) {
         index_node_id = SemIR::NodeId::BuiltinError;
       }
-      auto cast_index_id = context.ImplicitAsRequired(
+      auto cast_index_id = context.ConvertToValueOfType(
           index_node.parse_node(), index_node_id,
           context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType));
       context.AddNodeAndPush(parse_node, SemIR::Node::ArrayIndex::Make(

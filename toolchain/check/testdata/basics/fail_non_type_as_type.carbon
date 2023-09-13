@@ -9,7 +9,7 @@
 // CHECK:STDERR:                 ^
 var x: type = 42;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_non_type_as_type.carbon" {
 // CHECK:STDOUT:   %x: ref type = var "x"
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 42
 // CHECK:STDOUT:   assign %x, <error>

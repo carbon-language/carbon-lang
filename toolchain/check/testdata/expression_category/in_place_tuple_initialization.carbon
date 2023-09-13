@@ -16,7 +16,7 @@ fn H() -> i32 {
   return G()[0];
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "in_place_tuple_initialization.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc9 = fn_decl @G
 // CHECK:STDOUT:   %.loc15 = fn_decl @H
@@ -28,7 +28,7 @@ fn H() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_11: type = stub_reference i32
 // CHECK:STDOUT:   %.loc10_16: type = stub_reference i32
-// CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_value (%.loc10_11, %.loc10_16)
+// CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_literal (%.loc10_11, %.loc10_16)
 // CHECK:STDOUT:   %v: ref (i32, i32) = var "v"
 // CHECK:STDOUT:   no_op
 // CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call @F() to %v

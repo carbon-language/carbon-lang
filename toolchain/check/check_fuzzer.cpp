@@ -29,7 +29,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   llvm::raw_null_ostream null_ostream;
   Driver driver(fs, null_ostream, null_ostream);
 
-  // TODO: Get semantics-ir to a point where it can handle invalid parse trees
+  // TODO: Get checking to a point where it can handle invalid parse trees
   // without crashing.
   if (!driver.RunCommand({"compile", "--phase=parse", TestFileName})) {
     return 0;

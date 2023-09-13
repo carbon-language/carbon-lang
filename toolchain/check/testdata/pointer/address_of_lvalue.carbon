@@ -16,7 +16,7 @@ fn F() {
   var t1: i32* = &t[1];
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "address_of_lvalue.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -28,7 +28,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_35: i32 = stub_reference %.loc8_37
 // CHECK:STDOUT:   %.loc8_45: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc8_43: i32 = stub_reference %.loc8_45
-// CHECK:STDOUT:   %.loc8_46: {.a: i32, .b: i32} = struct_value (%.loc8_35, %.loc8_43)
+// CHECK:STDOUT:   %.loc8_46: {.a: i32, .b: i32} = struct_literal (%.loc8_35, %.loc8_43)
 // CHECK:STDOUT:   assign %s, %.loc8_46
 // CHECK:STDOUT:   %.loc10_27: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_28: type = ptr_type {.a: i32, .b: i32}
@@ -48,14 +48,14 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_11: type = stub_reference i32
 // CHECK:STDOUT:   %.loc14_16: type = stub_reference i32
 // CHECK:STDOUT:   %.loc14_19.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc14_19.2: (type, type) = tuple_value (%.loc14_11, %.loc14_16)
+// CHECK:STDOUT:   %.loc14_19.2: (type, type) = tuple_literal (%.loc14_11, %.loc14_16)
 // CHECK:STDOUT:   %.loc14_19.3: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %t: ref (i32, i32) = var "t"
 // CHECK:STDOUT:   %.loc14_24.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc14_24.2: i32 = stub_reference %.loc14_24.1
 // CHECK:STDOUT:   %.loc14_27.1: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc14_27.2: i32 = stub_reference %.loc14_27.1
-// CHECK:STDOUT:   %.loc14_28: (i32, i32) = tuple_value (%.loc14_24.2, %.loc14_27.2)
+// CHECK:STDOUT:   %.loc14_28: (i32, i32) = tuple_literal (%.loc14_24.2, %.loc14_27.2)
 // CHECK:STDOUT:   assign %t, %.loc14_28
 // CHECK:STDOUT:   %.loc15_14: type = ptr_type i32
 // CHECK:STDOUT:   %t0: ref i32* = var "t0"

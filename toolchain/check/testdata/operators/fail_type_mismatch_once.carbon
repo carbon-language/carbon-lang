@@ -13,7 +13,7 @@ fn Main() -> i32 {
   return 12 + 3.4 + 12;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_type_mismatch_once.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

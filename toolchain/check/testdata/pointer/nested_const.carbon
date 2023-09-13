@@ -9,7 +9,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
   return **p;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "nested_const.carbon" {
 // CHECK:STDOUT:   %.loc8 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

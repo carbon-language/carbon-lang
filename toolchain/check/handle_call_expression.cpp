@@ -26,19 +26,12 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   auto function_id = name_node.GetAsFunctionDeclaration();
   const auto& callable = context.semantics_ir().GetFunction(function_id);
 
-  CARBON_DIAGNOSTIC(NoMatchingCall, Error, "No matching callable was found.");
-  auto diagnostic =
-      context.emitter().Build(call_expr_parse_node, NoMatchingCall);
-  if (!context.ImplicitAsForArgs(refs_id, name_node.parse_node(),
-                                 callable.param_refs_id, &diagnostic)) {
-    diagnostic.Emit();
+  if (!context.ImplicitAsForArgs(call_expr_parse_node, refs_id,
+                                 name_node.parse_node(),
+                                 callable.param_refs_id)) {
     context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
     return true;
   }
-
-  CARBON_CHECK(context.ImplicitAsForArgs(refs_id, name_node.parse_node(),
-                                         callable.param_refs_id,
-                                         /*diagnostic=*/nullptr));
 
   // For functions with an implicit return type, the return type is the empty
   // tuple type.

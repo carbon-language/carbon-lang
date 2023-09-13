@@ -8,7 +8,7 @@ fn Main() {
   var x: i32;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "decl.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

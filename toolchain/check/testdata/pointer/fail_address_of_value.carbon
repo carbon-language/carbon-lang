@@ -82,7 +82,7 @@ fn AddressOfParameter(param: i32) {
   var param_addr: i32* = &param;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_address_of_value.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @G
 // CHECK:STDOUT:   %.loc9 = fn_decl @H
 // CHECK:STDOUT:   %.loc11 = fn_decl @AddressOfLiteral
@@ -116,12 +116,12 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc31_8.1: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc31_8.2: i32 = stub_reference %.loc31_8.1
 // CHECK:STDOUT:   %.loc31_9.1: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc31_9.2: (i32, i32) = tuple_value (%.loc31_5.2, %.loc31_8.2)
+// CHECK:STDOUT:   %.loc31_9.2: (i32, i32) = tuple_literal (%.loc31_5.2, %.loc31_8.2)
 // CHECK:STDOUT:   %.loc31_3.1: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %.loc31_3.2: (i32, i32)* = address_of %.loc31_9.2
 // CHECK:STDOUT:   %.loc35_10: i32 = int_literal 5
 // CHECK:STDOUT:   %.loc35_8: i32 = stub_reference %.loc35_10
-// CHECK:STDOUT:   %.loc35_11: {.a: i32} = struct_value (%.loc35_8)
+// CHECK:STDOUT:   %.loc35_11: {.a: i32} = struct_literal (%.loc35_8)
 // CHECK:STDOUT:   %.loc35_3.1: type = ptr_type {.a: i32}
 // CHECK:STDOUT:   %.loc35_3.2: {.a: i32}* = address_of %.loc35_11
 // CHECK:STDOUT:   return
@@ -167,7 +167,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc75_6.2: i32 = stub_reference %.loc75_6.1
 // CHECK:STDOUT:   %.loc75_9.1: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc75_9.2: i32 = stub_reference %.loc75_9.1
-// CHECK:STDOUT:   %.loc75_10: (i32, i32) = tuple_value (%.loc75_6.2, %.loc75_9.2)
+// CHECK:STDOUT:   %.loc75_10: (i32, i32) = tuple_literal (%.loc75_6.2, %.loc75_9.2)
 // CHECK:STDOUT:   %.loc75_12: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc75_13: i32 = tuple_index %.loc75_10, %.loc75_12
 // CHECK:STDOUT:   %.loc75_3: i32* = address_of %.loc75_13

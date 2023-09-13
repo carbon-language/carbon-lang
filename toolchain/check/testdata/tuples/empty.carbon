@@ -7,13 +7,13 @@
 var x: () = ();
 var y: () = x;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "empty.carbon" {
 // CHECK:STDOUT:   %.loc7_9.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_9.2: () = tuple_value ()
+// CHECK:STDOUT:   %.loc7_9.2: () = tuple_literal ()
 // CHECK:STDOUT:   %x: ref () = var "x"
-// CHECK:STDOUT:   %.loc7_14: () = tuple_value ()
+// CHECK:STDOUT:   %.loc7_14: () = tuple_literal ()
 // CHECK:STDOUT:   assign %x, %.loc7_14
-// CHECK:STDOUT:   %.loc8: () = tuple_value ()
+// CHECK:STDOUT:   %.loc8: () = tuple_literal ()
 // CHECK:STDOUT:   %y: ref () = var "y"
 // CHECK:STDOUT:   %.loc7_5: () = bind_value %x
 // CHECK:STDOUT:   assign %y, %.loc7_5

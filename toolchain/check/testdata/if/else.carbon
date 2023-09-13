@@ -17,7 +17,7 @@ fn If(b: bool) {
   H();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "else.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc8 = fn_decl @G
 // CHECK:STDOUT:   %.loc9 = fn_decl @H

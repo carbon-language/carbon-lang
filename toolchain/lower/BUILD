@@ -4,9 +4,13 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
-load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "testdata",
+    data = glob(["testdata/**/*.carbon"]),
+)
 
 cc_library(
     name = "lower",
@@ -41,16 +45,6 @@ cc_library(
         "//toolchain/sem_ir:node",
         "//toolchain/sem_ir:node_kind",
         "@llvm-project//llvm:Core",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-file_test(
-    name = "lower_file_test",
-    srcs = ["lower_file_test.cpp"],
-    tests = glob(["testdata/**/*.carbon"]),
-    deps = [
-        "//toolchain/driver:driver_file_test_base",
         "@llvm-project//llvm:Support",
     ],
 )

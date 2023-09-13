@@ -53,7 +53,8 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(Assign, "assign", None, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BinaryOperatorAdd, "add", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BindValue, "bind_value", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BlockArg, "block_arg", Typed, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(BoolLiteral, "bool_literal", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(BoolLiteral, "bool_literal", Typed,
+                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Branch, "br", None, Terminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BranchIf, "br", None, TerminatorSequence)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BranchWithArg, "br", None, Terminator)
@@ -81,7 +82,7 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(StructAccess, "struct_access", Typed,
 CARBON_SEMANTICS_NODE_KIND_IMPL(StructType, "struct_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(StructTypeField, "struct_type_field", None,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(StructValue, "struct_value", Typed,
+CARBON_SEMANTICS_NODE_KIND_IMPL(StructLiteral, "struct_literal", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(StubReference, "stub_reference", Typed,
                                 NotTerminator)
@@ -90,7 +91,8 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(TemporaryStorage, "temporary_storage", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleIndex, "tuple_index", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleType, "tuple_type", Typed, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(TupleValue, "tuple_value", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(TupleLiteral, "tuple_literal", Typed,
+                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(UnaryOperatorNot, "not", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(VarStorage, "var", Typed, NotTerminator)
 

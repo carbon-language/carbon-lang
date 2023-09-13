@@ -100,10 +100,12 @@ jobs:
         if:
           steps.filter.outputs.ignore == 'false' && matrix.os == 'ubuntu-22.04'
         run: |
-          LLVM_PATH="/usr/lib/llvm-15"
-          if [[ ! -e "${LLVM_PATH}" ]]; then
-            LLVM_PATH="/usr/lib/llvm-14"
-          fi
+          # TODO: Re-enable once llvm-15 is working.
+          # https://github.com/actions/runner-images/issues/8253
+          # LLVM_PATH="/usr/lib/llvm-15"
+          # if [[ ! -e "${LLVM_PATH}" ]]; then
+          LLVM_PATH="/usr/lib/llvm-14"
+          # fi
           echo "Using ${LLVM_PATH}"
           echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
           echo '*** ls "${LLVM_PATH}"'

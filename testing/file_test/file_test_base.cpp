@@ -6,6 +6,8 @@
 
 #include <filesystem>
 #include <fstream>
+#include <optional>
+#include <string>
 #include <utility>
 
 #include "absl/flags/flag.h"
@@ -16,9 +18,13 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PrettyStackTrace.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
-          "A comma-separated list of tests for file_test infrastructure.");
+          "A comma-separated list of repo-relative names of test files. "
+          "Overrides test_targets_file.");
+ABSL_FLAG(std::string, test_targets_file, "",
+          "A path to a file containing repo-relative names of test files.");
 ABSL_FLAG(bool, autoupdate, false,
           "Instead of verifying files match test output, autoupdate files "
           "based on test output.");
@@ -31,7 +37,7 @@ using ::testing::MatchesRegex;
 using ::testing::StrEq;
 
 // Reads a file to string.
-static auto ReadFile(std::filesystem::path path) -> std::string {
+static auto ReadFile(std::string_view path) -> std::string {
   std::ifstream proto_file(path);
   std::stringstream buffer;
   buffer << proto_file.rdbuf();
@@ -57,13 +63,18 @@ auto FileTestBase::TestBody() -> void {
   CARBON_CHECK(target);
   // This advice overrides the --file_tests flag provided by the file_test rule.
   llvm::errs() << "\nTo test this file alone, run:\n  bazel test " << target
-               << " --test_arg=--file_tests=" << GetTestFilename() << "\n\n";
+               << " --test_arg=--file_tests=" << test_name_ << "\n\n";
+
+  // Add a crash trace entry with a command that runs this test in isolation.
+  llvm::PrettyStackTraceFormat stack_trace_entry(
+      "bazel test %s --test_arg=--file_tests=%s", target, test_name_);
 
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
   ASSERT_TRUE(run_result.ok()) << run_result.error();
   ValidateRun();
-  EXPECT_THAT(!llvm::StringRef(path().filename()).starts_with("fail_"),
+  auto test_filename = std::filesystem::path(test_name_.str()).filename();
+  EXPECT_THAT(!llvm::StringRef(test_filename).starts_with("fail_"),
               Eq(context.exit_with_success))
       << "Tests should be prefixed with `fail_` if and only if running them "
          "is expected to fail.";
@@ -84,10 +95,14 @@ auto FileTestBase::TestBody() -> void {
 }
 
 auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
+  // Add a crash trace entry mentioning which file we're updating.
+  llvm::PrettyStackTraceFormat stack_trace_entry("performing autoupdate for %s",
+                                                 test_name_);
+
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
   if (!run_result.ok()) {
-    return ErrorBuilder() << "Error updating " << GetTestFilename() << ": "
+    return ErrorBuilder() << "Error updating " << test_name_ << ": "
                           << run_result.error();
   }
   if (!context.autoupdate_line_number) {
@@ -104,30 +119,32 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
     filenames.push_back(file.filename);
   }
 
-  llvm::ArrayRef filenames_for_line_number = filenames;
+  llvm::ArrayRef expected_filenames = filenames;
   if (filenames.size() > 1) {
-    filenames_for_line_number = filenames_for_line_number.drop_front();
+    expected_filenames = expected_filenames.drop_front();
   }
 
   return AutoupdateFileTest(
-      path(), context.input_content, filenames, *context.autoupdate_line_number,
-      context.non_check_lines, context.stdout, context.stderr,
-      GetLineNumberReplacement(filenames_for_line_number),
+      std::filesystem::absolute(test_name_.str()), context.input_content,
+      filenames, *context.autoupdate_line_number, context.non_check_lines,
+      context.stdout, context.stderr, GetDefaultFileRE(expected_filenames),
+      GetLineNumberReplacements(expected_filenames),
       [&](std::string& line) { DoExtraCheckReplacements(line); });
 }
 
-auto FileTestBase::GetLineNumberReplacement(
-    llvm::ArrayRef<llvm::StringRef> filenames) -> LineNumberReplacement {
-  return {
-      .has_file = true,
-      .pattern = llvm::formatv(R"(({0}):(\d+))", llvm::join(filenames, "|")),
-      .line_formatv = R"({0})"};
+auto FileTestBase::GetLineNumberReplacements(
+    llvm::ArrayRef<llvm::StringRef> filenames)
+    -> llvm::SmallVector<LineNumberReplacement> {
+  return {{.has_file = true,
+           .re = std::make_shared<RE2>(
+               llvm::formatv(R"(({0}):(\d+))", llvm::join(filenames, "|"))),
+           .line_formatv = R"({0})"}};
 }
 
 auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
     -> ErrorOr<Success> {
   // Store the file so that test_files can use references to content.
-  context.input_content = ReadFile(path());
+  context.input_content = ReadFile(test_name_);
 
   // Load expected output.
   CARBON_RETURN_IF_ERROR(ProcessTestFile(context));
@@ -139,13 +156,6 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   CARBON_RETURN_IF_ERROR(
       DoArgReplacements(context.test_args, context.test_files));
 
-  // Pass arguments as StringRef.
-  llvm::SmallVector<llvm::StringRef> test_args_ref;
-  test_args_ref.reserve(context.test_args.size());
-  for (const auto& arg : context.test_args) {
-    test_args_ref.push_back(arg);
-  }
-
   // Create the files in-memory.
   llvm::vfs::InMemoryFileSystem fs;
   for (const auto& test_file : context.test_files) {
@@ -156,6 +166,23 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
       return ErrorBuilder() << "File is repeated: " << test_file.filename;
     }
   }
+
+  // Convert the arguments to StringRef and const char* to match the
+  // expectations of PrettyStackTraceProgram and Run.
+  llvm::SmallVector<llvm::StringRef> test_args_ref;
+  llvm::SmallVector<const char*> test_argv_for_stack_trace;
+  test_args_ref.reserve(context.test_args.size());
+  test_argv_for_stack_trace.reserve(context.test_args.size() + 1);
+  for (const auto& arg : context.test_args) {
+    test_args_ref.push_back(arg);
+    test_argv_for_stack_trace.push_back(arg.c_str());
+  }
+  // Add a trailing null so that this is a proper argv.
+  test_argv_for_stack_trace.push_back(nullptr);
+
+  // Add a stack trace entry for the test invocation.
+  llvm::PrettyStackTraceProgram stack_trace_entry(
+      test_argv_for_stack_trace.size(), test_argv_for_stack_trace.data());
 
   // Capture trace streaming, but only when in debug mode.
   llvm::raw_svector_ostream stdout(context.stdout);
@@ -330,8 +357,9 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
                                  file_content.end() - current_file_start)));
   } else {
     // If no file splitting happened, use the main file as the test file.
-    context.test_files.push_back(
-        TestFile(path().filename().string(), file_content));
+    // There will always be a `/` unless tests are in the repo root.
+    context.test_files.push_back(TestFile(
+        test_name_.drop_front(test_name_.rfind("/") + 1).str(), file_content));
   }
 
   // Assume there is always a suffix `\n` in output.
@@ -431,16 +459,31 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
   return Matcher<std::string>{MatchesRegex(str)};
 }
 
-auto FileTestBase::GetTestFilename() -> std::string {
-  const char* src_dir = getenv("TEST_SRCDIR");
-  CARBON_CHECK(src_dir);
-  return path().lexically_relative(
-      std::filesystem::path(src_dir).append("carbon"));
+// Returns the tests to run.
+static auto GetTests() -> llvm::SmallVector<std::string> {
+  // Prefer a user-specified list if present.
+  auto specific_tests = absl::GetFlag(FLAGS_file_tests);
+  if (!specific_tests.empty()) {
+    return llvm::SmallVector<std::string>(specific_tests.begin(),
+                                          specific_tests.end());
+  }
+
+  // Extracts tests from the target file.
+  CARBON_CHECK(!absl::GetFlag(FLAGS_test_targets_file).empty())
+      << "Missing --test_targets_file.";
+  auto content = ReadFile(absl::GetFlag(FLAGS_test_targets_file));
+  llvm::SmallVector<std::string> all_tests;
+  for (llvm::StringRef file_ref : llvm::split(content, "\n")) {
+    if (file_ref.empty()) {
+      continue;
+    }
+    all_tests.push_back(file_ref.str());
+  }
+  return all_tests;
 }
 
-}  // namespace Carbon::Testing
-
-auto main(int argc, char** argv) -> int {
+// Implements main() within the Carbon::Testing namespace for convenience.
+static auto Main(int argc, char** argv) -> int {
   absl::ParseCommandLine(argc, argv);
   testing::InitGoogleTest(&argc, argv);
   llvm::setBugReportMsg(
@@ -454,46 +497,31 @@ auto main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
-  // Configure the base directory for test names.
-  const char* target = getenv("TEST_TARGET");
-  CARBON_CHECK(target);
-  llvm::StringRef target_dir = target;
-  std::error_code ec;
-  std::filesystem::path working_dir = std::filesystem::current_path(ec);
-  CARBON_CHECK(!ec) << ec.message();
-  // Leaves one slash.
-  CARBON_CHECK(target_dir.consume_front("/"));
-  target_dir = target_dir.substr(0, target_dir.rfind(":"));
-  std::string base_dir = working_dir.string() + target_dir.str() + "/";
-
-  auto test_factory = Carbon::Testing::GetFileTestFactory();
-
-  for (const auto& file_test : absl::GetFlag(FLAGS_file_tests)) {
-    // Pass the absolute path to the factory function.
-    auto path = std::filesystem::absolute(file_test, ec);
-    CARBON_CHECK(!ec) << file_test << ": " << ec.message();
-    CARBON_CHECK(llvm::StringRef(path.string()).starts_with(base_dir))
-        << "\n  " << path << "\n  should start with\n  " << base_dir;
-    if (absl::GetFlag(FLAGS_autoupdate)) {
-      std::unique_ptr<Carbon::Testing::FileTestBase> test(
-          test_factory.factory_fn(path));
+  llvm::SmallVector<std::string> tests = GetTests();
+  auto test_factory = GetFileTestFactory();
+  if (absl::GetFlag(FLAGS_autoupdate)) {
+    for (const auto& test_name : tests) {
+      std::unique_ptr<FileTestBase> test(test_factory.factory_fn(test_name));
       auto result = test->Autoupdate();
       llvm::errs() << (result.ok() ? (*result ? "!" : ".")
                                    : result.error().message());
-    } else {
-      std::string test_name = path.string().substr(base_dir.size());
-      testing::RegisterTest(test_factory.name, test_name.c_str(), nullptr,
-                            test_name.c_str(), __FILE__, __LINE__,
-                            [=]() { return test_factory.factory_fn(path); });
     }
-  }
-  if (absl::GetFlag(FLAGS_autoupdate)) {
     llvm::errs() << "\nDone!\n";
-  }
-
-  if (absl::GetFlag(FLAGS_autoupdate)) {
     return EXIT_SUCCESS;
   } else {
+    for (llvm::StringRef test_name : tests) {
+      testing::RegisterTest(test_factory.name, test_name.data(), nullptr,
+                            test_name.data(), __FILE__, __LINE__,
+                            [&test_factory, test_name = test_name]() {
+                              return test_factory.factory_fn(test_name);
+                            });
+    }
     return RUN_ALL_TESTS();
   }
+}
+
+}  // namespace Carbon::Testing
+
+auto main(int argc, char** argv) -> int {
+  return Carbon::Testing::Main(argc, argv);
 }

@@ -9,9 +9,9 @@
 // CHECK:STDERR:                 ^
 var x: () = (66);
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_assign_to_empty.carbon" {
 // CHECK:STDOUT:   %.loc10_9.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_9.2: () = tuple_value ()
+// CHECK:STDOUT:   %.loc10_9.2: () = tuple_literal ()
 // CHECK:STDOUT:   %x: ref () = var "x"
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66
 // CHECK:STDOUT:   assign %x, <error>

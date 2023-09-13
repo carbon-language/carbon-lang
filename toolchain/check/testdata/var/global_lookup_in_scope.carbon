@@ -10,7 +10,7 @@ fn Main() {
   var y: i32 = x;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "global_lookup_in_scope.carbon" {
 // CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x, %.loc7

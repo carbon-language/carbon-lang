@@ -11,7 +11,7 @@ fn Main() -> i32 {
   return;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_value_missing.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -6,12 +6,11 @@
 // CHECK:STDERR: unattached message 3
 // CHECK:STDERR: unattached message 4
 
+// CHECK:STDOUT: 3 args: `default_args`, `a.carbon`, `b.carbon`
+// CHECK:STDOUT: unattached message 1
+// CHECK:STDOUT: unattached message 2
 // --- a.carbon
 aaa
 
 // --- b.carbon
 bbb
-
-// CHECK:STDOUT: 3 args: `default_args`, `a.carbon`, `b.carbon`
-// CHECK:STDOUT: unattached message 1
-// CHECK:STDOUT: unattached message 2
