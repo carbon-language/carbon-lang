@@ -6,6 +6,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -109,25 +110,26 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
     filenames.push_back(file.filename);
   }
 
-  llvm::ArrayRef filenames_for_line_number = filenames;
+  llvm::ArrayRef expected_filenames = filenames;
   if (filenames.size() > 1) {
-    filenames_for_line_number = filenames_for_line_number.drop_front();
+    expected_filenames = expected_filenames.drop_front();
   }
 
   return AutoupdateFileTest(
       std::filesystem::absolute(test_name_.str()), context.input_content,
       filenames, *context.autoupdate_line_number, context.non_check_lines,
-      context.stdout, context.stderr,
-      GetLineNumberReplacement(filenames_for_line_number),
+      context.stdout, context.stderr, GetDefaultFileRE(expected_filenames),
+      GetLineNumberReplacements(expected_filenames),
       [&](std::string& line) { DoExtraCheckReplacements(line); });
 }
 
-auto FileTestBase::GetLineNumberReplacement(
-    llvm::ArrayRef<llvm::StringRef> filenames) -> LineNumberReplacement {
-  return {
-      .has_file = true,
-      .pattern = llvm::formatv(R"(({0}):(\d+))", llvm::join(filenames, "|")),
-      .line_formatv = R"({0})"};
+auto FileTestBase::GetLineNumberReplacements(
+    llvm::ArrayRef<llvm::StringRef> filenames)
+    -> llvm::SmallVector<LineNumberReplacement> {
+  return {{.has_file = true,
+           .re = std::make_shared<RE2>(
+               llvm::formatv(R"(({0}):(\d+))", llvm::join(filenames, "|"))),
+           .line_formatv = R"({0})"}};
 }
 
 auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
@@ -501,4 +503,6 @@ static auto Main(int argc, char** argv) -> int {
 
 }  // namespace Carbon::Testing
 
-auto main(int argc, char** argv) -> int { Carbon::Testing::Main(argc, argv); }
+auto main(int argc, char** argv) -> int {
+  return Carbon::Testing::Main(argc, argv);
+}
