@@ -128,13 +128,12 @@ equivalent to
 
 ```carbon
 for (let template i:! i32 in (0, 1, 2)) {
-  let product: auto = x[i] * y[i];
-  a[i] += product;
+  a[i] += x[i] * y[i];
 }
 ```
 
 Notice, however, that this notional rewritten form is not valid Carbon code,
-because the expressions `x[i]`, `y[i]`, and `z[i]` may have different types
+because the expressions `a[i]`, `x[i]`, and `y[i]` may have different types
 depending on the value of `i`.
 
 `...and` and `...or` can likewise be interpreted as looping constructs, although
