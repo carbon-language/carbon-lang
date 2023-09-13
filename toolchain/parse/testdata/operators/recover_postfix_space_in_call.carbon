@@ -9,17 +9,18 @@
 // CHECK:STDERR:                  ^
 var n: i8 = F(i8 *);
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'Name', text: 'n'},
-// CHECK:STDOUT:     {kind: 'Literal', text: 'i8'},
-// CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'NameExpression', text: 'F'},
-// CHECK:STDOUT:     {kind: 'CallExpressionStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'Literal', text: 'i8'},
-// CHECK:STDOUT:     {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'CallExpression', text: ')', subtree_size: 5},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 11},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: recover_postfix_space_in_call.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'n'},
+// CHECK:STDOUT:         {kind: 'Literal', text: 'i8'},
+// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:           {kind: 'NameExpression', text: 'F'},
+// CHECK:STDOUT:         {kind: 'CallExpressionStart', text: '(', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'Literal', text: 'i8'},
+// CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'CallExpression', text: ')', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 11},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

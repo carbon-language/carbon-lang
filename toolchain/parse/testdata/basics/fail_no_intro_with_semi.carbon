@@ -9,7 +9,8 @@
 // CHECK:STDERR: ^
 foo;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT: {kind: 'EmptyDeclaration', text: ';', has_error: yes},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_no_intro_with_semi.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'EmptyDeclaration', text: ';', has_error: yes},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

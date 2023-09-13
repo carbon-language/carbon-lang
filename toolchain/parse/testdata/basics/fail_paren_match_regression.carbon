@@ -12,18 +12,19 @@
 // CHECK:STDERR:            ^
 var = (foo {})
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+14]]:19: `var` declarations must end with a `;`.
-// CHECK:STDERR: // CHECK:STDOUT: ]
-// CHECK:STDERR:                   ^
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'Name', text: '=', has_error: yes},
-// CHECK:STDOUT:     {kind: 'InvalidParse', text: '=', has_error: yes},
-// CHECK:STDOUT:   {kind: 'PatternBinding', text: '=', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:     {kind: 'ParenExpressionOrTupleLiteralStart', text: '('},
-// CHECK:STDOUT:     {kind: 'NameExpression', text: 'foo'},
-// CHECK:STDOUT:   {kind: 'ParenExpression', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: 'var', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+15]]:21: `var` declarations must end with a `;`.
+// CHECK:STDERR: // CHECK:STDOUT:   ]
+// CHECK:STDERR:                     ^
+// CHECK:STDOUT: - filename: fail_paren_match_regression.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:         {kind: 'Name', text: '=', has_error: yes},
+// CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},
+// CHECK:STDOUT:       {kind: 'PatternBinding', text: '=', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'ParenExpressionOrTupleLiteralStart', text: '('},
+// CHECK:STDOUT:         {kind: 'NameExpression', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'ParenExpression', text: ')', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: 'var', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

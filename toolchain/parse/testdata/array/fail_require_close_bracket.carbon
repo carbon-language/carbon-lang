@@ -16,18 +16,19 @@
 // CHECK:STDERR:             ^
 var x: [i32;;
 
-// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+14]]:19: `var` declarations must end with a `;`.
-// CHECK:STDERR: // CHECK:STDOUT: ]
-// CHECK:STDERR:                   ^
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'Name', text: 'x'},
-// CHECK:STDOUT:         {kind: 'ArrayExpressionStart', text: '['},
-// CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'ArrayExpressionSemi', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:     {kind: 'ArrayExpression', text: ']', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 7},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: 'var', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+15]]:21: `var` declarations must end with a `;`.
+// CHECK:STDERR: // CHECK:STDOUT:   ]
+// CHECK:STDERR:                     ^
+// CHECK:STDOUT: - filename: fail_require_close_bracket.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'x'},
+// CHECK:STDOUT:             {kind: 'ArrayExpressionStart', text: '['},
+// CHECK:STDOUT:             {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'ArrayExpressionSemi', text: ';', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
+// CHECK:STDOUT:         {kind: 'ArrayExpression', text: ']', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: 'var', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

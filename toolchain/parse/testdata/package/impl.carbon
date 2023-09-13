@@ -6,10 +6,11 @@
 
 package Geometry impl;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:   {kind: 'Name', text: 'Geometry'},
-// CHECK:STDOUT:   {kind: 'PackageImpl', text: 'impl'},
-// CHECK:STDOUT: {kind: 'PackageDirective', text: ';', subtree_size: 4},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: impl.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
+// CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
+// CHECK:STDOUT:       {kind: 'PackageImpl', text: 'impl'},
+// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
