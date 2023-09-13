@@ -64,7 +64,7 @@ auto FileTestBase::TestBody() -> void {
   llvm::errs() << "\nTo test this file alone, run:\n  bazel test " << target
                << " --test_arg=--file_tests=" << test_name_ << "\n\n";
 
-  // Add a crash trace entry that runs this test in isolation.
+  // Add a crash trace entry with a command that runs this test in isolation.
   llvm::PrettyStackTraceFormat stack_trace_entry(
       "bazel test %s --test_arg=--file_tests=%s", target, test_name_);
 
@@ -94,7 +94,7 @@ auto FileTestBase::TestBody() -> void {
 }
 
 auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
-  // Add a crash trace entry that runs this test in isolation.
+  // Add a crash trace entry mentioning which file we're updating.
   llvm::PrettyStackTraceFormat stack_trace_entry("performing autoupdate for %s",
                                                  test_name_);
 
