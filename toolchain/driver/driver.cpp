@@ -422,6 +422,12 @@ class Driver::CompilationUnit {
 
   // Parses tokens. Returns true on success.
   auto RunParse() -> bool {
+    // Can be called when the file fails to load, so ensure there's source.
+    if (!source_) {
+      return false;
+    }
+    CARBON_CHECK(tokens_);
+
     LogCall("Parse::Tree::Parse", [&] {
       parse_tree_ = Parse::Tree::Parse(*tokens_, *consumer_, vlog_stream_);
     });
@@ -435,6 +441,12 @@ class Driver::CompilationUnit {
 
   // Check the parse tree and produce SemIR. Returns true on success.
   auto RunCheck(const SemIR::File& builtins) -> bool {
+    // Can be called when the file fails to load, so ensure there's source.
+    if (!source_) {
+      return false;
+    }
+    CARBON_CHECK(parse_tree_);
+
     LogCall("Check::CheckParseTree", [&] {
       sem_ir_ = Check::CheckParseTree(builtins, *tokens_, *parse_tree_,
                                       *consumer_, vlog_stream_);
@@ -466,6 +478,8 @@ class Driver::CompilationUnit {
 
   // Lower SemIR to LLVM IR.
   auto RunLower() -> void {
+    CARBON_CHECK(sem_ir_);
+
     LogCall("Lower::LowerToLLVM", [&] {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
       module_ = Lower::LowerToLLVM(*llvm_context_, input_file_name_, *sem_ir_,
@@ -485,6 +499,8 @@ class Driver::CompilationUnit {
 
   // Do codegen. Returns true on success.
   auto RunCodeGen() -> bool {
+    CARBON_CHECK(module_);
+
     CARBON_VLOG() << "*** CodeGen ***\n";
     std::optional<CodeGen> codegen =
         CodeGen::Create(*module_, options_.target, driver_->error_stream_);
