@@ -4328,7 +4328,7 @@ class ThenCompare(
   }
 }
 
-let template SongByArtistThenTitle: auto =
+let template SongByArtistThenTitle:! auto =
     ThenCompare(Song, (SongByArtist, SongByTitle));
 var s1: Song = ...;
 var s2: SongByArtistThenTitle =
