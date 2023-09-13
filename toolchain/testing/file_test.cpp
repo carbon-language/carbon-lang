@@ -33,7 +33,7 @@ class ToolchainFileTest : public FileTestBase {
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
     if (component_ == "check") {
-      return {"compile", "--phase=check", "--dump-semantics-ir", "%s"};
+      return {"compile", "--phase=check", "--dump-sem-ir", "%s"};
     } else if (component_ == "lex") {
       return {"compile", "--phase=lex", "--dump-tokens", "%s"};
     } else if (component_ == "lower") {
