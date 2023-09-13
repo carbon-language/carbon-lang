@@ -306,7 +306,7 @@ class File : public Printable<File> {
  private:
   // Allocates a copy of the given data using our slab allocator.
   template <typename T>
-  llvm::MutableArrayRef<T> AllocateCopy(llvm::ArrayRef<T> data) {
+  auto AllocateCopy(llvm::ArrayRef<T> data) -> llvm::MutableArrayRef<T> {
     // We're not going to run a destructor, so ensure that's OK.
     static_assert(std::is_trivially_destructible_v<T>);
 
@@ -318,7 +318,7 @@ class File : public Printable<File> {
 
   bool has_errors_ = false;
 
-  // Slab allocator, used to allocate node blocks.
+  // Slab allocator, used to allocate node and type blocks.
   llvm::BumpPtrAllocator allocator_;
 
   // The associated filename.
