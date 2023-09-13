@@ -18,6 +18,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PrettyStackTrace.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
           "A comma-separated list of repo-relative names of test files. "
@@ -64,6 +65,10 @@ auto FileTestBase::TestBody() -> void {
   llvm::errs() << "\nTo test this file alone, run:\n  bazel test " << target
                << " --test_arg=--file_tests=" << test_name_ << "\n\n";
 
+  // Add a crash trace entry with a command that runs this test in isolation.
+  llvm::PrettyStackTraceFormat stack_trace_entry(
+      "bazel test %s --test_arg=--file_tests=%s", target, test_name_);
+
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
   ASSERT_TRUE(run_result.ok()) << run_result.error();
@@ -90,6 +95,10 @@ auto FileTestBase::TestBody() -> void {
 }
 
 auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
+  // Add a crash trace entry mentioning which file we're updating.
+  llvm::PrettyStackTraceFormat stack_trace_entry("performing autoupdate for %s",
+                                                 test_name_);
+
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
   if (!run_result.ok()) {
@@ -147,13 +156,6 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   CARBON_RETURN_IF_ERROR(
       DoArgReplacements(context.test_args, context.test_files));
 
-  // Pass arguments as StringRef.
-  llvm::SmallVector<llvm::StringRef> test_args_ref;
-  test_args_ref.reserve(context.test_args.size());
-  for (const auto& arg : context.test_args) {
-    test_args_ref.push_back(arg);
-  }
-
   // Create the files in-memory.
   llvm::vfs::InMemoryFileSystem fs;
   for (const auto& test_file : context.test_files) {
@@ -164,6 +166,23 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
       return ErrorBuilder() << "File is repeated: " << test_file.filename;
     }
   }
+
+  // Convert the arguments to StringRef and const char* to match the
+  // expectations of PrettyStackTraceProgram and Run.
+  llvm::SmallVector<llvm::StringRef> test_args_ref;
+  llvm::SmallVector<const char*> test_argv_for_stack_trace;
+  test_args_ref.reserve(context.test_args.size());
+  test_argv_for_stack_trace.reserve(context.test_args.size() + 1);
+  for (const auto& arg : context.test_args) {
+    test_args_ref.push_back(arg);
+    test_argv_for_stack_trace.push_back(arg.c_str());
+  }
+  // Add a trailing null so that this is a proper argv.
+  test_argv_for_stack_trace.push_back(nullptr);
+
+  // Add a stack trace entry for the test invocation.
+  llvm::PrettyStackTraceProgram stack_trace_entry(
+      test_argv_for_stack_trace.size(), test_argv_for_stack_trace.data());
 
   // Capture trace streaming, but only when in debug mode.
   llvm::raw_svector_ostream stdout(context.stdout);
