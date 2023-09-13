@@ -39,8 +39,8 @@ class NodeBlockStack {
   // Peeks at the top node block. This does not trigger lazy allocation, so the
   // returned node block may be invalid.
   auto Peek() -> SemIR::NodeBlockId {
-    CARBON_CHECK(!stack_.empty()) << "no current block";
-    return stack_.back();
+    CARBON_CHECK(!empty()) << "no current block";
+    return stack_[size() - 1].id;
   }
 
   // Returns the top node block, allocating one if it's still invalid. If
@@ -52,16 +52,10 @@ class NodeBlockStack {
   // SemIR::NodeBlockId::Empty is returned if one wasn't allocated.
   auto Pop() -> SemIR::NodeBlockId;
 
-  // Pops the top node block, ensuring that it is lazily allocated if it's
-  // empty. For use when more nodes will be added to the block later.
-  auto PopForAdd() -> SemIR::NodeBlockId {
-    PeekForAdd();
-    return Pop();
-  }
-
   // Adds the given node ID to the block at the top of the stack.
   auto AddNodeId(SemIR::NodeId node_id) -> void {
-    semantics_ir_->AddNodeIdForNodeBlockStack(PeekForAdd(), node_id);
+    CARBON_CHECK(!empty()) << "no current block";
+    stack_[size_ - 1].content.push_back(node_id);
   }
 
   // Returns whether the current block is statically reachable.
@@ -72,10 +66,27 @@ class NodeBlockStack {
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
-  auto empty() const -> bool { return stack_.empty(); }
-  auto size() const -> size_t { return stack_.size(); }
+  auto empty() const -> bool { return size() == 0; }
+  auto size() const -> size_t { return size_; }
 
  private:
+  struct StackEntry {
+    StackEntry() { content.reserve(32); }
+
+    auto Reset(SemIR::NodeBlockId new_id) {
+      id = new_id;
+      content.clear();
+    }
+
+    // The block ID, if one has been allocated, Invalid if no block has been
+    // allocated, or Unreachable if this block is known to be unreachable.
+    SemIR::NodeBlockId id = SemIR::NodeBlockId::Invalid;
+
+    // The content of the block. Stored as a vector rather than as a SmallVector
+    // to reduce the cost of resizing `stack_` and performing swaps.
+    std::vector<SemIR::NodeId> content;
+  };
+
   // A name for debugging.
   llvm::StringLiteral name_;
 
@@ -86,9 +97,11 @@ class NodeBlockStack {
   llvm::raw_ostream* vlog_stream_;
 
   // The actual stack.
-  // PushEntry and PopEntry control modification in order to centralize
-  // vlogging.
-  llvm::SmallVector<SemIR::NodeBlockId> stack_;
+  llvm::SmallVector<StackEntry> stack_;
+
+  // The size of the stack. Entries after this in `stack_` are kept around so
+  // that we can reuse the allocated buffer for their content.
+  size_t size_ = 0;
 };
 
 }  // namespace Carbon::Check

@@ -157,15 +157,6 @@ class File : public Printable<File> {
     return node_id;
   }
 
-  // Adds the ID of an existing node to the specified block. Temporary, should
-  // only be called by Check::NodeBlockStack.
-  auto AddNodeIdForNodeBlockStack(NodeBlockId block_id, NodeId node_id)
-      -> void {
-    if (block_id != NodeBlockId::Unreachable) {
-      node_blocks_[block_id.index].push_back(node_id);
-    }
-  }
-
   // Overwrites a given node with a new value.
   auto ReplaceNode(NodeId node_id, Node node) -> void {
     nodes_[node_id.index] = node;
@@ -179,6 +170,15 @@ class File : public Printable<File> {
     NodeBlockId id(node_blocks_.size());
     node_blocks_.push_back({});
     return id;
+  }
+
+  // Sets the contents of an empty node block to the given content.
+  auto SetNodeBlock(NodeBlockId block_id, llvm::ArrayRef<NodeId> content)
+      -> void {
+    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
+    CARBON_CHECK(node_blocks_[block_id.index].empty())
+        << "node block content set more than once";
+    node_blocks_[block_id.index].assign(content.begin(), content.end());
   }
 
   // Adds a node block with the given content, returning an ID to reference it.
