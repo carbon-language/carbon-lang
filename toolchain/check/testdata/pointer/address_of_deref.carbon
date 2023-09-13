@@ -9,7 +9,7 @@ fn F() -> i32 {
   return *&*&n;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "address_of_deref.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

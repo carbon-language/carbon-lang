@@ -9,7 +9,7 @@
 // CHECK:STDERR:                     ^
 var x: {} = {.a = 1};
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_assign_to_empty.carbon" {
 // CHECK:STDOUT:   %.loc10_9.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_9.2: {} = struct_literal ()
 // CHECK:STDOUT:   %x: ref {} = var "x"

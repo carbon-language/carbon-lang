@@ -6,7 +6,7 @@
 
 var x: ((i32, i32), i32) = ((12, 76), 6);
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "nested_tuple.carbon" {
 // CHECK:STDOUT:   %.loc7_10: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_15: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_18.1: type = tuple_type (type, type)

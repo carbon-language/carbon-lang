@@ -6,7 +6,7 @@
 
 fn Foo(a: i32, b: i32,) {}
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "params_two_comma.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

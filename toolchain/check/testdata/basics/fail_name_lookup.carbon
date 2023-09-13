@@ -11,7 +11,7 @@ fn Main() {
   x;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_name_lookup.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

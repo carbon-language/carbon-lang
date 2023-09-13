@@ -10,7 +10,7 @@ fn Run() {
   var t: [i32; 1] = F();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "assign_return_value.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc9 = fn_decl @Run
 // CHECK:STDOUT: }

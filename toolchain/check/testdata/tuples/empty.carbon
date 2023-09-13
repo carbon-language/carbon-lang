@@ -7,7 +7,7 @@
 var x: () = ();
 var y: () = x;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "empty.carbon" {
 // CHECK:STDOUT:   %.loc7_9.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7_9.2: () = tuple_literal ()
 // CHECK:STDOUT:   %x: ref () = var "x"

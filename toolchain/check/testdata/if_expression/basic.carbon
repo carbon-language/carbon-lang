@@ -8,7 +8,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
   return if b then n + m else m + n;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "basic.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

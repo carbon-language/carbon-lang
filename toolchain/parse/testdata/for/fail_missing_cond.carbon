@@ -21,20 +21,21 @@ fn F() {
 // CHECK:STDERR: ^
 }
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'Name', text: 'F'},
-// CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ForHeaderStart', text: 'for', has_error: yes},
-// CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ForHeader', text: 'for', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'CodeBlockStart', text: '}', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '}', has_error: yes},
-// CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'ForStatement', text: 'for', subtree_size: 8},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_missing_cond.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ParameterList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'ForHeaderStart', text: 'for', has_error: yes},
+// CHECK:STDOUT:             {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'ForHeader', text: 'for', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '}', has_error: yes},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: '}', has_error: yes},
+// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ForStatement', text: 'for', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

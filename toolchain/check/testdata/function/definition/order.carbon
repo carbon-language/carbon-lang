@@ -8,7 +8,7 @@ fn Foo() {}
 fn Bar() {}
 fn Baz() {}
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "order.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Foo
 // CHECK:STDOUT:   %.loc8 = fn_decl @Bar
 // CHECK:STDOUT:   %.loc9 = fn_decl @Baz

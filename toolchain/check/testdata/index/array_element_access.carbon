@@ -9,7 +9,7 @@ var b: i32 = 1;
 var c: i32 = a[0];
 var d: i32 = a[b];
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "array_element_access.carbon" {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
 // CHECK:STDOUT:   %a: ref [i32; 2] = var "a"

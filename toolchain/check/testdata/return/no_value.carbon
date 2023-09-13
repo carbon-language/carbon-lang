@@ -8,7 +8,7 @@ fn Main() {
   return;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "no_value.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

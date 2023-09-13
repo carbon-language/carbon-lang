@@ -9,7 +9,7 @@
 // CHECK:STDERR:                            ^
 var a: [i32; 1] = (1, 2, 3);
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_out_of_bound.carbon" {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32
 // CHECK:STDOUT:   %a: ref [i32; 1] = var "a"

@@ -11,14 +11,15 @@
 // CHECK:STDERR:                ^
 var n: i8 = n* n;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'Name', text: 'n'},
-// CHECK:STDOUT:     {kind: 'Literal', text: 'i8'},
-// CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:     {kind: 'NameExpression', text: 'n'},
-// CHECK:STDOUT:   {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', has_error: yes, subtree_size: 8},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_infix_uneven_space_after.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'n'},
+// CHECK:STDOUT:         {kind: 'Literal', text: 'i8'},
+// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'NameExpression', text: 'n'},
+// CHECK:STDOUT:       {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

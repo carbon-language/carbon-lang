@@ -75,15 +75,12 @@ class ExplorerFileTest : public FileTestBase {
     return args;
   }
 
-  auto GetLineNumberReplacement(llvm::ArrayRef<llvm::StringRef> filenames)
-      -> LineNumberReplacement override {
+  auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)
+      -> llvm::SmallVector<LineNumberReplacement> override {
     if (check_trace_output()) {
-      return {.has_file = false,
-              .pattern = R"((DO NOT MATCH))",
-              // The `{{{{` becomes `{{`.
-              .line_formatv = "{{{{ *}}{0}"};
+      return {};
     }
-    return FileTestBase::GetLineNumberReplacement(filenames);
+    return FileTestBase::GetLineNumberReplacements(filenames);
   }
 
   auto DoExtraCheckReplacements(std::string& check_line) -> void override {

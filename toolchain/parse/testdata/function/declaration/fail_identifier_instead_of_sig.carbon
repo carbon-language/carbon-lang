@@ -9,9 +9,10 @@
 // CHECK:STDERR:        ^
 fn foo bar;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {kind: 'Name', text: 'foo'},
-// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_identifier_instead_of_sig.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'Name', text: 'foo'},
+// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

@@ -14,7 +14,7 @@ fn Main() {
   return 0;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_value_disallowed.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

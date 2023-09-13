@@ -9,8 +9,9 @@
 // CHECK:STDERR:         ^
 package library "Shapes" api;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT: {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_library_skips_name.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
+// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

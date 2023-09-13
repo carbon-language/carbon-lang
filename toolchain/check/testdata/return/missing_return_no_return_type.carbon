@@ -7,7 +7,7 @@
 fn F() {
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "missing_return_no_return_type.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

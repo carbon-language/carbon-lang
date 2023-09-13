@@ -7,7 +7,7 @@
 var x: {} = {};
 var y: {} = x;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "empty.carbon" {
 // CHECK:STDOUT:   %.loc7_9.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc7_9.2: {} = struct_literal ()
 // CHECK:STDOUT:   %x: ref {} = var "x"

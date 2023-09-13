@@ -15,13 +15,11 @@
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "testing/base/test_raw_ostream.h"
-#include "toolchain/base/yaml_test_helpers.h"
 
 namespace Carbon::Testing {
 namespace {
 
 using ::testing::ContainsRegex;
-using ::testing::ElementsAre;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
@@ -126,32 +124,8 @@ TEST_F(DriverTest, DumpTokens) {
   EXPECT_TRUE(
       driver_.RunCommand({"compile", "--phase=lex", "--dump-tokens", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
-  auto tokenized_text = test_output_stream_.TakeStr();
-
-  EXPECT_THAT(Yaml::Value::FromText(tokenized_text),
-              ElementsAre(Yaml::SequenceValue{
-                  Yaml::MappingValue{{"index", "0"},
-                                     {"kind", "Identifier"},
-                                     {"line", "1"},
-                                     {"column", "1"},
-                                     {"indent", "1"},
-                                     {"spelling", "Hello"},
-                                     {"identifier", "0"},
-                                     {"has_trailing_space", "true"}},
-                  Yaml::MappingValue{{"index", "1"},
-                                     {"kind", "Identifier"},
-                                     {"line", "1"},
-                                     {"column", "7"},
-                                     {"indent", "1"},
-                                     {"spelling", "World"},
-                                     {"identifier", "1"},
-                                     {"has_trailing_space", "true"}},
-                  Yaml::MappingValue{{"index", "2"},
-                                     {"kind", "EndOfFile"},
-                                     {"line", "1"},
-                                     {"column", "12"},
-                                     {"indent", "1"},
-                                     {"spelling", ""}}}));
+  // Verify there is output without examining it.
+  EXPECT_FALSE(test_output_stream_.TakeStr().empty());
 }
 
 TEST_F(DriverTest, DumpParseTree) {

@@ -13,7 +13,7 @@ fn If(b: bool) -> i32 {
   // Missing return here is OK.
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "unreachable_fallthrough.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -10,7 +10,7 @@ var x: {.a: i32} = {.a = 4};
 // CHECK:STDERR:               ^
 var y: i32 = x.b;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_non_member_access.carbon" {
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: ref {.a: i32} = var "x"
 // CHECK:STDOUT:   %.loc7_26: i32 = int_literal 4

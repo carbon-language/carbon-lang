@@ -11,7 +11,7 @@ fn F() -> i32 {
   return *p;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "basic.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

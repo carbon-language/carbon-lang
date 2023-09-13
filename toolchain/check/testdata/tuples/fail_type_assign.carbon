@@ -9,7 +9,7 @@
 // CHECK:STDERR:                         ^
 var x: (i32, ) = (i32, );
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_type_assign.carbon" {
 // CHECK:STDOUT:   %.loc10_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc10_14.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc10_14.2: (type,) = tuple_literal (%.loc10_9)

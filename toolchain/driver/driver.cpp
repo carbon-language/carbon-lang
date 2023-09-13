@@ -207,28 +207,28 @@ postorder.
         [&](auto& arg_b) { arg_b.Set(&preorder_parse_tree); });
     b.AddFlag(
         {
-            .name = "dump-raw-semantics-ir",
+            .name = "dump-raw-sem-ir",
             .help = R"""(
-Dump the raw JSON structure of semantics IR to stdout when built.
+Dump the raw JSON structure of SemIR to stdout when built.
 )""",
         },
-        [&](auto& arg_b) { arg_b.Set(&dump_raw_semantics_ir); });
+        [&](auto& arg_b) { arg_b.Set(&dump_raw_sem_ir); });
     b.AddFlag(
         {
-            .name = "dump-semantics-ir",
+            .name = "dump-sem-ir",
             .help = R"""(
-Dump the semantics IR to stdout when built.
+Dump the SemIR to stdout when built.
 )""",
         },
-        [&](auto& arg_b) { arg_b.Set(&dump_semantics_ir); });
+        [&](auto& arg_b) { arg_b.Set(&dump_sem_ir); });
     b.AddFlag(
         {
-            .name = "builtin-semantics-ir",
+            .name = "builtin-sem-ir",
             .help = R"""(
-Include the semantics IR for builtins when dumping it.
+Include the SemIR for builtins when dumping it.
 )""",
         },
-        [&](auto& arg_b) { arg_b.Set(&builtin_semantics_ir); });
+        [&](auto& arg_b) { arg_b.Set(&builtin_sem_ir); });
     b.AddFlag(
         {
             .name = "dump-llvm-ir",
@@ -259,13 +259,13 @@ Dump the generated assembly to stdout after codegen.
   bool force_obj_output = false;
   bool dump_tokens = false;
   bool dump_parse_tree = false;
-  bool dump_raw_semantics_ir = false;
-  bool dump_semantics_ir = false;
+  bool dump_raw_sem_ir = false;
+  bool dump_sem_ir = false;
   bool dump_llvm_ir = false;
   bool dump_asm = false;
   bool stream_errors = false;
   bool preorder_parse_tree = false;
-  bool builtin_semantics_ir = false;
+  bool builtin_sem_ir = false;
 };
 
 struct Driver::Options {
@@ -357,9 +357,9 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
       }
       [[clang::fallthrough]];
     case Phase::Parse:
-      if (options.dump_semantics_ir) {
-        error_stream_ << "ERROR: Requested dumping the semantics IR but "
-                         "compile phase is limited to '"
+      if (options.dump_sem_ir) {
+        error_stream_ << "ERROR: Requested dumping the SemIR but compile phase "
+                         "is limited to '"
                       << options.phase << "'\n";
         return false;
       }
@@ -446,9 +446,9 @@ class Driver::CompilationUnit {
     consumer_->Flush();
 
     CARBON_VLOG() << "*** Raw SemIR::File ***\n" << *sem_ir_ << "\n";
-    if (options_.dump_raw_semantics_ir) {
-      sem_ir_->Print(driver_->output_stream_, options_.builtin_semantics_ir);
-      if (options_.dump_semantics_ir) {
+    if (options_.dump_raw_sem_ir) {
+      sem_ir_->Print(driver_->output_stream_, options_.builtin_sem_ir);
+      if (options_.dump_sem_ir) {
         driver_->output_stream_ << "\n";
       }
     }
@@ -457,7 +457,7 @@ class Driver::CompilationUnit {
       CARBON_VLOG() << "*** SemIR::File ***\n";
       SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_, *vlog_stream_);
     }
-    if (options_.dump_semantics_ir) {
+    if (options_.dump_sem_ir) {
       SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_,
                         driver_->output_stream_);
     }

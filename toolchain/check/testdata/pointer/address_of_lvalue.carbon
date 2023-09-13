@@ -16,7 +16,7 @@ fn F() {
   var t1: i32* = &t[1];
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "address_of_lvalue.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

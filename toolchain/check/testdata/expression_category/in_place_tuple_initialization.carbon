@@ -16,7 +16,7 @@ fn H() -> i32 {
   return G()[0];
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "in_place_tuple_initialization.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc9 = fn_decl @G
 // CHECK:STDOUT:   %.loc15 = fn_decl @H

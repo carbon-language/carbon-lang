@@ -7,7 +7,7 @@
 var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
 var y: {.a: i32, .b: (i32,)} = x;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "tuple_as_element.carbon" {
 // CHECK:STDOUT:   %.loc7_23: type = stub_reference i32
 // CHECK:STDOUT:   %.loc7_27.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc7_27.2: (type,) = tuple_literal (%.loc7_23)

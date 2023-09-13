@@ -16,7 +16,7 @@ fn Main() {
   Run(1.0);
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_param_type.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Run
 // CHECK:STDOUT:   %.loc9 = fn_decl @Main
 // CHECK:STDOUT: }

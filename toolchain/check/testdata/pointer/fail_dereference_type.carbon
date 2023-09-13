@@ -12,7 +12,7 @@
 // CHECK:STDERR:        ^
 var p: *i32;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_dereference_type.carbon" {
 // CHECK:STDOUT:   %.loc13: ref <error> = dereference i32
 // CHECK:STDOUT:   %p: ref <error> = var "p"
 // CHECK:STDOUT: }

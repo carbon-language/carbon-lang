@@ -7,7 +7,7 @@
 fn Foo(a: i32) {}
 fn Bar(a: i32) {}
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "same_param_name.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Foo
 // CHECK:STDOUT:   %.loc8 = fn_decl @Bar
 // CHECK:STDOUT: }

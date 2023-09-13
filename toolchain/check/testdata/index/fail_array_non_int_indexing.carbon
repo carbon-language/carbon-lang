@@ -10,7 +10,7 @@ var a: [i32; 1] = (12,);
 // CHECK:STDERR:                ^
 var b: i32 = a[2.6];
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_array_non_int_indexing.carbon" {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
 // CHECK:STDOUT:   %a: ref [i32; 1] = var "a"

@@ -9,7 +9,7 @@
 // CHECK:STDERR:                            ^
 var x: {.a: i32} = {.b = 1};
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_field_name_mismatch.carbon" {
 // CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: ref {.a: i32} = var "x"
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1

@@ -12,7 +12,7 @@ fn Main() {
   a = 5.6;
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_type_mismatch_assignment.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

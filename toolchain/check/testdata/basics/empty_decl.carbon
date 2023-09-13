@@ -6,5 +6,5 @@
 
 ;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "empty_decl.carbon" {
 // CHECK:STDOUT: }

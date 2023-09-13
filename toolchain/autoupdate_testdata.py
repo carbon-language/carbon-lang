@@ -26,13 +26,13 @@ def main() -> None:
     # Support specifying tests to update, such as:
     # ./autoupdate_testdata.py lex/**/*
     if len(sys.argv) > 1:
-        repo_root = Path(__file__).parent.parent
+        repo_root = Path(__file__).resolve().parent.parent
         file_tests = []
         # Filter down to just test files.
         for f in sys.argv[1:]:
             if f.endswith(".carbon"):
-                path = str(Path(f).absolute().relative_to(repo_root))
-                if path.find("/testdata/"):
+                path = str(Path(f).resolve().relative_to(repo_root))
+                if path.count("/testdata/"):
                     file_tests.append(path)
         if not file_tests:
             sys.exit(

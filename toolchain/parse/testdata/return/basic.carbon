@@ -8,14 +8,15 @@ fn F() {
   return;
 }
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'Name', text: 'F'},
-// CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:   {kind: 'ReturnStatement', text: ';', subtree_size: 2},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: basic.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ParameterList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
+// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

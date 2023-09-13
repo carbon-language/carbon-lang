@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --phase=check --dump-semantics-ir %s
+// ARGS: compile --phase=check --dump-sem-ir %s
 //
 // Check that the command-line flag to dump textual IR works.
 //
@@ -12,7 +12,7 @@ fn Foo(n: i32) -> (i32, f64) {
   return (n + 2, 3.4);
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "textual_ir.carbon" {
 // CHECK:STDOUT:   %.loc11 = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

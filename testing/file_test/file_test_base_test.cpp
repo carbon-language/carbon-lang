@@ -9,11 +9,10 @@
 
 #include "common/ostream.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon::Testing {
 namespace {
-
-using ::testing::Eq;
 
 class FileTestBaseTest : public FileTestBase {
  public:
@@ -96,6 +95,27 @@ class FileTestBaseTest : public FileTestBase {
       stderr << "unattached message 3\n"
              << "unattached message 4\n";
       return true;
+    } else if (filename == "file_only_re_one_file.carbon") {
+      stdout << "unattached message 1\n"
+             << "file: file_only_re_one_file.carbon\n"
+             << "line: 1\n"
+             << "unattached message 2\n";
+      return true;
+    } else if (filename == "file_only_re_multi_file.carbon") {
+      int msg_count = 0;
+      stdout << "unattached message " << ++msg_count << "\n"
+             << "file: a.carbon\n"
+             << "unattached message " << ++msg_count << "\n"
+             << "line: 1: attached message " << ++msg_count << "\n"
+             << "unattached message " << ++msg_count << "\n"
+             << "line: 8: late message " << ++msg_count << "\n"
+             << "unattached message " << ++msg_count << "\n"
+             << "file: b.carbon\n"
+             << "line: 1: attached message " << ++msg_count << "\n"
+             << "unattached message " << ++msg_count << "\n"
+             << "line: 7: late message " << ++msg_count << "\n"
+             << "unattached message " << ++msg_count << "\n";
+      return true;
     } else {
       return ErrorBuilder() << "Unexpected file: " << filename;
     }
@@ -103,6 +123,24 @@ class FileTestBaseTest : public FileTestBase {
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
     return {"default_args", "%s"};
+  }
+
+  auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames)
+      -> std::optional<RE2> override {
+    return std::make_optional<RE2>(
+        llvm::formatv(R"(file: ({0}))", llvm::join(filenames, "|")));
+  }
+
+  auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)
+      -> llvm::SmallVector<LineNumberReplacement> override {
+    auto replacements = FileTestBase::GetLineNumberReplacements(filenames);
+    auto filename = std::filesystem::path(test_name().str()).filename();
+    if (llvm::StringRef(filename).startswith("file_only_re_")) {
+      replacements.push_back({.has_file = false,
+                              .re = std::make_shared<RE2>(R"(line: (\d+))"),
+                              .line_formatv = "{0}"});
+    }
+    return replacements;
   }
 };
 

@@ -9,7 +9,7 @@ var test_f64: f64 = 0.1;
 var test_str: String = "Test";
 var test_type: type = i32;
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "builtin_types.carbon" {
 // CHECK:STDOUT:   %test_i32: ref i32 = var "test_i32"
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0
 // CHECK:STDOUT:   assign %test_i32, %.loc7
