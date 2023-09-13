@@ -148,7 +148,9 @@ class File : public Printable<File> {
     return name_scopes_[scope_id.index];
   }
 
-  // Adds a node to the node list, returning an ID to reference the node.
+  // Adds a node to the node list, returning an ID to reference the node. Note
+  // that this doesn't add the node to any node block. Check::Context::AddNode
+  // should usually be used instead, to add the node to the current code block.
   auto AddNodeNoBlock(Node node) -> NodeId {
     NodeId node_id(nodes_.size());
     nodes_.push_back(node);
