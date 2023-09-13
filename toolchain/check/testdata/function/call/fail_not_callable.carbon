@@ -14,7 +14,7 @@ fn Run() {
   var x: i32 = "hello"();
 }
 
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_not_callable.carbon" {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
