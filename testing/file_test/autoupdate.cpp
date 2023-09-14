@@ -258,7 +258,7 @@ auto FileTestAutoupdater::StartSplitFile() -> void {
   ++non_check_line_;
 }
 
-auto FileTestAutoupdater::Run() -> bool {
+auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   bool any_attached_stdout_lines = std::any_of(
       stdout_.lines.begin(), stdout_.lines.end(),
       [&](const CheckLine& line) { return line.line_number() != -1; });
@@ -330,8 +330,10 @@ auto FileTestAutoupdater::Run() -> bool {
   if (new_content == input_content_) {
     return false;
   }
-  std::ofstream out(file_test_path_);
-  out << new_content;
+  if (!dry_run) {
+    std::ofstream out(file_test_path_);
+    out << new_content;
+  }
   return true;
 }
 

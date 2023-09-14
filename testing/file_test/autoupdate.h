@@ -65,8 +65,9 @@ class FileTestAutoupdater {
     }
   }
 
-  // Automatically updates CHECKs in the provided file. Returns true if updated.
-  auto Run() -> bool;
+  // Automatically updates CHECKs in the provided file when dry_run=false.
+  // Returns true if generated file content differs from actual file content.
+  auto Run(bool dry_run) -> bool;
 
  private:
   // The file and line number that a CHECK line refers to, and the
