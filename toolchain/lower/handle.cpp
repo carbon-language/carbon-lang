@@ -42,36 +42,21 @@ auto HandleArrayIndex(FunctionContext& context, SemIR::NodeId node_id,
   } else {
     auto* index = context.GetLocalLoaded(index_node_id);
     // TODO: Handle return value or call such as `F()[a]`.
-    // TODO: The GEP indexes here are wrong; we should pass {0, index}.
+    auto* zero = llvm::ConstantInt::get(
+        llvm::Type::getInt32Ty(context.llvm_context()), 0);
     array_element_value = context.builder().CreateInBoundsGEP(
-        llvm_type, array_value, index, "array.index");
+        llvm_type, array_value, {zero, index}, "array.index");
   }
   context.SetLocal(node_id, array_element_value);
 }
 
-auto HandleArrayValue(FunctionContext& context, SemIR::NodeId node_id,
-                      SemIR::Node node) -> void {
-  auto* llvm_type = context.GetType(node.type_id());
-  auto* alloca =
-      context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "array");
-  context.SetLocal(node_id, alloca);
-  auto tuple_node_id = node.GetAsArrayValue();
-  auto* tuple_value = context.GetLocal(tuple_node_id);
-  auto* tuple_type =
-      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
-
-  for (auto i : llvm::seq(llvm_type->getArrayNumElements())) {
-    llvm::Value* array_element_value = context.GetIndexFromStructOrArray(
-        tuple_type, tuple_value, i, "array.element");
-    if (tuple_value->getType()->isPointerTy()) {
-      array_element_value = context.builder().CreateLoad(
-          llvm_type->getArrayElementType(), array_element_value);
-    }
-    // Initializing the array with values.
-    context.builder().CreateStore(
-        array_element_value,
-        context.builder().CreateStructGEP(llvm_type, alloca, i));
-  }
+auto HandleArrayInit(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::Node node) -> void {
+  auto [src_id, refs_id] = node.GetAsArrayInit();
+  // The result of initialization is the return slot of the initializer.
+  context.SetLocal(
+      node_id,
+      context.GetLocal(context.semantics_ir().GetNodeBlock(refs_id).back()));
 }
 
 auto HandleAssign(FunctionContext& context, SemIR::NodeId /*node_id*/,
@@ -218,6 +203,13 @@ auto HandleFunctionDeclaration(FunctionContext& /*context*/,
       << "Should not be encountered. If that changes, we may want to change "
          "higher-level logic to skip them rather than calling this. "
       << node;
+}
+
+auto HandleInitializeFrom(FunctionContext& context, SemIR::NodeId /*node_id*/,
+                          SemIR::Node node) -> void {
+  auto [init_id, storage_id] = node.GetAsInitializeFrom();
+  auto storage_type_id = context.semantics_ir().GetNode(storage_id).type_id();
+  context.FinishInitialization(storage_type_id, storage_id, init_id);
 }
 
 auto HandleIntegerLiteral(FunctionContext& context, SemIR::NodeId node_id,

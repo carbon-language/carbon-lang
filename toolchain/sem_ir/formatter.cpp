@@ -594,6 +594,26 @@ class Formatter {
   }
 
   template <>
+  auto FormatInstructionRHS<Node::ArrayInit>(Node node) -> void {
+    out_ << " ";
+    auto [src_id, refs_id] = node.GetAsArrayInit();
+    FormatArg(src_id);
+
+    llvm::ArrayRef<NodeId> refs = semantics_ir_.GetNodeBlock(refs_id);
+    auto inits = refs.drop_back(1);
+    auto return_slot_id = refs.back();
+
+    out_ << ", (";
+    llvm::ListSeparator sep;
+    for (auto node_id : inits) {
+      out_ << sep;
+      FormatArg(node_id);
+    }
+    out_ << ')';
+    FormatReturnSlot(return_slot_id);
+  }
+
+  template <>
   auto FormatInstructionRHS<Node::Call>(Node node) -> void {
     out_ << " ";
     auto [args_id, callee_id] = node.GetAsCall();
@@ -618,9 +638,15 @@ class Formatter {
     out_ << ')';
 
     if (has_return_slot) {
-      out_ << " to ";
-      FormatArg(return_slot_id);
+      FormatReturnSlot(return_slot_id);
     }
+  }
+
+  template <>
+  auto FormatInstructionRHS<Node::InitializeFrom>(Node node) -> void {
+    auto [src_id, dest_id] = node.GetAsInitializeFrom();
+    FormatArgs(src_id);
+    FormatReturnSlot(dest_id);
   }
 
   template <>
@@ -737,6 +763,11 @@ class Formatter {
       FormatArg(type_id);
     }
     out_ << ')';
+  }
+
+  auto FormatReturnSlot(NodeId dest_id) -> void {
+    out_ << " to ";
+    FormatArg(dest_id);
   }
 
   auto FormatNodeName(NodeId id) -> void {

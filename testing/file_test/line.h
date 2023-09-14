@@ -11,9 +11,10 @@
 namespace Carbon::Testing {
 
 // Interface for lines.
-class FileTestLineBase {
+class FileTestLineBase : public Printable<FileTestLineBase> {
  public:
-  explicit FileTestLineBase(int line_number) : line_number_(line_number) {}
+  explicit FileTestLineBase(int file_number, int line_number)
+      : file_number_(file_number), line_number_(line_number) {}
   virtual ~FileTestLineBase() {}
 
   // Prints the autoupdated line.
@@ -21,17 +22,19 @@ class FileTestLineBase {
 
   virtual auto is_blank() const -> bool = 0;
 
+  auto file_number() const -> int { return file_number_; }
   auto line_number() const -> int { return line_number_; }
 
  private:
+  int file_number_;
   int line_number_;
 };
 
 // A line in the original file test.
 class FileTestLine : public FileTestLineBase {
  public:
-  explicit FileTestLine(int line_number, llvm::StringRef line)
-      : FileTestLineBase(line_number), line_(line) {}
+  explicit FileTestLine(int file_number, int line_number, llvm::StringRef line)
+      : FileTestLineBase(file_number, line_number), line_(line) {}
 
   auto Print(llvm::raw_ostream& out) const -> void override { out << line_; }
 

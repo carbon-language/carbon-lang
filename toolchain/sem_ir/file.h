@@ -8,6 +8,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/sem_ir/node.h"
 
@@ -148,13 +149,13 @@ class File : public Printable<File> {
     return name_scopes_[scope_id.index];
   }
 
-  // Adds a node to a specified block, returning an ID to reference the node.
-  auto AddNode(NodeBlockId block_id, Node node) -> NodeId {
+  // Adds a node to the node list, returning an ID to reference the node. Note
+  // that this doesn't add the node to any node block. Check::Context::AddNode
+  // or NodeBlockStack::AddNode should usually be used instead, to add the node
+  // to the current block.
+  auto AddNodeInNoBlock(Node node) -> NodeId {
     NodeId node_id(nodes_.size());
     nodes_.push_back(node);
-    if (block_id != NodeBlockId::Unreachable) {
-      node_blocks_[block_id.index].push_back(node_id);
-    }
     return node_id;
   }
 
@@ -166,22 +167,39 @@ class File : public Printable<File> {
   // Returns the requested node.
   auto GetNode(NodeId node_id) const -> Node { return nodes_[node_id.index]; }
 
-  // Adds an empty node block, returning an ID to reference it.
-  auto AddNodeBlock() -> NodeBlockId {
+  // Reserves and returns a node block ID. The contents of the node block
+  // should be specified by calling SetNodeBlock, or by pushing the ID onto the
+  // NodeBlockStack.
+  auto AddNodeBlockId() -> NodeBlockId {
     NodeBlockId id(node_blocks_.size());
     node_blocks_.push_back({});
     return id;
   }
 
+  // Sets the contents of an empty node block to the given content.
+  auto SetNodeBlock(NodeBlockId block_id, llvm::ArrayRef<NodeId> content)
+      -> void {
+    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
+    CARBON_CHECK(node_blocks_[block_id.index].empty())
+        << "node block content set more than once";
+    node_blocks_[block_id.index] = AllocateCopy(content);
+  }
+
+  // Adds a node block with the given content, returning an ID to reference it.
+  auto AddNodeBlock(llvm::ArrayRef<NodeId> content) -> NodeBlockId {
+    NodeBlockId id(node_blocks_.size());
+    node_blocks_.push_back(AllocateCopy(content));
+    return id;
+  }
+
   // Returns the requested node block.
-  auto GetNodeBlock(NodeBlockId block_id) const
-      -> const llvm::SmallVector<NodeId>& {
+  auto GetNodeBlock(NodeBlockId block_id) const -> llvm::ArrayRef<NodeId> {
     CARBON_CHECK(block_id != NodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
 
   // Returns the requested node block.
-  auto GetNodeBlock(NodeBlockId block_id) -> llvm::SmallVector<NodeId>& {
+  auto GetNodeBlock(NodeBlockId block_id) -> llvm::MutableArrayRef<NodeId> {
     CARBON_CHECK(block_id != NodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
@@ -245,21 +263,20 @@ class File : public Printable<File> {
     }
   }
 
-  // Adds an empty type block, returning an ID to reference it.
-  auto AddTypeBlock() -> TypeBlockId {
+  // Adds a type block with the given content, returning an ID to reference it.
+  auto AddTypeBlock(llvm::ArrayRef<TypeId> content) -> TypeBlockId {
     TypeBlockId id(type_blocks_.size());
-    type_blocks_.push_back({});
+    type_blocks_.push_back(AllocateCopy(content));
     return id;
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) const
-      -> const llvm::SmallVector<TypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) const -> llvm::ArrayRef<TypeId> {
     return type_blocks_[block_id.index];
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) -> llvm::SmallVector<TypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) -> llvm::MutableArrayRef<TypeId> {
     return type_blocks_[block_id.index];
   }
 
@@ -274,12 +291,7 @@ class File : public Printable<File> {
   auto nodes_size() const -> int { return nodes_.size(); }
   auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
-  auto types() const -> const llvm::SmallVector<NodeId>& { return types_; }
-
-  // The node blocks, for direct mutation.
-  auto node_blocks() -> llvm::SmallVector<llvm::SmallVector<NodeId>>& {
-    return node_blocks_;
-  }
+  auto types() const -> llvm::ArrayRef<NodeId> { return types_; }
 
   auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
   auto set_top_node_block_id(NodeBlockId block_id) -> void {
@@ -293,7 +305,22 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
+  // Allocates a copy of the given data using our slab allocator.
+  template <typename T>
+  auto AllocateCopy(llvm::ArrayRef<T> data) -> llvm::MutableArrayRef<T> {
+    // We're not going to run a destructor, so ensure that's OK.
+    static_assert(std::is_trivially_destructible_v<T>);
+
+    T* storage = static_cast<T*>(
+        allocator_.Allocate(data.size() * sizeof(T), alignof(T)));
+    std::uninitialized_copy(data.begin(), data.end(), storage);
+    return llvm::MutableArrayRef<T>(storage, data.size());
+  }
+
   bool has_errors_ = false;
+
+  // Slab allocator, used to allocate node and type blocks.
+  llvm::BumpPtrAllocator allocator_;
 
   // The associated filename.
   // TODO: If SemIR starts linking back to tokens, reuse its filename.
@@ -325,15 +352,17 @@ class File : public Printable<File> {
   // by lowering.
   llvm::SmallVector<NodeId> types_;
 
-  // Storage for blocks within the IR. These reference entries in types_.
-  llvm::SmallVector<llvm::SmallVector<TypeId>> type_blocks_;
+  // Type blocks within the IR. These reference entries in types_. Storage for
+  // the data is provided by allocator_.
+  llvm::SmallVector<llvm::MutableArrayRef<TypeId>> type_blocks_;
 
   // All nodes. The first entries will always be cross-references to builtins,
   // at indices matching BuiltinKind ordering.
   llvm::SmallVector<Node> nodes_;
 
-  // Storage for blocks within the IR. These reference entries in nodes_.
-  llvm::SmallVector<llvm::SmallVector<NodeId>> node_blocks_;
+  // Node blocks within the IR. These reference entries in nodes_. Storage for
+  // the data is provided by allocator_.
+  llvm::SmallVector<llvm::MutableArrayRef<NodeId>> node_blocks_;
 
   // The top node block ID.
   NodeBlockId top_node_block_id_ = NodeBlockId::Invalid;

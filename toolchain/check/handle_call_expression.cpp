@@ -8,7 +8,9 @@
 namespace Carbon::Check {
 
 auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
-  auto refs_id = context.ParamOrArgEnd(
+  // Process the final explicit call argument, but leave the arguments block on
+  // the stack until we add the return slot argument.
+  context.ParamOrArgEndNoPop(
       /*for_args=*/true, Parse::NodeKind::CallExpressionStart);
 
   // TODO: Convert to call expression.
@@ -20,18 +22,12 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
     // TODO: Work on error.
     context.TODO(parse_node, "Not a callable name");
     context.node_stack().Push(parse_node, name_id);
+    context.ParamOrArgPop();
     return true;
   }
 
   auto function_id = name_node.GetAsFunctionDeclaration();
   const auto& callable = context.semantics_ir().GetFunction(function_id);
-
-  if (!context.ImplicitAsForArgs(call_expr_parse_node, refs_id,
-                                 name_node.parse_node(),
-                                 callable.param_refs_id)) {
-    context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
-    return true;
-  }
 
   // For functions with an implicit return type, the return type is the empty
   // tuple type.
@@ -42,15 +38,26 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
 
   // If there is a return slot, add a corresponding argument.
   if (callable.return_slot_id.is_valid()) {
-    if (refs_id == SemIR::NodeBlockId::Empty) {
-      refs_id = context.semantics_ir().AddNodeBlock();
-    }
     // Tentatively put storage for a temporary in the function's return slot.
     // This will be replaced if necessary when we perform initialization.
-    auto return_slot_id = context.AddNode(SemIR::Node::TemporaryStorage::Make(
-        call_expr_parse_node, callable.return_type_id));
-    context.semantics_ir().GetNodeBlock(refs_id).push_back(return_slot_id);
+    context.AddNodeAndPush(parse_node,
+                           SemIR::Node::TemporaryStorage::Make(
+                               call_expr_parse_node, callable.return_type_id));
+    // TODO: We pass for_args=false here because we don't want a StubReference.
+    // We should remove the StubReferences for arguments and the corresponding
+    // `for_args` parameter. They didn't turn out to be used for anything.
+    context.ParamOrArgSave(/*for_args=*/false);
   }
+
+  // Convert the arguments to match the parameters.
+  auto refs_id = context.ParamOrArgPop();
+  if (!context.ImplicitAsForArgs(call_expr_parse_node, refs_id,
+                                 name_node.parse_node(), callable.param_refs_id,
+                                 callable.return_slot_id.is_valid())) {
+    context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+    return true;
+  }
+
   auto call_node_id = context.AddNode(SemIR::Node::Call::Make(
       call_expr_parse_node, type_id, refs_id, function_id));
 

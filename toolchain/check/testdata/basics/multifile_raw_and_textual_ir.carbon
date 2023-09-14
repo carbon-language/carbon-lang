@@ -12,7 +12,7 @@
 // CHECK:STDOUT:   sem_ir:
 // CHECK:STDOUT:   - cross_reference_irs_size: 1
 // CHECK:STDOUT:     functions: [
-// CHECK:STDOUT:       {name: str0, param_refs: block0, body: [block2]},
+// CHECK:STDOUT:       {name: str0, param_refs: block0, body: [block1]},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     integer_literals: [
 // CHECK:STDOUT:     ]
@@ -33,10 +33,10 @@
 // CHECK:STDOUT:       [
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+0,
+// CHECK:STDOUT:         node+1,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+1,
+// CHECK:STDOUT:         node+0,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:
@@ -52,7 +52,7 @@
 // CHECK:STDOUT:   sem_ir:
 // CHECK:STDOUT:   - cross_reference_irs_size: 1
 // CHECK:STDOUT:     functions: [
-// CHECK:STDOUT:       {name: str0, param_refs: block0, body: [block2]},
+// CHECK:STDOUT:       {name: str0, param_refs: block0, body: [block1]},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     integer_literals: [
 // CHECK:STDOUT:     ]
@@ -73,10 +73,10 @@
 // CHECK:STDOUT:       [
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+0,
+// CHECK:STDOUT:         node+1,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+1,
+// CHECK:STDOUT:         node+0,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:

@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_out_of_bound.carbon:[[@LINE+3]]:28: Cannot implicitly convert from `(i32, i32, i32) as type` to `[i32; 1]`.
+// CHECK:STDERR: fail_out_of_bound.carbon:[[@LINE+3]]:27: Cannot initialize array of 1 element(s) from 3 initializer(s).
 // CHECK:STDERR: var a: [i32; 1] = (1, 2, 3);
-// CHECK:STDERR:                            ^
+// CHECK:STDERR:                           ^
 var a: [i32; 1] = (1, 2, 3);
 
 // CHECK:STDOUT: file "fail_out_of_bound.carbon" {

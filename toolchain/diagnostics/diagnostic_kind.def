@@ -109,6 +109,8 @@ CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
 CARBON_DIAGNOSTIC_KIND(AddressOfEphemeralReference)
 CARBON_DIAGNOSTIC_KIND(AddressOfNonReference)
+CARBON_DIAGNOSTIC_KIND(ArrayInitFromLiteralArgCountMismatch)
+CARBON_DIAGNOSTIC_KIND(ArrayInitFromExpressionArgCountMismatch)
 CARBON_DIAGNOSTIC_KIND(AssignmentToNonAssignable)
 CARBON_DIAGNOSTIC_KIND(DereferenceOfNonPointer)
 CARBON_DIAGNOSTIC_KIND(DereferenceOfType)
