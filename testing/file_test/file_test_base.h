@@ -151,6 +151,9 @@ class FileTestBase : public testing::Test {
   static auto TransformExpectation(int line_index, llvm::StringRef in)
       -> ErrorOr<testing::Matcher<std::string>>;
 
+  // Runs the FileTestAutoupdater, returning the result.
+  auto RunAutoupdater(const TestContext& context, bool dry_run) -> bool;
+
   llvm::StringRef test_name_;
 };
 
