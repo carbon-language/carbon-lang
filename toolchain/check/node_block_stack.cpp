@@ -28,7 +28,6 @@ auto NodeBlockStack::PeekOrAdd(int depth) -> SemIR::NodeBlockId {
   auto& slot = stack_[index];
   if (!slot.id.is_valid()) {
     slot.id = semantics_ir_->AddNodeBlockId();
-    CARBON_VLOG() << name_ << " Add " << index << ": " << slot.id << "\n";
   }
   return slot.id;
 }
