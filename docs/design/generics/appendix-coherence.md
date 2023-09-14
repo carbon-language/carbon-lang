@@ -36,8 +36,8 @@ implements interfaces. There are a few main problematic use cases to consider:
     `Song` type to support "by title", "by artist", and "by album" orderings.
 -   Implementing an interface for a type when there is no relationship between
     the libraries defining the interface and the type.
--   When the implementation of an interface for a type uses an associated type
-    that can't be referenced from the file or files where the implementation is
+-   When the implementation of an interface for a type relies on something that
+    can't be referenced from the file or files where the implementation is
     allowed to be defined.
 
 These last two cases are highlighted as concerns in Rust in
@@ -208,9 +208,9 @@ This has some downsides:
     varies instead of being known statically.
 -   It is slower to execute from dynamic dispatch and the inability to inline.
 -   In some cases it may not be feasible to use dynamic dispatch. For example,
-    if an interface method returns an associated type, we might not know the
-    calling convention of the function without knowing some details about the
-    type.
+    if the return type of an interface method involves an associated constant,
+    we might not know the calling convention of the function without knowing
+    some details about the value of that constant.
 
 As a result, this doesn't make sense as the default behavior for Carbon based on
 its [goals](/docs/project/goals.md). That being said, this could be a feature
