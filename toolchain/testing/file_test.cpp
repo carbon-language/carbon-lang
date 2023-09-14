@@ -88,7 +88,8 @@ class ToolchainFileTest : public FileTestBase {
  private:
   // Returns the toolchain subdirectory being tested.
   static auto GetComponent(llvm::StringRef test_name) -> llvm::StringRef {
-    // This handles cases where the toolchain directory may be copied into a repository that doesn't put it at the root.
+    // This handles cases where the toolchain directory may be copied into a
+    // repository that doesn't put it at the root.
     auto pos = test_name.find("toolchain/");
     CARBON_CHECK(pos != llvm::StringRef::npos) << test_name;
     test_name = test_name.drop_front(pos + strlen("toolchain/"));
