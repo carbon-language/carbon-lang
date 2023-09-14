@@ -55,6 +55,9 @@ class FileTestAutoupdater {
         // initialization.
         stdout_(BuildCheckLines(stdout, "STDOUT")),
         stderr_(BuildCheckLines(stderr, "STDERR")),
+        any_attached_stdout_lines_(std::any_of(
+            stdout_.lines.begin(), stdout_.lines.end(),
+            [&](const CheckLine& line) { return line.line_number() != -1; })),
         non_check_line_(non_check_lines_.begin()) {
     for (const auto& replacement : line_number_replacements_) {
       CARBON_CHECK(replacement.has_file || default_file_re_)
@@ -177,6 +180,9 @@ class FileTestAutoupdater {
   // The constructed CheckLine list and cursor.
   CheckLines stdout_;
   CheckLines stderr_;
+
+  // Whether any stdout lines have an associated line number.
+  bool any_attached_stdout_lines_;
 
   // Iterators for the main Run loop.
   const FileTestLine* non_check_line_;
