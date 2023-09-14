@@ -61,10 +61,8 @@ auto Context::VerifyOnFinish() -> void {
 }
 
 auto Context::AddNode(SemIR::Node node) -> SemIR::NodeId {
-  auto node_id = semantics_ir_->AddNodeInNoBlock(node);
-  node_block_stack_.AddNodeId(node_id);
-  CARBON_VLOG() << "AddNode " << node_block_stack_.Peek() << ": " << node
-                << "\n";
+  auto node_id = node_block_stack_.AddNode(node);
+  CARBON_VLOG() << "AddNode: " << node << "\n";
   return node_id;
 }
 
@@ -234,29 +232,23 @@ auto Context::AddCurrentCodeBlockToFunction() -> void {
                          .GetAsFunctionDeclaration();
   semantics_ir()
       .GetFunction(function_id)
-      .body_block_ids.push_back(node_block_stack().PeekForAdd());
+      .body_block_ids.push_back(node_block_stack().PeekOrAdd());
 }
 
 auto Context::is_current_position_reachable() -> bool {
-  switch (auto block_id = node_block_stack().Peek(); block_id.index) {
-    case SemIR::NodeBlockId::Unreachable.index: {
-      return false;
-    }
-    case SemIR::NodeBlockId::Invalid.index: {
-      return true;
-    }
-    default: {
-      // Our current position is at the end of a real block. That position is
-      // reachable unless the previous instruction is a terminator instruction.
-      const auto& block_contents = semantics_ir().GetNodeBlock(block_id);
-      if (block_contents.empty()) {
-        return true;
-      }
-      const auto& last_node = semantics_ir().GetNode(block_contents.back());
-      return last_node.kind().terminator_kind() !=
-             SemIR::TerminatorKind::Terminator;
-    }
+  if (!node_block_stack().is_current_block_reachable()) {
+    return false;
   }
+
+  // Our current position is at the end of a reachable block. That position is
+  // reachable unless the previous instruction is a terminator instruction.
+  auto block_contents = node_block_stack().PeekCurrentBlockContents();
+  if (block_contents.empty()) {
+    return true;
+  }
+  const auto& last_node = semantics_ir().GetNode(block_contents.back());
+  return last_node.kind().terminator_kind() !=
+         SemIR::TerminatorKind::Terminator;
 }
 
 auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,

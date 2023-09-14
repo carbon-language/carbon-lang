@@ -11,7 +11,10 @@
 
 namespace Carbon::Check {
 
-// Wraps the stack of node blocks for Context.
+// A stack of node blocks that are currently being constructed in a Context. The
+// contents of the node blocks are stored here until the node block is popped
+// from the stack, at which point they are transferred into the SemIR::File for
+// long-term storage.
 //
 // All pushes and pops will be vlogged.
 class NodeBlockStack {
@@ -23,34 +26,29 @@ class NodeBlockStack {
   // Pushes an existing node block.
   auto Push(SemIR::NodeBlockId id) -> void;
 
-  // Pushes a new node block. It will be invalid unless PeekForAdd is called in
+  // Pushes a new node block. It will be invalid unless PeekOrAdd is called in
   // order to support lazy allocation.
   auto Push() -> void { Push(SemIR::NodeBlockId::Invalid); }
 
   // Pushes a new unreachable code block.
   auto PushUnreachable() -> void { Push(SemIR::NodeBlockId::Unreachable); }
 
-  // Allocates and pushes a new node block.
-  auto PushForAdd() -> SemIR::NodeBlockId {
-    Push();
-    return PeekForAdd();
-  }
-
-  // Peeks at the top node block. This does not trigger lazy allocation, so the
-  // returned node block may be invalid.
-  auto Peek() -> SemIR::NodeBlockId {
-    CARBON_CHECK(!empty()) << "no current block";
-    return stack_[size() - 1].id;
-  }
-
-  // Returns the top node block, allocating one if it's still invalid. If
+  // Returns the ID of the top node block, allocating one if necessary. If
   // `depth` is specified, returns the node at `depth` levels from the top of
-  // the stack, where the top block is at depth 0.
-  auto PeekForAdd(int depth = 0) -> SemIR::NodeBlockId;
+  // the stack instead of the top block, where the top block is at depth 0.
+  auto PeekOrAdd(int depth = 0) -> SemIR::NodeBlockId;
 
   // Pops the top node block. This will always return a valid node block;
   // SemIR::NodeBlockId::Empty is returned if one wasn't allocated.
   auto Pop() -> SemIR::NodeBlockId;
+
+  // Adds the given node to the block at the top of the stack and returns its
+  // ID.
+  auto AddNode(SemIR::Node node) -> SemIR::NodeId {
+    auto node_id = semantics_ir_->AddNodeInNoBlock(node);
+    AddNodeId(node_id);
+    return node_id;
+  }
 
   // Adds the given node ID to the block at the top of the stack.
   auto AddNodeId(SemIR::NodeId node_id) -> void {
@@ -60,7 +58,14 @@ class NodeBlockStack {
 
   // Returns whether the current block is statically reachable.
   auto is_current_block_reachable() -> bool {
-    return Peek() != SemIR::NodeBlockId::Unreachable;
+    return size_ != 0 &&
+           stack_[size_ - 1].id != SemIR::NodeBlockId::Unreachable;
+  }
+
+  // Returns a view of the contents of the top node block on the stack.
+  auto PeekCurrentBlockContents() -> llvm::ArrayRef<SemIR::NodeId> {
+    CARBON_CHECK(!empty()) << "no current block";
+    return stack_[size_ - 1].content;
   }
 
   // Prints the stack for a stack dump.
