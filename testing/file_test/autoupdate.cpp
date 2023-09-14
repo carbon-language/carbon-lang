@@ -225,11 +225,13 @@ auto FileTestAutoupdater::AddCheckLines(CheckLines& check_lines,
   }
 }
 
-auto FileTestAutoupdater::FinishFile() -> void {
+auto FileTestAutoupdater::FinishFile(bool is_last_file) -> void {
+  bool include_stdout = any_attached_stdout_lines_ || is_last_file;
+
   // At the end of each file, print any remaining lines which are associated
   // with the file.
   if (ShouldAddCheckLine(stderr_, INT_MAX) ||
-      ShouldAddCheckLine(stdout_, INT_MAX)) {
+      (include_stdout && ShouldAddCheckLine(stdout_, INT_MAX))) {
     // Ensure there's a blank line before any trailing CHECKs.
     if (!new_lines_.empty() && !new_lines_.back()->is_blank()) {
       new_lines_.push_back(&blank_line_);
@@ -237,7 +239,9 @@ auto FileTestAutoupdater::FinishFile() -> void {
     }
 
     AddCheckLines(stderr_, INT_MAX, "");
-    AddCheckLines(stdout_, INT_MAX, "");
+    if (include_stdout) {
+      AddCheckLines(stdout_, INT_MAX, "");
+    }
   }
 
   new_last_line_numbers_.push_back(output_line_number_);
@@ -292,7 +296,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   // Loop through remaining content.
   while (non_check_line_ != non_check_lines_.end()) {
     if (output_file_number_ < non_check_line_->file_number()) {
-      FinishFile();
+      FinishFile(/*is_last_file=*/false);
       StartSplitFile();
       continue;
     }
@@ -314,7 +318,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
     ++non_check_line_;
   }
 
-  FinishFile();
+  FinishFile(/*is_last_file=*/true);
 
   for (auto& check_line : stdout_.lines) {
     check_line.RemapLineNumbers(output_line_remap_, new_last_line_numbers_);
