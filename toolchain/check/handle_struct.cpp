@@ -51,11 +51,9 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   value_node_id = context.ConvertToValueExpression(value_node_id);
 
   // Store the name for the type.
-  context.args_type_info_stack().AddNodeId(
-      context.semantics_ir().AddNodeInNoBlock(
-          SemIR::Node::StructTypeField::Make(
-              parse_node, name_id,
-              context.semantics_ir().GetNode(value_node_id).type_id())));
+  context.args_type_info_stack().AddNode(SemIR::Node::StructTypeField::Make(
+      parse_node, name_id,
+      context.semantics_ir().GetNode(value_node_id).type_id()));
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(parse_node, value_node_id);

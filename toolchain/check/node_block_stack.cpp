@@ -22,7 +22,7 @@ auto NodeBlockStack::Push(SemIR::NodeBlockId id) -> void {
   ++size_;
 }
 
-auto NodeBlockStack::PeekForAdd(int depth) -> SemIR::NodeBlockId {
+auto NodeBlockStack::PeekOrAdd(int depth) -> SemIR::NodeBlockId {
   CARBON_CHECK(size() > depth) << "no such block";
   int index = size() - depth - 1;
   auto& slot = stack_[index];

@@ -36,7 +36,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
 
       // When the second operand is evaluated, the result of `and` and `or` is
       // its value.
-      auto resume_block_id = context.node_block_stack().PeekForAdd(/*depth=*/1);
+      auto resume_block_id = context.node_block_stack().PeekOrAdd(/*depth=*/1);
       context.AddNode(SemIR::Node::BranchWithArg::Make(
           parse_node, resume_block_id, rhs_id));
       context.node_block_stack().Pop();
