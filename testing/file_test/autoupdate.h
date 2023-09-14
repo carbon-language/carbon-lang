@@ -152,13 +152,13 @@ class FileTestAutoupdater {
 
   // Returns true if there's a CheckLine that should be added at
   // `to_line_number`.
-  auto ShouldAddCheckLine(const CheckLines& check_lines,
-                          int to_line_number) const -> bool;
+  auto ShouldAddCheckLine(const CheckLines& check_lines, bool to_file_end) const
+      -> bool;
 
-  // Add all check lines from the given vector until we reach a check line
-  // attached to a line later than `to_line_number`.
-  auto AddCheckLines(CheckLines& check_lines, int to_line_number,
-                     llvm::StringRef indent) -> void;
+  // Adds check_lines until output reaches:
+  // - If not to_file_end, non_check_line.
+  // - If to_file_end, the end of the file.
+  auto AddCheckLines(CheckLines& check_lines, bool to_file_end) -> void;
 
   // Adds remaining check lines for the current file. stderr is always included,
   // but stdout is only included when either any_attached_stdout_lines_ or

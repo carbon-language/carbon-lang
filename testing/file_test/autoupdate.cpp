@@ -207,21 +207,21 @@ auto FileTestAutoupdater::AddRemappedNonCheckLine() -> void {
 }
 
 auto FileTestAutoupdater::ShouldAddCheckLine(const CheckLines& check_lines,
-                                             int to_line_number) const -> bool {
+                                             bool to_file_end) const -> bool {
   return check_lines.cursor != check_lines.lines.end() &&
          (check_lines.cursor->file_number() < output_file_number_ ||
           (check_lines.cursor->file_number() == output_file_number_ &&
-           check_lines.cursor->line_number() <= to_line_number));
+           (to_file_end || check_lines.cursor->line_number() <=
+                               non_check_line_->line_number())));
 }
 
 auto FileTestAutoupdater::AddCheckLines(CheckLines& check_lines,
-                                        int to_line_number,
-                                        llvm::StringRef indent) -> void {
-  for (; ShouldAddCheckLine(check_lines, to_line_number);
-       ++check_lines.cursor) {
+                                        bool to_file_end) -> void {
+  for (; ShouldAddCheckLine(check_lines, to_file_end); ++check_lines.cursor) {
     new_lines_.push_back(check_lines.cursor);
-    check_lines.cursor->SetOutputLine(indent, output_file_number_,
-                                      ++output_line_number_);
+    check_lines.cursor->SetOutputLine(
+        to_file_end ? "" : non_check_line_->indent(), output_file_number_,
+        ++output_line_number_);
   }
 }
 
@@ -230,17 +230,17 @@ auto FileTestAutoupdater::FinishFile(bool is_last_file) -> void {
 
   // At the end of each file, print any remaining lines which are associated
   // with the file.
-  if (ShouldAddCheckLine(stderr_, INT_MAX) ||
-      (include_stdout && ShouldAddCheckLine(stdout_, INT_MAX))) {
+  if (ShouldAddCheckLine(stderr_, /*to_file_end=*/true) ||
+      (include_stdout && ShouldAddCheckLine(stdout_, /*to_file_end=*/true))) {
     // Ensure there's a blank line before any trailing CHECKs.
     if (!new_lines_.empty() && !new_lines_.back()->is_blank()) {
       new_lines_.push_back(&blank_line_);
       ++output_line_number_;
     }
 
-    AddCheckLines(stderr_, INT_MAX, "");
+    AddCheckLines(stderr_, /*to_file_end=*/true);
     if (include_stdout) {
-      AddCheckLines(stdout_, INT_MAX, "");
+      AddCheckLines(stdout_, /*to_file_end=*/true);
     }
   }
 
@@ -263,8 +263,7 @@ auto FileTestAutoupdater::StartSplitFile() -> void {
   // Add any file-specific but line-unattached STDOUT messages here. STDERR is
   // handled through the main loop because it's before the next line.
   if (any_attached_stdout_lines_) {
-    AddCheckLines(stdout_, non_check_line_->line_number(),
-                  non_check_line_->indent());
+    AddCheckLines(stdout_, /*to_file_end=*/false);
   }
 
   ++non_check_line_;
@@ -285,11 +284,9 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   // we don't insert a blank line before the STDERR checks if there are no more
   // lines after AUTOUPDATE.
   AddRemappedNonCheckLine();
-  AddCheckLines(stderr_, non_check_line_->line_number(),
-                non_check_line_->indent());
+  AddCheckLines(stderr_, /*to_file_end=*/false);
   if (any_attached_stdout_lines_) {
-    AddCheckLines(stdout_, non_check_line_->line_number(),
-                  non_check_line_->indent());
+    AddCheckLines(stdout_, /*to_file_end=*/false);
   }
   ++non_check_line_;
 
@@ -304,15 +301,13 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
     // STDERR check lines are placed before the line they refer to, or as
     // early as possible if they don't refer to a line. Include all STDERR
     // lines until we find one that wants to go later in the file.
-    AddCheckLines(stderr_, non_check_line_->line_number(),
-                  non_check_line_->indent());
+    AddCheckLines(stderr_, /*to_file_end=*/false);
     AddRemappedNonCheckLine();
 
     // STDOUT check lines are placed after the line they refer to, or at the
     // end of the file if none of them refers to a line.
     if (any_attached_stdout_lines_) {
-      AddCheckLines(stdout_, non_check_line_->line_number(),
-                    non_check_line_->indent());
+      AddCheckLines(stdout_, /*to_file_end=*/false);
     }
 
     ++non_check_line_;
