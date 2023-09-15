@@ -2565,8 +2565,6 @@ Implements constraints switched using the `impls` keyword in
 
 #### Recursive constraints
 
-**FIXME: LINKED**
-
 We sometimes need to constrain a type to equal one of its associated facets. In
 this first example, we want to represent the function `Abs` which will return
 `Self` for some but not all types, so we use an associated facet `MagnitudeType`
@@ -2900,7 +2898,7 @@ fn I[T:! C]() -> T.(A.U);
 
 ##### Rewrite constraint resolution
 
-**FIXME: Linked**
+**FIXME: Should the precise rules for constraints be moved into an appendix?**
 
 When a facet type is used as the declared type of a facet `T`, the constraints
 that were specified within that facet type are _resolved_ to determine the
@@ -3482,6 +3480,7 @@ interface Commute {
 
   fn GetX[self: Self]() -> X;
   fn GetY[self: Self]() -> Y;
+  // **FIXME: Don't think it is legal to write `X.X.Y` here.**
   fn TakesXXY[self: Self](xxy: X.X.Y);
 }
 
@@ -3923,8 +3922,6 @@ redundant ways to express a restriction, following the
 
 ### Referencing names in the interface being defined
 
-**FIXME: left off here.**
-
 The constraint in a `where` clause is required to only reference earlier names
 from this scope, as in this example:
 
@@ -4053,11 +4050,10 @@ interface Graph {
 
 #### Parameterized type implements interface
 
-**FIXME: LINKED**
-
-There are times when a function will pass a symbolic facet parameter of the
-function as an argument to a [parameterized type](#parameterized-types), and the
-function needs the result to implement a specific interface.
+There are times when a function will pass a
+[symbolic facet parameter](#symbolic-facet-bindings) of the function as an
+argument to a [parameterized type](#parameterized-types), and the function needs
+the result to implement a specific interface.
 
 ```
 // A parameterized type
@@ -4081,13 +4077,11 @@ fn PrintThree
 
 #### Another type implements parameterized interface
 
-**FIXME: LINKED**
-
 In this case, we need some other type to implement an interface parameterized by
-a symbolic facet parameter. The syntax for this case follows the previous case,
-except now the `.Self` parameter is on the interface to the right of the
-`impls`. For example, we might need a type parameter `T` to support explicit
-conversion from an `i32`:
+a [symbolic facet parameter](#symbolic-facet-bindings). The syntax for this case
+follows the previous case, except now the `.Self` parameter is on the interface
+to the right of the `impls`. For example, we might need a type parameter `T` to
+support explicit conversion from an `i32`:
 
 ```
 interface As(T:! type) {
@@ -4100,8 +4094,6 @@ fn Double[T:! Mul where i32 impls As(.Self)](x: T) -> T {
 ```
 
 #### Must be legal type argument constraints
-
-**FIXME: LINKED**
 
 Now consider the case that the symbolic facet parameter is going to be used as
 an argument to a [parameterized type](#parameterized-types) in a function body,
