@@ -15,10 +15,12 @@
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "testing/base/test_raw_ostream.h"
+#include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon::Testing {
 namespace {
 
+using ::testing::_;
 using ::testing::ContainsRegex;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
@@ -125,7 +127,8 @@ TEST_F(DriverTest, DumpTokens) {
       driver_.RunCommand({"compile", "--phase=lex", "--dump-tokens", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
-  EXPECT_FALSE(test_output_stream_.TakeStr().empty());
+  EXPECT_THAT(Yaml::Value::FromText(test_output_stream_.TakeStr()),
+              Yaml::IsYaml(_));
 }
 
 TEST_F(DriverTest, DumpParseTree) {
@@ -134,7 +137,8 @@ TEST_F(DriverTest, DumpParseTree) {
       {"compile", "--phase=parse", "--dump-parse-tree", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
-  EXPECT_FALSE(test_output_stream_.TakeStr().empty());
+  EXPECT_THAT(Yaml::Value::FromText(test_output_stream_.TakeStr()),
+              Yaml::IsYaml(_));
 }
 
 TEST_F(DriverTest, StdoutOutput) {

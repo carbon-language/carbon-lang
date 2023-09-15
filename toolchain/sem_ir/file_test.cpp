@@ -9,8 +9,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/base/test_raw_ostream.h"
-#include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/driver/driver.h"
+#include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -72,7 +72,8 @@ TEST(SemIRTest, YAML) {
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));
 
-  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(root));
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()),
+              IsYaml(ElementsAre(root)));
 }
 
 }  // namespace
