@@ -516,49 +516,62 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                            << source_loc << ")\n";
   }
 
+  const Value* value = nullptr;
   switch (type->kind()) {
     case Value::Kind::VariableType: {
       CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> value,
+          value,
           todo_.ValueOfNode(&cast<VariableType>(*type).binding(), source_loc));
       if (const auto* location = dyn_cast<LocationValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(value,
                                 heap_.Read(location->address(), source_loc));
       }
-      return value;
+      break;
     }
     case Value::Kind::InterfaceType: {
       const auto& interface_type = cast<InterfaceType>(*type);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&interface_type.bindings(), source_loc));
-      return arena_->New<InterfaceType>(&interface_type.declaration(),
-                                        bindings);
+      value =
+          arena_->New<InterfaceType>(&interface_type.declaration(), bindings);
+      break;
     }
     case Value::Kind::NamedConstraintType: {
       const auto& constraint_type = cast<NamedConstraintType>(*type);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&constraint_type.bindings(), source_loc));
-      return arena_->New<NamedConstraintType>(&constraint_type.declaration(),
-                                              bindings);
+      value = arena_->New<NamedConstraintType>(&constraint_type.declaration(),
+                                               bindings);
+      break;
     }
     case Value::Kind::ChoiceType: {
       const auto& choice_type = cast<ChoiceType>(*type);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&choice_type.bindings(), source_loc));
-      return arena_->New<ChoiceType>(&choice_type.declaration(), bindings);
+      value = arena_->New<ChoiceType>(&choice_type.declaration(), bindings);
+      break;
     }
     case Value::Kind::AssociatedConstant: {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type_value,
           EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
-      return type_value;
+      value = type_value;
+      break;
     }
     default:
-      return type;
+      value = type;
+      break;
   }
+
+  if (trace_stream_->is_enabled()) {
+    trace_stream_->End() << "instantiated type `" << *type << "` as `" << *value
+                         << "` (" << source_loc << ")\n";
+  }
+
+  return value;
 }
 
 auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
