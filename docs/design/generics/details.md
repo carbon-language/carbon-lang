@@ -66,7 +66,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Implementation of same-type `ImplicitAs`](#implementation-of-same-type-implicitas)
             -   [Manual type equality](#manual-type-equality)
             -   [Observe declarations](#observe-declarations)
-            -   [`observe` declarations](#observe-declarations-1)
         -   [Implements constraints](#implements-constraints)
             -   [Implied constraints](#implied-constraints)
         -   [Combining constraints](#combining-constraints)
@@ -121,6 +120,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Observing a type implements an interface](#observing-a-type-implements-an-interface)
     -   [Observing interface requirements](#observing-interface-requirements)
     -   [Observing blanket impl declarations](#observing-blanket-impl-declarations)
+    -   [Observing equal to a type implementing an interface](#observing-equal-to-a-type-implementing-an-interface)
 -   [Operator overloading](#operator-overloading)
     -   [Binary operators](#binary-operators)
     -   [`like` operator for implicit conversions](#like-operator-for-implicit-conversions)
@@ -3337,17 +3337,17 @@ doesn't compromise the soundness of the type system.
 #### Same-type constraints
 
 A same-type constraint describes that two type expressions are known to evaluate
-to the same value. Unlike a rewrite constraint, however, the two type
-expressions are treated as distinct types when type-checking a symbolic
-expression that refers to them.
+to the same value. Unlike a [rewrite constraint](#rewrite-constraints), however,
+the two type expressions are treated as distinct types when type-checking a
+symbolic expression that refers to them.
 
 Same-type constraints are brought into scope, looked up, and resolved exactly as
 if there were a `SameAs(U:! type)` interface and a `T == U` impl corresponded to
 `T is SameAs(U)`, except that `==` is commutative. As such, it's not possible to
 ask for a list of types that are the same as a given type, nor to ask whether
 there exists a type that is the same as a given type and has some property. But
-it is possible to ask whether two types are (non-transitively) **FIXME: add
-"known to be"?** the same.
+it is possible to ask whether two types are (non-transitively) known to be the
+same.
 
 In order for same-type constraints to be useful, they must allow the two types
 to be treated as actually being the same in some context. This can be
@@ -3382,8 +3382,6 @@ cannot pick a common type when given two distinct type expressions, even if we
 know they evaluate to the same type, because we would not know which API the
 result should have.
 
-**FIXME: Left off here.**
-
 ##### Implementation of same-type `ImplicitAs`
 
 It is possible to implement the above `impl` of `ImplicitAs` directly in Carbon,
@@ -3411,28 +3409,17 @@ The transition from `(T as ImplicitAs(U)).Convert`, where we know that `U == T`,
 to `EqualConverter.Convert`, where we know that `.T = U`, allows a same-type
 constraint to be used to perform a rewrite.
 
-This implementation is in use in Carbon Explorer.
-
 ##### Manual type equality
 
-Imagine we have some function with symbolic parameters:
-
-```
-fn F[T:! SomeInterface](x: T) {
-  x.G(x.H());
-}
-```
-
-We want to know if the return type of method `T.H` is the same as the parameter
-type of `T.G` in order to typecheck the function. However, determining whether
-two [type expressions](terminology.md#type-expression) are transitively equal is
-in general undecidable, as
+A same-type constraint establishes
+[type expressions](terminology.md#type-expression) are equal, and allows
+implicit conversions between them. However, determining whether two type
+expressions are _transitively_ equal is in general undecidable, as
 [has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
 
-Carbon's approach is to only allow implicit conversions between two type
-expressions that are constrained to be equal in a single where clause. This
-means that if two type expressions are only transitively equal, the user will
-need to include a sequence of casts or use an
+Carbon does not combine these equalities between type expressions. This means
+that if two type expressions are only transitively equal, the user will need to
+include a sequence of casts or use an
 [`observe` declaration](#observe-declarations) to convert between them.
 
 Given this interface `Transitive` that has associated facets that are
@@ -3469,46 +3456,6 @@ fn F[T:! Transitive](t: T) {
 }
 ```
 
-A value of type `A`, such as the return value of `GetA()`, has the API of `P`.
-Any such value also implements `Q`, and since the compiler can see that by way
-of a single `where` equality, values of type `A` are treated as if they
-implement `Q` [without extending it](terminology.md#extending-an-impl). However,
-the compiler will require a cast to `B` or `C` to see that the type implements
-`R`.
-
-```
-fn TakesPQR[U:! P & Q & R](u: U);
-
-fn G[T:! Transitive](t: T) {
-  var a: T.A = t.GetA();
-
-  // ✅ Allowed: `T.A` implements `P` and
-  // includes its API, as if it extends `P`.
-  a.InP();
-
-  // ✅ Allowed: `T.A` implements (but does not
-  // extend) `Q`.
-  a.(Q.InQ)();
-
-  // ❌ Not allowed: a.InQ();
-
-  // ✅ Allowed: values of type `T.A` may be cast
-  // to `T.B`, which extends and implements `Q`.
-  (a as T.B).InQ();
-
-  // ✅ Allowed: `T.B` implements (but does not
-  // extend) `R`.
-  (a as T.B).(R.InR)();
-  // ❌ Not allowed: (a as T.B).InR();
-
-  // ❌ Not allowed: TakesPQR(a);
-
-  // ✅ Allowed: `T.B` implements `P`, `Q`, and
-  // `R`, though `T.B` doesn't extend `P` or `R`.
-  TakesPQR(a as T.B);
-}
-```
-
 The compiler may have several different `where` clauses to consider,
 particularly when an interface has associated facets that recursively satisfy
 the same interface. For example, given this interface `Commute`:
@@ -3516,11 +3463,30 @@ the same interface. For example, given this interface `Commute`:
 ```
 interface Commute {
   let X:! Commute;
+  // **FIXME: Not allowed (at least not by Explorer)
+  // since `Commute` is incomplete here.**
   let Y:! Commute where .X == X.Y;
 
   fn GetX[self: Self]() -> X;
   fn GetY[self: Self]() -> Y;
   fn TakesXXY[self: Self](xxy: X.X.Y);
+}
+
+// **FIXME: Maybe the following?**
+interface Commute;
+constraint Helper(T:! Commute);
+
+interface Commute {
+  let X:! Commute;
+  let Y:! Helper(X);
+
+  fn GetX[self: Self]() -> X;
+  fn GetY[self: Self]() -> Y;
+  fn TakesXXY[self: Self](xxy: X.X.Y);
+}
+
+constraint Helper(T:! Commute) {
+  extend Commute where .X == T.Y;
 }
 ```
 
@@ -3572,9 +3538,8 @@ can find a sequence that prove they are equal.
 
 ##### Observe declarations
 
-Same-type constraints are non-transitive, just like other constraints such as
-`ImplicitAs`. The developer can use an `observe` declaration to bring a new
-same-type constraint into scope:
+Same-type constraints are non-transitive, just like `ImplicitAs`. The developer
+can use an `observe` declaration to bring a new same-type constraint into scope:
 
 ```
 observe A == B == C;
@@ -3588,14 +3553,13 @@ impl A as SameAs(C) { ... }
 
 where the `impl` makes use of `A is SameAs(B)` and `B is SameAs(C)`.
 
-##### `observe` declarations
-
-An `observe` declaration lists a sequence of
+In general, an `observe` declaration lists a sequence of
 [type expressions](terminology.md#type-expression) that are equal by some
 same-type `where` constraints. These `observe` declarations may be included in
 an `interface` definition or a function body, as in:
 
 ```
+// **FIXME: Not clear how to fix this example.**
 interface Commute {
   let X:! Commute;
   let Y:! Commute where .X == X.Y;
@@ -3614,6 +3578,7 @@ expression in the sequence by a single `where` equality constraint. In this
 example,
 
 ```
+// **FIXME: Not clear how to fix this example.**
 interface Commute {
   let X:! Commute;
   let Y:! Commute where .X == X.Y;
@@ -3633,7 +3598,7 @@ the `observe` declaration in the `Transitive` interface definition provides the
 link between associated facets `A` and `C` that allows function `F` to type
 check.
 
-```
+```carbon
 interface P { fn InP[self: Self](); }
 interface Q { fn InQ[self: Self](); }
 interface R { fn InR[self: Self](); }
@@ -3651,32 +3616,70 @@ interface Transitive {
   observe A == B == C;
 }
 
-fn TakesPQR[U:! P & Q & R](u: U);
-
 fn F[T:! Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  // ✅ Allowed: `T.A` == `T.C`
+  // ✅ Allowed: `T.A` values implicitly convert to
+  // `T.C` using `observe` in interface definition.
   t.TakesC(a);
-  a.(R.InR());
+
+  // ✅ Allowed: `T.C` extends and implements `R`.
+  (a as T.C).InR();
+}
+```
+
+Only the current type is searched for interface implementations, so the call to
+`InR()` would be illegal without the cast. However, an
+[`observe`...`==`...`impls` declaration](#observing-equal-to-a-type-implementing-an-interface)
+can be used to identify interfaces that must be implemented through some equal
+type. This does not [extending](terminology.md#extending-an-impl) the API of the
+type, that is solely determined by the definition of the type. Continuing the
+previous example:
+
+```carbon
+fn TakesPQR[U:! P & Q & R](u: U);
+
+fn G[T:! Transitive](t: T) {
+  var a: T.A = t.GetA();
+
+  // ✅ Allowed: `T.A` implements `P` and
+  // includes its API, as if it extends `P`.
+  a.InP();
+
+  // ❌ Illegal: only the current type is
+  // searched for interface implementations.
+  a.(Q.InQ());
+
+  // ✅ Allowed: values of type `T.A` may be cast
+  // to `T.B`, which extends and implements `Q`.
+  (a as T.B).InQ();
+
+  // ✅ Allowed: `T.A` == `T.B` that implements `Q`.
+  observe T.A == T.B impls Q;
+  a.(Q.InQ());
+
+  // ❌ Illegal: `T.A` still does not extend `Q`.
+  a.InQ();
 
   // ✅ Allowed: `T.A` implements `P`,
-  // `T.A` == `T.B` that implements `Q`, and
-  // `T.A` == `T.C` that implements `R`.
+  // `T.A` == `T.B` that implements `Q` (observe above),
+  // and `T.A` == `T.C` that implements `R`.
+  observe T.A == T.C impls R;
   TakesPQR(a);
 }
 ```
 
-Since adding an `observe` declaration only adds non-extending implementations of
-interfaces to symbolic facets, they may be added without breaking existing code.
+Since adding an `observe`...`impls` declaration only adds non-extending
+implementations of interfaces to symbolic facets, they may be added without
+breaking existing code.
 
 #### Implements constraints
 
-**FIXME**
-
-A `where` clause can express that a facet binding must implement an interface.
-This is more flexible than the usual approach of including that interface in the
-type since it can be applied to associated facet members as well.
+An _implements constraint_ is written `where T impls C`, and expresses that the
+facet `T` must implement the requirements of facet type `C`. This is more
+flexible than using
+[`&` to add a constraint](#combining-interfaces-by-anding-facet-types) since it
+can be applied to [associated facet](#associated-facets) members as well.
 
 In the following example, normally the `ElementType` of a `Container` can be any
 type. The `SortContainer` function, however, takes a pointer to a type
@@ -3696,7 +3699,8 @@ fn SortContainer
 
 In contrast to a [rewrite constraint](#rewrite-constraints) or a
 [same-type constraint](#same-type-constraints), this does not say what type
-`ElementType` exactly is, just that it must satisfy some facet type.
+`ElementType` exactly is, just that it must satisfy requirements of some facet
+type.
 
 **Note:** `Container` defines `ElementType` as having type `type`, but
 `ContainerType.ElementType` has type `Comparable`. This is because
@@ -3704,8 +3708,13 @@ In contrast to a [rewrite constraint](#rewrite-constraints) or a
 `Container`. This means we need to be a bit careful when talking about the type
 of `ContainerType` when there is a `where` clause modifying it.
 
-**FIXME: can also be used to say a facet implements an interface without
-including that interface's API.**
+An implements constraint can be applied to [`.Self`](#recursive-constraints), as
+in `I where .Self impls C`. This has the same requirements as `I & C`, but that
+`where` clause does not affect the API. This means that a
+[symbolic facet binding](#symbolic-facet-bindings) with that facet type, so `T`
+in `T:! I where .Self impls C`, is represented by an
+[archetype](terminology.md#archetype) that implements both `I` and `C`, but only
+[extends](terminology.md#extending-an-impl) `I`.
 
 ##### Implied constraints
 
@@ -3732,7 +3741,7 @@ class HashMap(
 
 In this case, `KeyType` gets `Hashable` and so on as _implied constraints_.
 Effectively that means that these functions are automatically rewritten to add a
-`where`...`impls` constraint on `KeyType`:
+`where .Self impls` constraint on `KeyType`:
 
 ```
 fn LookUp[
@@ -3760,10 +3769,10 @@ will have already satisfied these constraints.
 This implied constraint is equivalent to the explicit constraint that each
 parameter and return type [is legal](#must-be-legal-type-argument-constraints).
 
-**Note:** These implied constraints affect the _requirements_ of a symbolic
-facet parameter, but not its _member names_. This way you can always look at the
-declaration to see how name resolution works, without having to look up the
-definitions of everything it is used as an argument to.
+> **Note:** These implied constraints affect the _requirements_ of a symbolic
+> facet parameter, but not its _member names_. This way you can always look at
+> the declaration to see how name resolution works, without having to look up
+> the definitions of everything it is used as an argument to.
 
 **Limitation:** To limit readability concerns and ambiguity, this feature is
 limited to a single signature. Consider this interface declaration:
@@ -3815,18 +3824,22 @@ type in a parameter list that is already using commas to separate parameters.
 
 ### Satisfying both facet types
 
-If the two types being constrained to be equal have been declared with different
-facet types, then the actual type value they are set to will have to satisfy
-both constraints. For example, if `SortedContainer.ElementType` is declared to
-be `Comparable`, then in these declarations:
+If the two facet bindings being constrained to be equal, using either a
+[rewrite constraint](#rewrite-constraints) or a
+[same-type constraint](#same-type-constraints), have been declared with
+different facet types, then the actual type value they are set to will have to
+satisfy the requirements of both facet types. For example, if
+`SortedContainer.ElementType` is declared to have a `Comparable` requirement,
+then in these declarations:
 
 ```
+// With `=` rewrite constraint:
 fn Contains_Rewrite
     [SC:! SortedContainer,
      CT:! Container where .ElementType = SC.ElementType]
     (haystack: SC, needles: CT) -> bool;
 
-// Similarly with `==` same-type constraints:
+// With `==` same-type constraint:
 fn Contains_SameType
     [SC:! SortedContainer,
      CT:! Container where .ElementType == SC.ElementType]
@@ -3834,27 +3847,30 @@ fn Contains_SameType
 ```
 
 the `where` constraints in both cases mean `CT.ElementType` must satisfy
-`Comparable` as well.
+`Comparable` as well. However, the behavior inside the body of these two inside
+the body of the two functions is different.
 
-**FIXME: Separate rewrite and `==` behavior.**
+In `Contains_Rewrite`, `CT.ElementType` is rewritten to `SC.ElementType` and
+uses the facet type of `SC.ElementType`.
 
-However, inside the body of `Contains`, `CT.ElementType` will act like the
-implementation of `Comparable` is declared without [`extend`](#extend-impl).
-That is, items from the `needles` container won't directly have a `Compare`
-method member, but can still be implicitly converted to `Comparable` and can
-still call `Compare` using the compound member access syntax,
-`needle.(Comparable.Compare)(elt)`. The rule is that an `==` `where` constraint
-between two type variables does not modify the set of member names of either
-type. (If you write `where .ElementType = String` with a `=` and a concrete
-type, then `.ElementType` is actually set to `String` including the complete
-`String` API.)
+In `Contains_SameType`, the `where` clause does not affect the API of
+`CT.ElementType`, and it would not even be considered to implement `Comparable`
+unless there is some declaration like
+`observe CT.ElementType == SC.ElementType impls Comparable`. Even then, the
+items from the `needles` container won't directly have a `Compare` method
+member.
+
+The rule is that an same-type `where` constraint between two type variables does
+not modify the set of member names of either type. This is in contrast to
+rewrite constraints like `where .ElementType = String` with a `=`, then
+`.ElementType` is actually set to `String` including the complete `String` API.
 
 Note that `==` constraints are symmetric, so the previous declaration of
-`Contains` is equivalent to an alternative declaration where `CT` is declared
-first and the `where` clause is attached to `SortedContainer`:
+`Contains_SameType` is equivalent to an alternative declaration where `CT` is
+declared first and the `where` clause is attached to `SortedContainer`:
 
 ```
-fn Contains
+fn Contains_SameType_Equivalent
     [CT:! Container,
      SC:! SortedContainer where .ElementType == CT.ElementType]
     (haystack: SC, needles: CT) -> bool;
@@ -3906,6 +3922,8 @@ redundant ways to express a restriction, following the
 [considered whether this rule should be added](/proposals/p2376.md#alternatives-considered).
 
 ### Referencing names in the interface being defined
+
+**FIXME: left off here.**
 
 The constraint in a `where` clause is required to only reference earlier names
 from this scope, as in this example:
@@ -6052,7 +6070,7 @@ One situation where this occurs is when there is a chain of
 [interfaces requiring other interfaces](#interface-requiring-other-interfaces-revisited).
 During the `impl` validation done during type checking, Carbon will only
 consider the interfaces that are direct requirements of the interfaces the type
-is known to implement. An `observe...impls` declaration can be used to add an
+is known to implement. An `observe`...`impls` declaration can be used to add an
 interface that is a direct requirement to the set of interfaces whose direct
 requirements will be considered for that type. This allows a developer to
 provide a proof that there is a sequence of requirements that demonstrate that a
@@ -6095,7 +6113,7 @@ compiler can't determine the impl to select.
 
 ### Observing blanket impl declarations
 
-An `observe...impls` declaration can also be used to observe that a type
+An `observe`...`impls` declaration can also be used to observe that a type
 implements an interface because there is a
 [blanket impl declaration](#blanket-impl-declarations) in terms of requirements
 a type is already known to satisfy. Without an `observe` declaration, Carbon
@@ -6140,6 +6158,34 @@ fn RequiresA(T:! A)(x: T) {
 In the case of an error, a quality Carbon implementation will do a deeper search
 for chains of requirements and blanket impl declarations and suggest `observe`
 declarations that would make the code compile if any solution is found.
+
+### Observing equal to a type implementing an interface
+
+The [`observe`...`==` form](#observe-declarations) can be combined with the
+`observe`...`impls` form to show that a type implements an interface because it
+is equal to another type that is known to implement that interface.
+
+```carbon
+interface I {
+  fn F();
+}
+
+fn G(T:! I, U:! type where .Self == T) {
+  // ❌ Illegal: No implementation of `I` for `U`.
+  U.(I.F)();
+
+  // ✅ Allowed: Implementation of `I` for `U`
+  //             through `T`.
+  observe U == T impls I;
+  U.(I.F)();
+
+  // ❌ Illegal: `U` does not extend `I`.
+  U.F();
+}
+```
+
+Multiple `==` clauses are allowed in an `observe` declaration, so you may write
+`observe A == B == C impls I;`.
 
 ## Operator overloading
 
@@ -6493,7 +6539,7 @@ parameters may be used to specify types in the declarations of its members, such
 as data fields, member functions, and even interfaces being implemented. For
 example, a container type might be parameterized by the type of its elements:
 
-**FIXME: member functions may have additional parameters.**
+**FIXME: add a bit that member functions may have additional parameters.**
 
 ```
 class HashMap(
