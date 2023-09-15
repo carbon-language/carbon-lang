@@ -160,8 +160,10 @@ class FileTestAutoupdater {
   auto AddCheckLines(CheckLines& check_lines, int to_line_number,
                      llvm::StringRef indent) -> void;
 
-  // Adds remaining check lines for the current file.
-  auto FinishFile() -> void;
+  // Adds remaining check lines for the current file. stderr is always included,
+  // but stdout is only included when either any_attached_stdout_lines_ or
+  // is_last_file is true.
+  auto FinishFile(bool is_last_file) -> void;
 
   // Starts a new split file, updating file and line numbers. Advances past the
   // split line.
