@@ -255,14 +255,18 @@ auto FileTestAutoupdater::StartSplitFile() -> void {
       << "Expected a split line, got " << *non_check_line_;
   // The split line is ignored when calculating line counts.
   new_lines_.push_back(non_check_line_);
+
+  // Add any file-specific but line-unattached STDOUT messages here. STDERR is
+  // handled through the main loop because it's before the next line.
+  if (any_attached_stdout_lines_) {
+    AddCheckLines(stdout_, non_check_line_->line_number(),
+                  non_check_line_->indent());
+  }
+
   ++non_check_line_;
 }
 
 auto FileTestAutoupdater::Run(bool dry_run) -> bool {
-  bool any_attached_stdout_lines = std::any_of(
-      stdout_.lines.begin(), stdout_.lines.end(),
-      [&](const CheckLine& line) { return line.line_number() != -1; });
-
   // Print everything until the autoupdate line.
   while (non_check_line_->line_number() != autoupdate_line_number_) {
     CARBON_CHECK(non_check_line_ != non_check_lines_.end() &&
@@ -279,7 +283,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   AddRemappedNonCheckLine();
   AddCheckLines(stderr_, non_check_line_->line_number(),
                 non_check_line_->indent());
-  if (any_attached_stdout_lines) {
+  if (any_attached_stdout_lines_) {
     AddCheckLines(stdout_, non_check_line_->line_number(),
                   non_check_line_->indent());
   }
@@ -302,7 +306,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
 
     // STDOUT check lines are placed after the line they refer to, or at the
     // end of the file if none of them refers to a line.
-    if (any_attached_stdout_lines) {
+    if (any_attached_stdout_lines_) {
       AddCheckLines(stdout_, non_check_line_->line_number(),
                     non_check_line_->indent());
     }
