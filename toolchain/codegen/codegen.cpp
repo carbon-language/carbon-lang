@@ -46,11 +46,11 @@ auto CodeGen::Create(llvm::Module& module, llvm::StringRef target_triple,
 }
 
 auto CodeGen::EmitAssembly(llvm::raw_pwrite_stream& out) -> bool {
-  return EmitCode(out, llvm::CodeGenFileType::CGFT_AssemblyFile);
+  return EmitCode(out, llvm::CodeGenFileType::AssemblyFile);
 }
 
 auto CodeGen::EmitObject(llvm::raw_pwrite_stream& out) -> bool {
-  return EmitCode(out, llvm::CodeGenFileType::CGFT_ObjectFile);
+  return EmitCode(out, llvm::CodeGenFileType::ObjectFile);
 }
 
 auto CodeGen::EmitCode(llvm::raw_pwrite_stream& out,
