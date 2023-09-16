@@ -4543,8 +4543,12 @@ includes:
 
 The syntax for an out-of-line parameterized `impl` declaration is:
 
-> `impl forall [`_<parameter-bindings>_`]` _<type-expression>_ `as` >
+<!-- prettier-ignore-start -->
+
+> `impl forall [`_<parameter-bindings>_`]` _<type-expression>_ `as`
 > _<facet-type-expression> [_ `where` _<optional-rewrite-constraints> ]_ `;`
+
+<!-- prettier-ignore-end -->
 
 This may also be called a _generic `impl` declaration_.
 
