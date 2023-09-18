@@ -16,7 +16,7 @@
 #include "explorer/base/arena.h"
 #include "llvm/Support/Casting.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
@@ -93,4 +93,4 @@ TEST_F(ElementTest, BaseElementIsNamed) {
   EXPECT_FALSE(element.IsNamed("anything"));
 }
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

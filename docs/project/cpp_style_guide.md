@@ -147,8 +147,8 @@ these.
     namespaces. `static` minimizes the context necessary to notice the internal
     linkage of a definition.
     -   Anonymous namespaces are still necessary for classes and enums.
-    -   Tests are an exception and should typically be wrapped with
-        `namespace Carbon::Testing { namespace { ... } }` to keep everything
+    -   Tests are an exception and should typically be wrapped in an anonymous
+        namespace under the namespace of the code under test, to keep everything
         internal.
 
 ### Copyable and movable types

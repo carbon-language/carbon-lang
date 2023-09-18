@@ -8,7 +8,7 @@
 
 #include "testing/base/test_raw_ostream.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 // These are directly in the Carbon namespace because the defines require it.
@@ -45,7 +45,7 @@ TEST(EnumBaseTest, NamesAndConstants) {
 }
 
 TEST(EnumBaseTest, Printing) {
-  TestRawOstream stream;
+  Testing::TestRawOstream stream;
 
   TestKind kind = TestKind::Beep;
   stream << kind << " " << TestKind::Beep;
@@ -109,4 +109,4 @@ TEST(EnumBaseTest, IntConversion) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

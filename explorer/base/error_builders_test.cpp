@@ -9,7 +9,7 @@
 #include "explorer/base/source_location.h"
 #include "testing/base/test_raw_ostream.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 TEST(ErrorBuildersTest, ProgramError) {
@@ -17,10 +17,10 @@ TEST(ErrorBuildersTest, ProgramError) {
   EXPECT_EQ(err.location(), "x:1");
   EXPECT_EQ(err.message(), "test");
 
-  TestRawOstream out;
+  Testing::TestRawOstream out;
   out << err;
   EXPECT_EQ(out.TakeStr(), "x:1: test");
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

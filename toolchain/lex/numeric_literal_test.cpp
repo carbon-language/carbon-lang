@@ -11,10 +11,9 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Lex {
 namespace {
 
-using Lex::NumericLiteral;
 using ::testing::_;
 using ::testing::Field;
 using ::testing::Matcher;
@@ -328,4 +327,4 @@ TEST_F(NumericLiteralTest, TooManyDigits) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Lex

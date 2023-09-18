@@ -12,9 +12,10 @@
 #include "toolchain/driver/driver.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon::SemIR {
 namespace {
 
+using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::AllOf;
 using ::testing::Contains;
@@ -24,6 +25,8 @@ using ::testing::IsEmpty;
 using ::testing::MatchesRegex;
 using ::testing::Pair;
 using ::testing::SizeIs;
+
+namespace Yaml = ::Carbon::Testing::Yaml;
 
 TEST(SemIRTest, YAML) {
   llvm::vfs::InMemoryFileSystem fs;
@@ -77,4 +80,4 @@ TEST(SemIRTest, YAML) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::SemIR
