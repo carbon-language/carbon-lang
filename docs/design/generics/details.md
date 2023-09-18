@@ -85,7 +85,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Example: Creating an impl out of other implementations](#example-creating-an-impl-out-of-other-implementations)
     -   [Sized types and facet types](#sized-types-and-facet-types)
     -   [Destructor constraints](#destructor-constraints)
--   [Generic `let`](#generic-let)
+-   [Compile-time `let`](#compile-time-let)
 -   [Parameterized impl declarations](#parameterized-impl-declarations)
     -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
     -   [Conditional conformance](#conditional-conformance)
@@ -4456,7 +4456,7 @@ Instead they use
 and the compiler uses them to determine which of these facet types are
 implemented.
 
-## Generic `let`
+## Compile-time `let`
 
 A `let` statement inside a function body may be used to get the change in type
 behavior of calling a checked-generic function without having to introduce a
@@ -4472,7 +4472,19 @@ fn SymbolicLet(...) {
 }
 ```
 
-is generally equivalent to:
+This introduces a symbolic constant `T` with type `C` and value `U`. This
+implicitly includes an [`observe T == U;` declaration](#observe-declarations),
+when `T` and `U` are facets, which allows values to implicitly convert from the
+concrete type `U` to the erased type `T`, as in:
+
+```carbon
+let x: i32 = 7;
+let T:! Add = i32;
+// ✅ Allowed to convert `i32` values to `T`.
+let y: T = x;
+```
+
+This makes the `SymbolicLet` function roughly equivalent to:
 
 ```carbon
 fn SymbolicLet(...) {
@@ -4486,13 +4498,13 @@ fn SymbolicLet(...) {
 }
 ```
 
-The `where .Self == U` modifier allows values to implicitly convert between type
-`T`, the erased type, and type `U`, the concrete type. Note that implicit
-conversion is
-[only performed across a single `where` equality](#manual-type-equality). This
-can be used to switch to the API of `C` when `U` does not extend `C`, as an
-alternative to [using an adapter](#use-case-accessing-interface-names), or to
-simplify inlining of a generic function while preserving semantics.
+The `where .Self == U` modifier captures the `observe` declaration introduced by
+the `let` (at the cost of changing the type of `T`).
+
+A symbolic `let` can be used to switch to the API of `C` when `U` does not
+extend `C`, as an alternative to
+[using an adapter](#use-case-accessing-interface-names), or to simplify inlining
+of a generic function while preserving semantics.
 
 To get a template binding instead of symbolic binding, add the `template`
 keyword before the binding pattern, as in:
@@ -4507,7 +4519,8 @@ fn TemplateLet(...) {
 }
 ```
 
-which is generally equivalent to:
+which introduces a template constant `T` with type `C` and value `U`. This is
+roughly equivalent to:
 
 ```carbon
 fn TemplateLet(...) {
