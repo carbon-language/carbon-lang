@@ -11,10 +11,8 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Lex {
 namespace {
-
-using Lex::StringLiteral;
 
 class StringLiteralTest : public ::testing::Test {
  protected:
@@ -347,4 +345,4 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Lex

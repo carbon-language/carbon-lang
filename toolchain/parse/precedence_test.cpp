@@ -9,12 +9,9 @@
 
 #include "toolchain/lex/token_kind.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Parse {
 namespace {
 
-using Parse::Associativity;
-using Parse::OperatorPriority;
-using Parse::PrecedenceGroup;
 using ::testing::Eq;
 
 TEST(PrecedenceTest, OperatorsAreRecognized) {
@@ -158,4 +155,4 @@ TEST(PrecedenceTest, IncomparableOperators) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Parse

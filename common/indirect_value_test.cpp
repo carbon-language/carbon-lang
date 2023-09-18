@@ -8,7 +8,7 @@
 
 #include <string>
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 TEST(IndirectValueTest, ConstAccess) {
@@ -126,4 +126,4 @@ TEST(IndirectValueTest, IncompleteType) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

@@ -8,7 +8,7 @@
 
 #include "testing/base/test_raw_ostream.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 TEST(ErrorTest, Error) {
@@ -107,10 +107,10 @@ TEST(ErrorTest, ErrorBuilderOperatorImplicitCast) {
 
 TEST(ErrorTest, StreamError) {
   Error result = ErrorBuilder("TestFunc") << "msg";
-  TestRawOstream result_stream;
+  Testing::TestRawOstream result_stream;
   result_stream << result;
   EXPECT_EQ(result_stream.TakeStr(), "TestFunc: msg");
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

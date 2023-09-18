@@ -17,17 +17,19 @@
 #include "toolchain/lex/tokenized_buffer_test_helpers.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Lex {
 namespace {
 
-using Lex::Token;
-using Lex::TokenizedBuffer;
-using Lex::TokenKind;
+using ::Carbon::Testing::ExpectedToken;
+using ::Carbon::Testing::IsDiagnostic;
+using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::Pair;
+
+namespace Yaml = ::Carbon::Testing::Yaml;
 
 class LexerTest : public ::testing::Test {
  protected:
@@ -1030,4 +1032,4 @@ TEST_F(LexerTest, PrintingAsYaml) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Lex

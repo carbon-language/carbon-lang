@@ -10,7 +10,7 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 static constexpr llvm::StringLiteral TestFileName = "test.carbon";
@@ -66,4 +66,4 @@ TEST(SourceBufferTest, EmptyFile) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

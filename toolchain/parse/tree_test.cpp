@@ -15,12 +15,14 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Parse {
 namespace {
 
-using Parse::Tree;
+using ::Carbon::Testing::TestRawOstream;
 using ::testing::ElementsAre;
 using ::testing::Pair;
+
+namespace Yaml = ::Carbon::Testing::Yaml;
 
 class TreeTest : public ::testing::Test {
  protected:
@@ -126,4 +128,4 @@ TEST_F(TreeTest, HighRecursion) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Parse
