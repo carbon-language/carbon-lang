@@ -20,6 +20,8 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     integer_literals: [
 // CHECK:STDOUT:       2,
+// CHECK:STDOUT:       0,
+// CHECK:STDOUT:       1,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     real_literals: [
 // CHECK:STDOUT:       {mantissa: 34, exponent: -1, is_decimal: 1},
@@ -60,6 +62,10 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       {kind: RealLiteral, arg0: real0, type: type2},
 // CHECK:STDOUT:       {kind: StubReference, arg0: node+11, type: type2},
 // CHECK:STDOUT:       {kind: TupleLiteral, arg0: block5, type: type3},
+// CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int1, type: type0},
+// CHECK:STDOUT:       {kind: TupleIndex, arg0: node+6, arg1: node+14, type: type0},
+// CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int2, type: type0},
+// CHECK:STDOUT:       {kind: TupleIndex, arg0: node+6, arg1: node+16, type: type2},
 // CHECK:STDOUT:       {kind: ReturnExpression, arg0: node+13},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     node_blocks: [
@@ -89,6 +95,10 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:         node+12,
 // CHECK:STDOUT:         node+13,
 // CHECK:STDOUT:         node+14,
+// CHECK:STDOUT:         node+15,
+// CHECK:STDOUT:         node+16,
+// CHECK:STDOUT:         node+17,
+// CHECK:STDOUT:         node+18,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:       [
 // CHECK:STDOUT:         node+10,
@@ -111,5 +121,9 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   %.loc12_18.1: f64 = real_literal 34e-1
 // CHECK:STDOUT:   %.loc12_18.2: f64 = stub_reference %.loc12_18.1
 // CHECK:STDOUT:   %.loc12_21: (i32, f64) = tuple_literal (%.loc12_13.2, %.loc12_18.2)
+// CHECK:STDOUT:   %.loc12_22.1: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc12_22.2: ref i32 = tuple_index %return, %.loc12_22.1
+// CHECK:STDOUT:   %.loc12_22.3: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc12_22.4: ref f64 = tuple_index %return, %.loc12_22.3
 // CHECK:STDOUT:   return %.loc12_21
 // CHECK:STDOUT: }

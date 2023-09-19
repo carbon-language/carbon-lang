@@ -22,6 +22,12 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc7_33.1: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc7_33.2: i32 = stub_reference %.loc7_33.1
 // CHECK:STDOUT:   %.loc7_34: (i32, i32, i32) = tuple_literal (%.loc7_27.2, %.loc7_30.2, %.loc7_33.2)
+// CHECK:STDOUT:   %.loc7_35.1: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7_35.2: ref i32 = tuple_index %a, %.loc7_35.1
+// CHECK:STDOUT:   %.loc7_35.3: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7_35.4: ref i32 = tuple_index %a, %.loc7_35.3
+// CHECK:STDOUT:   %.loc7_35.5: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc7_35.6: ref i32 = tuple_index %a, %.loc7_35.5
 // CHECK:STDOUT:   assign %a, %.loc7_34
 // CHECK:STDOUT:   %.loc8_14: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc8_15: type = array_type %.loc8_14, i32

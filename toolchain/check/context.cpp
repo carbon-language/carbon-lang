@@ -282,6 +282,66 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
     case SemIR::ExpressionCategory::Initializing:
       MarkInitializerFor(expr_id, target_id);
       return expr_id;
+
+    case SemIR::ExpressionCategory::Mixed:
+      // Strip off outer stub references.
+      while (true) {
+        if (expr.kind() == SemIR::NodeKind::StubReference) {
+          expr_id = expr.GetAsStubReference();
+        } else {
+          break;
+        }
+        expr = semantics_ir().GetNode(expr_id);
+      }
+
+      // TODO: Make non-recursive.
+      // TODO: This should be done as part of the `ImplicitAs` processing so
+      // that we can still initialize directly from one tuple element if
+      // another one needs to be converted.
+      switch (expr.kind()) {
+        case SemIR::NodeKind::TupleLiteral: {
+          auto elements = semantics_ir().GetNodeBlock(expr.GetAsTupleLiteral());
+          for (auto [i, elem_id] : llvm::enumerate(elements)) {
+            // TODO: Avoid creating the integer literal.
+            auto int_id = AddNode(SemIR::Node::IntegerLiteral::Make(
+                parse_node, CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
+                semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
+            // TODO: We know the type already matches because we already invoked
+            // `ImplicitAsRequired`, but this will need to change once we stop
+            // doing that.
+            auto inner_target_type = semantics_ir().GetNode(elem_id).type_id();
+            // TODO: This should be placed into the return slot, and only
+            // created if needed.
+            auto inner_target_id = AddNode(SemIR::Node::TupleIndex::Make(
+                parse_node, inner_target_type, target_id, int_id));
+            Initialize(parse_node, inner_target_id, elem_id);
+          }
+          break;
+        }
+
+        case SemIR::NodeKind::StructLiteral: {
+          auto elements =
+              semantics_ir().GetNodeBlock(expr.GetAsStructLiteral());
+          for (auto [i, elem_id] : llvm::enumerate(elements)) {
+            // TODO: We know the type already matches because we already invoked
+            // `ImplicitAsRequired`, but this will need to change once we stop
+            // doing that.
+            auto inner_target_type = semantics_ir().GetNode(elem_id).type_id();
+            // TODO: This should be placed into the return slot, and only
+            // created if needed.
+            auto inner_target_id = AddNode(SemIR::Node::StructAccess::Make(
+                parse_node, inner_target_type, target_id,
+                SemIR::MemberIndex(i)));
+            Initialize(parse_node, inner_target_id, elem_id);
+          }
+          break;
+        }
+
+        default:
+          CARBON_FATAL() << "Unexpected kind for mixed-category expression "
+                         << expr.kind();
+      }
+      return expr_id;
   }
 }
 
@@ -330,6 +390,51 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
 
     case SemIR::ExpressionCategory::Value:
       return expr_id;
+
+    case SemIR::ExpressionCategory::Mixed: {
+      // Strip off outer stub references.
+      auto orig_expr_id = expr_id;
+      SemIR::Node expr = semantics_ir().GetNode(expr_id);
+      while (true) {
+        if (expr.kind() == SemIR::NodeKind::StubReference) {
+          expr_id = expr.GetAsStubReference();
+        } else {
+          break;
+        }
+        expr = semantics_ir().GetNode(expr_id);
+      }
+
+      // TODO: Make non-recursive.
+      switch (expr.kind()) {
+        case SemIR::NodeKind::TupleLiteral: {
+          auto elements = semantics_ir().GetNodeBlock(expr.GetAsTupleLiteral());
+          for (auto& elem_id : elements) {
+            // TODO: This will add nodes after the `TupleLiteral` node that
+            // references them. Consider creating a new `TupleLiteral` node if
+            // we added any nodes here.
+            elem_id = ConvertToValueExpression(elem_id);
+          }
+          break;
+        }
+
+        case SemIR::NodeKind::StructLiteral: {
+          auto elements =
+              semantics_ir().GetNodeBlock(expr.GetAsStructLiteral());
+          for (auto& elem_id : elements) {
+            // TODO: This will add nodes after the `StructLiteral` node that
+            // references them. Consider creating a new `StructLiteral` node if
+            // we added any nodes here.
+            elem_id = ConvertToValueExpression(elem_id);
+          }
+          break;
+        }
+
+        default:
+          CARBON_FATAL() << "Unexpected kind for mixed-category expression "
+                         << expr.kind();
+      }
+      return orig_expr_id;
+    }
   }
 }
 
@@ -340,20 +445,37 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
   auto orig_init_id = init_id;
   while (true) {
     SemIR::Node init = semantics_ir().GetNode(init_id);
-    CARBON_CHECK(SemIR::GetExpressionCategory(semantics_ir(), init_id) ==
-                 SemIR::ExpressionCategory::Initializing)
-        << "Can only materialize initializing expressions, found " << init;
+
     switch (init.kind()) {
       default:
         CARBON_FATAL() << "Initialization from unexpected node " << init;
 
-      case SemIR::NodeKind::StructLiteral:
-      case SemIR::NodeKind::TupleLiteral:
-        CARBON_FATAL() << init << " is not modeled as initializing yet";
-
       case SemIR::NodeKind::StubReference: {
         init_id = init.GetAsStubReference();
         continue;
+      }
+
+      // TODO: Make this non-recursive.
+      case SemIR::NodeKind::TupleLiteral: {
+        auto elements = semantics_ir().GetNodeBlock(init.GetAsTupleLiteral());
+        for (auto& elem_id : elements) {
+          // TODO: This will add nodes after the `TupleLiteral` node that
+          // references them. Consider creating a new `TupleLiteral` node if
+          // we added any nodes here.
+          elem_id = MaterializeIfInitializing(elem_id, discarded);
+        }
+        return init_id;
+      }
+
+      case SemIR::NodeKind::StructLiteral: {
+        auto elements = semantics_ir().GetNodeBlock(init.GetAsStructLiteral());
+        for (auto& elem_id : elements) {
+          // TODO: This will add nodes after the `StructLiteral` node that
+          // references them. Consider creating a new `StructLiteral` node if
+          // we added any nodes here.
+          elem_id = MaterializeIfInitializing(elem_id, discarded);
+        }
+        return init_id;
       }
 
       case SemIR::NodeKind::Call: {
@@ -464,10 +586,7 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
 
 auto Context::HandleDiscardedExpression(SemIR::NodeId expr_id) -> void {
   // If we discard an initializing expression, materialize it first.
-  if (SemIR::GetExpressionCategory(semantics_ir(), expr_id) ==
-      SemIR::ExpressionCategory::Initializing) {
-    FinalizeTemporary(expr_id, /*discarded=*/true);
-  }
+  MaterializeIfInitializing(expr_id, /*discarded=*/true);
 
   // TODO: This will eventually need to do some "do not discard" analysis.
   (void)expr_id;

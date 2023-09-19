@@ -484,11 +484,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
 
       case NodeKind::StructLiteral:
       case NodeKind::TupleLiteral:
-        // TODO: Eventually these will depend on the context in which the value
-        // is used, and could be either Value or Initializing. We may want
-        // different node kinds for a struct/tuple initializer versus a
-        // struct/tuple value construction.
-        return ExpressionCategory::Value;
+        return ExpressionCategory::Mixed;
 
       case NodeKind::ArrayInit:
       case NodeKind::Call:

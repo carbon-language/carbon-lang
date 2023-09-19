@@ -26,6 +26,9 @@ fn Main() {
 // CHECK:STDOUT:   store ptr %tuple.index1, ptr %2, align 8
 // CHECK:STDOUT:   %3 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 2
 // CHECK:STDOUT:   store ptr %tuple.index2, ptr %3, align 8
+// CHECK:STDOUT:   %tuple.index3 = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   %tuple.index4 = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   %tuple.index5 = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 2
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

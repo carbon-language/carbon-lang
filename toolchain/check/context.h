@@ -106,13 +106,18 @@ class Context {
   auto is_current_position_reachable() -> bool;
 
   // Converts the given expression to an ephemeral reference to a temporary if
-  // it is an initializing expression.
-  auto MaterializeIfInitializing(SemIR::NodeId expr_id) -> SemIR::NodeId {
-    if (GetExpressionCategory(semantics_ir(), expr_id) ==
-        SemIR::ExpressionCategory::Initializing) {
-      return FinalizeTemporary(expr_id, /*discarded=*/false);
+  // it is an initializing expression. If `discarded` is `true`, the result is
+  // discarded, and no temporary will be created if possible; if no temporary
+  // is created, the return value will be `SemIR::NodeId::Invalid`.
+  auto MaterializeIfInitializing(SemIR::NodeId expr_id, bool discarded = false)
+      -> SemIR::NodeId {
+    switch (GetExpressionCategory(semantics_ir(), expr_id)) {
+      case SemIR::ExpressionCategory::Initializing:
+      case SemIR::ExpressionCategory::Mixed:
+        return FinalizeTemporary(expr_id, discarded);
+      default:
+        return expr_id;
     }
-    return expr_id;
   }
 
   // Convert the given expression to a value expression of the same type.
@@ -286,6 +291,8 @@ class Context {
   // return value will be `SemIR::NodeId::Invalid`.
   auto FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
       -> SemIR::NodeId;
+  auto FinalizeNestedTemporaries(SemIR::NodeId init_id, bool discarded)
+      -> void;
 
   // Marks the initializer `init_id` as initializing `target_id`.
   auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)

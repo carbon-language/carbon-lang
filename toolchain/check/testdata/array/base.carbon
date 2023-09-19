@@ -68,6 +68,6 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc9_38.11: ref () = array_index %.loc9_38.3, %.loc9_38.10
 // CHECK:STDOUT:   %.loc9_38.12: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc9_38.13: ref () = array_index %.loc9_38.3, %.loc9_38.12
-// CHECK:STDOUT:   %.loc9_38.14: init [(); 5] = array_init %.loc9_38.2, (%.loc9_20.2, %.loc9_24.2, %.loc9_28.2, %.loc9_32.2, %.loc9_36.2) to %.loc9_38.3
+// CHECK:STDOUT:   %.loc9_38.14: init [(); 5] = array_init %.loc9_38.2, (%.loc9_20.1, %.loc9_24.1, %.loc9_28.1, %.loc9_32.1, %.loc9_36.1) to %.loc9_38.3
 // CHECK:STDOUT:   assign %c, %.loc9_38.14
 // CHECK:STDOUT: }

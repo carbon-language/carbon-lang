@@ -72,18 +72,21 @@ fn Run() {
 // CHECK:STDOUT:   store i32 2, ptr %13, align 4
 // CHECK:STDOUT:   %14 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple17, i32 0, i32 2
 // CHECK:STDOUT:   store i32 3, ptr %14, align 4
-// CHECK:STDOUT:   %e = alloca [3 x i32], align 4
-// CHECK:STDOUT:   %array.index18 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 0
 // CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 0
-// CHECK:STDOUT:   %15 = load i32, ptr %tuple.index, align 4
-// CHECK:STDOUT:   store i32 %15, ptr %array.index18, align 4
-// CHECK:STDOUT:   %array.index19 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 1
-// CHECK:STDOUT:   %tuple.index20 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 1
-// CHECK:STDOUT:   %16 = load i32, ptr %tuple.index20, align 4
-// CHECK:STDOUT:   store i32 %16, ptr %array.index19, align 4
-// CHECK:STDOUT:   %array.index21 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 2
-// CHECK:STDOUT:   %tuple.index22 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 2
-// CHECK:STDOUT:   %17 = load i32, ptr %tuple.index22, align 4
-// CHECK:STDOUT:   store i32 %17, ptr %array.index21, align 4
+// CHECK:STDOUT:   %tuple.index18 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 1
+// CHECK:STDOUT:   %tuple.index19 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 2
+// CHECK:STDOUT:   %e = alloca [3 x i32], align 4
+// CHECK:STDOUT:   %array.index20 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 0
+// CHECK:STDOUT:   %tuple.index21 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 0
+// CHECK:STDOUT:   %15 = load i32, ptr %tuple.index21, align 4
+// CHECK:STDOUT:   store i32 %15, ptr %array.index20, align 4
+// CHECK:STDOUT:   %array.index22 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 1
+// CHECK:STDOUT:   %tuple.index23 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 1
+// CHECK:STDOUT:   %16 = load i32, ptr %tuple.index23, align 4
+// CHECK:STDOUT:   store i32 %16, ptr %array.index22, align 4
+// CHECK:STDOUT:   %array.index24 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 2
+// CHECK:STDOUT:   %tuple.index25 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 2
+// CHECK:STDOUT:   %17 = load i32, ptr %tuple.index25, align 4
+// CHECK:STDOUT:   store i32 %17, ptr %array.index24, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

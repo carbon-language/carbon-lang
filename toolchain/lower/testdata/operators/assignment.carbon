@@ -31,5 +31,7 @@ fn Main() {
 // CHECK:STDOUT:   store i32 1, ptr %3, align 4
 // CHECK:STDOUT:   %4 = getelementptr inbounds { i32, i32 }, ptr %tuple1, i32 0, i32 1
 // CHECK:STDOUT:   store i32 2, ptr %4, align 4
+// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32 }, ptr %b, i32 0, i32 0
+// CHECK:STDOUT:   %tuple.index2 = getelementptr inbounds { i32, i32 }, ptr %b, i32 0, i32 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

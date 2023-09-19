@@ -23,6 +23,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %tuple1 = alloca { i32 }, align 8
 // CHECK:STDOUT:   %2 = getelementptr inbounds { i32 }, ptr %tuple1, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %2, align 4
+// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32 }, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load { i32 }, ptr %tuple1, align 4
 // CHECK:STDOUT:   store { i32 } %3, ptr %x, align 4
 // CHECK:STDOUT:   %tuple2 = alloca { %type }, align 8

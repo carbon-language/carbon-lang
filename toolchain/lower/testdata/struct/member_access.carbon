@@ -21,9 +21,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   store double 0.000000e+00, ptr %a, align 8
 // CHECK:STDOUT:   %b = getelementptr inbounds { double, i32 }, ptr %struct, i32 0, i32 1
 // CHECK:STDOUT:   store i32 1, ptr %b, align 4
+// CHECK:STDOUT:   %a1 = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %b2 = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 1
 // CHECK:STDOUT:   %y = alloca i32, align 4
-// CHECK:STDOUT:   %b1 = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   %1 = load i32, ptr %b1, align 4
+// CHECK:STDOUT:   %b3 = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 1
+// CHECK:STDOUT:   %1 = load i32, ptr %b3, align 4
 // CHECK:STDOUT:   store i32 %1, ptr %y, align 4
 // CHECK:STDOUT:   %z = alloca i32, align 4
 // CHECK:STDOUT:   %2 = load i32, ptr %y, align 4
