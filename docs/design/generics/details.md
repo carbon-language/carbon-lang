@@ -402,15 +402,15 @@ This (at least partially) addresses
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
 You can't use `extend` outside the class definition, so an `impl` declaration in
-a different library will never affect the class' API. This means that the API of
-a class such as `Point_OutOfLine` doesn't change based on what is imported. It
-would be particularly bad if two different libraries implemented interfaces with
-conflicting names that both affected the API of a single type. As a consequence
-of this restriction, you can find all the names of direct members (those
-available by [simple member access](terminology.md#simple-member-access)) of a
-type in the definition of that type and entities referenced in by an `extend`
-declaration in that definition. The only thing that may be in another library is
-an `impl` of an interface.
+a different library will never affect the class's API. This means that the API
+of a class such as `Point_OutOfLine` doesn't change based on what is imported.
+It would be particularly bad if two different libraries implemented interfaces
+with conflicting names that both affected the API of a single type. As a
+consequence of this restriction, you can find all the names of direct members
+(those available by [simple member access](terminology.md#simple-member-access))
+of a type in the definition of that type and entities referenced in by an
+`extend` declaration in that definition. The only thing that may be in another
+library is an `impl` of an interface.
 
 **Rejected alternative:** We could allow types to have different APIs in
 different files based on explicit configuration in that file. For example, we
