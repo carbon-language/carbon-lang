@@ -13,37 +13,40 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Interfaces](#interfaces)
 -   [Implementing interfaces](#implementing-interfaces)
+    -   [Inline `impl`](#inline-impl)
+    -   [`extend impl`](#extend-impl)
+    -   [Out-of-line `impl`](#out-of-line-impl)
+        -   [Defining an `impl` in another library than the type](#defining-an-impl-in-another-library-than-the-type)
+    -   [Forward `impl` declaration](#forward-impl-declaration)
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
-    -   [External impl](#external-impl)
+    -   [Avoiding name collisions](#avoiding-name-collisions)
     -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
     -   [Access](#access)
--   [Generics](#generics)
+-   [Checked-generic functions](#checked-generic-functions)
+    -   [Symbolic facet bindings](#symbolic-facet-bindings)
     -   [Return type](#return-type)
-    -   [Implementation model](#implementation-model)
 -   [Interfaces recap](#interfaces-recap)
--   [Type-of-types](#type-of-types)
+-   [Facet types](#facet-types)
 -   [Named constraints](#named-constraints)
-    -   [Subtyping between type-of-types](#subtyping-between-type-of-types)
--   [Combining interfaces by anding type-of-types](#combining-interfaces-by-anding-type-of-types)
+    -   [Subtyping between facet types](#subtyping-between-facet-types)
+-   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
         -   [`extend` and `impl` with named constraints](#extend-and-impl-with-named-constraints)
         -   [Diamond dependency issue](#diamond-dependency-issue)
-    -   [Use case: overload resolution](#use-case-overload-resolution)
+    -   [Use case: detecting unreachable matches](#use-case-detecting-unreachable-matches)
 -   [Adapting types](#adapting-types)
     -   [Adapter compatibility](#adapter-compatibility)
     -   [Extending adapter](#extending-adapter)
     -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
     -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
     -   [Use case: Private impl](#use-case-private-impl)
-    -   [Use case: Accessing external names](#use-case-accessing-external-names)
-    -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
+    -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
+    -   [Future work: Adapter with stricter invariants](#future-work-adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
--   [Associated types](#associated-types)
-    -   [Implementation model](#implementation-model-1)
+-   [Associated facets](#associated-facets)
 -   [Parameterized interfaces](#parameterized-interfaces)
-    -   [Impl lookup](#impl-lookup)
     -   [Parameterized named constraints](#parameterized-named-constraints)
 -   [Where constraints](#where-constraints)
     -   [Constraint use cases](#constraint-use-cases)
@@ -72,7 +75,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other implementations](#example-creating-an-impl-out-of-other-implementations)
     -   [Sized types and type-of-types](#sized-types-and-type-of-types)
-        -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
     -   [Destructor constraints](#destructor-constraints)
 -   [Generic `let`](#generic-let)
@@ -122,22 +124,25 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Evolution](#evolution)
     -   [Testing](#testing)
     -   [Impl with state](#impl-with-state)
-    -   [Generic associated types and higher-ranked types](#generic-associated-types-and-higher-ranked-types)
-        -   [Generic associated types](#generic-associated-types)
+    -   [Generic associated facets and higher-ranked facets](#generic-associated-facets-and-higher-ranked-facets)
+        -   [Generic associated facets](#generic-associated-facets)
         -   [Higher-ranked types](#higher-ranked-types)
     -   [Field requirements](#field-requirements)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
-    -   [Range constraints on generic integers](#range-constraints-on-generic-integers)
+    -   [Range constraints on symbolic integers](#range-constraints-on-symbolic-integers)
 -   [References](#references)
 
 <!-- tocstop -->
 
 ## Overview
 
-This document goes into the details of the design of generic type parameters.
+This document goes into the details of the design of Carbon's
+[generics](terminology.md#generic-means-compile-time-parameterized), by which we
+mean generalizing some language construct with compile-time parameters. These
+parameters can be types, [facets](terminology.md#facet), or other values.
 
-Imagine we want to write a function parameterized by a type argument. Maybe our
+Imagine we want to write a function with a type (or facet) parameter. Maybe our
 function is `PrintToStdout` and let's say we want to operate on values that have
 a type for which we have an implementation of the `ConvertibleToString`
 interface. The `ConvertibleToString` interface has a `ToString` method returning
@@ -145,8 +150,8 @@ a string. To do this, we give the `PrintToStdout` function two parameters: one
 is the value to print, let's call that `val`, the other is the type of that
 value, let's call that `T`. The type of `val` is `T`, what is the type of `T`?
 Well, since we want to let `T` be any type implementing the
-`ConvertibleToString` interface, we express that in the "interfaces are
-type-of-types" model by saying the type of `T` is `ConvertibleToString`.
+`ConvertibleToString` interface, we express that in the "interfaces are facet
+types" model by saying the type of `T` is `ConvertibleToString`.
 
 Since we can figure out `T` from the type of `val`, we don't need the caller to
 pass in `T` explicitly, so it can be a
@@ -156,34 +161,31 @@ doc). Basically, the user passes in a value for `val`, and the type of `val`
 determines `T`. `T` still gets passed into the function though, and it plays an
 important role -- it defines the key used to look up interface implementations.
 
-We can think of the interface as defining a struct type whose members are
-function pointers, and an implementation of an interface as a value of that
-struct with actual function pointer values. An implementation is a table mapping
-the interface's functions to function pointers. For more on this, see
-[the implementation model section](#implementation-model).
+That interface implementation has the definitions of the functions declared in
+the interface. For example, the types `i32` and `String` would have different
+implementations of the `ToString` method of the `ConvertibleToString` interface.
 
-In addition to function pointer members, interfaces can include any constants
-that belong to a type. For example, the
-[type's size](#sized-types-and-type-of-types) (represented by an integer
-constant member of the type) could be a member of an interface and its
-implementation. There are a few cases why we would include another interface
-implementation as a member:
+In addition to function members, interfaces can include other members that
+associate a [compile-time value](/docs/design/README.md#expression-phases) for
+any implementing type, called _associated constants_. For example, this can
+allow a container interface to include the type of iterators that are returned
+from and passed to various container methods.
 
--   [associated types](#associated-types)
--   [type parameters](#parameterized-interfaces)
--   [interface requirements](#interface-requiring-other-interfaces)
-
-The function expresses that the type argument is passed in
-[statically](terminology.md#static-dispatch-witness-table), basically generating
-a separate function body for every different type passed in, by using the
-"generic argument" syntax `:!`, see [the generics section](#generics) below. The
-interface contains enough information to
+The function expresses that the type argument is passed in statically, basically
+generating a separate function body for every different type passed in, by using
+the "compile-time parameter" syntax `:!`. By default, this defines a
+[checked-generics parameter](#checked-generic-functions) below. In this case,
+the interface contains enough information to
 [type and definition check](terminology.md#complete-definition-checking) the
 function body -- you can only call functions defined in the interface in the
-function body. Contrast this with making the type a template argument, where you
-could just use `type` instead of an interface and it will work as long as the
-function is only called with types that allow the definition of the function to
-compile. The interface bound has other benefits:
+function body.
+
+Alternatively, the `template` keyword can be included in the signature to make
+the type a template parameter. In this case, you could just use `type` instead
+of an interface and it will work as long as the function is only called with
+types that allow the definition of the function to compile.
+
+The interface bound has other benefits:
 
 -   allows the compiler to deliver clearer error messages,
 -   documents expectations, and
@@ -198,13 +200,12 @@ somewhere else as long as Carbon can be guaranteed to see the definition when
 needed. For more on this, see
 [the implementing interfaces section](#implementing-interfaces) below.
 
-When the implementation of `ConvertibleToString` for `Song` is defined as
-internal, every member of `ConvertibleToString` is also a member of `Song`. This
+When the implementation of `ConvertibleToString` for `Song` is declared with
+`extend`, every member of `ConvertibleToString` is also a member of `Song`. This
 includes members of `ConvertibleToString` that are not explicitly named in the
-`impl` definition but have defaults. Whether the implementation is defined as
-[internal](terminology.md#extending-an-impl) or
-[external](terminology.md#extending-an-impl), you may access the `ToString`
-function for a `Song` value `s` by a writing function call
+`impl` definition but have defaults. Whether the type
+[extends the implementation](terminology.md#extending-an-impl) or not, you may
+access the `ToString` function for a `Song` value `s` by a writing function call
 [using a qualified member access expression](terminology.md#qualified-member-access-expression),
 like `s.(ConvertibleToString.ToString)()`.
 
@@ -215,6 +216,12 @@ implementations we want. However, Carbon won't implicitly convert to that other
 type, the user will have to explicitly cast to that type in order to select
 those alternate implementations. For more on this, see
 [the adapting type section](#adapting-types) below.
+
+We originally considered following Swift and using a witness table
+implementation strategy for checked generics, but ultimately decided to only use
+that for the dynamic-dispatch case. This is because of the limitations of that
+strategy prevent some features that we considered important, as described in
+[the witness-table appendix](appendix-witness.md).
 
 ## Interfaces
 
@@ -235,11 +242,14 @@ The syntax here is to match
 [how the same members would be defined in a type](/docs/design/classes.md#methods).
 Each declaration in the interface defines an
 [associated entity](terminology.md#associated-entity). In this example, `Vector`
-has two associated methods, `Add` and `Scale`.
+has two associated methods, `Add` and `Scale`. A type
+[implements an interface](#implementing-interfaces) by providing definitions for
+all the associated entities declared in the interface,
 
-An interface defines a type-of-type, that is a type whose values are types. The
-values of an interface are any types implementing the interface, and so provide
-definitions for all the functions (and other members) declared in the interface.
+An interface defines a [facet type](terminology.md#facet-type), that is a type
+whose values are [facets](terminology.md#facet). Every type implementing the
+interface has a corresponding facet value. So if the type `Point` implements
+interface `Vector`, the facet value `Point as Vector` has type `Vector`.
 
 ## Implementing interfaces
 
@@ -252,57 +262,200 @@ have different definitions for `Add` and `Scale`, so we say their definitions
 are _associated_ with what type is implementing `Vector`. The `impl` defines
 what is associated with the implementing type for that interface.
 
+### Inline `impl`
+
 An impl may be defined inline inside the type definition:
 
 ```
-class Point {
+class Point_Inline {
   var x: f64;
   var y: f64;
-  extend impl as Vector {
+  impl as Vector {
     // In this scope, the `Self` keyword is an
-    // alias for `Point`.
+    // alias for `Point_Inline`.
     fn Add[self: Self](b: Self) -> Self {
-      return {.x = a.x + b.x, .y = a.y + b.y};
+      return {.x = self.x + b.x, .y = self.y + b.y};
     }
     fn Scale[self: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
+      return {.x = self.x * v, .y = self.y * v};
     }
   }
 }
 ```
 
+### `extend impl`
+
 Interfaces that are implemented inline with the `extend` keyword contribute to
 the type's API:
 
 ```
-var p1: Point = {.x = 1.0, .y = 2.0};
-var p2: Point = {.x = 2.0, .y = 4.0};
+class Point_Extend {
+  var x: f64;
+  var y: f64;
+  extend impl as Vector {
+    fn Add[self: Self](b: Self) -> Self {
+      return {.x = self.x + b.x, .y = self.y + b.y};
+    }
+    fn Scale[self: Self](v: f64) -> Self {
+      return {.x = self.x * v, .y = self.y * v};
+    }
+  }
+}
+
+var p1: Point_Extend = {.x = 1.0, .y = 2.0};
+var p2: Point_Extend = {.x = 2.0, .y = 4.0};
 Assert(p1.Scale(2.0) == p2);
 Assert(p1.Add(p1) == p2);
 ```
 
-**Note:** A type may implement any number of different interfaces, but may
-provide at most one implementation of any single interface. This makes the act
-of selecting an implementation of an interface for a type unambiguous throughout
-the whole program.
+Without `extend`, those methods may only be accessed with
+[qualified member names and compound member access](#qualified-member-names-and-compound-member-access):
 
-**Comparison with other languages:** Rust defines implementations lexically
-outside of the `class` definition. This Carbon approach means that a type's API
-is described by declarations inside the `class` definition and doesn't change
-afterwards.
+```
+// Point_Inline did not use `extend` when
+// implementing `Vector`:
+var a: Point_Inline = {.x = 1.0, .y = 2.0};
+// `a` does *not* have `Add` and `Scale` methods:
+// ❌ Error: a.Add(a.Scale(2.0));
+```
 
-**References:** This interface implementation syntax was accepted in
+This is consistent with the general Carbon rule that if the names of another
+entity affect a class' API, then that is mentioned with an `extend` declaration
+in the `class` definition.
+
+**Comparison with other languages:** Rust only defines implementations lexically
+outside of the `class` definition. Carbon's approach results in the property
+that every type's API is described by declarations inside its `class` definition
+and doesn't change afterwards.
+
+**References:** Carbon's interface implementation syntax was first defined in
 [proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
 particular, see
 [the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
+This syntax was changed to use `extend` in
+[proposal #2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760).
+
+### Out-of-line `impl`
+
+An impl may also be defined after the type definition, by naming the type
+between `impl` and `as`:
+
+```
+class Point_OutOfLine {
+  var x: f64;
+  var y: f64;
+}
+
+impl Point_OutOfLine as Vector {
+  // In this scope, the `Self` keyword is an
+  // alias for `Point_OutOfLine`.
+  fn Add[self: Self](b: Self) -> Self {
+    return {.x = self.x + b.x, .y = self.y + b.y};
+  }
+  fn Scale[self: Self](v: f64) -> Self {
+    return {.x = self.x * v, .y = self.y * v};
+  }
+}
+```
+
+Since `extend impl` may only be used inside the class definition, out-of-line
+definitions do not contribute to the class's API unless there is a corresponding
+[forward declaration in the class definition using `extend`](#forward-impl-declaration).
+
+Conversely, being declared or defined lexically inside the class means that
+implementation is available to other members defined in the class. For example,
+it would allow implementing another interface or method that requires this
+interface to be implemented.
+
+**Open question:** Do implementations need to be defined lexically inside the
+class to get access to private members, or is it sufficient to be defined in the
+same library as the class?
+
+**Comparison with other languages:** Both Rust and Swift support out-of-line
+implementation.
+[Swift's syntax](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277)
+does this as an "extension" of the original type. In Rust, all implementations
+are out-of-line as in
+[this example](https://doc.rust-lang.org/rust-by-example/trait.html). Unlike
+Swift and Rust, we don't allow a type's API to be modified outside its
+definition. So in Carbon a type's API is consistent no matter what is imported,
+unlike Swift and Rust.
+
+#### Defining an `impl` in another library than the type
+
+An out-of-line `impl` declaration is allowed to be defined in a different
+library from `Point_OutOfLine`, restricted by
+[the coherence/orphan rules](#orphan-rule) that ensure that the implementation
+of an interface can't change based on imports. In particular, the `impl`
+declaration is allowed in the library defining the interface (`Vector` in this
+case) in addition to the library that defines the type (`Point_OutOfLine` here).
+This (at least partially) addresses
+[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+
+You can't use `extend` outside the class definition, so an `impl` declaration in
+a different library will never affect the class's API. This means that the API
+of a class such as `Point_OutOfLine` doesn't change based on what is imported.
+It would be particularly bad if two different libraries implemented interfaces
+with conflicting names that both affected the API of a single type. As a
+consequence of this restriction, you can find all the names of direct members
+(those available by [simple member access](terminology.md#simple-member-access))
+of a type in the definition of that type and entities referenced in by an
+`extend` declaration in that definition. The only thing that may be in another
+library is an `impl` of an interface.
+
+**Rejected alternative:** We could allow types to have different APIs in
+different files based on explicit configuration in that file. For example, we
+could support a declaration that a given interface or a given method of an
+interface is "in scope" for a particular type in this file. With that
+declaration, the method could be called using
+[simple member access](terminology.md#simple-member-access). This avoids most
+concerns arising from name collisions between interfaces. It has a few downsides
+though:
+
+-   It increases variability between files, since the same type will have
+    different APIs depending on these declarations. This makes it harder to
+    copy-paste code between files.
+-   It makes reading code harder, since you have to search the file for these
+    declarations that affect name lookup.
+
+### Forward `impl` declaration
+
+An `impl` declaration may be forward declared and then defined later. If this is
+done using [`extend` to add to the type's API](#extend-impl), only the
+declaration in the class definition will use the `extend` keyword, as in this
+example:
+
+```
+class Point_ExtendForward {
+  var x: f64;
+  var y: f64;
+  // Forward declaration in class definition using `extend`.
+  // Signals that you should look in the definition of
+  // `Vector` since those methods are included in this type.
+  extend impl as Vector;
+}
+
+// Definition outside class definition does not.
+impl Point_ExtendForward as Vector {
+  fn Add[self: Self](b: Self) -> Self {
+    return {.x = self.x + b.x, .y = self.y + b.y};
+  }
+  fn Scale[self: Self](v: f64) -> Self {
+    return {.x = self.x * v, .y = self.y * v};
+  }
+}
+```
+
+More about forward declaring implementations in
+[its dedicated section](#declaring-implementations).
 
 ### Implementing multiple interfaces
 
 To implement more than one interface when defining a type, simply include an
-`impl` block per interface.
+`impl` block or forward declaration per interface.
 
 ```
-class Point {
+class Point_2Extend {
   var x: f64;
   var y: f64;
   extend impl as Vector {
@@ -315,24 +468,13 @@ class Point {
 }
 ```
 
-In this case, all the functions `Add`, `Scale`, and `Draw` end up a part of the
-API for `Point`. This means you can't implement two interfaces that have a name
-in common (unless you use an `impl` without `extend` for one or both, for an
-[external impl](#external-impl)).
+Since both were declared using `extend`, all the functions `Add`, `Scale`, and
+`Draw` end up a part of the API for `Point_2Extend`.
 
-```
-class GameBoard {
-  extend impl as Drawable {
-    fn Draw[self: Self]() { ... }
-  }
-  extend impl as EndOfGame {
-    // ❌ Error: `GameBoard` has two methods named
-    // `Draw` with the same signature.
-    fn Draw[self: Self]() { ... }
-    fn Winner[self: Self](player: i32) { ... }
-  }
-}
-```
+**Note:** A type may implement any number of different interfaces, but may
+provide at most one implementation of any single interface. This makes the act
+of selecting an implementation of an interface for a type unambiguous throughout
+the whole program.
 
 **Open question:** Should we have some syntax for the case where you want both
 names to be given the same implementation? It seems like that might be a common
@@ -356,96 +498,45 @@ class Player {
 }
 ```
 
-### External impl
+### Avoiding name collisions
 
-Interfaces may also be implemented for a type
-[externally](terminology.md#extending-an-impl), by using `impl` without
-`extend`. An external impl does not add the interface's methods to the type.
+To avoid name collisions, you can't extend implementations of two interfaces
+that have a name in common:
 
 ```
-class Point2 {
-  var x: f64;
-  var y: f64;
-
-  impl as Vector {
-    // In this scope, the `Self` keyword is an
-    // alias for `Point2`.
-    fn Add[self: Self](b: Self) -> Self {
-      return {.x = a.x + b.x, .y = a.y + b.y};
-    }
-    fn Scale[self: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
-    }
+class GameBoard {
+  extend impl as Drawable {
+    fn Draw[self: Self]() { ... }
+  }
+  extend impl as EndOfGame {
+    // ❌ Error: `GameBoard` has two methods named `Draw`.
+    fn Draw[self: Self]() { ... }
+    fn Winner[self: Self](player: i32) { ... }
   }
 }
-
-var a: Point2 = {.x = 1.0, .y = 2.0};
-// `a` does *not* have `Add` and `Scale` methods:
-// ❌ Error: a.Add(a.Scale(2.0));
 ```
 
-An external impl may include the name of the implementing type before `as`,
-which is required to define it out-of-line:
+To implement two interfaces that have a name in common, omit `extend` for one or
+both.
+
+You might also omit `extend` when implementing an interface for a type to avoid
+cluttering the API of that type or to avoid a name collision with another member
+of that type. A syntax for reusing method implementations allows us to include
+names from an implementation selectively:
 
 ```
-class Point3 {
+class Point_ReuseMethodInImpl {
   var x: f64;
   var y: f64;
-}
-
-impl Point3 as Vector {
-  // In this scope, the `Self` keyword is an
-  // alias for `Point3`.
-  fn Add[self: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
-  }
-  fn Scale[self: Self](v: f64) -> Self {
-    return {.x = a.x * v, .y = a.y * v};
-  }
-}
-
-var a: Point3 = {.x = 1.0, .y = 2.0};
-// `a` does *not* have `Add` and `Scale` methods:
-// ❌ Error: a.Add(a.Scale(2.0));
-```
-
-**References:** The external interface implementation syntax was decided in
-[proposal #553](https://github.com/carbon-language/carbon-lang/pull/553), and
-then replaced in
-[proposal #2760](https://github.com/carbon-language/carbon-lang/pull/2760).
-
-An external `impl` declaration is allowed to be defined in a different library
-from `Point3`, restricted by [the coherence/orphan rules](#impl-lookup) that
-ensure that the implementation of an interface can't change based on imports. In
-particular, the `impl` declaration is allowed in the library defining the
-interface (`Vector` in this case) in addition to the library that defines the
-type (`Point3` here). This (at least partially) addresses
-[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
-
-Carbon requires `impl` declarations in a different library to be external so
-that the API of `Point3` doesn't change based on what is imported. It would be
-particularly bad if two different libraries implemented interfaces with
-conflicting names that both affected the API of a single type. As a consequence
-of this restriction, you can find all the names of direct members (those
-available by [simple member access](terminology.md#simple-member-access)) of a
-type in the definition of that type. The only thing that may be in another
-library is an `impl` of an interface.
-
-You might also use an external `impl` to implement an interface for a type to
-avoid cluttering the API of that type, for example to avoid a name collision. A
-syntax for reusing method implementations allows us to do this selectively when
-needed. In this case, the external `impl` may be declared lexically inside the
-class scope.
-
-```
-class Point4a {
-  var x: f64;
-  var y: f64;
+  // `Add()` is a method of `Point_ReuseMethodInImpl`.
   fn Add[self: Self](b: Self) -> Self {
     return {.x = self.x + b.x, .y = self.y + b.y};
   }
+  // No `extend`, so other members of `Vector` are not
+  // part of `Point_ReuseMethodInImpl`'s API.
   impl as Vector {
-    alias Add = Point4a.Add;  // Syntax TBD
+    // Syntax TBD:
+    alias Add = Point_ReuseMethodInImpl.Add;
     fn Scale[self: Self](v: f64) -> Self {
       return {.x = self.x * v, .y = self.y * v};
     }
@@ -454,9 +545,11 @@ class Point4a {
 
 // OR:
 
-class Point4b {
+class Point_IncludeMethodFromImpl {
   var x: f64;
   var y: f64;
+  // No `extend`, so members of `Vector` are not
+  // part of `Point_IncludeMethodFromImpl`'s API.
   impl as Vector {
     fn Add[self: Self](b: Self) -> Self {
       return {.x = self.x + b.x, .y = self.y + b.y};
@@ -465,12 +558,15 @@ class Point4b {
       return {.x = self.x * v, .y = self.y * v};
     }
   }
+  // Include `Add` explicitly as a member.
   alias Add = Vector.Add;
 }
 
 // OR:
 
-class Point4c {
+// This is the same as `Point_ReuseMethodInImpl`,
+// except the `impl` is out-of-line.
+class Point_ReuseByOutOfLine {
   var x: f64;
   var y: f64;
   fn Add[self: Self](b: Self) -> Self {
@@ -478,68 +574,45 @@ class Point4c {
   }
 }
 
-impl Point4c as Vector {
-  alias Add = Point4c.Add;  // Syntax TBD
+impl Point_ReuseByOutOfLine as Vector {
+  // Syntax TBD:
+  alias Add = Point_ReuseByOutOfLine.Add;
   fn Scale[self: Self](v: f64) -> Self {
     return {.x = self.x * v, .y = self.y * v};
   }
 }
 ```
 
-Being defined lexically inside the class means that implementation is available
-to other members defined in the class. For example, it would allow implementing
-another interface or method that requires this interface to be implemented.
-
-**Open question:** Do implementations need to be defined lexically inside the
-class to get access to private members, or is it sufficient to be defined in the
-same library as the class?
-
-**Rejected alternative:** We could allow types to have different APIs in
-different files based on explicit configuration in that file. For example, we
-could support a declaration that a given interface or a given method of an
-interface is "in scope" for a particular type in this file. With that
-declaration, the method could be called using
-[simple member access](terminology.md#simple-member-access). This avoids most
-concerns arising from name collisions between interfaces. It has a few downsides
-though:
-
--   It increases variability between files, since the same type will have
-    different APIs depending on these declarations. This makes it harder to
-    copy-paste code between files.
--   It makes reading code harder, since you have to search the file for these
-    declarations that affect name lookup.
-
-**Comparison with other languages:** Both Rust and Swift support external
-implementation.
-[Swift's syntax](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277)
-does this as an "extension" of the original type. In Rust, all implementations
-are out-of-line as in
-[this example](https://doc.rust-lang.org/rust-by-example/trait.html). Unlike
-Swift and Rust, we don't allow a type's API to be modified outside its
-definition. So in Carbon a type's API is consistent no matter what is imported,
-unlike Swift and Rust.
-
 ### Qualified member names and compound member access
 
-Given a value of type `Point3` and an interface `Vector` implemented for that
-type, you can access the methods from that interface using a
+```
+class Point_NoExtend {
+  var x: f64;
+  var y: f64;
+}
+
+impl Point_NoExtend as Vector { ... }
+```
+
+Given a value of type `Point_NoExtend` and an interface `Vector` implemented for
+that type, you can access the methods from that interface using a
 [qualified member access expression](terminology.md#qualified-member-access-expression)
 whether or not the implementation is done with an
-[external `impl` declaration](#external-impl). The qualified member access
+[`extend impl` declaration](#extend-impl). The qualified member access
 expression writes the member's _qualified name_ in the parentheses of the
 [compound member access syntax](/docs/design/expressions/member_access.md):
 
 ```
-var p1: Point3 = {.x = 1.0, .y = 2.0};
-var p2: Point3 = {.x = 2.0, .y = 4.0};
+var p1: Point_NoExtend = {.x = 1.0, .y = 2.0};
+var p2: Point_NoExtend = {.x = 2.0, .y = 4.0};
 Assert(p1.(Vector.Scale)(2.0) == p2);
 Assert(p1.(Vector.Add)(p1) == p2);
 ```
 
 Note that the name in the parens is looked up in the containing scope, not in
-the names of members of `Point3`. So if there was another interface `Drawable`
-with method `Draw` defined in the `Plot` package also implemented for `Point3`,
-as in:
+the names of members of `Point_NoExtend`. So if there was another interface
+`Drawable` with method `Draw` defined in the `Plot` package also implemented for
+`Point_NoExtend`, as in:
 
 ```
 package Plot;
@@ -549,7 +622,7 @@ interface Drawable {
   fn Draw[self: Self]();
 }
 
-impl Points.Point3 as Drawable { ... }
+impl Points.Point_NoExtend as Drawable { ... }
 ```
 
 You could access `Draw` with a qualified name:
@@ -558,7 +631,7 @@ You could access `Draw` with a qualified name:
 import Plot;
 import Points;
 
-var p: Points.Point3 = {.x = 1.0, .y = 2.0};
+var p: Points.Point_NoExtend = {.x = 1.0, .y = 2.0};
 p.(Plot.Drawable.Draw)();
 ```
 
@@ -577,14 +650,14 @@ interface being implemented:
 -   Otherwise, if the type or interface is private but declared in an API file,
     then the `impl` must be declared in the same file so the existence of that
     `impl` is visible to all files in that library.
--   Otherwise, the `impl` must be defined in the public API file of the library,
-    so it is visible in all places that might use it.
+-   Otherwise, the `impl` must be declared in the public API file of the
+    library, so it is visible in all places that might use it.
 
 No access control modifiers are allowed on `impl` declarations, an `impl` is
 always visible to the intersection of the visibility of all names used in the
 declaration of the `impl`.
 
-## Generics
+## Checked-generic functions
 
 Here is a function that can accept values of any type that has implemented the
 `Vector` interface:
@@ -593,18 +666,37 @@ Here is a function that can accept values of any type that has implemented the
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: f64) -> T {
   return a.Add(b).Scale(s);
 }
-var v: Point = AddAndScaleGeneric(a, w, 2.5);
+var v: Point_Extend = AddAndScaleGeneric(a, w, 2.5);
 ```
 
-Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
-_[generic parameter](terminology.md#checked-versus-template-parameters)_. That
-means it must be known to the caller, but we will only use the information
-present in the signature of the function to type check the body of
-`AddAndScaleGeneric`'s definition. In this case, we know that any value of type
-`T` implements the `Vector` interface and so has an `Add` and a `Scale` method.
+Here `T` is a facet whose type is `Vector`. The `:!` syntax means that `T` is a
+_[compile-time binding](terminology.md#bindings)_. Here specifically it declares
+a _symbolic binding_ since it did not use the `template` keyword to mark it as a
+_template binding_.
 
-**References:** The `:!` syntax was accepted in
-[proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
+> **References:** The `:!` syntax was accepted in
+> [proposal #676](https://github.com/carbon-language/carbon-lang/pull/676).
+
+Since this symbolic binding pattern is in a function declaration, it marks a
+_[checked](terminology.md#checked-versus-template-parameters)
+[generic parameter](terminology.md#generic-means-compile-time-parameterized)_.
+That means its value must be known to the caller at compile-time, but we will
+only use the information present in the signature of the function to type check
+the body of `AddAndScaleGeneric`'s definition.
+
+Note that types may also be given compile-time parameters, see the
+["parameterized types" section](#parameterized-types).
+
+### Symbolic facet bindings
+
+In our example, `T` is a facet which may be used in type position in the rest of
+the function. Furthermore, since it omits the keyword `template` prefix, this is
+a symbolic binding. so we need to be able to typecheck the body of the function
+without knowing the specific value `T` from the caller.
+
+This typechecking is done by looking at the constraint on `T`. In the example,
+the constraint on `T` says that every value of `T` implements the `Vector`
+interface and so has a `Vector.Add` and a `Vector.Scale` method.
 
 Names are looked up in the body of `AddAndScaleGeneric` for values of type `T`
 in `Vector`. This means that `AddAndScaleGeneric` is interpreted as equivalent
@@ -627,33 +719,37 @@ satisfying the interface. The effect of this is that an archetype of `Vector`
 acts like a [supertype](https://en.wikipedia.org/wiki/Subtyping) of any `T`
 implementing `Vector`.
 
-For name lookup purposes, an archetype is considered to have
-[implemented its constraint internally](terminology.md#extending-an-impl). The
-only oddity is that the archetype may have different names for members than
-specific types `T` that implement interfaces from the constraint
-[externally](terminology.md#extending-an-impl). This difference in names can
-also occur for supertypes in C++, for example members in a derived class can
-hide members in the base class with the same name, though it is not that common
-for it to come up in practice.
+For name lookup purposes, an archetype is considered to
+[extend the implementation of its constraint](terminology.md#extending-an-impl).
+The only oddity is that the archetype may have different names for members than
+specific types `T` that don't extend the implementation of interfaces from the
+constraint. This difference in names can also occur for supertypes in C++, for
+example members in a derived class can hide members in the base class with the
+same name, though it is not that common for it to come up in practice.
 
 The behavior of calling `AddAndScaleGeneric` with a value of a specific type
-like `Point` is to set `T` to `Point` after all the names have been qualified.
+like `Point_Extend` is to set `T` to `Point_Extend` after all the names have
+been qualified.
 
 ```
-// AddAndScaleGeneric with T = Point
-fn AddAndScaleForPoint(a: Point, b: Point, s: Double) -> Point {
+// AddAndScaleGeneric with T = Point_Extend
+fn AddAndScaleForPoint_Extend(
+    a: Point_Extend, b: Point_Extend, s: Double)
+    -> Point_Extend {
   return a.(Vector.Add)(b).(Vector.Scale)(s);
 }
 ```
 
 This qualification gives a consistent interpretation to the body of the function
-even when the type supplied by the caller
-[implements the interface externally](terminology.md#extending-an-impl), as
-`Point2` does:
+even when the type supplied by the caller does not
+[extend the implementation of the interface](terminology.md#extending-an-impl),
+like `Point_NoExtend`:
 
 ```
-// AddAndScaleGeneric with T = Point2
-fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
+// AddAndScaleGeneric with T = Point_NoExtend
+fn AddAndScaleForPoint_NoExtend(
+    a: Point_NoExtend, b: Point_NoExtend, s: Double)
+    -> Point_NoExtend {
   // ✅ This works even though `a.Add(b).Scale(s)` wouldn't.
   return a.(Vector.Add)(b).(Vector.Scale)(s);
 }
@@ -663,20 +759,23 @@ fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
 
 From the caller's perspective, the return type is the result of substituting the
 caller's values for the generic parameters into the return type expression. So
-`AddAndScaleGeneric` called with `Point` values returns a `Point` and called
-with `Point2` values returns a `Point2`. So looking up a member on the resulting
-value will look in `Point` or `Point2` rather than `Vector`.
+`AddAndScaleGeneric` called with `Point_Extend` values returns a `Point_Extend`
+and called with `Point_NoExtend` values returns a `Point_NoExtend`. So looking
+up a member on the resulting value will look in `Point_Extend` or
+`Point_NoExtend` rather than `Vector`.
 
 This is part of realizing
 [the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions).
 In this example, `AddAndScaleGeneric` can be substituted for
-`AddAndScaleForPoint` and `AddAndScaleForPoint2` without affecting the return
-types. This requires the return value to be converted to the type that the
-caller expects instead of the erased type used inside the generic function.
+`AddAndScaleForPoint_Extend` and `AddAndScaleForPoint_NoExtend` without
+affecting the return types. This may require a conversion of the return value to
+the type that the caller expects, from the erased type used inside a
+checked-generic function.
 
-A generic caller of a generic function performs the same substitution process to
-determine the return type, but the result may be generic. In this example of
-calling a generic from another generic,
+A checked-generic caller of a checked-generic function performs the same
+substitution process to determine the return type, but the result may be a
+symbolic value. In this example of calling a checked generic from another
+checked generic,
 
 ```
 fn DoubleThreeTimes[U:! Vector](a: U) -> U {
@@ -686,8 +785,8 @@ fn DoubleThreeTimes[U:! Vector](a: U) -> U {
 
 the return type of `AddAndScaleGeneric` is found by substituting in the `U` from
 `DoubleThreeTimes` for the `T` from `AddAndScaleGeneric` in the return type
-expression of `AddAndScaleGeneric`. `U` is an archetype of `Vector`, and so
-implements `Vector` internally and therefore has a `Scale` method.
+expression of `AddAndScaleGeneric`. `U` is an archetype of `Vector`, and so acts
+as if it extends `Vector` and therefore has a `Scale` method.
 
 If `U` had a more specific type, the return value would have the additional
 capabilities of `U`. For example, given a parameterized type `GeneralPoint`
@@ -705,16 +804,16 @@ fn CallWithGeneralPoint[C:! Numeric](p: GeneralPoint(C)) -> C {
   // deduced to be `GeneralPoint(C)`.
 
   // ❌ Illegal: AddAndScaleGeneric(p, p, 2.0).Scale(2.0);
-  //    `GeneralPoint(C)` implements `Vector` externally, and so
-  //    does not have a `Scale` method.
+  //    `GeneralPoint(C)` implements but does not extend `Vector`,
+  //    and so does not have a `Scale` method.
 
   // ✅ Allowed: `GeneralPoint(C)` has a `Get` method
   AddAndScaleGeneric(p, p, 2.0).Get(0);
 
-  // ✅ Allowed: `GeneralPoint(C)` implements `Vector`
-  //    externally, and so has a `Vector.Scale` method.
-  //    `Vector.Scale` returns `Self` which is `GeneralPoint(C)`
-  //    again, and so has a `Get` method.
+  // ✅ Allowed: `GeneralPoint(C)` implements `Vector`, and so has
+  //    a `Vector.Scale` method. `Vector.Scale` returns `Self`
+  //    which is `GeneralPoint(C)` again, and so has a `Get`
+  //    method.
   return AddAndScaleGeneric(p, p, 2.0).(Vector.Scale)(2.0).Get(0);
 }
 ```
@@ -722,64 +821,8 @@ fn CallWithGeneralPoint[C:! Numeric](p: GeneralPoint(C)) -> C {
 The result of the call to `AddAndScaleGeneric` from `CallWithGeneralPoint` has
 type `GeneralPoint(C)` and so has a `Get` method and a `Vector.Scale` method.
 But, in contrast to how `DoubleThreeTimes` works, since `Vector` is implemented
-externally the return value in this case does not directly have a `Scale`
+without `extend` the return value in this case does not directly have a `Scale`
 method.
-
-### Implementation model
-
-A possible model for generating code for a generic function is to use a
-[witness table](terminology.md#witness-tables) to represent how a type
-implements an interface:
-
--   [Interfaces](#interfaces) are types of witness tables.
--   An [impl](#implementing-interfaces) is a witness table value.
-
-Type checking is done with just the interface. The impl is used during code
-generation time, possibly using
-[monomorphization](https://en.wikipedia.org/wiki/Monomorphization) to have a
-separate instantiation of the function for each combination of the generic
-argument values. The compiler is free to use other implementation strategies,
-such as passing the witness table for any needed implementations, if that can be
-predicted.
-
-For the example above, [the Vector interface](#interfaces) could be thought of
-defining a witness table type like:
-
-```
-class Vector {
-  // `Self` is the representation type, which is only
-  // known at compile time.
-  var Self:! type;
-  // `fnty` is **placeholder** syntax for a "function type",
-  // so `Add` is a function that takes two `Self` parameters
-  // and returns a value of type `Self`.
-  var Add: fnty(a: Self, b: Self) -> Self;
-  var Scale: fnty(a: Self, v: f64) -> Self;
-}
-```
-
-The [impl of Vector for Point](#implementing-interfaces) would be a value of
-this type:
-
-```
-var VectorForPoint: Vector  = {
-    .Self = Point,
-    // `lambda` is **placeholder** syntax for defining a
-    // function value.
-    .Add = lambda(a: Point, b: Point) -> Point {
-      return {.x = a.x + b.x, .y = a.y + b.y};
-    },
-    .Scale = lambda(a: Point, v: f64) -> Point {
-      return {.x = a.x * v, .y = a.y * v};
-    },
-};
-```
-
-Since generic arguments (where the parameter is declared using `:!`) are passed
-at compile time, so the actual value of `VectorForPoint` can be used to generate
-the code for functions using that impl. This is the
-[static-dispatch witness table](terminology.md#static-dispatch-witness-table)
-approach.
 
 ## Interfaces recap
 
@@ -805,45 +848,60 @@ An interface's name may be used in a few different contexts:
 -   to define [an `impl` for a type](#implementing-interfaces),
 -   as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access), and
--   as a [type-of-type](terminology.md#facet-type) for
-    [a generic type parameter](#generics).
+-   as a [facet type](terminology.md#facet-type) for
+    [a facet binding](#symbolic-facet-bindings).
 
-While interfaces are examples of type-of-types, type-of-types are a more general
+While interfaces are examples of facet types, facet types are a more general
 concept, for which interfaces are a building block.
 
-## Type-of-types
+## Facet types
 
-A [type-of-type](terminology.md#facet-type) consists of a set of requirements
-and a set of names. Requirements are typically a set of interfaces that a type
-must satisfy, though other kinds of requirements are added below. The names are
+A [facet type](terminology.md#facet-type) consists of a set of requirements and
+a set of names. Requirements are typically a set of interfaces that a type must
+satisfy, though other kinds of requirements are added below. The names are
 aliases for qualified names in those interfaces.
 
-An interface is one particularly simple example of a type-of-type. For example,
-`Vector` as a type-of-type has a set of requirements consisting of the single
+An interface is one particularly simple example of a facet type. For example,
+`Vector` as a facet type has a set of requirements consisting of the single
 interface `Vector`. Its set of names consists of `Add` and `Scale` which are
 aliases for the corresponding qualified names inside `Vector` as a namespace.
 
-The requirements determine which types are values of a given type-of-type. The
-set of names in a type-of-type determines the API of a generic type value and
-define the result of [member access](/docs/design/expressions/member_access.md)
-into the type-of-type.
+The requirements determine which types may be implicitly converted to a given
+facet type. The result of this conversion is a [facet](terminology.md#facet).
+For example, `Point_Inline` from [the "Inline `impl`" section](#inline-impl)
+implements `Vector`, so `Point_Inline` may be implicitly converted to `Vector`
+as considered as a type. The result is `Point_Inline as Vector`, which has the
+members of `Vector` instead of the members of `Point_Inline`. If the facet
+`Point_Inline as Vector` is used in a type position, it is implicitly converted
+back to type `type`, see
+["values usable as types" in the design overview](/docs/design/README.md#values-usable-as-types).
+This recovers the original type for the facet, so
+`(Point_Inline as Vector) as type` is `Point_Inline` again.
 
-This general structure of type-of-types holds not just for interfaces, but
-others described in the rest of this document.
+However, when a facet type like `Vector` is used as the binding type of a
+symbolic binding, as in `T:! Vector`, the
+[symbolic facet binding](#symbolic-facet-bindings) `T` is disassociated with
+whatever facet value `T` is eventually bound to. Instead, `T` is treated as an
+[archetype](terminology.md#archetype), with the members and
+[member access](/docs/design/expressions/member_access.md) determined by the
+names of the facet type.
+
+This general structure of facet types holds not just for interfaces, but others
+described in the rest of this document.
 
 ## Named constraints
 
-If the interfaces discussed above are the building blocks for type-of-types,
-[generic named constraints](terminology.md#named-constraints) describe how they
-may be composed together. Unlike interfaces which are nominal, the name of a
-named constraint is not a part of its value. Two different named constraints
-with the same definition are equivalent even if they have different names. This
-is because types don't have to explicitly specify which named constraints they
+If the interfaces discussed above are the building blocks for facet types,
+[named constraints](terminology.md#named-constraints) describe how they may be
+composed together. Unlike interfaces which are nominal, the name of a named
+constraint is not a part of its value. Two different named constraints with the
+same definition are equivalent even if they have different names. This is
+because types don't have to explicitly specify which named constraints they
 implement, types automatically implement any named constraints they can satisfy.
 
-A named constraint definition can contain interface requirements using `impl`
-declarations and names using `alias` declarations. Note that this allows us to
-declare the aspects of a type-of-type directly.
+A named constraint definition can contain interface requirements using
+`require Self impls` declarations and names using `alias` declarations. Note
+that this allows us to declare the aspects of a facet type directly.
 
 ```
 constraint VectorLegoFish {
@@ -857,9 +915,9 @@ constraint VectorLegoFish {
 }
 ```
 
-An `impl` requirement may alternatively be on a named constraint, instead of an
-interface, to add all the requirements of another named constraint without
-adding any of the names:
+A `require Self impls` requirement may alternatively be on a named constraint,
+instead of an interface, to add all the requirements of another named constraint
+without adding any of the names:
 
 ```
 constraint DrawVectorLegoFish {
@@ -882,9 +940,8 @@ whenever an interface may be. This includes all of these
 -   A named constraint may be used as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
--   A named constraint may be used as a
-    [type-of-type](terminology.md#facet-type) for
-    [a generic type parameter](#generics).
+-   A named constraint may be used as a [facet type](terminology.md#facet-type)
+    for [a facet binding](#symbolic-facet-bindings).
 
 We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
@@ -895,8 +952,8 @@ as:
 constraint type { }
 ```
 
-That is, `type` is the type-of-type with no requirements (so matches every
-type), and defines no names.
+That is, `type` is the facet type with no requirements (so matches every type),
+and defines no names.
 
 ```
 fn Identity[T:! type](x: T) -> T {
@@ -909,28 +966,21 @@ var i: i32 = Identity(3);
 var s: String = Identity("string");
 ```
 
-**Aside:** We can define `auto` as syntactic sugar for `(template _:! type)`.
-This definition allows you to use `auto` as the type for a local variable whose
-type can be statically determined by the compiler. It also allows you to use
-`auto` as the type of a function parameter, to mean "accepts a value of any
-type, and this function will be instantiated separately for every different
-type." This is consistent with the
-[use of `auto` in the C++20 Abbreviated function template feature](https://en.cppreference.com/w/cpp/language/function_template#Abbreviated_function_template).
-
 In general, the declarations in `constraint` definition match a subset of the
-declarations in an `interface`. Named constraints used with generics, as opposed
-to templates, should only include required interfaces and aliases to named
-members of those interfaces.
+declarations in an `interface`. These named constraints can be used with checked
+generics, as opposed to templates, and only include required interfaces and
+aliases to named members of those interfaces.
 
 To declare a named constraint that includes other declarations for use with
 template parameters, use the `template` keyword before `constraint`. Method,
-associated type, and associated function requirements may only be declared
-inside a `template constraint`. Note that a generic constraint ignores the names
-of members defined for a type, but a template constraint can depend on them.
+associated constant, and associated function requirements may only be declared
+inside a `template constraint`. Note that a checked-generic constraint ignores
+the names of members defined for a type, but a template constraint can depend on
+them.
 
-There is an analogy between declarations used in a `constraint` and in an
-`interface` definition. If an `interface` `I` has (non-`alias`) declarations
-`X`, `Y`, and `Z`, like so:
+There is an analogy between declarations used in a `template constraint` and in
+an `interface` definition. If an `interface` `I` has (non-`alias`,
+non-`require`) declarations `X`, `Y`, and `Z`, like so:
 
 ```
 interface I {
@@ -946,7 +996,7 @@ Then a type implementing `I` would have `impl as I` with definitions for `X`,
 ```
 class ImplementsI {
   // ...
-  extend impl as I {
+  impl as I {
     X { ... }
     Y { ... }
     Z { ... }
@@ -954,11 +1004,10 @@ class ImplementsI {
 }
 ```
 
-But the corresponding `constraint` or `template constraint`, `S`:
+But a `template constraint`, `S`:
 
 ```
-// or template constraint S {
-constraint S {
+template constraint S {
   X;
   Y;
   Z;
@@ -976,18 +1025,15 @@ class ImplementsS {
 }
 ```
 
-**TODO:** Move the `template constraint` and `auto` content to the template
-design document, once it exists.
+### Subtyping between facet types
 
-### Subtyping between type-of-types
-
-There is a subtyping relationship between type-of-types that allows calls of one
+There is a subtyping relationship between facet types that allows calls of one
 generic function from another as long as it has a subset of the requirements.
 
-Given a generic type variable `T` with type-of-type `I1`, it satisfies a
-type-of-type `I2` as long as the requirements of `I1` are a superset of the
-requirements of `I2`. This means a value `x` of type `T` may be passed to
-functions requiring types to satisfy `I2`, as in this example:
+Given a symbolic facet binding `T` with facet type `I1`, it satisfies a facet
+type `I2` as long as the requirements of `I1` are a superset of the requirements
+of `I2`. This means a value `x: T` may be passed to functions requiring types to
+satisfy `I2`, as in this example:
 
 ```
 interface Printable { fn Print[self: Self](); }
@@ -1014,12 +1060,12 @@ fn PrintDrawPrint[T1:! PrintAndRender](x1: T1) {
 }
 ```
 
-## Combining interfaces by anding type-of-types
+## Combining interfaces by anding facet types
 
 In order to support functions that require more than one interface to be
-implemented, we provide a combination operator on type-of-types, written `&`.
-This operator gives the type-of-type with the union of all the requirements and
-the union of the names minus any conflicts.
+implemented, we provide a combination operator on facet types, written `&`. This
+operator gives the facet type with the union of all the requirements and the
+union of the names.
 
 ```
 interface Printable {
@@ -1030,7 +1076,7 @@ interface Renderable {
   fn Draw[self: Self]();
 }
 
-// `Printable & Renderable` is syntactic sugar for this type-of-type:
+// `Printable & Renderable` is syntactic sugar for this facet type:
 constraint {
   require Self impls Printable;
   require Self impls Renderable;
@@ -1060,8 +1106,7 @@ var s: Sprite = ...;
 PrintThenDraw(s);
 ```
 
-Any conflicting names between the two types are replaced with a name that is an
-error to use.
+It is an error to use any names that conflict between the two interfaces.
 
 ```
 interface Renderable {
@@ -1072,15 +1117,10 @@ interface EndOfGame {
   fn Draw[self: Self]();
   fn Winner[self: Self](player: i32);
 }
-// `Renderable & EndOfGame` is syntactic sugar for this type-of-type:
-constraint {
-  require Self impls Renderable;
-  require Self impls EndOfGame;
-  alias Center = Renderable.Center;
-  // Open question: `forbidden`, `invalid`, or something else?
-  forbidden Draw
-    message "Ambiguous, use either `(Renderable.Draw)` or `(EndOfGame.Draw)`.";
-  alias Winner = EndOfGame.Winner;
+fn F[T:! Renderable & EndOfGame](x: T) {
+  // ❌ Error: Ambiguous, use either `(Renderable.Draw)`
+  //           or `(EndOfGame.Draw)`.
+  x.Draw();
 }
 ```
 
@@ -1099,71 +1139,53 @@ constraint RenderableAndEndOfGame {
 }
 
 fn RenderTieGame[T:! RenderableAndEndOfGame](x: T) {
-  // Calls Renderable.Draw()
+  // ✅ Calls `Renderable.Draw`:
   x.RenderableDraw();
-  // Calls EndOfGame.Draw()
+  // ✅ Calls `EndOfGame.Draw`:
   x.TieGame();
 }
 ```
 
-Reserving the name when there is a conflict is part of resolving what happens
-when you combine more than two type-of-types. If `x` is forbidden in `A`, it is
-forbidden in `A & B`, whether or not `B` defines the name `x`. This makes `&`
-associative and commutative, and so it is well defined on sets of interfaces, or
-other type-of-types, independent of order.
+Note that `&` is associative and commutative, and so it is well defined on sets
+of interfaces, or other facet types, independent of order.
 
-Note that we do _not_ consider two type-of-types using the same name to mean the
-same thing to be a conflict. For example, combining a type-of-type with itself
+Note that we do _not_ consider two facet types using the same name to mean the
+same thing to be a conflict. For example, combining a facet type with itself
 gives itself, `MyTypeOfType & MyTypeOfType == MyTypeOfType`. Also, given two
 [interface extensions](#interface-extension) of a common base interface, the
 combination should not conflict on any names in the common base.
 
-**Rejected alternative:** Instead of using `&` as the combining operator, we
-considered using `+`,
-[like Rust](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html).
-See [#531](https://github.com/carbon-language/carbon-lang/issues/531) for the
-discussion.
-
-**Future work:** We may want to define another operator on type-of-types for
-adding requirements to a type-of-type without affecting the names, and so avoid
-the possibility of name conflicts. Note this means the operation is not
-commutative. If we call this operator `[&]`, then `A [&] B` has the names of `A`
-and `B [&] A` has the names of `B`.
+To add to the requirements of a facet type without affecting the names, and so
+avoid the possibility of name conflicts, names, use a `where .Self impls`
+clause.
 
 ```
-// `Printable [&] Renderable` is syntactic sugar for this type-of-type:
+// `Printable where .Self impls Renderable` is equivalent to:
 constraint {
   require Self impls Printable;
   require Self impls Renderable;
   alias Print = Printable.Print;
 }
-
-// `Renderable [&] EndOfGame` is syntactic sugar for this type-of-type:
-constraint {
-  require Self impls Renderable;
-  require Self impls EndOfGame;
-  alias Center = Renderable.Center;
-  alias Draw = Renderable.Draw;
-}
 ```
 
-Note that all three expressions `A & B`, `A [&] B`, and `B [&] A` have the same
-requirements, and so you would be able to switch a function declaration between
-them without affecting callers.
-
-Nothing in this design depends on the `[&]` operator, and having both `&` and
-`[&]` might be confusing for users, so it makes sense to postpone implementing
-`[&]` until we have a demonstrated need. The `[&]` operator seems most useful
-for adding requirements for interfaces used for
+You might use this to add requirements on interfaces used for
 [operator overloading](#operator-overloading), where merely implementing the
 interface is enough to be able to use the operator to access the functionality.
+
+Note that the expressions `A & B` and `A where .Self impls B` have the same
+requirements, and so you would be able to switch a function declaration between
+them without affecting callers.
 
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/17IXDdu384x1t9RimQ01bhx4-nWzs4ZEeke4eO6ImQNc/edit?resourcekey=0-Fe44R-0DhQBlw0gs2ujNJA).
 
-**Comparison with other languages:** This `&` operation on interfaces works very
-similarly to Rust's `+` operation, with the main difference being how you
+**Rejected alternative:** Instead of using `&` as the combining operator, we
+considered using `+`,
+[like Rust](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html).
+The main difference from Rust's `+` is how you
 [qualify names when there is a conflict](https://doc.rust-lang.org/rust-by-example/trait/disambiguating.html).
+See [issue #531](https://github.com/carbon-language/carbon-lang/issues/531) for
+the discussion.
 
 ## Interface requiring other interfaces
 
@@ -1173,8 +1195,9 @@ type. For example, in C++,
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `EqualityComparable`, and
 `Swappable`. This is already a capability for
-[type-of-types in general](#type-of-types). For consistency we will use the same
-semantics and syntax as we do for [named constraints](#named-constraints):
+[facet types in general](#facet-types). For consistency we will use the same
+semantics and `require Self impls` syntax as we do for
+[named constraints](#named-constraints):
 
 ```
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
@@ -1250,7 +1273,8 @@ benefits:
     place.
 -   This reduces the boilerplate for types implementing `Hashable`.
 
-We expect this concept to be common enough to warrant dedicated syntax:
+We expect this concept to be common enough to warrant dedicated `interface`
+syntax:
 
 ```
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
@@ -1304,18 +1328,21 @@ interface SetAlgebra {
 
 **Alternative considered:** The `extend` declarations are in the body of the
 `interface` definition instead of the header so we can use
-[associated types (defined below)](#associated-types) also defined in the body
-in parameters or constraints of the interface being extended.
+[associated constants](terminology.md#associated-entity) also defined in the
+body in parameters or constraints of the interface being extended.
 
 ```
-// A type can implement `ConvertibleTo` many times, using
-// different values of `T`.
+// A type can implement `ConvertibleTo` many times,
+// using different values of `T`.
 interface ConvertibleTo(T:! type) { ... }
 
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
-  let AssociatedType:! type;
-  extend ConvertibleTo(AssociatedType);
+  let AssociatedFacet:! type;
+  // `extend` is in the body of an `interface`
+  // definition. This allows extending an expression
+  // that uses an associated facet.
+  extend ConvertibleTo(AssociatedFacet);
 }
 ```
 
@@ -1490,7 +1517,7 @@ though could be defined in the `impl` block of `IncidenceGraph`,
     }
     ```
 
--   Implementing `Graph` externally.
+-   Implementing `Graph` out-of-line.
 
     ```
     class MyEdgeListIncidenceGraph {
@@ -1512,43 +1539,18 @@ eventually be provided.
 declared lexically in the class scope in this case. That would allow earlier
 detection of missing definitions.
 
-### Use case: overload resolution
+### Use case: detecting unreachable matches
 
-Implementing an extended interface is an example of a more specific match for
-[lookup resolution](#lookup-resolution-and-specialization). For example, this
-could be used to provide different implementations of an algorithm depending on
-the capabilities of the iterator being passed in:
+If interface `E` extends another interface `I`, that gives the information to
+the compiler that the any type implementing `E` also implements `I`. This can be
+used to detect unreachable code.
 
-```
-interface ForwardIntIterator {
-  fn Advance[addr self: Self*]();
-  fn Get[self: Self]() -> i32;
-}
-interface BidirectionalIntIterator {
-  extend ForwardIntIterator;
-  fn Back[addr self: Self*]();
-}
-interface RandomAccessIntIterator {
-  extend BidirectionalIntIterator;
-  fn Skip[addr self: Self*](offset: i32);
-  fn Difference[self: Self](rhs: Self) -> i32;
-}
-
-fn SearchInSortedList[IterT:! ForwardIntIterator]
-    (begin: IterT, end: IterT, needle: i32) -> bool {
-  ... // does linear search
-}
-// Will prefer the following overload when it matches
-// since it is more specific.
-fn SearchInSortedList[IterT:! RandomAccessIntIterator]
-    (begin: IterT, end: IterT, needle: i32) -> bool {
-  ... // does binary search
-}
-```
-
-This would be an example of the more general rule that an interface `A`
-requiring an implementation of interface `B` means `A` is more specific than
-`B`.
+For example, the [`impl` prioritization rule](#prioritization-rule) is used to
+pick between `impl` declarations based on an explicit priority ordering given by
+the developer. If the broader interface `I` is prioritized over the more
+specific interface `E`, the compiler can conclude that the more specific
+declaration will never be selected and report an error. Similar situations could
+be detected in function overloading.
 
 ## Adapting types
 
@@ -1647,7 +1649,7 @@ compiler provides it as
 
 ### Adapter compatibility
 
-Consider a type with a generic type parameter, like a hash map:
+Consider a type with a facet parameter, like a hash map:
 
 ```
 interface Hashable { ... }
@@ -1670,10 +1672,11 @@ var thriller_count: Optional(i32) =
     play_count.Find(Song("Thriller"));
 ```
 
-Since the `Find` function is generic, it can only use the capabilities that
-`HashMap` requires of `KeyT` and `ValueT`. This allows us to evaluate when we
-can convert between two different arguments to a parameterized type. Consider
-two adapters of `Song` that implement `Hashable`:
+Since the `KeyT` and `ValueT` are symbolic parameters, the `Find` function is a
+checked generic, and it can only use the capabilities of `KeyT` and `ValueT`
+specified as requirements. This allows us to evaluate when we can convert
+between two different arguments to a parameterized type. Consider two adapters
+of `Song` that implement `Hashable`:
 
 ```
 class PlayableSong {
@@ -1731,14 +1734,21 @@ The resulting type `SongByArtist` would:
 -   implement `Hashable`, but differently than `Song`, and
 -   implement `Printable`, inherited from `Song`.
 
+The rule is that when looking up if `SongByArtist` implements an interface `I`
+and no implementation is found, the compiler repeats the search to see if `Song`
+implements `I`. If that is found, it is reused if possible. The reuse will be
+successful if all types that reference `Self` in the signatures of interface's
+functions can be cast to the corresponding type with `SongByArtist` substituted
+in for `Song`.
+
 Unlike the similar `class B { extend base: A; }` notation,
 `class B { extend adapt A; }` is permitted even if `A` is a final class. Also,
 there is no implicit conversion from `B` to `A`, matching `adapt` without
 `extend` but unlike class extension.
 
 To avoid or resolve name conflicts between interfaces, an `impl` may be declared
-[external](#external-impl). The names in that interface may then be pulled in
-individually or renamed using `alias` declarations.
+without [`extend`](#extend-impl). The names in that interface may then be pulled
+in individually or renamed using `alias` declarations.
 
 ```
 class SongRenderToPrintDriver {
@@ -1747,12 +1757,13 @@ class SongRenderToPrintDriver {
   // Add a new `Print()` member function.
   fn Print[self: Self]() { ... }
 
-  // Avoid name conflict with new `Print` function by making
-  // the implementation of the `Printable` interface external.
+  // Avoid name conflict with new `Print`
+  // function by implementing the `Printable`
+  // interface without `extend`.
   impl as Printable = Song;
 
-  // Make the `Print` function from `Printable` available
-  // under the name `PrintToScreen`.
+  // Make the `Print` function from `Printable`
+  // available under the name `PrintToScreen`.
   alias PrintToScreen = Printable.Print;
 }
 ```
@@ -1760,7 +1771,7 @@ class SongRenderToPrintDriver {
 ### Use case: Using independent libraries together
 
 Imagine we have two packages that are developed independently. Package
-`CompareLib` defines an interface `CompareLib.Comparable` and a generic
+`CompareLib` defines an interface `CompareLib.Comparable` and a checked-generic
 algorithm `CompareLib.Sort` that operates on types that implement
 `CompareLib.Comparable`. Package `SongLib` defines a type `SongLib.Song`.
 Neither has a dependency on the other, so neither package defines an
@@ -1836,12 +1847,12 @@ class ComparableFromDifference(T:! Difference) {
 }
 class IntWrapper {
   var x: i32;
-  extend impl as Difference {
+  impl as Difference {
     fn Sub[self: Self](rhs: Self) -> i32 {
       return left.x - right.x;
     }
   }
-  extend impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
+  impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
 }
 ```
 
@@ -1854,7 +1865,7 @@ class ComparableFromDifferenceFn
   adapt T;
   extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
-      return Difference(self, rhs) < 0;
+      return Difference(self as T, rhs as T) < 0;
     }
   }
 }
@@ -1863,7 +1874,7 @@ class IntWrapper {
   fn Difference(left: Self, right: Self) {
     return left.x - right.x;
   }
-  extend impl as Comparable =
+  impl as Comparable =
       ComparableFromDifferenceFn(IntWrapper, Difference);
 }
 ```
@@ -1901,16 +1912,17 @@ class ByReal {
 }
 
 fn Complex64.CloserToOrigin[self: Self](them: Self) -> bool {
-  var me_mag: ByReal = self * self.Conj() as ByReal;
+  var self_mag: ByReal = self * self.Conj() as ByReal;
   var them_mag: ByReal = them * them.Conj() as ByReal;
-  return me_mag.Less(them_mag);
+  return self_mag.Less(them_mag);
 }
 ```
 
-### Use case: Accessing external names
+### Use case: Accessing interface names
 
 Consider a case where a function will call several functions from an interface
-that is [implemented externally](terminology.md#extending-an-impl) for a type.
+that the type does not
+[extend the implementation of](terminology.md#extending-an-impl).
 
 ```
 interface DrawingContext {
@@ -1923,9 +1935,8 @@ interface DrawingContext {
 impl Window as DrawingContext { ... }
 ```
 
-An adapter can make that much more convenient by making a compatible type where
-the interface is [implemented internally](terminology.md#extending-an-impl).
-This avoids having to
+An adapter can make that more convenient by making a compatible type that does
+extend the implementation of the interface. This avoids having to
 [qualify](terminology.md#qualified-member-access-expression) each call to
 methods in the interface.
 
@@ -1943,7 +1954,22 @@ fn Render(w: Window) {
 }
 ```
 
-### Adapter with stricter invariants
+**Note:** Another way to achieve this is to use a
+[local symbolic facet constant](#generic-let).
+
+```carbon
+fn Render(w: Window) {
+  let DrawInWindow:! Draw = Window;
+  // Implicit conversion to `w as DrawInWindow`.
+  let d: DrawInWindow = w;
+  d.SetPen(...);
+  d.SetFill(...);
+  d.DrawRectangle(...);
+  ...
+}
+```
+
+### Future work: Adapter with stricter invariants
 
 **Future work:** Rust also uses the newtype idiom to create types with
 additional invariants or other information encoded in the type
@@ -1960,10 +1986,10 @@ and an adapter to address this use case.
 
 In addition to associated methods, we allow other kinds of
 [associated entities](terminology.md#associated-entity). For consistency, we use
-the same syntax to describe a constant in an interface as in a type without
-assigning a value. As constants, they are declared using the `let` introducer.
-For example, a fixed-dimensional point type could have the dimension as an
-associated constant.
+the same syntax to describe a compile-time constant in an interface as in a type
+without assigning a value. As constants, they are declared using the `let`
+introducer. For example, a fixed-dimensional point type could have the dimension
+as an associated constant.
 
 ```
 interface NSpacePoint {
@@ -2014,17 +2040,21 @@ Assert(Point2D.N == 2);
 Assert(Point3D.N == 3);
 
 fn PrintPoint[PointT:! NSpacePoint](p: PointT) {
-  for (var i: i32 = 0; i < PointT.N; ++i) {
+  var i: i32 = 0
+  while (i < PointT.N) {
     if (i > 0) { Print(", "); }
     Print(p.Get(i));
+    ++i;
   }
 }
 
 fn ExtractPoint[PointT:! NSpacePoint](
     p: PointT,
     dest: Array(f64, PointT.N)*) {
-  for (var i: i32 = 0; i < PointT.N; ++i) {
+  var i: i32 = 0;
+  while (i < PointT.N) {
     (*dest)[i] = p.Get(i);
+    ++i;
   }
 }
 ```
@@ -2032,8 +2062,8 @@ fn ExtractPoint[PointT:! NSpacePoint](
 **Comparison with other languages:** This feature is also called
 [associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
 
-**Aside:** In general, the use of `:!` here means these `let` declarations will
-only have compile-time and not runtime storage associated with them.
+**Aside:** The use of `:!` here means these `let` declarations will only have
+compile-time and not runtime storage associated with them.
 
 ### Associated class functions
 
@@ -2051,7 +2081,7 @@ class MySerializableType {
 
   extend impl as DeserializeFromString {
     fn Deserialize(serialized: String) -> Self {
-      return (.i = StringToInt(serialized));
+      return {.i = StringToInt(serialized)};
     }
   }
 }
@@ -2071,19 +2101,19 @@ Together associated methods and associated class functions are called
 _associated functions_, much like together methods and class functions are
 called [member functions](/docs/design/classes.md#member-functions).
 
-## Associated types
+## Associated facets
 
-Associated types are [associated entities](terminology.md#associated-entity)
-that happen to be types. These are particularly interesting since they can be
-used in the signatures of associated methods or functions, to allow the
-signatures of methods to vary from implementation to implementation. We already
-have one example of this: the `Self` type discussed
+Associated facets are [associated constants](#associated-constants) that happen
+to have a [facet type](terminology.md#facet-type). These are particularly
+interesting since they can be used in the signatures of associated methods or
+functions, to allow the signatures of methods to vary from implementation to
+implementation. We already have one example of this: the `Self` type discussed
 [in the "Interfaces" section](#interfaces). For other cases, we can say that the
-interface declares that each implementation will provide a type under a specific
-name. For example:
+interface declares that each implementation will provide a facet constant under
+a specified name. For example:
 
 ```
-interface StackAssociatedType {
+interface StackAssociatedFacet {
   let ElementType:! type;
   fn Push[addr self: Self*](value: ElementType);
   fn Pop[addr self: Self*]() -> ElementType;
@@ -2091,11 +2121,11 @@ interface StackAssociatedType {
 }
 ```
 
-Here we have an interface called `StackAssociatedType` which defines two
+Here we have an interface called `StackAssociatedFacet` which defines two
 methods, `Push` and `Pop`. The signatures of those two methods declare them as
 accepting or returning values with the type `ElementType`, which any implementer
-of `StackAssociatedType` must also define. For example, maybe `DynamicArray`
-implements `StackAssociatedType`:
+of `StackAssociatedFacet` must also define. For example, maybe a `DynamicArray`
+[parameterized type](#parameterized-types) implements `StackAssociatedFacet`:
 
 ```
 class DynamicArray(T:! type) {
@@ -2105,8 +2135,8 @@ class DynamicArray(T:! type) {
   fn Insert[addr self: Self*](pos: IteratorType, value: T);
   fn Remove[addr self: Self*](pos: IteratorType);
 
-  // Set the associated type `ElementType` to `T`.
-  extend impl as StackAssociatedType where .ElementType = T {
+  // Set the associated facet `ElementType` to `T`.
+  extend impl as StackAssociatedFacet where .ElementType = T {
     fn Push[addr self: Self*](value: ElementType) {
       self->Insert(self->End(), value);
     }
@@ -2127,7 +2157,7 @@ class DynamicArray(T:! type) {
 
 The keyword `Self` can be used after the `as` in an `impl` declaration as a
 shorthand for the type being implemented, including in the `where` clause
-specifying the values of associated types, as in:
+specifying the values of associated facets, as in:
 
 ```
 impl VeryLongTypeName as Add
@@ -2137,17 +2167,18 @@ impl VeryLongTypeName as Add
 }
 ```
 
-**Alternatives considered:** See
-[other syntax options considered in #731 for specifying associated types](/proposals/p0731.md#syntax-for-associated-constants).
-In particular, it was deemed that
-[Swift's approach of inferring the associated type from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
-was unneeded complexity.
+> **Alternatives considered:** See
+> [other syntax options considered in #731 for specifying associated facets](/proposals/p0731.md#syntax-for-associated-constants).
+> In particular, it was deemed that
+> [Swift's approach of inferring an associated facet from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
+> was unneeded complexity.
 
-The definition of the `StackAssociatedType` is sufficient for writing a generic
-function that operates on anything implementing that interface, for example:
+The definition of the `StackAssociatedFacet` is sufficient for writing a
+checked-generic function that operates on anything implementing that interface,
+for example:
 
 ```
-fn PeekAtTopOfStack[StackType:! StackAssociatedType](s: StackType*)
+fn PeekAtTopOfStack[StackType:! StackAssociatedFacet](s: StackType*)
     -> StackType.ElementType {
   var top: StackType.ElementType = s->Pop();
   s->Push(top);
@@ -2155,14 +2186,16 @@ fn PeekAtTopOfStack[StackType:! StackAssociatedType](s: StackType*)
 }
 ```
 
-Inside the generic function `PeekAtTopOfStack`, the `ElementType` associated
-type member of `StackType` is erased. This means `StackType.ElementType` has the
-API dictated by the declaration of `ElementType` in the interface
-`StackAssociatedType`.
+Inside the checked-generic function `PeekAtTopOfStack`, the `ElementType`
+associated facet member of `StackType` is an
+[archetype](terminology.md#archetype), like other
+[symbolic facet bindings](#symbolic-facet-bindings). This means
+`StackType.ElementType` has the API dictated by the declaration of `ElementType`
+in the interface `StackAssociatedFacet`.
 
-Outside the generic, associated types have the concrete type values determined
-by impl lookup, rather than the erased version of that type used inside a
-generic.
+Outside the checked-generic, associated facets have the concrete facet values
+determined by impl lookup, rather than the erased version of that facet used
+inside a checked-generic.
 
 ```
 var my_array: DynamicArray(i32) = (1, 2, 3);
@@ -2175,7 +2208,7 @@ This is another part of achieving
 [the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions)
 discussed in the [return type section](#return-type).
 
-Associated types can also be implemented using a
+Associated facets can also be implemented using a
 [member type](/docs/design/classes.md#member-type).
 
 ```
@@ -2196,60 +2229,25 @@ class DynamicArray(T:! type) {
 ```
 
 For context, see
-["Interface type parameters and associated types" in the generics terminology document](terminology.md#interface-parameters-and-associated-constants).
+["Interface parameters and associated constants" in the generics terminology document](terminology.md#interface-parameters-and-associated-constants).
 
 **Comparison with other languages:** Both
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
-support associated types.
-
-### Implementation model
-
-The associated type can be modeled by a witness table field in the interface's
-witness table.
-
-```
-interface Iterator {
-  fn Advance[addr self: Self*]();
-}
-
-interface Container {
-  let IteratorType:! Iterator;
-  fn Begin[addr self: Self*]() -> IteratorType;
-}
-```
-
-is represented by:
-
-```
-class Iterator(Self:! type) {
-  var Advance: fnty(this: Self*);
-  ...
-}
-class Container(Self:! type) {
-  // Representation type for the iterator.
-  let IteratorType:! type;
-  // Witness that IteratorType implements Iterator.
-  var iterator_impl: Iterator(IteratorType)*;
-
-  // Method
-  var Begin: fnty (this: Self*) -> IteratorType;
-  ...
-}
-```
+support these, but call them "associated types."
 
 ## Parameterized interfaces
 
-Associated types don't change the fact that a type can only implement an
+Associated constants don't change the fact that a type can only implement an
 interface at most once.
 
 If instead you want a family of related interfaces, one per possible value of a
 type parameter, multiple of which could be implemented for a single type, you
 would use
-[parameterized interfaces](terminology.md#interface-parameters-and-associated-constants).
-To write a parameterized version of the stack interface, instead of using
-associated types, write a parameter list after the name of the interface instead
-of the associated type declaration:
+[_parameterized interfaces_](terminology.md#interface-parameters-and-associated-constants),
+also known as _generic interfaces_. To write a parameterized version of the
+stack interface, instead of using associated constants, write a parameter list
+after the name of the interface:
 
 ```
 interface StackParameterized(ElementType:! type) {
@@ -2291,9 +2289,9 @@ class Produce {
 }
 ```
 
-Unlike associated types in interfaces and parameters to types, interface
+Unlike associated constants in interfaces and parameters to types, interface
 parameters can't be deduced. For example, if we were to rewrite
-[the `PeekAtTopOfStack` example in the "associated types" section](#associated-types)
+[the `PeekAtTopOfStack` example in the "associated facets" section](#associated-facets)
 for `StackParameterized(T)` it would generate a compile error:
 
 ```
@@ -2304,14 +2302,31 @@ fn BrokenPeekAtTopOfStackParameterized
 ```
 
 This error is because the compiler can not determine if `T` should be `Fruit` or
-`Veggie` when passing in argument of type `Produce*`. The function's signature
-would have to be changed so that the value for `T` could be determined from the
-explicit parameters.
+`Veggie` when passing in argument of type `Produce*`. Either `T` should be
+replaced by a concrete type, like `Fruit`:
 
 ```
-fn PeekAtTopOfStackParameterized
-    [T:! type, StackType:! StackParameterized(T)]
-    (s: StackType*, _:! singleton_type_of(T)) -> T { ... }
+fn PeekAtTopOfFruitStack
+    [StackType:! StackParameterized(Fruit)]
+    (s: StackType*) -> T { ... }
+
+var produce: Produce = ...;
+var top_fruit: Fruit =
+    PeekAtTopOfFruitStack(&produce);
+```
+
+Or the value for `T` would be passed explicitly, using `where` constraints
+described [in this section](#another-type-implements-parameterized-interface):
+
+```
+fn PeekAtTopOfStackParameterizedImpl
+    (T:! type, StackType:! StackParameterized(T), s: StackType*) -> T {
+  ...
+}
+fn PeekAtTopOfStackParameterized[StackType:! type]
+    (s: StackType*, T:! type where StackType is StackParameterized(T)) -> T {
+  return PeekAtTopOfStackParameterizedImpl(T, StackType, s);
+}
 
 var produce: Produce = ...;
 var top_fruit: Fruit =
@@ -2320,20 +2335,18 @@ var top_veggie: Veggie =
     PeekAtTopOfStackParameterized(&produce, Veggie);
 ```
 
-The pattern `_:! singleton_type_of(T)` is a placeholder syntax for an expression
-that will only match `T`, until issue
-[#578: Value patterns as function parameters](https://github.com/carbon-language/carbon-lang/issues/578)
-is resolved. Using that pattern in the explicit parameter list allows us to make
-`T` available earlier in the declaration so it can be passed as the argument to
-the parameterized interface `StackParameterized`.
+> **Note:** Alternative ways of declaraing `PeekAtTopOfStackParameterized` are
+> described and discussed in
+> [#578: Value patterns as function parameters](https://github.com/carbon-language/carbon-lang/issues/578).
 
-This approach is useful for the `ComparableTo(T)` interface, where a type might
-be comparable with multiple other types, and in fact interfaces for
-[operator overloads](#operator-overloading) more generally. Example:
+Parameterized interfaces are useful for
+[operator overloads](#operator-overloading). For example, the `EqWith(T)` and
+`OrderedWith(T)` interfaces have a parameter that allows type to be comparable
+with multiple other types, as in:
 
 ```
-interface EquatableWith(T:! type) {
-  fn Equals[self: Self](rhs: T) -> bool;
+interface EqWith(T:! type) {
+  fn Equal[self: Self](rhs: T) -> bool;
   ...
 }
 class Complex {
@@ -2341,23 +2354,26 @@ class Complex {
   var imag: f64;
   // Can implement this interface more than once
   // as long as it has different arguments.
-  extend impl as EquatableWith(f64) { ... }
-  // Same as: impl as EquatableWith(Complex) { ... }
-  extend impl as EquatableWith(Self) { ... }
+  extend impl as EqWith(f64) { ... }
+  // Same as: impl as EqWith(Complex) { ... }
+  extend impl as EqWith(Self) { ... }
 }
 ```
 
-All interface parameters must be marked as "generic", using the `:!` syntax.
-This reflects these two properties of these parameters:
+All interface parameters must be marked as "symbolic", using the `:!` binding
+pattern syntax. This reflects these two properties of these parameters:
 
 -   They must be resolved at compile-time, and so can't be passed regular
     dynamic values.
--   We allow either generic or template values to be passed in.
+-   We allow either symbolic or template values to be passed in.
 
-**Note:** Interface parameters aren't required to be types, but that is the vast
-majority of cases. As an example, if we had an interface that allowed a type to
-define how the tuple-member-read operator would work, the index of the member
-could be an interface parameter:
+**Future work:** We might also allow `template` bindings for interface
+parameters, once we have a use case.
+
+**Note:** Interface parameters aren't required to be facets, but that is the
+vast majority of cases. As an example, if we had an interface that allowed a
+type to define how the tuple-member-read operator would work, the index of the
+member could be an interface parameter:
 
 ```
 interface ReadTupleMember(index:! u32) {
@@ -2368,7 +2384,7 @@ interface ReadTupleMember(index:! u32) {
 ```
 
 This requires that the index be known at compile time, but allows different
-indices to be associated with different types.
+indices to be associated with different values of `T`.
 
 **Caveat:** When implementing an interface twice for a type, the interface
 parameters are required to always be different. For example:
@@ -2381,7 +2397,7 @@ class Bijection(FromType:! type, ToType:! type) {
   extend impl as Map(FromType, ToType) { ... }
   extend impl as Map(ToType, FromType) { ... }
 }
-// ❌ Error: Bijection has twodifferent impl definitions of
+// ❌ Error: Bijection has two different impl definitions of
 // interface Map(String, String)
 var oops: Bijection(String, String) = ...;
 ```
@@ -2401,55 +2417,20 @@ class ReverseLookup(FromType:! type, ToType:! type) {
 ```
 
 **Comparison with other languages:** Rust calls
-[traits with type parameters "generic traits"](https://doc.rust-lang.org/reference/items/traits.html#generic-traits)
+[traits with parameters "generic traits"](https://doc.rust-lang.org/reference/items/traits.html#generic-traits)
 and
 [uses them for operator overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading).
 
 [Rust uses the term "type parameters"](https://github.com/rust-lang/rfcs/blob/master/text/0195-associated-items.md#clearer-trait-matching)
-for both interface type parameters and associated types. The difference is that
-interface parameters are "inputs" since they _determine_ which `impl` to use,
-and associated types are "outputs" since they are determined _by_ the `impl`,
-but play no role in selecting the `impl`.
-
-### Impl lookup
-
-Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. To satisfy the [orphan rule for coherence](#orphan-rule), that
-`impl` must be defined in some library that must be imported in any code that
-looks up whether that interface is implemented for that type. This requires that
-`impl` is defined in the same library that defines the interface or one of the
-names needed by the type. That is, the `impl` must be defined with one of `I`,
-`T`, `U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking
-up this `impl` to import the _definitions_ of all of those names. Seeing a
-forward declaration of these names is insufficient, since you can presumably see
-forward declarations without seeing an `impl` with the definition. This
-accomplishes a few goals:
-
--   The compiler can check that there is only one definition of any `impl` that
-    is actually used, avoiding
-    [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
-    problems.
--   Every attempt to use an `impl` will see the exact same `impl`, making the
-    interpretation and semantics of code consistent no matter its context, in
-    accordance with the
-    [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
--   Allowing the `impl` to be defined with either the interface or the type
-    addresses the
-    [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
-
-Note that [the rules for specialization](#lookup-resolution-and-specialization)
-do allow there to be more than one `impl` to be defined for a type, by
-unambiguously picking one as most specific.
-
-**References:** Implementation coherence is
-[defined in terminology](terminology.md#coherence), and is
-[a goal for Carbon](goals.md#coherence). More detail can be found in
-[this appendix with the rationale and alternatives considered](appendix-coherence.md).
+for both interface facet parameters and associated facets. The difference is
+that interface parameters are "inputs" since they _determine_ which `impl` to
+use, and associated constants are "outputs" since they are determined _by_ the
+`impl`, but play no role in selecting the `impl`.
 
 ### Parameterized named constraints
 
-We should also allow the [named constraint](#named-constraints) construct to
-support parameters. Parameters would work the same way as for interfaces.
+Carbon also allows the [named constraint](#named-constraints) construct to
+support parameters. Those parameters work the same way as for interfaces.
 
 ## Where constraints
 
@@ -2595,7 +2576,8 @@ constraint IntStack {
 ```
 
 This syntax is also used to specify the values of
-[associated types](#associated-types) when implementing an interface for a type.
+[associated constants](#associated-constants) when implementing an interface for
+a type.
 
 ##### Equal generic types
 
@@ -2674,15 +2656,16 @@ fn Contains
 ```
 
 the `where` constraint means `CT.ElementType` must satisfy `Comparable` as well.
-However, inside the body of `Contains`, `CT.ElementType` will only act like the
-implementation of `Comparable` is [external](#external-impl). That is, items
-from the `needles` container won't directly have a `Compare` method member, but
-can still be implicitly converted to `Comparable` and can still call `Compare`
-using the compound member access syntax, `needle.(Comparable.Compare)(elt)`. The
-rule is that an `==` `where` constraint between two type variables does not
-modify the set of member names of either type. (If you write
-`where .ElementType = String` with a `=` and a concrete type, then
-`.ElementType` is actually set to `String` including the complete `String` API.)
+However, inside the body of `Contains`, `CT.ElementType` will act like the
+implementation of `Comparable` is declared without [`extend`](#extend-impl).
+That is, items from the `needles` container won't directly have a `Compare`
+method member, but can still be implicitly converted to `Comparable` and can
+still call `Compare` using the compound member access syntax,
+`needle.(Comparable.Compare)(elt)`. The rule is that an `==` `where` constraint
+between two type variables does not modify the set of member names of either
+type. (If you write `where .ElementType = String` with a `=` and a concrete
+type, then `.ElementType` is actually set to `String` including the complete
+`String` API.)
 
 Note that `==` constraints are symmetric, so the previous declaration of
 `Contains` is equivalent to an alternative declaration where `CT` is declared
@@ -3598,13 +3581,6 @@ with the size? So you could say `T.ByteSize` in the above example to get a
 generic int value with the size of `T`. Similarly you might say `T.ByteStride`
 to get the number of bytes used for each element of an array of `T`.
 
-#### Implementation model
-
-This requires a special integer field be included in the witness table type to
-hold the size of the type. This field will only be known generically, so if its
-value is used for type checking, we need some way of evaluating those type tests
-symbolically.
-
 ### `TypeId`
 
 There are some capabilities every type can provide. For example, every type
@@ -3650,11 +3626,11 @@ There are four type-of-types related to
 conform to the decision on
 [question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
 
-The type-of-types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
+The facet types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
 `Destructible`. Combinations of them may be formed using
-[the `&` operator](#combining-interfaces-by-anding-type-of-types). For example,
-a generic function that both instantiates and deletes values of a type `T` would
-require `T` implement `Concrete & Deletable`.
+[the `&` operator](#combining-interfaces-by-anding-facet-types). For example, a
+checked-generic function that both instantiates and deletes values of a type `T`
+would require `T` implement `Concrete & Deletable`.
 
 Types are forbidden from explicitly implementing these type-of-types directly.
 Instead they use
@@ -3696,9 +3672,9 @@ The `where .Self == U` modifier allows values to implicitly convert between type
 `T`, the erased type, and type `U`, the concrete type. Note that implicit
 conversion is
 [only performed across a single `where` equality](#manual-type-equality). This
-can be used to switch to the API of `C` when it is external, as an alternative
-to [using an adapter](#use-case-accessing-external-names), or to simplify
-inlining of a generic function while preserving semantics.
+can be used to switch to the API of `C` when `U` does not extend `C`, as an
+alternative to [using an adapter](#use-case-accessing-interface-names), or to
+simplify inlining of a generic function while preserving semantics.
 
 ## Parameterized impl declarations
 
@@ -3786,8 +3762,8 @@ interface when its element type satisfies the same interface:
     if the element type is comparable.
 -   A container is copyable if its elements are.
 
-This may be done with an [external `impl`](#external-impl) by specifying a more
-specific implementing type to the left of the `as` in the declaration:
+This may be done by specifying a more specific implementing type to the left of
+the `as` in the declaration:
 
 ```
 interface Printable {
@@ -3954,8 +3930,8 @@ than one root type, so the `impl` declaration will use a type variable for the
 
     This means that every type is the common type with itself.
 
-Blanket impl declarations must always be [external](#external-impl) and defined
-lexically out-of-line.
+Blanket impl declarations may never be declared using [`extend`](#extend-impl)
+and must always be defined lexically [out-of-line](#out-of-line-impl).
 
 #### Difference between a blanket impl and a named constraint
 
@@ -3986,8 +3962,8 @@ class BigInt {
 impl forall [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
 ```
 
-Wildcard impl declarations must always be [external](#external-impl), to avoid
-having the names in the interface defined for the type multiple times.
+Wildcard impl declarations may never be declared using [`extend`](#extend-impl),
+to avoid having the names in the interface defined for the type multiple times.
 
 ### Combinations
 
@@ -4065,6 +4041,39 @@ interface. This is achieved with the _orphan rule_.
 
 **Orphan rule:** Some name from the type structure of an `impl` declaration must
 be defined in the same library as the `impl`, that is some name must be _local_.
+
+Let's say you have some interface `I(T, U(V))` being implemented for some type
+`A(B(C(D), E))`. To satisfy the orphan rule for coherence, that `impl` must be
+defined in some library that must be imported in any code that looks up whether
+that interface is implemented for that type. This requires that `impl` is
+defined in the same library that defines the interface or one of the names
+needed by the type. That is, the `impl` must be defined with one of `I`, `T`,
+`U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further require anything looking up
+this `impl` to import the _definitions_ of all of those names. Seeing a forward
+declaration of these names is insufficient, since you can presumably see forward
+declarations without seeing an `impl` with the definition. This accomplishes a
+few goals:
+
+-   The compiler can check that there is only one definition of any `impl` that
+    is actually used, avoiding
+    [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
+    problems.
+-   Every attempt to use an `impl` will see the exact same `impl`, making the
+    interpretation and semantics of code consistent no matter its context, in
+    accordance with the
+    [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
+-   Allowing the `impl` to be defined with either the interface or the type
+    partially addresses the
+    [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+
+Note that [the rules for specialization](#lookup-resolution-and-specialization)
+do allow there to be more than one `impl` to be defined for a type, by
+unambiguously picking one as most specific.
+
+> **References:** Implementation coherence is
+> [defined in terminology](terminology.md#coherence), and is
+> [a goal for Carbon generics](goals.md#coherence). More detail can be found in
+> [this appendix with the rationale and alternatives considered](appendix-coherence.md).
 
 Only the implementing interface and types (self type and type parameters) in the
 type structure are relevant here; an interface mentioned in a constraint is not
@@ -4286,9 +4295,9 @@ this time there are no known alternatives. Unfortunately, the approach Carbon
 uses to avoid undecidability for type equality,
 [providing an explicit proof in the source](#manual-type-equality), can't be
 used here. The code triggering the query asking whether some type implements an
-interface will typically be generic code with know specific knowledge about the
-types involved, and won't be in a position to provide a manual proof that the
-implementation should exist.
+interface will typically be checked-generic code with no specific knowledge
+about the types involved, and won't be in a position to provide a manual proof
+that the implementation should exist.
 
 **Open question:** Is there some restriction on `impl` declarations that would
 allow our desired use cases, but allow the compiler to detect non-terminating
@@ -4388,8 +4397,8 @@ Since we do not require the compiler to compare the definitions of functions,
 agreement is only possible for interfaces without any function members.
 
 If the Carbon compiler sees a matching `final` impl, it can assume it won't be
-specialized so it can use the assignments of the associated types in that impl
-definition.
+specialized so it can use the assignments of the associated constants in that
+impl definition.
 
 ```
 fn F[T:! type](x: T) {
@@ -4462,9 +4471,9 @@ differences between the Carbon and Rust plans:
     declared `final`.
 -   Since a Rust impl is not specializable by default, generic functions can
     assume that if a matching blanket impl declaration is found, the associated
-    types from that impl will be used. In Carbon, if a generic function requires
-    an associated type to have a particular value, the function commonly will
-    need to state that using an explicit constraint.
+    constants from that impl will be used. In Carbon, if a checked-generic
+    function requires an associated constant to have a particular value, the
+    function commonly will need to state that using an explicit constraint.
 -   Carbon will not have the "fundamental" attribute used by Rust on types or
     traits, as described in
     [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html).
@@ -4606,17 +4615,18 @@ The declaration of an interface implementation consists of:
 
 -   optional modifier keyword `final`,
 -   the keyword introducer `impl`,
--   an optional deduced parameter list in square brackets `[`...`]`,
+-   an optional `forall` followed by a deduced parameter list in square brackets
+    `[`...`]`,
 -   a type, including an optional parameter pattern,
 -   the keyword `as`, and
--   a [type-of-type](#type-of-types), including an optional
+-   a [facet type](#facet-types), including an optional
     [parameter pattern](#parameterized-interfaces) and
     [`where` clause](#where-constraints) assigning
-    [associated constants](#associated-constants) and
-    [associated types](#associated-types).
+    [associated constants](#associated-constants) including
+    [associated facets](#associated-facets).
 
 **Note:** The `extend` keyword, when present, is not part of the declaration. It
-is only present for internal `impl` declarations in class scope.
+precedes the `impl` declaration in class scope.
 
 An implementation of an interface for a type may be forward declared subject to
 these rules:
@@ -4637,16 +4647,17 @@ these rules:
     does not apply to `impl as` declarations in an interface or named constraint
     definition, as those are considered interface requirements not forward
     declarations.
--   Every internal implementation must be declared (or defined) inside the scope
-    of the class definition. It may also be declared before the class definition
-    or defined afterwards. Note that the class itself is incomplete in the scope
-    of the class definition, but member function bodies defined inline are
-    processed
+-   Every extending implementation must be declared (or defined) inside the
+    scope of the class definition. It may also be declared before the class
+    definition or defined afterwards. Note that the class itself is incomplete
+    in the scope of the class definition, but member function bodies defined
+    inline are processed
     [as if they appeared immediately after the end of the outermost enclosing class](/docs/project/principles/information_accumulation.md#exceptions).
--   For [coherence](goals.md#coherence), we require that any impl that matches
-    an [impl lookup](#impl-lookup) query in the same file, must be declared
-    before the query. This can be done with a definition or a forward
-    declaration.
+-   For [coherence](goals.md#coherence), we require that any `impl` declaration
+    that matches an impl lookup query in the same file, must be declared before
+    the query. This can be done with a definition or a forward declaration. This
+    matches the
+    [information accumulation principle](/docs/project/principles/information_accumulation.md).
 
 ### Matching and agreeing
 
@@ -4664,10 +4675,11 @@ after name and alias resolution. To agree:
     declarations, they must match.
 -   Types agree if they correspond to the same expression tree, after name and
     alias resolution and canonicalization of parentheses. Note that no other
-    evaluation of type expressions is performed.
+    evaluation of expressions is performed.
 
 Interface implementation declarations match if the type and interface
-expressions match:
+expressions match along with
+[the `forall` clause](#parameterized-impl-declarations), if any:
 
 -   If the type part is omitted, it is rewritten to `Self` in the context of the
     declaration.
@@ -4675,7 +4687,7 @@ expressions match:
     scope, this should match the type name and optional parameter expression
     after `class`. So in `class MyClass { ... }`, `Self` is rewritten to
     `MyClass`. In `class Vector(T:! Movable) { ... }`, `Self` is rewritten to
-    `Vector(T:! Movable)`.
+    `forall [T:! Movable] Vector(T)`.
 -   Types match if they have the same name after name and alias resolution and
     the same parameters, or are the same type parameter.
 -   Interfaces match if they have the same name after name and alias resolution
@@ -4723,11 +4735,9 @@ interface Interface4 {
   let T4:! type;
 }
 
-// Forward declaration of external implementations
+// Out-of-line forward declarations
 impl MyClass as Interface1 where .T1 = i32;
 impl MyClass as Interface2 where .T2 = bool;
-
-// Forward declaration of an internal implementation
 impl MyClass as Interface3 where .T3 = f32;
 impl MyClass as Interface4 where .T4 = String;
 
@@ -4740,50 +4750,55 @@ interface Interface6 {
 
 // Definition of the previously declared class type
 class MyClass {
-  // Definition of previously declared external impl.
+  // Inline definition of previously declared impl.
   // Note: no need to repeat assignments to associated
   // constants.
   impl as Interface1 where _ { }
 
-  // Definition of previously declared internal impl.
+  // Inline extending definition of previously declared
+  // impl.
+  // Note: `extend` only appears on the declaration in
+  // class scope
   // Note: allowed even though `MyClass` is incomplete.
   // Note: allowed but not required to repeat `where`
   // clause.
   extend impl as Interface3 where .T3 = f32 { }
 
-  // Redeclaration of previously declared internal impl.
-  // Every internal implementation must be declared in
-  // the class definition.
+  // Extending redeclaration of previously declared
+  // impl. Every extending implementation must be
+  // declared in the class definition.
   extend impl as Interface4 where _;
 
-  // Forward declaration of external implementation.
+  // Inline forward declaration of implementation.
   impl MyClass as Interface5 where .T5 = u64;
   // or: impl as Interface5 where .T5 = u64;
 
-  // Forward declaration of internal implementation.
+  // Forward declaration of extending implementation.
   extend impl as Interface6 where .T6 = u8;
-  // Not: extend impl MyClass as Interface6 where .T6 = u8;
+  // *Not*:
+  //   extend impl MyClass as Interface6 where .T6 = u8;
+  // No optional type after `extend impl`, it must be
+  // followed immediately by `as`
 }
 
 // It would be legal to move the following definitions
 // from the API file to the implementation file for
 // this library.
 
-// Definition of implementations previously declared
-// external.
+// Definitions of previously declared implementations.
 impl MyClass as Interface2 where _ { }
 impl MyClass as Interface5 where _ { }
 
-// Definition of implementations previously declared
-// internal.
+// Definition of previously declared extending
+// implementations.
 impl MyClass as Interface4 where _ { }
 impl MyClass as Interface6 where _ { }
 ```
 
 ### Example of declaring interfaces with cyclic references
 
-In this example, `Node` has an `EdgeType` associated type that is constrained to
-implement `Edge`, and `Edge` has a `NodeType` associated type that is
+In this example, `Node` has an `EdgeType` associated facet that is constrained
+to implement `Edge`, and `Edge` has a `NodeType` associated facet that is
 constrained to implement `Node`. Furthermore, the `NodeType` of an `EdgeType` is
 the original type, and the other way around. This is accomplished by naming and
 then forward declaring the constraints that can't be stated directly:
@@ -4919,7 +4934,7 @@ developers desire. As an example, in Rust the
 has one required method but dozens of "provided methods" with defaults.
 
 Defaults may also be provided for associated constants, such as associated
-types, and interface parameters, using the `= <default value>` syntax.
+facets, and interface parameters, using the `= <default value>` syntax.
 
 ```
 interface Add(Right:! type = Self) {
@@ -4933,7 +4948,7 @@ impl String as Add() {
 }
 ```
 
-Note that `Self` is a legal default value for an associated type or type
+Note that `Self` is a legal default value for an associated facet or facet
 parameter. In this case the value of those names is not determined until `Self`
 is, so `Add()` is equivalent to the constraint:
 
@@ -4947,7 +4962,7 @@ constraint AddDefault {
 Note also that the parenthesis are required after `Add`, even when all
 parameters are left as their default values.
 
-More generally, default expressions may reference other associated types or
+More generally, default expressions may reference other associated constants or
 `Self` as parameters to type constructors. For example:
 
 ```
@@ -5185,7 +5200,7 @@ interface B(T:! type) {
 
 An implementation of `B` for a set of types can only be valid if there is a
 visible implementation of `A` with the same `T` parameter for those types with
-the `.Result` associated type set to `i32`. That is
+the `.Result` associated facet set to `i32`. That is
 [not sufficient](/proposals/p1088.md#less-strict-about-requirements-with-where-clauses),
 though, unless the implementation of `A` can't be specialized, either because it
 is [marked `final`](#final-impl-declarations) or is not
@@ -5486,8 +5501,8 @@ the unparameterized impl when there is an exact match.
 
 To reduce the boilerplate needed to support these implicit conversions when
 defining operator overloads, Carbon has the `like` operator. This operator can
-only be used in the type or type-of-type part of an `impl` declaration, as part
-of a forward declaration or definition, in a place of a type.
+only be used in the type or facet type part of an `impl` declaration, as part of
+a forward declaration or definition, in a place of a type.
 
 ```
 // Notice `f64` has been replaced by `like f64`
@@ -5643,10 +5658,12 @@ impl forall [T:! IntLike] like T
 
 ## Parameterized types
 
-Types may have generic parameters. Those parameters may be used to specify types
-in the declarations of its members, such as data fields, member functions, and
-even interfaces being implemented. For example, a container type might be
-parameterized by the type of its elements:
+Generic types may be defined by giving them compile-time parameters. Those
+parameters may be used to specify types in the declarations of its members, such
+as data fields, member functions, and even interfaces being implemented. For
+example, a container type might be parameterized by the type of its elements:
+
+**FIXME: member functions may have additional parameters.**
 
 ```
 class HashMap(
@@ -5666,15 +5683,16 @@ class HashMap(
 }
 ```
 
-Note that, unlike functions, every parameter to a type must either be generic or
-template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
+Note that, unlike functions, every parameter to a type must be compile-time,
+either symbolic using `:!` or template using `template...:!`, not dynamic, with
+a plain `:`.
 
 Two types are the same if they have the same name and the same arguments.
 Carbon's [manual type equality](#manual-type-equality) approach means that the
-compiler may not always be able to tell when two type expressions are equal
-without help from the user, in the form of
-[`observe` declarations](#observe-declarations). This means Carbon will not in
-general be able to determine when types are unequal.
+compiler may not always be able to tell when two
+[type expressions](terminology.md#type-expression) are equal without help from
+the user, in the form of [`observe` declarations](#observe-declarations). This
+means Carbon will not in general be able to determine when types are unequal.
 
 Unlike an [interface's parameters](#parameterized-interfaces), a type's
 parameters may be [deduced](terminology.md#deduced-parameter), as in:
@@ -5773,8 +5791,8 @@ Note that the constraint on `T` is just `Movable`, not
 `Movable & OptionalStorage`, since the `Movable` requirement is
 [sufficient to guarantee](#lookup-resolution-and-specialization) that some
 implementation of `OptionalStorage` exists for `T`. Carbon does not require
-callers of `Optional`, even generic callers, to specify that the argument type
-implements `OptionalStorage`:
+callers of `Optional`, even checked-generic callers, to specify that the
+argument type implements `OptionalStorage`:
 
 ```
 // ✅ Allowed: `T` just needs to be `Movable` to form `Optional(T)`.
@@ -5808,15 +5826,15 @@ class Optional(T:! Movable) {
 
 ### Dynamic types
 
-Generics provide enough structure to support runtime dispatch for values with
-types that vary at runtime, without giving up type safety. Both Rust and Swift
-have demonstrated the value of this feature.
+Checked-generics provide enough structure to support runtime dispatch for values
+with types that vary at runtime, without giving up type safety. Both Rust and
+Swift have demonstrated the value of this feature.
 
 #### Runtime type parameters
 
 This feature is about allowing a function's type parameter to be passed in as a
-dynamic (non-generic) parameter. All values of that type would still be required
-to have the same type.
+dynamic (non-compile-time) parameter. All values of that type would still be
+required to have the same type.
 
 #### Runtime type fields
 
@@ -5845,8 +5863,8 @@ There are a collection of use cases for making different changes to interfaces
 that are already in use. These should be addressed either by describing how they
 can be accomplished with existing generics features, or by adding features.
 
-In addition, evolution from (C++ or Carbon) templates to generics needs to be
-supported and made safe.
+In addition, evolution from (C++ or Carbon) templates to checked generics needs
+to be supported and made safe.
 
 ### Testing
 
@@ -5857,15 +5875,16 @@ expected behavior of any type implementing that interface.
 
 A feature we might consider where an `impl` itself can have state.
 
-### Generic associated types and higher-ranked types
+### Generic associated facets and higher-ranked facets
 
 This would be some way to express the requirement that there is a way to go from
 a type to an implementation of an interface parameterized by that type.
 
-#### Generic associated types
+#### Generic associated facets
 
-Generic associated types are about when this is a requirement of an interface.
-These are also called "associated type constructors."
+Generic associated facets are about when this is a requirement of an interface.
+These are also called
+"[associated type constructors](https://smallcultfollowing.com/babysteps/blog/2016/11/02/associated-type-constructors-part-1-basic-concepts-and-introduction/)."
 
 Rust has
 [stabilized this feature](https://github.com/rust-lang/rust/pull/96709).
@@ -5874,7 +5893,7 @@ Rust has
 
 Higher-ranked types are used to represent this requirement in a function
 signature. They can be
-[emulated using generic associated types](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/).
+[emulated using generic associated facets](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/).
 
 ### Field requirements
 
@@ -5889,13 +5908,14 @@ See details in [the goals document](goals.md#bridge-for-c-customization-points).
 
 ### Variadic arguments
 
-Some facility for allowing a function to generically take a variable number of
-arguments.
+Some facility for allowing a function to take a variable number of arguments,
+with the [definition checked](terminology.md#complete-definition-checking)
+independent of calls.
 
-### Range constraints on generic integers
+### Range constraints on symbolic integers
 
-We currently only support `where` clauses on type-of-types. We may want to also
-support constraints on generic integers. The constraint with the most expected
+We currently only support `where` clauses on facet types. We may want to also
+support constraints on symbolic integers. The constraint with the most expected
 value is the ability to do comparisons like `<`, or `>=`. For example, you might
 constrain the `N` member of [`NSpacePoint`](#associated-constants) using an
 expression like `PointT:! NSpacePoint where 2 <= .N and .N <= 3`.
@@ -5903,10 +5923,10 @@ expression like `PointT:! NSpacePoint where 2 <= .N and .N <= 3`.
 The concern here is supporting this at compile time with more benefit than
 complexity. For example, we probably don't want to support integer-range based
 types at runtime, and there are also concerns about reasoning about comparisons
-between multiple generic integer parameters. For example, if `J < K` and
+between multiple symbolic integer parameters. For example, if `J < K` and
 `K <= L`, can we call a function that requires `J < L`? There is also a
 secondary syntactic concern about how to write this kind of constraint on a
-parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
+parameter, as opposed to an associated facet, as in `N:! u32 where ___ >= 2`.
 
 ## References
 
@@ -5917,6 +5937,7 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#983: Generic details 7: final impls](https://github.com/carbon-language/carbon-lang/pull/983)
+-   [#989: Member access expressions](https://github.com/carbon-language/carbon-lang/pull/989)
 -   [#990: Generics details 8: interface default and final members](https://github.com/carbon-language/carbon-lang/pull/990)
 -   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
 -   [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
@@ -5925,7 +5946,13 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146)
 -   [#1327: Generics: `impl forall`](https://github.com/carbon-language/carbon-lang/pull/1327)
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+-   [#2138: Checked and template generic terminology](https://github.com/carbon-language/carbon-lang/pull/2138)
+-   [#2173: Associated constant assignment versus equality](https://github.com/carbon-language/carbon-lang/pull/2173)
+-   [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
 -   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)
+-   [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 -   [#2376: Constraints must use `Self`](https://github.com/carbon-language/carbon-lang/pull/2376)
 -   [#2483: Replace keyword `is` with `impls`](https://github.com/carbon-language/carbon-lang/pull/2483)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+-   [#2964: Expression phase terminology](https://github.com/carbon-language/carbon-lang/pull/2964)
+-   [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
