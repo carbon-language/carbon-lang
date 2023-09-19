@@ -324,9 +324,9 @@ entity affect a class' API, then that is mentioned with an `extend` declaration
 in the `class` definition.
 
 **Comparison with other languages:** Rust only defines implementations lexically
-outside of the `class` definition. Carbon's approach results in the property that every type's API
-is described by declarations inside its `class` definition and doesn't change
-afterwards.
+outside of the `class` definition. Carbon's approach results in the property
+that every type's API is described by declarations inside its `class` definition
+and doesn't change afterwards.
 
 **References:** Carbon's interface implementation syntax was first defined in
 [proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
@@ -392,8 +392,8 @@ case) in addition to the library that defines the type (`Point_OutOfLine` here).
 This (at least partially) addresses
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
-You can't use `extend` outside the class definition, so an `impl` declaration
-in a different library will never affect the class's API. This means that the API
+You can't use `extend` outside the class definition, so an `impl` declaration in
+a different library will never affect the class's API. This means that the API
 of a class such as `Point_OutOfLine` doesn't change based on what is imported.
 It would be particularly bad if two different libraries implemented interfaces
 with conflicting names that both affected the API of a single type. As a

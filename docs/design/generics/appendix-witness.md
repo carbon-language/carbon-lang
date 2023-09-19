@@ -213,8 +213,8 @@ class Vector {
 }
 ```
 
-The [impl of `Vector` for `Point_Inline`](details.md#inline-impl) would be a value
-of this type:
+The [impl of `Vector` for `Point_Inline`](details.md#inline-impl) would be a
+value of this type:
 
 ```
 var VectorForPoint_Inline: Vector  = {
