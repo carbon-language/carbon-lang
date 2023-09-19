@@ -101,6 +101,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> step TypeInstantiationAction pos: 0 `interface As(T = class T)` (phase_execution.carbon:10) --->
 // CHECK:STDOUT: ->> instantiating type `interface As(T = class T)` (phase_execution.carbon:10)
 // CHECK:STDOUT: ->> instantiating type `class T` (phase_execution.carbon:10)
+// CHECK:STDOUT: <<- instantiated type `class T` as `class T` (phase_execution.carbon:10)
+// CHECK:STDOUT: <<- instantiated type `interface As(T = class T)` as `interface As(T = class T)` (phase_execution.carbon:10)
 // CHECK:STDOUT: <[] stack-pop:  TypeInstantiationAction pos: 0 `interface As(T = class T)` (phase_execution.carbon:10)
 // CHECK:STDOUT: ->> step ExpressionAction pos: 3 `{}.(interface ImplicitAs(T = class T).Convert)` results: [`{}`, `witness for impl T as ImplicitAs(U)`, `interface As(T = class T)`]  (phase_execution.carbon:10) --->
 // CHECK:STDOUT: ->> step ExpressionAction pos: 4 `{}.(interface ImplicitAs(T = class T).Convert)` results: [`{}`, `witness for impl T as ImplicitAs(U)`, `interface As(T = class T)`]  (phase_execution.carbon:10) --->
@@ -150,6 +152,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <[] stack-pop:  TypeInstantiationAction pos: 0 `class T` (prelude.carbon:{{\d+}})
 // CHECK:STDOUT: ->> step ExpressionAction pos: 2 `self` results: [`{}`, `class T`]  (prelude.carbon:{{\d+}}) --->
 // CHECK:STDOUT: ->> instantiating type `class T` (prelude.carbon:{{\d+}})
+// CHECK:STDOUT: <<- instantiated type `class T` as `class T` (prelude.carbon:{{\d+}})
 // CHECK:STDOUT: <[] stack-pop:  ExpressionAction pos: 2 `self` results: [`{}`, `class T`]  (prelude.carbon:{{\d+}})
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `__intrinsic_implicit_as_convert(self, U)` results: [`T{}`]  (prelude.carbon:{{\d+}}) --->
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `__intrinsic_implicit_as_convert(self, U)` results: [`T{}`]  (prelude.carbon:{{\d+}})
