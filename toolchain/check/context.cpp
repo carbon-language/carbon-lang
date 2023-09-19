@@ -449,25 +449,22 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
 
       // TODO: Make non-recursive.
       switch (expr.kind()) {
-        case SemIR::NodeKind::TupleLiteral: {
-          auto elements = semantics_ir().GetNodeBlock(expr.GetAsTupleLiteral());
-          CopyOnWriteBlock new_block(semantics_ir(), expr.GetAsTupleLiteral());
+        case SemIR::NodeKind::TupleLiteral:
+        case SemIR::NodeKind::StructLiteral: {
+          bool is_tuple = expr.kind() == SemIR::NodeKind::TupleLiteral;
+          auto elements_id =
+              is_tuple ? expr.GetAsTupleLiteral() : expr.GetAsStructLiteral();
+          auto elements = semantics_ir().GetNodeBlock(elements_id);
+          CopyOnWriteBlock new_block(semantics_ir(), elements_id);
           for (auto [i, elem_id] : llvm::enumerate(elements)) {
             new_block.Set(i,  ConvertToValueExpression(elem_id));
           }
-          return AddNode(SemIR::Node::TupleValue::Make(
-              expr.parse_node(), expr.type_id(), expr_id, new_block.id()));
-        }
-
-        case SemIR::NodeKind::StructLiteral: {
-          auto elements =
-              semantics_ir().GetNodeBlock(expr.GetAsStructLiteral());
-          CopyOnWriteBlock new_block(semantics_ir(), expr.GetAsStructLiteral());
-          for (auto [i, elem_id] : llvm::enumerate(elements)) {
-            new_block.Set(i, ConvertToValueExpression(elem_id));
-          }
-          return AddNode(SemIR::Node::StructValue::Make(
-              expr.parse_node(), expr.type_id(), expr_id, new_block.id()));
+          return AddNode(is_tuple ? SemIR::Node::TupleValue::Make(
+                                        expr.parse_node(), expr.type_id(),
+                                        expr_id, new_block.id())
+                                  : SemIR::Node::StructValue::Make(
+                                        expr.parse_node(), expr.type_id(),
+                                        expr_id, new_block.id()));
         }
 
         default:
@@ -577,6 +574,7 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
 
       case SemIR::NodeKind::StructInit:
       case SemIR::NodeKind::TupleInit:
+      case SemIR::NodeKind::InitializeFrom:
         CARBON_FATAL() << init << " should already have a destination";
 
       case SemIR::NodeKind::StubReference:
@@ -829,15 +827,13 @@ auto Context::ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
     // A tuple of types converts to type `type`.
     // TODO: This should apply even for non-literal tuples.
     if (value.kind() == SemIR::NodeKind::TupleLiteral) {
+      // The conversion from tuple to `type` is `final`.
       auto tuple_block_id = value.GetAsTupleLiteral();
       llvm::SmallVector<SemIR::TypeId> type_ids;
       // If it is empty tuple type, we don't fetch anything.
       if (tuple_block_id != SemIR::NodeBlockId::Empty) {
         const auto& tuple_block = semantics_ir_->GetNodeBlock(tuple_block_id);
         for (auto tuple_node_id : tuple_block) {
-          // TODO: Eventually ExpressionAsType will insert implicit cast
-          // instructions. When that happens, this will need to verify the full
-          // tuple conversion will work before calling it.
           // TODO: This call recurses back to this function. Switch to an
           // iterative approach.
           type_ids.push_back(
