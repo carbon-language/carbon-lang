@@ -188,7 +188,7 @@ It also could contain constants, to store the values of
 
 ### Example
 
-For example, given this `Vector` interface:
+For example, this `Vector` interface:
 
 ```carbon
 interface Vector {
@@ -213,7 +213,7 @@ class Vector {
 }
 ```
 
-The [impl of Vector for Point_Inline](details.md#inline-impl) would be a value
+The [impl of `Vector` for `Point_Inline`](details.md#inline-impl) would be a value
 of this type:
 
 ```
@@ -250,21 +250,22 @@ interface Container {
 }
 ```
 
-is represented by:
+could be represented by:
 
 ```
-class Iterator(Self:! type) {
+class Iterator {
+  var Self:! type;
   var Advance: fnty(this: Self*);
   ...
 }
-class Container(Self:! type) {
-  // Representation type for the iterator.
-  let IteratorType:! type;
+class Container {
+  var Self:! type;
+
   // Witness that IteratorType implements Iterator.
-  var iterator_impl: Iterator(IteratorType)*;
+  var IteratorType:! Iterator*;
 
   // Method
-  var Begin: fnty (this: Self*) -> IteratorType;
+  var Begin: fnty (this: Self*) -> IteratorType->Self;
   ...
 }
 ```
