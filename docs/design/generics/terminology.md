@@ -675,6 +675,9 @@ object, unlike a
 which otherwise is very similar to a witness table, "witnessing" the specific
 descendant of a base class.
 
+Carbon approach to using witness tables is detailed in an
+[appendix](appendix-witness.md).
+
 ## Instantiation
 
 Instantiation is the implementation strategy for templates in both C++ and

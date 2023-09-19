@@ -67,9 +67,9 @@ per method in the interface. However, in practice, it's more complex because it
 must model things like associated facets and interfaces.
 
 Witness tables are called "dictionary passing" in Haskell. Outside of generics,
-a [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) is a witness
-table that witnesses that a class is a descendant of an abstract base class, and
-is passed as part of the object instead of separately.
+a [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) is very similar
+to a witness table, "witnessing" the specific descendant of a base class.
+Vtables, however, are passed as part of the object instead of separately.
 
 ### Dynamic-dispatch witness table
 
