@@ -1163,39 +1163,26 @@ gives itself, `MyTypeOfType & MyTypeOfType == MyTypeOfType`. Also, given two
 [interface extensions](#interface-extension) of a common base interface, the
 combination should not conflict on any names in the common base.
 
-**Future work:** We may want to define another operator on facet types for
-adding requirements to a facet type without affecting the names, and so avoid
-the possibility of name conflicts. Note this means the operation is not
-commutative. If we call this operator `[&]`, then `A [&] B` has the names of `A`
-and `B [&] A` has the names of `B`.
+To add to the requirements of a facet type without affecting the names, and so
+avoid the possibility of name conflicts, names, use a
+[`where .Self impls` clause](#implements-constraints).
 
-```carbon
-// `Printable [&] Renderable` is syntactic sugar for this facet type:
+```
+// `Printable where .Self impls Renderable` is equivalent to:
 constraint {
   require Self impls Printable;
   require Self impls Renderable;
   alias Print = Printable.Print;
 }
-
-// `Renderable [&] EndOfGame` is syntactic sugar for this facet type:
-constraint {
-  require Self impls Renderable;
-  require Self impls EndOfGame;
-  alias Center = Renderable.Center;
-  alias Draw = Renderable.Draw;
-}
 ```
 
-Note that all three expressions `A & B`, `A [&] B`, and `B [&] A` have the same
-requirements, and so you would be able to switch a function declaration between
-them without affecting callers.
-
-Nothing in this design depends on the `[&]` operator, and having both `&` and
-`[&]` might be confusing for users, so it makes sense to postpone implementing
-`[&]` until we have a demonstrated need. The `[&]` operator seems most useful
-for adding requirements for interfaces used for
+You might use this to add requirements on interfaces used for
 [operator overloading](#operator-overloading), where merely implementing the
 interface is enough to be able to use the operator to access the functionality.
+
+Note that the expressions `A & B` and `A where .Self impls B` have the same
+requirements, and so you would be able to switch a function declaration between
+them without affecting callers.
 
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/17IXDdu384x1t9RimQ01bhx4-nWzs4ZEeke4eO6ImQNc/edit?resourcekey=0-Fe44R-0DhQBlw0gs2ujNJA).
@@ -1975,12 +1962,14 @@ fn Render(w: Window) {
 }
 ```
 
-**Note:** Another way to achieve this is to use a local symbolic facet constant:
+**Note:** Another way to achieve this is to use a
+[local symbolic facet constant](#compile-time-let).
 
 ```carbon
 fn Render(w: Window) {
   let DrawInWindow:! Draw = Window;
-  let d: DrawInWindow = w as DrawInWindow;
+  // Implicit conversion to `w as DrawInWindow`.
+  let d: DrawInWindow = w;
   d.SetPen(...);
   d.SetFill(...);
   d.DrawRectangle(...);
