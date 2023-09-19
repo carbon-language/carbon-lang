@@ -12,21 +12,24 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "testing/base/test_raw_ostream.h"
-#include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/tokenized_buffer_test_helpers.h"
+#include "toolchain/testing/yaml_test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Lex {
 namespace {
 
-using Lex::Token;
-using Lex::TokenizedBuffer;
-using Lex::TokenKind;
+using ::Carbon::Testing::ExpectedToken;
+using ::Carbon::Testing::IsDiagnostic;
+using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
+using ::testing::Pair;
+
+namespace Yaml = ::Carbon::Testing::Yaml;
 
 class LexerTest : public ::testing::Test {
  protected:
@@ -1003,37 +1006,30 @@ TEST_F(LexerTest, PrintingAsYaml) {
 
   EXPECT_THAT(
       Yaml::Value::FromText(print_stream.TakeStr()),
-      ElementsAre(Yaml::SequenceValue{Yaml::MappingValue{
-          {"filename", Yaml::ScalarValue{source_storage_.front().filename()}},
-          {"tokens", Yaml::SequenceValue{
-                         Yaml::MappingValue{{"index", "0"},
-                                            {"kind", "Semi"},
-                                            {"line", "2"},
-                                            {"column", "2"},
-                                            {"indent", "2"},
-                                            {"spelling", ";"},
-                                            {"has_trailing_space", "true"}},
-                         Yaml::MappingValue{{"index", "1"},
-                                            {"kind", "Semi"},
-                                            {"line", "5"},
-                                            {"column", "1"},
-                                            {"indent", "1"},
-                                            {"spelling", ";"},
-                                            {"has_trailing_space", "true"}},
-                         Yaml::MappingValue{{"index", "2"},
-                                            {"kind", "Semi"},
-                                            {"line", "5"},
-                                            {"column", "3"},
-                                            {"indent", "1"},
-                                            {"spelling", ";"},
-                                            {"has_trailing_space", "true"}},
-                         Yaml::MappingValue{{"index", "3"},
-                                            {"kind", "EndOfFile"},
-                                            {"line", "15"},
-                                            {"column", "1"},
-                                            {"indent", "1"},
-                                            {"spelling", ""}}}}}}));
+      IsYaml(ElementsAre(Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(
+          Pair("filename", source_storage_.front().filename().str()),
+          Pair("tokens",
+               Yaml::Sequence(ElementsAre(
+                   Yaml::Mapping(ElementsAre(
+                       Pair("index", "0"), Pair("kind", "Semi"),
+                       Pair("line", "2"), Pair("column", "2"),
+                       Pair("indent", "2"), Pair("spelling", ";"),
+                       Pair("has_trailing_space", "true"))),
+                   Yaml::Mapping(
+                       ElementsAre(Pair("index", "1"), Pair("kind", "Semi"),
+                                   Pair("line", "5"), Pair("column", "1"),
+                                   Pair("indent", "1"), Pair("spelling", ";"),
+                                   Pair("has_trailing_space", "true"))),
+                   Yaml::Mapping(
+                       ElementsAre(Pair("index", "2"), Pair("kind", "Semi"),
+                                   Pair("line", "5"), Pair("column", "3"),
+                                   Pair("indent", "1"), Pair("spelling", ";"),
+                                   Pair("has_trailing_space", "true"))),
+                   Yaml::Mapping(ElementsAre(
+                       Pair("index", "3"), Pair("kind", "EndOfFile"),
+                       Pair("line", "15"), Pair("column", "1"),
+                       Pair("indent", "1"), Pair("spelling", "")))))))))))));
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Lex

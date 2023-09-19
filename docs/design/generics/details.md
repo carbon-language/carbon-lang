@@ -333,9 +333,9 @@ entity affect a class' API, then that is mentioned with an `extend` declaration
 in the `class` definition.
 
 **Comparison with other languages:** Rust only defines implementations lexically
-outside of the `class` definition. Carbon's approach results in every type's API
-is described by declarations inside its `class` definition and doesn't change
-afterwards.
+outside of the `class` definition. Carbon's approach results in the property
+that every type's API is described by declarations inside its `class` definition
+and doesn't change afterwards.
 
 **References:** Carbon's interface implementation syntax was first defined in
 [proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
@@ -368,8 +368,8 @@ impl Point_OutOfLine as Vector {
 ```
 
 Since `extend impl` may only be used inside the class definition, out-of-line
-definitions do not contribute to the class' API unless there is a corresponding
-[forward declaration in the class definition using `extend](#forward-impl-declaration).
+definitions do not contribute to the class's API unless there is a corresponding
+[forward declaration in the class definition using `extend`](#forward-impl-declaration).
 
 Conversely, being declared or defined lexically inside the class means that
 implementation is available to other members defined in the class. For example,
@@ -401,15 +401,16 @@ case) in addition to the library that defines the type (`Point_OutOfLine` here).
 This (at least partially) addresses
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
-You can't use `extend` outside the class definition, so an `impl` declarations
-in a different library will never affect the class' API. This means that the API
-of a class such as `Point_OutOfLine` doesn't change based on what is imported.
-It would be particularly bad if two different libraries implemented interfaces
-with conflicting names that both affected the API of a single type. As a
-consequence of this restriction, you can find all the names of direct members
-(those available by [simple member access](terminology.md#simple-member-access))
-of a type in the definition of that type. The only thing that may be in another
-library is an `impl` of an interface.
+You can't use `extend` outside the class definition, so an `impl` declaration in
+a different library will never affect the class' API. This means that the API of
+a class such as `Point_OutOfLine` doesn't change based on what is imported. It
+would be particularly bad if two different libraries implemented interfaces with
+conflicting names that both affected the API of a single type. As a consequence
+of this restriction, you can find all the names of direct members (those
+available by [simple member access](terminology.md#simple-member-access)) of a
+type in the definition of that type and entities referenced in by an `extend`
+declaration in that definition. The only thing that may be in another library is
+an `impl` of an interface.
 
 **Rejected alternative:** We could allow types to have different APIs in
 different files based on explicit configuration in that file. For example, we
@@ -727,7 +728,7 @@ satisfying the interface. The effect of this is that an archetype of `Vector`
 acts like a [supertype](https://en.wikipedia.org/wiki/Subtyping) of any `T`
 implementing `Vector`.
 
-For name lookup purposes, an archetype is considered to have
+For name lookup purposes, an archetype is considered to
 [extend the implementation of its constraint](terminology.md#extending-an-impl).
 The only oddity is that the archetype may have different names for members than
 specific types `T` that don't extend the implementation of interfaces from the
@@ -1073,7 +1074,7 @@ fn PrintDrawPrint[T1:! PrintAndRender](x1: T1) {
 In order to support functions that require more than one interface to be
 implemented, we provide a combination operator on facet types, written `&`. This
 operator gives the facet type with the union of all the requirements and the
-union of the names minus any conflicts.
+union of the names.
 
 ```carbon
 interface Printable {
@@ -1549,16 +1550,16 @@ detection of missing definitions.
 
 ### Use case: detecting unreachable matches
 
-If one interface extends another, that gives the information to the compiler
-that the extending interface is implemented for a subset of types as the
-extended interface. This can be used to detect unreachable code.
+If interface `E` extends another interface `I`, that gives the information to
+the compiler that the any type implementing `E` also implements `I`. This can be
+used to detect unreachable code.
 
 For example, the [`impl` prioritization rule](#prioritization-rule) is used to
 pick between `impl` declarations based on an explicit priority ordering given by
-the user. If the broader interface is prioritized over the more specific
-interface, the compiler can conclude that the more specific declaration will
-never be selected and report an error. Similar situations could be detected in
-function overloading.
+the developer. If the broader interface `I` is prioritized over the more
+specific interface `E`, the compiler can conclude that the more specific
+declaration will never be selected and report an error. Similar situations could
+be detected in function overloading.
 
 ## Adapting types
 
@@ -1944,7 +1945,7 @@ impl Window as DrawingContext { ... }
 ```
 
 An adapter can make that more convenient by making a compatible type that does
-extends the implementation of the interface. This avoids having to
+extend the implementation of the interface. This avoids having to
 [qualify](terminology.md#qualified-member-access-expression) each call to
 methods in the interface.
 

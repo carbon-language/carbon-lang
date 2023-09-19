@@ -10,8 +10,10 @@
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/mocks.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
+
+using ::Carbon::Testing::IsDiagnostic;
 
 struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {
   auto GetLocation(int n) -> DiagnosticLocation override {
@@ -68,4 +70,4 @@ TEST_F(DiagnosticEmitterTest, EmitNote) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

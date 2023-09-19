@@ -7,7 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 using ::testing::MatchesRegex;
@@ -53,4 +53,4 @@ TEST(ParseAndExecuteTest, Recursion) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

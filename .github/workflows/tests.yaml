@@ -173,7 +173,7 @@ jobs:
           # number based on the available host CPUs and the reality will be a
           # long chain of largely serialized download events with little or no
           # usage of the host machine. Fortunately, local actions are
-          # *separately* gated on `--local_*_resources` that will avoid a large
+          # *separately* gated on '--local_*_resources' that will avoid a large
           # jobs value overwhelming the host. There is a bug to make downloads
           # behave completely asynchronously and remove the need for this filed
           # back in 2018 but work seemed to not finish:
@@ -182,7 +182,11 @@ jobs:
           # There is a new effort (yay!) but until then it seems worth using the
           # workaround of a high jobs value. The biggest downside (increased
           # heap usage) seems like it isn't currently a big loss for our builds.
-          build --jobs=50
+          #
+          # Higher values like 50 have led to CI failures with network errors
+          # and IOExceptions, see
+          # https://discord.com/channels/655572317891461132/707150492370862090/1151605725576056934
+          build --jobs=32
 
           # General build options.
           build --verbose_failures

@@ -55,6 +55,9 @@ class FileTestAutoupdater {
         // initialization.
         stdout_(BuildCheckLines(stdout, "STDOUT")),
         stderr_(BuildCheckLines(stderr, "STDERR")),
+        any_attached_stdout_lines_(std::any_of(
+            stdout_.lines.begin(), stdout_.lines.end(),
+            [&](const CheckLine& line) { return line.line_number() != -1; })),
         non_check_line_(non_check_lines_.begin()) {
     for (const auto& replacement : line_number_replacements_) {
       CARBON_CHECK(replacement.has_file || default_file_re_)
@@ -65,8 +68,9 @@ class FileTestAutoupdater {
     }
   }
 
-  // Automatically updates CHECKs in the provided file. Returns true if updated.
-  auto Run() -> bool;
+  // Automatically updates CHECKs in the provided file when dry_run=false.
+  // Returns true if generated file content differs from actual file content.
+  auto Run(bool dry_run) -> bool;
 
  private:
   // The file and line number that a CHECK line refers to, and the
@@ -148,16 +152,18 @@ class FileTestAutoupdater {
 
   // Returns true if there's a CheckLine that should be added at
   // `to_line_number`.
-  auto ShouldAddCheckLine(const CheckLines& check_lines,
-                          int to_line_number) const -> bool;
+  auto ShouldAddCheckLine(const CheckLines& check_lines, bool to_file_end) const
+      -> bool;
 
-  // Add all check lines from the given vector until we reach a check line
-  // attached to a line later than `to_line_number`.
-  auto AddCheckLines(CheckLines& check_lines, int to_line_number,
-                     llvm::StringRef indent) -> void;
+  // Adds check_lines until output reaches:
+  // - If not to_file_end, non_check_line.
+  // - If to_file_end, the end of the file.
+  auto AddCheckLines(CheckLines& check_lines, bool to_file_end) -> void;
 
-  // Adds remaining check lines for the current file.
-  auto FinishFile() -> void;
+  // Adds remaining check lines for the current file. stderr is always included,
+  // but stdout is only included when either any_attached_stdout_lines_ or
+  // is_last_file is true.
+  auto FinishFile(bool is_last_file) -> void;
 
   // Starts a new split file, updating file and line numbers. Advances past the
   // split line.
@@ -176,6 +182,9 @@ class FileTestAutoupdater {
   // The constructed CheckLine list and cursor.
   CheckLines stdout_;
   CheckLines stderr_;
+
+  // Whether any stdout lines have an associated line number.
+  bool any_attached_stdout_lines_;
 
   // Iterators for the main Run loop.
   const FileTestLine* non_check_line_;

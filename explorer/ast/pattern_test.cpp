@@ -12,7 +12,7 @@
 #include "explorer/base/arena.h"
 #include "llvm/Support/Casting.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 using llvm::cast;
@@ -129,4 +129,4 @@ TEST_F(PatternTest, BinaryAsTuplePattern) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

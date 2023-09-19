@@ -7,18 +7,18 @@
 // CHECK:STDOUT: unattached message 1
 
 // --- a.carbon
-aaa
 // CHECK:STDOUT: file: a.carbon
 // CHECK:STDOUT: unattached message 2
-// CHECK:STDOUT: line: [[@LINE-3]]: attached message 3
+aaa
+// CHECK:STDOUT: line: [[@LINE-1]]: attached message 3
 // CHECK:STDOUT: unattached message 4
 
 // CHECK:STDOUT: line: [[@LINE+1]]: late message 5
 // CHECK:STDOUT: unattached message 6
 // --- b.carbon
-bbb
 // CHECK:STDOUT: file: b.carbon
-// CHECK:STDOUT: line: [[@LINE-2]]: attached message 7
+bbb
+// CHECK:STDOUT: line: [[@LINE-1]]: attached message 7
 // CHECK:STDOUT: unattached message 8
 
 // CHECK:STDOUT: line: [[@LINE+1]]: late message 9

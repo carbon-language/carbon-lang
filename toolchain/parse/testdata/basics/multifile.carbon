@@ -4,6 +4,12 @@
 //
 // AUTOUPDATE
 
+// --- a.carbon
+fn A() {}
+
+// --- b.carbon
+fn B() {}
+
 // CHECK:STDOUT: - filename: a.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
@@ -24,8 +30,3 @@
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// --- a.carbon
-fn A() {}
-
-// --- b.carbon
-fn B() {}

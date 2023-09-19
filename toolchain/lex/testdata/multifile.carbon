@@ -5,7 +5,6 @@
 // AUTOUPDATE
 
 // --- a.carbon
-
 // CHECK:STDOUT: - filename: a.carbon
 // CHECK:STDOUT:   tokens: [
 a;
@@ -15,7 +14,6 @@ a;
 // CHECK:STDOUT:     { index: 2, kind:  'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]
 // --- b.carbon
-
 // CHECK:STDOUT: - filename: b.carbon
 // CHECK:STDOUT:   tokens: [
 b;

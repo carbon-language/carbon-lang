@@ -67,9 +67,9 @@ per method in the interface. However, in practice, it's more complex because it
 must model things like associated facets and interfaces.
 
 Witness tables are called "dictionary passing" in Haskell. Outside of generics,
-a [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) is a witness
-table that witnesses that a class is a descendant of an abstract base class, and
-is passed as part of the object instead of separately.
+a [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) is very similar
+to a witness table, "witnessing" the specific descendant of a base class.
+Vtables, however, are passed as part of the object instead of separately.
 
 ### Dynamic-dispatch witness table
 
@@ -188,7 +188,7 @@ It also could contain constants, to store the values of
 
 ### Example
 
-For example, given this `Vector` interface:
+For example, this `Vector` interface:
 
 ```carbon
 interface Vector {
@@ -213,8 +213,8 @@ class Vector {
 }
 ```
 
-The [impl of Vector for Point_Inline](details.md#inline-impl) would be a value
-of this type:
+The [`impl` of `Vector` for `Point_Inline`](details.md#inline-impl) would be a
+value of this type:
 
 ```
 var VectorForPoint_Inline: Vector  = {
@@ -250,21 +250,22 @@ interface Container {
 }
 ```
 
-is represented by:
+could be represented by:
 
 ```
-class Iterator(Self:! type) {
+class Iterator {
+  var Self:! type;
   var Advance: fnty(this: Self*);
   ...
 }
-class Container(Self:! type) {
-  // Representation type for the iterator.
-  let IteratorType:! type;
+class Container {
+  var Self:! type;
+
   // Witness that IteratorType implements Iterator.
-  var iterator_impl: Iterator(IteratorType)*;
+  var IteratorType:! Iterator*;
 
   // Method
-  var Begin: fnty (this: Self*) -> IteratorType;
+  var Begin: fnty (this: Self*) -> IteratorType->Self;
   ...
 }
 ```

@@ -4,6 +4,12 @@
 //
 // AUTOUPDATE
 
+// --- a.carbon
+fn A() {}
+
+// --- b.carbon
+fn B() {}
+
 // CHECK:STDOUT: file "a.carbon" {
 // CHECK:STDOUT:   %.loc1 = fn_decl @A
 // CHECK:STDOUT: }
@@ -20,8 +26,3 @@
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// --- a.carbon
-fn A() {}
-
-// --- b.carbon
-fn B() {}

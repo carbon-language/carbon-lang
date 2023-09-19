@@ -7,7 +7,7 @@
 
 #include "explorer/base/trace_stream.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 TEST(SetFileContextRaiiTest, UpdateFileContext) {
@@ -34,4 +34,4 @@ TEST(SetFileContextRaiiTest, UpdateFileContext) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

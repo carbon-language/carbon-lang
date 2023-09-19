@@ -80,7 +80,19 @@ auto FileTestBase::TestBody() -> void {
       << "Tests should be prefixed with `fail_` if and only if running them "
          "is expected to fail.";
 
-  // Check results.
+  // Check results. Include a reminder of the autoupdate command for any
+  // stdout/stderr differences.
+  std::string update_message;
+  if (context.autoupdate_line_number) {
+    update_message = llvm::formatv(
+        "If these differences are expected, try the autoupdater:\n"
+        "\tbazel run {0} -- --autoupdate --file_tests={1}",
+        target, test_name_);
+  } else {
+    update_message =
+        "If these differences are expected, content must be updated manually.";
+  }
+  SCOPED_TRACE(update_message);
   if (context.check_subset) {
     EXPECT_THAT(SplitOutput(context.stdout),
                 IsSupersetOf(context.expected_stdout));
@@ -93,19 +105,17 @@ auto FileTestBase::TestBody() -> void {
     EXPECT_THAT(SplitOutput(context.stderr),
                 ElementsAreArray(context.expected_stderr));
   }
+
+  // If there are no other test failures, check if autoupdate would make
+  // changes. We don't do this when there _are_ failures because the
+  // SCOPED_TRACE already contains the autoupdate reminder.
+  if (!HasFailure() && RunAutoupdater(context, /*dry_run=*/true)) {
+    ADD_FAILURE() << "Autoupdate would make changes to the file content.";
+  }
 }
 
-auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
-  // Add a crash trace entry mentioning which file we're updating.
-  llvm::PrettyStackTraceFormat stack_trace_entry("performing autoupdate for %s",
-                                                 test_name_);
-
-  TestContext context;
-  auto run_result = ProcessTestFileAndRun(context);
-  if (!run_result.ok()) {
-    return ErrorBuilder() << "Error updating " << test_name_ << ": "
-                          << run_result.error();
-  }
+auto FileTestBase::RunAutoupdater(const TestContext& context, bool dry_run)
+    -> bool {
   if (!context.autoupdate_line_number) {
     return false;
   }
@@ -132,7 +142,21 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
              GetDefaultFileRE(expected_filenames),
              GetLineNumberReplacements(expected_filenames),
              [&](std::string& line) { DoExtraCheckReplacements(line); })
-      .Run();
+      .Run(dry_run);
+}
+
+auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
+  // Add a crash trace entry mentioning which file we're updating.
+  llvm::PrettyStackTraceFormat stack_trace_entry("performing autoupdate for %s",
+                                                 test_name_);
+
+  TestContext context;
+  auto run_result = ProcessTestFileAndRun(context);
+  if (!run_result.ok()) {
+    return ErrorBuilder() << "Error updating " << test_name_ << ": "
+                          << run_result.error();
+  }
+  return RunAutoupdater(context, /*dry_run=*/false);
 }
 
 auto FileTestBase::GetLineNumberReplacements(
