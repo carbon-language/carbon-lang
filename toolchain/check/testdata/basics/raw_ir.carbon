@@ -64,11 +64,11 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       {kind: TupleLiteral, arg0: block5, type: type3},
 // CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:       {kind: TupleIndex, arg0: node+6, arg1: node+14, type: type0},
-// CHECK:STDOUT:       {kind: Assign, arg0: node+15, arg1: node+10},
+// CHECK:STDOUT:       {kind: InitializeFrom, arg0: node+10, arg1: node+15, type: type0},
 // CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int2, type: type0},
 // CHECK:STDOUT:       {kind: TupleIndex, arg0: node+6, arg1: node+17, type: type2},
-// CHECK:STDOUT:       {kind: Assign, arg0: node+18, arg1: node+12},
-// CHECK:STDOUT:       {kind: TupleInit, arg0: node+13, arg1: block5, type: type3},
+// CHECK:STDOUT:       {kind: InitializeFrom, arg0: node+12, arg1: node+18, type: type2},
+// CHECK:STDOUT:       {kind: TupleInit, arg0: node+13, arg1: block6, type: type3},
 // CHECK:STDOUT:       {kind: ReturnExpression, arg0: node+20},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     node_blocks: [
@@ -109,6 +109,10 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       [
 // CHECK:STDOUT:         node+10,
 // CHECK:STDOUT:         node+12,
+// CHECK:STDOUT:       ],
+// CHECK:STDOUT:       [
+// CHECK:STDOUT:         node+16,
+// CHECK:STDOUT:         node+19,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:       [
 // CHECK:STDOUT:         node+7,

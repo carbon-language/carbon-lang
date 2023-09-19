@@ -344,17 +344,10 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
             auto inner_target_id = AddNode(SemIR::Node::TupleIndex::Make(
                 parse_node, inner_target_type, target_id, int_id));
 
-            auto new_id = Initialize(parse_node, inner_target_id, elem_id);
-            // If we're initializing the tuple in-place, then we need to finish
-            // the initialization of this element.
-            if (is_in_place &&
-                SemIR::GetInitializingRepresentation(semantics_ir(),
-                                                     inner_target_type)
-                        .kind != SemIR::InitializingRepresentation::InPlace) {
-              // TODO: Add a new node kind for this, and store it in the block.
-              AddNode(SemIR::Node::Assign::Make(parse_node, inner_target_id,
-                                                new_id));
-            }
+            auto new_id =
+                is_in_place ? InitializeAndFinalize(parse_node, inner_target_id,
+                                                    elem_id)
+                            : Initialize(parse_node, inner_target_id, elem_id);
             new_block.Set(i, new_id);
           }
           return AddNode(SemIR::Node::TupleInit::Make(
@@ -379,17 +372,10 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                 parse_node, inner_target_type, target_id,
                 SemIR::MemberIndex(i)));
 
-            auto new_id = Initialize(parse_node, inner_target_id, elem_id);
-            // If we're initializing the struct in-place, then we need to finish
-            // the initialization of this element.
-            if (is_in_place &&
-                SemIR::GetInitializingRepresentation(semantics_ir(),
-                                                     inner_target_type)
-                        .kind != SemIR::InitializingRepresentation::InPlace) {
-              // TODO: Add a new node kind for this, and store it in the block.
-              AddNode(SemIR::Node::Assign::Make(parse_node, inner_target_id,
-                                                new_id));
-            }
+            auto new_id =
+                is_in_place ? InitializeAndFinalize(parse_node, inner_target_id,
+                                                    elem_id)
+                            : Initialize(parse_node, inner_target_id, elem_id);
             new_block.Set(i, new_id);
           }
           return AddNode(SemIR::Node::StructInit::Make(

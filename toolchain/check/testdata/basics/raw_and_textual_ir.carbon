@@ -64,11 +64,11 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       {kind: TupleLiteral, arg0: block5, type: type3},
 // CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:       {kind: TupleIndex, arg0: node+6, arg1: node+14, type: type0},
-// CHECK:STDOUT:       {kind: Assign, arg0: node+15, arg1: node+10},
+// CHECK:STDOUT:       {kind: InitializeFrom, arg0: node+10, arg1: node+15, type: type0},
 // CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int2, type: type0},
 // CHECK:STDOUT:       {kind: TupleIndex, arg0: node+6, arg1: node+17, type: type2},
-// CHECK:STDOUT:       {kind: Assign, arg0: node+18, arg1: node+12},
-// CHECK:STDOUT:       {kind: TupleInit, arg0: node+13, arg1: block5, type: type3},
+// CHECK:STDOUT:       {kind: InitializeFrom, arg0: node+12, arg1: node+18, type: type2},
+// CHECK:STDOUT:       {kind: TupleInit, arg0: node+13, arg1: block6, type: type3},
 // CHECK:STDOUT:       {kind: ReturnExpression, arg0: node+20},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     node_blocks: [
@@ -111,6 +111,10 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:         node+12,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:       [
+// CHECK:STDOUT:         node+16,
+// CHECK:STDOUT:         node+19,
+// CHECK:STDOUT:       ],
+// CHECK:STDOUT:       [
 // CHECK:STDOUT:         node+7,
 // CHECK:STDOUT:       ],
 // CHECK:STDOUT:     ]
@@ -129,10 +133,10 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   %.loc12_21: (i32, f64) = tuple_literal (%.loc12_13.2, %.loc12_18.2)
 // CHECK:STDOUT:   %.loc12_22.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc12_22.2: ref i32 = tuple_index %return, %.loc12_22.1
-// CHECK:STDOUT:   assign %.loc12_22.2, %.loc12_13.2
-// CHECK:STDOUT:   %.loc12_22.3: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc12_22.4: ref f64 = tuple_index %return, %.loc12_22.3
-// CHECK:STDOUT:   assign %.loc12_22.4, %.loc12_18.2
-// CHECK:STDOUT:   %.loc12_22.5: init (i32, f64) = tuple_init %.loc12_21, (%.loc12_13.2, %.loc12_18.2)
-// CHECK:STDOUT:   return %.loc12_22.5
+// CHECK:STDOUT:   %.loc12_22.3: init i32 = initialize_from %.loc12_13.2 to %.loc12_22.2
+// CHECK:STDOUT:   %.loc12_22.4: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc12_22.5: ref f64 = tuple_index %return, %.loc12_22.4
+// CHECK:STDOUT:   %.loc12_22.6: init f64 = initialize_from %.loc12_18.2 to %.loc12_22.5
+// CHECK:STDOUT:   %.loc12_22.7: init (i32, f64) = tuple_init %.loc12_21, (%.loc12_22.3, %.loc12_22.6)
+// CHECK:STDOUT:   return %.loc12_22.7
 // CHECK:STDOUT: }
