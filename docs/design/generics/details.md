@@ -3700,11 +3700,11 @@ In contrast to a [rewrite constraint](#rewrite-constraints) or a
 `ElementType` exactly is, just that it must satisfy requirements of some facet
 type.
 
-**Note:** `Container` defines `ElementType` as having type `type`, but
-`ContainerType.ElementType` has type `Comparable`. This is because
-`ContainerType` has type `Container where .ElementType impls Comparable`, not
-`Container`. This means we need to be a bit careful when talking about the type
-of `ContainerType` when there is a `where` clause modifying it.
+> **Note:** `Container` defines `ElementType` as having type `type`, but
+> `ContainerType.ElementType` has type `Comparable`. This is because
+> `ContainerType` has type `Container where .ElementType impls Comparable`, not
+> `Container`. This means we need to be a bit careful when talking about the
+> type of `ContainerType` when there is a `where` clause modifying it.
 
 An implements constraint can be applied to [`.Self`](#recursive-constraints), as
 in `I where .Self impls C`. This has the same requirements as `I & C`, but that
