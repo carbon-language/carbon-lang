@@ -1541,16 +1541,16 @@ detection of missing definitions.
 
 ### Use case: detecting unreachable matches
 
-If one interface extends another, that gives the information to the compiler
-that the extending interface is implemented for a subset of types as the
-extended interface. This can be used to detect unreachable code.
+If interface `E` extends another interface `I`, that gives the information to
+the compiler that the any type implementing `E` also implements `I`. This can be
+used to detect unreachable code.
 
 For example, the [`impl` prioritization rule](#prioritization-rule) is used to
 pick between `impl` declarations based on an explicit priority ordering given by
-the developer. If the broader interface is prioritized over the more specific
-interface, the compiler can conclude that the more specific declaration will
-never be selected and report an error. Similar situations could be detected in
-function overloading.
+the developer. If the broader interface `I` is prioritized over the more
+specific interface `E`, the compiler can conclude that the more specific
+declaration will never be selected and report an error. Similar situations could
+be detected in function overloading.
 
 ## Adapting types
 
@@ -1954,12 +1954,14 @@ fn Render(w: Window) {
 }
 ```
 
-**Note:** Another way to achieve this is to use a local symbolic facet constant:
+**Note:** Another way to achieve this is to use a
+[local symbolic facet constant](#generic-let).
 
 ```carbon
 fn Render(w: Window) {
   let DrawInWindow:! Draw = Window;
-  let d: DrawInWindow = w as DrawInWindow;
+  // Implicit conversion to `w as DrawInWindow`.
+  let d: DrawInWindow = w;
   d.SetPen(...);
   d.SetFill(...);
   d.DrawRectangle(...);
