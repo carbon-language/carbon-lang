@@ -493,26 +493,30 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
       }
 
       // TODO: Make this non-recursive.
+      case SemIR::NodeKind::StructLiteral:
       case SemIR::NodeKind::TupleLiteral: {
-        auto elements = semantics_ir().GetNodeBlock(init.GetAsTupleLiteral());
-        CopyOnWriteBlock new_block(semantics_ir(), init.GetAsTupleLiteral());
-        for (auto [i, elem_id] : llvm::enumerate(elements)) {
-          new_block.Set(i, MaterializeIfInitializing(elem_id, discarded));
+        bool is_tuple = init.kind() == SemIR::NodeKind::TupleLiteral;
+        auto elements_id =
+            is_tuple ? init.GetAsTupleLiteral() : init.GetAsStructLiteral();
+        bool changed_anything = false;
+        for (auto& elem_id : semantics_ir().GetNodeBlock(elements_id)) {
+          auto new_elem_id = MaterializeIfInitializing(elem_id, discarded);
+          if (new_elem_id != elem_id) {
+            elem_id = new_elem_id;
+            changed_anything = true;
+          }
         }
-        // TODO: This tuple value can contain elements that are references.
-        return AddNode(SemIR::Node::TupleValue::Make(
-            init.parse_node(), init.type_id(), init_id, new_block.id()));
-      }
-
-      case SemIR::NodeKind::StructLiteral: {
-        auto elements = semantics_ir().GetNodeBlock(init.GetAsStructLiteral());
-        CopyOnWriteBlock new_block(semantics_ir(), init.GetAsStructLiteral());
-        for (auto [i, elem_id] : llvm::enumerate(elements)) {
-          new_block.Set(i, MaterializeIfInitializing(elem_id, discarded));
+        // Move the literal node to after its elements if we changed anything.
+        if (changed_anything) {
+          semantics_ir().ReplaceNode(
+              init_id, SemIR::Node::NoOp::Make(init.parse_node()));
+          init_id = AddNode(
+              is_tuple ? SemIR::Node::TupleLiteral::Make(
+                             init.parse_node(), init.type_id(), elements_id)
+                       : SemIR::Node::StructLiteral::Make(
+                             init.parse_node(), init.type_id(), elements_id));
         }
-        // TODO: This struct value can contain elements that are references.
-        return AddNode(SemIR::Node::StructValue::Make(
-            init.parse_node(), init.type_id(), init_id, new_block.id()));
+        return init_id;
       }
 
       case SemIR::NodeKind::Call: {

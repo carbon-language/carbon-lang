@@ -167,10 +167,9 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc75_6.2: i32 = stub_reference %.loc75_6.1
 // CHECK:STDOUT:   %.loc75_9.1: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc75_9.2: i32 = stub_reference %.loc75_9.1
-// CHECK:STDOUT:   %.loc75_10.1: (i32, i32) = tuple_literal (%.loc75_6.2, %.loc75_9.2)
+// CHECK:STDOUT:   %.loc75_10: (i32, i32) = tuple_literal (%.loc75_6.2, %.loc75_9.2)
 // CHECK:STDOUT:   %.loc75_12: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc75_10.2: (i32, i32) = tuple_value %.loc75_10.1, (%.loc75_6.2, %.loc75_9.2)
-// CHECK:STDOUT:   %.loc75_13: i32 = tuple_index %.loc75_10.2, %.loc75_12
+// CHECK:STDOUT:   %.loc75_13: i32 = tuple_index %.loc75_10, %.loc75_12
 // CHECK:STDOUT:   %.loc75_3: i32* = address_of %.loc75_13
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
