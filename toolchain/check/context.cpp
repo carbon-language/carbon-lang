@@ -696,7 +696,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
 
   // Skip back over StubReferences to find if we're being initialized from a
   // tuple literal.
-  value_id = SkipStubReferences(value_id);
+  value_id = context.SkipStubReferences(value_id);
   auto value = context.semantics_ir().GetNode(value_id);
 
   llvm::ArrayRef<SemIR::NodeId> literal_elems;

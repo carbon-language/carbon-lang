@@ -105,6 +105,17 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
+  // Skips past any stub references to find the node that defines the value of
+  // the given node.
+  auto SkipStubReferences(SemIR::NodeId expr_id) -> SemIR::NodeId {
+    SemIR::Node expr = semantics_ir().GetNode(expr_id);
+    while (expr.kind() == SemIR::NodeKind::StubReference) {
+      expr_id = expr.GetAsStubReference();
+      expr = semantics_ir().GetNode(expr_id);
+    }
+    return expr_id;
+  }
+
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
 
@@ -274,15 +285,6 @@ class Context {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
-
-  auto SkipStubReferences(SemIR::NodeId expr_id) -> SemIR::NodeId {
-    SemIR::Node expr = semantics_ir().GetNode(expr_id);
-    while (expr.kind() == SemIR::NodeKind::StubReference) {
-      expr_id = expr.GetAsStubReference();
-      expr = semantics_ir().GetNode(expr_id);
-    }
-    return expr_id;
-  }
 
   // Commits to using a temporary to store the result of the initializing
   // expression described by `init_id`, and returns the location of the
