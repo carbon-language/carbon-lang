@@ -105,17 +105,6 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Skips past any stub references to find the node that defines the value of
-  // the given node.
-  auto SkipStubReferences(SemIR::NodeId expr_id) -> SemIR::NodeId {
-    SemIR::Node expr = semantics_ir().GetNode(expr_id);
-    while (expr.kind() == SemIR::NodeKind::StubReference) {
-      expr_id = expr.GetAsStubReference();
-      expr = semantics_ir().GetNode(expr_id);
-    }
-    return expr_id;
-  }
-
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
 
@@ -211,14 +200,14 @@ class Context {
 
   // On a comma, pushes the entry. On return, the top of node_stack_ will be
   // start_kind.
-  auto ParamOrArgComma(bool for_args) -> void;
+  auto ParamOrArgComma() -> void;
 
   // Detects whether there's an entry to push from the end of a parameter or
   // argument list, and if so, moves it to the current parameter or argument
   // list. Does not pop the list. `start_kind` is the node kind at the start
   // of the parameter or argument list, and will be at the top of the parse node
   // stack when this function returns.
-  auto ParamOrArgEndNoPop(bool for_args, Parse::NodeKind start_kind) -> void;
+  auto ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void;
 
   // Pops the current parameter or argument list. Should only be called after
   // `ParamOrArgEndNoPop`.
@@ -226,15 +215,13 @@ class Context {
 
   // Detects whether there's an entry to push. Pops and returns the argument
   // list. This is the same as `ParamOrArgEndNoPop` followed by `ParamOrArgPop`.
-  auto ParamOrArgEnd(bool for_args, Parse::NodeKind start_kind)
-      -> SemIR::NodeBlockId;
+  auto ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::NodeBlockId;
 
   // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_or_args_stack_. If for_args, adds a StubReference of the previous
-  // node's result to the IR.
-  //
-  // This should only be called by other ParamOrArg functions, not directly.
-  auto ParamOrArgSave(bool for_args) -> void;
+  // params_or_args_stack_.
+  auto ParamOrArgSave(SemIR::NodeId node_id) -> void {
+    params_or_args_stack_.AddNodeId(node_id);
+  }
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
