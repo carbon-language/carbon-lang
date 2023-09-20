@@ -105,23 +105,13 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Converts the given expression to an ephemeral reference to a temporary if
-  // it is an initializing expression. If `discarded` is `true`, the result is
-  // discarded, and no temporary will be created if possible; if no temporary
-  // is created, the return value will be `SemIR::NodeId::Invalid`.
-  auto MaterializeIfInitializing(SemIR::NodeId expr_id, bool discarded = false)
-      -> SemIR::NodeId {
-    switch (GetExpressionCategory(semantics_ir(), expr_id)) {
-      case SemIR::ExpressionCategory::Initializing:
-      case SemIR::ExpressionCategory::Mixed:
-        return FinalizeTemporary(expr_id, discarded);
-      default:
-        return expr_id;
-    }
-  }
-
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
+
+  // Convert the given expression to a value or reference expression of the same
+  // type.
+  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id)
+      -> SemIR::NodeId;
 
   // Performs initialization of `target_id` from `value_id`. Returns the
   // possibly-converted initialization expression, which should be assigned to
@@ -284,6 +274,15 @@ class Context {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
+  auto SkipStubReferences(SemIR::NodeId expr_id) -> SemIR::NodeId {
+    SemIR::Node expr = semantics_ir().GetNode(expr_id);
+    while (expr.kind() == SemIR::NodeKind::StubReference) {
+      expr_id = expr.GetAsStubReference();
+      expr = semantics_ir().GetNode(expr_id);
+    }
+    return expr_id;
+  }
+
   // Commits to using a temporary to store the result of the initializing
   // expression described by `init_id`, and returns the location of the
   // temporary. If `discarded` is `true`, the result is discarded, and no
@@ -291,8 +290,12 @@ class Context {
   // return value will be `SemIR::NodeId::Invalid`.
   auto FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
       -> SemIR::NodeId;
+
+  // Commits to using temporaries for all initializing expressions directly
+  // within `init_id`. This looks through struct and tuple literals to find
+  // nested temporaries.
   auto FinalizeNestedTemporaries(SemIR::NodeId init_id, bool discarded)
-      -> void;
+      -> SemIR::NodeId;
 
   // Marks the initializer `init_id` as initializing `target_id`.
   auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)

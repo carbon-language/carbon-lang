@@ -412,10 +412,16 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
   }
 
   switch (SemIR::GetExpressionCategory(semantics_ir(), expr_id)) {
-    case SemIR::ExpressionCategory::NotExpression:
-      CARBON_FATAL() << "Converting non-expression node "
-                     << semantics_ir().GetNode(expr_id)
-                     << " to value expression";
+    case SemIR::ExpressionCategory::NotExpression: {
+      // TODO: We currently encounter this for use of namespaces and functions.
+      // We should provide a better diagnostic for inappropriate use of
+      // namespace names, and allow use of functions as values.
+      CARBON_DIAGNOSTIC(UseOfNonExpressionAsValue, Error,
+                        "Expression cannot be used as a value.");
+      emitter().Emit(semantics_ir().GetNode(expr_id).parse_node(),
+                     UseOfNonExpressionAsValue);
+      return SemIR::NodeId::BuiltinError;
+    }
 
     case SemIR::ExpressionCategory::Initializing:
       // Commit to using a temporary for this initializing expression.
@@ -475,160 +481,234 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
   }
 }
 
-auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
+// Convert the given expression to a value or reference expression of the same
+// type.
+auto Context::ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id)
     -> SemIR::NodeId {
-  // TODO: See if we can refactor this with MarkInitializerFor once recursion
-  // through struct and tuple values is properly handled.
-  auto orig_init_id = init_id;
-  while (true) {
-    SemIR::Node init = semantics_ir().GetNode(init_id);
+  switch (GetExpressionCategory(semantics_ir(), expr_id)) {
+    case SemIR::ExpressionCategory::Value:
+    case SemIR::ExpressionCategory::DurableReference:
+    case SemIR::ExpressionCategory::EphemeralReference:
+      return expr_id;
 
-    switch (init.kind()) {
-      default:
-        CARBON_FATAL() << "Initialization from unexpected node " << init;
+    case SemIR::ExpressionCategory::Initializing:
+      return FinalizeTemporary(expr_id, /*discarded=*/false);
 
-      case SemIR::NodeKind::StubReference: {
-        init_id = init.GetAsStubReference();
-        continue;
-      }
-
-      // TODO: Make this non-recursive.
-      case SemIR::NodeKind::StructLiteral:
-      case SemIR::NodeKind::TupleLiteral: {
-        bool is_tuple = init.kind() == SemIR::NodeKind::TupleLiteral;
-        auto elements_id =
-            is_tuple ? init.GetAsTupleLiteral() : init.GetAsStructLiteral();
-        bool changed_anything = false;
-        for (auto& elem_id : semantics_ir().GetNodeBlock(elements_id)) {
-          auto new_elem_id = MaterializeIfInitializing(elem_id, discarded);
-          if (new_elem_id != elem_id) {
-            elem_id = new_elem_id;
-            changed_anything = true;
-          }
-        }
-        // Move the literal node to after its elements if we changed anything.
-        if (changed_anything) {
-          semantics_ir().ReplaceNode(
-              init_id, SemIR::Node::NoOp::Make(init.parse_node()));
-          init_id = AddNode(
-              is_tuple ? SemIR::Node::TupleLiteral::Make(
-                             init.parse_node(), init.type_id(), elements_id)
-                       : SemIR::Node::StructLiteral::Make(
-                             init.parse_node(), init.type_id(), elements_id));
-        }
-        return init_id;
-      }
-
-      case SemIR::NodeKind::Call: {
-        auto [refs_id, callee_id] = init.GetAsCall();
-        if (semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
-          // The return slot should have a materialized temporary in it.
-          auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
-          CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
-                       SemIR::NodeKind::TemporaryStorage)
-              << "Return slot for function call does not contain a temporary; "
-              << "initialized multiple times? Have "
-              << semantics_ir().GetNode(temporary_id);
-          return AddNode(SemIR::Node::Temporary::Make(
-              init.parse_node(), init.type_id(), temporary_id, orig_init_id));
-        }
-
-        if (discarded) {
-          // Don't invent a temporary that we're going to discard.
-          return SemIR::NodeId::Invalid;
-        }
-
-        // The function has no return slot, but we want to produce a temporary
-        // object. Materialize one now.
-        // TODO: Consider using an invalid ID to mean that we immediately
-        // materialize and initialize a temporary, rather than two separate
-        // nodes.
-        auto temporary_id = AddNode(SemIR::Node::TemporaryStorage::Make(
-            init.parse_node(), init.type_id()));
-        return AddNode(SemIR::Node::Temporary::Make(
-            init.parse_node(), init.type_id(), temporary_id, init_id));
-      }
-
-      case SemIR::NodeKind::ArrayInit: {
-        auto [src_id, refs_id] = init.GetAsArrayInit();
-        // The return slot should have a materialized temporary in it.
-        auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
-        CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
-                     SemIR::NodeKind::TemporaryStorage)
-            << "Return slot for array init does not contain a temporary; "
-            << "initialized multiple times? Have "
-            << semantics_ir().GetNode(temporary_id);
-        return AddNode(SemIR::Node::Temporary::Make(
-            init.parse_node(), init.type_id(), temporary_id, orig_init_id));
-      }
-    }
+    case SemIR::ExpressionCategory::Mixed:
+    case SemIR::ExpressionCategory::NotExpression:
+      return ConvertToValueExpression(expr_id);
   }
 }
 
 auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
     -> void {
-  while (true) {
-    SemIR::Node init = semantics_ir().GetNode(init_id);
-    CARBON_CHECK(SemIR::GetExpressionCategory(semantics_ir(), init_id) ==
-                 SemIR::ExpressionCategory::Initializing)
-        << "initialization from non-initializing node " << init;
-    switch (init.kind()) {
-      default:
-        CARBON_FATAL() << "Initialization from unexpected node " << init;
+  init_id = SkipStubReferences(init_id);
+  SemIR::Node init = semantics_ir().GetNode(init_id);
+  CARBON_CHECK(SemIR::GetExpressionCategory(semantics_ir(), init_id) ==
+               SemIR::ExpressionCategory::Initializing)
+      << "initialization from non-initializing node " << init;
 
-      case SemIR::NodeKind::StructInit:
-      case SemIR::NodeKind::TupleInit:
-      case SemIR::NodeKind::InitializeFrom:
-        CARBON_FATAL() << init << " should already have a destination";
+  switch (init.kind()) {
+    default:
+      CARBON_FATAL() << "Initialization from unexpected node " << init;
 
-      case SemIR::NodeKind::StubReference:
-        init_id = init.GetAsStubReference();
-        continue;
+    case SemIR::NodeKind::StructInit:
+    case SemIR::NodeKind::TupleInit:
+    case SemIR::NodeKind::InitializeFrom:
+      CARBON_FATAL() << init << " should already have a destination";
 
-      case SemIR::NodeKind::Call: {
-        // If the callee has a return slot, point it at our target.
-        auto [refs_id, callee_id] = init.GetAsCall();
-        if (semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
-          // Replace the return slot with our given target, and remove the
-          // tentatively-created temporary.
-          auto temporary_id = std::exchange(
-              semantics_ir().GetNodeBlock(refs_id).back(), target_id);
-          auto temporary = semantics_ir().GetNode(temporary_id);
-          CARBON_CHECK(temporary.kind() == SemIR::NodeKind::TemporaryStorage)
-              << "Return slot for function call does not contain a temporary; "
-              << "initialized multiple times? Have " << temporary;
-          semantics_ir().ReplaceNode(
-              temporary_id, SemIR::Node::NoOp::Make(temporary.parse_node()));
-        }
-        return;
+    case SemIR::NodeKind::Call: {
+      // If the callee has a return slot, point it at our target.
+      auto [refs_id, callee_id] = init.GetAsCall();
+      if (semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
+        // Replace the return slot with our given target, and remove the
+        // tentatively-created temporary.
+        auto temporary_id = std::exchange(
+            semantics_ir().GetNodeBlock(refs_id).back(), target_id);
+        auto temporary = semantics_ir().GetNode(temporary_id);
+        CARBON_CHECK(temporary.kind() == SemIR::NodeKind::TemporaryStorage)
+            << "Return slot for function call does not contain a temporary; "
+            << "initialized multiple times? Have " << temporary;
+        semantics_ir().ReplaceNode(
+            temporary_id, SemIR::Node::NoOp::Make(temporary.parse_node()));
       }
+      return;
+    }
 
-      case SemIR::NodeKind::ArrayInit: {
-        // Rewrite the return slot as a reference to our target. We can't just
-        // update the index in `refs_id`, like we do for a Call, because there
-        // will be other references to the return slot for the individual array
-        // element initializers.
-        auto [src_id, refs_id] = init.GetAsArrayInit();
+    case SemIR::NodeKind::ArrayInit: {
+      // Rewrite the return slot as a reference to our target. We can't just
+      // update the index in `refs_id`, like we do for a Call, because there
+      // will be other references to the return slot for the individual array
+      // element initializers.
+      auto [src_id, refs_id] = init.GetAsArrayInit();
+      auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
+      CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
+                   SemIR::NodeKind::TemporaryStorage)
+          << "Return slot for array init does not contain a temporary; "
+          << "initialized multiple times? Have "
+          << semantics_ir().GetNode(temporary_id);
+      semantics_ir().ReplaceNode(
+          temporary_id,
+          SemIR::Node::StubReference::Make(
+              init.parse_node(), semantics_ir().GetNode(target_id).type_id(),
+              target_id));
+      return;
+    }
+  }
+}
+
+auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
+    -> SemIR::NodeId {
+  init_id = SkipStubReferences(init_id);
+  SemIR::Node init = semantics_ir().GetNode(init_id);
+  CARBON_CHECK(SemIR::GetExpressionCategory(semantics_ir(), init_id) ==
+               SemIR::ExpressionCategory::Initializing)
+      << "initialization from non-initializing node " << init;
+
+  switch (init.kind()) {
+    default:
+      CARBON_FATAL() << "Initialization from unexpected node " << init;
+
+    case SemIR::NodeKind::StructInit:
+    case SemIR::NodeKind::TupleInit:
+    case SemIR::NodeKind::InitializeFrom:
+      CARBON_FATAL() << init << " should already have a destination";
+
+    case SemIR::NodeKind::Call: {
+      auto [refs_id, callee_id] = init.GetAsCall();
+      if (semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
+        // The return slot should have a materialized temporary in it.
         auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
         CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
                      SemIR::NodeKind::TemporaryStorage)
-            << "Return slot for array init does not contain a temporary; "
+            << "Return slot for function call does not contain a temporary; "
             << "initialized multiple times? Have "
             << semantics_ir().GetNode(temporary_id);
-        semantics_ir().ReplaceNode(
-            temporary_id,
-            SemIR::Node::StubReference::Make(
-                init.parse_node(), semantics_ir().GetNode(target_id).type_id(),
-                target_id));
-        return;
+        return AddNode(SemIR::Node::Temporary::Make(
+            init.parse_node(), init.type_id(), temporary_id, init_id));
       }
+
+      if (discarded) {
+        // Don't invent a temporary that we're going to discard.
+        return SemIR::NodeId::Invalid;
+      }
+
+      // The function has no return slot, but we want to produce a temporary
+      // object. Materialize one now.
+      // TODO: Consider using an invalid ID to mean that we immediately
+      // materialize and initialize a temporary, rather than two separate
+      // nodes.
+      auto temporary_id = AddNode(SemIR::Node::TemporaryStorage::Make(
+          init.parse_node(), init.type_id()));
+      return AddNode(SemIR::Node::Temporary::Make(
+          init.parse_node(), init.type_id(), temporary_id, init_id));
+    }
+
+    case SemIR::NodeKind::ArrayInit: {
+      auto [src_id, refs_id] = init.GetAsArrayInit();
+      // The return slot should have a materialized temporary in it.
+      auto temporary_id = semantics_ir().GetNodeBlock(refs_id).back();
+      CARBON_CHECK(semantics_ir().GetNode(temporary_id).kind() ==
+                   SemIR::NodeKind::TemporaryStorage)
+          << "Return slot for array init does not contain a temporary; "
+          << "initialized multiple times? Have "
+          << semantics_ir().GetNode(temporary_id);
+      return AddNode(SemIR::Node::Temporary::Make(
+          init.parse_node(), init.type_id(), temporary_id, init_id));
+    }
+  }
+}
+
+auto Context::FinalizeNestedTemporaries(SemIR::NodeId init_id, bool discarded)
+    -> SemIR::NodeId {
+  // A work item, representing a recursion level: either at the top level, or
+  // visiting the elements of a tuple or a struct.
+  struct WorkListItem {
+    enum Kind { TopLevel, Tuple, Struct } kind;
+    SemIR::NodeId enclosing_id;
+    llvm::MutableArrayRef<SemIR::NodeId> elements;
+    bool modified = false;
+
+    void DropFirstElement() { elements = elements.drop_front(); }
+  };
+
+  llvm::SmallVector<WorkListItem> work_list;
+  work_list.push_back({.kind = WorkListItem::TopLevel,
+                       .enclosing_id = SemIR::NodeId::Invalid,
+                       .elements = init_id});
+
+  while (true) {
+    // If we're out of elements, we've finished this work item.
+    if (work_list.back().elements.empty()) {
+      auto item = work_list.pop_back_val();
+      if (item.kind == WorkListItem::TopLevel) {
+        return init_id;
+      }
+
+      auto& next_item = work_list.back();
+
+      // If we changed any of the elements, move the literal node later so that
+      // it appears after its updated contents.
+      if (item.modified) {
+        auto node = semantics_ir().GetNode(item.enclosing_id);
+        auto& new_id = next_item.elements.front();
+
+        semantics_ir().ReplaceNode(item.enclosing_id,
+                                   SemIR::Node::NoOp::Make(node.parse_node()));
+
+        switch (item.kind) {
+          case WorkListItem::TopLevel:
+            CARBON_FATAL() << "already handled";
+
+          case WorkListItem::Tuple:
+            new_id = AddNode(SemIR::Node::TupleLiteral::Make(
+                node.parse_node(), node.type_id(), node.GetAsTupleLiteral()));
+            break;
+
+          case WorkListItem::Struct:
+            new_id = AddNode(SemIR::Node::StructLiteral::Make(
+                node.parse_node(), node.type_id(), node.GetAsStructLiteral()));
+            break;
+        }
+
+        next_item.modified = true;
+      }
+
+      next_item.DropFirstElement();
+      continue;
+    }
+
+    // Visit the next element and finalize temporaries within it.
+    auto& item = work_list.back();
+    auto node_id = SkipStubReferences(item.elements.front());
+    SemIR::Node node = semantics_ir().GetNode(node_id);
+
+    if (node.kind() == SemIR::NodeKind::StructLiteral) {
+      work_list.push_back(
+          {.kind = WorkListItem::Struct,
+           .enclosing_id = node_id,
+           .elements = semantics_ir().GetNodeBlock(node.GetAsStructLiteral())});
+    } else if (node.kind() == SemIR::NodeKind::TupleLiteral) {
+      work_list.push_back(
+          {.kind = WorkListItem::Tuple,
+           .enclosing_id = node_id,
+           .elements = semantics_ir().GetNodeBlock(node.GetAsTupleLiteral())});
+    } else if (GetExpressionCategory(semantics_ir(), node_id) ==
+        SemIR::ExpressionCategory::Initializing) {
+      item.elements.front() = FinalizeTemporary(node_id, discarded);
+      item.modified = true;
+      item.DropFirstElement();
+    } else {
+      item.DropFirstElement();
     }
   }
 }
 
 auto Context::HandleDiscardedExpression(SemIR::NodeId expr_id) -> void {
-  // If we discard an initializing expression, materialize it first.
-  MaterializeIfInitializing(expr_id, /*discarded=*/true);
+  // If we discard an initializing expression, finalize all temporaries in it.
+  // TODO: Can we just ConvertToValueOrReferenceExpression here? This is the
+  // only user of FinalizeNestedTemporaries.
+  FinalizeNestedTemporaries(expr_id, /*discarded=*/true);
 
   // TODO: This will eventually need to do some "do not discard" analysis.
   (void)expr_id;
@@ -750,7 +830,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
   // directly. Otherwise, materialize a temporary if needed and index into the
   // result.
   if (literal_elems.empty()) {
-    value_id = context.MaterializeIfInitializing(value_id);
+    value_id = context.ConvertToValueOrReferenceExpression(value_id);
   }
 
   // Arrays are always initialized in-place. Tentatively allocate a temporary
