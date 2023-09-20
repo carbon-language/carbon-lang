@@ -22,13 +22,6 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @G() {
-// CHECK:STDOUT:   %tuple = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   %1 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %1, align 4
-// CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %2, align 4
-// CHECK:STDOUT:   %3 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 2
-// CHECK:STDOUT:   store i32 3, ptr %3, align 4
 // CHECK:STDOUT:   %temp = alloca [3 x i32], align 4
 // CHECK:STDOUT:   %array.index = getelementptr inbounds [3 x i32], ptr %temp, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %array.index, align 4
@@ -39,6 +32,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F = call i32 @F(ptr %temp, i32 1)
 // CHECK:STDOUT:   %temp3 = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %F, ptr %temp3, align 4
-// CHECK:STDOUT:   %4 = load i32, ptr %temp3, align 4
-// CHECK:STDOUT:   ret i32 %4
+// CHECK:STDOUT:   %1 = load i32, ptr %temp3, align 4
+// CHECK:STDOUT:   ret i32 %1
 // CHECK:STDOUT: }

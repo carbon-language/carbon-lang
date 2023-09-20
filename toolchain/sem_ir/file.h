@@ -385,6 +385,11 @@ enum class ExpressionCategory : int8_t {
   // This node represents an initializing expression, that describes how to
   // initialize an object.
   Initializing,
+  // This node represents a syntactic combination of expressions that are
+  // permitted to have different expression categories. This is used for tuple
+  // and struct literals, where the subexpressions for different elements can
+  // have different categories.
+  Mixed,
 };
 
 // Returns the expression category for a node.

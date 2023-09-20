@@ -27,5 +27,18 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   %.loc7_39.1: i32 = int_literal 6
 // CHECK:STDOUT:   %.loc7_39.2: i32 = stub_reference %.loc7_39.1
 // CHECK:STDOUT:   %.loc7_40: ((i32, i32), i32) = tuple_literal (%.loc7_36.2, %.loc7_39.2)
-// CHECK:STDOUT:   assign %x, %.loc7_40
+// CHECK:STDOUT:   %.loc7_41.1: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7_41.2: ref (i32, i32) = tuple_index %x, %.loc7_41.1
+// CHECK:STDOUT:   %.loc7_41.3: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7_41.4: ref i32 = tuple_index %.loc7_41.2, %.loc7_41.3
+// CHECK:STDOUT:   %.loc7_41.5: init i32 = initialize_from %.loc7_30.2 to %.loc7_41.4
+// CHECK:STDOUT:   %.loc7_41.6: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7_41.7: ref i32 = tuple_index %.loc7_41.2, %.loc7_41.6
+// CHECK:STDOUT:   %.loc7_41.8: init i32 = initialize_from %.loc7_34.2 to %.loc7_41.7
+// CHECK:STDOUT:   %.loc7_41.9: init (i32, i32) = tuple_init %.loc7_36.1, (%.loc7_41.5, %.loc7_41.8)
+// CHECK:STDOUT:   %.loc7_41.10: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7_41.11: ref i32 = tuple_index %x, %.loc7_41.10
+// CHECK:STDOUT:   %.loc7_41.12: init i32 = initialize_from %.loc7_39.2 to %.loc7_41.11
+// CHECK:STDOUT:   %.loc7_41.13: init ((i32, i32), i32) = tuple_init %.loc7_40, (%.loc7_41.9, %.loc7_41.12)
+// CHECK:STDOUT:   assign %x, %.loc7_41.13
 // CHECK:STDOUT: }

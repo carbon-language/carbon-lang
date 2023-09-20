@@ -14,9 +14,6 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   auto base_id = context.node_stack().PopExpression();
 
-  // Materialize a temporary for the base expression if necessary.
-  base_id = context.MaterializeIfInitializing(base_id);
-
   auto base = context.semantics_ir().GetNode(base_id);
   if (base.kind() == SemIR::NodeKind::Namespace) {
     // For a namespace, just resolve the name.
@@ -26,6 +23,9 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     context.node_stack().Push(parse_node, node_id);
     return true;
   }
+
+  // Materialize a temporary for the base expression if necessary.
+  base_id = context.ConvertToValueOrReferenceExpression(base_id);
 
   auto base_type = context.semantics_ir().GetNode(
       context.semantics_ir().GetTypeAllowBuiltinTypes(base.type_id()));

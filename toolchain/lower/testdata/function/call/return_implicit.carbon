@@ -20,7 +20,6 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %tuple = alloca {}, align 8
 // CHECK:STDOUT:   %b = alloca {}, align 8
 // CHECK:STDOUT:   call void @MakeImplicitEmptyTuple()
 // CHECK:STDOUT:   ret void

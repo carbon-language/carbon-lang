@@ -105,18 +105,25 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Converts the given expression to an ephemeral reference to a temporary if
-  // it is an initializing expression.
-  auto MaterializeIfInitializing(SemIR::NodeId expr_id) -> SemIR::NodeId {
-    if (GetExpressionCategory(semantics_ir(), expr_id) ==
-        SemIR::ExpressionCategory::Initializing) {
-      return FinalizeTemporary(expr_id, /*discarded=*/false);
+  // Skips past any stub references to find the node that defines the value of
+  // the given node.
+  auto SkipStubReferences(SemIR::NodeId expr_id) -> SemIR::NodeId {
+    SemIR::Node expr = semantics_ir().GetNode(expr_id);
+    while (expr.kind() == SemIR::NodeKind::StubReference) {
+      expr_id = expr.GetAsStubReference();
+      expr = semantics_ir().GetNode(expr_id);
     }
     return expr_id;
   }
 
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
+
+  // Convert the given expression to a value or reference expression of the same
+  // type.
+  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id,
+                                           bool discarded = false)
+      -> SemIR::NodeId;
 
   // Performs initialization of `target_id` from `value_id`. Returns the
   // possibly-converted initialization expression, which should be assigned to

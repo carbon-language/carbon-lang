@@ -45,11 +45,6 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack().PopExpressionWithParseNode();
   SemIR::StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
 
-  // Convert the operand to a value.
-  // TODO: We need to decide how struct literals interact with expression
-  // categories.
-  value_node_id = context.ConvertToValueExpression(value_node_id);
-
   // Store the name for the type.
   context.args_type_info_stack().AddNode(SemIR::Node::StructTypeField::Make(
       parse_node, name_id,

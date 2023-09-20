@@ -14,10 +14,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: source_filename = "empty.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
-// CHECK:STDOUT:   %tuple = alloca {}, align 8
 // CHECK:STDOUT:   %x = alloca {}, align 8
-// CHECK:STDOUT:   %tuple1 = alloca {}, align 8
-// CHECK:STDOUT:   %tuple2 = alloca {}, align 8
 // CHECK:STDOUT:   %y = alloca {}, align 8
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

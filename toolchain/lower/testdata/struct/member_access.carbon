@@ -16,10 +16,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
 // CHECK:STDOUT:   %x = alloca { double, i32 }, align 8
-// CHECK:STDOUT:   %struct = alloca { double, i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { double, i32 }, ptr %struct, i32 0, i32 0
+// CHECK:STDOUT:   %a = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store double 0.000000e+00, ptr %a, align 8
-// CHECK:STDOUT:   %b = getelementptr inbounds { double, i32 }, ptr %struct, i32 0, i32 1
+// CHECK:STDOUT:   %b = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 1
 // CHECK:STDOUT:   store i32 1, ptr %b, align 4
 // CHECK:STDOUT:   %y = alloca i32, align 4
 // CHECK:STDOUT:   %b1 = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 1
