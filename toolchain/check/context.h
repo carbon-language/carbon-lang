@@ -110,7 +110,8 @@ class Context {
 
   // Convert the given expression to a value or reference expression of the same
   // type.
-  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id)
+  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id,
+                                           bool discarded = false)
       -> SemIR::NodeId;
 
   // Performs initialization of `target_id` from `value_id`. Returns the
@@ -289,12 +290,6 @@ class Context {
   // temporary will be created if possible; if no temporary is created, the
   // return value will be `SemIR::NodeId::Invalid`.
   auto FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
-      -> SemIR::NodeId;
-
-  // Commits to using temporaries for all initializing expressions directly
-  // within `init_id`. This looks through struct and tuple literals to find
-  // nested temporaries.
-  auto FinalizeNestedTemporaries(SemIR::NodeId init_id, bool discarded)
       -> SemIR::NodeId;
 
   // Marks the initializer `init_id` as initializing `target_id`.

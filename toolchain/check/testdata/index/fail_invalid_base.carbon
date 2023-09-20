@@ -31,27 +31,27 @@ var c: i32 = {.a = 1, .b = 2}[0];
 var d: i32 = {.a: i32, .b: i32}[0];
 
 // CHECK:STDOUT: file "fail_invalid_base.carbon" {
-// CHECK:STDOUT:   %.loc7 = namespace {}
+// CHECK:STDOUT:   %.loc14 = namespace {}
 // CHECK:STDOUT:   %a: ref i32 = var "a"
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 0
 // CHECK:STDOUT:   assign %a, <error>
-// CHECK:STDOUT:   %.loc16 = fn_decl @F
+// CHECK:STDOUT:   %.loc20 = fn_decl @F
 // CHECK:STDOUT:   %b: ref i32 = var "b"
-// CHECK:STDOUT:   %.loc20: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc21: i32 = int_literal 1
 // CHECK:STDOUT:   assign %b, <error>
 // CHECK:STDOUT:   %c: ref i32 = var "c"
-// CHECK:STDOUT:   %.loc25_20: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc25_18: i32 = stub_reference %.loc25_20
-// CHECK:STDOUT:   %.loc25_28: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc25_26: i32 = stub_reference %.loc25_28
-// CHECK:STDOUT:   %.loc25_29.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc25_29.2: {.a: i32, .b: i32} = struct_literal (%.loc25_18, %.loc25_26)
-// CHECK:STDOUT:   %.loc25_31: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc25_29.3: {.a: i32, .b: i32} = struct_value %.loc25_29.2, (%.loc25_18, %.loc25_26)
+// CHECK:STDOUT:   %.loc26_20: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc26_18: i32 = stub_reference %.loc26_20
+// CHECK:STDOUT:   %.loc26_28: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc26_26: i32 = stub_reference %.loc26_28
+// CHECK:STDOUT:   %.loc26_29.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc26_29.2: {.a: i32, .b: i32} = struct_literal (%.loc26_18, %.loc26_26)
+// CHECK:STDOUT:   %.loc26_31: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = struct_value %.loc26_29.2, (%.loc26_18, %.loc26_26)
 // CHECK:STDOUT:   assign %c, <error>
 // CHECK:STDOUT:   %d: ref i32 = var "d"
-// CHECK:STDOUT:   %.loc30_31: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc30_33: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc31_33: i32 = int_literal 0
 // CHECK:STDOUT:   assign %d, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

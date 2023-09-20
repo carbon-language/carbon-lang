@@ -310,14 +310,8 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
 
     case SemIR::ExpressionCategory::Mixed:
       // Strip off outer stub references.
-      while (true) {
-        if (expr.kind() == SemIR::NodeKind::StubReference) {
-          expr_id = expr.GetAsStubReference();
-        } else {
-          break;
-        }
-        expr = semantics_ir().GetNode(expr_id);
-      }
+      expr_id = SkipStubReferences(expr_id);
+      expr = semantics_ir().GetNode(expr_id);
 
       // TODO: Make non-recursive.
       // TODO: This should be done as part of the `ImplicitAs` processing so
@@ -443,15 +437,8 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
 
     case SemIR::ExpressionCategory::Mixed: {
       // Strip off outer stub references.
+      expr_id = SkipStubReferences(expr_id);
       SemIR::Node expr = semantics_ir().GetNode(expr_id);
-      while (true) {
-        if (expr.kind() == SemIR::NodeKind::StubReference) {
-          expr_id = expr.GetAsStubReference();
-        } else {
-          break;
-        }
-        expr = semantics_ir().GetNode(expr_id);
-      }
 
       // TODO: Make non-recursive.
       switch (expr.kind()) {
@@ -483,7 +470,8 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
 
 // Convert the given expression to a value or reference expression of the same
 // type.
-auto Context::ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id)
+auto Context::ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id,
+                                                  bool discarded)
     -> SemIR::NodeId {
   switch (GetExpressionCategory(semantics_ir(), expr_id)) {
     case SemIR::ExpressionCategory::Value:
@@ -492,7 +480,7 @@ auto Context::ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id)
       return expr_id;
 
     case SemIR::ExpressionCategory::Initializing:
-      return FinalizeTemporary(expr_id, /*discarded=*/false);
+      return FinalizeTemporary(expr_id, discarded);
 
     case SemIR::ExpressionCategory::Mixed:
     case SemIR::ExpressionCategory::NotExpression:
@@ -619,96 +607,10 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
   }
 }
 
-auto Context::FinalizeNestedTemporaries(SemIR::NodeId init_id, bool discarded)
-    -> SemIR::NodeId {
-  // A work item, representing a recursion level: either at the top level, or
-  // visiting the elements of a tuple or a struct.
-  struct WorkListItem {
-    enum Kind { TopLevel, Tuple, Struct } kind;
-    SemIR::NodeId enclosing_id;
-    llvm::MutableArrayRef<SemIR::NodeId> elements;
-    bool modified = false;
-
-    void DropFirstElement() { elements = elements.drop_front(); }
-  };
-
-  llvm::SmallVector<WorkListItem> work_list;
-  work_list.push_back({.kind = WorkListItem::TopLevel,
-                       .enclosing_id = SemIR::NodeId::Invalid,
-                       .elements = init_id});
-
-  while (true) {
-    // If we're out of elements, we've finished this work item.
-    if (work_list.back().elements.empty()) {
-      auto item = work_list.pop_back_val();
-      if (item.kind == WorkListItem::TopLevel) {
-        return init_id;
-      }
-
-      auto& next_item = work_list.back();
-
-      // If we changed any of the elements, move the literal node later so that
-      // it appears after its updated contents.
-      if (item.modified) {
-        auto node = semantics_ir().GetNode(item.enclosing_id);
-        auto& new_id = next_item.elements.front();
-
-        semantics_ir().ReplaceNode(item.enclosing_id,
-                                   SemIR::Node::NoOp::Make(node.parse_node()));
-
-        switch (item.kind) {
-          case WorkListItem::TopLevel:
-            CARBON_FATAL() << "already handled";
-
-          case WorkListItem::Tuple:
-            new_id = AddNode(SemIR::Node::TupleLiteral::Make(
-                node.parse_node(), node.type_id(), node.GetAsTupleLiteral()));
-            break;
-
-          case WorkListItem::Struct:
-            new_id = AddNode(SemIR::Node::StructLiteral::Make(
-                node.parse_node(), node.type_id(), node.GetAsStructLiteral()));
-            break;
-        }
-
-        next_item.modified = true;
-      }
-
-      next_item.DropFirstElement();
-      continue;
-    }
-
-    // Visit the next element and finalize temporaries within it.
-    auto& item = work_list.back();
-    auto node_id = SkipStubReferences(item.elements.front());
-    SemIR::Node node = semantics_ir().GetNode(node_id);
-
-    if (node.kind() == SemIR::NodeKind::StructLiteral) {
-      work_list.push_back(
-          {.kind = WorkListItem::Struct,
-           .enclosing_id = node_id,
-           .elements = semantics_ir().GetNodeBlock(node.GetAsStructLiteral())});
-    } else if (node.kind() == SemIR::NodeKind::TupleLiteral) {
-      work_list.push_back(
-          {.kind = WorkListItem::Tuple,
-           .enclosing_id = node_id,
-           .elements = semantics_ir().GetNodeBlock(node.GetAsTupleLiteral())});
-    } else if (GetExpressionCategory(semantics_ir(), node_id) ==
-        SemIR::ExpressionCategory::Initializing) {
-      item.elements.front() = FinalizeTemporary(node_id, discarded);
-      item.modified = true;
-      item.DropFirstElement();
-    } else {
-      item.DropFirstElement();
-    }
-  }
-}
-
 auto Context::HandleDiscardedExpression(SemIR::NodeId expr_id) -> void {
-  // If we discard an initializing expression, finalize all temporaries in it.
-  // TODO: Can we just ConvertToValueOrReferenceExpression here? This is the
-  // only user of FinalizeNestedTemporaries.
-  FinalizeNestedTemporaries(expr_id, /*discarded=*/true);
+  // If we discard an initializing expression, convert it to a value or
+  // reference so that it has something to initialize.
+  ConvertToValueOrReferenceExpression(expr_id, /*discarded=*/true);
 
   // TODO: This will eventually need to do some "do not discard" analysis.
   (void)expr_id;
@@ -794,11 +696,8 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
 
   // Skip back over StubReferences to find if we're being initialized from a
   // tuple literal.
+  value_id = SkipStubReferences(value_id);
   auto value = context.semantics_ir().GetNode(value_id);
-  while (value.kind() == SemIR::NodeKind::StubReference) {
-    value_id = value.GetAsStubReference();
-    value = context.semantics_ir().GetNode(value_id);
-  }
 
   llvm::ArrayRef<SemIR::NodeId> literal_elems;
   if (value.kind() == SemIR::NodeKind::TupleLiteral) {
