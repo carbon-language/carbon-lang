@@ -407,9 +407,8 @@ class Node : public Printable<Node> {
   using StructAccess = Factory<NodeKind::StructAccess, NodeId /*struct_id*/,
                                MemberIndex /*ref_index*/>;
 
-  using StructInit =
-      Factory<NodeKind::StructInit, NodeId /*literal_id*/,
-              NodeBlockId /*converted_refs_id*/>;
+  using StructInit = Factory<NodeKind::StructInit, NodeId /*literal_id*/,
+                             NodeBlockId /*converted_refs_id*/>;
 
   using StructLiteral =
       Factory<NodeKind::StructLiteral, NodeBlockId /*refs_id*/>;
@@ -420,9 +419,8 @@ class Node : public Printable<Node> {
       FactoryNoType<NodeKind::StructTypeField, StringId /*name_id*/,
                     TypeId /*type_id*/>;
 
-  using StructValue =
-      Factory<NodeKind::StructValue, NodeId /*literal_id*/,
-              NodeBlockId /*converted_refs_id*/>;
+  using StructValue = Factory<NodeKind::StructValue, NodeId /*literal_id*/,
+                              NodeBlockId /*converted_refs_id*/>;
 
   using StubReference = Factory<NodeKind::StubReference, NodeId /*node_id*/>;
 
@@ -434,17 +432,15 @@ class Node : public Printable<Node> {
   using TupleIndex =
       Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;
 
-  using TupleInit =
-      Factory<NodeKind::TupleInit, NodeId /*literal_id*/,
-              NodeBlockId /*converted_refs_id*/>;
+  using TupleInit = Factory<NodeKind::TupleInit, NodeId /*literal_id*/,
+                            NodeBlockId /*converted_refs_id*/>;
 
   using TupleLiteral = Factory<NodeKind::TupleLiteral, NodeBlockId /*refs_id*/>;
 
   using TupleType = Factory<NodeKind::TupleType, TypeBlockId /*refs_id*/>;
 
-  using TupleValue =
-      Factory<NodeKind::TupleValue, NodeId /*literal_id*/,
-              NodeBlockId /*converted_refs_id*/>;
+  using TupleValue = Factory<NodeKind::TupleValue, NodeId /*literal_id*/,
+                             NodeBlockId /*converted_refs_id*/>;
 
   using UnaryOperatorNot =
       Factory<NodeKind::UnaryOperatorNot, NodeId /*operand_id*/>;

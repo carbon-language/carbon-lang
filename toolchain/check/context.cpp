@@ -274,7 +274,7 @@ class CopyOnWriteBlock {
   SemIR::NodeBlockId source_id_;
   SemIR::NodeBlockId id_ = source_id_;
 };
-}
+}  // namespace
 
 auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                          SemIR::NodeId value_id) -> SemIR::NodeId {
@@ -344,8 +344,8 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                             : Initialize(parse_node, inner_target_id, elem_id);
             new_block.Set(i, new_id);
           }
-          return AddNode(SemIR::Node::TupleInit::Make(
-              parse_node, type_id, expr_id, new_block.id()));
+          return AddNode(SemIR::Node::TupleInit::Make(parse_node, type_id,
+                                                      expr_id, new_block.id()));
         }
 
         case SemIR::NodeKind::StructLiteral: {
@@ -374,7 +374,7 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
           }
           return AddNode(SemIR::Node::StructInit::Make(
               parse_node, type_id, expr_id, new_block.id()));
-          }
+        }
 
         default:
           CARBON_FATAL() << "Unexpected kind for mixed-category expression "
@@ -450,7 +450,7 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
           auto elements = semantics_ir().GetNodeBlock(elements_id);
           CopyOnWriteBlock new_block(semantics_ir(), elements_id);
           for (auto [i, elem_id] : llvm::enumerate(elements)) {
-            new_block.Set(i,  ConvertToValueExpression(elem_id));
+            new_block.Set(i, ConvertToValueExpression(elem_id));
           }
           return AddNode(is_tuple ? SemIR::Node::TupleValue::Make(
                                         expr.parse_node(), expr.type_id(),

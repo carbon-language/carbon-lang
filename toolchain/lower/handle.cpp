@@ -354,7 +354,7 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
 }
 
 auto HandleStructInit(FunctionContext& context, SemIR::NodeId node_id,
-                               SemIR::Node node) -> void {
+                      SemIR::Node node) -> void {
   auto* llvm_type = context.GetType(node.type_id());
 
   switch (SemIR::GetInitializingRepresentation(context.semantics_ir(),
@@ -376,9 +376,8 @@ auto HandleStructInit(FunctionContext& context, SemIR::NodeId node_id,
   }
 }
 
-auto HandleStructValue(FunctionContext& context,
-                                SemIR::NodeId node_id, SemIR::Node node)
-    -> void {
+auto HandleStructValue(FunctionContext& context, SemIR::NodeId node_id,
+                       SemIR::Node node) -> void {
   auto [struct_literal_id, refs_id] = node.GetAsStructValue();
   context.SetLocal(node_id, EmitStructOrTupleValueRepresentation(
                                 context, node.type_id(), refs_id, "struct"));
@@ -417,9 +416,8 @@ auto HandleTupleLiteral(FunctionContext& context, SemIR::NodeId node_id,
                    llvm::PoisonValue::get(context.GetType(node.type_id())));
 }
 
-auto HandleTupleInit(FunctionContext& context,
-                              SemIR::NodeId node_id, SemIR::Node node)
-    -> void {
+auto HandleTupleInit(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::Node node) -> void {
   auto* llvm_type = context.GetType(node.type_id());
 
   switch (SemIR::GetInitializingRepresentation(context.semantics_ir(),
@@ -441,14 +439,12 @@ auto HandleTupleInit(FunctionContext& context,
   }
 }
 
-auto HandleTupleValue(FunctionContext& context,
-                               SemIR::NodeId node_id, SemIR::Node node)
-    -> void {
+auto HandleTupleValue(FunctionContext& context, SemIR::NodeId node_id,
+                      SemIR::Node node) -> void {
   auto [struct_literal_id, refs_id] = node.GetAsTupleValue();
   context.SetLocal(node_id, EmitStructOrTupleValueRepresentation(
                                 context, node.type_id(), refs_id, "tuple"));
 }
-
 
 auto HandleUnaryOperatorNot(FunctionContext& context, SemIR::NodeId node_id,
                             SemIR::Node node) -> void {
