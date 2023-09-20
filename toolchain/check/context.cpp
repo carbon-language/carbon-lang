@@ -252,6 +252,15 @@ auto Context::is_current_position_reachable() -> bool {
 }
 
 namespace {
+// A handle to a new block that may be modified, with copy-on-write semantics.
+//
+// The constructor is given the ID of an existing block that provides the
+// initial contents of the new block. The new block is lazily allocated; if no
+// modifications have been made, the `id()` function will return the original
+// block ID.
+//
+// This is intended to avoid an unnecessary block allocation in the case where
+// the new block ends up being exactly the same as the original block.
 class CopyOnWriteBlock {
  public:
   CopyOnWriteBlock(SemIR::File& file, SemIR::NodeBlockId source_id)
