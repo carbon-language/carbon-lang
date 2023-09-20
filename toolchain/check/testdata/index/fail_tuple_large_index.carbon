@@ -20,10 +20,9 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc7_18.1: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc7_18.2: i32 = stub_reference %.loc7_18.1
 // CHECK:STDOUT:   %.loc7_21: (i32,) = tuple_literal (%.loc7_18.2)
-// CHECK:STDOUT:   %.loc7_22.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc7_22.2: ref i32 = tuple_index %a, %.loc7_22.1
-// CHECK:STDOUT:   %.loc7_22.3: init (i32,) = tuple_init %.loc7_21, (%.loc7_18.2)
-// CHECK:STDOUT:   assign %a, %.loc7_22.3
+// CHECK:STDOUT:   %.loc7_22.1: ref i32 = tuple_access %a, member0
+// CHECK:STDOUT:   %.loc7_22.2: init (i32,) = tuple_init %.loc7_21, (%.loc7_18.2)
+// CHECK:STDOUT:   assign %a, %.loc7_22.2
 // CHECK:STDOUT:   %.loc8_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_13: (type,) = tuple_literal (%.loc8_9)
 // CHECK:STDOUT:   %b: ref (i32,) = var "b"

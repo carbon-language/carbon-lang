@@ -15,10 +15,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
 // CHECK:STDOUT:   %x = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   store i32 12, ptr %tuple.index, align 4
-// CHECK:STDOUT:   %tuple.index1 = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   store i32 7, ptr %tuple.index1, align 4
+// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   store i32 12, ptr %tuple.elem, align 4
+// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 1
+// CHECK:STDOUT:   store i32 7, ptr %tuple.elem1, align 4
 // CHECK:STDOUT:   %y = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

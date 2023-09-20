@@ -19,9 +19,9 @@ fn Main() {
 // CHECK:STDOUT:   store i32 12, ptr %a, align 4
 // CHECK:STDOUT:   store i32 9, ptr %a, align 4
 // CHECK:STDOUT:   %b = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32 }, ptr %b, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %tuple.index, align 4
-// CHECK:STDOUT:   %tuple.index1 = getelementptr inbounds { i32, i32 }, ptr %b, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %tuple.index1, align 4
+// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds { i32, i32 }, ptr %b, i32 0, i32 0
+// CHECK:STDOUT:   store i32 1, ptr %tuple.elem, align 4
+// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds { i32, i32 }, ptr %b, i32 0, i32 1
+// CHECK:STDOUT:   store i32 2, ptr %tuple.elem1, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

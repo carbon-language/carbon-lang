@@ -198,7 +198,7 @@ struct TypeBlockId : public IndexBase, public Printable<TypeBlockId> {
   }
 };
 
-// An index for member access.
+// An index for member access, for structs and tuples.
 struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -428,6 +428,9 @@ class Node : public Printable<Node> {
       Factory<NodeKind::Temporary, NodeId /*storage_id*/, NodeId /*init_id*/>;
 
   using TemporaryStorage = Factory<NodeKind::TemporaryStorage>;
+
+  using TupleAccess = Factory<NodeKind::TupleAccess, NodeId /*tuple_id*/,
+                              MemberIndex /*index*/>;
 
   using TupleIndex =
       Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;

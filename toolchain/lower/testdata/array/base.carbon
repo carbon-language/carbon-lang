@@ -31,24 +31,24 @@ fn Run() {
 // CHECK:STDOUT:   %array.index6 = getelementptr inbounds [5 x {}], ptr %c, i32 0, i32 3
 // CHECK:STDOUT:   %array.index7 = getelementptr inbounds [5 x {}], ptr %c, i32 0, i32 4
 // CHECK:STDOUT:   %d = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %tuple.index, align 4
-// CHECK:STDOUT:   %tuple.index8 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %tuple.index8, align 4
-// CHECK:STDOUT:   %tuple.index9 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 2
-// CHECK:STDOUT:   store i32 3, ptr %tuple.index9, align 4
+// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 0
+// CHECK:STDOUT:   store i32 1, ptr %tuple.elem, align 4
+// CHECK:STDOUT:   %tuple.elem8 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 1
+// CHECK:STDOUT:   store i32 2, ptr %tuple.elem8, align 4
+// CHECK:STDOUT:   %tuple.elem9 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 2
+// CHECK:STDOUT:   store i32 3, ptr %tuple.elem9, align 4
 // CHECK:STDOUT:   %e = alloca [3 x i32], align 4
 // CHECK:STDOUT:   %array.index10 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 0
-// CHECK:STDOUT:   %tuple.index11 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %tuple.index11, align 4
+// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 0
+// CHECK:STDOUT:   %1 = load i32, ptr %tuple.index, align 4
 // CHECK:STDOUT:   store i32 %1, ptr %array.index10, align 4
-// CHECK:STDOUT:   %array.index12 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 1
-// CHECK:STDOUT:   %tuple.index13 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 1
-// CHECK:STDOUT:   %2 = load i32, ptr %tuple.index13, align 4
-// CHECK:STDOUT:   store i32 %2, ptr %array.index12, align 4
-// CHECK:STDOUT:   %array.index14 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 2
-// CHECK:STDOUT:   %tuple.index15 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 2
-// CHECK:STDOUT:   %3 = load i32, ptr %tuple.index15, align 4
-// CHECK:STDOUT:   store i32 %3, ptr %array.index14, align 4
+// CHECK:STDOUT:   %array.index11 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 1
+// CHECK:STDOUT:   %tuple.index12 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 1
+// CHECK:STDOUT:   %2 = load i32, ptr %tuple.index12, align 4
+// CHECK:STDOUT:   store i32 %2, ptr %array.index11, align 4
+// CHECK:STDOUT:   %array.index13 = getelementptr inbounds [3 x i32], ptr %e, i32 0, i32 2
+// CHECK:STDOUT:   %tuple.index14 = getelementptr inbounds { i32, i32, i32 }, ptr %d, i32 0, i32 2
+// CHECK:STDOUT:   %3 = load i32, ptr %tuple.index14, align 4
+// CHECK:STDOUT:   store i32 %3, ptr %array.index13, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

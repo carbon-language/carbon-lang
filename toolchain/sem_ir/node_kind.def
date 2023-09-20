@@ -94,6 +94,8 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(StubReference, "stub_reference", Typed,
 CARBON_SEMANTICS_NODE_KIND_IMPL(TemporaryStorage, "temporary_storage", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Temporary, "temporary", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(TupleAccess, "tuple_access", Typed,
+                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleIndex, "tuple_index", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleInit, "tuple_init", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleLiteral, "tuple_literal", Typed,

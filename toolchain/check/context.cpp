@@ -327,40 +327,13 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
       // that we can still initialize directly from one tuple element if
       // another one needs to be converted.
       switch (expr.kind()) {
-        case SemIR::NodeKind::TupleLiteral: {
-          auto elements = semantics_ir().GetNodeBlock(expr.GetAsTupleLiteral());
-          CopyOnWriteBlock new_block(semantics_ir(), expr.GetAsTupleLiteral());
-          bool is_in_place =
-              SemIR::GetInitializingRepresentation(semantics_ir(), type_id)
-                  .kind == SemIR::InitializingRepresentation::InPlace;
-          for (auto [i, elem_id] : llvm::enumerate(elements)) {
-            // TODO: Avoid creating the integer literal.
-            auto int_id = AddNode(SemIR::Node::IntegerLiteral::Make(
-                parse_node, CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
-                semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
-            // TODO: We know the type already matches because we already invoked
-            // `ImplicitAsRequired`, but this will need to change once we stop
-            // doing that.
-            auto inner_target_type = semantics_ir().GetNode(elem_id).type_id();
-            // TODO: This should be placed into the return slot, and only
-            // created if needed.
-            auto inner_target_id = AddNode(SemIR::Node::TupleIndex::Make(
-                parse_node, inner_target_type, target_id, int_id));
-
-            auto new_id =
-                is_in_place ? InitializeAndFinalize(parse_node, inner_target_id,
-                                                    elem_id)
-                            : Initialize(parse_node, inner_target_id, elem_id);
-            new_block.Set(i, new_id);
-          }
-          return AddNode(SemIR::Node::TupleInit::Make(parse_node, type_id,
-                                                      expr_id, new_block.id()));
-        }
-
+        case SemIR::NodeKind::TupleLiteral:
         case SemIR::NodeKind::StructLiteral: {
-          auto elements =
-              semantics_ir().GetNodeBlock(expr.GetAsStructLiteral());
-          CopyOnWriteBlock new_block(semantics_ir(), expr.GetAsStructLiteral());
+          bool is_tuple = expr.kind() == SemIR::NodeKind::TupleLiteral;
+          auto elements_id =
+              is_tuple ? expr.GetAsTupleLiteral() : expr.GetAsStructLiteral();
+          auto elements = semantics_ir().GetNodeBlock(elements_id);
+          CopyOnWriteBlock new_block(semantics_ir(), elements_id);
           bool is_in_place =
               SemIR::GetInitializingRepresentation(semantics_ir(), type_id)
                   .kind == SemIR::InitializingRepresentation::InPlace;
@@ -371,18 +344,24 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
             auto inner_target_type = semantics_ir().GetNode(elem_id).type_id();
             // TODO: This should be placed into the return slot, and only
             // created if needed.
-            auto inner_target_id = AddNode(SemIR::Node::StructAccess::Make(
-                parse_node, inner_target_type, target_id,
-                SemIR::MemberIndex(i)));
-
+            auto inner_target_id =
+                AddNode(is_tuple ? SemIR::Node::TupleAccess::Make(
+                                       parse_node, inner_target_type, target_id,
+                                       SemIR::MemberIndex(i))
+                                 : SemIR::Node::StructAccess::Make(
+                                       parse_node, inner_target_type, target_id,
+                                       SemIR::MemberIndex(i)));
             auto new_id =
                 is_in_place ? InitializeAndFinalize(parse_node, inner_target_id,
                                                     elem_id)
                             : Initialize(parse_node, inner_target_id, elem_id);
             new_block.Set(i, new_id);
           }
-          return AddNode(SemIR::Node::StructInit::Make(
-              parse_node, type_id, expr_id, new_block.id()));
+          return AddNode(
+              is_tuple ? SemIR::Node::TupleInit::Make(parse_node, type_id,
+                                                      expr_id, new_block.id())
+                       : SemIR::Node::StructInit::Make(
+                             parse_node, type_id, expr_id, new_block.id()));
         }
 
         default:
