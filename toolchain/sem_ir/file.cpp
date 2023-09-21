@@ -225,6 +225,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::StubReference:
     case NodeKind::Temporary:
     case NodeKind::TemporaryStorage:
+    case NodeKind::TupleAccess:
     case NodeKind::TupleIndex:
     case NodeKind::TupleLiteral:
     case NodeKind::TupleInit:
@@ -391,6 +392,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::StubReference:
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
+      case NodeKind::TupleAccess:
       case NodeKind::TupleIndex:
       case NodeKind::TupleLiteral:
       case NodeKind::TupleInit:
@@ -481,6 +483,12 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         continue;
       }
 
+      case NodeKind::TupleAccess: {
+        auto [base_id, index_id] = node.GetAsTupleAccess();
+        node_id = base_id;
+        continue;
+      }
+
       case NodeKind::TupleIndex: {
         auto [base_id, index_id] = node.GetAsTupleIndex();
         node_id = base_id;
@@ -554,6 +562,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::StructValue:
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
+      case NodeKind::TupleAccess:
       case NodeKind::TupleIndex:
       case NodeKind::TupleLiteral:
       case NodeKind::TupleInit:

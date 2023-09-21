@@ -16,17 +16,14 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc7_30: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_33: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc7_34: (i32, i32, i32) = tuple_literal (%.loc7_27, %.loc7_30, %.loc7_33)
-// CHECK:STDOUT:   %.loc7_35.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc7_35.2: ref i32 = tuple_index %a, %.loc7_35.1
-// CHECK:STDOUT:   %.loc7_35.3: init i32 = initialize_from %.loc7_27 to %.loc7_35.2
-// CHECK:STDOUT:   %.loc7_35.4: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc7_35.5: ref i32 = tuple_index %a, %.loc7_35.4
-// CHECK:STDOUT:   %.loc7_35.6: init i32 = initialize_from %.loc7_30 to %.loc7_35.5
-// CHECK:STDOUT:   %.loc7_35.7: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc7_35.8: ref i32 = tuple_index %a, %.loc7_35.7
-// CHECK:STDOUT:   %.loc7_35.9: init i32 = initialize_from %.loc7_33 to %.loc7_35.8
-// CHECK:STDOUT:   %.loc7_35.10: init (i32, i32, i32) = tuple_init %.loc7_34, (%.loc7_35.3, %.loc7_35.6, %.loc7_35.9)
-// CHECK:STDOUT:   assign %a, %.loc7_35.10
+// CHECK:STDOUT:   %.loc7_35.1: ref i32 = tuple_access %a, member0
+// CHECK:STDOUT:   %.loc7_35.2: init i32 = initialize_from %.loc7_27 to %.loc7_35.1
+// CHECK:STDOUT:   %.loc7_35.3: ref i32 = tuple_access %a, member1
+// CHECK:STDOUT:   %.loc7_35.4: init i32 = initialize_from %.loc7_30 to %.loc7_35.3
+// CHECK:STDOUT:   %.loc7_35.5: ref i32 = tuple_access %a, member2
+// CHECK:STDOUT:   %.loc7_35.6: init i32 = initialize_from %.loc7_33 to %.loc7_35.5
+// CHECK:STDOUT:   %.loc7_35.7: init (i32, i32, i32) = tuple_init %.loc7_34, (%.loc7_35.2, %.loc7_35.4, %.loc7_35.6)
+// CHECK:STDOUT:   assign %a, %.loc7_35.7
 // CHECK:STDOUT:   %.loc8_14: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc8_15: type = array_type %.loc8_14, i32
 // CHECK:STDOUT:   %b: ref [i32; 3] = var "b"

@@ -18,10 +18,10 @@ fn Run() {
 // CHECK:STDOUT: source_filename = "array_element_access.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @A(ptr sret({ i32, i32 }) %return) {
-// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %tuple.index, align 4
-// CHECK:STDOUT:   %tuple.index1 = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %tuple.index1, align 4
+// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   store i32 1, ptr %tuple.elem, align 4
+// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   store i32 2, ptr %tuple.elem1, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

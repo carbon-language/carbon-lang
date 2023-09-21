@@ -67,14 +67,12 @@ fn Main() {
 // CHECK:STDOUT:   %.loc21_13: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc21_16: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc21_17: (i32, i32) = tuple_literal (%.loc21_13, %.loc21_16)
-// CHECK:STDOUT:   %.loc21_10.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc21_10.2: i32 = tuple_index %.loc21_8.2, %.loc21_10.1
-// CHECK:STDOUT:   %.loc21_10.3: init i32 = initialize_from %.loc21_13 to %.loc21_10.2
-// CHECK:STDOUT:   %.loc21_10.4: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc21_10.5: i32 = tuple_index %.loc21_8.2, %.loc21_10.4
-// CHECK:STDOUT:   %.loc21_10.6: init i32 = initialize_from %.loc21_16 to %.loc21_10.5
-// CHECK:STDOUT:   %.loc21_10.7: init (i32, i32) = tuple_init %.loc21_17, (%.loc21_10.3, %.loc21_10.6)
-// CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_10.7
+// CHECK:STDOUT:   %.loc21_10.1: i32 = tuple_access %.loc21_8.2, member0
+// CHECK:STDOUT:   %.loc21_10.2: init i32 = initialize_from %.loc21_13 to %.loc21_10.1
+// CHECK:STDOUT:   %.loc21_10.3: i32 = tuple_access %.loc21_8.2, member1
+// CHECK:STDOUT:   %.loc21_10.4: init i32 = initialize_from %.loc21_16 to %.loc21_10.3
+// CHECK:STDOUT:   %.loc21_10.5: init (i32, i32) = tuple_init %.loc21_17, (%.loc21_10.2, %.loc21_10.4)
+// CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_10.5
 // CHECK:STDOUT:   %.loc21_8.3: (i32, i32) = tuple_value %.loc21_8.2, (%.loc21_4, %.loc21_7)
 // CHECK:STDOUT:   %n: ref i32 = var "n"
 // CHECK:STDOUT:   %.loc22_16: i32 = int_literal 0
@@ -83,14 +81,12 @@ fn Main() {
 // CHECK:STDOUT:   %.loc26_13: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc26_16: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc26_17: (i32, i32) = tuple_literal (%.loc26_13, %.loc26_16)
-// CHECK:STDOUT:   %.loc26_10.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc26_10.2: i32 = tuple_index %.loc26_8.1, %.loc26_10.1
-// CHECK:STDOUT:   %.loc26_10.3: init i32 = initialize_from %.loc26_13 to %.loc26_10.2
-// CHECK:STDOUT:   %.loc26_10.4: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc26_10.5: i32 = tuple_index %.loc26_8.1, %.loc26_10.4
-// CHECK:STDOUT:   %.loc26_10.6: init i32 = initialize_from %.loc26_16 to %.loc26_10.5
-// CHECK:STDOUT:   %.loc26_10.7: init (i32, i32) = tuple_init %.loc26_17, (%.loc26_10.3, %.loc26_10.6)
-// CHECK:STDOUT:   assign %.loc26_8.1, %.loc26_10.7
+// CHECK:STDOUT:   %.loc26_10.1: i32 = tuple_access %.loc26_8.1, member0
+// CHECK:STDOUT:   %.loc26_10.2: init i32 = initialize_from %.loc26_13 to %.loc26_10.1
+// CHECK:STDOUT:   %.loc26_10.3: i32 = tuple_access %.loc26_8.1, member1
+// CHECK:STDOUT:   %.loc26_10.4: init i32 = initialize_from %.loc26_16 to %.loc26_10.3
+// CHECK:STDOUT:   %.loc26_10.5: init (i32, i32) = tuple_init %.loc26_17, (%.loc26_10.2, %.loc26_10.4)
+// CHECK:STDOUT:   assign %.loc26_8.1, %.loc26_10.5
 // CHECK:STDOUT:   %.loc22_7.1: i32 = bind_value %n
 // CHECK:STDOUT:   %.loc22_7.2: i32 = bind_value %n
 // CHECK:STDOUT:   %.loc26_8.2: (i32, i32) = tuple_value %.loc26_8.1, (%.loc22_7.1, %.loc22_7.2)

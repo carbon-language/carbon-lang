@@ -394,6 +394,17 @@ auto HandleStubReference(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
 }
 
+auto HandleTupleAccess(FunctionContext& context, SemIR::NodeId node_id,
+                       SemIR::Node node) -> void {
+  auto [tuple_node_id, index] = node.GetAsTupleAccess();
+  auto* tuple_value = context.GetLocal(tuple_node_id);
+  auto* llvm_type =
+      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
+  context.SetLocal(
+      node_id, context.GetIndexFromStructOrArray(llvm_type, tuple_value,
+                                                 index.index, "tuple.elem"));
+}
+
 auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
                       SemIR::Node node) -> void {
   auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
