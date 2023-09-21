@@ -25,9 +25,8 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b: ref i32 = var "b"
-// CHECK:STDOUT:   %.loc12_21.1: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc12_21.2: i32 = stub_reference %.loc12_21.1
-// CHECK:STDOUT:   %.loc12_20: init i32 = call @Echo(%.loc12_21.2)
+// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc12_20: init i32 = call @Echo(%.loc12_21)
 // CHECK:STDOUT:   assign %b, %.loc12_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
