@@ -5041,6 +5041,9 @@ of type structures, which is resolved using this rule:
 > library C is the most specific. The advantage of the implicit intersection
 > rule is that if library B is changed to add an impl with type structure
 > `impl (A, B, ?, D) as I`, it won't shift which library is serving that query.
+> Ultimately we decided that it was too surprising to prioritize based on the
+> implicit intersection of `impl` declarations, rather than something explicitly
+> written in the code.
 >
 > We chose between these alternatives in
 > [the open discussion on 2023-07-18](https://docs.google.com/document/d/1gnJBTfY81fZYvI_QXjwKk1uQHYBNHGqRLI2BS_cYYNQ/edit?resourcekey=0-ql1Q1WvTcDvhycf8LbA9DQ#heading=h.7jxges9ojgy3).
