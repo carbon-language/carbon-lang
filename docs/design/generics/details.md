@@ -5304,13 +5304,11 @@ therefore are rejected by the acyclic rule. Otherwise, we could construct an
 infinite family of non-facet argument values that could be used to avoid
 termination.
 
-**FIXME: Left off here.**
-
 ### `final` impl declarations
 
 There are cases where knowing that a parameterized impl won't be specialized is
 particularly valuable. This could let the compiler know the return type of a
-generic function call, such as using an operator:
+call to a generic function, such as using an operator:
 
 ```carbon
 // Interface defining the behavior of the prefix-* operator
@@ -5411,21 +5409,21 @@ fn F[T:! type](x: T) {
 }
 ```
 
-**Alternatives considered:**
-
--   [Allow interfaces with member functions to compare equal](/proposals/p2868.md#allow-interfaces-with-member-functions-to-compare-equal)
--   Mark associated constants as `final` instead of an `impl` declaration, in
-    proposals
-    [#983](/proposals/p0983.md#final-associated-constants-instead-of-final-impls)
-    and
-    [#2868](/proposals/p2868.md#mark-associated-constants-as-final-instead-of-an-impl-declaration)
--   [Prioritize a `final impl` over a more specific `impl` on the overlap](/proposals/p2868.md#prioritize-a-final-impl-over-a-more-specific-impl-on-the-overlap)
+> **Alternatives considered:**
+>
+> -   [Allow interfaces with member functions to compare equal](/proposals/p2868.md#allow-interfaces-with-member-functions-to-compare-equal)
+> -   Mark associated constants as `final` instead of an `impl` declaration, in
+>     proposals
+>     [#983](/proposals/p0983.md#final-associated-constants-instead-of-final-impls)
+>     and
+>     [#2868](/proposals/p2868.md#mark-associated-constants-as-final-instead-of-an-impl-declaration)
+> -   [Prioritize a `final impl` over a more specific `impl` on the overlap](/proposals/p2868.md#prioritize-a-final-impl-over-a-more-specific-impl-on-the-overlap)
 
 #### Libraries that can contain a `final` impl
 
-To prevent the possibility of two unrelated libraries defining conflicting impl
-declarations, Carbon restricts which libraries may declare an impl as `final` to
-only:
+To prevent the possibility of two unrelated libraries defining conflicting
+`impl` declarations, Carbon restricts which libraries may declare an impl as
+`final` to only:
 
 -   the library declaring the impl's interface and
 -   the library declaring the root of the `Self` type.
@@ -5464,9 +5462,9 @@ process, so Carbon can benefit from the work they have done. However, getting
 specialization to work for Rust is complicated by the need to maintain
 compatibility with existing Rust code. This motivates a number of Rust rules
 where Carbon can be simpler. As a result there are both similarities and
-differences between the Carbon and Rust plans:
+differences between the Carbon design and Rust plans:
 
--   A Rust impl defaults to not being able to be specialized, with a `default`
+-   A Rust `impl` defaults to not being able to be specialized, with a `default`
     keyword used to opt-in to allowing specialization, reflecting the existing
     code base developed without specialization. Carbon `impl` declarations
     default to allowing specialization, with restrictions on which may be
@@ -5490,9 +5488,9 @@ differences between the Carbon and Rust plans:
     [Little Orphan Impls: The ordered rule](http://smallcultfollowing.com/babysteps/blog/2015/01/14/little-orphan-impls/#the-ordered-rule),
     but the specifics are different.
 -   Carbon is not planning to support any inheritance of implementation between
-    impl definitions. This is more important to Rust since Rust does not support
-    class inheritance for implementation reuse. Rust has considered multiple
-    approaches here, see
+    `impl` definitions. This is more important to Rust since Rust does not
+    support class inheritance for implementation reuse. Rust has considered
+    multiple approaches here, see
     [Aaron Turon: "Specialize to Reuse"](http://aturon.github.io/tech/2015/09/18/reuse/)
     and
     [Supporting blanket impls in specialization](http://smallcultfollowing.com/babysteps/blog/2016/10/24/supporting-blanket-impls-in-specialization/).
@@ -5503,6 +5501,8 @@ differences between the Carbon and Rust plans:
     ambiguous which impl should be selected. Carbon instead has picked a total
     ordering on type structures, picking one as higher priority even without one
     being more specific in the sense of only applying to a subset of types.
+
+**FIXME: Left off here.**
 
 ## Forward declarations and cyclic references
 
@@ -5538,10 +5538,7 @@ interface in its parameter list. There is a
 the use cases when this would come up.
 
 An expression forming a constraint, such as `C & D`, is incomplete if any of the
-interfaces or constraints used in the expression are incomplete. A constraint
-expression using a [`where` clause](#where-constraints), like `C where ...`, is
-invalid if `C` is incomplete, since there is no way to look up member names of
-`C` that appear after `where`.
+interfaces or constraints used in the expression are incomplete.
 
 An interface or named constraint may be forward declared subject to these rules:
 
@@ -5549,17 +5546,19 @@ An interface or named constraint may be forward declared subject to these rules:
 -   Only the first declaration may have an access-control keyword.
 -   An incomplete interface or named constraint may be used as constraints in
     declarations of types, functions, interfaces, or named constraints. This
-    includes an `impl as` or `extend` declaration inside an interface or named
+    includes an `require` or `extend` declaration inside an interface or named
     constraint, but excludes specifying the values for associated constants
     because that would involve name lookup into the incomplete constraint.
 -   An attempt to define the body of a generic function using an incomplete
-    interface or named constraint is illegal.
+    interface or named constraint in its signature is illegal.
 -   An attempt to call a generic function using an incomplete interface or named
     constraint in its signature is illegal.
 -   Any name lookup into an incomplete interface or named constraint is an
     error. For example, it is illegal to attempt to access a member of an
     interface using `MyInterface.MemberName` or constrain a member using a
-    `where` clause.
+    [`where` clause](#where-constraints).
+
+**FIXME: Left off here.**
 
 If `C` is the name of an incomplete interface or named constraint, then it can
 be used in the following contexts:
