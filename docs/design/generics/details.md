@@ -4613,8 +4613,6 @@ impl forall [Key:! Hashable, Value:! type]
 
 ### Conditional conformance
 
-**FIXME: left off here.**
-
 [Conditional conformance](terminology.md#conditional-conformance) is expressing
 that we have an `impl` of some interface for some type, but only if some
 additional type restrictions are met. Examples where this would be useful
@@ -4701,10 +4699,12 @@ class Array(T:! type, template N:! i64) {
 
 Inside the scope of this `impl` definition, both `P` and `T` refer to the same
 type, but `P` has the facet type of `Printable` and so has a `Print` member. The
-relationship between `T` and `P` is as if there was a `where P == T` clause.
+relationship between `T` and `P` is as if there was a
+[`where P == T` clause](#same-type-constraints).
 
-**TODO:** Need to resolve whether the `T` name can be reused, or if we require
-that you need to use new names, like `P`, when creating new type variables.
+**Open question:** Need to resolve whether the `T` name can be reused, or if we
+require that you need to use new names, like `P`, when creating new type
+variables.
 
 **Example:** Consider a type with two parameters, like `Pair(T, U)`. In this
 example, the interface `Foo(T)` is only implemented when the two types are
@@ -4846,22 +4846,22 @@ This has a wildcard parameter `U`, and a condition on parameter `T`.
 
 ### Lookup resolution and specialization
 
-As much as possible, we want rules for where an impl is allowed to be defined
-and for selecting which impl to use that achieve these three goals:
+As much as possible, we want rules for where an `impl` is allowed to be defined
+and for selecting which `impl` definition to use that achieve these three goals:
 
 -   Implementations have coherence, as
     [defined in terminology](terminology.md#coherence). This is
     [a goal for Carbon](goals.md#coherence). More detail can be found in
     [this appendix with the rationale and alternatives considered](appendix-coherence.md).
 -   Libraries will work together as long as they pass their separate checks.
--   A checked-generic function can assume that some impl will be successfully
-    selected if it can see an impl that applies, even though another more
-    specific impl may be selected.
+-   A checked-generic function can assume that some `impl` definition will be
+    successfully selected if it can see an `impl` declaration that applies, even
+    though another more specific `impl` definition may be selected.
 
-For this to work, we need a rule that picks a single `impl` in the case where
-there are multiple `impl` definitions that match a particular type and interface
-combination. This is called _specialization_ when the rule is that most specific
-implementation is chosen, for some definition of specific.
+For this to work, we need a rule that picks a single `impl` definition in the
+case where there are multiple `impl` definitions that match a particular type
+and interface combination. This is called _specialization_ when the rule is that
+most specific implementation is chosen, for some definition of "specific."
 
 #### Type structure of an impl declaration
 
@@ -4882,8 +4882,8 @@ impl Foo(?, i32) as Bar(String, ?)
 To get a uniform representation across different `impl` definitions, before type
 parameters are replaced the declarations are normalized as follows:
 
--   For impl declarations lexically inline in a class definition, the type is
-    added between the `impl` and `as` keywords if the type is left out.
+-   For `impl` declarations that are lexically inline in a class definition, the
+    type is added between the `impl` and `as` keywords if the type is left out.
 -   Pointer types `T*` are replaced with `Ptr(T)`.
 -   The `extend` keyword is removed, if present.
 -   The `forall` clause introducing type parameters is removed, if present.
@@ -4924,9 +4924,9 @@ few goals:
     is actually used, avoiding
     [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
     problems.
--   Every attempt to use an `impl` will see the exact same `impl`, making the
-    interpretation and semantics of code consistent no matter its context, in
-    accordance with the
+-   Every attempt to use an `impl` will see the exact same `impl` definition,
+    making the interpretation and semantics of code consistent no matter its
+    context, in accordance with the
     [low context-sensitivity principle](/docs/project/principles/low_context_sensitivity.md).
 -   Allowing the `impl` to be defined with either the interface or the type
     partially addresses the
@@ -4978,54 +4978,66 @@ difference.
 
 Since at most one library can contain `impl` definitions with a given type
 structure, all `impl` definitions with a given type structure must be in the
-same library. Furthermore by the [impl declaration access rules](#access), they
-will be defined in the API file for the library if they could match any query
-from outside the library. If there is more than one impl with that type
+same library. Furthermore by the [`impl` declaration access rules](#access),
+they will be defined in the API file for the library if they could match any
+query from outside the library. If there is more than one `impl` with that type
 structure, they must be [defined](#implementing-interfaces) or
 [declared](#declaring-implementations) together in a prioritization block. Once
-a type structure is selected for a query, the first impl in the prioritization
-block that matches is selected.
+a type structure is selected for a query, the first `impl` declaration in the
+prioritization block that matches is selected.
 
-**Open question:** How are prioritization blocks written? A block starts with a
-keyword like `match_first` or `impl_priority` and then a sequence of impl
-declarations inside matching curly braces `{` ... `}`.
+> **Open question:** How are prioritization blocks written? A block starts with
+> a keyword like `match_first` or `impl_priority` and then a sequence of impl
+> declarations inside matching curly braces `{` ... `}`.
+>
+> ```carbon
+> match_first {
+>   // If T is Foo prioritized ahead of T is Bar
+>   impl forall [T:! Foo] T as Bar { ... }
+>   impl forall [T:! Baz] T as Bar { ... }
+> }
+> ```
 
-```carbon
-match_first {
-  // If T is Foo prioritized ahead of T is Bar
-  impl forall [T:! Foo] T as Bar { ... }
-  impl forall [T:! Baz] T as Bar { ... }
-}
-```
+To increase expressivity, Carbon allows prioritization blocks to contain a mix
+of type structures, which is resolved using this rule:
 
-**Open question:** How do we pick between two different prioritization blocks
-when they contain a mixture of type structures? There are three options:
+> The compiler first picks the `impl` declaration with the type structure most
+> favored for the query, and then picks the highest priority (earliest) matching
+> `impl` declaration in the same prioritization block.
 
--   Prioritization blocks implicitly define all non-empty intersections of
-    contained `impl` declarations, which are then selected by their type
-    structure.
--   The compiler first picks the impl with the type pattern most favored for the
-    query, and then picks the definition of the highest priority matching impl
-    in the same prioritization block.
--   All the `impl` declarations in a prioritization block are required to have
-    the same type structure, at a cost in expressivity.
-
-To see the difference between the first two options, consider two libraries with
-type structures as follows:
-
--   Library B has `impl (A, ?, ?, D) as I` and `impl (?, B, ?, D) as I` in the
-    same prioritization block.
--   Library C has `impl (A, ?, C, ?) as I`.
-
-For the query `(A, B, C, D) as I`, using the intersection rule, library B is
-considered to have the intersection impl with type structure
-`impl (A, B, ?, D) as I` which is the most specific. If we instead just
-considered the rules mentioned explicitly, then `impl (A, ?, C, ?) as I` from
-library C is the most specific. The advantage of the implicit intersection rule
-is that if library B is changed to add an impl with type structure
-`impl (A, B, ?, D) as I`, it won't shift which library is serving that query.
+> **Alternatives considered:** We considered two other options:
+>
+> -   "Intersection rule:" Prioritization blocks implicitly define all non-empty
+>     intersections of contained `impl` declarations, which are then selected by
+>     their type structure.
+> -   "Same type structure rule:" All the `impl` declarations in a
+>     prioritization block are required to have the same type structure, at a
+>     cost in expressivity. This option was not chosen since it wouldn't support
+>     the different type structures created by the
+>     [`like` operator](#like-operator-for-implicit-conversions).
+>
+> To see the difference from the first option, consider two libraries with type
+> structures as follows:
+>
+> -   Library B has `impl (A, ?, ?, D) as I` and `impl (?, B, ?, D) as I` in the
+>     same prioritization block.
+> -   Library C has `impl (A, ?, C, ?) as I`.
+>
+> For the query `(A, B, C, D) as I`, using the intersection rule, library B is
+> considered to have the intersection impl with type structure
+> `impl (A, B, ?, D) as I` which is the most specific. If we instead just
+> considered the rules mentioned explicitly, then `impl (A, ?, C, ?) as I` from
+> library C is the most specific. The advantage of the implicit intersection
+> rule is that if library B is changed to add an impl with type structure
+> `impl (A, B, ?, D) as I`, it won't shift which library is serving that query.
+>
+> We chose between these alternatives in
+> [the open discussion on 2023-07-18](https://docs.google.com/document/d/1gnJBTfY81fZYvI_QXjwKk1uQHYBNHGqRLI2BS_cYYNQ/edit?resourcekey=0-ql1Q1WvTcDvhycf8LbA9DQ#heading=h.7jxges9ojgy3).
+> **TODO:** This decision needs to be approved in a proposal.
 
 #### Acyclic rule
+
+**FIXME: Left off here.**
 
 A cycle is when a query, such as "does type `T` implement interface `I`?",
 considers an impl that might match, and whether that impl matches is ultimately
