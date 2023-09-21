@@ -3347,27 +3347,27 @@ final impl forall [T:! type, U:! type where .Self == T] T as ImplicitAs(U) {
 }
 ```
 
-It superficially seems like it would be convenient if such implementations were
-made available implicitly – for example, by writing
-`impl forall [T:! type] T as ImplicitAs(T)` – but in more complex examples that
-turns out to be problematic. Consider:
-
-```carbon
-interface CommonTypeWith(U:! type) {
-  let Result:! type;
-}
-final impl forall [T:! type] T as CommonTypeWith(T) where .Result = T {}
-
-fn F[T:! Potato, U:! Hashable where .Self == T](x: T, y: U) -> auto {
-  // What is T.CommonTypeWith(U).Result? Is it T or U?
-  return (if cond then x else y).Hash();
-}
-```
-
-With this proposal, `impl` validation for `T as CommonTypeWith(U)` fails: we
-cannot pick a common type when given two distinct type expressions, even if we
-know they evaluate to the same type, because we would not know which API the
-result should have.
+> **Alternative considered:** It superficially seems like it would be convenient
+> if such implementations were made available implicitly –- for example, by
+> writing `impl forall [T:! type] T as ImplicitAs(T)` -– but in more complex
+> examples that turns out to be problematic. Consider:
+>
+> ```carbon
+> interface CommonTypeWith(U:! type) {
+>   let Result:! type;
+> }
+> final impl forall [T:! type] T as CommonTypeWith(T) where .Result = T {}
+>
+> fn F[T:! Potato, U:! Hashable where .Self == T](x: T, y: U) -> auto {
+>   // What is T.CommonTypeWith(U).Result? Is it T or U?
+>  return (if cond then x else y).Hash();
+> }
+> ```
+>
+> With this alternative, `impl` validation for `T as CommonTypeWith(U)` fails:
+> we cannot pick a common type when given two distinct type expressions, even if
+> we know they evaluate to the same type, because we would not know which API
+> the result should have.
 
 ##### Implementation of same-type `ImplicitAs`
 
