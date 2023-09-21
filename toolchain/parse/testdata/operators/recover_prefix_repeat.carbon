@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: recover_prefix_repeat.carbon:[[@LINE+3]]:17: Parentheses are required around this unary `const` operator.
+// CHECK:STDERR: ERROR: recover_prefix_repeat.carbon:[[@LINE+3]]:17: Parentheses are required around this unary `const` operator.
 // CHECK:STDERR: fn F() -> const const i32* {
 // CHECK:STDERR:                 ^
 fn F() -> const const i32* {

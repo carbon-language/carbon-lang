@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: recover_postfix_space_surrounding.carbon:[[@LINE+3]]:18: Whitespace is not allowed before this unary operator.
+// CHECK:STDERR: ERROR: recover_postfix_space_surrounding.carbon:[[@LINE+3]]:18: Whitespace is not allowed before this unary operator.
 // CHECK:STDERR: var v: type = i8 * ;
 // CHECK:STDERR:                  ^
 var v: type = i8 * ;

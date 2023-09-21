@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_no_type.carbon:[[@LINE+3]]:17: Expected a `api` or `impl`.
+// CHECK:STDERR: ERROR: fail_no_type.carbon:[[@LINE+3]]:17: Expected a `api` or `impl`.
 // CHECK:STDERR: package Geometry;
 // CHECK:STDERR:                 ^
 package Geometry;

@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_require_semi.carbon:[[@LINE+3]]:12: Expected `;` in array type.
+// CHECK:STDERR: ERROR: fail_require_semi.carbon:[[@LINE+3]]:12: Expected `;` in array type.
 // CHECK:STDERR: var x: [i32];
 // CHECK:STDERR:            ^
 var x: [i32];

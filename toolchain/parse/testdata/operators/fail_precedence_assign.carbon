@@ -8,22 +8,22 @@ fn F() {
   var a: i32;
   // Assignment can only appear as an expression statement, not as a subexpression.
   // TODO: Produce the "can only be used as a complete statement" diagnostic in each of these cases.
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:10: Expected `,` or `)`.
+  // CHECK:STDERR: ERROR: fail_precedence_assign.carbon:[[@LINE+3]]:10: Expected `,` or `)`.
   // CHECK:STDERR:   1 + (a = 1);
   // CHECK:STDERR:          ^
   1 + (a = 1);
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+6]]:19: Expected `else` after `if ... then ...`.
+  // CHECK:STDERR: ERROR: fail_precedence_assign.carbon:[[@LINE+6]]:19: Expected `else` after `if ... then ...`.
   // CHECK:STDERR:   (if true then a += 1 else a /= 2);
   // CHECK:STDERR:                   ^
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:19: Expected `,` or `)`.
+  // CHECK:STDERR: ERROR: fail_precedence_assign.carbon:[[@LINE+3]]:19: Expected `,` or `)`.
   // CHECK:STDERR:   (if true then a += 1 else a /= 2);
   // CHECK:STDERR:                   ^
   (if true then a += 1 else a /= 2);
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:7: Operator `++` can only be used as a complete statement.
+  // CHECK:STDERR: ERROR: fail_precedence_assign.carbon:[[@LINE+3]]:7: Operator `++` can only be used as a complete statement.
   // CHECK:STDERR:   a + ++a;
   // CHECK:STDERR:       ^
   a + ++a;
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:5: Parentheses are required around this unary `if` operator.
+  // CHECK:STDERR: ERROR: fail_precedence_assign.carbon:[[@LINE+3]]:5: Parentheses are required around this unary `if` operator.
   // CHECK:STDERR:   ++if c then a else b;
   // CHECK:STDERR:     ^
   ++if c then a else b;

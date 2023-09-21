@@ -4,18 +4,18 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+6]]:25: Expected `.field = value`.
+// CHECK:STDERR: ERROR: fail_mix_with_unknown.carbon:[[@LINE+6]]:25: Expected `.field = value`.
 // CHECK:STDERR: var x: i32 = {.a = 1, .b, .c: i32};
 // CHECK:STDERR:                         ^
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+3]]:29: Expected `.field = value`.
+// CHECK:STDERR: ERROR: fail_mix_with_unknown.carbon:[[@LINE+3]]:29: Expected `.field = value`.
 // CHECK:STDERR: var x: i32 = {.a = 1, .b, .c: i32};
 // CHECK:STDERR:                             ^
 var x: i32 = {.a = 1, .b, .c: i32};
 
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+6]]:26: Expected `.field: field_type`.
+// CHECK:STDERR: ERROR: fail_mix_with_unknown.carbon:[[@LINE+6]]:26: Expected `.field: field_type`.
 // CHECK:STDERR: var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDERR:                          ^
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+3]]:31: Expected `.field: field_type`.
+// CHECK:STDERR: ERROR: fail_mix_with_unknown.carbon:[[@LINE+3]]:31: Expected `.field: field_type`.
 // CHECK:STDERR: var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDERR:                               ^
 var x: i32 = {.a: i32, .b, .c = 1};

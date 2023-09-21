@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: fail_then_missing.carbon:[[@LINE+3]]:23: Expected `then` after `if` condition.
+  // CHECK:STDERR: ERROR: fail_then_missing.carbon:[[@LINE+3]]:23: Expected `then` after `if` condition.
   // CHECK:STDERR:   var n: i32 = if true;
   // CHECK:STDERR:                       ^
   var n: i32 = if true;

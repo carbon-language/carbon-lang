@@ -6,13 +6,13 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_errors_sorted.carbon:[[@LINE+3]]:24: Closing symbol does not match most recent opening symbol.
+// CHECK:STDERR: ERROR: fail_errors_sorted.carbon:[[@LINE+3]]:24: Closing symbol does not match most recent opening symbol.
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^
 fn run(String program) {
   return True;
 
-// CHECK:STDERR: fail_errors_sorted.carbon:[[@LINE+3]]:10: Invalid digit 'a' in decimal numeric literal.
+// CHECK:STDERR: ERROR: fail_errors_sorted.carbon:[[@LINE+3]]:10: Invalid digit 'a' in decimal numeric literal.
 // CHECK:STDERR: var x = 3a;
 // CHECK:STDERR:          ^
 var x = 3a;

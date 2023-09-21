@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:27: Expected a `api` or `impl`.
+// CHECK:STDERR: ERROR: fail_extra_string.carbon:[[@LINE+3]]:27: Expected a `api` or `impl`.
 // CHECK:STDERR: package Foo library "bar" "baz";
 // CHECK:STDERR:                           ^
 package Foo library "bar" "baz";

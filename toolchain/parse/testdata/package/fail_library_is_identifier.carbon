@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_library_is_identifier.carbon:[[@LINE+3]]:26: Expected a string literal to specify the library name.
+// CHECK:STDERR: ERROR: fail_library_is_identifier.carbon:[[@LINE+3]]:26: Expected a string literal to specify the library name.
 // CHECK:STDERR: package Geometry library Shapes api;
 // CHECK:STDERR:                          ^
 package Geometry library Shapes api;

@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_dot_string_colon.carbon:[[@LINE+3]]:10: Expected identifier after `.`.
+// CHECK:STDERR: ERROR: fail_dot_string_colon.carbon:[[@LINE+3]]:10: Expected identifier after `.`.
 // CHECK:STDERR: var x: {."hello": i32, .y: i32} = {};
 // CHECK:STDERR:          ^
 var x: {."hello": i32, .y: i32} = {};

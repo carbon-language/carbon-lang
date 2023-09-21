@@ -5,10 +5,10 @@
 // AUTOUPDATE
 
 fn Run() {
-  // CHECK:STDERR: fail_not_callable.carbon:[[@LINE+6]]:24: Semantics TODO: `Not a callable name`.
+  // CHECK:STDERR: ERROR: fail_not_callable.carbon:[[@LINE+6]]:24: Semantics TODO: `Not a callable name`.
   // CHECK:STDERR:   var x: i32 = "hello"();
   // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_not_callable.carbon:[[@LINE+3]]:25: Cannot implicitly convert from `String` to `i32`.
+  // CHECK:STDERR: ERROR: fail_not_callable.carbon:[[@LINE+3]]:25: Cannot implicitly convert from `String` to `i32`.
   // CHECK:STDERR:   var x: i32 = "hello"();
   // CHECK:STDERR:                         ^
   var x: i32 = "hello"();

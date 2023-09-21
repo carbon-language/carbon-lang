@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_no_name.carbon:[[@LINE+3]]:8: Expected identifier after `package`.
+// CHECK:STDERR: ERROR: fail_no_name.carbon:[[@LINE+3]]:8: Expected identifier after `package`.
 // CHECK:STDERR: package;
 // CHECK:STDERR:        ^
 package;

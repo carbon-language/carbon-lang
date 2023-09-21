@@ -5,23 +5,23 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:6: Expected `(` after `if`.
+  // CHECK:STDERR: ERROR: fail_errors.carbon:[[@LINE+3]]:6: Expected `(` after `if`.
   // CHECK:STDERR:   if a {}
   // CHECK:STDERR:      ^
   if a {}
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:7: Expected expression.
+  // CHECK:STDERR: ERROR: fail_errors.carbon:[[@LINE+3]]:7: Expected expression.
   // CHECK:STDERR:   if () {}
   // CHECK:STDERR:       ^
   if () {}
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:9: Unexpected tokens before `)`.
+  // CHECK:STDERR: ERROR: fail_errors.carbon:[[@LINE+3]]:9: Unexpected tokens before `)`.
   // CHECK:STDERR:   if (b c) {}
   // CHECK:STDERR:         ^
   if (b c) {}
   if (d)
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+6]]:1: Expected braced code block.
+// CHECK:STDERR: ERROR: fail_errors.carbon:[[@LINE+6]]:1: Expected braced code block.
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:1: Expected expression.
+// CHECK:STDERR: ERROR: fail_errors.carbon:[[@LINE+3]]:1: Expected expression.
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 }

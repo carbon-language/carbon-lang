@@ -7,7 +7,7 @@
 fn Run(a: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:6: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: ERROR: fail_param_type.carbon:[[@LINE+6]]:6: Cannot implicitly convert from `f64` to `i32`.
   // CHECK:STDERR:   Run(1.0);
   // CHECK:STDERR:      ^
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE-6]]:1: Initializing parameter 1 of function declared here.

@@ -5,13 +5,13 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+9]]:6: Expected `(` after `if`.
+  // CHECK:STDERR: ERROR: fail_square_brackets.carbon:[[@LINE+9]]:6: Expected `(` after `if`.
   // CHECK:STDERR:   if [] {}
   // CHECK:STDERR:      ^
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+6]]:7: Expected expression.
+  // CHECK:STDERR: ERROR: fail_square_brackets.carbon:[[@LINE+6]]:7: Expected expression.
   // CHECK:STDERR:   if [] {}
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+3]]:7: Expected `;` in array type.
+  // CHECK:STDERR: ERROR: fail_square_brackets.carbon:[[@LINE+3]]:7: Expected `;` in array type.
   // CHECK:STDERR:   if [] {}
   // CHECK:STDERR:       ^
   if [] {}

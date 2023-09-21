@@ -9,24 +9,24 @@ fn F() -> i32 {
   // error, so that it's clear what ambiguity we're referring to.
   // TODO: Improve error recovery so that we recover as `3 * (i32*) * 4`, not
   // as `(3 * i32)* * 4`, to suppress the second error here.
-  // CHECK:STDERR: fail_pointer_type_in_expression.carbon:[[@LINE+6]]:17: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: ERROR: fail_pointer_type_in_expression.carbon:[[@LINE+6]]:17: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   return 3 * i32* * 4;
   // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_pointer_type_in_expression.carbon:[[@LINE+3]]:19: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: ERROR: fail_pointer_type_in_expression.carbon:[[@LINE+3]]:19: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   return 3 * i32* * 4;
   // CHECK:STDERR:                   ^
   return 3 * i32* * 4;
 }
 
 fn G() -> i32 {
-  // CHECK:STDERR: fail_pointer_type_in_expression.carbon:[[@LINE+3]]:15: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: ERROR: fail_pointer_type_in_expression.carbon:[[@LINE+3]]:15: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   return i32* + 4;
   // CHECK:STDERR:               ^
   return i32* + 4;
 }
 
 fn H() -> i32 {
-  // CHECK:STDERR: fail_pointer_type_in_expression.carbon:[[@LINE+3]]:14: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: ERROR: fail_pointer_type_in_expression.carbon:[[@LINE+3]]:14: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   return *i32*;
   // CHECK:STDERR:              ^
   return *i32*;

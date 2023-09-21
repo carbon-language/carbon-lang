@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_precedence_star_minus.carbon:[[@LINE+3]]:16: Parentheses are required to disambiguate operator precedence.
+// CHECK:STDERR: ERROR: fail_precedence_star_minus.carbon:[[@LINE+3]]:16: Parentheses are required to disambiguate operator precedence.
 // CHECK:STDERR: var n: i8 = n* -n;
 // CHECK:STDERR:                ^
 var n: i8 = n* -n;

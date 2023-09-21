@@ -5,7 +5,7 @@
 // This validates that earlier errors prevent lowering, without crashing.
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+3]]:1: Unrecognized declaration introducer.
+// CHECK:STDERR: ERROR: fail_before_lowering.carbon:[[@LINE+3]]:1: Unrecognized declaration introducer.
 // CHECK:STDERR: a;
 // CHECK:STDERR: ^
 a;

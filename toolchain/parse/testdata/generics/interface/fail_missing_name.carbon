@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+3]]:11: `interface` introducer should be followed by a name.
+// CHECK:STDERR: ERROR: fail_missing_name.carbon:[[@LINE+3]]:11: `interface` introducer should be followed by a name.
 // CHECK:STDERR: interface {
 // CHECK:STDERR:           ^
 interface {

@@ -5,18 +5,18 @@
 // AUTOUPDATE
 // TODO: It should emit only one error message.
 
-// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+9]]:8: Closing symbol does not match most recent opening symbol.
+// CHECK:STDERR: ERROR: fail_require_close_bracket.carbon:[[@LINE+9]]:8: Closing symbol does not match most recent opening symbol.
 // CHECK:STDERR: var x: [i32;;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+6]]:13: Expected expression.
+// CHECK:STDERR: ERROR: fail_require_close_bracket.carbon:[[@LINE+6]]:13: Expected expression.
 // CHECK:STDERR: var x: [i32;;
 // CHECK:STDERR:             ^
-// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+3]]:13: Unexpected tokens before `]`.
+// CHECK:STDERR: ERROR: fail_require_close_bracket.carbon:[[@LINE+3]]:13: Unexpected tokens before `]`.
 // CHECK:STDERR: var x: [i32;;
 // CHECK:STDERR:             ^
 var x: [i32;;
 
-// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+15]]:21: `var` declarations must end with a `;`.
+// CHECK:STDERR: ERROR: fail_require_close_bracket.carbon:[[@LINE+15]]:21: `var` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_require_close_bracket.carbon

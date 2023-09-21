@@ -7,7 +7,7 @@
 fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: ERROR: fail_return_type_mismatch.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `f64` to `i32`.
   // CHECK:STDERR:   var x: i32 = Foo();
   // CHECK:STDERR:                     ^
   var x: i32 = Foo();

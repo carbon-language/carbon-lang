@@ -9,7 +9,7 @@ namespace Foo;
 fn Foo.Baz() {
 }
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:8: Duplicate name being declared in the same scope.
+// CHECK:STDERR: ERROR: fail_duplicate.carbon:[[@LINE+6]]:8: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR:        ^
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: Name is previously declared here.

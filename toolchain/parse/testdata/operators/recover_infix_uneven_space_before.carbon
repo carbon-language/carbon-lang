@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: recover_infix_uneven_space_before.carbon:[[@LINE+3]]:15: Whitespace missing after binary operator.
+// CHECK:STDERR: ERROR: recover_infix_uneven_space_before.carbon:[[@LINE+3]]:15: Whitespace missing after binary operator.
 // CHECK:STDERR: var n: i8 = n *n;
 // CHECK:STDERR:               ^
 var n: i8 = n *n;

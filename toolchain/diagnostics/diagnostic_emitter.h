@@ -345,13 +345,18 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
       : stream_(&stream) {}
 
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
-    Print(diagnostic.message);
+    std::string prefix = "";
+    if (diagnostic.level == DiagnosticLevel::Error) {
+      prefix = "ERROR: ";
+    }
+    Print(diagnostic.message, prefix);
     for (const auto& note : diagnostic.notes) {
       Print(note);
     }
   }
-  auto Print(const DiagnosticMessage& message) -> void {
-    *stream_ << message.location.file_name;
+  auto Print(const DiagnosticMessage& message, llvm::StringRef prefix = "")
+      -> void {
+    *stream_ << prefix << message.location.file_name;
     if (message.location.line_number > 0) {
       *stream_ << ":" << message.location.line_number;
       if (message.location.column_number > 0) {

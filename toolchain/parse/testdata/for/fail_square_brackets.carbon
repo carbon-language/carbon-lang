@@ -5,16 +5,16 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+12]]:7: Expected `(` after `for`.
+  // CHECK:STDERR: ERROR: fail_square_brackets.carbon:[[@LINE+12]]:7: Expected `(` after `for`.
   // CHECK:STDERR:   for [] {
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+9]]:7: Expected `var` declaration.
+  // CHECK:STDERR: ERROR: fail_square_brackets.carbon:[[@LINE+9]]:7: Expected `var` declaration.
   // CHECK:STDERR:   for [] {
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+6]]:8: Expected expression.
+  // CHECK:STDERR: ERROR: fail_square_brackets.carbon:[[@LINE+6]]:8: Expected expression.
   // CHECK:STDERR:   for [] {
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+3]]:8: Expected `;` in array type.
+  // CHECK:STDERR: ERROR: fail_square_brackets.carbon:[[@LINE+3]]:8: Expected `;` in array type.
   // CHECK:STDERR:   for [] {
   // CHECK:STDERR:        ^
   for [] {
