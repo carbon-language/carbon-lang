@@ -26,9 +26,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_11: type = stub_reference i32
-// CHECK:STDOUT:   %.loc10_16: type = stub_reference i32
-// CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_literal (%.loc10_11, %.loc10_16)
+// CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %v: ref (i32, i32) = var "v"
 // CHECK:STDOUT:   %.loc10_24.1: ref (i32, i32) = stub_reference %v
 // CHECK:STDOUT:   %.loc10_24.2: init (i32, i32) = call @F() to %.loc10_24.1

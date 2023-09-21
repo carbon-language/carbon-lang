@@ -22,9 +22,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_7.1: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_7.2: i32 = stub_reference %.loc10_7.1
+// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_6.2: init () = call @Foo(%.loc10_7.2)
+// CHECK:STDOUT:   %.loc10_6.2: init () = call @Foo(%.loc10_7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -7,10 +7,7 @@
 namespace Carbon::Check {
 
 auto HandleStructComma(Context& context, Parse::Node /*parse_node*/) -> bool {
-  context.ParamOrArgComma(
-      /*for_args=*/context.parse_tree().node_kind(
-          context.node_stack().PeekParseNode()) !=
-      Parse::NodeKind::StructFieldType);
+  context.ParamOrArgComma();
   return true;
 }
 
@@ -57,7 +54,6 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
 
 auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/true,
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
@@ -89,7 +85,6 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
 
 auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/false,
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();

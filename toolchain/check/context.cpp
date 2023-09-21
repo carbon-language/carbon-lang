@@ -318,8 +318,6 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
       return expr_id;
 
     case SemIR::ExpressionCategory::Mixed:
-      // Strip off outer stub references.
-      expr_id = SkipStubReferences(expr_id);
       expr = semantics_ir().GetNode(expr_id);
 
       // TODO: Make non-recursive.
@@ -445,8 +443,6 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
       return expr_id;
 
     case SemIR::ExpressionCategory::Mixed: {
-      // Strip off outer stub references.
-      expr_id = SkipStubReferences(expr_id);
       SemIR::Node expr = semantics_ir().GetNode(expr_id);
 
       // TODO: Make non-recursive.
@@ -537,8 +533,6 @@ static auto FindReturnSlotForInitializer(SemIR::File& semantics_ir,
 
 auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
     -> void {
-  init_id = SkipStubReferences(init_id);
-
   auto return_slot_id = FindReturnSlotForInitializer(semantics_ir(), init_id);
   if (return_slot_id.is_valid()) {
     // Replace the temporary in the return slot with a reference to our target.
@@ -557,9 +551,6 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
 
 auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
     -> SemIR::NodeId {
-  init_id = SkipStubReferences(init_id);
-  auto init = semantics_ir().GetNode(init_id);
-
   auto return_slot_id = FindReturnSlotForInitializer(semantics_ir(), init_id);
   if (return_slot_id.is_valid()) {
     // The return slot should already have a materialized temporary in it.
@@ -568,6 +559,7 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
         << "Return slot for initializer does not contain a temporary; "
         << "initialized multiple times? Have "
         << semantics_ir().GetNode(return_slot_id);
+    auto init = semantics_ir().GetNode(init_id);
     return AddNode(SemIR::Node::Temporary::Make(
         init.parse_node(), init.type_id(), return_slot_id, init_id));
   }
@@ -582,6 +574,7 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
   // TODO: Consider using an invalid ID to mean that we immediately
   // materialize and initialize a temporary, rather than two separate
   // nodes.
+  auto init = semantics_ir().GetNode(init_id);
   auto temporary_id = AddNode(
       SemIR::Node::TemporaryStorage::Make(init.parse_node(), init.type_id()));
   return AddNode(SemIR::Node::Temporary::Make(init.parse_node(), init.type_id(),
@@ -674,9 +667,6 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
   const auto& tuple_elem_types =
       context.semantics_ir().GetTypeBlock(tuple_elem_types_id);
 
-  // Skip back over StubReferences to find if we're being initialized from a
-  // tuple literal.
-  value_id = context.SkipStubReferences(value_id);
   auto value = context.semantics_ir().GetNode(value_id);
 
   llvm::ArrayRef<SemIR::NodeId> literal_elems;
@@ -832,14 +822,13 @@ auto Context::ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
 
 auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
 
-auto Context::ParamOrArgComma(bool for_args) -> void {
-  ParamOrArgSave(for_args);
+auto Context::ParamOrArgComma() -> void {
+  ParamOrArgSave(node_stack_.PopExpression());
 }
 
-auto Context::ParamOrArgEndNoPop(bool for_args, Parse::NodeKind start_kind)
-    -> void {
+auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) != start_kind) {
-    ParamOrArgSave(for_args);
+    ParamOrArgSave(node_stack_.PopExpression());
   }
 }
 
@@ -847,25 +836,9 @@ auto Context::ParamOrArgPop() -> SemIR::NodeBlockId {
   return params_or_args_stack_.Pop();
 }
 
-auto Context::ParamOrArgEnd(bool for_args, Parse::NodeKind start_kind)
-    -> SemIR::NodeBlockId {
-  ParamOrArgEndNoPop(for_args, start_kind);
+auto Context::ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::NodeBlockId {
+  ParamOrArgEndNoPop(start_kind);
   return ParamOrArgPop();
-}
-
-auto Context::ParamOrArgSave(bool for_args) -> void {
-  auto [entry_parse_node, entry_node_id] =
-      node_stack_.PopExpressionWithParseNode();
-  if (for_args) {
-    // For an argument, we add a stub reference to the expression on the top of
-    // the stack. There may not be anything on the IR prior to this.
-    entry_node_id = AddNode(SemIR::Node::StubReference::Make(
-        entry_parse_node, semantics_ir_->GetNode(entry_node_id).type_id(),
-        entry_node_id));
-  }
-
-  // Save the param or arg ID.
-  params_or_args_stack_.AddNodeId(entry_node_id);
 }
 
 auto Context::CanonicalizeTypeImpl(
@@ -948,16 +921,6 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
         canonical_id.AddInteger(name_id.index);
         canonical_id.AddInteger(type_id.index);
       }
-      break;
-    }
-    case SemIR::NodeKind::StubReference: {
-      // We rely on stub references not referring to each other to ensure we
-      // only recurse once here.
-      auto inner =
-          semantics_context.semantics_ir().GetNode(node.GetAsStubReference());
-      CARBON_CHECK(inner.kind() != SemIR::NodeKind::StubReference)
-          << "A stub reference should never refer to another stub reference.";
-      ProfileType(semantics_context, inner, canonical_id);
       break;
     }
     case SemIR::NodeKind::TupleType:
