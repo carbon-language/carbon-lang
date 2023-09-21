@@ -4474,6 +4474,10 @@ let T:! Add = i32;
 let y: T = x;
 ```
 
+> **TODO:** The implied `observe` declaration is from question-for-leads issue
+> [#996](https://github.com/carbon-language/carbon-lang/issues/996) and should
+> be approved in a proposal.
+
 This makes the `SymbolicLet` function roughly equivalent to:
 
 ```carbon
@@ -4525,6 +4529,13 @@ fn TemplateLet(...) {
 ```
 
 In this case, the `where .Self == U` modifier is superfluous.
+
+> **References:**
+>
+> -   Proposal
+>     [#950: Generics details 6: remove facets #950](https://github.com/carbon-language/carbon-lang/pull/950)
+> -   Question-for-leads issue
+>     [#996: Generic `let` with `auto`?](https://github.com/carbon-language/carbon-lang/issues/996)
 
 ## Parameterized impl declarations
 
