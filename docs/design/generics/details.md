@@ -101,6 +101,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Prioritization rule](#prioritization-rule)
         -   [Acyclic rule](#acyclic-rule)
         -   [Termination rule](#termination-rule)
+            -   [Non-facet arguments](#non-facet-arguments)
     -   [`final` impl declarations](#final-impl-declarations)
         -   [Libraries that can contain a `final` impl](#libraries-that-can-contain-a-final-impl)
     -   [Comparison to Rust](#comparison-to-rust)
@@ -5051,13 +5052,12 @@ of type structures, which is resolved using this rule:
 
 #### Acyclic rule
 
-**FIXME: Left off here.**
-
 A cycle is when a query, such as "does type `T` implement interface `I`?",
-considers an impl that might match, and whether that impl matches is ultimately
-dependent on whether that query is true. These are cycles in the graph of (type,
-interface) pairs where there is an edge from pair A to pair B if whether type A
-implements interface A determines whether type B implements interface B.
+considers an `impl` declaration that might match, and whether that `impl`
+declaration matches is ultimately dependent on whether that query is true. These
+are cycles in the graph of (type, interface) pairs where there is an edge from
+pair A to pair B if whether type A implements interface A determines whether
+type B implements interface B.
 
 The test for whether something forms a cycle needs to be precise enough, and not
 erase too much information when considering this graph, that these `impl`
@@ -5102,12 +5102,12 @@ declarations are selected.
 
 -   An implementation of `Z(i16)` for `i8` could come from the first blanket
     impl with `T == i8` and `U == i16` if `i16 impls Z(i8)` and
-    `i16.(Z(i8).Cond) == Y`. This condition is satisfied if `i16` implements
+    `(i16 as Z(i8)).Cond == Y`. This condition is satisfied if `i16` implements
     `Z(i8)` using the second blanket impl. In this case,
-    `i8.(Z(i16).Cond) == N`.
+    `(i8 as Z(i16)).Cond == N`.
 -   Equally well `Z(i8)` could be implemented for `i16` using the first blanket
     impl and `Z(i16)` for `i8` using the second. In this case,
-    `i8.(Z(i16).Cond) == Y`.
+    `(i8 as Z(i16)).Cond == Y`.
 
 There is no reason to to prefer one of these outcomes over the other.
 
@@ -5128,18 +5128,20 @@ match_first {
 }
 ```
 
-What is `i8.(D(i16).Cond)`? The answer is determined by which blanket impl is
+What is `(i8 as D(i16)).Cond`? The answer is determined by which blanket impl is
 selected to implement `D(i16)` for `i8`:
 
--   If the third blanket impl is selected, then `i8.(D(i16).Cond) == A`. This
-    implies that `i16.(D(i8).Cond) == B` using the second blanket impl. If that
-    is true, though, then our first impl choice was incorrect, since the first
-    blanket impl applies and is higher priority. So `i8.(D(i16).Cond) == C`. But
-    that means that `i16 as D(i8)` can't use the second blanket impl.
--   For the second blanket impl to be selected, so `i8.(D(i16).Cond) == B`,
-    `i16.(D(i8).Cond)` would have to be `A`. This happens when `i16` implements
-    `D(i8)` using the third blanket impl. However, `i8.(D(i16).Cond) == B` means
-    that there is a higher priority implementation of `D(i8).Cond` for `i16`.
+-   If the third blanket impl is selected, then `(i8 as D(i16)).Cond == A`. This
+    implies that `(i16 as D(i8)).Cond == B` using the second blanket impl. If
+    that is true, though, then our first impl choice was incorrect, since the
+    first blanket impl applies and is higher priority. So
+    `(i8 as D(i16)).Cond == C`. But that means that `i16 as D(i8)` can't use the
+    second blanket impl.
+-   For the second blanket impl to be selected, so `(i8 as D(i16)).Cond == B`,
+    `(i16 as D(i8)).Cond` would have to be `A`. This happens when `i16`
+    implements `D(i8)` using the third blanket impl. However,
+    `(i8 as D(i16)).Cond == B` means that there is a higher priority
+    implementation of `D(i8).Cond` for `i16`.
 
 In either case, we arrive at a contradiction.
 
@@ -5180,21 +5182,129 @@ impl forall [A:! type where Optional(.Self) impls B] A as B { ... }
 This problem can also result from a chain of `impl` declarations, as in
 `A impls B` if `A* impls C`, if `Optional(A) impls B`, and so on.
 
-Rust solves this problem by imposing a recursion limit, much like C++ compilers
-use to terminate template recursion. This goes against
-[Carbon's goal of predictability in generics](goals.md#predictability), but at
-this time there are no known alternatives. Unfortunately, the approach Carbon
-uses to avoid undecidability for type equality,
-[providing an explicit proof in the source](#manual-type-equality), can't be
-used here. The code triggering the query asking whether some type implements an
-interface will typically be checked-generic code with no specific knowledge
-about the types involved, and won't be in a position to provide a manual proof
-that the implementation should exist.
+Determining whether a particular set of `impl` declarations terminates is
+[equivalent to the halting problem](https://sdleffler.github.io/RustTypeSystemTuringComplete/)
+(content warning: contains many instances of an obscene word as part of a
+programming language name), and so is undecidable in general. Carbon adopts an
+approximation that guarantees termination, but may mistakenly report an error
+when the query would terminate if left to run long enough. The hope is that this
+criteria is accurate on code that occurs in practice.
 
-**Open question:** Is there some restriction on `impl` declarations that would
-allow our desired use cases, but allow the compiler to detect non-terminating
-cases? Perhaps there is some sort of complexity measure Carbon can require
-doesn't increase when recursing?
+Rule: the types in the `impl` query must never get strictly more complicated
+when considering the same `impl` declaration again. The way we measure the
+complexity of a set of types is by counting how many of each base type appears.
+A base type is the name of a type without its parameters. For example, the base
+types in this query `Pair(Optional(i32), bool) impls AddWith(Optional(i32))`
+are:
+
+-   `Pair`
+-   `Optional` twice
+-   `i32` twice
+-   `bool`
+-   `AddWith`
+
+A query is strictly more complicated if at least one count increases, and no
+count decreases. So `Optional(Optional(i32))` is strictly more complicated than
+`Optional(i32)` but not strictly more complicated than `Optional(bool)`.
+
+This rule, when combined with [the acyclic rule](#acyclic-rule) that a query
+can't repeat exactly,
+[guarantees termination](/proposals/p2687.md#proof-of-termination).
+
+Consider the example from before,
+
+```carbon
+impl forall [A:! type where Optional(.Self) impls B] A as B;
+```
+
+This `impl` declaration matches the query `i32 impls B` as long as
+`Optional(i32) impls B`. That is a strictly more complicated query, though,
+since it contains all the base types of the starting query (`i32` and `B`), plus
+one more (`Optional`). As a result, an error can be given after one step, rather
+than after hitting a large recursion limit. And that error can state explicitly
+what went wrong: we went from a query with no `Optional` to one with one,
+without anything else decreasing.
+
+Note this only triggers a failure when the same `impl` declaration is considered
+with the strictly more complicated query. For example, if the declaration is not
+considered since there is a more specialized `impl` declaration that is
+preferred by the [type-structure overlap rule](#overlap-rule), as in:
+
+```
+impl forall [A:! type where Optional(.Self) impls B] A as B;
+impl Optional(bool) as B;
+// OK, because we never consider the first `impl`
+// declaration when looking for `Optional(bool) impls I`.
+let U:! B = bool;
+// Error: cycle with `i32 impls B` depending on
+// `Optional(i32) impls B`, using the same `impl`
+// declaration, as before.
+let V:! B = i32;
+```
+
+> **Comparison with other languages:** Rust solves this problem by imposing a
+> recursion limit, much like C++ compilers use to terminate template recursion.
+> This goes against
+> [Carbon's goal of predictability in generics](goals.md#predictability),
+> because of the concern that increasing the number of steps needed to resolve
+> an `impl` query could cause far away code to hit the recursion limit.
+>
+> Carbon's approach is robust in the face of refactoring:
+>
+> -   It does not depend on the specifics of how an `impl` declaration is
+>     parameterized, only on the query.
+> -   It does not depend on the length of the chain of queries.
+> -   It does not depend on a measure of type-expression complexity, like depth.
+>
+> Carbon's approach also results in identifying the minimal steps in the loop,
+> which makes error messages as short and understandable as possible.
+
+> **Alternatives considered:**
+>
+>     -   [Recursion limit](/proposals/p2687.md#problem)
+>     -   [Measure complexity using type tree depth](/proposals/p2687.md#measure-complexity-using-type-tree-depth)
+>     -   [Consider each type parameter in an `impl` declaration separately](/proposals/p2687.md#consider-each-type-parameter-in-an-impl-declaration-separately)
+>     -   [Consider types in the interface being implemented as distinct](/proposals/p2687.md#consider-types-in-the-interface-being-implemented-as-distinct)
+>     -   [Require some count to decrease](/proposals/p2687.md#require-some-count-to-decrease)
+>     -   [Require non-type values to stay the same](/proposals/p2687.md#require-non-type-values-to-stay-the-same)
+
+> **References:** This algorithm is from proposal
+> [#2687: Termination algorithm for impl selection](https://github.com/carbon-language/carbon-lang/pull/2687),
+> replacing the recursion limit originally proposed in
+> [#920: Generic parameterized impls (details 5)](https://github.com/carbon-language/carbon-lang/pull/920)
+> before we came up with this algorithm.
+
+##### Non-facet arguments
+
+For non-facet arguments we have to expand beyond base types to consider other
+kinds of keys. These other keys are in a separate namespace from base types.
+
+-   Values with an integral type use the name of the type as the key and the
+    absolute value as a count. This means integer arguments are considered more
+    complicated if they increase in absolute value. For example, if the values
+    `2` and `-3` are used as arguments to parameters with type `i32`, then the
+    `i32` key will have count `5`.
+-   Every option of a choice type is its own key, counting how many times a
+    value using that option occurs. Any parameters to the option are recorded as
+    separate keys. For example, the `Optional(i32)` value of `.Some(7)` is
+    recorded as keys `.Some` (with a count of `1`) and `i32` (with a count of
+    `7`).
+-   Yet another namespace of keys is used to track counts of variadic arguments,
+    under the base type. This is to defend against having a variadic type `V`
+    that takes any number of `i32` arguments, with an infinite set of distinct
+    instantiations: `V(0)`, `V(0, 0)`, `V(0, 0, 0)`, ...
+    -   A `tuple` key in this namespace is used to track the total number of
+        components of tuple values. The values of those elements will be tracked
+        using their own keys.
+
+Non-facet argument values not covered by these cases are deleted from the query
+entirely for purposes of the termination algorithm. This requires that two
+queries that only differ by non-facet arguments are considered identical and
+therefore are rejected by the acyclic rule. Otherwise, we could construct an
+infinite family of non-facet argument values that could be used to avoid
+termination.
+
+**FIXME: Left off here.**
 
 ### `final` impl declarations
 
@@ -6874,6 +6984,10 @@ parameter, as opposed to an associated facet, as in `N:! u32 where ___ >= 2`.
 -   [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 -   [#2376: Constraints must use `Self`](https://github.com/carbon-language/carbon-lang/pull/2376)
 -   [#2483: Replace keyword `is` with `impls`](https://github.com/carbon-language/carbon-lang/pull/2483)
+-   [#2687: Termination algorithm for impl selection](https://github.com/carbon-language/carbon-lang/pull/2687)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 -   [#2964: Expression phase terminology](https://github.com/carbon-language/carbon-lang/pull/2964)
 -   [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
+
+**FIXME: issue #2495 updated `impl` terminology, should be noted in PR summary.
+Also: https://github.com/carbon-language/carbon-lang/pull/2687 **
