@@ -5558,8 +5558,6 @@ An interface or named constraint may be forward declared subject to these rules:
     interface using `MyInterface.MemberName` or constrain a member using a
     [`where` clause](#where-constraints).
 
-**FIXME: Left off here.**
-
 If `C` is the name of an incomplete interface or named constraint, then it can
 be used in the following contexts:
 
@@ -5567,8 +5565,8 @@ be used in the following contexts:
 -   ✅ `C & D`
     -   There may be conflicts between `C` and `D` making this invalid that will
         only be discovered once they are both complete.
--   ✅ `interface `...` { impl` ... `as C; }` or `constraint `...` { impl` ...
-    `as C; }`
+-   ✅ `interface `...` { require` ... `impls C; }` or
+    `constraint `...` { require` ... `impls C; }`
     -   Nothing implied by implementing `C` will be visible until `C` is
         complete.
 -   ✅ `T:! C` ... `T impls C`
@@ -5591,24 +5589,26 @@ An incomplete `C` cannot be used in the following contexts:
     -   Need to see the definition of `C` to see if it implies `A`.
 -   ❌ `impl` ... `as C {` ... `}`
 
-**Future work:** It is currently undecided whether an interface needs to be
-complete to be extended, as in:
+> **Future work:** It is currently undecided whether an interface needs to be
+> complete to be extended, as in:
+>
+> ```carbon
+> interface I { extend C; }
+> ```
+>
+> There are three different approaches being considered:
+>
+> -   If we detect name collisions between the members of the interface `I` and
+>     `C` when the interface `I` is defined, then we need `C` to be complete.
+> -   If we instead only generate errors on ambiguous use of members with the
+>     same name, as we do with `A & B`, then we don't need to require `C` to be
+>     complete.
+> -   Another option, being discussed in
+>     [#2355](https://github.com/carbon-language/carbon-lang/issues/2355), is
+>     that names in interface `I` shadow the names in any interface being
+>     extended, then `C` would not be required to be complete.
 
-```carbon
-interface I { extend C; }
-```
-
-There are three different approaches being considered:
-
--   If we detect name collisions between the members of the interface `I` and
-    `C` when the interface `I` is defined, then we need `C` to be complete.
--   If we instead only generate errors on ambiguous use of members with the same
-    name, as we do with `A & B`, then we don't need to require `C` to be
-    complete.
--   Another option, being discussed in
-    [#2355](https://github.com/carbon-language/carbon-lang/issues/2355), is that
-    names in interface `I` shadow the names in any interface being extended,
-    then `C` would not be required to be complete.
+**FIXME: Left off here.**
 
 ### Declaring implementations
 
