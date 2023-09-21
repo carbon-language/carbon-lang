@@ -12,8 +12,7 @@ auto HandleParenExpression(Context& context, Parse::Node parse_node) -> bool {
   auto value_id = context.node_stack().PopExpression();
   // ParamOrArgStart was called for tuple handling; clean up the ParamOrArg
   // support for non-tuple cases.
-  context.ParamOrArgEnd(
-      /*for_args=*/true, Parse::NodeKind::ParenExpressionOrTupleLiteralStart);
+  context.ParamOrArgEnd(Parse::NodeKind::ParenExpressionOrTupleLiteralStart);
   context.node_stack()
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::ParenExpressionOrTupleLiteralStart>();
@@ -30,13 +29,13 @@ auto HandleParenExpressionOrTupleLiteralStart(Context& context,
 
 auto HandleTupleLiteralComma(Context& context, Parse::Node /*parse_node*/)
     -> bool {
-  context.ParamOrArgComma(/*for_args=*/true);
+  context.ParamOrArgComma();
   return true;
 }
 
 auto HandleTupleLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/true, Parse::NodeKind::ParenExpressionOrTupleLiteralStart);
+      Parse::NodeKind::ParenExpressionOrTupleLiteralStart);
 
   context.node_stack()
       .PopAndDiscardSoloParseNode<

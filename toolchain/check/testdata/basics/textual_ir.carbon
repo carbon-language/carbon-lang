@@ -19,17 +19,15 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, f64) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_15: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc12_13.1: i32 = add %n, %.loc12_15
-// CHECK:STDOUT:   %.loc12_13.2: i32 = stub_reference %.loc12_13.1
-// CHECK:STDOUT:   %.loc12_18.1: f64 = real_literal 34e-1
-// CHECK:STDOUT:   %.loc12_18.2: f64 = stub_reference %.loc12_18.1
-// CHECK:STDOUT:   %.loc12_21: (i32, f64) = tuple_literal (%.loc12_13.2, %.loc12_18.2)
+// CHECK:STDOUT:   %.loc12_13: i32 = add %n, %.loc12_15
+// CHECK:STDOUT:   %.loc12_18: f64 = real_literal 34e-1
+// CHECK:STDOUT:   %.loc12_21: (i32, f64) = tuple_literal (%.loc12_13, %.loc12_18)
 // CHECK:STDOUT:   %.loc12_22.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc12_22.2: ref i32 = tuple_index %return, %.loc12_22.1
-// CHECK:STDOUT:   %.loc12_22.3: init i32 = initialize_from %.loc12_13.2 to %.loc12_22.2
+// CHECK:STDOUT:   %.loc12_22.3: init i32 = initialize_from %.loc12_13 to %.loc12_22.2
 // CHECK:STDOUT:   %.loc12_22.4: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_22.5: ref f64 = tuple_index %return, %.loc12_22.4
-// CHECK:STDOUT:   %.loc12_22.6: init f64 = initialize_from %.loc12_18.2 to %.loc12_22.5
+// CHECK:STDOUT:   %.loc12_22.6: init f64 = initialize_from %.loc12_18 to %.loc12_22.5
 // CHECK:STDOUT:   %.loc12_22.7: init (i32, f64) = tuple_init %.loc12_21, (%.loc12_22.3, %.loc12_22.6)
 // CHECK:STDOUT:   return %.loc12_22.7
 // CHECK:STDOUT: }
