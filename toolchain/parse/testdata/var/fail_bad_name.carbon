@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_bad_name.carbon:[[@LINE+3]]:5: Expected pattern in `var` declaration.
+// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+3]]:5: ERROR: Expected pattern in `var` declaration.
 // CHECK:STDERR: var *;
 // CHECK:STDERR:     ^
 var *;

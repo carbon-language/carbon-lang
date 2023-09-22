@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: ERROR: fail_missing_cond.carbon:[[@LINE+3]]:6: Expected `(` after `if`.
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+3]]:6: ERROR: Expected `(` after `if`.
   // CHECK:STDERR:   if {
   // CHECK:STDERR:      ^
   if {

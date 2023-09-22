@@ -5,19 +5,19 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: ERROR: fail_variety.carbon:[[@LINE+15]]:21: Operator `=` can only be used as a complete statement.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+15]]:21: ERROR: Operator `=` can only be used as a complete statement.
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                     ^
-  // CHECK:STDERR: ERROR: fail_variety.carbon:[[@LINE+12]]:29: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+12]]:29: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                             ^
-  // CHECK:STDERR: ERROR: fail_variety.carbon:[[@LINE+9]]:34: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+9]]:34: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                                  ^
-  // CHECK:STDERR: ERROR: fail_variety.carbon:[[@LINE+6]]:38: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+6]]:38: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                                      ^
-  // CHECK:STDERR: ERROR: fail_variety.carbon:[[@LINE+3]]:40: Parentheses are required around this unary `not` operator.
+  // CHECK:STDERR: fail_variety.carbon:[[@LINE+3]]:40: ERROR: Parentheses are required around this unary `not` operator.
   // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
   // CHECK:STDERR:                                        ^
   n = a * b + c * d = d * d << e & f - not g;

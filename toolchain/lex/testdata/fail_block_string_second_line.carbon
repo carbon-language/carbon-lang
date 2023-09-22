@@ -7,7 +7,7 @@
 // CHECK:STDOUT: - filename: fail_block_string_second_line.carbon
 // CHECK:STDOUT:   tokens: [
 
-// CHECK:STDERR: ERROR: fail_block_string_second_line.carbon:[[@LINE+4]]:3: Only whitespace is permitted before the closing `'''` of a multi-line string.
+// CHECK:STDERR: fail_block_string_second_line.carbon:[[@LINE+4]]:3: ERROR: Only whitespace is permitted before the closing `'''` of a multi-line string.
 // CHECK:STDERR:   error here: '''
 // CHECK:STDERR:   ^
 var s: String = '''

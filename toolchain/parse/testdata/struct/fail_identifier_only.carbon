@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_identifier_only.carbon:[[@LINE+3]]:9: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: fail_identifier_only.carbon:[[@LINE+3]]:9: ERROR: Expected `.field: field_type` or `.field = value`.
 // CHECK:STDERR: var x: {a} = {};
 // CHECK:STDERR:         ^
 var x: {a} = {};

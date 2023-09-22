@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_repeated_fn_and_semi.carbon:[[@LINE+3]]:4: `fn` introducer should be followed by a name.
+// CHECK:STDERR: fail_repeated_fn_and_semi.carbon:[[@LINE+3]]:4: ERROR: `fn` introducer should be followed by a name.
 // CHECK:STDERR: fn fn;
 // CHECK:STDERR:    ^
 fn fn;

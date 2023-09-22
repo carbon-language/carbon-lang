@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 constraint Foo {
-  // CHECK:STDERR: ERROR: fail_no_impl_allowed.carbon:[[@LINE+3]]:39: Method implementations are not allowed in interfaces.
+  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+3]]:39: ERROR: Method implementations are not allowed in interfaces.
   // CHECK:STDERR:   fn Add[self: Self](b: Self) -> Self {}
   // CHECK:STDERR:                                       ^
   fn Add[self: Self](b: Self) -> Self {}

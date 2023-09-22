@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: ERROR: fail_precedence_and_or.carbon:[[@LINE+3]]:11: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_and_or.carbon:[[@LINE+3]]:11: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   a and b or c;
   // CHECK:STDERR:           ^
   a and b or c;

@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: ERROR: fail_then_expr_missing.carbon:[[@LINE+3]]:28: Expected expression.
+  // CHECK:STDERR: fail_then_expr_missing.carbon:[[@LINE+3]]:28: ERROR: Expected expression.
   // CHECK:STDERR:   var n: i32 = if true then;
   // CHECK:STDERR:                            ^
   var n: i32 = if true then;

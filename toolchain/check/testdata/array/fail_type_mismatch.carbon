@@ -4,23 +4,23 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_type_mismatch.carbon:[[@LINE+3]]:39: Cannot implicitly convert from `String` to `i32`.
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:39: ERROR: Cannot implicitly convert from `String` to `i32`.
 // CHECK:STDERR: var a: [i32; 3] = (1, "Hello", "World");
 // CHECK:STDERR:                                       ^
 var a: [i32; 3] = (1, "Hello", "World");
 
-// CHECK:STDERR: ERROR: fail_type_mismatch.carbon:[[@LINE+3]]:5: Cannot implicitly convert from `String` to `i32`.
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:5: ERROR: Cannot implicitly convert from `String` to `i32`.
 // CHECK:STDERR: var t1: (i32, String, String);
 // CHECK:STDERR:     ^
 var t1: (i32, String, String);
 var b: [i32; 3] = t1;
 
-// CHECK:STDERR: ERROR: fail_type_mismatch.carbon:[[@LINE+3]]:24: Cannot initialize array of 3 element(s) from 2 initializer(s).
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:24: ERROR: Cannot initialize array of 3 element(s) from 2 initializer(s).
 // CHECK:STDERR: var c: [i32; 3] = (1, 2);
 // CHECK:STDERR:                        ^
 var c: [i32; 3] = (1, 2);
 
-// CHECK:STDERR: ERROR: fail_type_mismatch.carbon:[[@LINE+3]]:5: Cannot initialize array of 3 element(s) from tuple with 2 element(s).
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:5: ERROR: Cannot initialize array of 3 element(s) from tuple with 2 element(s).
 // CHECK:STDERR: var t2: (i32, i32);
 // CHECK:STDERR:     ^
 var t2: (i32, i32);

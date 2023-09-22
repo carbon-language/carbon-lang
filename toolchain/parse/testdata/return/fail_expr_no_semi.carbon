@@ -6,7 +6,7 @@
 
 fn F() {
   return x
-// CHECK:STDERR: ERROR: fail_expr_no_semi.carbon:[[@LINE+3]]:1: `return` statements must end with a `;`.
+// CHECK:STDERR: fail_expr_no_semi.carbon:[[@LINE+3]]:1: ERROR: `return` statements must end with a `;`.
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 }

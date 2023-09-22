@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR: ERROR: fail_non_member_access.carbon:[[@LINE+3]]:15: Type `{.a: i32}` does not have a member `b`.
+// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+3]]:15: ERROR: Type `{.a: i32}` does not have a member `b`.
 // CHECK:STDERR: var y: i32 = x.b;
 // CHECK:STDERR:               ^
 var y: i32 = x.b;

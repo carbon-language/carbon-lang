@@ -8,7 +8,7 @@
 // CHECK:STDERR: fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDERR:         ^
 fn G(p: const (const i32)**) -> i32** {
-  // CHECK:STDERR: ERROR: fail_collapse.carbon:[[@LINE+3]]:11: Cannot implicitly convert from `const i32**` to `i32**`.
+  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:11: ERROR: Cannot implicitly convert from `const i32**` to `i32**`.
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:           ^
   return p;

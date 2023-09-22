@@ -356,14 +356,14 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
   }
   auto Print(const DiagnosticMessage& message, llvm::StringRef prefix = "")
       -> void {
-    *stream_ << prefix << message.location.file_name;
+    *stream_ << message.location.file_name;
     if (message.location.line_number > 0) {
       *stream_ << ":" << message.location.line_number;
       if (message.location.column_number > 0) {
         *stream_ << ":" << message.location.column_number;
       }
     }
-    *stream_ << ": " << message.format_fn(message) << "\n";
+    *stream_ << ": " << prefix << message.format_fn(message) << "\n";
     if (message.location.column_number > 0) {
       *stream_ << message.location.line << "\n";
       stream_->indent(message.location.column_number - 1);

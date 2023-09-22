@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_no_colon_or_equals.carbon:[[@LINE+3]]:11: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: fail_no_colon_or_equals.carbon:[[@LINE+3]]:11: ERROR: Expected `.field: field_type` or `.field = value`.
 // CHECK:STDERR: var x: {.a} = {};
 // CHECK:STDERR:           ^
 var x: {.a} = {};

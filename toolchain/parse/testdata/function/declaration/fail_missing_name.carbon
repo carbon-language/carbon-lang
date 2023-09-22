@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_missing_name.carbon:[[@LINE+3]]:4: `fn` introducer should be followed by a name.
+// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+3]]:4: ERROR: `fn` introducer should be followed by a name.
 // CHECK:STDERR: fn ();
 // CHECK:STDERR:    ^
 fn ();

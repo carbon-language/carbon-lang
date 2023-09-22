@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn foo() {
-  // CHECK:STDERR: ERROR: fail_colon_instead_of_in.carbon:[[@LINE+3]]:19: `:` should be replaced by `in`.
+  // CHECK:STDERR: fail_colon_instead_of_in.carbon:[[@LINE+3]]:19: ERROR: `:` should be replaced by `in`.
   // CHECK:STDERR:   for (var x: i32 : y) {
   // CHECK:STDERR:                   ^
   for (var x: i32 : y) {

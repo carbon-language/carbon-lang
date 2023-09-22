@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_empty_expr.carbon:[[@LINE+3]]:16: Expected expression.
+// CHECK:STDERR: fail_empty_expr.carbon:[[@LINE+3]]:16: ERROR: Expected expression.
 // CHECK:STDERR: var v: i32 = t[];
 // CHECK:STDERR:                ^
 var v: i32 = t[];

@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_undefined_bound.carbon:[[@LINE+3]]:14: Semantics TODO: `HandleArrayExpressionWithoutBounds`.
+// CHECK:STDERR: fail_undefined_bound.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `HandleArrayExpressionWithoutBounds`.
 // CHECK:STDERR: var a: [i32; ];
 // CHECK:STDERR:              ^
 var a: [i32; ];

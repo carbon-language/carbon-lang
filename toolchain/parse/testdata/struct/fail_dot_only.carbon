@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_dot_only.carbon:[[@LINE+3]]:10: Expected identifier after `.`.
+// CHECK:STDERR: fail_dot_only.carbon:[[@LINE+3]]:10: ERROR: Expected identifier after `.`.
 // CHECK:STDERR: var x: {.} = {};
 // CHECK:STDERR:          ^
 var x: {.} = {};

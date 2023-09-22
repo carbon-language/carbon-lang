@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: ERROR: fail_else_missing.carbon:[[@LINE+3]]:30: Expected `else` after `if ... then ...`.
+  // CHECK:STDERR: fail_else_missing.carbon:[[@LINE+3]]:30: ERROR: Expected `else` after `if ... then ...`.
   // CHECK:STDERR:   var n: i32 = if true then 1;
   // CHECK:STDERR:                              ^
   var n: i32 = if true then 1;

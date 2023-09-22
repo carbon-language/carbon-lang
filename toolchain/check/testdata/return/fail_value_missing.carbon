@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn Main() -> i32 {
-  // CHECK:STDERR: ERROR: fail_value_missing.carbon:[[@LINE+3]]:9: Must return a i32.
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+3]]:9: ERROR: Must return a i32.
   // CHECK:STDERR:   return;
   // CHECK:STDERR:         ^
   return;

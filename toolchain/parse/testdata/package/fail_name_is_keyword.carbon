@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_name_is_keyword.carbon:[[@LINE+3]]:9: Expected identifier after `package`.
+// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+3]]:9: ERROR: Expected identifier after `package`.
 // CHECK:STDERR: package fn;
 // CHECK:STDERR:         ^
 package fn;

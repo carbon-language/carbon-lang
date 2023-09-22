@@ -7,7 +7,7 @@
 // --- a.carbon
 // CHECK:STDOUT: - filename: a.carbon
 // CHECK:STDOUT:   tokens: [
-// CHECK:STDERR: ERROR: a.carbon:[[@LINE+3]]:3: Empty digit sequence in numeric literal.
+// CHECK:STDERR: a.carbon:[[@LINE+3]]:3: ERROR: Empty digit sequence in numeric literal.
 // CHECK:STDERR: 1.a
 // CHECK:STDERR:   ^
 1.a
@@ -18,7 +18,7 @@
 // --- b.carbon
 // CHECK:STDOUT: - filename: b.carbon
 // CHECK:STDOUT:   tokens: [
-// CHECK:STDERR: ERROR: b.carbon:[[@LINE+3]]:3: Empty digit sequence in numeric literal.
+// CHECK:STDERR: b.carbon:[[@LINE+3]]:3: ERROR: Empty digit sequence in numeric literal.
 // CHECK:STDERR: 2.b
 // CHECK:STDERR:   ^
 2.b

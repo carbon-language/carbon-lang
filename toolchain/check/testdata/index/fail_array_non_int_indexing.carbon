@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 var a: [i32; 1] = (12,);
-// CHECK:STDERR: ERROR: fail_array_non_int_indexing.carbon:[[@LINE+3]]:16: Cannot implicitly convert from `f64` to `i32`.
+// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+3]]:16: ERROR: Cannot implicitly convert from `f64` to `i32`.
 // CHECK:STDERR: var b: i32 = a[2.6];
 // CHECK:STDERR:                ^
 var b: i32 = a[2.6];

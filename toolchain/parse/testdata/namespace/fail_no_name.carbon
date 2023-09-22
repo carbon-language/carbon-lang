@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_no_name.carbon:[[@LINE+3]]:10: `namespace` introducer should be followed by a name.
+// CHECK:STDERR: fail_no_name.carbon:[[@LINE+3]]:10: ERROR: `namespace` introducer should be followed by a name.
 // CHECK:STDERR: namespace;
 // CHECK:STDERR:          ^
 namespace;

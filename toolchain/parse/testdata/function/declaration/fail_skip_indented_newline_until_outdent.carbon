@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-  // CHECK:STDERR: ERROR: fail_skip_indented_newline_until_outdent.carbon:[[@LINE+3]]:6: `fn` introducer should be followed by a name.
+  // CHECK:STDERR: fail_skip_indented_newline_until_outdent.carbon:[[@LINE+3]]:6: ERROR: `fn` introducer should be followed by a name.
   // CHECK:STDERR:   fn (x,
   // CHECK:STDERR:      ^
   fn (x,

@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: ERROR: fail_malformed_expr.carbon:[[@LINE+3]]:17: Unexpected tokens before `]`.
+// CHECK:STDERR: fail_malformed_expr.carbon:[[@LINE+3]]:17: ERROR: Unexpected tokens before `]`.
 // CHECK:STDERR: var v: i32 = t[0,];
 // CHECK:STDERR:                 ^
 var v: i32 = t[0,];

@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn foo() {
-  // CHECK:STDERR: ERROR: fail_missing_var.carbon:[[@LINE+3]]:8: Expected `var` declaration.
+  // CHECK:STDERR: fail_missing_var.carbon:[[@LINE+3]]:8: ERROR: Expected `var` declaration.
   // CHECK:STDERR:   for (x: i32 in y) {
   // CHECK:STDERR:        ^
   for (x: i32 in y) {
