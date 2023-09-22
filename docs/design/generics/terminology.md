@@ -570,7 +570,8 @@ permitted, always has the same meaning as an explicit cast.
 A generics or interface system has the _implementation coherence_ property, or
 simply _coherence_, if there is a single answer to the question "what is the
 implementation of this interface for this type, if any?" independent of context,
-such as the libraries imported into a given file.
+such as the libraries imported into a given file. Coherence is
+[a goal of Carbon checked generics](goals.md#coherence).
 
 This is enforced using two kinds of rules:
 
@@ -587,6 +588,9 @@ This is enforced using two kinds of rules:
     considered most specialized. In Rust, by contrast, the
     [overlap rule or overlap check](https://rust-lang.github.io/chalk/book/clauses/coherence.html#chalk-overlap-check)
     instead produces an error if two implementations apply at once.
+
+The rationale for Carbon choosing coherence and alternatives considered may be
+found in [this appendix](appendix-coherence.md)
 
 ## Adapting a type
 

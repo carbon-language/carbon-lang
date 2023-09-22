@@ -1645,8 +1645,8 @@ class SongByTitle {
 ```
 
 **Comparison with other languages:** This matches the Rust idiom called
-"newtype", which is used to implement traits on types while avoiding coherence
-problems, see
+"newtype", which is used to implement traits on types while avoiding
+[coherence](terminology.md#coherence) problems, see
 [here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
 and
 [here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
@@ -4911,11 +4911,12 @@ library depends on.
 
 #### Orphan rule
 
-To achieve coherence, we need to ensure that any given impl can only be defined
-in a library that must be imported for it to apply. Specifically, given a
-specific type and specific interface, `impl` declarations that can match can
-only be in libraries that must have been imported to name that type or
-interface. This is achieved with the _orphan rule_.
+To achieve [coherence](terminology.md#coherence), we need to ensure that any
+given impl can only be defined in a library that must be imported for it to
+apply. Specifically, given a specific type and specific interface, `impl`
+declarations that can match can only be in libraries that must have been
+imported to name that type or interface. This is achieved with the _orphan
+rule_.
 
 **Orphan rule:** Some name from the type structure of an `impl` declaration must
 be defined in the same library as the `impl`, that is some name must be _local_.
@@ -5502,8 +5503,6 @@ differences between the Carbon design and Rust plans:
     ordering on type structures, picking one as higher priority even without one
     being more specific in the sense of only applying to a subset of types.
 
-**FIXME: Left off here.**
-
 ## Forward declarations and cyclic references
 
 Interfaces, named constraints, and their implementations may be forward declared
@@ -5608,8 +5607,6 @@ An incomplete `C` cannot be used in the following contexts:
 >     that names in interface `I` shadow the names in any interface being
 >     extended, then `C` would not be required to be complete.
 
-**FIXME: Left off here.**
-
 ### Declaring implementations
 
 The declaration of an interface implementation consists of:
@@ -5618,46 +5615,43 @@ The declaration of an interface implementation consists of:
 -   the keyword introducer `impl`,
 -   an optional `forall` followed by a deduced parameter list in square brackets
     `[`...`]`,
--   a type, including an optional parameter pattern,
+-   a type, including an optional [argument list](#parameterized-types),
 -   the keyword `as`, and
 -   a [facet type](#facet-types), including an optional
-    [parameter pattern](#parameterized-interfaces) and
+    [argument list](#parameterized-interfaces) and
     [`where` clause](#where-constraints) assigning
     [associated constants](#associated-constants) including
     [associated facets](#associated-facets).
 
-**Note:** The `extend` keyword, when present, is not part of the declaration. It
-precedes the `impl` declaration in class scope.
+**Note:** The `extend` keyword, when present, is not part of the `impl`
+declaration. It precedes the `impl` declaration in class scope.
 
-An implementation of an interface for a type may be forward declared subject to
+An implementation of an interface for a type may be forward declared, subject to
 these rules:
 
 -   The definition must be in the same library as the declaration. They must
     either be in the same file, or the declaration can be in the API file and
     the definition in an impl file. **Future work:** Carbon may require
-    [parameterized impl definitions](#parameterized-impl-declarations) to be in
-    the API file, to support separate compilation.
+    [parameterized `impl` definitions](#parameterized-impl-declarations) to be
+    in the API file, to support separate compilation.
 -   If there is both a forward declaration and a definition, only the first
     declaration must specify the assignment of associated constants with a
     `where` clause. Later declarations may omit the `where` clause by writing
     `where _` instead.
--   You may forward declare an implementation of a defined interface but not an
-    incomplete interface. This allows the assignment of associated constants in
-    the `impl` declaration to be verified. An impl forward declaration may be
-    for any declared type, whether it is incomplete or defined. Note that this
-    does not apply to `impl as` declarations in an interface or named constraint
-    definition, as those are considered interface requirements not forward
-    declarations.
--   Every extending implementation must be declared (or defined) inside the
-    scope of the class definition. It may also be declared before the class
-    definition or defined afterwards. Note that the class itself is incomplete
-    in the scope of the class definition, but member function bodies defined
-    inline are processed
+-   You can't forward declare an implementation of an incomplete interface. This
+    allows the assignment of associated constants in the `impl` declaration to
+    be verified with the declaration. An `impl` forward declaration may be for
+    any declared type, whether it is incomplete or defined.
+-   Every [extending implementation](#extend-impl) must be declared (or defined)
+    inside the scope of the class definition. It may also be declared before the
+    class definition or defined afterwards. Note that the class itself is
+    incomplete in the scope of the class definition, but member function bodies
+    defined inline are processed
     [as if they appeared immediately after the end of the outermost enclosing class](/docs/project/principles/information_accumulation.md#exceptions).
--   For [coherence](goals.md#coherence), we require that any `impl` declaration
-    that matches an impl lookup query in the same file, must be declared before
-    the query. This can be done with a definition or a forward declaration. This
-    matches the
+-   For [coherence](terminology.md#coherence), we require that any `impl`
+    declaration that matches an impl lookup query in the same file, must be
+    declared before the query. This can be done with a definition or a forward
+    declaration. This matches the
     [information accumulation principle](/docs/project/principles/information_accumulation.md).
 
 ### Matching and agreeing
@@ -5685,9 +5679,10 @@ expressions match along with
 -   If the type part is omitted, it is rewritten to `Self` in the context of the
     declaration.
 -   `Self` is rewritten to its meaning in the scope it is used. In a class
-    scope, this should match the type name and optional parameter expression
-    after `class`. So in `class MyClass { ... }`, `Self` is rewritten to
-    `MyClass`. In `class Vector(T:! Movable) { ... }`, `Self` is rewritten to
+    scope, this should match the type name and
+    [optional parameter expression](#parameterized-types) after `class`. So in
+    `class MyClass { ... }`, `Self` is rewritten to `MyClass`. In
+    `class Vector(T:! Movable) { ... }`, `Self` is rewritten to
     `forall [T:! Movable] Vector(T)`.
 -   Types match if they have the same name after name and alias resolution and
     the same parameters, or are the same type parameter.
@@ -5992,6 +5987,10 @@ interface TotalOrder {
 The workaround for this restriction is to use a
 [blanket impl declaration](#blanket-impl-declarations) instead:
 
+**FIXME: Is it sensible to have both a `require` and a blanket implementation?
+Does the blanket implementation satisfy the requirement so you only need to
+implement `TotalOrder`?**
+
 ```carbon
 interface TotalOrder {
   fn TotalLess[self: Self](right: Self) -> bool;
@@ -6042,7 +6041,7 @@ interface Add(T:! type = Self) {
   // `AddWith` *always* equals `T`
   final let AddWith:! type = T;
   // Has a *default* of `Self`
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn DoAdd[self: Self](right: AddWith) -> Result;
 }
 ```
@@ -6111,8 +6110,9 @@ says that if `Self` implements `CommonTypeWith(T)`, then `T` must implement
 `CommonTypeWith(Self)`.
 
 An `require`...`impls` constraint in an `interface`, or `constraint`, definition
-must still use `Self` in some way. It can be an argument to either the type or
-interface. For example:
+must still use `Self` in some way. It can be an argument to either the
+[type](#parameterized-types) or [interface](#parameterized-interfaces). For
+example:
 
 -   ✅ Allowed: `require Self impls Equatable`
 -   ✅ Allowed: `require Vector(Self) impls Equatable`
@@ -6125,9 +6125,9 @@ interface. For example:
 This restriction allows the Carbon compiler to know where to look for facts
 about a type. If `require i32 impls Equatable` could appear in any `interface`
 definition, that implies having to search all of them when considering what
-interfaces `i32` implements. This creates a coherence problem, since then the
-set of facts true for a type would depend on which interfaces have been
-imported.
+interfaces `i32` implements. This would create a
+[coherence](terminology.md#coherence) problem, since then the set of facts true
+for a type would depend on which interfaces have been imported.
 
 When implementing an interface with an `require`...`impls` requirement, that
 requirement must be satisfied by an implementation in an imported library, an
@@ -6150,7 +6150,7 @@ fn ProcessVector(v: Vector(i32)) {
 }
 
 // Satisfies the requirement that `Vector(i32)` must
-// implement `Equatable` since `i32` impls `Equatable`.
+// implement `Equatable` since `i32 impls Equatable`.
 impl forall [T:! Equatable] Vector(T) as Equatable { ... }
 ```
 
@@ -6209,6 +6209,8 @@ is [marked `final`](#final-impl-declarations) or is not
 libraries can't make `A` be implemented for fewer types, but can cause `.Result`
 to have a different assignment.
 
+**FIXME: Left off here.**
+
 ## Observing a type implements an interface
 
 An [`observe` declaration](#observe-declarations) can be used to show that two
@@ -6259,8 +6261,8 @@ fn RequiresD[T:! D](x: T) {
 ```
 
 Note that `observe` statements do not affect which impl is selected during code
-generation. For coherence, the impl used for a (type, interface) pair must
-always be the same, independent of context. The
+generation. For [coherence](terminology.md#coherence), the impl used for a
+(type, interface) pair must always be the same, independent of context. The
 [termination rule](#termination-rule) governs when compilation may fail when the
 compiler can't determine the impl to select.
 
