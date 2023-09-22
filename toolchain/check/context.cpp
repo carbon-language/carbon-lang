@@ -285,8 +285,92 @@ class CopyOnWriteBlock {
 };
 }  // namespace
 
+// A block of code that contains pending instructions that might be needed but
+// that haven't been inserted yet.
+class Context::PendingBlock {
+ public:
+  PendingBlock(Context& context) : context_(context) {}
+
+  PendingBlock(const PendingBlock&) = delete;
+  PendingBlock& operator=(const PendingBlock&) = delete;
+
+  // A scope in which we will tentatively add nodes to a pending block. If we
+  // leave the scope without inserting or merging the block, nodes added after
+  // this point will be removed again.
+  class DiscardUnusedNodesScope {
+   public:
+    DiscardUnusedNodesScope(PendingBlock& block)
+        : block_(block), size_(block.nodes_.size()) {}
+    ~DiscardUnusedNodesScope() {
+      if (block_.nodes_.size() > size_) {
+        block_.nodes_.truncate(size_);
+      }
+    }
+
+   private:
+    PendingBlock& block_;
+    size_t size_;
+  };
+
+  auto AddNode(SemIR::Node node) -> SemIR::NodeId {
+    auto node_id = context_.semantics_ir().AddNodeInNoBlock(node);
+    nodes_.push_back(node_id);
+    return node_id;
+  }
+
+  // Insert the pending block of code at the current position.
+  auto InsertHere() -> void {
+    for (auto id : nodes_) {
+      context_.node_block_stack().AddNodeId(id);
+    }
+    nodes_.clear();
+  }
+
+  // Replace the node at target_id with the nodes in this block. The new value
+  // for target_id should be value_id.
+  auto MergeReplacing(SemIR::NodeId target_id, SemIR::NodeId value_id) -> void {
+    auto value = context_.semantics_ir().GetNode(value_id);
+
+    // There are three cases here:
+
+    if (nodes_.empty()) {
+      // 1) The block is empty. Replace `target_id` with an empty splice
+      // pointing at `value_id`.
+      context_.semantics_ir().ReplaceNode(
+          target_id,
+          SemIR::Node::SpliceBlock::Make(value.parse_node(), value.type_id(),
+                                         SemIR::NodeBlockId::Empty, value_id));
+    } else if (nodes_.size() == 1 && nodes_[0] == value_id) {
+      // 2) The block is {value_id}. Replace `target_id` with the node referred
+      // to by `value_id`. This is intended to be the common case.
+      context_.semantics_ir().ReplaceNode(target_id, value);
+    } else {
+      // 3) Anything else: splice it into the IR, replacing `target_id`.
+      context_.semantics_ir().ReplaceNode(
+          target_id,
+          SemIR::Node::SpliceBlock::Make(
+              value.parse_node(), value.type_id(),
+              context_.semantics_ir().AddNodeBlock(nodes_), value_id));
+    }
+
+    // Prepare to stash more pending instructions.
+    nodes_.clear();
+  }
+
+ private:
+  Context& context_;
+  llvm::SmallVector<SemIR::NodeId> nodes_;
+};
+
 auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                          SemIR::NodeId value_id) -> SemIR::NodeId {
+  PendingBlock target_block(*this);
+  return InitializeImpl(parse_node, target_id, target_block, value_id);
+}
+
+auto Context::InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
+                             PendingBlock& target_block, SemIR::NodeId value_id)
+    -> SemIR::NodeId {
   // Implicitly convert the value to the type of the target.
   auto type_id = semantics_ir().GetNode(target_id).type_id();
   auto expr_id = ImplicitAs(parse_node, value_id, type_id);
@@ -314,7 +398,7 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
       return expr_id;
 
     case SemIR::ExpressionCategory::Initializing:
-      MarkInitializerFor(expr_id, target_id);
+      MarkInitializerFor(expr_id, target_id, target_block);
       return expr_id;
 
     case SemIR::ExpressionCategory::Mixed:
@@ -340,19 +424,19 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
             // `ImplicitAsRequired`, but this will need to change once we stop
             // doing that.
             auto inner_target_type = semantics_ir().GetNode(elem_id).type_id();
-            // TODO: This should be placed into the return slot, and only
-            // created if needed.
-            auto inner_target_id =
-                AddNode(is_tuple ? SemIR::Node::TupleAccess::Make(
-                                       parse_node, inner_target_type, target_id,
-                                       SemIR::MemberIndex(i))
-                                 : SemIR::Node::StructAccess::Make(
-                                       parse_node, inner_target_type, target_id,
-                                       SemIR::MemberIndex(i)));
+            PendingBlock::DiscardUnusedNodesScope scope(target_block);
+            auto inner_target_id = target_block.AddNode(
+                is_tuple ? SemIR::Node::TupleAccess::Make(
+                               parse_node, inner_target_type, target_id,
+                               SemIR::MemberIndex(i))
+                         : SemIR::Node::StructAccess::Make(
+                               parse_node, inner_target_type, target_id,
+                               SemIR::MemberIndex(i)));
             auto new_id =
                 is_in_place ? InitializeAndFinalize(parse_node, inner_target_id,
-                                                    elem_id)
-                            : Initialize(parse_node, inner_target_id, elem_id);
+                                                    target_block, elem_id)
+                            : InitializeImpl(parse_node, inner_target_id,
+                                             target_block, elem_id);
             new_block.Set(i, new_id);
           }
           return AddNode(
@@ -371,8 +455,9 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
 
 auto Context::InitializeAndFinalize(Parse::Node parse_node,
                                     SemIR::NodeId target_id,
+                                    PendingBlock& target_block,
                                     SemIR::NodeId value_id) -> SemIR::NodeId {
-  auto init_id = Initialize(parse_node, target_id, value_id);
+  auto init_id = InitializeImpl(parse_node, target_id, target_block, value_id);
   if (init_id == SemIR::NodeId::BuiltinError) {
     return init_id;
   }
@@ -380,6 +465,7 @@ auto Context::InitializeAndFinalize(Parse::Node parse_node,
   if (auto init_rep =
           SemIR::GetInitializingRepresentation(semantics_ir(), target_type_id);
       init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
+    target_block.InsertHere();
     init_id = AddNode(SemIR::Node::InitializeFrom::Make(
         parse_node, target_type_id, init_id, target_id));
   }
@@ -510,8 +596,8 @@ static auto FindReturnSlotForInitializer(SemIR::File& semantics_ir,
   }
 }
 
-auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
-    -> void {
+auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id,
+                                 PendingBlock& target_block) -> void {
   auto return_slot_id = FindReturnSlotForInitializer(semantics_ir(), init_id);
   if (return_slot_id.is_valid()) {
     // Replace the temporary in the return slot with a reference to our target.
@@ -520,11 +606,7 @@ auto Context::MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
         << "Return slot for initializer does not contain a temporary; "
         << "initialized multiple times? Have "
         << semantics_ir().GetNode(return_slot_id);
-    semantics_ir().ReplaceNode(
-        return_slot_id,
-        SemIR::Node::StubReference::Make(
-            semantics_ir().GetNode(init_id).parse_node(),
-            semantics_ir().GetNode(target_id).type_id(), target_id));
+    target_block.MergeReplacing(return_slot_id, target_id);
   }
 }
 
@@ -681,9 +763,11 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
     value_id = context.ConvertToValueOrReferenceExpression(value_id);
   }
 
+  Context::PendingBlock target_block(context);
+
   // Arrays are always initialized in-place. Tentatively allocate a temporary
   // as the destination for the array initialization.
-  auto return_slot_id = context.AddNode(
+  auto return_slot_id = target_block.AddNode(
       SemIR::Node::TemporaryStorage::Make(value.parse_node(), array_type_id));
 
   // Initialize each element of the array from the corresponding element of the
@@ -691,21 +775,22 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
   llvm::SmallVector<SemIR::NodeId> inits;
   inits.reserve(array_bound + 1);
   for (auto [i, src_type_id] : llvm::enumerate(tuple_elem_types)) {
+    Context::PendingBlock::DiscardUnusedNodesScope scope(target_block);
     // TODO: Add a new node kind for indexing an array at a constant index
     // so that we don't need an integer literal node here.
-    auto index_id = context.AddNode(SemIR::Node::IntegerLiteral::Make(
+    auto index_id = target_block.AddNode(SemIR::Node::IntegerLiteral::Make(
         value.parse_node(),
         context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
         context.semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
-    auto target_id = context.AddNode(SemIR::Node::ArrayIndex::Make(
+    auto target_id = target_block.AddNode(SemIR::Node::ArrayIndex::Make(
         value.parse_node(), element_type_id, return_slot_id, index_id));
-    auto src_id =
-        !literal_elems.empty()
-            ? literal_elems[i]
-            : context.AddNode(SemIR::Node::TupleIndex::Make(
-                  value.parse_node(), src_type_id, value_id, index_id));
-    auto init_id =
-        context.InitializeAndFinalize(value.parse_node(), target_id, src_id);
+    auto src_id = !literal_elems.empty()
+                      ? literal_elems[i]
+                      : context.AddNode(SemIR::Node::TupleAccess::Make(
+                            value.parse_node(), src_type_id, value_id,
+                            SemIR::MemberIndex(i)));
+    auto init_id = context.InitializeAndFinalize(value.parse_node(), target_id,
+                                                 target_block, src_id);
     if (init_id == SemIR::NodeId::BuiltinError) {
       return SemIR::NodeId::BuiltinError;
     }
@@ -713,7 +798,8 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
   }
 
   // The last element of the refs block contains the return slot for the array
-  // initialization.
+  // initialization. Flush the temporary here if we didn't insert it earlier.
+  target_block.InsertHere();
   inits.push_back(return_slot_id);
 
   return context.AddNode(

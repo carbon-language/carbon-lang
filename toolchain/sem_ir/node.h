@@ -401,6 +401,9 @@ class Node : public Printable<Node> {
   using ReturnExpression =
       FactoryNoType<NodeKind::ReturnExpression, NodeId /*expr_id*/>;
 
+  using SpliceBlock = Factory<NodeKind::SpliceBlock, NodeBlockId /*block_id*/,
+                              NodeId /*result_id*/>;
+
   using StringLiteral =
       Factory<NodeKind::StringLiteral, StringId /*string_id*/>;
 
@@ -421,8 +424,6 @@ class Node : public Printable<Node> {
 
   using StructValue = Factory<NodeKind::StructValue, NodeId /*literal_id*/,
                               NodeBlockId /*converted_refs_id*/>;
-
-  using StubReference = Factory<NodeKind::StubReference, NodeId /*node_id*/>;
 
   using Temporary =
       Factory<NodeKind::Temporary, NodeId /*storage_id*/, NodeId /*init_id*/>;

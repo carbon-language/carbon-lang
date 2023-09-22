@@ -4,15 +4,18 @@
 
 #include "toolchain/lower/function_context.h"
 
+#include "common/vlog.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Lower {
 
 FunctionContext::FunctionContext(FileContext& file_context,
-                                 llvm::Function* function)
+                                 llvm::Function* function,
+                                 llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
-      builder_(file_context.llvm_context()) {}
+      builder_(file_context.llvm_context()),
+      vlog_stream_(vlog_stream) {}
 
 auto FunctionContext::GetBlock(SemIR::NodeBlockId block_id)
     -> llvm::BasicBlock* {
@@ -32,6 +35,22 @@ auto FunctionContext::TryToReuseBlock(SemIR::NodeBlockId block_id,
     synthetic_block_ = nullptr;
   }
   return true;
+}
+
+auto FunctionContext::LowerBlock(SemIR::NodeBlockId block_id) -> void {
+  for (const auto& node_id : semantics_ir().GetNodeBlock(block_id)) {
+    auto node = semantics_ir().GetNode(node_id);
+    CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
+    // clang warns on unhandled enum values; clang-tidy is incorrect here.
+    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
+    switch (node.kind()) {
+#define CARBON_SEMANTICS_NODE_KIND(Name) \
+  case SemIR::NodeKind::Name:            \
+    Handle##Name(*this, node_id, node);  \
+    break;
+#include "toolchain/sem_ir/node_kind.def"
+    }
+  }
 }
 
 auto FunctionContext::GetBlockArg(SemIR::NodeBlockId block_id,

@@ -42,6 +42,9 @@ class NodeBlockStack {
   // SemIR::NodeBlockId::Empty is returned if one wasn't allocated.
   auto Pop() -> SemIR::NodeBlockId;
 
+  // Pops the top node block, and discards it if it hasn't had an ID allocated.
+  auto PopAndDiscard() -> void;
+
   // Adds the given node to the block at the top of the stack and returns its
   // ID.
   auto AddNode(SemIR::Node node) -> SemIR::NodeId {

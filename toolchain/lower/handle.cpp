@@ -182,6 +182,7 @@ auto HandleCall(FunctionContext& context, SemIR::NodeId node_id,
     context.builder().CreateCall(llvm_function, args);
     // The value of a function call with a void return type shouldn't used, but
     // StubReference needs a value to propagate.
+    // TODO: Remove this now the StubReferences are gone.
     context.SetLocal(node_id,
                      llvm::PoisonValue::get(context.GetType(node.type_id())));
   } else {
@@ -272,6 +273,13 @@ auto HandleReturnExpression(FunctionContext& context, SemIR::NodeId /*node_id*/,
       context.builder().CreateRet(context.GetLocalLoaded(expr_id));
       return;
   }
+}
+
+auto HandleSpliceBlock(FunctionContext& context, SemIR::NodeId node_id,
+                       SemIR::Node node) -> void {
+  auto [block_id, result_id] = node.GetAsSpliceBlock();
+  context.LowerBlock(block_id);
+  context.SetLocal(node_id, context.GetLocal(result_id));
 }
 
 auto HandleStringLiteral(FunctionContext& /*context*/,
@@ -387,11 +395,6 @@ auto HandleStructTypeField(FunctionContext& /*context*/,
                            SemIR::NodeId /*node_id*/, SemIR::Node /*node*/)
     -> void {
   // No action to take.
-}
-
-auto HandleStubReference(FunctionContext& context, SemIR::NodeId node_id,
-                         SemIR::Node node) -> void {
-  context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
 }
 
 auto HandleTupleAccess(FunctionContext& context, SemIR::NodeId node_id,
