@@ -6209,15 +6209,14 @@ is [marked `final`](#final-impl-declarations) or is not
 libraries can't make `A` be implemented for fewer types, but can cause `.Result`
 to have a different assignment.
 
-**FIXME: Left off here.**
-
 ## Observing a type implements an interface
 
 An [`observe` declaration](#observe-declarations) can be used to show that two
 types are equal so code can pass type checking without explicitly writing casts,
-without requiring the compiler to do a unbounded search that may not terminate.
-An `observe` declaration can also be used to show that a type implements an
-interface, in cases where the compiler will not work this out for itself.
+and without requiring the compiler to do a unbounded search that may not
+terminate. An `observe` declaration can also be used to show that a type
+implements an interface, in cases where the compiler will not work this out for
+itself.
 
 ### Observing interface requirements
 
@@ -6246,15 +6245,15 @@ fn RequiresD[T:! D](x: T) {
   // ❌ Illegal: No direct connection between `D` and `A`.
   // RequiresA(x);
 
-  // `T` impls `D` and `D` directly requires `C` to be
+  // `T impls D` and `D` directly requires `C` to be
   // implemented.
   observe T impls C;
 
-  // `T` impls `C` and `C` directly requires `B` to be
+  // `T impls C` and `C` directly requires `B` to be
   // implemented.
   observe T impls B;
 
-  // ✅ Allowed: `T` impls `B` and `B` directly requires
+  // ✅ Allowed: `T impls B` and `B` directly requires
   //             `A` to be implemented.
   RequiresA(x);
 }
@@ -6264,7 +6263,7 @@ Note that `observe` statements do not affect which impl is selected during code
 generation. For [coherence](terminology.md#coherence), the impl used for a
 (type, interface) pair must always be the same, independent of context. The
 [termination rule](#termination-rule) governs when compilation may fail when the
-compiler can't determine the impl to select.
+compiler can't determine the `impl` definition to select.
 
 ### Observing blanket impl declarations
 
@@ -6345,24 +6344,26 @@ Multiple `==` clauses are allowed in an `observe` declaration, so you may write
 ## Operator overloading
 
 Operations are overloaded for a type by implementing an interface specific to
-that interface for that type. For example, types implement the `Negatable`
-interface to overload the unary `-` operator:
+that interface for that type. For example, types implement
+[the `Negate` interface](/docs/design/expressions/arithmetic.md#extensibility)
+to overload the unary `-` operator:
 
 ```carbon
 // Unary `-`.
-interface Negatable {
-  let Result:! type = Self;
-  fn Negate[self: Self]() -> Result;
+interface Negate {
+  default let Result:! type = Self;
+  fn Op[self: Self]() -> Result;
 }
 ```
 
 Expressions using operators are rewritten into calls to these interface methods.
-For example, `-x` would be rewritten to `x.(Negatable.Negate)()`.
+For example, `-x` would be rewritten to `x.(Negate.Op)()`.
 
 The interfaces and rewrites used for a given operator may be found in the
 [expressions design](/docs/design/expressions/README.md).
 [Question-for-leads issue #1058](https://github.com/carbon-language/carbon-lang/issues/1058)
-defines the naming scheme for these interfaces.
+defines the naming scheme for these interfaces, which was implemented in
+[proposal #1178](https://github.com/carbon-language/carbon-lang/pull/1178).
 
 ### Binary operators
 
@@ -6383,14 +6384,14 @@ parameterization of the interface means it can be implemented multiple times to
 support multiple operand types.
 
 Unlike `as`, for most binary operators the interface's argument will be the
-_type_ of the right-hand operand instead of its _value_. Consider an interface
-for a binary operator like `*`:
+_type_ of the right-hand operand instead of its _value_. Consider
+[the interface for a binary operator like `*`](/docs/design/expressions/arithmetic.md#extensibility):
 
 ```carbon
 // Binary `*`.
-interface MultipliableWith(U:! type) {
-  let Result:! type = Self;
-  fn Multiply[self: Self](other: U) -> Result;
+interface MulWith(U:! type) {
+  default let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 ```
 
@@ -6401,8 +6402,8 @@ var left: Meters = ...;
 var right: f64 = ...;
 var result: auto = left * right;
 // Equivalent to:
-var equivalent: left.(MultipliableWith(f64).Result)
-    = left.(MultipliableWith(f64).Multiply)(right);
+var equivalent: left.(MulWith(f64).Result)
+    = left.(MulWith(f64).Op)(right);
 ```
 
 Note that if the types of the two operands are different, then swapping the
@@ -6412,22 +6413,27 @@ standard library will provide [adapters](#adapting-types) for defining the
 second implementation from the first, as in:
 
 ```carbon
-interface ComparableWith(RHS:! type) {
-  fn Compare[self: Self](right: RHS) -> CompareResult;
+interface OrderedWith(U:! type) {
+  fn Compare[self: Self](u: U) -> Ordering;
+  // ...
 }
 
-class ReverseComparison
-    (T:! type, U:! ComparableWith(RHS)) {
+class ReverseComparison(T:! type, U:! OrderedWith(T)) {
   adapt T;
-  extend impl as ComparableWith(U) {
-    fn Compare[self: Self](right: RHS) -> CompareResult {
-      return ReverseCompareResult(right.Compare(self));
+  extend impl as OrderedWith(U) {
+    fn Compare[self: Self](u: U) -> Ordering {
+      match (u.Compare(self)) {
+        case .Less         => return .Greater;
+        case .Equivalent   => return .Equivalent;
+        case .Greater      => return .Less;
+        case .Incomparable => return .Incomparable;
+      }
     }
   }
 }
 
-impl SongByTitle as ComparableWith(SongTitle);
-impl SongTitle as ComparableWith(SongByTitle)
+impl SongByTitle as OrderedWith(SongTitle) { ... }
+impl SongTitle as OrderedWith(SongByTitle)
     = ReverseComparison(SongTitle, SongByTitle);
 ```
 
@@ -6435,7 +6441,7 @@ In some cases the reverse operation may not be defined. For example, a library
 might support subtracting a vector from a point, but not the other way around.
 
 Further note that even if the reverse implementation exists,
-[the impl prioritization rule](#prioritization-rule) might not pick it. For
+[the `impl` prioritization rule](#prioritization-rule) might not pick it. For
 example, if we have two types that support comparison with anything implementing
 an interface that the other implements:
 
@@ -6446,48 +6452,48 @@ interface IntLike {
 
 class EvenInt { ... }
 impl EvenInt as IntLike;
-impl EvenInt as ComparableWith(EvenInt);
+impl EvenInt as OrderedWith(EvenInt);
 // Allow `EvenInt` to be compared with anything that
 // implements `IntLike`, in either order.
-impl forall [T:! IntLike] EvenInt as ComparableWith(T);
-impl forall [T:! IntLike] T as ComparableWith(EvenInt);
+impl forall [T:! IntLike] EvenInt as OrderedWith(T);
+impl forall [T:! IntLike] T as OrderedWith(EvenInt);
 
 class PositiveInt { ... }
 impl PositiveInt as IntLike;
-impl PositiveInt as ComparableWith(PositiveInt);
+impl PositiveInt as OrderedWith(PositiveInt);
 // Allow `PositiveInt` to be compared with anything that
 // implements `IntLike`, in either order.
-impl forall [T:! IntLike] PositiveInt as ComparableWith(T);
-impl forall [T:! IntLike] T as ComparableWith(PositiveInt);
+impl forall [T:! IntLike] PositiveInt as OrderedWith(T);
+impl forall [T:! IntLike] T as OrderedWith(PositiveInt);
 ```
 
-Then it will favor selecting the implementation based on the type of the
-left-hand operand:
+Then the compiler will favor selecting the implementation based on the type of
+the left-hand operand:
 
 ```carbon
 var even: EvenInt = ...;
 var positive: PositiveInt = ...;
-// Uses `EvenInt as ComparableWith(T)` impl
+// Uses `EvenInt as OrderedWith(T)` impl
 if (even < positive) { ... }
-// Uses `PositiveInt as ComparableWith(T)` impl
+// Uses `PositiveInt as OrderedWith(T)` impl
 if (positive > even) { ... }
 ```
 
 ### `like` operator for implicit conversions
 
-Because the type of the operands is directly used to select the implementation
-to use, there are no automatic implicit conversions, unlike with function or
-method calls. Given both a method and an interface implementation for
-multiplying by a value of type `f64`:
+Because the type of the operands is directly used to select the operator
+interface implementation, there are no automatic implicit conversions, unlike
+with function or method calls. Given both a method and an interface
+implementation for multiplying by a value of type `f64`:
 
 ```carbon
 class Meters {
   fn Scale[self: Self](s: f64) -> Self;
 }
 // "Implementation One"
-impl Meters as MultipliableWith(f64)
+impl Meters as MulWith(f64)
     where .Result = Meters {
-  fn Multiply[self: Self](other: f64) -> Result {
+  fn Op[self: Self](other: f64) -> Result {
     return self.Scale(other);
   }
 }
@@ -6504,7 +6510,7 @@ var scale: f32 = 1.25;
 //             from `f32` to `f64`.
 var allowed: Meters = height.Scale(scale);
 // ❌ Illegal: `Meters` doesn't implement
-//             `MultipliableWith(f32)`.
+//             `MulWith(f32)`.
 var illegal: Meters = height * scale;
 ```
 
@@ -6515,14 +6521,14 @@ conversion. The implementation is for types that implement the
 ```carbon
 // "Implementation Two"
 impl forall [T:! ImplicitAs(f64)]
-    Meters as MultipliableWith(T) where .Result = Meters {
-  fn Multiply[self: Self](other: T) -> Result {
+    Meters as MulWith(T) where .Result = Meters {
+  fn Op[self: Self](other: T) -> Result {
     // Carbon will implicitly convert `other` from type
     // `T` to `f64` to perform this call.
-    return self.(Meters.(MultipliableWith(f64).Multiply))(other);
+    return self.((Meters as MulWith(f64)).Op)(other);
   }
 }
-// ✅ Allowed: uses `Meters as MultipliableWith(T)` impl
+// ✅ Allowed: uses `Meters as MulWith(T)` impl
 //             with `T == f32` since `f32 impls ImplicitAs(f64)`.
 var now_allowed: Meters = height * scale;
 ```
@@ -6538,9 +6544,9 @@ a forward declaration or definition, in a place of a type.
 ```carbon
 // Notice `f64` has been replaced by `like f64`
 // compared to "implementation one" above.
-impl Meters as MultipliableWith(like f64)
+impl Meters as MulWith(like f64)
     where .Result = Meters {
-  fn Multiply[self: Self](other: f64) -> Result {
+  fn Op[self: Self](other: f64) -> Result {
     return self.Scale(other);
   }
 }
@@ -6552,19 +6558,30 @@ equivalent to "implementation one". The second implementation replaces the
 `like f64` with a parameter that ranges over types that can be implicitly
 converted to `f64`, equivalent to "implementation two".
 
+> **Note:** We have decided to change the following in
+> [a discussion on 2023-07-13](https://docs.google.com/document/d/1gnJBTfY81fZYvI_QXjwKk1uQHYBNHGqRLI2BS_cYYNQ/edit?resourcekey=0-ql1Q1WvTcDvhycf8LbA9DQ#heading=h.rs7m0kytcl4t).
+> The new approach is to have one parameterized implementation replacing all of
+> the `like` expressions on the left of the `as`, and another replacing all of
+> the `like` expressions on the right of the `as`. However, in
+> [a discussion on 2023-07-20](https://docs.google.com/document/d/1gnJBTfY81fZYvI_QXjwKk1uQHYBNHGqRLI2BS_cYYNQ/edit?resourcekey=0-ql1Q1WvTcDvhycf8LbA9DQ#heading=h.msdqbemd6axi),
+> we decided that this change would not affect how we handle nested `like`
+> expressions: `like Vector(like i32)` is still `like Vector(i32)` plus
+> `Vector(like i32)`. These changes have not yet gone through the proposal
+> process.
+
 In general, each `like` adds one additional parameterized implementation. There
 is always the impl defined with all of the `like` expressions replaced by their
 arguments with the definition supplied in the source code. In addition, for each
 `like` expression, there is an automatic `impl` definition with it replaced by a
 new parameter. These additional automatic implementations will delegate to the
-main impl, which will trigger implicit conversions according to
+main `impl` definition, which will trigger implicit conversions according to
 [Carbon's ordinary implicit conversion rules](/docs/design/expressions/implicit_conversions.md).
 In this example, there are two uses of `like`, producing three implementations
 
 ```carbon
-impl like Meters as MultipliableWith(like f64)
+impl like Meters as MulWith(like f64)
     where .Result = Meters {
-  fn Multiply[self: Self](other: f64) -> Result {
+  fn Op[self: Self](other: f64) -> Result {
     return self.Scale(other);
   }
 }
@@ -6574,20 +6591,20 @@ is equivalent to "implementation one", "implementation two", and:
 
 ```carbon
 impl forall [T:! ImplicitAs(Meters)]
-    T as MultipliableWith(f64) where .Result = Meters {
-  fn Multiply[self: Self](other: f64) -> Result {
-    // Will implicitly convert `self` to `Meters` in order to
-    // match the signature of this `Multiply` method.
-    return self.(Meters.(MultipliableWith(f64).Multiply))(other);
+    T as MulWith(f64) where .Result = Meters {
+  fn Op[self: Self](other: f64) -> Result {
+    // Will implicitly convert `self` to `Meters` in
+    // order to match the signature of this `Op` method.
+    return self.((Meters as MulWith(f64)).Op)(other);
   }
 }
 ```
 
-`like` may be used in forward declarations in a way analogous to impl
+`like` may be used in `impl` forward declarations in a way analogous to `impl`
 definitions.
 
 ```carbon
-impl like Meters as MultipliableWith(like f64)
+impl like Meters as MulWith(like f64)
     where .Result = Meters;
 }
 ```
@@ -6597,25 +6614,23 @@ is equivalent to:
 ```carbon
 // All `like`s removed. Same as the declaration part of
 // "implementation one", without the body of the definition.
-impl Meters as MultipliableWith(f64)
-    where .Result = Meters;
+impl Meters as MulWith(f64) where .Result = Meters;
 
 // First `like` replaced with a wildcard.
 impl forall [T:! ImplicitAs(Meters)]
-    T as MultipliableWith(f64) where .Result = Meters;
+    T as MulWith(f64) where .Result = Meters;
 
 // Second `like` replaced with a wildcard. Same as the
 // declaration part of "implementation two", without the
 // body of the definition.
 impl forall [T:! ImplicitAs(f64)]
-    Meters as MultipliableWith(T) where .Result = Meters;
+    Meters as MulWith(T) where .Result = Meters;
 ```
 
-In addition, the generated impl definition for a `like` is implicitly injected
-at the end of the (unique) source file in which the impl is first declared. That
-is, it is injected in the API file if the impl is declared in an API file, and
-in the sole impl file declaring the impl otherwise. This means an `impl`
-declaration using `like` in an API file also makes the parameterized definition
+In addition, the generated `impl` definition for a `like` is implicitly injected
+at the end of the (unique) source file in which the `impl` is defined. That is,
+it is injected in the API file if the `impl` definition is in an API file, and
+in the sole impl file with the `impl` definition otherwise.
 
 If one `impl` declaration uses `like`, other declarations must use `like` in the
 same way to match.
@@ -6667,27 +6682,29 @@ impl forall [T:! IntLike] like T as Printable;
 // ❌ Illegal: `T` being used in a `where` clause
 //             is insufficient.
 impl forall [T:! IntLike] like T
-    as MultipliableWith(i64) where .Result = T;
+    as MulWith(i64) where .Result = T;
 
 // ❌ Illegal: `like` can't be used in a `where`
 //             clause.
-impl Meters as MultipliableWith(f64)
+impl Meters as MulWith(f64)
     where .Result = like Meters;
 
 // ✅ Allowed: `T` can be determined by another
 //             part of the query.
 impl forall [T:! IntLike] like T
-    as MultipliableWith(T) where .Result = T;
+    as MulWith(T) where .Result = T;
 impl forall [T:! IntLike] T
-    as MultipliableWith(like T) where .Result = T;
+    as MulWith(like T) where .Result = T;
 
 // ✅ Allowed: Only one `like` used at a time, so this
 //             is equivalent to the above two examples.
 impl forall [T:! IntLike] like T
-    as MultipliableWith(like T) where .Result = T;
+    as MulWith(like T) where .Result = T;
 ```
 
 ## Parameterized types
+
+**FIXME: left off here.**
 
 Generic types may be defined by giving them compile-time parameters. Those
 parameters may be used to specify types in the declarations of its members, such
@@ -6710,7 +6727,7 @@ class HashMap(
 
   // Parameters may be used in interfaces implemented.
   extend impl as Container where .ElementType = (KeyType, ValueType);
-  extend impl as ComparableWith(HashMap(KeyType, ValueType));
+  impl as OrderedWith(HashMap(KeyType, ValueType));
 }
 ```
 
