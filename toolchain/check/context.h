@@ -24,6 +24,31 @@ class Context {
   // A block of code that has not yet been inserted into SemIR.
   class PendingBlock;
 
+  // Description of the target of a conversion.
+  struct ConversionTarget {
+    enum Kind {
+      // Convert to a value of type `type`.
+      Value,
+      // Convert to either a value or a reference of type `type`.
+      ValueOrReference,
+      // Convert to an initializer for the object denoted by `init_id`.
+      Initializer,
+      // Convert to an initializer for the object denoted by `init_id`,
+      // including a final destination store if needed.
+      FullInitializer,
+    };
+    // The kind of the target for this conversion.
+    Kind kind;
+    // The target type for the conversion.
+    SemIR::TypeId type_id;
+    // For an initializer, the object being initialized.
+    SemIR::NodeId init_id = SemIR::NodeId::Invalid;
+    // For an initializer, a block of pending instructions that are needed to
+    // form the value of `target_id`, and that can be discarded if no
+    // initialization is needed.
+    PendingBlock* init_block = nullptr;
+  };
+
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter<Parse::Node>& emitter,
@@ -108,6 +133,10 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
+  // Convert a value to another type and expression category.
+  auto Convert(Parse::Node parse_node, SemIR::NodeId value_id,
+               ConversionTarget target) -> SemIR::NodeId;
+
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
 
@@ -122,16 +151,6 @@ class Context {
   // the target using a suitable node for the kind of initialization.
   auto Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                   SemIR::NodeId value_id) -> SemIR::NodeId;
-
-  // Performs and finalizes initialization of `target_id` from `value_id`. This
-  // is the same as `Initialize`, except that it also performs the final store
-  // from the initializer to the target if the initialization is not in-place.
-  // That final store is often undesirable as it is performed by the consumer
-  // of the initializer, such as an `Assign` or `ReturnExpression` node. The
-  // resulting node describes the initialization operation that was performed.
-  auto InitializeAndFinalize(Parse::Node parse_node, SemIR::NodeId target_id,
-                             PendingBlock& target_block, SemIR::NodeId value_id)
-      -> SemIR::NodeId;
 
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
@@ -267,13 +286,6 @@ class Context {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
-
-  // Implementation of `Initialize`. Takes a `target_block` which contains
-  // pending instructions that are needed to form the value of `target_id`.
-  // These can be discarded if no initialization is needed.
-  auto InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
-                      PendingBlock& target_block, SemIR::NodeId value_id)
-      -> SemIR::NodeId;
 
   // Commits to using a temporary to store the result of the initializing
   // expression described by `init_id`, and returns the location of the

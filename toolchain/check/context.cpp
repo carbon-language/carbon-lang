@@ -365,18 +365,39 @@ class Context::PendingBlock {
 auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                          SemIR::NodeId value_id) -> SemIR::NodeId {
   PendingBlock target_block(*this);
-  return InitializeImpl(parse_node, target_id, target_block, value_id);
+  return Convert(parse_node, value_id,
+                 {.kind = ConversionTarget::Initializer,
+                  .type_id = semantics_ir().GetNode(target_id).type_id(),
+                  .init_id = target_id,
+                  .init_block = &target_block});
 }
 
-auto Context::InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
-                             PendingBlock& target_block, SemIR::NodeId value_id)
-    -> SemIR::NodeId {
+auto Context::Convert(Parse::Node parse_node, SemIR::NodeId value_id,
+                      ConversionTarget target) -> SemIR::NodeId {
   // Implicitly convert the value to the type of the target.
-  auto type_id = semantics_ir().GetNode(target_id).type_id();
+  auto type_id = target.type_id;
   auto expr_id = ImplicitAs(parse_node, value_id, type_id);
-  SemIR::Node expr = semantics_ir().GetNode(expr_id);
+  if (expr_id == SemIR::NodeId::BuiltinError) {
+    return expr_id;
+  }
+
+  switch (target.kind) {
+    case ConversionTarget::Value:
+      return ConvertToValueExpression(expr_id);
+
+    case ConversionTarget::ValueOrReference:
+      return ConvertToValueOrReferenceExpression(expr_id);
+
+    case ConversionTarget::Initializer:
+    case ConversionTarget::FullInitializer:
+      break;
+  }
+
+  auto target_id = target.init_id;
+  auto& target_block = *target.init_block;
 
   // Perform initialization now that we have an expression of the right type.
+  SemIR::Node expr = semantics_ir().GetNode(expr_id);
   switch (SemIR::GetExpressionCategory(semantics_ir(), expr_id)) {
     case SemIR::ExpressionCategory::NotExpression:
       CARBON_FATAL() << "Converting non-expression node " << expr
@@ -389,17 +410,18 @@ auto Context::InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
       //
       // TODO: Determine whether this is observably different from the design,
       // and change either the toolchain or the design so they match.
-      return AddNode(SemIR::Node::BindValue::Make(expr.parse_node(),
-                                                  expr.type_id(), expr_id));
+      expr_id = AddNode(SemIR::Node::BindValue::Make(expr.parse_node(),
+                                                     expr.type_id(), expr_id));
+      break;
 
     case SemIR::ExpressionCategory::Value:
       // TODO: For class types, use an interface to determine how to perform
       // this operation.
-      return expr_id;
+      break;
 
     case SemIR::ExpressionCategory::Initializing:
       MarkInitializerFor(expr_id, target_id, target_block);
-      return expr_id;
+      break;
 
     case SemIR::ExpressionCategory::Mixed:
       expr = semantics_ir().GetNode(expr_id);
@@ -415,14 +437,17 @@ auto Context::InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
           auto elements_id =
               is_tuple ? expr.GetAsTupleLiteral() : expr.GetAsStructLiteral();
           auto elements = semantics_ir().GetNodeBlock(elements_id);
+
+          // Perform a final destination store if we're performing an in-place
+          // initialization.
+          ConversionTarget::Kind inner_kind =
+               SemIR::GetInitializingRepresentation(semantics_ir(), type_id)
+                       .kind == SemIR::InitializingRepresentation::InPlace
+                  ? ConversionTarget::FullInitializer
+                  : ConversionTarget::Initializer;
+
           CopyOnWriteBlock new_block(semantics_ir(), elements_id);
-          bool is_in_place =
-              SemIR::GetInitializingRepresentation(semantics_ir(), type_id)
-                  .kind == SemIR::InitializingRepresentation::InPlace;
           for (auto [i, elem_id] : llvm::enumerate(elements)) {
-            // TODO: We know the type already matches because we already invoked
-            // `ImplicitAsRequired`, but this will need to change once we stop
-            // doing that.
             auto inner_target_type = semantics_ir().GetNode(elem_id).type_id();
             PendingBlock::DiscardUnusedNodesScope scope(target_block);
             auto inner_target_id = target_block.AddNode(
@@ -432,18 +457,19 @@ auto Context::InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
                          : SemIR::Node::StructAccess::Make(
                                parse_node, inner_target_type, target_id,
                                SemIR::MemberIndex(i)));
-            auto new_id =
-                is_in_place ? InitializeAndFinalize(parse_node, inner_target_id,
-                                                    target_block, elem_id)
-                            : InitializeImpl(parse_node, inner_target_id,
-                                             target_block, elem_id);
+            auto new_id = Convert(parse_node, elem_id,
+                                  {.kind = inner_kind,
+                                   .type_id = inner_target_type,
+                                   .init_id = inner_target_id,
+                                   .init_block = &target_block});
             new_block.Set(i, new_id);
           }
-          return AddNode(
+          expr_id = AddNode(
               is_tuple ? SemIR::Node::TupleInit::Make(parse_node, type_id,
                                                       expr_id, new_block.id())
                        : SemIR::Node::StructInit::Make(
                              parse_node, type_id, expr_id, new_block.id()));
+          break;
         }
 
         default:
@@ -451,25 +477,18 @@ auto Context::InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
                          << expr.kind();
       }
   }
-}
 
-auto Context::InitializeAndFinalize(Parse::Node parse_node,
-                                    SemIR::NodeId target_id,
-                                    PendingBlock& target_block,
-                                    SemIR::NodeId value_id) -> SemIR::NodeId {
-  auto init_id = InitializeImpl(parse_node, target_id, target_block, value_id);
-  if (init_id == SemIR::NodeId::BuiltinError) {
-    return init_id;
+  if (target.kind == ConversionTarget::FullInitializer) {
+    if (auto init_rep =
+            SemIR::GetInitializingRepresentation(semantics_ir(), type_id);
+        init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
+      target_block.InsertHere();
+      expr_id = AddNode(SemIR::Node::InitializeFrom::Make(parse_node, type_id,
+                                                          expr_id, target_id));
+    }
   }
-  auto target_type_id = semantics_ir().GetNode(target_id).type_id();
-  if (auto init_rep =
-          SemIR::GetInitializingRepresentation(semantics_ir(), target_type_id);
-      init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
-    target_block.InsertHere();
-    init_id = AddNode(SemIR::Node::InitializeFrom::Make(
-        parse_node, target_type_id, init_id, target_id));
-  }
-  return init_id;
+
+  return expr_id;
 }
 
 auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
@@ -748,11 +767,11 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
                       "Cannot initialize array of {0} element(s) from tuple "
                       "with {1} element(s).",
                       uint64_t, size_t);
-    context.emitter().Emit(
-        context.semantics_ir().GetNode(value_id).parse_node(),
-        literal_elems.empty() ? ArrayInitFromExpressionArgCountMismatch
-                              : ArrayInitFromLiteralArgCountMismatch,
-        array_bound, tuple_elem_types.size());
+    context.emitter().Emit(value.parse_node(),
+                           literal_elems.empty()
+                               ? ArrayInitFromExpressionArgCountMismatch
+                               : ArrayInitFromLiteralArgCountMismatch,
+                           array_bound, tuple_elem_types.size());
     return SemIR::NodeId::BuiltinError;
   }
 
@@ -792,8 +811,12 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
                       : context.AddNode(SemIR::Node::TupleAccess::Make(
                             value.parse_node(), src_type_id, value_id,
                             SemIR::MemberIndex(i)));
-    auto init_id = context.InitializeAndFinalize(value.parse_node(), target_id,
-                                                 target_block, src_id);
+    auto init_id =
+        context.Convert(value.parse_node(), src_id,
+                        {.kind = Context::ConversionTarget::FullInitializer,
+                         .type_id = element_type_id,
+                         .init_id = target_id,
+                         .init_block = &target_block});
     if (init_id == SemIR::NodeId::BuiltinError) {
       return SemIR::NodeId::BuiltinError;
     }
