@@ -89,7 +89,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Parameterized impl declarations](#parameterized-impl-declarations)
     -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
     -   [Conditional conformance](#conditional-conformance)
-        -   [Conditional methods](#conditional-methods)
     -   [Blanket impl declarations](#blanket-impl-declarations)
         -   [Difference between a blanket impl and a named constraint](#difference-between-a-blanket-impl-and-a-named-constraint)
     -   [Wildcard impl declarations](#wildcard-impl-declarations)
@@ -125,6 +124,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Binary operators](#binary-operators)
     -   [`like` operator for implicit conversions](#like-operator-for-implicit-conversions)
 -   [Parameterized types](#parameterized-types)
+    -   [Generic methods](#generic-methods)
+    -   [Conditional methods](#conditional-methods)
     -   [Specialization](#specialization)
 -   [Future work](#future-work)
     -   [Dynamic types](#dynamic-types)
@@ -140,7 +141,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Field requirements](#field-requirements)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Variadic arguments](#variadic-arguments)
-    -   [Range constraints on symbolic integers](#range-constraints-on-symbolic-integers)
+    -   [Value constraints for template parameters](#value-constraints-for-template-parameters)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -1203,10 +1204,9 @@ Some interfaces will depend on other interfaces being implemented for the same
 type. For example, in C++,
 [the `Container` concept](https://en.cppreference.com/w/cpp/named_req/Container#Other_requirements)
 requires all containers to also satisfy the requirements of
-`DefaultConstructible`, `CopyConstructible`, `EqualityComparable`, and
-`Swappable`. This is already a capability for
-[facet types in general](#facet-types). For consistency we will use the same
-semantics and `require Self impls` syntax as we do for
+`DefaultConstructible`, `CopyConstructible`, `Eq`, and `Swappable`. This is
+already a capability for [facet types in general](#facet-types). For consistency
+we will use the same semantics and `require Self impls` syntax as we do for
 [named constraints](#named-constraints):
 
 ```carbon
@@ -1576,7 +1576,7 @@ APIs, in particular with different interface implementations, by
 interface Printable {
   fn Print[self: Self]();
 }
-interface Comparable {
+interface Ordered {
   fn Less[self: Self](rhs: Self) -> bool;
 }
 class Song {
@@ -1584,7 +1584,7 @@ class Song {
 }
 class SongByTitle {
   adapt Song;
-  extend impl as Comparable {
+  extend impl as Ordered {
     fn Less[self: Self](rhs: Self) -> bool { ... }
   }
 }
@@ -1595,7 +1595,7 @@ class FormattedSong {
 class FormattedSongByTitle {
   adapt Song;
   extend impl as Printable = FormattedSong;
-  extend impl as Comparable = SongByTitle;
+  extend impl as Ordered = SongByTitle;
 }
 ```
 
@@ -1623,7 +1623,7 @@ type may be accessed either by a cast:
 ```carbon
 class SongByTitle {
   adapt Song;
-  extend impl as Comparable {
+  extend impl as Ordered {
     fn Less[self: Self](rhs: Self) -> bool {
       return (self as Song).Title() < (rhs as Song).Title();
     }
@@ -1636,7 +1636,7 @@ or using a qualified member access expression:
 ```carbon
 class SongByTitle {
   adapt Song;
-  extend impl as Comparable {
+  extend impl as Ordered {
     fn Less[self: Self](rhs: Self) -> bool {
       return self.(Song.Title)() < rhs.(Song.Title)();
     }
@@ -1659,7 +1659,7 @@ compiler provides it as
 
 ### Adapter compatibility
 
-Consider a type with a facet parameter, like a hash map:
+Consider a [type with a facet parameter, like a hash map](#parameterized-types):
 
 ```carbon
 interface Hashable { ... }
@@ -1730,7 +1730,7 @@ class SongByArtist {
   extend adapt Song;
 
   // Add an implementation of a new interface
-  extend impl as Comparable { ... }
+  extend impl as Ordered { ... }
 
   // Replace an existing implementation of an interface
   // with an alternative.
@@ -1740,7 +1740,7 @@ class SongByArtist {
 
 The resulting type `SongByArtist` would:
 
--   implement `Comparable`, unlike `Song`,
+-   implement `Ordered`, unlike `Song`,
 -   implement `Hashable`, but differently than `Song`, and
 -   implement `Printable`, inherited from `Song`.
 
@@ -3673,7 +3673,7 @@ can be applied to [associated facet](#associated-facets) members as well.
 In the following example, normally the `ElementType` of a `Container` can be any
 type. The `SortContainer` function, however, takes a pointer to a type
 satisfying `Container` with the additional constraint that its `ElementType`
-must satisfy the `Comparable` interface, using an `impls` constraint:
+must satisfy the `Ordered` interface, using an `impls` constraint:
 
 ```carbon
 interface Container {
@@ -3682,7 +3682,7 @@ interface Container {
 }
 
 fn SortContainer
-    [ContainerType:! Container where .ElementType impls Comparable]
+    [ContainerType:! Container where .ElementType impls Ordered]
     (container_to_sort: ContainerType*);
 ```
 
@@ -3692,8 +3692,8 @@ In contrast to a [rewrite constraint](#rewrite-constraints) or a
 type.
 
 > **Note:** `Container` defines `ElementType` as having type `type`, but
-> `ContainerType.ElementType` has type `Comparable`. This is because
-> `ContainerType` has type `Container where .ElementType impls Comparable`, not
+> `ContainerType.ElementType` has type `Ordered`. This is because
+> `ContainerType` has type `Container where .ElementType impls Ordered`, not
 > `Container`. This means we need to be a bit careful when talking about the
 > type of `ContainerType` when there is a `where` clause modifying it.
 
@@ -3707,42 +3707,42 @@ in `T:! I where .Self impls C`, is represented by an
 
 ##### Implied constraints
 
-Imagine we have a checked-generic function that accepts an arbitrary `HashMap`
-[parameterized type](#parameterized-types):
+Imagine we have a checked-generic function that accepts an arbitrary
+[`HashMap` parameterized type](#parameterized-types):
 
 ```carbon
-fn LookUp[KeyType:! type](hm: HashMap(KeyType, i32)*,
-                          k: KeyType) -> i32;
+fn LookUp[KeyT:! type](hm: HashMap(KeyT, i32)*,
+                       k: KeyT) -> i32;
 
-fn PrintValueOrDefault[KeyType:! Printable,
+fn PrintValueOrDefault[KeyT:! Printable,
                        ValueT:! Printable & HasDefault]
-    (map: HashMap(KeyType, ValueT), key: KeyT);
+    (map: HashMap(KeyT, ValueT), key: KeyT);
 ```
 
-The `KeyType` in these declarations does not visibly satisfy the requirements of
+The `KeyT` in these declarations does not visibly satisfy the requirements of
 `HashMap`, which requires the type implement `Hashable` and other interfaces:
 
 ```carbon
 class HashMap(
-    KeyType:! Hashable & EqualityComparable & Movable,
+    KeyT:! Hashable & Eq & Movable,
     ...) { ... }
 ```
 
-In this case, `KeyType` gets `Hashable` and so on as _implied constraints_.
+In this case, `KeyT` gets `Hashable` and so on as _implied constraints_.
 Effectively that means that these functions are automatically rewritten to add a
-`where .Self impls` constraint on `KeyType`:
+`where .Self impls` constraint on `KeyT`:
 
 ```carbon
 fn LookUp[
-    KeyType:! type
-        where .Self impls Hashable & EqualityComparable & Movable]
-    (hm: HashMap(KeyType, i32)*, k: KeyType) -> i32;
+    KeyT:! type
+        where .Self impls Hashable & Eq & Movable]
+    (hm: HashMap(KeyT, i32)*, k: KeyT) -> i32;
 
 fn PrintValueOrDefault[
-    KeyType:! Printable
-        where .Self impls Hashable & EqualityComparable & Movable,
+    KeyT:! Printable
+        where .Self impls Hashable & Eq & Movable,
     ValueT:! Printable & HasDefault]
-    (map: HashMap(KeyType, ValueT), key: KeyT);
+    (map: HashMap(KeyT, ValueT), key: KeyT);
 ```
 
 In this case, Carbon will accept the definition and infer the needed constraints
@@ -3818,8 +3818,8 @@ If the two facet bindings being constrained to be equal, using either a
 [same-type constraint](#same-type-constraints), have been declared with
 different facet types, then the actual type value they are set to will have to
 satisfy the requirements of both facet types. For example, if
-`SortedContainer.ElementType` is declared to have a `Comparable` requirement,
-then in these declarations:
+`SortedContainer.ElementType` is declared to have a `Ordered` requirement, then
+in these declarations:
 
 ```carbon
 // With `=` rewrite constraint:
@@ -3836,18 +3836,17 @@ fn Contains_SameType
 ```
 
 the `where` constraints in both cases mean `CT.ElementType` must satisfy
-`Comparable` as well. However, the behavior inside the body of these two inside
-the body of the two functions is different.
+`Ordered` as well. However, the behavior inside the body of these two inside the
+body of the two functions is different.
 
 In `Contains_Rewrite`, `CT.ElementType` is rewritten to `SC.ElementType` and
 uses the facet type of `SC.ElementType`.
 
 In `Contains_SameType`, the `where` clause does not affect the API of
-`CT.ElementType`, and it would not even be considered to implement `Comparable`
+`CT.ElementType`, and it would not even be considered to implement `Ordered`
 unless there is some declaration like
-`observe CT.ElementType == SC.ElementType impls Comparable`. Even then, the
-items from the `needles` container won't directly have a `Compare` method
-member.
+`observe CT.ElementType == SC.ElementType impls Ordered`. Even then, the items
+from the `needles` container won't directly have a `Compare` method member.
 
 The rule is that an same-type `where` constraint between two type variables does
 not modify the set of member names of either type. This is in contrast to
@@ -4258,12 +4257,12 @@ the same interface for a type.
 
 ```carbon
 choice CompareResult { Less, Equal, Greater }
-interface Comparable {
+interface Ordered {
   fn Compare[self: Self](rhs: Self) -> CompareResult;
 }
 fn CombinedLess[T:! type](a: T, b: T,
-                          U:! CompatibleWith(T) & Comparable,
-                          V:! CompatibleWith(T) & Comparable) -> bool {
+                          U:! CompatibleWith(T) & Ordered,
+                          V:! CompatibleWith(T) & Ordered) -> bool {
   match ((a as U).Compare(b as U)) {
     case .Less => { return True; }
     case .Greater => { return False; }
@@ -4278,8 +4277,8 @@ Used as:
 
 ```carbon
 class Song { ... }
-class SongByArtist { adapt Song; impl as Comparable { ... } }
-class SongByTitle { adapt Song; impl as Comparable { ... } }
+class SongByArtist { adapt Song; impl as Ordered { ... } }
+class SongByTitle { adapt Song; impl as Ordered { ... } }
 let s1: Song = ...;
 let s2: Song = ...;
 assert(CombinedLess(s1, s2, SongByArtist, SongByTitle) == True);
@@ -4290,7 +4289,7 @@ assert(CombinedLess(s1, s2, SongByArtist, SongByTitle) == True);
 >
 > ```carbon
 > fn CombinedCompare[T:! type]
->     (a: T, b: T, ... each CompareT:! CompatibleWith(T) & Comparable)
+>     (a: T, b: T, ... each CompareT:! CompatibleWith(T) & Ordered)
 >     -> CompareResult {
 >   ... block {
 >     let result: CompareResult =
@@ -4310,16 +4309,16 @@ assert(CombinedLess(s1, s2, SongByArtist, SongByTitle) == True);
 
 #### Example: Creating an impl out of other implementations
 
-And then to package this functionality as an implementation of `Comparable`, we
+And then to package this functionality as an implementation of `Ordered`, we
 combine `CompatibleWith` with [type adaptation](#adapting-types) and
 [variadics](#variadic-arguments):
 
 ```carbon
 class ThenCompare(
       T:! type,
-      ... each CompareT:! CompatibleWith(T) & Comparable) {
+      ... each CompareT:! CompatibleWith(T) & Ordered) {
   adapt T;
-  extend impl as Comparable {
+  extend impl as Ordered {
     fn Compare[self: Self](rhs: Self) -> CompareResult {
       ... block {
         let result: CompareResult =
@@ -4607,20 +4606,20 @@ The parameter for the type can be used as an argument to the interface being
 implemented, with or without `extend`:
 
 ```carbon
-class HashMap(Key:! Hashable, Value:! type) {
-  extend impl as Has(Key) { ... }
-  impl as Contains(HashSet(Key)) { ... }
+class HashMap(KeyT:! Hashable, ValueT:! type) {
+  extend impl as Has(KeyT) { ... }
+  impl as Contains(HashSet(KeyT)) { ... }
 }
 ```
 
 or out-of-line the same `forall` parameter can be passed to both:
 
 ```carbon
-class HashMap(Key:! Hashable, Value:! type) { ... }
-impl forall [Key:! Hashable, Value:! type]
-    HashMap(Key, Value) as Has(Key) { ... }
-impl forall [Key:! Hashable, Value:! type]
-    HashMap(Key, Value) as Contains(HashSet(Key)) { ... }
+class HashMap(KeyT:! Hashable, ValueT:! type) { ... }
+impl forall [KeyT:! Hashable, ValueT:! type]
+    HashMap(KeyT, ValueT) as Has(KeyT) { ... }
+impl forall [KeyT:! Hashable, ValueT:! type]
+    HashMap(KeyT, ValueT) as Contains(HashSet(KeyT)) { ... }
 ```
 
 ### Conditional conformance
@@ -4763,28 +4762,6 @@ can only mean one thing, regardless of `T`.
 [Swift supports conditional conformance](https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md),
 but bans cases where there could be ambiguity from overlap.
 [Rust also supports conditional conformance](https://doc.rust-lang.org/rust-by-example/generics/where.html).
-
-#### Conditional methods
-
-A method could be defined conditionally for a type by using a more specific type
-in place of `Self` in the method declaration. For example, this is how to define
-a vector type that only has a `Sort` method if its elements implement the
-`Comparable` interface:
-
-```carbon
-class Vector(T:! type) {
-  // `Vector(T)` has a `Sort()` method if `T` impls `Comparable`.
-  fn Sort[C:! Comparable, addr self: Vector(C)*]();
-}
-```
-
-**Comparison with other languages:** In
-[Rust](https://doc.rust-lang.org/book/ch10-02-traits.html#using-trait-bounds-to-conditionally-implement-methods)
-this feature is part of conditional conformance. Swift supports conditional
-methods using
-[conditional extensions](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID553)
-or
-[contextual where clauses](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID628).
 
 ### Blanket impl declarations
 
@@ -6704,40 +6681,38 @@ impl forall [T:! IntLike] like T
 
 ## Parameterized types
 
-**FIXME: left off here.**
-
 Generic types may be defined by giving them compile-time parameters. Those
 parameters may be used to specify types in the declarations of its members, such
 as data fields, member functions, and even interfaces being implemented. For
-example, a container type might be parameterized by the type of its elements:
-
-**FIXME: add a bit that member functions may have additional parameters.**
+example, a container type might be parameterized by a facet describing the type
+of its elements:
 
 ```carbon
 class HashMap(
-    KeyType:! Hashable & EqualityComparable & Movable,
-    ValueType:! Movable) {
-  // `Self` is `HashMap(KeyType, ValueType)`.
+    KeyT:! Hashable & Eq & Movable,
+    ValueT:! Movable) {
+  // `Self` is `HashMap(KeyT, ValueT)`.
 
-  // Parameters may be used in function signatures.
-  fn Insert[addr self: Self*](k: KeyType, v: ValueType);
+  // Class parameters may be used in function signatures.
+  fn Insert[addr self: Self*](k: KeyT, v: ValueT);
 
-  // Parameters may be used in field types.
-  private var buckets: Vector((KeyType, ValueType));
+  // Class parameters may be used in field types.
+  private var buckets: DynArray((KeyT, ValueT));
 
-  // Parameters may be used in interfaces implemented.
-  extend impl as Container where .ElementType = (KeyType, ValueType);
-  impl as OrderedWith(HashMap(KeyType, ValueType));
+  // Class parameters may be used in interfaces implemented.
+  extend impl as Container where .ElementType = (KeyT, ValueT);
+  impl as OrderedWith(HashMap(KeyT, ValueT));
 }
 ```
 
-Note that, unlike functions, every parameter to a type must be compile-time,
-either symbolic using `:!` or template using `template...:!`, not dynamic, with
-a plain `:`.
+Note that, unlike functions, every parameter to a type must be a compile-time
+binding, either symbolic using `:!` or template using `template`...`:!`, not
+runtime, with a plain `:`.
 
-Two types are the same if they have the same name and the same arguments.
-Carbon's [manual type equality](#manual-type-equality) approach means that the
-compiler may not always be able to tell when two
+Two types are the same if they have the same name and the same arguments, after
+applying aliases and [rewrite constraints](#rewrite-constraints). Carbon's
+[manual type equality](#manual-type-equality) approach means that the compiler
+may not always be able to tell when two
 [type expressions](terminology.md#type-expression) are equal without help from
 the user, in the form of [`observe` declarations](#observe-declarations). This
 means Carbon will not in general be able to determine when types are unequal.
@@ -6746,19 +6721,66 @@ Unlike an [interface's parameters](#parameterized-interfaces), a type's
 parameters may be [deduced](terminology.md#deduced-parameter), as in:
 
 ```carbon
-fn ContainsKey[KeyType:! Movable, ValueType:! Movable]
-    (haystack: HashMap(KeyType, ValueType), needle: KeyType)
+fn ContainsKey[KeyT:! Movable, ValueT:! Movable]
+    (haystack: HashMap(KeyT, ValueT), needle: KeyT)
     -> bool { ... }
 fn MyMapContains(s: String) {
   var map: HashMap(String, i32) = (("foo", 3), ("bar", 5));
-  // ✅ Deduces `KeyType` = `String` from the types of both arguments.
-  // Deduces `ValueType` = `i32` from the type of the first argument.
+  // ✅ Deduces `KeyT` = `String as Movable` from the types of both arguments.
+  // Deduces `ValueT` = `i32 as Movable` from the type of the first argument.
   return ContainsKey(map, s);
 }
 ```
 
 Note that restrictions on the type's parameters from the type's declaration can
-be [implied constraints](#implied-constraints) on the function's parameters.
+be [implied constraints](#implied-constraints) on the function's parameters. In
+the above example, the `KeyT` parameter to `ContainsKey` gets `Hashable & Eq`
+implied constraints from the declaration of the corresponding parameter to
+`HashMap`.
+
+> **Future work:** We may want to support optional deduced parameters in square
+> brackets `[`...`]` before the explicit parameters in round parens `(`...`)`.
+
+> **References:** This feature is from
+> [proposal #1146: Generic details 12: parameterized types](https://github.com/carbon-language/carbon-lang/pull/1146).
+
+### Generic methods
+
+A generic type may have methods with additional compile-time parameters. For
+example, this `Set(T)` type may be compared to anything implementing the
+`Container` interface as long as the element types match:
+
+```carbon
+class Set(T:! Ordered) {
+  fn Less[U:! Container with .ElementType = T, self: Self](u: U) -> bool;
+  // ...
+}
+```
+
+The `Less` method is parameterized both by the `T` parameter to the `Set` type
+and its own `U` parameter deduced from the type of its first argument.
+
+### Conditional methods
+
+A method could be defined conditionally for a generic type by using a more
+specific type in place of `Self` in the method declaration. For example, this is
+how to define a dynamically sized array type that only has a `Sort` method if
+its elements implement the `Ordered` interface:
+
+```carbon
+class DynArray(T:! type) {
+  // `DynArray(T)` has a `Sort()` method if `T impls Ordered`.
+  fn Sort[C:! Ordered, addr self: DynArray(C)*]();
+}
+```
+
+**Comparison with other languages:** In
+[Rust](https://doc.rust-lang.org/book/ch10-02-traits.html#using-trait-bounds-to-conditionally-implement-methods)
+this feature is part of conditional conformance. Swift supports conditional
+methods using
+[conditional extensions](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID553)
+or
+[contextual where clauses](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID628).
 
 ### Specialization
 
@@ -6870,6 +6892,9 @@ class Optional(T:! Movable) {
 }
 ```
 
+> **Alternative considered:** Direct support for specialization of types was
+> considered in [proposal #1146](/proposals/p1146.md#alternatives-considered).
+
 ## Future work
 
 ### Dynamic types
@@ -6958,23 +6983,18 @@ See details in [the goals document](goals.md#bridge-for-c-customization-points).
 
 Some facility for allowing a function to take a variable number of arguments,
 with the [definition checked](terminology.md#complete-definition-checking)
-independent of calls.
+independent of calls. Open
+[proposal #2240](https://github.com/carbon-language/carbon-lang/pull/2240) is
+adding this feature.
 
-### Range constraints on symbolic integers
+### Value constraints for template parameters
 
-We currently only support `where` clauses on facet types. We may want to also
-support constraints on symbolic integers. The constraint with the most expected
-value is the ability to do comparisons like `<`, or `>=`. For example, you might
-constrain the `N` member of [`NSpacePoint`](#associated-constants) using an
-expression like `PointT:! NSpacePoint where 2 <= .N and .N <= 3`.
-
-The concern here is supporting this at compile time with more benefit than
-complexity. For example, we probably don't want to support integer-range based
-types at runtime, and there are also concerns about reasoning about comparisons
-between multiple symbolic integer parameters. For example, if `J < K` and
-`K <= L`, can we call a function that requires `J < L`? There is also a
-secondary syntactic concern about how to write this kind of constraint on a
-parameter, as opposed to an associated facet, as in `N:! u32 where ___ >= 2`.
+We have planned support for predicates that constrain the value of non-facet
+template parameters. For example, we might support a predicate that constrains
+an integer to live inside a specified range. See
+[question-for-leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153)
+and
+[future work in proposal #2200: Template generics](/proposals/p2200.md#predicates-constraints-on-values).
 
 ## References
 
