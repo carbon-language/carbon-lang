@@ -111,17 +111,14 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc27_4: String = string_literal "Hello"
 // CHECK:STDOUT:   %.loc27_3.1: type = ptr_type String
 // CHECK:STDOUT:   %.loc27_3.2: String* = address_of %.loc27_4
-// CHECK:STDOUT:   %.loc31_5.1: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc31_5.2: i32 = stub_reference %.loc31_5.1
-// CHECK:STDOUT:   %.loc31_8.1: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc31_8.2: i32 = stub_reference %.loc31_8.1
+// CHECK:STDOUT:   %.loc31_5: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc31_8: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc31_9.1: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc31_9.2: (i32, i32) = tuple_literal (%.loc31_5.2, %.loc31_8.2)
+// CHECK:STDOUT:   %.loc31_9.2: (i32, i32) = tuple_literal (%.loc31_5, %.loc31_8)
 // CHECK:STDOUT:   %.loc31_3.1: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %.loc31_3.2: (i32, i32)* = address_of %.loc31_9.2
 // CHECK:STDOUT:   %.loc35_10: i32 = int_literal 5
-// CHECK:STDOUT:   %.loc35_8: i32 = stub_reference %.loc35_10
-// CHECK:STDOUT:   %.loc35_11: {.a: i32} = struct_literal (%.loc35_8)
+// CHECK:STDOUT:   %.loc35_11: {.a: i32} = struct_literal (%.loc35_10)
 // CHECK:STDOUT:   %.loc35_3.1: type = ptr_type {.a: i32}
 // CHECK:STDOUT:   %.loc35_3.2: {.a: i32}* = address_of %.loc35_11
 // CHECK:STDOUT:   return
@@ -163,13 +160,12 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfTupleElementValue() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc75_6.1: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc75_6.2: i32 = stub_reference %.loc75_6.1
-// CHECK:STDOUT:   %.loc75_9.1: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc75_9.2: i32 = stub_reference %.loc75_9.1
-// CHECK:STDOUT:   %.loc75_10: (i32, i32) = tuple_literal (%.loc75_6.2, %.loc75_9.2)
+// CHECK:STDOUT:   %.loc75_6: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc75_9: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc75_10.1: (i32, i32) = tuple_literal (%.loc75_6, %.loc75_9)
 // CHECK:STDOUT:   %.loc75_12: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc75_13: i32 = tuple_index %.loc75_10, %.loc75_12
+// CHECK:STDOUT:   %.loc75_10.2: (i32, i32) = tuple_value %.loc75_10.1, (%.loc75_6, %.loc75_9)
+// CHECK:STDOUT:   %.loc75_13: i32 = tuple_index %.loc75_10.2, %.loc75_12
 // CHECK:STDOUT:   %.loc75_3: i32* = address_of %.loc75_13
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

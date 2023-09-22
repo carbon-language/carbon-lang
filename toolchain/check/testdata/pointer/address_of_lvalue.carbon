@@ -25,11 +25,14 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_27: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %s: ref {.a: i32, .b: i32} = var "s"
 // CHECK:STDOUT:   %.loc8_37: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc8_35: i32 = stub_reference %.loc8_37
 // CHECK:STDOUT:   %.loc8_45: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc8_43: i32 = stub_reference %.loc8_45
-// CHECK:STDOUT:   %.loc8_46: {.a: i32, .b: i32} = struct_literal (%.loc8_35, %.loc8_43)
-// CHECK:STDOUT:   assign %s, %.loc8_46
+// CHECK:STDOUT:   %.loc8_46: {.a: i32, .b: i32} = struct_literal (%.loc8_37, %.loc8_45)
+// CHECK:STDOUT:   %.loc8_47.1: ref i32 = struct_access %s, member0
+// CHECK:STDOUT:   %.loc8_47.2: init i32 = initialize_from %.loc8_37 to %.loc8_47.1
+// CHECK:STDOUT:   %.loc8_47.3: ref i32 = struct_access %s, member1
+// CHECK:STDOUT:   %.loc8_47.4: init i32 = initialize_from %.loc8_45 to %.loc8_47.3
+// CHECK:STDOUT:   %.loc8_47.5: init {.a: i32, .b: i32} = struct_init %.loc8_46, (%.loc8_47.2, %.loc8_47.4)
+// CHECK:STDOUT:   assign %s, %.loc8_47.5
 // CHECK:STDOUT:   %.loc10_27: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_28: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %p: ref {.a: i32, .b: i32}* = var "p"
@@ -45,18 +48,19 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_19: ref i32 = struct_access %s, member1
 // CHECK:STDOUT:   %.loc12_17: i32* = address_of %.loc12_19
 // CHECK:STDOUT:   assign %r, %.loc12_17
-// CHECK:STDOUT:   %.loc14_11: type = stub_reference i32
-// CHECK:STDOUT:   %.loc14_16: type = stub_reference i32
 // CHECK:STDOUT:   %.loc14_19.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc14_19.2: (type, type) = tuple_literal (%.loc14_11, %.loc14_16)
+// CHECK:STDOUT:   %.loc14_19.2: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc14_19.3: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %t: ref (i32, i32) = var "t"
-// CHECK:STDOUT:   %.loc14_24.1: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc14_24.2: i32 = stub_reference %.loc14_24.1
-// CHECK:STDOUT:   %.loc14_27.1: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc14_27.2: i32 = stub_reference %.loc14_27.1
-// CHECK:STDOUT:   %.loc14_28: (i32, i32) = tuple_literal (%.loc14_24.2, %.loc14_27.2)
-// CHECK:STDOUT:   assign %t, %.loc14_28
+// CHECK:STDOUT:   %.loc14_24: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc14_27: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc14_28: (i32, i32) = tuple_literal (%.loc14_24, %.loc14_27)
+// CHECK:STDOUT:   %.loc14_29.1: ref i32 = tuple_access %t, member0
+// CHECK:STDOUT:   %.loc14_29.2: init i32 = initialize_from %.loc14_24 to %.loc14_29.1
+// CHECK:STDOUT:   %.loc14_29.3: ref i32 = tuple_access %t, member1
+// CHECK:STDOUT:   %.loc14_29.4: init i32 = initialize_from %.loc14_27 to %.loc14_29.3
+// CHECK:STDOUT:   %.loc14_29.5: init (i32, i32) = tuple_init %.loc14_28, (%.loc14_29.2, %.loc14_29.4)
+// CHECK:STDOUT:   assign %t, %.loc14_29.5
 // CHECK:STDOUT:   %.loc15_14: type = ptr_type i32
 // CHECK:STDOUT:   %t0: ref i32* = var "t0"
 // CHECK:STDOUT:   %.loc15_21: i32 = int_literal 0

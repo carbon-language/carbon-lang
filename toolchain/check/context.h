@@ -105,18 +105,14 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Converts the given expression to an ephemeral reference to a temporary if
-  // it is an initializing expression.
-  auto MaterializeIfInitializing(SemIR::NodeId expr_id) -> SemIR::NodeId {
-    if (GetExpressionCategory(semantics_ir(), expr_id) ==
-        SemIR::ExpressionCategory::Initializing) {
-      return FinalizeTemporary(expr_id, /*discarded=*/false);
-    }
-    return expr_id;
-  }
-
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
+
+  // Convert the given expression to a value or reference expression of the same
+  // type.
+  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id,
+                                           bool discarded = false)
+      -> SemIR::NodeId;
 
   // Performs initialization of `target_id` from `value_id`. Returns the
   // possibly-converted initialization expression, which should be assigned to
@@ -204,14 +200,14 @@ class Context {
 
   // On a comma, pushes the entry. On return, the top of node_stack_ will be
   // start_kind.
-  auto ParamOrArgComma(bool for_args) -> void;
+  auto ParamOrArgComma() -> void;
 
   // Detects whether there's an entry to push from the end of a parameter or
   // argument list, and if so, moves it to the current parameter or argument
   // list. Does not pop the list. `start_kind` is the node kind at the start
   // of the parameter or argument list, and will be at the top of the parse node
   // stack when this function returns.
-  auto ParamOrArgEndNoPop(bool for_args, Parse::NodeKind start_kind) -> void;
+  auto ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void;
 
   // Pops the current parameter or argument list. Should only be called after
   // `ParamOrArgEndNoPop`.
@@ -219,15 +215,13 @@ class Context {
 
   // Detects whether there's an entry to push. Pops and returns the argument
   // list. This is the same as `ParamOrArgEndNoPop` followed by `ParamOrArgPop`.
-  auto ParamOrArgEnd(bool for_args, Parse::NodeKind start_kind)
-      -> SemIR::NodeBlockId;
+  auto ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::NodeBlockId;
 
   // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_or_args_stack_. If for_args, adds a StubReference of the previous
-  // node's result to the IR.
-  //
-  // This should only be called by other ParamOrArg functions, not directly.
-  auto ParamOrArgSave(bool for_args) -> void;
+  // params_or_args_stack_.
+  auto ParamOrArgSave(SemIR::NodeId node_id) -> void {
+    params_or_args_stack_.AddNodeId(node_id);
+  }
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;

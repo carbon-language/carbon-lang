@@ -134,6 +134,7 @@ CARBON_DIAGNOSTIC_KIND(QualifiedDeclarationInNonScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclarationNonScopeEntity)
 CARBON_DIAGNOSTIC_KIND(QualifiedExpressionUnsupported)
 CARBON_DIAGNOSTIC_KIND(QualifiedExpressionNameNotFound)
+CARBON_DIAGNOSTIC_KIND(UseOfNonExpressionAsValue)
 
 // ============================================================================
 // Other diagnostics

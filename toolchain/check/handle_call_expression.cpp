@@ -10,8 +10,7 @@ namespace Carbon::Check {
 auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   // Process the final explicit call argument, but leave the arguments block on
   // the stack until we add the return slot argument.
-  context.ParamOrArgEndNoPop(
-      /*for_args=*/true, Parse::NodeKind::CallExpressionStart);
+  context.ParamOrArgEndNoPop(Parse::NodeKind::CallExpressionStart);
 
   // TODO: Convert to call expression.
   auto [call_expr_parse_node, name_id] =
@@ -40,13 +39,9 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   if (callable.return_slot_id.is_valid()) {
     // Tentatively put storage for a temporary in the function's return slot.
     // This will be replaced if necessary when we perform initialization.
-    context.AddNodeAndPush(parse_node,
-                           SemIR::Node::TemporaryStorage::Make(
-                               call_expr_parse_node, callable.return_type_id));
-    // TODO: We pass for_args=false here because we don't want a StubReference.
-    // We should remove the StubReferences for arguments and the corresponding
-    // `for_args` parameter. They didn't turn out to be used for anything.
-    context.ParamOrArgSave(/*for_args=*/false);
+    auto temp_id = context.AddNode(SemIR::Node::TemporaryStorage::Make(
+        call_expr_parse_node, callable.return_type_id));
+    context.ParamOrArgSave(temp_id);
   }
 
   // Convert the arguments to match the parameters.
@@ -67,7 +62,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
 
 auto HandleCallExpressionComma(Context& context, Parse::Node /*parse_node*/)
     -> bool {
-  context.ParamOrArgComma(/*for_args=*/true);
+  context.ParamOrArgComma();
   return true;
 }
 

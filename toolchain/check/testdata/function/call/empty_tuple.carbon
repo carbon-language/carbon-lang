@@ -25,7 +25,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: () = stub_reference %.loc12_9.1
+// CHECK:STDOUT:   %.loc12_9.2: () = tuple_value %.loc12_9.1, ()
 // CHECK:STDOUT:   %.loc12_7: init () = call @Echo(%.loc12_9.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

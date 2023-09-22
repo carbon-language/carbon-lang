@@ -18,20 +18,14 @@ fn Run() {
 // CHECK:STDOUT: source_filename = "array_element_access.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @A(ptr sret({ i32, i32 }) %return) {
-// CHECK:STDOUT:   %tuple = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %1 = getelementptr inbounds { i32, i32 }, ptr %tuple, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %1, align 4
-// CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32 }, ptr %tuple, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %2, align 4
+// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   store i32 1, ptr %tuple.elem, align 4
+// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   store i32 2, ptr %tuple.elem1, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @B(ptr sret([2 x i32]) %return) {
-// CHECK:STDOUT:   %tuple = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %1 = getelementptr inbounds { i32, i32 }, ptr %tuple, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %1, align 4
-// CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32 }, ptr %tuple, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %2, align 4
 // CHECK:STDOUT:   %array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %array.index, align 4
 // CHECK:STDOUT:   %array.index1 = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 1

@@ -17,8 +17,7 @@ auto HandleDeducedParameterListStart(Context& context, Parse::Node parse_node)
 }
 
 auto HandleParameterList(Context& context, Parse::Node parse_node) -> bool {
-  auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/false, Parse::NodeKind::ParameterListStart);
+  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ParameterListStart);
   context.PopScope();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ParameterListStart>();
@@ -28,7 +27,7 @@ auto HandleParameterList(Context& context, Parse::Node parse_node) -> bool {
 
 auto HandleParameterListComma(Context& context, Parse::Node /*parse_node*/)
     -> bool {
-  context.ParamOrArgComma(/*for_args=*/false);
+  context.ParamOrArgComma();
   return true;
 }
 

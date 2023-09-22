@@ -2176,13 +2176,10 @@ class TypeChecker::SubstituteTransform
     const auto* declaration = &witness->declaration();
     if (!IsTemplateSaturated(witness->bindings()) &&
         IsTemplateSaturated(*bindings)) {
-      CARBON_ASSIGN_OR_RETURN(
-          CARBON_PROTECT_COMMAS(auto [new_decl, new_bindings]),
-          type_checker_->InstantiateImplDeclaration(declaration, bindings));
-      declaration = new_decl;
-      bindings = new_bindings;
+      return type_checker_->InstantiateImplDeclaration(declaration, bindings);
+    } else {
+      return type_checker_->arena_->New<ImplWitness>(declaration, bindings);
     }
-    return type_checker_->arena_->New<ImplWitness>(declaration, bindings);
   }
 
   // For an associated constant, look for a rewrite.
@@ -5805,6 +5802,11 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                            << impl_decl->source_loc() << ")\n";
   }
 
+  // We need to eagerly typecheck portions of the impl in terms of the generic
+  // parameters, and then typecheck it again at instantiation time in terms of
+  // the actual arguments. The AST doesn't allow type information to be mutated,
+  // So in order to do that, we need to preserve a clone that doesn't have type
+  // information attached.
   if (!IsTemplateSaturated(impl_decl->deduced_parameters())) {
     CloneContext context(arena_);
     TemplateInfo template_info = {.pattern = context.Clone(impl_decl)};
@@ -6502,25 +6504,31 @@ auto TypeChecker::FindCollectedMembers(Nonnull<const Declaration*> decl)
 }
 
 auto TypeChecker::InstantiateImplDeclaration(
-    Nonnull<const ImplDeclaration*> old_impl,
+    Nonnull<const ImplDeclaration*> pattern,
     Nonnull<const Bindings*> bindings) const
-    -> ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>> {
+    -> ErrorOr<Nonnull<const ImplWitness*>> {
   CARBON_CHECK(IsTemplateSaturated(*bindings));
 
   if (trace_stream_->is_enabled()) {
-    trace_stream_->Start() << "instantiating `" << PrintAsID(*old_impl) << "` ("
-                           << old_impl->source_loc() << ")\n";
+    trace_stream_->Start() << "instantiating `" << PrintAsID(*pattern) << "` ("
+                           << pattern->source_loc() << ")\n";
     *trace_stream_ << *bindings << "\n";
   }
 
-  SetFileContext set_file_context(*trace_stream_, old_impl->source_loc());
+  SetFileContext set_file_context(*trace_stream_, pattern->source_loc());
 
-  auto it = templates_.find(old_impl);
+  auto it = templates_.find(pattern);
   CARBON_CHECK(it != templates_.end());
   const TemplateInfo& info = it->second;
 
-  // TODO: Only instantiate each declaration once for each set of template
-  // arguments.
+  if (auto instantiation = info.instantiations.find(bindings);
+      instantiation != info.instantiations.end()) {
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "reusing cached instantiation\n";
+    }
+    return instantiation->second;
+  }
+
   CloneContext context(arena_);
   Nonnull<ImplDeclaration*> impl =
       context.Clone(cast<ImplDeclaration>(info.pattern));
@@ -6605,7 +6613,10 @@ auto TypeChecker::InstantiateImplDeclaration(
       /*is_template_instantiation=*/true));
   CARBON_RETURN_IF_ERROR(type_checker->TypeCheckImplDeclaration(impl, scope));
 
-  return std::pair{impl, arena_->New<Bindings>(std::move(new_bindings))};
+  auto* result = arena_->New<ImplWitness>(
+      impl, arena_->New<Bindings>(std::move(new_bindings)));
+  CARBON_CHECK(info.instantiations.insert({bindings, result}).second);
+  return result;
 }
 
 auto TypeChecker::InterpExp(Nonnull<const Expression*> e)

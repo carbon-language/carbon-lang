@@ -7,10 +7,7 @@
 namespace Carbon::Check {
 
 auto HandleStructComma(Context& context, Parse::Node /*parse_node*/) -> bool {
-  context.ParamOrArgComma(
-      /*for_args=*/context.parse_tree().node_kind(
-          context.node_stack().PeekParseNode()) !=
-      Parse::NodeKind::StructFieldType);
+  context.ParamOrArgComma();
   return true;
 }
 
@@ -45,11 +42,6 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack().PopExpressionWithParseNode();
   SemIR::StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
 
-  // Convert the operand to a value.
-  // TODO: We need to decide how struct literals interact with expression
-  // categories.
-  value_node_id = context.ConvertToValueExpression(value_node_id);
-
   // Store the name for the type.
   context.args_type_info_stack().AddNode(SemIR::Node::StructTypeField::Make(
       parse_node, name_id,
@@ -62,7 +54,6 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
 
 auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/true,
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
@@ -94,7 +85,6 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
 
 auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/false,
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();

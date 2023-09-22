@@ -220,11 +220,16 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::StructAccess:
     case NodeKind::StructTypeField:
     case NodeKind::StructLiteral:
+    case NodeKind::StructInit:
+    case NodeKind::StructValue:
     case NodeKind::StubReference:
     case NodeKind::Temporary:
     case NodeKind::TemporaryStorage:
+    case NodeKind::TupleAccess:
     case NodeKind::TupleIndex:
     case NodeKind::TupleLiteral:
+    case NodeKind::TupleInit:
+    case NodeKind::TupleValue:
     case NodeKind::UnaryOperatorNot:
     case NodeKind::VarStorage:
       CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
@@ -382,11 +387,16 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::StringLiteral:
       case NodeKind::StructAccess:
       case NodeKind::StructLiteral:
+      case NodeKind::StructInit:
+      case NodeKind::StructValue:
       case NodeKind::StubReference:
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
+      case NodeKind::TupleAccess:
       case NodeKind::TupleIndex:
       case NodeKind::TupleLiteral:
+      case NodeKind::TupleInit:
+      case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
       case NodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
@@ -454,7 +464,9 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case NodeKind::PointerType:
       case NodeKind::RealLiteral:
       case NodeKind::StringLiteral:
+      case NodeKind::StructValue:
       case NodeKind::StructType:
+      case NodeKind::TupleValue:
       case NodeKind::TupleType:
       case NodeKind::UnaryOperatorNot:
         return ExpressionCategory::Value;
@@ -467,6 +479,12 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
 
       case NodeKind::StructAccess: {
         auto [base_id, member_index] = node.GetAsStructAccess();
+        node_id = base_id;
+        continue;
+      }
+
+      case NodeKind::TupleAccess: {
+        auto [base_id, index_id] = node.GetAsTupleAccess();
         node_id = base_id;
         continue;
       }
@@ -484,15 +502,13 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
 
       case NodeKind::StructLiteral:
       case NodeKind::TupleLiteral:
-        // TODO: Eventually these will depend on the context in which the value
-        // is used, and could be either Value or Initializing. We may want
-        // different node kinds for a struct/tuple initializer versus a
-        // struct/tuple value construction.
-        return ExpressionCategory::Value;
+        return ExpressionCategory::Mixed;
 
       case NodeKind::ArrayInit:
       case NodeKind::Call:
       case NodeKind::InitializeFrom:
+      case NodeKind::StructInit:
+      case NodeKind::TupleInit:
         return ExpressionCategory::Initializing;
 
       case NodeKind::Dereference:
@@ -542,10 +558,15 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::StructAccess:
       case NodeKind::StructTypeField:
       case NodeKind::StructLiteral:
+      case NodeKind::StructInit:
+      case NodeKind::StructValue:
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
+      case NodeKind::TupleAccess:
       case NodeKind::TupleIndex:
       case NodeKind::TupleLiteral:
+      case NodeKind::TupleInit:
+      case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
       case NodeKind::VarStorage:
         CARBON_FATAL() << "Type refers to non-type node " << node;

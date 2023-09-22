@@ -75,26 +75,33 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(Parameter, "parameter", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(PointerType, "ptr_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(RealLiteral, "real_literal", Typed,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(Return, "return", None, Terminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(ReturnExpression, "return", None, Terminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Return, "return", None, Terminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(StringLiteral, "string_literal", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(StructAccess, "struct_access", Typed,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(StructType, "struct_type", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(StructInit, "struct_init", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(StructLiteral, "struct_literal", Typed,
+                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(StructTypeField, "struct_type_field", None,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(StructLiteral, "struct_literal", Typed,
+CARBON_SEMANTICS_NODE_KIND_IMPL(StructType, "struct_type", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(StructValue, "struct_value", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(StubReference, "stub_reference", Typed,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(Temporary, "temporary", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TemporaryStorage, "temporary_storage", Typed,
                                 NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Temporary, "temporary", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(TupleAccess, "tuple_access", Typed,
+                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleIndex, "tuple_index", Typed, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(TupleType, "tuple_type", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(TupleInit, "tuple_init", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleLiteral, "tuple_literal", Typed,
                                 NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(TupleType, "tuple_type", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(TupleValue, "tuple_value", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(UnaryOperatorNot, "not", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(VarStorage, "var", Typed, NotTerminator)
 

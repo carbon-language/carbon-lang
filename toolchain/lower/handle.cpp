@@ -301,6 +301,110 @@ auto HandleStructAccess(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(node_id, gep);
 }
 
+auto HandleStructLiteral(FunctionContext& context, SemIR::NodeId node_id,
+                         SemIR::Node node) -> void {
+  // A StructLiteral should always be converted to a StructInit or StructValue
+  // if its value is needed.
+  context.SetLocal(node_id,
+                   llvm::PoisonValue::get(context.GetType(node.type_id())));
+}
+
+// Emits the value representation for a struct or tuple whose elements are the
+// contents of `refs_id`.
+auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
+                                          SemIR::TypeId type_id,
+                                          SemIR::NodeBlockId refs_id,
+                                          llvm::Twine name) -> llvm::Value* {
+  auto* llvm_type = context.GetType(type_id);
+
+  switch (SemIR::GetValueRepresentation(context.semantics_ir(), type_id).kind) {
+    case SemIR::ValueRepresentation::None:
+      // TODO: Add a helper to get a "no value representation" value.
+      return llvm::PoisonValue::get(llvm_type);
+
+    case SemIR::ValueRepresentation::Copy: {
+      auto refs = context.semantics_ir().GetNodeBlock(refs_id);
+      CARBON_CHECK(refs.size() == 1)
+          << "Unexpected size for aggregate with by-copy value representation";
+      // TODO: Remove the LLVM StructType wrapper in this case, so we don't
+      // need this `insert_value` wrapping.
+      return context.builder().CreateInsertValue(
+          llvm::PoisonValue::get(llvm_type), context.GetLocal(refs[0]), {0});
+    }
+
+    case SemIR::ValueRepresentation::Pointer: {
+      // Write the object representation to a local alloca so we can produce a
+      // pointer to it as the value representation.
+      auto* alloca = context.builder().CreateAlloca(
+          llvm_type, /*ArraySize=*/nullptr, name);
+      for (auto [i, ref] :
+           llvm::enumerate(context.semantics_ir().GetNodeBlock(refs_id))) {
+        auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
+        // TODO: We are loading a value representation here and storing an
+        // object representation!
+        context.builder().CreateStore(context.GetLocal(ref), gep);
+      }
+      return alloca;
+    }
+
+    case SemIR::ValueRepresentation::Custom:
+      CARBON_FATAL()
+          << "Aggregate should never have custom value representation";
+  }
+}
+
+auto HandleStructInit(FunctionContext& context, SemIR::NodeId node_id,
+                      SemIR::Node node) -> void {
+  auto* llvm_type = context.GetType(node.type_id());
+
+  switch (SemIR::GetInitializingRepresentation(context.semantics_ir(),
+                                               node.type_id())
+              .kind) {
+    case SemIR::InitializingRepresentation::None:
+    case SemIR::InitializingRepresentation::InPlace:
+      // TODO: Add a helper to poison a value slot.
+      context.SetLocal(node_id, llvm::PoisonValue::get(llvm_type));
+      break;
+
+    case SemIR::InitializingRepresentation::ByCopy: {
+      auto [struct_literal_id, refs_id] = node.GetAsStructInit();
+      context.SetLocal(node_id,
+                       EmitStructOrTupleValueRepresentation(
+                           context, node.type_id(), refs_id, "struct.init"));
+      break;
+    }
+  }
+}
+
+auto HandleStructValue(FunctionContext& context, SemIR::NodeId node_id,
+                       SemIR::Node node) -> void {
+  auto [struct_literal_id, refs_id] = node.GetAsStructValue();
+  context.SetLocal(node_id, EmitStructOrTupleValueRepresentation(
+                                context, node.type_id(), refs_id, "struct"));
+}
+
+auto HandleStructTypeField(FunctionContext& /*context*/,
+                           SemIR::NodeId /*node_id*/, SemIR::Node /*node*/)
+    -> void {
+  // No action to take.
+}
+
+auto HandleStubReference(FunctionContext& context, SemIR::NodeId node_id,
+                         SemIR::Node node) -> void {
+  context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
+}
+
+auto HandleTupleAccess(FunctionContext& context, SemIR::NodeId node_id,
+                       SemIR::Node node) -> void {
+  auto [tuple_node_id, index] = node.GetAsTupleAccess();
+  auto* tuple_value = context.GetLocal(tuple_node_id);
+  auto* llvm_type =
+      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
+  context.SetLocal(
+      node_id, context.GetIndexFromStructOrArray(llvm_type, tuple_value,
+                                                 index.index, "tuple.elem"));
+}
+
 auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
                       SemIR::Node node) -> void {
   auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
@@ -317,49 +421,40 @@ auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
 
 auto HandleTupleLiteral(FunctionContext& context, SemIR::NodeId node_id,
                         SemIR::Node node) -> void {
+  // A TupleLiteral should always be converted to a TupleInit or TupleValue if
+  // its value is needed.
+  context.SetLocal(node_id,
+                   llvm::PoisonValue::get(context.GetType(node.type_id())));
+}
+
+auto HandleTupleInit(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::Node node) -> void {
   auto* llvm_type = context.GetType(node.type_id());
-  auto* alloca =
-      context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "tuple");
-  context.SetLocal(node_id, alloca);
-  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsTupleLiteral());
-  for (auto [i, ref] : llvm::enumerate(refs)) {
-    auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
-    context.builder().CreateStore(context.GetLocal(ref), gep);
+
+  switch (SemIR::GetInitializingRepresentation(context.semantics_ir(),
+                                               node.type_id())
+              .kind) {
+    case SemIR::InitializingRepresentation::None:
+    case SemIR::InitializingRepresentation::InPlace:
+      // TODO: Add a helper to poison a value slot.
+      context.SetLocal(node_id, llvm::PoisonValue::get(llvm_type));
+      break;
+
+    case SemIR::InitializingRepresentation::ByCopy: {
+      auto [struct_literal_id, refs_id] = node.GetAsTupleInit();
+      context.SetLocal(
+          node_id, EmitStructOrTupleValueRepresentation(context, node.type_id(),
+                                                        refs_id, "tuple.init"));
+      break;
+    }
   }
 }
 
-auto HandleStructTypeField(FunctionContext& /*context*/,
-                           SemIR::NodeId /*node_id*/, SemIR::Node /*node*/)
-    -> void {
-  // No action to take.
-}
-
-auto HandleStructLiteral(FunctionContext& context, SemIR::NodeId node_id,
-                         SemIR::Node node) -> void {
-  auto* llvm_type = context.GetType(node.type_id());
-  auto* alloca = context.builder().CreateAlloca(
-      llvm_type, /*ArraySize=*/nullptr, "struct");
-  context.SetLocal(node_id, alloca);
-
-  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructLiteral());
-  // Get type information for member names.
-  auto type_refs = context.semantics_ir().GetNodeBlock(
-      context.semantics_ir()
-          .GetNode(context.semantics_ir().GetType(node.type_id()))
-          .GetAsStructType());
-  for (auto [i, ref, type_ref] : llvm::enumerate(refs, type_refs)) {
-    auto [field_name_id, field_type_id] =
-        context.semantics_ir().GetNode(type_ref).GetAsStructTypeField();
-    auto member_name = context.semantics_ir().GetString(field_name_id);
-    auto* gep =
-        context.builder().CreateStructGEP(llvm_type, alloca, i, member_name);
-    context.builder().CreateStore(context.GetLocal(ref), gep);
-  }
-}
-
-auto HandleStubReference(FunctionContext& context, SemIR::NodeId node_id,
-                         SemIR::Node node) -> void {
-  context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
+auto HandleTupleValue(FunctionContext& context, SemIR::NodeId node_id,
+                      SemIR::Node node) -> void {
+  auto [struct_literal_id, refs_id] = node.GetAsTupleValue();
+  context.SetLocal(node_id, EmitStructOrTupleValueRepresentation(
+                                context, node.type_id(), refs_id, "tuple"));
 }
 
 auto HandleUnaryOperatorNot(FunctionContext& context, SemIR::NodeId node_id,

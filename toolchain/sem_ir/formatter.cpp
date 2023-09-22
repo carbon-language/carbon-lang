@@ -519,6 +519,7 @@ class Formatter {
         switch (GetExpressionCategory(semantics_ir_, node_id)) {
           case ExpressionCategory::NotExpression:
           case ExpressionCategory::Value:
+          case ExpressionCategory::Mixed:
             break;
           case ExpressionCategory::DurableReference:
           case ExpressionCategory::EphemeralReference:

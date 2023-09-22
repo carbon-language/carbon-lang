@@ -198,7 +198,7 @@ struct TypeBlockId : public IndexBase, public Printable<TypeBlockId> {
   }
 };
 
-// An index for member access.
+// An index for member access, for structs and tuples.
 struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -407,6 +407,9 @@ class Node : public Printable<Node> {
   using StructAccess = Factory<NodeKind::StructAccess, NodeId /*struct_id*/,
                                MemberIndex /*ref_index*/>;
 
+  using StructInit = Factory<NodeKind::StructInit, NodeId /*literal_id*/,
+                             NodeBlockId /*converted_refs_id*/>;
+
   using StructLiteral =
       Factory<NodeKind::StructLiteral, NodeBlockId /*refs_id*/>;
 
@@ -416,6 +419,9 @@ class Node : public Printable<Node> {
       FactoryNoType<NodeKind::StructTypeField, StringId /*name_id*/,
                     TypeId /*type_id*/>;
 
+  using StructValue = Factory<NodeKind::StructValue, NodeId /*literal_id*/,
+                              NodeBlockId /*converted_refs_id*/>;
+
   using StubReference = Factory<NodeKind::StubReference, NodeId /*node_id*/>;
 
   using Temporary =
@@ -423,12 +429,21 @@ class Node : public Printable<Node> {
 
   using TemporaryStorage = Factory<NodeKind::TemporaryStorage>;
 
+  using TupleAccess = Factory<NodeKind::TupleAccess, NodeId /*tuple_id*/,
+                              MemberIndex /*index*/>;
+
   using TupleIndex =
       Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;
+
+  using TupleInit = Factory<NodeKind::TupleInit, NodeId /*literal_id*/,
+                            NodeBlockId /*converted_refs_id*/>;
 
   using TupleLiteral = Factory<NodeKind::TupleLiteral, NodeBlockId /*refs_id*/>;
 
   using TupleType = Factory<NodeKind::TupleType, TypeBlockId /*refs_id*/>;
+
+  using TupleValue = Factory<NodeKind::TupleValue, NodeId /*literal_id*/,
+                             NodeBlockId /*converted_refs_id*/>;
 
   using UnaryOperatorNot =
       Factory<NodeKind::UnaryOperatorNot, NodeId /*operand_id*/>;

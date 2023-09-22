@@ -26,19 +26,17 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_11: type = stub_reference i32
-// CHECK:STDOUT:   %.loc10_16: type = stub_reference i32
-// CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_literal (%.loc10_11, %.loc10_16)
+// CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %v: ref (i32, i32) = var "v"
-// CHECK:STDOUT:   no_op
-// CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call @F() to %v
-// CHECK:STDOUT:   assign %v, %.loc10_24
-// CHECK:STDOUT:   no_op
-// CHECK:STDOUT:   %.loc11: init (i32, i32) = call @F() to %v
-// CHECK:STDOUT:   assign %v, %.loc11
-// CHECK:STDOUT:   no_op
-// CHECK:STDOUT:   %.loc12: init (i32, i32) = call @F() to %return
-// CHECK:STDOUT:   return %.loc12
+// CHECK:STDOUT:   %.loc10_24.1: ref (i32, i32) = stub_reference %v
+// CHECK:STDOUT:   %.loc10_24.2: init (i32, i32) = call @F() to %.loc10_24.1
+// CHECK:STDOUT:   assign %v, %.loc10_24.2
+// CHECK:STDOUT:   %.loc11_8.1: ref (i32, i32) = stub_reference %v
+// CHECK:STDOUT:   %.loc11_8.2: init (i32, i32) = call @F() to %.loc11_8.1
+// CHECK:STDOUT:   assign %v, %.loc11_8.2
+// CHECK:STDOUT:   %.loc12_11.1: ref (i32, i32) = stub_reference %return
+// CHECK:STDOUT:   %.loc12_11.2: init (i32, i32) = call @F() to %.loc12_11.1
+// CHECK:STDOUT:   return %.loc12_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> i32 {
