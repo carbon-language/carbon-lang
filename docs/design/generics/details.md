@@ -5580,7 +5580,7 @@ An incomplete `C` cannot be used in the following contexts:
 >     same name, as we do with `A & B`, then we don't need to require `C` to be
 >     complete.
 > -   Another option, being discussed in
->     [#2355](https://github.com/carbon-language/carbon-lang/issues/2355), is
+>     [#2745](https://github.com/carbon-language/carbon-lang/issues/2745), is
 >     that names in interface `I` shadow the names in any interface being
 >     extended, then `C` would not be required to be complete.
 
