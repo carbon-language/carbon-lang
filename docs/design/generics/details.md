@@ -7026,6 +7026,3 @@ and
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 -   [#2964: Expression phase terminology](https://github.com/carbon-language/carbon-lang/pull/2964)
 -   [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
-
-**FIXME: issue #2495 updated `impl` terminology, should be noted in PR summary.
-Also: https://github.com/carbon-language/carbon-lang/pull/2687 **
