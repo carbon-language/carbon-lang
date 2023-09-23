@@ -336,9 +336,9 @@ in scope.
 
 It's also worth noting that Carbon
 [doesn't use _any_ kind of brackets](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/README.md#checked-and-template-parameters)
-to mark template- or checked-generic parameters, so if Carbon had angle brackets,
-they would mean something different than they do in C++, which could cause
-confusion. We do use square brackets to mark _deduced_ parameters, as in:
+to mark template- or checked-generic parameters, so if Carbon had angle
+brackets, they would mean something different than they do in C++, which could
+cause confusion. We do use square brackets to mark _deduced_ parameters, as in:
 
 ```
 fn Sort[T:! Comparable](a: Vector(T)*)
