@@ -6556,7 +6556,8 @@ converted to `f64`, equivalent to "implementation two".
 > we decided that this change would not affect how we handle nested `like`
 > expressions: `like Vector(like i32)` is still `like Vector(i32)` plus
 > `Vector(like i32)`. These changes have not yet gone through the proposal
-> process.
+> process, and we may decide to reject nested `like` until we have a
+> demonstrated need.
 
 In general, each `like` adds one additional parameterized implementation. There
 is always the impl defined with all of the `like` expressions replaced by their
