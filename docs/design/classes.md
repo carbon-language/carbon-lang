@@ -1625,7 +1625,7 @@ conform to the decision on
 The compiler automatically determines which of these
 [facet types](/docs/design/generics/terminology.md#facet-type) a given type
 satisfies. It is illegal to directly implement `Concrete`, `Deletable`, or
-`Destructible` directly. For more about these constraints, see
+`Destructible`. For more about these constraints, see
 ["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
 
 A pointer to `Deletable` types may be passed to the `Delete` method of the
