@@ -5220,6 +5220,18 @@ let U:! B = bool;
 let V:! B = i32;
 ```
 
+<!-- prettier-ignore-start -->
+
+<!-- The following triggers a bug in prettier where it adds an `>` -->
+
+> **Note:**
+> [Issue #2880](https://github.com/carbon-language/carbon-lang/issues/2880) is a
+> tracking bug for known issues with this "strictly more complex" rule for
+> `impl` termination. We are using that issue to track any code that arises in
+> practice that would terminate but is rejected by this rule.
+
+<!-- prettier-ignore-end -->
+
 > **Comparison with other languages:** Rust solves this problem by imposing a
 > recursion limit, much like C++ compilers use to terminate template recursion.
 > This goes against
