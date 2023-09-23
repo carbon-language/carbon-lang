@@ -336,9 +336,9 @@ in scope.
 
 It's also worth noting that Carbon
 [doesn't use _any_ kind of brackets](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/README.md#checked-and-template-parameters)
-to mark template or generic parameters, so if Carbon had angle brackets, they
-would mean something different than they do in C++, which could cause confusion.
-We do use square brackets to mark _deduced_ parameters, as in:
+to mark template- or checked-generic parameters, so if Carbon had angle
+brackets, they would mean something different than they do in C++, which could
+cause confusion. We do use square brackets to mark _deduced_ parameters, as in:
 
 ```
 fn Sort[T:! Comparable](a: Vector(T)*)
@@ -349,7 +349,7 @@ particular, deduced parameters are never mentioned at the callsite, so those
 square brackets are never part of the expression syntax.
 
 See [Proposal #676: `:!` generic syntax](/proposals/p0676.md) for more
-background on how and why we chose our current generics syntax.
+background on how and why we chose our current compile-time parameter syntax.
 
 ### Why do variable declarations have to start with `var` or `let`?
 
@@ -444,24 +444,24 @@ will handle both templates (matching C++) and checked generics (common in other
 languages: Rust, Swift, Go, Kotlin, Java, and so on).
 
 The key difference between the two is that template arguments can only finish
-type-checking _during_ instantiation, whereas generics specify an interface with
-which arguments can finish type-checking _without_ instantiation. This has a
-couple of important benefits:
+type-checking _during_ instantiation, whereas checked generics specify an
+interface with which arguments can finish type-checking _without_ instantiation.
+This has a couple of important benefits:
 
--   Type-checking errors for generics happen earlier, making it easier for the
-    compiler to produce helpful diagnostics.
--   Generic functions can generate less compiled output, allowing compilation
-    with many uses to be faster.
+-   Type-checking errors for checked generics happen earlier, making it easier
+    for the compiler to produce helpful diagnostics.
+-   Checked-generic functions can generate less compiled output, allowing
+    compilation with many uses to be faster.
     -   For comparison, template instantiations are a major factor for C++
         compilation latency.
 
-Although Carbon will prefer generics over templates, templates are provided for
-migration of C++ code.
+Although Carbon will prefer checked generics over templates, templates are
+provided for migration of C++ code.
 
 References:
 
 -   [Generics: Goals: Better compiler experience](/docs/design/generics/goals.md#better-compiler-experience)
--   [Generics: Terminology: Generic versus template parameters](/docs/design/generics/terminology.md#checked-versus-template-parameters)
+-   [Generics: Terminology: Checked versus template parameters](/docs/design/generics/terminology.md#checked-versus-template-parameters)
 
 ### What is Carbon's memory model?
 

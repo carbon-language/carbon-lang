@@ -14,11 +14,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Pattern Syntax and Semantics](#pattern-syntax-and-semantics)
     -   [Expression patterns](#expression-patterns)
         -   [Alternatives considered](#alternatives-considered)
-    -   [Bindings](#bindings)
-        -   [Name bindings](#name-bindings)
+    -   [Binding patterns](#binding-patterns)
+        -   [Name binding patterns](#name-binding-patterns)
         -   [Unused bindings](#unused-bindings)
             -   [Alternatives considered](#alternatives-considered-1)
-        -   [Generic bindings](#generic-bindings)
+        -   [Compile-time bindings](#compile-time-bindings)
         -   [`auto` and type deduction](#auto-and-type-deduction)
         -   [Alternatives considered](#alternatives-considered-2)
     -   [`var`](#var)
@@ -46,16 +46,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 A _pattern_ is an expression-like syntax that describes the structure of some
 value. The pattern may contain unknowns, so it can potentially match multiple
 values, and those unknowns may have names, in which case they are called
-_bindings_. When a pattern is executed by giving it a value called the
+_binding patterns_. When a pattern is executed by giving it a value called the
 _scrutinee_, it determines whether the scrutinee matches the pattern, and if so,
 determines the values of the bindings.
 
 ## Pattern Syntax and Semantics
 
 Expressions are patterns, as described below. A pattern that is not an
-expression, because it contains pattern-specific syntax such as a binding, is a
-_proper pattern_. Many expression forms, such as arbitrary function calls, are
-not permitted as proper patterns, so cannot contain bindings.
+expression, because it contains pattern-specific syntax such as a binding
+pattern, is a _proper pattern_. Many expression forms, such as arbitrary
+function calls, are not permitted as proper patterns, so cannot contain binding
+patterns.
 
 -   _pattern_ ::= _proper-pattern_
 
@@ -93,7 +94,7 @@ reusing the result from an earlier comparison:
 
 ```carbon
 class ChattyIntMatcher {
-  external impl as EqWith(i32) {
+  impl as EqWith(i32) {
     fn Eq[me: ChattyIntMatcher](other: i32) {
       Print("Matching {0}", other);
       return other == 1;
@@ -116,24 +117,28 @@ fn F() {
 
 -   [Introducer syntax for expression patterns](/proposals/p2188.md#introducer-syntax-for-expression-patterns)
 
-### Bindings
+### Binding patterns
 
-#### Name bindings
+#### Name binding patterns
 
-A name binding is a pattern.
+A name binding pattern is a pattern.
 
 -   _binding-pattern_ ::= _identifier_ `:` _expression_
 -   _proper-pattern_ ::= _binding-pattern_
 
-The type of the _identifier_ is specified by the _expression_. The scrutinee is
-implicitly converted to that type if necessary.
+The _identifier_ specifies the name of the _binding_. The type of the binding is
+specified by the _expression_. The scrutinee is implicitly converted to that
+type if necessary. The binding is then _bound_ to the converted value.
 
 ```carbon
 fn F() -> i32 {
   match (5) {
     // ✅ `5` is implicitly converted to `i32`.
-    // Returns `5 as i32`.
-    case n: i32 => { return n; }
+    case n: i32 => {
+      // The binding `n` has the value `5 as i32`,
+      // which is the value returned.
+      return n;
+    }
   }
 }
 ```
@@ -144,7 +149,7 @@ value matches the scope of the binding.
 ```carbon
 class NoisyDestructor {
   fn Make() -> Self { return {}; }
-  external impl i32 as ImplicitAs(NoisyDestructor) {
+  impl i32 as ImplicitAs(NoisyDestructor) {
     fn Convert[me: i32]() -> Self { return Make(); }
   }
   destructor {
@@ -214,26 +219,26 @@ fn J(unused n: i32);
 -   [Anonymous, named identifiers](/proposals/p2022.md#anonymous-named-identifiers)
 -   [Attributes](/proposals/p2022.md#attributes)
 
-#### Generic bindings
+#### Compile-time bindings
 
 A `:!` can be used in place of `:` for a binding that is usable at compile time.
 
--   _generic-pattern_ ::= `unused`? `template`? _identifier_ `:!` _expression_
--   _generic-pattern_ ::= `template`? _identifier_ `:!` _expression_
--   _generic-pattern_ ::= `template`? `_` `:!` _expression_
--   _generic-pattern_ ::= `unused` `template`? _identifier_ `:!` _expression_
--   _proper-pattern_ ::= _generic-pattern_
+-   _compile-time-pattern_ ::= `template`? _identifier_ `:!` _expression_
+-   _compile-time-pattern_ ::= `template`? `_` `:!` _expression_
+-   _compile-time-pattern_ ::= `unused` `template`? _identifier_ `:!`
+    _expression_
+-   _proper-pattern_ ::= _compile-time-pattern_
 
 ```carbon
-// ✅ `F` takes a generic type parameter `T` and a parameter `x` of type `T`.
-fn F(T:! Type, x: T) {
+// ✅ `F` takes a symbolic facet parameter `T` and a parameter `x` of type `T`.
+fn F(T:! type, x: T) {
   var v: T = x;
 }
 ```
 
-The `template` keyword indicates the binding is introducing a template
-parameter, so name lookups into the parameter should be deferred until its value
-is known.
+The `template` keyword indicates the binding pattern is introducing a template
+binding, so name lookups into the binding will not be fully resolved until its
+value is known.
 
 #### `auto` and type deduction
 
@@ -256,7 +261,7 @@ The `auto` keyword is only permitted in specific contexts. Currently these are:
 -   As the type of a binding.
 
 It is anticipated that `auto` may be permitted in more contexts in the future,
-for example as a generic argument in a parameterized type that appears in a
+for example as a placeholder argument in a parameterized type that appears in a
 context where `auto` is allowed, such as `Vector(auto)` or `auto*`.
 
 When the type of a binding requires type deduction, the type is deduced against
@@ -265,7 +270,7 @@ before pattern matching is performed.
 
 ```carbon
 fn G[T:! Type](p: T*);
-class X { external impl as ImplicitAs(i32*); }
+class X { impl as ImplicitAs(i32*); }
 // ✅ Deduces `T = i32` then implicitly and
 // trivially converts `p` to `i32*`.
 fn H1(p: i32*) { G(p); }
@@ -288,8 +293,8 @@ scrutinee.
 -   _proper-pattern_ ::= `var` _proper-pattern_
 
 A `var` pattern matches when its nested pattern matches. The type of the storage
-is the resolved type of the nested _pattern_. Any bindings within the nested
-pattern refer to portions of the corresponding storage rather than to the
+is the resolved type of the nested _pattern_. Any binding patterns within the
+nested pattern refer to portions of the corresponding storage rather than to the
 scrutinee.
 
 ```carbon
@@ -441,7 +446,7 @@ match (Optional(i32).None) {
 }
 
 class X {
-  external impl as ImplicitAs(Optional(i32));
+  impl as ImplicitAs(Optional(i32));
 }
 
 match ({} as X) {

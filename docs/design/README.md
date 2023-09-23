@@ -1604,14 +1604,13 @@ fn Foo() -> f32 {
 }
 ```
 
-> **Note:** This is provisional, no design for `match` statements has been
-> through the proposal process yet.
-
 > References:
 >
 > -   [Pattern matching](pattern_matching.md)
 > -   Question-for-leads issue
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
+> -   Proposal
+>     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
 
 ## User-defined types
 
@@ -3562,9 +3561,6 @@ imported, so a wrapper may be added without requiring changes to importers?
 
 ### Templates
 
-> **Note:** This is provisional, no design for this has been through the
-> proposal process yet.
-
 Carbon supports both
 [checked and template generics](#checked-and-template-parameters). This provides
 a migration path for C++ template code:
@@ -3590,6 +3586,11 @@ We expect the best interop in these areas to be based on a Carbon-provided C++
 toolchain. However, even when using Carbon's generated C++ headers for interop,
 we will include the ability where possible to use a Carbon generic from C++ as
 if it were a C++ template.
+
+> References:
+>
+> -   Proposal
+>     [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
 
 ### Standard types
 

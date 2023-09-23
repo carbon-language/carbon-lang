@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Purpose of this document](#purpose-of-this-document)
 -   [Background](#background)
-    -   [Generic parameters](#generic-parameters)
+    -   [Compile-time parameters](#compile-time-parameters)
     -   [Interfaces](#interfaces)
 -   [Templates](#templates)
 -   [Checked-generic goals](#checked-generic-goals)
@@ -66,34 +66,35 @@ the
 [compile-time duck typing](https://en.wikipedia.org/wiki/Duck_typing#Templates_or_generic_types)
 approach of C++ templates.
 
-### Generic parameters
+### Compile-time parameters
 
-Generic functions and generic types will all take some "generic parameters",
+Generic functions and generic types will all take some compile-time parameters,
 which will frequently be types, and in some cases will be
 [deduced](terminology.md#deduced-parameter) from the types of the values of
 explicit parameters.
 
-If a generic parameter is a type, the generic function's signature can specify
-constraints that the caller's type must satisfy. For example, a resizable array
-type (like C++'s `std::vector`) might have a generic type parameter with the
-constraint that the type must be movable and have a static size. A sort function
-might apply to any array whose elements are comparable and movable.
+If a compile-time parameter is a type, the generic function's signature can
+specify constraints that the caller's type must satisfy. For example, a
+resizable array type (like C++'s `std::vector`) might have a compile-time type
+parameter with the constraint that the type must be movable and have a static
+size. A sort function might apply to any array whose elements are comparable and
+movable.
 
-A constraint might involve multiple generic parameters. For example, a merge
-function might apply to two arbitrary containers so long as their elements have
-the same type.
+A constraint might involve multiple compile-time parameters. For example, a
+merge function might apply to two arbitrary containers so long as their elements
+have the same type.
 
 ### Interfaces
 
-We need some way to express the constraints on a generic type parameter. In
+We need some way to express the constraints on a compile-time type parameter. In
 Carbon we express these "type constraints" by saying we restrict to types that
 implement specific [_interfaces_](terminology.md#interface). Interfaces describe
 an API a type could implement; for example, it might specify a set of functions,
 including names and signatures. A type implementing an interface may be passed
-as a generic type argument to a function that has that interface as a
-requirement of its generic type parameter. Then, the functions defined in the
-interface may be called in the body of the function. Further, interfaces have
-names that allow them to be reused.
+as a compile-time type argument to a function that has that interface as a
+requirement of its compile-time type parameter. Then, the functions defined in
+the interface may be called in the body of the function. Further, interfaces
+have names that allow them to be reused.
 
 Similar compile-time and run-time constructs may be found in other programming
 languages:
@@ -350,10 +351,10 @@ Enable simple user control of whether to use dynamic or static dispatch.
 checked-generic functions:
 
 -   Static strategy: Like template parameters, the values for checked parameters
-    must be statically known at the callsite, or known to be a generic parameter
-    to the calling function. This can generate separate, specialized versions of
-    each combination of checked and template arguments, in order to optimize for
-    those types or values.
+    must be statically known at the callsite, or known to be a compile-time
+    parameter to the calling function. This can generate separate, specialized
+    versions of each combination of checked and template arguments, in order to
+    optimize for those types or values.
 -   Dynamic strategy: This is when the compiler generates a single version of
     the function that uses runtime dispatch to get something semantically
     equivalent to separate instantiation, but likely with different size, build
@@ -390,7 +391,7 @@ following features would benefit substantially from guaranteed monomorphization:
 -   Allocating local variables in stack storage. Without monomorphization, we
     would need to perform dynamic memory allocation -- whether on the stack or
     the heap -- for local variables whose sizes depend on checked parameters.
--   Passing parameters to functions. We cannot pass values of generic types in
+-   Passing parameters to functions. We cannot pass values of types in
     registers.
 -   Finding [specialized](terminology.md#specialization) implementations of
     interfaces beyond those clearly needed from the function signature.
@@ -625,10 +626,10 @@ Checked generics don't need to provide full flexibility of C++ templates:
 
 -   [Carbon templates](#templates) will cover those cases that don't fit inside
     checked generics, such as code that relies on compile-time duck typing.
--   We won't allow a specialization of some generic interface for some
-    particular type to actually expose a _different_ interface, with different
-    methods or different types in method signatures. This would break modular
-    type checking.
+-   We won't allow a specialization of some interface for some particular type
+    to actually expose a _different_ interface, with different methods or
+    different types in method signatures. This would break modular type
+    checking.
 -   [Template metaprogramming](https://en.wikipedia.org/wiki/Template_metaprogramming)
     will not be supported by Carbon checked generics. We expect to address those
     use cases with metaprogramming or [templates](#templates) in Carbon.

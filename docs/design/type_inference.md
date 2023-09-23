@@ -43,7 +43,8 @@ constant `IntLiteral(1)` value, whereas most languages would suggest a variable
 integer type, such as `i64`. Carbon might also make it an error. Although type
 inference currently only addresses `auto` for variables and function return
 types, this is something that will be considered as part of type inference in
-general, because it also affects generics, templates, lambdas, and return types.
+general, because it also affects checked generics, templates, lambdas, and
+return types.
 
 ## Alternatives considered
 
