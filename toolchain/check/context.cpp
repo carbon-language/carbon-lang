@@ -784,6 +784,9 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
         context.semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
     auto target_id = target_block.AddNode(SemIR::Node::ArrayIndex::Make(
         value.parse_node(), element_type_id, return_slot_id, index_id));
+    // Note, this is computing the source location not the destination, so it
+    // goes into the current code block, not into the target block.
+    // TODO: Ideally we would also discard this node if it's unused.
     auto src_id = !literal_elems.empty()
                       ? literal_elems[i]
                       : context.AddNode(SemIR::Node::TupleAccess::Make(
