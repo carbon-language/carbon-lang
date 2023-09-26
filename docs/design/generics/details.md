@@ -2857,7 +2857,7 @@ var n: i32;
 
 // ❌ No implicit conversion from `i32` to `T.(A.T)`.
 // Resolved constraint on `T` is
-// `B where T.(A.T) == T.(A.U) and T.(A.U) = i32`.
+// `B where T.(A.T) == T.(A.U) and T.(A.U) == i32`.
 // `T.(A.T)` is single-step equal to `T.(A.U)`, and
 // `T.(A.U)` is single-step equal to `i32`, but
 // `T.(A.T)` is not single-step equal to `i32`.
@@ -2918,7 +2918,7 @@ When a facet type is used as the declared type of a facet `T`, the constraints
 that were specified within that facet type are _resolved_ to determine the
 constraints that apply to `T`. This happens:
 
--   When the constraint is used explicitly, when declaring symbolic binding,
+-   When the constraint is used explicitly when declaring a symbolic binding,
     like a generic parameter or associated constant, of the form
     `T:! Constraint`.
 -   When declaring that a type implements a constraint with an `impl`
@@ -3645,7 +3645,7 @@ Only the current type is searched for interface implementations, so the call to
 `InR()` would be illegal without the cast. However, an
 [`observe`...`==`...`impls` declaration](#observing-equal-to-a-type-implementing-an-interface)
 can be used to identify interfaces that must be implemented through some equal
-type. This does not [extending](terminology.md#extending-an-impl) the API of the
+type. This does not [extend](terminology.md#extending-an-impl) the API of the
 type, that is solely determined by the definition of the type. Continuing the
 previous example:
 
@@ -3712,7 +3712,7 @@ fn SortContainer
 
 In contrast to a [rewrite constraint](#rewrite-constraints) or a
 [same-type constraint](#same-type-constraints), this does not say what type
-`ElementType` exactly is, just that it must satisfy requirements of some facet
+`ElementType` exactly is, just that it must satisfy the requirements of some facet
 type.
 
 > **Note:** `Container` defines `ElementType` as having type `type`, but
@@ -3872,7 +3872,7 @@ unless there is some declaration like
 `observe CT.ElementType == SC.ElementType impls Ordered`. Even then, the items
 from the `needles` container won't directly have a `Compare` method member.
 
-The rule is that an same-type `where` constraint between two type variables does
+The rule is that a same-type `where` constraint between two type variables does
 not modify the set of member names of either type. This is in contrast to
 rewrite constraints like `where .ElementType = String` with a `=`, then
 `.ElementType` is actually set to `String` including the complete `String` API.
@@ -4595,7 +4595,7 @@ This may also be called a _generic `impl` declaration_.
 ### Impl for a parameterized type
 
 Interfaces may be implemented for a [parameterized type](#parameterized-types).
-This can be done lexically in the class' scope:
+This can be done lexically in the class's scope:
 
 ```carbon
 class Vector(T:! type) {
@@ -6122,7 +6122,7 @@ interface CommonTypeWith(T:! type) {
 says that if `Self` implements `CommonTypeWith(T)`, then `T` must implement
 `CommonTypeWith(Self)`.
 
-An `require`...`impls` constraint in an `interface`, or `constraint`, definition
+A `require`...`impls` constraint in an `interface`, or `constraint`, definition
 must still use `Self` in some way. It can be an argument to either the
 [type](#parameterized-types) or [interface](#parameterized-interfaces). For
 example:
