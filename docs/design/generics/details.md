@@ -1206,7 +1206,7 @@ type. For example, in C++,
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `Eq`, and `Swappable`. This is
 already a capability for [facet types in general](#facet-types). For consistency
-we will use the same semantics and `require Self impls` syntax as we do for
+we use the same semantics and `require Self impls` syntax as we do for
 [named constraints](#named-constraints):
 
 ```carbon
@@ -2481,7 +2481,7 @@ The result of applying a `where` operator to a facet type is another facet type.
 Note that this expands the kinds of requirements that facet types can have from
 just interface requirements to also include the various kinds of constraints
 discussed later in this section. In addition, it can introduce relationships
-between different type variables, such as that a member of one is equal to the
+between different type variables, such as that a member of one is equal to a
 member of another. The `where` operator is not associative, so a type expression
 using multiple must use round parens `(`...`)` to specify grouping.
 
@@ -2536,9 +2536,9 @@ An implements constraint is written `where T impls C`, where `T` is a facet and
 `C` is a facet type. The constraint is that `T` satisfies the requirements of
 `C`.
 
-**References:** The definition of rewrite and same-type constraints were
+**References:** The definition of rewrite and same-type constraints were in
 [proposal #2173](https://github.com/carbon-language/carbon-lang/pull/2173).
-Implements constraints switched using the `impls` keyword in
+Implements constraints switched to using the `impls` keyword in
 [proposal #2483](https://github.com/carbon-language/carbon-lang/pull/2483).
 
 **Alternatives considered:**
@@ -2571,7 +2571,7 @@ interface HasAbs {
 For types representing subsets of the real numbers, such as `i32` or `f32`, the
 `MagnitudeType` will match `Self`, the type implementing an interface. For types
 representing complex numbers, the types will be different. For example, the
-`Abs()` applied to a `Complex64` value would produce a `f32` result. The goal is
+`Abs()` function applied to a `Complex64` value would produce a `f32` result. The goal is
 to write a constraint to restrict to the first case.
 
 In a second example, when you take the slice of a type implementing `Container`
@@ -2635,10 +2635,10 @@ constraint ContainerIsSlice {
 
 The `.Self` construct follows these rules:
 
--   `X :!` introduces `.Self:! type`, where references to `.Self` are resolved.
+-   `X :!` introduces `.Self:! type`, where references to `.Self` are resolved
     to `X`. This allows you to use `.Self` as an interface parameter as in
     `X:! I(.Self)`.
--   `A where` introduces `.Self:! A` and `.Foo` _designator_ for each member
+-   `A where` introduces `.Self:! A` and a `.Foo` _designator_ for each member
     `Foo` of `A`.
 -   It's an error to reference `.Self` if it refers to more than one different
     thing or isn't a facet.
