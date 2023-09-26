@@ -21,6 +21,9 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
+  // A block of code that has not yet been inserted into SemIR.
+  class PendingBlock;
+
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter<Parse::Node>& emitter,
@@ -127,7 +130,8 @@ class Context {
   // of the initializer, such as an `Assign` or `ReturnExpression` node. The
   // resulting node describes the initialization operation that was performed.
   auto InitializeAndFinalize(Parse::Node parse_node, SemIR::NodeId target_id,
-                             SemIR::NodeId value_id) -> SemIR::NodeId;
+                             PendingBlock& target_block, SemIR::NodeId value_id)
+      -> SemIR::NodeId;
 
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
@@ -177,17 +181,8 @@ class Context {
       -> SemIR::TypeId;
 
   // Converts an expression for use as a type.
-  // TODO: This should eventually return a type ID.
   auto ExpressionAsType(Parse::Node parse_node, SemIR::NodeId value_id)
       -> SemIR::TypeId {
-    auto node = semantics_ir_->GetNode(value_id);
-    if (node.kind() == SemIR::NodeKind::StubReference) {
-      value_id = node.GetAsStubReference();
-      CARBON_CHECK(semantics_ir_->GetNode(value_id).kind() !=
-                   SemIR::NodeKind::StubReference)
-          << "Stub reference should not point to another stub reference";
-    }
-
     return CanonicalizeType(
         ConvertToValueOfType(parse_node, value_id, SemIR::TypeId::TypeType));
   }
@@ -273,6 +268,13 @@ class Context {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
+  // Implementation of `Initialize`. Takes a `target_block` which contains
+  // pending instructions that are needed to form the value of `target_id`.
+  // These can be discarded if no initialization is needed.
+  auto InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
+                      PendingBlock& target_block, SemIR::NodeId value_id)
+      -> SemIR::NodeId;
+
   // Commits to using a temporary to store the result of the initializing
   // expression described by `init_id`, and returns the location of the
   // temporary. If `discarded` is `true`, the result is discarded, and no
@@ -282,8 +284,8 @@ class Context {
       -> SemIR::NodeId;
 
   // Marks the initializer `init_id` as initializing `target_id`.
-  auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
-      -> void;
+  auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id,
+                          PendingBlock& target_block) -> void;
 
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
   // converted result. Prints a diagnostic and returns an Error if the

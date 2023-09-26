@@ -14,9 +14,8 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   %x: ref (i32,) = var "x"
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc7_20: (i32,) = tuple_literal (%.loc7_18)
-// CHECK:STDOUT:   %.loc7_21.1: ref i32 = tuple_access %x, member0
-// CHECK:STDOUT:   %.loc7_21.2: init (i32,) = tuple_init %.loc7_20, (%.loc7_18)
-// CHECK:STDOUT:   assign %x, %.loc7_21.2
+// CHECK:STDOUT:   %.loc7_21: init (i32,) = tuple_init %.loc7_20, (%.loc7_18)
+// CHECK:STDOUT:   assign %x, %.loc7_21
 // CHECK:STDOUT:   %.loc8: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %y: ref (i32,) = var "y"
 // CHECK:STDOUT:   %.loc7_5: (i32,) = bind_value %x

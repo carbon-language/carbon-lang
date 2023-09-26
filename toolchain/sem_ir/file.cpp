@@ -216,13 +216,13 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::RealLiteral:
     case NodeKind::Return:
     case NodeKind::ReturnExpression:
+    case NodeKind::SpliceBlock:
     case NodeKind::StringLiteral:
     case NodeKind::StructAccess:
     case NodeKind::StructTypeField:
     case NodeKind::StructLiteral:
     case NodeKind::StructInit:
     case NodeKind::StructValue:
-    case NodeKind::StubReference:
     case NodeKind::Temporary:
     case NodeKind::TemporaryStorage:
     case NodeKind::TupleAccess:
@@ -384,12 +384,12 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::RealLiteral:
       case NodeKind::Return:
       case NodeKind::ReturnExpression:
+      case NodeKind::SpliceBlock:
       case NodeKind::StringLiteral:
       case NodeKind::StructAccess:
       case NodeKind::StructLiteral:
       case NodeKind::StructInit:
       case NodeKind::StructValue:
-      case NodeKind::StubReference:
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
       case NodeKind::TupleAccess:
@@ -495,8 +495,9 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         continue;
       }
 
-      case NodeKind::StubReference: {
-        node_id = node.GetAsStubReference();
+      case NodeKind::SpliceBlock: {
+        auto [block_id, result_id] = node.GetAsSpliceBlock();
+        node_id = result_id;
         continue;
       }
 
@@ -578,8 +579,9 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
         continue;
       }
 
-      case NodeKind::StubReference: {
-        node_id = node.GetAsStubReference();
+      case NodeKind::SpliceBlock: {
+        auto [block_id, result_id] = node.GetAsSpliceBlock();
+        node_id = result_id;
         continue;
       }
 
