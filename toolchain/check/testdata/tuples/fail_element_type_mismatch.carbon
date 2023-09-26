@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:31: Cannot implicitly convert from `(i32, f64) as type` to `(i32, i32) as type`.
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:31: ERROR: Cannot implicitly convert from `(i32, f64) as type` to `(i32, i32) as type`.
 // CHECK:STDERR: var x: (i32, i32) = (2, 65.89);
 // CHECK:STDERR:                               ^
 var x: (i32, i32) = (2, 65.89);

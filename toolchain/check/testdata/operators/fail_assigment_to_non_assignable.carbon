@@ -7,39 +7,39 @@
 fn F() -> i32;
 
 fn Main() {
-  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:3: Expression is not assignable.
+  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:3: ERROR: Expression is not assignable.
   // CHECK:STDERR:   1 = 2;
   // CHECK:STDERR:   ^
   1 = 2;
-  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:5: Expression is not assignable.
+  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:5: ERROR: Expression is not assignable.
   // CHECK:STDERR:   F() = 1;
   // CHECK:STDERR:     ^
   F() = 1;
-  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:8: Expression is not assignable.
+  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:8: ERROR: Expression is not assignable.
   // CHECK:STDERR:   (1, 2) = (3, 4);
   // CHECK:STDERR:        ^
   (1, 2) = (3, 4);
   var n: i32 = 0;
-  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:8: Expression is not assignable.
+  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:8: ERROR: Expression is not assignable.
   // CHECK:STDERR:   (n, n) = (1, 2);
   // CHECK:STDERR:        ^
   (n, n) = (1, 2);
-  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:3: Expression is not assignable.
+  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:3: ERROR: Expression is not assignable.
   // CHECK:STDERR:   i32 = i32*;
   // CHECK:STDERR:   ^
   i32 = i32*;
-  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:18: Expression is not assignable.
+  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:18: ERROR: Expression is not assignable.
   // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
   // CHECK:STDERR:                  ^
   {.x = 1, .y = 2} = {.x = 3, .y = 4};
-  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:25: Expression is not assignable.
+  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:25: ERROR: Expression is not assignable.
   // CHECK:STDERR:   (if true then 1 else 2) = 3;
   // CHECK:STDERR:                         ^
   (if true then 1 else 2) = 3;
 
   // Under #911, if expressions are never reference expressions.
   var a: i32;
-  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:25: Expression is not assignable.
+  // CHECK:STDERR: fail_assigment_to_non_assignable.carbon:[[@LINE+3]]:25: ERROR: Expression is not assignable.
   // CHECK:STDERR:   (if true then a else a) = 10;
   // CHECK:STDERR:                         ^
   (if true then a else a) = 10;

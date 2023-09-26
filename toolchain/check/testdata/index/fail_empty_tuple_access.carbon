@@ -7,7 +7,7 @@
 fn F() {}
 
 fn Run() {
-  // CHECK:STDERR: fail_empty_tuple_access.carbon:[[@LINE+3]]:8: Index `0` is past the end of `() as type`.
+  // CHECK:STDERR: fail_empty_tuple_access.carbon:[[@LINE+3]]:8: ERROR: Index `0` is past the end of `() as type`.
   // CHECK:STDERR:   F()[0];
   // CHECK:STDERR:        ^
   F()[0];

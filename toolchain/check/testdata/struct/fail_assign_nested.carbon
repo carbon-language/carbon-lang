@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:28: Cannot implicitly convert from `{.b: {}}` to `{.a: {}}`.
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:28: ERROR: Cannot implicitly convert from `{.b: {}}` to `{.a: {}}`.
 // CHECK:STDERR: var x: {.a: {}} = {.b = {}};
 // CHECK:STDERR:                            ^
 var x: {.a: {}} = {.b = {}};

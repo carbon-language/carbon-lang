@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: fail_invalid_type.carbon:[[@LINE+3]]:13: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var a: [1; 1];
 // CHECK:STDERR:             ^
 var a: [1; 1];

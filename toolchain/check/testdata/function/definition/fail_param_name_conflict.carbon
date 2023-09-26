@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+6]]:16: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+6]]:16: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Bar(a: i32, a: i32) {}
 // CHECK:STDERR:                ^
 // CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+3]]:8: Name is previously declared here.

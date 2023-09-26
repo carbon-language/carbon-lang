@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_args.carbon:[[@LINE+3]]:14: `namespace` declarations must end with a `;`.
+// CHECK:STDERR: fail_args.carbon:[[@LINE+3]]:14: ERROR: `namespace` declarations must end with a `;`.
 // CHECK:STDERR: namespace Foo();
 // CHECK:STDERR:              ^
 namespace Foo();

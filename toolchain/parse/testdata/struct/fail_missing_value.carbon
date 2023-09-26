@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:12: Expected expression.
+// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:12: ERROR: Expected expression.
 // CHECK:STDERR: var x: {.a=} = {};
 // CHECK:STDERR:            ^
 var x: {.a=} = {};

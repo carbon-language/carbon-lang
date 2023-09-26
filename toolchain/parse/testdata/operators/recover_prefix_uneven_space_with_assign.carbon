@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: recover_prefix_uneven_space_with_assign.carbon:[[@LINE+3]]:12: Whitespace is not allowed after this unary operator.
+// CHECK:STDERR: recover_prefix_uneven_space_with_assign.carbon:[[@LINE+3]]:12: ERROR: Whitespace is not allowed after this unary operator.
 // CHECK:STDERR: var n: i8 =- n;
 // CHECK:STDERR:            ^
 var n: i8 =- n;

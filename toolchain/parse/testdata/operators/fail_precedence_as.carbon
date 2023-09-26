@@ -6,17 +6,17 @@
 
 fn F(n: i32) {
   // No ordering between `not` and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:12: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:12: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   not true as bool;
   // CHECK:STDERR:            ^
   not true as bool;
 
   // No ordering between most binary operators and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:9: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:9: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   1 + 1 as i32;
   // CHECK:STDERR:         ^
   1 + 1 as i32;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:9: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+3]]:9: ERROR: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   5 % 2 as i32;
   // CHECK:STDERR:         ^
   5 % 2 as i32;

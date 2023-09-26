@@ -5,4 +5,4 @@
 // ARGS: compile nonexistent.carbon
 //
 // AUTOUPDATE
-// CHECK:STDERR: nonexistent.carbon: Error opening file for read: No such file or directory
+// CHECK:STDERR: nonexistent.carbon: ERROR: Error opening file for read: No such file or directory
