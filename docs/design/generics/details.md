@@ -54,8 +54,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Rewrite constraints](#rewrite-constraints)
             -   [Combining constraints with `&`](#combining-constraints-with-)
             -   [Combining constraints with `and`](#combining-constraints-with-and)
-            -   [Combining constraints with `extends`](#combining-constraints-with-extends)
-            -   [Combining constraints with `impl as` and `impls`](#combining-constraints-with-impl-as-and-impls)
+            -   [Combining constraints with `extend`](#combining-constraints-with-extend)
+            -   [Combining constraints with `require` and `impls`](#combining-constraints-with-require-and-impls)
             -   [Rewrite constraint resolution](#rewrite-constraint-resolution)
             -   [Precise rules and termination](#precise-rules-and-termination)
                 -   [Qualified name lookup](#qualified-name-lookup)
@@ -1200,8 +1200,8 @@ the discussion.
 
 ## Interface requiring other interfaces
 
-Some interfaces will depend on other interfaces being implemented for the same
-type. For example, in C++,
+Some interfaces depend on other interfaces being implemented for the same type.
+For example, in C++,
 [the `Container` concept](https://en.cppreference.com/w/cpp/named_req/Container#Other_requirements)
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `Eq`, and `Swappable`. This is
@@ -1259,9 +1259,9 @@ def DoHashAndEquals[T:! Hashable](x: T) {
 
 ### Interface extension
 
-When implementing an interface, we should allow implementing the aliased names
-as well. In the case of `Hashable` above, this includes all the members of
-`Equatable`, obviating the need to implement `Equatable` itself:
+When implementing an interface, we allow implementing the aliased names as well.
+In the case of `Hashable` above, this includes all the members of `Equatable`,
+obviating the need to implement `Equatable` itself:
 
 ```carbon
 class Song {
@@ -2551,7 +2551,7 @@ Implements constraints switched to using the `impls` keyword in
 -   [Different syntax for same-type constraint](/proposals/p2173.md#different-syntax-for-same-type-constraint)
 -   [Required ordering for rewrites](/proposals/p2173.md#required-ordering-for-rewrites)
 -   [Multi-constraint `where` clauses](/proposals/p2173.md#multi-constraint-where-clauses)
--   [Rewrite constraints in `impl as` constraints](/proposals/p2173.md#rewrite-constraints-in-impl-as-constraints)
+-   [Rewrite constraints in `require` constraints](/proposals/p2173.md#rewrite-constraints-in-impl-as-constraints)
 
 #### Recursive constraints
 
@@ -2571,8 +2571,8 @@ interface HasAbs {
 For types representing subsets of the real numbers, such as `i32` or `f32`, the
 `MagnitudeType` will match `Self`, the type implementing an interface. For types
 representing complex numbers, the types will be different. For example, the
-`Abs()` function applied to a `Complex64` value would produce a `f32` result. The goal is
-to write a constraint to restrict to the first case.
+`Abs()` function applied to a `Complex64` value would produce a `f32` result.
+The goal is to write a constraint to restrict to the first case.
 
 In a second example, when you take the slice of a type implementing `Container`
 you get a type implementing `Container` which may or may not be the same type as
@@ -2602,6 +2602,7 @@ defined.
 ```carbon
 interface Container {
   let ElementType:! type;
+  let IteratorType:! Iterator where .ElementType = ElementType;
 
   let SliceType:! Container
       where .ElementType = ElementType and
@@ -2617,19 +2618,26 @@ interface Container {
 Note that [naming](#named-constraint-constants) a recursive constraint using the
 [`constraint` introducer](#named-constraints) approach, we can name the
 implementing type using `Self` instead of `.Self`, since they refer to the same
-type:
+type. Note though they are different facets with different facet types:
 
 ```carbon
 constraint RealAbs {
   extend HasAbs where .MagnitudeType = Self;
-  // Equivalent to:
+  // Satisfied by the same types:
   extend HasAbs where .MagnitudeType = .Self;
+
+  // While `Self as type` is the same as `.Self as type`,
+  // they are different as facets: `Self` has type
+  // `RealAbs` and `.Self` has type `HasAbs`.
 }
 
 constraint ContainerIsSlice {
   extend Container where .SliceType = Self;
-  // Equivalent to:
+  // Satisfied by the same types:
   extend Container where .SliceType = .Self;
+
+  // `Self` has type `ContainerIsSlice` and
+  // `.Self` has type `Container`.
 }
 ```
 
@@ -2656,6 +2664,22 @@ it is an error if `.Self` could mean two different things, as in:
 // ❌ Illegal: `.Self` could mean `T` or `T.A`.
 fn F[T:! InterfaceA where .A impls
            (InterfaceB where .B = .Self)](x: T);
+```
+
+These two meanings can be disambiguated by defining a
+[`constraint`](#named-constraints):
+
+```carbon
+constraint InterfaceBWithSelf {
+  extend InterfaceB where .B = Self;
+}
+constraint InterfaceBWith(U:! InterfaceA) {
+  extend InterfaceB where .B = U;
+}
+// `T.A impls InterfaceB where .B = T.A`
+fn F[T:! InterfaceA where .A impls InterfaceBWithSelf](x: T);
+// `T.A impls InterfaceB where .B = T`
+fn F[T:! InterfaceA where .A impls InterfaceBWith(.Self)](x: T);
 ```
 
 #### Rewrite constraints
@@ -2781,9 +2805,9 @@ fn F[A:! C where .T = M and .U = .T.Me]() {}
 fn F[A:! C where .U = .T.Me and .T = M]() {}
 ```
 
-##### Combining constraints with `extends`
+##### Combining constraints with `extend`
 
-Within an interface or named constraint, `extends` can be used to extend a
+Within an interface or named constraint, `extend` can be used to extend a
 constraint that has rewrites.
 
 ```carbon
@@ -2792,7 +2816,7 @@ interface A {
   let U:! type;
 }
 interface B {
-  extends A where .T = .U and .U = i32;
+  extend A where .T = .U and .U = i32;
 }
 
 var n: i32;
@@ -2803,9 +2827,9 @@ var n: i32;
 fn F(T:! B) -> T.(A.T) { return n; }
 ```
 
-##### Combining constraints with `impl as` and `impls`
+##### Combining constraints with `require` and `impls`
 
-Within an interface or named constraint, the `impl T as C` syntax does not
+Within an interface or named constraint, the `require T impls C` syntax does not
 permit `=` constraints to be specified directly. However, such constraints can
 be specified indirectly, for example if `C` is a named constraint that contains
 rewrites. Because these constraints don't change the type of `T`, rewrite
@@ -2818,15 +2842,15 @@ interface A {
   let U:! type;
 }
 constraint C {
-  extends A where .T = .U and .U = i32;
+  extend A where .T = .U and .U = i32;
 }
 constraint D {
-  extends A where .T == .U and .U == i32;
+  extend A where .T == .U and .U == i32;
 }
 interface B {
-  // OK, equivalent to `impl as D;` or
-  // `impl as A where .T == .U and .U == i32;`.
-  impl as C;
+  // OK, equivalent to `require Self impls D;` or
+  // `require Self impls A where .T == .U and .U == i32;`.
+  require Self impls C;
 }
 
 var n: i32;
@@ -2847,8 +2871,8 @@ an expression:
 -   If an `=` constraint is specified directly in an operand of an `&` or
     `(`...`)`, then it is specified directly in that enclosing expression.
 
-In an `impl as C` or `impl T as C` declaration in an interface or named
-constraint, `C` is not allowed to directly specify any `=` constraints:
+In an `require Self impls C` or `require T impls C` declaration in an interface
+or named constraint, `C` is not allowed to directly specify any `=` constraints:
 
 ```carbon
 // Compile-time identity function.
@@ -2856,18 +2880,18 @@ fn Identity[T:! type](x:! T) -> T { return x; }
 
 interface E {
   // ❌ Rewrite constraint specified directly.
-  impl as A where .T = .U and .U = i32;
+  require Self impls A where .T = .U and .U = i32;
   // ❌ Rewrite constraint specified directly.
-  impl as type & (A where .T = .U and .U = i32);
+  require Self impls type & (A where .T = .U and .U = i32);
   // ✅ Not specified directly, but does not result
   // in any rewrites being performed.
-  impl as Identity(A where .T = .U and .U = i32);
+  require Self impls Identity(A where .T = .U and .U = i32);
 }
 ```
 
-The same rules apply to `impls` constraints. Note that `.T == U` constraints are
-also not allowed in this context, because the reference to `.T` is rewritten to
-`.Self.T`, and `.Self` is ambiguous.
+The same rules apply to `where`...`impls` constraints. Note that `.T == U`
+constraints are also not allowed in this context, because the reference to `.T`
+is rewritten to `.Self.T`, and `.Self` is ambiguous.
 
 ```carbon
 // ❌ Rewrite constraint specified directly in `impls`.
@@ -2899,7 +2923,7 @@ constraints that apply to `T`. This happens:
     `T:! Constraint`.
 -   When declaring that a type implements a constraint with an `impl`
     declaration, such as `impl T as Constraint`. Note that this does not include
-    `impl ... as` constraints appearing in `interface` or `constraint`
+    `require` ... `impls` constraints appearing in `interface` or `constraint`
     declarations.
 
 In each case, the following steps are performed to resolve the facet type's
@@ -3226,7 +3250,7 @@ interface Container {
   let Element:! type;
 }
 interface SliceableContainer {
-  extends Container;
+  extend Container;
   let Slice:! Container where .Element = Self.(Container.Element);
 }
 // ❌ Qualified name lookup rewrites this facet type to
@@ -3260,7 +3284,7 @@ interface AllowedBase {
   let A:! Allowed;
 }
 interface Allowed {
-  extends AllowedBase where .A = .Self;
+  extend AllowedBase where .A = .Self;
 }
 // ✅ The final type of `x` is `T`. It is computed as follows:
 // In `((T.A).A).A`, the inner `T.A` is rewritten to `T`,
@@ -3278,7 +3302,7 @@ interface MoveYsRight {
   let Y:! ForwardDeclaredConstraint(X);
 }
 constraint ForwardDeclaredConstraint(X:! MoveYsRight) {
-  extends MoveYsRight where .X = X.Y;
+  extend MoveYsRight where .X = X.Y;
 }
 // ✅ The final type of `x` is `T.X.Y.Y`. It is computed as follows:
 // The type of `T` is `MoveYsRight`.
