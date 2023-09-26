@@ -3712,8 +3712,8 @@ fn SortContainer
 
 In contrast to a [rewrite constraint](#rewrite-constraints) or a
 [same-type constraint](#same-type-constraints), this does not say what type
-`ElementType` exactly is, just that it must satisfy the requirements of some facet
-type.
+`ElementType` exactly is, just that it must satisfy the requirements of some
+facet type.
 
 > **Note:** `Container` defines `ElementType` as having type `type`, but
 > `ContainerType.ElementType` has type `Ordered`. This is because
