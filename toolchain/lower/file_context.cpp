@@ -139,7 +139,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 
   llvm::Function* llvm_function = GetFunction(function_id);
-  FunctionContext function_lowering(*this, llvm_function);
+  FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
   const bool has_return_slot = function.return_slot_id.is_valid();
 
@@ -174,19 +174,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     // Keep the LLVM blocks in lexical order.
     llvm_block->moveBefore(llvm_function->end());
     function_lowering.builder().SetInsertPoint(llvm_block);
-    for (const auto& node_id : semantics_ir().GetNodeBlock(block_id)) {
-      auto node = semantics_ir().GetNode(node_id);
-      CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
-      // clang warns on unhandled enum values; clang-tidy is incorrect here.
-      // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-      switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name)            \
-  case SemIR::NodeKind::Name:                       \
-    Handle##Name(function_lowering, node_id, node); \
-    break;
-#include "toolchain/sem_ir/node_kind.def"
-      }
-    }
+    function_lowering.LowerBlock(block_id);
   }
 }
 

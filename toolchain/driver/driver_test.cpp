@@ -17,13 +17,16 @@
 #include "testing/base/test_raw_ostream.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
+using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::ContainsRegex;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
+
+namespace Yaml = ::Carbon::Testing::Yaml;
 
 // Reads a file to string.
 // TODO: Extract this to a helper and share it with other tests.
@@ -189,4 +192,4 @@ TEST_F(DriverTest, FileOutput) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

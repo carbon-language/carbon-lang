@@ -385,7 +385,7 @@ resolution.
 Multiple lookups can be performed when resolving a member access expression with
 a [template binding](#compile-time-bindings). We resolve this the same way as
 when looking in multiple interfaces that are
-[combined with `&`](/docs/design/generics/details.md#combining-interfaces-by-anding-type-of-types):
+[combined with `&`](/docs/design/generics/details.md#combining-interfaces-by-anding-facet-types):
 
 -   If more than one distinct member is found, after performing
     [`impl` lookup](#impl-lookup) if necessary, the lookup is ambiguous, and the

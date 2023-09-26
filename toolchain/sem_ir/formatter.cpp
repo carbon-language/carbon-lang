@@ -351,13 +351,18 @@ class NodeNamer {
           AddBlockLabel(scope_idx, dest_id, node);
           break;
         }
+        case NodeKind::SpliceBlock: {
+          auto [block_id, result_id] = node.GetAsSpliceBlock();
+          CollectNamesInBlock(scope_idx, block_id);
+          break;
+        }
         case NodeKind::Parameter: {
           auto name_id = node.GetAsParameter();
           nodes[node_id.index] = {
               scope_idx,
               scope.nodes.AllocateName(*this, node.parse_node(),
                                        semantics_ir_.GetString(name_id).str())};
-          break;
+          continue;
         }
         case NodeKind::VarStorage: {
           // TODO: Eventually this name will be optional, and we'll want to
@@ -368,16 +373,17 @@ class NodeNamer {
               scope_idx,
               scope.nodes.AllocateName(*this, node.parse_node(),
                                        semantics_ir_.GetString(name_id).str())};
-          break;
+          continue;
         }
         default: {
-          // Sequentially number all remaining values.
-          if (node.kind().value_kind() != NodeValueKind::None) {
-            nodes[node_id.index] = {
-                scope_idx, scope.nodes.AllocateName(*this, node.parse_node())};
-          }
           break;
         }
+      }
+
+      // Sequentially number all remaining values.
+      if (node.kind().value_kind() != NodeValueKind::None) {
+        nodes[node_id.index] = {
+            scope_idx, scope.nodes.AllocateName(*this, node.parse_node())};
       }
     }
   }
@@ -483,7 +489,8 @@ class Formatter {
 
   auto FormatInstruction(NodeId node_id) -> void {
     if (!node_id.is_valid()) {
-      out_ << "  " << NodeKind::Invalid.ir_name() << "\n";
+      Indent();
+      out_ << NodeKind::Invalid.ir_name() << "\n";
       return;
     }
 
@@ -502,9 +509,11 @@ class Formatter {
     }
   }
 
+  auto Indent() -> void { out_.indent(indent_); }
+
   template <typename Kind>
   auto FormatInstruction(NodeId node_id, Node node) -> void {
-    out_ << "  ";
+    Indent();
     FormatInstructionLHS(node_id, node);
     out_ << node.kind().ir_name();
     FormatInstructionRHS<Kind>(node);
@@ -519,6 +528,7 @@ class Formatter {
         switch (GetExpressionCategory(semantics_ir_, node_id)) {
           case ExpressionCategory::NotExpression:
           case ExpressionCategory::Value:
+          case ExpressionCategory::Mixed:
             break;
           case ExpressionCategory::DurableReference:
           case ExpressionCategory::EphemeralReference:
@@ -555,8 +565,8 @@ class Formatter {
   template <>
   auto FormatInstruction<Node::BranchIf>(NodeId /*node_id*/, Node node)
       -> void {
-    if (!in_terminator_sequence) {
-      out_ << "  ";
+    if (!in_terminator_sequence_) {
+      Indent();
     }
     auto [label_id, cond_id] = node.GetAsBranchIf();
     out_ << "if ";
@@ -564,14 +574,14 @@ class Formatter {
     out_ << " " << NodeKind::Branch.ir_name() << " ";
     FormatLabel(label_id);
     out_ << " else ";
-    in_terminator_sequence = true;
+    in_terminator_sequence_ = true;
   }
 
   template <>
   auto FormatInstruction<Node::BranchWithArg>(NodeId /*node_id*/, Node node)
       -> void {
-    if (!in_terminator_sequence) {
-      out_ << "  ";
+    if (!in_terminator_sequence_) {
+      Indent();
     }
     auto [label_id, arg_id] = node.GetAsBranchWithArg();
     out_ << NodeKind::BranchWithArg.ir_name() << " ";
@@ -579,18 +589,18 @@ class Formatter {
     out_ << "(";
     FormatNodeName(arg_id);
     out_ << ")\n";
-    in_terminator_sequence = false;
+    in_terminator_sequence_ = false;
   }
 
   template <>
   auto FormatInstruction<Node::Branch>(NodeId /*node_id*/, Node node) -> void {
-    if (!in_terminator_sequence) {
-      out_ << "  ";
+    if (!in_terminator_sequence_) {
+      Indent();
     }
     out_ << NodeKind::Branch.ir_name() << " ";
     FormatLabel(node.GetAsBranch());
     out_ << "\n";
-    in_terminator_sequence = false;
+    in_terminator_sequence_ = false;
   }
 
   template <>
@@ -655,6 +665,21 @@ class Formatter {
     // name cross-reference IRs, perhaps by the node ID of the import?
     auto [xref_id, node_id] = node.GetAsCrossReference();
     out_ << " " << xref_id << "." << node_id;
+  }
+
+  template <>
+  auto FormatInstructionRHS<Node::SpliceBlock>(Node node) -> void {
+    auto [block_id, result_id] = node.GetAsSpliceBlock();
+    FormatArgs(result_id);
+    out_ << " {";
+    if (!semantics_ir_.GetNodeBlock(block_id).empty()) {
+      out_ << "\n";
+      indent_ += 2;
+      FormatCodeBlock(block_id);
+      indent_ -= 2;
+      Indent();
+    }
+    out_ << "}";
   }
 
   // StructTypeFields are formatted as part of their StructType.
@@ -799,7 +824,8 @@ class Formatter {
   llvm::raw_ostream& out_;
   NodeNamer node_namer_;
   NodeNamer::ScopeIndex scope_ = NodeNamer::ScopeIndex::None;
-  bool in_terminator_sequence = false;
+  bool in_terminator_sequence_ = false;
+  int indent_ = 2;
 };
 
 auto FormatFile(const Lex::TokenizedBuffer& tokenized_buffer,

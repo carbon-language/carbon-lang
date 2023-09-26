@@ -193,7 +193,7 @@ following family of interfaces:
 ```
 // Unary `-`.
 interface Negate {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self]() -> Result;
 }
 ```
@@ -201,7 +201,7 @@ interface Negate {
 ```
 // Binary `+`.
 interface AddWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Add {
@@ -212,7 +212,7 @@ constraint Add {
 ```
 // Binary `-`.
 interface SubWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Sub {
@@ -223,7 +223,7 @@ constraint Sub {
 ```
 // Binary `*`.
 interface MulWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Mul {
@@ -234,7 +234,7 @@ constraint Mul {
 ```
 // Binary `/`.
 interface DivWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Div {
@@ -245,7 +245,7 @@ constraint Div {
 ```
 // Binary `%`.
 interface ModWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Mod {

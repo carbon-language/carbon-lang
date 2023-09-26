@@ -28,8 +28,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_7.1: f64 = real_literal 10e-1
-// CHECK:STDOUT:   %.loc16_7.2: f64 = stub_reference %.loc16_7.1
+// CHECK:STDOUT:   %.loc16_7: f64 = real_literal 10e-1
 // CHECK:STDOUT:   %.loc16_6: type = tuple_type ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

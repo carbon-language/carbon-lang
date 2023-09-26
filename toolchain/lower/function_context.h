@@ -18,7 +18,8 @@ namespace Carbon::Lower {
 // `llvm::Function` definition.
 class FunctionContext {
  public:
-  explicit FunctionContext(FileContext& file_context, llvm::Function* function);
+  explicit FunctionContext(FileContext& file_context, llvm::Function* function,
+                           llvm::raw_ostream* vlog_stream);
 
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
@@ -29,6 +30,9 @@ class FunctionContext {
   // block.
   auto TryToReuseBlock(SemIR::NodeBlockId block_id, llvm::BasicBlock* block)
       -> bool;
+
+  // Builds LLVM IR for the sequence of instructions in `block_id`.
+  auto LowerBlock(SemIR::NodeBlockId block_id) -> void;
 
   // Returns a phi node corresponding to the block argument of the given basic
   // block.
@@ -123,6 +127,9 @@ class FunctionContext {
   llvm::Function* function_;
 
   llvm::IRBuilder<> builder_;
+
+  // The optional vlog stream.
+  llvm::raw_ostream* vlog_stream_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.
   llvm::DenseMap<SemIR::NodeBlockId, llvm::BasicBlock*> blocks_;

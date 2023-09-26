@@ -95,8 +95,8 @@ source file:
 | `{` and `}`     | Struct literals, blocks of control flow statements, and the bodies of definitions (classes, functions, etc.) |
 | `,`             | Separate tuple and struct elements                                                                           |
 | `.`             | Member access                                                                                                |
-| `:`             | Name bindings                                                                                                |
-| `:!`            | Generic binding                                                                                              |
+| `:`             | Name binding patterns                                                                                        |
+| `:!`            | Compile-time binding patterns                                                                                |
 | `;`             | Statement separator                                                                                          |
 
 ## Alternatives considered

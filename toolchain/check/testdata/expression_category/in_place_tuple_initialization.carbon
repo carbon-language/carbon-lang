@@ -26,18 +26,16 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_11: type = stub_reference i32
-// CHECK:STDOUT:   %.loc10_16: type = stub_reference i32
-// CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_literal (%.loc10_11, %.loc10_16)
+// CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %v: ref (i32, i32) = var "v"
-// CHECK:STDOUT:   no_op
-// CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call @F() to %v
+// CHECK:STDOUT:   %.loc10_7.1: ref (i32, i32) = splice_block %v {}
+// CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call @F() to %.loc10_7.1
 // CHECK:STDOUT:   assign %v, %.loc10_24
-// CHECK:STDOUT:   no_op
-// CHECK:STDOUT:   %.loc11: init (i32, i32) = call @F() to %v
+// CHECK:STDOUT:   %.loc10_7.2: ref (i32, i32) = splice_block %v {}
+// CHECK:STDOUT:   %.loc11: init (i32, i32) = call @F() to %.loc10_7.2
 // CHECK:STDOUT:   assign %v, %.loc11
-// CHECK:STDOUT:   no_op
-// CHECK:STDOUT:   %.loc12: init (i32, i32) = call @F() to %return
+// CHECK:STDOUT:   %.loc9: ref (i32, i32) = splice_block %return {}
+// CHECK:STDOUT:   %.loc12: init (i32, i32) = call @F() to %.loc9
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

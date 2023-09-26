@@ -17,10 +17,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_28.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc7_28.2: i32 = stub_reference %.loc7_28.1
-// CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_literal (%.loc7_28.2)
-// CHECK:STDOUT:   return %.loc7_30
+// CHECK:STDOUT:   %.loc7_28: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7_30.1: (i32,) = tuple_literal (%.loc7_28)
+// CHECK:STDOUT:   %.loc7_30.2: (i32,) = tuple_value %.loc7_30.1, (%.loc7_28)
+// CHECK:STDOUT:   return %.loc7_30.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {

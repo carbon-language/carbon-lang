@@ -53,6 +53,12 @@ auto NodeBlockStack::Pop() -> SemIR::NodeBlockId {
   return back.id;
 }
 
+auto NodeBlockStack::PopAndDiscard() -> void {
+  CARBON_CHECK(!empty()) << "no current block";
+  --size_;
+  CARBON_VLOG() << name_ << " PopAndDiscard " << size_ << "\n";
+}
+
 auto NodeBlockStack::PrintForStackDump(llvm::raw_ostream& output) const
     -> void {
   output << name_ << ":\n";

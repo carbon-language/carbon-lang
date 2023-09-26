@@ -1604,14 +1604,13 @@ fn Foo() -> f32 {
 }
 ```
 
-> **Note:** This is provisional, no design for `match` statements has been
-> through the proposal process yet.
-
 > References:
 >
 > -   [Pattern matching](pattern_matching.md)
 > -   Question-for-leads issue
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
+> -   Proposal
+>     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
 
 ## User-defined types
 
@@ -2569,8 +2568,7 @@ class ContactInfo {
 >
 > -   [Aliases](aliases.md)
 > -   ["Aliasing" in "Code and name organization"](code_and_name_organization/README.md#aliasing)
-> -   <!-- [`alias` a name from an interface impl](generics/details.md#avoiding-name-collisions) -->
->     [`alias` a name from an interface impl](generics/details.md#external-impl)
+> -   [`alias` a name from an interface impl](generics/details.md#avoiding-name-collisions)
 > -   [`alias` a name in a named constraint](generics/details.md#named-constraints)
 > -   Proposal
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
@@ -2803,8 +2801,7 @@ In addition to function requirements, interfaces can contain:
 -   [requirements that other interfaces be implemented](generics/details.md#interface-requiring-other-interfaces)
     or
     [interfaces that this interface extends](generics/details.md#interface-extension)
--   <!-- [associated facets](generics/details.md#associated-facets) -->
-    [associated facets](generics/details.md#associated-types) and other
+-   [associated facets](generics/details.md#associated-facets) and other
     [associated constants](generics/details.md#associated-constants)
 -   [interface defaults](generics/details.md#interface-defaults)
 -   [`final` interface members](generics/details.md#final-members)
@@ -2857,16 +2854,14 @@ In this case, `Print` is not a direct member of `Circle`, but:
     }
     ```
 
-<!-- [`extend`](generics/details.md#extend-impl) keyword... -->
-
 To include the members of the interface as direct members of the type, use the
-`extend` keyword, as in `extend impl as Printable`. This is only permitted on
-`impl` declarations in the body of a class definition.
+[`extend`](generics/details.md#extend-impl) keyword, as in
+`extend impl as Printable`. This is only permitted on `impl` declarations in the
+body of a class definition.
 
 Without `extend`, implementations don't have to be in the same library as the
-type definition, subject to the orphan rule
-([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)) for
-[coherence](generics/terminology.md#coherence).
+type definition, subject to the [orphan rule](generics/details.md#orphan-rule)
+for [coherence](generics/terminology.md#coherence).
 
 Interfaces and implementations may be
 [forward declared](generics/details.md#forward-declarations-and-cyclic-references)
@@ -2928,8 +2923,7 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 
 > References:
 >
-> -   <!-- [Combining interfaces by anding facet types](generics/details.md#combining-interfaces-by-anding-facet-types) -->
->     [Combining interfaces by anding type-of-types](generics/details.md#combining-interfaces-by-anding-type-of-types)
+> -   [Combining interfaces by anding facet types](generics/details.md#combining-interfaces-by-anding-facet-types)
 > -   Question-for-leads issue
 >     [#531: Combine interfaces with `+` or `&`](https://github.com/carbon-language/carbon-lang/issues/531)
 > -   Proposal
@@ -3559,17 +3553,13 @@ function.
 
 Carbon interfaces with no C++ equivalent, such as
 [`CommonTypeWith(U)`](#common-type), may be implemented for C++ types
-out-of-line in Carbon code. To satisfy the orphan rule
-([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)),
-each C++ library will have a corresponding Carbon wrapper library that must be
-imported instead of the C++ library if the Carbon wrapper exists. **TODO:**
-Perhaps it will automatically be imported, so a wrapper may be added without
-requiring changes to importers?
+out-of-line in Carbon code. To satisfy the
+[orphan rule](generics/details.md#orphan-rule), each C++ library will have a
+corresponding Carbon wrapper library that must be imported instead of the C++
+library if the Carbon wrapper exists. **TODO:** Perhaps it will automatically be
+imported, so a wrapper may be added without requiring changes to importers?
 
 ### Templates
-
-> **Note:** This is provisional, no design for this has been through the
-> proposal process yet.
 
 Carbon supports both
 [checked and template generics](#checked-and-template-parameters). This provides
@@ -3596,6 +3586,11 @@ We expect the best interop in these areas to be based on a Carbon-provided C++
 toolchain. However, even when using Carbon's generated C++ headers for interop,
 we will include the ability where possible to use a Carbon generic from C++ as
 if it were a C++ template.
+
+> References:
+>
+> -   Proposal
+>     [#2200: Template generics](https://github.com/carbon-language/carbon-lang/pull/2200)
 
 ### Standard types
 

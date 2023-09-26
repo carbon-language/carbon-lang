@@ -241,8 +241,8 @@ User-defined types can extend the behavior of the comparison operators by
 implementing interfaces. In this section, various properties are specified that
 such implementations "should" satisfy. These properties are not enforced in
 general, but the standard library might detect violations of some of them in
-some circumstances. These properties may be assumed by generic code, resulting
-in unexpected behavior if they are violated.
+some circumstances. These properties may be assumed by checked-generic code,
+resulting in unexpected behavior if they are violated.
 
 #### Equality
 
@@ -460,7 +460,7 @@ than or equivalent to themselves.
 
 **TODO:** The standard library should provide a way to specify that an ordering
 is a weak, partial, or total ordering, and a way to request such an ordering in
-a generic.
+a checked generic.
 
 #### Compatibility of equality and ordering
 

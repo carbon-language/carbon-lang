@@ -338,7 +338,7 @@ that fit into a machine register, but also the efficiency of minimal copies when
 working with types where a copy would require extra allocations or other costly
 resources. This directly helps programmers by providing a simpler model to
 select the mechanism of passing function inputs. But it is also important to
-enable generic code that needs a single type model that will have generically
+enable generic code that needs a single type model that will have consistently
 good performance.
 
 When forming a value expression from a reference expression, Carbon
@@ -591,7 +591,9 @@ storage.
 
 None of this impacts the type system and so an implementation can freely select
 specific strategies here based on concrete types without harming generic code.
-There is always a generic fallback as well if monomorphization isn't desired.
+Even if generics were to be implemented without monomorphization, for example
+dynamic dispatch of object-safe interfaces, there is a conservatively correct
+strategy that will work for any type.
 
 This freedom mirrors that of [input values](#value-expressions) where might be
 implemented as either a reference or a copy without breaking genericity. Here
@@ -1010,8 +1012,8 @@ placeholder `value_rep = T;`, we need to explore exactly what the best
 relationship is with the customization point. For example, should this syntax
 immediately forward declare `impl as ReferenceImplicitAs where .T = T`, thereby
 allowing an out-of-line definition of the `Convert` method and `... where _` to
-pick up the associated type from the syntax. Alternatively, the syntactic marker
-might be integrated into the `impl` declaration for `ReferenceImplicitAs`
+pick up the associated constant from the syntax. Alternatively, the syntactic
+marker might be integrated into the `impl` declaration for `ReferenceImplicitAs`
 itself.
 
 ## Alternatives considered

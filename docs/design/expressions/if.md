@@ -175,8 +175,8 @@ _Note:_ This rule is intended to be considered more specialized than the other
 rules in this document.
 
 Because this `impl` is declared `final`, `T.(CommonType(T)).Result` is always
-assumed to be `T`, even in contexts where `T` involves a generic parameter and
-so the result would normally be an unknown type whose type-of-type is `type`.
+assumed to be `T`, even in contexts where `T` involves a symbolic binding and so
+the result would normally be an unknown type whose facet type is `type`.
 
 ```
 fn F[T:! Hashable](c: bool, x: T, y: T) -> HashCode {

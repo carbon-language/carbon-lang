@@ -41,7 +41,8 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
   auto index_node_id = context.node_stack().PopExpression();
   auto index_node = context.semantics_ir().GetNode(index_node_id);
   auto operand_node_id = context.node_stack().PopExpression();
-  operand_node_id = context.MaterializeIfInitializing(operand_node_id);
+  operand_node_id =
+      context.ConvertToValueOrReferenceExpression(operand_node_id);
   auto operand_node = context.semantics_ir().GetNode(operand_node_id);
   auto operand_type_id = operand_node.type_id();
   auto operand_type_node = context.semantics_ir().GetNode(

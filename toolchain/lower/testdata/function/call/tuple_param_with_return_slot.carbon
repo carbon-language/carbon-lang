@@ -19,28 +19,27 @@ fn Main() {
 // CHECK:STDOUT:   %tuple.index = extractvalue { i32 } %b, 0
 // CHECK:STDOUT:   %tuple.index1 = getelementptr inbounds { i32, i32 }, ptr %c, i32 0, i32 0
 // CHECK:STDOUT:   %tuple.index2 = getelementptr inbounds { i32, i32 }, ptr %c, i32 0, i32 1
-// CHECK:STDOUT:   %tuple = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   %1 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 0
-// CHECK:STDOUT:   store i32 %tuple.index, ptr %1, align 4
-// CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 1
-// CHECK:STDOUT:   store ptr %tuple.index1, ptr %2, align 8
-// CHECK:STDOUT:   %3 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 2
-// CHECK:STDOUT:   store ptr %tuple.index2, ptr %3, align 8
+// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   store i32 %tuple.index, ptr %tuple.elem, align 4
+// CHECK:STDOUT:   %tuple.elem3 = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   %1 = load i32, ptr %tuple.index1, align 4
+// CHECK:STDOUT:   store i32 %1, ptr %tuple.elem3, align 4
+// CHECK:STDOUT:   %tuple.elem4 = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 2
+// CHECK:STDOUT:   %2 = load i32, ptr %tuple.index2, align 4
+// CHECK:STDOUT:   store i32 %2, ptr %tuple.elem4, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %tuple = alloca {}, align 8
-// CHECK:STDOUT:   %tuple1 = alloca { i32 }, align 8
-// CHECK:STDOUT:   %1 = getelementptr inbounds { i32 }, ptr %tuple1, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %1, align 4
-// CHECK:STDOUT:   %tuple2 = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32 }, ptr %tuple2, i32 0, i32 0
-// CHECK:STDOUT:   store i32 2, ptr %2, align 4
-// CHECK:STDOUT:   %3 = getelementptr inbounds { i32, i32 }, ptr %tuple2, i32 0, i32 1
-// CHECK:STDOUT:   store i32 3, ptr %3, align 4
 // CHECK:STDOUT:   %temp = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   %4 = load { i32 }, ptr %tuple1, align 4
-// CHECK:STDOUT:   call void @F(ptr %temp, { i32 } %4, ptr %tuple2)
+// CHECK:STDOUT:   %tuple = alloca { i32, i32 }, align 8
+// CHECK:STDOUT:   %1 = getelementptr inbounds { i32, i32 }, ptr %tuple, i32 0, i32 0
+// CHECK:STDOUT:   store i32 2, ptr %1, align 4
+// CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32 }, ptr %tuple, i32 0, i32 1
+// CHECK:STDOUT:   store i32 3, ptr %2, align 4
+// CHECK:STDOUT:   call void @F(ptr %temp, { i32 } { i32 1 }, ptr %tuple)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder i32 1, { 2, 0, 1, 3, 4, 5 }

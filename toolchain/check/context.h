@@ -21,6 +21,9 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
+  // A block of code that has not yet been inserted into SemIR.
+  class PendingBlock;
+
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter<Parse::Node>& emitter,
@@ -105,18 +108,14 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Converts the given expression to an ephemeral reference to a temporary if
-  // it is an initializing expression.
-  auto MaterializeIfInitializing(SemIR::NodeId expr_id) -> SemIR::NodeId {
-    if (GetExpressionCategory(semantics_ir(), expr_id) ==
-        SemIR::ExpressionCategory::Initializing) {
-      return FinalizeTemporary(expr_id, /*discarded=*/false);
-    }
-    return expr_id;
-  }
-
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
+
+  // Convert the given expression to a value or reference expression of the same
+  // type.
+  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id,
+                                           bool discarded = false)
+      -> SemIR::NodeId;
 
   // Performs initialization of `target_id` from `value_id`. Returns the
   // possibly-converted initialization expression, which should be assigned to
@@ -131,7 +130,8 @@ class Context {
   // of the initializer, such as an `Assign` or `ReturnExpression` node. The
   // resulting node describes the initialization operation that was performed.
   auto InitializeAndFinalize(Parse::Node parse_node, SemIR::NodeId target_id,
-                             SemIR::NodeId value_id) -> SemIR::NodeId;
+                             PendingBlock& target_block, SemIR::NodeId value_id)
+      -> SemIR::NodeId;
 
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
@@ -181,17 +181,8 @@ class Context {
       -> SemIR::TypeId;
 
   // Converts an expression for use as a type.
-  // TODO: This should eventually return a type ID.
   auto ExpressionAsType(Parse::Node parse_node, SemIR::NodeId value_id)
       -> SemIR::TypeId {
-    auto node = semantics_ir_->GetNode(value_id);
-    if (node.kind() == SemIR::NodeKind::StubReference) {
-      value_id = node.GetAsStubReference();
-      CARBON_CHECK(semantics_ir_->GetNode(value_id).kind() !=
-                   SemIR::NodeKind::StubReference)
-          << "Stub reference should not point to another stub reference";
-    }
-
     return CanonicalizeType(
         ConvertToValueOfType(parse_node, value_id, SemIR::TypeId::TypeType));
   }
@@ -204,14 +195,14 @@ class Context {
 
   // On a comma, pushes the entry. On return, the top of node_stack_ will be
   // start_kind.
-  auto ParamOrArgComma(bool for_args) -> void;
+  auto ParamOrArgComma() -> void;
 
   // Detects whether there's an entry to push from the end of a parameter or
   // argument list, and if so, moves it to the current parameter or argument
   // list. Does not pop the list. `start_kind` is the node kind at the start
   // of the parameter or argument list, and will be at the top of the parse node
   // stack when this function returns.
-  auto ParamOrArgEndNoPop(bool for_args, Parse::NodeKind start_kind) -> void;
+  auto ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void;
 
   // Pops the current parameter or argument list. Should only be called after
   // `ParamOrArgEndNoPop`.
@@ -219,15 +210,13 @@ class Context {
 
   // Detects whether there's an entry to push. Pops and returns the argument
   // list. This is the same as `ParamOrArgEndNoPop` followed by `ParamOrArgPop`.
-  auto ParamOrArgEnd(bool for_args, Parse::NodeKind start_kind)
-      -> SemIR::NodeBlockId;
+  auto ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::NodeBlockId;
 
   // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_or_args_stack_. If for_args, adds a StubReference of the previous
-  // node's result to the IR.
-  //
-  // This should only be called by other ParamOrArg functions, not directly.
-  auto ParamOrArgSave(bool for_args) -> void;
+  // params_or_args_stack_.
+  auto ParamOrArgSave(SemIR::NodeId node_id) -> void {
+    params_or_args_stack_.AddNodeId(node_id);
+  }
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
@@ -279,6 +268,13 @@ class Context {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
+  // Implementation of `Initialize`. Takes a `target_block` which contains
+  // pending instructions that are needed to form the value of `target_id`.
+  // These can be discarded if no initialization is needed.
+  auto InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
+                      PendingBlock& target_block, SemIR::NodeId value_id)
+      -> SemIR::NodeId;
+
   // Commits to using a temporary to store the result of the initializing
   // expression described by `init_id`, and returns the location of the
   // temporary. If `discarded` is `true`, the result is discarded, and no
@@ -288,8 +284,8 @@ class Context {
       -> SemIR::NodeId;
 
   // Marks the initializer `init_id` as initializing `target_id`.
-  auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
-      -> void;
+  auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id,
+                          PendingBlock& target_block) -> void;
 
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
   // converted result. Prints a diagnostic and returns an Error if the

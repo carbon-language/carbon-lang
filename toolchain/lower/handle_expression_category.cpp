@@ -14,6 +14,7 @@ auto HandleBindValue(FunctionContext& context, SemIR::NodeId node_id,
     case SemIR::ValueRepresentation::None:
       // Nothing should use this value, but StubReference needs a value to
       // propagate.
+      // TODO: Remove this now the StubReferences are gone.
       context.SetLocal(node_id,
                        llvm::PoisonValue::get(context.GetType(node.type_id())));
       break;

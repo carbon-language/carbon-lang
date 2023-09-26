@@ -12,7 +12,8 @@ var y: {} = x;
 // CHECK:STDOUT:   %.loc7_9.2: {} = struct_literal ()
 // CHECK:STDOUT:   %x: ref {} = var "x"
 // CHECK:STDOUT:   %.loc7_14: {} = struct_literal ()
-// CHECK:STDOUT:   assign %x, %.loc7_14
+// CHECK:STDOUT:   %.loc7_15: init {} = struct_init %.loc7_14, ()
+// CHECK:STDOUT:   assign %x, %.loc7_15
 // CHECK:STDOUT:   %.loc8: {} = struct_literal ()
 // CHECK:STDOUT:   %y: ref {} = var "y"
 // CHECK:STDOUT:   %.loc7_5: {} = bind_value %x

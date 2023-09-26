@@ -11,8 +11,7 @@ var x: {.a = 1};
 
 // CHECK:STDOUT: file "fail_value_as_type.carbon" {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_12: i32 = stub_reference %.loc10_14
 // CHECK:STDOUT:   %.loc10_15.1: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.loc10_15.2: {.a: i32} = struct_literal (%.loc10_12)
+// CHECK:STDOUT:   %.loc10_15.2: {.a: i32} = struct_literal (%.loc10_14)
 // CHECK:STDOUT:   %x: ref <error> = var "x"
 // CHECK:STDOUT: }
