@@ -155,7 +155,8 @@ class Context {
   // Converts `value_id` to a value expression of type `type_id`.
   auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
                             SemIR::TypeId type_id) -> SemIR::NodeId {
-    return ConvertToValueExpression(ImplicitAs(parse_node, value_id, type_id));
+    return Convert(parse_node, value_id,
+                   {.kind = ConversionTarget::Value, .type_id = type_id});
   }
 
   // Converts `value_id` to a value expression of type `bool`.
