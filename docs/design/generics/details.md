@@ -3355,11 +3355,18 @@ symbolic expression that refers to them.
 
 Same-type constraints are brought into scope, looked up, and resolved exactly as
 if there were a `SameAs(U:! type)` interface and a `T == U` impl corresponded to
-`T is SameAs(U)`, except that `==` is commutative. As such, it's not possible to
-ask for a list of types that are the same as a given type, nor to ask whether
-there exists a type that is the same as a given type and has some property. But
-it is possible to ask whether two types are (non-transitively) known to be the
-same.
+`T is SameAs(U)`, except that `==` is commutative.
+
+Further, same-type equalities apply to type components, so that `X(A, B, C)` is
+`SameType(X(D, E, F))` if we know that `A == D`, `B == E`, and `C == F`. Stated
+differently, if `F` is any pure type function, `T impls SameAs(U)` implies
+`F(T) impls SameAs(F(U))`. For example, if we know that `T == i32` then we also
+have `Vector(T)` is single-step equal to `Vector(i32)`.
+
+This relationship is not transitive, though, so it's not possible to ask for a
+list of types that are the same as a given type, nor to ask whether there exists
+a type that is the same as a given type and has some property. But it is
+possible to ask whether two types are (non-transitively) known to be the same.
 
 In order for same-type constraints to be useful, they must allow the two types
 to be treated as actually being the same in some context. This can be
@@ -3715,11 +3722,18 @@ In contrast to a [rewrite constraint](#rewrite-constraints) or a
 `ElementType` exactly is, just that it must satisfy the requirements of some
 facet type.
 
-> **Note:** `Container` defines `ElementType` as having type `type`, but
-> `ContainerType.ElementType` has type `Ordered`. This is because
-> `ContainerType` has type `Container where .ElementType impls Ordered`, not
-> `Container`. This means we need to be a bit careful when talking about the
-> type of `ContainerType` when there is a `where` clause modifying it.
+The specific case of a clause of the form
+`where .AssociatedFacet impls AConstraint`, where the constraint is applied to a
+direct associated facet member of the facet type being constrained (similar to
+the restriction on [rewrite constraints](#rewrite-constraints)), gets special
+treatment. In this case, the type of the associated facet is
+[combined](#combining-interfaces-by-anding-facet-types) with the constraint. In
+the above example, `Container` defines `ElementType` as having type `type`, but
+`ContainerType.ElementType` has type `type & Ordered` (which is equivalent to
+`Ordered`). This is because `ContainerType` has type
+`Container where .ElementType impls Ordered`, not `Container`. This means we
+need to be a bit careful when talking about the type of `ContainerType` when
+there is a `where` clause modifying it.
 
 An implements constraint can be applied to [`.Self`](#recursive-constraints), as
 in `I where .Self impls C`. This has the same requirements as `I & C`, but that
@@ -4070,19 +4084,30 @@ the result to implement a specific interface.
 
 ```carbon
 // A parameterized type
-class Vector(T:! type) { ... }
+class DynArray(T:! type) { ... }
 
-// The parameterized type `Vector` implements interface
+interface Printable { fn Print[self: Self](); }
+
+// The parameterized type `DynArray` implements interface
 // `Printable` only for some arguments.
-impl Vector(String) as Printable { ... }
+impl DynArray(String) as Printable { ... }
 
-// Constraint: `T` such that `Vector(T)` implements `Printable`
+// Constraint: `T` such that `DynArray(T)` implements `Printable`
 fn PrintThree
-    [T:! type where Vector(.Self) impls Printable]
+    [T:! type where DynArray(.Self) impls Printable]
     (a: T, b: T, c: T) {
-  var v: Vector(T) = (a, b, c);
-  Print(v);
+  // Create a `DynArray(T)` of size 3.
+  var v: auto = DynArray(T).Make(a, b, c);
+  // Known to be implemented due to the constraint on `T`.
+  v.(Printable.Print)();
 }
+
+// ✅ Allowed: `DynArray(String)` implements `Printable`.
+let s: String = "Ai ";
+PrintThree(s, s, s);
+// ❌ Forbidden: `DynArray(i32)` doesn't implement `Printable`.
+let i: i32 = 3;
+PrintThree(i, i, i);
 ```
 
 **Comparison with other languages:** This use case was part of the
@@ -6000,16 +6025,16 @@ interface TotalOrder {
 The workaround for this restriction is to use a
 [blanket impl declaration](#blanket-impl-declarations) instead:
 
-**FIXME: Is it sensible to have both a `require` and a blanket implementation?
-Does the blanket implementation satisfy the requirement so you only need to
-implement `TotalOrder`?**
-
 ```carbon
 interface TotalOrder {
   fn TotalLess[self: Self](right: Self) -> bool;
-  require Self impls PartialOrder;
+  // No `require` declaration, since implementers of
+  // `TotalOrder` don't need to also implement
+  // `PartialOrder`, since an implementation is provided.
 }
 
+// Any type that implements `TotalOrder` also has at
+// least this implementation of `PartialOrder`:
 impl forall [T:! TotalOrder] T as PartialOrder {
   fn PartialLess[self: Self](right: Self) -> bool {
     return self.TotalLess(right);
