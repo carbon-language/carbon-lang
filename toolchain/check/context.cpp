@@ -372,6 +372,180 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                   .init_block = &target_block});
 }
 
+// Performs a conversion from a tuple to an array type.
+static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
+                                SemIR::Node array_type,
+                                SemIR::TypeId array_type_id,
+                                SemIR::NodeId value_id) -> SemIR::NodeId {
+  auto [array_bound_id, element_type_id] = array_type.GetAsArrayType();
+  auto tuple_elem_types_id = tuple_type.GetAsTupleType();
+  const auto& tuple_elem_types =
+      context.semantics_ir().GetTypeBlock(tuple_elem_types_id);
+
+  auto value = context.semantics_ir().GetNode(value_id);
+
+  llvm::ArrayRef<SemIR::NodeId> literal_elems;
+  if (value.kind() == SemIR::NodeKind::TupleLiteral) {
+    literal_elems =
+        context.semantics_ir().GetNodeBlock(value.GetAsTupleLiteral());
+  }
+
+  // Check that the tuple is the right size.
+  uint64_t array_bound =
+      context.semantics_ir().GetArrayBoundValue(array_bound_id);
+  if (tuple_elem_types.size() != array_bound) {
+    CARBON_DIAGNOSTIC(
+        ArrayInitFromLiteralArgCountMismatch, Error,
+        "Cannot initialize array of {0} element(s) from {1} initializer(s).",
+        uint64_t, size_t);
+    CARBON_DIAGNOSTIC(ArrayInitFromExpressionArgCountMismatch, Error,
+                      "Cannot initialize array of {0} element(s) from tuple "
+                      "with {1} element(s).",
+                      uint64_t, size_t);
+    context.emitter().Emit(value.parse_node(),
+                           literal_elems.empty()
+                               ? ArrayInitFromExpressionArgCountMismatch
+                               : ArrayInitFromLiteralArgCountMismatch,
+                           array_bound, tuple_elem_types.size());
+    return SemIR::NodeId::BuiltinError;
+  }
+
+  // If we're initializing from a tuple literal, we will use its elements
+  // directly. Otherwise, materialize a temporary if needed and index into the
+  // result.
+  if (literal_elems.empty()) {
+    value_id = context.ConvertToValueOrReferenceExpression(value_id);
+  }
+
+  Context::PendingBlock target_block(context);
+
+  // Arrays are always initialized in-place. Tentatively allocate a temporary
+  // as the destination for the array initialization.
+  auto return_slot_id = target_block.AddNode(
+      SemIR::Node::TemporaryStorage::Make(value.parse_node(), array_type_id));
+
+  // Initialize each element of the array from the corresponding element of the
+  // tuple.
+  llvm::SmallVector<SemIR::NodeId> inits;
+  inits.reserve(array_bound + 1);
+  for (auto [i, src_type_id] : llvm::enumerate(tuple_elem_types)) {
+    Context::PendingBlock::DiscardUnusedNodesScope scope(target_block);
+    // TODO: Add a new node kind for indexing an array at a constant index
+    // so that we don't need an integer literal node here.
+    auto index_id = target_block.AddNode(SemIR::Node::IntegerLiteral::Make(
+        value.parse_node(),
+        context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
+        context.semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
+    auto target_id = target_block.AddNode(SemIR::Node::ArrayIndex::Make(
+        value.parse_node(), element_type_id, return_slot_id, index_id));
+    // Note, this is computing the source location not the destination, so it
+    // goes into the current code block, not into the target block.
+    // TODO: Ideally we would also discard this node if it's unused.
+    auto src_id = !literal_elems.empty()
+                      ? literal_elems[i]
+                      : context.AddNode(SemIR::Node::TupleAccess::Make(
+                            value.parse_node(), src_type_id, value_id,
+                            SemIR::MemberIndex(i)));
+    auto init_id =
+        context.Convert(value.parse_node(), src_id,
+                        {.kind = Context::ConversionTarget::FullInitializer,
+                         .type_id = element_type_id,
+                         .init_id = target_id,
+                         .init_block = &target_block});
+    if (init_id == SemIR::NodeId::BuiltinError) {
+      return SemIR::NodeId::BuiltinError;
+    }
+    inits.push_back(init_id);
+  }
+
+  // The last element of the refs block contains the return slot for the array
+  // initialization. Flush the temporary here if we didn't insert it earlier.
+  target_block.InsertHere();
+  inits.push_back(return_slot_id);
+
+  return context.AddNode(
+      SemIR::Node::ArrayInit::Make(value.parse_node(), array_type_id, value_id,
+                                   context.semantics_ir().AddNodeBlock(inits)));
+}
+
+auto Context::ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
+                         SemIR::TypeId as_type_id) -> SemIR::NodeId {
+  // Start by making sure both sides are valid. If any part is invalid, the
+  // result is invalid and we shouldn't error.
+  if (value_id == SemIR::NodeId::BuiltinError) {
+    // If the value is invalid, we can't do much, but do "succeed".
+    return value_id;
+  }
+  auto value = semantics_ir_->GetNode(value_id);
+  auto value_type_id = value.type_id();
+  if (value_type_id == SemIR::TypeId::Error ||
+      as_type_id == SemIR::TypeId::Error) {
+    return SemIR::NodeId::BuiltinError;
+  }
+
+  if (value_type_id == as_type_id) {
+    return value_id;
+  }
+
+  auto as_type = semantics_ir_->GetTypeAllowBuiltinTypes(as_type_id);
+  auto as_type_node = semantics_ir_->GetNode(as_type);
+
+  // A tuple (T1, T2, ..., Tn) converts to [T; n] if each Ti converts to T.
+  if (as_type_node.kind() == SemIR::NodeKind::ArrayType) {
+    auto value_type_node = semantics_ir_->GetNode(
+        semantics_ir_->GetTypeAllowBuiltinTypes(value_type_id));
+    if (value_type_node.kind() == SemIR::NodeKind::TupleType) {
+      // The conversion from tuple to array is `final`, so we don't need a
+      // fallback path here.
+      return ConvertTupleToArray(*this, value_type_node, as_type_node,
+                                 as_type_id, value_id);
+    }
+  }
+
+  if (as_type_id == SemIR::TypeId::TypeType) {
+    // A tuple of types converts to type `type`.
+    // TODO: This should apply even for non-literal tuples.
+    if (value.kind() == SemIR::NodeKind::TupleLiteral) {
+      // The conversion from tuple to `type` is `final`.
+      auto tuple_block_id = value.GetAsTupleLiteral();
+      llvm::SmallVector<SemIR::TypeId> type_ids;
+      // If it is empty tuple type, we don't fetch anything.
+      if (tuple_block_id != SemIR::NodeBlockId::Empty) {
+        const auto& tuple_block = semantics_ir_->GetNodeBlock(tuple_block_id);
+        for (auto tuple_node_id : tuple_block) {
+          // TODO: This call recurses back to this function. Switch to an
+          // iterative approach.
+          type_ids.push_back(
+              ExpressionAsType(value.parse_node(), tuple_node_id));
+        }
+      }
+      auto tuple_type_id =
+          CanonicalizeTupleType(value.parse_node(), std::move(type_ids));
+      return semantics_ir_->GetTypeAllowBuiltinTypes(tuple_type_id);
+    }
+    // When converting `{}` to a type, the result is `{} as type`.
+    // TODO: This conversion should also be performed for a non-literal value of
+    // type `{}`.
+    if (value.kind() == SemIR::NodeKind::StructLiteral &&
+        value.GetAsStructLiteral() == SemIR::NodeBlockId::Empty) {
+      return semantics_ir_->GetType(value_type_id);
+    }
+  }
+
+  // TODO: Handle ImplicitAs for compatible structs and tuples.
+
+  CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
+                    "Cannot implicitly convert from `{0}` to `{1}`.",
+                    std::string, std::string);
+  emitter_
+      ->Build(parse_node, ImplicitAsConversionFailure,
+              semantics_ir_->StringifyType(
+                  semantics_ir_->GetNode(value_id).type_id()),
+              semantics_ir_->StringifyType(as_type_id))
+      .Emit();
+  return SemIR::NodeId::BuiltinError;
+}
+
 auto Context::Convert(Parse::Node parse_node, SemIR::NodeId value_id,
                       ConversionTarget target) -> SemIR::NodeId {
   // Implicitly convert the value to the type of the target.
@@ -735,180 +909,6 @@ auto Context::ImplicitAsForArgs(Parse::Node call_parse_node,
   }
 
   return true;
-}
-
-// Performs a conversion from a tuple to an array type.
-static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
-                                SemIR::Node array_type,
-                                SemIR::TypeId array_type_id,
-                                SemIR::NodeId value_id) -> SemIR::NodeId {
-  auto [array_bound_id, element_type_id] = array_type.GetAsArrayType();
-  auto tuple_elem_types_id = tuple_type.GetAsTupleType();
-  const auto& tuple_elem_types =
-      context.semantics_ir().GetTypeBlock(tuple_elem_types_id);
-
-  auto value = context.semantics_ir().GetNode(value_id);
-
-  llvm::ArrayRef<SemIR::NodeId> literal_elems;
-  if (value.kind() == SemIR::NodeKind::TupleLiteral) {
-    literal_elems =
-        context.semantics_ir().GetNodeBlock(value.GetAsTupleLiteral());
-  }
-
-  // Check that the tuple is the right size.
-  uint64_t array_bound =
-      context.semantics_ir().GetArrayBoundValue(array_bound_id);
-  if (tuple_elem_types.size() != array_bound) {
-    CARBON_DIAGNOSTIC(
-        ArrayInitFromLiteralArgCountMismatch, Error,
-        "Cannot initialize array of {0} element(s) from {1} initializer(s).",
-        uint64_t, size_t);
-    CARBON_DIAGNOSTIC(ArrayInitFromExpressionArgCountMismatch, Error,
-                      "Cannot initialize array of {0} element(s) from tuple "
-                      "with {1} element(s).",
-                      uint64_t, size_t);
-    context.emitter().Emit(value.parse_node(),
-                           literal_elems.empty()
-                               ? ArrayInitFromExpressionArgCountMismatch
-                               : ArrayInitFromLiteralArgCountMismatch,
-                           array_bound, tuple_elem_types.size());
-    return SemIR::NodeId::BuiltinError;
-  }
-
-  // If we're initializing from a tuple literal, we will use its elements
-  // directly. Otherwise, materialize a temporary if needed and index into the
-  // result.
-  if (literal_elems.empty()) {
-    value_id = context.ConvertToValueOrReferenceExpression(value_id);
-  }
-
-  Context::PendingBlock target_block(context);
-
-  // Arrays are always initialized in-place. Tentatively allocate a temporary
-  // as the destination for the array initialization.
-  auto return_slot_id = target_block.AddNode(
-      SemIR::Node::TemporaryStorage::Make(value.parse_node(), array_type_id));
-
-  // Initialize each element of the array from the corresponding element of the
-  // tuple.
-  llvm::SmallVector<SemIR::NodeId> inits;
-  inits.reserve(array_bound + 1);
-  for (auto [i, src_type_id] : llvm::enumerate(tuple_elem_types)) {
-    Context::PendingBlock::DiscardUnusedNodesScope scope(target_block);
-    // TODO: Add a new node kind for indexing an array at a constant index
-    // so that we don't need an integer literal node here.
-    auto index_id = target_block.AddNode(SemIR::Node::IntegerLiteral::Make(
-        value.parse_node(),
-        context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
-        context.semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
-    auto target_id = target_block.AddNode(SemIR::Node::ArrayIndex::Make(
-        value.parse_node(), element_type_id, return_slot_id, index_id));
-    // Note, this is computing the source location not the destination, so it
-    // goes into the current code block, not into the target block.
-    // TODO: Ideally we would also discard this node if it's unused.
-    auto src_id = !literal_elems.empty()
-                      ? literal_elems[i]
-                      : context.AddNode(SemIR::Node::TupleAccess::Make(
-                            value.parse_node(), src_type_id, value_id,
-                            SemIR::MemberIndex(i)));
-    auto init_id =
-        context.Convert(value.parse_node(), src_id,
-                        {.kind = Context::ConversionTarget::FullInitializer,
-                         .type_id = element_type_id,
-                         .init_id = target_id,
-                         .init_block = &target_block});
-    if (init_id == SemIR::NodeId::BuiltinError) {
-      return SemIR::NodeId::BuiltinError;
-    }
-    inits.push_back(init_id);
-  }
-
-  // The last element of the refs block contains the return slot for the array
-  // initialization. Flush the temporary here if we didn't insert it earlier.
-  target_block.InsertHere();
-  inits.push_back(return_slot_id);
-
-  return context.AddNode(
-      SemIR::Node::ArrayInit::Make(value.parse_node(), array_type_id, value_id,
-                                   context.semantics_ir().AddNodeBlock(inits)));
-}
-
-auto Context::ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
-                         SemIR::TypeId as_type_id) -> SemIR::NodeId {
-  // Start by making sure both sides are valid. If any part is invalid, the
-  // result is invalid and we shouldn't error.
-  if (value_id == SemIR::NodeId::BuiltinError) {
-    // If the value is invalid, we can't do much, but do "succeed".
-    return value_id;
-  }
-  auto value = semantics_ir_->GetNode(value_id);
-  auto value_type_id = value.type_id();
-  if (value_type_id == SemIR::TypeId::Error ||
-      as_type_id == SemIR::TypeId::Error) {
-    return SemIR::NodeId::BuiltinError;
-  }
-
-  if (value_type_id == as_type_id) {
-    return value_id;
-  }
-
-  auto as_type = semantics_ir_->GetTypeAllowBuiltinTypes(as_type_id);
-  auto as_type_node = semantics_ir_->GetNode(as_type);
-
-  // A tuple (T1, T2, ..., Tn) converts to [T; n] if each Ti converts to T.
-  if (as_type_node.kind() == SemIR::NodeKind::ArrayType) {
-    auto value_type_node = semantics_ir_->GetNode(
-        semantics_ir_->GetTypeAllowBuiltinTypes(value_type_id));
-    if (value_type_node.kind() == SemIR::NodeKind::TupleType) {
-      // The conversion from tuple to array is `final`, so we don't need a
-      // fallback path here.
-      return ConvertTupleToArray(*this, value_type_node, as_type_node,
-                                 as_type_id, value_id);
-    }
-  }
-
-  if (as_type_id == SemIR::TypeId::TypeType) {
-    // A tuple of types converts to type `type`.
-    // TODO: This should apply even for non-literal tuples.
-    if (value.kind() == SemIR::NodeKind::TupleLiteral) {
-      // The conversion from tuple to `type` is `final`.
-      auto tuple_block_id = value.GetAsTupleLiteral();
-      llvm::SmallVector<SemIR::TypeId> type_ids;
-      // If it is empty tuple type, we don't fetch anything.
-      if (tuple_block_id != SemIR::NodeBlockId::Empty) {
-        const auto& tuple_block = semantics_ir_->GetNodeBlock(tuple_block_id);
-        for (auto tuple_node_id : tuple_block) {
-          // TODO: This call recurses back to this function. Switch to an
-          // iterative approach.
-          type_ids.push_back(
-              ExpressionAsType(value.parse_node(), tuple_node_id));
-        }
-      }
-      auto tuple_type_id =
-          CanonicalizeTupleType(value.parse_node(), std::move(type_ids));
-      return semantics_ir_->GetTypeAllowBuiltinTypes(tuple_type_id);
-    }
-    // When converting `{}` to a type, the result is `{} as type`.
-    // TODO: This conversion should also be performed for a non-literal value of
-    // type `{}`.
-    if (value.kind() == SemIR::NodeKind::StructLiteral &&
-        value.GetAsStructLiteral() == SemIR::NodeBlockId::Empty) {
-      return semantics_ir_->GetType(value_type_id);
-    }
-  }
-
-  // TODO: Handle ImplicitAs for compatible structs and tuples.
-
-  CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                    "Cannot implicitly convert from `{0}` to `{1}`.",
-                    std::string, std::string);
-  emitter_
-      ->Build(parse_node, ImplicitAsConversionFailure,
-              semantics_ir_->StringifyType(
-                  semantics_ir_->GetNode(value_id).type_id()),
-              semantics_ir_->StringifyType(as_type_id))
-      .Emit();
-  return SemIR::NodeId::BuiltinError;
 }
 
 auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
