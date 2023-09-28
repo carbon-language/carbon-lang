@@ -2829,12 +2829,11 @@ fn F(T:! B) -> T.(A.T) { return n; }
 
 ##### Combining constraints with `require` and `impls`
 
-Within an interface or named constraint, the `require T impls C` syntax does not
-permit `=` constraints to be specified directly. However, such constraints can
-be specified indirectly, for example if `C` is a named constraint that contains
-rewrites. Because these constraints don't change the type of `T`, rewrite
-constraints in this context will never result in a rewrite being performed, and
-instead are equivalent to `==` constraints.
+Within an interface or named constraint, the `require T impls C` and
+`require Self impls C` syntaxes do not change the type of `T` or `Self`,
+respectively, so any `=` constraints that they specify do not result in rewrites
+being performed when the type `T` or `Self` is later used. Such `=` constraints
+are equivalent to `==` constraints:
 
 ```carbon
 interface A {
@@ -2864,15 +2863,17 @@ var n: i32;
 fn F(T:! B) -> T.(A.T) { return n; }
 ```
 
-A purely syntactic check is used to determine if an `=` is specified directly in
-an expression:
+Because `=` constraints are effectively treated as `==` constraints in an
+`require Self impls C` or `require T impls C` declaration in an interface or
+named constraint, it is an error to specify such a `=` constraint directly in
+`C`. A purely syntactic check is used to determine if an `=` is specified
+directly in an expression:
 
 -   An `=` constraint is specified directly in its enclosing `where` expression.
 -   If an `=` constraint is specified directly in an operand of an `&` or
     `(`...`)`, then it is specified directly in that enclosing expression.
 
-In an `require Self impls C` or `require T impls C` declaration in an interface
-or named constraint, `C` is not allowed to directly specify any `=` constraints:
+For example:
 
 ```carbon
 // Compile-time identity function.
