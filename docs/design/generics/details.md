@@ -3592,17 +3592,22 @@ same-type `where` constraints. These `observe` declarations may be included in
 an `interface` definition or a function body, as in:
 
 ```carbon
-// **FIXME: Not clear how to fix this example.**
-interface Commute {
-  let X:! Commute;
-  let Y:! Commute where .X == X.Y;
-  ...
-  observe X.X.Y == X.Y.X == Y.X.X;
+interface Edge {
+  let N:! type;
+}
+interface Node {
+  let E:! type;
+}
+interface Graph {
+  let E:! Edge;
+  let N:! Node where .E == E and E.N == .Self;
+  observe E == N.E == E.N.E == N.E.N.E;
+  // ...
 }
 
-fn H[C: Commute](c: C) {
-  observe C.X.Y.Y == C.Y.X.Y == C.Y.Y.X;
-  ...
+fn H[G: Graph](g: G) {
+  observe G.N == G.E.N == G.N.E.N == G.E.N.E.N;
+  // ...
 }
 ```
 
@@ -3611,19 +3616,15 @@ expression in the sequence by a single `where` equality constraint. In this
 example,
 
 ```carbon
-// **FIXME: Not clear how to fix this example.**
-interface Commute {
-  let X:! Commute;
-  let Y:! Commute where .X == X.Y;
-  ...
-  // ✅ Legal:
-  observe X.X.Y.Y == X.Y.X.Y == Y.X.X.Y == X.Y.Y.X;
+fn J[G: Graph](g: G) {
+  observe G.E.N == G.N.E.N == G.N == G.E.N.E.N;
+  // ...
 }
 ```
 
-the expression `X.Y.Y.X` is one equality away from `X.Y.X.Y` and so it is
-allowed. This is even though `X.Y.X.Y` isn't the type expression immediately
-prior to `X.Y.Y.X`.
+the expression `G.E.N.E.N` is one equality away from `G.N.E.N` and so it is
+allowed. This is even though `G.N.E.N` isn't the type expression immediately
+prior to `G.E.N.E.N`.
 
 After an `observe` declaration, all of the listed type expressions are
 considered equal to each other using a single `where` equality. In this example,
