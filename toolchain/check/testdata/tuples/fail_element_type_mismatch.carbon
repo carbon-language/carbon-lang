@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:31: ERROR: Cannot implicitly convert from `(i32, f64) as type` to `(i32, i32) as type`.
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:30: ERROR: Cannot implicitly convert from `f64` to `i32`.
 // CHECK:STDERR: var x: (i32, i32) = (2, 65.89);
-// CHECK:STDERR:                               ^
+// CHECK:STDERR:                              ^
 var x: (i32, i32) = (2, 65.89);
 
 // CHECK:STDOUT: file "fail_element_type_mismatch.carbon" {
@@ -18,5 +18,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %.loc10_25: f64 = real_literal 6589e-2
 // CHECK:STDOUT:   %.loc10_30.1: type = tuple_type (i32, f64)
 // CHECK:STDOUT:   %.loc10_30.2: (i32, f64) = tuple_literal (%.loc10_22, %.loc10_25)
+// CHECK:STDOUT:   %.loc10_30.3: ref i32 = tuple_access %x, member0
+// CHECK:STDOUT:   %.loc10_30.4: init i32 = initialize_from %.loc10_22 to %.loc10_30.3
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

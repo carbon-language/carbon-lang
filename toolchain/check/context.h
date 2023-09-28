@@ -36,6 +36,7 @@ class Context {
       // Convert to an initializer for the object denoted by `init_id`,
       // including a final destination store if needed.
       FullInitializer,
+      Last = FullInitializer
     };
     // The kind of the target for this conversion.
     Kind kind;
@@ -47,6 +48,11 @@ class Context {
     // form the value of `target_id`, and that can be discarded if no
     // initialization is needed.
     PendingBlock* init_block = nullptr;
+
+    // Are we converting this value into an initializer for an object?
+    bool is_initializer() const {
+      return kind == Initializer || kind == FullInitializer;
+    }
   };
 
   // Stores references for work.
@@ -287,6 +293,11 @@ class Context {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
+
+  // Performs a builtin conversion of `value_id` to `target`, if possible. If
+  // no builtin conversion applies, returns `value_id` unchanged.
+  auto PerformBuiltinConversion(Parse::Node parse_node, SemIR::NodeId value_id,
+                                ConversionTarget target) -> SemIR::NodeId;
 
   // Commits to using a temporary to store the result of the initializing
   // expression described by `init_id`, and returns the location of the

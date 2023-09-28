@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:28: ERROR: Cannot implicitly convert from `{.b: {}}` to `{.a: {}}`.
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:27: ERROR: Mismatched names for field 1 in struct initialization: source has field name `b`, destination has field name `a`.
 // CHECK:STDERR: var x: {.a: {}} = {.b = {}};
-// CHECK:STDERR:                            ^
+// CHECK:STDERR:                           ^
 var x: {.a: {}} = {.b = {}};
 
 // CHECK:STDOUT: file "fail_assign_nested.carbon" {

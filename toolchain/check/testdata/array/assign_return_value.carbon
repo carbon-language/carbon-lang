@@ -33,11 +33,10 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_22.3: ref (i32,) = temporary %.loc10_22.2, %.loc10_22.1
 // CHECK:STDOUT:   %.loc10_22.4: ref i32 = tuple_access %.loc10_22.3, member0
 // CHECK:STDOUT:   %.loc10_22.5: i32 = bind_value %.loc10_22.4
-// CHECK:STDOUT:   %.loc10_7: ref [i32; 1] = splice_block %t {}
 // CHECK:STDOUT:   %.loc10_22.6: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc10_22.7: ref i32 = array_index %.loc10_7, %.loc10_22.6
+// CHECK:STDOUT:   %.loc10_22.7: ref i32 = array_index %t, %.loc10_22.6
 // CHECK:STDOUT:   %.loc10_22.8: init i32 = initialize_from %.loc10_22.5 to %.loc10_22.7
-// CHECK:STDOUT:   %.loc10_22.9: init [i32; 1] = array_init %.loc10_22.3, (%.loc10_22.8) to %.loc10_7
+// CHECK:STDOUT:   %.loc10_22.9: init [i32; 1] = array_init %.loc10_22.3, (%.loc10_22.8) to %t
 // CHECK:STDOUT:   assign %t, %.loc10_22.9
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

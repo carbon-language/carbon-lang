@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:25: ERROR: Cannot implicitly convert from `(type,) as type` to `(i32,) as type`.
+// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:24: ERROR: Cannot implicitly convert from `type` to `i32`.
 // CHECK:STDERR: var x: (i32, ) = (i32, );
-// CHECK:STDERR:                         ^
+// CHECK:STDERR:                        ^
 var x: (i32, ) = (i32, );
 
 // CHECK:STDOUT: file "fail_type_assign.carbon" {
