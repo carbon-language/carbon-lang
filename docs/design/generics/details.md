@@ -3495,7 +3495,6 @@ private constraint NodeFor(EdgeT:! Edge);
 interface Edge {
   let N:! NodeFor(Self);
   fn GetN[self: Self]() -> N;
-  // FIXME: delete fn HasN[self: Self](n: N) -> bool;
 }
 interface Node {
   let E:! EdgeFor(Self);
