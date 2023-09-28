@@ -3477,55 +3477,65 @@ fn F[T:! Transitive](t: T) {
 
 The compiler may have several different `where` clauses to consider,
 particularly when an interface has associated facets that recursively satisfy
-the same interface. For example, given this interface `Commute`:
+the same interface, or mutual recursion between multiple interfaces. For
+example, given these `Edge` and `Node` interfaces (similar to those defined in
+[the section on interfaces with cyclic references](#example-of-declaring-interfaces-with-cyclic-references),
+but using `==` same-type constraints):
 
 ```carbon
-interface Commute {
-  let X:! Commute;
-  // **FIXME: Not allowed (at least not by Explorer)
-  // since `Commute` is incomplete here.**
-  let Y:! Commute where .X == X.Y;
+interface Edge;
+interface Node;
 
-  fn GetX[self: Self]() -> X;
-  fn GetY[self: Self]() -> Y;
-  fn TakesXXY[self: Self](xxy: X.X.Y);
+private constraint EdgeFor(NodeT:! Node);
+private constraint NodeFor(EdgeT:! Edge);
+
+interface Edge {
+  let N:! NodeFor(Self);
+  fn GetN[self: Self]() -> N;
+  // FIXME: delete fn HasN[self: Self](n: N) -> bool;
+}
+interface Node {
+  let E:! EdgeFor(Self);
+  fn GetE[self: Self]() -> EdgeT;
+  fn AddE[addr self: Self*](e: EdgeT);
+  fn NearN[self: Self](n: N) -> bool;
 }
 
-// **FIXME: Maybe the following?**
-interface Commute;
-constraint Helper(T:! Commute);
-
-interface Commute {
-  let X:! Commute;
-  let Y:! Helper(X);
-
-  fn GetX[self: Self]() -> X;
-  fn GetY[self: Self]() -> Y;
-  // **FIXME: Don't think it is legal to write `X.X.Y` here.**
-  fn TakesXXY[self: Self](xxy: X.X.Y);
+constraint EdgeFor(NodeT:! Node) {
+  extend Edge where .N == NodeT;
 }
-
-constraint Helper(T:! Commute) {
-  extend Commute where .X == T.Y;
+constraint NodeFor(EdgeT:! Edge) {
+  extend Node where .E == EdgeT;
 }
 ```
 
-and a function `H` taking a value with some type implementing this interface,
-then the following would be legal statements in `H`:
+and a function `H` taking a value with some type implementing the `Node`
+interface, then the following would be legal statements in `H`:
 
 ```carbon
-fn H[C: Commute](c: C) {
-  // ✅ Legal: argument has type `C.X.X.Y`
-  c.TakesXXY(c.GetX().GetX().GetY());
+fn H[N:! Node](n: N) {
+  // ✅ Legal: argument has type `N.E`, matches parameter
+  n.AddE(n.GetE());
 
-  // ✅ Legal: argument has type `C.X.Y.X` which is equal
-  // to `C.X.X.Y` following only one `where` clause.
-  c.TakesXXY(c.GetX().GetY().GetX());
+  // ✅ Legal:
+  // - argument has type `N.E.N`
+  // - `N.E` has type `EdgeFor(Self)` where `Self`
+  //   is `N`, which means `Edge where .N == N`
+  // - so we have the constraint `N.E.N == N`
+  // - which means the argument type `N.E.N`
+  //   is equal to the parameter type `N` using a
+  //   single `==` constraint.
+  n.NearN(n.GetE().GetN());
 
-  // ✅ Legal: cast is legal since it matches a `where`
-  // clause, and produces an argument that has type
-  // `C.X.Y.X`.
-  c.TakesXXY(c.GetY().GetX().GetX() as C.X.Y.X);
+  // ✅ Legal:
+  // - type `N.E.N.E.N` may be cast to `N.E.N`
+  //   using a single `where ==` clause, either
+  //   `(N.E.N).E.N == (N).E.N` or
+  //   `N.E.(N.E.N) == N.E.(N)`
+  // - argument of type `N.E.N` may be passed to
+  //   function expecting `N`, using a single
+  //   `where ==` clause, as in the previous call.
+  n.NearN(n.GetE().GetN().GetE().GetN() as N.E.N);
 }
 ```
 
@@ -5831,11 +5841,11 @@ impl MyClass as Interface6 where _ { }
 
 ### Example of declaring interfaces with cyclic references
 
-In this example, `Node` has an `EdgeType` associated facet that is constrained
-to implement `Edge`, and `Edge` has a `NodeType` associated facet that is
-constrained to implement `Node`. Furthermore, the `NodeType` of an `EdgeType` is
-the original type, and the other way around. This is accomplished by naming and
-then forward declaring the constraints that can't be stated directly:
+In this example, `Node` has an `EdgeT` associated facet that is constrained to
+implement `Edge`, and `Edge` has a `NodeT` associated facet that is constrained
+to implement `Node`. Furthermore, the `NodeT` of an `EdgeT` is the original
+type, and the other way around. This is accomplished by naming and then forward
+declaring the constraints that can't be stated directly:
 
 ```carbon
 // Forward declare interfaces used in
@@ -5850,24 +5860,45 @@ private constraint NodeFor(E:! Edge);
 
 // Define interfaces using named constraints.
 interface Edge {
-  let NodeType:! NodeFor(Self);
-  fn Head[self: Self]() -> NodeType;
+  let NodeT:! NodeFor(Self);
+  fn Head[self: Self]() -> NodeT;
 }
 interface Node {
-  let EdgeType:! EdgeFor(Self);
-  fn Edges[self: Self]() -> Vector(EdgeType);
+  let EdgeT:! EdgeFor(Self);
+  fn Edges[self: Self]() -> DynArray(EdgeT);
 }
 
 // Now that the interfaces are defined, can
 // refer to members of the interface, so it is
 // now legal to define the named constraints.
 constraint EdgeFor(N:! Node) {
-  extend Edge where .NodeType == N;
+  extend Edge where .NodeT = N;
 }
 constraint NodeFor(E:! Edge) {
-  extend Node where .EdgeType == E;
+  extend Node where .EdgeT = E;
 }
 ```
+
+> **Future work:** This approach has limitations. For example the compiler only
+> knows `EdgeT` is convertible to `type` in the body of the `interface Node`
+> definition, which may not be enough to satisfy the requirements to be an
+> argument to `DynArray`. If this proves to be a problem, we may decided to
+> expand what can be done with incomplete interfaces and types to allow the
+> above to be written without the additional private constraints:
+>
+> ```carbon
+> interface Node;
+>
+> interface Edge {
+>   let NodeT:! Node where .EdgeT = Self;
+>   fn Head[self: Self]() -> NodeT;
+> }
+>
+> interface Node {
+>   let EdgeT:! Movable & Edge where .NodeT = Self;
+>   fn Edges[self: Self]() -> DynArray(EdgeT);
+> }
+> ```
 
 ### Interfaces with parameters constrained by the same interface
 
