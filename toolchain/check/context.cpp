@@ -371,16 +371,6 @@ class Context::PendingBlock {
   llvm::SmallVector<SemIR::NodeId> nodes_;
 };
 
-auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
-                         SemIR::NodeId value_id) -> SemIR::NodeId {
-  PendingBlock target_block(*this);
-  return Convert(parse_node, value_id,
-                 {.kind = ConversionTarget::Initializer,
-                  .type_id = semantics_ir().GetNode(target_id).type_id(),
-                  .init_id = target_id,
-                  .init_block = &target_block});
-}
-
 // Performs a conversion from a tuple to an array type. Does not perform a
 // final conversion to the requested expression category.
 static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
@@ -402,7 +392,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
     literal_elems =
         context.semantics_ir().GetNodeBlock(value.GetAsTupleLiteral());
   } else {
-    value_id = context.ConvertToValueOrReferenceExpression(value_id);
+    value_id = context.MaterializeIfInitializing(value_id);
   }
 
 
@@ -505,7 +495,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::Node src_type,
     literal_elems =
         context.semantics_ir().GetNodeBlock(value.GetAsTupleLiteral());
   } else {
-    value_id = context.ConvertToValueOrReferenceExpression(value_id);
+    value_id = context.MaterializeIfInitializing(value_id);
   }
 
   // Check that the tuples are the same size.
@@ -596,7 +586,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::Node src_type,
     literal_elems =
         context.semantics_ir().GetNodeBlock(value.GetAsStructLiteral());
   } else {
-    value_id = context.ConvertToValueOrReferenceExpression(value_id);
+    value_id = context.MaterializeIfInitializing(value_id);
   }
 
   // Check that the structs are the same size.
@@ -685,7 +675,8 @@ static auto ConvertStructToStruct(Context& context, SemIR::Node src_type,
 }
 
 // Returns whether `category` is a valid expression category to produce as a
-// result of a conversion with kind `target_kind`.
+// result of a conversion with kind `target_kind`, or at most needs a temporary
+// to be materialized.
 static bool IsValidExpressionCategoryForConversionTarget(
     SemIR::ExpressionCategory category,
     Context::ConversionTarget::Kind target_kind) {
@@ -693,9 +684,11 @@ static bool IsValidExpressionCategoryForConversionTarget(
     case Context::ConversionTarget::Value:
       return category == SemIR::ExpressionCategory::Value;
     case Context::ConversionTarget::ValueOrReference:
+    case Context::ConversionTarget::Discarded:
       return category == SemIR::ExpressionCategory::Value ||
              category == SemIR::ExpressionCategory::DurableReference ||
-             category == SemIR::ExpressionCategory::EphemeralReference;
+             category == SemIR::ExpressionCategory::EphemeralReference ||
+             category == SemIR::ExpressionCategory::Initializing;
     case Context::ConversionTarget::Initializer:
     case Context::ConversionTarget::FullInitializer:
       return category == SemIR::ExpressionCategory::Initializing;
@@ -866,7 +859,10 @@ auto Context::Convert(Parse::Node parse_node, SemIR::NodeId expr_id,
       return ConvertSimpleExpressionToValueExpression(expr_id);
 
     case ConversionTarget::ValueOrReference:
-      return ConvertToValueOrReferenceExpression(expr_id);
+      return MaterializeIfInitializing(expr_id, /*discarded=*/false);
+
+    case ConversionTarget::Discarded:
+      return MaterializeIfInitializing(expr_id, /*discarded=*/true);
 
     case ConversionTarget::Initializer:
     case ConversionTarget::FullInitializer:
@@ -924,6 +920,16 @@ auto Context::Convert(Parse::Node parse_node, SemIR::NodeId expr_id,
   return expr_id;
 }
 
+auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
+                         SemIR::NodeId value_id) -> SemIR::NodeId {
+  PendingBlock target_block(*this);
+  return Convert(parse_node, value_id,
+                 {.kind = ConversionTarget::Initializer,
+                  .type_id = semantics_ir().GetNode(target_id).type_id(),
+                  .init_id = target_id,
+                  .init_block = &target_block});
+}
+
 auto Context::ConvertSimpleExpressionToValueExpression(SemIR::NodeId expr_id)
     -> SemIR::NodeId {
   if (expr_id == SemIR::NodeId::BuiltinError) {
@@ -963,26 +969,6 @@ auto Context::ConvertSimpleExpressionToValueExpression(SemIR::NodeId expr_id)
     case SemIR::ExpressionCategory::Mixed:
       CARBON_FATAL() << "Should not see mixed-category expressions, found "
                      << semantics_ir().GetNode(expr_id);
-  }
-}
-
-// Convert the given expression to a value or reference expression of the same
-// type.
-auto Context::ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id,
-                                                  bool discarded)
-    -> SemIR::NodeId {
-  switch (GetExpressionCategory(semantics_ir(), expr_id)) {
-    case SemIR::ExpressionCategory::Value:
-    case SemIR::ExpressionCategory::DurableReference:
-    case SemIR::ExpressionCategory::EphemeralReference:
-      return expr_id;
-
-    case SemIR::ExpressionCategory::Initializing:
-      return FinalizeTemporary(expr_id, discarded);
-
-    case SemIR::ExpressionCategory::Mixed:
-    case SemIR::ExpressionCategory::NotExpression:
-      return ConvertToValueExpression(expr_id);
   }
 }
 
@@ -1073,7 +1059,9 @@ auto Context::FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
 auto Context::HandleDiscardedExpression(SemIR::NodeId expr_id) -> void {
   // If we discard an initializing expression, convert it to a value or
   // reference so that it has something to initialize.
-  ConvertToValueOrReferenceExpression(expr_id, /*discarded=*/true);
+  auto expr = semantics_ir().GetNode(expr_id);
+  Convert(expr.parse_node(), expr_id,
+          {.kind = ConversionTarget::Discarded, .type_id = expr.type_id()});
 
   // TODO: This will eventually need to do some "do not discard" analysis.
 }

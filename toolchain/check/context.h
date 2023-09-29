@@ -31,6 +31,9 @@ class Context {
       Value,
       // Convert to either a value or a reference of type `type`.
       ValueOrReference,
+      // The result of the conversion is discarded. It can't be an initializing
+      // expression, but can be anything else.
+      Discarded,
       // Convert to an initializer for the object denoted by `init_id`.
       Initializer,
       // Convert to an initializer for the object denoted by `init_id`,
@@ -139,6 +142,17 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
+  // Materialize a temporary to hold the result of the given expression if it is
+  // an initializing expression.
+  auto MaterializeIfInitializing(SemIR::NodeId expr_id, bool discarded = false)
+      -> SemIR::NodeId {
+    if (GetExpressionCategory(semantics_ir(), expr_id) ==
+        SemIR::ExpressionCategory::Initializing) {
+      return FinalizeTemporary(expr_id, discarded);
+    }
+    return expr_id;
+  }
+
   // Convert a value to another type and expression category.
   auto Convert(Parse::Node parse_node, SemIR::NodeId value_id,
                ConversionTarget target) -> SemIR::NodeId;
@@ -153,9 +167,13 @@ class Context {
 
   // Convert the given expression to a value or reference expression of the same
   // type.
-  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id,
-                                           bool discarded = false)
-      -> SemIR::NodeId;
+  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id)
+      -> SemIR::NodeId {
+    auto expr = semantics_ir().GetNode(expr_id);
+    return Convert(expr.parse_node(), expr_id,
+                   {.kind = ConversionTarget::ValueOrReference,
+                    .type_id = expr.type_id()});
+  }
 
   // Performs initialization of `target_id` from `value_id`. Returns the
   // possibly-converted initialization expression, which should be assigned to
