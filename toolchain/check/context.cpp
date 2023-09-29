@@ -854,59 +854,49 @@ auto Context::Convert(Parse::Node parse_node, SemIR::NodeId expr_id,
   }
 
   // Now perform any necessary value category conversions.
-  switch (target.kind) {
-    case ConversionTarget::Value:
-      return ConvertSimpleExpressionToValueExpression(expr_id);
-
-    case ConversionTarget::ValueOrReference:
-      return MaterializeIfInitializing(expr_id, /*discarded=*/false);
-
-    case ConversionTarget::Discarded:
-      return MaterializeIfInitializing(expr_id, /*discarded=*/true);
-
-    case ConversionTarget::Initializer:
-    case ConversionTarget::FullInitializer:
-      // Fall through to perform initialization.
-      break;
-  }
-
-  // Perform initialization now that we have an expression of the right type.
   switch (SemIR::GetExpressionCategory(semantics_ir(), expr_id)) {
     case SemIR::ExpressionCategory::NotExpression:
-      CARBON_FATAL() << "Converting non-expression node " << expr
-                     << " to initializing expression";
-
-    case SemIR::ExpressionCategory::DurableReference:
-    case SemIR::ExpressionCategory::EphemeralReference:
-      // The design uses a custom "copy initialization" process here. We model
-      // that as value binding followed by direct initialization.
-      //
-      // TODO: Determine whether this is observably different from the design,
-      // and change either the toolchain or the design so they match.
-      expr_id = AddNode(SemIR::Node::BindValue::Make(expr.parse_node(),
-                                                     expr.type_id(), expr_id));
-      break;
-
-    case SemIR::ExpressionCategory::Value:
-      // TODO: For class types, use an interface to determine how to perform
-      // this operation.
-      break;
+    case SemIR::ExpressionCategory::Mixed:
+      CARBON_FATAL() << "Unexpected expression " << expr
+                     << " after builtin conversions";
 
     case SemIR::ExpressionCategory::Initializing:
-      if (orig_expr_id == expr_id) {
-        // Don't fill in the return slot if we created the expression through a
-        // conversion. In that case, we will have created it with the target
-        // already set.
-        // TODO: Find a better way to track whether we need to do this.
-        MarkInitializerFor(expr_id, target.init_id, *target.init_block);
+      if (target.is_initializer()) {
+        if (orig_expr_id == expr_id) {
+          // Don't fill in the return slot if we created the expression through
+          // a conversion. In that case, we will have created it with the
+          // target already set.
+          // TODO: Find a better way to track whether we need to do this.
+          MarkInitializerFor(expr_id, target.init_id, *target.init_block);
+        }
+        break;
+      }
+
+      // Commit to using a temporary for this initializing expression.
+      // TODO: Don't create a temporary if the initializing representation
+      // is already a value representation.
+      expr_id = FinalizeTemporary(expr_id,
+                                  target.kind == ConversionTarget::Discarded);
+      // We now have an ephemeral reference.
+      [[fallthrough]];
+
+    case SemIR::ExpressionCategory::DurableReference:
+    case SemIR::ExpressionCategory::EphemeralReference: {
+      // If we have a reference and don't want one, form a value binding.
+      if (target.kind != ConversionTarget::ValueOrReference &&
+          target.kind != ConversionTarget::Discarded) {
+        // TODO: Support types with custom value representations.
+        expr_id = AddNode(SemIR::Node::BindValue::Make(
+            expr.parse_node(), expr.type_id(), expr_id));
       }
       break;
+    }
 
-    case SemIR::ExpressionCategory::Mixed:
-      CARBON_FATAL() << "Mixed-category expression " << expr
-                     << " should have been handled as a builtin conversion";
+    case SemIR::ExpressionCategory::Value:
+      break;
   }
 
+  // Perform a final destination store, if necessary.
   if (target.kind == ConversionTarget::FullInitializer) {
     if (auto init_rep = SemIR::GetInitializingRepresentation(semantics_ir(),
                                                              target.type_id);
@@ -928,48 +918,6 @@ auto Context::Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
                   .type_id = semantics_ir().GetNode(target_id).type_id(),
                   .init_id = target_id,
                   .init_block = &target_block});
-}
-
-auto Context::ConvertSimpleExpressionToValueExpression(SemIR::NodeId expr_id)
-    -> SemIR::NodeId {
-  if (expr_id == SemIR::NodeId::BuiltinError) {
-    return expr_id;
-  }
-
-  switch (SemIR::GetExpressionCategory(semantics_ir(), expr_id)) {
-    case SemIR::ExpressionCategory::NotExpression: {
-      // TODO: We currently encounter this for use of namespaces and functions.
-      // We should provide a better diagnostic for inappropriate use of
-      // namespace names, and allow use of functions as values.
-      CARBON_DIAGNOSTIC(UseOfNonExpressionAsValue, Error,
-                        "Expression cannot be used as a value.");
-      emitter().Emit(semantics_ir().GetNode(expr_id).parse_node(),
-                     UseOfNonExpressionAsValue);
-      return SemIR::NodeId::BuiltinError;
-    }
-
-    case SemIR::ExpressionCategory::Initializing:
-      // Commit to using a temporary for this initializing expression.
-      // TODO: Don't create a temporary if the initializing representation is
-      // already a value representation.
-      expr_id = FinalizeTemporary(expr_id, /*discarded=*/false);
-      [[fallthrough]];
-
-    case SemIR::ExpressionCategory::DurableReference:
-    case SemIR::ExpressionCategory::EphemeralReference: {
-      // TODO: Support types with custom value representations.
-      SemIR::Node expr = semantics_ir().GetNode(expr_id);
-      return AddNode(SemIR::Node::BindValue::Make(expr.parse_node(),
-                                                  expr.type_id(), expr_id));
-    }
-
-    case SemIR::ExpressionCategory::Value:
-      return expr_id;
-
-    case SemIR::ExpressionCategory::Mixed:
-      CARBON_FATAL() << "Should not see mixed-category expressions, found "
-                     << semantics_ir().GetNode(expr_id);
-  }
 }
 
 // Given an initializing expression, find its return slot. Returns `Invalid` if

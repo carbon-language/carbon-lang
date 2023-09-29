@@ -144,11 +144,10 @@ class Context {
 
   // Materialize a temporary to hold the result of the given expression if it is
   // an initializing expression.
-  auto MaterializeIfInitializing(SemIR::NodeId expr_id, bool discarded = false)
-      -> SemIR::NodeId {
+  auto MaterializeIfInitializing(SemIR::NodeId expr_id) -> SemIR::NodeId {
     if (GetExpressionCategory(semantics_ir(), expr_id) ==
         SemIR::ExpressionCategory::Initializing) {
-      return FinalizeTemporary(expr_id, discarded);
+      return FinalizeTemporary(expr_id, /*discarded=*/false);
     }
     return expr_id;
   }
@@ -198,7 +197,8 @@ class Context {
   // Handles an expression whose result is discarded.
   auto HandleDiscardedExpression(SemIR::NodeId id) -> void;
 
-  // Runs ImplicitAs for a set of arguments and parameters in a function call.
+  // Implicitly converts a set of arguments to match the parameter types in a
+  // function call.
   auto ImplicitAsForArgs(Parse::Node call_parse_node,
                          SemIR::NodeBlockId arg_refs_id,
                          Parse::Node param_parse_node,
@@ -321,11 +321,6 @@ class Context {
   // no builtin conversion applies, returns `value_id` unchanged.
   auto PerformBuiltinConversion(Parse::Node parse_node, SemIR::NodeId value_id,
                                 ConversionTarget target) -> SemIR::NodeId;
-
-  // Convert the given expression to a value expression of the same type. The
-  // expression is known to not be a struct or tuple literal.
-  auto ConvertSimpleExpressionToValueExpression(SemIR::NodeId expr_id)
-      -> SemIR::NodeId;
 
   // Commits to using a temporary to store the result of the initializing
   // expression described by `init_id`, and returns the location of the
