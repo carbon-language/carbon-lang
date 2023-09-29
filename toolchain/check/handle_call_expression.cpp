@@ -46,9 +46,9 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
 
   // Convert the arguments to match the parameters.
   auto refs_id = context.ParamOrArgPop();
-  if (!context.ImplicitAsForArgs(call_expr_parse_node, refs_id,
-                                 name_node.parse_node(), callable.param_refs_id,
-                                 callable.return_slot_id.is_valid())) {
+  if (!context.ConvertCallArgs(call_expr_parse_node, refs_id,
+                               name_node.parse_node(), callable.param_refs_id,
+                               callable.return_slot_id.is_valid())) {
     context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
     return true;
   }

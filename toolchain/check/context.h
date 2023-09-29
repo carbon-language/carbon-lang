@@ -199,10 +199,10 @@ class Context {
 
   // Implicitly converts a set of arguments to match the parameter types in a
   // function call.
-  auto ImplicitAsForArgs(Parse::Node call_parse_node,
-                         SemIR::NodeBlockId arg_refs_id,
-                         Parse::Node param_parse_node,
-                         SemIR::NodeBlockId param_refs_id, bool has_return_slot)
+  auto ConvertCallArgs(Parse::Node call_parse_node,
+                       SemIR::NodeBlockId arg_refs_id,
+                       Parse::Node param_parse_node,
+                       SemIR::NodeBlockId param_refs_id, bool has_return_slot)
       -> bool;
 
   // Canonicalizes a type which is tracked as a single node.
@@ -333,12 +333,6 @@ class Context {
   // Marks the initializer `init_id` as initializing `target_id`.
   auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id,
                           PendingBlock& target_block) -> void;
-
-  // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
-  // converted result. Prints a diagnostic and returns an Error if the
-  // conversion cannot be performed.
-  auto ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
-                  SemIR::TypeId as_type_id) -> SemIR::NodeId;
 
   // Forms a canonical type ID for a type. This function is given two
   // callbacks:

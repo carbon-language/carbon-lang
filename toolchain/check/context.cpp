@@ -1013,11 +1013,11 @@ auto Context::HandleDiscardedExpression(SemIR::NodeId expr_id) -> void {
   // TODO: This will eventually need to do some "do not discard" analysis.
 }
 
-auto Context::ImplicitAsForArgs(Parse::Node call_parse_node,
-                                SemIR::NodeBlockId arg_refs_id,
-                                Parse::Node param_parse_node,
-                                SemIR::NodeBlockId param_refs_id,
-                                bool has_return_slot) -> bool {
+auto Context::ConvertCallArgs(Parse::Node call_parse_node,
+                              SemIR::NodeBlockId arg_refs_id,
+                              Parse::Node param_parse_node,
+                              SemIR::NodeBlockId param_refs_id,
+                              bool has_return_slot) -> bool {
   // If both arguments and parameters are empty, return quickly. Otherwise,
   // we'll fetch both so that errors are consistent.
   if (arg_refs_id == SemIR::NodeBlockId::Empty &&
