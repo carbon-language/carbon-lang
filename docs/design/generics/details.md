@@ -2898,9 +2898,9 @@ interface Edge {
 }
 interface Node {
   let E:! EdgeFor(Self);
-  fn GetE[self: Self]() -> EdgeT;
-  fn AddE[addr self: Self*](e: EdgeT);
-  fn NearN[self: Self](n: N) -> bool;
+  fn GetE[self: Self]() -> E;
+  fn AddE[addr self: Self*](e: E);
+  fn NearN[self: Self](n: Self) -> bool;
 }
 
 constraint EdgeFor(NodeT:! Node) {
@@ -3022,7 +3022,7 @@ fn J[G: Graph](g: G) {
 ```
 
 the expression `G.E.N.E.N` is one equality away from `G.N.E.N` and so it is
-allowed. This is even though `G.N.E.N` isn't the type expression immediately
+allowed. This is true even though `G.N.E.N` isn't the type expression immediately
 prior to `G.E.N.E.N`.
 
 After an `observe` declaration, all of the listed type expressions are
