@@ -395,7 +395,6 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
     value_id = context.MaterializeIfInitializing(value_id);
   }
 
-
   // Check that the tuple is the right size.
   uint64_t array_bound =
       context.semantics_ir().GetArrayBoundValue(array_bound_id);
@@ -568,8 +567,8 @@ static auto ConvertTupleToTuple(Context& context, SemIR::Node src_type,
 // Performs a conversion from a struct to a struct type. Does not perform a
 // final conversion to the requested expression category.
 static auto ConvertStructToStruct(Context& context, SemIR::Node src_type,
-                                SemIR::Node dest_type, SemIR::NodeId value_id,
-                                Context::ConversionTarget target)
+                                  SemIR::Node dest_type, SemIR::NodeId value_id,
+                                  Context::ConversionTarget target)
     -> SemIR::NodeId {
   auto src_elem_fields =
       context.semantics_ir().GetNodeBlock(src_type.GetAsStructType());
