@@ -827,6 +827,18 @@ auto Context::Convert(Parse::Node parse_node, SemIR::NodeId expr_id,
     return SemIR::NodeId::BuiltinError;
   }
 
+  if (SemIR::GetExpressionCategory(semantics_ir(), expr_id) ==
+      SemIR::ExpressionCategory::NotExpression) {
+    // TODO: We currently encounter this for use of namespaces and functions.
+    // We should provide a better diagnostic for inappropriate use of
+    // namespace names, and allow use of functions as values.
+    CARBON_DIAGNOSTIC(UseOfNonExpressionAsValue, Error,
+                      "Expression cannot be used as a value.");
+    emitter().Emit(semantics_ir().GetNode(expr_id).parse_node(),
+                   UseOfNonExpressionAsValue);
+    return SemIR::NodeId::BuiltinError;
+  }
+
   // Check whether any builtin conversion applies.
   expr_id = PerformBuiltinConversion(parse_node, expr_id, target);
   if (expr_id == SemIR::NodeId::BuiltinError) {
@@ -851,7 +863,7 @@ auto Context::Convert(Parse::Node parse_node, SemIR::NodeId expr_id,
   // Now perform any necessary value category conversions.
   switch (target.kind) {
     case ConversionTarget::Value:
-      return ConvertToValueExpression(expr_id);
+      return ConvertSimpleExpressionToValueExpression(expr_id);
 
     case ConversionTarget::ValueOrReference:
       return ConvertToValueOrReferenceExpression(expr_id);
@@ -912,7 +924,8 @@ auto Context::Convert(Parse::Node parse_node, SemIR::NodeId expr_id,
   return expr_id;
 }
 
-auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
+auto Context::ConvertSimpleExpressionToValueExpression(SemIR::NodeId expr_id)
+    -> SemIR::NodeId {
   if (expr_id == SemIR::NodeId::BuiltinError) {
     return expr_id;
   }
@@ -947,35 +960,9 @@ auto Context::ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
     case SemIR::ExpressionCategory::Value:
       return expr_id;
 
-    case SemIR::ExpressionCategory::Mixed: {
-      SemIR::Node expr = semantics_ir().GetNode(expr_id);
-
-      // TODO: Make non-recursive.
-      switch (expr.kind()) {
-        case SemIR::NodeKind::TupleLiteral:
-        case SemIR::NodeKind::StructLiteral: {
-          bool is_tuple = expr.kind() == SemIR::NodeKind::TupleLiteral;
-          auto elements_id =
-              is_tuple ? expr.GetAsTupleLiteral() : expr.GetAsStructLiteral();
-          auto elements = semantics_ir().GetNodeBlock(elements_id);
-          CopyOnWriteBlock new_block(semantics_ir(), elements_id,
-                                     elements.size());
-          for (auto [i, elem_id] : llvm::enumerate(elements)) {
-            new_block.Set(i, ConvertToValueExpression(elem_id));
-          }
-          return AddNode(is_tuple ? SemIR::Node::TupleValue::Make(
-                                        expr.parse_node(), expr.type_id(),
-                                        expr_id, new_block.id())
-                                  : SemIR::Node::StructValue::Make(
-                                        expr.parse_node(), expr.type_id(),
-                                        expr_id, new_block.id()));
-        }
-
-        default:
-          CARBON_FATAL() << "Unexpected kind for mixed-category expression "
-                         << expr.kind();
-      }
-    }
+    case SemIR::ExpressionCategory::Mixed:
+      CARBON_FATAL() << "Should not see mixed-category expressions, found "
+                     << semantics_ir().GetNode(expr_id);
   }
 }
 

@@ -144,7 +144,12 @@ class Context {
                ConversionTarget target) -> SemIR::NodeId;
 
   // Convert the given expression to a value expression of the same type.
-  auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
+  auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
+    auto expr = semantics_ir().GetNode(expr_id);
+    return Convert(
+        expr.parse_node(), expr_id,
+        {.kind = ConversionTarget::Value, .type_id = expr.type_id()});
+  }
 
   // Convert the given expression to a value or reference expression of the same
   // type.
@@ -298,6 +303,11 @@ class Context {
   // no builtin conversion applies, returns `value_id` unchanged.
   auto PerformBuiltinConversion(Parse::Node parse_node, SemIR::NodeId value_id,
                                 ConversionTarget target) -> SemIR::NodeId;
+
+  // Convert the given expression to a value expression of the same type. The
+  // expression is known to not be a struct or tuple literal.
+  auto ConvertSimpleExpressionToValueExpression(SemIR::NodeId expr_id)
+      -> SemIR::NodeId;
 
   // Commits to using a temporary to store the result of the initializing
   // expression described by `init_id`, and returns the location of the
