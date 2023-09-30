@@ -401,10 +401,11 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   // `ImplicitAs`. There are a few reasons we need to perform some of these
   // conversions as builtins:
   //
-  // 1) Conversions from struct and tuple *literals* have special rules, and
-  //    cannot be performed in the library. Specifically, we must recurse into
-  //    the elements of the literal before performing initialization in order
-  //    to avoid unnecessary conversions between expression categories.
+  // 1) Conversions from struct and tuple *literals* have special rules that
+  //    cannot be implemented by invoking `ImplicitAs`. Specifically, we must
+  //    recurse into the elements of the literal before performing
+  //    initialization in order to avoid unnecessary conversions between
+  //    expression categories.
   // 2) (Not implemented yet) Conversion of a facet to a facet type depends on
   //    the value of the facet, not only its type.
   // 3) Some of these conversions are used while checking the library

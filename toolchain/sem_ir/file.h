@@ -312,7 +312,7 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
-  // Allocates an uninitialized array using our allocator.
+  // Allocates an uninitialized array using our slab allocator.
   template <typename T>
   auto AllocateUninitialized(std::size_t size) -> llvm::MutableArrayRef<T> {
     // We're not going to run a destructor, so ensure that's OK.
