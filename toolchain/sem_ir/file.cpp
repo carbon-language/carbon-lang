@@ -198,6 +198,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::ArrayInit:
     case NodeKind::Assign:
     case NodeKind::BinaryOperatorAdd:
+    case NodeKind::BindName:
     case NodeKind::BindValue:
     case NodeKind::BlockArg:
     case NodeKind::BoolLiteral:
@@ -365,6 +366,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::ArrayInit:
       case NodeKind::Assign:
       case NodeKind::BinaryOperatorAdd:
+      case NodeKind::BindName:
       case NodeKind::BindValue:
       case NodeKind::BlockArg:
       case NodeKind::BoolLiteral:
@@ -471,6 +473,12 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case NodeKind::UnaryOperatorNot:
         return ExpressionCategory::Value;
 
+      case NodeKind::BindName: {
+        auto [name_id, value_id] = node.GetAsBindName();
+        node_id = value_id;
+        continue;
+      }
+
       case NodeKind::ArrayIndex: {
         auto [base_id, index_id] = node.GetAsArrayIndex();
         node_id = base_id;
@@ -537,6 +545,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::ArrayInit:
       case NodeKind::Assign:
       case NodeKind::BinaryOperatorAdd:
+      case NodeKind::BindName:
       case NodeKind::BindValue:
       case NodeKind::BlockArg:
       case NodeKind::BoolLiteral:

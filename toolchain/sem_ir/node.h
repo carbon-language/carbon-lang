@@ -322,6 +322,9 @@ class Node : public Printable<Node> {
   using BinaryOperatorAdd = Node::Factory<NodeKind::BinaryOperatorAdd,
                                           NodeId /*lhs_id*/, NodeId /*rhs_id*/>;
 
+  using BindName =
+      Factory<NodeKind::BindName, StringId /*name_id*/, NodeId /*value_id*/>;
+
   using BindValue = Factory<NodeKind::BindValue, NodeId /*value_id*/>;
 
   using BlockArg = Factory<NodeKind::BlockArg, NodeBlockId /*block_id*/>;

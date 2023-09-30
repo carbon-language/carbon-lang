@@ -139,6 +139,16 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(GenericPatternBinding, 2)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1)
 
+// `let`:
+//   LetIntroducer
+//   _external_: PatternBinding
+//   LetInitializer
+//   _external_: expression
+// LetDeclaration
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetIntroducer, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetInitializer, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(LetDeclaration, LetIntroducer)
+
 // `var`:
 //   VariableIntroducer
 //   _external_: PatternBinding

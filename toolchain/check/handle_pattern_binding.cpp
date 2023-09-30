@@ -28,6 +28,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
   // Allocate a node of the appropriate kind, linked to the name for error
   // locations.
+  // TODO: Each of these cases should create a `BindName` node.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::VariableIntroducer:
@@ -37,6 +38,16 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
     case Parse::NodeKind::ParameterListStart:
       context.AddNodeAndPush(parse_node, SemIR::Node::Parameter::Make(
                                              name_node, cast_type_id, name_id));
+      break;
+    case Parse::NodeKind::LetIntroducer:
+      // Create the node, but don't add it to a block until after we've formed
+      // its initializer.
+      // TODO: For general pattern parsing, we'll need to create a block to hold
+      // the `let` pattern before we see the initializer.
+      context.node_stack().Push(
+          parse_node,
+          context.semantics_ir().AddNodeInNoBlock(SemIR::Node::BindName::Make(
+              name_node, cast_type_id, name_id, SemIR::NodeId::Invalid)));
       break;
     default:
       CARBON_FATAL() << "Found a pattern binding in unexpected context "

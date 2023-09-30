@@ -57,6 +57,10 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
       context.PushState(State::VarAsSemicolon);
       break;
     }
+    case Lex::TokenKind::Let: {
+      context.PushState(State::Let);
+      break;
+    }
     default: {
       HandleUnrecognizedDeclaration(context);
       break;
