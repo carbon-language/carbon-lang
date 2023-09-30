@@ -2592,18 +2592,24 @@ this interface while `.Self` refers to the associated facet currently being
 defined.
 
 ```carbon
+interface Container;
+constraint SliceConstraint(E:! type, S:! Container);
+
 interface Container {
   let ElementType:! type;
   let IteratorType:! Iterator where .ElementType = ElementType;
 
-  let SliceType:! Container
-      where .ElementType = ElementType and
-            // `.Self` means `SliceType`.
-            .SliceType = .Self;
+  // `.Self` means `SliceType`.
+  let SliceType:! SliceConstraint(ElementType, .Self);
 
   // `Self` means the type implementing `Container`.
   fn GetSlice[addr self: Self*]
       (start: IteratorType, end: IteratorType) -> SliceType;
+}
+
+constraint SliceConstraint(E:! type, S:! Container) {
+  extend Container where .ElementType = E and
+                         .SliceType = S;
 }
 ```
 
@@ -3147,6 +3153,11 @@ the above example, `Container` defines `ElementType` as having type `type`, but
 `Container where .ElementType impls Ordered`, not `Container`. This means we
 need to be a bit careful when talking about the type of `ContainerType` when
 there is a `where` clause modifying it.
+
+> **Future work:** We may want to use a different operator in this case, such as
+> `&=`, in place of `impls`, to reflect the change in the type. This is
+> analogous to rewrite constraints using `=` instead of `==` to visibly reflect
+> the different impact on the type.
 
 An implements constraint can be applied to [`.Self`](#recursive-constraints), as
 in `I where .Self impls C`. This has the same requirements as `I & C`, but that
