@@ -5,10 +5,10 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CONVERT_H_
 #define CARBON_TOOLCHAIN_CHECK_CONVERT_H_
 
-#include "toolchain/sem_ir/node.h"
-#include "toolchain/parse/tree.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/pending_block.h"
+#include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {
 

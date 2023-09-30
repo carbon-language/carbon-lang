@@ -68,8 +68,7 @@ class CopyOnWriteBlock {
 // final conversion to the requested expression category.
 static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
                                 SemIR::Node array_type, SemIR::NodeId value_id,
-                                ConversionTarget target)
-    -> SemIR::NodeId {
+                                ConversionTarget target) -> SemIR::NodeId {
   auto [array_bound_id, element_type_id] = array_type.GetAsArrayType();
   auto tuple_elem_types_id = tuple_type.GetAsTupleType();
   const auto& tuple_elem_types =
@@ -171,8 +170,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
 // final conversion to the requested expression category.
 static auto ConvertTupleToTuple(Context& context, SemIR::Node src_type,
                                 SemIR::Node dest_type, SemIR::NodeId value_id,
-                                ConversionTarget target)
-    -> SemIR::NodeId {
+                                ConversionTarget target) -> SemIR::NodeId {
   auto src_elem_types =
       context.semantics_ir().GetTypeBlock(src_type.GetAsTupleType());
   auto dest_elem_types =
@@ -264,8 +262,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::Node src_type,
 // final conversion to the requested expression category.
 static auto ConvertStructToStruct(Context& context, SemIR::Node src_type,
                                   SemIR::Node dest_type, SemIR::NodeId value_id,
-                                  ConversionTarget target)
-    -> SemIR::NodeId {
+                                  ConversionTarget target) -> SemIR::NodeId {
   auto src_elem_fields =
       context.semantics_ir().GetNodeBlock(src_type.GetAsStructType());
   auto dest_elem_fields =
@@ -375,8 +372,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::Node src_type,
 // result of a conversion with kind `target_kind`, or at most needs a temporary
 // to be materialized.
 static bool IsValidExpressionCategoryForConversionTarget(
-    SemIR::ExpressionCategory category,
-    ConversionTarget::Kind target_kind) {
+    SemIR::ExpressionCategory category, ConversionTarget::Kind target_kind) {
   switch (target_kind) {
     case ConversionTarget::Value:
       return category == SemIR::ExpressionCategory::Value;
