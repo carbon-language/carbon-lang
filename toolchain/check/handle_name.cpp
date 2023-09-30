@@ -4,6 +4,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {
@@ -25,7 +26,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
   }
 
   // Materialize a temporary for the base expression if necessary.
-  base_id = context.ConvertToValueOrReferenceExpression(base_id);
+  base_id = ConvertToValueOrReferenceExpression(context, base_id);
 
   auto base_type = context.semantics_ir().GetNode(
       context.semantics_ir().GetTypeAllowBuiltinTypes(base.type_id()));

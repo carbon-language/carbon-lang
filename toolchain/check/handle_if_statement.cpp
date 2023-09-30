@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {
@@ -15,7 +16,7 @@ auto HandleIfConditionStart(Context& /*context*/, Parse::Node /*parse_node*/)
 auto HandleIfCondition(Context& context, Parse::Node parse_node) -> bool {
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().PopExpression();
-  cond_value_id = context.ConvertToBoolValue(parse_node, cond_value_id);
+  cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
 
   // Create the then block and the else block, and branch to the right one. If
   // there is no `else`, the then block will terminate with a branch to the

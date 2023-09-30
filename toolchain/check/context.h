@@ -21,43 +21,6 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
-  // A block of code that has not yet been inserted into SemIR.
-  class PendingBlock;
-
-  // Description of the target of a conversion.
-  struct ConversionTarget {
-    enum Kind {
-      // Convert to a value of type `type`.
-      Value,
-      // Convert to either a value or a reference of type `type`.
-      ValueOrReference,
-      // The result of the conversion is discarded. It can't be an initializing
-      // expression, but can be anything else.
-      Discarded,
-      // Convert to an initializer for the object denoted by `init_id`.
-      Initializer,
-      // Convert to an initializer for the object denoted by `init_id`,
-      // including a final destination store if needed.
-      FullInitializer,
-      Last = FullInitializer
-    };
-    // The kind of the target for this conversion.
-    Kind kind;
-    // The target type for the conversion.
-    SemIR::TypeId type_id;
-    // For an initializer, the object being initialized.
-    SemIR::NodeId init_id = SemIR::NodeId::Invalid;
-    // For an initializer, a block of pending instructions that are needed to
-    // form the value of `target_id`, and that can be discarded if no
-    // initialization is needed.
-    PendingBlock* init_block = nullptr;
-
-    // Are we converting this value into an initializer for an object?
-    bool is_initializer() const {
-      return kind == Initializer || kind == FullInitializer;
-    }
-  };
-
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter<Parse::Node>& emitter,
@@ -142,69 +105,6 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Materialize a temporary to hold the result of the given expression if it is
-  // an initializing expression.
-  auto MaterializeIfInitializing(SemIR::NodeId expr_id) -> SemIR::NodeId {
-    if (GetExpressionCategory(semantics_ir(), expr_id) ==
-        SemIR::ExpressionCategory::Initializing) {
-      return FinalizeTemporary(expr_id, /*discarded=*/false);
-    }
-    return expr_id;
-  }
-
-  // Convert a value to another type and expression category.
-  auto Convert(Parse::Node parse_node, SemIR::NodeId value_id,
-               ConversionTarget target) -> SemIR::NodeId;
-
-  // Convert the given expression to a value expression of the same type.
-  auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId {
-    auto expr = semantics_ir().GetNode(expr_id);
-    return Convert(
-        expr.parse_node(), expr_id,
-        {.kind = ConversionTarget::Value, .type_id = expr.type_id()});
-  }
-
-  // Convert the given expression to a value or reference expression of the same
-  // type.
-  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id)
-      -> SemIR::NodeId {
-    auto expr = semantics_ir().GetNode(expr_id);
-    return Convert(expr.parse_node(), expr_id,
-                   {.kind = ConversionTarget::ValueOrReference,
-                    .type_id = expr.type_id()});
-  }
-
-  // Performs initialization of `target_id` from `value_id`. Returns the
-  // possibly-converted initialization expression, which should be assigned to
-  // the target using a suitable node for the kind of initialization.
-  auto Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
-                  SemIR::NodeId value_id) -> SemIR::NodeId;
-
-  // Converts `value_id` to a value expression of type `type_id`.
-  auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
-                            SemIR::TypeId type_id) -> SemIR::NodeId {
-    return Convert(parse_node, value_id,
-                   {.kind = ConversionTarget::Value, .type_id = type_id});
-  }
-
-  // Converts `value_id` to a value expression of type `bool`.
-  auto ConvertToBoolValue(Parse::Node parse_node, SemIR::NodeId value_id)
-      -> SemIR::NodeId {
-    return ConvertToValueOfType(
-        parse_node, value_id, CanonicalizeType(SemIR::NodeId::BuiltinBoolType));
-  }
-
-  // Handles an expression whose result is discarded.
-  auto HandleDiscardedExpression(SemIR::NodeId id) -> void;
-
-  // Implicitly converts a set of arguments to match the parameter types in a
-  // function call.
-  auto ConvertCallArgs(Parse::Node call_parse_node,
-                       SemIR::NodeBlockId arg_refs_id,
-                       Parse::Node param_parse_node,
-                       SemIR::NodeBlockId param_refs_id, bool has_return_slot)
-      -> bool;
-
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.
   auto CanonicalizeType(SemIR::NodeId node_id) -> SemIR::TypeId;
@@ -228,13 +128,6 @@ class Context {
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)
       -> SemIR::TypeId;
-
-  // Converts an expression for use as a type.
-  auto ExpressionAsType(Parse::Node parse_node, SemIR::NodeId value_id)
-      -> SemIR::TypeId {
-    return CanonicalizeType(
-        ConvertToValueOfType(parse_node, value_id, SemIR::TypeId::TypeType));
-  }
 
   // Removes any top-level `const` qualifiers from a type.
   auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
@@ -316,23 +209,6 @@ class Context {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
-
-  // Performs a builtin conversion of `value_id` to `target`, if possible. If
-  // no builtin conversion applies, returns `value_id` unchanged.
-  auto PerformBuiltinConversion(Parse::Node parse_node, SemIR::NodeId value_id,
-                                ConversionTarget target) -> SemIR::NodeId;
-
-  // Commits to using a temporary to store the result of the initializing
-  // expression described by `init_id`, and returns the location of the
-  // temporary. If `discarded` is `true`, the result is discarded, and no
-  // temporary will be created if possible; if no temporary is created, the
-  // return value will be `SemIR::NodeId::Invalid`.
-  auto FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
-      -> SemIR::NodeId;
-
-  // Marks the initializer `init_id` as initializing `target_id`.
-  auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id,
-                          PendingBlock& target_block) -> void;
 
   // Forms a canonical type ID for a type. This function is given two
   // callbacks:

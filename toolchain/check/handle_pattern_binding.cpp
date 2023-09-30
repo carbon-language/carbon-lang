@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {
@@ -19,7 +20,7 @@ auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
 auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExpressionWithParseNode();
-  auto cast_type_id = context.ExpressionAsType(type_node, parsed_type_id);
+  auto cast_type_id = ExpressionAsType(context, type_node, parsed_type_id);
 
   // Get the name.
   auto [name_node, name_id] =

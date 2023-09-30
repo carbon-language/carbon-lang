@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/node.h"
 #include "toolchain/sem_ir/node_kind.h"
@@ -43,7 +44,7 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
           parse_node,
           SemIR::Node::ArrayType::Make(
               parse_node, SemIR::TypeId::TypeType, bound_node_id,
-              context.ExpressionAsType(parse_node, element_type_node_id)));
+              ExpressionAsType(context, parse_node, element_type_node_id)));
       return true;
     }
   }

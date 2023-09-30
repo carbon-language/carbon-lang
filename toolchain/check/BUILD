@@ -33,7 +33,9 @@ cc_library(
     srcs = [
         "check.cpp",
         "context.cpp",
+        "convert.cpp",
         "declaration_name_stack.cpp",
+        "initializing_expression.cpp",
         "node_block_stack.cpp",
     ] +
     # Glob handler files to avoid missing any.
@@ -43,8 +45,11 @@ cc_library(
     hdrs = [
         "check.h",
         "context.h",
+        "convert.h",
         "declaration_name_stack.h",
+        "initializing_expression.h",
         "node_block_stack.h",
+        "pending_block.h",
     ],
     deps = [
         ":node_stack",
