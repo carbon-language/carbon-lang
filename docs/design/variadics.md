@@ -12,14 +12,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Basics](#basics)
     -   [Additional examples](#additional-examples)
--   [Expression and statement semantics](#expression-and-statement-semantics)
--   [Typechecking expressions and statements](#typechecking-expressions-and-statements)
+-   [Semantics](#semantics)
+    -   [Expressions and statements](#expressions-and-statements)
+    -   [Pattern matching](#pattern-matching)
+-   [Typechecking](#typechecking)
     -   [Generalized tuple types](#generalized-tuple-types)
     -   [Iterative typechecking](#iterative-typechecking)
--   [Pattern semantics](#pattern-semantics)
--   [Typechecking pattern matching](#typechecking-pattern-matching)
-    -   [Identifying potential matchings](#identifying-potential-matchings)
-    -   [The type-checking algorithm](#the-type-checking-algorithm)
+    -   [Pattern matching with generalized tuple types](#pattern-matching-with-generalized-tuple-types)
+        -   [Identifying potential matchings](#identifying-potential-matchings)
+        -   [The type-checking algorithm](#the-type-checking-algorithm)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -28,10 +29,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Basics
 
 A "pack expansion" is a syntactic unit beginning with `...`, which is a kind of
-compile-time loop over sequences called "packs", which are specified by
-"expansion arguments". Expansion arguments can be formed from tuples with the
-`expand` operator, or from a "variadic binding", which is marked with the `each`
-keyword at the point of declaration and the point of use.
+compile-time loop over sequences called "packs". Packs are initialized and
+referred to using "pack bindings", which are marked with the `each` keyword at
+the point of declaration and the point of use.
 
 The syntax and behavior of a pack expansion depends on its context, and in some
 cases by a keyword following the `...`:
@@ -45,7 +45,7 @@ cases by a keyword following the `...`:
 -   In a statement context, `...` iteratively executes a statement.
 -   In a tuple literal pattern (such as a function parameter list), `...`
     iteratively matches the elements of the scrutinee tuple. In conjunction with
-    variadic bindings, this enables functions to take an arbitrary number of
+    pack bindings, this enables functions to take an arbitrary number of
     arguments.
 
 This example illustrates many of the key concepts:
@@ -67,8 +67,33 @@ fn Zip[... each ElementType:! type]
 }
 ```
 
-A _pack expansion_ is a syntactic unit that begins with `...`. Pack expansions
-come in several syntactic forms:
+A _pack_ is a sequence of a fixed number of values called "elements", which may
+be of different types. Packs are very similar to tuple values in many ways, but
+they are not first-class values -- in particular, packs do not have types, and
+no expression evaluates to a pack. The _arity_ of a pack is a compile-time value
+representing the number of values in the sequence.
+
+A pattern of the form "`...` _subpattern_" is called a _pack expansion pattern_.
+It can only appear as part of a tuple pattern (or an implicit parameter list),
+and it matches a sequence of tuple elements if each element matches
+_subpattern_. Since _subpattern_ will be matched against multiple scrutinees (or
+none) in a single pattern-matching operation, it cannot contain a ordinary
+binding patterns. However, it can contain _pack binding patterns_, which are
+binding patterns that begin with `each`, such as `each ElementType:! type`. A
+pack binding pattern can match any number of times (including zero), and binds
+to a pack consisting of all the matched values. A usage of a pack binding always
+has the form "`each` _identifier_".
+
+Note that the operand of `each` is always an identifier name or a binding
+pattern, so it does not have a precedence. For example, the loop condition
+`...and each iter != each vector.End()` in the implementation of `Zip` is
+equivalent to `...and (each iter) != (each vector).End()`.
+
+Usages of the `each` keyword (in other words, pack binding patterns and usages
+of pack bindings) are called _expansion sites_. The _arity_ of an expansion site
+is a symbolic value representing the arity of the underlying pack. Expansion
+sites can only occur in the body of a _pack expansion_, which is an instance of
+one of the following syntactic forms:
 
 -   A statement of the form "`...` _statement_".
 -   A tuple expression element of the form "`...` _expression_", with the same
@@ -80,87 +105,83 @@ come in several syntactic forms:
 -   An expression of the form "`...` `and` _expression_" or "`...` `or`
     _expression_", with the same precedence as `and` and `or`.
 
-The last form can be trivially distinguished with one token of lookahead, and
-the other forms can be distinguished from each other by the context they appear
-in. As a corollary, if the nearest enclosing delimiters around a `...` are
-parentheses, they will be interpreted as forming a tuple rather than as
-grouping. Thus, expressions like `(... each ElementType)` in the above example
-are tuple literals, even though they don't contain commas.
+The `...` token can also occur in a tuple expression element of the form "`...`
+`expand` _expression_", with the same precedence as `,`. However, that syntax is
+not considered a pack expansion, and has its own semantics: _expression_ must
+have a tuple type, and "`...` `expand` _expression_" evaluates _expression_ and
+treats its elements as elements of the enclosing tuple literal. This is
+especially useful for using non-literal tuple values as function call arguments:
 
-The statement, expression, or pattern embedded in the pack expansion is called
-the _expansion body_. By convention, `...` is always followed by whitespace,
-except that `...and` and `...or` are written with no whitespace between the two
-tokens. This serves to emphasize that the `and`/`or` is not part of the
-expansion body, but rather a modifier on the syntax and semantics of `...`.
+```carbon
+fn F(x: i32, y: String);
+fn MakeArgs() -> (i32, String);
 
-A pack expansion must contain one or more _expansion arguments_, which also come
-in several syntactic forms:
+F(...expand MakeArgs());
+```
 
--   An expression of the form "`each` _identifier_".
--   A pattern of the form "`each` _binding-pattern_".
--   An expression of the form "`expand` _expression_", with the same precedence
-    as `*`.
+`...and`, `...or`, and `...expand` can be trivially distinguished with one token
+of lookahead, and the other can be distinguished from each other by the context
+they appear in. As a corollary, if the nearest enclosing delimiters around a
+`...` are parentheses, they will be interpreted as forming a tuple rather than
+as grouping. Thus, expressions like `(... each ElementType)` in the above
+example are tuple literals, even though they don't contain commas.
 
-Note that the operand of `each` is always an identifier name or a binding
-pattern, so it does not have a precedence. For example, in the loop condition
-`...and each iter != each vector.End()` in the implementation of `Zip`,
-`each iter` and `each vector` are expansion arguments.
+By convention, `...` is always followed by whitespace, except that `...and`,
+`...or`, and `...expand` are written with no whitespace between the two tokens.
+This serves to emphasize that the keyword is not part of the expansion body, but
+rather a modifier on the syntax and semantics of `...`.
 
-An expansion argument iterates over a sequence of tuple elements: an `expand`
-expression iterates over the elements of its operand tuple, an `each` binding
-pattern matches a sequence of tuple elements and iterates over them, and an
-`each` expression iterates over the same sequence as the binding pattern it
-names. This kind of sequence is called a _pack_. Packs are very similar to tuple
-values in many ways, but they are not first-class values -- in particular, packs
-do not have types, and no expression evaluates to a pack. The _arity_ of a pack
-is a compile-time value representing the number of values in the sequence. All
-arguments of a given expansion must have the same arity (which we will also
-refer to as the arity of the expansion).
+In a pack expansion, the statement, expression, or pattern embedded in the
+expansion is called the _body_ of the expansion, and a pack expansion body must
+contain at least one expansion site. All sites of a given expansion must have
+the same arity (which we will also refer to as the arity of the expansion).
 
 A pack expansion cannot occur within another pack expansion.
+
+A pack binding cannot be used in the same pack expansion that declares it. In
+almost all cases, a binding that violates this rule can be changed to a non-pack
+binding, because pack bindings are only necessary when you need to transfer a
+pack from one pack expansion to another.
 
 A pack expansion can be thought of as a kind of loop that executes at compile
 time (specifically, monomorphization time), where the expansion body is
 implicitly parameterized by an integer value called the _pack index_, which
 ranges from 0 to one less than the arity of the expansion. The pack index is
-implicitly used as an index into the expansion argument packs. This is easiest
-to see with statement pack expansions. For example, if `a`, `x`, and `y` are
-tuples of size 3, then `... expand a += expand x * expand y;` is roughly
+implicitly used as an index into the expansion site packs. This is easiest to
+see with statement pack expansions. For example, if `a`, `x`, and `y` are pack
+bindings with arity 3, then `... each a += each x * each y;` is roughly
 equivalent to
 
 ```carbon
 for (let template i:! i32 in (0, 1, 2)) {
-  a[i] += x[i] * y[i];
+  a[:i:] += x[:i:] * y[:i:];
 }
 ```
 
-Notice, however, that this notional rewritten form is not valid Carbon code,
-because the expressions `a[i]`, `x[i]`, and `y[i]` may have different types
-depending on the value of `i`.
+Here we are using `[::]` as a hypothetical pack indexing operator for purposes
+of illustration; packs cannot actually be indexed in Carbon code. Note also that
+this rewritten form would not typecheck under the usual rules, because the
+expressions `a[:i:]`, `x[:i:]`, and `y[:i:]` may have different types depending
+on the value of `i`.
 
 `...and` and `...or` can likewise be interpreted as looping constructs, although
 the rewrite is less straightforward because Carbon doesn't have a way to write a
-loop in an expression context. An expression like `...and F(expand x, expand y)`
-can be thought of as evaluating to the value of `result` after executing the
+loop in an expression context. An expression like `...and F(each x, each y)` can
+be thought of as evaluating to the value of `result` after executing the
 following code fragment:
 
 ```
 var result: bool = true;
 for (let template i:! i32 in (0, 1, 2)) {
-  result = result && F(x[i], y[i]);
+  result = result && F(x[:i:], y[:i:]);
   if (result == false) { break; }
 }
 ```
 
 `...` in a tuple literal can't be modeled in terms of a code rewrite, because it
 evaluates to a sequence of values rather than a singular value, but it is still
-fundamentally iterative, as will be seen in the next section.
-
-A binding pattern that begins with `each` declares a _variadic binding_, which
-binds the name to one value for each iteration of the expansion. The name
-declared by a variadic binding can only be used inside a pack expansion, where
-it must be prefixed by `each`, and acts as an expansion argument whose elements
-are the bound values.
+fundamentally iterative: an expression like `(... F(each x, each y))` evaluates
+to a tuple whose `i`th element is `F(x[:i:], y[:i:])`.
 
 ### Additional examples
 
@@ -203,7 +224,7 @@ fn Min[T:! Comparable & Value](first: T, ... each next: T) -> T {
 // Invokes f, with the tuple `args` as its arguments.
 fn Apply[... each T:! type, F:! CallableWith(... each T)]
     (f: F, args: (... each T)) -> auto {
-  return f(... expand args);
+  return f(...expand args);
 }
 ```
 
@@ -217,18 +238,19 @@ fn MiddleVariadic(first: i64, ... each middle: f64, last: i64);
 // Toy example of using the result of variadic type deduction.
 fn TupleConcat[... each T1: type, ... each T2: type](
     t1: (... each T1), t2: (... each T2)) -> (... each T1, ... each T2) {
-  return (... expand t1, ... expand t2);
+  return (...expand t1, ...expand t2);
 }
 ```
 
-## Expression and statement semantics
+## Semantics
+
+### Expressions and statements
 
 In all of the following, N is the arity of the pack expansion being discussed,
 and `$I` is a notional variable representing the pack index. These semantics are
 implemented at monomorphization time, so the value of N is a known integer
 constant. Although the value of `$I` can vary during execution, it is
-nevertheless treated as a constant; for example, it can be used to index a
-tuple.
+nevertheless treated as a constant.
 
 A statement of the form "`...` _statement_" is evaluated by executing
 _statement_ N times, with `$I` ranging from 0 to N - 1.
@@ -246,14 +268,32 @@ A tuple expression element of the form "`...` _expression_" evaluates to a
 sequence of N values, where the k'th value is the value of _operand_ where `$I`
 is equal to k - 1.
 
-An expression of the form "`expand` _expression_" evaluates to "_expression_
-`[$I]`". _expression_ must have a tuple type.
+An expression of the form "`each` _identifier_", where _identifier_ names a pack
+binding, evaluates to the `$I`th value that it was bound to (indexed from zero).
 
-An expression of the form "`each` _identifier_", where _identifier_ names a
-variadic binding, evaluates to the `$I`th value that it was bound to (indexed
-from zero).
+### Pattern matching
 
-## Typechecking expressions and statements
+`...` expansions can also appear in patterns. The semantics are chosen to follow
+the general principle that pattern matching is the inverse of expression
+evaluation, so for example if the pattern `(... each x: auto)` matches some
+scrutinee value `s`, the expression `(... each x)` should be equal to `s`. These
+semantics are implemented at monomorphization time, so all types are known
+constants, and all tuple elements are singular.
+
+A tuple pattern can contain no more than one subpattern of the form "`...`
+_operand_". When such a subpattern is present, the N elements of the pattern
+before the `...` expansion are matched with the first N elements of the
+scrutinee, and the M elements of the pattern after the `...` expansion are
+matched with the last M elements of the scrutinee. If the scrutinee does not
+have at least N + M elements, the pattern does not match.
+
+The remaining elements of the scrutinee are iteratively matched against
+_operand_, in order. In each iteration, `$I` is equal to the index of the
+scrutinee element being matched, minus N.
+
+A pack binding pattern binds the name to each of the scrutinee values, in order.
+
+## Typechecking
 
 ### Generalized tuple types
 
@@ -278,14 +318,13 @@ be symbolic. There is a special symbolic variable called the _pack index_, which
 can only be used in the representative of a segment, and only as the subscript
 of an indexing expression on a tuple. The pack index is used solely as a
 placeholder, and never has a value. There are also symbolic variables
-representing the arity of every variadic binding. For purposes of illustration,
-the notation `<V, N>` represents a segment with representative `V` and arity
-`N`, `$I` represents the pack index, and given a variadic binding `B`, `|B|`
-represents the arity of `B`, and `B/$I` represents the `$I`th value bound by
-`B`.
+representing the arity of every pack binding. For purposes of illustration, the
+notation `<V, N>` represents a segment with representative `V` and arity `N`,
+`$I` represents the pack index, and given a pack binding `B`, `|B|` represents
+the arity of `B`, and `B[:$I:]` represents the `$I`th value bound by `B`.
 
 So, continuing the earlier example, the type of `z` is represented symbolically
-as `(<i32, SizeOf(x)>, <f32, 1>, <Optional(T/$I), |T|>)`.
+as `(<i32, |x|>, <f32, 1>, <Optional(T[:$I:]), |T|>)`.
 
 A segment is _variadic_ if its arity is unknown, and _singular_ if its arity is
 known to be 1 and its representative does not refer to the pack index. In
@@ -294,26 +333,29 @@ them as "elements". Segments are always assumed to be normalized, meaning that
 every segment is either singular or variadic. This is always possible because if
 a segment's arity is known to be some fixed value N other than 1, we can replace
 it with N singular segments. The _shape_ of a tuple type is the sequence of
-arities of its segments, so the shape of the type of `z` is
-`(SizeOf(x), 1, |T|)`.
+arities of its segments, so the shape of the type of `z` is `(|x|, 1, |T|)`.
 
 In order to index into a tuple with subscript `I`, the tuple type's segment
 sequence must start with at least `I` singular segments, so that we can
 determine the type of the indexing expression. Note that this rule applies only
-to user-written subscript operations, not to the notional `[$I]` operations
+to user-written subscript operations, not to the notional `[:$I:]` operations
 introduced by the compiler when rewriting a pack expansion.
+
+Similarly, in order to pattern-match a tuple pattern that does not contain a
+pack expansion subpattern (and therefore contains a separate subpattern for each
+element), the scrutinee tuple type's segments must all be singular.
 
 ### Iterative typechecking
 
 Since the execution semantics of an expansion are defined in terms of a notional
-rewritten form where we simultaneously iterate over the expansion arguments, in
+rewritten form where we simultaneously iterate over the expansion sites, in
 principle we can typecheck the expansion by typechecking the rewritten form.
 However, the rewritten form usually would not typecheck as ordinary Carbon code,
-because the expansion arguments can have different types on different
-iterations. Furthermore, the difference in types can propagate through
-expressions: if `x[$I]` and `y[$I]` can have different types for different
-values of `$I`, then so can `x[$I] * y[$I]`. In effect, we have to typecheck the
-loop body separately for each iteration.
+because the expansion sites can have different types on different iterations.
+Furthermore, the difference in types can propagate through expressions: if
+`x[:$I:]` and `y[:$I:]` can have different types for different values of `$I`,
+then so can `x[:$I:] * y[:$I:]`. In effect, we have to typecheck the loop body
+separately for each iteration.
 
 As a result, an expression or pattern in a pack expansion does not have a type,
 it has a _type pack_ that represents the sequence of types it takes on over the
@@ -321,93 +363,83 @@ course of the iteration. Just as a pack is not quite a value, a type pack is not
 quite a type, but type packs relate to packs in the same way that types relate
 to values.
 
-An expansion argument pack is composed of a sequence of elements from a tuple,
-so its type pack consists of the types of those elements. However, as discussed
+An expansion site's pack is composed of a sequence of elements from a tuple, so
+its type pack consists of the types of those elements. However, as discussed
 above, at typechecking time we don't necessarily know the type of each tuple
 element, or even how many elements there are -- we only know the sequence of
 segments. As a result, a type pack is represented as a sequence of segments.
 
-The type pack of an expansion argument is determined as follows:
+In some cases, the typechecker may need to reason about the values contained in
+a pack, as well as their types. For example:
 
--   The type pack of "`expand` _operand_" consists of the same segments as the
-    type of _operand_ (which must be a tuple type).
--   The type pack of a variadic binding pattern with type `T` (such as
-    `each foo: T`) consists of a single segment `<T, N>`, where `N` is an
-    invented symbolic variable representing the arity of the pack expansion.
--   The type pack of an "`each` _identifier_" expression is the same as the type
-    pack of the binding that _identifier_ names.
+```
+fn f[...each A:! I1, ...each B:! I2]((... each a: each A), (...each b: each B)) {
+  let (... each X:! type) = (...each A, ...each B);
+  let (... each x: each X) = (...each a, ...each b);
+}
+```
+
+In order to represent the declared type of `x`, the typechecker needs to model
+the fact that `X` consists of the concatenation of `A` and `B`, even though it
+does not yet know the arity or contents of either pack. It does this by
+representing packs as sequences of segments. For example, `Y` can be represented
+as `(<A[:$I:], |A|>, <B[:$I:], |B|>)`.
+
+Similarly, the typechecker sometimes needs to reason symbolically about values
+with generalized tuple types (like the value of `(...each A, ...each B)`).
+These, too, are represented as sequences of segments.
 
 Since type packs are sequences of segments, typechecking must iterate over those
 segments' representatives rather than over the (unknown) individual element
-types. To ensure that this is valid, we require all arguments of a given
-expansion to have the same shape. The type packs of expressions and patterns in
-the expansion body are then determined by iterative typechecking: for a given
-expression or pattern E, the k'th segment of its type pack is `<T, N>`, where
-`N` is the arity of the k'th segments of the expansion arguments, and `T` is the
-type determined by the k'th iteration of typechecking.
+types. To ensure that this is valid, we require all sites of a given expansion
+to have the same shape. We determine the shapes of the expansion sites as
+follows:
 
-## Pattern semantics
+-   If the expansion contains any non-deducing usages of pack bindings, the
+    bindings they name must all have the same shape, and all other expansion
+    sites are deduced to have the same shape.
+-   Otherwise, we invent a local symbolic variable `N`, and all expansion sites
+    are treated as having the shape `(N,)` (representing a single segment with
+    unknown arity).
 
-`...` expansions can also appear in patterns. The semantics are chosen to follow
-the general principle that pattern matching is the inverse of expression
-evaluation, so for example if the pattern `(... each x: auto)` matches some
-scrutinee value `s`, the expression `(... each x)` should be equal to `s`. These
-semantics are implemented at monomorphization time, so all types are known
-constants, and all tuple elements are singular.
+The type packs of expressions and patterns in the expansion body are then
+determined by iterative typechecking: within the k'th typechecking iteration,
+typechecking and symbolic evaluation behave as they do during non-variadic
+typechecking, except that:
 
-A tuple pattern can contain no more than one subpattern of the form "`...`
-_operand_". When such a subpattern is present, the N elements of the pattern
-before the `...` expansion are matched with the first N elements of the
-scrutinee, and the M elements of the pattern after the `...` expansion are
-matched with the last M elements of the scrutinee. If the scrutinee does not
-have at least N + M elements, the pattern does not match.
+-   For every expression/pattern in the expansion, the type of the k'th segment
+    of its type pack takes the place of its type (on both reads and writes).
+    // - We reuse (rather than attempt to recompute) any type information that
+    was // computed in the course of the shape-checking described above.
+-   Any time we would use the type of an expression, and the expression is a
+    usage of a pack binding, we instead use the type of the k'th segment of the
+    binding it refers to (which has already been determined because of the rule
+    that a pack binding pattern cannot be bound and used in the same pack
+    expansion).
+-   Any time we would evaluate a usage of a pack binding, we instead use the
+    value of the k'th segment of the binding it refers to.
+-   Any time we would deduce the value of a non-pack binding declared outside
+    the expansion, it is an error if the value we deduce is different from the
+    value deduced by any previous iteration. Note that this requirement does not
+    apply when deducing a value for `auto`.
+-   Any time we would deduce the value of a pack binding declared outside the
+    expansion, we instead deduce the value of the k'th segment of that binding.
 
-The remaining elements of the scrutinee are iteratively matched against
-_operand_, in order. In each iteration, `$I` is equal to the index of the
-scrutinee element being matched, minus N.
+Once the body of a pack expansion has been typechecked, typechecking the
+expansion itself is relatively straightforward:
 
-A variadic binding pattern binds the name to each of the scrutinee values, in
-order.
+-   A statement pack expansion requires no further typechecking, because
+    statements don't have types.
+-   An `...and` or `...or` expression has type `bool`, and every segment of the
+    operand's type pack must have a type that's convertible to `bool`.
+-   For a `...` tuple element expression or pattern, the segments of the
+    operand's type pack become segments of the type of the enclosing tuple.
 
-A pattern of the form `expand` _subpattern_ matches the `$I`th element of
-_subpattern_ against the current (`$I`th) scrutinee. Consequently, _subpattern_
-must be a kind of pattern that has elements. Specifically, it must be one of:
+### Pattern matching with generalized tuple types
 
--   An expression pattern that evaluates to a tuple.
--   A tuple literal pattern.
--   A binding pattern with a tuple type.
-
-In the last case, we treat the binding pattern as if it were a sequence of
-binding patterns that bind values to the elements of the tuple.
-
-## Typechecking pattern matching
-
-Typechecking for a pattern matching operation proceeds in three phases:
-
-1. The scrutinee expression is typechecked, and assigned a type.
-2. The pattern is typechecked, and assigned a type.
-3. The scrutinee type is checked against the pattern type.
-
-If the pattern appears in a context that requires it to be irrefutable, such as
-the parameter list of a function declaration, phase 3 ensures that the pattern
-can match _any_ possible value of the scrutinee expression. Otherwise, it
-ensures that the pattern can match _some_ possible value of the scrutinee
-expression. For simplicity, we currently only support variadic pattern matching
-in contexts that require irrefutability.
-
-> **Future work:** Specify rules for refutable matching of variadics, for
-> example to support C++-style recursive variadics.
-
-Expression typechecking (phase 1) was described earlier. Pattern typechecking
-(phase 2) behaves just like expression typechecking, because pattern syntax is
-essentially expression syntax extended with binding patterns (which are easy to
-accommodate because they declare their types explicitly).
-
-The remainder of this section will focus on matching the scrutinee type against
-the pattern type (phase 3). Our focus will be on generalized tuple types,
-because other kinds of types are largely unaffected by variadics.
-
-Correctly matching one tuple type to another is difficult, because they may not
+Tuple pattern matching involves unifying the type of the tuple pattern with the
+type of the scrutinee. This becomes substantially more challenging when the
+tuple types can contain variadic segments, because the two tuple types may not
 have the same shape. As a consequence, we don't necessarily know which pattern
 segments each scrutinee segment will match with, or the other way around. For
 example, consider the following code:
@@ -457,7 +489,7 @@ segments (corresponding to the cases where `x` and/or `z` do not match any
 arguments). Extending the type system to support deduction that splits into
 multiple cases would add a fearsome amount of complexity to the type system.
 
-### Identifying potential matchings
+#### Identifying potential matchings
 
 Our solution will rely on being able to identify which segments of the pattern
 can potentially match which segments of the scrutinee. We can do so as follows:
@@ -525,7 +557,7 @@ matches for a symbolic argument $E$ as follows:
     symbolic arguments:
     -   If $E$ is singular, and there are no earlier variadic argument
         expressions, then $E$ can only match the $i$'th leading parameter.
-    -   Otherwise, $$ can match the $i$'th leading parameter, any later leading
+    -   Otherwise, $E$ can match the $i$'th leading parameter, any later leading
         parameters, and the variadic parameter.
 -   If $E$ is trailing, let $i$ be one more than the number of later singular
     symbolic arguments:
@@ -535,11 +567,11 @@ matches for a symbolic argument $E$ as follows:
         earlier trailing parameters, and the variadic parameter.
 -   Otherwise, $E$ can only match the variadic parameter.
 
-### The type-checking algorithm
+#### The type-checking algorithm
 
 In order to avoid type deduction that splits into multiple cases, we require
 that if the variadic parameter's type involves a deduced value that is used in
-more than one place (as `Ts` is in the earlier example of this problem), there
+more than one place (as `T` is in the earlier example of this problem), there
 cannot be any leading or trailing variadic symbolic arguments (in the sense
 defined in the previous section). This ensures that each symbolic argument can
 only match one parameter, and so type deduction deterministically produces a
@@ -567,6 +599,9 @@ parameter as follows:
     -   Otherwise:
         -   If the parameter has a non-deduced type, we check each potential
             argument against that type.
+        -   Otherwise, if the parameter has type `auto`, no further checking is
+            performed (`auto` can deduce to different types on different
+            iterations within a single segment).
         -   Otherwise, we check that all potential arguments have the same type,
             and then check that type against the parameter.
 
@@ -585,10 +620,12 @@ monomorphization.
 
 ## Alternatives considered
 
--   [Variadic members](/proposals/p2240.md#variadic-members)
+-   [Member packs](/proposals/p2240.md#member-packs)
 -   [First-class packs](/proposals/p2240.md#first-class-packs)
--   [Support array expansion arguments](/proposals/p2240.md#support-array-expansion-arguments)
--   [Omit variadic bindings](/proposals/p2240.md#omit-variadic-bindings)
+-   [Generalize `expand`](/proposals/p2240.md#generalize-expand)
+-   [Omit `expand`](/proposals/p2240.md#omit-expand)
+-   [Support expanding arrays](/proposals/p2240.md#support-expanding-arrays)
+-   [Omit pack bindings](/proposals/p2240.md#omit-pack-bindings)
     -   [Disallow pack-type bindings](/proposals/p2240.md#disallow-pack-type-bindings)
 -   [Fold expressions](/proposals/p2240.md#fold-expressions)
 -   [Allow multiple pack expansions in a tuple pattern](/proposals/p2240.md#allow-multiple-pack-expansions-in-a-tuple-pattern)
