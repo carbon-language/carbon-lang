@@ -2600,7 +2600,7 @@ interface Container {
   let IteratorType:! Iterator where .ElementType = ElementType;
 
   // `.Self` means `SliceType`.
-  let SliceType:! SliceConstraint(ElementType, .Self);
+  let SliceType:! Container where .Self is SliceConstraint(ElementType, .Self);
 
   // `Self` means the type implementing `Container`.
   fn GetSlice[addr self: Self*]
