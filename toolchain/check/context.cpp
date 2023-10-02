@@ -4,11 +4,11 @@
 
 #include "toolchain/check/context.h"
 
+#include <string>
 #include <utility>
 
 #include "common/check.h"
 #include "common/vlog.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/check/declaration_name_stack.h"
 #include "toolchain/check/node_block_stack.h"
