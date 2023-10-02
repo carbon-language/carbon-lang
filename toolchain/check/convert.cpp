@@ -57,18 +57,17 @@ static auto FindReturnSlotForInitializer(SemIR::File& semantics_ir,
 }
 
 // Marks the initializer `init_id` as initializing `target_id`.
-static auto MarkInitializerFor(Context& context, SemIR::NodeId init_id,
+static auto MarkInitializerFor(SemIR::File& semantics_ir, SemIR::NodeId init_id,
                                SemIR::NodeId target_id,
                                PendingBlock& target_block) -> void {
-  auto return_slot_id =
-      FindReturnSlotForInitializer(context.semantics_ir(), init_id);
+  auto return_slot_id = FindReturnSlotForInitializer(semantics_ir, init_id);
   if (return_slot_id.is_valid()) {
     // Replace the temporary in the return slot with a reference to our target.
-    CARBON_CHECK(context.semantics_ir().GetNode(return_slot_id).kind() ==
+    CARBON_CHECK(semantics_ir.GetNode(return_slot_id).kind() ==
                  SemIR::NodeKind::TemporaryStorage)
         << "Return slot for initializer does not contain a temporary; "
         << "initialized multiple times? Have "
-        << context.semantics_ir().GetNode(return_slot_id);
+        << semantics_ir.GetNode(return_slot_id);
     target_block.MergeReplacing(return_slot_id, target_id);
   }
 }
@@ -80,16 +79,17 @@ static auto MarkInitializerFor(Context& context, SemIR::NodeId init_id,
 // return value will be `SemIR::NodeId::Invalid`.
 static auto FinalizeTemporary(Context& context, SemIR::NodeId init_id,
                               bool discarded) -> SemIR::NodeId {
+  auto& semantics_ir = context.semantics_ir();
   auto return_slot_id =
-      FindReturnSlotForInitializer(context.semantics_ir(), init_id);
+      FindReturnSlotForInitializer(semantics_ir, init_id);
   if (return_slot_id.is_valid()) {
     // The return slot should already have a materialized temporary in it.
-    CARBON_CHECK(context.semantics_ir().GetNode(return_slot_id).kind() ==
+    CARBON_CHECK(semantics_ir.GetNode(return_slot_id).kind() ==
                  SemIR::NodeKind::TemporaryStorage)
         << "Return slot for initializer does not contain a temporary; "
         << "initialized multiple times? Have "
-        << context.semantics_ir().GetNode(return_slot_id);
-    auto init = context.semantics_ir().GetNode(init_id);
+        << semantics_ir.GetNode(return_slot_id);
+    auto init = semantics_ir.GetNode(init_id);
     return context.AddNode(SemIR::Node::Temporary::Make(
         init.parse_node(), init.type_id(), return_slot_id, init_id));
   }
@@ -104,7 +104,7 @@ static auto FinalizeTemporary(Context& context, SemIR::NodeId init_id,
   // TODO: Consider using an invalid ID to mean that we immediately
   // materialize and initialize a temporary, rather than two separate
   // nodes.
-  auto init = context.semantics_ir().GetNode(init_id);
+  auto init = semantics_ir.GetNode(init_id);
   auto temporary_id = context.AddNode(
       SemIR::Node::TemporaryStorage::Make(init.parse_node(), init.type_id()));
   return context.AddNode(SemIR::Node::Temporary::Make(
@@ -120,6 +120,71 @@ static auto MaterializeIfInitializing(Context& context, SemIR::NodeId expr_id)
     return FinalizeTemporary(context, expr_id, /*discarded=*/false);
   }
   return expr_id;
+}
+
+// Creates and adds a node to perform element access into an aggregate.
+template <typename AccessNodeT, typename NodeBlockT>
+static auto MakeElemAccessNode(Context& context, Parse::Node parse_node,
+                               SemIR::NodeId aggregate_id,
+                               SemIR::TypeId elem_type_id, NodeBlockT& block,
+                               std::size_t i) {
+  if constexpr (std::is_same_v<AccessNodeT, SemIR::Node::ArrayIndex>) {
+    // TODO: Add a new node kind for indexing an array at a constant index
+    // so that we don't need an integer literal node here, and remove this
+    // special case.
+    auto index_id = block.AddNode(SemIR::Node::IntegerLiteral::Make(
+        parse_node, context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
+        context.semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
+    return block.AddNode(
+        AccessNodeT::Make(parse_node, elem_type_id, aggregate_id, index_id));
+  } else {
+    return block.AddNode(AccessNodeT::Make(
+        parse_node, elem_type_id, aggregate_id, SemIR::MemberIndex(i)));
+  }
+}
+
+// Converts an element of one aggregate so that it can be used as an element of
+// another aggregate.
+//
+// For the source: `src_id` is the source aggregate, `src_elem_type` is the
+// element type, `i` is the index, and `SourceAccessNodeT` is the kind of node
+// used to access the source element.
+//
+// For the target: `kind` is the kind of conversion or initialization,
+// `target_elem_type` is the element type. For initialization, `target_id` is
+// the destination, `target_block` is a pending block for target location
+// calculations that will be spliced as the return slot of the initializer if
+// necessary, `i` is the index, and `TargetAccessNodeT` is the kind of node
+// used to access the destination element.
+template <typename SourceAccessNodeT, typename TargetAccessNodeT>
+static auto ConvertAggregateElement(
+    Context& context, Parse::Node parse_node, SemIR::NodeId src_id,
+    SemIR::TypeId src_elem_type,
+    llvm::ArrayRef<SemIR::NodeId> src_literal_elems,
+    ConversionTarget::Kind kind, SemIR::NodeId target_id,
+    SemIR::TypeId target_elem_type, PendingBlock* target_block, std::size_t i) {
+  // Compute the location of the source element. This goes into the current code
+  // block, not into the target block.
+  // TODO: Ideally we would discard this node if it's unused.
+  auto src_elem_id =
+      !src_literal_elems.empty()
+          ? src_literal_elems[i]
+          : MakeElemAccessNode<SourceAccessNodeT>(context, parse_node, src_id,
+                                                  src_elem_type, context, i);
+
+  // If we're performing a conversion rather than an initialization, we won't
+  // have or need a target.
+  ConversionTarget target = {.kind = kind, .type_id = target_elem_type};
+  if (!target.is_initializer()) {
+    return Convert(context, parse_node, src_elem_id, target);
+  }
+
+  // Compute the location of the target element and initialize it.
+  PendingBlock::DiscardUnusedNodesScope scope(target_block);
+  target.init_block = target_block;
+  target.init_id = MakeElemAccessNode<TargetAccessNodeT>(
+      context, parse_node, target_id, target_elem_type, *target_block, i);
+  return Convert(context, parse_node, src_elem_id, target);
 }
 
 namespace {
@@ -225,30 +290,13 @@ static auto ConvertTupleToArray(Context& context, SemIR::Node tuple_type,
   llvm::SmallVector<SemIR::NodeId> inits;
   inits.reserve(array_bound + 1);
   for (auto [i, src_type_id] : llvm::enumerate(tuple_elem_types)) {
-    PendingBlock::DiscardUnusedNodesScope scope(target_block);
-    // TODO: Add a new node kind for indexing an array at a constant index
-    // so that we don't need an integer literal node here.
-    auto index_id = target_block->AddNode(SemIR::Node::IntegerLiteral::Make(
-        value.parse_node(),
-        context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
-        context.semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
-    auto target_id = target_block->AddNode(SemIR::Node::ArrayIndex::Make(
-        value.parse_node(), element_type_id, return_slot_id, index_id));
-    // Note, this is computing the source location not the destination, so it
-    // goes into the current code block, not into the target block.
-    // TODO: Ideally we would also discard this node if it's unused.
-    auto src_id = !literal_elems.empty()
-                      ? literal_elems[i]
-                      : context.AddNode(SemIR::Node::TupleAccess::Make(
-                            value.parse_node(), src_type_id, value_id,
-                            SemIR::MemberIndex(i)));
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
-    auto init_id = Convert(context, value.parse_node(), src_id,
-                           {.kind = ConversionTarget::FullInitializer,
-                            .type_id = element_type_id,
-                            .init_id = target_id,
-                            .init_block = target_block});
+    auto init_id = ConvertAggregateElement<SemIR::Node::TupleAccess,
+                                           SemIR::Node::ArrayIndex>(
+        context, value.parse_node(), value_id, src_type_id, literal_elems,
+        ConversionTarget::FullInitializer, return_slot_id, element_type_id,
+        target_block, i);
     if (init_id == SemIR::NodeId::BuiltinError) {
       return SemIR::NodeId::BuiltinError;
     }
@@ -322,27 +370,12 @@ static auto ConvertTupleToTuple(Context& context, SemIR::Node src_type,
                              src_elem_types.size());
   for (auto [i, src_type_id, dest_type_id] :
        llvm::enumerate(src_elem_types, dest_elem_types)) {
-    PendingBlock::DiscardUnusedNodesScope scope(target.init_block);
-    auto target_id =
-        is_init ? target.init_block->AddNode(SemIR::Node::TupleAccess::Make(
-                      value.parse_node(), dest_type_id, target.init_id,
-                      SemIR::MemberIndex(i)))
-                : SemIR::NodeId::Invalid;
-    // Note, this is computing the source location not the destination, so it
-    // goes into the current code block, not into the target block.
-    // TODO: Ideally we would also discard this node if it's unused.
-    auto src_id = !literal_elems.empty()
-                      ? literal_elems[i]
-                      : context.AddNode(SemIR::Node::TupleAccess::Make(
-                            value.parse_node(), src_type_id, value_id,
-                            SemIR::MemberIndex(i)));
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
-    auto init_id = Convert(context, value.parse_node(), src_id,
-                           {.kind = inner_kind,
-                            .type_id = dest_type_id,
-                            .init_id = target_id,
-                            .init_block = target.init_block});
+    auto init_id = ConvertAggregateElement<SemIR::Node::TupleAccess,
+                                           SemIR::Node::TupleAccess>(
+        context, value.parse_node(), value_id, src_type_id, literal_elems,
+        inner_kind, target.init_id, dest_type_id, target.init_block, i);
     if (init_id == SemIR::NodeId::BuiltinError) {
       return SemIR::NodeId::BuiltinError;
     }
@@ -432,27 +465,13 @@ static auto ConvertStructToStruct(Context& context, SemIR::Node src_type,
                              context.semantics_ir().GetString(dest_name_id));
       return SemIR::NodeId::BuiltinError;
     }
-    PendingBlock::DiscardUnusedNodesScope scope(target.init_block);
-    auto target_id =
-        is_init ? target.init_block->AddNode(SemIR::Node::StructAccess::Make(
-                      value.parse_node(), dest_type_id, target.init_id,
-                      SemIR::MemberIndex(i)))
-                : SemIR::NodeId::Invalid;
-    // Note, this is computing the source location not the destination, so it
-    // goes into the current code block, not into the target block.
-    // TODO: Ideally we would also discard this node if it's unused.
-    auto src_id = !literal_elems.empty()
-                      ? literal_elems[i]
-                      : context.AddNode(SemIR::Node::StructAccess::Make(
-                            value.parse_node(), src_type_id, value_id,
-                            SemIR::MemberIndex(i)));
+
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
-    auto init_id = Convert(context, value.parse_node(), src_id,
-                           {.kind = inner_kind,
-                            .type_id = dest_type_id,
-                            .init_id = target_id,
-                            .init_block = target.init_block});
+    auto init_id = ConvertAggregateElement<SemIR::Node::StructAccess,
+                                           SemIR::Node::StructAccess>(
+        context, value.parse_node(), value_id, src_type_id, literal_elems,
+        inner_kind, target.init_id, dest_type_id, target.init_block, i);
     if (init_id == SemIR::NodeId::BuiltinError) {
       return SemIR::NodeId::BuiltinError;
     }
@@ -662,7 +681,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
           // a conversion. In that case, we will have created it with the
           // target already set.
           // TODO: Find a better way to track whether we need to do this.
-          MarkInitializerFor(context, expr_id, target.init_id,
+          MarkInitializerFor(context.semantics_ir(), expr_id, target.init_id,
                              *target.init_block);
         }
         break;
