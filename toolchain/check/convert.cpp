@@ -80,8 +80,7 @@ static auto MarkInitializerFor(SemIR::File& semantics_ir, SemIR::NodeId init_id,
 static auto FinalizeTemporary(Context& context, SemIR::NodeId init_id,
                               bool discarded) -> SemIR::NodeId {
   auto& semantics_ir = context.semantics_ir();
-  auto return_slot_id =
-      FindReturnSlotForInitializer(semantics_ir, init_id);
+  auto return_slot_id = FindReturnSlotForInitializer(semantics_ir, init_id);
   if (return_slot_id.is_valid()) {
     // The return slot should already have a materialized temporary in it.
     CARBON_CHECK(semantics_ir.GetNode(return_slot_id).kind() ==
