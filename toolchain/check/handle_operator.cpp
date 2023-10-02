@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 
 namespace Carbon::Check {
 
@@ -16,9 +17,10 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
     case Lex::TokenKind::Plus:
       // TODO: This should search for a compatible interface. For now, it's a
       // very trivial check of validity on the operation.
-      lhs_id = context.ConvertToValueOfType(
-          parse_node, lhs_id, context.semantics_ir().GetNode(rhs_id).type_id());
-      rhs_id = context.ConvertToValueExpression(rhs_id);
+      lhs_id = ConvertToValueOfType(
+          context, parse_node, lhs_id,
+          context.semantics_ir().GetNode(rhs_id).type_id());
+      rhs_id = ConvertToValueExpression(context, rhs_id);
 
       context.AddNodeAndPush(
           parse_node,
@@ -32,7 +34,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // The first operand is wrapped in a ShortCircuitOperand, which we
       // already handled by creating a RHS block and a resumption block, which
       // are the current block and its enclosing block.
-      rhs_id = context.ConvertToBoolValue(parse_node, rhs_id);
+      rhs_id = ConvertToBoolValue(context, parse_node, rhs_id);
 
       // When the second operand is evaluated, the result of `and` and `or` is
       // its value.
@@ -60,7 +62,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       }
       // TODO: Destroy the old value before reinitializing. This will require
       // building the destruction code before we build the RHS subexpression.
-      rhs_id = context.Initialize(parse_node, lhs_id, rhs_id);
+      rhs_id = Initialize(context, parse_node, lhs_id, rhs_id);
       context.AddNode(SemIR::Node::Assign::Make(parse_node, lhs_id, rhs_id));
       // We model assignment as an expression, so we need to push a value for
       // it, even though it doesn't produce a value.
@@ -81,7 +83,7 @@ auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::Star: {
-      auto inner_type_id = context.ExpressionAsType(parse_node, value_id);
+      auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
       context.AddNodeAndPush(
           parse_node, SemIR::Node::PointerType::Make(
                           parse_node, SemIR::TypeId::TypeType, inner_type_id));
@@ -138,7 +140,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
                           "additional effect.");
         context.emitter().Emit(parse_node, RepeatedConst);
       }
-      auto inner_type_id = context.ExpressionAsType(parse_node, value_id);
+      auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
       context.AddNodeAndPush(
           parse_node, SemIR::Node::ConstType::Make(
                           parse_node, SemIR::TypeId::TypeType, inner_type_id));
@@ -146,7 +148,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
     }
 
     case Lex::TokenKind::Not:
-      value_id = context.ConvertToBoolValue(parse_node, value_id);
+      value_id = ConvertToBoolValue(context, parse_node, value_id);
       context.AddNodeAndPush(
           parse_node,
           SemIR::Node::UnaryOperatorNot::Make(
@@ -179,7 +181,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
         }
         builder.Emit();
       }
-      value_id = context.ConvertToValueExpression(value_id);
+      value_id = ConvertToValueExpression(context, value_id);
       context.AddNodeAndPush(
           parse_node,
           SemIR::Node::Dereference::Make(parse_node, result_type_id, value_id));
@@ -195,7 +197,7 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
     -> bool {
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().PopExpression();
-  cond_value_id = context.ConvertToBoolValue(parse_node, cond_value_id);
+  cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
   auto bool_type_id = context.semantics_ir().GetNode(cond_value_id).type_id();
 
   // Compute the branch value: the condition for `and`, inverted for `or`.

@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:21: ERROR: Cannot implicitly convert from `{.a: i32}` to `{} as type`.
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:20: ERROR: Cannot initialize struct of 0 element(s) from struct with 1 element(s).
 // CHECK:STDERR: var x: {} = {.a = 1};
-// CHECK:STDERR:                     ^
+// CHECK:STDERR:                    ^
 var x: {} = {.a = 1};
 
 // CHECK:STDOUT: file "fail_assign_to_empty.carbon" {

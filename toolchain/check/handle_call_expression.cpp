@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {
@@ -46,9 +47,9 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
 
   // Convert the arguments to match the parameters.
   auto refs_id = context.ParamOrArgPop();
-  if (!context.ImplicitAsForArgs(call_expr_parse_node, refs_id,
-                                 name_node.parse_node(), callable.param_refs_id,
-                                 callable.return_slot_id.is_valid())) {
+  if (!ConvertCallArgs(context, call_expr_parse_node, refs_id,
+                       name_node.parse_node(), callable.param_refs_id,
+                       callable.return_slot_id.is_valid())) {
     context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
     return true;
   }

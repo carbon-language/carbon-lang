@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:30: ERROR: Cannot implicitly convert from `{.b: f64}` to `{.a: i32}`.
+// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:29: ERROR: Mismatched names for field 1 in struct initialization: source has field name `b`, destination has field name `a`.
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1.0};
-// CHECK:STDERR:                              ^
+// CHECK:STDERR:                             ^
 var x: {.a: i32} = {.b = 1.0};
 
 // CHECK:STDOUT: file "fail_field_type_mismatch.carbon" {

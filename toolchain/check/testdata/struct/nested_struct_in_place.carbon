@@ -23,12 +23,12 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_50: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}
 // CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var "v"
-// CHECK:STDOUT:   %.loc10_75.1: ref (i32, i32, i32) = struct_access %v, member0
-// CHECK:STDOUT:   %.loc10_62: init (i32, i32, i32) = call @F() to %.loc10_75.1
-// CHECK:STDOUT:   %.loc10_75.2: ref (i32, i32, i32) = struct_access %v, member1
-// CHECK:STDOUT:   %.loc10_72: init (i32, i32, i32) = call @F() to %.loc10_75.2
-// CHECK:STDOUT:   %.loc10_74: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_literal (%.loc10_62, %.loc10_72)
-// CHECK:STDOUT:   %.loc10_75.3: init {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_init %.loc10_74, (%.loc10_62, %.loc10_72)
-// CHECK:STDOUT:   assign %v, %.loc10_75.3
+// CHECK:STDOUT:   %.loc10_74.1: ref (i32, i32, i32) = struct_access %v, member0
+// CHECK:STDOUT:   %.loc10_62: init (i32, i32, i32) = call @F() to %.loc10_74.1
+// CHECK:STDOUT:   %.loc10_74.2: ref (i32, i32, i32) = struct_access %v, member1
+// CHECK:STDOUT:   %.loc10_72: init (i32, i32, i32) = call @F() to %.loc10_74.2
+// CHECK:STDOUT:   %.loc10_74.3: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_literal (%.loc10_62, %.loc10_72)
+// CHECK:STDOUT:   %.loc10_74.4: init {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_init %.loc10_74.3, (%.loc10_62, %.loc10_72)
+// CHECK:STDOUT:   assign %v, %.loc10_74.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

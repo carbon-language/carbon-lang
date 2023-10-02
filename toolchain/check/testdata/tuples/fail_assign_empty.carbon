@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:19: ERROR: Cannot implicitly convert from `() as type` to `(i32,) as type`.
+// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:18: ERROR: Cannot initialize tuple of 1 element(s) from tuple with 0 element(s).
 // CHECK:STDERR: var x: (i32,) = ();
-// CHECK:STDERR:                   ^
+// CHECK:STDERR:                  ^
 var x: (i32,) = ();
 
 // CHECK:STDOUT: file "fail_assign_empty.carbon" {

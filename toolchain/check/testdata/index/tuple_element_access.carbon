@@ -14,13 +14,15 @@ var c: i32 = b[0];
 // CHECK:STDOUT:   %.loc7_13.3: type = tuple_type (i32)
 // CHECK:STDOUT:   %a: ref (i32,) = var "a"
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 12
-// CHECK:STDOUT:   %.loc7_21: (i32,) = tuple_literal (%.loc7_18)
-// CHECK:STDOUT:   %.loc7_22: init (i32,) = tuple_init %.loc7_21, (%.loc7_18)
-// CHECK:STDOUT:   assign %a, %.loc7_22
+// CHECK:STDOUT:   %.loc7_21.1: (i32,) = tuple_literal (%.loc7_18)
+// CHECK:STDOUT:   %.loc7_21.2: init (i32,) = tuple_init %.loc7_21.1, (%.loc7_18)
+// CHECK:STDOUT:   assign %a, %.loc7_21.2
 // CHECK:STDOUT:   %.loc8: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %b: ref (i32,) = var "b"
-// CHECK:STDOUT:   %.loc7_5: (i32,) = bind_value %a
-// CHECK:STDOUT:   assign %b, %.loc7_5
+// CHECK:STDOUT:   %.loc7_5.1: ref i32 = tuple_access %a, member0
+// CHECK:STDOUT:   %.loc7_5.2: i32 = bind_value %.loc7_5.1
+// CHECK:STDOUT:   %.loc7_5.3: init (i32,) = tuple_init %a, (%.loc7_5.2)
+// CHECK:STDOUT:   assign %b, %.loc7_5.3
 // CHECK:STDOUT:   %c: ref i32 = var "c"
 // CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc9_17.1: ref i32 = tuple_index %b, %.loc9_16

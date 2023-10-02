@@ -4,6 +4,7 @@
 
 #include "llvm/ADT/APSInt.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/node.h"
 #include "toolchain/sem_ir/node_kind.h"
 
@@ -42,7 +43,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
   auto index_node = context.semantics_ir().GetNode(index_node_id);
   auto operand_node_id = context.node_stack().PopExpression();
   operand_node_id =
-      context.ConvertToValueOrReferenceExpression(operand_node_id);
+      ConvertToValueOrReferenceExpression(context, operand_node_id);
   auto operand_node = context.semantics_ir().GetNode(operand_node_id);
   auto operand_type_id = operand_node.type_id();
   auto operand_type_node = context.semantics_ir().GetNode(
@@ -59,8 +60,8 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
               context.semantics_ir().GetArrayBoundValue(bound_id))) {
         index_node_id = SemIR::NodeId::BuiltinError;
       }
-      auto cast_index_id = context.ConvertToValueOfType(
-          index_node.parse_node(), index_node_id,
+      auto cast_index_id = ConvertToValueOfType(
+          context, index_node.parse_node(), index_node_id,
           context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType));
       context.AddNodeAndPush(parse_node, SemIR::Node::ArrayIndex::Make(
                                              parse_node, element_type_id,

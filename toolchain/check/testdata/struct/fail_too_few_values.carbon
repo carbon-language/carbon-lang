@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:37: ERROR: Cannot implicitly convert from `{.a: i32}` to `{.a: i32, .b: i32}`.
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:36: ERROR: Cannot initialize struct of 2 element(s) from struct with 1 element(s).
 // CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
-// CHECK:STDERR:                                     ^
+// CHECK:STDERR:                                    ^
 var x: {.a: i32, .b: i32} = {.a = 1};
 
 // CHECK:STDOUT: file "fail_too_few_values.carbon" {

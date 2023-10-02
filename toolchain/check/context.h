@@ -21,9 +21,6 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
-  // A block of code that has not yet been inserted into SemIR.
-  class PendingBlock;
-
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter<Parse::Node>& emitter,
@@ -108,54 +105,6 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Convert the given expression to a value expression of the same type.
-  auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
-
-  // Convert the given expression to a value or reference expression of the same
-  // type.
-  auto ConvertToValueOrReferenceExpression(SemIR::NodeId expr_id,
-                                           bool discarded = false)
-      -> SemIR::NodeId;
-
-  // Performs initialization of `target_id` from `value_id`. Returns the
-  // possibly-converted initialization expression, which should be assigned to
-  // the target using a suitable node for the kind of initialization.
-  auto Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
-                  SemIR::NodeId value_id) -> SemIR::NodeId;
-
-  // Performs and finalizes initialization of `target_id` from `value_id`. This
-  // is the same as `Initialize`, except that it also performs the final store
-  // from the initializer to the target if the initialization is not in-place.
-  // That final store is often undesirable as it is performed by the consumer
-  // of the initializer, such as an `Assign` or `ReturnExpression` node. The
-  // resulting node describes the initialization operation that was performed.
-  auto InitializeAndFinalize(Parse::Node parse_node, SemIR::NodeId target_id,
-                             PendingBlock& target_block, SemIR::NodeId value_id)
-      -> SemIR::NodeId;
-
-  // Converts `value_id` to a value expression of type `type_id`.
-  auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
-                            SemIR::TypeId type_id) -> SemIR::NodeId {
-    return ConvertToValueExpression(ImplicitAs(parse_node, value_id, type_id));
-  }
-
-  // Converts `value_id` to a value expression of type `bool`.
-  auto ConvertToBoolValue(Parse::Node parse_node, SemIR::NodeId value_id)
-      -> SemIR::NodeId {
-    return ConvertToValueOfType(
-        parse_node, value_id, CanonicalizeType(SemIR::NodeId::BuiltinBoolType));
-  }
-
-  // Handles an expression whose result is discarded.
-  auto HandleDiscardedExpression(SemIR::NodeId id) -> void;
-
-  // Runs ImplicitAs for a set of arguments and parameters in a function call.
-  auto ImplicitAsForArgs(Parse::Node call_parse_node,
-                         SemIR::NodeBlockId arg_refs_id,
-                         Parse::Node param_parse_node,
-                         SemIR::NodeBlockId param_refs_id, bool has_return_slot)
-      -> bool;
-
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.
   auto CanonicalizeType(SemIR::NodeId node_id) -> SemIR::TypeId;
@@ -179,13 +128,6 @@ class Context {
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)
       -> SemIR::TypeId;
-
-  // Converts an expression for use as a type.
-  auto ExpressionAsType(Parse::Node parse_node, SemIR::NodeId value_id)
-      -> SemIR::TypeId {
-    return CanonicalizeType(
-        ConvertToValueOfType(parse_node, value_id, SemIR::TypeId::TypeType));
-  }
 
   // Removes any top-level `const` qualifiers from a type.
   auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
@@ -267,31 +209,6 @@ class Context {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
-
-  // Implementation of `Initialize`. Takes a `target_block` which contains
-  // pending instructions that are needed to form the value of `target_id`.
-  // These can be discarded if no initialization is needed.
-  auto InitializeImpl(Parse::Node parse_node, SemIR::NodeId target_id,
-                      PendingBlock& target_block, SemIR::NodeId value_id)
-      -> SemIR::NodeId;
-
-  // Commits to using a temporary to store the result of the initializing
-  // expression described by `init_id`, and returns the location of the
-  // temporary. If `discarded` is `true`, the result is discarded, and no
-  // temporary will be created if possible; if no temporary is created, the
-  // return value will be `SemIR::NodeId::Invalid`.
-  auto FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
-      -> SemIR::NodeId;
-
-  // Marks the initializer `init_id` as initializing `target_id`.
-  auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id,
-                          PendingBlock& target_block) -> void;
-
-  // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
-  // converted result. Prints a diagnostic and returns an Error if the
-  // conversion cannot be performed.
-  auto ImplicitAs(Parse::Node parse_node, SemIR::NodeId value_id,
-                  SemIR::TypeId as_type_id) -> SemIR::NodeId;
 
   // Forms a canonical type ID for a type. This function is given two
   // callbacks:

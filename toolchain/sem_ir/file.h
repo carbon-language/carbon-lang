@@ -192,6 +192,13 @@ class File : public Printable<File> {
     return id;
   }
 
+  // Adds a node block of the given size.
+  auto AddUninitializedNodeBlock(size_t size) -> NodeBlockId {
+    NodeBlockId id(node_blocks_.size());
+    node_blocks_.push_back(AllocateUninitialized<NodeId>(size));
+    return id;
+  }
+
   // Returns the requested node block.
   auto GetNodeBlock(NodeBlockId block_id) const -> llvm::ArrayRef<NodeId> {
     CARBON_CHECK(block_id != NodeBlockId::Unreachable);
@@ -305,16 +312,23 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
-  // Allocates a copy of the given data using our slab allocator.
+  // Allocates an uninitialized array using our slab allocator.
   template <typename T>
-  auto AllocateCopy(llvm::ArrayRef<T> data) -> llvm::MutableArrayRef<T> {
+  auto AllocateUninitialized(std::size_t size) -> llvm::MutableArrayRef<T> {
     // We're not going to run a destructor, so ensure that's OK.
     static_assert(std::is_trivially_destructible_v<T>);
 
-    T* storage = static_cast<T*>(
-        allocator_.Allocate(data.size() * sizeof(T), alignof(T)));
-    std::uninitialized_copy(data.begin(), data.end(), storage);
-    return llvm::MutableArrayRef<T>(storage, data.size());
+    T* storage =
+        static_cast<T*>(allocator_.Allocate(size * sizeof(T), alignof(T)));
+    return llvm::MutableArrayRef<T>(storage, size);
+  }
+
+  // Allocates a copy of the given data using our slab allocator.
+  template <typename T>
+  auto AllocateCopy(llvm::ArrayRef<T> data) -> llvm::MutableArrayRef<T> {
+    auto result = AllocateUninitialized<T>(data.size());
+    std::uninitialized_copy(data.begin(), data.end(), result.begin());
+    return result;
   }
 
   bool has_errors_ = false;
@@ -390,6 +404,7 @@ enum class ExpressionCategory : int8_t {
   // and struct literals, where the subexpressions for different elements can
   // have different categories.
   Mixed,
+  Last = Mixed
 };
 
 // Returns the expression category for a node.

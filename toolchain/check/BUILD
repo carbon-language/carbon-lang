@@ -33,6 +33,7 @@ cc_library(
     srcs = [
         "check.cpp",
         "context.cpp",
+        "convert.cpp",
         "declaration_name_stack.cpp",
         "node_block_stack.cpp",
     ] +
@@ -43,8 +44,10 @@ cc_library(
     hdrs = [
         "check.h",
         "context.h",
+        "convert.h",
         "declaration_name_stack.h",
         "node_block_stack.h",
+        "pending_block.h",
     ],
     deps = [
         ":node_stack",
