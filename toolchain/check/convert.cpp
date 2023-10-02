@@ -506,18 +506,19 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   auto target_type_node = semantics_ir.GetNode(
       semantics_ir.GetTypeAllowBuiltinTypes(target.type_id));
 
-  // Various forms of implicit conversion are supported as builtin conversions
-  // rather than being implemented purely in the Carbon prelude as `impl`s of
-  // `ImplicitAs`. There are a few reasons we need to perform some of these
+  // Various forms of implicit conversion are supported as builtin conversions,
+  // either in addition to or instead of `impl`s of `ImplicitAs` in the Carbon
+  // prelude. There are a few reasons we need to perform some of these
   // conversions as builtins:
   //
   // 1) Conversions from struct and tuple *literals* have special rules that
   //    cannot be implemented by invoking `ImplicitAs`. Specifically, we must
   //    recurse into the elements of the literal before performing
   //    initialization in order to avoid unnecessary conversions between
-  //    expression categories.
+  //    expression categories that would be performed by `ImplicitAs.Convert`.
   // 2) (Not implemented yet) Conversion of a facet to a facet type depends on
-  //    the value of the facet, not only its type.
+  //    the value of the facet, not only its type, and therefore cannot be
+  //    modeled by `ImplicitAs`.
   // 3) Some of these conversions are used while checking the library
   //    definition of `ImplicitAs` itself or implementations of it.
   //
@@ -528,9 +529,9 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   // builtin conversions as we can so that we can test that they do the same
   // thing as the library implementations.
   //
-  // These builtin conversions all correspond to `final impl`s in the library,
-  // so we don't need to worry about `ImplicitAs` being specialized in any of
-  // these cases.
+  // The builtin conversions that correspond to `impl`s in the library all
+  // correspond to `final impl`s, so we don't need to worry about `ImplicitAs`
+  // being specialized in any of these cases.
 
   // If the value is already of the right kind and expression category, there's
   // nothing to do. Performing a conversion would decompose and rebuild tuples
