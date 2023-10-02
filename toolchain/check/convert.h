@@ -51,8 +51,8 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId value_id,
              ConversionTarget target) -> SemIR::NodeId;
 
 // Performs initialization of `target_id` from `value_id`. Returns the
-// possibly-converted initialization expression, which should be assigned to
-// the target using a suitable node for the kind of initialization.
+// possibly-converted initializing expression, which should be assigned to the
+// target using a suitable node for the kind of initialization.
 auto Initialize(Context& context, Parse::Node parse_node,
                 SemIR::NodeId target_id, SemIR::NodeId value_id)
     -> SemIR::NodeId;
