@@ -21,6 +21,12 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
+  // A scope in which `break` and `continue` can be used.
+  struct BreakContinueScope {
+    SemIR::NodeBlockId break_target;
+    SemIR::NodeBlockId continue_target;
+  };
+
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter<Parse::Node>& emitter,
@@ -183,6 +189,10 @@ class Context {
     return return_scope_stack_;
   }
 
+  auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
+    return break_continue_stack_;
+  }
+
   auto declaration_name_stack() -> DeclarationNameStack& {
     return declaration_name_stack_;
   }
@@ -269,6 +279,9 @@ class Context {
   // A stack of return scopes; i.e., targets for `return`. Inside a function,
   // this will be a FunctionDeclaration.
   llvm::SmallVector<SemIR::NodeId> return_scope_stack_;
+
+  // A stack of `break` and `continue` targets.
+  llvm::SmallVector<BreakContinueScope> break_continue_stack_;
 
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
