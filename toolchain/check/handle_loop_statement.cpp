@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 
 namespace Carbon::Check {
 
@@ -40,17 +41,52 @@ auto HandleForStatement(Context& context, Parse::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleForStatement");
 }
 
-auto HandleWhileCondition(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleWhileCondition");
-}
-
 auto HandleWhileConditionStart(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_node, "HandleWhileConditionStart");
+  // Branch to the loop entry block.
+  auto loop_entry_id = context.AddDominatedBlockAndBranch(parse_node);
+  context.node_block_stack().Pop();
+
+  // Start emitting the loop entry block.
+  context.node_block_stack().Push(loop_entry_id);
+  context.AddCurrentCodeBlockToFunction();
+
+  context.node_stack().Push(parse_node, loop_entry_id);
+  return true;
+}
+
+auto HandleWhileCondition(Context& context, Parse::Node parse_node) -> bool {
+  auto cond_value_id = context.node_stack().PopExpression();
+  cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
+
+  // Branch to either the loop body or the loop exit block.
+  auto loop_body_id =
+      context.AddDominatedBlockAndBranchIf(parse_node, cond_value_id);
+  auto loop_exit_id = context.AddDominatedBlockAndBranch(parse_node);
+  context.node_block_stack().Pop();
+
+  // Start emitting the loop body.
+  context.node_block_stack().Push(loop_body_id);
+  context.AddCurrentCodeBlockToFunction();
+
+  context.node_stack().Push(parse_node, loop_exit_id);
+  return true;
 }
 
 auto HandleWhileStatement(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleWhileStatement");
+  auto loop_exit_id =
+      context.node_stack().Pop<Parse::NodeKind::WhileCondition>();
+  auto loop_entry_id =
+      context.node_stack().Pop<Parse::NodeKind::WhileConditionStart>();
+
+  // Add the loop backedge.
+  context.AddNode(SemIR::Node::Branch::Make(parse_node, loop_entry_id));
+  context.node_block_stack().Pop();
+
+  // Start emitting the loop exit block.
+  context.node_block_stack().Push(loop_exit_id);
+  context.AddCurrentCodeBlockToFunction();
+  return true;
 }
 
 }  // namespace Carbon::Check

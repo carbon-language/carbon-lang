@@ -264,6 +264,8 @@ class NodeStack {
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExpressionIf:
       case Parse::NodeKind::ParameterList:
+      case Parse::NodeKind::WhileCondition:
+      case Parse::NodeKind::WhileConditionStart:
         return IdKind::NodeBlockId;
       case Parse::NodeKind::FunctionDefinitionStart:
         return IdKind::FunctionId;
