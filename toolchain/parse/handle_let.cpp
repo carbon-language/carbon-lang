@@ -37,7 +37,7 @@ auto HandleLetAfterPattern(Context& context) -> void {
         ExpectedInitializerAfterLet, Error,
         "Expected `=`; `let` declaration must have an initializer.");
     context.emitter().Emit(*context.position(), ExpectedInitializerAfterLet);
-    state.has_error = true;
+    context.ReturnErrorOnState();
   }
 }
 
