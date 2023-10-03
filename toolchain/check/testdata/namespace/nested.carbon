@@ -30,7 +30,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref = name_reference_untyped "Foo", package.%.loc7
-// CHECK:STDOUT:   %.loc23_14.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc23_14.2: init () = call @Wiz()
+// CHECK:STDOUT:   %.loc14_14.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc14_14.2: init () = call @Wiz()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
