@@ -257,7 +257,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // format.
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
 
-  // Returns true if the buffer has errors that are detectable at lexing time.
+  // Returns true if the buffer has errors that were detected at lexing time.
   [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
 
   [[nodiscard]] auto tokens() const -> llvm::iterator_range<TokenIterator> {
