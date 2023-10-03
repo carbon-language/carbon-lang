@@ -40,7 +40,7 @@ auto HandleArrayIndex(FunctionContext& context, SemIR::NodeId node_id,
     array_element_value = context.GetIndexFromStructOrArray(
         llvm_type, array_value, index, "array.index");
   } else {
-    auto* index = context.GetLocalLoaded(index_node_id);
+    auto* index = context.GetLocal(index_node_id);
     // TODO: Handle return value or call such as `F()[a]`.
     auto* zero = llvm::ConstantInt::get(
         llvm::Type::getInt32Ty(context.llvm_context()), 0);
@@ -108,7 +108,7 @@ auto HandleBranch(FunctionContext& context, SemIR::NodeId /*node_id*/,
 auto HandleBranchIf(FunctionContext& context, SemIR::NodeId /*node_id*/,
                     SemIR::Node node) -> void {
   auto [target_block_id, cond_id] = node.GetAsBranchIf();
-  llvm::Value* cond = context.GetLocalLoaded(cond_id);
+  llvm::Value* cond = context.GetLocal(cond_id);
   llvm::BasicBlock* then_block = context.GetBlock(target_block_id);
   llvm::BasicBlock* else_block = context.CreateSyntheticBlock();
   context.builder().CreateCondBr(cond, then_block, else_block);
@@ -118,7 +118,7 @@ auto HandleBranchIf(FunctionContext& context, SemIR::NodeId /*node_id*/,
 auto HandleBranchWithArg(FunctionContext& context, SemIR::NodeId /*node_id*/,
                          SemIR::Node node) -> void {
   auto [target_block_id, arg_id] = node.GetAsBranchWithArg();
-  llvm::Value* arg = context.GetLocalLoaded(arg_id);
+  llvm::Value* arg = context.GetLocal(arg_id);
   SemIR::TypeId arg_type_id = context.semantics_ir().GetNode(arg_id).type_id();
 
   // Opportunistically avoid creating a BasicBlock that contains just a branch.
@@ -164,17 +164,9 @@ auto HandleCall(FunctionContext& context, SemIR::NodeId node_id,
 
   for (auto ref_id : arg_ids) {
     auto arg_type_id = context.semantics_ir().GetNode(ref_id).type_id();
-    switch (SemIR::GetValueRepresentation(context.semantics_ir(), arg_type_id)
-                .kind) {
-      case SemIR::ValueRepresentation::None:
-        break;
-      case SemIR::ValueRepresentation::Copy:
-      case SemIR::ValueRepresentation::Custom:
-        args.push_back(context.GetLocalLoaded(ref_id));
-        break;
-      case SemIR::ValueRepresentation::Pointer:
-        args.push_back(context.GetLocal(ref_id));
-        break;
+    if (SemIR::GetValueRepresentation(context.semantics_ir(), arg_type_id)
+            .kind != SemIR::ValueRepresentation::None) {
+      args.push_back(context.GetLocal(ref_id));
     }
   }
 
@@ -270,7 +262,7 @@ auto HandleReturnExpression(FunctionContext& context, SemIR::NodeId /*node_id*/,
       return;
     case SemIR::InitializingRepresentation::ByCopy:
       // The expression produces the value representation for the type.
-      context.builder().CreateRet(context.GetLocalLoaded(expr_id));
+      context.builder().CreateRet(context.GetLocal(expr_id));
       return;
   }
 }

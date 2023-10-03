@@ -25,10 +25,9 @@ fn F() -> i32 {
 // CHECK:STDOUT: define i32 @F() {
 // CHECK:STDOUT:   %n = alloca i32, align 4
 // CHECK:STDOUT:   store i32 0, ptr %n, align 4
-// CHECK:STDOUT:   %1 = load ptr, ptr %n, align 8
-// CHECK:STDOUT:   %G = call i32 @G(ptr %1)
+// CHECK:STDOUT:   %G = call i32 @G(ptr %n)
 // CHECK:STDOUT:   %temp = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %G, ptr %temp, align 4
-// CHECK:STDOUT:   %2 = load i32, ptr %temp, align 4
-// CHECK:STDOUT:   ret i32 %2
+// CHECK:STDOUT:   %1 = load i32, ptr %temp, align 4
+// CHECK:STDOUT:   ret i32 %1
 // CHECK:STDOUT: }

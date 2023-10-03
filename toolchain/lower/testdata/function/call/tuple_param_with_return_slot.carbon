@@ -22,11 +22,9 @@ fn Main() {
 // CHECK:STDOUT:   %tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %tuple.index, ptr %tuple.elem, align 4
 // CHECK:STDOUT:   %tuple.elem3 = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   %1 = load i32, ptr %tuple.index1, align 4
-// CHECK:STDOUT:   store i32 %1, ptr %tuple.elem3, align 4
+// CHECK:STDOUT:   store ptr %tuple.index1, ptr %tuple.elem3, align 8
 // CHECK:STDOUT:   %tuple.elem4 = getelementptr inbounds { i32, i32, i32 }, ptr %return, i32 0, i32 2
-// CHECK:STDOUT:   %2 = load i32, ptr %tuple.index2, align 4
-// CHECK:STDOUT:   store i32 %2, ptr %tuple.elem4, align 4
+// CHECK:STDOUT:   store ptr %tuple.index2, ptr %tuple.elem4, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

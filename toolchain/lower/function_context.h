@@ -51,10 +51,6 @@ class FunctionContext {
     return it->second;
   }
 
-  // Returns a local (versus global) value for the given node in loaded state.
-  // Loads will only be inserted on an as-needed basis.
-  auto GetLocalLoaded(SemIR::NodeId node_id) -> llvm::Value*;
-
   // Sets the value for the given node.
   auto SetLocal(SemIR::NodeId node_id, llvm::Value* value) {
     bool added = locals_.insert({node_id, value}).second;

@@ -24,7 +24,6 @@ fn F() {
 // CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
 // CHECK:STDOUT:   store i32 2, ptr %b, align 4
 // CHECK:STDOUT:   %b1 = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
-// CHECK:STDOUT:   %1 = load ptr, ptr %b1, align 8
-// CHECK:STDOUT:   call void @G(ptr %1)
+// CHECK:STDOUT:   call void @G(ptr %b1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

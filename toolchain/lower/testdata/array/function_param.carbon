@@ -17,8 +17,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F(ptr %arr, i32 %i) {
 // CHECK:STDOUT:   %array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i
-// CHECK:STDOUT:   %1 = load i32, ptr %array.index, align 4
-// CHECK:STDOUT:   ret i32 %1
+// CHECK:STDOUT:   ret ptr %array.index
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @G() {
