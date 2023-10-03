@@ -63,6 +63,14 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
       auto cast_index_id = ConvertToValueOfType(
           context, index_node.parse_node(), index_node_id,
           context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType));
+      if (SemIR::GetExpressionCategory(context.semantics_ir(),
+                                       operand_node_id) ==
+          SemIR::ExpressionCategory::Value) {
+        // If the operand is an array value, convert it to an ephemeral
+        // reference to an array so we can index into it.
+        operand_node_id = context.AddNode(SemIR::Node::ValueAsReference::Make(
+            parse_node, operand_type_id, operand_node_id));
+      }
       context.AddNodeAndPush(parse_node, SemIR::Node::ArrayIndex::Make(
                                              parse_node, element_type_id,
                                              operand_node_id, cast_index_id));
