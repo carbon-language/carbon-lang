@@ -5,7 +5,6 @@
 // AUTOUPDATE
 
 fn G(p: i32*) -> i32 {
-  // TODO: The LLVM IR generated here is wrong, missing a load.
   return *p;
 }
 

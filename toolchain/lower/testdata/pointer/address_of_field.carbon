@@ -8,7 +8,6 @@ fn G(p: i32*);
 
 fn F() {
   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // TODO: The lowering here is incorrect: we're incorrectly loading `s.b`.
   G(&s.b);
 }
 
