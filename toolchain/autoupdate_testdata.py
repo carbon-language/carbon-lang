@@ -19,6 +19,8 @@ def main() -> None:
         "run",
         "-c",
         "opt",
+        "--experimental_convenience_symlinks=ignore",
+        "--ui_event_filters=-info,-stdout,-stderr,-finish",
         "//toolchain/testing:file_test",
         "--",
         "--autoupdate",
