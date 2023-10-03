@@ -17,6 +17,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: i32 = bind_name "a", <error>
+// CHECK:STDOUT:   %a: i32 = bind_name "a", <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -33,7 +33,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc8_36.7: init i32 = initialize_from %.loc8_35 to %.loc8_36.6
 // CHECK:STDOUT:   %.loc8_36.8: init (i32, i32, i32) = tuple_init %.loc8_36.1, (%.loc8_36.3, %.loc8_36.5, %.loc8_36.7)
 // CHECK:STDOUT:   assign %v, %.loc8_36.8
-// CHECK:STDOUT:   %.loc10_24: (type, type, type) = tuple_literal (i32, i32, i32)
+// CHECK:STDOUT:   %.loc10: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc8_7.1: ref i32 = tuple_access %v, member0
 // CHECK:STDOUT:   %.loc8_7.2: i32 = bind_value %.loc8_7.1
 // CHECK:STDOUT:   %.loc8_7.3: ref i32 = tuple_access %v, member1
@@ -41,8 +41,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc8_7.5: ref i32 = tuple_access %v, member2
 // CHECK:STDOUT:   %.loc8_7.6: i32 = bind_value %.loc8_7.5
 // CHECK:STDOUT:   %.loc8_7.7: (i32, i32, i32) = tuple_value %v, (%.loc8_7.2, %.loc8_7.4, %.loc8_7.6)
-// CHECK:STDOUT:   %.loc10_7: (i32, i32, i32) = bind_name "w", %.loc8_7.7
+// CHECK:STDOUT:   %w: (i32, i32, i32) = bind_name "w", %.loc8_7.7
 // CHECK:STDOUT:   %.loc11_12: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc11_13: i32 = tuple_index %.loc10_7, %.loc11_12
+// CHECK:STDOUT:   %.loc11_13: i32 = tuple_index %w, %.loc11_12
 // CHECK:STDOUT:   return %.loc11_13
 // CHECK:STDOUT: }
