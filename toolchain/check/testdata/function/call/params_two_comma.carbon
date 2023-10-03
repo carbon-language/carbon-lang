@@ -23,10 +23,12 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Foo.ref.loc10 = name_reference_untyped "Foo", package.%.loc7
 // CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_10: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc10_6.2: init () = call @Foo(%.loc10_7, %.loc10_10)
+// CHECK:STDOUT:   %Foo.ref.loc11 = name_reference_untyped "Foo", package.%.loc7
 // CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc11_10: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc11_6: init () = call @Foo(%.loc11_7, %.loc11_10)

@@ -31,6 +31,7 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%.loc7
 // CHECK:STDOUT:   %.loc11_11.1: init bool = call @F()
 // CHECK:STDOUT:   %.loc11_11.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc11_11.3: ref bool = temporary %.loc11_11.2, %.loc11_11.1
@@ -39,6 +40,7 @@ fn And() -> bool {
 // CHECK:STDOUT:   if %.loc11_11.4 br !and.rhs else br !and.result(%.loc11_14.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
+// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%.loc8
 // CHECK:STDOUT:   %.loc11_19.1: init bool = call @G()
 // CHECK:STDOUT:   %.loc11_19.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc11_19.3: ref bool = temporary %.loc11_19.2, %.loc11_19.1

@@ -356,6 +356,22 @@ class NodeNamer {
           CollectNamesInBlock(scope_idx, block_id);
           break;
         }
+        case NodeKind::NameReference: {
+          auto [name_id, value_id] = node.GetAsNameReference();
+          nodes[node_id.index] = {
+              scope_idx, scope.nodes.AllocateName(
+                             *this, node.parse_node(),
+                             semantics_ir_.GetString(name_id).str() + ".ref")};
+          continue;
+        }
+        case NodeKind::NameReferenceUntyped: {
+          auto [name_id, value_id] = node.GetAsNameReferenceUntyped();
+          nodes[node_id.index] = {
+              scope_idx, scope.nodes.AllocateName(
+                             *this, node.parse_node(),
+                             semantics_ir_.GetString(name_id).str() + ".ref")};
+          continue;
+        }
         case NodeKind::Parameter: {
           auto name_id = node.GetAsParameter();
           nodes[node_id.index] = {

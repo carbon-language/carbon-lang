@@ -265,6 +265,8 @@ class File : public Printable<File> {
       return NodeId::BuiltinTypeType;
     } else if (type_id == TypeId::Error) {
       return NodeId::BuiltinError;
+    } else if (type_id == TypeId::Invalid) {
+      return NodeId::Invalid;
     } else {
       return GetType(type_id);
     }

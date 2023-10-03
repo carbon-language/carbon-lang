@@ -31,6 +31,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%.loc7
 // CHECK:STDOUT:   %.loc11_11.1: init bool = call @F()
 // CHECK:STDOUT:   %.loc11_11.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc11_11.3: ref bool = temporary %.loc11_11.2, %.loc11_11.1
@@ -40,6 +41,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   if %.loc11_14.1 br !or.rhs else br !or.result(%.loc11_14.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
+// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%.loc8
 // CHECK:STDOUT:   %.loc11_18.1: init bool = call @G()
 // CHECK:STDOUT:   %.loc11_18.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc11_18.3: ref bool = temporary %.loc11_18.2, %.loc11_18.1

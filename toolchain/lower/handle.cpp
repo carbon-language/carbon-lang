@@ -223,6 +223,18 @@ auto HandleIntegerLiteral(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(node_id, v);
 }
 
+auto HandleNameReference(FunctionContext& context, SemIR::NodeId node_id,
+                         SemIR::Node node) -> void {
+  auto [name_id, value_id] = node.GetAsNameReference();
+  context.SetLocal(node_id, context.GetLocal(value_id));
+}
+
+auto HandleNameReferenceUntyped(FunctionContext& /*context*/,
+                                SemIR::NodeId /*node_id*/, SemIR::Node /*node*/)
+    -> void {
+  // No action to take: untyped name references don't hold a value.
+}
+
 auto HandleNamespace(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
                      SemIR::Node /*node*/) -> void {
   // No action to take.

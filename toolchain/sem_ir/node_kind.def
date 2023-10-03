@@ -69,6 +69,10 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(InitializeFrom, "initialize_from", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_literal", Typed,
                                 NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(NameReference, "name_reference", Typed,
+                                NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(NameReferenceUntyped, "name_reference_untyped",
+                                Untyped, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Namespace, "namespace", Untyped, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(NoOp, "no_op", None, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Parameter, "parameter", Typed, NotTerminator)

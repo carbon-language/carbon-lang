@@ -18,6 +18,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: ref i32 = var "x"
+// CHECK:STDOUT:   %x.ref: <error> = name_reference "x", <error>
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

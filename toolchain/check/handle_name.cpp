@@ -15,7 +15,8 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   auto base_id = context.node_stack().PopExpression();
 
-  auto base = context.semantics_ir().GetNode(base_id);
+  auto base =
+      context.semantics_ir().GetNode(context.SkipNameReferences(base_id));
   if (base.kind() == SemIR::NodeKind::Namespace) {
     // For a namespace, just resolve the name.
     auto node_id =
@@ -90,10 +91,22 @@ auto HandleName(Context& context, Parse::Node parse_node) -> bool {
 auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   auto name_str = context.parse_tree().GetNodeText(parse_node);
   auto name_id = context.semantics_ir().AddString(name_str);
-  context.node_stack().Push(
-      parse_node,
+  auto value_id =
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
-                         /*print_diagnostics=*/true));
+                         /*print_diagnostics=*/true);
+  auto value = context.semantics_ir().GetNode(value_id);
+  if (value.kind().value_kind() == SemIR::NodeValueKind::Typed) {
+    // This is a reference to a name binding that has a value and a type.
+    context.AddNodeAndPush(parse_node,
+                           SemIR::Node::NameReference::Make(
+                               parse_node, value.type_id(), name_id, value_id));
+  } else {
+    // This is something like a namespace name, that can be found by name lookup
+    // but isn't a first-class value with a type.
+    context.AddNodeAndPush(parse_node,
+                           SemIR::Node::NameReferenceUntyped::Make(
+                               parse_node, value.type_id(), name_id, value_id));
+  }
   return true;
 }
 
@@ -105,8 +118,8 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
       // First QualifiedDeclaration in a chain.
       auto [parse_node1, node_id1] =
           context.node_stack().PopExpressionWithParseNode();
-      context.declaration_name_stack().ApplyExpressionQualifier(parse_node1,
-                                                                node_id1);
+      context.declaration_name_stack().ApplyExpressionQualifier(
+          parse_node1, context.SkipNameReferences(node_id1));
       // Add the QualifiedDeclaration so that it can be used for bracketing.
       context.node_stack().Push(parse_node);
     } else {
