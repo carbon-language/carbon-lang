@@ -231,6 +231,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::TupleInit:
     case NodeKind::TupleValue:
     case NodeKind::UnaryOperatorNot:
+    case NodeKind::ValueAsReference:
     case NodeKind::VarStorage:
       CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
   }
@@ -398,6 +399,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::TupleInit:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
+      case NodeKind::ValueAsReference:
       case NodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
         // in errors, but make it clear what's going on so that it's clearer
@@ -518,6 +520,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
 
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
+      case NodeKind::ValueAsReference:
         return ExpressionCategory::EphemeralReference;
     }
   }
@@ -569,6 +572,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::TupleInit:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
+      case NodeKind::ValueAsReference:
       case NodeKind::VarStorage:
         CARBON_FATAL() << "Type refers to non-type node " << node;
 
