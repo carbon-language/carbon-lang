@@ -63,17 +63,24 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
       auto cast_index_id = ConvertToValueOfType(
           context, index_node.parse_node(), index_node_id,
           context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType));
-      if (SemIR::GetExpressionCategory(context.semantics_ir(),
-                                       operand_node_id) ==
-          SemIR::ExpressionCategory::Value) {
+      auto array_cat =
+          SemIR::GetExpressionCategory(context.semantics_ir(), operand_node_id);
+      if (array_cat == SemIR::ExpressionCategory::Value) {
         // If the operand is an array value, convert it to an ephemeral
-        // reference to an array so we can index into it.
+        // reference to an array so we can perform a primitive indexing into it.
         operand_node_id = context.AddNode(SemIR::Node::ValueAsReference::Make(
             parse_node, operand_type_id, operand_node_id));
       }
-      context.AddNodeAndPush(parse_node, SemIR::Node::ArrayIndex::Make(
-                                             parse_node, element_type_id,
-                                             operand_node_id, cast_index_id));
+      auto elem_id = context.AddNode(SemIR::Node::ArrayIndex::Make(
+          parse_node, element_type_id, operand_node_id, cast_index_id));
+      if (array_cat != SemIR::ExpressionCategory::DurableReference) {
+        // Indexing a durable reference gives a durable reference expression.
+        // Indexing anything else gives a value expression.
+        // TODO: This should be replaced by a choice between using `IndexWith`
+        // and `IndirectIndexWith`.
+        elem_id = ConvertToValueExpression(context, elem_id);
+      }
+      context.node_stack().Push(parse_node, elem_id);
       return true;
     }
     case SemIR::NodeKind::TupleType: {
