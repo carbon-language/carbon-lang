@@ -25,9 +25,9 @@ fn ValueBinding(b: [i32; 3]) {
 }
 
 // CHECK:STDOUT: file "expression_category.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc9 = fn_decl @G
-// CHECK:STDOUT:   %.loc17 = fn_decl @ValueBinding
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %ValueBinding = fn_decl @ValueBinding
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: [i32; 3];
