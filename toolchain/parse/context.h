@@ -18,8 +18,8 @@
 
 namespace Carbon::Parse {
 
-// Context and shared functionality for parser handlers. See state.def
-// for state documentation.
+// Context and shared functionality for parser handlers. See state.def for state
+// documentation.
 class Context {
  public:
   // Possible operator fixities for errors.
