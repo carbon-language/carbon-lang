@@ -144,7 +144,7 @@ auto Context::PopScope() -> void {
   }
 }
 
-auto Context::SkipNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId {
+auto Context::FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId {
   while (true) {
     auto node = semantics_ir().GetNode(node_id);
     switch (node.kind()) {

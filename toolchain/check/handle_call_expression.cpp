@@ -18,7 +18,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack()
           .PopWithParseNode<Parse::NodeKind::CallExpressionStart>();
   auto name_node =
-      context.semantics_ir().GetNode(context.SkipNameReferences(name_id));
+      context.semantics_ir().GetNode(context.FollowNameReferences(name_id));
   if (name_node.kind() != SemIR::NodeKind::FunctionDeclaration) {
     // TODO: Work on error.
     context.TODO(parse_node, "Not a callable name");

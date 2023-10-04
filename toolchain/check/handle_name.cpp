@@ -16,7 +16,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
   auto base_id = context.node_stack().PopExpression();
 
   auto base =
-      context.semantics_ir().GetNode(context.SkipNameReferences(base_id));
+      context.semantics_ir().GetNode(context.FollowNameReferences(base_id));
   if (base.kind() == SemIR::NodeKind::Namespace) {
     // For a namespace, just resolve the name.
     auto node_id =
@@ -119,7 +119,7 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
       auto [parse_node1, node_id1] =
           context.node_stack().PopExpressionWithParseNode();
       context.declaration_name_stack().ApplyExpressionQualifier(
-          parse_node1, context.SkipNameReferences(node_id1));
+          parse_node1, context.FollowNameReferences(node_id1));
       // Add the QualifiedDeclaration so that it can be used for bracketing.
       context.node_stack().Push(parse_node);
     } else {
