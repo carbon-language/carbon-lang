@@ -268,9 +268,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto NoteWhitespace() -> void {
-    if (!buffer_->token_infos_.empty()) {
-      buffer_->token_infos_.back().has_trailing_space = true;
-    }
+    buffer_->token_infos_.back().has_trailing_space = true;
   }
 
   auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
@@ -709,6 +707,15 @@ class TokenizedBuffer::Lexer {
                        .column = current_column_});
   }
 
+  auto AddStartOfFileToken() -> void {
+    // Note that the start-of-file always has trailing space because it *is*
+    // whitespace.
+    buffer_->AddToken({.kind = TokenKind::StartOfFile,
+                       .has_trailing_space = true,
+                       .token_line = current_line_,
+                       .column = current_column_});
+  }
+
   constexpr static auto MakeDispatchTable() -> DispatchTableT {
     DispatchTableT table = {};
     auto dispatch_lex_error = +[](Lexer& lexer, llvm::StringRef& source_text) {
@@ -831,6 +838,10 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   // dispatch structures.
   constexpr Lexer::DispatchTableT DispatchTable = Lexer::MakeDispatchTable();
 
+  // Before lexing any source text, add the start-of-file token so that code can
+  // assume a non-empty token buffer for the rest of lexing.
+  lexer.AddStartOfFileToken();
+
   llvm::StringRef source_text = source.text();
   while (lexer.SkipWhitespace(source_text)) {
     Lexer::LexResult result =
@@ -914,7 +925,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
   }
 
-  if (token_info.kind == TokenKind::EndOfFile) {
+  if (token_info.kind == TokenKind::StartOfFile ||
+      token_info.kind == TokenKind::EndOfFile) {
     return llvm::StringRef();
   }
 

@@ -10,6 +10,7 @@ fn foo(bar: i64, baz: i64) {
 
 // CHECK:STDOUT: - filename: with_params.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},

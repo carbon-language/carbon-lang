@@ -11,6 +11,7 @@ namespace Foo();
 
 // CHECK:STDOUT: - filename: fail_args.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},

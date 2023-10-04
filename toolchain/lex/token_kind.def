@@ -210,6 +210,7 @@ CARBON_TOKEN(IntegerTypeLiteral)
 CARBON_TOKEN(UnsignedIntegerTypeLiteral)
 CARBON_TOKEN(FloatingPointTypeLiteral)
 CARBON_TOKEN(Error)
+CARBON_TOKEN(StartOfFile)
 CARBON_TOKEN(EndOfFile)
 
 #undef CARBON_TOKEN

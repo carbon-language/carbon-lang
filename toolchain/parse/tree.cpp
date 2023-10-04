@@ -26,6 +26,9 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
+  context.AddLeafNode(NodeKind::FileStart,
+                      context.ConsumeChecked(Lex::TokenKind::StartOfFile));
+
   context.PushState(State::DeclarationScopeLoop);
 
   // The package should always be the first token, if it's present. Any other

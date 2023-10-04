@@ -8,6 +8,7 @@ var x: (i32, i32) = (1, 2);
 
 // CHECK:STDOUT: - filename: two_entries.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'x'},
 // CHECK:STDOUT:           {kind: 'ParenExpressionOrTupleLiteralStart', text: '('},

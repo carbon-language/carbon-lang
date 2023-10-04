@@ -8,6 +8,7 @@ var v: type = i8* ;
 
 // CHECK:STDOUT: - filename: postfix_space_after_op.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'v'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'type'},

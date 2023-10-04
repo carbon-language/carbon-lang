@@ -8,6 +8,7 @@ var n: i8 = n*n;
 
 // CHECK:STDOUT: - filename: infix_no_space.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'n'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i8'},
