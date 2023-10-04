@@ -449,6 +449,9 @@ class Node : public Printable<Node> {
   using UnaryOperatorNot =
       Factory<NodeKind::UnaryOperatorNot, NodeId /*operand_id*/>;
 
+  using ValueAsReference =
+      Factory<NodeKind::ValueAsReference, NodeId /*value_id*/>;
+
   using VarStorage = Factory<NodeKind::VarStorage, StringId /*name_id*/>;
 
   explicit Node()
