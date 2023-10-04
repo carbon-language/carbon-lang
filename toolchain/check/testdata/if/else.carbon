@@ -18,10 +18,10 @@ fn If(b: bool) {
 }
 
 // CHECK:STDOUT: file "else.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc8 = fn_decl @G
-// CHECK:STDOUT:   %.loc9 = fn_decl @H
-// CHECK:STDOUT:   %.loc11 = fn_decl @If
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %H = fn_decl @H
+// CHECK:STDOUT:   %If = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

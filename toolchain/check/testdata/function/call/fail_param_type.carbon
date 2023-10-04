@@ -17,8 +17,8 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "fail_param_type.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Run
-// CHECK:STDOUT:   %.loc9 = fn_decl @Main
+// CHECK:STDOUT:   %Run = fn_decl @Run
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run(%a: i32) {

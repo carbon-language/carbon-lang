@@ -12,9 +12,9 @@ fn Or() -> bool {
 }
 
 // CHECK:STDOUT: file "or.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc8 = fn_decl @G
-// CHECK:STDOUT:   %.loc10 = fn_decl @Or
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %Or = fn_decl @Or
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {

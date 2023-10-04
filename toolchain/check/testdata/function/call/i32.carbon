@@ -13,8 +13,8 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "i32.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Echo
-// CHECK:STDOUT:   %.loc11 = fn_decl @Main
+// CHECK:STDOUT:   %Echo = fn_decl @Echo
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {

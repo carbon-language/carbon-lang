@@ -26,7 +26,7 @@ fn F() {
 }
 
 // CHECK:STDOUT: file "numeric_literals.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

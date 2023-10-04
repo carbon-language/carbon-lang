@@ -17,9 +17,9 @@ fn H() -> i32 {
 }
 
 // CHECK:STDOUT: file "in_place_tuple_initialization.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc9 = fn_decl @G
-// CHECK:STDOUT:   %.loc15 = fn_decl @H
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %H = fn_decl @H
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: (i32, i32);

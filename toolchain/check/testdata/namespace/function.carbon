@@ -18,10 +18,10 @@ fn Bar() {
 }
 
 // CHECK:STDOUT: file "function.carbon" {
-// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %.loc13}
-// CHECK:STDOUT:   %.loc10 = fn_decl @Baz.1
-// CHECK:STDOUT:   %.loc13 = fn_decl @Baz.2
-// CHECK:STDOUT:   %.loc16 = fn_decl @Bar
+// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %Baz.loc13}
+// CHECK:STDOUT:   %Baz.loc10 = fn_decl @Baz.1
+// CHECK:STDOUT:   %Baz.loc13 = fn_decl @Baz.2
+// CHECK:STDOUT:   %Bar = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.1() {

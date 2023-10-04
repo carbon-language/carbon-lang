@@ -11,8 +11,8 @@ fn G() {
 }
 
 // CHECK:STDOUT: file "nested_struct_in_place.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc9 = fn_decl @G
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: (i32, i32, i32);

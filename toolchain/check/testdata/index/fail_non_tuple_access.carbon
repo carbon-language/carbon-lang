@@ -12,7 +12,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "fail_non_tuple_access.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

@@ -83,14 +83,14 @@ fn AddressOfParameter(param: i32) {
 }
 
 // CHECK:STDOUT: file "fail_address_of_value.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @G
-// CHECK:STDOUT:   %.loc9 = fn_decl @H
-// CHECK:STDOUT:   %.loc11 = fn_decl @AddressOfLiteral
-// CHECK:STDOUT:   %.loc38 = fn_decl @AddressOfOperator
-// CHECK:STDOUT:   %.loc53 = fn_decl @AddressOfCall
-// CHECK:STDOUT:   %.loc60 = fn_decl @AddressOfType
-// CHECK:STDOUT:   %.loc71 = fn_decl @AddressOfTupleElementValue
-// CHECK:STDOUT:   %.loc78 = fn_decl @AddressOfParameter
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %H = fn_decl @H
+// CHECK:STDOUT:   %AddressOfLiteral = fn_decl @AddressOfLiteral
+// CHECK:STDOUT:   %AddressOfOperator = fn_decl @AddressOfOperator
+// CHECK:STDOUT:   %AddressOfCall = fn_decl @AddressOfCall
+// CHECK:STDOUT:   %AddressOfType = fn_decl @AddressOfType
+// CHECK:STDOUT:   %AddressOfTupleElementValue = fn_decl @AddressOfTupleElementValue
+// CHECK:STDOUT:   %AddressOfParameter = fn_decl @AddressOfParameter
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;

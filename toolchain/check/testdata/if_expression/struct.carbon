@@ -12,8 +12,8 @@ fn F(cond: bool) {
 }
 
 // CHECK:STDOUT: file "struct.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @G
-// CHECK:STDOUT:   %.loc9 = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%s: {.a: i32, .b: i32});

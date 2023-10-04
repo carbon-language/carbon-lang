@@ -20,7 +20,7 @@ fn Deref(n: i32) {
 }
 
 // CHECK:STDOUT: file "fail_dereference_not_pointer.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Deref
+// CHECK:STDOUT:   %Deref = fn_decl @Deref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n: i32) {

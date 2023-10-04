@@ -7,7 +7,7 @@
 fn Foo(a: i32) {}
 
 // CHECK:STDOUT: file "params_one.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
+// CHECK:STDOUT:   %Foo = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {

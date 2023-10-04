@@ -16,10 +16,10 @@ fn G() -> i32 {
 }
 
 // CHECK:STDOUT: file "constant_condition.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @A
-// CHECK:STDOUT:   %.loc8 = fn_decl @B
-// CHECK:STDOUT:   %.loc10 = fn_decl @F
-// CHECK:STDOUT:   %.loc14 = fn_decl @G
+// CHECK:STDOUT:   %A = fn_decl @A
+// CHECK:STDOUT:   %B = fn_decl @B
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {

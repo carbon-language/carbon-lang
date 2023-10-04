@@ -14,8 +14,8 @@ fn Run() {
 }
 
 // CHECK:STDOUT: file "fail_return_type_mismatch.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
-// CHECK:STDOUT:   %.loc9 = fn_decl @Run
+// CHECK:STDOUT:   %Foo = fn_decl @Foo
+// CHECK:STDOUT:   %Run = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {

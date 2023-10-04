@@ -11,8 +11,8 @@ fn Run() -> i32 {
 }
 
 // CHECK:STDOUT: file "tuple_return_value_access.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc9 = fn_decl @Run
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %Run = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {

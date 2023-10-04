@@ -11,8 +11,8 @@ fn F() -> i32 {
 }
 
 // CHECK:STDOUT: file "literal_member_access.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @G
-// CHECK:STDOUT:   %.loc9 = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: {.x: i32, .y: i32, .z: i32};
