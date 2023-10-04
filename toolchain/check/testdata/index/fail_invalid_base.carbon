@@ -35,7 +35,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %a: ref i32 = var "a"
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 0
 // CHECK:STDOUT:   assign %a, <error>
-// CHECK:STDOUT:   %.loc20 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT:   %b: ref i32 = var "b"
 // CHECK:STDOUT:   %.loc21: i32 = int_literal 1
 // CHECK:STDOUT:   assign %b, <error>

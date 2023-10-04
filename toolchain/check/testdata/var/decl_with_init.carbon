@@ -9,7 +9,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "decl_with_init.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

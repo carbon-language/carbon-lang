@@ -17,7 +17,7 @@ fn F(b: bool) -> i32 {
 }
 
 // CHECK:STDOUT: file "code_after_return_value.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {

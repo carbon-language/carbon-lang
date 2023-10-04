@@ -13,8 +13,8 @@ fn G() -> i32 {
 }
 
 // CHECK:STDOUT: file "function_param.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc11 = fn_decl @G
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%arr: [i32; 3], %i: i32) -> i32 {

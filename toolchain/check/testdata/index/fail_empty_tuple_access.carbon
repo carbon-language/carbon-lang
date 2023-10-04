@@ -14,8 +14,8 @@ fn Run() {
 }
 
 // CHECK:STDOUT: file "fail_empty_tuple_access.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc9 = fn_decl @Run
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %Run = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

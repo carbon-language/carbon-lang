@@ -12,8 +12,8 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "params_two_comma.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
-// CHECK:STDOUT:   %.loc9 = fn_decl @Main
+// CHECK:STDOUT:   %Foo = fn_decl @Foo
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {

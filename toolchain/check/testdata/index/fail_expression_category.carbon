@@ -30,8 +30,8 @@ fn G(b: [i32; 3]) {
 }
 
 // CHECK:STDOUT: file "fail_expression_category.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc9 = fn_decl @G
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: [i32; 3];

@@ -14,7 +14,7 @@ fn If(b: bool) -> i32 {
 }
 
 // CHECK:STDOUT: file "unreachable_fallthrough.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @If
+// CHECK:STDOUT:   %If = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {

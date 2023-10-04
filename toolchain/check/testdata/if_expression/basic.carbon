@@ -9,7 +9,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 }
 
 // CHECK:STDOUT: file "basic.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {

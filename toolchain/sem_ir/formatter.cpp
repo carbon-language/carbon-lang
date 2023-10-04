@@ -334,7 +334,20 @@ class NodeNamer {
       if (!node_id.is_valid()) {
         continue;
       }
+
       auto node = semantics_ir_.GetNode(node_id);
+      auto add_node_name = [&](std::string name) {
+        nodes[node_id.index] = {scope_idx, scope.nodes.AllocateName(
+                                               *this, node.parse_node(), name)};
+      };
+      auto add_node_name_id = [&](StringId name_id) {
+        if (name_id.is_valid()) {
+          add_node_name(semantics_ir_.GetString(name_id).str());
+        } else {
+          add_node_name("");
+        }
+      };
+
       switch (node.kind()) {
         case NodeKind::Branch: {
           auto dest_id = node.GetAsBranch();
@@ -356,23 +369,21 @@ class NodeNamer {
           CollectNamesInBlock(scope_idx, block_id);
           break;
         }
+        case NodeKind::FunctionDeclaration: {
+          add_node_name_id(
+              semantics_ir_.GetFunction(node.GetAsFunctionDeclaration())
+                  .name_id);
+          continue;
+        }
         case NodeKind::Parameter: {
-          auto name_id = node.GetAsParameter();
-          nodes[node_id.index] = {
-              scope_idx,
-              scope.nodes.AllocateName(*this, node.parse_node(),
-                                       semantics_ir_.GetString(name_id).str())};
+          add_node_name_id(node.GetAsParameter());
           continue;
         }
         case NodeKind::VarStorage: {
           // TODO: Eventually this name will be optional, and we'll want to
           // provide something like `var` as a default. However, that's not
           // possible right now so cannot be tested.
-          auto name_id = node.GetAsVarStorage();
-          nodes[node_id.index] = {
-              scope_idx,
-              scope.nodes.AllocateName(*this, node.parse_node(),
-                                       semantics_ir_.GetString(name_id).str())};
+          add_node_name_id(node.GetAsVarStorage());
           continue;
         }
         default: {
@@ -382,8 +393,7 @@ class NodeNamer {
 
       // Sequentially number all remaining values.
       if (node.kind().value_kind() != NodeValueKind::None) {
-        nodes[node_id.index] = {
-            scope_idx, scope.nodes.AllocateName(*this, node.parse_node())};
+        add_node_name("");
       }
     }
   }

@@ -9,7 +9,7 @@ fn Main() -> {.a: i32} {
 }
 
 // CHECK:STDOUT: file "struct.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> {.a: i32} {

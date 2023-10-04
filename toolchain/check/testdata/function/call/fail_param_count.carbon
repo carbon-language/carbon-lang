@@ -56,10 +56,10 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "fail_param_count.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Run0
-// CHECK:STDOUT:   %.loc8 = fn_decl @Run1
-// CHECK:STDOUT:   %.loc9 = fn_decl @Run2
-// CHECK:STDOUT:   %.loc11 = fn_decl @Main
+// CHECK:STDOUT:   %Run0 = fn_decl @Run0
+// CHECK:STDOUT:   %Run1 = fn_decl @Run1
+// CHECK:STDOUT:   %Run2 = fn_decl @Run2
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
