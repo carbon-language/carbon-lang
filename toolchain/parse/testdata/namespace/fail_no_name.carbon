@@ -11,6 +11,7 @@ namespace;
 
 // CHECK:STDOUT: - filename: fail_no_name.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: ';'},
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},

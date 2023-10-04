@@ -12,6 +12,7 @@ fn F() -> if true then i32 else i32* {
 
 // CHECK:STDOUT: - filename: in_type.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'n'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},

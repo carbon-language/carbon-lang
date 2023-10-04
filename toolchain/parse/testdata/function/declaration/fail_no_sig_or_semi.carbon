@@ -6,11 +6,12 @@
 
 fn foo
 
-// CHECK:STDERR: fail_no_sig_or_semi.carbon:[[@LINE+9]]:21: ERROR: `fn` requires a `(` for parameters.
+// CHECK:STDERR: fail_no_sig_or_semi.carbon:[[@LINE+10]]:21: ERROR: `fn` requires a `(` for parameters.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_no_sig_or_semi.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 3},

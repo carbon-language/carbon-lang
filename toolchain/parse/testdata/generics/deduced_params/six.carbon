@@ -10,6 +10,7 @@ interface Bar[a: i32, b: i32, c: i32, d: i32, e: i32, f: i32]() {}
 
 // CHECK:STDOUT: - filename: six.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Foo'},
 // CHECK:STDOUT:         {kind: 'DeducedParameterListStart', text: '['},

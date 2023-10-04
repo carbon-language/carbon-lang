@@ -11,6 +11,7 @@ package Foo library "bar" "baz";
 
 // CHECK:STDOUT: - filename: fail_extra_string.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Foo'},
 // CHECK:STDOUT:         {kind: 'Literal', text: '"bar"'},

@@ -10,6 +10,7 @@ fn C() -> const (i32*) { return C(); }
 
 // CHECK:STDOUT: - filename: const_pointer.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'A'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},

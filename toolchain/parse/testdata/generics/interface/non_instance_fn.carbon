@@ -10,6 +10,7 @@ interface Foo {
 
 // CHECK:STDOUT: - filename: non_instance_fn.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'Foo'},
 // CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},

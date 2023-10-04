@@ -9,6 +9,7 @@ fn F(p: i32*, n: i32) {
 
 // CHECK:STDOUT: - filename: fixity_in_params.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},

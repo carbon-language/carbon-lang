@@ -11,6 +11,7 @@ package fn;
 
 // CHECK:STDOUT: - filename: fail_name_is_keyword.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
