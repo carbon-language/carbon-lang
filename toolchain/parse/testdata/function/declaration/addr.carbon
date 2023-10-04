@@ -8,6 +8,7 @@ fn foo(addr a: i32*);
 
 // CHECK:STDOUT: - filename: addr.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},

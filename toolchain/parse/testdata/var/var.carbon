@@ -12,6 +12,7 @@ fn F() {
 
 // CHECK:STDOUT: - filename: var.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'v'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},

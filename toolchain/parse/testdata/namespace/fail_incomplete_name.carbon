@@ -11,6 +11,7 @@ namespace Foo.;
 
 // CHECK:STDOUT: - filename: fail_incomplete_name.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:         {kind: 'NameExpression', text: 'Foo'},
 // CHECK:STDOUT:         {kind: 'Name', text: ';', has_error: yes},

@@ -8,6 +8,7 @@ fn foo[a: i32, b: i32]();
 
 // CHECK:STDOUT: - filename: deduced_params.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'DeducedParameterListStart', text: '['},

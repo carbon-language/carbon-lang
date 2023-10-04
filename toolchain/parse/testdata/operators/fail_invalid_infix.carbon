@@ -22,6 +22,7 @@ var c: i32 = == ;
 
 // CHECK:STDOUT: - filename: fail_invalid_infix.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},

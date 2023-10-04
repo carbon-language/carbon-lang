@@ -10,6 +10,7 @@ var test_str: String = "Test";
 
 // CHECK:STDOUT: - filename: builtin_types.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'test_i32'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},

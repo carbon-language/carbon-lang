@@ -11,6 +11,7 @@ var v: type = i8 * ;
 
 // CHECK:STDOUT: - filename: recover_postfix_space_surrounding.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'v'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'type'},

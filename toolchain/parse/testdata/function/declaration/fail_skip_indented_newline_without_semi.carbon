@@ -14,6 +14,7 @@ fn F();
 
 // CHECK:STDOUT: - filename: fail_skip_indented_newline_without_semi.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '('},
 // CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 3},
