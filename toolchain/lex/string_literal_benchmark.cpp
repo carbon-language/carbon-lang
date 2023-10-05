@@ -7,10 +7,8 @@
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/string_literal.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Lex {
 namespace {
-
-using Lex::StringLiteral;
 
 static void BM_ValidString(benchmark::State& state, std::string_view introducer,
                            std::string_view terminator) {
@@ -117,4 +115,4 @@ BENCHMARK(BM_SimpleStringValue_MultilineDoubleQuote);
 BENCHMARK(BM_SimpleStringValue_Raw);
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Lex
