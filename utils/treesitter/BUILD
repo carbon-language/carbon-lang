@@ -5,6 +5,11 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
 load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_cc_library")
 
+package(default_visibility = [
+    "//bazel/check_deps:__pkg__",
+    "//installers:__subpackages__",
+])
+
 tree_sitter_cc_library(
     name = "treesitter",
     srcs = ["src/scanner.c"],
@@ -13,6 +18,7 @@ tree_sitter_cc_library(
 
 cc_binary(
     name = "test_runner",
+    testonly = 1,
     srcs = ["test_runner.cpp"],
     deps = [
         ":treesitter",
