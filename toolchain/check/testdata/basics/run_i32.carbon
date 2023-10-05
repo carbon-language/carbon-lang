@@ -12,6 +12,6 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: i32 = int_literal 0
-// CHECK:STDOUT:   return %.loc10
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 0
+// CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
