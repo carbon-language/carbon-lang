@@ -5,6 +5,7 @@
 #include <benchmark/benchmark.h>
 
 #include <algorithm>
+#include <utility>
 
 #include "absl/random/random.h"
 #include "common/check.h"
@@ -291,6 +292,8 @@ class LexerBenchHelper {
     return result;
   }
 
+  auto source_text() -> llvm::StringRef { return source_.text(); }
+
  private:
   auto MakeSourceBuffer(llvm::StringRef text) -> SourceBuffer {
     CARBON_CHECK(fs_.addFile(filename_, /*ModificationTime=*/0,
@@ -378,6 +381,184 @@ BENCHMARK(BM_ValidMix)
     ->Args({25, 30})
     ->Args({50, 20})
     ->Args({75, 10});
+
+// This is a speed-of-light benchmark that should reflect memory bandwidth
+// (ideally) of simply reading all the source code. For speed-of-light we use
+// `strcpy` -- this both examines ever byte of the input looking for a null to
+// end the copy, and also writes to a data structure of roughly the same size as
+// the input. This routine is one we expect to be *very* well optimized and give
+// a good approximation of the fastest possible lexer given the physical
+// constraints of the machine. Note that which particular source we use as input
+// here isn't especially interesting, so we just pick one and should update it
+// to reflect whatever distribution is most realistic long-term. The
+// bytes/second throughput is the important output of this routine.
+auto BM_SpeedOfLightStrCpy(benchmark::State& state) -> void {
+  std::string source =
+      RandomMixedSeq(/*symbol_percent=*/25, /*keyword_percent=*/30);
+
+  // A buffer to write the null-terminated contents of `source` into.
+  llvm::OwningArrayRef<char> buffer(source.size() + 1);
+
+  for (auto _ : state) {
+    const char* text = source.data();
+    benchmark::DoNotOptimize(text);
+    strcpy(buffer.data(), text);
+    benchmark::DoNotOptimize(buffer.data());
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_SpeedOfLightStrCpy);
+
+// This is a speed-of-light benchmark that builds up a best-case byte-wise table
+// dispatch using guaranteed tail recursion. The goal is both to ensure the
+// general technique can reasonably hit the level of performance we need and to
+// establish how far from this speed of light the actual lexer currently sits.
+//
+// A major impact on the observed performance of this technique is how many
+// different functions are reached in this dispatch loop. This benchmark
+// infrastructure tries to bracket the range of performance this technique
+// affords with different numbers of dispatch target functions.
+using DispatchPtrT = auto (*)(ssize_t& index, const char* text, char* buffer)
+    -> void;
+using DispatchTableT = std::array<DispatchPtrT, 256>;
+
+template <const DispatchTableT& Table>
+auto BasicDispatch(ssize_t& index, const char* text, char* buffer) -> void {
+  *buffer = text[index];
+  ++index;
+  [[clang::musttail]] return Table[static_cast<unsigned char>(text[index])](
+      index, text, buffer);
+}
+
+template <const DispatchTableT& Table, char C>
+auto SpecializedDispatch(ssize_t& index, const char* text, char* buffer)
+    -> void {
+  CARBON_CHECK(C == text[index]);
+  *buffer = C;
+  ++index;
+  [[clang::musttail]] return Table[static_cast<unsigned char>(text[index])](
+      index, text, buffer);
+}
+
+// A sample of the symbol characters used in Carbon code. Doesn't need to be
+// perfect, as we just need to have a reasonably large # of distinct dispatch
+// functions.
+constexpr char DispatchSpecializableSymbols[] = {
+    '!', '%', '(', ')', '*', '+', ',', '-', '.', ':',
+    ';', '<', '=', '>', '?', '[', ']', '{', '}', '~',
+};
+
+// Create an array of all the characters we can specialize dispatch over --
+// [0-9A-Za-z] and the symbols above. Similar to the above symbols, doesn't need
+// to be exhaustive.
+constexpr std::array<char, 26 * 2 + 10 + sizeof(DispatchSpecializableSymbols)>
+    DispatchSpecializableChars = []() constexpr {
+      constexpr int Size = sizeof(DispatchSpecializableChars);
+      std::array<char, Size> chars = {};
+      int i = 0;
+      for (char c = '0'; c <= '9'; ++c) {
+        chars[i] = c;
+        ++i;
+      }
+      for (char c = 'A'; c <= 'Z'; ++c) {
+        chars[i] = c;
+        ++i;
+      }
+      for (char c = 'a'; c <= 'z'; ++c) {
+        chars[i] = c;
+        ++i;
+      }
+      for (char c : DispatchSpecializableSymbols) {
+        chars[i] = c;
+        ++i;
+      }
+      CARBON_CHECK(i == Size);
+      return chars;
+    }();
+
+// Instantiate a number of specialized dispatch functions for characters in the
+// array above, and assign those function addresses to the character's entry in
+// the provided table. The provided `tmp_table` is a temporary that will
+// eventually initialize the provided `Table` constant, so the constant is what
+// we propagate to the instantiated function and the temporary is the one we
+// initialize.
+template <const DispatchTableT& Table, size_t... Indices>
+constexpr auto SpecializeDispatchTable(
+    DispatchTableT& tmp_table, std::index_sequence<Indices...> /*indices*/)
+    -> void {
+  static_assert(sizeof...(Indices) <= sizeof(DispatchSpecializableChars));
+  ((tmp_table[static_cast<unsigned char>(DispatchSpecializableChars[Indices])] =
+        &SpecializedDispatch<Table, DispatchSpecializableChars[Indices]>),
+   ...);
+}
+
+// The maximum number of dispatch targets is the size of the array + 1 (for the
+// base case target).
+constexpr int MaxDispatchTargets = sizeof(DispatchSpecializableChars) + 1;
+
+// Dispatch tables with a provided number of distinct dispatch targets. There
+// will always be one additional target for the null byte to end the loop.
+template <int NumDispatchTargets>
+constexpr DispatchTableT DispatchTable = []() constexpr {
+  static_assert(NumDispatchTargets > 0, "Need at least one dispatch target.");
+  static_assert(NumDispatchTargets <= MaxDispatchTargets,
+                "Limited number of dispatch targets available.");
+
+  DispatchTableT tmp_table = {};
+  // Start with the basic dispatch target.
+  for (int i = 0; i < 256; ++i) {
+    tmp_table[i] = &BasicDispatch<DispatchTable<NumDispatchTargets>>;
+  }
+  if constexpr (NumDispatchTargets > 1) {
+    // Add additional dispatch targets from our specializable array.
+    SpecializeDispatchTable<DispatchTable<NumDispatchTargets>>(
+        tmp_table, std::make_index_sequence<NumDispatchTargets - 1>());
+  }
+  // Special case the null byte index to end the tail-dispatch.
+  tmp_table[0] =
+      +[](ssize_t& index, const char* text, char* /*buffer*/) -> void {
+    CARBON_CHECK(text[index] == '\0');
+    return;
+  };
+  return tmp_table;
+}();
+
+template <int NumDispatchTargets>
+auto BM_SpeedOfLightDispatch(benchmark::State& state) -> void {
+  std::string source =
+      RandomMixedSeq(/*symbol_percent=*/25, /*keyword_percent=*/30);
+
+  // A buffer to write to, simulating some minimal write traffic.
+  llvm::OwningArrayRef<char> buffer(source.size());
+
+  for (auto _ : state) {
+    const char* text = source.data();
+    benchmark::DoNotOptimize(text);
+
+    // Use `ssize_t` to minimize indexing overhead.
+    ssize_t i = 0;
+    // The dispatch table tail-recurses through the entire string.
+    DispatchTable<NumDispatchTargets>[static_cast<unsigned char>(text[i])](
+        i, text, buffer.data());
+    CARBON_CHECK(i == static_cast<ssize_t>(source.size()));
+
+    benchmark::DoNotOptimize(buffer.data());
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_SpeedOfLightDispatch<1>);
+BENCHMARK(BM_SpeedOfLightDispatch<2>);
+BENCHMARK(BM_SpeedOfLightDispatch<4>);
+BENCHMARK(BM_SpeedOfLightDispatch<8>);
+BENCHMARK(BM_SpeedOfLightDispatch<16>);
+BENCHMARK(BM_SpeedOfLightDispatch<32>);
+BENCHMARK(BM_SpeedOfLightDispatch<MaxDispatchTargets>);
 
 }  // namespace
 }  // namespace Carbon::Lex
