@@ -130,6 +130,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc42_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc42_7: i32 = add %.loc42_5, %.loc42_9
 // CHECK:STDOUT:   %.loc42_3: i32* = address_of %.loc42_7
+// CHECK:STDOUT:   %H.ref = name_reference_untyped "H", package.%H
 // CHECK:STDOUT:   %.loc46_5.1: init {.a: i32} = call @H()
 // CHECK:STDOUT:   %.loc46_5.2: ref {.a: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc46_5.3: ref {.a: i32} = temporary %.loc46_5.2, %.loc46_5.1
@@ -143,6 +144,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfCall() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%G
 // CHECK:STDOUT:   %.loc57_5: init i32 = call @G()
 // CHECK:STDOUT:   %.loc57_3: i32* = address_of %.loc57_5
 // CHECK:STDOUT:   return
@@ -174,7 +176,8 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc82_22: type = ptr_type i32
 // CHECK:STDOUT:   %param_addr: ref i32* = var "param_addr"
-// CHECK:STDOUT:   %.loc82_26: i32* = address_of %param
+// CHECK:STDOUT:   %param.ref: i32 = name_reference "param", %param
+// CHECK:STDOUT:   %.loc82_26: i32* = address_of %param.ref
 // CHECK:STDOUT:   assign %param_addr, %.loc82_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -23,8 +23,10 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_50: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}
 // CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var "v"
+// CHECK:STDOUT:   %F.ref.loc10_61 = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc10_74.1: ref (i32, i32, i32) = struct_access %v, member0
 // CHECK:STDOUT:   %.loc10_62: init (i32, i32, i32) = call @F() to %.loc10_74.1
+// CHECK:STDOUT:   %F.ref.loc10_71 = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc10_74.2: ref (i32, i32, i32) = struct_access %v, member1
 // CHECK:STDOUT:   %.loc10_72: init (i32, i32, i32) = call @F() to %.loc10_74.2
 // CHECK:STDOUT:   %.loc10_74.3: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_literal (%.loc10_62, %.loc10_72)

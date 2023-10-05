@@ -25,7 +25,8 @@ var b: i32 = a[2];
 // CHECK:STDOUT:   %.loc7_27.6: init (i32, i32) = tuple_init %.loc7_27.1, (%.loc7_27.3, %.loc7_27.5)
 // CHECK:STDOUT:   assign %a, %.loc7_27.6
 // CHECK:STDOUT:   %b: ref i32 = var "b"
+// CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_reference "a", %a
 // CHECK:STDOUT:   %.loc11_16: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc11_17: ref <error> = tuple_index %a, <error>
+// CHECK:STDOUT:   %.loc11_17: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign %b, <error>
 // CHECK:STDOUT: }

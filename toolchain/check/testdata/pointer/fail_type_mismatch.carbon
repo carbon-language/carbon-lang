@@ -17,5 +17,6 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %p.ref: const {}* = name_reference "p", %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

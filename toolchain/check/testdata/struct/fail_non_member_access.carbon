@@ -18,5 +18,6 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %.loc7_27.2: init {.a: i32} = struct_init %.loc7_27.1, (%.loc7_26)
 // CHECK:STDOUT:   assign %x, %.loc7_27.2
 // CHECK:STDOUT:   %y: ref i32 = var "y"
+// CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_reference "x", %x
 // CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }
