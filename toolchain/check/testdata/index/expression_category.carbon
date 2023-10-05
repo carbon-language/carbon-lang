@@ -55,12 +55,14 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   assign %a, %.loc10_29.12
 // CHECK:STDOUT:   %.loc13_14: type = ptr_type i32
 // CHECK:STDOUT:   %pa: ref i32* = var "pa"
+// CHECK:STDOUT:   %a.ref.loc13: ref [i32; 3] = name_reference "a", %a
 // CHECK:STDOUT:   %.loc13_21: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc13_22: ref i32 = array_index %a, %.loc13_21
+// CHECK:STDOUT:   %.loc13_22: ref i32 = array_index %a.ref.loc13, %.loc13_21
 // CHECK:STDOUT:   %.loc13_18: i32* = address_of %.loc13_22
 // CHECK:STDOUT:   assign %pa, %.loc13_18
+// CHECK:STDOUT:   %a.ref.loc14: ref [i32; 3] = name_reference "a", %a
 // CHECK:STDOUT:   %.loc14_5: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc14_6: ref i32 = array_index %a, %.loc14_5
+// CHECK:STDOUT:   %.loc14_6: ref i32 = array_index %a.ref.loc14, %.loc14_5
 // CHECK:STDOUT:   %.loc14_10: i32 = int_literal 4
 // CHECK:STDOUT:   assign %.loc14_6, %.loc14_10
 // CHECK:STDOUT:   return
@@ -86,12 +88,15 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc18_29.10: init i32 = initialize_from %.loc18_28 to %.loc18_29.9
 // CHECK:STDOUT:   %.loc18_29.11: init [i32; 3] = array_init %.loc18_29.1, (%.loc18_29.4, %.loc18_29.7, %.loc18_29.10) to %a
 // CHECK:STDOUT:   assign %a, %.loc18_29.11
+// CHECK:STDOUT:   %a.ref: ref [i32; 3] = name_reference "a", %a
 // CHECK:STDOUT:   %.loc22_5: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc22_6: ref i32 = array_index %a, %.loc22_5
+// CHECK:STDOUT:   %.loc22_6: ref i32 = array_index %a.ref, %.loc22_5
+// CHECK:STDOUT:   %b.ref: [i32; 3] = name_reference "b", %b
 // CHECK:STDOUT:   %.loc23_5: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc23_6.1: ref [i32; 3] = value_as_reference %b
+// CHECK:STDOUT:   %.loc23_6.1: ref [i32; 3] = value_as_reference %b.ref
 // CHECK:STDOUT:   %.loc23_6.2: ref i32 = array_index %.loc23_6.1, %.loc23_5
 // CHECK:STDOUT:   %.loc23_6.3: i32 = bind_value %.loc23_6.2
+// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc24_4.1: ref [i32; 3] = temporary_storage
 // CHECK:STDOUT:   %.loc24_4.2: init [i32; 3] = call @F() to %.loc24_4.1
 // CHECK:STDOUT:   %.loc24_7: i32 = int_literal 0

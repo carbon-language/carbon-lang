@@ -21,10 +21,12 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc7_46.6: init {.a: f64, .b: i32} = struct_init %.loc7_46.1, (%.loc7_46.3, %.loc7_46.5)
 // CHECK:STDOUT:   assign %x, %.loc7_46.6
 // CHECK:STDOUT:   %y: ref i32 = var "y"
-// CHECK:STDOUT:   %.loc8_15.1: ref i32 = struct_access %x, member1
+// CHECK:STDOUT:   %x.ref: ref {.a: f64, .b: i32} = name_reference "x", %x
+// CHECK:STDOUT:   %.loc8_15.1: ref i32 = struct_access %x.ref, member1
 // CHECK:STDOUT:   %.loc8_15.2: i32 = bind_value %.loc8_15.1
 // CHECK:STDOUT:   assign %y, %.loc8_15.2
 // CHECK:STDOUT:   %z: ref i32 = var "z"
-// CHECK:STDOUT:   %.loc8_5: i32 = bind_value %y
-// CHECK:STDOUT:   assign %z, %.loc8_5
+// CHECK:STDOUT:   %y.ref: ref i32 = name_reference "y", %y
+// CHECK:STDOUT:   %.loc9: i32 = bind_value %y.ref
+// CHECK:STDOUT:   assign %z, %.loc9
 // CHECK:STDOUT: }

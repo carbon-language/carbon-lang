@@ -144,6 +144,26 @@ auto Context::PopScope() -> void {
   }
 }
 
+auto Context::FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId {
+  while (true) {
+    auto node = semantics_ir().GetNode(node_id);
+    switch (node.kind()) {
+      case SemIR::NodeKind::NameReference: {
+        auto [name_id, value_id] = node.GetAsNameReference();
+        node_id = value_id;
+        break;
+      }
+      case SemIR::NodeKind::NameReferenceUntyped: {
+        auto [name_id, value_id] = node.GetAsNameReferenceUntyped();
+        node_id = value_id;
+        break;
+      }
+      default:
+        return node_id;
+    }
+  }
+}
+
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
                                            Parse::Node parse_node, Args... args)

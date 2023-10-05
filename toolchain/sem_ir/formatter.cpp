@@ -375,6 +375,16 @@ class NodeNamer {
                   .name_id);
           continue;
         }
+        case NodeKind::NameReference: {
+          auto [name_id, value_id] = node.GetAsNameReference();
+          add_node_name(semantics_ir_.GetString(name_id).str() + ".ref");
+          continue;
+        }
+        case NodeKind::NameReferenceUntyped: {
+          auto [name_id, value_id] = node.GetAsNameReferenceUntyped();
+          add_node_name(semantics_ir_.GetString(name_id).str() + ".ref");
+          continue;
+        }
         case NodeKind::Parameter: {
           add_node_name_id(node.GetAsParameter());
           continue;

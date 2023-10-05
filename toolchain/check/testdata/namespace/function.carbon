@@ -36,6 +36,7 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Foo.ref = name_reference_untyped "Foo", package.%.loc7
 // CHECK:STDOUT:   %.loc17_10.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc17_10.2: init () = call @Baz.2()
 // CHECK:STDOUT:   return

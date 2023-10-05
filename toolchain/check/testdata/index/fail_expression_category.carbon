@@ -40,20 +40,23 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_14: type = ptr_type i32
 // CHECK:STDOUT:   %pb: ref i32* = var "pb"
+// CHECK:STDOUT:   %b.ref.loc14: [i32; 3] = name_reference "b", %b
 // CHECK:STDOUT:   %.loc14_21: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc14_22.1: ref [i32; 3] = value_as_reference %b
+// CHECK:STDOUT:   %.loc14_22.1: ref [i32; 3] = value_as_reference %b.ref.loc14
 // CHECK:STDOUT:   %.loc14_22.2: ref i32 = array_index %.loc14_22.1, %.loc14_21
 // CHECK:STDOUT:   %.loc14_22.3: i32 = bind_value %.loc14_22.2
 // CHECK:STDOUT:   %.loc14_18: i32* = address_of %.loc14_22.3
 // CHECK:STDOUT:   assign %pb, %.loc14_18
+// CHECK:STDOUT:   %b.ref.loc18: [i32; 3] = name_reference "b", %b
 // CHECK:STDOUT:   %.loc18_5: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc18_6.1: ref [i32; 3] = value_as_reference %b
+// CHECK:STDOUT:   %.loc18_6.1: ref [i32; 3] = value_as_reference %b.ref.loc18
 // CHECK:STDOUT:   %.loc18_6.2: ref i32 = array_index %.loc18_6.1, %.loc18_5
 // CHECK:STDOUT:   %.loc18_6.3: i32 = bind_value %.loc18_6.2
 // CHECK:STDOUT:   %.loc18_10: i32 = int_literal 4
 // CHECK:STDOUT:   assign %.loc18_6.3, %.loc18_10
 // CHECK:STDOUT:   %.loc25_14: type = ptr_type i32
 // CHECK:STDOUT:   %pf: ref i32* = var "pf"
+// CHECK:STDOUT:   %F.ref.loc25 = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc25_20.1: ref [i32; 3] = temporary_storage
 // CHECK:STDOUT:   %.loc25_20.2: init [i32; 3] = call @F() to %.loc25_20.1
 // CHECK:STDOUT:   %.loc25_23: i32 = int_literal 0
@@ -62,6 +65,7 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc25_24.2: i32 = bind_value %.loc25_24.1
 // CHECK:STDOUT:   %.loc25_18: i32* = address_of %.loc25_24.2
 // CHECK:STDOUT:   assign %pf, %.loc25_18
+// CHECK:STDOUT:   %F.ref.loc29 = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc29_4.1: ref [i32; 3] = temporary_storage
 // CHECK:STDOUT:   %.loc29_4.2: init [i32; 3] = call @F() to %.loc29_4.1
 // CHECK:STDOUT:   %.loc29_7: i32 = int_literal 0

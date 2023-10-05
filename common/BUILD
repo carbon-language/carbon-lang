@@ -71,6 +71,7 @@ cc_library(
 
 cc_library(
     name = "enum_base_test_def",
+    testonly = 1,
     textual_hdrs = ["enum_base_test.def"],
 )
 

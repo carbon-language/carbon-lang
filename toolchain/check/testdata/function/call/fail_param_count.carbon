@@ -79,12 +79,18 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Run0.ref.loc18 = name_reference_untyped "Run0", package.%Run0
 // CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc18_7: type = tuple_type ()
+// CHECK:STDOUT:   %Run0.ref.loc25 = name_reference_untyped "Run0", package.%Run0
 // CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1
+// CHECK:STDOUT:   %Run1.ref.loc33 = name_reference_untyped "Run1", package.%Run1
+// CHECK:STDOUT:   %Run1.ref.loc40 = name_reference_untyped "Run1", package.%Run1
 // CHECK:STDOUT:   %.loc40_8: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc40_11: i32 = int_literal 1
+// CHECK:STDOUT:   %Run2.ref.loc48 = name_reference_untyped "Run2", package.%Run2
+// CHECK:STDOUT:   %Run2.ref.loc55 = name_reference_untyped "Run2", package.%Run2
 // CHECK:STDOUT:   %.loc55: i32 = int_literal 0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
