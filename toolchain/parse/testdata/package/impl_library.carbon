@@ -8,6 +8,7 @@ package Geometry library "Shapes" impl;
 
 // CHECK:STDOUT: - filename: impl_library.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
 // CHECK:STDOUT:         {kind: 'Literal', text: '"Shapes"'},

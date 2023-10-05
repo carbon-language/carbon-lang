@@ -34,14 +34,15 @@ fn If3(b: bool) -> i32 {
 }
 
 // CHECK:STDOUT: file "fail_reachable_fallthrough.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @If1
-// CHECK:STDOUT:   %.loc17 = fn_decl @If2
-// CHECK:STDOUT:   %.loc27 = fn_decl @If3
+// CHECK:STDOUT:   %If1 = fn_decl @If1
+// CHECK:STDOUT:   %If2 = fn_decl @If2
+// CHECK:STDOUT:   %If3 = fn_decl @If3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !if.then else br !if.else
+// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 1
@@ -55,7 +56,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !if.then else br !if.else
+// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   br !if.done
@@ -69,7 +71,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If3(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !if.then else br !if.else
+// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc29: i32 = int_literal 1

@@ -13,7 +13,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "fail_type_mismatch_assignment.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -21,7 +21,8 @@ fn Main() {
 // CHECK:STDOUT:   %a: ref i32 = var "a"
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 3
 // CHECK:STDOUT:   assign %a, %.loc8
+// CHECK:STDOUT:   %a.ref: ref i32 = name_reference "a", %a
 // CHECK:STDOUT:   %.loc12: f64 = real_literal 56e-1
-// CHECK:STDOUT:   assign %a, <error>
+// CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

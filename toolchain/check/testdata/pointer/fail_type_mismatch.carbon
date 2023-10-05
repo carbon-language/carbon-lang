@@ -12,10 +12,11 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 }
 
 // CHECK:STDOUT: file "fail_type_mismatch.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @ConstMismatch
+// CHECK:STDOUT:   %ConstMismatch = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %p.ref: const {}* = name_reference "p", %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

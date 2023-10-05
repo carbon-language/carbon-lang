@@ -211,6 +211,8 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::InitializeFrom:
     case NodeKind::IntegerLiteral:
     case NodeKind::Invalid:
+    case NodeKind::NameReference:
+    case NodeKind::NameReferenceUntyped:
     case NodeKind::Namespace:
     case NodeKind::NoOp:
     case NodeKind::Parameter:
@@ -232,6 +234,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::TupleInit:
     case NodeKind::TupleValue:
     case NodeKind::UnaryOperatorNot:
+    case NodeKind::ValueAsReference:
     case NodeKind::VarStorage:
       CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
   }
@@ -257,10 +260,8 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
-
-    // Invalid node IDs will use the default invalid printing.
     if (!step.node_id.is_valid()) {
-      out << step.node_id;
+      out << "<invalid type>";
       continue;
     }
 
@@ -380,6 +381,8 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::FunctionDeclaration:
       case NodeKind::InitializeFrom:
       case NodeKind::IntegerLiteral:
+      case NodeKind::NameReference:
+      case NodeKind::NameReferenceUntyped:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
       case NodeKind::Parameter:
@@ -400,6 +403,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::TupleInit:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
+      case NodeKind::ValueAsReference:
       case NodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
         // in errors, but make it clear what's going on so that it's clearer
@@ -439,6 +443,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case NodeKind::BranchIf:
       case NodeKind::BranchWithArg:
       case NodeKind::FunctionDeclaration:
+      case NodeKind::NameReferenceUntyped:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
       case NodeKind::Return:
@@ -450,6 +455,12 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         auto [xref_id, xref_node_id] = node.GetAsCrossReference();
         ir = &ir->GetCrossReferenceIR(xref_id);
         node_id = xref_node_id;
+        continue;
+      }
+
+      case NodeKind::NameReference: {
+        auto [name_id, value_id] = node.GetAsNameReference();
+        node_id = value_id;
         continue;
       }
 
@@ -526,6 +537,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
 
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
+      case NodeKind::ValueAsReference:
         return ExpressionCategory::EphemeralReference;
     }
   }
@@ -558,6 +570,8 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::InitializeFrom:
       case NodeKind::IntegerLiteral:
       case NodeKind::Invalid:
+      case NodeKind::NameReference:
+      case NodeKind::NameReferenceUntyped:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
       case NodeKind::Parameter:
@@ -578,6 +592,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::TupleInit:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
+      case NodeKind::ValueAsReference:
       case NodeKind::VarStorage:
         CARBON_FATAL() << "Type refers to non-type node " << node;
 

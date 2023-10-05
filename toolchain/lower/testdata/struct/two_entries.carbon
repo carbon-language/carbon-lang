@@ -13,7 +13,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'two_entries.carbon'
 // CHECK:STDOUT: source_filename = "two_entries.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Run() {
+// CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT:   %x = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %a, align 4

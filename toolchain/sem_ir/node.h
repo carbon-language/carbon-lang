@@ -388,6 +388,13 @@ class Node : public Printable<Node> {
   using IntegerLiteral =
       Factory<NodeKind::IntegerLiteral, IntegerLiteralId /*integer_id*/>;
 
+  using NameReference = Factory<NodeKind::NameReference, StringId /*name_id*/,
+                                NodeId /*value_id*/>;
+
+  using NameReferenceUntyped =
+      Factory<NodeKind::NameReferenceUntyped, StringId /*name_id*/,
+              NodeId /*value_id*/>;
+
   using Namespace =
       FactoryNoType<NodeKind::Namespace, NameScopeId /*name_scope_id*/>;
 
@@ -451,6 +458,9 @@ class Node : public Printable<Node> {
 
   using UnaryOperatorNot =
       Factory<NodeKind::UnaryOperatorNot, NodeId /*operand_id*/>;
+
+  using ValueAsReference =
+      Factory<NodeKind::ValueAsReference, NodeId /*value_id*/>;
 
   using VarStorage = Factory<NodeKind::VarStorage, StringId /*name_id*/>;
 

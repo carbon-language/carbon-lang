@@ -26,6 +26,7 @@ interface Bar[a: i32] {}
 
 // CHECK:STDOUT: - filename: fail_no_parens.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Foo'},
 // CHECK:STDOUT:         {kind: 'DeducedParameterListStart', text: '['},

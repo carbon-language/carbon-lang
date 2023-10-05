@@ -8,10 +8,8 @@
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/numeric_literal.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Lex {
 namespace {
-
-using Lex::NumericLiteral;
 
 static void BM_Lex_Float(benchmark::State& state) {
   for (auto _ : state) {
@@ -49,4 +47,4 @@ BENCHMARK(BM_ComputeValue_Float);
 BENCHMARK(BM_ComputeValue_Integer);
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Lex

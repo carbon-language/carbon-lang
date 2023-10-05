@@ -15,11 +15,8 @@
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Lex {
 namespace {
-
-using Lex::TokenizedBuffer;
-using Lex::TokenKind;
 
 // A large value for measurement stability without making benchmarking too slow.
 // Needs to be a multiple of 100 so we can easily divide it up into percentages,
@@ -383,4 +380,4 @@ BENCHMARK(BM_ValidMix)
     ->Args({75, 10});
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Lex

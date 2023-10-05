@@ -47,7 +47,7 @@ fn B() {}
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "a.carbon" {
-// CHECK:STDOUT:   %.loc1 = fn_decl @A
+// CHECK:STDOUT:   %A = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -87,7 +87,7 @@ fn B() {}
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "b.carbon" {
-// CHECK:STDOUT:   %.loc1 = fn_decl @B
+// CHECK:STDOUT:   %B = fn_decl @B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {

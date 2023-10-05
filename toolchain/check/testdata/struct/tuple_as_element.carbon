@@ -27,16 +27,17 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.loc8_27: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc8_28: type = struct_type {.a: i32, .b: (i32,)}
 // CHECK:STDOUT:   %y: ref {.a: i32, .b: (i32,)} = var "y"
-// CHECK:STDOUT:   %.loc7_5.1: ref i32 = struct_access %x, member0
-// CHECK:STDOUT:   %.loc7_5.2: i32 = bind_value %.loc7_5.1
-// CHECK:STDOUT:   %.loc7_5.3: ref i32 = struct_access %y, member0
-// CHECK:STDOUT:   %.loc7_5.4: init i32 = initialize_from %.loc7_5.2 to %.loc7_5.3
-// CHECK:STDOUT:   %.loc7_5.5: ref (i32,) = struct_access %x, member1
-// CHECK:STDOUT:   %.loc7_5.6: ref i32 = tuple_access %.loc7_5.5, member0
-// CHECK:STDOUT:   %.loc7_5.7: i32 = bind_value %.loc7_5.6
-// CHECK:STDOUT:   %.loc7_5.8: init (i32,) = tuple_init %.loc7_5.5, (%.loc7_5.7)
-// CHECK:STDOUT:   %.loc7_5.9: ref (i32,) = struct_access %y, member1
-// CHECK:STDOUT:   %.loc7_5.10: init (i32,) = initialize_from %.loc7_5.8 to %.loc7_5.9
-// CHECK:STDOUT:   %.loc7_5.11: init {.a: i32, .b: (i32,)} = struct_init %x, (%.loc7_5.4, %.loc7_5.10)
-// CHECK:STDOUT:   assign %y, %.loc7_5.11
+// CHECK:STDOUT:   %x.ref: ref {.a: i32, .b: (i32,)} = name_reference "x", %x
+// CHECK:STDOUT:   %.loc8_32.1: ref i32 = struct_access %x.ref, member0
+// CHECK:STDOUT:   %.loc8_32.2: i32 = bind_value %.loc8_32.1
+// CHECK:STDOUT:   %.loc8_32.3: ref i32 = struct_access %y, member0
+// CHECK:STDOUT:   %.loc8_32.4: init i32 = initialize_from %.loc8_32.2 to %.loc8_32.3
+// CHECK:STDOUT:   %.loc8_32.5: ref (i32,) = struct_access %x.ref, member1
+// CHECK:STDOUT:   %.loc8_32.6: ref i32 = tuple_access %.loc8_32.5, member0
+// CHECK:STDOUT:   %.loc8_32.7: i32 = bind_value %.loc8_32.6
+// CHECK:STDOUT:   %.loc8_32.8: init (i32,) = tuple_init %.loc8_32.5, (%.loc8_32.7)
+// CHECK:STDOUT:   %.loc8_32.9: ref (i32,) = struct_access %y, member1
+// CHECK:STDOUT:   %.loc8_32.10: init (i32,) = initialize_from %.loc8_32.8 to %.loc8_32.9
+// CHECK:STDOUT:   %.loc8_32.11: init {.a: i32, .b: (i32,)} = struct_init %x.ref, (%.loc8_32.4, %.loc8_32.10)
+// CHECK:STDOUT:   assign %y, %.loc8_32.11
 // CHECK:STDOUT: }

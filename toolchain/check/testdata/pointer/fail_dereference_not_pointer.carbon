@@ -20,12 +20,13 @@ fn Deref(n: i32) {
 }
 
 // CHECK:STDOUT: file "fail_dereference_not_pointer.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Deref
+// CHECK:STDOUT:   %Deref = fn_decl @Deref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: ref <error> = dereference %n
+// CHECK:STDOUT:   %n.ref: i32 = name_reference "n", %n
+// CHECK:STDOUT:   %.loc11: ref <error> = dereference %n.ref
 // CHECK:STDOUT:   %.loc15_5.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc15_5.2: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_5.3: () = tuple_value %.loc15_5.2, ()

@@ -40,6 +40,9 @@
   CARBON_PARSE_NODE_KIND(Name)
 #endif
 
+// The start of the file.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0)
+
 // The end of the file.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0)
 

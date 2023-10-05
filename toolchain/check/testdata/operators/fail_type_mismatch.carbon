@@ -12,7 +12,7 @@ fn Main() -> i32 {
 }
 
 // CHECK:STDOUT: file "fail_type_mismatch.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {

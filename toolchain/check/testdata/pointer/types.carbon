@@ -13,16 +13,18 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 }
 
 // CHECK:STDOUT: file "types.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Ptr
-// CHECK:STDOUT:   %.loc11 = fn_decl @ConstPtr
+// CHECK:STDOUT:   %Ptr = fn_decl @Ptr
+// CHECK:STDOUT:   %ConstPtr = fn_decl @ConstPtr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Ptr(%p: i32*) -> i32* {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return %p
+// CHECK:STDOUT:   %p.ref: i32* = name_reference "p", %p
+// CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstPtr(%p: const i32*) -> const i32* {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return %p
+// CHECK:STDOUT:   %p.ref: const i32* = name_reference "p", %p
+// CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }

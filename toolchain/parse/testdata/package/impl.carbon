@@ -8,6 +8,7 @@ package Geometry impl;
 
 // CHECK:STDOUT: - filename: impl.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
 // CHECK:STDOUT:       {kind: 'PackageImpl', text: 'impl'},

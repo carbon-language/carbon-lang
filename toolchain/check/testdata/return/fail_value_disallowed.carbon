@@ -15,7 +15,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "fail_value_disallowed.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

@@ -42,7 +42,7 @@ for dep in deps:
 
         # Other packages in the LLVM project shouldn't be accidentally used
         # in Carbon. We can expand the above list if use cases emerge.
-        if package not in ("llvm", "lld", "clang"):
+        if package not in ("llvm", "lld", "clang", "clang-tools-extra/clangd"):
             sys.exit(
                 "ERROR: unexpected dependency into the LLVM project: %s" % dep
             )

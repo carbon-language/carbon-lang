@@ -6,11 +6,12 @@
 
 package Geometry api
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+10]]:21: ERROR: `package` declarations must end with a `;`.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+11]]:21: ERROR: `package` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
 // CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
