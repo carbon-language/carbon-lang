@@ -60,15 +60,21 @@ static auto SplitOutput(llvm::StringRef output)
 // Runs a test and compares output. This keeps output split by line so that
 // issues are a little easier to identify by the different line.
 auto FileTestBase::TestBody() -> void {
-  const char* target = getenv("TEST_TARGET");
-  CARBON_CHECK(target);
-  // This advice overrides the --file_tests flag provided by the file_test rule.
-  llvm::errs() << "\nTo test this file alone, run:\n  bazel test " << target
-               << " --test_arg=--file_tests=" << test_name_ << "\n\n";
+  std::optional<llvm::PrettyStackTraceFormat> stack_trace_entry;
 
-  // Add a crash trace entry with a command that runs this test in isolation.
-  llvm::PrettyStackTraceFormat stack_trace_entry(
-      "bazel test %s --test_arg=--file_tests=%s", target, test_name_);
+  // If we're being run from bazel, provide some assistance for understanding
+  // and reproducing failures.
+  const char* target = getenv("TEST_TARGET");
+  if (target) {
+    // This advice overrides the --file_tests flag provided by the file_test
+    // rule.
+    llvm::errs() << "\nTo test this file alone, run:\n  bazel test " << target
+                 << " --test_arg=--file_tests=" << test_name_ << "\n\n";
+
+    // Add a crash trace entry with a command that runs this test in isolation.
+    stack_trace_entry.emplace("bazel test %s --test_arg=--file_tests=%s",
+                              target, test_name_);
+  }
 
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
@@ -83,7 +89,7 @@ auto FileTestBase::TestBody() -> void {
   // Check results. Include a reminder of the autoupdate command for any
   // stdout/stderr differences.
   std::string update_message;
-  if (context.autoupdate_line_number) {
+  if (target && context.autoupdate_line_number) {
     update_message = llvm::formatv(
         "If these differences are expected, try the autoupdater:\n"
         "\tbazel run {0} -- --autoupdate --file_tests={1}",
