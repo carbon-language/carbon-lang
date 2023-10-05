@@ -56,6 +56,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   store ptr %tuple10, ptr %12, align 8
 // CHECK:STDOUT:   %tuple.index = getelementptr inbounds { { i32, i32, i32 }, { i32, i32 } }, ptr %tuple11, i32 0, i32 1
 // CHECK:STDOUT:   %tuple.index12 = getelementptr inbounds { i32, i32 }, ptr %tuple.index, i32 0, i32 1
-// CHECK:STDOUT:   %13 = load i32, ptr %tuple.index12, align 4
-// CHECK:STDOUT:   ret i32 %13
+// CHECK:STDOUT:   %tuple.index.load = load i32, ptr %tuple.index12, align 4
+// CHECK:STDOUT:   ret i32 %tuple.index.load
 // CHECK:STDOUT: }

@@ -10,11 +10,13 @@ fn F(a: i32) -> i32 {
 }
 
 // CHECK:STDOUT: file "local.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b: i32 = bind_name "b", %a
-// CHECK:STDOUT:   return %b
+// CHECK:STDOUT:   %a.ref: i32 = name_reference "a", %a
+// CHECK:STDOUT:   %b: i32 = bind_name "b", %a.ref
+// CHECK:STDOUT:   %b.ref: i32 = name_reference "b", %b
+// CHECK:STDOUT:   return %b.ref
 // CHECK:STDOUT: }

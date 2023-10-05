@@ -11,6 +11,7 @@ let a = 4;
 
 // CHECK:STDOUT: - filename: fail_missing_type.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},

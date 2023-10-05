@@ -12,11 +12,12 @@ fn F() {
 }
 
 // CHECK:STDOUT: file "fail_use_in_init.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a.ref: <error> = name_reference "a", <error>
 // CHECK:STDOUT:   %a: i32 = bind_name "a", <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -11,6 +11,7 @@ let;
 
 // CHECK:STDOUT: - filename: fail_empty.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:         {kind: 'Name', text: ';', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},

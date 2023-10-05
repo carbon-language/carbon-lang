@@ -11,6 +11,7 @@ fn F() {
 
 // CHECK:STDOUT: - filename: let.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'v'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
