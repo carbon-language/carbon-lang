@@ -31,9 +31,9 @@ var c: i32 = {.a = 1, .b = 2}[0];
 var d: i32 = {.a: i32, .b: i32}[0];
 
 // CHECK:STDOUT: file "fail_invalid_base.carbon" {
-// CHECK:STDOUT:   %.loc14 = namespace {}
+// CHECK:STDOUT:   %.loc11 = namespace {}
 // CHECK:STDOUT:   %a: ref i32 = var "a"
-// CHECK:STDOUT:   %N.ref = name_reference_untyped "N", %.loc14
+// CHECK:STDOUT:   %N.ref = name_reference_untyped "N", %.loc11
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 0
 // CHECK:STDOUT:   assign %a, <error>
 // CHECK:STDOUT:   %F = fn_decl @F
