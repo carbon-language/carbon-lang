@@ -12,8 +12,8 @@ fn F(cond: bool) {
 }
 
 // CHECK:STDOUT: file "struct.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @G
-// CHECK:STDOUT:   %.loc9 = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%s: {.a: i32, .b: i32});
@@ -31,7 +31,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc10_46.5: init i32 = initialize_from %.loc10_45 to %.loc10_46.4
 // CHECK:STDOUT:   %.loc10_46.6: init {.a: i32, .b: i32} = struct_init %.loc10_46.1, (%.loc10_46.3, %.loc10_46.5)
 // CHECK:STDOUT:   assign %a, %.loc10_46.6
-// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%.loc7
+// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%G
 // CHECK:STDOUT:   %cond.ref: bool = name_reference "cond", %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:

@@ -13,7 +13,7 @@ fn F(p: const i32**) -> const (const i32)** {
 }
 
 // CHECK:STDOUT: file "collapse.carbon" {
-// CHECK:STDOUT:   %.loc11 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {

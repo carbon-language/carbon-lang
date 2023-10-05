@@ -13,6 +13,7 @@ fn F() -> i32 {
 
 // CHECK:STDOUT: - filename: pointer_value.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},

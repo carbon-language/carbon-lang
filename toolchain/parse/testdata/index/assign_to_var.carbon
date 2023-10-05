@@ -8,6 +8,7 @@ var v: i32 = t[0];
 
 // CHECK:STDOUT: - filename: assign_to_var.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'v'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},

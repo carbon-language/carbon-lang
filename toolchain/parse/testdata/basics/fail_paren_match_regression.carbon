@@ -12,11 +12,12 @@
 // CHECK:STDERR:            ^
 var = (foo {})
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+15]]:21: ERROR: `var` declarations must end with a `;`.
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+16]]:21: ERROR: `var` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_paren_match_regression.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: '=', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},

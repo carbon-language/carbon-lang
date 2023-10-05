@@ -79,7 +79,7 @@ class File : public Printable<File> {
   auto Verify() const -> ErrorOr<Success>;
 
   // Prints the full IR. Allow omitting builtins so that unrelated changes are
-  // less likely to alternate test golden files.
+  // less likely to alter test golden files.
   // TODO: In the future, the things to print may change, for example by adding
   // preludes. We may then want the ability to omit other things similar to
   // builtins.
@@ -103,6 +103,8 @@ class File : public Printable<File> {
   // Adds a callable, returning an ID to reference it.
   auto AddFunction(Function function) -> FunctionId {
     FunctionId id(functions_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     functions_.push_back(function);
     return id;
   }
@@ -120,6 +122,8 @@ class File : public Printable<File> {
   // Adds an integer literal, returning an ID to reference it.
   auto AddIntegerLiteral(llvm::APInt integer_literal) -> IntegerLiteralId {
     IntegerLiteralId id(integer_literals_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     integer_literals_.push_back(integer_literal);
     return id;
   }
@@ -132,6 +136,8 @@ class File : public Printable<File> {
   // Adds a name scope, returning an ID to reference it.
   auto AddNameScope() -> NameScopeId {
     NameScopeId name_scopes_id(name_scopes_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(name_scopes_id.index >= 0);
     name_scopes_.resize(name_scopes_id.index + 1);
     return name_scopes_id;
   }
@@ -155,6 +161,8 @@ class File : public Printable<File> {
   // to the current block.
   auto AddNodeInNoBlock(Node node) -> NodeId {
     NodeId node_id(nodes_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(node_id.index >= 0);
     nodes_.push_back(node);
     return node_id;
   }
@@ -172,6 +180,8 @@ class File : public Printable<File> {
   // NodeBlockStack.
   auto AddNodeBlockId() -> NodeBlockId {
     NodeBlockId id(node_blocks_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     node_blocks_.push_back({});
     return id;
   }
@@ -188,6 +198,8 @@ class File : public Printable<File> {
   // Adds a node block with the given content, returning an ID to reference it.
   auto AddNodeBlock(llvm::ArrayRef<NodeId> content) -> NodeBlockId {
     NodeBlockId id(node_blocks_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     node_blocks_.push_back(AllocateCopy(content));
     return id;
   }
@@ -195,6 +207,8 @@ class File : public Printable<File> {
   // Adds a node block of the given size.
   auto AddUninitializedNodeBlock(size_t size) -> NodeBlockId {
     NodeBlockId id(node_blocks_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     node_blocks_.push_back(AllocateUninitialized<NodeId>(size));
     return id;
   }
@@ -214,6 +228,8 @@ class File : public Printable<File> {
   // Adds a real literal, returning an ID to reference it.
   auto AddRealLiteral(RealLiteral real_literal) -> RealLiteralId {
     RealLiteralId id(real_literals_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     real_literals_.push_back(real_literal);
     return id;
   }
@@ -230,8 +246,10 @@ class File : public Printable<File> {
     auto [it, added] = string_to_id_.insert({str, next_id});
 
     if (added) {
+      // TODO: Return failure on overflow instead of crashing.
+      CARBON_CHECK(next_id.index >= 0);
       // Update the reverse mapping from IDs to strings.
-      CARBON_CHECK(it->second == next_id);
+      CARBON_DCHECK(it->second == next_id);
       strings_.push_back(it->first());
     }
 
@@ -246,6 +264,8 @@ class File : public Printable<File> {
   // Adds a type, returning an ID to reference it.
   auto AddType(NodeId node_id) -> TypeId {
     TypeId type_id(types_.size());
+    // Should never happen, will always overflow node_ids first.
+    CARBON_DCHECK(type_id.index >= 0);
     types_.push_back(node_id);
     return type_id;
   }
@@ -275,6 +295,8 @@ class File : public Printable<File> {
   // Adds a type block with the given content, returning an ID to reference it.
   auto AddTypeBlock(llvm::ArrayRef<TypeId> content) -> TypeBlockId {
     TypeBlockId id(type_blocks_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     type_blocks_.push_back(AllocateCopy(content));
     return id;
   }

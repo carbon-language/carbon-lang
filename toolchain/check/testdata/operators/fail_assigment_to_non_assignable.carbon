@@ -46,8 +46,8 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "fail_assigment_to_non_assignable.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc9 = fn_decl @Main
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32;
@@ -57,7 +57,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc13_3: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 2
 // CHECK:STDOUT:   assign %.loc13_3, %.loc13_7
-// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%.loc7
+// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc17_4: init i32 = call @F()
 // CHECK:STDOUT:   %.loc17_9: i32 = int_literal 1
 // CHECK:STDOUT:   assign %.loc17_4, %.loc17_9

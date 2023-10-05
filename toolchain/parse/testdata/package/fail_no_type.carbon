@@ -11,6 +11,7 @@ package Geometry;
 
 // CHECK:STDOUT: - filename: fail_no_type.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
 // CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 3},

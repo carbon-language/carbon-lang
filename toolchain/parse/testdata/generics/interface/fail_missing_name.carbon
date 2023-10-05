@@ -12,6 +12,7 @@ interface {
 
 // CHECK:STDOUT: - filename: fail_missing_name.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '{'},
 // CHECK:STDOUT:     {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 3},

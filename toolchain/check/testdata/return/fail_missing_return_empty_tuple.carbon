@@ -11,7 +11,7 @@ fn F() -> () {
 }
 
 // CHECK:STDOUT: file "fail_missing_return_empty_tuple.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> () {

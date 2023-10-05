@@ -108,7 +108,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "raw_and_textual_ir.carbon" {
-// CHECK:STDOUT:   %.loc11 = fn_decl @Foo
+// CHECK:STDOUT:   %Foo = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, f64) {

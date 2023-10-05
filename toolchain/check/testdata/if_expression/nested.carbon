@@ -9,7 +9,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 }
 
 // CHECK:STDOUT: file "nested.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {

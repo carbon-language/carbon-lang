@@ -14,7 +14,7 @@ fn Main() {
 var y: i32 = x;
 
 // CHECK:STDOUT: file "fail_lookup_outside_scope.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT:   %y: ref i32 = var "y"
 // CHECK:STDOUT:   %x.ref: <error> = name_reference "x", <error>
 // CHECK:STDOUT:   assign %y, <error>

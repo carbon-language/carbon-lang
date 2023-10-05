@@ -10,7 +10,7 @@ fn Main() -> (i32, i32) {
 }
 
 // CHECK:STDOUT: file "tuple.carbon" {
-// CHECK:STDOUT:   %.loc8 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %return: (i32, i32) {

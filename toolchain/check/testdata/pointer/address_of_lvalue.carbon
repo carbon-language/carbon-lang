@@ -17,7 +17,7 @@ fn F() {
 }
 
 // CHECK:STDOUT: file "address_of_lvalue.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

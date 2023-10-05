@@ -13,8 +13,8 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "i32.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Echo
-// CHECK:STDOUT:   %.loc11 = fn_decl @Main
+// CHECK:STDOUT:   %Echo = fn_decl @Echo
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b: ref i32 = var "b"
-// CHECK:STDOUT:   %Echo.ref = name_reference_untyped "Echo", package.%.loc7
+// CHECK:STDOUT:   %Echo.ref = name_reference_untyped "Echo", package.%Echo
 // CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_20: init i32 = call @Echo(%.loc12_21)
 // CHECK:STDOUT:   assign %b, %.loc12_20

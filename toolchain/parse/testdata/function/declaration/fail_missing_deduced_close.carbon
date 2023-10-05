@@ -13,11 +13,12 @@
 // CHECK:STDERR:        ^
 fn Div[();
 
-// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+14]]:21: ERROR: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+15]]:21: ERROR: A `(` for parameters is required after deduced parameters.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_missing_deduced_close.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Div'},
 // CHECK:STDOUT:         {kind: 'DeducedParameterListStart', text: '['},

@@ -22,6 +22,7 @@ var x: i32 = {.a: i32, .b, .c = 1};
 
 // CHECK:STDOUT: - filename: fail_mix_with_unknown.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'x'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},

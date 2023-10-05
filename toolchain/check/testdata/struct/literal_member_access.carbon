@@ -11,8 +11,8 @@ fn F() -> i32 {
 }
 
 // CHECK:STDOUT: file "literal_member_access.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @G
-// CHECK:STDOUT:   %.loc9 = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: {.x: i32, .y: i32, .z: i32};
@@ -20,7 +20,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
-// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%.loc7
+// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%G
 // CHECK:STDOUT:   %.loc10_25.1: ref {.x: i32, .y: i32, .z: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc10_25.2: init {.x: i32, .y: i32, .z: i32} = call @G() to %.loc10_25.1
 // CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3

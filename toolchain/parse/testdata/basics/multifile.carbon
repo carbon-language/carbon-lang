@@ -12,6 +12,7 @@ fn B() {}
 
 // CHECK:STDOUT: - filename: a.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'A'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},
@@ -22,6 +23,7 @@ fn B() {}
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: b.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'B'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},

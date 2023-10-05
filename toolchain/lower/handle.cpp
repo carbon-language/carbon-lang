@@ -30,24 +30,12 @@ auto HandleArrayIndex(FunctionContext& context, SemIR::NodeId node_id,
   auto* array_value = context.GetLocal(array_node_id);
   auto* llvm_type =
       context.GetType(context.semantics_ir().GetNode(array_node_id).type_id());
-  auto index_node = context.semantics_ir().GetNode(index_node_id);
-  llvm::Value* array_element_value;
-
-  if (index_node.kind() == SemIR::NodeKind::IntegerLiteral) {
-    const auto index = context.semantics_ir()
-                           .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
-                           .getZExtValue();
-    array_element_value = context.GetIndexFromStructOrArray(
-        llvm_type, array_value, index, "array.index");
-  } else {
-    auto* index = context.GetLocalLoaded(index_node_id);
-    // TODO: Handle return value or call such as `F()[a]`.
-    auto* zero = llvm::ConstantInt::get(
-        llvm::Type::getInt32Ty(context.llvm_context()), 0);
-    array_element_value = context.builder().CreateInBoundsGEP(
-        llvm_type, array_value, {zero, index}, "array.index");
-  }
-  context.SetLocal(node_id, array_element_value);
+  llvm::Value* indexes[2] = {
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(context.llvm_context()), 0),
+      context.GetLocal(index_node_id)};
+  context.SetLocal(node_id,
+                   context.builder().CreateInBoundsGEP(llvm_type, array_value,
+                                                       indexes, "array.index"));
 }
 
 auto HandleArrayInit(FunctionContext& context, SemIR::NodeId node_id,
@@ -108,7 +96,7 @@ auto HandleBranch(FunctionContext& context, SemIR::NodeId /*node_id*/,
 auto HandleBranchIf(FunctionContext& context, SemIR::NodeId /*node_id*/,
                     SemIR::Node node) -> void {
   auto [target_block_id, cond_id] = node.GetAsBranchIf();
-  llvm::Value* cond = context.GetLocalLoaded(cond_id);
+  llvm::Value* cond = context.GetLocal(cond_id);
   llvm::BasicBlock* then_block = context.GetBlock(target_block_id);
   llvm::BasicBlock* else_block = context.CreateSyntheticBlock();
   context.builder().CreateCondBr(cond, then_block, else_block);
@@ -118,7 +106,7 @@ auto HandleBranchIf(FunctionContext& context, SemIR::NodeId /*node_id*/,
 auto HandleBranchWithArg(FunctionContext& context, SemIR::NodeId /*node_id*/,
                          SemIR::Node node) -> void {
   auto [target_block_id, arg_id] = node.GetAsBranchWithArg();
-  llvm::Value* arg = context.GetLocalLoaded(arg_id);
+  llvm::Value* arg = context.GetLocal(arg_id);
   SemIR::TypeId arg_type_id = context.semantics_ir().GetNode(arg_id).type_id();
 
   // Opportunistically avoid creating a BasicBlock that contains just a branch.
@@ -164,17 +152,9 @@ auto HandleCall(FunctionContext& context, SemIR::NodeId node_id,
 
   for (auto ref_id : arg_ids) {
     auto arg_type_id = context.semantics_ir().GetNode(ref_id).type_id();
-    switch (SemIR::GetValueRepresentation(context.semantics_ir(), arg_type_id)
-                .kind) {
-      case SemIR::ValueRepresentation::None:
-        break;
-      case SemIR::ValueRepresentation::Copy:
-      case SemIR::ValueRepresentation::Custom:
-        args.push_back(context.GetLocalLoaded(ref_id));
-        break;
-      case SemIR::ValueRepresentation::Pointer:
-        args.push_back(context.GetLocal(ref_id));
-        break;
+    if (SemIR::GetValueRepresentation(context.semantics_ir(), arg_type_id)
+            .kind != SemIR::ValueRepresentation::None) {
+      args.push_back(context.GetLocal(ref_id));
     }
   }
 
@@ -282,7 +262,7 @@ auto HandleReturnExpression(FunctionContext& context, SemIR::NodeId /*node_id*/,
       return;
     case SemIR::InitializingRepresentation::ByCopy:
       // The expression produces the value representation for the type.
-      context.builder().CreateRet(context.GetLocalLoaded(expr_id));
+      context.builder().CreateRet(context.GetLocal(expr_id));
       return;
   }
 }
@@ -299,11 +279,55 @@ auto HandleStringLiteral(FunctionContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
+// Extracts an element of either a struct or a tuple by index. Depending on the
+// expression category of the aggregate input, this will either produce a value
+// or a reference.
+static auto GetStructOrTupleElement(FunctionContext& context,
+                                    SemIR::NodeId aggr_node_id, unsigned idx,
+                                    SemIR::TypeId result_type_id,
+                                    llvm::Twine name) -> llvm::Value* {
+  auto aggr_node = context.semantics_ir().GetNode(aggr_node_id);
+  auto* aggr_value = context.GetLocal(aggr_node_id);
+
+  auto aggr_cat =
+      SemIR::GetExpressionCategory(context.semantics_ir(), aggr_node_id);
+  if (aggr_cat == SemIR::ExpressionCategory::Value &&
+      SemIR::GetValueRepresentation(context.semantics_ir(), aggr_node.type_id())
+              .kind == SemIR::ValueRepresentation::Copy) {
+    // We are holding the values of the aggregate directly, elementwise.
+    return context.builder().CreateExtractValue(aggr_value, idx, name);
+  }
+
+  // Either we're accessing an element of a reference and producing a reference,
+  // or we're accessing an element of a value that is held by pointer and we're
+  // producing a value.
+  auto* aggr_type = context.GetType(aggr_node.type_id());
+  auto* elem_ptr =
+      context.builder().CreateStructGEP(aggr_type, aggr_value, idx, name);
+
+  // If this is a value access, load the element if necessary.
+  if (aggr_cat == SemIR::ExpressionCategory::Value) {
+    switch (
+        SemIR::GetValueRepresentation(context.semantics_ir(), result_type_id)
+            .kind) {
+      case SemIR::ValueRepresentation::None:
+        return llvm::PoisonValue::get(context.GetType(result_type_id));
+      case SemIR::ValueRepresentation::Copy:
+        return context.builder().CreateLoad(context.GetType(result_type_id),
+                                            elem_ptr, name + ".load");
+      case SemIR::ValueRepresentation::Pointer:
+        return elem_ptr;
+      case SemIR::ValueRepresentation::Custom:
+        CARBON_FATAL() << "TODO: Add support for custom value representation";
+    }
+  }
+  return elem_ptr;
+}
+
 auto HandleStructAccess(FunctionContext& context, SemIR::NodeId node_id,
                         SemIR::Node node) -> void {
   auto [struct_id, member_index] = node.GetAsStructAccess();
   auto struct_type_id = context.semantics_ir().GetNode(struct_id).type_id();
-  auto* llvm_type = context.GetType(struct_type_id);
 
   // Get type information for member names.
   auto type_refs = context.semantics_ir().GetNodeBlock(
@@ -316,9 +340,9 @@ auto HandleStructAccess(FunctionContext& context, SemIR::NodeId node_id,
           .GetAsStructTypeField();
   auto member_name = context.semantics_ir().GetString(field_name_id);
 
-  auto* gep = context.builder().CreateStructGEP(
-      llvm_type, context.GetLocal(struct_id), member_index.index, member_name);
-  context.SetLocal(node_id, gep);
+  context.SetLocal(
+      node_id, GetStructOrTupleElement(context, struct_id, member_index.index,
+                                       node.type_id(), member_name));
 }
 
 auto HandleStructLiteral(FunctionContext& context, SemIR::NodeId node_id,
@@ -412,26 +436,21 @@ auto HandleStructTypeField(FunctionContext& /*context*/,
 auto HandleTupleAccess(FunctionContext& context, SemIR::NodeId node_id,
                        SemIR::Node node) -> void {
   auto [tuple_node_id, index] = node.GetAsTupleAccess();
-  auto* tuple_value = context.GetLocal(tuple_node_id);
-  auto* llvm_type =
-      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
-  context.SetLocal(
-      node_id, context.GetIndexFromStructOrArray(llvm_type, tuple_value,
-                                                 index.index, "tuple.elem"));
+  context.SetLocal(node_id,
+                   GetStructOrTupleElement(context, tuple_node_id, index.index,
+                                           node.type_id(), "tuple.elem"));
 }
 
 auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
                       SemIR::Node node) -> void {
   auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
-  auto* tuple_value = context.GetLocal(tuple_node_id);
   auto index_node = context.semantics_ir().GetNode(index_node_id);
   const auto index = context.semantics_ir()
                          .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
                          .getZExtValue();
-  auto* llvm_type =
-      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
-  context.SetLocal(node_id, context.GetIndexFromStructOrArray(
-                                llvm_type, tuple_value, index, "tuple.index"));
+  context.SetLocal(node_id,
+                   GetStructOrTupleElement(context, tuple_node_id, index,
+                                           node.type_id(), "tuple.index"));
 }
 
 auto HandleTupleLiteral(FunctionContext& context, SemIR::NodeId node_id,

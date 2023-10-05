@@ -8,6 +8,7 @@ var y: ((), (), ());
 
 // CHECK:STDOUT: - filename: nested.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'y'},
 // CHECK:STDOUT:           {kind: 'ParenExpressionOrTupleLiteralStart', text: '('},

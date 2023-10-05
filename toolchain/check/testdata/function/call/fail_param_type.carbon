@@ -17,8 +17,8 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "fail_param_type.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Run
-// CHECK:STDOUT:   %.loc9 = fn_decl @Main
+// CHECK:STDOUT:   %Run = fn_decl @Run
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run(%a: i32) {
@@ -28,7 +28,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Run.ref = name_reference_untyped "Run", package.%.loc7
+// CHECK:STDOUT:   %Run.ref = name_reference_untyped "Run", package.%Run
 // CHECK:STDOUT:   %.loc16_7: f64 = real_literal 10e-1
 // CHECK:STDOUT:   %.loc16_6: type = tuple_type ()
 // CHECK:STDOUT:   return

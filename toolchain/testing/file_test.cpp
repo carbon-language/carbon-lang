@@ -76,10 +76,13 @@ class ToolchainFileTest : public FileTestBase {
         check_line = "// CHECK:STDOUT: {{.*}}";
       }
     } else if (component_ == "lex") {
-      // Ignore the resulting column of EndOfFile because it's often the end of
-      // the CHECK comment.
-      static RE2 end_of_file_re(R"((EndOfFile.*column: )( *\d+))");
-      RE2::Replace(&check_line, end_of_file_re, R"(\1{{ *\\d+}})");
+      // Both StartOfFile and EndOfFile regularly have locations on CHECK
+      // comment lines that don't work correctly. The line happens to be correct
+      // for the EndOfFile, but we need to avoid checking the column.
+      // The column happens to be right for StartOfFile, but the line is wrong.
+      static RE2 file_token_re(
+          R"((EndOfFile.*column: |StartOfFile.*line: )( *\d+))");
+      RE2::Replace(&check_line, file_token_re, R"(\1{{ *\\d+}})");
     } else {
       return FileTestBase::DoExtraCheckReplacements(check_line);
     }
