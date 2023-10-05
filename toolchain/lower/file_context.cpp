@@ -8,6 +8,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/lower/function_context.h"
+#include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/node.h"
 #include "toolchain/sem_ir/node_kind.h"
@@ -107,11 +108,20 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
           ? GetType(function.return_type_id)
           : llvm::Type::getVoidTy(llvm_context());
 
+  std::string mangled_name;
+  if (SemIR::IsEntryPoint(semantics_ir(), function_id)) {
+    // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
+    mangled_name = "main";
+  } else {
+    // TODO: Decide on a name mangling scheme.
+    mangled_name = semantics_ir().GetString(function.name_id);
+  }
+
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, param_types, /*isVarArg=*/false);
-  auto* llvm_function = llvm::Function::Create(
-      function_type, llvm::Function::ExternalLinkage,
-      semantics_ir().GetString(function.name_id), llvm_module());
+  auto* llvm_function =
+      llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
+                             mangled_name, llvm_module());
 
   // Set up parameters and the return slot.
   for (auto [node_id, arg] :
