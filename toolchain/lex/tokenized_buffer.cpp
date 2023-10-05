@@ -716,24 +716,54 @@ class TokenizedBuffer::Lexer {
                        .column = current_column_});
   }
 
+  // We use a collection of static member functions for table-based dispatch to
+  // lexer methods. These are named static member functions so that they show up
+  // helpfully in profiles and backtraces, but they tend to not contain the
+  // interesting logic and simply delegate to the relevant methods. All of their
+  // signatures need to be exactly the same however in order to ensure we can
+  // build efficient dispatch tables out of them.
+  static auto DispatchLexError(Lexer& lexer, llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexError(source_text);
+  }
+  static auto DispatchLexSymbol(Lexer& lexer, llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexSymbolToken(source_text);
+  }
+  template <const TokenKind& Token>
+  static auto DispatchLexOneCharSymbol(Lexer& lexer,
+                                       llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexSymbolToken(source_text, Token);
+  }
+  static auto DispatchLexWord(Lexer& lexer, llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexKeywordOrIdentifier(source_text);
+  }
+  static auto DispatchLexNumericLiteral(Lexer& lexer,
+                                        llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexNumericLiteral(source_text);
+  }
+  static auto DispatchLexStringLiteral(Lexer& lexer,
+                                       llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexStringLiteral(source_text);
+  }
+
   constexpr static auto MakeDispatchTable() -> DispatchTableT {
     DispatchTableT table = {};
-    auto dispatch_lex_error = +[](Lexer& lexer, llvm::StringRef& source_text) {
-      return lexer.LexError(source_text);
-    };
     for (int i = 0; i < 256; ++i) {
-      table[i] = dispatch_lex_error;
+      table[i] = &DispatchLexError;
     }
 
     // Symbols have some special dispatching. First, set the first character of
     // each symbol token spelling to dispatch to the symbol lexer. We don't
     // provide a pre-computed token here, so the symbol lexer will compute the
-    // exact symbol token kind.
-    auto dispatch_lex_symbol = +[](Lexer& lexer, llvm::StringRef& source_text) {
-      return lexer.LexSymbolToken(source_text);
-    };
+    // exact symbol token kind. We'll override this with more specific dispatch
+    // below.
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = dispatch_lex_symbol;
+  table[(Spelling)[0]] = &DispatchLexSymbol;
 #include "toolchain/lex/token_kind.def"
 
     // Now special cased single-character symbols that are guaranteed to not
@@ -742,46 +772,34 @@ class TokenizedBuffer::Lexer {
     // orthogonal to any other punctuation. We do this separately because this
     // needs to override some of the generic handling above, and provide a
     // custom token.
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)                  \
-  table[(Spelling)[0]] = +[](Lexer& lexer, llvm::StringRef& source_text) { \
-    return lexer.LexSymbolToken(source_text, TokenKind::TokenName);        \
-  };
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
+  table[(Spelling)[0]] = &DispatchLexOneCharSymbol<TokenKind::TokenName>;
 #include "toolchain/lex/token_kind.def"
 
-    auto dispatch_lex_word = +[](Lexer& lexer, llvm::StringRef& source_text) {
-      return lexer.LexKeywordOrIdentifier(source_text);
-    };
-    table['_'] = dispatch_lex_word;
+    table['_'] = &DispatchLexWord;
     // Note that we don't use `llvm::seq` because this needs to be `constexpr`
     // evaluated.
     for (unsigned char c = 'a'; c <= 'z'; ++c) {
-      table[c] = dispatch_lex_word;
+      table[c] = &DispatchLexWord;
     }
     for (unsigned char c = 'A'; c <= 'Z'; ++c) {
-      table[c] = dispatch_lex_word;
+      table[c] = &DispatchLexWord;
     }
     // We dispatch all non-ASCII UTF-8 characters to the identifier lexing
     // as whitespace characters should already have been skipped and the
     // only remaining valid Unicode characters would be part of an
     // identifier. That code can either accept or reject.
     for (int i = 0x80; i < 0x100; ++i) {
-      table[i] = dispatch_lex_word;
+      table[i] = &DispatchLexWord;
     }
 
-    auto dispatch_lex_numeric =
-        +[](Lexer& lexer, llvm::StringRef& source_text) {
-          return lexer.LexNumericLiteral(source_text);
-        };
     for (unsigned char c = '0'; c <= '9'; ++c) {
-      table[c] = dispatch_lex_numeric;
+      table[c] = &DispatchLexNumericLiteral;
     }
 
-    auto dispatch_lex_string = +[](Lexer& lexer, llvm::StringRef& source_text) {
-      return lexer.LexStringLiteral(source_text);
-    };
-    table['\''] = dispatch_lex_string;
-    table['"'] = dispatch_lex_string;
-    table['#'] = dispatch_lex_string;
+    table['\''] = &DispatchLexStringLiteral;
+    table['"'] = &DispatchLexStringLiteral;
+    table['#'] = &DispatchLexStringLiteral;
 
     return table;
   };
