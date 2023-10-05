@@ -5,6 +5,8 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 package(default_visibility = [
+    "//bazel/check_deps:__pkg__",
+    "//installers:__subpackages__",
     "//language_server:__subpackages__",
 ])
 
