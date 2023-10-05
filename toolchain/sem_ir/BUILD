@@ -66,6 +66,16 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "entry_point",
+    srcs = ["entry_point.cpp"],
+    hdrs = ["entry_point.h"],
+    deps = [
+        ":file",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "file_test",
     size = "small",

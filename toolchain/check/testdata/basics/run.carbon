@@ -4,14 +4,13 @@
 //
 // AUTOUPDATE
 
-fn Run() -> i32 {
-  ((i32,), );
-  return 0;
-}
+fn Run() {}
 
-// CHECK:STDOUT: ; ModuleID = 'nested_tuple.carbon'
-// CHECK:STDOUT: source_filename = "nested_tuple.carbon"
+// CHECK:STDOUT: file "run.carbon" {
+// CHECK:STDOUT:   %Run = fn_decl @Run
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() {
-// CHECK:STDOUT:   ret i32 0
+// CHECK:STDOUT: fn @Run() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }

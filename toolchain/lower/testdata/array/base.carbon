@@ -15,7 +15,7 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'base.carbon'
 // CHECK:STDOUT: source_filename = "base.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Run() {
+// CHECK:STDOUT: define void @main() {
 // CHECK:STDOUT:   %a = alloca [1 x i32], align 4
 // CHECK:STDOUT:   %array.index = getelementptr inbounds [1 x i32], ptr %a, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %array.index, align 4
