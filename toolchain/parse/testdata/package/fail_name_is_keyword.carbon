@@ -4,13 +4,15 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+3]]:9: Expected identifier after `package`.
+// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+3]]:9: ERROR: Expected identifier after `package`.
 // CHECK:STDERR: package fn;
 // CHECK:STDERR:         ^
 package fn;
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT: {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_name_is_keyword.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
+// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

@@ -45,9 +45,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Type erasure](#type-erasure)
 -   [Archetype](#archetype)
 -   [Extending an interface](#extending-an-interface)
--   [Witness tables](#witness-tables)
-    -   [Dynamic-dispatch witness table](#dynamic-dispatch-witness-table)
-    -   [Static-dispatch witness table](#static-dispatch-witness-table)
+-   [Dynamic-dispatch witness table](#dynamic-dispatch-witness-table)
 -   [Instantiation](#instantiation)
 -   [Specialization](#specialization)
     -   [Template specialization](#template-specialization)
@@ -69,7 +67,7 @@ called a _generic parameter_, to it. So:
 -   a _generic function_ is a function with at least one compile-time parameter,
     which could be an explicit argument to the function or
     [deduced](#deduced-parameter);
--   a _generic type_ is a function with a compile-time parameter, for example a
+-   a _generic type_ is a type with a compile-time parameter, for example a
     container type parameterized by the type of the contained elements;
 -   a _generic interface_ is an [interface](#interface) with
     [a compile-time parameter](#interface-parameters-and-associated-constants).
@@ -132,7 +130,7 @@ Expected difference between checked and template parameters:
    </td>
   </tr>
   <tr>
-   <td>supports separate type checking; may also support separate compilation, for example when implemented using dynamic witness tables
+   <td>supports separate type checking; may also support separate compilation
    </td>
    <td>separate compilation only to the extent that C++ supports it
    </td>
@@ -324,9 +322,6 @@ long as it has an implicit conversion to `type` that may be performed at compile
 time.
 
 ## Facet type
-
-> **TODO:** Documents using the obsolete term "type-of-type" should be updated
-> to say "facet type" instead.
 
 A _facet type_ is a [type](#types-and-type) whose values are some subset of the
 values of `type`, determined by a set of [type constraints](#type-constraints):
@@ -575,7 +570,8 @@ permitted, always has the same meaning as an explicit cast.
 A generics or interface system has the _implementation coherence_ property, or
 simply _coherence_, if there is a single answer to the question "what is the
 implementation of this interface for this type, if any?" independent of context,
-such as the libraries imported into a given file.
+such as the libraries imported into a given file. Coherence is
+[a goal of Carbon checked generics](goals.md#coherence).
 
 This is enforced using two kinds of rules:
 
@@ -592,6 +588,9 @@ This is enforced using two kinds of rules:
     considered most specialized. In Rust, by contrast, the
     [overlap rule or overlap check](https://rust-lang.github.io/chalk/book/clauses/coherence.html#chalk-overlap-check)
     instead produces an error if two implementations apply at once.
+
+The rationale for Carbon choosing coherence and alternatives considered may be
+found in [this appendix](appendix-coherence.md)
 
 ## Adapting a type
 
@@ -651,42 +650,34 @@ of another interface, plus some additional API. Types implementing the extended
 interface should automatically be considered to have implemented the narrower
 interface.
 
-## Witness tables
+## Dynamic-dispatch witness table
 
-[Witness tables](https://forums.swift.org/t/where-does-the-term-witness-table-come-from/54334/4)
-are an implementation strategy where values passed to a generic type parameter
-are compiled into a table of required functionality. That table is then filled
-in for a given passed-in type with references to the implementation on the
-original type. The generic is implemented using calls into entries in the
-witness table, which turn into calls to the original type. This doesn't
-necessarily imply a runtime indirection: it may be a purely compile-time
-separation of concerns. However, it insists on a full abstraction boundary
-between the generic user of a type and the concrete implementation.
+Dynamic-dispatch
+[witness tables](https://forums.swift.org/t/where-does-the-term-witness-table-come-from/54334/4)
+are an implementation strategy that uses a table accessed at runtime to allow
+behavior of a function to vary. This allows a function to work with any type
+implementing a facet type (such as an interface). For example, the witness table
+might contain pointers to the implementations of the functions of the interface.
+This can be done to reduce the size of generated code, at the expense of
+additional indirection at runtime.
 
-A simple way to imagine a witness table is as a struct of function pointers, one
-per method in the interface. However, in practice, it's more complex because it
-must model things like associated facets and interfaces.
+It can also allow a function to dynamically dispatch when the runtime type of a
+value is not known. This is the implementation strategy for
+[boxed protocol types in Swift](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/opaquetypes/#Boxed-Protocol-Types)
+and
+[trait objects in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
+Note that this often comes with limitations, since for example it is much more
+difficult to support when the associated constants of the interface are not
+known.
 
-Witness tables are called "dictionary passing" in Haskell. Outside of generics,
-a [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) is a witness
-table that witnesses that a class is a descendant of an abstract base class, and
-is passed as part of the object instead of separately.
+Typically a reference to the witness table will be passed separately from the
+object, unlike a
+[virtual method table](https://en.wikipedia.org/wiki/Virtual_method_table),
+which otherwise is very similar to a witness table, "witnessing" the specific
+descendant of a base class.
 
-### Dynamic-dispatch witness table
-
-For dynamic-dispatch witness tables, actual function pointers are formed and
-used as a dynamic, runtime indirection. As a result, the generic code **will
-not** be duplicated for different witness tables.
-
-### Static-dispatch witness table
-
-For static-dispatch witness tables, the implementation is required to collapse
-the table indirections at compile time. As a result, the generic code **will**
-be duplicated for different witness tables.
-
-Static-dispatch may be implemented as a performance optimization for
-dynamic-dispatch that increases generated code size. The final compiled output
-may not retain the witness table.
+Carbon's approach to using witness tables is detailed in an
+[appendix](appendix-witness.md).
 
 ## Instantiation
 
@@ -696,7 +687,7 @@ replaces the template components with the concrete type and its implementation
 operations. It allows duck typing and lazy binding. Instantiation implies
 template code **will** be duplicated.
 
-Unlike [static-dispatch witness tables](#static-dispatch-witness-table) and
+Unlike static-dispatch witness tables (as in Swift) and
 [monomorphization (as in Rust)](https://doc.rust-lang.org/book/ch10-01-syntax.html#performance-of-code-using-generics),
 this is done **before** type checking completes. Only when the template is used
 with a concrete type is the template fully type checked, and it type checks
@@ -727,13 +718,6 @@ restricted to changing the implementation _without_ affecting the interface.
 This restriction is needed to preserve the ability to perform type checking of
 generic definitions that reference a type that can be specialized, without
 statically knowing which specialization will be used.
-
-While there is nothing fundamentally incompatible about specialization with
-checked generics, even when implemented using witness tables, the result may be
-surprising because the selection of the specialized generic happens outside of
-the witness-table-based indirection between the generic code and the concrete
-implementation. Provided all selection relies exclusively on interfaces, this
-still satisfies the fundamental constraints of generics.
 
 ## Conditional conformance
 

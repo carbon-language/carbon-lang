@@ -4,43 +4,12 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:17: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:17: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var x: type = 42;
 // CHECK:STDERR:                 ^
 var x: type = 42;
 
-// CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: functions: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   42,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: real_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   x,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: type_blocks: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: nodeError},
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_non_type_as_type.carbon" {
 // CHECK:STDOUT:   %x: ref type = var "x"
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 42
 // CHECK:STDOUT:   assign %x, <error>

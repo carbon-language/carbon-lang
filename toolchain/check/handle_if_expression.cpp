@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 
 namespace Carbon::Check {
 
@@ -12,34 +13,34 @@ auto HandleIfExpressionIf(Context& context, Parse::Node parse_node) -> bool {
 
   auto cond_value_id = context.node_stack().PopExpression();
 
-  context.node_stack().Push(if_node);
-
   // Convert the condition to `bool`, and branch on it.
-  cond_value_id = context.ConvertToBoolValue(if_node, cond_value_id);
+  cond_value_id = ConvertToBoolValue(context, if_node, cond_value_id);
   auto then_block_id =
       context.AddDominatedBlockAndBranchIf(if_node, cond_value_id);
   auto else_block_id = context.AddDominatedBlockAndBranch(if_node);
 
-  // Push the `else` block and `then` block, and start emitting the `then`.
+  // Start emitting the `then` block.
   context.node_block_stack().Pop();
-  context.node_block_stack().Push(else_block_id);
   context.node_block_stack().Push(then_block_id);
   context.AddCurrentCodeBlockToFunction();
+
+  context.node_stack().Push(if_node, else_block_id);
   return true;
 }
 
 auto HandleIfExpressionThen(Context& context, Parse::Node parse_node) -> bool {
-  // Alias parse_node for if/then/else consistency.
-  auto& then_node = parse_node;
+  auto then_value_id = context.node_stack().PopExpression();
+  auto else_block_id =
+      context.node_stack().Peek<Parse::NodeKind::IfExpressionIf>();
 
   // Convert the first operand to a value.
-  auto [then_value_node, then_value_id] =
-      context.node_stack().PopExpressionWithParseNode();
-  context.node_stack().Push(then_value_node,
-                            context.ConvertToValueExpression(then_value_id));
+  then_value_id = ConvertToValueExpression(context, then_value_id);
 
-  context.node_stack().Push(then_node, context.node_block_stack().Pop());
+  // Start emitting the `else` block.
+  context.node_block_stack().Push(else_block_id);
   context.AddCurrentCodeBlockToFunction();
+
+  context.node_stack().Push(parse_node, then_value_id);
   return true;
 }
 
@@ -48,25 +49,21 @@ auto HandleIfExpressionElse(Context& context, Parse::Node parse_node) -> bool {
   auto& else_node = parse_node;
 
   auto else_value_id = context.node_stack().PopExpression();
-  auto [then_node, then_end_block_id] =
-      context.node_stack()
-          .PopWithParseNode<Parse::NodeKind::IfExpressionThen>();
-  auto then_value_id = context.node_stack().PopExpression();
-  auto if_node = context.node_stack()
-                     .PopForSoloParseNode<Parse::NodeKind::IfExpressionIf>();
+  auto then_value_id =
+      context.node_stack().Pop<Parse::NodeKind::IfExpressionThen>();
+  auto [if_node, _] =
+      context.node_stack().PopWithParseNode<Parse::NodeKind::IfExpressionIf>();
 
   // Convert the `else` value to the `then` value's type, and finish the `else`
   // block.
   // TODO: Find a common type, and convert both operands to it instead.
   auto result_type_id = context.semantics_ir().GetNode(then_value_id).type_id();
   else_value_id =
-      context.ConvertToValueOfType(else_node, else_value_id, result_type_id);
-  auto else_end_block_id = context.node_block_stack().Pop();
+      ConvertToValueOfType(context, else_node, else_value_id, result_type_id);
 
   // Create a resumption block and branches to it.
   auto chosen_value_id = context.AddConvergenceBlockWithArgAndPush(
-      if_node,
-      {{then_end_block_id, then_value_id}, {else_end_block_id, else_value_id}});
+      if_node, {else_value_id, then_value_id});
   context.AddCurrentCodeBlockToFunction();
 
   // Push the result value.

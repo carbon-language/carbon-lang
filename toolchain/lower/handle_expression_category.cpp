@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/lower/function_context.h"
+#include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Lower {
 
@@ -14,6 +15,7 @@ auto HandleBindValue(FunctionContext& context, SemIR::NodeId node_id,
     case SemIR::ValueRepresentation::None:
       // Nothing should use this value, but StubReference needs a value to
       // propagate.
+      // TODO: Remove this now the StubReferences are gone.
       context.SetLocal(node_id,
                        llvm::PoisonValue::get(context.GetType(node.type_id())));
       break;
@@ -42,6 +44,17 @@ auto HandleTemporaryStorage(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(
       node_id, context.builder().CreateAlloca(context.GetType(node.type_id()),
                                               nullptr, "temp"));
+}
+
+auto HandleValueAsReference(FunctionContext& context, SemIR::NodeId node_id,
+                            SemIR::Node node) -> void {
+  CARBON_CHECK(SemIR::GetExpressionCategory(context.semantics_ir(),
+                                            node.GetAsValueAsReference()) ==
+               SemIR::ExpressionCategory::Value);
+  CARBON_CHECK(
+      SemIR::GetValueRepresentation(context.semantics_ir(), node.type_id())
+          .kind == SemIR::ValueRepresentation::Pointer);
+  context.SetLocal(node_id, context.GetLocal(node.GetAsValueAsReference()));
 }
 
 }  // namespace Carbon::Lower

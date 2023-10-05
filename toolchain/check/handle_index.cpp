@@ -4,6 +4,7 @@
 
 #include "llvm/ADT/APSInt.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/node.h"
 #include "toolchain/sem_ir/node_kind.h"
 
@@ -41,7 +42,8 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
   auto index_node_id = context.node_stack().PopExpression();
   auto index_node = context.semantics_ir().GetNode(index_node_id);
   auto operand_node_id = context.node_stack().PopExpression();
-  operand_node_id = context.MaterializeIfInitializing(operand_node_id);
+  operand_node_id =
+      ConvertToValueOrReferenceExpression(context, operand_node_id);
   auto operand_node = context.semantics_ir().GetNode(operand_node_id);
   auto operand_type_id = operand_node.type_id();
   auto operand_type_node = context.semantics_ir().GetNode(
@@ -58,12 +60,27 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
               context.semantics_ir().GetArrayBoundValue(bound_id))) {
         index_node_id = SemIR::NodeId::BuiltinError;
       }
-      auto cast_index_id = context.ImplicitAsRequired(
-          index_node.parse_node(), index_node_id,
+      auto cast_index_id = ConvertToValueOfType(
+          context, index_node.parse_node(), index_node_id,
           context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType));
-      context.AddNodeAndPush(parse_node, SemIR::Node::ArrayIndex::Make(
-                                             parse_node, element_type_id,
-                                             operand_node_id, cast_index_id));
+      auto array_cat =
+          SemIR::GetExpressionCategory(context.semantics_ir(), operand_node_id);
+      if (array_cat == SemIR::ExpressionCategory::Value) {
+        // If the operand is an array value, convert it to an ephemeral
+        // reference to an array so we can perform a primitive indexing into it.
+        operand_node_id = context.AddNode(SemIR::Node::ValueAsReference::Make(
+            parse_node, operand_type_id, operand_node_id));
+      }
+      auto elem_id = context.AddNode(SemIR::Node::ArrayIndex::Make(
+          parse_node, element_type_id, operand_node_id, cast_index_id));
+      if (array_cat != SemIR::ExpressionCategory::DurableReference) {
+        // Indexing a durable reference gives a durable reference expression.
+        // Indexing anything else gives a value expression.
+        // TODO: This should be replaced by a choice between using `IndexWith`
+        // and `IndirectIndexWith`.
+        elem_id = ConvertToValueExpression(context, elem_id);
+      }
+      context.node_stack().Push(parse_node, elem_id);
       return true;
     }
     case SemIR::NodeKind::TupleType: {

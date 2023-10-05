@@ -128,8 +128,8 @@ class TokenIterator
 class RealLiteralValue : public Printable<RealLiteralValue> {
  public:
   auto Print(llvm::raw_ostream& output_stream) const -> void {
-    output_stream << mantissa << "*" << (is_decimal ? "10" : "2") << "^"
-                  << exponent;
+    mantissa.print(output_stream, /*isSigned=*/false);
+    output_stream << "*" << (is_decimal ? "10" : "2") << "^" << exponent;
   }
 
   // The mantissa, represented as an unsigned integer.
@@ -257,7 +257,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // format.
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
 
-  // Returns true if the buffer has errors that are detectable at lexing time.
+  // Returns true if the buffer has errors that were detected at lexing time.
   [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
 
   [[nodiscard]] auto tokens() const -> llvm::iterator_range<TokenIterator> {
@@ -270,6 +270,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   [[nodiscard]] auto expected_parse_tree_size() const -> int {
     return expected_parse_tree_size_;
   }
+
+  auto filename() const -> llvm::StringRef { return source_->filename(); }
 
  private:
   // Implementation detail struct implementing the actual lexer logic.

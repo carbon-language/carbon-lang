@@ -16,7 +16,7 @@ fn FromReferenceExpressionDeref() {
   var c_var: C = {};
   var c_ref: C* = &c_var;
   heap.PrintAllocs();
-  Print("Initialize c from reference expression from deferenced pointer");
+  Print("Initialize c from reference expression from dereferenced pointer");
   let c: C = *c_ref;
   heap.PrintAllocs();
 }
@@ -27,7 +27,7 @@ fn Main() -> i32 {
 }
 
 // CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: ptr<Allocation(1)>
-// CHECK:STDOUT: Initialize c from reference expression from deferenced pointer
+// CHECK:STDOUT: Initialize c from reference expression from dereferenced pointer
 // CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: ptr<Allocation(1)>
 // CHECK:STDOUT: c destroyed
 // CHECK:STDOUT: result: 0

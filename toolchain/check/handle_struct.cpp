@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 
 namespace Carbon::Check {
 
 auto HandleStructComma(Context& context, Parse::Node /*parse_node*/) -> bool {
-  context.ParamOrArgComma(
-      /*for_args=*/context.parse_tree().node_kind(
-          context.node_stack().PeekParseNode()) !=
-      Parse::NodeKind::StructFieldType);
+  context.ParamOrArgComma();
   return true;
 }
 
@@ -25,7 +23,7 @@ auto HandleStructFieldDesignator(Context& context, Parse::Node /*parse_node*/)
 
 auto HandleStructFieldType(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, type_id] = context.node_stack().PopExpressionWithParseNode();
-  SemIR::TypeId cast_type_id = context.ExpressionAsType(type_node, type_id);
+  SemIR::TypeId cast_type_id = ExpressionAsType(context, type_node, type_id);
 
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
@@ -45,18 +43,10 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack().PopExpressionWithParseNode();
   SemIR::StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
 
-  // Convert the operand to a value.
-  // TODO: We need to decide how struct literals interact with expression
-  // categories.
-  value_node_id = context.ConvertToValueExpression(value_node_id);
-
   // Store the name for the type.
-  auto type_block_id = context.args_type_info_stack().PeekForAdd();
-  context.semantics_ir().AddNode(
-      type_block_id,
-      SemIR::Node::StructTypeField::Make(
-          parse_node, name_id,
-          context.semantics_ir().GetNode(value_node_id).type_id()));
+  context.args_type_info_stack().AddNode(SemIR::Node::StructTypeField::Make(
+      parse_node, name_id,
+      context.semantics_ir().GetNode(value_node_id).type_id()));
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(parse_node, value_node_id);
@@ -65,7 +55,6 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
 
 auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/true,
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
@@ -77,7 +66,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
   auto value_id = context.AddNode(
-      SemIR::Node::StructValue::Make(parse_node, type_id, refs_id));
+      SemIR::Node::StructLiteral::Make(parse_node, type_id, refs_id));
   context.node_stack().Push(parse_node, value_id);
   return true;
 }
@@ -97,7 +86,6 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
 
 auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      /*for_args=*/false,
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();

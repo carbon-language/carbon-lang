@@ -59,7 +59,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = semantics_ir().GetFunction(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
-  auto& param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
 
   SemIR::InitializingRepresentation return_rep =
       function.return_type_id.is_valid()
@@ -139,7 +139,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
 
   llvm::Function* llvm_function = GetFunction(function_id);
-  FunctionContext function_lowering(*this, llvm_function);
+  FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
   const bool has_return_slot = function.return_slot_id.is_valid();
 
@@ -147,7 +147,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // TODO: This duplicates the mapping between semantics nodes and LLVM
   // function parameters that was already computed in BuildFunctionDeclaration.
   // We should only do that once.
-  auto& param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
     function_lowering.SetLocal(function.return_slot_id,
@@ -174,19 +174,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     // Keep the LLVM blocks in lexical order.
     llvm_block->moveBefore(llvm_function->end());
     function_lowering.builder().SetInsertPoint(llvm_block);
-    for (const auto& node_id : semantics_ir().GetNodeBlock(block_id)) {
-      auto node = semantics_ir().GetNode(node_id);
-      CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
-      // clang warns on unhandled enum values; clang-tidy is incorrect here.
-      // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-      switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name)            \
-  case SemIR::NodeKind::Name:                       \
-    Handle##Name(function_lowering, node_id, node); \
-    break;
-#include "toolchain/sem_ir/node_kind.def"
-      }
-    }
+    function_lowering.LowerBlock(block_id);
   }
 }
 
@@ -219,7 +207,7 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
     case SemIR::NodeKind::PointerType:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
     case SemIR::NodeKind::StructType: {
-      auto& refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
+      auto refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
       for (auto ref_id : refs) {
@@ -238,7 +226,7 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       // can be collectively replaced with LLVM's void, particularly around
       // function returns. LLVM doesn't allow declaring variables with a void
       // type, so that may require significant special casing.
-      auto& refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
+      auto refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
       for (auto ref_id : refs) {

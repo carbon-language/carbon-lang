@@ -5,16 +5,17 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "common/ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
-#include "llvm/Support/raw_ostream.h"
 #include "testing/base/test_raw_ostream.h"
-#include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/driver/driver.h"
+#include "toolchain/testing/yaml_test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon::SemIR {
 namespace {
 
+using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::AllOf;
 using ::testing::Contains;
@@ -25,6 +26,8 @@ using ::testing::MatchesRegex;
 using ::testing::Pair;
 using ::testing::SizeIs;
 
+namespace Yaml = ::Carbon::Testing::Yaml;
+
 TEST(SemIRTest, YAML) {
   llvm::vfs::InMemoryFileSystem fs;
   CARBON_CHECK(fs.addFile(
@@ -33,7 +36,7 @@ TEST(SemIRTest, YAML) {
   TestRawOstream print_stream;
   Driver d(fs, print_stream, llvm::errs());
   d.RunCommand(
-      {"compile", "--phase=check", "--dump-raw-semantics-ir", "test.carbon"});
+      {"compile", "--phase=check", "--dump-raw-sem-ir", "test.carbon"});
 
   // Matches the ID of a node. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.
@@ -41,36 +44,40 @@ TEST(SemIRTest, YAML) {
   auto node_builtin = Yaml::Scalar(MatchesRegex(R"(node\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
 
-  EXPECT_THAT(
-      Yaml::Value::FromText(print_stream.TakeStr()),
-      ElementsAre(Yaml::Mapping(ElementsAre(
-          Pair("cross_reference_irs_size", "1"),
-          Pair("functions", Yaml::Sequence(SizeIs(1))),
-          Pair("integer_literals", Yaml::Sequence(ElementsAre("0"))),
-          Pair("real_literals", Yaml::Sequence(IsEmpty())),
-          Pair("strings", Yaml::Sequence(ElementsAre("F", "x"))),
-          Pair("types", Yaml::Sequence(ElementsAre(node_builtin))),
-          Pair("type_blocks", Yaml::Sequence(IsEmpty())),
-          Pair("nodes",
-               Yaml::Sequence(AllOf(
-                   // kind is required, other parts are optional.
-                   Each(Yaml::Mapping(Contains(Pair("kind", _)))),
-                   // A 0-arg node.
-                   Contains(Yaml::Mapping(ElementsAre(Pair("kind", "Return")))),
-                   // A 1-arg node.
-                   Contains(Yaml::Mapping(ElementsAre(
-                       Pair("kind", "IntegerLiteral"), Pair("arg0", "int0"),
-                       Pair("type", type_id)))),
-                   // A 2-arg node.
-                   Contains(Yaml::Mapping(ElementsAre(
-                       Pair("kind", "Assign"), Pair("arg0", node_id),
-                       Pair("arg1", node_id))))))),
-          // This production has only two node blocks.
-          Pair("node_blocks",
-               Yaml::Sequence(ElementsAre(Yaml::Sequence(IsEmpty()),
-                                          Yaml::Sequence(Each(node_id)),
-                                          Yaml::Sequence(Each(node_id)))))))));
+  auto file = Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(
+      Pair("cross_reference_irs_size", "1"),
+      Pair("functions", Yaml::Sequence(SizeIs(1))),
+      Pair("integer_literals", Yaml::Sequence(ElementsAre("0"))),
+      Pair("real_literals", Yaml::Sequence(IsEmpty())),
+      Pair("strings", Yaml::Sequence(ElementsAre("F", "x"))),
+      Pair("types", Yaml::Sequence(ElementsAre(node_builtin))),
+      Pair("type_blocks", Yaml::Sequence(IsEmpty())),
+      Pair("nodes",
+           Yaml::Sequence(AllOf(
+               // kind is required, other parts are optional.
+               Each(Yaml::Mapping(Contains(Pair("kind", _)))),
+               // A 0-arg node.
+               Contains(Yaml::Mapping(ElementsAre(Pair("kind", "Return")))),
+               // A 1-arg node.
+               Contains(Yaml::Mapping(
+                   ElementsAre(Pair("kind", "IntegerLiteral"),
+                               Pair("arg0", "int0"), Pair("type", type_id)))),
+               // A 2-arg node.
+               Contains(Yaml::Mapping(ElementsAre(Pair("kind", "Assign"),
+                                                  Pair("arg0", node_id),
+                                                  Pair("arg1", node_id))))))),
+      // This production has only two node blocks.
+      Pair("node_blocks",
+           Yaml::Sequence(ElementsAre(Yaml::Sequence(IsEmpty()),
+                                      Yaml::Sequence(Each(node_id)),
+                                      Yaml::Sequence(Each(node_id)))))))));
+
+  auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
+      ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));
+
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()),
+              IsYaml(ElementsAre(root)));
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::SemIR

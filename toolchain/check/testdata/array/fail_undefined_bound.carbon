@@ -4,31 +4,10 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_undefined_bound.carbon:[[@LINE+3]]:14: Semantics TODO: `HandleArrayExpressionWithoutBounds`.
+// CHECK:STDERR: fail_undefined_bound.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `HandleArrayExpressionWithoutBounds`.
 // CHECK:STDERR: var a: [i32; ];
 // CHECK:STDERR:              ^
 var a: [i32; ];
 
-// CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: functions: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: real_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   a,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: types: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: type_blocks: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: nodes: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_undefined_bound.carbon" {
 // CHECK:STDOUT: }

@@ -19,7 +19,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   // escaped quotes (`\"` repeated) have O(M * N) behavior for M errors in a
   // file length N, so either that will need to also be fixed or M will need to
   // shrink for large (1MB+) inputs.
-  // This also affects parse_tree_fuzzer.cpp.
+  // This also affects parse/parse_fuzzer.cpp.
   if (size > 100000) {
     return 0;
   }
@@ -30,7 +30,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
       TestFileName, /*ModificationTime=*/0,
       llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
                                        /*RequiresNullTerminator=*/false)));
-  auto source = SourceBuffer::CreateFromFile(fs, TestFileName);
+  auto source =
+      SourceBuffer::CreateFromFile(fs, TestFileName, NullDiagnosticConsumer());
 
   auto buffer = Lex::TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
   if (buffer.has_errors()) {

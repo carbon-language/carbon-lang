@@ -11,9 +11,10 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
+using ::Carbon::Testing::IsDiagnostic;
 using ::testing::InSequence;
 
 CARBON_DIAGNOSTIC(TestDiagnostic, Error, "{0}", llvm::StringRef);
@@ -61,4 +62,4 @@ TEST(SortedDiagnosticEmitterTest, SortErrors) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

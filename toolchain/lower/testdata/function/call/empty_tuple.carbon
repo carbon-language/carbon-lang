@@ -20,9 +20,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %tuple = alloca {}, align 8
 // CHECK:STDOUT:   %b = alloca {}, align 8
-// CHECK:STDOUT:   %tuple1 = alloca {}, align 8
 // CHECK:STDOUT:   call void @Echo()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

@@ -7,7 +7,7 @@
 
 #include "explorer/base/trace_stream.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 TEST(SetProgramPhaseRaiiTest, Simple) {
@@ -33,4 +33,4 @@ TEST(SetProgramPhaseRaiiTest, UpdatePhase) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

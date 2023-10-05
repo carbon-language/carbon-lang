@@ -7,46 +7,48 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "common/ostream.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon::Testing {
 namespace {
-
-using ::testing::AllOf;
-using ::testing::ElementsAre;
-using ::testing::Eq;
-using ::testing::Field;
-using ::testing::Matcher;
 
 class FileTestBaseTest : public FileTestBase {
  public:
   using FileTestBase::FileTestBase;
 
-  static auto HasFilename(std::string filename) -> Matcher<TestFile> {
-    return Field("filename", &TestFile::filename, Eq(filename));
-  }
-
-  static auto HasContent(std::string content) -> Matcher<TestFile> {
-    return Field("content", &TestFile::content, Eq(content));
-  }
-
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-           const llvm::SmallVector<TestFile>& test_files,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
-      -> ErrorOr<bool> override {
-    if (!test_args.empty()) {
-      llvm::ListSeparator sep;
-      stdout << test_args.size() << " args: ";
-      for (const auto& arg : test_args) {
-        stdout << sep << "`" << arg << "`";
-      }
-      stdout << "\n";
+           llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> override {
+    llvm::ArrayRef<llvm::StringRef> args = test_args;
+
+    llvm::ListSeparator sep;
+    stdout << args.size() << " args: ";
+    for (auto arg : args) {
+      stdout << sep << "`" << arg << "`";
+    }
+    stdout << "\n";
+
+    auto filename = std::filesystem::path(test_name().str()).filename();
+    if (filename == "args.carbon") {
+      // 'args.carbon' has custom arguments, so don't do regular argument
+      // validation for it.
+      return true;
     }
 
-    auto filename = path().filename();
-    if (filename == "args.carbon") {
-      return true;
-    } else if (filename == "example.carbon") {
+    if (args.empty() || args.front() != "default_args") {
+      return ErrorBuilder() << "missing `default_args` argument";
+    }
+    args = args.drop_front();
+
+    for (auto arg : args) {
+      if (!fs.exists(arg)) {
+        return ErrorBuilder() << "Missing file: " << arg;
+      }
+    }
+
+    if (filename == "example.carbon") {
       int delta_line = 10;
       stdout << "something\n"
              << "\n"
@@ -58,38 +60,87 @@ class FileTestBaseTest : public FileTestBase {
     } else if (filename == "fail_example.carbon") {
       stderr << "Oops\n";
       return false;
-    } else if (filename == "two_files.carbon") {
-      int i = 0;
-      for (const auto& file : test_files) {
-        // Prints line numbers to validate per-file.
-        stdout << file.filename << ":2: " << ++i << "\n";
+    } else if (filename == "two_files.carbon" ||
+               filename == "not_split.carbon") {
+      for (auto arg : args) {
+        // Describe file contents to stdout to validate splitting.
+        auto file = fs.getBufferForFile(arg, /*FileSize=*/-1,
+                                        /*RequiresNullTerminator=*/false);
+        if (file.getError()) {
+          return Error(file.getError().message());
+        }
+        llvm::StringRef content = file.get()->getBuffer();
+        stdout << arg << ":1: starts with \"";
+        stdout.write_escaped(content.take_front(40));
+        stdout << "\", length " << content.count('\n') << " lines\n";
       }
+      return true;
+    } else if (filename == "alternating_files.carbon") {
+      stdout << "unattached message 1\n"
+             << "a.carbon:2: message 2\n"
+             << "b.carbon:5: message 3\n"
+             << "a.carbon:2: message 4\n"
+             << "b.carbon:5: message 5\n"
+             << "unattached message 6\n";
+      stderr << "unattached message 1\n"
+             << "a.carbon:2: message 2\n"
+             << "b.carbon:5: message 3\n"
+             << "a.carbon:2: message 4\n"
+             << "b.carbon:5: message 5\n"
+             << "unattached message 6\n";
+      return true;
+    } else if (filename == "unattached_multi_file.carbon") {
+      stdout << "unattached message 1\n"
+             << "unattached message 2\n";
+      stderr << "unattached message 3\n"
+             << "unattached message 4\n";
+      return true;
+    } else if (filename == "file_only_re_one_file.carbon") {
+      stdout << "unattached message 1\n"
+             << "file: file_only_re_one_file.carbon\n"
+             << "line: 1\n"
+             << "unattached message 2\n";
+      return true;
+    } else if (filename == "file_only_re_multi_file.carbon") {
+      int msg_count = 0;
+      stdout << "unattached message " << ++msg_count << "\n"
+             << "file: a.carbon\n"
+             << "unattached message " << ++msg_count << "\n"
+             << "line: 3: attached message " << ++msg_count << "\n"
+             << "unattached message " << ++msg_count << "\n"
+             << "line: 8: late message " << ++msg_count << "\n"
+             << "unattached message " << ++msg_count << "\n"
+             << "file: b.carbon\n"
+             << "line: 2: attached message " << ++msg_count << "\n"
+             << "unattached message " << ++msg_count << "\n"
+             << "line: 7: late message " << ++msg_count << "\n"
+             << "unattached message " << ++msg_count << "\n";
       return true;
     } else {
       return ErrorBuilder() << "Unexpected file: " << filename;
     }
   }
 
-  auto ValidateRun(const llvm::SmallVector<TestFile>& test_files)
-      -> void override {
-    auto filename = path().filename();
-    if (filename == "two_files.carbon") {
-      EXPECT_THAT(
-          test_files,
-          ElementsAre(
-              AllOf(HasFilename("a.carbon"),
-                    HasContent(
-                        "// CHECK:STDOUT: a.carbon:[[@LINE+1]]: 1\naaa\n\n")),
-              AllOf(HasFilename("b.carbon"),
-                    HasContent(
-                        "// CHECK:STDOUT: b.carbon:[[@LINE+1]]: 2\nbbb\n"))));
-    } else {
-      EXPECT_THAT(test_files, ElementsAre(HasFilename(filename)));
-    }
-  }
-
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
     return {"default_args", "%s"};
+  }
+
+  auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames)
+      -> std::optional<RE2> override {
+    return std::make_optional<RE2>(
+        llvm::formatv(R"(file: ({0}))", llvm::join(filenames, "|")));
+  }
+
+  auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)
+      -> llvm::SmallVector<LineNumberReplacement> override {
+    auto replacements = FileTestBase::GetLineNumberReplacements(filenames);
+    auto filename = std::filesystem::path(test_name().str()).filename();
+    if (llvm::StringRef(filename).startswith("file_only_re_")) {
+      replacements.push_back({.has_file = false,
+                              .re = std::make_shared<RE2>(R"(line: (\d+))"),
+                              .line_formatv = "{0}"});
+    }
+    return replacements;
   }
 };
 

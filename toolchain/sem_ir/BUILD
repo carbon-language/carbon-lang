@@ -71,10 +71,11 @@ cc_test(
     size = "small",
     srcs = ["file_test.cpp"],
     deps = [
+        "//common:ostream",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "//toolchain/base:yaml_test_helpers",
         "//toolchain/driver",
+        "//toolchain/testing:yaml_test_helpers",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

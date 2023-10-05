@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 
 namespace Carbon::Check {
 
@@ -133,7 +134,7 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
       context.node_stack().PopExpressionWithParseNode();
-  auto type_id = context.ExpressionAsType(type_parse_node, type_node_id);
+  auto type_id = ExpressionAsType(context, type_parse_node, type_node_id);
   // TODO: Use a dedicated node rather than VarStorage here.
   context.AddNodeAndPush(
       parse_node,

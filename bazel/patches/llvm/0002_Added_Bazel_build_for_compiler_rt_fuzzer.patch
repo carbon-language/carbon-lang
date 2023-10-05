@@ -1,20 +1,20 @@
-From 2c9527d988d2f5935b9406511104819463c37662 Mon Sep 17 00:00:00 2001
-From: P K <pk19604014@gmail.com>
-Date: Mon, 11 Jul 2022 17:32:57 -0400
-Subject: [PATCH] Added Bazel build for compiler-rt/fuzzer
+From 20d0f1fb854d9b7ce135d08575112fc58c4c7ce7 Mon Sep 17 00:00:00 2001
+From: jonmeow <jperkins@google.com>
+Date: Thu, 14 Sep 2023 20:31:11 +0000
+Subject: [PATCH] Add libfuzzer target to compiler-rt.
 
 ---
- .../compiler-rt/BUILD.bazel                    | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
- create mode 100644 compiler-rt/BUILD.bazel
+ .../compiler-rt/BUILD.bazel                     | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
 
-diff --git a/compiler-rt/BUILD.bazel b/compiler-rt/BUILD.bazel
-new file mode 100644
-index 000000000000..c6796b24a8e1
---- /dev/null
-+++ b/compiler-rt/BUILD.bazel
-@@ -0,0 +1,18 @@
-+package(default_visibility = ["//visibility:public"])
+diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+index 573549781ab7..65c9522e022b 100644
+--- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+@@ -49,3 +49,20 @@ cc_library(
+     ],
+     linkstatic = True,
+ )
 +
 +cc_library(
 +    name = "FuzzerMain",
@@ -33,4 +33,4 @@ index 000000000000..c6796b24a8e1
 +    includes = ["lib/fuzzer"],
 +)
 --
-2.37.0.144.g8ac04bfd2-goog
+2.42.0

@@ -4,72 +4,17 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:19: Cannot implicitly convert from `() as type` to `(i32,) as type`.
+// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:18: ERROR: Cannot initialize tuple of 1 element(s) from tuple with 0 element(s).
 // CHECK:STDERR: var x: (i32,) = ();
-// CHECK:STDERR:                   ^
+// CHECK:STDERR:                  ^
 var x: (i32,) = ();
 
-// CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: functions: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: real_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   x,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: types: [
-// CHECK:STDOUT:   node+1,
-// CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT:   node+3,
-// CHECK:STDOUT:   node+5,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: type_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     typeTypeType,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     type1,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type0},
-// CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type2},
-// CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock2, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: nodeError},
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc10_9: type = stub_reference i32
+// CHECK:STDOUT: file "fail_assign_empty.carbon" {
 // CHECK:STDOUT:   %.loc10_13.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc10_13.2: (type,) = tuple_value (%.loc10_9)
+// CHECK:STDOUT:   %.loc10_13.2: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc10_13.3: type = tuple_type (i32)
 // CHECK:STDOUT:   %x: ref (i32,) = var "x"
 // CHECK:STDOUT:   %.loc10_18.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_18.2: () = tuple_value ()
+// CHECK:STDOUT:   %.loc10_18.2: () = tuple_literal ()
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

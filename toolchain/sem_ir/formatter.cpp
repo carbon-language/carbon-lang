@@ -334,7 +334,20 @@ class NodeNamer {
       if (!node_id.is_valid()) {
         continue;
       }
+
       auto node = semantics_ir_.GetNode(node_id);
+      auto add_node_name = [&](std::string name) {
+        nodes[node_id.index] = {scope_idx, scope.nodes.AllocateName(
+                                               *this, node.parse_node(), name)};
+      };
+      auto add_node_name_id = [&](StringId name_id) {
+        if (name_id.is_valid()) {
+          add_node_name(semantics_ir_.GetString(name_id).str());
+        } else {
+          add_node_name("");
+        }
+      };
+
       switch (node.kind()) {
         case NodeKind::Branch: {
           auto dest_id = node.GetAsBranch();
@@ -351,33 +364,36 @@ class NodeNamer {
           AddBlockLabel(scope_idx, dest_id, node);
           break;
         }
-        case NodeKind::Parameter: {
-          auto name_id = node.GetAsParameter();
-          nodes[node_id.index] = {
-              scope_idx,
-              scope.nodes.AllocateName(*this, node.parse_node(),
-                                       semantics_ir_.GetString(name_id).str())};
+        case NodeKind::SpliceBlock: {
+          auto [block_id, result_id] = node.GetAsSpliceBlock();
+          CollectNamesInBlock(scope_idx, block_id);
           break;
+        }
+        case NodeKind::FunctionDeclaration: {
+          add_node_name_id(
+              semantics_ir_.GetFunction(node.GetAsFunctionDeclaration())
+                  .name_id);
+          continue;
+        }
+        case NodeKind::Parameter: {
+          add_node_name_id(node.GetAsParameter());
+          continue;
         }
         case NodeKind::VarStorage: {
           // TODO: Eventually this name will be optional, and we'll want to
           // provide something like `var` as a default. However, that's not
           // possible right now so cannot be tested.
-          auto name_id = node.GetAsVarStorage();
-          nodes[node_id.index] = {
-              scope_idx,
-              scope.nodes.AllocateName(*this, node.parse_node(),
-                                       semantics_ir_.GetString(name_id).str())};
-          break;
+          add_node_name_id(node.GetAsVarStorage());
+          continue;
         }
         default: {
-          // Sequentially number all remaining values.
-          if (node.kind().value_kind() != NodeValueKind::None) {
-            nodes[node_id.index] = {
-                scope_idx, scope.nodes.AllocateName(*this, node.parse_node())};
-          }
           break;
         }
+      }
+
+      // Sequentially number all remaining values.
+      if (node.kind().value_kind() != NodeValueKind::None) {
+        add_node_name("");
       }
     }
   }
@@ -404,9 +420,9 @@ class Formatter {
         node_namer_(tokenized_buffer, parse_tree, semantics_ir) {}
 
   auto Format() -> void {
-    // TODO: Include information from the package declaration, once we fully
-    // support it.
-    out_ << "package {\n";
+    out_ << "file \"" << semantics_ir_.filename() << "\" {\n";
+    // TODO: Include information from the package declaration, once we
+    // fully support it.
     // TODO: Handle the case where there are multiple top-level node blocks.
     // For example, there may be branching in the initializer of a global or a
     // type expression.
@@ -483,7 +499,8 @@ class Formatter {
 
   auto FormatInstruction(NodeId node_id) -> void {
     if (!node_id.is_valid()) {
-      out_ << "  " << NodeKind::Invalid.ir_name() << "\n";
+      Indent();
+      out_ << NodeKind::Invalid.ir_name() << "\n";
       return;
     }
 
@@ -502,9 +519,11 @@ class Formatter {
     }
   }
 
+  auto Indent() -> void { out_.indent(indent_); }
+
   template <typename Kind>
   auto FormatInstruction(NodeId node_id, Node node) -> void {
-    out_ << "  ";
+    Indent();
     FormatInstructionLHS(node_id, node);
     out_ << node.kind().ir_name();
     FormatInstructionRHS<Kind>(node);
@@ -519,6 +538,7 @@ class Formatter {
         switch (GetExpressionCategory(semantics_ir_, node_id)) {
           case ExpressionCategory::NotExpression:
           case ExpressionCategory::Value:
+          case ExpressionCategory::Mixed:
             break;
           case ExpressionCategory::DurableReference:
           case ExpressionCategory::EphemeralReference:
@@ -555,8 +575,8 @@ class Formatter {
   template <>
   auto FormatInstruction<Node::BranchIf>(NodeId /*node_id*/, Node node)
       -> void {
-    if (!in_terminator_sequence) {
-      out_ << "  ";
+    if (!in_terminator_sequence_) {
+      Indent();
     }
     auto [label_id, cond_id] = node.GetAsBranchIf();
     out_ << "if ";
@@ -564,14 +584,14 @@ class Formatter {
     out_ << " " << NodeKind::Branch.ir_name() << " ";
     FormatLabel(label_id);
     out_ << " else ";
-    in_terminator_sequence = true;
+    in_terminator_sequence_ = true;
   }
 
   template <>
   auto FormatInstruction<Node::BranchWithArg>(NodeId /*node_id*/, Node node)
       -> void {
-    if (!in_terminator_sequence) {
-      out_ << "  ";
+    if (!in_terminator_sequence_) {
+      Indent();
     }
     auto [label_id, arg_id] = node.GetAsBranchWithArg();
     out_ << NodeKind::BranchWithArg.ir_name() << " ";
@@ -579,18 +599,38 @@ class Formatter {
     out_ << "(";
     FormatNodeName(arg_id);
     out_ << ")\n";
-    in_terminator_sequence = false;
+    in_terminator_sequence_ = false;
   }
 
   template <>
   auto FormatInstruction<Node::Branch>(NodeId /*node_id*/, Node node) -> void {
-    if (!in_terminator_sequence) {
-      out_ << "  ";
+    if (!in_terminator_sequence_) {
+      Indent();
     }
     out_ << NodeKind::Branch.ir_name() << " ";
     FormatLabel(node.GetAsBranch());
     out_ << "\n";
-    in_terminator_sequence = false;
+    in_terminator_sequence_ = false;
+  }
+
+  template <>
+  auto FormatInstructionRHS<Node::ArrayInit>(Node node) -> void {
+    out_ << " ";
+    auto [src_id, refs_id] = node.GetAsArrayInit();
+    FormatArg(src_id);
+
+    llvm::ArrayRef<NodeId> refs = semantics_ir_.GetNodeBlock(refs_id);
+    auto inits = refs.drop_back(1);
+    auto return_slot_id = refs.back();
+
+    out_ << ", (";
+    llvm::ListSeparator sep;
+    for (auto node_id : inits) {
+      out_ << sep;
+      FormatArg(node_id);
+    }
+    out_ << ')';
+    FormatReturnSlot(return_slot_id);
   }
 
   template <>
@@ -618,9 +658,15 @@ class Formatter {
     out_ << ')';
 
     if (has_return_slot) {
-      out_ << " to ";
-      FormatArg(return_slot_id);
+      FormatReturnSlot(return_slot_id);
     }
+  }
+
+  template <>
+  auto FormatInstructionRHS<Node::InitializeFrom>(Node node) -> void {
+    auto [src_id, dest_id] = node.GetAsInitializeFrom();
+    FormatArgs(src_id);
+    FormatReturnSlot(dest_id);
   }
 
   template <>
@@ -629,6 +675,21 @@ class Formatter {
     // name cross-reference IRs, perhaps by the node ID of the import?
     auto [xref_id, node_id] = node.GetAsCrossReference();
     out_ << " " << xref_id << "." << node_id;
+  }
+
+  template <>
+  auto FormatInstructionRHS<Node::SpliceBlock>(Node node) -> void {
+    auto [block_id, result_id] = node.GetAsSpliceBlock();
+    FormatArgs(result_id);
+    out_ << " {";
+    if (!semantics_ir_.GetNodeBlock(block_id).empty()) {
+      out_ << "\n";
+      indent_ += 2;
+      FormatCodeBlock(block_id);
+      indent_ -= 2;
+      Indent();
+    }
+    out_ << "}";
   }
 
   // StructTypeFields are formatted as part of their StructType.
@@ -674,7 +735,7 @@ class Formatter {
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 
   auto FormatArg(IntegerLiteralId id) -> void {
-    out_ << semantics_ir_.GetIntegerLiteral(id);
+    semantics_ir_.GetIntegerLiteral(id).print(out_, /*isSigned=*/false);
   }
 
   auto FormatArg(MemberIndex index) -> void { out_ << index; }
@@ -717,7 +778,8 @@ class Formatter {
   auto FormatArg(RealLiteralId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
     const auto& real = semantics_ir_.GetRealLiteral(id);
-    out_ << real.mantissa << (real.is_decimal ? 'e' : 'p') << real.exponent;
+    real.mantissa.print(out_, /*isSigned=*/false);
+    out_ << (real.is_decimal ? 'e' : 'p') << real.exponent;
   }
 
   auto FormatArg(StringId id) -> void {
@@ -736,6 +798,11 @@ class Formatter {
       FormatArg(type_id);
     }
     out_ << ')';
+  }
+
+  auto FormatReturnSlot(NodeId dest_id) -> void {
+    out_ << " to ";
+    FormatArg(dest_id);
   }
 
   auto FormatNodeName(NodeId id) -> void {
@@ -767,7 +834,8 @@ class Formatter {
   llvm::raw_ostream& out_;
   NodeNamer node_namer_;
   NodeNamer::ScopeIndex scope_ = NodeNamer::ScopeIndex::None;
-  bool in_terminator_sequence = false;
+  bool in_terminator_sequence_ = false;
+  int indent_ = 2;
 };
 
 auto FormatFile(const Lex::TokenizedBuffer& tokenized_buffer,

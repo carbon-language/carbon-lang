@@ -311,8 +311,8 @@ implemented in descendants.
 While it is typical for this case to be associated with single-level inheritance
 hierarchies, there are some cases where there is an interface at the root of a
 type hierarchy and polymorphic types as interior branches of the tree. The case
-of generic interfaces extending or requiring other interface would also be
-modeled by deeper inheritance hierarchies.
+of interfaces extending or requiring other interface would also be modeled by
+deeper inheritance hierarchies.
 
 An interface as base class needs to either have a virtual destructor or forbid
 deallocation.
@@ -325,7 +325,7 @@ that support dynamic dispatch are called _object-safe_, following
 
 -   They don't have a `Self` in the signature of a method in a contravariant
     position like a parameter.
--   They don't have free associated types or other associated items used in a
+-   They don't have free associated facets or other associated items used in a
     method signature.
 
 The restrictions on object-safe interfaces match the restrictions on base class
@@ -910,7 +910,7 @@ which must be an
 then match pattern '`self:` _type_' against it".
 
 If the method declaration also includes
-[deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
+[deduced compile-time parameters](/docs/design/generics/overview.md#deduced-parameters),
 the `self` parameter must be in the same list in square brackets `[`...`]`. The
 `self` parameter may appear in any position in that list, as long as it appears
 after any names needed to describe its type.
@@ -1174,11 +1174,11 @@ methods whose implementation may be overridden in a derived class.
 
 Only methods defined in the scope of the class definition may be virtual, not
 any defined in
-[external interface `impl` declarations](/docs/design/generics/details.md#external-impl).
+[out-of-line interface `impl` declarations](/docs/design/generics/details.md#out-of-line-impl).
 Interface methods may be implemented using virtual methods when the
-[impl is internal](/docs/design/generics/details.md#implementing-interfaces),
-and calls to those methods by way of the interface will do virtual dispatch just
-like a direct call to the method does.
+[impl is inline](/docs/design/generics/details.md#inline-impl), and calls to
+those methods by way of the interface will do virtual dispatch just like a
+direct call to the method does.
 
 [Class functions](#class-functions) may not be declared virtual.
 
@@ -1595,7 +1595,7 @@ class MyDerivedClass {
 
 The properties of a type, whether type is abstract, base, or final, and whether
 the destructor is virtual or non-virtual, determines which
-[type-of-types](/docs/design/generics/terminology.md#facet-type) it satisfies.
+[facet types](/docs/design/generics/terminology.md#facet-type) it satisfies.
 
 -   Non-abstract classes are `Concrete`. This means you can create local and
     member variables of this type. `Concrete` types have destructors that are
@@ -1623,9 +1623,9 @@ conform to the decision on
 | final    | any         | yes        | yes         | yes            |
 
 The compiler automatically determines which of these
-[type-of-types](/docs/design/generics/terminology.md#facet-type) a given type
+[facet types](/docs/design/generics/terminology.md#facet-type) a given type
 satisfies. It is illegal to directly implement `Concrete`, `Deletable`, or
-`Destructible` directly. For more about these constraints, see
+`Destructible`. For more about these constraints, see
 ["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
 
 A pointer to `Deletable` types may be passed to the `Delete` method of the
@@ -1644,8 +1644,9 @@ interface Allocator {
 }
 ```
 
-To pass a pointer to a base class without a virtual destructor to a generic
-function expecting a `Deletable` type, use the `UnsafeAllowDelete`
+To pass a pointer to a base class without a virtual destructor to a
+checked-generic function expecting a `Deletable` type, use the
+`UnsafeAllowDelete`
 [type adapter](/docs/design/generics/details.md#adapting-types).
 
 ```
@@ -1670,7 +1671,7 @@ and not implemented in the current class.
 
 Types satisfy the
 [`TrivialDestructor`](/docs/design/generics/details.md#destructor-constraints)
-type-of-type if:
+facet type if:
 
 -   the class declaration does not define a destructor or the class defines the
     destructor with an empty body `{ }`,
@@ -1949,11 +1950,11 @@ We want four things so that Carbon's object-safe interfaces may interoperate
 with C++ abstract base classes without data members, matching the
 [interface as base class use case](#interface-as-base-class):
 
--   Ability to convert an object-safe interface (a type-of-type) into an
+-   Ability to convert an object-safe interface (a facet type) into an
     C++-compatible base class (a base type), maybe using
     `AsBaseClass(MyInterface)`.
 -   Ability to convert a C++ base class without data members (a base type) into
-    an object-safe interface (a type-of-type), maybe using `AsInterface(MyIBC)`.
+    an object-safe interface (a facet type), maybe using `AsInterface(MyIBC)`.
 -   Ability to convert a (thin) pointer to an abstract base class to a `DynPtr`
     of the corresponding interface.
 -   Ability to convert `DynPtr(MyInterface)` values to a proxy type that extends
@@ -2160,7 +2161,7 @@ implementations for [data classes](#data-classes) more generally. These
 implementations will typically subject to the criteria that all the data fields
 of the type must implement the interface. An example use case would be to say
 that a data class is serializable if all of its fields were. For this we will
-need a type-of-type for capturing that criteria, maybe something like
+need a facet type for capturing that criteria, maybe something like
 `DataFieldsImplement(MyInterface)`. The templated implementation will need some
 way of iterating through the fields so it can perform operations fieldwise. This
 feature should also implement the interfaces for any tuples whose fields satisfy
@@ -2239,7 +2240,7 @@ the type of `U.x`."
     -   [Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
     -   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
     -   [Allow multiple conditional destructors](/proposals/p1154.md#allow-multiple-conditional-destructors)
-    -   [Type-of-type naming](/proposals/p1154.md#type-of-type-naming)
+    -   [Facet type naming](/proposals/p1154.md#type-of-type-naming)
     -   [Other approaches to extensible classes without vtables](/proposals/p1154.md#other-approaches-to-extensible-classes-without-vtables)
 
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)

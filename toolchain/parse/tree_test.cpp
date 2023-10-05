@@ -10,16 +10,19 @@
 #include <forward_list>
 
 #include "testing/base/test_raw_ostream.h"
-#include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/testing/yaml_test_helpers.h"
 
-namespace Carbon::Testing {
+namespace Carbon::Parse {
 namespace {
 
-using Parse::Tree;
+using ::Carbon::Testing::TestRawOstream;
 using ::testing::ElementsAre;
+using ::testing::Pair;
+
+namespace Yaml = ::Carbon::Testing::Yaml;
 
 class TreeTest : public ::testing::Test {
  protected:
@@ -27,7 +30,7 @@ class TreeTest : public ::testing::Test {
     CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
                             llvm::MemoryBuffer::getMemBuffer(t)));
     source_storage.push_front(
-        std::move(*SourceBuffer::CreateFromFile(fs, "test.carbon")));
+        std::move(*SourceBuffer::CreateFromFile(fs, "test.carbon", consumer)));
     return source_storage.front();
   }
 
@@ -56,19 +59,24 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
   TestRawOstream print_stream;
   tree.Print(print_stream);
 
-  auto file = Yaml::SequenceValue{
-      Yaml::MappingValue{{"kind", "FunctionIntroducer"}, {"text", "fn"}},
-      Yaml::MappingValue{{"kind", "Name"}, {"text", "F"}},
-      Yaml::MappingValue{{"kind", "ParameterListStart"}, {"text", "("}},
-      Yaml::MappingValue{
-          {"kind", "ParameterList"}, {"text", ")"}, {"subtree_size", "2"}},
-      Yaml::MappingValue{{"kind", "FunctionDeclaration"},
-                         {"text", ";"},
-                         {"subtree_size", "5"}},
-      Yaml::MappingValue{{"kind", "FileEnd"}, {"text", ""}},
-  };
+  auto file = Yaml::Sequence(ElementsAre(
+      Yaml::Mapping(ElementsAre(Pair("kind", "FileStart"), Pair("text", ""))),
+      Yaml::Mapping(
+          ElementsAre(Pair("kind", "FunctionIntroducer"), Pair("text", "fn"))),
+      Yaml::Mapping(ElementsAre(Pair("kind", "Name"), Pair("text", "F"))),
+      Yaml::Mapping(
+          ElementsAre(Pair("kind", "ParameterListStart"), Pair("text", "("))),
+      Yaml::Mapping(ElementsAre(Pair("kind", "ParameterList"),
+                                Pair("text", ")"), Pair("subtree_size", "2"))),
+      Yaml::Mapping(ElementsAre(Pair("kind", "FunctionDeclaration"),
+                                Pair("text", ";"), Pair("subtree_size", "5"))),
+      Yaml::Mapping(ElementsAre(Pair("kind", "FileEnd"), Pair("text", "")))));
 
-  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
+  auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
+      ElementsAre(Pair("filename", "test.carbon"), Pair("parse_tree", file)))));
+
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()),
+              IsYaml(ElementsAre(root)));
 }
 
 TEST_F(TreeTest, PrintPreorderAsYAML) {
@@ -78,33 +86,36 @@ TEST_F(TreeTest, PrintPreorderAsYAML) {
   TestRawOstream print_stream;
   tree.Print(print_stream, /*preorder=*/true);
 
-  auto parameter_list = Yaml::SequenceValue{
-      Yaml::MappingValue{
-          {"node_index", "2"}, {"kind", "ParameterListStart"}, {"text", "("}},
-  };
+  auto parameter_list = Yaml::Sequence(ElementsAre(Yaml::Mapping(
+      ElementsAre(Pair("node_index", "3"), Pair("kind", "ParameterListStart"),
+                  Pair("text", "(")))));
 
-  auto function_decl = Yaml::SequenceValue{
-      Yaml::MappingValue{
-          {"node_index", "0"}, {"kind", "FunctionIntroducer"}, {"text", "fn"}},
-      Yaml::MappingValue{{"node_index", "1"}, {"kind", "Name"}, {"text", "F"}},
-      Yaml::MappingValue{{"node_index", "3"},
-                         {"kind", "ParameterList"},
-                         {"text", ")"},
-                         {"subtree_size", "2"},
-                         {"children", parameter_list}},
-  };
+  auto function_decl = Yaml::Sequence(ElementsAre(
+      Yaml::Mapping(ElementsAre(Pair("node_index", "1"),
+                                Pair("kind", "FunctionIntroducer"),
+                                Pair("text", "fn"))),
+      Yaml::Mapping(ElementsAre(Pair("node_index", "2"), Pair("kind", "Name"),
+                                Pair("text", "F"))),
+      Yaml::Mapping(ElementsAre(Pair("node_index", "4"),
+                                Pair("kind", "ParameterList"),
+                                Pair("text", ")"), Pair("subtree_size", "2"),
+                                Pair("children", parameter_list)))));
 
-  auto file = Yaml::SequenceValue{
-      Yaml::MappingValue{{"node_index", "4"},
-                         {"kind", "FunctionDeclaration"},
-                         {"text", ";"},
-                         {"subtree_size", "5"},
-                         {"children", function_decl}},
-      Yaml::MappingValue{
-          {"node_index", "5"}, {"kind", "FileEnd"}, {"text", ""}},
-  };
+  auto file = Yaml::Sequence(ElementsAre(
+      Yaml::Mapping(ElementsAre(Pair("node_index", "0"),
+                                Pair("kind", "FileStart"), Pair("text", ""))),
+      Yaml::Mapping(ElementsAre(Pair("node_index", "5"),
+                                Pair("kind", "FunctionDeclaration"),
+                                Pair("text", ";"), Pair("subtree_size", "5"),
+                                Pair("children", function_decl))),
+      Yaml::Mapping(ElementsAre(Pair("node_index", "6"),
+                                Pair("kind", "FileEnd"), Pair("text", "")))));
 
-  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
+  auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
+      ElementsAre(Pair("filename", "test.carbon"), Pair("parse_tree", file)))));
+
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()),
+              IsYaml(ElementsAre(root)));
 }
 
 TEST_F(TreeTest, HighRecursion) {
@@ -120,4 +131,4 @@ TEST_F(TreeTest, HighRecursion) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon::Parse

@@ -4,15 +4,17 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+3]]:11: `interface` introducer should be followed by a name.
+// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+3]]:11: ERROR: `interface` introducer should be followed by a name.
 // CHECK:STDERR: interface {
 // CHECK:STDERR:           ^
 interface {
 }
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:   {kind: 'InvalidParse', text: '{'},
-// CHECK:STDOUT: {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_missing_name.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: '{'},
+// CHECK:STDOUT:     {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

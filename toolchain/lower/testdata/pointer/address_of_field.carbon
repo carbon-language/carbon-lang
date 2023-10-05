@@ -8,7 +8,6 @@ fn G(p: i32*);
 
 fn F() {
   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // TODO: The lowering here is incorrect: we're incorrectly loading `s.b`.
   G(&s.b);
 }
 
@@ -19,13 +18,11 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() {
 // CHECK:STDOUT:   %s = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %struct = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %struct, i32 0, i32 0
+// CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %a, align 4
-// CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %struct, i32 0, i32 1
+// CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
 // CHECK:STDOUT:   store i32 2, ptr %b, align 4
 // CHECK:STDOUT:   %b1 = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
-// CHECK:STDOUT:   %1 = load ptr, ptr %b1, align 8
-// CHECK:STDOUT:   call void @G(ptr %1)
+// CHECK:STDOUT:   call void @G(ptr %b1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

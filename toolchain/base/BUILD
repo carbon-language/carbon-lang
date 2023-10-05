@@ -22,15 +22,3 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
-
-cc_library(
-    name = "yaml_test_helpers",
-    testonly = 1,
-    srcs = ["yaml_test_helpers.cpp"],
-    hdrs = ["yaml_test_helpers.h"],
-    deps = [
-        "//common:ostream",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
-)

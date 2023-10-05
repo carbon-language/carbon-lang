@@ -4,52 +4,14 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:17: Cannot implicitly convert from `i32` to `() as type`.
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:17: ERROR: Cannot implicitly convert from `i32` to `() as type`.
 // CHECK:STDERR: var x: () = (66);
 // CHECK:STDERR:                 ^
 var x: () = (66);
 
-// CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: functions: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   66,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: real_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   x,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: types: [
-// CHECK:STDOUT:   node+0,
-// CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: type_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type0},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError},
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
+// CHECK:STDOUT: file "fail_assign_to_empty.carbon" {
 // CHECK:STDOUT:   %.loc10_9.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_9.2: () = tuple_value ()
+// CHECK:STDOUT:   %.loc10_9.2: () = tuple_literal ()
 // CHECK:STDOUT:   %x: ref () = var "x"
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66
 // CHECK:STDOUT:   assign %x, <error>

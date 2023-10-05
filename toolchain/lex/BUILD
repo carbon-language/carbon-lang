@@ -4,10 +4,14 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
-load("//testing/file_test:rules.bzl", "file_test")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "testdata",
+    data = glob(["testdata/**/*.carbon"]),
+)
 
 cc_library(
     name = "token_kind",
@@ -211,9 +215,9 @@ cc_test(
         ":tokenized_buffer_test_helpers",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "//toolchain/base:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
+        "//toolchain/testing:yaml_test_helpers",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -241,20 +245,10 @@ cc_binary(
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@com_github_google_benchmark//:benchmark_main",
         "@com_google_absl//absl/random",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-file_test(
-    name = "lex_file_test",
-    srcs = ["lex_file_test.cpp"],
-    tests = glob(["testdata/**/*.carbon"]),
-    deps = [
-        "//toolchain/driver:driver_file_test_base",
-        "@com_googlesource_code_re2//:re2",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -15,7 +15,8 @@ namespace Carbon::SemIR {
 
 File::File()
     // Builtins are always the first IR, even when self-referential.
-    : cross_reference_irs_({this}),
+    : filename_("<builtins>"),
+      cross_reference_irs_({this}),
       // Default entry for NodeBlockId::Empty.
       node_blocks_(1) {
   nodes_.reserve(BuiltinKind::ValidCount);
@@ -35,9 +36,10 @@ File::File()
       << " nodes, actual: " << nodes_.size();
 }
 
-File::File(const File* builtins)
+File::File(std::string filename, const File* builtins)
     // Builtins are always the first IR.
-    : cross_reference_irs_({builtins}),
+    : filename_(std::move(filename)),
+      cross_reference_irs_({builtins}),
       // Default entry for NodeBlockId::Empty.
       node_blocks_(1) {
   CARBON_CHECK(builtins != nullptr);
@@ -90,56 +92,80 @@ auto File::Verify() const -> ErrorOr<Success> {
   return Success();
 }
 
-static constexpr int Indent = 2;
+static constexpr int BaseIndent = 4;
+static constexpr int IndentStep = 2;
 
-template <typename T>
-static auto PrintList(llvm::raw_ostream& out, llvm::StringLiteral name,
-                      const llvm::SmallVector<T>& list) {
+// Define PrintList for ArrayRef.
+template <typename T, typename PrintT =
+                          std::function<void(llvm::raw_ostream&, const T& val)>>
+static auto PrintList(
+    llvm::raw_ostream& out, llvm::StringLiteral name, llvm::ArrayRef<T> list,
+    PrintT print = [](llvm::raw_ostream& out, const T& val) { out << val; }) {
+  out.indent(BaseIndent);
   out << name << ": [\n";
   for (const auto& element : list) {
-    out.indent(Indent);
-    out << element << ",\n";
+    out.indent(BaseIndent + IndentStep);
+    print(out, element);
+    out << ",\n";
   }
+  out.indent(BaseIndent);
   out << "]\n";
 }
 
+// Adapt PrintList for a vector.
+template <typename T, typename PrintT =
+                          std::function<void(llvm::raw_ostream&, const T& val)>>
+static auto PrintList(
+    llvm::raw_ostream& out, llvm::StringLiteral name,
+    const llvm::SmallVector<T>& list,
+    PrintT print = [](llvm::raw_ostream& out, const T& val) { out << val; }) {
+  PrintList(out, name, llvm::ArrayRef(list), print);
+}
+
+// PrintBlock is only used for vectors.
 template <typename T>
 static auto PrintBlock(llvm::raw_ostream& out, llvm::StringLiteral block_name,
                        const llvm::SmallVector<T>& blocks) {
+  out.indent(BaseIndent);
   out << block_name << ": [\n";
   for (const auto& block : blocks) {
-    out.indent(Indent);
+    out.indent(BaseIndent + IndentStep);
     out << "[\n";
 
     for (const auto& node : block) {
-      out.indent(2 * Indent);
+      out.indent(BaseIndent + 2 * IndentStep);
       out << node << ",\n";
     }
-    out.indent(Indent);
+    out.indent(BaseIndent + IndentStep);
     out << "],\n";
   }
+  out.indent(BaseIndent);
   out << "]\n";
 }
 
 auto File::Print(llvm::raw_ostream& out, bool include_builtins) const -> void {
-  out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
+  out << "- filename: " << filename_ << "\n"
+      << "  sem_ir:\n"
+      << "  - cross_reference_irs_size: " << cross_reference_irs_.size()
+      << "\n";
 
   PrintList(out, "functions", functions_);
-  PrintList(out, "integer_literals", integer_literals_);
+  // Integer literals are an APInt, and default to a signed print, but the
+  // ZExtValue print is correct.
+  PrintList(out, "integer_literals", integer_literals_,
+            [](llvm::raw_ostream& out, const llvm::APInt& val) {
+              val.print(out, /*isSigned=*/false);
+            });
   PrintList(out, "real_literals", real_literals_);
   PrintList(out, "strings", strings_);
   PrintList(out, "types", types_);
-
   PrintBlock(out, "type_blocks", type_blocks_);
 
-  out << "nodes: [\n";
-  for (int i = include_builtins ? 0 : BuiltinKind::ValidCount;
-       i < static_cast<int>(nodes_.size()); ++i) {
-    const auto& element = nodes_[i];
-    out.indent(Indent);
-    out << element << ",\n";
+  llvm::ArrayRef nodes = nodes_;
+  if (!include_builtins) {
+    nodes = nodes.drop_front(BuiltinKind::ValidCount);
   }
-  out << "]\n";
+  PrintList(out, "nodes", nodes);
 
   PrintBlock(out, "node_blocks", node_blocks_);
 }
@@ -169,7 +195,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
 
     case NodeKind::AddressOf:
     case NodeKind::ArrayIndex:
-    case NodeKind::ArrayValue:
+    case NodeKind::ArrayInit:
     case NodeKind::Assign:
     case NodeKind::BinaryOperatorAdd:
     case NodeKind::BindValue:
@@ -181,6 +207,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::Call:
     case NodeKind::Dereference:
     case NodeKind::FunctionDeclaration:
+    case NodeKind::InitializeFrom:
     case NodeKind::IntegerLiteral:
     case NodeKind::Invalid:
     case NodeKind::Namespace:
@@ -189,16 +216,22 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::RealLiteral:
     case NodeKind::Return:
     case NodeKind::ReturnExpression:
+    case NodeKind::SpliceBlock:
     case NodeKind::StringLiteral:
     case NodeKind::StructAccess:
     case NodeKind::StructTypeField:
+    case NodeKind::StructLiteral:
+    case NodeKind::StructInit:
     case NodeKind::StructValue:
-    case NodeKind::StubReference:
     case NodeKind::Temporary:
     case NodeKind::TemporaryStorage:
+    case NodeKind::TupleAccess:
     case NodeKind::TupleIndex:
+    case NodeKind::TupleLiteral:
+    case NodeKind::TupleInit:
     case NodeKind::TupleValue:
     case NodeKind::UnaryOperatorNot:
+    case NodeKind::ValueAsReference:
     case NodeKind::VarStorage:
       CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
   }
@@ -330,7 +363,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       }
       case NodeKind::AddressOf:
       case NodeKind::ArrayIndex:
-      case NodeKind::ArrayValue:
+      case NodeKind::ArrayInit:
       case NodeKind::Assign:
       case NodeKind::BinaryOperatorAdd:
       case NodeKind::BindValue:
@@ -344,6 +377,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::CrossReference:
       case NodeKind::Dereference:
       case NodeKind::FunctionDeclaration:
+      case NodeKind::InitializeFrom:
       case NodeKind::IntegerLiteral:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
@@ -351,15 +385,21 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::RealLiteral:
       case NodeKind::Return:
       case NodeKind::ReturnExpression:
+      case NodeKind::SpliceBlock:
       case NodeKind::StringLiteral:
       case NodeKind::StructAccess:
+      case NodeKind::StructLiteral:
+      case NodeKind::StructInit:
       case NodeKind::StructValue:
-      case NodeKind::StubReference:
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
+      case NodeKind::TupleAccess:
       case NodeKind::TupleIndex:
+      case NodeKind::TupleLiteral:
+      case NodeKind::TupleInit:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
+      case NodeKind::ValueAsReference:
       case NodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
         // in errors, but make it clear what's going on so that it's clearer
@@ -426,7 +466,9 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case NodeKind::PointerType:
       case NodeKind::RealLiteral:
       case NodeKind::StringLiteral:
+      case NodeKind::StructValue:
       case NodeKind::StructType:
+      case NodeKind::TupleValue:
       case NodeKind::TupleType:
       case NodeKind::UnaryOperatorNot:
         return ExpressionCategory::Value;
@@ -443,27 +485,33 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         continue;
       }
 
+      case NodeKind::TupleAccess: {
+        auto [base_id, index_id] = node.GetAsTupleAccess();
+        node_id = base_id;
+        continue;
+      }
+
       case NodeKind::TupleIndex: {
         auto [base_id, index_id] = node.GetAsTupleIndex();
         node_id = base_id;
         continue;
       }
 
-      case NodeKind::StubReference: {
-        node_id = node.GetAsStubReference();
+      case NodeKind::SpliceBlock: {
+        auto [block_id, result_id] = node.GetAsSpliceBlock();
+        node_id = result_id;
         continue;
       }
 
-      case NodeKind::ArrayValue:
-      case NodeKind::StructValue:
-      case NodeKind::TupleValue:
-        // TODO: Eventually these will depend on the context in which the value
-        // is used, and could be either Value or Initializing. We may want
-        // different node kinds for a struct/tuple initializer versus a
-        // struct/tuple value construction.
-        return ExpressionCategory::Value;
+      case NodeKind::StructLiteral:
+      case NodeKind::TupleLiteral:
+        return ExpressionCategory::Mixed;
 
+      case NodeKind::ArrayInit:
       case NodeKind::Call:
+      case NodeKind::InitializeFrom:
+      case NodeKind::StructInit:
+      case NodeKind::TupleInit:
         return ExpressionCategory::Initializing;
 
       case NodeKind::Dereference:
@@ -472,6 +520,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
 
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
+      case NodeKind::ValueAsReference:
         return ExpressionCategory::EphemeralReference;
     }
   }
@@ -488,7 +537,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
     switch (node.kind()) {
       case NodeKind::AddressOf:
       case NodeKind::ArrayIndex:
-      case NodeKind::ArrayValue:
+      case NodeKind::ArrayInit:
       case NodeKind::Assign:
       case NodeKind::BinaryOperatorAdd:
       case NodeKind::BindValue:
@@ -500,6 +549,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::Call:
       case NodeKind::Dereference:
       case NodeKind::FunctionDeclaration:
+      case NodeKind::InitializeFrom:
       case NodeKind::IntegerLiteral:
       case NodeKind::Invalid:
       case NodeKind::Namespace:
@@ -511,12 +561,18 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::StringLiteral:
       case NodeKind::StructAccess:
       case NodeKind::StructTypeField:
+      case NodeKind::StructLiteral:
+      case NodeKind::StructInit:
       case NodeKind::StructValue:
       case NodeKind::Temporary:
       case NodeKind::TemporaryStorage:
+      case NodeKind::TupleAccess:
       case NodeKind::TupleIndex:
+      case NodeKind::TupleLiteral:
+      case NodeKind::TupleInit:
       case NodeKind::TupleValue:
       case NodeKind::UnaryOperatorNot:
+      case NodeKind::ValueAsReference:
       case NodeKind::VarStorage:
         CARBON_FATAL() << "Type refers to non-type node " << node;
 
@@ -527,8 +583,9 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
         continue;
       }
 
-      case NodeKind::StubReference: {
-        node_id = node.GetAsStubReference();
+      case NodeKind::SpliceBlock: {
+        auto [block_id, result_id] = node.GetAsSpliceBlock();
+        node_id = result_id;
         continue;
       }
 

@@ -13,7 +13,7 @@
 #include "explorer/ast/statement.h"
 #include "explorer/base/arena.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 using ::testing::_;
@@ -159,4 +159,4 @@ TEST(ASTDeclarationsTest, BasicUsage) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

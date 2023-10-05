@@ -268,9 +268,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto NoteWhitespace() -> void {
-    if (!buffer_->token_infos_.empty()) {
-      buffer_->token_infos_.back().has_trailing_space = true;
-    }
+    buffer_->token_infos_.back().has_trailing_space = true;
   }
 
   auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
@@ -709,24 +707,63 @@ class TokenizedBuffer::Lexer {
                        .column = current_column_});
   }
 
+  auto AddStartOfFileToken() -> void {
+    // Note that the start-of-file always has trailing space because it *is*
+    // whitespace.
+    buffer_->AddToken({.kind = TokenKind::StartOfFile,
+                       .has_trailing_space = true,
+                       .token_line = current_line_,
+                       .column = current_column_});
+  }
+
+  // We use a collection of static member functions for table-based dispatch to
+  // lexer methods. These are named static member functions so that they show up
+  // helpfully in profiles and backtraces, but they tend to not contain the
+  // interesting logic and simply delegate to the relevant methods. All of their
+  // signatures need to be exactly the same however in order to ensure we can
+  // build efficient dispatch tables out of them.
+  static auto DispatchLexError(Lexer& lexer, llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexError(source_text);
+  }
+  static auto DispatchLexSymbol(Lexer& lexer, llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexSymbolToken(source_text);
+  }
+  template <const TokenKind& Token>
+  static auto DispatchLexOneCharSymbol(Lexer& lexer,
+                                       llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexSymbolToken(source_text, Token);
+  }
+  static auto DispatchLexWord(Lexer& lexer, llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexKeywordOrIdentifier(source_text);
+  }
+  static auto DispatchLexNumericLiteral(Lexer& lexer,
+                                        llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexNumericLiteral(source_text);
+  }
+  static auto DispatchLexStringLiteral(Lexer& lexer,
+                                       llvm::StringRef& source_text)
+      -> LexResult {
+    return lexer.LexStringLiteral(source_text);
+  }
+
   constexpr static auto MakeDispatchTable() -> DispatchTableT {
     DispatchTableT table = {};
-    auto dispatch_lex_error = +[](Lexer& lexer, llvm::StringRef& source_text) {
-      return lexer.LexError(source_text);
-    };
     for (int i = 0; i < 256; ++i) {
-      table[i] = dispatch_lex_error;
+      table[i] = &DispatchLexError;
     }
 
     // Symbols have some special dispatching. First, set the first character of
     // each symbol token spelling to dispatch to the symbol lexer. We don't
     // provide a pre-computed token here, so the symbol lexer will compute the
-    // exact symbol token kind.
-    auto dispatch_lex_symbol = +[](Lexer& lexer, llvm::StringRef& source_text) {
-      return lexer.LexSymbolToken(source_text);
-    };
+    // exact symbol token kind. We'll override this with more specific dispatch
+    // below.
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = dispatch_lex_symbol;
+  table[(Spelling)[0]] = &DispatchLexSymbol;
 #include "toolchain/lex/token_kind.def"
 
     // Now special cased single-character symbols that are guaranteed to not
@@ -735,46 +772,34 @@ class TokenizedBuffer::Lexer {
     // orthogonal to any other punctuation. We do this separately because this
     // needs to override some of the generic handling above, and provide a
     // custom token.
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)                  \
-  table[(Spelling)[0]] = +[](Lexer& lexer, llvm::StringRef& source_text) { \
-    return lexer.LexSymbolToken(source_text, TokenKind::TokenName);        \
-  };
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
+  table[(Spelling)[0]] = &DispatchLexOneCharSymbol<TokenKind::TokenName>;
 #include "toolchain/lex/token_kind.def"
 
-    auto dispatch_lex_word = +[](Lexer& lexer, llvm::StringRef& source_text) {
-      return lexer.LexKeywordOrIdentifier(source_text);
-    };
-    table['_'] = dispatch_lex_word;
+    table['_'] = &DispatchLexWord;
     // Note that we don't use `llvm::seq` because this needs to be `constexpr`
     // evaluated.
     for (unsigned char c = 'a'; c <= 'z'; ++c) {
-      table[c] = dispatch_lex_word;
+      table[c] = &DispatchLexWord;
     }
     for (unsigned char c = 'A'; c <= 'Z'; ++c) {
-      table[c] = dispatch_lex_word;
+      table[c] = &DispatchLexWord;
     }
     // We dispatch all non-ASCII UTF-8 characters to the identifier lexing
     // as whitespace characters should already have been skipped and the
     // only remaining valid Unicode characters would be part of an
     // identifier. That code can either accept or reject.
     for (int i = 0x80; i < 0x100; ++i) {
-      table[i] = dispatch_lex_word;
+      table[i] = &DispatchLexWord;
     }
 
-    auto dispatch_lex_numeric =
-        +[](Lexer& lexer, llvm::StringRef& source_text) {
-          return lexer.LexNumericLiteral(source_text);
-        };
     for (unsigned char c = '0'; c <= '9'; ++c) {
-      table[c] = dispatch_lex_numeric;
+      table[c] = &DispatchLexNumericLiteral;
     }
 
-    auto dispatch_lex_string = +[](Lexer& lexer, llvm::StringRef& source_text) {
-      return lexer.LexStringLiteral(source_text);
-    };
-    table['\''] = dispatch_lex_string;
-    table['"'] = dispatch_lex_string;
-    table['#'] = dispatch_lex_string;
+    table['\''] = &DispatchLexStringLiteral;
+    table['"'] = &DispatchLexStringLiteral;
+    table['#'] = &DispatchLexStringLiteral;
 
     return table;
   };
@@ -830,6 +855,10 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   // get better results by taking full control and manually creating the
   // dispatch structures.
   constexpr Lexer::DispatchTableT DispatchTable = Lexer::MakeDispatchTable();
+
+  // Before lexing any source text, add the start-of-file token so that code can
+  // assume a non-empty token buffer for the rest of lexing.
+  lexer.AddStartOfFileToken();
 
   llvm::StringRef source_text = source.text();
   while (lexer.SkipWhitespace(source_text)) {
@@ -914,7 +943,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
   }
 
-  if (token_info.kind == TokenKind::EndOfFile) {
+  if (token_info.kind == TokenKind::StartOfFile ||
+      token_info.kind == TokenKind::EndOfFile) {
     return llvm::StringRef();
   }
 
@@ -1045,18 +1075,20 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
     return;
   }
 
+  output_stream << "- filename: " << source_->filename() << "\n"
+                << "  tokens: [\n";
+
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth((token_infos_.size()));
   for (Token token : tokens()) {
     widths.Widen(GetTokenPrintWidths(token));
   }
 
-  output_stream << "[\n";
   for (Token token : tokens()) {
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }
-  output_stream << "]\n";
+  output_stream << "  ]\n";
 }
 
 auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
@@ -1075,7 +1107,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
   // justification manually in order to use the dynamically computed widths
   // and get the quotes included.
   output_stream << llvm::formatv(
-      "{ index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
+      "    { index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
       "spelling: '{5}'",
       llvm::format_decimal(token_index, widths.index),
       llvm::right_justify(llvm::formatv("'{0}'", token_info.kind.name()).str(),

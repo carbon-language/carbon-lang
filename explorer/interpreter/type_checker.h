@@ -558,7 +558,7 @@ class TypeChecker {
   // template bindings.
   auto InstantiateImplDeclaration(Nonnull<const ImplDeclaration*> pattern,
                                   Nonnull<const Bindings*> bindings) const
-      -> ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>>;
+      -> ErrorOr<Nonnull<const ImplWitness*>>;
 
   // Wraps the interpreter's InterpExp, forwarding TypeChecker members as
   // arguments.
@@ -598,8 +598,20 @@ class TypeChecker {
     // A mapping from the bindings of the type-checked pattern to the bindings
     // of the original.
     std::map<const GenericBinding*, const GenericBinding*> param_map;
-    // TODO: Keep track of the instantiations we've already performed and don't
-    // do them again.
+
+    // Comparator for pointers to Bindings.
+    struct BindingPtrCompare {
+      auto operator()(Nonnull<const Bindings*> lhs,
+                      Nonnull<const Bindings*> rhs) const {
+        return std::tie(lhs->args(), lhs->witnesses()) <
+               std::tie(rhs->args(), rhs->witnesses());
+      }
+    };
+
+    // Cache of instantiations of this template.
+    mutable std::map<Nonnull<const Bindings*>, Nonnull<const ImplWitness*>,
+                     BindingPtrCompare>
+        instantiations;
   };
 
   // Map from template declarations to extra information we use to type-check

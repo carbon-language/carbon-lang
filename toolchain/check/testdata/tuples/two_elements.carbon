@@ -7,108 +7,30 @@
 var x: (i32, i32) = (4, 102);
 var y: (i32, i32) = x;
 
-// CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: functions: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   4,
-// CHECK:STDOUT:   102,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: real_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   x,
-// CHECK:STDOUT:   y,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: types: [
-// CHECK:STDOUT:   node+2,
-// CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT:   node+4,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: type_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     typeTypeType,
-// CHECK:STDOUT:     typeTypeType,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     type1,
-// CHECK:STDOUT:     type1,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
-// CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type0},
-// CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str0, type: type2},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+6, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+8, type: type1},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+10},
-// CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
-// CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type0},
-// CHECK:STDOUT:   {kind: VarStorage, arg0: str1, type: type2},
-// CHECK:STDOUT:   {kind: BindValue, arg0: node+5, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: node+16},
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+14,
-// CHECK:STDOUT:     node+15,
-// CHECK:STDOUT:     node+16,
-// CHECK:STDOUT:     node+17,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7_9: type = stub_reference i32
-// CHECK:STDOUT:   %.loc7_14: type = stub_reference i32
+// CHECK:STDOUT: file "two_elements.carbon" {
 // CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc7_17.2: (type, type) = tuple_value (%.loc7_9, %.loc7_14)
+// CHECK:STDOUT:   %.loc7_17.2: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_17.3: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %x: ref (i32, i32) = var "x"
-// CHECK:STDOUT:   %.loc7_22.1: i32 = int_literal 4
-// CHECK:STDOUT:   %.loc7_22.2: i32 = stub_reference %.loc7_22.1
-// CHECK:STDOUT:   %.loc7_25.1: i32 = int_literal 102
-// CHECK:STDOUT:   %.loc7_25.2: i32 = stub_reference %.loc7_25.1
-// CHECK:STDOUT:   %.loc7_28: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_25.2)
-// CHECK:STDOUT:   assign %x, %.loc7_28
-// CHECK:STDOUT:   %.loc8_9: type = stub_reference i32
-// CHECK:STDOUT:   %.loc8_14: type = stub_reference i32
-// CHECK:STDOUT:   %.loc8_17: (type, type) = tuple_value (%.loc8_9, %.loc8_14)
+// CHECK:STDOUT:   %.loc7_22: i32 = int_literal 4
+// CHECK:STDOUT:   %.loc7_25: i32 = int_literal 102
+// CHECK:STDOUT:   %.loc7_28.1: (i32, i32) = tuple_literal (%.loc7_22, %.loc7_25)
+// CHECK:STDOUT:   %.loc7_28.2: ref i32 = tuple_access %x, member0
+// CHECK:STDOUT:   %.loc7_28.3: init i32 = initialize_from %.loc7_22 to %.loc7_28.2
+// CHECK:STDOUT:   %.loc7_28.4: ref i32 = tuple_access %x, member1
+// CHECK:STDOUT:   %.loc7_28.5: init i32 = initialize_from %.loc7_25 to %.loc7_28.4
+// CHECK:STDOUT:   %.loc7_28.6: init (i32, i32) = tuple_init %.loc7_28.1, (%.loc7_28.3, %.loc7_28.5)
+// CHECK:STDOUT:   assign %x, %.loc7_28.6
+// CHECK:STDOUT:   %.loc8: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %y: ref (i32, i32) = var "y"
-// CHECK:STDOUT:   %.loc7_5: (i32, i32) = bind_value %x
-// CHECK:STDOUT:   assign %y, %.loc7_5
+// CHECK:STDOUT:   %.loc7_5.1: ref i32 = tuple_access %x, member0
+// CHECK:STDOUT:   %.loc7_5.2: i32 = bind_value %.loc7_5.1
+// CHECK:STDOUT:   %.loc7_5.3: ref i32 = tuple_access %y, member0
+// CHECK:STDOUT:   %.loc7_5.4: init i32 = initialize_from %.loc7_5.2 to %.loc7_5.3
+// CHECK:STDOUT:   %.loc7_5.5: ref i32 = tuple_access %x, member1
+// CHECK:STDOUT:   %.loc7_5.6: i32 = bind_value %.loc7_5.5
+// CHECK:STDOUT:   %.loc7_5.7: ref i32 = tuple_access %y, member1
+// CHECK:STDOUT:   %.loc7_5.8: init i32 = initialize_from %.loc7_5.6 to %.loc7_5.7
+// CHECK:STDOUT:   %.loc7_5.9: init (i32, i32) = tuple_init %x, (%.loc7_5.4, %.loc7_5.8)
+// CHECK:STDOUT:   assign %y, %.loc7_5.9
 // CHECK:STDOUT: }

@@ -198,7 +198,7 @@ struct TypeBlockId : public IndexBase, public Printable<TypeBlockId> {
   }
 };
 
-// An index for member access.
+// An index for member access, for structs and tuples.
 struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -304,11 +304,18 @@ class Node : public Printable<Node> {
   using ArrayIndex =
       Factory<NodeKind::ArrayIndex, NodeId /*array_id*/, NodeId /*index*/>;
 
+  // Initializes an array from a tuple. `tuple_id` is the source tuple
+  // expression. `refs_id` contains one initializer per array element, plus a
+  // final element that is the return slot for the initialization.
+  using ArrayInit = Factory<NodeKind::ArrayInit, NodeId /*tuple_id*/,
+                            NodeBlockId /*refs_id*/>;
+
   using ArrayType = Node::Factory<NodeKind::ArrayType, NodeId /*bound_node_id*/,
                                   TypeId /*array_element_type_id*/>;
 
-  using ArrayValue = Factory<NodeKind::ArrayValue, NodeId /*tuple_value_id*/>;
-
+  // Performs a source-level initialization or assignment of `lhs_id` from
+  // `rhs_id`. This finishes initialization of `lhs_id` in the same way as
+  // `InitializeFrom`.
   using Assign = Node::FactoryNoType<NodeKind::Assign, NodeId /*lhs_id*/,
                                      NodeId /*rhs_id*/>;
 
@@ -369,6 +376,12 @@ class Node : public Printable<Node> {
   using FunctionDeclaration =
       FactoryNoType<NodeKind::FunctionDeclaration, FunctionId /*function_id*/>;
 
+  // Finalizes the initialization of `dest_id` from the initializer expression
+  // `src_id`, by performing a final copy from source to destination, for types
+  // whose initialization is not in-place.
+  using InitializeFrom =
+      Factory<NodeKind::InitializeFrom, NodeId /*src_id*/, NodeId /*dest_id*/>;
+
   using IntegerLiteral =
       Factory<NodeKind::IntegerLiteral, IntegerLiteralId /*integer_id*/>;
 
@@ -388,11 +401,20 @@ class Node : public Printable<Node> {
   using ReturnExpression =
       FactoryNoType<NodeKind::ReturnExpression, NodeId /*expr_id*/>;
 
+  using SpliceBlock = Factory<NodeKind::SpliceBlock, NodeBlockId /*block_id*/,
+                              NodeId /*result_id*/>;
+
   using StringLiteral =
       Factory<NodeKind::StringLiteral, StringId /*string_id*/>;
 
   using StructAccess = Factory<NodeKind::StructAccess, NodeId /*struct_id*/,
                                MemberIndex /*ref_index*/>;
+
+  using StructInit = Factory<NodeKind::StructInit, NodeId /*literal_id*/,
+                             NodeBlockId /*converted_refs_id*/>;
+
+  using StructLiteral =
+      Factory<NodeKind::StructLiteral, NodeBlockId /*refs_id*/>;
 
   using StructType = Factory<NodeKind::StructType, NodeBlockId /*refs_id*/>;
 
@@ -400,24 +422,35 @@ class Node : public Printable<Node> {
       FactoryNoType<NodeKind::StructTypeField, StringId /*name_id*/,
                     TypeId /*type_id*/>;
 
-  using StructValue = Factory<NodeKind::StructValue, NodeBlockId /*refs_id*/>;
-
-  using StubReference = Factory<NodeKind::StubReference, NodeId /*node_id*/>;
+  using StructValue = Factory<NodeKind::StructValue, NodeId /*literal_id*/,
+                              NodeBlockId /*converted_refs_id*/>;
 
   using Temporary =
       Factory<NodeKind::Temporary, NodeId /*storage_id*/, NodeId /*init_id*/>;
 
   using TemporaryStorage = Factory<NodeKind::TemporaryStorage>;
 
+  using TupleAccess = Factory<NodeKind::TupleAccess, NodeId /*tuple_id*/,
+                              MemberIndex /*index*/>;
+
   using TupleIndex =
       Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;
 
+  using TupleInit = Factory<NodeKind::TupleInit, NodeId /*literal_id*/,
+                            NodeBlockId /*converted_refs_id*/>;
+
+  using TupleLiteral = Factory<NodeKind::TupleLiteral, NodeBlockId /*refs_id*/>;
+
   using TupleType = Factory<NodeKind::TupleType, TypeBlockId /*refs_id*/>;
 
-  using TupleValue = Factory<NodeKind::TupleValue, NodeBlockId /*refs_id*/>;
+  using TupleValue = Factory<NodeKind::TupleValue, NodeId /*literal_id*/,
+                             NodeBlockId /*converted_refs_id*/>;
 
   using UnaryOperatorNot =
       Factory<NodeKind::UnaryOperatorNot, NodeId /*operand_id*/>;
+
+  using ValueAsReference =
+      Factory<NodeKind::ValueAsReference, NodeId /*value_id*/>;
 
   using VarStorage = Factory<NodeKind::VarStorage, StringId /*name_id*/>;
 

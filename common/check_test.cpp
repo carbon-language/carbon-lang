@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 TEST(CheckTest, CheckTrue) { CARBON_CHECK(true); }
@@ -59,4 +59,4 @@ TEST(ErrorTest, FatalNoReturnRequired) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

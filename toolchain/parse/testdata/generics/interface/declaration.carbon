@@ -7,10 +7,12 @@
 interface Foo {
 }
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
-// CHECK:STDOUT:   {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: declaration.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

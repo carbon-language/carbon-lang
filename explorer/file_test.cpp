@@ -18,8 +18,8 @@ namespace {
 
 class ExplorerFileTest : public FileTestBase {
  public:
-  explicit ExplorerFileTest(std::filesystem::path path)
-      : FileTestBase(std::move(path)),
+  explicit ExplorerFileTest(llvm::StringRef test_name)
+      : FileTestBase(test_name),
         prelude_line_re_(R"(prelude.carbon:(\d+))"),
         timing_re_(R"((Time elapsed in \w+: )\d+(ms))") {
     CARBON_CHECK(prelude_line_re_.ok()) << prelude_line_re_.error();
@@ -27,18 +27,8 @@ class ExplorerFileTest : public FileTestBase {
   }
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-           const llvm::SmallVector<TestFile>& test_files,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
-      -> ErrorOr<bool> override {
-    // Create the files in-memory.
-    llvm::vfs::InMemoryFileSystem fs;
-    for (const auto& test_file : test_files) {
-      if (!fs.addFile(test_file.filename, /*ModificationTime=*/0,
-                      llvm::MemoryBuffer::getMemBuffer(test_file.content))) {
-        return ErrorBuilder() << "File is repeated: " << test_file.filename;
-      }
-    }
-
+           llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> override {
     // Add the prelude.
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
         llvm::MemoryBuffer::getFile("explorer/data/prelude.carbon");
@@ -66,8 +56,7 @@ class ExplorerFileTest : public FileTestBase {
     return exit_code == EXIT_SUCCESS;
   }
 
-  auto ValidateRun(const llvm::SmallVector<TestFile>& /*test_files*/)
-      -> void override {
+  auto ValidateRun() -> void override {
     // Skip trace test check as they use stdout stream instead of
     // trace_stream_ostream
     if (absl::GetFlag(FLAGS_trace)) {
@@ -86,15 +75,12 @@ class ExplorerFileTest : public FileTestBase {
     return args;
   }
 
-  auto GetLineNumberReplacement(llvm::ArrayRef<llvm::StringRef> filenames)
-      -> LineNumberReplacement override {
+  auto GetLineNumberReplacements(llvm::ArrayRef<llvm::StringRef> filenames)
+      -> llvm::SmallVector<LineNumberReplacement> override {
     if (check_trace_output()) {
-      return {.has_file = false,
-              .pattern = R"((DO NOT MATCH))",
-              // The `{{{{` becomes `{{`.
-              .line_formatv = "{{{{ *}}{0}"};
+      return {};
     }
-    return FileTestBase::GetLineNumberReplacement(filenames);
+    return FileTestBase::GetLineNumberReplacements(filenames);
   }
 
   auto DoExtraCheckReplacements(std::string& check_line) -> void override {
@@ -111,7 +97,7 @@ class ExplorerFileTest : public FileTestBase {
  private:
   // Trace output is directly checked for a few tests.
   auto check_trace_output() -> bool {
-    return path().string().find("/trace/") != std::string::npos;
+    return test_name().find("/trace/") != std::string::npos;
   }
 
   TestRawOstream trace_stream_;

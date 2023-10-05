@@ -96,7 +96,6 @@ def remap_file(label: str) -> str:
         return path.replace(":", "/")
     assert repo in EXTERNAL_REPOS, repo
     return EXTERNAL_REPOS[repo].remap(path)
-    exit(f"Don't know how to remap label '{label}'")
 
 
 def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:

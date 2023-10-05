@@ -415,11 +415,14 @@ void CallableDeclaration::PrintIndent(int indent_num_spaces,
   auto name = GetName(*this);
   CARBON_CHECK(name) << "Unexpected missing name for `" << *this << "`.";
   out.indent(indent_num_spaces) << "fn " << *name << " ";
-  if (!deduced_parameters_.empty()) {
+  if (!deduced_parameters_.empty() || self_pattern_) {
     out << "[";
     llvm::ListSeparator sep;
     for (Nonnull<const GenericBinding*> deduced : deduced_parameters_) {
       out << sep << *deduced;
+    }
+    if (self_pattern_) {
+      out << sep << **self_pattern_;
     }
     out << "]";
   }

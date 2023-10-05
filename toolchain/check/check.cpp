@@ -15,7 +15,7 @@ auto CheckParseTree(const SemIR::File& builtin_ir,
                     const Lex::TokenizedBuffer& tokens,
                     const Parse::Tree& parse_tree, DiagnosticConsumer& consumer,
                     llvm::raw_ostream* vlog_stream) -> SemIR::File {
-  auto semantics_ir = SemIR::File(&builtin_ir);
+  auto semantics_ir = SemIR::File(tokens.filename().str(), &builtin_ir);
 
   Parse::NodeLocationTranslator translator(&tokens, &parse_tree);
   ErrorTrackingDiagnosticConsumer err_tracker(consumer);

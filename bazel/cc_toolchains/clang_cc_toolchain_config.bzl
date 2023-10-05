@@ -132,7 +132,7 @@ def _impl(ctx):
                             "-Wself-assign",
                             "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
-                            "-Wnon-virtual-dtor",
+                            "-Wdelete-non-virtual-dtor",
                             # Don't warn on external code as we can't
                             # necessarily patch it easily.
                             "--system-header-prefix=external/",

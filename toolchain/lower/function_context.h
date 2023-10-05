@@ -18,7 +18,8 @@ namespace Carbon::Lower {
 // `llvm::Function` definition.
 class FunctionContext {
  public:
-  explicit FunctionContext(FileContext& file_context, llvm::Function* function);
+  explicit FunctionContext(FileContext& file_context, llvm::Function* function,
+                           llvm::raw_ostream* vlog_stream);
 
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
@@ -29,6 +30,9 @@ class FunctionContext {
   // block.
   auto TryToReuseBlock(SemIR::NodeBlockId block_id, llvm::BasicBlock* block)
       -> bool;
+
+  // Builds LLVM IR for the sequence of instructions in `block_id`.
+  auto LowerBlock(SemIR::NodeBlockId block_id) -> void;
 
   // Returns a phi node corresponding to the block argument of the given basic
   // block.
@@ -47,24 +51,10 @@ class FunctionContext {
     return it->second;
   }
 
-  // Returns a local (versus global) value for the given node in loaded state.
-  // Loads will only be inserted on an as-needed basis.
-  auto GetLocalLoaded(SemIR::NodeId node_id) -> llvm::Value*;
-
   // Sets the value for the given node.
   auto SetLocal(SemIR::NodeId node_id, llvm::Value* value) {
     bool added = locals_.insert({node_id, value}).second;
     CARBON_CHECK(added) << "Duplicate local insert: " << node_id;
-  }
-
-  // Returns the requested index into val based on whether val is a pointer
-  // type.
-  auto GetIndexFromStructOrArray(llvm::Type* llvm_type, llvm::Value* val,
-                                 unsigned idx, const llvm::Twine& name)
-      -> llvm::Value* {
-    return val->getType()->isPointerTy()
-               ? builder().CreateStructGEP(llvm_type, val, idx, name)
-               : builder().CreateExtractValue(val, idx, name);
   }
 
   // Gets a callable's function.
@@ -123,6 +113,9 @@ class FunctionContext {
   llvm::Function* function_;
 
   llvm::IRBuilder<> builder_;
+
+  // The optional vlog stream.
+  llvm::raw_ostream* vlog_stream_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.
   llvm::DenseMap<SemIR::NodeBlockId, llvm::BasicBlock*> blocks_;

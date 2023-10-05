@@ -36,10 +36,6 @@ class Context {
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemIR::Node node) -> SemIR::NodeId;
 
-  // Adds a node to the given block, returning the produced ID.
-  auto AddNodeToBlock(SemIR::NodeBlockId block, SemIR::Node node)
-      -> SemIR::NodeId;
-
   // Pushes a parse tree node onto the stack, storing the SemIR::Node as the
   // result.
   auto AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void;
@@ -87,81 +83,27 @@ class Context {
                                     SemIR::NodeId cond_id)
       -> SemIR::NodeBlockId;
 
-  // Adds branches from the given list of blocks to a new block, for
-  // reconvergence of control flow, and pushes the new block onto the node
-  // block stack.
-  auto AddConvergenceBlockAndPush(
-      Parse::Node parse_node, std::initializer_list<SemIR::NodeBlockId> blocks)
+  // Handles recovergence of control flow. Adds branches from the top
+  // `num_blocks` on the node block stack to a new block, pops the existing
+  // blocks, and pushes the new block onto the node block stack.
+  auto AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
       -> void;
 
-  // Adds branches from the given list of blocks and values to a new block, for
-  // reconvergence of control flow with a result value, and pushes the new
-  // block onto the node block stack. Returns a node referring to the result
-  // value.
+  // Handles recovergence of control flow with a result value. Adds branches
+  // from the top few blocks on the node block stack to a new block, pops the
+  // existing blocks, and pushes the new block onto the node block stack. The
+  // number of blocks popped is the size of `block_args`, and the corresponding
+  // result values are the elements of `block_args`. Returns a node referring
+  // to the result value.
   auto AddConvergenceBlockWithArgAndPush(
       Parse::Node parse_node,
-      std::initializer_list<std::pair<SemIR::NodeBlockId, SemIR::NodeId>>
-          blocks_and_args) -> SemIR::NodeId;
+      std::initializer_list<SemIR::NodeId> blocks_and_args) -> SemIR::NodeId;
 
   // Add the current code block to the enclosing function.
   auto AddCurrentCodeBlockToFunction() -> void;
 
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
-
-  // Converts the given expression to an ephemeral reference to a temporary if
-  // it is an initializing expression.
-  auto MaterializeIfInitializing(SemIR::NodeId expr_id) -> SemIR::NodeId {
-    if (GetExpressionCategory(semantics_ir(), expr_id) ==
-        SemIR::ExpressionCategory::Initializing) {
-      return FinalizeTemporary(expr_id, /*discarded=*/false);
-    }
-    return expr_id;
-  }
-
-  // Convert the given expression to a value expression of the same type.
-  auto ConvertToValueExpression(SemIR::NodeId expr_id) -> SemIR::NodeId;
-
-  // Performs initialization of `target_id` from `value_id`. Returns the
-  // possibly-converted initialization expression, which should be assigned to
-  // the target using a suitable node for the kind of initialization.
-  auto Initialize(Parse::Node parse_node, SemIR::NodeId target_id,
-                  SemIR::NodeId value_id) -> SemIR::NodeId;
-
-  // Converts `value_id` to a value expression of type `type_id`.
-  auto ConvertToValueOfType(Parse::Node parse_node, SemIR::NodeId value_id,
-                            SemIR::TypeId type_id) -> SemIR::NodeId {
-    return ConvertToValueExpression(
-        ImplicitAsRequired(parse_node, value_id, type_id));
-  }
-
-  // Converts `value_id` to a value expression of type `bool`.
-  auto ConvertToBoolValue(Parse::Node parse_node, SemIR::NodeId value_id)
-      -> SemIR::NodeId {
-    return ConvertToValueOfType(
-        parse_node, value_id, CanonicalizeType(SemIR::NodeId::BuiltinBoolType));
-  }
-
-  // Handles an expression whose result is discarded.
-  auto HandleDiscardedExpression(SemIR::NodeId id) -> void;
-
-  // Runs ImplicitAsImpl for a set of arguments and parameters.
-  //
-  // This will eventually need to support checking against multiple possible
-  // overloads, multiple of which may be possible but not "best". While this can
-  // currently be done by calling twice, toggling `apply_implicit_as`, in the
-  // future we may want to remember the right implicit conversions to do for
-  // valid cases in order to efficiently handle generics.
-  auto ImplicitAsForArgs(
-      SemIR::NodeBlockId arg_refs_id, Parse::Node param_parse_node,
-      SemIR::NodeBlockId param_refs_id,
-      DiagnosticEmitter<Parse::Node>::DiagnosticBuilder* diagnostic) -> bool;
-
-  // Runs ImplicitAsImpl for a situation where a cast is required, returning the
-  // updated `value_id`. Prints a diagnostic and returns an Error if
-  // unsupported.
-  auto ImplicitAsRequired(Parse::Node parse_node, SemIR::NodeId value_id,
-                          SemIR::TypeId as_type_id) -> SemIR::NodeId;
 
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.
@@ -180,28 +122,12 @@ class Context {
   // Handles canonicalization of tuple types. This may create a new tuple type
   // if the `type_ids` doesn't match an existing tuple type.
   auto CanonicalizeTupleType(Parse::Node parse_node,
-                             llvm::SmallVector<SemIR::TypeId>&& type_ids)
+                             llvm::ArrayRef<SemIR::TypeId> type_ids)
       -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)
       -> SemIR::TypeId;
-
-  // Converts an expression for use as a type.
-  // TODO: This should eventually return a type ID.
-  auto ExpressionAsType(Parse::Node parse_node, SemIR::NodeId value_id)
-      -> SemIR::TypeId {
-    auto node = semantics_ir_->GetNode(value_id);
-    if (node.kind() == SemIR::NodeKind::StubReference) {
-      value_id = node.GetAsStubReference();
-      CARBON_CHECK(semantics_ir_->GetNode(value_id).kind() !=
-                   SemIR::NodeKind::StubReference)
-          << "Stub reference should not point to another stub reference";
-    }
-
-    return CanonicalizeType(
-        ConvertToValueOfType(parse_node, value_id, SemIR::TypeId::TypeType));
-  }
 
   // Removes any top-level `const` qualifiers from a type.
   auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
@@ -211,20 +137,28 @@ class Context {
 
   // On a comma, pushes the entry. On return, the top of node_stack_ will be
   // start_kind.
-  auto ParamOrArgComma(bool for_args) -> void;
+  auto ParamOrArgComma() -> void;
 
-  // Detects whether there's an entry to push. On return, the top of
-  // node_stack_ will be start_kind, and the caller should do type-specific
-  // processing. Returns refs_id.
-  auto ParamOrArgEnd(bool for_args, Parse::NodeKind start_kind)
-      -> SemIR::NodeBlockId;
+  // Detects whether there's an entry to push from the end of a parameter or
+  // argument list, and if so, moves it to the current parameter or argument
+  // list. Does not pop the list. `start_kind` is the node kind at the start
+  // of the parameter or argument list, and will be at the top of the parse node
+  // stack when this function returns.
+  auto ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void;
+
+  // Pops the current parameter or argument list. Should only be called after
+  // `ParamOrArgEndNoPop`.
+  auto ParamOrArgPop() -> SemIR::NodeBlockId;
+
+  // Detects whether there's an entry to push. Pops and returns the argument
+  // list. This is the same as `ParamOrArgEndNoPop` followed by `ParamOrArgPop`.
+  auto ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::NodeBlockId;
 
   // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_or_args_stack_. If for_args, adds a StubReference of the previous
-  // node's result to the IR.
-  //
-  // This should only be called by other ParamOrArg functions, not directly.
-  auto ParamOrArgSave(bool for_args) -> void;
+  // params_or_args_stack_.
+  auto ParamOrArgSave(SemIR::NodeId node_id) -> void {
+    params_or_args_stack_.AddNodeId(node_id);
+  }
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
@@ -254,16 +188,6 @@ class Context {
   }
 
  private:
-  // For CanImplicitAs, the detected conversion to apply.
-  enum ImplicitAsKind : int8_t {
-    // Incompatible types.
-    Incompatible,
-    // No conversion required.
-    Identical,
-    // ImplicitAs is required.
-    Compatible,
-  };
-
   // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
    public:
@@ -285,29 +209,6 @@ class Context {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
-
-  // Commits to using a temporary to store the result of the initializing
-  // expression described by `init_id`, and returns the location of the
-  // temporary. If `discarded` is `true`, the result is discarded, and no
-  // temporary will be created if possible; if no temporary is created, the
-  // return value will be `SemIR::NodeId::Invalid`.
-  auto FinalizeTemporary(SemIR::NodeId init_id, bool discarded)
-      -> SemIR::NodeId;
-
-  // Marks the initializer `init_id` as initializing `target_id`.
-  auto MarkInitializerFor(SemIR::NodeId init_id, SemIR::NodeId target_id)
-      -> void;
-
-  // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
-  // result type. The result will be the node to use to replace `value`.
-  //
-  // If `output_value_id` is null, then this only checks if the conversion is
-  // possible.
-  //
-  // If `output_value_id` is not null, then it will be set if there is a need to
-  // cast.
-  auto ImplicitAsImpl(SemIR::NodeId value_id, SemIR::TypeId as_type_id,
-                      SemIR::NodeId* output_value_id) -> ImplicitAsKind;
 
   // Forms a canonical type ID for a type. This function is given two
   // callbacks:

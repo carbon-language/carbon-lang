@@ -4,12 +4,14 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_no_intro_without_semi.carbon:[[@LINE+3]]:1: Unrecognized declaration introducer.
+// CHECK:STDERR: fail_no_intro_without_semi.carbon:[[@LINE+3]]:1: ERROR: Unrecognized declaration introducer.
 // CHECK:STDERR: foo bar baz
 // CHECK:STDERR: ^
 foo bar baz
 
-// CHECK:STDOUT: [
-// CHECK:STDOUT: {kind: 'EmptyDeclaration', text: 'foo', has_error: yes},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
+// CHECK:STDOUT: - filename: fail_no_intro_without_semi.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:     {kind: 'EmptyDeclaration', text: 'foo', has_error: yes},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]

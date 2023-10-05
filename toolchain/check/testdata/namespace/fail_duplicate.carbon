@@ -9,7 +9,7 @@ namespace Foo;
 fn Foo.Baz() {
 }
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:8: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:8: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR:        ^
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: Name is previously declared here.
@@ -18,49 +18,9 @@ fn Foo.Baz() {
 fn Foo.Baz() {
 }
 
-// CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str1, param_refs: block0, body: [block2]},
-// CHECK:STDOUT:   {name: str<invalid>, param_refs: block0, body: [block3]},
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: real_literals: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   Foo,
-// CHECK:STDOUT:   Baz,
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: types: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: type_blocks: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: Namespace, arg0: name_scope0},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: Return},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
-// CHECK:STDOUT:   {kind: Return},
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %.loc9}
-// CHECK:STDOUT:   %.loc9 = fn_decl @Baz
+// CHECK:STDOUT: file "fail_duplicate.carbon" {
+// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %Baz}
+// CHECK:STDOUT:   %Baz = fn_decl @Baz
 // CHECK:STDOUT:   %.loc18 = fn_decl @.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

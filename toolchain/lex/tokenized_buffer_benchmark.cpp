@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -297,7 +298,8 @@ class LexerBenchHelper {
   auto MakeSourceBuffer(llvm::StringRef text) -> SourceBuffer {
     CARBON_CHECK(fs_.addFile(filename_, /*ModificationTime=*/0,
                              llvm::MemoryBuffer::getMemBuffer(text)));
-    return std::move(*SourceBuffer::CreateFromFile(fs_, filename_));
+    return std::move(*SourceBuffer::CreateFromFile(
+        fs_, filename_, ConsoleDiagnosticConsumer()));
   }
 
   llvm::vfs::InMemoryFileSystem fs_;

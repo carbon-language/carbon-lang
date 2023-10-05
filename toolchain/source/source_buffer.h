@@ -8,10 +8,10 @@
 #include <memory>
 #include <string>
 
-#include "common/error.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon {
 
@@ -34,8 +34,12 @@ namespace Carbon {
 // some implementation complexity in the future if needed.
 class SourceBuffer {
  public:
+  // Opens the requested file. Returns a SourceBuffer on success. Prints an
+  // error and returns nullopt on failure.
   static auto CreateFromFile(llvm::vfs::FileSystem& fs,
-                             llvm::StringRef filename) -> ErrorOr<SourceBuffer>;
+                             llvm::StringRef filename,
+                             DiagnosticConsumer& consumer)
+      -> std::optional<SourceBuffer>;
 
   // Use one of the factory functions above to create a source buffer.
   SourceBuffer() = delete;

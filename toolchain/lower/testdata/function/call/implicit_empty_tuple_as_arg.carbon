@@ -25,7 +25,6 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %tuple = alloca {}, align 8
 // CHECK:STDOUT:   %x = alloca {}, align 8
 // CHECK:STDOUT:   call void @Foo()
 // CHECK:STDOUT:   %temp = alloca {}, align 8

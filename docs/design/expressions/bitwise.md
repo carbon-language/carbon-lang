@@ -197,7 +197,7 @@ implementing the following family of interfaces:
 ```
 // Unary `^`.
 interface BitComplement {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self]() -> Result;
 }
 ```
@@ -205,7 +205,7 @@ interface BitComplement {
 ```
 // Binary `&`.
 interface BitAndWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint BitAnd {
@@ -216,7 +216,7 @@ constraint BitAnd {
 ```
 // Binary `|`.
 interface BitOrWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint BitOr {
@@ -227,7 +227,7 @@ constraint BitOr {
 ```
 // Binary `^`.
 interface BitXorWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint BitXor {
@@ -238,7 +238,7 @@ constraint BitXor {
 ```
 // Binary `<<`.
 interface LeftShiftWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint LeftShift {
@@ -249,7 +249,7 @@ constraint LeftShift {
 ```
 // Binary `>>`.
 interface RightShiftWith(U:! type) {
-  let Result:! type = Self;
+  default let Result:! type = Self;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint RightShift {

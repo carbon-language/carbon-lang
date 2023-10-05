@@ -8,6 +8,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/sem_ir/node.h"
 
@@ -52,8 +53,9 @@ struct Function : public Printable<Function> {
 
 struct RealLiteral : public Printable<RealLiteral> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{mantissa: " << mantissa << ", exponent: " << exponent
-        << ", is_decimal: " << is_decimal << "}";
+    out << "{mantissa: ";
+    mantissa.print(out, /*isSigned=*/false);
+    out << ", exponent: " << exponent << ", is_decimal: " << is_decimal << "}";
   }
 
   llvm::APInt mantissa;
@@ -71,13 +73,13 @@ class File : public Printable<File> {
   explicit File();
 
   // Starts a new file for Check::CheckParseTree. Builtins are required.
-  explicit File(const File* builtins);
+  explicit File(std::string filename, const File* builtins);
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
 
   // Prints the full IR. Allow omitting builtins so that unrelated changes are
-  // less likely to alternate test golden files.
+  // less likely to alter test golden files.
   // TODO: In the future, the things to print may change, for example by adding
   // preludes. We may then want the ability to omit other things similar to
   // builtins.
@@ -101,6 +103,8 @@ class File : public Printable<File> {
   // Adds a callable, returning an ID to reference it.
   auto AddFunction(Function function) -> FunctionId {
     FunctionId id(functions_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     functions_.push_back(function);
     return id;
   }
@@ -118,6 +122,8 @@ class File : public Printable<File> {
   // Adds an integer literal, returning an ID to reference it.
   auto AddIntegerLiteral(llvm::APInt integer_literal) -> IntegerLiteralId {
     IntegerLiteralId id(integer_literals_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     integer_literals_.push_back(integer_literal);
     return id;
   }
@@ -130,6 +136,8 @@ class File : public Printable<File> {
   // Adds a name scope, returning an ID to reference it.
   auto AddNameScope() -> NameScopeId {
     NameScopeId name_scopes_id(name_scopes_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(name_scopes_id.index >= 0);
     name_scopes_.resize(name_scopes_id.index + 1);
     return name_scopes_id;
   }
@@ -147,13 +155,15 @@ class File : public Printable<File> {
     return name_scopes_[scope_id.index];
   }
 
-  // Adds a node to a specified block, returning an ID to reference the node.
-  auto AddNode(NodeBlockId block_id, Node node) -> NodeId {
+  // Adds a node to the node list, returning an ID to reference the node. Note
+  // that this doesn't add the node to any node block. Check::Context::AddNode
+  // or NodeBlockStack::AddNode should usually be used instead, to add the node
+  // to the current block.
+  auto AddNodeInNoBlock(Node node) -> NodeId {
     NodeId node_id(nodes_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(node_id.index >= 0);
     nodes_.push_back(node);
-    if (block_id != NodeBlockId::Unreachable) {
-      node_blocks_[block_id.index].push_back(node_id);
-    }
     return node_id;
   }
 
@@ -165,22 +175,52 @@ class File : public Printable<File> {
   // Returns the requested node.
   auto GetNode(NodeId node_id) const -> Node { return nodes_[node_id.index]; }
 
-  // Adds an empty node block, returning an ID to reference it.
-  auto AddNodeBlock() -> NodeBlockId {
+  // Reserves and returns a node block ID. The contents of the node block
+  // should be specified by calling SetNodeBlock, or by pushing the ID onto the
+  // NodeBlockStack.
+  auto AddNodeBlockId() -> NodeBlockId {
     NodeBlockId id(node_blocks_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     node_blocks_.push_back({});
     return id;
   }
 
+  // Sets the contents of an empty node block to the given content.
+  auto SetNodeBlock(NodeBlockId block_id, llvm::ArrayRef<NodeId> content)
+      -> void {
+    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
+    CARBON_CHECK(node_blocks_[block_id.index].empty())
+        << "node block content set more than once";
+    node_blocks_[block_id.index] = AllocateCopy(content);
+  }
+
+  // Adds a node block with the given content, returning an ID to reference it.
+  auto AddNodeBlock(llvm::ArrayRef<NodeId> content) -> NodeBlockId {
+    NodeBlockId id(node_blocks_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
+    node_blocks_.push_back(AllocateCopy(content));
+    return id;
+  }
+
+  // Adds a node block of the given size.
+  auto AddUninitializedNodeBlock(size_t size) -> NodeBlockId {
+    NodeBlockId id(node_blocks_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
+    node_blocks_.push_back(AllocateUninitialized<NodeId>(size));
+    return id;
+  }
+
   // Returns the requested node block.
-  auto GetNodeBlock(NodeBlockId block_id) const
-      -> const llvm::SmallVector<NodeId>& {
+  auto GetNodeBlock(NodeBlockId block_id) const -> llvm::ArrayRef<NodeId> {
     CARBON_CHECK(block_id != NodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
 
   // Returns the requested node block.
-  auto GetNodeBlock(NodeBlockId block_id) -> llvm::SmallVector<NodeId>& {
+  auto GetNodeBlock(NodeBlockId block_id) -> llvm::MutableArrayRef<NodeId> {
     CARBON_CHECK(block_id != NodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
@@ -188,6 +228,8 @@ class File : public Printable<File> {
   // Adds a real literal, returning an ID to reference it.
   auto AddRealLiteral(RealLiteral real_literal) -> RealLiteralId {
     RealLiteralId id(real_literals_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
     real_literals_.push_back(real_literal);
     return id;
   }
@@ -204,8 +246,10 @@ class File : public Printable<File> {
     auto [it, added] = string_to_id_.insert({str, next_id});
 
     if (added) {
+      // TODO: Return failure on overflow instead of crashing.
+      CARBON_CHECK(next_id.index >= 0);
       // Update the reverse mapping from IDs to strings.
-      CARBON_CHECK(it->second == next_id);
+      CARBON_DCHECK(it->second == next_id);
       strings_.push_back(it->first());
     }
 
@@ -220,6 +264,8 @@ class File : public Printable<File> {
   // Adds a type, returning an ID to reference it.
   auto AddType(NodeId node_id) -> TypeId {
     TypeId type_id(types_.size());
+    // Should never happen, will always overflow node_ids first.
+    CARBON_DCHECK(type_id.index >= 0);
     types_.push_back(node_id);
     return type_id;
   }
@@ -244,21 +290,22 @@ class File : public Printable<File> {
     }
   }
 
-  // Adds an empty type block, returning an ID to reference it.
-  auto AddTypeBlock() -> TypeBlockId {
+  // Adds a type block with the given content, returning an ID to reference it.
+  auto AddTypeBlock(llvm::ArrayRef<TypeId> content) -> TypeBlockId {
     TypeBlockId id(type_blocks_.size());
-    type_blocks_.push_back({});
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
+    type_blocks_.push_back(AllocateCopy(content));
     return id;
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) const
-      -> const llvm::SmallVector<TypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) const -> llvm::ArrayRef<TypeId> {
     return type_blocks_[block_id.index];
   }
 
   // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) -> llvm::SmallVector<TypeId>& {
+  auto GetTypeBlock(TypeBlockId block_id) -> llvm::MutableArrayRef<TypeId> {
     return type_blocks_[block_id.index];
   }
 
@@ -273,12 +320,7 @@ class File : public Printable<File> {
   auto nodes_size() const -> int { return nodes_.size(); }
   auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
-  auto types() const -> const llvm::SmallVector<NodeId>& { return types_; }
-
-  // The node blocks, for direct mutation.
-  auto node_blocks() -> llvm::SmallVector<llvm::SmallVector<NodeId>>& {
-    return node_blocks_;
-  }
+  auto types() const -> llvm::ArrayRef<NodeId> { return types_; }
 
   auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
   auto set_top_node_block_id(NodeBlockId block_id) -> void {
@@ -289,8 +331,36 @@ class File : public Printable<File> {
   auto has_errors() const -> bool { return has_errors_; }
   auto set_has_errors(bool has_errors) -> void { has_errors_ = has_errors; }
 
+  auto filename() const -> llvm::StringRef { return filename_; }
+
  private:
+  // Allocates an uninitialized array using our slab allocator.
+  template <typename T>
+  auto AllocateUninitialized(std::size_t size) -> llvm::MutableArrayRef<T> {
+    // We're not going to run a destructor, so ensure that's OK.
+    static_assert(std::is_trivially_destructible_v<T>);
+
+    T* storage =
+        static_cast<T*>(allocator_.Allocate(size * sizeof(T), alignof(T)));
+    return llvm::MutableArrayRef<T>(storage, size);
+  }
+
+  // Allocates a copy of the given data using our slab allocator.
+  template <typename T>
+  auto AllocateCopy(llvm::ArrayRef<T> data) -> llvm::MutableArrayRef<T> {
+    auto result = AllocateUninitialized<T>(data.size());
+    std::uninitialized_copy(data.begin(), data.end(), result.begin());
+    return result;
+  }
+
   bool has_errors_ = false;
+
+  // Slab allocator, used to allocate node and type blocks.
+  llvm::BumpPtrAllocator allocator_;
+
+  // The associated filename.
+  // TODO: If SemIR starts linking back to tokens, reuse its filename.
+  std::string filename_;
 
   // Storage for callable objects.
   llvm::SmallVector<Function> functions_;
@@ -318,15 +388,17 @@ class File : public Printable<File> {
   // by lowering.
   llvm::SmallVector<NodeId> types_;
 
-  // Storage for blocks within the IR. These reference entries in types_.
-  llvm::SmallVector<llvm::SmallVector<TypeId>> type_blocks_;
+  // Type blocks within the IR. These reference entries in types_. Storage for
+  // the data is provided by allocator_.
+  llvm::SmallVector<llvm::MutableArrayRef<TypeId>> type_blocks_;
 
   // All nodes. The first entries will always be cross-references to builtins,
   // at indices matching BuiltinKind ordering.
   llvm::SmallVector<Node> nodes_;
 
-  // Storage for blocks within the IR. These reference entries in nodes_.
-  llvm::SmallVector<llvm::SmallVector<NodeId>> node_blocks_;
+  // Node blocks within the IR. These reference entries in nodes_. Storage for
+  // the data is provided by allocator_.
+  llvm::SmallVector<llvm::MutableArrayRef<NodeId>> node_blocks_;
 
   // The top node block ID.
   NodeBlockId top_node_block_id_ = NodeBlockId::Invalid;
@@ -349,6 +421,12 @@ enum class ExpressionCategory : int8_t {
   // This node represents an initializing expression, that describes how to
   // initialize an object.
   Initializing,
+  // This node represents a syntactic combination of expressions that are
+  // permitted to have different expression categories. This is used for tuple
+  // and struct literals, where the subexpressions for different elements can
+  // have different categories.
+  Mixed,
+  Last = Mixed
 };
 
 // Returns the expression category for a node.
