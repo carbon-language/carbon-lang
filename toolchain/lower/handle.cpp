@@ -306,21 +306,11 @@ static auto GetStructOrTupleElement(FunctionContext& context,
   auto* elem_ptr =
       context.builder().CreateStructGEP(aggr_type, aggr_value, idx, name);
 
-  // If this is a value access, load the element if necessary.
+  // If this is a value access, we were holding a pointer to the value, so load
+  // the element.
   if (aggr_cat == SemIR::ExpressionCategory::Value) {
-    switch (
-        SemIR::GetValueRepresentation(context.semantics_ir(), result_type_id)
-            .kind) {
-      case SemIR::ValueRepresentation::None:
-        return llvm::PoisonValue::get(context.GetType(result_type_id));
-      case SemIR::ValueRepresentation::Copy:
-        return context.builder().CreateLoad(context.GetType(result_type_id),
-                                            elem_ptr, name + ".load");
-      case SemIR::ValueRepresentation::Pointer:
-        return elem_ptr;
-      case SemIR::ValueRepresentation::Custom:
-        CARBON_FATAL() << "TODO: Add support for custom value representation";
-    }
+    return context.builder().CreateLoad(context.GetType(result_type_id),
+                                        elem_ptr, name + ".load");
   }
   return elem_ptr;
 }
@@ -360,12 +350,10 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
                                           SemIR::TypeId type_id,
                                           SemIR::NodeBlockId refs_id,
                                           llvm::Twine name) -> llvm::Value* {
-  auto* llvm_type = context.GetType(type_id);
-
   switch (SemIR::GetValueRepresentation(context.semantics_ir(), type_id).kind) {
     case SemIR::ValueRepresentation::None:
       // TODO: Add a helper to get a "no value representation" value.
-      return llvm::PoisonValue::get(llvm_type);
+      return llvm::PoisonValue::get(context.GetType(type_id));
 
     case SemIR::ValueRepresentation::Copy: {
       auto refs = context.semantics_ir().GetNodeBlock(refs_id);
@@ -374,20 +362,35 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
       // TODO: Remove the LLVM StructType wrapper in this case, so we don't
       // need this `insert_value` wrapping.
       return context.builder().CreateInsertValue(
-          llvm::PoisonValue::get(llvm_type), context.GetLocal(refs[0]), {0});
+          llvm::PoisonValue::get(context.GetType(type_id)),
+          context.GetLocal(refs[0]), {0});
     }
 
     case SemIR::ValueRepresentation::Pointer: {
-      // Write the object representation to a local alloca so we can produce a
-      // pointer to it as the value representation.
-      auto* alloca = context.builder().CreateAlloca(
-          llvm_type, /*ArraySize=*/nullptr, name);
+      auto refs = context.semantics_ir().GetNodeBlock(refs_id);
+
+      // Compute the type of the value representation. Note that we don't use
+      // `context.GetType(type_id)` here, because that would give us the object
+      // representation rather than the value representation.
+      // TODO: Consider precomputing or caching this.
+      llvm::SmallVector<llvm::Type*> element_types;
+      element_types.reserve(refs.size());
+      for (auto [i, ref] : llvm::enumerate(refs)) {
+        element_types.push_back(context.GetLocal(ref)->getType());
+      }
+      llvm::Type* llvm_value_rep_type =
+          llvm::StructType::get(context.llvm_context(), element_types);
+
+      // Write the value representation to a local alloca so we can produce a
+      // pointer to it as the value representation of the struct or tuple.
+      auto* alloca =
+          context.builder().CreateAlloca(llvm_value_rep_type,
+                                         /*ArraySize=*/nullptr, name);
       for (auto [i, ref] :
            llvm::enumerate(context.semantics_ir().GetNodeBlock(refs_id))) {
-        auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
-        // TODO: We are loading a value representation here and storing an
-        // object representation!
-        context.builder().CreateStore(context.GetLocal(ref), gep);
+        context.builder().CreateStore(
+            context.GetLocal(ref),
+            context.builder().CreateStructGEP(llvm_value_rep_type, alloca, i));
       }
       return alloca;
     }
