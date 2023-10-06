@@ -60,9 +60,10 @@ auto HandleBinaryOperatorAdd(FunctionContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto HandleBindName(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
-                    SemIR::Node /*node*/) -> void {
-  // Probably need to do something here, but not necessary for now.
+auto HandleBindName(FunctionContext& context, SemIR::NodeId node_id,
+                    SemIR::Node node) -> void {
+  auto [name_id, value_id] = node.GetAsBindName();
+  context.SetLocal(node_id, context.GetLocal(value_id));
 }
 
 auto HandleBlockArg(FunctionContext& context, SemIR::NodeId node_id,

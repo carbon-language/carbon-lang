@@ -369,6 +369,11 @@ class NodeNamer {
           CollectNamesInBlock(scope_idx, block_id);
           break;
         }
+        case NodeKind::BindName: {
+          auto [name_id, value_id] = node.GetAsBindName();
+          add_node_name_id(name_id);
+          continue;
+        }
         case NodeKind::FunctionDeclaration: {
           add_node_name_id(
               semantics_ir_.GetFunction(node.GetAsFunctionDeclaration())
