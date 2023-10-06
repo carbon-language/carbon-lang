@@ -21,7 +21,7 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
       break;
     }
     case Lex::TokenKind::IntegerLiteral: {
-      auto id = context.semantics_ir().AddIntegerLiteral(
+      auto id = context.semantics_ir().AddIntegerValue(
           context.tokens().GetIntegerLiteral(token));
       context.AddNodeAndPush(
           parse_node,
@@ -32,7 +32,7 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
     }
     case Lex::TokenKind::RealLiteral: {
       auto token_value = context.tokens().GetRealLiteral(token);
-      auto id = context.semantics_ir().AddRealLiteral(
+      auto id = context.semantics_ir().AddRealValue(
           {.mantissa = token_value.mantissa,
            .exponent = token_value.exponent,
            .is_decimal = token_value.is_decimal});

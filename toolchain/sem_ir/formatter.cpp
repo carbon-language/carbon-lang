@@ -749,8 +749,8 @@ class Formatter {
 
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 
-  auto FormatArg(IntegerLiteralId id) -> void {
-    semantics_ir_.GetIntegerLiteral(id).print(out_, /*isSigned=*/false);
+  auto FormatArg(IntegerValueId id) -> void {
+    semantics_ir_.GetIntegerValue(id).print(out_, /*isSigned=*/false);
   }
 
   auto FormatArg(MemberIndex index) -> void { out_ << index; }
@@ -790,9 +790,9 @@ class Formatter {
     out_ << ')';
   }
 
-  auto FormatArg(RealLiteralId id) -> void {
+  auto FormatArg(RealValueId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
-    const auto& real = semantics_ir_.GetRealLiteral(id);
+    const auto& real = semantics_ir_.GetRealValue(id);
     real.mantissa.print(out_, /*isSigned=*/false);
     out_ << (real.is_decimal ? 'e' : 'p') << real.exponent;
   }

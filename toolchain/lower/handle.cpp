@@ -197,7 +197,7 @@ auto HandleInitializeFrom(FunctionContext& context, SemIR::NodeId /*node_id*/,
 auto HandleIntegerLiteral(FunctionContext& context, SemIR::NodeId node_id,
                           SemIR::Node node) -> void {
   llvm::APInt i =
-      context.semantics_ir().GetIntegerLiteral(node.GetAsIntegerLiteral());
+      context.semantics_ir().GetIntegerValue(node.GetAsIntegerLiteral());
   // TODO: This won't offer correct semantics, but seems close enough for now.
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());
@@ -233,8 +233,8 @@ auto HandleParameter(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
 
 auto HandleRealLiteral(FunctionContext& context, SemIR::NodeId node_id,
                        SemIR::Node node) -> void {
-  SemIR::RealLiteral real =
-      context.semantics_ir().GetRealLiteral(node.GetAsRealLiteral());
+  SemIR::RealValue real =
+      context.semantics_ir().GetRealValue(node.GetAsRealLiteral());
   // TODO: This will probably have overflow issues, and should be fixed.
   double val =
       real.mantissa.getZExtValue() *
@@ -447,7 +447,7 @@ auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
   auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
   auto index_node = context.semantics_ir().GetNode(index_node_id);
   const auto index = context.semantics_ir()
-                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
+                         .GetIntegerValue(index_node.GetAsIntegerLiteral())
                          .getZExtValue();
   context.SetLocal(node_id,
                    GetStructOrTupleElement(context, tuple_node_id, index,

@@ -11,9 +11,9 @@
 // CHECK:STDOUT:   - cross_reference_irs_size: 1
 // CHECK:STDOUT:     functions: [
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     integer_literals: [
+// CHECK:STDOUT:     integer_values: [
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     real_literals: [
+// CHECK:STDOUT:     real_values: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     strings: [
 // CHECK:STDOUT:     ]

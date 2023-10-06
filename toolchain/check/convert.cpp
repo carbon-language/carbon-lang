@@ -133,7 +133,7 @@ static auto MakeElemAccessNode(Context& context, Parse::Node parse_node,
     // special case.
     auto index_id = block.AddNode(SemIR::Node::IntegerLiteral::Make(
         parse_node, context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
-        context.semantics_ir().AddIntegerLiteral(llvm::APInt(32, i))));
+        context.semantics_ir().AddIntegerValue(llvm::APInt(32, i))));
     return block.AddNode(
         AccessNodeT::Make(parse_node, elem_type_id, aggregate_id, index_id));
   } else {
