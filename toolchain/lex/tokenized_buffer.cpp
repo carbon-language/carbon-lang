@@ -214,7 +214,7 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
 // tokens by calling into this API. This class handles the state and breaks down
 // the different lexing steps that may be used. It directly updates the provided
 // tokenized buffer with the lexed tokens.
-class TokenizedBuffer::Lexer {
+class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
  public:
   // Symbolic result of a lexing action. This indicates whether we successfully
   // lexed a token, or whether other lexing actions should be attempted.
@@ -565,11 +565,31 @@ class TokenizedBuffer::Lexer {
   // Closes all open groups that cannot remain open across the symbol `K`.
   // Users may pass `Error` to close all open groups.
   auto CloseInvalidOpenGroups(TokenKind kind) -> void {
-    if (!kind.is_closing_symbol() && kind != TokenKind::Error) {
+    // There are two common cases that result in nothing to close. Short circuit
+    // those here.
+    if ((!kind.is_closing_symbol() && kind != TokenKind::Error) ||
+        open_groups_.empty()) {
       return;
     }
 
-    while (!open_groups_.empty()) {
+    // Also check the first open group token to see if it matches this closing
+    // token, in which case there is nothing to do. This is redundant with the
+    // work inside the main loop, but we peel it out to allow inlining.
+    Token opening_token = open_groups_.back();
+    TokenKind opening_kind = buffer_->GetTokenInfo(opening_token).kind;
+    if (kind == opening_kind.closing_symbol()) {
+      return;
+    }
+
+    // Otherwise, delegate to a separate function to help with inlining.
+    CloseInvalidOpenGroupsSlow(kind);
+  }
+
+  auto CloseInvalidOpenGroupsSlow(TokenKind kind) -> void {
+    CARBON_CHECK(kind.is_closing_symbol() || kind == TokenKind::Error);
+    CARBON_CHECK(!open_groups_.empty());
+
+    do {
       Token opening_token = open_groups_.back();
       TokenKind opening_kind = buffer_->GetTokenInfo(opening_token).kind;
       if (kind == opening_kind.closing_symbol()) {
@@ -598,7 +618,7 @@ class TokenizedBuffer::Lexer {
       TokenInfo& closing_token_info = buffer_->GetTokenInfo(closing_token);
       opening_token_info.closing_token = closing_token;
       closing_token_info.opening_token = opening_token;
-    }
+    } while (!open_groups_.empty());
   }
 
   auto GetOrCreateIdentifier(llvm::StringRef text) -> Identifier {
