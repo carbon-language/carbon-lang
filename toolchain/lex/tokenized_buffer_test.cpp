@@ -571,6 +571,9 @@ TEST_F(LexerTest, Whitespace) {
                   false};
   int pos = 0;
   for (Token token : buffer.tokens()) {
+    SCOPED_TRACE(
+        llvm::formatv("Token #{0}: '{1}'", token, buffer.GetTokenText(token)));
+
     ASSERT_LT(pos, std::size(space));
     EXPECT_THAT(buffer.HasLeadingWhitespace(token), Eq(space[pos]));
     ++pos;
