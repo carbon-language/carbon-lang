@@ -226,15 +226,66 @@ auto GetSymbolTokenTable() -> llvm::ArrayRef<TokenKind> {
   return symbol_token_table_storage;
 }
 
-// Compute a random sequence of mixed symbols, keywords, and identifiers, with
-// percentages of each according to the parameters.
-auto RandomMixedSeq(int symbol_percent, int keyword_percent) -> std::string {
-  CARBON_CHECK(0 <= symbol_percent && symbol_percent <= 100)
-      << "Must be a percent: [0, 100].";
-  CARBON_CHECK(0 <= keyword_percent && keyword_percent <= 100)
-      << "Must be a percent: [0, 100].";
-  CARBON_CHECK((symbol_percent + keyword_percent) <= 100)
-      << "Cannot have >100%.";
+struct RandomSourceOptions {
+  int symbol_percent = 0;
+  int keyword_percent = 0;
+  int numeric_literal_percent = 0;
+  int string_literal_percent = 0;
+
+  int tokens_per_line = NumTokens;
+
+  int comment_line_percent = 0;
+  int blank_line_percent = 0;
+
+  void Validate() {
+    CARBON_CHECK(0 <= symbol_percent && symbol_percent <= 100);
+    CARBON_CHECK(0 <= keyword_percent && keyword_percent <= 100);
+    CARBON_CHECK(0 <= numeric_literal_percent &&
+                 numeric_literal_percent <= 100);
+    CARBON_CHECK(0 <= string_literal_percent && string_literal_percent <= 100);
+    CARBON_CHECK((symbol_percent + keyword_percent + numeric_literal_percent +
+                  string_literal_percent) <= 100);
+
+    CARBON_CHECK(tokens_per_line <= NumTokens);
+    CARBON_CHECK(NumTokens % tokens_per_line == 0)
+        << "Tokens per line of " << tokens_per_line
+        << " does not divide the number of tokens " << NumTokens;
+
+    CARBON_CHECK(0 <= comment_line_percent && comment_line_percent <= 100);
+    CARBON_CHECK(0 <= blank_line_percent && blank_line_percent <= 100);
+    CARBON_CHECK((comment_line_percent + blank_line_percent) < 100);
+  }
+};
+
+// Based on measurements of LLVM's source code, a rough approximation of the
+// distribution of these kinds of tokens.
+constexpr RandomSourceOptions DefaultSourceDist = {
+    .symbol_percent = 50,
+    .keyword_percent = 7,
+    .numeric_literal_percent = 17,
+    .string_literal_percent = 1,
+
+    // The median for LLVM is roughly 5.
+    .tokens_per_line = 5,
+
+    // Observed percentage of lines in LLVM.
+    .comment_line_percent = 22,
+    .blank_line_percent = 15,
+};
+
+// Compute random source code with a mixture of tokens and whitespace according
+// to the options. The source isn't designed to be valid, or directly
+// representative of real-world Carbon code. However, it tries to provide
+// reasonable coverage of the different aspects of Carbon's lexer, such that for
+// real world source code with distributions similar to the options provided the
+// lexer performance will be roughly representative.
+//
+// TODO: Does not yet support generating numeric or string literals.
+//
+// TODO: The shape of lines is handled very arbitrarily and should vary more to
+// avoid over-fitting to a specific shape (number of tokens, length of comment).
+auto RandomSource(RandomSourceOptions options) -> std::string {
+  options.Validate();
   static_assert((NumTokens % 100) == 0,
                 "The number of tokens must be divisible by 100 so that we can "
                 "easily scale integer percentages up to it.");
@@ -246,10 +297,10 @@ auto RandomMixedSeq(int symbol_percent, int keyword_percent) -> std::string {
 
   // Build a list of StringRefs from the different types with the desired
   // distribution, then shuffle that list.
-  std::array<llvm::StringRef, NumTokens> tokens;
+  llvm::OwningArrayRef<llvm::StringRef> tokens(NumTokens);
 
-  int num_symbols = (NumTokens / 100) * symbol_percent;
-  int num_keywords = (NumTokens / 100) * keyword_percent;
+  int num_symbols = (NumTokens / 100) * options.symbol_percent;
+  int num_keywords = (NumTokens / 100) * options.keyword_percent;
   int num_identifiers = NumTokens - num_symbols - num_keywords;
   CARBON_CHECK(num_identifiers == 0 || num_identifiers > 500)
       << "We require at least 500 identifiers as we need to collect a "
@@ -268,7 +319,48 @@ auto RandomMixedSeq(int symbol_percent, int keyword_percent) -> std::string {
   }
   std::shuffle(tokens.begin(), tokens.end(), absl::BitGen());
 
-  return llvm::join(tokens, " ");
+  // Distribute the tokens across lines as well as horizontal whitespace. The
+  // goal isn't to make any one line representative of anything, but to make the
+  // rough density of different kinds of whitespace roughly representative.
+  //
+  // TODO: This is a really coarse approach that just picks a fixed number of
+  // tokens per line rather than using some distribution with this as the median
+  // or mean.
+  llvm::SmallVector<std::string> lines;
+  // First place tokens onto each line.
+  for (auto i : llvm::seq(NumTokens / options.tokens_per_line)) {
+    lines.push_back("");
+    llvm::raw_string_ostream os(lines.back());
+    // Arbitrarily indent each line by two spaces.
+    os << "  ";
+    llvm::ListSeparator sep;
+    for (int j : llvm::seq(options.tokens_per_line)) {
+      os << sep << tokens[i * options.tokens_per_line + j];
+    }
+  }
+
+  // Next, synthesize blank and comment lines with the correct distribution.
+  int token_line_percent =
+      100 - options.blank_line_percent - options.comment_line_percent;
+  CARBON_CHECK(token_line_percent > 0);
+  int num_token_lines = lines.size();
+  int num_lines = num_token_lines * 100 / token_line_percent;
+  int num_blank_lines = num_lines * options.blank_line_percent / 100;
+  int num_comment_lines = num_lines - num_blank_lines - num_token_lines;
+  CARBON_CHECK(num_comment_lines >= 0);
+  lines.resize(num_lines);
+  for (auto& line :
+       llvm::MutableArrayRef(lines).slice(num_lines - num_comment_lines)) {
+    // TODO: We should vary the content and length, especially as the
+    // distribution is weirdly shaped with just over half the comment lines
+    // being blank and the median length of non-black comment lines being 64!
+    // This is a *very* coarse approximation of the mean at 30 characters long.
+    line = "  // abcdefghijklmnopqrstuvwxyz";
+  }
+  // Now shuffle the lines.
+  std::shuffle(lines.begin(), lines.end(), absl::BitGen());
+  // And join them into the source string.
+  return llvm::join(lines, "\n");
 }
 
 class LexerBenchHelper {
@@ -354,10 +446,8 @@ BENCHMARK(BM_ValidIdentifiers<3, 5, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<3, 16, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<12, 64, /*Uniform=*/true>);
 
-void BM_ValidMix(benchmark::State& state) {
-  int symbol_percent = state.range(0);
-  int keyword_percent = state.range(1);
-  std::string source = RandomMixedSeq(symbol_percent, keyword_percent);
+void BM_RandomSource(benchmark::State& state) {
+  std::string source = RandomSource(DefaultSourceDist);
 
   LexerBenchHelper helper(source);
   for (auto _ : state) {
@@ -371,16 +461,15 @@ void BM_ValidMix(benchmark::State& state) {
   state.SetBytesProcessed(state.iterations() * source.size());
   state.counters["tokens_per_second"] = benchmark::Counter(
       NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+  state.counters["lines_per_second"] =
+      benchmark::Counter(llvm::StringRef(source).count('\n'),
+                         benchmark::Counter::kIsIterationInvariantRate);
 }
 // The distributions between symbols, keywords, and identifiers here are
 // guesses. Eventually, we should collect more data to help tune these, but
 // hopefully the performance isn't too sensitive and we can just cover a wide
 // range here.
-BENCHMARK(BM_ValidMix)
-    ->Args({10, 40})
-    ->Args({25, 30})
-    ->Args({50, 20})
-    ->Args({75, 10});
+BENCHMARK(BM_RandomSource);
 
 // This is a speed-of-light benchmark that should reflect memory bandwidth
 // (ideally) of simply reading all the source code. For speed-of-light we use
@@ -393,8 +482,7 @@ BENCHMARK(BM_ValidMix)
 // to reflect whatever distribution is most realistic long-term. The
 // bytes/second throughput is the important output of this routine.
 auto BM_SpeedOfLightStrCpy(benchmark::State& state) -> void {
-  std::string source =
-      RandomMixedSeq(/*symbol_percent=*/25, /*keyword_percent=*/30);
+  std::string source = RandomSource(DefaultSourceDist);
 
   // A buffer to write the null-terminated contents of `source` into.
   llvm::OwningArrayRef<char> buffer(source.size() + 1);
@@ -409,6 +497,9 @@ auto BM_SpeedOfLightStrCpy(benchmark::State& state) -> void {
   state.SetBytesProcessed(state.iterations() * source.size());
   state.counters["tokens_per_second"] = benchmark::Counter(
       NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+  state.counters["lines_per_second"] =
+      benchmark::Counter(llvm::StringRef(source).count('\n'),
+                         benchmark::Counter::kIsIterationInvariantRate);
 }
 BENCHMARK(BM_SpeedOfLightStrCpy);
 
@@ -528,8 +619,7 @@ constexpr DispatchTableT DispatchTable = []() {
 
 template <int NumDispatchTargets>
 auto BM_SpeedOfLightDispatch(benchmark::State& state) -> void {
-  std::string source =
-      RandomMixedSeq(/*symbol_percent=*/25, /*keyword_percent=*/30);
+  std::string source = RandomSource(DefaultSourceDist);
 
   // A buffer to write to, simulating some minimal write traffic.
   llvm::OwningArrayRef<char> buffer(source.size());
@@ -551,6 +641,9 @@ auto BM_SpeedOfLightDispatch(benchmark::State& state) -> void {
   state.SetBytesProcessed(state.iterations() * source.size());
   state.counters["tokens_per_second"] = benchmark::Counter(
       NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+  state.counters["lines_per_second"] =
+      benchmark::Counter(llvm::StringRef(source).count('\n'),
+                         benchmark::Counter::kIsIterationInvariantRate);
 }
 BENCHMARK(BM_SpeedOfLightDispatch<1>);
 BENCHMARK(BM_SpeedOfLightDispatch<2>);
