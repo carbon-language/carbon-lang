@@ -208,9 +208,12 @@ struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
 };
 
 namespace NodeData {
-// This exists in the NodeKind enumeration but isn't a real node kind. Just
-// ensure that any use of it gives an error.
-using Invalid = void;
+// The Invalid NodeKind exists, but nodes of this kind cannot be created.
+struct Invalid {
+  Invalid() {
+    CARBON_FATAL() << "Attempted to create an Invalid node";
+  }
+};
 
 struct AddressOf {
   NodeId lvalue_id;
@@ -290,7 +293,7 @@ struct Builtin {
   // Builtins don't have a parse node associated with them.
   using HasParseNode = std::false_type;
 
-  TypeId type_id;
+  BuiltinKind builtin_kind;
 };
 
 struct Call {
@@ -770,14 +773,18 @@ class Node : public Printable<Node> {
   // TODO: This exists for compatibility with the old `GetAs##Name` interface,
   // and should be removed once we use field names to access node data.
   template <typename Typed>
-  auto GetAs() const -> Typed {
+  auto GetAs() const -> auto {
     return Typed::DataBase::FromRawArgs(arg0_, arg1_).single_arg_or_pair();
   }
 
-  // Provide `node.GetAsKind()` as an instance method for all kinds, essentially
-  // an alias for`Node::Kind::Get(node)`.
+  // Provide `node.GetAsKind()` as an instance method for all kinds, as an alias
+  // for `node.GetAs<Kind>()`.
+  // TODO: Remove this.
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
-  auto GetAs##Name() const { return Name::Get(*this); }
+  template <typename T = SemIR::Name>    \
+  auto GetAs##Name() const -> auto {     \
+    return GetAs<T>();                   \
+  }
 #include "toolchain/sem_ir/node_kind.def"
 
   auto parse_node() const -> Parse::Node { return parse_node_; }
@@ -895,80 +902,124 @@ using TypeBase =
     std::conditional_t<GetWithDefault<T, GetHasType, std::true_type>{},
                        HasTypeBase, HasNoTypeBase>;
 
+// Convert a field from its raw representation.
+template <typename T>
+constexpr auto FromRaw(int32_t raw) -> T {
+  return T(raw);
+}
+template <>
+constexpr auto FromRaw<BuiltinKind>(int32_t raw) -> BuiltinKind {
+  return BuiltinKind::FromInt(raw);
+}
+
+// Convert a field to its raw representation.
+constexpr auto ToRaw(IndexBase base) -> int32_t { return base.index; }
+constexpr auto ToRaw(BuiltinKind kind) -> int32_t { return kind.AsInt(); }
+
 // A type that can be converted to any field type.
 struct AnyField {
-  // Allow any `IndexBase` type as a field.
+  // Allow any field type that we can convert to a raw representation.
   template <typename FieldT,
-            typename = std::enable_if_t<std::is_base_of_v<IndexBase, FieldT>>>
+            typename = decltype(ToRaw(std::declval<FieldT>()))>
   operator FieldT() const;
 };
 
 // Simple detector to find the number of data fields in a node data type.
-// Base case: FieldCounter<T, T, Fields...> can be constructed with
-// sizeof...(Fields) fields.
-template <typename T, typename = T, typename ...Fields>
-struct FieldCounter {
+// The second template parameter is always T and is used as a SFINAE helper.
+template <typename T, typename, typename... Fields>
+struct FieldCounter;
+// If T can be constructed from {Fields...}, then we've found the field count.
+template <typename T, typename... Fields>
+struct FieldCounter<T, decltype(T{Fields()...}), Fields...> {
   static constexpr int Result = sizeof...(Fields);
 };
-// If T can be constructed from {AnyField, Fields...}, then add AnyField to the
-// field list and recurse.
-template <typename T, typename... Fields>
-struct FieldCounter<T, decltype(T{AnyField(), Fields()...}), Fields...>
-    : FieldCounter<T, T, AnyField, Fields...> {};
+// Otherwise, remove the first field and try again.
+template <typename T, typename Field, typename... Fields>
+struct FieldCounterRemoveOne : FieldCounter<T, T, Fields...> {};
+template <typename T, typename, typename... Fields>
+struct FieldCounter : FieldCounterRemoveOne<T, Fields...> {};
+
+// Count types with up to three fields. We use three fields rather than two here
+// so that we get a count of 3 that we can easily reject if the data type has
+// three or more fields, rather than risking silently returning 2.
+template <typename T>
+constexpr int FieldCount =
+    FieldCounter<T, T, AnyField, AnyField, AnyField>::Result;
+
+// Utility to access fields by index.
+template <int NumFields>
+struct FieldAccessor;
+
+template<> struct FieldAccessor<1> {
+  template <int Field, typename T>
+  static auto Get(T&& value) -> auto& {
+    auto& [field] = value;
+    return field;
+  }
+};
+
+template<> struct FieldAccessor<2> {
+  template <int Field, typename T>
+  static auto Get(T&& value) -> auto& {
+    auto& [field0, field1] = value;
+    if constexpr (Field == 0) {
+      return field0;
+    } else {
+      return field1;
+    }
+  }
+};
+
+// Get the type of a field by index.
+template <typename T, int NumFields, int Field>
+using FieldType = std::remove_reference_t<
+    decltype(FieldAccessor<NumFields>::template Get<Field>(std::declval<T>()))>;
 
 // Base class for nodes that contains the node data.
 template <typename T>
 struct DataBase : T {
-  static constexpr int NumFields = FieldCounter<T>::Result;
+  static constexpr int NumFields = FieldCount<T>;
   static_assert(NumFields <= 2, "Too many fields in node data");
 
   static auto FromRawArgs(int32_t arg0, int32_t arg1) -> DataBase {
-    DataBase returned_var;
-
-    if constexpr (NumFields == 1) {
-      auto& [field0] = returned_var;
-      field0 = std::remove_reference_t<decltype(field0)>(arg0);
-    } else if constexpr (NumFields == 2) {
-      auto& [field0, field1] = returned_var;
-      field0 = std::remove_reference_t<decltype(field0)>(arg0);
-      field1 = std::remove_reference_t<decltype(field1)>(arg1);
+    if constexpr (NumFields == 0) {
+      return {};
+    } else if constexpr (NumFields == 1) {
+      return {FromRaw<FieldType<T, NumFields, 0>>(arg0)};
+    } else {
+      return {FromRaw<FieldType<T, NumFields, 0>>(arg0),
+              FromRaw<FieldType<T, NumFields, 1>>(arg1)};
     }
-
-    return returned_var;
   }
 
   // If this node holds a single field, returns that field; otherwise, returns a
-  // pair of fields.
+  // struct of fields.
   //
   // TODO: This exists for compatibility with code using the old GetAsT
   // interface, and will be removed when that is removed.
   auto single_arg_or_pair() const -> auto {
     if constexpr (NumFields == 0) {
-      return Node::NoArgs{};
+      return Node::NoArgs();
     } else if constexpr (NumFields == 1) {
       auto [field0] = *this;
       return field0;
-    } else if constexpr (NumFields == 2) {
-      return static_cast<const T&>(*this);
+    } else {
+      auto [field0, field1] = *this;
+      return std::pair(field0, field1);
     }
   }
 
   auto arg0_or_invalid() const -> auto {
-    if constexpr (NumFields == 1) {
-      auto [field0] = *this;
-      return field0.index;
-    } else if constexpr (NumFields == 2) {
-      auto [field0, field1] = *this;
-      return field0.index;
+    if constexpr (NumFields >= 1) {
+      return ToRaw(FieldAccessor<NumFields>::Get<0>(*this));
     } else {
       return NodeId::InvalidIndex;
     }
   }
 
   auto arg1_or_invalid() const -> auto {
-    if constexpr (NumFields == 2) {
-      auto [field0, field1] = *this;
-      return field1.index;
+    if constexpr (NumFields >= 2) {
+      return ToRaw(FieldAccessor<NumFields>::Get<1>(*this));
     } else {
       return NodeId::InvalidIndex;
     }
