@@ -267,7 +267,7 @@ class TokenizedBuffer::Lexer {
     buffer_->token_infos_.back().has_trailing_space = true;
   }
 
-  auto LexHorizWhitespace(llvm::StringRef& source_text) -> void {
+  auto LexHorizontalWhitespace(llvm::StringRef& source_text) -> void {
     CARBON_DCHECK(source_text.front() == ' ' || source_text.front() == '\t');
     NoteWhitespace();
     ++current_column_;
@@ -777,7 +777,7 @@ class TokenizedBuffer::Lexer {
     lexer.LexMethod(source_text);                                             \
     [[clang::musttail]] return DispatchNext(lexer, source_text);              \
   }
-  CARBON_DISPATCH_LEX_NON_TOKEN(LexHorizWhitespace)
+  CARBON_DISPATCH_LEX_NON_TOKEN(LexHorizontalWhitespace)
   CARBON_DISPATCH_LEX_NON_TOKEN(LexVerticalWhitespace)
   CARBON_DISPATCH_LEX_NON_TOKEN(LexCommentOrSlash)
 
@@ -886,8 +886,8 @@ class TokenizedBuffer::Lexer {
     table['"'] = &DispatchLexStringLiteral;
     table['#'] = &DispatchLexStringLiteral;
 
-    table[' '] = &DispatchLexHorizWhitespace;
-    table['\t'] = &DispatchLexHorizWhitespace;
+    table[' '] = &DispatchLexHorizontalWhitespace;
+    table['\t'] = &DispatchLexHorizontalWhitespace;
     table['\n'] = &DispatchLexVerticalWhitespace;
 
     return table;
