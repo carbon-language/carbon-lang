@@ -455,7 +455,7 @@ constexpr char DispatchSpecializableSymbols[] = {
 // [0-9A-Za-z] and the symbols above. Similar to the above symbols, doesn't need
 // to be exhaustive.
 constexpr std::array<char, 26 * 2 + 10 + sizeof(DispatchSpecializableSymbols)>
-    DispatchSpecializableChars = []() constexpr {
+    DispatchSpecializableChars = []() {
       constexpr int Size = sizeof(DispatchSpecializableChars);
       std::array<char, Size> chars = {};
       int i = 0;
@@ -502,7 +502,7 @@ constexpr int MaxDispatchTargets = sizeof(DispatchSpecializableChars) + 1;
 // Dispatch tables with a provided number of distinct dispatch targets. There
 // will always be one additional target for the null byte to end the loop.
 template <int NumDispatchTargets>
-constexpr DispatchTableT DispatchTable = []() constexpr {
+constexpr DispatchTableT DispatchTable = []() {
   static_assert(NumDispatchTargets > 0, "Need at least one dispatch target.");
   static_assert(NumDispatchTargets <= MaxDispatchTargets,
                 "Limited number of dispatch targets available.");
