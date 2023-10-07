@@ -350,55 +350,54 @@ class NodeNamer {
 
       switch (node.kind()) {
         case NodeKind::Branch: {
-          auto dest_id = node.GetAsBranch();
-          AddBlockLabel(scope_idx, dest_id, node);
+          AddBlockLabel(scope_idx, node.As<Branch>().target_id, node);
           break;
         }
         case NodeKind::BranchIf: {
-          auto [dest_id, cond_id] = node.GetAsBranchIf();
-          AddBlockLabel(scope_idx, dest_id, node);
+          AddBlockLabel(scope_idx, node.As<BranchIf>().target_id, node);
           break;
         }
         case NodeKind::BranchWithArg: {
-          auto [dest_id, arg_id] = node.GetAsBranchWithArg();
-          AddBlockLabel(scope_idx, dest_id, node);
+          AddBlockLabel(scope_idx, node.As<BranchWithArg>().target_id, node);
           break;
         }
         case NodeKind::SpliceBlock: {
-          auto [block_id, result_id] = node.GetAsSpliceBlock();
-          CollectNamesInBlock(scope_idx, block_id);
+          CollectNamesInBlock(scope_idx, node.As<SpliceBlock>().block_id);
           break;
         }
         case NodeKind::BindName: {
-          auto [name_id, value_id] = node.GetAsBindName();
-          add_node_name_id(name_id);
+          add_node_name_id(node.As<BindName>().name_id);
           continue;
         }
         case NodeKind::FunctionDeclaration: {
           add_node_name_id(
-              semantics_ir_.GetFunction(node.GetAsFunctionDeclaration())
+              semantics_ir_
+                  .GetFunction(node.As<FunctionDeclaration>().function_id)
                   .name_id);
           continue;
         }
         case NodeKind::NameReference: {
-          auto [name_id, value_id] = node.GetAsNameReference();
-          add_node_name(semantics_ir_.GetString(name_id).str() + ".ref");
+          add_node_name(
+              semantics_ir_.GetString(node.As<NameReference>().name_id).str() +
+              ".ref");
           continue;
         }
         case NodeKind::NameReferenceUntyped: {
-          auto [name_id, value_id] = node.GetAsNameReferenceUntyped();
-          add_node_name(semantics_ir_.GetString(name_id).str() + ".ref");
+          add_node_name(
+              semantics_ir_.GetString(node.As<NameReferenceUntyped>().name_id)
+                  .str() +
+              ".ref");
           continue;
         }
         case NodeKind::Parameter: {
-          add_node_name_id(node.GetAsParameter());
+          add_node_name_id(node.As<Parameter>().name_id);
           continue;
         }
         case NodeKind::VarStorage: {
           // TODO: Eventually this name will be optional, and we'll want to
           // provide something like `var` as a default. However, that's not
           // possible right now so cannot be tested.
-          add_node_name_id(node.GetAsVarStorage());
+          add_node_name_id(node.As<VarStorage>().name_id);
           continue;
         }
         default: {
@@ -526,9 +525,9 @@ class Formatter {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name)          \
-  case NodeKind::Name:                            \
-    FormatInstruction<Node::Name>(node_id, node); \
+#define CARBON_SEMANTICS_NODE_KIND(Kind)         \
+  case NodeKind::Kind:                           \
+    FormatInstruction(node_id, node.As<Kind>()); \
     break;
 #include "toolchain/sem_ir/node_kind.def"
     }
@@ -536,12 +535,12 @@ class Formatter {
 
   auto Indent() -> void { out_.indent(indent_); }
 
-  template <typename Kind>
-  auto FormatInstruction(NodeId node_id, Node node) -> void {
+  template <typename NodeT>
+  auto FormatInstruction(NodeId node_id, NodeT node) -> void {
     Indent();
     FormatInstructionLHS(node_id, node);
-    out_ << node.kind().ir_name();
-    FormatInstructionRHS<Kind>(node);
+    out_ << NodeT::Kind.ir_name();
+    FormatInstructionRHS(node);
     out_ << "\n";
   }
 
@@ -575,66 +574,56 @@ class Formatter {
     }
   }
 
-  template <typename Kind>
-  auto FormatInstructionRHS(Node node) -> void {
+  template <typename NodeT>
+  auto FormatInstructionRHS(NodeT node) -> void {
     // By default, an instruction has a comma-separated argument list.
-    FormatArgs(Kind::Get(node));
+    std::apply([&](auto... args) { FormatArgs(args...); }, node.args_tuple());
   }
 
-  template <>
-  auto FormatInstructionRHS<Node::BlockArg>(Node node) -> void {
+  auto FormatInstructionRHS(BlockArg node) -> void {
     out_ << " ";
-    FormatLabel(node.GetAsBlockArg());
+    FormatLabel(node.block_id);
   }
 
-  template <>
-  auto FormatInstruction<Node::BranchIf>(NodeId /*node_id*/, Node node)
-      -> void {
+  auto FormatInstruction(NodeId /*node_id*/, BranchIf node) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
-    auto [label_id, cond_id] = node.GetAsBranchIf();
     out_ << "if ";
-    FormatNodeName(cond_id);
+    FormatNodeName(node.cond_id);
     out_ << " " << NodeKind::Branch.ir_name() << " ";
-    FormatLabel(label_id);
+    FormatLabel(node.target_id);
     out_ << " else ";
     in_terminator_sequence_ = true;
   }
 
-  template <>
-  auto FormatInstruction<Node::BranchWithArg>(NodeId /*node_id*/, Node node)
-      -> void {
+  auto FormatInstruction(NodeId /*node_id*/, BranchWithArg node) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
-    auto [label_id, arg_id] = node.GetAsBranchWithArg();
     out_ << NodeKind::BranchWithArg.ir_name() << " ";
-    FormatLabel(label_id);
+    FormatLabel(node.target_id);
     out_ << "(";
-    FormatNodeName(arg_id);
+    FormatNodeName(node.arg_id);
     out_ << ")\n";
     in_terminator_sequence_ = false;
   }
 
-  template <>
-  auto FormatInstruction<Node::Branch>(NodeId /*node_id*/, Node node) -> void {
+  auto FormatInstruction(NodeId /*node_id*/, Branch node) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
     out_ << NodeKind::Branch.ir_name() << " ";
-    FormatLabel(node.GetAsBranch());
+    FormatLabel(node.target_id);
     out_ << "\n";
     in_terminator_sequence_ = false;
   }
 
-  template <>
-  auto FormatInstructionRHS<Node::ArrayInit>(Node node) -> void {
+  auto FormatInstructionRHS(ArrayInit node) -> void {
     out_ << " ";
-    auto [src_id, refs_id] = node.GetAsArrayInit();
-    FormatArg(src_id);
+    FormatArg(node.tuple_id);
 
-    llvm::ArrayRef<NodeId> refs = semantics_ir_.GetNodeBlock(refs_id);
+    llvm::ArrayRef<NodeId> refs = semantics_ir_.GetNodeBlock(node.refs_id);
     auto inits = refs.drop_back(1);
     auto return_slot_id = refs.back();
 
@@ -648,16 +637,14 @@ class Formatter {
     FormatReturnSlot(return_slot_id);
   }
 
-  template <>
-  auto FormatInstructionRHS<Node::Call>(Node node) -> void {
+  auto FormatInstructionRHS(Call node) -> void {
     out_ << " ";
-    auto [args_id, callee_id] = node.GetAsCall();
-    FormatArg(callee_id);
+    FormatArg(node.function_id);
 
-    llvm::ArrayRef<NodeId> args = semantics_ir_.GetNodeBlock(args_id);
+    llvm::ArrayRef<NodeId> args = semantics_ir_.GetNodeBlock(node.args_id);
 
     bool has_return_slot =
-        semantics_ir_.GetFunction(callee_id).return_slot_id.is_valid();
+        semantics_ir_.GetFunction(node.function_id).return_slot_id.is_valid();
     NodeId return_slot_id = NodeId::Invalid;
     if (has_return_slot) {
       return_slot_id = args.back();
@@ -677,30 +664,24 @@ class Formatter {
     }
   }
 
-  template <>
-  auto FormatInstructionRHS<Node::InitializeFrom>(Node node) -> void {
-    auto [src_id, dest_id] = node.GetAsInitializeFrom();
-    FormatArgs(src_id);
-    FormatReturnSlot(dest_id);
+  auto FormatInstructionRHS(InitializeFrom node) -> void {
+    FormatArgs(node.src_id);
+    FormatReturnSlot(node.dest_id);
   }
 
-  template <>
-  auto FormatInstructionRHS<Node::CrossReference>(Node node) -> void {
+  auto FormatInstructionRHS(CrossReference node) -> void {
     // TODO: Figure out a way to make this meaningful. We'll need some way to
     // name cross-reference IRs, perhaps by the node ID of the import?
-    auto [xref_id, node_id] = node.GetAsCrossReference();
-    out_ << " " << xref_id << "." << node_id;
+    out_ << " " << node.ir_id << "." << node.node_id;
   }
 
-  template <>
-  auto FormatInstructionRHS<Node::SpliceBlock>(Node node) -> void {
-    auto [block_id, result_id] = node.GetAsSpliceBlock();
-    FormatArgs(result_id);
+  auto FormatInstructionRHS(SpliceBlock node) -> void {
+    FormatArgs(node.result_id);
     out_ << " {";
-    if (!semantics_ir_.GetNodeBlock(block_id).empty()) {
+    if (!semantics_ir_.GetNodeBlock(node.block_id).empty()) {
       out_ << "\n";
       indent_ += 2;
-      FormatCodeBlock(block_id);
+      FormatCodeBlock(node.block_id);
       indent_ -= 2;
       Indent();
     }
@@ -708,15 +689,13 @@ class Formatter {
   }
 
   // StructTypeFields are formatted as part of their StructType.
-  template <>
-  auto FormatInstruction<Node::StructTypeField>(NodeId /*node_id*/,
-                                                Node /*node*/) -> void {}
+  auto FormatInstruction(NodeId /*node_id*/, StructTypeField /*node*/)
+      -> void {}
 
-  template <>
-  auto FormatInstructionRHS<Node::StructType>(Node node) -> void {
+  auto FormatInstructionRHS(StructType node) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
-    for (auto field_id : semantics_ir_.GetNodeBlock(node.GetAsStructType())) {
+    for (auto field_id : semantics_ir_.GetNodeBlock(node.fields_id)) {
       out_ << sep << ".";
       auto [field_name_id, field_type_id] =
           semantics_ir_.GetNode(field_id).GetAsStructTypeField();
@@ -727,20 +706,13 @@ class Formatter {
     out_ << "}";
   }
 
-  auto FormatArgs(Node::NoArgs /*unused*/) -> void {}
+  auto FormatArgs() -> void {}
 
-  template <typename Arg1>
-  auto FormatArgs(Arg1 arg) -> void {
+  template <typename... Args>
+  auto FormatArgs(Args... args) -> void {
     out_ << ' ';
-    FormatArg(arg);
-  }
-
-  template <typename Arg1, typename Arg2>
-  auto FormatArgs(std::pair<Arg1, Arg2> args) -> void {
-    out_ << ' ';
-    FormatArg(args.first);
-    out_ << ",";
-    FormatArgs(args.second);
+    llvm::ListSeparator sep;
+    ((out_ << sep, FormatArg(args)), ...);
   }
 
   auto FormatArg(BoolValue v) -> void { out_ << v; }

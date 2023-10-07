@@ -221,7 +221,7 @@ struct AddressOf {
 
 struct ArrayIndex {
   NodeId array_id;
-  NodeId index;
+  NodeId index_id;
 };
 
 // Initializes an array from a tuple. `tuple_id` is the source tuple
@@ -286,7 +286,7 @@ struct BranchWithArg {
   using HasType = std::false_type;
 
   NodeBlockId target_id;
-  NodeId arg;
+  NodeId arg_id;
 };
 
 struct Builtin {
@@ -297,7 +297,7 @@ struct Builtin {
 };
 
 struct Call {
-  NodeBlockId refs_id;
+  NodeBlockId args_id;
   FunctionId function_id;
 };
 
@@ -339,7 +339,6 @@ struct IntegerLiteral {
 
 struct NameReference {
   StringId name_id;
-
   NodeId value_id;
 };
 
@@ -404,7 +403,7 @@ struct StructLiteral {
 };
 
 struct StructType {
-  NodeBlockId refs_id;
+  NodeBlockId fields_id;
 };
 
 struct StructTypeField {
@@ -744,7 +743,7 @@ class Node : public Printable<Node> {
   template <NodeKind::RawEnumType Kind, typename Data>
   /*implicit*/
   Node(TypedNode<Kind, Data> typed_node)
-      : Node(typed_node.type_id_or_invalid(), NodeKind::Create(Kind),
+      : Node(typed_node.parse_node_or_invalid(), NodeKind::Create(Kind),
              typed_node.type_id_or_invalid(), typed_node.arg0_or_invalid(),
              typed_node.arg1_or_invalid()) {}
 
@@ -1009,9 +1008,25 @@ struct DataBase : T {
     }
   }
 
+  // Returns the operands of the node.
+  auto args() const -> T { return *this; }
+
+  // Returns the operands of the node as a tuple.
+  auto args_tuple() const -> auto {
+    if constexpr (NumFields == 0) {
+      return std::tuple{};
+    } else if constexpr (NumFields == 1) {
+      auto [field0] = *this;
+      return std::tuple{field0};
+    } else {
+      auto [field0, field1] = *this;
+      return std::tuple{field0, field1};
+    }
+  }
+
   auto arg0_or_invalid() const -> auto {
     if constexpr (NumFields >= 1) {
-      return ToRaw(FieldAccessor<NumFields>::Get<0>(*this));
+      return ToRaw(FieldAccessor<NumFields>::template Get<0>(*this));
     } else {
       return NodeId::InvalidIndex;
     }
@@ -1019,7 +1034,7 @@ struct DataBase : T {
 
   auto arg1_or_invalid() const -> auto {
     if constexpr (NumFields >= 2) {
-      return ToRaw(FieldAccessor<NumFields>::Get<1>(*this));
+      return ToRaw(FieldAccessor<NumFields>::template Get<1>(*this));
     } else {
       return NodeId::InvalidIndex;
     }
@@ -1035,9 +1050,9 @@ struct TypedNode : NodeInternals::ParseNodeBase<Data>,
 
   static auto FromRawData(Parse::Node parse_node, TypeId type_id, int32_t arg0,
                           int32_t arg1) -> TypedNode {
-    return TypedNode{TypedNode::ParseNodeBase::FromParseNode(parse_node),
-                     TypedNode::TypeBase::FromTypeId(type_id),
-                     TypedNode::DataBase::FromRawArgs(arg0, arg1)};
+    return TypedNode{TypedNode::FromParseNode(parse_node),
+                     TypedNode::FromTypeId(type_id),
+                     TypedNode::FromRawArgs(arg0, arg1)};
   }
 };
 
