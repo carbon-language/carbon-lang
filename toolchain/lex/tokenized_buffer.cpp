@@ -242,10 +242,6 @@ class TokenizedBuffer::Lexer {
     bool formed_token_;
   };
 
-  using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef& source_text)
-      -> LexResult;
-  using DispatchTableT = std::array<DispatchFunctionT*, 256>;
-
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer_(&buffer),
         translator_(&buffer),
@@ -271,77 +267,72 @@ class TokenizedBuffer::Lexer {
     buffer_->token_infos_.back().has_trailing_space = true;
   }
 
-  auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
-    const char* const whitespace_start = source_text.begin();
+  auto LexHorizontalWhitespace(llvm::StringRef& source_text) -> void {
+    CARBON_DCHECK(source_text.front() == ' ' || source_text.front() == '\t');
+    NoteWhitespace();
+    ++current_column_;
+    source_text = source_text.drop_front();
+  }
 
-    while (!source_text.empty()) {
-      // We only support line-oriented commenting and lex comments as-if they
-      // were whitespace.
-      if (source_text.startswith("//")) {
-        // Any comment must be the only non-whitespace on the line.
-        if (set_indent_) {
-          CARBON_DIAGNOSTIC(TrailingComment, Error,
-                            "Trailing comments are not permitted.");
+  auto LexVerticalWhitespace(llvm::StringRef& source_text) -> void {
+    CARBON_DCHECK(source_text.front() == '\n');
+    NoteWhitespace();
+    source_text = source_text.drop_front();
 
-          emitter_.Emit(source_text.begin(), TrailingComment);
-        }
-        // The introducer '//' must be followed by whitespace or EOF.
-        if (source_text.size() > 2 && !IsSpace(source_text[2])) {
-          CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
-                            "Whitespace is required after '//'.");
-          emitter_.Emit(source_text.begin() + 2,
-                        NoWhitespaceAfterCommentIntroducer);
-        }
-        while (!source_text.empty() && source_text.front() != '\n') {
-          ++current_column_;
-          source_text = source_text.drop_front();
-        }
-        if (source_text.empty()) {
-          break;
-        }
-      }
-
-      switch (source_text.front()) {
-        default:
-          // If we find a non-whitespace character without exhausting the
-          // buffer, return true to continue lexing.
-          CARBON_CHECK(!IsSpace(source_text.front()));
-          if (whitespace_start != source_text.begin()) {
-            NoteWhitespace();
-          }
-          return true;
-
-        case '\n':
-          // If this is the last character in the source, directly return here
-          // to avoid creating an empty line.
-          source_text = source_text.drop_front();
-          if (source_text.empty()) {
-            current_line_info_->length = current_column_;
-            return false;
-          }
-
-          // Otherwise, add a line and set up to continue lexing.
-          HandleNewline();
-          continue;
-
-        case ' ':
-        case '\t':
-          // Skip other forms of whitespace while tracking column.
-          // TODO: This obviously needs looooots more work to handle unicode
-          // whitespace as well as special handling to allow better tokenization
-          // of operators. This is just a stub to check that our column
-          // management works.
-          ++current_column_;
-          source_text = source_text.drop_front();
-          continue;
-      }
+    // If this is the last character in the source, directly return here
+    // to avoid creating an empty line.
+    if (LLVM_UNLIKELY(source_text.empty())) {
+      current_line_info_->length = current_column_;
+      return;
     }
 
-    CARBON_CHECK(source_text.empty())
-        << "Cannot reach here w/o finishing the text!";
-    // Update the line length as this is also the end of a line.
-    current_line_info_->length = current_column_;
-    return false;
+    // Otherwise, add a line and set up to continue lexing.
+    HandleNewline();
+  }
+
+  auto LexCommentOrSlash(llvm::StringRef& source_text) -> void {
+    CARBON_DCHECK(source_text.front() == '/');
+
+    // Both comments and slash symbols start with a `/`. We disambiguate with a
+    // max-munch rule -- if the next character is another `/` then we lex it as
+    // a comment start. If it isn't, then we lex as a slash.
+    if (source_text.size() > 1 && source_text[1] == '/') {
+      LexComment(source_text);
+      return;
+    }
+
+    // This code path should produce a token, make sure that happens.
+    LexResult result = LexSymbolToken(source_text);
+    CARBON_CHECK(result) << "Failed to form a token!";
+  }
+
+  auto LexComment(llvm::StringRef& source_text) -> void {
+    CARBON_DCHECK(source_text.startswith("//"));
+
+    // Any comment must be the only non-whitespace on the line.
+    if (set_indent_) {
+      CARBON_DIAGNOSTIC(TrailingComment, Error,
+                        "Trailing comments are not permitted.");
+
+      emitter_.Emit(source_text.begin(), TrailingComment);
+    }
+
+    // The introducer '//' must be followed by whitespace or EOF.
+    if (source_text.size() > 2 && !IsSpace(source_text[2])) {
+      CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
+                        "Whitespace is required after '//'.");
+      emitter_.Emit(source_text.begin() + 2,
+                    NoWhitespaceAfterCommentIntroducer);
+    }
+
+    // Now just consume the text until a newline.
+    while (!source_text.empty() && source_text.front() != '\n') {
+      ++current_column_;
+      source_text = source_text.drop_front();
+    }
+
+    // We don't handle the newline, just fall back to the lex loop to handle it
+    // generically.
   }
 
   auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
@@ -701,17 +692,29 @@ class TokenizedBuffer::Lexer {
     return token;
   }
 
-  auto AddEndOfFileToken() -> void {
-    buffer_->AddToken({.kind = TokenKind::EndOfFile,
+  auto LexStartOfFile(llvm::StringRef& /*source_text*/) -> void {
+    // Before lexing any source text, add the start-of-file token so that code
+    // can assume a non-empty token buffer for the rest of lexing. Note that the
+    // start-of-file always has trailing space because it *is* whitespace.
+    buffer_->AddToken({.kind = TokenKind::StartOfFile,
+                       .has_trailing_space = true,
                        .token_line = current_line_,
                        .column = current_column_});
   }
 
-  auto AddStartOfFileToken() -> void {
-    // Note that the start-of-file always has trailing space because it *is*
-    // whitespace.
-    buffer_->AddToken({.kind = TokenKind::StartOfFile,
-                       .has_trailing_space = true,
+  auto LexEndOfFile(llvm::StringRef& source_text) -> void {
+    CARBON_DCHECK(source_text.empty());
+
+    // The end-of-file token is always considered to be whitespace.
+    NoteWhitespace();
+    // Update the line length as this is also the end of a line.
+    current_line_info_->length = current_column_;
+
+    // Close any open groups. We do this after marking whitespace, it will
+    // preserve that.
+    CloseInvalidOpenGroups(TokenKind::Error);
+
+    buffer_->AddToken({.kind = TokenKind::EndOfFile,
                        .token_line = current_line_,
                        .column = current_column_});
   }
@@ -721,112 +724,80 @@ class TokenizedBuffer::Lexer {
   // helpfully in profiles and backtraces, but they tend to not contain the
   // interesting logic and simply delegate to the relevant methods. All of their
   // signatures need to be exactly the same however in order to ensure we can
-  // build efficient dispatch tables out of them.
-  static auto DispatchLexError(Lexer& lexer, llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexError(source_text);
+  // build efficient dispatch tables out of them. All of them end by doing a
+  // must-tail return call to this routine. It handles continuing the dispatch
+  // chain.
+  static auto DispatchNext(Lexer& lexer, llvm::StringRef& source_text) -> void {
+    // When we finish the source text, stop recursing. We also hint this so that
+    // the tail-dispatch is optimized as that's essentially the loop back-edge
+    // and this is the loop exit.
+    if (LLVM_UNLIKELY(source_text.empty())) {
+      lexer.LexEndOfFile(source_text);
+      return;
+    }
+
+    // The common case is to tail recurse based on the next character. Note that
+    // because this is a must-tail return, this cannot fail to tail-call and
+    // will not grow the stack. This is in essence a loop with dynamic tail
+    // dispatch to the next stage of the loop.
+    [[clang::musttail]] return DispatchTable[static_cast<unsigned char>(
+        source_text.front())](lexer, source_text);
   }
-  static auto DispatchLexSymbol(Lexer& lexer, llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexSymbolToken(source_text);
+
+  // Define a set of dispatch functions that simply forward to a method that
+  // lexes a token. This includes validating that an actual token was produced,
+  // and continuing the dispatch.
+#define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                  \
+  static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef& source_text) \
+      ->void {                                                                \
+    LexResult result = lexer.LexMethod(source_text);                          \
+    CARBON_CHECK(result) << "Failed to form a token!";                        \
+    [[clang::musttail]] return DispatchNext(lexer, source_text);              \
   }
+  CARBON_DISPATCH_LEX_TOKEN(LexError)
+  CARBON_DISPATCH_LEX_TOKEN(LexSymbolToken)
+  CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
+  CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
+  CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
+
+  // A custom dispatch function that pre-selects a symbol token to lex.
   template <const TokenKind& Token>
   static auto DispatchLexOneCharSymbol(Lexer& lexer,
-                                       llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexSymbolToken(source_text, Token);
-  }
-  static auto DispatchLexWord(Lexer& lexer, llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexKeywordOrIdentifier(source_text);
-  }
-  static auto DispatchLexNumericLiteral(Lexer& lexer,
-                                        llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexNumericLiteral(source_text);
-  }
-  static auto DispatchLexStringLiteral(Lexer& lexer,
-                                       llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexStringLiteral(source_text);
+                                       llvm::StringRef& source_text) -> void {
+    LexResult result = lexer.LexSymbolToken(source_text, Token);
+    CARBON_CHECK(result) << "Failed to form a token!";
+    [[clang::musttail]] return DispatchNext(lexer, source_text);
   }
 
-  constexpr static auto MakeDispatchTable() -> DispatchTableT {
-    DispatchTableT table = {};
-    for (int i = 0; i < 256; ++i) {
-      table[i] = &DispatchLexError;
-    }
+  // Define a set of non-token dispatch functions that handle things like
+  // whitespace and comments.
+#define CARBON_DISPATCH_LEX_NON_TOKEN(LexMethod)                              \
+  static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef& source_text) \
+      ->void {                                                                \
+    lexer.LexMethod(source_text);                                             \
+    [[clang::musttail]] return DispatchNext(lexer, source_text);              \
+  }
+  CARBON_DISPATCH_LEX_NON_TOKEN(LexHorizontalWhitespace)
+  CARBON_DISPATCH_LEX_NON_TOKEN(LexVerticalWhitespace)
+  CARBON_DISPATCH_LEX_NON_TOKEN(LexCommentOrSlash)
 
-    // Symbols have some special dispatching. First, set the first character of
-    // each symbol token spelling to dispatch to the symbol lexer. We don't
-    // provide a pre-computed token here, so the symbol lexer will compute the
-    // exact symbol token kind. We'll override this with more specific dispatch
-    // below.
-#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexSymbol;
-#include "toolchain/lex/token_kind.def"
+  // The main entry point for dispatching through the lexer's table. This method
+  // should always fully consume the source text.
+  auto Dispatch(llvm::StringRef& source_text) -> void {
+    LexStartOfFile(source_text);
 
-    // Now special cased single-character symbols that are guaranteed to not
-    // join with another symbol. These are grouping symbols, terminators,
-    // or separators in the grammar and have a good reason to be
-    // orthogonal to any other punctuation. We do this separately because this
-    // needs to override some of the generic handling above, and provide a
-    // custom token.
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexOneCharSymbol<TokenKind::TokenName>;
-#include "toolchain/lex/token_kind.def"
+    // Manually enter the dispatch loop. This call will tail-recurse through the
+    // dispatch table until everything from source_text is consumed.
+    DispatchNext(*this, source_text);
 
-    table['_'] = &DispatchLexWord;
-    // Note that we don't use `llvm::seq` because this needs to be `constexpr`
-    // evaluated.
-    for (unsigned char c = 'a'; c <= 'z'; ++c) {
-      table[c] = &DispatchLexWord;
-    }
-    for (unsigned char c = 'A'; c <= 'Z'; ++c) {
-      table[c] = &DispatchLexWord;
-    }
-    // We dispatch all non-ASCII UTF-8 characters to the identifier lexing
-    // as whitespace characters should already have been skipped and the
-    // only remaining valid Unicode characters would be part of an
-    // identifier. That code can either accept or reject.
-    for (int i = 0x80; i < 0x100; ++i) {
-      table[i] = &DispatchLexWord;
-    }
-
-    for (unsigned char c = '0'; c <= '9'; ++c) {
-      table[c] = &DispatchLexNumericLiteral;
-    }
-
-    table['\''] = &DispatchLexStringLiteral;
-    table['"'] = &DispatchLexStringLiteral;
-    table['#'] = &DispatchLexStringLiteral;
-
-    return table;
-  };
+    CARBON_CHECK(source_text.empty())
+        << "Finished lexer dispatch without consuming the entire source text!";
+  }
 
  private:
-  TokenizedBuffer* buffer_;
-
-  SourceBufferLocationTranslator translator_;
-  LexerDiagnosticEmitter emitter_;
-
-  TokenLocationTranslator token_translator_;
-  TokenDiagnosticEmitter token_emitter_;
-
-  Line current_line_;
-  LineInfo* current_line_info_;
-
-  int current_column_ = 0;
-  bool set_indent_ = false;
-
-  llvm::SmallVector<Token> open_groups_;
-};
-
-auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
-    -> TokenizedBuffer {
-  TokenizedBuffer buffer(source);
-  ErrorTrackingDiagnosticConsumer error_tracking_consumer(consumer);
-  Lexer lexer(buffer, error_tracking_consumer);
+  using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef& source_text)
+      -> void;
+  using DispatchTableT = std::array<DispatchFunctionT*, 256>;
 
   // Build a table of function pointers that we can use to dispatch to the
   // correct lexer routine based on the first byte of source text.
@@ -854,25 +825,104 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   // Ultimately, when table-based dispatch is such an important technique, we
   // get better results by taking full control and manually creating the
   // dispatch structures.
-  constexpr Lexer::DispatchTableT DispatchTable = Lexer::MakeDispatchTable();
+  //
+  // The functions in this table also use tail-recursion to implement the loop
+  // of the lexer. This is based on the technique described more fully for any
+  // kind of byte-stream loop structure here:
+  // https://blog.reverberate.org/2021/04/21/musttail-efficient-interpreters.html
+  constexpr static auto MakeDispatchTable() -> DispatchTableT {
+    DispatchTableT table = {};
+    // First set the table entries to dispatch to our error token handler as the
+    // base case. Everything valid comes from an override below.
+    for (int i = 0; i < 256; ++i) {
+      table[i] = &DispatchLexError;
+    }
 
-  // Before lexing any source text, add the start-of-file token so that code can
-  // assume a non-empty token buffer for the rest of lexing.
-  lexer.AddStartOfFileToken();
+    // Symbols have some special dispatching. First, set the first character of
+    // each symbol token spelling to dispatch to the symbol lexer. We don't
+    // provide a pre-computed token here, so the symbol lexer will compute the
+    // exact symbol token kind. We'll override this with more specific dispatch
+    // below.
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
+  table[(Spelling)[0]] = &DispatchLexSymbolToken;
+#include "toolchain/lex/token_kind.def"
+
+    // Now special cased single-character symbols that are guaranteed to not
+    // join with another symbol. These are grouping symbols, terminators,
+    // or separators in the grammar and have a good reason to be
+    // orthogonal to any other punctuation. We do this separately because this
+    // needs to override some of the generic handling above, and provide a
+    // custom token.
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
+  table[(Spelling)[0]] = &DispatchLexOneCharSymbol<TokenKind::TokenName>;
+#include "toolchain/lex/token_kind.def"
+
+    // Override the handling for `/` to consider comments as well as a `/`
+    // symbol.
+    table['/'] = &DispatchLexCommentOrSlash;
+
+    table['_'] = &DispatchLexKeywordOrIdentifier;
+    // Note that we don't use `llvm::seq` because this needs to be `constexpr`
+    // evaluated.
+    for (unsigned char c = 'a'; c <= 'z'; ++c) {
+      table[c] = &DispatchLexKeywordOrIdentifier;
+    }
+    for (unsigned char c = 'A'; c <= 'Z'; ++c) {
+      table[c] = &DispatchLexKeywordOrIdentifier;
+    }
+    // We dispatch all non-ASCII UTF-8 characters to the identifier lexing
+    // as whitespace characters should already have been skipped and the
+    // only remaining valid Unicode characters would be part of an
+    // identifier. That code can either accept or reject.
+    for (int i = 0x80; i < 0x100; ++i) {
+      table[i] = &DispatchLexKeywordOrIdentifier;
+    }
+
+    for (unsigned char c = '0'; c <= '9'; ++c) {
+      table[c] = &DispatchLexNumericLiteral;
+    }
+
+    table['\''] = &DispatchLexStringLiteral;
+    table['"'] = &DispatchLexStringLiteral;
+    table['#'] = &DispatchLexStringLiteral;
+
+    table[' '] = &DispatchLexHorizontalWhitespace;
+    table['\t'] = &DispatchLexHorizontalWhitespace;
+    table['\n'] = &DispatchLexVerticalWhitespace;
+
+    return table;
+  };
+
+  static const DispatchTableT DispatchTable;
+
+  TokenizedBuffer* buffer_;
+
+  SourceBufferLocationTranslator translator_;
+  LexerDiagnosticEmitter emitter_;
+
+  TokenLocationTranslator token_translator_;
+  TokenDiagnosticEmitter token_emitter_;
+
+  Line current_line_;
+  LineInfo* current_line_info_;
+
+  int current_column_ = 0;
+  bool set_indent_ = false;
+
+  llvm::SmallVector<Token> open_groups_;
+};
+
+constexpr TokenizedBuffer::Lexer::DispatchTableT
+    TokenizedBuffer::Lexer::DispatchTable = MakeDispatchTable();
+
+auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
+    -> TokenizedBuffer {
+  TokenizedBuffer buffer(source);
+  ErrorTrackingDiagnosticConsumer error_tracking_consumer(consumer);
+  Lexer lexer(buffer, error_tracking_consumer);
 
   llvm::StringRef source_text = source.text();
-  while (lexer.SkipWhitespace(source_text)) {
-    Lexer::LexResult result =
-        DispatchTable[static_cast<unsigned char>(source_text.front())](
-            lexer, source_text);
-    CARBON_CHECK(result) << "Failed to form a token!";
-  }
-
-  // The end-of-file token is always considered to be whitespace.
-  lexer.NoteWhitespace();
-
-  lexer.CloseInvalidOpenGroups(TokenKind::Error);
-  lexer.AddEndOfFileToken();
+  lexer.Dispatch(source_text);
 
   if (error_tracking_consumer.seen_error()) {
     buffer.has_errors_ = true;
