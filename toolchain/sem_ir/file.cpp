@@ -276,13 +276,14 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
       case NodeKind::ArrayType: {
-        auto [bound_id, type_id] = node.GetAsArrayType();
+        auto array = node.As<ArrayType>();
         if (step.index == 0) {
           out << "[";
           steps.push_back(step.Next());
-          steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
+          steps.push_back(
+              {.node_id = GetTypeAllowBuiltinTypes(array.element_type_id)});
         } else if (step.index == 1) {
-          out << "; " << GetArrayBoundValue(bound_id) << "]";
+          out << "; " << GetArrayBoundValue(array.bound_id) << "]";
         }
         break;
       }
@@ -292,7 +293,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
 
           // Add parentheses if required.
           auto inner_type_node_id =
-              GetTypeAllowBuiltinTypes(node.GetAsConstType());
+              GetTypeAllowBuiltinTypes(node.As<ConstType>().inner_id);
           if (GetTypePrecedence(GetNode(inner_type_node_id).kind()) <
               GetTypePrecedence(node.kind())) {
             out << "(";
@@ -308,15 +309,15 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::PointerType: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back(
-              {.node_id = GetTypeAllowBuiltinTypes(node.GetAsPointerType())});
+          steps.push_back({.node_id = GetTypeAllowBuiltinTypes(
+                               node.As<PointerType>().pointee_id)});
         } else if (step.index == 1) {
           out << "*";
         }
         break;
       }
       case NodeKind::StructType: {
-        auto refs = GetNodeBlock(node.GetAsStructType());
+        auto refs = GetNodeBlock(node.As<StructType>().fields_id);
         if (refs.empty()) {
           out << "{}";
           break;
@@ -334,13 +335,13 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
         break;
       }
       case NodeKind::StructTypeField: {
-        auto [name_id, type_id] = node.GetAsStructTypeField();
-        out << "." << GetString(name_id) << ": ";
-        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
+        auto field = node.As<StructTypeField>();
+        out << "." << GetString(field.name_id) << ": ";
+        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(field.type_id)});
         break;
       }
       case NodeKind::TupleType: {
-        auto refs = GetTypeBlock(node.GetAsTupleType());
+        auto refs = GetTypeBlock(node.As<TupleType>().elements_id);
         if (refs.empty()) {
           out << "()";
           break;
@@ -421,7 +422,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
     auto outer_node = GetNode(outer_node_id);
     if (outer_node.kind() == NodeKind::TupleType ||
         (outer_node.kind() == NodeKind::StructType &&
-         GetNodeBlock(outer_node.GetAsStructType()).empty())) {
+         GetNodeBlock(outer_node.As<StructType>().fields_id).empty())) {
       out << " as type";
     }
   }
@@ -452,15 +453,14 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         return ExpressionCategory::NotExpression;
 
       case NodeKind::CrossReference: {
-        auto [xref_id, xref_node_id] = node.GetAsCrossReference();
-        ir = &ir->GetCrossReferenceIR(xref_id);
-        node_id = xref_node_id;
+        auto xref = node.As<CrossReference>();
+        ir = &ir->GetCrossReferenceIR(xref.ir_id);
+        node_id = xref.node_id;
         continue;
       }
 
       case NodeKind::NameReference: {
-        auto [name_id, value_id] = node.GetAsNameReference();
-        node_id = value_id;
+        node_id = node.As<NameReference>().value_id;
         continue;
       }
 
@@ -485,38 +485,32 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         return ExpressionCategory::Value;
 
       case NodeKind::BindName: {
-        auto [name_id, value_id] = node.GetAsBindName();
-        node_id = value_id;
+        node_id = node.As<BindName>().value_id;
         continue;
       }
 
       case NodeKind::ArrayIndex: {
-        auto [base_id, index_id] = node.GetAsArrayIndex();
-        node_id = base_id;
+        node_id = node.As<ArrayIndex>().array_id;
         continue;
       }
 
       case NodeKind::StructAccess: {
-        auto [base_id, member_index] = node.GetAsStructAccess();
-        node_id = base_id;
+        node_id = node.As<StructAccess>().struct_id;
         continue;
       }
 
       case NodeKind::TupleAccess: {
-        auto [base_id, index_id] = node.GetAsTupleAccess();
-        node_id = base_id;
+        node_id = node.As<TupleAccess>().tuple_id;
         continue;
       }
 
       case NodeKind::TupleIndex: {
-        auto [base_id, index_id] = node.GetAsTupleIndex();
-        node_id = base_id;
+        node_id = node.As<TupleIndex>().tuple_id;
         continue;
       }
 
       case NodeKind::SpliceBlock: {
-        auto [block_id, result_id] = node.GetAsSpliceBlock();
-        node_id = result_id;
+        node_id = node.As<SpliceBlock>().result_id;
         continue;
       }
 
@@ -597,15 +591,14 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
         CARBON_FATAL() << "Type refers to non-type node " << node;
 
       case NodeKind::CrossReference: {
-        auto [xref_id, xref_node_id] = node.GetAsCrossReference();
-        ir = &ir->GetCrossReferenceIR(xref_id);
-        node_id = xref_node_id;
+        auto xref = node.As<CrossReference>();
+        ir = &ir->GetCrossReferenceIR(xref.ir_id);
+        node_id = xref.node_id;
         continue;
       }
 
       case NodeKind::SpliceBlock: {
-        auto [block_id, result_id] = node.GetAsSpliceBlock();
-        node_id = result_id;
+        node_id = node.As<SpliceBlock>().result_id;
         continue;
       }
 
@@ -616,16 +609,15 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
         return {.kind = ValueRepresentation::Pointer, .type = type_id};
 
       case NodeKind::StructType: {
-        const auto& fields = ir->GetNodeBlock(node.GetAsStructType());
+        const auto& fields = ir->GetNodeBlock(node.As<StructType>().fields_id);
         if (fields.empty()) {
           // An empty struct has an empty representation.
           return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
         }
         if (fields.size() == 1) {
           // A struct with one field has the same representation as its field.
-          auto [field_name_id, field_type_id] =
-              ir->GetNode(fields.front()).GetAsStructTypeField();
-          node_id = ir->GetTypeAllowBuiltinTypes(field_type_id);
+          node_id = ir->GetTypeAllowBuiltinTypes(
+              ir->GetNode(fields.front()).As<StructTypeField>().type_id);
           continue;
         }
         // For any other struct, use a pointer representation.
@@ -633,7 +625,8 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       }
 
       case NodeKind::TupleType: {
-        const auto& elements = ir->GetTypeBlock(node.GetAsTupleType());
+        const auto& elements =
+            ir->GetTypeBlock(node.As<TupleType>().elements_id);
         if (elements.empty()) {
           // An empty tuple has an empty representation.
           return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
@@ -650,7 +643,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::Builtin:
         // clang warns on unhandled enum values; clang-tidy is incorrect here.
         // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-        switch (node.GetAsBuiltin()) {
+        switch (node.As<Builtin>().builtin_kind) {
           case BuiltinKind::TypeType:
           case BuiltinKind::Error:
           case BuiltinKind::Invalid:
@@ -670,7 +663,7 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
         return {.kind = ValueRepresentation::Copy, .type = type_id};
 
       case NodeKind::ConstType:
-        node_id = ir->GetTypeAllowBuiltinTypes(node.GetAsConstType());
+        node_id = ir->GetTypeAllowBuiltinTypes(node.As<ConstType>().inner_id);
         continue;
     }
   }

@@ -233,8 +233,8 @@ struct ArrayInit {
 };
 
 struct ArrayType {
-  NodeId bound_node_id;
-  TypeId array_element_type_id;
+  NodeId bound_id;
+  TypeId element_type_id;
 };
 
 // Performs a source-level initialization or assignment of `lhs_id` from
@@ -437,20 +437,20 @@ struct TupleIndex {
 
 struct TupleInit {
   NodeId literal_id;
-  NodeBlockId converted_refs_id;
+  NodeBlockId elements_id;
 };
 
 struct TupleLiteral {
-  NodeBlockId refs_id;
+  NodeBlockId elements_id;
 };
 
 struct TupleType {
-  TypeBlockId refs_id;
+  TypeBlockId elements_id;
 };
 
 struct TupleValue {
   NodeId literal_id;
-  NodeBlockId converted_refs_id;
+  NodeBlockId elements_id;
 };
 
 struct UnaryOperatorNot {

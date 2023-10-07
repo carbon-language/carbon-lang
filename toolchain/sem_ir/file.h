@@ -91,7 +91,7 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound node.
   auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
-    return GetIntegerValue(GetNode(bound_id).GetAsIntegerLiteral())
+    return GetIntegerValue(GetNode(bound_id).As<IntegerLiteral>().integer_id)
         .getZExtValue();
   }
 

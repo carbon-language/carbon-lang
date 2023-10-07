@@ -697,11 +697,10 @@ class Formatter {
     llvm::ListSeparator sep;
     for (auto field_id : semantics_ir_.GetNodeBlock(node.fields_id)) {
       out_ << sep << ".";
-      auto [field_name_id, field_type_id] =
-          semantics_ir_.GetNode(field_id).GetAsStructTypeField();
-      FormatString(field_name_id);
+      auto field = semantics_ir_.GetNode(field_id).As<StructTypeField>();
+      FormatString(field.name_id);
       out_ << ": ";
-      FormatType(field_type_id);
+      FormatType(field.type_id);
     }
     out_ << "}";
   }
