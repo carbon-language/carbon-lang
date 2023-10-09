@@ -90,7 +90,7 @@ static auto FinalizeTemporary(Context& context, SemIR::NodeId init_id,
         << "initialized multiple times? Have "
         << semantics_ir.GetNode(return_slot_id);
     auto init = semantics_ir.GetNode(init_id);
-    return context.AddNode(SemIR::Node::Temporary::Make(
+    return context.AddNode(SemIR::Temporary(
         init.parse_node(), init.type_id(), return_slot_id, init_id));
   }
 
@@ -106,8 +106,8 @@ static auto FinalizeTemporary(Context& context, SemIR::NodeId init_id,
   // nodes.
   auto init = semantics_ir.GetNode(init_id);
   auto temporary_id = context.AddNode(
-      SemIR::Node::TemporaryStorage::Make(init.parse_node(), init.type_id()));
-  return context.AddNode(SemIR::Node::Temporary::Make(
+      SemIR::TemporaryStorage(init.parse_node(), init.type_id()));
+  return context.AddNode(SemIR::Temporary(
       init.parse_node(), init.type_id(), temporary_id, init_id));
 }
 
@@ -132,7 +132,7 @@ static auto MakeElemAccessNode(Context& context, Parse::Node parse_node,
     // TODO: Add a new node kind for indexing an array at a constant index
     // so that we don't need an integer literal node here, and remove this
     // special case.
-    auto index_id = block.AddNode(SemIR::Node::IntegerLiteral::Make(
+    auto index_id = block.AddNode(SemIR::IntegerLiteral(
         parse_node, context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
         context.semantics_ir().AddIntegerValue(llvm::APInt(32, i))));
     return block.AddNode(
@@ -277,7 +277,7 @@ static auto ConvertTupleToArray(Context& context,
   // destination for the array initialization if we weren't given one.
   SemIR::NodeId return_slot_id = target.init_id;
   if (!target.init_id.is_valid()) {
-    return_slot_id = target_block->AddNode(SemIR::Node::TemporaryStorage::Make(
+    return_slot_id = target_block->AddNode(SemIR::TemporaryStorage(
         value.parse_node(), target.type_id));
   }
 
@@ -307,7 +307,7 @@ static auto ConvertTupleToArray(Context& context,
   inits.push_back(return_slot_id);
 
   return context.AddNode(
-      SemIR::Node::ArrayInit::Make(value.parse_node(), target.type_id, value_id,
+      SemIR::ArrayInit(value.parse_node(), target.type_id, value_id,
                                    semantics_ir.AddNodeBlock(inits)));
 }
 
@@ -378,12 +378,12 @@ static auto ConvertTupleToTuple(Context& context,
     new_block.Set(i, init_id);
   }
 
-  return context.AddNode(
-      is_init
-          ? SemIR::Node::TupleInit::Make(value.parse_node(), target.type_id,
-                                         value_id, new_block.id())
-          : SemIR::Node::TupleValue::Make(value.parse_node(), target.type_id,
-                                          value_id, new_block.id()));
+  return is_init ? context.AddNode(SemIR::TupleInit(value.parse_node(),
+                                                    target.type_id, value_id,
+                                                    new_block.id()))
+                 : context.AddNode(SemIR::TupleValue(value.parse_node(),
+                                                     target.type_id, value_id,
+                                                     new_block.id()));
 }
 
 // Performs a conversion from a struct to a struct type. Does not perform a
@@ -472,12 +472,12 @@ static auto ConvertStructToStruct(Context& context,
     new_block.Set(i, init_id);
   }
 
-  return context.AddNode(
-      is_init
-          ? SemIR::Node::StructInit::Make(value.parse_node(), target.type_id,
-                                          value_id, new_block.id())
-          : SemIR::Node::StructValue::Make(value.parse_node(), target.type_id,
-                                           value_id, new_block.id()));
+  return is_init ? context.AddNode(SemIR::StructInit(value.parse_node(),
+                                                     target.type_id, value_id,
+                                                     new_block.id()))
+                 : context.AddNode(SemIR::StructValue(value.parse_node(),
+                                                      target.type_id, value_id,
+                                                      new_block.id()));
 }
 
 // Returns whether `category` is a valid expression category to produce as a
@@ -692,7 +692,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
       if (target.kind != ConversionTarget::ValueOrReference &&
           target.kind != ConversionTarget::Discarded) {
         // TODO: Support types with custom value representations.
-        expr_id = context.AddNode(SemIR::Node::BindValue::Make(
+        expr_id = context.AddNode(SemIR::BindValue(
             expr.parse_node(), expr.type_id(), expr_id));
       }
       break;
@@ -708,7 +708,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
             SemIR::GetInitializingRepresentation(semantics_ir, target.type_id);
         init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
       target.init_block->InsertHere();
-      expr_id = context.AddNode(SemIR::Node::InitializeFrom::Make(
+      expr_id = context.AddNode(SemIR::InitializeFrom(
           parse_node, target.type_id, expr_id, target.init_id));
     }
   }

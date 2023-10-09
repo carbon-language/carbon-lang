@@ -49,7 +49,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
           .Emit();
     }
 
-    context.AddNode(SemIR::Node::Return::Make(parse_node));
+    context.AddNode(SemIR::Return(parse_node));
   } else {
     auto arg = context.node_stack().PopExpression();
     context.node_stack()
@@ -72,7 +72,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
                                  callable.return_type_id);
     }
 
-    context.AddNode(SemIR::Node::ReturnExpression::Make(parse_node, arg));
+    context.AddNode(SemIR::ReturnExpression(parse_node, arg));
   }
 
   // Switch to a new, unreachable, empty node block. This typically won't

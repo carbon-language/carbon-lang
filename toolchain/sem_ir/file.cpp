@@ -24,11 +24,11 @@ File::File()
   // Error uses a self-referential type so that it's not accidentally treated as
   // a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...)                               \
-  nodes_.push_back(Node::Builtin::Make(BuiltinKind::Name,                      \
-                                       BuiltinKind::Name == BuiltinKind::Error \
-                                           ? TypeId::Error                     \
-                                           : TypeId::TypeType));
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...)                   \
+  nodes_.push_back(Builtin(BuiltinKind::Name == BuiltinKind::Error \
+                               ? TypeId::Error                     \
+                               : TypeId::TypeType,                 \
+                           BuiltinKind::Name));
 #include "toolchain/sem_ir/builtin_kind.def"
 
   CARBON_CHECK(nodes_.size() == BuiltinKind::ValidCount)
@@ -51,8 +51,8 @@ File::File(std::string filename, const File* builtins)
   static constexpr auto BuiltinIR = CrossReferenceIRId(0);
   for (auto [i, node] : llvm::enumerate(builtins->nodes_)) {
     // We can reuse builtin type IDs because they're special-cased values.
-    nodes_.push_back(Node::CrossReference::Make(node.type_id(), BuiltinIR,
-                                                SemIR::NodeId(i)));
+    nodes_.push_back(
+        CrossReference(node.type_id(), BuiltinIR, SemIR::NodeId(i)));
   }
 }
 

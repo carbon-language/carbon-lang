@@ -42,7 +42,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
         if (name_id == field.name_id) {
           context.AddNodeAndPush(
               parse_node,
-              SemIR::Node::StructAccess::Make(parse_node, field.type_id,
+              SemIR::StructAccess(parse_node, field.type_id,
                                               base_id, SemIR::MemberIndex(i)));
           return true;
         }
@@ -97,13 +97,13 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   if (value.kind().value_kind() == SemIR::NodeValueKind::Typed) {
     // This is a reference to a name binding that has a value and a type.
     context.AddNodeAndPush(parse_node,
-                           SemIR::Node::NameReference::Make(
+                           SemIR::NameReference(
                                parse_node, value.type_id(), name_id, value_id));
   } else {
     // This is something like a namespace name, that can be found by name lookup
     // but isn't a first-class value with a type.
     context.AddNodeAndPush(parse_node,
-                           SemIR::Node::NameReferenceUntyped::Make(
+                           SemIR::NameReferenceUntyped(
                                parse_node, value.type_id(), name_id, value_id));
   }
   return true;

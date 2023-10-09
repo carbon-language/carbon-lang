@@ -31,7 +31,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
     init_id = Initialize(context, parse_node, var_id, init_id);
     // TODO: Consider using different node kinds for assignment versus
     // initialization.
-    context.AddNode(SemIR::Node::Assign::Make(parse_node, var_id, init_id));
+    context.AddNode(SemIR::Assign(parse_node, var_id, init_id));
   }
 
   context.node_stack()

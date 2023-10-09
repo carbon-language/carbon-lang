@@ -207,6 +207,7 @@ struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
   }
 };
 
+// Data storage for the operands of each kind of node.
 namespace NodeData {
 // The Invalid NodeKind exists, but nodes of this kind cannot be created.
 struct Invalid {
@@ -473,6 +474,12 @@ struct VarStorage {
 // - A `parse_node` member for nodes with an associated parse node.
 // - A `type_id` member for nodes with an associated type.
 // - Each member from the `NodeData` struct, above.
+//
+// A `TypedNode` can be constructed by passing its fields in order:
+//
+// - First, the `parse_node`, for nodes with a location,
+// - Then, the `type_id`, for nodes with a type,
+// - Then, each field of the `NodeData` struct above.
 template <NodeKind::RawEnumType Kind, typename Data>
 struct TypedNode;
 
@@ -491,7 +498,7 @@ using Name = TypedNode<NodeKind::Name, NodeData::Name>;
 //
 // For each Kind in NodeKind, a typical flow looks like:
 //
-// - Create a `Node` using `Node::Kind::Make()`
+// - Create a `Node` using the appropriate `TypedNode` constructor.
 // - Access cross-Kind members using `node.type_id()` and similar.
 // - Access Kind-specific members using `node.As<Kind>()`, which produces a
 //   `TypedNode` with type-specific members, including `parse_node` and
@@ -501,246 +508,8 @@ using Name = TypedNode<NodeKind::Name, NodeData::Name>;
 //     guarantee).
 //   - Use `node.TryAs<Kind>()` to safely access type-specific node data where
 //     the node's kind is not known.
-//
-// Internally, each Kind uses the `Factory*` types to provide a boilerplate
-// `Make` method.
 class Node : public Printable<Node> {
  public:
-  struct NoArgs {};
-
-  // Factory base classes are private, then used for public classes. This class
-  // has two public and two private sections to prevent accidents.
- private:
-  // Provides Make and Get to support 0, 1, or 2 arguments for a Node.
-  // These are protected so that child factories can opt in to what pieces they
-  // want to use.
-  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
-  class FactoryBase {
-   protected:
-    static auto Make(Parse::Node parse_node, TypeId type_id,
-                     ArgTypes... arg_ids) -> Node {
-      return Node(parse_node, NodeKind::Create(Kind), type_id,
-                  arg_ids.index...);
-    }
-
-    static auto Get(Node node) {
-      struct Unused {};
-      return GetImpl<ArgTypes..., Unused>(node);
-    }
-
-   private:
-    // GetImpl handles the different return types based on ArgTypes.
-    template <typename Arg0Type, typename Arg1Type, typename>
-    static auto GetImpl(Node node) -> std::pair<Arg0Type, Arg1Type> {
-      CARBON_CHECK(node.kind() == Kind);
-      return {Arg0Type(node.arg0_), Arg1Type(node.arg1_)};
-    }
-    template <typename Arg0Type, typename>
-    static auto GetImpl(Node node) -> Arg0Type {
-      CARBON_CHECK(node.kind() == Kind);
-      return Arg0Type(node.arg0_);
-    }
-    template <typename>
-    static auto GetImpl(Node node) -> NoArgs {
-      CARBON_CHECK(node.kind() == Kind);
-      return NoArgs();
-    }
-  };
-
-  // Provide Get along with a Make that requires a type.
-  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
-  class Factory : public FactoryBase<Kind, ArgTypes...> {
-   public:
-    using FactoryBase<Kind, ArgTypes...>::Make;
-    using FactoryBase<Kind, ArgTypes...>::Get;
-  };
-
-  // Provides Get along with a Make that assumes the node doesn't produce a
-  // typed value.
-  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
-  class FactoryNoType : public FactoryBase<Kind, ArgTypes...> {
-   public:
-    static auto Make(Parse::Node parse_node, ArgTypes... args) {
-      return FactoryBase<Kind, ArgTypes...>::Make(parse_node, TypeId::Invalid,
-                                                  args...);
-    }
-    using FactoryBase<Kind, ArgTypes...>::Get;
-  };
-
- public:
-  // Invalid is in the NodeKind enum, but should never be used.
-  class Invalid {
-   public:
-    static auto Get(Node /*node*/) -> Node::NoArgs {
-      CARBON_FATAL() << "Invalid access";
-    }
-  };
-
-  using AddressOf = Node::Factory<NodeKind::AddressOf, NodeId /*lvalue_id*/>;
-
-  using ArrayIndex =
-      Factory<NodeKind::ArrayIndex, NodeId /*array_id*/, NodeId /*index*/>;
-
-  // Initializes an array from a tuple. `tuple_id` is the source tuple
-  // expression. `refs_id` contains one initializer per array element, plus a
-  // final element that is the return slot for the initialization.
-  using ArrayInit = Factory<NodeKind::ArrayInit, NodeId /*tuple_id*/,
-                            NodeBlockId /*refs_id*/>;
-
-  using ArrayType = Node::Factory<NodeKind::ArrayType, NodeId /*bound_node_id*/,
-                                  TypeId /*array_element_type_id*/>;
-
-  // Performs a source-level initialization or assignment of `lhs_id` from
-  // `rhs_id`. This finishes initialization of `lhs_id` in the same way as
-  // `InitializeFrom`.
-  using Assign = Node::FactoryNoType<NodeKind::Assign, NodeId /*lhs_id*/,
-                                     NodeId /*rhs_id*/>;
-
-  using BinaryOperatorAdd = Node::Factory<NodeKind::BinaryOperatorAdd,
-                                          NodeId /*lhs_id*/, NodeId /*rhs_id*/>;
-
-  using BindName =
-      Factory<NodeKind::BindName, StringId /*name_id*/, NodeId /*value_id*/>;
-
-  using BindValue = Factory<NodeKind::BindValue, NodeId /*value_id*/>;
-
-  using BlockArg = Factory<NodeKind::BlockArg, NodeBlockId /*block_id*/>;
-
-  using BoolLiteral = Factory<NodeKind::BoolLiteral, BoolValue /*value*/>;
-
-  using Branch = FactoryNoType<NodeKind::Branch, NodeBlockId /*target_id*/>;
-
-  using BranchIf = FactoryNoType<NodeKind::BranchIf, NodeBlockId /*target_id*/,
-                                 NodeId /*cond_id*/>;
-
-  using BranchWithArg =
-      FactoryNoType<NodeKind::BranchWithArg, NodeBlockId /*target_id*/,
-                    NodeId /*arg*/>;
-
-  class Builtin {
-   public:
-    static auto Make(BuiltinKind builtin_kind, TypeId type_id) -> Node {
-      // Builtins won't have a Parse::Tree node associated, so we provide the
-      // default invalid one.
-      // This can't use the standard Make function because of the `AsInt()` cast
-      // instead of `.index`.
-      return Node(Parse::Node::Invalid, NodeKind::Builtin, type_id,
-                  builtin_kind.AsInt());
-    }
-    static auto Get(Node node) -> BuiltinKind {
-      return BuiltinKind::FromInt(node.arg0_);
-    }
-  };
-
-  using Call = Factory<NodeKind::Call, NodeBlockId /*refs_id*/,
-                       FunctionId /*function_id*/>;
-
-  using ConstType = Factory<NodeKind::ConstType, TypeId /*inner_id*/>;
-
-  class CrossReference
-      : public FactoryBase<NodeKind::CrossReference,
-                           CrossReferenceIRId /*ir_id*/, NodeId /*node_id*/> {
-   public:
-    static auto Make(TypeId type_id, CrossReferenceIRId ir_id, NodeId node_id)
-        -> Node {
-      // A node's parse tree node must refer to a node in the current parse
-      // tree. This cannot use the cross-referenced node's parse tree node
-      // because it will be in a different parse tree.
-      return FactoryBase::Make(Parse::Node::Invalid, type_id, ir_id, node_id);
-    }
-    using FactoryBase::Get;
-  };
-
-  using Dereference = Factory<NodeKind::Dereference, NodeId /*pointer_id*/>;
-
-  using FunctionDeclaration =
-      FactoryNoType<NodeKind::FunctionDeclaration, FunctionId /*function_id*/>;
-
-  // Finalizes the initialization of `dest_id` from the initializer expression
-  // `src_id`, by performing a final copy from source to destination, for types
-  // whose initialization is not in-place.
-  using InitializeFrom =
-      Factory<NodeKind::InitializeFrom, NodeId /*src_id*/, NodeId /*dest_id*/>;
-
-  using IntegerLiteral =
-      Factory<NodeKind::IntegerLiteral, IntegerValueId /*integer_id*/>;
-
-  using NameReference = Factory<NodeKind::NameReference, StringId /*name_id*/,
-                                NodeId /*value_id*/>;
-
-  using NameReferenceUntyped =
-      Factory<NodeKind::NameReferenceUntyped, StringId /*name_id*/,
-              NodeId /*value_id*/>;
-
-  using Namespace =
-      FactoryNoType<NodeKind::Namespace, NameScopeId /*name_scope_id*/>;
-
-  using NoOp = FactoryNoType<NodeKind::NoOp>;
-
-  using Parameter = Factory<NodeKind::Parameter, StringId /*name_id*/>;
-
-  using PointerType = Factory<NodeKind::PointerType, TypeId /*pointee_id*/>;
-
-  using RealLiteral = Factory<NodeKind::RealLiteral, RealValueId /*real_id*/>;
-
-  using Return = FactoryNoType<NodeKind::Return>;
-
-  using ReturnExpression =
-      FactoryNoType<NodeKind::ReturnExpression, NodeId /*expr_id*/>;
-
-  using SpliceBlock = Factory<NodeKind::SpliceBlock, NodeBlockId /*block_id*/,
-                              NodeId /*result_id*/>;
-
-  using StringLiteral =
-      Factory<NodeKind::StringLiteral, StringId /*string_id*/>;
-
-  using StructAccess = Factory<NodeKind::StructAccess, NodeId /*struct_id*/,
-                               MemberIndex /*ref_index*/>;
-
-  using StructInit = Factory<NodeKind::StructInit, NodeId /*literal_id*/,
-                             NodeBlockId /*converted_refs_id*/>;
-
-  using StructLiteral =
-      Factory<NodeKind::StructLiteral, NodeBlockId /*refs_id*/>;
-
-  using StructType = Factory<NodeKind::StructType, NodeBlockId /*refs_id*/>;
-
-  using StructTypeField =
-      FactoryNoType<NodeKind::StructTypeField, StringId /*name_id*/,
-                    TypeId /*type_id*/>;
-
-  using StructValue = Factory<NodeKind::StructValue, NodeId /*literal_id*/,
-                              NodeBlockId /*converted_refs_id*/>;
-
-  using Temporary =
-      Factory<NodeKind::Temporary, NodeId /*storage_id*/, NodeId /*init_id*/>;
-
-  using TemporaryStorage = Factory<NodeKind::TemporaryStorage>;
-
-  using TupleAccess = Factory<NodeKind::TupleAccess, NodeId /*tuple_id*/,
-                              MemberIndex /*index*/>;
-
-  using TupleIndex =
-      Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;
-
-  using TupleInit = Factory<NodeKind::TupleInit, NodeId /*literal_id*/,
-                            NodeBlockId /*converted_refs_id*/>;
-
-  using TupleLiteral = Factory<NodeKind::TupleLiteral, NodeBlockId /*refs_id*/>;
-
-  using TupleType = Factory<NodeKind::TupleType, TypeBlockId /*refs_id*/>;
-
-  using TupleValue = Factory<NodeKind::TupleValue, NodeId /*literal_id*/,
-                             NodeBlockId /*converted_refs_id*/>;
-
-  using UnaryOperatorNot =
-      Factory<NodeKind::UnaryOperatorNot, NodeId /*operand_id*/>;
-
-  using ValueAsReference =
-      Factory<NodeKind::ValueAsReference, NodeId /*value_id*/>;
-
-  using VarStorage = Factory<NodeKind::VarStorage, StringId /*name_id*/>;
-
   explicit Node()
       : Node(Parse::Node::Invalid, NodeKind::Invalid, TypeId::Invalid) {}
 
@@ -780,14 +549,6 @@ class Node : public Printable<Node> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  // Builtins have peculiar construction, so they are a friend rather than using
-  // a factory base class.
-  friend struct NodeForBuiltin;
-
-  // Typed nodes read our data directly.
-  template <NodeKind::RawEnumType Kind, typename Data>
-  struct TypedNode;
-
   explicit Node(Parse::Node parse_node, NodeKind kind, TypeId type_id,
                 int32_t arg0 = NodeId::InvalidIndex,
                 int32_t arg1 = NodeId::InvalidIndex)

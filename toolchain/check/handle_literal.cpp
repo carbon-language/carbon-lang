@@ -13,7 +13,7 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
     case Lex::TokenKind::True: {
       context.AddNodeAndPush(
           parse_node,
-          SemIR::Node::BoolLiteral::Make(
+          SemIR::BoolLiteral(
               parse_node,
               context.CanonicalizeType(SemIR::NodeId::BuiltinBoolType),
               token_kind == Lex::TokenKind::True ? SemIR::BoolValue::True
@@ -25,7 +25,7 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
           context.tokens().GetIntegerLiteral(token));
       context.AddNodeAndPush(
           parse_node,
-          SemIR::Node::IntegerLiteral::Make(
+          SemIR::IntegerLiteral(
               parse_node,
               context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType), id));
       break;
@@ -38,7 +38,7 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
            .is_decimal = token_value.is_decimal});
       context.AddNodeAndPush(
           parse_node,
-          SemIR::Node::RealLiteral::Make(
+          SemIR::RealLiteral(
               parse_node,
               context.CanonicalizeType(SemIR::NodeId::BuiltinFloatingPointType),
               id));
@@ -49,7 +49,7 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
           context.tokens().GetStringLiteral(token));
       context.AddNodeAndPush(
           parse_node,
-          SemIR::Node::StringLiteral::Make(
+          SemIR::StringLiteral(
               parse_node,
               context.CanonicalizeType(SemIR::NodeId::BuiltinStringType), id));
       break;

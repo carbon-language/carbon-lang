@@ -32,11 +32,11 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::VariableIntroducer:
-      context.AddNodeAndPush(parse_node, SemIR::Node::VarStorage::Make(
+      context.AddNodeAndPush(parse_node, SemIR::VarStorage(
                                              name_node, cast_type_id, name_id));
       break;
     case Parse::NodeKind::ParameterListStart:
-      context.AddNodeAndPush(parse_node, SemIR::Node::Parameter::Make(
+      context.AddNodeAndPush(parse_node, SemIR::Parameter(
                                              name_node, cast_type_id, name_id));
       break;
     case Parse::NodeKind::LetIntroducer:
@@ -46,7 +46,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       // the `let` pattern before we see the initializer.
       context.node_stack().Push(
           parse_node,
-          context.semantics_ir().AddNodeInNoBlock(SemIR::Node::BindName::Make(
+          context.semantics_ir().AddNodeInNoBlock(SemIR::BindName(
               name_node, cast_type_id, name_id, SemIR::NodeId::Invalid)));
       break;
     default:

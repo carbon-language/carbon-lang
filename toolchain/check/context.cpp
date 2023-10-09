@@ -170,27 +170,27 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
     return SemIR::NodeBlockId::Unreachable;
   }
   auto block_id = context.semantics_ir().AddNodeBlockId();
-  context.AddNode(BranchNode::Make(parse_node, block_id, args...));
+  context.AddNode(BranchNode(parse_node, block_id, args...));
   return block_id;
 }
 
 auto Context::AddDominatedBlockAndBranch(Parse::Node parse_node)
     -> SemIR::NodeBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::Node::Branch>(*this, parse_node);
+  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, parse_node);
 }
 
 auto Context::AddDominatedBlockAndBranchWithArg(Parse::Node parse_node,
                                                 SemIR::NodeId arg_id)
     -> SemIR::NodeBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::Node::BranchWithArg>(
-      *this, parse_node, arg_id);
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, parse_node,
+                                                              arg_id);
 }
 
 auto Context::AddDominatedBlockAndBranchIf(Parse::Node parse_node,
                                            SemIR::NodeId cond_id)
     -> SemIR::NodeBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::Node::BranchIf>(
-      *this, parse_node, cond_id);
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, parse_node,
+                                                         cond_id);
 }
 
 auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
@@ -203,7 +203,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
         new_block_id = semantics_ir().AddNodeBlockId();
       }
-      AddNode(SemIR::Node::Branch::Make(parse_node, new_block_id));
+      AddNode(SemIR::Branch(parse_node, new_block_id));
     }
     node_block_stack().Pop();
   }
@@ -222,7 +222,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
         new_block_id = semantics_ir().AddNodeBlockId();
       }
       AddNode(
-          SemIR::Node::BranchWithArg::Make(parse_node, new_block_id, arg_id));
+          SemIR::BranchWithArg(parse_node, new_block_id, arg_id));
     }
     node_block_stack().Pop();
   }
@@ -232,7 +232,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
   SemIR::TypeId result_type_id =
       semantics_ir().GetNode(*block_args.begin()).type_id();
   return AddNode(
-      SemIR::Node::BlockArg::Make(parse_node, result_type_id, new_block_id));
+      SemIR::BlockArg(parse_node, result_type_id, new_block_id));
 }
 
 // Add the current code block to the enclosing function.
@@ -412,7 +412,7 @@ auto Context::CanonicalizeType(SemIR::NodeId node_id) -> SemIR::TypeId {
 auto Context::CanonicalizeStructType(Parse::Node parse_node,
                                      SemIR::NodeBlockId refs_id)
     -> SemIR::TypeId {
-  return CanonicalizeTypeAndAddNodeIfNew(SemIR::Node::StructType::Make(
+  return CanonicalizeTypeAndAddNodeIfNew(SemIR::StructType(
       parse_node, SemIR::TypeId::TypeType, refs_id));
 }
 
@@ -425,7 +425,7 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
   };
   auto make_tuple_node = [&] {
     return AddNode(
-        SemIR::Node::TupleType::Make(parse_node, SemIR::TypeId::TypeType,
+        SemIR::TupleType(parse_node, SemIR::TypeId::TypeType,
                                      semantics_ir_->AddTypeBlock(type_ids)));
   };
   return CanonicalizeTypeImpl(SemIR::NodeKind::TupleType, profile_tuple,
@@ -434,7 +434,7 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
 
 auto Context::GetPointerType(Parse::Node parse_node,
                              SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
-  return CanonicalizeTypeAndAddNodeIfNew(SemIR::Node::PointerType::Make(
+  return CanonicalizeTypeAndAddNodeIfNew(SemIR::PointerType(
       parse_node, SemIR::TypeId::TypeType, pointee_type_id));
 }
 
