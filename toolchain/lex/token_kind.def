@@ -32,6 +32,10 @@
 #define CARBON_TOKEN(Name)
 #endif
 
+// The error token comes first because we want it to get the zero value, which
+// will also be used in default initialization.
+CARBON_TOKEN(Error)
+
 #ifndef CARBON_SYMBOL_TOKEN
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) CARBON_TOKEN(Name)
 #endif
@@ -209,7 +213,6 @@ CARBON_TOKEN(StringLiteral)
 CARBON_TOKEN(IntegerTypeLiteral)
 CARBON_TOKEN(UnsignedIntegerTypeLiteral)
 CARBON_TOKEN(FloatingPointTypeLiteral)
-CARBON_TOKEN(Error)
 CARBON_TOKEN(StartOfFile)
 CARBON_TOKEN(EndOfFile)
 

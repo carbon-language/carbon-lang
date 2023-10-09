@@ -464,30 +464,95 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     }
   }
 
-  auto LexSymbolToken(llvm::StringRef& source_text,
-                      TokenKind kind = TokenKind::Error) -> LexResult {
-    auto compute_symbol_kind = [](llvm::StringRef source_text) {
-      return llvm::StringSwitch<TokenKind>(source_text)
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
-  .StartsWith(Spelling, TokenKind::Name)
-#include "toolchain/lex/token_kind.def"
-          .Default(TokenKind::Error);
+  auto LexOneCharSymbolToken(llvm::StringRef& source_text, TokenKind kind)
+      -> Token {
+    // Verify in a debug build that the incoming token kind is correct.
+    CARBON_DCHECK(kind != TokenKind::Error);
+    CARBON_DCHECK(kind.fixed_spelling().size() == 1);
+    CARBON_DCHECK(source_text.front() == kind.fixed_spelling().front())
+        << "Source text starts with '" << source_text.front()
+        << "' instead of the spelling '" << kind.fixed_spelling()
+        << "' of the incoming token kind '" << kind << "'";
+
+    if (!set_indent_) {
+      current_line_info_->indent = current_column_;
+      set_indent_ = true;
+    }
+
+    Token token = buffer_->AddToken(
+        {.kind = kind, .token_line = current_line_, .column = current_column_});
+    ++current_column_;
+    source_text = source_text.drop_front();
+    return token;
+  }
+
+  auto LexOpeningSymbolToken(llvm::StringRef& source_text, TokenKind kind)
+      -> LexResult {
+    Token token = LexOneCharSymbolToken(source_text, kind);
+    open_groups_.push_back(token);
+    return token;
+  }
+
+  auto LexClosingSymbolToken(llvm::StringRef& source_text, TokenKind kind)
+      -> LexResult {
+    auto unmatched_error = [&] {
+      CARBON_DIAGNOSTIC(
+          UnmatchedClosing, Error,
+          "Closing symbol without a corresponding opening symbol.");
+      emitter_.Emit(source_text.begin(), UnmatchedClosing);
+      Token token = buffer_->AddToken({.kind = TokenKind::Error,
+                                       .token_line = current_line_,
+                                       .column = current_column_,
+                                       .error_length = 1});
+      ++current_column_;
+      source_text = source_text.drop_front();
+      return token;
     };
 
-    // We use the `error` token as a place-holder for cases where one character
-    // isn't enough to pick a definitive symbol token. Recompute the kind using
-    // the full symbol set.
-    if (LLVM_UNLIKELY(kind == TokenKind::Error)) {
-      kind = compute_symbol_kind(source_text);
-      if (kind == TokenKind::Error) {
-        return LexError(source_text);
+    // If we have no open groups, this is an error.
+    if (LLVM_UNLIKELY(open_groups_.empty())) {
+      return unmatched_error();
+    }
+
+    Token opening_token = open_groups_.back();
+    // Close any invalid open groups first.
+    if (LLVM_UNLIKELY(buffer_->GetTokenInfo(opening_token).kind !=
+                      kind.opening_symbol())) {
+      CloseInvalidOpenGroups(kind);
+      // This may exhaust the open groups so re-check and re-error if needed.
+      if (open_groups_.empty()) {
+        return unmatched_error();
       }
-    } else {
-      // Verify in a debug build that the incoming token kind is correct.
-      CARBON_DCHECK(kind == compute_symbol_kind(source_text))
-          << "Incoming token kind '" << kind
-          << "' does not match computed kind '"
-          << compute_symbol_kind(source_text) << "'!";
+      opening_token = open_groups_.back();
+      CARBON_DCHECK(buffer_->GetTokenInfo(opening_token).kind ==
+                    kind.opening_symbol());
+    }
+    open_groups_.pop_back();
+
+    // Now that the groups are all matched up, lex the actual token.
+    Token token = LexOneCharSymbolToken(source_text, kind);
+
+    // Note that it is important to get fresh token infos here as lexing the
+    // open token would invalidate any pointers.
+    buffer_->GetTokenInfo(opening_token).closing_token = token;
+    buffer_->GetTokenInfo(token).opening_token = opening_token;
+
+    return token;
+  }
+
+  auto LexSymbolToken(llvm::StringRef& source_text) -> LexResult {
+    // One character symbols and grouping symbols are handled with dedicated
+    // dispatch. We only lex the multi-character tokens here.
+    TokenKind kind = llvm::StringSwitch<TokenKind>(source_text)
+#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
+  .StartsWith(Spelling, TokenKind::Name)
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)
+#include "toolchain/lex/token_kind.def"
+                         .Default(TokenKind::Error);
+    if (kind == TokenKind::Error) {
+      return LexError(source_text);
     }
 
     if (!set_indent_) {
@@ -495,46 +560,10 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
       set_indent_ = true;
     }
 
-    CloseInvalidOpenGroups(kind);
-
-    const char* location = source_text.begin();
     Token token = buffer_->AddToken(
         {.kind = kind, .token_line = current_line_, .column = current_column_});
     current_column_ += kind.fixed_spelling().size();
     source_text = source_text.drop_front(kind.fixed_spelling().size());
-
-    // Opening symbols just need to be pushed onto our queue of opening groups.
-    if (kind.is_opening_symbol()) {
-      open_groups_.push_back(token);
-      return token;
-    }
-
-    // Only closing symbols need further special handling.
-    if (!kind.is_closing_symbol()) {
-      return token;
-    }
-
-    TokenInfo& closing_token_info = buffer_->GetTokenInfo(token);
-
-    // Check that there is a matching opening symbol before we consume this as
-    // a closing symbol.
-    if (open_groups_.empty()) {
-      closing_token_info.kind = TokenKind::Error;
-      closing_token_info.error_length = kind.fixed_spelling().size();
-
-      CARBON_DIAGNOSTIC(
-          UnmatchedClosing, Error,
-          "Closing symbol without a corresponding opening symbol.");
-      emitter_.Emit(location, UnmatchedClosing);
-      // Note that this still returns true as we do consume a symbol.
-      return token;
-    }
-
-    // Finally can handle a normal closing symbol.
-    Token opening_token = open_groups_.pop_back_val();
-    TokenInfo& opening_token_info = buffer_->GetTokenInfo(opening_token);
-    opening_token_info.closing_token = token;
-    closing_token_info.opening_token = opening_token;
     return token;
   }
 
@@ -587,30 +616,9 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     return token;
   }
 
-  // Closes all open groups that cannot remain open across the symbol `K`.
+  // Closes all open groups that cannot remain open across a closing symbol.
   // Users may pass `Error` to close all open groups.
-  auto CloseInvalidOpenGroups(TokenKind kind) -> void {
-    // There are two common cases that result in nothing to close. Short circuit
-    // those here.
-    if ((!kind.is_closing_symbol() && kind != TokenKind::Error) ||
-        open_groups_.empty()) {
-      return;
-    }
-
-    // Also check the first open group token to see if it matches this closing
-    // token, in which case there is nothing to do. This is redundant with the
-    // work inside the main loop, but we peel it out to allow inlining.
-    Token opening_token = open_groups_.back();
-    TokenKind opening_kind = buffer_->GetTokenInfo(opening_token).kind;
-    if (kind == opening_kind.closing_symbol()) {
-      return;
-    }
-
-    // Otherwise, delegate to a separate function to help with inlining.
-    CloseInvalidOpenGroupsSlow(kind);
-  }
-
-  [[gnu::noinline]] auto CloseInvalidOpenGroupsSlow(TokenKind kind) -> void {
+  [[gnu::noinline]] auto CloseInvalidOpenGroups(TokenKind kind) -> void {
     CARBON_CHECK(kind.is_closing_symbol() || kind == TokenKind::Error);
     CARBON_CHECK(!open_groups_.empty());
 
@@ -770,7 +778,9 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 
     // Close any open groups. We do this after marking whitespace, it will
     // preserve that.
-    CloseInvalidOpenGroups(TokenKind::Error);
+    if (!open_groups_.empty()) {
+      CloseInvalidOpenGroups(TokenKind::Error);
+    }
 
     buffer_->AddToken({.kind = TokenKind::EndOfFile,
                        .token_line = current_line_,
@@ -818,14 +828,19 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
   CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
   CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-  // A custom dispatch function that pre-selects a symbol token to lex.
-  template <const TokenKind& Token>
-  static auto DispatchLexOneCharSymbol(Lexer& lexer,
-                                       llvm::StringRef& source_text) -> void {
-    LexResult result = lexer.LexSymbolToken(source_text, Token);
-    CARBON_CHECK(result) << "Failed to form a token!";
-    [[clang::musttail]] return DispatchNext(lexer, source_text);
+  // A custom dispatch functions that pre-select the symbol token to lex.
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
+  static auto Dispatch##LexMethod##SymbolToken(Lexer& lexer,                 \
+                                               llvm::StringRef& source_text) \
+      ->void {                                                               \
+    LexResult result = lexer.LexMethod##SymbolToken(                         \
+        source_text, OneCharTokenKindTable[source_text.front()]);            \
+    CARBON_CHECK(result) << "Failed to form a token!";                       \
+    [[clang::musttail]] return DispatchNext(lexer, source_text);             \
   }
+  CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
+  CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
+  CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
 
   // Define a set of non-token dispatch functions that handle things like
   // whitespace and comments.
@@ -915,7 +930,11 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     // needs to override some of the generic handling above, and provide a
     // custom token.
 #define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexOneCharSymbol<TokenKind::TokenName>;
+  table[(Spelling)[0]] = &DispatchLexOneCharSymbolToken;
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
+  table[(Spelling)[0]] = &DispatchLexOpeningSymbolToken;
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
+  table[(Spelling)[0]] = &DispatchLexClosingSymbolToken;
 #include "toolchain/lex/token_kind.def"
 
     // Override the handling for `/` to consider comments as well as a `/`
@@ -956,6 +975,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 
   static const DispatchTableT DispatchTable;
 
+  static const std::array<TokenKind, 256> OneCharTokenKindTable;
+
   TokenizedBuffer* buffer_;
 
   SourceBufferLocationTranslator translator_;
@@ -975,6 +996,19 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 
 constexpr TokenizedBuffer::Lexer::DispatchTableT
     TokenizedBuffer::Lexer::DispatchTable = MakeDispatchTable();
+
+constexpr std::array<TokenKind, 256>
+    TokenizedBuffer::Lexer::OneCharTokenKindTable = [] {
+      std::array<TokenKind, 256> table = {};
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
+  table[(Spelling)[0]] = TokenKind::TokenName;
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
+  table[(Spelling)[0]] = TokenKind::TokenName;
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
+  table[(Spelling)[0]] = TokenKind::TokenName;
+#include "toolchain/lex/token_kind.def"
+      return table;
+    }();
 
 auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
     -> TokenizedBuffer {
