@@ -585,7 +585,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     CloseInvalidOpenGroupsSlow(kind);
   }
 
-  auto CloseInvalidOpenGroupsSlow(TokenKind kind) -> void {
+  [[clang::noinline]] auto CloseInvalidOpenGroupsSlow(TokenKind kind) -> void {
     CARBON_CHECK(kind.is_closing_symbol() || kind == TokenKind::Error);
     CARBON_CHECK(!open_groups_.empty());
 
