@@ -225,11 +225,12 @@ struct ArrayIndex {
 };
 
 // Initializes an array from a tuple. `tuple_id` is the source tuple
-// expression. `refs_id` contains one initializer per array element, plus a
-// final element that is the return slot for the initialization.
+// expression. `inits_and_return_slot_id` contains one initializer per array
+// element, plus a final element that is the return slot for the
+// initialization.
 struct ArrayInit {
   NodeId tuple_id;
-  NodeBlockId refs_id;
+  NodeBlockId inits_and_return_slot_id;
 };
 
 struct ArrayType {
@@ -399,7 +400,7 @@ struct StructInit {
 };
 
 struct StructLiteral {
-  NodeBlockId refs_id;
+  NodeBlockId elements_id;
 };
 
 struct StructType {
@@ -1042,11 +1043,12 @@ struct DataBase : T {
 };
 }  // namespace NodeInternals
 
-template <NodeKind::RawEnumType KindT, typename Data>
-struct TypedNode : NodeInternals::ParseNodeBase<Data>,
-                   NodeInternals::TypeBase<Data>,
-                   NodeInternals::DataBase<Data> {
+template <NodeKind::RawEnumType KindT, typename DataT>
+struct TypedNode : NodeInternals::ParseNodeBase<DataT>,
+                   NodeInternals::TypeBase<DataT>,
+                   NodeInternals::DataBase<DataT> {
   static constexpr NodeKind Kind = NodeKind::Create(KindT);
+  using Data = DataT;
 
   static auto FromRawData(Parse::Node parse_node, TypeId type_id, int32_t arg0,
                           int32_t arg1) -> TypedNode {

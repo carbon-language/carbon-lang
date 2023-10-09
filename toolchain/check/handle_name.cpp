@@ -17,10 +17,10 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   auto base =
       context.semantics_ir().GetNode(context.FollowNameReferences(base_id));
-  if (base.kind() == SemIR::NodeKind::Namespace) {
+  if (auto namespc = base.TryAs<SemIR::Namespace>()) {
     // For a namespace, just resolve the name.
     auto node_id =
-        context.LookupName(parse_node, name_id, base.GetAsNamespace(),
+        context.LookupName(parse_node, name_id, namespc->name_scope_id,
                            /*print_diagnostics=*/true);
     context.node_stack().Push(parse_node, node_id);
     return true;
@@ -34,16 +34,15 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   switch (base_type.kind()) {
     case SemIR::NodeKind::StructType: {
-      auto refs =
-          context.semantics_ir().GetNodeBlock(base_type.GetAsStructType());
+      auto refs = context.semantics_ir().GetNodeBlock(
+          base_type.As<SemIR::StructType>().fields_id);
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
-        auto ref = context.semantics_ir().GetNode(ref_id);
-        if (auto [field_name_id, field_type_id] = ref.GetAsStructTypeField();
-            name_id == field_name_id) {
+        auto field = context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(ref_id);
+        if (name_id == field.name_id) {
           context.AddNodeAndPush(
               parse_node,
-              SemIR::Node::StructAccess::Make(parse_node, field_type_id,
+              SemIR::Node::StructAccess::Make(parse_node, field.type_id,
                                               base_id, SemIR::MemberIndex(i)));
           return true;
         }

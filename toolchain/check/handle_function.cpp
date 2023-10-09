@@ -123,11 +123,10 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   context.AddCurrentCodeBlockToFunction();
 
   // Bring the parameters into scope.
-  for (auto ref_id :
+  for (auto param_id :
        context.semantics_ir().GetNodeBlock(function.param_refs_id)) {
-    auto ref = context.semantics_ir().GetNode(ref_id);
-    auto name_id = ref.GetAsParameter();
-    context.AddNameToLookup(ref.parse_node(), name_id, ref_id);
+    auto param = context.semantics_ir().GetNodeAs<SemIR::Parameter>(param_id);
+    context.AddNameToLookup(param.parse_node, param.name_id, param_id);
   }
 
   context.node_stack().Push(parse_node, function_id);

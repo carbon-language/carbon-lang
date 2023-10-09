@@ -27,7 +27,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
     return true;
   }
 
-  auto function_id = name_node.GetAsFunctionDeclaration();
+  auto function_id = name_node.As<SemIR::FunctionDeclaration>().function_id;
   const auto& callable = context.semantics_ir().GetFunction(function_id);
 
   // For functions with an implicit return type, the return type is the empty

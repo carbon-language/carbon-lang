@@ -91,7 +91,7 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound node.
   auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
-    return GetIntegerValue(GetNode(bound_id).As<IntegerLiteral>().integer_id)
+    return GetIntegerValue(GetNodeAs<IntegerLiteral>(bound_id).integer_id)
         .getZExtValue();
   }
 
@@ -174,6 +174,12 @@ class File : public Printable<File> {
 
   // Returns the requested node.
   auto GetNode(NodeId node_id) const -> Node { return nodes_[node_id.index]; }
+
+  // Returns the requested node, which is known to have the specified type.
+  template <typename NodeT>
+  auto GetNodeAs(NodeId node_id) const -> NodeT {
+    return GetNode(node_id).As<NodeT>();
+  }
 
   // Reserves and returns a node block ID. The contents of the node block
   // should be specified by calling SetNodeBlock, or by pushing the ID onto the

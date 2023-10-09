@@ -623,9 +623,10 @@ class Formatter {
     out_ << " ";
     FormatArg(node.tuple_id);
 
-    llvm::ArrayRef<NodeId> refs = semantics_ir_.GetNodeBlock(node.refs_id);
-    auto inits = refs.drop_back(1);
-    auto return_slot_id = refs.back();
+    llvm::ArrayRef<NodeId> inits_and_return_slot =
+        semantics_ir_.GetNodeBlock(node.inits_and_return_slot_id);
+    auto inits = inits_and_return_slot.drop_back(1);
+    auto return_slot_id = inits_and_return_slot.back();
 
     out_ << ", (";
     llvm::ListSeparator sep;
@@ -697,7 +698,7 @@ class Formatter {
     llvm::ListSeparator sep;
     for (auto field_id : semantics_ir_.GetNodeBlock(node.fields_id)) {
       out_ << sep << ".";
-      auto field = semantics_ir_.GetNode(field_id).As<StructTypeField>();
+      auto field = semantics_ir_.GetNodeAs<StructTypeField>(field_id);
       FormatString(field.name_id);
       out_ << ": ";
       FormatType(field.type_id);

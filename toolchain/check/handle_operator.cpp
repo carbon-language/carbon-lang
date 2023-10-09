@@ -163,7 +163,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
           context.semantics_ir().GetTypeAllowBuiltinTypes(type_id));
       auto result_type_id = SemIR::TypeId::Error;
       if (type_node.kind() == SemIR::NodeKind::PointerType) {
-        result_type_id = type_node.GetAsPointerType();
+        result_type_id = type_node.As<SemIR::PointerType>().pointee_id;
       } else {
         CARBON_DIAGNOSTIC(
             DereferenceOfNonPointer, Error,

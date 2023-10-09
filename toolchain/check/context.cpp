@@ -149,13 +149,11 @@ auto Context::FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId {
     auto node = semantics_ir().GetNode(node_id);
     switch (node.kind()) {
       case SemIR::NodeKind::NameReference: {
-        auto [name_id, value_id] = node.GetAsNameReference();
-        node_id = value_id;
+        node_id = node.As<SemIR::NameReference>().value_id;
         break;
       }
       case SemIR::NodeKind::NameReferenceUntyped: {
-        auto [name_id, value_id] = node.GetAsNameReferenceUntyped();
-        node_id = value_id;
+        node_id = node.As<SemIR::NameReferenceUntyped>().value_id;
         break;
       }
       default:
@@ -247,9 +245,10 @@ auto Context::AddCurrentCodeBlockToFunction() -> void {
     return;
   }
 
-  auto function_id = semantics_ir()
-                         .GetNode(return_scope_stack().back())
-                         .GetAsFunctionDeclaration();
+  auto function_id =
+      semantics_ir()
+          .GetNodeAs<SemIR::FunctionDeclaration>(return_scope_stack().back())
+          .function_id;
   semantics_ir()
       .GetFunction(function_id)
       .body_block_ids.push_back(node_block_stack().PeekOrAdd());
@@ -339,45 +338,48 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
                         llvm::FoldingSetNodeID& canonical_id) -> void {
   switch (node.kind()) {
     case SemIR::NodeKind::ArrayType: {
-      auto [bound_id, element_type_id] = node.GetAsArrayType();
+      auto array_type = node.As<SemIR::ArrayType>();
       canonical_id.AddInteger(
-          semantics_context.semantics_ir().GetArrayBoundValue(bound_id));
-      canonical_id.AddInteger(element_type_id.index);
+          semantics_context.semantics_ir().GetArrayBoundValue(
+              array_type.bound_id));
+      canonical_id.AddInteger(array_type.element_type_id.index);
       break;
     }
     case SemIR::NodeKind::Builtin:
-      canonical_id.AddInteger(node.GetAsBuiltin().AsInt());
+      canonical_id.AddInteger(node.As<SemIR::Builtin>().builtin_kind.AsInt());
       break;
     case SemIR::NodeKind::CrossReference: {
       // TODO: Cross-references should be canonicalized by looking at their
       // target rather than treating them as new unique types.
-      auto [xref_id, node_id] = node.GetAsCrossReference();
-      canonical_id.AddInteger(xref_id.index);
-      canonical_id.AddInteger(node_id.index);
+      auto xref = node.As<SemIR::CrossReference>();
+      canonical_id.AddInteger(xref.ir_id.index);
+      canonical_id.AddInteger(xref.node_id.index);
       break;
     }
     case SemIR::NodeKind::ConstType:
       canonical_id.AddInteger(
-          semantics_context.GetUnqualifiedType(node.GetAsConstType()).index);
+          semantics_context.GetUnqualifiedType(node.As<SemIR::ConstType>().inner_id)
+              .index);
       break;
     case SemIR::NodeKind::PointerType:
-      canonical_id.AddInteger(node.GetAsPointerType().index);
+      canonical_id.AddInteger(node.As<SemIR::PointerType>().pointee_id.index);
       break;
     case SemIR::NodeKind::StructType: {
-      auto refs =
-          semantics_context.semantics_ir().GetNodeBlock(node.GetAsStructType());
-      for (const auto& ref_id : refs) {
-        auto ref = semantics_context.semantics_ir().GetNode(ref_id);
-        auto [name_id, type_id] = ref.GetAsStructTypeField();
-        canonical_id.AddInteger(name_id.index);
-        canonical_id.AddInteger(type_id.index);
+      auto fields = semantics_context.semantics_ir().GetNodeBlock(
+          node.As<SemIR::StructType>().fields_id);
+      for (const auto& field_id : fields) {
+        auto field =
+            semantics_context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(
+                field_id);
+        canonical_id.AddInteger(field.name_id.index);
+        canonical_id.AddInteger(field.type_id.index);
       }
       break;
     }
     case SemIR::NodeKind::TupleType:
-      ProfileTupleType(
-          semantics_context.semantics_ir().GetTypeBlock(node.GetAsTupleType()),
-          canonical_id);
+      ProfileTupleType(semantics_context.semantics_ir().GetTypeBlock(
+                           node.As<SemIR::TupleType>().elements_id),
+                       canonical_id);
       break;
     default:
       CARBON_FATAL() << "Unexpected type node " << node;
@@ -439,8 +441,8 @@ auto Context::GetPointerType(Parse::Node parse_node,
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
   SemIR::Node type_node =
       semantics_ir_->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(type_id));
-  if (type_node.kind() == SemIR::NodeKind::ConstType) {
-    return type_node.GetAsConstType();
+  if (auto const_type = type_node.TryAs<SemIR::ConstType>()) {
+    return const_type->inner_id;
   }
   return type_id;
 }

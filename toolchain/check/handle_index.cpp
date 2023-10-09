@@ -21,10 +21,10 @@ auto HandleIndexExpressionStart(Context& /*context*/,
 static auto ValidateIntegerLiteralBound(Context& context,
                                         Parse::Node parse_node,
                                         SemIR::Node operand_node,
-                                        SemIR::Node index_node, int size)
-    -> const llvm::APInt* {
+                                        SemIR::IntegerLiteral index_node,
+                                        int size) -> const llvm::APInt* {
   const auto& index_val =
-      context.semantics_ir().GetIntegerValue(index_node.GetAsIntegerLiteral());
+      context.semantics_ir().GetIntegerValue(index_node.integer_id);
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(IndexOutOfBounds, Error,
                       "Index `{0}` is past the end of `{1}`.", llvm::APSInt,
@@ -51,13 +51,14 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
 
   switch (operand_type_node.kind()) {
     case SemIR::NodeKind::ArrayType: {
-      auto [bound_id, element_type_id] = operand_type_node.GetAsArrayType();
+      auto array_type = operand_type_node.As<SemIR::ArrayType>();
       // We can check whether integers are in-bounds, although it doesn't affect
       // the IR for an array.
-      if (index_node.kind() == SemIR::NodeKind::IntegerLiteral &&
+      if (auto index_literal = index_node.TryAs<SemIR::IntegerLiteral>();
+          index_literal &&
           !ValidateIntegerLiteralBound(
-              context, parse_node, operand_node, index_node,
-              context.semantics_ir().GetArrayBoundValue(bound_id))) {
+              context, parse_node, operand_node, *index_literal,
+              context.semantics_ir().GetArrayBoundValue(array_type.bound_id))) {
         index_node_id = SemIR::NodeId::BuiltinError;
       }
       auto cast_index_id = ConvertToValueOfType(
@@ -71,8 +72,9 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
         operand_node_id = context.AddNode(SemIR::Node::ValueAsReference::Make(
             parse_node, operand_type_id, operand_node_id));
       }
-      auto elem_id = context.AddNode(SemIR::Node::ArrayIndex::Make(
-          parse_node, element_type_id, operand_node_id, cast_index_id));
+      auto elem_id = context.AddNode(
+          SemIR::Node::ArrayIndex::Make(parse_node, array_type.element_type_id,
+                                        operand_node_id, cast_index_id));
       if (array_cat != SemIR::ExpressionCategory::DurableReference) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.
@@ -85,12 +87,12 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
     }
     case SemIR::NodeKind::TupleType: {
       SemIR::TypeId element_type_id = SemIR::TypeId::Error;
-      if (index_node.kind() == SemIR::NodeKind::IntegerLiteral) {
+      if (auto index_literal = index_node.TryAs<SemIR::IntegerLiteral>()) {
         auto type_block = context.semantics_ir().GetTypeBlock(
-            operand_type_node.GetAsTupleType());
-        if (const auto* index_val =
-                ValidateIntegerLiteralBound(context, parse_node, operand_node,
-                                            index_node, type_block.size())) {
+            operand_type_node.As<SemIR::TupleType>().elements_id);
+        if (const auto* index_val = ValidateIntegerLiteralBound(
+                context, parse_node, operand_node, *index_literal,
+                type_block.size())) {
           element_type_id = type_block[index_val->getZExtValue()];
         } else {
           index_node_id = SemIR::NodeId::BuiltinError;
