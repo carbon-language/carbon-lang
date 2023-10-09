@@ -498,6 +498,92 @@ void BM_RandomSource(benchmark::State& state) {
 // range here.
 BENCHMARK(BM_RandomSource);
 
+// Benchmark to stress opening and closing grouped symbols.
+void BM_GroupingSymbols(benchmark::State& state) {
+  int curly_brace_depth = state.range(0);
+  int paren_depth = state.range(1);
+  int square_bracket_depth = state.range(2);
+
+  // TODO: It might be interesting to have some random pattern of nesting, but
+  // the obvious ways to do that result it really unstable total size of input
+  // or unbalanced groups. For now, just use a simple strict nesting approach.
+  // It should still let us look for specific pain points. We do include some
+  // whitespace and keywords to make sure *some* other parts of the benchmark
+  // are also active and have some reasonable icache pressure.
+  const std::array<std::string, NumTokens>& ids = GetRandomIdentifiers();
+  std::string source;
+  llvm::raw_string_ostream os(source);
+  int num_tokens_per_nest =
+      curly_brace_depth * 2 + paren_depth * 2 + square_bracket_depth * 2 + 2;
+  int num_nests = NumTokens / num_tokens_per_nest;
+  for (int i : llvm::seq(num_nests)) {
+    for (int j : llvm::seq(curly_brace_depth)) {
+      os.indent(j * 2) << "{\n";
+    }
+    os.indent(curly_brace_depth * 2);
+    for ([[gnu::unused]] int j : llvm::seq(paren_depth)) {
+      os << "(";
+    }
+    for ([[gnu::unused]] int j : llvm::seq(square_bracket_depth)) {
+      os << "[";
+    }
+    os << ids[(i * 2) % NumTokens];
+    for ([[gnu::unused]] int j : llvm::seq(square_bracket_depth)) {
+      os << "]";
+    }
+    for ([[gnu::unused]] int j : llvm::seq(paren_depth)) {
+      os << ")";
+    }
+    for (int j : llvm::reverse(llvm::seq(curly_brace_depth))) {
+      os << "\n";
+      os.indent(j * 2) << "}";
+    }
+    os << ids[(i * 2 + 1) % NumTokens] << "\n";
+  }
+
+  LexerBenchHelper helper(os.str());
+  for (auto _ : state) {
+    TokenizedBuffer buffer = helper.Lex();
+
+    // Ensure that lexing actually occurs for benchmarking and that it doesn't
+    // hit errors that would skew the benchmark results.
+    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+  state.counters["lines_per_second"] =
+      benchmark::Counter(llvm::StringRef(source).count('\n'),
+                         benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_GroupingSymbols)
+    ->ArgsProduct({
+        {1, 2, 3, 4, 8, 16, 32},
+        {0},
+        {0},
+    })
+    ->ArgsProduct({
+        {0},
+        {1, 2, 3, 4, 8, 16, 32},
+        {0},
+    })
+    ->ArgsProduct({
+        {0},
+        {0},
+        {1, 2, 3, 4, 8, 16, 32},
+    })
+    ->ArgsProduct({
+        {32},
+        {1, 2, 3, 4, 8, 16, 32},
+        {0},
+    })
+    ->ArgsProduct({
+        {32},
+        {32},
+        {1, 2, 3, 4, 8, 16, 32},
+    });
+
 // Benchmark to stress the lexing of blank lines. This uses a simple, easy to
 // lex token, but separates each one by varying numbers of blank lines.
 void BM_BlankLines(benchmark::State& state) {
