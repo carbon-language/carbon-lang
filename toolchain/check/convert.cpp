@@ -404,8 +404,8 @@ static auto ConvertStructToStruct(Context& context,
   // result.
   llvm::ArrayRef<SemIR::NodeId> literal_elems;
   auto literal_elems_id = SemIR::NodeBlockId::Invalid;
-  if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
-    literal_elems_id = tuple_literal->elements_id;
+  if (auto struct_literal = value.TryAs<SemIR::StructLiteral>()) {
+    literal_elems_id = struct_literal->elements_id;
     literal_elems = semantics_ir.GetNodeBlock(literal_elems_id);
   } else {
     value_id = MaterializeIfInitializing(context, value_id);
