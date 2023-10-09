@@ -391,12 +391,12 @@ struct StringLiteral {
 
 struct StructAccess {
   NodeId struct_id;
-  MemberIndex ref_index;
+  MemberIndex index;
 };
 
 struct StructInit {
   NodeId literal_id;
-  NodeBlockId converted_refs_id;
+  NodeBlockId elements_id;
 };
 
 struct StructLiteral {
@@ -416,7 +416,7 @@ struct StructTypeField {
 
 struct StructValue {
   NodeId literal_id;
-  NodeBlockId converted_refs_id;
+  NodeBlockId elements_id;
 };
 
 struct Temporary {
@@ -433,7 +433,7 @@ struct TupleAccess {
 
 struct TupleIndex {
   NodeId tuple_id;
-  NodeId index;
+  NodeId index_id;
 };
 
 struct TupleInit {
@@ -1046,7 +1046,8 @@ struct DataBase : T {
 template <NodeKind::RawEnumType KindT, typename DataT>
 struct TypedNode : NodeInternals::ParseNodeBase<DataT>,
                    NodeInternals::TypeBase<DataT>,
-                   NodeInternals::DataBase<DataT> {
+                   NodeInternals::DataBase<DataT>,
+                   Printable<TypedNode<KindT, DataT>> {
   static constexpr NodeKind Kind = NodeKind::Create(KindT);
   using Data = DataT;
 
@@ -1056,6 +1057,8 @@ struct TypedNode : NodeInternals::ParseNodeBase<DataT>,
                      TypedNode::FromTypeId(type_id),
                      TypedNode::FromRawArgs(arg0, arg1)};
   }
+
+  auto Print(llvm::raw_ostream& out) const -> void { Node(*this).Print(out); }
 };
 
 // Provides base support for use of Id types as DenseMap/DenseSet keys.
