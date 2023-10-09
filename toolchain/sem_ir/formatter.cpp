@@ -690,8 +690,8 @@ class Formatter {
   }
 
   // StructTypeFields are formatted as part of their StructType.
-  auto FormatInstruction(NodeId /*node_id*/, StructTypeField /*node*/)
-      -> void {}
+  auto FormatInstruction(NodeId /*node_id*/, StructTypeField /*node*/) -> void {
+  }
 
   auto FormatInstructionRHS(StructType node) -> void {
     out_ << " {";

@@ -38,11 +38,11 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
           base_type.As<SemIR::StructType>().fields_id);
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
-        auto field = context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(ref_id);
+        auto field =
+            context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(ref_id);
         if (name_id == field.name_id) {
           context.AddNodeAndPush(
-              parse_node,
-              SemIR::StructAccess(parse_node, field.type_id,
+              parse_node, SemIR::StructAccess(parse_node, field.type_id,
                                               base_id, SemIR::MemberIndex(i)));
           return true;
         }
@@ -96,15 +96,15 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   auto value = context.semantics_ir().GetNode(value_id);
   if (value.kind().value_kind() == SemIR::NodeValueKind::Typed) {
     // This is a reference to a name binding that has a value and a type.
-    context.AddNodeAndPush(parse_node,
-                           SemIR::NameReference(
-                               parse_node, value.type_id(), name_id, value_id));
+    context.AddNodeAndPush(
+        parse_node,
+        SemIR::NameReference(parse_node, value.type_id(), name_id, value_id));
   } else {
     // This is something like a namespace name, that can be found by name lookup
     // but isn't a first-class value with a type.
-    context.AddNodeAndPush(parse_node,
-                           SemIR::NameReferenceUntyped(
-                               parse_node, value.type_id(), name_id, value_id));
+    context.AddNodeAndPush(
+        parse_node, SemIR::NameReferenceUntyped(parse_node, value.type_id(),
+                                                name_id, value_id));
   }
   return true;
 }

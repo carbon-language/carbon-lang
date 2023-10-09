@@ -15,7 +15,8 @@ auto HandleInvalid(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
 }
 
 auto HandleCrossReference(FunctionContext& /*context*/,
-                          SemIR::NodeId /*node_id*/, SemIR::CrossReference node) -> void {
+                          SemIR::NodeId /*node_id*/, SemIR::CrossReference node)
+    -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 

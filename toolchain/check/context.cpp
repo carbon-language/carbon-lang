@@ -221,8 +221,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
         new_block_id = semantics_ir().AddNodeBlockId();
       }
-      AddNode(
-          SemIR::BranchWithArg(parse_node, new_block_id, arg_id));
+      AddNode(SemIR::BranchWithArg(parse_node, new_block_id, arg_id));
     }
     node_block_stack().Pop();
   }
@@ -231,8 +230,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
   // Acquire the result value.
   SemIR::TypeId result_type_id =
       semantics_ir().GetNode(*block_args.begin()).type_id();
-  return AddNode(
-      SemIR::BlockArg(parse_node, result_type_id, new_block_id));
+  return AddNode(SemIR::BlockArg(parse_node, result_type_id, new_block_id));
 }
 
 // Add the current code block to the enclosing function.
@@ -358,7 +356,8 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
     }
     case SemIR::NodeKind::ConstType:
       canonical_id.AddInteger(
-          semantics_context.GetUnqualifiedType(node.As<SemIR::ConstType>().inner_id)
+          semantics_context
+              .GetUnqualifiedType(node.As<SemIR::ConstType>().inner_id)
               .index);
       break;
     case SemIR::NodeKind::PointerType:
@@ -412,8 +411,8 @@ auto Context::CanonicalizeType(SemIR::NodeId node_id) -> SemIR::TypeId {
 auto Context::CanonicalizeStructType(Parse::Node parse_node,
                                      SemIR::NodeBlockId refs_id)
     -> SemIR::TypeId {
-  return CanonicalizeTypeAndAddNodeIfNew(SemIR::StructType(
-      parse_node, SemIR::TypeId::TypeType, refs_id));
+  return CanonicalizeTypeAndAddNodeIfNew(
+      SemIR::StructType(parse_node, SemIR::TypeId::TypeType, refs_id));
 }
 
 auto Context::CanonicalizeTupleType(Parse::Node parse_node,
@@ -424,9 +423,8 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
     ProfileTupleType(type_ids, canonical_id);
   };
   auto make_tuple_node = [&] {
-    return AddNode(
-        SemIR::TupleType(parse_node, SemIR::TypeId::TypeType,
-                                     semantics_ir_->AddTypeBlock(type_ids)));
+    return AddNode(SemIR::TupleType(parse_node, SemIR::TypeId::TypeType,
+                                    semantics_ir_->AddTypeBlock(type_ids)));
   };
   return CanonicalizeTypeImpl(SemIR::NodeKind::TupleType, profile_tuple,
                               make_tuple_node);
@@ -434,8 +432,8 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
 
 auto Context::GetPointerType(Parse::Node parse_node,
                              SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
-  return CanonicalizeTypeAndAddNodeIfNew(SemIR::PointerType(
-      parse_node, SemIR::TypeId::TypeType, pointee_type_id));
+  return CanonicalizeTypeAndAddNodeIfNew(
+      SemIR::PointerType(parse_node, SemIR::TypeId::TypeType, pointee_type_id));
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {

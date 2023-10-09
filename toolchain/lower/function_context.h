@@ -133,7 +133,8 @@ class FunctionContext {
 // Declare handlers for each SemIR::File node.
 #define CARBON_SEMANTICS_NODE_KIND(Name)                             \
   auto Handle##Name(FunctionContext& context, SemIR::NodeId node_id, \
-                    SemIR::Name node) -> void;
+                    SemIR::Name node)                                \
+      ->void;
 #include "toolchain/sem_ir/node_kind.def"
 
 }  // namespace Carbon::Lower

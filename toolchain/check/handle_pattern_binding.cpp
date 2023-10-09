@@ -32,12 +32,12 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::VariableIntroducer:
-      context.AddNodeAndPush(parse_node, SemIR::VarStorage(
-                                             name_node, cast_type_id, name_id));
+      context.AddNodeAndPush(
+          parse_node, SemIR::VarStorage(name_node, cast_type_id, name_id));
       break;
     case Parse::NodeKind::ParameterListStart:
-      context.AddNodeAndPush(parse_node, SemIR::Parameter(
-                                             name_node, cast_type_id, name_id));
+      context.AddNodeAndPush(
+          parse_node, SemIR::Parameter(name_node, cast_type_id, name_id));
       break;
     case Parse::NodeKind::LetIntroducer:
       // Create the node, but don't add it to a block until after we've formed

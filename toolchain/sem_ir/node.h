@@ -211,9 +211,7 @@ struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
 namespace NodeData {
 // The Invalid NodeKind exists, but nodes of this kind cannot be created.
 struct Invalid {
-  Invalid() {
-    CARBON_FATAL() << "Attempted to create an Invalid node";
-  }
+  Invalid() { CARBON_FATAL() << "Attempted to create an Invalid node"; }
 };
 
 struct AddressOf {
@@ -485,7 +483,7 @@ struct TypedNode;
 
 // Declare type names for each specific kind of node.
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
-using Name = TypedNode<NodeKind::Name, NodeData::Name>;
+  using Name = TypedNode<NodeKind::Name, NodeData::Name>;
 #include "toolchain/sem_ir/node_kind.def"
 
 // The standard structure for Node. This is trying to provide a minimal
@@ -664,8 +662,7 @@ constexpr auto ToRaw(BuiltinKind kind) -> int32_t { return kind.AsInt(); }
 // A type that can be converted to any field type.
 struct AnyField {
   // Allow any field type that we can convert to a raw representation.
-  template <typename FieldT,
-            typename = decltype(ToRaw(std::declval<FieldT>()))>
+  template <typename FieldT, typename = decltype(ToRaw(std::declval<FieldT>()))>
   operator FieldT() const;
 };
 
@@ -695,7 +692,8 @@ constexpr int FieldCount =
 template <int NumFields>
 struct FieldAccessor;
 
-template<> struct FieldAccessor<1> {
+template <>
+struct FieldAccessor<1> {
   template <int Field, typename T>
   static auto Get(T&& value) -> auto& {
     auto& [field] = value;
@@ -703,7 +701,8 @@ template<> struct FieldAccessor<1> {
   }
 };
 
-template<> struct FieldAccessor<2> {
+template <>
+struct FieldAccessor<2> {
   template <int Field, typename T>
   static auto Get(T&& value) -> auto& {
     auto& [field0, field1] = value;
@@ -787,7 +786,8 @@ struct DataBase : T {
   }
 };
 
-template <typename, typename, typename, typename> struct TypedNodeBase;
+template <typename, typename, typename, typename>
+struct TypedNodeBase;
 
 // A helper base class that produces a constructor with the desired signature.
 template <typename DataT, typename... ParseNodeFields, typename... TypeFields,

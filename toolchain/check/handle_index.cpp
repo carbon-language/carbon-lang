@@ -74,7 +74,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
       }
       auto elem_id = context.AddNode(
           SemIR::ArrayIndex(parse_node, array_type.element_type_id,
-                                        operand_node_id, cast_index_id));
+                            operand_node_id, cast_index_id));
       if (array_cat != SemIR::ExpressionCategory::DurableReference) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.
@@ -103,9 +103,9 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
         context.emitter().Emit(parse_node, TupleIndexIntegerLiteral);
         index_node_id = SemIR::NodeId::BuiltinError;
       }
-      context.AddNodeAndPush(parse_node, SemIR::TupleIndex(
-                                             parse_node, element_type_id,
-                                             operand_node_id, index_node_id));
+      context.AddNodeAndPush(parse_node,
+                             SemIR::TupleIndex(parse_node, element_type_id,
+                                               operand_node_id, index_node_id));
       return true;
     }
     default: {
