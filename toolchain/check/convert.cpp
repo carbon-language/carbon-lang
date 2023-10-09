@@ -128,7 +128,7 @@ static auto MakeElemAccessNode(Context& context, Parse::Node parse_node,
                                SemIR::NodeId aggregate_id,
                                SemIR::TypeId elem_type_id, NodeBlockT& block,
                                std::size_t i) {
-  if constexpr (std::is_same_v<AccessNodeT, SemIR::Node::ArrayIndex>) {
+  if constexpr (std::is_same_v<AccessNodeT, SemIR::ArrayIndex>) {
     // TODO: Add a new node kind for indexing an array at a constant index
     // so that we don't need an integer literal node here, and remove this
     // special case.
@@ -136,10 +136,10 @@ static auto MakeElemAccessNode(Context& context, Parse::Node parse_node,
         parse_node, context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
         context.semantics_ir().AddIntegerValue(llvm::APInt(32, i))));
     return block.AddNode(
-        AccessNodeT::Make(parse_node, elem_type_id, aggregate_id, index_id));
+        AccessNodeT(parse_node, elem_type_id, aggregate_id, index_id));
   } else {
-    return block.AddNode(AccessNodeT::Make(
-        parse_node, elem_type_id, aggregate_id, SemIR::MemberIndex(i)));
+    return block.AddNode(AccessNodeT(parse_node, elem_type_id, aggregate_id,
+                                     SemIR::MemberIndex(i)));
   }
 }
 
@@ -290,11 +290,11 @@ static auto ConvertTupleToArray(Context& context,
   for (auto [i, src_type_id] : llvm::enumerate(tuple_elem_types)) {
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
-    auto init_id = ConvertAggregateElement<SemIR::Node::TupleAccess,
-                                           SemIR::Node::ArrayIndex>(
-        context, value.parse_node(), value_id, src_type_id, literal_elems,
-        ConversionTarget::FullInitializer, return_slot_id,
-        array_type.element_type_id, target_block, i);
+    auto init_id =
+        ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
+            context, value.parse_node(), value_id, src_type_id, literal_elems,
+            ConversionTarget::FullInitializer, return_slot_id,
+            array_type.element_type_id, target_block, i);
     if (init_id == SemIR::NodeId::BuiltinError) {
       return SemIR::NodeId::BuiltinError;
     }
@@ -368,10 +368,10 @@ static auto ConvertTupleToTuple(Context& context,
        llvm::enumerate(src_elem_types, dest_elem_types)) {
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
-    auto init_id = ConvertAggregateElement<SemIR::Node::TupleAccess,
-                                           SemIR::Node::TupleAccess>(
-        context, value.parse_node(), value_id, src_type_id, literal_elems,
-        inner_kind, target.init_id, dest_type_id, target.init_block, i);
+    auto init_id =
+        ConvertAggregateElement<SemIR::TupleAccess, SemIR::TupleAccess>(
+            context, value.parse_node(), value_id, src_type_id, literal_elems,
+            inner_kind, target.init_id, dest_type_id, target.init_block, i);
     if (init_id == SemIR::NodeId::BuiltinError) {
       return SemIR::NodeId::BuiltinError;
     }
@@ -461,10 +461,11 @@ static auto ConvertStructToStruct(Context& context,
 
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
-    auto init_id = ConvertAggregateElement<SemIR::Node::StructAccess,
-                                           SemIR::Node::StructAccess>(
-        context, value.parse_node(), value_id, src_field.type_id, literal_elems,
-        inner_kind, target.init_id, dest_field.type_id, target.init_block, i);
+    auto init_id =
+        ConvertAggregateElement<SemIR::StructAccess, SemIR::StructAccess>(
+            context, value.parse_node(), value_id, src_field.type_id,
+            literal_elems, inner_kind, target.init_id, dest_field.type_id,
+            target.init_block, i);
     if (init_id == SemIR::NodeId::BuiltinError) {
       return SemIR::NodeId::BuiltinError;
     }

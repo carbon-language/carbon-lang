@@ -959,6 +959,23 @@ template <typename T, int NumFields, int Field>
 using FieldType = std::remove_reference_t<
     decltype(FieldAccessor<NumFields>::template Get<Field>(std::declval<T>()))>;
 
+template <typename... T>
+struct FieldTypes {};
+
+template <typename T, int Count = FieldCount<T>,
+          typename = std::make_index_sequence<Count>>
+struct MakeFieldTypesImpl;
+
+template <typename T, int Count, std::size_t... Indexes>
+struct MakeFieldTypesImpl<T, Count, std::index_sequence<Indexes...>> {
+  using Result = FieldTypes<FieldType<T, Count, Indexes>...>;
+};
+
+// Get a FieldTypes<Field1, Field2, ...> type listing the types of the fields in
+// T.
+template <typename T>
+using MakeFieldTypes = typename MakeFieldTypesImpl<T>::Result;
+
 // Base class for nodes that contains the node data.
 template <typename T>
 struct DataBase : T {
@@ -1008,21 +1025,52 @@ struct DataBase : T {
     }
   }
 };
+
+template <typename, typename, typename, typename> struct TypedNodeBase;
+
+// A helper base class that produces a constructor with the desired signature.
+template <typename DataT, typename... ParseNodeFields, typename... TypeFields,
+          typename... DataFields>
+struct TypedNodeBase<DataT, FieldTypes<ParseNodeFields...>,
+                     FieldTypes<TypeFields...>, FieldTypes<DataFields...>>
+    : ParseNodeBase<DataT>, TypeBase<DataT>, DataBase<DataT> {
+  // Braced initialization of base classes confuses clang-format.
+  // clang-format off
+  constexpr TypedNodeBase(ParseNodeFields... parse_node_fields,
+                          TypeFields... type_fields, DataFields... data_fields)
+      : ParseNodeBase<DataT>{parse_node_fields...},
+        TypeBase<DataT>{type_fields...},
+        DataBase<DataT>{data_fields...} {
+  }
+  // clang-format on
+
+  constexpr TypedNodeBase(ParseNodeBase<DataT> parse_node_base,
+                          TypeBase<DataT> type_base, DataBase<DataT> data_base)
+      : ParseNodeBase<DataT>(parse_node_base),
+        TypeBase<DataT>(type_base),
+        DataBase<DataT>(data_base) {}
+};
+
+template <typename DataT>
+using MakeTypedNodeBase =
+    TypedNodeBase<DataT, MakeFieldTypes<ParseNodeBase<DataT>>,
+                  MakeFieldTypes<TypeBase<DataT>>,
+                  MakeFieldTypes<DataBase<DataT>>>;
 }  // namespace NodeInternals
 
 template <NodeKind::RawEnumType KindT, typename DataT>
-struct TypedNode : NodeInternals::ParseNodeBase<DataT>,
-                   NodeInternals::TypeBase<DataT>,
-                   NodeInternals::DataBase<DataT>,
+struct TypedNode : NodeInternals::MakeTypedNodeBase<DataT>,
                    Printable<TypedNode<KindT, DataT>> {
   static constexpr NodeKind Kind = NodeKind::Create(KindT);
   using Data = DataT;
 
+  using NodeInternals::MakeTypedNodeBase<DataT>::MakeTypedNodeBase;
+
   static auto FromRawData(Parse::Node parse_node, TypeId type_id, int32_t arg0,
                           int32_t arg1) -> TypedNode {
-    return TypedNode{TypedNode::FromParseNode(parse_node),
+    return TypedNode(TypedNode::FromParseNode(parse_node),
                      TypedNode::FromTypeId(type_id),
-                     TypedNode::FromRawArgs(arg0, arg1)};
+                     TypedNode::FromRawArgs(arg0, arg1));
   }
 
   auto Print(llvm::raw_ostream& out) const -> void { Node(*this).Print(out); }
