@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Basics](#basics)
     -   [Additional examples](#additional-examples)
--   [Semantics](#semantics)
+-   [Execution Semantics](#execution-semantics)
     -   [Expressions and statements](#expressions-and-statements)
     -   [Pattern matching](#pattern-matching)
 -   [Typechecking](#typechecking)
@@ -77,12 +77,12 @@ A pattern of the form "`...` _subpattern_" is called a _pack expansion pattern_.
 It can only appear as part of a tuple pattern (or an implicit parameter list),
 and it matches a sequence of tuple elements if each element matches
 _subpattern_. Since _subpattern_ will be matched against multiple scrutinees (or
-none) in a single pattern-matching operation, it cannot contain ordinary
-binding patterns. However, it can contain _pack binding patterns_, which are
-binding patterns that begin with `each`, such as `each ElementType:! type`. A
-pack binding pattern can match any number of times (including zero), and binds
-to a pack consisting of all the matched values. A usage of a pack binding always
-has the form "`each` _identifier_".
+none) in a single pattern-matching operation, it cannot contain ordinary binding
+patterns. However, it can contain _pack binding patterns_, which are binding
+patterns that begin with `each`, such as `each ElementType:! type`. A pack
+binding pattern can match any number of times (including zero), and binds to a
+pack consisting of all the matched values. A usage of a pack binding always has
+the form "`each` _identifier_".
 
 Note that the operand of `each` is always an identifier name or a binding
 pattern, so it does not have a precedence. For example, the loop condition
@@ -120,11 +120,11 @@ F(...expand MakeArgs());
 ```
 
 `...and`, `...or`, and `...expand` can be trivially distinguished with one token
-of lookahead, and the other meanings of `...` can be distinguished from each other by the context
-they appear in. As a corollary, if the nearest enclosing delimiters around a
-`...` are parentheses, they will be interpreted as forming a tuple rather than
-as grouping. Thus, expressions like `(... each ElementType)` in the above
-example are tuple literals, even though they don't contain commas.
+of lookahead, and the other meanings of `...` can be distinguished from each
+other by the context they appear in. As a corollary, if the nearest enclosing
+delimiters around a `...` are parentheses, they will be interpreted as forming a
+tuple rather than as grouping. Thus, expressions like `(... each ElementType)`
+in the above example are tuple literals, even though they don't contain commas.
 
 By convention, `...` is always followed by whitespace, except that `...and`,
 `...or`, and `...expand` are written with no whitespace between the two tokens.
@@ -136,12 +136,13 @@ expansion is called the _body_ of the expansion, and a pack expansion body must
 contain at least one expansion site. All sites of a given expansion must have
 the same arity (which we will also refer to as the arity of the expansion).
 
-A pack expansion cannot occur within another pack expansion.
+A pack expansion or `...expand` expression cannot contain another pack expansion
+or `...expand` expression.
 
 A pack binding cannot be used in the same pack expansion that declares it. In
-almost all cases, a binding that violates this rule can be changed to a non-pack
-binding, because pack bindings are only necessary when you need to transfer a
-pack from one pack expansion to another.
+most if not all cases, a binding that violates this rule can be changed to a
+non-pack binding, because pack bindings are only necessary when you need to
+transfer a pack from one pack expansion to another.
 
 A pack expansion can be thought of as a kind of loop that executes at compile
 time (specifically, monomorphization time), where the expansion body is
@@ -153,7 +154,7 @@ bindings with arity 3, then `... each a += each x * each y;` is roughly
 equivalent to
 
 ```carbon
-for (let template i:! i32 in (0, 1, 2)) {
+for (let i:! i32 in (0, 1, 2)) {
   a[:i:] += x[:i:] * y[:i:];
 }
 ```
@@ -164,24 +165,27 @@ this rewritten form would not typecheck under the usual rules, because the
 expressions `a[:i:]`, `x[:i:]`, and `y[:i:]` may have different types depending
 on the value of `i`.
 
-`...and` and `...or` can likewise be interpreted as looping constructs, although
-the rewrite is less straightforward because Carbon doesn't have a way to write a
-loop in an expression context. An expression like `...and F(each x, each y)` can
-be thought of as evaluating to the value of `result` after executing the
-following code fragment:
+`...and` and `...or` behave like chains of the corresponding boolean operator,
+so `...and F(each x, each y)` behaves like
+`true and F(x[:0:], y[:0:]) and F(x[:1:], y[:1:]) and F(x[:2:], y[:2:])`. They
+can also be interpreted as looping constructs, although the rewrite is less
+straightforward because Carbon doesn't have a way to write a loop in an
+expression context. An expression like `...and F(each x, each y)` can be thought
+of as evaluating to the value of `result` after executing the following code
+fragment:
 
 ```
 var result: bool = true;
-for (let template i:! i32 in (0, 1, 2)) {
+for (let i:! i32 in (0, 1, 2)) {
   result = result && F(x[:i:], y[:i:]);
   if (result == false) { break; }
 }
 ```
 
-`...` in a tuple literal can't be modeled in terms of a code rewrite, because it
-evaluates to a sequence of values rather than a singular value, but it is still
-fundamentally iterative: an expression like `(... F(each x, each y))` evaluates
-to a tuple whose `i`th element is `F(x[:i:], y[:i:])`.
+`...` in a tuple literal behaves like a series of comma-separated tuple
+elements, so `(... F(each x, each y))` is equivalent to
+`(F(x[:0:], y[:0:]), F(x[:1:], y[:1:]), F(x[:2:], y[:2:]))`. This can't be
+expressed as a loop in Carbon code, but it is still fundamentally iterative.
 
 ### Additional examples
 
@@ -242,7 +246,7 @@ fn TupleConcat[... each T1: type, ... each T2: type](
 }
 ```
 
-## Semantics
+## Execution Semantics
 
 ### Expressions and statements
 
@@ -278,7 +282,7 @@ the general principle that pattern matching is the inverse of expression
 evaluation, so for example if the pattern `(... each x: auto)` matches some
 scrutinee value `s`, the expression `(... each x)` should be equal to `s`. These
 semantics are implemented at monomorphization time, so all types are known
-constants, and all tuple elements are singular.
+constants, and all all arities are known.
 
 A tuple pattern can contain no more than one subpattern of the form "`...`
 _operand_". When such a subpattern is present, the N elements of the pattern
@@ -382,7 +386,7 @@ fn f[...each A:! I1, ...each B:! I2]((... each a: each A), (...each b: each B)) 
 In order to represent the declared type of `x`, the typechecker needs to model
 the fact that `X` consists of the concatenation of `A` and `B`, even though it
 does not yet know the arity or contents of either pack. It does this by
-representing packs as sequences of segments. For example, `Y` can be represented
+representing packs as sequences of segments. For example, `X` can be represented
 as `(<A[:$I:], |A|>, <B[:$I:], |B|>)`.
 
 Similarly, the typechecker sometimes needs to reason symbolically about values
@@ -398,9 +402,12 @@ follows:
 -   If the expansion contains any non-deducing usages of pack bindings, the
     bindings they name must all have the same shape, and all other expansion
     sites are deduced to have the same shape.
--   Otherwise, we invent a local symbolic variable `N`, and all expansion sites
-    are treated as having the shape `(N,)` (representing a single segment with
-    unknown arity).
+-   Otherwise, the expansion must be part of a pattern. We invent a local
+    symbolic variable `N`, and all expansion sites are treated as having the
+    shape `(N,)` (representing a single segment with unknown arity). The value
+    of `N` will be deduced as part of type deduction, so the pattern must occur
+    in a context where type deduction is permitted. For example, if it's part of
+    a `let` statement, it must have an initializer.
 
 The type packs of expressions and patterns in the expansion body are then
 determined by iterative typechecking: within the k'th typechecking iteration,
@@ -409,8 +416,6 @@ typechecking, except that:
 
 -   For every expression/pattern in the expansion, the type of the k'th segment
     of its type pack takes the place of its type (on both reads and writes).
-    // - We reuse (rather than attempt to recompute) any type information that
-    was // computed in the course of the shape-checking described above.
 -   Any time we would use the type of an expression, and the expression is a
     usage of a pack binding, we instead use the type of the k'th segment of the
     binding it refers to (which has already been determined because of the rule
@@ -465,9 +470,7 @@ checking to fail if any of the potential argument-parameter mappings could fail
 to typecheck after monomorphization. Furthermore, for reasons of readability as
 well as efficiency, we want type checking to fail if any two potential mappings
 would deduce inconsistent values for any deduced parameter. However, in general
-this is intractable, because in the worst case the number of distinct ways to
-map symbolic arguments to parameters is ${2n \choose n}$ for n variadic
-arguments, which is only a factor of $\sqrt{n}$ away from exponential.
+this requires exponential time.
 
 Introducing type deduction further complicates the situation. For example:
 
@@ -483,11 +486,12 @@ fn I((... each x: i32), (... each y: f32), (... each z: String)) {
 ```
 
 Here, the deduced type of `result` can have one of four different forms. The
-most general case is `(<i32, |x|-1>, <P, 1>, <f32, |y|>, <Q, 1>, <String, |z|-1>)`,
-and the other three cases are formed by omitting the first two and/or last two
-segments (corresponding to the cases where `x` and/or `z` do not match any
-arguments). Extending the type system to support deduction that splits into
-multiple cases would add a fearsome amount of complexity to the type system.
+most general case is
+`(<i32, |x|-1>, <P, 1>, <f32, |y|>, <Q, 1>, <String, |z|-1>)`, and the other
+three cases are formed by omitting the first two and/or last two segments
+(corresponding to the cases where `x` and/or `z` do not match any arguments).
+Extending the type system to support deduction that splits into multiple cases
+would add a fearsome amount of complexity to the type system.
 
 #### Identifying potential matchings
 
