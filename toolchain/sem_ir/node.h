@@ -493,14 +493,17 @@ using Name = TypedNode<NodeKind::Name, NodeData::Name>;
 //
 // - Create a `Node` using `Node::Kind::Make()`
 // - Access cross-Kind members using `node.type_id()` and similar.
-// - Access Kind-specific members using `node.GetAsKind()`, which depending on
-//   the number of members will return one of NoArgs, a single value, or a
-//   `std::pair` of values.
-//   - Using the wrong `node.GetAsKind()` is a programming error, and should
-//     CHECK-fail in debug modes (opt may too, but it's not an API guarantee).
+// - Access Kind-specific members using `node.As<Kind>()`, which produces a
+//   `TypedNode` with type-specific members, including `parse_node` and
+//   `type_id` for nodes that have associated parse nodes and types.
+//   - Using the wrong kind in `node.As<Kind>()` is a programming error, and
+//     will CHECK-fail in debug modes (opt may too, but it's not an API
+//     guarantee).
+//   - Use `node.TryAs<Kind>()` to safely access type-specific node data where
+//     the node's kind is not known.
 //
 // Internally, each Kind uses the `Factory*` types to provide a boilerplate
-// `Make` and `Get` methods.
+// `Make` method.
 class Node : public Printable<Node> {
  public:
   struct NoArgs {};
@@ -768,25 +771,6 @@ class Node : public Printable<Node> {
     }
   }
 
-  // Casts this node to the given typed node, which must match the node's kind.
-  // Returns the node's operands.
-  // TODO: This exists for compatibility with the old `GetAs##Name` interface,
-  // and should be removed once we use field names to access node data.
-  template <typename Typed>
-  auto GetAs() const -> auto {
-    return Typed::DataBase::FromRawArgs(arg0_, arg1_).single_arg_or_pair();
-  }
-
-  // Provide `node.GetAsKind()` as an instance method for all kinds, as an alias
-  // for `node.GetAs<Kind>()`.
-  // TODO: Remove this.
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
-  template <typename T = SemIR::Name>    \
-  auto GetAs##Name() const -> auto {     \
-    return GetAs<T>();                   \
-  }
-#include "toolchain/sem_ir/node_kind.def"
-
   auto parse_node() const -> Parse::Node { return parse_node_; }
   auto kind() const -> NodeKind { return kind_; }
 
@@ -817,7 +801,7 @@ class Node : public Printable<Node> {
   NodeKind kind_;
   TypeId type_id_;
 
-  // Use GetAsKind to access arg0 and arg1.
+  // Use `As` to access arg0 and arg1.
   int32_t arg0_;
   int32_t arg1_;
 };
@@ -989,23 +973,6 @@ struct DataBase : T {
     } else {
       return {FromRaw<FieldType<T, NumFields, 0>>(arg0),
               FromRaw<FieldType<T, NumFields, 1>>(arg1)};
-    }
-  }
-
-  // If this node holds a single field, returns that field; otherwise, returns a
-  // struct of fields.
-  //
-  // TODO: This exists for compatibility with code using the old GetAsT
-  // interface, and will be removed when that is removed.
-  auto single_arg_or_pair() const -> auto {
-    if constexpr (NumFields == 0) {
-      return Node::NoArgs();
-    } else if constexpr (NumFields == 1) {
-      auto [field0] = *this;
-      return field0;
-    } else {
-      auto [field0, field1] = *this;
-      return std::pair(field0, field1);
     }
   }
 
