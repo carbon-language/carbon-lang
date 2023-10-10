@@ -19,7 +19,8 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
           .PopWithParseNode<Parse::NodeKind::CallExpressionStart>();
   auto name_node =
       context.semantics_ir().GetNode(context.FollowNameReferences(name_id));
-  if (name_node.kind() != SemIR::NodeKind::FunctionDeclaration) {
+  auto function_name = name_node.TryAs<SemIR::FunctionDeclaration>();
+  if (!function_name) {
     // TODO: Work on error.
     context.TODO(parse_node, "Not a callable name");
     context.node_stack().Push(parse_node, name_id);
@@ -27,7 +28,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
     return true;
   }
 
-  auto function_id = name_node.As<SemIR::FunctionDeclaration>().function_id;
+  auto function_id = function_name->function_id;
   const auto& callable = context.semantics_ir().GetFunction(function_id);
 
   // For functions with an implicit return type, the return type is the empty
