@@ -402,7 +402,7 @@ struct StructAccess {
 };
 
 struct StructInit {
-  NodeId literal_id;
+  NodeId src_id;
   NodeBlockId elements_id;
 };
 
@@ -422,7 +422,7 @@ struct StructTypeField {
 };
 
 struct StructValue {
-  NodeId literal_id;
+  NodeId src_id;
   NodeBlockId elements_id;
 };
 
@@ -444,7 +444,7 @@ struct TupleIndex {
 };
 
 struct TupleInit {
-  NodeId literal_id;
+  NodeId src_id;
   NodeBlockId elements_id;
 };
 
@@ -457,7 +457,7 @@ struct TupleType {
 };
 
 struct TupleValue {
-  NodeId literal_id;
+  NodeId src_id;
   NodeBlockId elements_id;
 };
 
