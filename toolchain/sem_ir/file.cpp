@@ -210,7 +210,6 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::FunctionDeclaration:
     case NodeKind::InitializeFrom:
     case NodeKind::IntegerLiteral:
-    case NodeKind::Invalid:
     case NodeKind::NameReference:
     case NodeKind::NameReferenceUntyped:
     case NodeKind::Namespace:
@@ -411,8 +410,6 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
         // when stringification is needed.
         out << "<cannot stringify " << step.node_id << ">";
         break;
-      case NodeKind::Invalid:
-        llvm_unreachable("NodeKind::Invalid is never used.");
     }
   }
 
@@ -438,7 +435,6 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
-      case NodeKind::Invalid:
       case NodeKind::Assign:
       case NodeKind::Branch:
       case NodeKind::BranchIf:
@@ -563,7 +559,6 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::FunctionDeclaration:
       case NodeKind::InitializeFrom:
       case NodeKind::IntegerLiteral:
-      case NodeKind::Invalid:
       case NodeKind::NameReference:
       case NodeKind::NameReferenceUntyped:
       case NodeKind::Namespace:

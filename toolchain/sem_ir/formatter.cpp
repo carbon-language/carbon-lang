@@ -514,7 +514,7 @@ class Formatter {
   auto FormatInstruction(NodeId node_id) -> void {
     if (!node_id.is_valid()) {
       Indent();
-      out_ << NodeKind::Invalid.ir_name() << "\n";
+      out_ << "invalid\n";
       return;
     }
 

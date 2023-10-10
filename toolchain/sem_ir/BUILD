@@ -33,6 +33,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//toolchain/base:index_base",
+        "//toolchain/base:struct_reflection",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:node_kind",

@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/struct_reflection.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/node_kind.h"
@@ -209,11 +210,6 @@ struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
 
 // Data storage for the operands of each kind of node.
 namespace NodeData {
-// The Invalid NodeKind exists, but nodes of this kind cannot be created.
-struct Invalid {
-  Invalid() { CARBON_FATAL() << "Attempted to create an Invalid node"; }
-};
-
 struct AddressOf {
   NodeId lvalue_id;
 };
@@ -508,9 +504,6 @@ struct TypedNode;
 //     the node's kind is not known.
 class Node : public Printable<Node> {
  public:
-  explicit Node()
-      : Node(Parse::Node::Invalid, NodeKind::Invalid, TypeId::Invalid) {}
-
   template <NodeKind::RawEnumType Kind, typename Data>
   /*implicit*/
   Node(TypedNode<Kind, Data> typed_node)
@@ -659,98 +652,20 @@ constexpr auto FromRaw<BuiltinKind>(int32_t raw) -> BuiltinKind {
 constexpr auto ToRaw(IndexBase base) -> int32_t { return base.index; }
 constexpr auto ToRaw(BuiltinKind kind) -> int32_t { return kind.AsInt(); }
 
-// A type that can be converted to any field type.
-struct AnyField {
-  // Allow any field type that we can convert to a raw representation.
-  template <typename FieldT, typename = decltype(ToRaw(std::declval<FieldT>()))>
-  operator FieldT() const;
-};
-
-// Simple detector to find the number of data fields in a node data type.
-// The second template parameter is always T and is used as a SFINAE helper.
-template <typename T, typename, typename... Fields>
-struct FieldCounter;
-// If T can be constructed from {Fields...}, then we've found the field count.
-template <typename T, typename... Fields>
-struct FieldCounter<T, decltype(T{Fields()...}), Fields...> {
-  static constexpr int Result = sizeof...(Fields);
-};
-// Otherwise, remove the first field and try again.
-template <typename T, typename Field, typename... Fields>
-struct FieldCounterRemoveOne : FieldCounter<T, T, Fields...> {};
-template <typename T, typename, typename... Fields>
-struct FieldCounter : FieldCounterRemoveOne<T, Fields...> {};
-
-// Count types with up to three fields. We use three fields rather than two here
-// so that we get a count of 3 that we can easily reject if the data type has
-// three or more fields, rather than risking silently returning 2.
 template <typename T>
-constexpr int FieldCount =
-    FieldCounter<T, T, AnyField, AnyField, AnyField>::Result;
-
-// Utility to access fields by index.
-template <int NumFields>
-struct FieldAccessor;
-
-template <>
-struct FieldAccessor<1> {
-  template <int Field, typename T>
-  static auto Get(T&& value) -> auto& {
-    auto& [field] = value;
-    return field;
-  }
-};
-
-template <>
-struct FieldAccessor<2> {
-  template <int Field, typename T>
-  static auto Get(T&& value) -> auto& {
-    auto& [field0, field1] = value;
-    if constexpr (Field == 0) {
-      return field0;
-    } else {
-      return field1;
-    }
-  }
-};
-
-// Get the type of a field by index.
-template <typename T, int NumFields, int Field>
-using FieldType = std::remove_reference_t<
-    decltype(FieldAccessor<NumFields>::template Get<Field>(std::declval<T>()))>;
-
-template <typename... T>
-struct FieldTypes {};
-
-template <typename T, int Count = FieldCount<T>,
-          typename = std::make_index_sequence<Count>>
-struct MakeFieldTypesImpl;
-
-template <typename T, int Count, std::size_t... Indexes>
-struct MakeFieldTypesImpl<T, Count, std::index_sequence<Indexes...>> {
-  using Result = FieldTypes<FieldType<T, Count, Indexes>...>;
-};
-
-// Get a FieldTypes<Field1, Field2, ...> type listing the types of the fields in
-// T.
-template <typename T>
-using MakeFieldTypes = typename MakeFieldTypesImpl<T>::Result;
+using FieldTypes = decltype(StructReflection::AsTuple(std::declval<T>()));
 
 // Base class for nodes that contains the node data.
-template <typename T>
-struct DataBase : T {
-  static constexpr int NumFields = FieldCount<T>;
-  static_assert(NumFields <= 2, "Too many fields in node data");
+template <typename T, typename = FieldTypes<T>>
+struct DataBase;
 
-  static auto FromRawArgs(int32_t arg0, int32_t arg1) -> DataBase {
-    if constexpr (NumFields == 0) {
-      return {};
-    } else if constexpr (NumFields == 1) {
-      return {FromRaw<FieldType<T, NumFields, 0>>(arg0)};
-    } else {
-      return {FromRaw<FieldType<T, NumFields, 0>>(arg0),
-              FromRaw<FieldType<T, NumFields, 1>>(arg1)};
-    }
+template <typename T, typename... Fields>
+struct DataBase<T, std::tuple<Fields...>> : T {
+  static_assert(sizeof...(Fields) <= 2, "Too many fields in node data");
+
+  static auto FromRawArgs(decltype(ToRaw(std::declval<Fields>()))... args, ...)
+      -> DataBase {
+    return {FromRaw<Fields>(args)...};
   }
 
   // Returns the operands of the node.
@@ -758,28 +673,20 @@ struct DataBase : T {
 
   // Returns the operands of the node as a tuple.
   auto args_tuple() const -> auto {
-    if constexpr (NumFields == 0) {
-      return std::tuple{};
-    } else if constexpr (NumFields == 1) {
-      auto [field0] = *this;
-      return std::tuple{field0};
-    } else {
-      auto [field0, field1] = *this;
-      return std::tuple{field0, field1};
-    }
+    return StructReflection::AsTuple(static_cast<const T&>(*this));
   }
 
   auto arg0_or_invalid() const -> auto {
-    if constexpr (NumFields >= 1) {
-      return ToRaw(FieldAccessor<NumFields>::template Get<0>(*this));
+    if constexpr (sizeof...(Fields) >= 1) {
+      return ToRaw(std::get<0>(args_tuple()));
     } else {
       return NodeId::InvalidIndex;
     }
   }
 
   auto arg1_or_invalid() const -> auto {
-    if constexpr (NumFields >= 2) {
-      return ToRaw(FieldAccessor<NumFields>::template Get<1>(*this));
+    if constexpr (sizeof...(Fields) >= 2) {
+      return ToRaw(std::get<1>(args_tuple()));
     } else {
       return NodeId::InvalidIndex;
     }
@@ -792,8 +699,8 @@ struct TypedNodeBase;
 // A helper base class that produces a constructor with the desired signature.
 template <typename DataT, typename... ParseNodeFields, typename... TypeFields,
           typename... DataFields>
-struct TypedNodeBase<DataT, FieldTypes<ParseNodeFields...>,
-                     FieldTypes<TypeFields...>, FieldTypes<DataFields...>>
+struct TypedNodeBase<DataT, std::tuple<ParseNodeFields...>,
+                     std::tuple<TypeFields...>, std::tuple<DataFields...>>
     : ParseNodeBase<DataT>, TypeBase<DataT>, DataBase<DataT> {
   // Braced initialization of base classes confuses clang-format.
   // clang-format off
@@ -814,9 +721,8 @@ struct TypedNodeBase<DataT, FieldTypes<ParseNodeFields...>,
 
 template <typename DataT>
 using MakeTypedNodeBase =
-    TypedNodeBase<DataT, MakeFieldTypes<ParseNodeBase<DataT>>,
-                  MakeFieldTypes<TypeBase<DataT>>,
-                  MakeFieldTypes<DataBase<DataT>>>;
+    TypedNodeBase<DataT, FieldTypes<ParseNodeBase<DataT>>,
+                  FieldTypes<TypeBase<DataT>>, FieldTypes<DataT>>;
 }  // namespace NodeInternals
 
 template <NodeKind::RawEnumType KindT, typename DataT>

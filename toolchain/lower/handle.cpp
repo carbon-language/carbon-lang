@@ -9,11 +9,6 @@
 
 namespace Carbon::Lower {
 
-auto HandleInvalid(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
-                   SemIR::Invalid /*node*/) -> void {
-  llvm_unreachable("never in actual IR");
-}
-
 auto HandleCrossReference(FunctionContext& /*context*/,
                           SemIR::NodeId /*node_id*/, SemIR::CrossReference node)
     -> void {
