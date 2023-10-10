@@ -474,19 +474,7 @@ struct VarStorage {
 };
 }  // namespace NodeData
 
-// Representation of a specific kind of node. This has the following public
-// data members:
-//
-// - A `parse_node` member for nodes with an associated parse node.
-// - A `type_id` member for nodes with an associated type.
-// - Each member from the `NodeData` struct, above.
-//
-// A `TypedNode` can be constructed by passing its fields in order:
-//
-// - First, the `parse_node`, for nodes with a location,
-// - Then, the `type_id`, for nodes with a type,
-// - Then, each field of the `NodeData` struct above.
-template <NodeKind::RawEnumType Kind, typename Data>
+template <NodeKind::RawEnumType KindT, typename DataT>
 struct TypedNode;
 
 // Declare type names for each specific kind of node.
@@ -497,14 +485,15 @@ struct TypedNode;
 // The standard structure for Node. This is trying to provide a minimal
 // amount of information for a node:
 //
-// - parse_node for error placement.
-// - kind for run-time logic when the input Kind is unknown.
-// - type_id for quick type checking.
+// - `parse_node` for error placement.
+// - `kind` for run-time logic when the input Kind is unknown.
+// - `type_id` for quick type checking.
 // - Up to two Kind-specific members.
 //
 // For each Kind in NodeKind, a typical flow looks like:
 //
-// - Create a `Node` using the appropriate `TypedNode` constructor.
+// - Create a specific kind of `Node` using the appropriate `TypedNode`
+//   constructor.
 // - Access cross-Kind members using `node.type_id()` and similar.
 // - Access Kind-specific members using `node.As<Kind>()`, which produces a
 //   `TypedNode` with type-specific members, including `parse_node` and
@@ -575,6 +564,65 @@ class Node : public Printable<Node> {
 // were 3.5 bytes, we could potentially shrink Node by 4 bytes. This
 // may be worth investigating further.
 static_assert(sizeof(Node) == 20, "Unexpected Node size");
+
+namespace NodeInternals {
+template <typename DataT>
+struct TypedNodeImpl;
+}
+
+// Representation of a specific kind of node. This has the following public
+// data members:
+//
+// - A `parse_node` member for nodes with an associated parse node.
+// - A `type_id` member for nodes with an associated type.
+// - Each member from the `NodeData` struct, above.
+//
+// A `TypedNode` can be constructed by passing its fields in order:
+//
+// - First, the `parse_node`, for nodes with a location,
+// - Then, the `type_id`, for nodes with a type,
+// - Then, each field of the `NodeData` struct above.
+template <NodeKind::RawEnumType KindT, typename DataT>
+struct TypedNode : NodeInternals::TypedNodeImpl<DataT>,
+                   Printable<TypedNode<KindT, DataT>> {
+  static constexpr NodeKind Kind = NodeKind::Create(KindT);
+  using Data = DataT;
+
+  // Members from base classes, repeated here to make the API of this class
+  // easier to understand.
+#if 0
+  // From HasParseNodeBase, unless `DataT::HasParseNode` is `false_type`.
+  Parse::Node parse_node;
+
+  // From HasTypeBase, unless `DataT::HasType` is `false_type`.
+  TypeId type_id;
+
+  // Up to two operand types and names, from `DataT`.
+  IdType1 id_1;
+  IdType2 id_2;
+
+  // Construct the node from its elements. For any omitted fields, the
+  // parameter is removed here. Constructor is inherited from TypedNodeBase.
+  TypedNode(Parse::Node parse_node, TypeId type_id, IdType1 id_1, IdType2 id_2);
+
+  // Returns the operands of the node.
+  auto args() const -> DataT;
+
+  // Returns the operands of the node as a tuple of up to two operands.
+  auto args_tuple() const -> std::tuple<IdType1, IdType2>;
+#endif
+
+  using NodeInternals::TypedNodeImpl<DataT>::TypedNodeImpl;
+
+  static auto FromRawData(Parse::Node parse_node, TypeId type_id, int32_t arg0,
+                          int32_t arg1) -> TypedNode {
+    return TypedNode(TypedNode::FromParseNode(parse_node),
+                     TypedNode::FromTypeId(type_id),
+                     TypedNode::FromRawArgs(arg0, arg1));
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void { Node(*this).Print(out); }
+};
 
 // Implementation details for typed nodes.
 namespace NodeInternals {
@@ -736,25 +784,12 @@ template <typename DataT>
 using MakeTypedNodeBase =
     TypedNodeBase<DataT, FieldTypes<ParseNodeBase<DataT>>,
                   FieldTypes<TypeBase<DataT>>, FieldTypes<DataT>>;
-}  // namespace NodeInternals
 
-template <NodeKind::RawEnumType KindT, typename DataT>
-struct TypedNode : NodeInternals::MakeTypedNodeBase<DataT>,
-                   Printable<TypedNode<KindT, DataT>> {
-  static constexpr NodeKind Kind = NodeKind::Create(KindT);
-  using Data = DataT;
-
-  using NodeInternals::MakeTypedNodeBase<DataT>::MakeTypedNodeBase;
-
-  static auto FromRawData(Parse::Node parse_node, TypeId type_id, int32_t arg0,
-                          int32_t arg1) -> TypedNode {
-    return TypedNode(TypedNode::FromParseNode(parse_node),
-                     TypedNode::FromTypeId(type_id),
-                     TypedNode::FromRawArgs(arg0, arg1));
-  }
-
-  auto Print(llvm::raw_ostream& out) const -> void { Node(*this).Print(out); }
+template <typename DataT>
+struct TypedNodeImpl : MakeTypedNodeBase<DataT> {
+  using MakeTypedNodeBase<DataT>::MakeTypedNodeBase;
 };
+}  // namespace NodeInternals
 
 // Provides base support for use of Id types as DenseMap/DenseSet keys.
 // Instantiated below.
