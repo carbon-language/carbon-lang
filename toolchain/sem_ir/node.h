@@ -92,7 +92,7 @@ struct BoolValue : public IndexBase, public Printable<BoolValue> {
 constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
-// The ID of an integer literal.
+// The ID of an integer value.
 struct IntegerValueId : public IndexBase, public Printable<IntegerValueId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -144,7 +144,8 @@ constexpr NodeBlockId NodeBlockId::Invalid =
 constexpr NodeBlockId NodeBlockId::Unreachable =
     NodeBlockId(NodeBlockId::InvalidIndex - 1);
 
-// The ID of a real literal.
+// The ID of a value of a real number type. Despite the name, this type only
+// represents rational numbers.
 struct RealValueId : public IndexBase, public Printable<RealValueId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -209,6 +210,17 @@ struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
 };
 
 // Data storage for the operands of each kind of node.
+//
+// For each node kind declared in `node_kinds.def`, a struct here with the same
+// name describes the kind-specific storage for that node. A node kind can
+// store up to two IDs.
+//
+// A typed node also has:
+//
+// -  An injected `Parse::Node parse_node;` field, unless it specifies
+//    `using HasParseNode = std::false_type;`, and
+// -  An injected `TypeId type_id;` field, unless it specifies
+//    `using HasTypeId = std::false_type;`.
 namespace NodeData {
 struct AddressOf {
   NodeId lvalue_id;
@@ -696,7 +708,8 @@ struct DataBase<T, std::tuple<Fields...>> : T {
 template <typename, typename, typename, typename>
 struct TypedNodeBase;
 
-// A helper base class that produces a constructor with the desired signature.
+// A helper base class that produces a constructor with one correctly-typed
+// parameter for each struct field.
 template <typename DataT, typename... ParseNodeFields, typename... TypeFields,
           typename... DataFields>
 struct TypedNodeBase<DataT, std::tuple<ParseNodeFields...>,
