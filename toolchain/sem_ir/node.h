@@ -477,11 +477,6 @@ struct VarStorage {
 template <NodeKind::RawEnumType KindT, typename DataT>
 struct TypedNode;
 
-// Declare type names for each specific kind of node.
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
-  using Name = TypedNode<NodeKind::Name, NodeData::Name>;
-#include "toolchain/sem_ir/node_kind.def"
-
 // The standard structure for Node. This is trying to provide a minimal
 // amount of information for a node:
 //
@@ -623,6 +618,11 @@ struct TypedNode : NodeInternals::TypedNodeImpl<DataT>,
 
   auto Print(llvm::raw_ostream& out) const -> void { Node(*this).Print(out); }
 };
+
+// Declare type names for each specific kind of node.
+#define CARBON_SEMANTICS_NODE_KIND(Name) \
+  using Name = TypedNode<NodeKind::Name, NodeData::Name>;
+#include "toolchain/sem_ir/node_kind.def"
 
 // Implementation details for typed nodes.
 namespace NodeInternals {
