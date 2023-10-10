@@ -459,6 +459,15 @@ def _impl(ctx):
         name = "sanitizer_common_flags",
         requires = [feature_set(["nonhost"])],
         implies = ["minimal_optimization_flags", "minimal_debug_info_flags", "preserve_call_stacks"],
+    )
+
+    # Separated from the feature above so it can only be included on platforms
+    # where it is supported. There is no negative flag in Clang so we can't just
+    # override it later.
+    sanitizer_static_lib_flags = feature(
+        name = "sanitizer_static_lib_flags",
+        enabled = True,
+        requires = [feature_set(["sanitizer_common_flags"])],
         flag_sets = [flag_set(
             actions = all_link_actions,
             flag_groups = [flag_group(flags = [
@@ -486,6 +495,20 @@ def _impl(ctx):
                 # Needed due to clang AST issues, such as in
                 # clang/AST/Redeclarable.h line 199.
                 "-fno-sanitize=vptr",
+            ])],
+        )],
+    )
+
+    # Likely due to being unable to use the static-linked and up-to-date
+    # sanitizer runtimes, we have to disable a number of sanitizers on macOS.
+    macos_asan_workarounds = feature(
+        name = "macos_sanitizer_workarounds",
+        enabled = True,
+        requires = [feature_set(["asan"])],
+        flag_sets = [flag_set(
+            actions = all_compile_actions + all_link_actions,
+            flag_groups = [flag_group(flags = [
+                "-fno-sanitize=function",
             ])],
         )],
     )
@@ -856,6 +879,7 @@ def _impl(ctx):
     # Next, add the features based on the target platform. Here too the
     # features are order sensitive. We also setup the sysroot here.
     if ctx.attr.target_cpu == "k8":
+        features.append(sanitizer_static_lib_flags)
         features.append(linux_flags_feature)
         sysroot = None
     elif ctx.attr.target_cpu == "x64_windows":
@@ -864,9 +888,11 @@ def _impl(ctx):
         # so that might be an example where a feature must be added.
         sysroot = None
     elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+        features.append(macos_asan_workarounds)
         features.append(macos_flags_feature)
         sysroot = sysroot_dir
     elif ctx.attr.target_cpu == "freebsd":
+        features.append(sanitizer_static_lib_flags)
         features.append(freebsd_flags_feature)
         sysroot = sysroot_dir
     else:
