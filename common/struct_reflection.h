@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_BASE_STRUCT_REFLECTION_H_
-#define CARBON_TOOLCHAIN_BASE_STRUCT_REFLECTION_H_
+#ifndef CARBON_COMMON_STRUCT_REFLECTION_H_
+#define CARBON_COMMON_STRUCT_REFLECTION_H_
 
 // Reflection support for simple struct types.
 //
@@ -159,4 +159,4 @@ auto AsTuple(T value) -> auto {
 
 }  // namespace Carbon::StructReflection
 
-#endif  // CARBON_TOOLCHAIN_BASE_STRUCT_REFLECTION_H_
+#endif  // CARBON_COMMON_STRUCT_REFLECTION_H_

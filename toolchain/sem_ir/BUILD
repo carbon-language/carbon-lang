@@ -32,8 +32,8 @@ cc_library(
     deps = [
         "//common:check",
         "//common:ostream",
+        "//common:struct_reflection",
         "//toolchain/base:index_base",
-        "//toolchain/base:struct_reflection",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:node_kind",

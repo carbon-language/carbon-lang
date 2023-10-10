@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/base/struct_reflection.h"
+#include "common/struct_reflection.h"
 
 #include <gtest/gtest.h>
 
@@ -38,7 +38,7 @@ struct TwoFieldsNoDefaultConstructor {
   NoDefaultConstructor y;
 };
 
-TEST(ReflectionTest, CanListInitialize) {
+TEST(StructReflectionTest, CanListInitialize) {
   {
     using Type = OneField;
     using Field = Internal::AnyField<Type>;
@@ -56,7 +56,7 @@ TEST(ReflectionTest, CanListInitialize) {
   }
 }
 
-TEST(ReflectionTest, CountFields) {
+TEST(StructReflectionTest, CountFields) {
   static_assert(Internal::CountFields<ZeroFields>() == 0);
   static_assert(Internal::CountFields<OneField>() == 1);
   static_assert(Internal::CountFields<TwoFields>() == 2);
@@ -64,30 +64,30 @@ TEST(ReflectionTest, CountFields) {
   static_assert(Internal::CountFields<OneFieldNoDefaultConstructor>() == 1);
 }
 
-TEST(ReflectionTest, EmptyStruct) {
+TEST(StructReflectionTest, EmptyStruct) {
   std::tuple<> fields = AsTuple(ZeroFields());
   static_cast<void>(fields);
 }
 
-TEST(ReflectionTest, OneField) {
+TEST(StructReflectionTest, OneField) {
   std::tuple<int> fields = AsTuple(OneField{.x = 1});
   EXPECT_EQ(std::get<0>(fields), 1);
 }
 
-TEST(ReflectionTest, TwoField) {
+TEST(StructReflectionTest, TwoField) {
   std::tuple<int, int> fields = AsTuple(TwoFields{.x = 1, .y = 2});
   EXPECT_EQ(std::get<0>(fields), 1);
   EXPECT_EQ(std::get<1>(fields), 2);
 }
 
-TEST(ReflectionTest, NoDefaultConstructor) {
+TEST(StructReflectionTest, NoDefaultConstructor) {
   std::tuple<NoDefaultConstructor, NoDefaultConstructor> fields =
       AsTuple(TwoFieldsNoDefaultConstructor{.x = 1, .y = 2});
   EXPECT_EQ(std::get<0>(fields).v, 1);
   EXPECT_EQ(std::get<1>(fields).v, 2);
 }
 
-TEST(ReflectionTest, ReferenceField) {
+TEST(StructReflectionTest, ReferenceField) {
   int n = 0;
   std::tuple<int&> fields = AsTuple(ReferenceField{.ref = n});
   EXPECT_EQ(&std::get<0>(fields), &n);
