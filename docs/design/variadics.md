@@ -77,7 +77,7 @@ A pattern of the form "`...` _subpattern_" is called a _pack expansion pattern_.
 It can only appear as part of a tuple pattern (or an implicit parameter list),
 and it matches a sequence of tuple elements if each element matches
 _subpattern_. Since _subpattern_ will be matched against multiple scrutinees (or
-none) in a single pattern-matching operation, it cannot contain a ordinary
+none) in a single pattern-matching operation, it cannot contain ordinary
 binding patterns. However, it can contain _pack binding patterns_, which are
 binding patterns that begin with `each`, such as `each ElementType:! type`. A
 pack binding pattern can match any number of times (including zero), and binds
@@ -120,7 +120,7 @@ F(...expand MakeArgs());
 ```
 
 `...and`, `...or`, and `...expand` can be trivially distinguished with one token
-of lookahead, and the other can be distinguished from each other by the context
+of lookahead, and the other meanings of `...` can be distinguished from each other by the context
 they appear in. As a corollary, if the nearest enclosing delimiters around a
 `...` are parentheses, they will be interpreted as forming a tuple rather than
 as grouping. Thus, expressions like `(... each ElementType)` in the above
@@ -477,13 +477,13 @@ fn H[each T:! type](a: i32, ... each b: each T, c: String) -> (... each T);
 external impl P as ImplicitAs(i32);
 external impl Q as ImplicitAs(String);
 
-fn I(each x: i32, each y: f32, each z: String) {
+fn I((... each x: i32), (... each y: f32), (... each z: String)) {
   var result: auto = H(... each x, {} as P, ... each y, {} as Q, ... each z);
 }
 ```
 
 Here, the deduced type of `result` can have one of four different forms. The
-most general case is `(<i32, |x|>, <P, 1>, <f32, |y|>, <Q, 1>, <String, |z|>)`,
+most general case is `(<i32, |x|-1>, <P, 1>, <f32, |y|>, <Q, 1>, <String, |z|-1>)`,
 and the other three cases are formed by omitting the first two and/or last two
 segments (corresponding to the cases where `x` and/or `z` do not match any
 arguments). Extending the type system to support deduction that splits into
