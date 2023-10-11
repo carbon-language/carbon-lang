@@ -24,6 +24,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: <namespace> = name_reference "A", package.%.loc7
-// CHECK:STDOUT:   %.loc10: ref <error> = dereference <error>
+// CHECK:STDOUT:   %.loc16: ref <error> = dereference <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
