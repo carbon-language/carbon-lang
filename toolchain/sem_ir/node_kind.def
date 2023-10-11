@@ -20,8 +20,6 @@
 //   Invoked for each kind of semantic node, along with the name that is used
 //   to denote this node in textual Semantics IR.
 
-// FIXME: TODO: everything is now Typed, get rid of Untyped
-
 #if defined(CARBON_SEMANTICS_NODE_KIND)
 #define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, ValueKind, \
                                         TerminatorKind)          \

@@ -682,7 +682,7 @@ struct HasNoTypeBase {
 };
 
 // TypeBase<T> holds the `type_id` field if the node has a type, and is either
-// TypedNodeBase or UntypedNodeBase.
+// HasTypeBase or HasNoTypeBase.
 template <typename T>
 using TypeBase =
     std::conditional_t<GetWithDefault<T, GetHasType, std::true_type>{},

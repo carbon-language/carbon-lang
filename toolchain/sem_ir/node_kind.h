@@ -17,9 +17,6 @@ enum class NodeValueKind : int8_t {
   // This node doesn't produce a value, and shouldn't be referenced by other
   // nodes.
   None,
-  // This node represents an untyped value. It may be referenced by other nodes
-  // expecting this kind of value.
-  Untyped,
   // This node represents an expression or expression-like construct that
   // produces a value of the type indicated by its `type_id` field.
   Typed,

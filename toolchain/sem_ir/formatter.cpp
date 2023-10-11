@@ -575,10 +575,6 @@ class Formatter {
         FormatType(node.type_id());
         out_ << " = ";
         break;
-      case NodeValueKind::Untyped:
-        FormatNodeName(node_id);
-        out_ << " = ";
-        break;
       case NodeValueKind::None:
         break;
     }
