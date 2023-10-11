@@ -41,6 +41,12 @@ class FileContext {
     return types_[type_id.index];
   }
 
+  // Returns a lowered type to use for the value representation of the given
+  // type_id.
+  auto GetValueRepresentationType(SemIR::TypeId type_id) -> llvm::Type* {
+    return GetType(semantics_ir_->GetValueRepresentation(type_id));
+  }
+
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {
     return llvm::ConstantStruct::get(GetTypeType());

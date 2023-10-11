@@ -109,7 +109,6 @@ class Context {
   auto is_current_position_reachable() -> bool;
 
   // Canonicalizes a type which is tracked as a single node.
-  // TODO: This should eventually return a type ID.
   auto CanonicalizeType(SemIR::NodeId node_id) -> SemIR::TypeId;
 
   // Handles canonicalization of struct types. This may create a new struct type

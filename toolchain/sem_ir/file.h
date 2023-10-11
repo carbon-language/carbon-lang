@@ -266,8 +266,16 @@ class File : public Printable<File> {
     TypeId type_id(types_.size());
     // Should never happen, will always overflow node_ids first.
     CARBON_DCHECK(type_id.index >= 0);
-    types_.push_back(node_id);
+    types_.push_back(
+        {.node_id = node_id, .value_representation_id = TypeId::Invalid});
     return type_id;
+  }
+
+  // Marks a type as complete, and sets its value representation.
+  auto CompleteType(TypeId object_type_id, TypeId value_type_id) -> void {
+    CARBON_CHECK(!types_[object_id].value_representation_id.is_valid())
+        << "Type " << object_id << " completed more than once";
+    types_[object_id].value_representation_id = value_representation_id;
   }
 
   // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
@@ -277,7 +285,17 @@ class File : public Printable<File> {
     // Double-check it's not called with TypeType or InvalidType.
     CARBON_CHECK(type_id.index >= 0)
         << "Invalid argument for GetType: " << type_id;
-    return types_[type_id.index];
+    return types_[type_id.index].node_id;
+  }
+
+  // Gets the value representation to use for a type. This returns an
+  // invalid type if the given type is not complete.
+  auto GetValueRepresentation(TypeId type_id) const -> TypeId {
+    if (type_id.index < 0) {
+      // TypeType and InvalidType are their own value representation.
+      return type_id;
+    }
+    return types_[type_id.index].value_representation_id;
   }
 
   auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> NodeId {
@@ -322,7 +340,9 @@ class File : public Printable<File> {
   auto nodes_size() const -> int { return nodes_.size(); }
   auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
-  auto types() const -> llvm::ArrayRef<NodeId> { return types_; }
+  auto types() const -> auto {
+    return llvm::map_range(types_, [](TypeInfo info) { return info.node_id; });
+  }
 
   auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
   auto set_top_node_block_id(NodeBlockId block_id) -> void {
@@ -336,6 +356,14 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
+  struct TypeInfo {
+    // The node that defines this type.
+    NodeId node_id;
+    // The value representation for this type. Invalid if and only if the type
+    // is incomplete.
+    TypeId value_representation_id;
+  };
+
   // Allocates an uninitialized array using our slab allocator.
   template <typename T>
   auto AllocateUninitialized(std::size_t size) -> llvm::MutableArrayRef<T> {
@@ -386,9 +414,8 @@ class File : public Printable<File> {
   llvm::StringMap<StringId> string_to_id_;
   llvm::SmallVector<llvm::StringRef> strings_;
 
-  // Nodes which correspond to in-use types. Stored separately for easy access
-  // by lowering.
-  llvm::SmallVector<NodeId> types_;
+  // Descriptions of types used in this file.
+  llvm::SmallVector<TypeInfo> types_;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.
