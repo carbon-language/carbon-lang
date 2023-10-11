@@ -70,6 +70,9 @@ class Context {
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
 
+  // Follows NameReference nodes to find the value named by a given node.
+  auto FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId;
+
   // Adds a `Branch` node branching to a new node block, and returns the ID of
   // the new block. All paths to the branch target must go through the current
   // block, though not necessarily through this branch.

@@ -11,8 +11,8 @@ fn Run() {
 }
 
 // CHECK:STDOUT: file "assign_return_value.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
-// CHECK:STDOUT:   %.loc9 = fn_decl @Run
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %Run = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {
@@ -28,6 +28,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
 // CHECK:STDOUT:   %t: ref [i32; 1] = var "t"
+// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc10_22.1: init (i32,) = call @F()
 // CHECK:STDOUT:   %.loc10_22.2: ref (i32,) = temporary_storage
 // CHECK:STDOUT:   %.loc10_22.3: ref (i32,) = temporary %.loc10_22.2, %.loc10_22.1

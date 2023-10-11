@@ -44,9 +44,9 @@ auto FunctionContext::LowerBlock(SemIR::NodeBlockId block_id) -> void {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
-  case SemIR::NodeKind::Name:            \
-    Handle##Name(*this, node_id, node);  \
+#define CARBON_SEMANTICS_NODE_KIND(Name)                  \
+  case SemIR::NodeKind::Name:                             \
+    Handle##Name(*this, node_id, node.As<SemIR::Name>()); \
     break;
 #include "toolchain/sem_ir/node_kind.def"
     }
@@ -98,7 +98,7 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::NodeId source_id,
     case SemIR::ValueRepresentation::None:
       break;
     case SemIR::ValueRepresentation::Copy:
-      builder().CreateStore(GetLocalLoaded(source_id), GetLocal(dest_id));
+      builder().CreateStore(GetLocal(source_id), GetLocal(dest_id));
       break;
     case SemIR::ValueRepresentation::Pointer: {
       const auto& layout = llvm_module().getDataLayout();
@@ -115,17 +115,6 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::NodeId source_id,
     }
     case SemIR::ValueRepresentation::Custom:
       CARBON_FATAL() << "TODO: Add support for CopyValue with custom value rep";
-  }
-}
-
-auto FunctionContext::GetLocalLoaded(SemIR::NodeId node_id) -> llvm::Value* {
-  auto* value = GetLocal(node_id);
-  if (llvm::isa<llvm::AllocaInst, llvm::GetElementPtrInst>(value)) {
-    auto* load_type = GetType(semantics_ir().GetNode(node_id).type_id());
-    return builder().CreateLoad(load_type, value);
-  } else {
-    // No load is needed.
-    return value;
   }
 }
 

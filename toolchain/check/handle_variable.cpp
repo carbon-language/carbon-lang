@@ -24,15 +24,14 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
   // Get the storage and add it to name lookup.
   SemIR::NodeId var_id =
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
-  auto var = context.semantics_ir().GetNode(var_id);
-  auto name_id = var.GetAsVarStorage();
-  context.AddNameToLookup(var.parse_node(), name_id, var_id);
+  auto var = context.semantics_ir().GetNodeAs<SemIR::VarStorage>(var_id);
+  context.AddNameToLookup(var.parse_node, var.name_id, var_id);
   // If there was an initializer, assign it to storage.
   if (has_init) {
     init_id = Initialize(context, parse_node, var_id, init_id);
     // TODO: Consider using different node kinds for assignment versus
     // initialization.
-    context.AddNode(SemIR::Node::Assign::Make(parse_node, var_id, init_id));
+    context.AddNode(SemIR::Assign(parse_node, var_id, init_id));
   }
 
   context.node_stack()

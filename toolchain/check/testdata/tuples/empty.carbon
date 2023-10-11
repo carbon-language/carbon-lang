@@ -14,8 +14,9 @@ var y: () = x;
 // CHECK:STDOUT:   %.loc7_14.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_14.2: init () = tuple_init %.loc7_14.1, ()
 // CHECK:STDOUT:   assign %x, %.loc7_14.2
-// CHECK:STDOUT:   %.loc8: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_9: () = tuple_literal ()
 // CHECK:STDOUT:   %y: ref () = var "y"
-// CHECK:STDOUT:   %.loc7_5: init () = tuple_init %x, ()
-// CHECK:STDOUT:   assign %y, %.loc7_5
+// CHECK:STDOUT:   %x.ref: ref () = name_reference "x", %x
+// CHECK:STDOUT:   %.loc8_13: init () = tuple_init %x.ref, ()
+// CHECK:STDOUT:   assign %y, %.loc8_13
 // CHECK:STDOUT: }

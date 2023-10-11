@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/sem_ir/entry_point.h"
 
 namespace Carbon::Check {
 
@@ -56,9 +57,24 @@ static auto BuildFunctionDeclaration(Context& context)
        .return_type_id = return_type_id,
        .return_slot_id = return_slot_id,
        .body_block_ids = {}});
-  auto decl_id = context.AddNode(
-      SemIR::Node::FunctionDeclaration::Make(fn_node, function_id));
+  auto decl_id =
+      context.AddNode(SemIR::FunctionDeclaration(fn_node, function_id));
   context.declaration_name_stack().AddNameToLookup(name_context, decl_id);
+
+  if (SemIR::IsEntryPoint(context.semantics_ir(), function_id)) {
+    // TODO: Update this once valid signatures for the entry point are decided.
+    if (!context.semantics_ir().GetNodeBlock(param_refs_id).empty() ||
+        (return_slot_id.is_valid() &&
+         return_type_id !=
+             context.CanonicalizeType(SemIR::NodeId::BuiltinBoolType) &&
+         return_type_id != context.CanonicalizeTupleType(fn_node, {}))) {
+      CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
+                        "Invalid signature for `Main.Run` function. Expected "
+                        "`fn ()` or `fn () -> i32`.");
+      context.emitter().Emit(fn_node, InvalidMainRunSignature);
+    }
+  }
+
   return {function_id, decl_id};
 }
 
@@ -84,7 +100,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
           "Missing `return` at end of function with declared return type.");
       context.emitter().Emit(parse_node, MissingReturnStatement);
     } else {
-      context.AddNode(SemIR::Node::Return::Make(parse_node));
+      context.AddNode(SemIR::Return(parse_node));
     }
   }
 
@@ -107,11 +123,10 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   context.AddCurrentCodeBlockToFunction();
 
   // Bring the parameters into scope.
-  for (auto ref_id :
+  for (auto param_id :
        context.semantics_ir().GetNodeBlock(function.param_refs_id)) {
-    auto ref = context.semantics_ir().GetNode(ref_id);
-    auto name_id = ref.GetAsParameter();
-    context.AddNameToLookup(ref.parse_node(), name_id, ref_id);
+    auto param = context.semantics_ir().GetNodeAs<SemIR::Parameter>(param_id);
+    context.AddNameToLookup(param.parse_node, param.name_id, param_id);
   }
 
   context.node_stack().Push(parse_node, function_id);
@@ -138,8 +153,8 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   // TODO: Use a dedicated node rather than VarStorage here.
   context.AddNodeAndPush(
       parse_node,
-      SemIR::Node::VarStorage::Make(
-          parse_node, type_id, context.semantics_ir().AddString("return")));
+      SemIR::VarStorage(parse_node, type_id,
+                        context.semantics_ir().AddString("return")));
   return true;
 }
 

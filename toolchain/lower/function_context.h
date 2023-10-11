@@ -51,24 +51,10 @@ class FunctionContext {
     return it->second;
   }
 
-  // Returns a local (versus global) value for the given node in loaded state.
-  // Loads will only be inserted on an as-needed basis.
-  auto GetLocalLoaded(SemIR::NodeId node_id) -> llvm::Value*;
-
   // Sets the value for the given node.
   auto SetLocal(SemIR::NodeId node_id, llvm::Value* value) {
     bool added = locals_.insert({node_id, value}).second;
     CARBON_CHECK(added) << "Duplicate local insert: " << node_id;
-  }
-
-  // Returns the requested index into val based on whether val is a pointer
-  // type.
-  auto GetIndexFromStructOrArray(llvm::Type* llvm_type, llvm::Value* val,
-                                 unsigned idx, const llvm::Twine& name)
-      -> llvm::Value* {
-    return val->getType()->isPointerTy()
-               ? builder().CreateStructGEP(llvm_type, val, idx, name)
-               : builder().CreateExtractValue(val, idx, name);
   }
 
   // Gets a callable's function.
@@ -147,7 +133,7 @@ class FunctionContext {
 // Declare handlers for each SemIR::File node.
 #define CARBON_SEMANTICS_NODE_KIND(Name)                             \
   auto Handle##Name(FunctionContext& context, SemIR::NodeId node_id, \
-                    SemIR::Node node)                                \
+                    SemIR::Name node)                                \
       ->void;
 #include "toolchain/sem_ir/node_kind.def"
 

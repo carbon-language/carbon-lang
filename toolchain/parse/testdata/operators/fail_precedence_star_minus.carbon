@@ -11,6 +11,7 @@ var n: i8 = n* -n;
 
 // CHECK:STDOUT: - filename: fail_precedence_star_minus.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'n'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i8'},

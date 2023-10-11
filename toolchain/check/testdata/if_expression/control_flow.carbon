@@ -12,9 +12,9 @@ fn F(b: bool) -> i32 {
 }
 
 // CHECK:STDOUT: file "control_flow.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @A
-// CHECK:STDOUT:   %.loc8 = fn_decl @B
-// CHECK:STDOUT:   %.loc10 = fn_decl @F
+// CHECK:STDOUT:   %A = fn_decl @A
+// CHECK:STDOUT:   %B = fn_decl @B
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
@@ -31,9 +31,11 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
+// CHECK:STDOUT:   %A.ref = name_reference_untyped "A", package.%A
 // CHECK:STDOUT:   %.loc11_21.1: init i32 = call @A()
 // CHECK:STDOUT:   %.loc11_21.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc11_21.3: ref i32 = temporary %.loc11_21.2, %.loc11_21.1
@@ -41,6 +43,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_21.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
+// CHECK:STDOUT:   %B.ref = name_reference_untyped "B", package.%B
 // CHECK:STDOUT:   %.loc11_30.1: init i32 = call @B()
 // CHECK:STDOUT:   %.loc11_30.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc11_30.3: ref i32 = temporary %.loc11_30.2, %.loc11_30.1

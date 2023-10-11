@@ -40,8 +40,6 @@
 #error "Must define the x-macro to use this file."
 #endif
 
-CARBON_SEMANTICS_NODE_KIND_IMPL(Invalid, "invalid", None, NotTerminator)
-
 // A cross-reference between IRs.
 CARBON_SEMANTICS_NODE_KIND_IMPL(CrossReference, "xref", Typed, NotTerminator)
 
@@ -51,6 +49,7 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(ArrayInit, "array_init", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(ArrayType, "array_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Assign, "assign", None, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BinaryOperatorAdd, "add", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(BindName, "bind_name", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BindValue, "bind_value", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BlockArg, "block_arg", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BoolLiteral, "bool_literal", Typed,
@@ -69,6 +68,10 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(InitializeFrom, "initialize_from", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_literal", Typed,
                                 NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(NameReference, "name_reference", Typed,
+                                NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(NameReferenceUntyped, "name_reference_untyped",
+                                Untyped, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Namespace, "namespace", Untyped, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(NoOp, "no_op", None, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Parameter, "parameter", Typed, NotTerminator)
@@ -103,6 +106,8 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(TupleLiteral, "tuple_literal", Typed,
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleType, "tuple_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleValue, "tuple_value", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(UnaryOperatorNot, "not", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(ValueAsReference, "value_as_reference", Typed,
+                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(VarStorage, "var", Typed, NotTerminator)
 
 #undef CARBON_SEMANTICS_NODE_KIND

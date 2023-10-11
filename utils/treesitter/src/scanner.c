@@ -11,7 +11,7 @@ enum TokenType {
 };
 
 // our scanner is stateless
-void* tree_sitter_carbon_external_scanner_create() { return NULL; }
+void* tree_sitter_carbon_external_scanner_create(void) { return NULL; }
 
 unsigned tree_sitter_carbon_external_scanner_serialize(
     __attribute__((unused)) void* payload,

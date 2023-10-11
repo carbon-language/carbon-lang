@@ -9,11 +9,12 @@ fn Not(b: bool) -> bool {
 }
 
 // CHECK:STDOUT: file "unary_op.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Not
+// CHECK:STDOUT:   %Not = fn_decl @Not
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: bool = not %b
+// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   %.loc8: bool = not %b.ref
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }

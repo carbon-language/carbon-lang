@@ -23,8 +23,9 @@ var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc7_23.6: init [i32; 1] = array_init %.loc7_23.2, (%.loc7_23.5) to %a
 // CHECK:STDOUT:   assign %a, %.loc7_23.6
 // CHECK:STDOUT:   %b: ref i32 = var "b"
+// CHECK:STDOUT:   %a.ref: ref [i32; 1] = name_reference "a", %a
 // CHECK:STDOUT:   %.loc11_16: i32 = int_literal 295147905179352825855
-// CHECK:STDOUT:   %.loc11_35.1: ref i32 = array_index %a, <error>
+// CHECK:STDOUT:   %.loc11_35.1: ref i32 = array_index %a.ref, <error>
 // CHECK:STDOUT:   %.loc11_35.2: i32 = bind_value %.loc11_35.1
 // CHECK:STDOUT:   assign %b, %.loc11_35.2
 // CHECK:STDOUT: }

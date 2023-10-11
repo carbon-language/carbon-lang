@@ -9,7 +9,7 @@ fn Main() -> i32 {
 }
 
 // CHECK:STDOUT: file "binary_op.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {

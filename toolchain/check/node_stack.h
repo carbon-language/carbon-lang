@@ -275,6 +275,7 @@ class NodeStack {
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
+      case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::ParameterListStart:
       case Parse::NodeKind::ParenExpressionOrTupleLiteralStart:
       case Parse::NodeKind::QualifiedDeclaration:

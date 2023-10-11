@@ -10,6 +10,7 @@ fn F() {
 
 // CHECK:STDOUT: - filename: precedence_not.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},

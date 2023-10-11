@@ -5,9 +5,10 @@
 // AUTOUPDATE
 // CHECK:STDOUT: - filename: printing_integer_literal.carbon
 // CHECK:STDOUT:   tokens: [
+// CHECK:STDOUT:     { index: 0, kind:    'StartOfFile', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 
 123
-// CHECK:STDOUT:     { index: 0, kind: 'IntegerLiteral', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '123', value: `123`, has_trailing_space: true },
+// CHECK:STDOUT:     { index: 1, kind: 'IntegerLiteral', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '123', value: `123`, has_trailing_space: true },
 
-// CHECK:STDOUT:     { index: 1, kind:      'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 2, kind:      'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]

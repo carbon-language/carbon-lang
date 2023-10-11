@@ -13,6 +13,7 @@ constraint Foo {
 
 // CHECK:STDOUT: - filename: fail_no_impl_allowed.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'NamedConstraintIntroducer', text: 'constraint'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'Foo'},
 // CHECK:STDOUT:       {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},

@@ -71,6 +71,7 @@ cc_library(
 
 cc_library(
     name = "enum_base_test_def",
+    testonly = 1,
     textual_hdrs = ["enum_base_test.def"],
 )
 
@@ -149,6 +150,22 @@ cc_test(
         "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "struct_reflection",
+    hdrs = ["struct_reflection.h"],
+)
+
+cc_test(
+    name = "struct_reflection_test",
+    size = "small",
+    srcs = ["struct_reflection_test.cpp"],
+    deps = [
+        ":struct_reflection",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 

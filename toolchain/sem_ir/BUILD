@@ -32,6 +32,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:ostream",
+        "//common:struct_reflection",
         "//toolchain/base:index_base",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:builtin_kind",
@@ -62,6 +63,16 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:node_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "entry_point",
+    srcs = ["entry_point.cpp"],
+    hdrs = ["entry_point.h"],
+    deps = [
+        ":file",
         "@llvm-project//llvm:Support",
     ],
 )

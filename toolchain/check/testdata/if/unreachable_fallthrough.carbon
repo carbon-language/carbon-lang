@@ -14,12 +14,13 @@ fn If(b: bool) -> i32 {
 }
 
 // CHECK:STDOUT: file "unreachable_fallthrough.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @If
+// CHECK:STDOUT:   %If = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !if.then else br !if.else
+// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 1

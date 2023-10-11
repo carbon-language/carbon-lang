@@ -6,7 +6,7 @@
 
 namespace Carbon::Parse {
 
-// Handles PatternAs(DeducedParameter|FunctionParameter|Variable).
+// Handles PatternAs(DeducedParameter|FunctionParameter|Variable|Let).
 static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
     -> void {
   auto state = context.PopState();
@@ -34,6 +34,12 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
         CARBON_DIAGNOSTIC(ExpectedVariableName, Error,
                           "Expected pattern in `var` declaration.");
         context.emitter().Emit(*context.position(), ExpectedVariableName);
+        break;
+      }
+      case Context::PatternKind::Let: {
+        CARBON_DIAGNOSTIC(ExpectedLetBindingName, Error,
+                          "Expected pattern in `let` declaration.");
+        context.emitter().Emit(*context.position(), ExpectedLetBindingName);
         break;
       }
     }
@@ -88,6 +94,10 @@ auto HandlePatternAsParameter(Context& context) -> void {
 
 auto HandlePatternAsVariable(Context& context) -> void {
   HandlePattern(context, Context::PatternKind::Variable);
+}
+
+auto HandlePatternAsLet(Context& context) -> void {
+  HandlePattern(context, Context::PatternKind::Let);
 }
 
 // Handles PatternFinishAs(Generic|Regular).

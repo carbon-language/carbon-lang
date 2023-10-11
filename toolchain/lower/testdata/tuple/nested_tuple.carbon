@@ -12,6 +12,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'nested_tuple.carbon'
 // CHECK:STDOUT: source_filename = "nested_tuple.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Run() {
+// CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

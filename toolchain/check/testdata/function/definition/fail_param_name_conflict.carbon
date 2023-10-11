@@ -13,7 +13,7 @@
 fn Bar(a: i32, a: i32) {}
 
 // CHECK:STDOUT: file "fail_param_name_conflict.carbon" {
-// CHECK:STDOUT:   %.loc13 = fn_decl @Bar
+// CHECK:STDOUT:   %Bar = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar(%a.loc13_8: i32, %a.loc13_16: i32) {

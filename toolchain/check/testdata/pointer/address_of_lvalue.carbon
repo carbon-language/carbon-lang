@@ -17,7 +17,7 @@ fn F() {
 }
 
 // CHECK:STDOUT: file "address_of_lvalue.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %F = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -36,16 +36,19 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_27: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_28: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %p: ref {.a: i32, .b: i32}* = var "p"
-// CHECK:STDOUT:   %.loc10_32: {.a: i32, .b: i32}* = address_of %s
+// CHECK:STDOUT:   %s.ref.loc10: ref {.a: i32, .b: i32} = name_reference "s", %s
+// CHECK:STDOUT:   %.loc10_32: {.a: i32, .b: i32}* = address_of %s.ref.loc10
 // CHECK:STDOUT:   assign %p, %.loc10_32
 // CHECK:STDOUT:   %.loc11_13: type = ptr_type i32
 // CHECK:STDOUT:   %q: ref i32* = var "q"
-// CHECK:STDOUT:   %.loc11_19: ref i32 = struct_access %s, member0
+// CHECK:STDOUT:   %s.ref.loc11: ref {.a: i32, .b: i32} = name_reference "s", %s
+// CHECK:STDOUT:   %.loc11_19: ref i32 = struct_access %s.ref.loc11, member0
 // CHECK:STDOUT:   %.loc11_17: i32* = address_of %.loc11_19
 // CHECK:STDOUT:   assign %q, %.loc11_17
 // CHECK:STDOUT:   %.loc12_13: type = ptr_type i32
 // CHECK:STDOUT:   %r: ref i32* = var "r"
-// CHECK:STDOUT:   %.loc12_19: ref i32 = struct_access %s, member1
+// CHECK:STDOUT:   %s.ref.loc12: ref {.a: i32, .b: i32} = name_reference "s", %s
+// CHECK:STDOUT:   %.loc12_19: ref i32 = struct_access %s.ref.loc12, member1
 // CHECK:STDOUT:   %.loc12_17: i32* = address_of %.loc12_19
 // CHECK:STDOUT:   assign %r, %.loc12_17
 // CHECK:STDOUT:   %.loc14_19.1: type = tuple_type (type, type)
@@ -63,14 +66,16 @@ fn F() {
 // CHECK:STDOUT:   assign %t, %.loc14_28.6
 // CHECK:STDOUT:   %.loc15_14: type = ptr_type i32
 // CHECK:STDOUT:   %t0: ref i32* = var "t0"
+// CHECK:STDOUT:   %t.ref.loc15: ref (i32, i32) = name_reference "t", %t
 // CHECK:STDOUT:   %.loc15_21: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc15_22: ref i32 = tuple_index %t, %.loc15_21
+// CHECK:STDOUT:   %.loc15_22: ref i32 = tuple_index %t.ref.loc15, %.loc15_21
 // CHECK:STDOUT:   %.loc15_18: i32* = address_of %.loc15_22
 // CHECK:STDOUT:   assign %t0, %.loc15_18
 // CHECK:STDOUT:   %.loc16_14: type = ptr_type i32
 // CHECK:STDOUT:   %t1: ref i32* = var "t1"
+// CHECK:STDOUT:   %t.ref.loc16: ref (i32, i32) = name_reference "t", %t
 // CHECK:STDOUT:   %.loc16_21: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc16_22: ref i32 = tuple_index %t, %.loc16_21
+// CHECK:STDOUT:   %.loc16_22: ref i32 = tuple_index %t.ref.loc16, %.loc16_21
 // CHECK:STDOUT:   %.loc16_18: i32* = address_of %.loc16_22
 // CHECK:STDOUT:   assign %t1, %.loc16_18
 // CHECK:STDOUT:   return

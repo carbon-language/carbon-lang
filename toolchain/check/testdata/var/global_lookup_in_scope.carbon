@@ -14,13 +14,14 @@ fn Main() {
 // CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x, %.loc7
-// CHECK:STDOUT:   %.loc9 = fn_decl @Main
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %y: ref i32 = var "y"
-// CHECK:STDOUT:   %.loc7: i32 = bind_value package.%x
-// CHECK:STDOUT:   assign %y, %.loc7
+// CHECK:STDOUT:   %x.ref: ref i32 = name_reference "x", package.%x
+// CHECK:STDOUT:   %.loc10: i32 = bind_value %x.ref
+// CHECK:STDOUT:   assign %y, %.loc10
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -18,10 +18,10 @@ fn Bar() {
 }
 
 // CHECK:STDOUT: file "function.carbon" {
-// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %.loc13}
-// CHECK:STDOUT:   %.loc10 = fn_decl @Baz.1
-// CHECK:STDOUT:   %.loc13 = fn_decl @Baz.2
-// CHECK:STDOUT:   %.loc16 = fn_decl @Bar
+// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %Baz.loc13}
+// CHECK:STDOUT:   %Baz.loc10 = fn_decl @Baz.1
+// CHECK:STDOUT:   %Baz.loc13 = fn_decl @Baz.2
+// CHECK:STDOUT:   %Bar = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.1() {
@@ -36,6 +36,7 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Foo.ref = name_reference_untyped "Foo", package.%.loc7
 // CHECK:STDOUT:   %.loc17_10.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc17_10.2: init () = call @Baz.2()
 // CHECK:STDOUT:   return

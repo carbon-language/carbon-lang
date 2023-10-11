@@ -11,8 +11,8 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "params_zero.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
-// CHECK:STDOUT:   %.loc9 = fn_decl @Main
+// CHECK:STDOUT:   %Foo = fn_decl @Foo
+// CHECK:STDOUT:   %Main = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
@@ -22,6 +22,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Foo.ref = name_reference_untyped "Foo", package.%Foo
 // CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc10_6.2: init () = call @Foo()
 // CHECK:STDOUT:   return

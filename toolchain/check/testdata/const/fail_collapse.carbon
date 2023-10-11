@@ -15,10 +15,11 @@ fn G(p: const (const i32)**) -> i32** {
 }
 
 // CHECK:STDOUT: file "fail_collapse.carbon" {
-// CHECK:STDOUT:   %.loc10 = fn_decl @G
+// CHECK:STDOUT:   %G = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %p.ref: const i32** = name_reference "p", %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

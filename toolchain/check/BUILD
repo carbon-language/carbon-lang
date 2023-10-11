@@ -62,6 +62,7 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/parse:tree_node_location_translator",
         "//toolchain/sem_ir:builtin_kind",
+        "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:node",
         "//toolchain/sem_ir:node_kind",

@@ -16,11 +16,12 @@
 // CHECK:STDERR:             ^
 var x: [i32;;
 
-// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+15]]:21: ERROR: `var` declarations must end with a `;`.
+// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+16]]:21: ERROR: `var` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_require_close_bracket.carbon
 // CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'x'},
 // CHECK:STDOUT:             {kind: 'ArrayExpressionStart', text: '['},

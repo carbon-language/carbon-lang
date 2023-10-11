@@ -14,7 +14,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'tuple_element_access.carbon'
 // CHECK:STDOUT: source_filename = "tuple_element_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Run() {
+// CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT:   %a = alloca { i32, i32, i32 }, align 8
 // CHECK:STDOUT:   %tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a, i32 0, i32 0
 // CHECK:STDOUT:   store i32 0, ptr %tuple.elem, align 4
