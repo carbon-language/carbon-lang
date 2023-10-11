@@ -64,9 +64,8 @@ class PendingBlock {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
       context_.semantics_ir().ReplaceNode(
-          target_id,
-          SemIR::Node::SpliceBlock::Make(value.parse_node(), value.type_id(),
-                                         SemIR::NodeBlockId::Empty, value_id));
+          target_id, SemIR::SpliceBlock(value.parse_node(), value.type_id(),
+                                        SemIR::NodeBlockId::Empty, value_id));
     } else if (nodes_.size() == 1 && nodes_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the node referred
       // to by `value_id`. This is intended to be the common case.
@@ -75,9 +74,9 @@ class PendingBlock {
       // 3) Anything else: splice it into the IR, replacing `target_id`.
       context_.semantics_ir().ReplaceNode(
           target_id,
-          SemIR::Node::SpliceBlock::Make(
-              value.parse_node(), value.type_id(),
-              context_.semantics_ir().AddNodeBlock(nodes_), value_id));
+          SemIR::SpliceBlock(value.parse_node(), value.type_id(),
+                             context_.semantics_ir().AddNodeBlock(nodes_),
+                             value_id));
     }
 
     // Prepare to stash more pending instructions.
