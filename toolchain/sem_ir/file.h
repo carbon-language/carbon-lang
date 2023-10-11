@@ -51,7 +51,9 @@ struct Function : public Printable<Function> {
   llvm::SmallVector<NodeBlockId> body_block_ids;
 };
 
-struct RealLiteral : public Printable<RealLiteral> {
+// TODO: Replace this with a Rational type, per the design:
+// docs/design/expressions/literals.md
+struct Real : public Printable<Real> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{mantissa: ";
     mantissa.print(out, /*isSigned=*/false);
@@ -91,7 +93,7 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound node.
   auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
-    return GetIntegerLiteral(GetNode(bound_id).GetAsIntegerLiteral())
+    return GetInteger(GetNodeAs<IntegerLiteral>(bound_id).integer_id)
         .getZExtValue();
   }
 
@@ -119,18 +121,18 @@ class File : public Printable<File> {
     return functions_[function_id.index];
   }
 
-  // Adds an integer literal, returning an ID to reference it.
-  auto AddIntegerLiteral(llvm::APInt integer_literal) -> IntegerLiteralId {
-    IntegerLiteralId id(integer_literals_.size());
+  // Adds an integer value, returning an ID to reference it.
+  auto AddInteger(llvm::APInt integer) -> IntegerId {
+    IntegerId id(integers_.size());
     // TODO: Return failure on overflow instead of crashing.
     CARBON_CHECK(id.index >= 0);
-    integer_literals_.push_back(integer_literal);
+    integers_.push_back(integer);
     return id;
   }
 
-  // Returns the requested integer literal.
-  auto GetIntegerLiteral(IntegerLiteralId int_id) const -> const llvm::APInt& {
-    return integer_literals_[int_id.index];
+  // Returns the requested integer value.
+  auto GetInteger(IntegerId int_id) const -> const llvm::APInt& {
+    return integers_[int_id.index];
   }
 
   // Adds a name scope, returning an ID to reference it.
@@ -174,6 +176,12 @@ class File : public Printable<File> {
 
   // Returns the requested node.
   auto GetNode(NodeId node_id) const -> Node { return nodes_[node_id.index]; }
+
+  // Returns the requested node, which is known to have the specified type.
+  template <typename NodeT>
+  auto GetNodeAs(NodeId node_id) const -> NodeT {
+    return GetNode(node_id).As<NodeT>();
+  }
 
   // Reserves and returns a node block ID. The contents of the node block
   // should be specified by calling SetNodeBlock, or by pushing the ID onto the
@@ -225,18 +233,18 @@ class File : public Printable<File> {
     return node_blocks_[block_id.index];
   }
 
-  // Adds a real literal, returning an ID to reference it.
-  auto AddRealLiteral(RealLiteral real_literal) -> RealLiteralId {
-    RealLiteralId id(real_literals_.size());
+  // Adds a real value, returning an ID to reference it.
+  auto AddReal(Real real) -> RealId {
+    RealId id(reals_.size());
     // TODO: Return failure on overflow instead of crashing.
     CARBON_CHECK(id.index >= 0);
-    real_literals_.push_back(real_literal);
+    reals_.push_back(real);
     return id;
   }
 
-  // Returns the requested real literal.
-  auto GetRealLiteral(RealLiteralId int_id) const -> const RealLiteral& {
-    return real_literals_[int_id.index];
+  // Returns the requested real value.
+  auto GetReal(RealId real_id) const -> const Real& {
+    return reals_[real_id.index];
   }
 
   // Adds an string, returning an ID to reference it.
@@ -372,14 +380,14 @@ class File : public Printable<File> {
   // crossing node blocks).
   llvm::SmallVector<const File*> cross_reference_irs_;
 
-  // Storage for integer literals.
-  llvm::SmallVector<llvm::APInt> integer_literals_;
+  // Storage for integer values.
+  llvm::SmallVector<llvm::APInt> integers_;
 
   // Storage for name scopes.
   llvm::SmallVector<llvm::DenseMap<StringId, NodeId>> name_scopes_;
 
-  // Storage for real literals.
-  llvm::SmallVector<RealLiteral> real_literals_;
+  // Storage for real values.
+  llvm::SmallVector<Real> reals_;
 
   // Storage for strings. strings_ provides a list of allocated strings, while
   // string_to_id_ provides a mapping to identify strings.
