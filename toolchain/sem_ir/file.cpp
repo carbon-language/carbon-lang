@@ -417,8 +417,8 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
   // conversion to type `type` if it's not implied by the context.
   if (!in_type_context) {
     auto outer_node = GetNode(outer_node_id);
-    if (outer_node.kind() == TupleType::Kind ||
-        (outer_node.kind() == StructType::Kind &&
+    if (outer_node.Is<TupleType>() ||
+        (outer_node.Is<StructType>() &&
          GetNodeBlock(outer_node.As<StructType>().fields_id).empty())) {
       out << " as type";
     }

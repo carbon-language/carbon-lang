@@ -307,7 +307,7 @@ class NodeNamer {
         break;
 
       case Parse::NodeKind::ShortCircuitOperand: {
-        bool is_rhs = node.kind() == BranchIf::Kind;
+        bool is_rhs = node.Is<BranchIf>();
         bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
                           node.parse_node())) == Lex::TokenKind::And;
         name = is_and ? (is_rhs ? "and.rhs" : "and.result")
