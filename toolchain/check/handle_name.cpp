@@ -33,7 +33,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
       context.semantics_ir().GetTypeAllowBuiltinTypes(base.type_id()));
 
   switch (base_type.kind()) {
-    case SemIR::NodeKind::StructType: {
+    case SemIR::StructType::Kind: {
       auto refs = context.semantics_ir().GetNodeBlock(
           base_type.As<SemIR::StructType>().fields_id);
       // TODO: Do we need to optimize this with a lookup table for O(1)?

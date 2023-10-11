@@ -18,7 +18,7 @@ auto Node::Print(llvm::raw_ostream& out) const -> void {
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind_) {
 #define CARBON_SEMANTICS_NODE_KIND(Name)                    \
-  case NodeKind::Name:                                      \
+  case Name::Kind:                                          \
     std::apply(print_args, As<SemIR::Name>().args_tuple()); \
     break;
 #include "toolchain/sem_ir/node_kind.def"
