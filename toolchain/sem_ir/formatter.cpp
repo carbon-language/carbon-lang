@@ -315,6 +315,23 @@ class NodeNamer {
         break;
       }
 
+      case Parse::NodeKind::WhileConditionStart:
+        name = "while.cond";
+        break;
+
+      case Parse::NodeKind::WhileCondition:
+        switch (node.kind()) {
+          case NodeKind::BranchIf:
+            name = "while.body";
+            break;
+          case NodeKind::Branch:
+            name = "while.done";
+            break;
+          default:
+            break;
+        }
+        break;
+
       default:
         break;
     }
