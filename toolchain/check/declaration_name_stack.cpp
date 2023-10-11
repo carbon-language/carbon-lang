@@ -120,7 +120,8 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
   switch (resolved_node.kind()) {
     case SemIR::NodeKind::Namespace:
       name_context.state = NameContext::State::Resolved;
-      name_context.target_scope_id = resolved_node.GetAsNamespace();
+      name_context.target_scope_id =
+          resolved_node.As<SemIR::Namespace>().name_scope_id;
       break;
     default:
       name_context.state = NameContext::State::ResolvedNonScope;
