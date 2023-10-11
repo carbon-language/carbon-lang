@@ -74,6 +74,7 @@ auto HandleBoolLiteral(FunctionContext& context, SemIR::NodeId node_id,
 auto HandleBranch(FunctionContext& context, SemIR::NodeId /*node_id*/,
                   SemIR::Branch node) -> void {
   // Opportunistically avoid creating a BasicBlock that contains just a branch.
+  // TODO: Don't do this if it would remove a loop preheader block.
   llvm::BasicBlock* block = context.builder().GetInsertBlock();
   if (block->empty() && context.TryToReuseBlock(node.target_id, block)) {
     // Reuse this block as the branch target.
