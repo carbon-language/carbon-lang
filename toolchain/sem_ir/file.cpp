@@ -211,7 +211,6 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NodeKind::InitializeFrom:
     case NodeKind::IntegerLiteral:
     case NodeKind::NameReference:
-    case NodeKind::NameReferenceUntyped:
     case NodeKind::Namespace:
     case NodeKind::NoOp:
     case NodeKind::Parameter:
@@ -382,7 +381,6 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case NodeKind::InitializeFrom:
       case NodeKind::IntegerLiteral:
       case NodeKind::NameReference:
-      case NodeKind::NameReferenceUntyped:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
       case NodeKind::Parameter:
@@ -440,7 +438,6 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case NodeKind::BranchIf:
       case NodeKind::BranchWithArg:
       case NodeKind::FunctionDeclaration:
-      case NodeKind::NameReferenceUntyped:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
       case NodeKind::Return:
@@ -560,7 +557,6 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
       case NodeKind::InitializeFrom:
       case NodeKind::IntegerLiteral:
       case NodeKind::NameReference:
-      case NodeKind::NameReferenceUntyped:
       case NodeKind::Namespace:
       case NodeKind::NoOp:
       case NodeKind::Parameter:
@@ -642,6 +638,8 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
           case BuiltinKind::TypeType:
           case BuiltinKind::Error:
           case BuiltinKind::Invalid:
+          case BuiltinKind::NamespaceType:
+          case BuiltinKind::FunctionType:
             return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
           case BuiltinKind::BoolType:
           case BuiltinKind::IntegerType:

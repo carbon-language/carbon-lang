@@ -327,8 +327,6 @@ struct Dereference {
 };
 
 struct FunctionDeclaration {
-  using HasType = std::false_type;
-
   FunctionId function_id;
 };
 
@@ -349,14 +347,7 @@ struct NameReference {
   NodeId value_id;
 };
 
-struct NameReferenceUntyped {
-  StringId name_id;
-  NodeId value_id;
-};
-
 struct Namespace {
-  using HasType = std::false_type;
-
   NameScopeId name_scope_id;
 };
 

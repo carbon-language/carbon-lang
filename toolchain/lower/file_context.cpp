@@ -208,6 +208,10 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       // TODO: We may want to have different representations for `bool` storage
       // (`i8`) versus for `bool` values (`i1`).
       return llvm::Type::getInt1Ty(*llvm_context_);
+    case SemIR::BuiltinKind::FunctionType.AsInt():
+    case SemIR::BuiltinKind::NamespaceType.AsInt():
+      // Return an empty struct as a placeholder.
+      return llvm::StructType::get(*llvm_context_);
     default:
       // Handled below.
       break;

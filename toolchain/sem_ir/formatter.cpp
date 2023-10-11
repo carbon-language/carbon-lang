@@ -399,13 +399,6 @@ class NodeNamer {
               ".ref");
           continue;
         }
-        case NodeKind::NameReferenceUntyped: {
-          add_node_name(
-              semantics_ir_.GetString(node.As<NameReferenceUntyped>().name_id)
-                  .str() +
-              ".ref");
-          continue;
-        }
         case NodeKind::Parameter: {
           add_node_name_id(node.As<Parameter>().name_id);
           continue;

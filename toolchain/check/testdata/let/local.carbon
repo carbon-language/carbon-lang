@@ -10,7 +10,7 @@ fn F(a: i32) -> i32 {
 }
 
 // CHECK:STDOUT: file "local.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: i32) -> i32 {
