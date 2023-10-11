@@ -25,6 +25,10 @@ fn While() {
 // CHECK:STDOUT: declare i1 @C()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @While() {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %0
+// CHECK:STDOUT:
+// CHECK:STDOUT: 0:                                                ; preds = %entry, %8, %4
 // CHECK:STDOUT:   %A = call i1 @A()
 // CHECK:STDOUT:   %temp = alloca i1, align 1
 // CHECK:STDOUT:   store i1 %A, ptr %temp, align 1
@@ -56,4 +60,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: 9:                                                ; preds = %7, %0
 // CHECK:STDOUT:   ret void
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT:   uselistorder label %0, { 1, 2, 0 }
 // CHECK:STDOUT: }
