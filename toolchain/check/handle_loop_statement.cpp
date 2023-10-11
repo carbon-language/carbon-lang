@@ -20,8 +20,7 @@ auto HandleBreakStatementStart(Context& context, Parse::Node parse_node)
                       "`break` can only be used in a loop.");
     context.emitter().Emit(parse_node, BreakOutsideLoop);
   } else {
-    context.AddNode(
-        SemIR::Node::Branch::Make(parse_node, stack.back().break_target));
+    context.AddNode(SemIR::Branch(parse_node, stack.back().break_target));
   }
 
   context.node_block_stack().Pop();
@@ -42,8 +41,7 @@ auto HandleContinueStatementStart(Context& context, Parse::Node parse_node)
                       "`continue` can only be used in a loop.");
     context.emitter().Emit(parse_node, ContinueOutsideLoop);
   } else {
-    context.AddNode(
-        SemIR::Node::Branch::Make(parse_node, stack.back().continue_target));
+    context.AddNode(SemIR::Branch(parse_node, stack.back().continue_target));
   }
 
   context.node_block_stack().Pop();
@@ -111,7 +109,7 @@ auto HandleWhileStatement(Context& context, Parse::Node parse_node) -> bool {
   context.break_continue_stack().pop_back();
 
   // Add the loop backedge.
-  context.AddNode(SemIR::Node::Branch::Make(parse_node, loop_entry_id));
+  context.AddNode(SemIR::Branch(parse_node, loop_entry_id));
   context.node_block_stack().Pop();
 
   // Start emitting the loop exit block.

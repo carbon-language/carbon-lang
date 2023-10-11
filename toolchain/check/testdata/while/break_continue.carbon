@@ -27,15 +27,15 @@ fn While() {
 }
 
 // CHECK:STDOUT: file "break_continue.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @A
-// CHECK:STDOUT:   %.loc8 = fn_decl @B
-// CHECK:STDOUT:   %.loc9 = fn_decl @C
-// CHECK:STDOUT:   %.loc10 = fn_decl @D
-// CHECK:STDOUT:   %.loc11 = fn_decl @E
-// CHECK:STDOUT:   %.loc12 = fn_decl @F
-// CHECK:STDOUT:   %.loc13 = fn_decl @G
-// CHECK:STDOUT:   %.loc14 = fn_decl @H
-// CHECK:STDOUT:   %.loc16 = fn_decl @While
+// CHECK:STDOUT:   %A = fn_decl @A
+// CHECK:STDOUT:   %B = fn_decl @B
+// CHECK:STDOUT:   %C = fn_decl @C
+// CHECK:STDOUT:   %D = fn_decl @D
+// CHECK:STDOUT:   %E = fn_decl @E
+// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %H = fn_decl @H
+// CHECK:STDOUT:   %While = fn_decl @While
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> bool;
@@ -59,6 +59,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond.loc17:
+// CHECK:STDOUT:   %A.ref = name_reference_untyped "A", package.%A
 // CHECK:STDOUT:   %.loc17_11.1: init bool = call @A()
 // CHECK:STDOUT:   %.loc17_11.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc17_11.3: ref bool = temporary %.loc17_11.2, %.loc17_11.1
@@ -66,6 +67,7 @@ fn While() {
 // CHECK:STDOUT:   if %.loc17_11.4 br !while.body.loc17 else br !while.done.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body.loc17:
+// CHECK:STDOUT:   %B.ref = name_reference_untyped "B", package.%B
 // CHECK:STDOUT:   %.loc18_10.1: init bool = call @B()
 // CHECK:STDOUT:   %.loc18_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc18_10.3: ref bool = temporary %.loc18_10.2, %.loc18_10.1
@@ -76,6 +78,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc18:
+// CHECK:STDOUT:   %C.ref = name_reference_untyped "C", package.%C
 // CHECK:STDOUT:   %.loc19_10.1: init bool = call @C()
 // CHECK:STDOUT:   %.loc19_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc19_10.3: ref bool = temporary %.loc19_10.2, %.loc19_10.1
@@ -89,6 +92,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond.loc20:
+// CHECK:STDOUT:   %D.ref = name_reference_untyped "D", package.%D
 // CHECK:STDOUT:   %.loc20_13.1: init bool = call @D()
 // CHECK:STDOUT:   %.loc20_13.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc20_13.3: ref bool = temporary %.loc20_13.2, %.loc20_13.1
@@ -96,6 +100,7 @@ fn While() {
 // CHECK:STDOUT:   if %.loc20_13.4 br !while.body.loc20 else br !while.done.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body.loc20:
+// CHECK:STDOUT:   %E.ref = name_reference_untyped "E", package.%E
 // CHECK:STDOUT:   %.loc21_12.1: init bool = call @E()
 // CHECK:STDOUT:   %.loc21_12.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc21_12.3: ref bool = temporary %.loc21_12.2, %.loc21_12.1
@@ -106,6 +111,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc21:
+// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc22_12.1: init bool = call @F()
 // CHECK:STDOUT:   %.loc22_12.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc22_12.3: ref bool = temporary %.loc22_12.2, %.loc22_12.1
@@ -119,6 +125,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done.loc20:
+// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%G
 // CHECK:STDOUT:   %.loc24_10.1: init bool = call @G()
 // CHECK:STDOUT:   %.loc24_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc24_10.3: ref bool = temporary %.loc24_10.2, %.loc24_10.1
@@ -129,6 +136,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc24:
+// CHECK:STDOUT:   %H.ref = name_reference_untyped "H", package.%H
 // CHECK:STDOUT:   %.loc25_10.1: init bool = call @H()
 // CHECK:STDOUT:   %.loc25_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc25_10.3: ref bool = temporary %.loc25_10.2, %.loc25_10.1

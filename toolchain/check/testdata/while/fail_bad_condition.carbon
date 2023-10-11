@@ -12,7 +12,7 @@ fn While() {
 }
 
 // CHECK:STDOUT: file "fail_bad_condition.carbon" {
-// CHECK:STDOUT:   %.loc7 = fn_decl @While
+// CHECK:STDOUT:   %While = fn_decl @While
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {
