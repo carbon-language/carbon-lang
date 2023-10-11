@@ -18,10 +18,10 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     functions: [
 // CHECK:STDOUT:       {name: str0, param_refs: block1, return_type: type3, return_slot: node+4, body: [block4]},
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     integer_values: [
+// CHECK:STDOUT:     integers: [
 // CHECK:STDOUT:       2,
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     real_values: [
+// CHECK:STDOUT:     reals: [
 // CHECK:STDOUT:       {mantissa: 34, exponent: -1, is_decimal: 1},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     strings: [

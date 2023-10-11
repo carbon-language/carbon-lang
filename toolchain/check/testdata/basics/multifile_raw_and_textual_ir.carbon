@@ -20,9 +20,9 @@ fn B() {}
 // CHECK:STDOUT:     functions: [
 // CHECK:STDOUT:       {name: str0, param_refs: block0, body: [block1]},
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     integer_values: [
+// CHECK:STDOUT:     integers: [
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     real_values: [
+// CHECK:STDOUT:     reals: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     strings: [
 // CHECK:STDOUT:       A,
@@ -60,9 +60,9 @@ fn B() {}
 // CHECK:STDOUT:     functions: [
 // CHECK:STDOUT:       {name: str0, param_refs: block0, body: [block1]},
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     integer_values: [
+// CHECK:STDOUT:     integers: [
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     real_values: [
+// CHECK:STDOUT:     reals: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     strings: [
 // CHECK:STDOUT:       B,

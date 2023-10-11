@@ -24,7 +24,7 @@ static auto ValidateIntegerLiteralBound(Context& context,
                                         SemIR::IntegerLiteral index_node,
                                         int size) -> const llvm::APInt* {
   const auto& index_val =
-      context.semantics_ir().GetIntegerValue(index_node.integer_id);
+      context.semantics_ir().GetInteger(index_node.integer_id);
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(IndexOutOfBounds, Error,
                       "Index `{0}` is past the end of `{1}`.", llvm::APSInt,

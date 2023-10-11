@@ -93,7 +93,7 @@ constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
 // The ID of an integer value.
-struct IntegerValueId : public IndexBase, public Printable<IntegerValueId> {
+struct IntegerId : public IndexBase, public Printable<IntegerId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "int";
@@ -144,9 +144,8 @@ constexpr NodeBlockId NodeBlockId::Invalid =
 constexpr NodeBlockId NodeBlockId::Unreachable =
     NodeBlockId(NodeBlockId::InvalidIndex - 1);
 
-// The ID of a value of a real number type. Despite the name, this type only
-// represents rational numbers.
-struct RealValueId : public IndexBase, public Printable<RealValueId> {
+// The ID of a real number value.
+struct RealId : public IndexBase, public Printable<RealId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "real";
@@ -342,7 +341,7 @@ struct InitializeFrom {
 };
 
 struct IntegerLiteral {
-  IntegerValueId integer_id;
+  IntegerId integer_id;
 };
 
 struct NameReference {
@@ -374,7 +373,7 @@ struct PointerType {
 };
 
 struct RealLiteral {
-  RealValueId real_id;
+  RealId real_id;
 };
 
 struct Return {

@@ -152,11 +152,11 @@ auto File::Print(llvm::raw_ostream& out, bool include_builtins) const -> void {
   PrintList(out, "functions", functions_);
   // Integer values are APInts, and default to a signed print, but we currently
   // treat them as unsigned.
-  PrintList(out, "integer_values", integer_values_,
+  PrintList(out, "integers", integers_,
             [](llvm::raw_ostream& out, const llvm::APInt& val) {
               val.print(out, /*isSigned=*/false);
             });
-  PrintList(out, "real_values", real_values_);
+  PrintList(out, "reals", reals_);
   PrintList(out, "strings", strings_);
   PrintList(out, "types", types_);
   PrintBlock(out, "type_blocks", type_blocks_);

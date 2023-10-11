@@ -37,7 +37,7 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
   auto bound_node = context.semantics_ir().GetNode(bound_node_id);
   if (auto literal = bound_node.TryAs<SemIR::IntegerLiteral>()) {
     const auto& bound_value =
-        context.semantics_ir().GetIntegerValue(literal->integer_id);
+        context.semantics_ir().GetInteger(literal->integer_id);
     // TODO: Produce an error if the array type is too large.
     if (bound_value.getActiveBits() <= 64) {
       context.AddNodeAndPush(

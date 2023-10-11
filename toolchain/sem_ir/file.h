@@ -51,7 +51,9 @@ struct Function : public Printable<Function> {
   llvm::SmallVector<NodeBlockId> body_block_ids;
 };
 
-struct RealValue : public Printable<RealValue> {
+// TODO: Replace this with a Rational type, per the design:
+// docs/design/expressions/literals.md
+struct Real : public Printable<Real> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{mantissa: ";
     mantissa.print(out, /*isSigned=*/false);
@@ -91,7 +93,7 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound node.
   auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
-    return GetIntegerValue(GetNodeAs<IntegerLiteral>(bound_id).integer_id)
+    return GetInteger(GetNodeAs<IntegerLiteral>(bound_id).integer_id)
         .getZExtValue();
   }
 
@@ -120,17 +122,17 @@ class File : public Printable<File> {
   }
 
   // Adds an integer value, returning an ID to reference it.
-  auto AddIntegerValue(llvm::APInt integer_value) -> IntegerValueId {
-    IntegerValueId id(integer_values_.size());
+  auto AddInteger(llvm::APInt integer) -> IntegerId {
+    IntegerId id(integers_.size());
     // TODO: Return failure on overflow instead of crashing.
     CARBON_CHECK(id.index >= 0);
-    integer_values_.push_back(integer_value);
+    integers_.push_back(integer);
     return id;
   }
 
   // Returns the requested integer value.
-  auto GetIntegerValue(IntegerValueId int_id) const -> const llvm::APInt& {
-    return integer_values_[int_id.index];
+  auto GetInteger(IntegerId int_id) const -> const llvm::APInt& {
+    return integers_[int_id.index];
   }
 
   // Adds a name scope, returning an ID to reference it.
@@ -232,17 +234,17 @@ class File : public Printable<File> {
   }
 
   // Adds a real value, returning an ID to reference it.
-  auto AddRealValue(RealValue real_value) -> RealValueId {
-    RealValueId id(real_values_.size());
+  auto AddReal(Real real) -> RealId {
+    RealId id(reals_.size());
     // TODO: Return failure on overflow instead of crashing.
     CARBON_CHECK(id.index >= 0);
-    real_values_.push_back(real_value);
+    reals_.push_back(real);
     return id;
   }
 
   // Returns the requested real value.
-  auto GetRealValue(RealValueId int_id) const -> const RealValue& {
-    return real_values_[int_id.index];
+  auto GetReal(RealId real_id) const -> const Real& {
+    return reals_[real_id.index];
   }
 
   // Adds an string, returning an ID to reference it.
@@ -379,13 +381,13 @@ class File : public Printable<File> {
   llvm::SmallVector<const File*> cross_reference_irs_;
 
   // Storage for integer values.
-  llvm::SmallVector<llvm::APInt> integer_values_;
+  llvm::SmallVector<llvm::APInt> integers_;
 
   // Storage for name scopes.
   llvm::SmallVector<llvm::DenseMap<StringId, NodeId>> name_scopes_;
 
-  // Storage for real value.
-  llvm::SmallVector<RealValue> real_values_;
+  // Storage for real values.
+  llvm::SmallVector<Real> reals_;
 
   // Storage for strings. strings_ provides a list of allocated strings, while
   // string_to_id_ provides a mapping to identify strings.
