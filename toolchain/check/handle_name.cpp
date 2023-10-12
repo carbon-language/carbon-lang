@@ -17,10 +17,10 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   auto base =
       context.semantics_ir().GetNode(context.FollowNameReferences(base_id));
-  if (base.kind() == SemIR::NodeKind::Namespace) {
+  if (auto namespc = base.TryAs<SemIR::Namespace>()) {
     // For a namespace, just resolve the name.
     auto node_id =
-        context.LookupName(parse_node, name_id, base.GetAsNamespace(),
+        context.LookupName(parse_node, name_id, namespc->name_scope_id,
                            /*print_diagnostics=*/true);
     context.node_stack().Push(parse_node, node_id);
     return true;
@@ -33,17 +33,16 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
       context.semantics_ir().GetTypeAllowBuiltinTypes(base.type_id()));
 
   switch (base_type.kind()) {
-    case SemIR::NodeKind::StructType: {
-      auto refs =
-          context.semantics_ir().GetNodeBlock(base_type.GetAsStructType());
+    case SemIR::StructType::Kind: {
+      auto refs = context.semantics_ir().GetNodeBlock(
+          base_type.As<SemIR::StructType>().fields_id);
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
-        auto ref = context.semantics_ir().GetNode(ref_id);
-        if (auto [field_name_id, field_type_id] = ref.GetAsStructTypeField();
-            name_id == field_name_id) {
+        auto field =
+            context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(ref_id);
+        if (name_id == field.name_id) {
           context.AddNodeAndPush(
-              parse_node,
-              SemIR::Node::StructAccess::Make(parse_node, field_type_id,
+              parse_node, SemIR::StructAccess(parse_node, field.type_id,
                                               base_id, SemIR::MemberIndex(i)));
           return true;
         }
@@ -97,15 +96,15 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   auto value = context.semantics_ir().GetNode(value_id);
   if (value.kind().value_kind() == SemIR::NodeValueKind::Typed) {
     // This is a reference to a name binding that has a value and a type.
-    context.AddNodeAndPush(parse_node,
-                           SemIR::Node::NameReference::Make(
-                               parse_node, value.type_id(), name_id, value_id));
+    context.AddNodeAndPush(
+        parse_node,
+        SemIR::NameReference(parse_node, value.type_id(), name_id, value_id));
   } else {
     // This is something like a namespace name, that can be found by name lookup
     // but isn't a first-class value with a type.
-    context.AddNodeAndPush(parse_node,
-                           SemIR::Node::NameReferenceUntyped::Make(
-                               parse_node, value.type_id(), name_id, value_id));
+    context.AddNodeAndPush(
+        parse_node, SemIR::NameReferenceUntyped(parse_node, value.type_id(),
+                                                name_id, value_id));
   }
   return true;
 }

@@ -154,6 +154,22 @@ cc_test(
 )
 
 cc_library(
+    name = "struct_reflection",
+    hdrs = ["struct_reflection.h"],
+)
+
+cc_test(
+    name = "struct_reflection_test",
+    size = "small",
+    srcs = ["struct_reflection_test.cpp"],
+    deps = [
+        ":struct_reflection",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "vlog",
     srcs = ["vlog_internal.h"],
     hdrs = ["vlog.h"],

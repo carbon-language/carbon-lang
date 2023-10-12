@@ -40,8 +40,6 @@
 #error "Must define the x-macro to use this file."
 #endif
 
-CARBON_SEMANTICS_NODE_KIND_IMPL(Invalid, "invalid", None, NotTerminator)
-
 // A cross-reference between IRs.
 CARBON_SEMANTICS_NODE_KIND_IMPL(CrossReference, "xref", Typed, NotTerminator)
 
