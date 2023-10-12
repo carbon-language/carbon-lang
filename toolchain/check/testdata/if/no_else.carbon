@@ -38,11 +38,11 @@ fn If(b: bool) {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc12_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc12_6.2: init () = call @F()
+// CHECK:STDOUT:   %.loc12_6.2: init () = call %F.ref()
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
-// CHECK:STDOUT:   %.loc14: init () = call @G()
+// CHECK:STDOUT:   %.loc14: init () = call %G.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

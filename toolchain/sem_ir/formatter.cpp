@@ -646,12 +646,13 @@ class Formatter {
 
   auto FormatInstructionRHS(Call node) -> void {
     out_ << " ";
-    FormatArg(node.function_id);
+    FormatArg(node.callee_id);
 
     llvm::ArrayRef<NodeId> args = semantics_ir_.GetNodeBlock(node.args_id);
 
     bool has_return_slot =
-        semantics_ir_.GetFunction(node.function_id).return_slot_id.is_valid();
+        GetInitializingRepresentation(semantics_ir_, node.type_id)
+            .has_return_slot();
     NodeId return_slot_id = NodeId::Invalid;
     if (has_return_slot) {
       return_slot_id = args.back();

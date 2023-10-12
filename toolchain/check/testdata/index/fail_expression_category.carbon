@@ -58,7 +58,7 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %pf: ref i32* = var "pf"
 // CHECK:STDOUT:   %F.ref.loc25: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc25_20.1: ref [i32; 3] = temporary_storage
-// CHECK:STDOUT:   %.loc25_20.2: init [i32; 3] = call @F() to %.loc25_20.1
+// CHECK:STDOUT:   %.loc25_20.2: init [i32; 3] = call %F.ref.loc25() to %.loc25_20.1
 // CHECK:STDOUT:   %.loc25_23: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc25_20.3: ref [i32; 3] = temporary %.loc25_20.1, %.loc25_20.2
 // CHECK:STDOUT:   %.loc25_24.1: ref i32 = array_index %.loc25_20.3, %.loc25_23
@@ -67,7 +67,7 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   assign %pf, %.loc25_18
 // CHECK:STDOUT:   %F.ref.loc29: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc29_4.1: ref [i32; 3] = temporary_storage
-// CHECK:STDOUT:   %.loc29_4.2: init [i32; 3] = call @F() to %.loc29_4.1
+// CHECK:STDOUT:   %.loc29_4.2: init [i32; 3] = call %F.ref.loc29() to %.loc29_4.1
 // CHECK:STDOUT:   %.loc29_7: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc29_4.3: ref [i32; 3] = temporary %.loc29_4.1, %.loc29_4.2
 // CHECK:STDOUT:   %.loc29_8.1: ref i32 = array_index %.loc29_4.3, %.loc29_7

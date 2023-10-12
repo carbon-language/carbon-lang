@@ -42,8 +42,8 @@ static auto FindReturnSlotForInitializer(SemIR::File& semantics_ir,
 
     case SemIR::Call::Kind: {
       auto call = init.As<SemIR::Call>();
-      if (!semantics_ir.GetFunction(call.function_id)
-               .return_slot_id.is_valid()) {
+      if (!SemIR::GetInitializingRepresentation(semantics_ir, call.type_id)
+               .has_return_slot()) {
         return SemIR::NodeId::Invalid;
       }
       return semantics_ir.GetNodeBlock(call.args_id).back();

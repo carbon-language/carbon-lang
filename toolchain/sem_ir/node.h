@@ -304,8 +304,8 @@ struct Builtin {
 };
 
 struct Call {
+  NodeId callee_id;
   NodeBlockId args_id;
-  FunctionId function_id;
 };
 
 struct ConstType {

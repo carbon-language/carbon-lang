@@ -28,6 +28,6 @@ fn Main() {
 // CHECK:STDOUT:   %Echo.ref: <function> = name_reference "Echo", package.%Echo
 // CHECK:STDOUT:   %.loc12_9.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: {} = struct_value %.loc12_9.1, ()
-// CHECK:STDOUT:   %.loc12_7: init {} = call @Echo(%.loc12_9.2)
+// CHECK:STDOUT:   %.loc12_7: init {} = call %Echo.ref(%.loc12_9.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

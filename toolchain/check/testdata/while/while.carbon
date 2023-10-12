@@ -38,12 +38,12 @@ fn While() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc14_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc14_4.2: init () = call @F()
+// CHECK:STDOUT:   %.loc14_4.2: init () = call %F.ref()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
 // CHECK:STDOUT:   %Cond.ref: <function> = name_reference "Cond", package.%Cond
-// CHECK:STDOUT:   %.loc15_14.1: init bool = call @Cond()
+// CHECK:STDOUT:   %.loc15_14.1: init bool = call %Cond.ref()
 // CHECK:STDOUT:   %.loc15_14.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc15_14.3: ref bool = temporary %.loc15_14.2, %.loc15_14.1
 // CHECK:STDOUT:   %.loc15_14.4: bool = bind_value %.loc15_14.3
@@ -51,11 +51,11 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
-// CHECK:STDOUT:   %.loc16: init () = call @G()
+// CHECK:STDOUT:   %.loc16: init () = call %G.ref()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done:
 // CHECK:STDOUT:   %H.ref: <function> = name_reference "H", package.%H
-// CHECK:STDOUT:   %.loc18: init () = call @H()
+// CHECK:STDOUT:   %.loc18: init () = call %H.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -129,14 +129,14 @@ auto HandleBuiltin(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
 
 auto HandleCall(FunctionContext& context, SemIR::NodeId node_id,
                 SemIR::Call node) -> void {
-  auto* llvm_function = context.GetFunction(node.function_id);
-  const auto& function = context.semantics_ir().GetFunction(node.function_id);
+  auto* callee = llvm::cast<llvm::Function>(context.GetLocal(node.callee_id));
 
   std::vector<llvm::Value*> args;
   llvm::ArrayRef<SemIR::NodeId> arg_ids =
       context.semantics_ir().GetNodeBlock(node.args_id);
 
-  if (function.return_slot_id.is_valid()) {
+  if (SemIR::GetInitializingRepresentation(context.semantics_ir(), node.type_id)
+          .has_return_slot()) {
     args.push_back(context.GetLocal(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
   }
@@ -149,17 +149,13 @@ auto HandleCall(FunctionContext& context, SemIR::NodeId node_id,
     }
   }
 
-  if (llvm_function->getReturnType()->isVoidTy()) {
-    context.builder().CreateCall(llvm_function, args);
-    // The value of a function call with a void return type shouldn't used, but
-    // StubReference needs a value to propagate.
-    // TODO: Remove this now the StubReferences are gone.
-    context.SetLocal(node_id,
-                     llvm::PoisonValue::get(context.GetType(node.type_id)));
-  } else {
-    context.SetLocal(node_id,
-                     context.builder().CreateCall(llvm_function, args,
-                                                  llvm_function->getName()));
+  auto* call = context.builder().CreateCall(callee, args);
+  context.SetLocal(node_id, call);
+
+  // Name the call's result the same as the callee.
+  // TODO: Is this a helpful name?
+  if (!call->getType()->isVoidTy()) {
+    call->setName(callee->getName());
   }
 }
 
@@ -196,12 +192,17 @@ auto HandleNameReference(FunctionContext& context, SemIR::NodeId node_id,
                          SemIR::NameReference node) -> void {
   auto type_node_id =
       context.semantics_ir().GetTypeAllowBuiltinTypes(node.type_id);
-  if (type_node_id == SemIR::NodeId::BuiltinFunctionType ||
-      type_node_id == SemIR::NodeId::BuiltinNamespaceType) {
+  if (type_node_id == SemIR::NodeId::BuiltinNamespaceType) {
     return;
   }
-  // TODO: Handle name references to globals
-  context.SetLocal(node_id, context.GetLocal(node.value_id));
+
+  auto target = context.semantics_ir().GetNode(node.value_id);
+  if (auto function_decl = target.TryAs<SemIR::FunctionDeclaration>()) {
+    context.SetLocal(node_id, context.GetFunction(function_decl->function_id));
+  } else {
+    // TODO: Handle other kinds of name references to globals.
+    context.SetLocal(node_id, context.GetLocal(node.value_id));
+  }
 }
 
 auto HandleNamespace(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,

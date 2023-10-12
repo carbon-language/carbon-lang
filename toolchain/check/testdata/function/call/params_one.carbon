@@ -25,6 +25,6 @@ fn Main() {
 // CHECK:STDOUT:   %Foo.ref: <function> = name_reference "Foo", package.%Foo
 // CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_6.2: init () = call @Foo(%.loc10_7)
+// CHECK:STDOUT:   %.loc10_6.2: init () = call %Foo.ref(%.loc10_7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

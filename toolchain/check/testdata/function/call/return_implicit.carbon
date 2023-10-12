@@ -27,7 +27,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_11.2: () = tuple_literal ()
 // CHECK:STDOUT:   %b: ref () = var "b"
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: <function> = name_reference "MakeImplicitEmptyTuple", package.%MakeImplicitEmptyTuple
-// CHECK:STDOUT:   %.loc11_37: init () = call @MakeImplicitEmptyTuple()
+// CHECK:STDOUT:   %.loc11_37: init () = call %MakeImplicitEmptyTuple.ref()
 // CHECK:STDOUT:   assign %b, %.loc11_37
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
