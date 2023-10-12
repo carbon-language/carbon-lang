@@ -97,7 +97,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
         } else {
           index_node_id = SemIR::NodeId::BuiltinError;
         }
-      } else {
+      } else if (index_node.type_id() != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(TupleIndexIntegerLiteral, Error,
                           "Tuples indices must be integer literals.");
         context.emitter().Emit(parse_node, TupleIndexIntegerLiteral);
