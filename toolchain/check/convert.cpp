@@ -29,18 +29,18 @@ static auto FindReturnSlotForInitializer(SemIR::File& semantics_ir,
     default:
       CARBON_FATAL() << "Initialization from unexpected node " << init;
 
-    case SemIR::NodeKind::StructInit:
-    case SemIR::NodeKind::TupleInit:
+    case SemIR::StructInit::Kind:
+    case SemIR::TupleInit::Kind:
       // TODO: Track a return slot for these initializers.
       CARBON_FATAL() << init
                      << " should be created with its return slot already "
                         "filled in properly";
 
-    case SemIR::NodeKind::InitializeFrom: {
+    case SemIR::InitializeFrom::Kind: {
       return init.As<SemIR::InitializeFrom>().dest_id;
     }
 
-    case SemIR::NodeKind::Call: {
+    case SemIR::Call::Kind: {
       auto call = init.As<SemIR::Call>();
       if (!semantics_ir.GetFunction(call.function_id)
                .return_slot_id.is_valid()) {
@@ -49,7 +49,7 @@ static auto FindReturnSlotForInitializer(SemIR::File& semantics_ir,
       return semantics_ir.GetNodeBlock(call.args_id).back();
     }
 
-    case SemIR::NodeKind::ArrayInit: {
+    case SemIR::ArrayInit::Kind: {
       return semantics_ir
           .GetNodeBlock(init.As<SemIR::ArrayInit>().inits_and_return_slot_id)
           .back();
@@ -65,7 +65,7 @@ static auto MarkInitializerFor(SemIR::File& semantics_ir, SemIR::NodeId init_id,
   if (return_slot_id.is_valid()) {
     // Replace the temporary in the return slot with a reference to our target.
     CARBON_CHECK(semantics_ir.GetNode(return_slot_id).kind() ==
-                 SemIR::NodeKind::TemporaryStorage)
+                 SemIR::TemporaryStorage::Kind)
         << "Return slot for initializer does not contain a temporary; "
         << "initialized multiple times? Have "
         << semantics_ir.GetNode(return_slot_id);
@@ -85,7 +85,7 @@ static auto FinalizeTemporary(Context& context, SemIR::NodeId init_id,
   if (return_slot_id.is_valid()) {
     // The return slot should already have a materialized temporary in it.
     CARBON_CHECK(semantics_ir.GetNode(return_slot_id).kind() ==
-                 SemIR::NodeKind::TemporaryStorage)
+                 SemIR::TemporaryStorage::Kind)
         << "Return slot for initializer does not contain a temporary; "
         << "initialized multiple times? Have "
         << semantics_ir.GetNode(return_slot_id);
