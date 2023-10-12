@@ -242,7 +242,7 @@ struct RandomSourceOptions {
     CARBON_CHECK(is_percentage(symbol_percent));
     CARBON_CHECK(is_percentage(keyword_percent));
     CARBON_CHECK(is_percentage(numeric_literal_percent));
-    CARBON_CHECK(is_pecentage(string_literal_percent));
+    CARBON_CHECK(is_percentage(string_literal_percent));
     CARBON_CHECK(is_percentage(symbol_percent + keyword_percent +
                                numeric_literal_percent + string_literal_percent));
 
@@ -253,6 +253,9 @@ struct RandomSourceOptions {
 
     CARBON_CHECK(is_percentage(comment_line_percent));
     CARBON_CHECK(is_percentage(blank_line_percent));
+
+    // Ensure that comment and blank lines are less than 100% so we eventually
+    // produce a token line.
     CARBON_CHECK(comment_line_percent + blank_line_percent < 100);
   }
 };
