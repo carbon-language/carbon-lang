@@ -185,7 +185,7 @@ auto GetRandomIdentifiers() -> const std::array<std::string, NumTokens>& {
 
 // Compute a random sequence of just identifiers.
 template <int MinLength = 1, int MaxLength = 64, bool Uniform = false>
-auto RandomIdentifierSeq() -> std::string {
+auto RandomIdentifierSeq(llvm::StringRef separator = " ") -> std::string {
   // Get a static pool of identifiers with the desired distribution.
   const std::array<std::string, NumTokens>& ids =
       GetRandomIdentifiers<MinLength, MaxLength, Uniform>();
@@ -197,7 +197,7 @@ auto RandomIdentifierSeq() -> std::string {
     tokens[i] = ids[i];
   }
   std::shuffle(tokens.begin(), tokens.end(), absl::BitGen());
-  return llvm::join(tokens, " ");
+  return llvm::join(tokens, separator);
 }
 
 auto GetSymbolTokenTable() -> llvm::ArrayRef<TokenKind> {
@@ -450,6 +450,29 @@ BENCHMARK(BM_ValidIdentifiers<3, 5, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<3, 16, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<12, 64, /*Uniform=*/true>);
 
+// Benchmark to stress the lexing of horizontal whitespace. This sets up what is
+// nearly a worst-case scenario of short-but-expensive-to-lex tokens with runs
+// of horizontal whitespace between them.
+void BM_HorizontalWhitespace(benchmark::State& state) {
+  int num_spaces = state.range(0);
+  std::string separator(num_spaces, ' ');
+  std::string source = RandomIdentifierSeq<3, 5, /*Uniform=*/true>(separator);
+
+  LexerBenchHelper helper(source);
+  for (auto _ : state) {
+    TokenizedBuffer buffer = helper.Lex();
+
+    // Ensure that lexing actually occurs for benchmarking and that it doesn't
+    // hit errors that would skew the benchmark results.
+    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_HorizontalWhitespace)->RangeMultiplier(4)->Range(1, 128);
+
 void BM_RandomSource(benchmark::State& state) {
   std::string source = RandomSource(DefaultSourceDist);
 
@@ -474,6 +497,75 @@ void BM_RandomSource(benchmark::State& state) {
 // hopefully the performance isn't too sensitive and we can just cover a wide
 // range here.
 BENCHMARK(BM_RandomSource);
+
+// Benchmark to stress the lexing of blank lines. This uses a simple, easy to
+// lex token, but separates each one by varying numbers of blank lines.
+void BM_BlankLines(benchmark::State& state) {
+  int num_blank_lines = state.range(0);
+  std::string separator(num_blank_lines, '\n');
+  std::string source = RandomIdentifierSeq<3, 5, /*Uniform=*/true>(separator);
+
+  LexerBenchHelper helper(source);
+  for (auto _ : state) {
+    TokenizedBuffer buffer = helper.Lex();
+
+    // Ensure that lexing actually occurs for benchmarking and that it doesn't
+    // hit errors that would skew the benchmark results.
+    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+  state.counters["lines_per_second"] =
+      benchmark::Counter(llvm::StringRef(source).count('\n'),
+                         benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_BlankLines)->RangeMultiplier(4)->Range(1, 128);
+
+// Benchmark to stress the lexing of comment lines. This uses a simple, easy to
+// lex token, but separates each one by varying numbers of comment lines, with
+// varying comment line length and indentation.
+void BM_CommentLines(benchmark::State& state) {
+  int num_comment_lines = state.range(0);
+  int comment_length = state.range(1);
+  int comment_indent = state.range(2);
+  std::string separator;
+  llvm::raw_string_ostream os(separator);
+  os << "\n";
+  for (int i : llvm::seq(num_comment_lines)) {
+    static_cast<void>(i);
+    os << std::string(comment_indent, ' ') << "//"
+       << std::string(comment_length, ' ') << "\n";
+  }
+  std::string source = RandomIdentifierSeq<3, 5, /*Uniform=*/true>(separator);
+
+  LexerBenchHelper helper(source);
+  for (auto _ : state) {
+    TokenizedBuffer buffer = helper.Lex();
+
+    // Ensure that lexing actually occurs for benchmarking and that it doesn't
+    // hit errors that would skew the benchmark results.
+    CARBON_CHECK(!buffer.has_errors()) << helper.DiagnoseErrors();
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+  state.counters["lines_per_second"] =
+      benchmark::Counter(llvm::StringRef(source).count('\n'),
+                         benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_CommentLines)
+    ->ArgsProduct({
+        // How many lines of comment. Focused on a couple of small and checking
+        // how it scales up to large blocks.
+        {1, 4, 128},
+        // Comment lengths: the two extremes and a middling length.
+        {0, 30, 70},
+        // Comment indentations.
+        {0, 2, 8},
+    });
 
 // This is a speed-of-light benchmark that should reflect memory bandwidth
 // (ideally) of simply reading all the source code. For speed-of-light we use
