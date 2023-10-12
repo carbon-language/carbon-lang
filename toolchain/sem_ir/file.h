@@ -68,6 +68,46 @@ struct Real : public Printable<Real> {
   bool is_decimal;
 };
 
+// The value representation to use when passing by value.
+struct ValueRepresentation : public Printable<ValueRepresentation> {
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  enum Kind : int8_t {
+    // The value representation is not yet known. This is used for incomplete
+    // types, in cases where the incompleteness means the value representation
+    // can't be determined.
+    Unknown,
+    // The type has no value representation. This is used for empty types, such
+    // as `()`, where there is no value.
+    None,
+    // The value representation is a copy of the value. On call boundaries, the
+    // value itself will be passed. `type` is the value type.
+    Copy,
+    // The value representation is a pointer to an object. When used as a
+    // parameter, the argument is a reference expression. `type` is the pointee
+    // type.
+    Pointer,
+    // The value representation has been customized, and has the same behavior
+    // as the value representation of some other type.
+    // TODO: This is not implemented or used yet.
+    Custom,
+  };
+  // The kind of value representation used by this type.
+  Kind kind = Unknown;
+  // The type used to model the value representation.
+  TypeId type_id = TypeId::Invalid;
+};
+
+// Information stored about a TypeId.
+struct TypeInfo : public Printable<TypeInfo> {
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  // The node that defines this type.
+  NodeId node_id;
+  // The value representation for this type.
+  ValueRepresentation value_representation;
+};
+
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
@@ -275,15 +315,22 @@ class File : public Printable<File> {
     // Should never happen, will always overflow node_ids first.
     CARBON_DCHECK(type_id.index >= 0);
     types_.push_back(
-        {.node_id = node_id, .value_representation_id = TypeId::Invalid});
+        {.node_id = node_id,
+         .value_representation = {.kind = ValueRepresentation::Unknown}});
     return type_id;
   }
 
   // Marks a type as complete, and sets its value representation.
-  auto CompleteType(TypeId object_type_id, TypeId value_type_id) -> void {
-    CARBON_CHECK(!types_[object_id].value_representation_id.is_valid())
-        << "Type " << object_id << " completed more than once";
-    types_[object_id].value_representation_id = value_representation_id;
+  auto CompleteType(TypeId object_type_id,
+                    ValueRepresentation value_representation) -> void {
+    if (object_type_id.index < 0) {
+      // We already know our builtin types are complete.
+      return;
+    }
+    CARBON_CHECK(types_[object_type_id.index].value_representation.kind ==
+                 ValueRepresentation::Unknown)
+        << "Type " << object_type_id << " completed more than once";
+    types_[object_type_id.index].value_representation = value_representation;
   }
 
   // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
@@ -296,16 +343,6 @@ class File : public Printable<File> {
     return types_[type_id.index].node_id;
   }
 
-  // Gets the value representation to use for a type. This returns an
-  // invalid type if the given type is not complete.
-  auto GetValueRepresentation(TypeId type_id) const -> TypeId {
-    if (type_id.index < 0) {
-      // TypeType and InvalidType are their own value representation.
-      return type_id;
-    }
-    return types_[type_id.index].value_representation_id;
-  }
-
   auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> NodeId {
     if (type_id == TypeId::TypeType) {
       return NodeId::BuiltinTypeType;
@@ -316,6 +353,21 @@ class File : public Printable<File> {
     } else {
       return GetType(type_id);
     }
+  }
+
+  // Gets the value representation to use for a type. This returns an
+  // invalid type if the given type is not complete.
+  auto GetValueRepresentation(TypeId type_id) const -> ValueRepresentation {
+    if (type_id.index < 0) {
+      // TypeType and InvalidType are their own value representation.
+      return {.kind = ValueRepresentation::Copy, .type_id = type_id};
+    }
+    return types_[type_id.index].value_representation;
+  }
+
+  // Gets the pointee type of the given type, which must be a pointer type.
+  auto GetPointeeType(TypeId pointer_id) const -> TypeId {
+    return GetNodeAs<PointerType>(GetType(pointer_id)).pointee_id;
   }
 
   // Adds a type block with the given content, returning an ID to reference it.
@@ -348,9 +400,7 @@ class File : public Printable<File> {
   auto nodes_size() const -> int { return nodes_.size(); }
   auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
-  auto types() const -> auto {
-    return llvm::map_range(types_, [](TypeInfo info) { return info.node_id; });
-  }
+  auto types() const -> llvm::ArrayRef<TypeInfo> { return types_; }
 
   auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
   auto set_top_node_block_id(NodeBlockId block_id) -> void {
@@ -364,14 +414,6 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
-  struct TypeInfo {
-    // The node that defines this type.
-    NodeId node_id;
-    // The value representation for this type. Invalid if and only if the type
-    // is incomplete.
-    TypeId value_representation_id;
-  };
-
   // Allocates an uninitialized array using our slab allocator.
   template <typename T>
   auto AllocateUninitialized(std::size_t size) -> llvm::MutableArrayRef<T> {
@@ -470,35 +512,11 @@ enum class ExpressionCategory : int8_t {
 auto GetExpressionCategory(const File& file, NodeId node_id)
     -> ExpressionCategory;
 
-// The value representation to use when passing by value.
-struct ValueRepresentation {
-  enum Kind : int8_t {
-    // The type has no value representation. This is used for empty types, such
-    // as `()`, where there is no value.
-    None,
-    // The value representation is a copy of the value. On call boundaries, the
-    // value itself will be passed. `type` is the value type.
-    // TODO: `type` should be `const`-qualified, but is currently not.
-    Copy,
-    // The value representation is a pointer to an object. When used as a
-    // parameter, the argument is a reference expression. `type` is the pointee
-    // type.
-    // TODO: `type` should be `const`-qualified, but is currently not.
-    Pointer,
-    // The value representation has been customized, and has the same behavior
-    // as the value representation of some other type.
-    // TODO: This is not implemented or used yet.
-    Custom,
-  };
-  // The kind of value representation used by this type.
-  Kind kind;
-  // The type used to model the value representation.
-  TypeId type;
-};
-
 // Returns information about the value representation to use for a type.
-auto GetValueRepresentation(const File& file, TypeId type_id)
-    -> ValueRepresentation;
+inline auto GetValueRepresentation(const File& file, TypeId type_id)
+    -> ValueRepresentation {
+  return file.GetValueRepresentation(type_id);
+}
 
 // The initializing representation to use when returning by value.
 struct InitializingRepresentation {

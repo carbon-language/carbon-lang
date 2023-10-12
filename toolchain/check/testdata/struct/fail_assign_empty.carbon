@@ -13,6 +13,7 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: ref {.a: i32} = var "x"
 // CHECK:STDOUT:   %.loc10_21.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc10_21.2: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc10_21.2: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_21.3: {} = struct_literal ()
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

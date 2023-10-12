@@ -16,6 +16,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %test_f64: ref f64 = var "test_f64"
 // CHECK:STDOUT:   %.loc8: f64 = real_literal 1e-1
 // CHECK:STDOUT:   assign %test_f64, %.loc8
+// CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT:   %test_str: ref String = var "test_str"
 // CHECK:STDOUT:   %.loc9: String = string_literal "Test"
 // CHECK:STDOUT:   assign %test_str, %.loc9

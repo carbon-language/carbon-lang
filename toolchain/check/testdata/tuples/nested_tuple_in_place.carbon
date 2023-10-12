@@ -27,8 +27,12 @@ fn H() {
 // CHECK:STDOUT:   %.loc10_25: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_42: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_43.1: type = tuple_type ((type, type, type), (type, type, type))
-// CHECK:STDOUT:   %.loc10_43.2: ((type, type, type), (type, type, type)) = tuple_literal (%.loc10_25, %.loc10_42)
-// CHECK:STDOUT:   %.loc10_43.3: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
+// CHECK:STDOUT:   %.loc10_43.2: type = tuple_type ((type, type, type)*, (type, type, type)*)
+// CHECK:STDOUT:   %.loc10_43.3: type = ptr_type ((type, type, type)*, (type, type, type)*)
+// CHECK:STDOUT:   %.loc10_43.4: ((type, type, type), (type, type, type)) = tuple_literal (%.loc10_25, %.loc10_42)
+// CHECK:STDOUT:   %.loc10_43.5: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
+// CHECK:STDOUT:   %.loc10_43.6: type = tuple_type ((i32, i32, i32)*, (i32, i32, i32)*)
+// CHECK:STDOUT:   %.loc10_43.7: type = ptr_type ((i32, i32, i32)*, (i32, i32, i32)*)
 // CHECK:STDOUT:   %v: ref ((i32, i32, i32), (i32, i32, i32)) = var "v"
 // CHECK:STDOUT:   %F.ref.loc10_48 = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc10_56.1: ref (i32, i32, i32) = tuple_access %v, member0
@@ -46,8 +50,12 @@ fn H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_30: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc14_36.1: type = tuple_type (type, (type, type, type), type)
-// CHECK:STDOUT:   %.loc14_36.2: (type, (type, type, type), type) = tuple_literal (i32, %.loc14_30, i32)
-// CHECK:STDOUT:   %.loc14_36.3: type = tuple_type (i32, (i32, i32, i32), i32)
+// CHECK:STDOUT:   %.loc14_36.2: type = tuple_type (type, (type, type, type)*, type)
+// CHECK:STDOUT:   %.loc14_36.3: type = ptr_type (type, (type, type, type)*, type)
+// CHECK:STDOUT:   %.loc14_36.4: (type, (type, type, type), type) = tuple_literal (i32, %.loc14_30, i32)
+// CHECK:STDOUT:   %.loc14_36.5: type = tuple_type (i32, (i32, i32, i32), i32)
+// CHECK:STDOUT:   %.loc14_36.6: type = tuple_type (i32, (i32, i32, i32)*, i32)
+// CHECK:STDOUT:   %.loc14_36.7: type = ptr_type (i32, (i32, i32, i32)*, i32)
 // CHECK:STDOUT:   %v: ref (i32, (i32, i32, i32), i32) = var "v"
 // CHECK:STDOUT:   %.loc14_41: i32 = int_literal 1
 // CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F

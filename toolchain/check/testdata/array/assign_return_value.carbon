@@ -26,7 +26,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
+// CHECK:STDOUT:   %.loc10_17.1: type = array_type %.loc10_16, i32
+// CHECK:STDOUT:   %.loc10_17.2: type = ptr_type [i32; 1]
 // CHECK:STDOUT:   %t: ref [i32; 1] = var "t"
 // CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
 // CHECK:STDOUT:   %.loc10_22.1: init (i32,) = call @F()

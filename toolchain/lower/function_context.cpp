@@ -95,6 +95,8 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::NodeId source_id,
                                 SemIR::NodeId dest_id) -> void {
   switch (auto rep = SemIR::GetValueRepresentation(semantics_ir(), type_id);
           rep.kind) {
+    case SemIR::ValueRepresentation::Unknown:
+      CARBON_FATAL() << "Attempt to copy incomplete type";
     case SemIR::ValueRepresentation::None:
       break;
     case SemIR::ValueRepresentation::Copy:

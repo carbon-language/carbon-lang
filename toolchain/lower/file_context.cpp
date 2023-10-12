@@ -35,7 +35,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   auto types = semantics_ir_->types();
   types_.resize_for_overwrite(types.size());
   for (auto [i, type] : llvm::enumerate(types)) {
-    types_[i] = BuildType(type);
+    types_[i] = BuildType(type.node_id);
   }
 
   // Lower function declarations.
@@ -87,15 +87,15 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     switch (auto value_rep =
                 SemIR::GetValueRepresentation(semantics_ir(), param_type_id);
             value_rep.kind) {
+      case SemIR::ValueRepresentation::Unknown:
+        CARBON_FATAL()
+            << "Incomplete parameter type lowering function declaration";
       case SemIR::ValueRepresentation::None:
         break;
       case SemIR::ValueRepresentation::Copy:
       case SemIR::ValueRepresentation::Custom:
-        param_types.push_back(GetType(value_rep.type));
-        param_node_ids.push_back(param_ref_id);
-        break;
       case SemIR::ValueRepresentation::Pointer:
-        param_types.push_back(GetType(value_rep.type)->getPointerTo());
+        param_types.push_back(GetType(value_rep.type_id));
         param_node_ids.push_back(param_ref_id);
         break;
     }

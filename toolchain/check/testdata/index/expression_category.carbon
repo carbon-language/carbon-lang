@@ -41,18 +41,19 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc10_25: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_28: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc10_29.1: type = tuple_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_29.2: (i32, i32, i32) = tuple_literal (%.loc10_22, %.loc10_25, %.loc10_28)
-// CHECK:STDOUT:   %.loc10_29.3: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc10_29.4: ref i32 = array_index %a, %.loc10_29.3
-// CHECK:STDOUT:   %.loc10_29.5: init i32 = initialize_from %.loc10_22 to %.loc10_29.4
-// CHECK:STDOUT:   %.loc10_29.6: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_29.7: ref i32 = array_index %a, %.loc10_29.6
-// CHECK:STDOUT:   %.loc10_29.8: init i32 = initialize_from %.loc10_25 to %.loc10_29.7
-// CHECK:STDOUT:   %.loc10_29.9: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc10_29.10: ref i32 = array_index %a, %.loc10_29.9
-// CHECK:STDOUT:   %.loc10_29.11: init i32 = initialize_from %.loc10_28 to %.loc10_29.10
-// CHECK:STDOUT:   %.loc10_29.12: init [i32; 3] = array_init %.loc10_29.2, (%.loc10_29.5, %.loc10_29.8, %.loc10_29.11) to %a
-// CHECK:STDOUT:   assign %a, %.loc10_29.12
+// CHECK:STDOUT:   %.loc10_29.2: type = ptr_type (i32, i32, i32)
+// CHECK:STDOUT:   %.loc10_29.3: (i32, i32, i32) = tuple_literal (%.loc10_22, %.loc10_25, %.loc10_28)
+// CHECK:STDOUT:   %.loc10_29.4: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc10_29.5: ref i32 = array_index %a, %.loc10_29.4
+// CHECK:STDOUT:   %.loc10_29.6: init i32 = initialize_from %.loc10_22 to %.loc10_29.5
+// CHECK:STDOUT:   %.loc10_29.7: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_29.8: ref i32 = array_index %a, %.loc10_29.7
+// CHECK:STDOUT:   %.loc10_29.9: init i32 = initialize_from %.loc10_25 to %.loc10_29.8
+// CHECK:STDOUT:   %.loc10_29.10: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc10_29.11: ref i32 = array_index %a, %.loc10_29.10
+// CHECK:STDOUT:   %.loc10_29.12: init i32 = initialize_from %.loc10_28 to %.loc10_29.11
+// CHECK:STDOUT:   %.loc10_29.13: init [i32; 3] = array_init %.loc10_29.3, (%.loc10_29.6, %.loc10_29.9, %.loc10_29.12) to %a
+// CHECK:STDOUT:   assign %a, %.loc10_29.13
 // CHECK:STDOUT:   %.loc13_14: type = ptr_type i32
 // CHECK:STDOUT:   %pa: ref i32* = var "pa"
 // CHECK:STDOUT:   %a.ref.loc13: ref [i32; 3] = name_reference "a", %a

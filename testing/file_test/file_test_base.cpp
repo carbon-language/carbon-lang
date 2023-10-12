@@ -215,7 +215,7 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
 
   // Add a stack trace entry for the test invocation.
   llvm::PrettyStackTraceProgram stack_trace_entry(
-      test_argv_for_stack_trace.size(), test_argv_for_stack_trace.data());
+      test_argv_for_stack_trace.size() - 1, test_argv_for_stack_trace.data());
 
   // Capture trace streaming, but only when in debug mode.
   llvm::raw_svector_ostream stdout(context.stdout);

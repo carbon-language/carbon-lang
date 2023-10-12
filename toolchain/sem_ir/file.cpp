@@ -13,6 +13,32 @@
 
 namespace Carbon::SemIR {
 
+auto ValueRepresentation::Print(llvm::raw_ostream& out) const -> void {
+  out << "{kind: ";
+  switch (kind) {
+    case Unknown:
+      out << "unknown";
+      break;
+    case None:
+      out << "none";
+      break;
+    case Copy:
+      out << "copy";
+      break;
+    case Pointer:
+      out << "pointer";
+      break;
+    case Custom:
+      out << "custom";
+      break;
+  }
+  out << ", type: " << type_id << "}";
+}
+
+auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
+  out << "{node: " << node_id << ", value_rep: " << value_representation << "}";
+}
+
 File::File()
     // Builtins are always the first IR, even when self-referential.
     : filename_("<builtins>"),
@@ -533,137 +559,6 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
   }
 }
 
-auto GetValueRepresentation(const File& file, TypeId type_id)
-    -> ValueRepresentation {
-  const File* ir = &file;
-  NodeId node_id = ir->GetTypeAllowBuiltinTypes(type_id);
-  while (true) {
-    auto node = ir->GetNode(node_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
-      case NodeKind::AddressOf:
-      case NodeKind::ArrayIndex:
-      case NodeKind::ArrayInit:
-      case NodeKind::Assign:
-      case NodeKind::BinaryOperatorAdd:
-      case NodeKind::BindName:
-      case NodeKind::BindValue:
-      case NodeKind::BlockArg:
-      case NodeKind::BoolLiteral:
-      case NodeKind::Branch:
-      case NodeKind::BranchIf:
-      case NodeKind::BranchWithArg:
-      case NodeKind::Call:
-      case NodeKind::Dereference:
-      case NodeKind::FunctionDeclaration:
-      case NodeKind::InitializeFrom:
-      case NodeKind::IntegerLiteral:
-      case NodeKind::NameReference:
-      case NodeKind::NameReferenceUntyped:
-      case NodeKind::Namespace:
-      case NodeKind::NoOp:
-      case NodeKind::Parameter:
-      case NodeKind::RealLiteral:
-      case NodeKind::Return:
-      case NodeKind::ReturnExpression:
-      case NodeKind::StringLiteral:
-      case NodeKind::StructAccess:
-      case NodeKind::StructTypeField:
-      case NodeKind::StructLiteral:
-      case NodeKind::StructInit:
-      case NodeKind::StructValue:
-      case NodeKind::Temporary:
-      case NodeKind::TemporaryStorage:
-      case NodeKind::TupleAccess:
-      case NodeKind::TupleIndex:
-      case NodeKind::TupleLiteral:
-      case NodeKind::TupleInit:
-      case NodeKind::TupleValue:
-      case NodeKind::UnaryOperatorNot:
-      case NodeKind::ValueAsReference:
-      case NodeKind::VarStorage:
-        CARBON_FATAL() << "Type refers to non-type node " << node;
-
-      case NodeKind::CrossReference: {
-        auto xref = node.As<CrossReference>();
-        ir = &ir->GetCrossReferenceIR(xref.ir_id);
-        node_id = xref.node_id;
-        continue;
-      }
-
-      case NodeKind::SpliceBlock: {
-        node_id = node.As<SpliceBlock>().result_id;
-        continue;
-      }
-
-      case NodeKind::ArrayType:
-        // For arrays, it's convenient to always use a pointer representation,
-        // even when the array has zero or one element, in order to support
-        // indexing.
-        return {.kind = ValueRepresentation::Pointer, .type = type_id};
-
-      case NodeKind::StructType: {
-        const auto& fields = ir->GetNodeBlock(node.As<StructType>().fields_id);
-        if (fields.empty()) {
-          // An empty struct has an empty representation.
-          return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
-        }
-        if (fields.size() == 1) {
-          // A struct with one field has the same representation as its field.
-          node_id = ir->GetTypeAllowBuiltinTypes(
-              ir->GetNode(fields.front()).As<StructTypeField>().type_id);
-          continue;
-        }
-        // For any other struct, use a pointer representation.
-        return {.kind = ValueRepresentation::Pointer, .type = type_id};
-      }
-
-      case NodeKind::TupleType: {
-        const auto& elements =
-            ir->GetTypeBlock(node.As<TupleType>().elements_id);
-        if (elements.empty()) {
-          // An empty tuple has an empty representation.
-          return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
-        }
-        if (elements.size() == 1) {
-          // A one-tuple has the same representation as its sole element.
-          node_id = ir->GetTypeAllowBuiltinTypes(elements.front());
-          continue;
-        }
-        // For any other tuple, use a pointer representation.
-        return {.kind = ValueRepresentation::Pointer, .type = type_id};
-      }
-
-      case NodeKind::Builtin:
-        // clang warns on unhandled enum values; clang-tidy is incorrect here.
-        // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-        switch (node.As<Builtin>().builtin_kind) {
-          case BuiltinKind::TypeType:
-          case BuiltinKind::Error:
-          case BuiltinKind::Invalid:
-            return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
-          case BuiltinKind::BoolType:
-          case BuiltinKind::IntegerType:
-          case BuiltinKind::FloatingPointType:
-            return {.kind = ValueRepresentation::Copy, .type = type_id};
-          case BuiltinKind::StringType:
-            // TODO: Decide on string value semantics. This should probably be a
-            // custom value representation carrying a pointer and size or
-            // similar.
-            return {.kind = ValueRepresentation::Pointer, .type = type_id};
-        }
-
-      case NodeKind::PointerType:
-        return {.kind = ValueRepresentation::Copy, .type = type_id};
-
-      case NodeKind::ConstType:
-        node_id = ir->GetTypeAllowBuiltinTypes(node.As<ConstType>().inner_id);
-        continue;
-    }
-  }
-}
-
 auto GetInitializingRepresentation(const File& file, TypeId type_id)
     -> InitializingRepresentation {
   auto value_rep = GetValueRepresentation(file, type_id);
@@ -679,6 +574,10 @@ auto GetInitializingRepresentation(const File& file, TypeId type_id)
     case ValueRepresentation::Pointer:
     case ValueRepresentation::Custom:
       return {.kind = InitializingRepresentation::InPlace};
+
+    case ValueRepresentation::Unknown:
+      CARBON_FATAL()
+          << "Attempting to perform initialization of incomplete type";
   }
 }
 

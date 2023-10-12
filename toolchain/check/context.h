@@ -127,6 +127,11 @@ class Context {
                              llvm::ArrayRef<SemIR::TypeId> type_ids)
       -> SemIR::TypeId;
 
+  // Attempts to complete the type `type_id`. Returns `true` if the type is
+  // complete, or `false` if it could not be completed. A complete type has
+  // known object and value representations.
+  auto TryToCompleteType(SemIR::TypeId type_id) -> bool;
+
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)
       -> SemIR::TypeId;
