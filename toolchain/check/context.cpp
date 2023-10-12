@@ -380,8 +380,6 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
         case SemIR::BuiltinKind::TypeType:
         case SemIR::BuiltinKind::Error:
         case SemIR::BuiltinKind::Invalid:
-          return set_empty_representation();
-
         case SemIR::BuiltinKind::BoolType:
         case SemIR::BuiltinKind::IntegerType:
         case SemIR::BuiltinKind::FloatingPointType:
