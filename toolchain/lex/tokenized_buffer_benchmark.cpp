@@ -244,7 +244,8 @@ struct RandomSourceOptions {
     CARBON_CHECK(is_percentage(numeric_literal_percent));
     CARBON_CHECK(is_percentage(string_literal_percent));
     CARBON_CHECK(is_percentage(symbol_percent + keyword_percent +
-                               numeric_literal_percent + string_literal_percent));
+                               numeric_literal_percent +
+                               string_literal_percent));
 
     CARBON_CHECK(tokens_per_line <= NumTokens);
     CARBON_CHECK(NumTokens % tokens_per_line == 0)
