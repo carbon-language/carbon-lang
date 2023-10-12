@@ -22,17 +22,16 @@ auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
 
   // Update the binding with its value and add it to the current block, after
   // the computation of the value.
-  auto [name_id, absent_value_id] = pattern.GetAsBindName();
-  CARBON_CHECK(!absent_value_id.is_valid())
+  // TODO: Support other kinds of pattern here.
+  auto bind_name = pattern.As<SemIR::BindName>();
+  CARBON_CHECK(!bind_name.value_id.is_valid())
       << "Binding should not already have a value!";
-  context.semantics_ir().ReplaceNode(
-      pattern_id,
-      SemIR::Node::BindName::Make(pattern.parse_node(), pattern.type_id(),
-                                  name_id, value_id));
+  bind_name.value_id = value_id;
+  context.semantics_ir().ReplaceNode(pattern_id, bind_name);
   context.node_block_stack().AddNodeId(pattern_id);
 
   // Add the name of the binding to the current scope.
-  context.AddNameToLookup(pattern.parse_node(), name_id, pattern_id);
+  context.AddNameToLookup(pattern.parse_node(), bind_name.name_id, pattern_id);
   return true;
 }
 

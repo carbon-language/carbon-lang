@@ -118,9 +118,10 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
   auto resolved_node =
       context_->semantics_ir().GetNode(name_context.resolved_node_id);
   switch (resolved_node.kind()) {
-    case SemIR::NodeKind::Namespace:
+    case SemIR::Namespace::Kind:
       name_context.state = NameContext::State::Resolved;
-      name_context.target_scope_id = resolved_node.GetAsNamespace();
+      name_context.target_scope_id =
+          resolved_node.As<SemIR::Namespace>().name_scope_id;
       break;
     default:
       name_context.state = NameContext::State::ResolvedNonScope;

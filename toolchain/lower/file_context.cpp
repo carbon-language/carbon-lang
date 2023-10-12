@@ -132,7 +132,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
           llvm_context(), GetType(function.return_type_id)));
     } else {
       arg.setName(semantics_ir().GetString(
-          semantics_ir().GetNode(node_id).GetAsParameter()));
+          semantics_ir().GetNodeAs<SemIR::Parameter>(node_id).name_id));
     }
   }
 
@@ -186,6 +186,14 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     function_lowering.builder().SetInsertPoint(llvm_block);
     function_lowering.LowerBlock(block_id);
   }
+
+  // LLVM requires that the entry block has no predecessors.
+  auto* entry_block = &llvm_function->getEntryBlock();
+  if (entry_block->hasNPredecessorsOrMore(1)) {
+    auto* new_entry_block = llvm::BasicBlock::Create(
+        llvm_context(), "entry", llvm_function, entry_block);
+    llvm::BranchInst::Create(entry_block, new_entry_block);
+  }
 }
 
 auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
@@ -207,40 +215,42 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
 
   auto node = semantics_ir_->GetNode(node_id);
   switch (node.kind()) {
-    case SemIR::NodeKind::ArrayType: {
-      auto [bound_node_id, type_id] = node.GetAsArrayType();
+    case SemIR::ArrayType::Kind: {
+      auto array_type = node.As<SemIR::ArrayType>();
       return llvm::ArrayType::get(
-          GetType(type_id), semantics_ir_->GetArrayBoundValue(bound_node_id));
+          GetType(array_type.element_type_id),
+          semantics_ir_->GetArrayBoundValue(array_type.bound_id));
     }
-    case SemIR::NodeKind::ConstType:
-      return GetType(node.GetAsConstType());
-    case SemIR::NodeKind::PointerType:
+    case SemIR::ConstType::Kind:
+      return GetType(node.As<SemIR::ConstType>().inner_id);
+    case SemIR::PointerType::Kind:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
-    case SemIR::NodeKind::StructType: {
-      auto refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
+    case SemIR::StructType::Kind: {
+      auto fields =
+          semantics_ir_->GetNodeBlock(node.As<SemIR::StructType>().fields_id);
       llvm::SmallVector<llvm::Type*> subtypes;
-      subtypes.reserve(refs.size());
-      for (auto ref_id : refs) {
-        auto [field_name_id, field_type_id] =
-            semantics_ir_->GetNode(ref_id).GetAsStructTypeField();
+      subtypes.reserve(fields.size());
+      for (auto field_id : fields) {
+        auto field = semantics_ir_->GetNodeAs<SemIR::StructTypeField>(field_id);
         // TODO: Handle recursive types. The restriction for builtins prevents
         // recursion while still letting them cache.
-        CARBON_CHECK(field_type_id.index < SemIR::BuiltinKind::ValidCount)
-            << field_type_id;
-        subtypes.push_back(GetType(field_type_id));
+        CARBON_CHECK(field.type_id.index < SemIR::BuiltinKind::ValidCount)
+            << field.type_id;
+        subtypes.push_back(GetType(field.type_id));
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
-    case SemIR::NodeKind::TupleType: {
+    case SemIR::TupleType::Kind: {
       // TODO: Investigate special-casing handling of empty tuples so that they
       // can be collectively replaced with LLVM's void, particularly around
       // function returns. LLVM doesn't allow declaring variables with a void
       // type, so that may require significant special casing.
-      auto refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
+      auto elements =
+          semantics_ir_->GetTypeBlock(node.As<SemIR::TupleType>().elements_id);
       llvm::SmallVector<llvm::Type*> subtypes;
-      subtypes.reserve(refs.size());
-      for (auto ref_id : refs) {
-        subtypes.push_back(GetType(ref_id));
+      subtypes.reserve(elements.size());
+      for (auto element_id : elements) {
+        subtypes.push_back(GetType(element_id));
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }

@@ -29,10 +29,10 @@ auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
 
 auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
-  const auto& fn_node =
-      context.semantics_ir().GetNode(context.return_scope_stack().back());
+  auto fn_node = context.semantics_ir().GetNodeAs<SemIR::FunctionDeclaration>(
+      context.return_scope_stack().back());
   const auto& callable =
-      context.semantics_ir().GetFunction(fn_node.GetAsFunctionDeclaration());
+      context.semantics_ir().GetFunction(fn_node.function_id);
 
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       Parse::NodeKind::ReturnStatementStart) {
@@ -49,7 +49,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
           .Emit();
     }
 
-    context.AddNode(SemIR::Node::Return::Make(parse_node));
+    context.AddNode(SemIR::Return(parse_node));
   } else {
     auto arg = context.node_stack().PopExpression();
     context.node_stack()
@@ -63,7 +63,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
                         "There was no return type provided.");
       context.emitter()
           .Build(parse_node, ReturnStatementDisallowExpression)
-          .Note(fn_node.parse_node(), ReturnStatementImplicitNote)
+          .Note(fn_node.parse_node, ReturnStatementImplicitNote)
           .Emit();
     } else if (callable.return_slot_id.is_valid()) {
       arg = Initialize(context, parse_node, callable.return_slot_id, arg);
@@ -72,7 +72,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
                                  callable.return_type_id);
     }
 
-    context.AddNode(SemIR::Node::ReturnExpression::Make(parse_node, arg));
+    context.AddNode(SemIR::ReturnExpression(parse_node, arg));
   }
 
   // Switch to a new, unreachable, empty node block. This typically won't

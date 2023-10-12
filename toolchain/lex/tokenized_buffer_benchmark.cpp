@@ -238,22 +238,26 @@ struct RandomSourceOptions {
   int blank_line_percent = 0;
 
   void Validate() {
-    CARBON_CHECK(0 <= symbol_percent && symbol_percent <= 100);
-    CARBON_CHECK(0 <= keyword_percent && keyword_percent <= 100);
-    CARBON_CHECK(0 <= numeric_literal_percent &&
-                 numeric_literal_percent <= 100);
-    CARBON_CHECK(0 <= string_literal_percent && string_literal_percent <= 100);
-    CARBON_CHECK((symbol_percent + keyword_percent + numeric_literal_percent +
-                  string_literal_percent) <= 100);
+    auto is_percentage = [](int n) { return 0 <= n && n <= 100; };
+    CARBON_CHECK(is_percentage(symbol_percent));
+    CARBON_CHECK(is_percentage(keyword_percent));
+    CARBON_CHECK(is_percentage(numeric_literal_percent));
+    CARBON_CHECK(is_percentage(string_literal_percent));
+    CARBON_CHECK(is_percentage(symbol_percent + keyword_percent +
+                               numeric_literal_percent +
+                               string_literal_percent));
 
     CARBON_CHECK(tokens_per_line <= NumTokens);
     CARBON_CHECK(NumTokens % tokens_per_line == 0)
         << "Tokens per line of " << tokens_per_line
         << " does not divide the number of tokens " << NumTokens;
 
-    CARBON_CHECK(0 <= comment_line_percent && comment_line_percent <= 100);
-    CARBON_CHECK(0 <= blank_line_percent && blank_line_percent <= 100);
-    CARBON_CHECK((comment_line_percent + blank_line_percent) < 100);
+    CARBON_CHECK(is_percentage(comment_line_percent));
+    CARBON_CHECK(is_percentage(blank_line_percent));
+
+    // Ensure that comment and blank lines are less than 100% so we eventually
+    // produce a token line.
+    CARBON_CHECK(comment_line_percent + blank_line_percent < 100);
   }
 };
 
@@ -333,7 +337,7 @@ auto RandomSource(RandomSourceOptions options) -> std::string {
     llvm::raw_string_ostream os(lines.back());
     // Arbitrarily indent each line by two spaces.
     os << "  ";
-    llvm::ListSeparator sep;
+    llvm::ListSeparator sep(" ");
     for (int j : llvm::seq(options.tokens_per_line)) {
       os << sep << tokens[i * options.tokens_per_line + j];
     }

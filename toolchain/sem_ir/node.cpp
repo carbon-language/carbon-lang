@@ -6,28 +6,20 @@
 
 namespace Carbon::SemIR {
 
-static auto PrintArgs(llvm::raw_ostream& /*out*/,
-                      const Node::NoArgs /*no_args*/) -> void {}
-
-template <typename T>
-static auto PrintArgs(llvm::raw_ostream& out, T arg) -> void {
-  out << ", arg0: " << arg;
-}
-
-template <typename T0, typename T1>
-static auto PrintArgs(llvm::raw_ostream& out, std::pair<T0, T1> args) -> void {
-  PrintArgs(out, args.first);
-  out << ", arg1: " << args.second;
-}
-
 auto Node::Print(llvm::raw_ostream& out) const -> void {
   out << "{kind: " << kind_;
+
+  auto print_args = [&](auto... args) {
+    int n = 0;
+    ((out << ", arg" << n++ << ": " << args), ...);
+  };
+
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind_) {
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
-  case NodeKind::Name:                   \
-    PrintArgs(out, GetAs##Name());       \
+#define CARBON_SEMANTICS_NODE_KIND(Name)                    \
+  case Name::Kind:                                          \
+    std::apply(print_args, As<SemIR::Name>().args_tuple()); \
     break;
 #include "toolchain/sem_ir/node_kind.def"
   }

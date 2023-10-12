@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
@@ -91,8 +92,8 @@ struct BoolValue : public IndexBase, public Printable<BoolValue> {
 constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
-// The ID of an integer literal.
-struct IntegerLiteralId : public IndexBase, public Printable<IntegerLiteralId> {
+// The ID of an integer value.
+struct IntegerId : public IndexBase, public Printable<IntegerId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "int";
@@ -143,8 +144,8 @@ constexpr NodeBlockId NodeBlockId::Invalid =
 constexpr NodeBlockId NodeBlockId::Unreachable =
     NodeBlockId(NodeBlockId::InvalidIndex - 1);
 
-// The ID of a real literal.
-struct RealLiteralId : public IndexBase, public Printable<RealLiteralId> {
+// The ID of a real number value.
+struct RealId : public IndexBase, public Printable<RealId> {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "real";
@@ -207,271 +208,329 @@ struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
   }
 };
 
+// Data storage for the operands of each kind of node.
+//
+// For each node kind declared in `node_kinds.def`, a struct here with the same
+// name describes the kind-specific storage for that node. A node kind can
+// store up to two IDs.
+//
+// A typed node also has:
+//
+// -  An injected `Parse::Node parse_node;` field, unless it specifies
+//    `using HasParseNode = std::false_type;`, and
+// -  An injected `TypeId type_id;` field, unless it specifies
+//    `using HasTypeId = std::false_type;`.
+namespace NodeData {
+struct AddressOf {
+  NodeId lvalue_id;
+};
+
+struct ArrayIndex {
+  NodeId array_id;
+  NodeId index_id;
+};
+
+// Initializes an array from a tuple. `tuple_id` is the source tuple
+// expression. `inits_and_return_slot_id` contains one initializer per array
+// element, plus a final element that is the return slot for the
+// initialization.
+struct ArrayInit {
+  NodeId tuple_id;
+  NodeBlockId inits_and_return_slot_id;
+};
+
+struct ArrayType {
+  NodeId bound_id;
+  TypeId element_type_id;
+};
+
+// Performs a source-level initialization or assignment of `lhs_id` from
+// `rhs_id`. This finishes initialization of `lhs_id` in the same way as
+// `InitializeFrom`.
+struct Assign {
+  using HasType = std::false_type;
+
+  NodeId lhs_id;
+  NodeId rhs_id;
+};
+
+struct BinaryOperatorAdd {
+  NodeId lhs_id;
+  NodeId rhs_id;
+};
+
+struct BindName {
+  StringId name_id;
+  NodeId value_id;
+};
+
+struct BindValue {
+  NodeId value_id;
+};
+
+struct BlockArg {
+  NodeBlockId block_id;
+};
+
+struct BoolLiteral {
+  BoolValue value;
+};
+
+struct Branch {
+  using HasType = std::false_type;
+
+  NodeBlockId target_id;
+};
+
+struct BranchIf {
+  using HasType = std::false_type;
+
+  NodeBlockId target_id;
+  NodeId cond_id;
+};
+
+struct BranchWithArg {
+  using HasType = std::false_type;
+
+  NodeBlockId target_id;
+  NodeId arg_id;
+};
+
+struct Builtin {
+  // Builtins don't have a parse node associated with them.
+  using HasParseNode = std::false_type;
+
+  BuiltinKind builtin_kind;
+};
+
+struct Call {
+  NodeBlockId args_id;
+  FunctionId function_id;
+};
+
+struct ConstType {
+  TypeId inner_id;
+};
+
+struct CrossReference {
+  // A node's parse tree node must refer to a node in the current parse tree.
+  // This cannot use the cross-referenced node's parse tree node because it
+  // will be in a different parse tree.
+  using HasParseNode = std::false_type;
+
+  CrossReferenceIRId ir_id;
+  NodeId node_id;
+};
+
+struct Dereference {
+  NodeId pointer_id;
+};
+
+struct FunctionDeclaration {
+  using HasType = std::false_type;
+
+  FunctionId function_id;
+};
+
+// Finalizes the initialization of `dest_id` from the initializer expression
+// `src_id`, by performing a final copy from source to destination, for types
+// whose initialization is not in-place.
+struct InitializeFrom {
+  NodeId src_id;
+  NodeId dest_id;
+};
+
+struct IntegerLiteral {
+  IntegerId integer_id;
+};
+
+struct NameReference {
+  StringId name_id;
+  NodeId value_id;
+};
+
+struct NameReferenceUntyped {
+  StringId name_id;
+  NodeId value_id;
+};
+
+struct Namespace {
+  using HasType = std::false_type;
+
+  NameScopeId name_scope_id;
+};
+
+struct NoOp {
+  using HasType = std::false_type;
+};
+
+struct Parameter {
+  StringId name_id;
+};
+
+struct PointerType {
+  TypeId pointee_id;
+};
+
+struct RealLiteral {
+  RealId real_id;
+};
+
+struct Return {
+  using HasType = std::false_type;
+};
+
+struct ReturnExpression {
+  using HasType = std::false_type;
+
+  NodeId expr_id;
+};
+
+struct SpliceBlock {
+  NodeBlockId block_id;
+  NodeId result_id;
+};
+
+struct StringLiteral {
+  StringId string_id;
+};
+
+struct StructAccess {
+  NodeId struct_id;
+  MemberIndex index;
+};
+
+struct StructInit {
+  NodeId src_id;
+  NodeBlockId elements_id;
+};
+
+struct StructLiteral {
+  NodeBlockId elements_id;
+};
+
+struct StructType {
+  NodeBlockId fields_id;
+};
+
+struct StructTypeField {
+  using HasType = std::false_type;
+
+  StringId name_id;
+  TypeId type_id;
+};
+
+struct StructValue {
+  NodeId src_id;
+  NodeBlockId elements_id;
+};
+
+struct Temporary {
+  NodeId storage_id;
+  NodeId init_id;
+};
+
+struct TemporaryStorage {};
+
+struct TupleAccess {
+  NodeId tuple_id;
+  MemberIndex index;
+};
+
+struct TupleIndex {
+  NodeId tuple_id;
+  NodeId index_id;
+};
+
+struct TupleInit {
+  NodeId src_id;
+  NodeBlockId elements_id;
+};
+
+struct TupleLiteral {
+  NodeBlockId elements_id;
+};
+
+struct TupleType {
+  TypeBlockId elements_id;
+};
+
+struct TupleValue {
+  NodeId src_id;
+  NodeBlockId elements_id;
+};
+
+struct UnaryOperatorNot {
+  NodeId operand_id;
+};
+
+struct ValueAsReference {
+  NodeId value_id;
+};
+
+struct VarStorage {
+  StringId name_id;
+};
+}  // namespace NodeData
+
+template <NodeKind::RawEnumType KindT, typename DataT>
+struct TypedNode;
+
 // The standard structure for Node. This is trying to provide a minimal
 // amount of information for a node:
 //
-// - parse_node for error placement.
-// - kind for run-time logic when the input Kind is unknown.
-// - type_id for quick type checking.
+// - `parse_node` for error placement.
+// - `kind` for run-time logic when the input Kind is unknown.
+// - `type_id` for quick type checking.
 // - Up to two Kind-specific members.
 //
 // For each Kind in NodeKind, a typical flow looks like:
 //
-// - Create a `Node` using `Node::Kind::Make()`
+// - Create a specific kind of `Node` using the appropriate `TypedNode`
+//   constructor.
 // - Access cross-Kind members using `node.type_id()` and similar.
-// - Access Kind-specific members using `node.GetAsKind()`, which depending on
-//   the number of members will return one of NoArgs, a single value, or a
-//   `std::pair` of values.
-//   - Using the wrong `node.GetAsKind()` is a programming error, and should
-//     CHECK-fail in debug modes (opt may too, but it's not an API guarantee).
-//
-// Internally, each Kind uses the `Factory*` types to provide a boilerplate
-// `Make` and `Get` methods.
+// - Access Kind-specific members using `node.As<Kind>()`, which produces a
+//   `TypedNode` with type-specific members, including `parse_node` and
+//   `type_id` for nodes that have associated parse nodes and types.
+//   - Using the wrong kind in `node.As<Kind>()` is a programming error, and
+//     will CHECK-fail in debug modes (opt may too, but it's not an API
+//     guarantee).
+//   - Use `node.TryAs<Kind>()` to safely access type-specific node data where
+//     the node's kind is not known.
 class Node : public Printable<Node> {
  public:
-  struct NoArgs {};
+  template <NodeKind::RawEnumType Kind, typename Data>
+  /*implicit*/
+  Node(TypedNode<Kind, Data> typed_node)
+      : Node(typed_node.parse_node_or_invalid(), NodeKind::Create(Kind),
+             typed_node.type_id_or_invalid(), typed_node.arg0_or_invalid(),
+             typed_node.arg1_or_invalid()) {}
 
-  // Factory base classes are private, then used for public classes. This class
-  // has two public and two private sections to prevent accidents.
- private:
-  // Provides Make and Get to support 0, 1, or 2 arguments for a Node.
-  // These are protected so that child factories can opt in to what pieces they
-  // want to use.
-  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
-  class FactoryBase {
-   protected:
-    static auto Make(Parse::Node parse_node, TypeId type_id,
-                     ArgTypes... arg_ids) -> Node {
-      return Node(parse_node, NodeKind::Create(Kind), type_id,
-                  arg_ids.index...);
+  // Returns whether this node has the specified type.
+  template <typename Typed>
+  auto Is() const -> bool {
+    return kind() == Typed::Kind;
+  }
+
+  // Casts this node to the given typed node, which must match the node's kind,
+  // and returns the typed node.
+  template <typename Typed>
+  auto As() const -> Typed {
+    CARBON_CHECK(Is<Typed>()) << "Casting node of kind " << kind()
+                              << " to wrong kind " << Typed::Kind;
+    return Typed::FromRawData(parse_node_, type_id_, arg0_, arg1_);
+  }
+
+  // If this node is the given kind, returns a typed node, otherwise returns
+  // nullopt.
+  template <typename Typed>
+  auto TryAs() const -> std::optional<Typed> {
+    if (Is<Typed>()) {
+      return As<Typed>();
+    } else {
+      return std::nullopt;
     }
-
-    static auto Get(Node node) {
-      struct Unused {};
-      return GetImpl<ArgTypes..., Unused>(node);
-    }
-
-   private:
-    // GetImpl handles the different return types based on ArgTypes.
-    template <typename Arg0Type, typename Arg1Type, typename>
-    static auto GetImpl(Node node) -> std::pair<Arg0Type, Arg1Type> {
-      CARBON_CHECK(node.kind() == Kind);
-      return {Arg0Type(node.arg0_), Arg1Type(node.arg1_)};
-    }
-    template <typename Arg0Type, typename>
-    static auto GetImpl(Node node) -> Arg0Type {
-      CARBON_CHECK(node.kind() == Kind);
-      return Arg0Type(node.arg0_);
-    }
-    template <typename>
-    static auto GetImpl(Node node) -> NoArgs {
-      CARBON_CHECK(node.kind() == Kind);
-      return NoArgs();
-    }
-  };
-
-  // Provide Get along with a Make that requires a type.
-  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
-  class Factory : public FactoryBase<Kind, ArgTypes...> {
-   public:
-    using FactoryBase<Kind, ArgTypes...>::Make;
-    using FactoryBase<Kind, ArgTypes...>::Get;
-  };
-
-  // Provides Get along with a Make that assumes the node doesn't produce a
-  // typed value.
-  template <NodeKind::RawEnumType Kind, typename... ArgTypes>
-  class FactoryNoType : public FactoryBase<Kind, ArgTypes...> {
-   public:
-    static auto Make(Parse::Node parse_node, ArgTypes... args) {
-      return FactoryBase<Kind, ArgTypes...>::Make(parse_node, TypeId::Invalid,
-                                                  args...);
-    }
-    using FactoryBase<Kind, ArgTypes...>::Get;
-  };
-
- public:
-  // Invalid is in the NodeKind enum, but should never be used.
-  class Invalid {
-   public:
-    static auto Get(Node /*node*/) -> Node::NoArgs {
-      CARBON_FATAL() << "Invalid access";
-    }
-  };
-
-  using AddressOf = Node::Factory<NodeKind::AddressOf, NodeId /*lvalue_id*/>;
-
-  using ArrayIndex =
-      Factory<NodeKind::ArrayIndex, NodeId /*array_id*/, NodeId /*index*/>;
-
-  // Initializes an array from a tuple. `tuple_id` is the source tuple
-  // expression. `refs_id` contains one initializer per array element, plus a
-  // final element that is the return slot for the initialization.
-  using ArrayInit = Factory<NodeKind::ArrayInit, NodeId /*tuple_id*/,
-                            NodeBlockId /*refs_id*/>;
-
-  using ArrayType = Node::Factory<NodeKind::ArrayType, NodeId /*bound_node_id*/,
-                                  TypeId /*array_element_type_id*/>;
-
-  // Performs a source-level initialization or assignment of `lhs_id` from
-  // `rhs_id`. This finishes initialization of `lhs_id` in the same way as
-  // `InitializeFrom`.
-  using Assign = Node::FactoryNoType<NodeKind::Assign, NodeId /*lhs_id*/,
-                                     NodeId /*rhs_id*/>;
-
-  using BinaryOperatorAdd = Node::Factory<NodeKind::BinaryOperatorAdd,
-                                          NodeId /*lhs_id*/, NodeId /*rhs_id*/>;
-
-  using BindName =
-      Factory<NodeKind::BindName, StringId /*name_id*/, NodeId /*value_id*/>;
-
-  using BindValue = Factory<NodeKind::BindValue, NodeId /*value_id*/>;
-
-  using BlockArg = Factory<NodeKind::BlockArg, NodeBlockId /*block_id*/>;
-
-  using BoolLiteral = Factory<NodeKind::BoolLiteral, BoolValue /*value*/>;
-
-  using Branch = FactoryNoType<NodeKind::Branch, NodeBlockId /*target_id*/>;
-
-  using BranchIf = FactoryNoType<NodeKind::BranchIf, NodeBlockId /*target_id*/,
-                                 NodeId /*cond_id*/>;
-
-  using BranchWithArg =
-      FactoryNoType<NodeKind::BranchWithArg, NodeBlockId /*target_id*/,
-                    NodeId /*arg*/>;
-
-  class Builtin {
-   public:
-    static auto Make(BuiltinKind builtin_kind, TypeId type_id) -> Node {
-      // Builtins won't have a Parse::Tree node associated, so we provide the
-      // default invalid one.
-      // This can't use the standard Make function because of the `AsInt()` cast
-      // instead of `.index`.
-      return Node(Parse::Node::Invalid, NodeKind::Builtin, type_id,
-                  builtin_kind.AsInt());
-    }
-    static auto Get(Node node) -> BuiltinKind {
-      return BuiltinKind::FromInt(node.arg0_);
-    }
-  };
-
-  using Call = Factory<NodeKind::Call, NodeBlockId /*refs_id*/,
-                       FunctionId /*function_id*/>;
-
-  using ConstType = Factory<NodeKind::ConstType, TypeId /*inner_id*/>;
-
-  class CrossReference
-      : public FactoryBase<NodeKind::CrossReference,
-                           CrossReferenceIRId /*ir_id*/, NodeId /*node_id*/> {
-   public:
-    static auto Make(TypeId type_id, CrossReferenceIRId ir_id, NodeId node_id)
-        -> Node {
-      // A node's parse tree node must refer to a node in the current parse
-      // tree. This cannot use the cross-referenced node's parse tree node
-      // because it will be in a different parse tree.
-      return FactoryBase::Make(Parse::Node::Invalid, type_id, ir_id, node_id);
-    }
-    using FactoryBase::Get;
-  };
-
-  using Dereference = Factory<NodeKind::Dereference, NodeId /*pointer_id*/>;
-
-  using FunctionDeclaration =
-      FactoryNoType<NodeKind::FunctionDeclaration, FunctionId /*function_id*/>;
-
-  // Finalizes the initialization of `dest_id` from the initializer expression
-  // `src_id`, by performing a final copy from source to destination, for types
-  // whose initialization is not in-place.
-  using InitializeFrom =
-      Factory<NodeKind::InitializeFrom, NodeId /*src_id*/, NodeId /*dest_id*/>;
-
-  using IntegerLiteral =
-      Factory<NodeKind::IntegerLiteral, IntegerLiteralId /*integer_id*/>;
-
-  using NameReference = Factory<NodeKind::NameReference, StringId /*name_id*/,
-                                NodeId /*value_id*/>;
-
-  using NameReferenceUntyped =
-      Factory<NodeKind::NameReferenceUntyped, StringId /*name_id*/,
-              NodeId /*value_id*/>;
-
-  using Namespace =
-      FactoryNoType<NodeKind::Namespace, NameScopeId /*name_scope_id*/>;
-
-  using NoOp = FactoryNoType<NodeKind::NoOp>;
-
-  using Parameter = Factory<NodeKind::Parameter, StringId /*name_id*/>;
-
-  using PointerType = Factory<NodeKind::PointerType, TypeId /*pointee_id*/>;
-
-  using RealLiteral = Factory<NodeKind::RealLiteral, RealLiteralId /*real_id*/>;
-
-  using Return = FactoryNoType<NodeKind::Return>;
-
-  using ReturnExpression =
-      FactoryNoType<NodeKind::ReturnExpression, NodeId /*expr_id*/>;
-
-  using SpliceBlock = Factory<NodeKind::SpliceBlock, NodeBlockId /*block_id*/,
-                              NodeId /*result_id*/>;
-
-  using StringLiteral =
-      Factory<NodeKind::StringLiteral, StringId /*string_id*/>;
-
-  using StructAccess = Factory<NodeKind::StructAccess, NodeId /*struct_id*/,
-                               MemberIndex /*ref_index*/>;
-
-  using StructInit = Factory<NodeKind::StructInit, NodeId /*literal_id*/,
-                             NodeBlockId /*converted_refs_id*/>;
-
-  using StructLiteral =
-      Factory<NodeKind::StructLiteral, NodeBlockId /*refs_id*/>;
-
-  using StructType = Factory<NodeKind::StructType, NodeBlockId /*refs_id*/>;
-
-  using StructTypeField =
-      FactoryNoType<NodeKind::StructTypeField, StringId /*name_id*/,
-                    TypeId /*type_id*/>;
-
-  using StructValue = Factory<NodeKind::StructValue, NodeId /*literal_id*/,
-                              NodeBlockId /*converted_refs_id*/>;
-
-  using Temporary =
-      Factory<NodeKind::Temporary, NodeId /*storage_id*/, NodeId /*init_id*/>;
-
-  using TemporaryStorage = Factory<NodeKind::TemporaryStorage>;
-
-  using TupleAccess = Factory<NodeKind::TupleAccess, NodeId /*tuple_id*/,
-                              MemberIndex /*index*/>;
-
-  using TupleIndex =
-      Factory<NodeKind::TupleIndex, NodeId /*tuple_id*/, NodeId /*index*/>;
-
-  using TupleInit = Factory<NodeKind::TupleInit, NodeId /*literal_id*/,
-                            NodeBlockId /*converted_refs_id*/>;
-
-  using TupleLiteral = Factory<NodeKind::TupleLiteral, NodeBlockId /*refs_id*/>;
-
-  using TupleType = Factory<NodeKind::TupleType, TypeBlockId /*refs_id*/>;
-
-  using TupleValue = Factory<NodeKind::TupleValue, NodeId /*literal_id*/,
-                             NodeBlockId /*converted_refs_id*/>;
-
-  using UnaryOperatorNot =
-      Factory<NodeKind::UnaryOperatorNot, NodeId /*operand_id*/>;
-
-  using ValueAsReference =
-      Factory<NodeKind::ValueAsReference, NodeId /*value_id*/>;
-
-  using VarStorage = Factory<NodeKind::VarStorage, StringId /*name_id*/>;
-
-  explicit Node()
-      : Node(Parse::Node::Invalid, NodeKind::Invalid, TypeId::Invalid) {}
-
-  // Provide `node.GetAsKind()` as an instance method for all kinds, essentially
-  // an alias for`Node::Kind::Get(node)`.
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
-  auto GetAs##Name() const { return Name::Get(*this); }
-#include "toolchain/sem_ir/node_kind.def"
+  }
 
   auto parse_node() const -> Parse::Node { return parse_node_; }
   auto kind() const -> NodeKind { return kind_; }
@@ -482,10 +541,6 @@ class Node : public Printable<Node> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  // Builtins have peculiar construction, so they are a friend rather than using
-  // a factory base class.
-  friend struct NodeForBuiltin;
-
   explicit Node(Parse::Node parse_node, NodeKind kind, TypeId type_id,
                 int32_t arg0 = NodeId::InvalidIndex,
                 int32_t arg1 = NodeId::InvalidIndex)
@@ -499,7 +554,7 @@ class Node : public Printable<Node> {
   NodeKind kind_;
   TypeId type_id_;
 
-  // Use GetAsKind to access arg0 and arg1.
+  // Use `As` to access arg0 and arg1.
   int32_t arg0_;
   int32_t arg1_;
 };
@@ -509,6 +564,237 @@ class Node : public Printable<Node> {
 // were 3.5 bytes, we could potentially shrink Node by 4 bytes. This
 // may be worth investigating further.
 static_assert(sizeof(Node) == 20, "Unexpected Node size");
+
+namespace NodeInternals {
+template <typename DataT>
+struct TypedNodeImpl;
+}
+
+// Representation of a specific kind of node. This has the following public
+// data members:
+//
+// - A `parse_node` member for nodes with an associated parse node.
+// - A `type_id` member for nodes with an associated type.
+// - Each member from the `NodeData` struct, above.
+//
+// A `TypedNode` can be constructed by passing its fields in order:
+//
+// - First, the `parse_node`, for nodes with a location,
+// - Then, the `type_id`, for nodes with a type,
+// - Then, each field of the `NodeData` struct above.
+template <NodeKind::RawEnumType KindT, typename DataT>
+struct TypedNode : NodeInternals::TypedNodeImpl<DataT>,
+                   Printable<TypedNode<KindT, DataT>> {
+  static constexpr NodeKind Kind = NodeKind::Create(KindT);
+  using Data = DataT;
+
+  // Members from base classes, repeated here to make the API of this class
+  // easier to understand.
+#if 0
+  // From HasParseNodeBase, unless `DataT::HasParseNode` is `false_type`.
+  Parse::Node parse_node;
+
+  // From HasTypeBase, unless `DataT::HasType` is `false_type`.
+  TypeId type_id;
+
+  // Up to two operand types and names, from `DataT`.
+  IdType1 id_1;
+  IdType2 id_2;
+
+  // Construct the node from its elements. For any omitted fields, the
+  // parameter is removed here. Constructor is inherited from TypedNodeBase.
+  TypedNode(Parse::Node parse_node, TypeId type_id, IdType1 id_1, IdType2 id_2);
+
+  // Returns the operands of the node.
+  auto args() const -> DataT;
+
+  // Returns the operands of the node as a tuple of up to two operands.
+  auto args_tuple() const -> std::tuple<IdType1, IdType2>;
+#endif
+
+  using NodeInternals::TypedNodeImpl<DataT>::TypedNodeImpl;
+
+  static auto FromRawData(Parse::Node parse_node, TypeId type_id, int32_t arg0,
+                          int32_t arg1) -> TypedNode {
+    return TypedNode(TypedNode::FromParseNode(parse_node),
+                     TypedNode::FromTypeId(type_id),
+                     TypedNode::FromRawArgs(arg0, arg1));
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void { Node(*this).Print(out); }
+};
+
+// Declare type names for each specific kind of node.
+#define CARBON_SEMANTICS_NODE_KIND(Name) \
+  using Name = TypedNode<NodeKind::Name, NodeData::Name>;
+#include "toolchain/sem_ir/node_kind.def"
+
+// Implementation details for typed nodes.
+namespace NodeInternals {
+template <typename T>
+using GetHasParseNode = typename T::HasParseNode;
+template <typename T>
+using GetHasType = typename T::HasType;
+
+// Apply Getter<T>, or provide Default if it doesn't exist.
+template <typename T, template <typename> typename Getter, typename Default,
+          typename Void = void>
+struct GetWithDefaultImpl {
+  using Result = Default;
+};
+template <typename T, template <typename> typename Getter, typename Default>
+struct GetWithDefaultImpl<T, Getter, Default, std::void_t<Getter<T>>> {
+  using Result = Getter<T>;
+};
+template <typename T, template <typename> typename Getter, typename Default>
+using GetWithDefault = typename GetWithDefaultImpl<T, Getter, Default>::Result;
+
+// Base class for nodes that have a `parse_node` field.
+struct HasParseNodeBase {
+  Parse::Node parse_node;
+
+  static auto FromParseNode(Parse::Node parse_node) -> HasParseNodeBase {
+    return {.parse_node = parse_node};
+  }
+
+  auto parse_node_or_invalid() const -> Parse::Node { return parse_node; }
+};
+
+// Base class for nodes that have no `parse_node` field.
+struct HasNoParseNodeBase {
+  static auto FromParseNode(Parse::Node /*parse_node*/) -> HasNoParseNodeBase {
+    return {};
+  }
+
+  auto parse_node_or_invalid() const -> Parse::Node {
+    return Parse::Node::Invalid;
+  }
+};
+
+// ParseNodeBase<T> holds the `parse_node` field if the node has a parse tree
+// node, and is either HasParseNodeBase or HasNoParseNodeBase.
+template <typename T>
+using ParseNodeBase =
+    std::conditional_t<GetWithDefault<T, GetHasParseNode, std::true_type>{},
+                       HasParseNodeBase, HasNoParseNodeBase>;
+
+// Base class for nodes that have a `type_id` field.
+struct HasTypeBase {
+  TypeId type_id;
+
+  static auto FromTypeId(TypeId type_id) -> HasTypeBase {
+    return {.type_id = type_id};
+  }
+
+  auto type_id_or_invalid() const -> TypeId { return type_id; }
+};
+
+// Base class for nodes that have no `type_id` field.
+struct HasNoTypeBase {
+  static auto FromTypeId(TypeId /*type_id*/) -> HasNoTypeBase { return {}; }
+
+  auto type_id_or_invalid() const -> TypeId { return TypeId::Invalid; }
+};
+
+// TypeBase<T> holds the `type_id` field if the node has a type, and is either
+// TypedNodeBase or UntypedNodeBase.
+template <typename T>
+using TypeBase =
+    std::conditional_t<GetWithDefault<T, GetHasType, std::true_type>{},
+                       HasTypeBase, HasNoTypeBase>;
+
+// Convert a field from its raw representation.
+template <typename T>
+constexpr auto FromRaw(int32_t raw) -> T {
+  return T(raw);
+}
+template <>
+constexpr auto FromRaw<BuiltinKind>(int32_t raw) -> BuiltinKind {
+  return BuiltinKind::FromInt(raw);
+}
+
+// Convert a field to its raw representation.
+constexpr auto ToRaw(IndexBase base) -> int32_t { return base.index; }
+constexpr auto ToRaw(BuiltinKind kind) -> int32_t { return kind.AsInt(); }
+
+template <typename T>
+using FieldTypes = decltype(StructReflection::AsTuple(std::declval<T>()));
+
+// Base class for nodes that contains the node data.
+template <typename T, typename = FieldTypes<T>>
+struct DataBase;
+
+template <typename T, typename... Fields>
+struct DataBase<T, std::tuple<Fields...>> : T {
+  static_assert(sizeof...(Fields) <= 2, "Too many fields in node data");
+
+  static auto FromRawArgs(decltype(ToRaw(std::declval<Fields>()))... args, ...)
+      -> DataBase {
+    return {FromRaw<Fields>(args)...};
+  }
+
+  // Returns the operands of the node.
+  auto args() const -> T { return *this; }
+
+  // Returns the operands of the node as a tuple.
+  auto args_tuple() const -> auto {
+    return StructReflection::AsTuple(static_cast<const T&>(*this));
+  }
+
+  auto arg0_or_invalid() const -> auto {
+    if constexpr (sizeof...(Fields) >= 1) {
+      return ToRaw(std::get<0>(args_tuple()));
+    } else {
+      return NodeId::InvalidIndex;
+    }
+  }
+
+  auto arg1_or_invalid() const -> auto {
+    if constexpr (sizeof...(Fields) >= 2) {
+      return ToRaw(std::get<1>(args_tuple()));
+    } else {
+      return NodeId::InvalidIndex;
+    }
+  }
+};
+
+template <typename, typename, typename, typename>
+struct TypedNodeBase;
+
+// A helper base class that produces a constructor with one correctly-typed
+// parameter for each struct field.
+template <typename DataT, typename... ParseNodeFields, typename... TypeFields,
+          typename... DataFields>
+struct TypedNodeBase<DataT, std::tuple<ParseNodeFields...>,
+                     std::tuple<TypeFields...>, std::tuple<DataFields...>>
+    : ParseNodeBase<DataT>, TypeBase<DataT>, DataBase<DataT> {
+  // Braced initialization of base classes confuses clang-format.
+  // clang-format off
+  constexpr TypedNodeBase(ParseNodeFields... parse_node_fields,
+                          TypeFields... type_fields, DataFields... data_fields)
+      : ParseNodeBase<DataT>{parse_node_fields...},
+        TypeBase<DataT>{type_fields...},
+        DataBase<DataT>{data_fields...} {
+  }
+  // clang-format on
+
+  constexpr TypedNodeBase(ParseNodeBase<DataT> parse_node_base,
+                          TypeBase<DataT> type_base, DataBase<DataT> data_base)
+      : ParseNodeBase<DataT>(parse_node_base),
+        TypeBase<DataT>(type_base),
+        DataBase<DataT>(data_base) {}
+};
+
+template <typename DataT>
+using MakeTypedNodeBase =
+    TypedNodeBase<DataT, FieldTypes<ParseNodeBase<DataT>>,
+                  FieldTypes<TypeBase<DataT>>, FieldTypes<DataT>>;
+
+template <typename DataT>
+struct TypedNodeImpl : MakeTypedNodeBase<DataT> {
+  using MakeTypedNodeBase<DataT>::MakeTypedNodeBase;
+};
+}  // namespace NodeInternals
 
 // Provides base support for use of Id types as DenseMap/DenseSet keys.
 // Instantiated below.
