@@ -50,7 +50,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
       context.semantics_ir().GetTypeAllowBuiltinTypes(operand_type_id));
 
   switch (operand_type_node.kind()) {
-    case SemIR::NodeKind::ArrayType: {
+    case SemIR::ArrayType::Kind: {
       auto array_type = operand_type_node.As<SemIR::ArrayType>();
       // We can check whether integers are in-bounds, although it doesn't affect
       // the IR for an array.
@@ -85,7 +85,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack().Push(parse_node, elem_id);
       return true;
     }
-    case SemIR::NodeKind::TupleType: {
+    case SemIR::TupleType::Kind: {
       SemIR::TypeId element_type_id = SemIR::TypeId::Error;
       if (auto index_literal = index_node.TryAs<SemIR::IntegerLiteral>()) {
         auto type_block = context.semantics_ir().GetTypeBlock(

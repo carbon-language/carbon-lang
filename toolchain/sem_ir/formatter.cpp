@@ -275,13 +275,13 @@ class NodeNamer {
     switch (parse_tree_.node_kind(node.parse_node())) {
       case Parse::NodeKind::IfExpressionIf:
         switch (node.kind()) {
-          case NodeKind::BranchIf:
+          case BranchIf::Kind:
             name = "if.expr.then";
             break;
-          case NodeKind::Branch:
+          case Branch::Kind:
             name = "if.expr.else";
             break;
-          case NodeKind::BranchWithArg:
+          case BranchWithArg::Kind:
             name = "if.expr.result";
             break;
           default:
@@ -291,10 +291,10 @@ class NodeNamer {
 
       case Parse::NodeKind::IfCondition:
         switch (node.kind()) {
-          case NodeKind::BranchIf:
+          case BranchIf::Kind:
             name = "if.then";
             break;
-          case NodeKind::Branch:
+          case Branch::Kind:
             name = "if.else";
             break;
           default:
@@ -307,7 +307,7 @@ class NodeNamer {
         break;
 
       case Parse::NodeKind::ShortCircuitOperand: {
-        bool is_rhs = node.kind() == NodeKind::BranchIf;
+        bool is_rhs = node.Is<BranchIf>();
         bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
                           node.parse_node())) == Lex::TokenKind::And;
         name = is_and ? (is_rhs ? "and.rhs" : "and.result")
@@ -366,44 +366,44 @@ class NodeNamer {
       };
 
       switch (node.kind()) {
-        case NodeKind::Branch: {
+        case Branch::Kind: {
           AddBlockLabel(scope_idx, node.As<Branch>().target_id, node);
           break;
         }
-        case NodeKind::BranchIf: {
+        case BranchIf::Kind: {
           AddBlockLabel(scope_idx, node.As<BranchIf>().target_id, node);
           break;
         }
-        case NodeKind::BranchWithArg: {
+        case BranchWithArg::Kind: {
           AddBlockLabel(scope_idx, node.As<BranchWithArg>().target_id, node);
           break;
         }
-        case NodeKind::SpliceBlock: {
+        case SpliceBlock::Kind: {
           CollectNamesInBlock(scope_idx, node.As<SpliceBlock>().block_id);
           break;
         }
-        case NodeKind::BindName: {
+        case BindName::Kind: {
           add_node_name_id(node.As<BindName>().name_id);
           continue;
         }
-        case NodeKind::FunctionDeclaration: {
+        case FunctionDeclaration::Kind: {
           add_node_name_id(
               semantics_ir_
                   .GetFunction(node.As<FunctionDeclaration>().function_id)
                   .name_id);
           continue;
         }
-        case NodeKind::NameReference: {
+        case NameReference::Kind: {
           add_node_name(
               semantics_ir_.GetString(node.As<NameReference>().name_id).str() +
               ".ref");
           continue;
         }
-        case NodeKind::Parameter: {
+        case Parameter::Kind: {
           add_node_name_id(node.As<Parameter>().name_id);
           continue;
         }
-        case NodeKind::VarStorage: {
+        case VarStorage::Kind: {
           // TODO: Eventually this name will be optional, and we'll want to
           // provide something like `var` as a default. However, that's not
           // possible right now so cannot be tested.
@@ -535,9 +535,9 @@ class Formatter {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Kind)         \
-  case NodeKind::Kind:                           \
-    FormatInstruction(node_id, node.As<Kind>()); \
+#define CARBON_SEMANTICS_NODE_KIND(NodeT)         \
+  case NodeT::Kind:                               \
+    FormatInstruction(node_id, node.As<NodeT>()); \
     break;
 #include "toolchain/sem_ir/node_kind.def"
     }
@@ -597,7 +597,7 @@ class Formatter {
     }
     out_ << "if ";
     FormatNodeName(node.cond_id);
-    out_ << " " << NodeKind::Branch.ir_name() << " ";
+    out_ << " " << Branch::Kind.ir_name() << " ";
     FormatLabel(node.target_id);
     out_ << " else ";
     in_terminator_sequence_ = true;
@@ -607,7 +607,7 @@ class Formatter {
     if (!in_terminator_sequence_) {
       Indent();
     }
-    out_ << NodeKind::BranchWithArg.ir_name() << " ";
+    out_ << BranchWithArg::Kind.ir_name() << " ";
     FormatLabel(node.target_id);
     out_ << "(";
     FormatNodeName(node.arg_id);
@@ -619,7 +619,7 @@ class Formatter {
     if (!in_terminator_sequence_) {
       Indent();
     }
-    out_ << NodeKind::Branch.ir_name() << " ";
+    out_ << Branch::Kind.ir_name() << " ";
     FormatLabel(node.target_id);
     out_ << "\n";
     in_terminator_sequence_ = false;

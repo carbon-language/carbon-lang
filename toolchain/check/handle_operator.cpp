@@ -134,7 +134,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       // TODO: Detect `const (const T)*` and suggest moving the `*` inside the
       // parentheses.
       if (context.semantics_ir().GetNode(value_id).kind() ==
-          SemIR::NodeKind::ConstType) {
+          SemIR::ConstType::Kind) {
         CARBON_DIAGNOSTIC(RepeatedConst, Warning,
                           "`const` applied repeatedly to the same type has no "
                           "additional effect.");

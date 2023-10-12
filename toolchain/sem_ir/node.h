@@ -497,12 +497,18 @@ class Node : public Printable<Node> {
              typed_node.type_id_or_invalid(), typed_node.arg0_or_invalid(),
              typed_node.arg1_or_invalid()) {}
 
+  // Returns whether this node has the specified type.
+  template <typename Typed>
+  auto Is() const -> bool {
+    return kind() == Typed::Kind;
+  }
+
   // Casts this node to the given typed node, which must match the node's kind,
   // and returns the typed node.
   template <typename Typed>
   auto As() const -> Typed {
-    CARBON_CHECK(kind() == Typed::Kind) << "Casting node of kind " << kind()
-                                        << " to wrong kind " << Typed::Kind;
+    CARBON_CHECK(Is<Typed>()) << "Casting node of kind " << kind()
+                              << " to wrong kind " << Typed::Kind;
     return Typed::FromRawData(parse_node_, type_id_, arg0_, arg1_);
   }
 
@@ -510,7 +516,7 @@ class Node : public Printable<Node> {
   // nullopt.
   template <typename Typed>
   auto TryAs() const -> std::optional<Typed> {
-    if (kind() == Typed::Kind) {
+    if (Is<Typed>()) {
       return As<Typed>();
     } else {
       return std::nullopt;
