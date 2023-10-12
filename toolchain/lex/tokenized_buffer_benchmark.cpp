@@ -333,7 +333,7 @@ auto RandomSource(RandomSourceOptions options) -> std::string {
     llvm::raw_string_ostream os(lines.back());
     // Arbitrarily indent each line by two spaces.
     os << "  ";
-    llvm::ListSeparator sep;
+    llvm::ListSeparator sep(" ");
     for (int j : llvm::seq(options.tokens_per_line)) {
       os << sep << tokens[i * options.tokens_per_line + j];
     }
