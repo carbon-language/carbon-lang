@@ -247,18 +247,48 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         translator_(&buffer),
         emitter_(translator_, consumer),
         token_translator_(&buffer),
-        token_emitter_(token_translator_, consumer),
-        current_line_(buffer.AddLine(LineInfo(0))),
-        current_line_info_(&buffer.GetLineInfo(current_line_)) {}
+        token_emitter_(token_translator_, consumer) {}
+
+  // Find all line endings and create the line data structures. Explicitly kept
+  // out-of-line because this is a significant loop that is useful to have in
+  // the profile and it doesn't simplify by inlining at all. But because it can,
+  // the compiler will flatten this otherwise.
+  [[gnu::noinline]] auto CreateLines(llvm::StringRef source_text) -> void {
+    // We currently use `memchr` here which typically is well optimized to use
+    // SIMD or other significantly faster than byte-wise scanning. We also use
+    // carefully selected variables and the `ssize_t` type for performance and
+    // code size of this hot loop.
+    //
+    // TODO: Eventually, we'll likely need to roll our own SIMD-optimized
+    // routine here in order to handle CR+LF line endings, as we'll want those
+    // to stay on the fast path. We'll also need to detect and diagnose Unicode
+    // vertical whitespace. Starting with `memchr` should give us a strong
+    // baseline performance target when adding those features.
+    const char* const text = source_text.data();
+    const ssize_t size = source_text.size();
+    ssize_t start = 0;
+    while (const char* nl = reinterpret_cast<const char*>(
+               memchr(&text[start], '\n', size - start))) {
+      ssize_t nl_index = nl - text;
+      buffer_->AddLine(LineInfo(start, nl_index - start));
+      start = nl_index + 1;
+    }
+    // The last line ends at the end of the file.
+    buffer_->AddLine(LineInfo(start, size - start));
+
+    // Now that all the infos are allocated, get a fresh pointer to the first
+    // info for use while lexing.
+    current_line_ = Line(0);
+    current_line_info_ = &buffer_->GetLineInfo(current_line_);
+  }
 
   // Perform the necessary bookkeeping to step past a newline at the current
   // line and column.
   auto HandleNewline() -> void {
-    current_line_info_->length = current_column_;
-
-    current_line_ = buffer_->AddLine(
-        LineInfo(current_line_info_->start + current_column_ + 1));
+    int next_start = current_line_info_->start + current_column_ + 1;
+    current_line_ = buffer_->GetNextLine(current_line_);
     current_line_info_ = &buffer_->GetLineInfo(current_line_);
+    CARBON_DCHECK(next_start == current_line_info_->start);
     current_column_ = 0;
     set_indent_ = false;
   }
@@ -278,15 +308,6 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     CARBON_DCHECK(source_text.front() == '\n');
     NoteWhitespace();
     source_text = source_text.drop_front();
-
-    // If this is the last character in the source, directly return here
-    // to avoid creating an empty line.
-    if (LLVM_UNLIKELY(source_text.empty())) {
-      current_line_info_->length = current_column_;
-      return;
-    }
-
-    // Otherwise, add a line and set up to continue lexing.
     HandleNewline();
   }
 
@@ -325,14 +346,18 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
                     NoWhitespaceAfterCommentIntroducer);
     }
 
-    // Now just consume the text until a newline.
-    while (!source_text.empty() && source_text.front() != '\n') {
-      ++current_column_;
-      source_text = source_text.drop_front();
+    // Use the current line info to jump to the end of the line.
+    source_text =
+        source_text.drop_front(current_line_info_->length - current_column_);
+    // This may be the end of the file in which case we immediately return.
+    if (source_text.empty()) {
+      // Finished lexing.
+      return;
     }
 
-    // We don't handle the newline, just fall back to the lex loop to handle it
-    // generically.
+    // Otherwise, lex the newline.
+    current_column_ = current_line_info_->length;
+    LexVerticalWhitespace(source_text);
   }
 
   auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
@@ -725,10 +750,23 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
   auto LexEndOfFile(llvm::StringRef& source_text) -> void {
     CARBON_DCHECK(source_text.empty());
 
+    // Check if the last line is empty and not the first line (and only). If so,
+    // re-pin the last line to be the prior one so that diagnostics and editors
+    // can treat newlines as terminators even though we internally handle them
+    // as separators in case of a missing newline on the last line. We do this
+    // here instead of detecting this when we see the newline to avoid more
+    // conditions along that fast path.
+    if (current_column_ == 0 && buffer_->GetLineNumber(current_line_) != 1) {
+      current_line_ = buffer_->GetPrevLine(current_line_);
+      current_line_info_ = &buffer_->GetLineInfo(current_line_);
+      current_column_ = current_line_info_->length;
+    } else {
+      // Update the line length as this is also the end of a line.
+      current_line_info_->length = current_column_;
+    }
+
     // The end-of-file token is always considered to be whitespace.
     NoteWhitespace();
-    // Update the line length as this is also the end of a line.
-    current_line_info_->length = current_column_;
 
     // Close any open groups. We do this after marking whitespace, it will
     // preserve that.
@@ -804,6 +842,9 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
   // The main entry point for dispatching through the lexer's table. This method
   // should always fully consume the source text.
   auto Dispatch(llvm::StringRef& source_text) -> void {
+    // First build up our line data structures.
+    CreateLines(source_text);
+
     LexStartOfFile(source_text);
 
     // Manually enter the dispatch loop. This call will tail-recurse through the
@@ -923,7 +964,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
   TokenLocationTranslator token_translator_;
   TokenDiagnosticEmitter token_emitter_;
 
-  Line current_line_;
+  Line current_line_ = Line::Invalid;
   LineInfo* current_line_info_;
 
   int current_column_ = 0;
@@ -1096,6 +1137,17 @@ auto TokenizedBuffer::IsRecoveryToken(Token token) const -> bool {
 
 auto TokenizedBuffer::GetLineNumber(Line line) const -> int {
   return line.index + 1;
+}
+
+auto TokenizedBuffer::GetNextLine(Line line) const -> Line {
+  Line next(line.index + 1);
+  CARBON_DCHECK(static_cast<size_t>(next.index) < line_infos_.size());
+  return next;
+}
+
+auto TokenizedBuffer::GetPrevLine(Line line) const -> Line {
+  CARBON_CHECK(line.index > 0);
+  return Line(line.index - 1);
 }
 
 auto TokenizedBuffer::GetIndentColumnNumber(Line line) const -> int {

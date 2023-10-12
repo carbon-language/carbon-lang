@@ -55,7 +55,11 @@ struct Token : public ComparableIndexBase {
 // All other APIs to query a `Line` are on the `TokenizedBuffer`.
 struct Line : public ComparableIndexBase {
   using ComparableIndexBase::ComparableIndexBase;
+
+  static const Line Invalid;
 };
+
+constexpr Line Line::Invalid(Line::InvalidIndex);
 
 // A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
 //
@@ -229,6 +233,12 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the 1-based indentation column number.
   [[nodiscard]] auto GetIndentColumnNumber(Line line) const -> int;
 
+  // Returns the next line handle.
+  [[nodiscard]] auto GetNextLine(Line line) const -> Line;
+
+  // Returns the previous line handle.
+  [[nodiscard]] auto GetPrevLine(Line line) const -> Line;
+
   // Returns the text for an identifier.
   [[nodiscard]] auto GetIdentifierText(Identifier id) const -> llvm::StringRef;
 
@@ -346,6 +356,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
         : start(start),
           length(static_cast<int32_t>(llvm::StringRef::npos)),
           indent(0) {}
+
+    explicit LineInfo(int64_t start, int32_t length)
+        : start(start), length(length), indent(0) {}
 
     // Zero-based byte offset of the start of the line within the source buffer
     // provided.
