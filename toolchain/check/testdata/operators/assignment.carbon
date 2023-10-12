@@ -23,7 +23,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "assignment.carbon" {
-// CHECK:STDOUT:   %Main = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

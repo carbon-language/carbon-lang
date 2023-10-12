@@ -15,9 +15,9 @@ fn H() {
 }
 
 // CHECK:STDOUT: file "nested_tuple_in_place.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %G = fn_decl @G
-// CHECK:STDOUT:   %H = fn_decl @H
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: (i32, i32, i32);
@@ -34,10 +34,10 @@ fn H() {
 // CHECK:STDOUT:   %.loc10_43.6: type = tuple_type ((i32, i32, i32)*, (i32, i32, i32)*)
 // CHECK:STDOUT:   %.loc10_43.7: type = ptr_type ((i32, i32, i32)*, (i32, i32, i32)*)
 // CHECK:STDOUT:   %v: ref ((i32, i32, i32), (i32, i32, i32)) = var "v"
-// CHECK:STDOUT:   %F.ref.loc10_48 = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref.loc10_48: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc10_56.1: ref (i32, i32, i32) = tuple_access %v, member0
 // CHECK:STDOUT:   %.loc10_49: init (i32, i32, i32) = call @F() to %.loc10_56.1
-// CHECK:STDOUT:   %F.ref.loc10_53 = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref.loc10_53: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc10_56.2: ref (i32, i32, i32) = tuple_access %v, member1
 // CHECK:STDOUT:   %.loc10_54: init (i32, i32, i32) = call @F() to %.loc10_56.2
 // CHECK:STDOUT:   %.loc10_56.3: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_49, %.loc10_54)
@@ -58,7 +58,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc14_36.7: type = ptr_type (i32, (i32, i32, i32)*, i32)
 // CHECK:STDOUT:   %v: ref (i32, (i32, i32, i32), i32) = var "v"
 // CHECK:STDOUT:   %.loc14_41: i32 = int_literal 1
-// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc14_50.1: ref (i32, i32, i32) = tuple_access %v, member1
 // CHECK:STDOUT:   %.loc14_45: init (i32, i32, i32) = call @F() to %.loc14_50.1
 // CHECK:STDOUT:   %.loc14_49: i32 = int_literal 2

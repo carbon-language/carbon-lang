@@ -145,21 +145,11 @@ auto Context::PopScope() -> void {
 }
 
 auto Context::FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId {
-  while (true) {
-    auto node = semantics_ir().GetNode(node_id);
-    switch (node.kind()) {
-      case SemIR::NameReference::Kind: {
-        node_id = node.As<SemIR::NameReference>().value_id;
-        break;
-      }
-      case SemIR::NameReferenceUntyped::Kind: {
-        node_id = node.As<SemIR::NameReferenceUntyped>().value_id;
-        break;
-      }
-      default:
-        return node_id;
-    }
+  while (auto name_ref =
+             semantics_ir().GetNode(node_id).TryAs<SemIR::NameReference>()) {
+    node_id = name_ref->value_id;
   }
+  return node_id;
 }
 
 template <typename BranchNode, typename... Args>
@@ -336,7 +326,6 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
     case SemIR::InitializeFrom::Kind:
     case SemIR::IntegerLiteral::Kind:
     case SemIR::NameReference::Kind:
-    case SemIR::NameReferenceUntyped::Kind:
     case SemIR::Namespace::Kind:
     case SemIR::NoOp::Kind:
     case SemIR::Parameter::Kind:
@@ -383,6 +372,8 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
         case SemIR::BuiltinKind::BoolType:
         case SemIR::BuiltinKind::IntegerType:
         case SemIR::BuiltinKind::FloatingPointType:
+        case SemIR::BuiltinKind::NamespaceType:
+        case SemIR::BuiltinKind::FunctionType:
           return set_copy_representation(type_id);
 
         case SemIR::BuiltinKind::StringType:

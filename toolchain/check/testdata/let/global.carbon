@@ -11,7 +11,7 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT: file "global.carbon" {
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 1
 // CHECK:STDOUT:   %n: i32 = bind_name "n", %.loc7
-// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {

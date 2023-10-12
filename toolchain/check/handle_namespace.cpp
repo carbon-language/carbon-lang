@@ -15,8 +15,9 @@ auto HandleNamespaceStart(Context& context, Parse::Node /*parse_node*/)
 
 auto HandleNamespace(Context& context, Parse::Node parse_node) -> bool {
   auto name_context = context.declaration_name_stack().Pop();
-  auto namespace_id = context.AddNode(
-      SemIR::Namespace(parse_node, context.semantics_ir().AddNameScope()));
+  auto namespace_id = context.AddNode(SemIR::Namespace(
+      parse_node, context.CanonicalizeType(SemIR::NodeId::BuiltinNamespaceType),
+      context.semantics_ir().AddNameScope()));
   context.declaration_name_stack().AddNameToLookup(name_context, namespace_id);
   return true;
 }

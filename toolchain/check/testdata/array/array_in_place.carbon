@@ -11,8 +11,8 @@ fn G() {
 }
 
 // CHECK:STDOUT: file "array_in_place.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: (i32, i32, i32);
@@ -24,13 +24,13 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_29.1: type = array_type %.loc10_28, (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_29.2: type = ptr_type [(i32, i32, i32); 2]
 // CHECK:STDOUT:   %v: ref [(i32, i32, i32); 2] = var "v"
-// CHECK:STDOUT:   %F.ref.loc10_34 = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref.loc10_34: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc10_42.3: ref (i32, i32, i32) = splice_block %.loc10_42.2 {
 // CHECK:STDOUT:     %.loc10_42.1: i32 = int_literal 0
 // CHECK:STDOUT:     %.loc10_42.2: ref (i32, i32, i32) = array_index %v, %.loc10_42.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_35: init (i32, i32, i32) = call @F() to %.loc10_42.3
-// CHECK:STDOUT:   %F.ref.loc10_39 = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref.loc10_39: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc10_42.6: ref (i32, i32, i32) = splice_block %.loc10_42.5 {
 // CHECK:STDOUT:     %.loc10_42.4: i32 = int_literal 1
 // CHECK:STDOUT:     %.loc10_42.5: ref (i32, i32, i32) = array_index %v, %.loc10_42.4

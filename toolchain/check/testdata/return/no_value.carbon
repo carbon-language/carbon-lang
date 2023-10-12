@@ -9,7 +9,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "no_value.carbon" {
-// CHECK:STDOUT:   %Main = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

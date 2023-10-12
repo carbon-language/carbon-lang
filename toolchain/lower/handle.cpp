@@ -5,6 +5,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/lower/function_context.h"
+#include "toolchain/sem_ir/node.h"
 #include "toolchain/sem_ir/node_kind.h"
 
 namespace Carbon::Lower {
@@ -193,18 +194,22 @@ auto HandleIntegerLiteral(FunctionContext& context, SemIR::NodeId node_id,
 
 auto HandleNameReference(FunctionContext& context, SemIR::NodeId node_id,
                          SemIR::NameReference node) -> void {
+  auto type_node_id =
+      context.semantics_ir().GetTypeAllowBuiltinTypes(node.type_id);
+  if (type_node_id == SemIR::NodeId::BuiltinFunctionType ||
+      type_node_id == SemIR::NodeId::BuiltinNamespaceType) {
+    return;
+  }
+  // TODO: Handle name references to globals
   context.SetLocal(node_id, context.GetLocal(node.value_id));
 }
 
-auto HandleNameReferenceUntyped(FunctionContext& /*context*/,
-                                SemIR::NodeId /*node_id*/,
-                                SemIR::NameReferenceUntyped /*node*/) -> void {
-  // No action to take: untyped name references don't hold a value.
-}
-
 auto HandleNamespace(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
-                     SemIR::Namespace /*node*/) -> void {
-  // No action to take.
+                     SemIR::Namespace node) -> void {
+  CARBON_FATAL()
+      << "Should not be encountered. If that changes, we may want to change "
+         "higher-level logic to skip them rather than calling this. "
+      << node;
 }
 
 auto HandleNoOp(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
