@@ -215,17 +215,17 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
 
   auto node = semantics_ir_->GetNode(node_id);
   switch (node.kind()) {
-    case SemIR::NodeKind::ArrayType: {
+    case SemIR::ArrayType::Kind: {
       auto array_type = node.As<SemIR::ArrayType>();
       return llvm::ArrayType::get(
           GetType(array_type.element_type_id),
           semantics_ir_->GetArrayBoundValue(array_type.bound_id));
     }
-    case SemIR::NodeKind::ConstType:
+    case SemIR::ConstType::Kind:
       return GetType(node.As<SemIR::ConstType>().inner_id);
-    case SemIR::NodeKind::PointerType:
+    case SemIR::PointerType::Kind:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
-    case SemIR::NodeKind::StructType: {
+    case SemIR::StructType::Kind: {
       auto fields =
           semantics_ir_->GetNodeBlock(node.As<SemIR::StructType>().fields_id);
       llvm::SmallVector<llvm::Type*> subtypes;
@@ -240,7 +240,7 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
-    case SemIR::NodeKind::TupleType: {
+    case SemIR::TupleType::Kind: {
       // TODO: Investigate special-casing handling of empty tuples so that they
       // can be collectively replaced with LLVM's void, particularly around
       // function returns. LLVM doesn't allow declaring variables with a void
