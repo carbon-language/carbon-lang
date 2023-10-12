@@ -50,7 +50,7 @@ TEST(SemIRTest, YAML) {
       Pair("integers", Yaml::Sequence(ElementsAre("0"))),
       Pair("reals", Yaml::Sequence(IsEmpty())),
       Pair("strings", Yaml::Sequence(ElementsAre("F", "x"))),
-      Pair("types", Yaml::Sequence(ElementsAre(node_builtin))),
+      Pair("types", Yaml::Sequence(Each(node_builtin))),
       Pair("type_blocks", Yaml::Sequence(IsEmpty())),
       Pair("nodes",
            Yaml::Sequence(AllOf(

@@ -299,8 +299,12 @@ static auto GetStructOrTupleElement(FunctionContext& context,
           auto* value_type = context.GetType(pointee_type_id);
           auto* elem_ptr = context.builder().CreateStructGEP(
               value_type, aggr_value, idx, name);
-          return context.builder().CreateLoad(context.GetType(result_type_id),
-                                              elem_ptr, name + ".load");
+          auto result_value_type_id =
+              SemIR::GetValueRepresentation(context.semantics_ir(),
+                                            result_type_id)
+                  .type_id;
+          return context.builder().CreateLoad(
+              context.GetType(result_value_type_id), elem_ptr, name + ".load");
         }
         case SemIR::ValueRepresentation::Custom:
           CARBON_FATAL()
