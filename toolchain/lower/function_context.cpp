@@ -45,7 +45,7 @@ auto FunctionContext::LowerBlock(SemIR::NodeBlockId block_id) -> void {
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
 #define CARBON_SEMANTICS_NODE_KIND(Name)                  \
-  case SemIR::NodeKind::Name:                             \
+  case SemIR::Name::Kind:                                 \
     Handle##Name(*this, node_id, node.As<SemIR::Name>()); \
     break;
 #include "toolchain/sem_ir/node_kind.def"

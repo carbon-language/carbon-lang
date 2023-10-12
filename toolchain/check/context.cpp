@@ -148,11 +148,11 @@ auto Context::FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId {
   while (true) {
     auto node = semantics_ir().GetNode(node_id);
     switch (node.kind()) {
-      case SemIR::NodeKind::NameReference: {
+      case SemIR::NameReference::Kind: {
         node_id = node.As<SemIR::NameReference>().value_id;
         break;
       }
-      case SemIR::NodeKind::NameReferenceUntyped: {
+      case SemIR::NameReferenceUntyped::Kind: {
         node_id = node.As<SemIR::NameReferenceUntyped>().value_id;
         break;
       }
@@ -548,7 +548,8 @@ auto Context::CanonicalizeTypeImpl(
   // representation.
   // TODO: Delay doing this until a complete type is required, and issue a
   // diagnostic if it fails.
-  TryToCompleteType(type_id);
+  bool complete = TryToCompleteType(type_id);
+  CARBON_CHECK(complete) << "Incomplete types should not exist yet";
   return type_id;
 }
 
@@ -564,7 +565,7 @@ static auto ProfileTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids,
 static auto ProfileType(Context& semantics_context, SemIR::Node node,
                         llvm::FoldingSetNodeID& canonical_id) -> void {
   switch (node.kind()) {
-    case SemIR::NodeKind::ArrayType: {
+    case SemIR::ArrayType::Kind: {
       auto array_type = node.As<SemIR::ArrayType>();
       canonical_id.AddInteger(
           semantics_context.semantics_ir().GetArrayBoundValue(
@@ -572,10 +573,10 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
       canonical_id.AddInteger(array_type.element_type_id.index);
       break;
     }
-    case SemIR::NodeKind::Builtin:
+    case SemIR::Builtin::Kind:
       canonical_id.AddInteger(node.As<SemIR::Builtin>().builtin_kind.AsInt());
       break;
-    case SemIR::NodeKind::CrossReference: {
+    case SemIR::CrossReference::Kind: {
       // TODO: Cross-references should be canonicalized by looking at their
       // target rather than treating them as new unique types.
       auto xref = node.As<SemIR::CrossReference>();
@@ -583,16 +584,16 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
       canonical_id.AddInteger(xref.node_id.index);
       break;
     }
-    case SemIR::NodeKind::ConstType:
+    case SemIR::ConstType::Kind:
       canonical_id.AddInteger(
           semantics_context
               .GetUnqualifiedType(node.As<SemIR::ConstType>().inner_id)
               .index);
       break;
-    case SemIR::NodeKind::PointerType:
+    case SemIR::PointerType::Kind:
       canonical_id.AddInteger(node.As<SemIR::PointerType>().pointee_id.index);
       break;
-    case SemIR::NodeKind::StructType: {
+    case SemIR::StructType::Kind: {
       auto fields = semantics_context.semantics_ir().GetNodeBlock(
           node.As<SemIR::StructType>().fields_id);
       for (const auto& field_id : fields) {
@@ -604,7 +605,7 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
       }
       break;
     }
-    case SemIR::NodeKind::TupleType:
+    case SemIR::TupleType::Kind:
       ProfileTupleType(semantics_context.semantics_ir().GetTypeBlock(
                            node.As<SemIR::TupleType>().elements_id),
                        canonical_id);
@@ -655,7 +656,7 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
     return AddNode(SemIR::TupleType(parse_node, SemIR::TypeId::TypeType,
                                     semantics_ir_->AddTypeBlock(type_ids)));
   };
-  return CanonicalizeTypeImpl(SemIR::NodeKind::TupleType, profile_tuple,
+  return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
                               make_tuple_node);
 }
 

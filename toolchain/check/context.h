@@ -21,6 +21,12 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
+  // A scope in which `break` and `continue` can be used.
+  struct BreakContinueScope {
+    SemIR::NodeBlockId break_target;
+    SemIR::NodeBlockId continue_target;
+  };
+
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter<Parse::Node>& emitter,
@@ -130,6 +136,7 @@ class Context {
   // Attempts to complete the type `type_id`. Returns `true` if the type is
   // complete, or `false` if it could not be completed. A complete type has
   // known object and value representations.
+  // TODO: For now, all types are always complete.
   auto TryToCompleteType(SemIR::TypeId type_id) -> bool;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
@@ -188,6 +195,10 @@ class Context {
 
   auto return_scope_stack() -> llvm::SmallVector<SemIR::NodeId>& {
     return return_scope_stack_;
+  }
+
+  auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
+    return break_continue_stack_;
   }
 
   auto declaration_name_stack() -> DeclarationNameStack& {
@@ -276,6 +287,9 @@ class Context {
   // A stack of return scopes; i.e., targets for `return`. Inside a function,
   // this will be a FunctionDeclaration.
   llvm::SmallVector<SemIR::NodeId> return_scope_stack_;
+
+  // A stack of `break` and `continue` targets.
+  llvm::SmallVector<BreakContinueScope> break_continue_stack_;
 
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
