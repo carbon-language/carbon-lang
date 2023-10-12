@@ -186,6 +186,14 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     function_lowering.builder().SetInsertPoint(llvm_block);
     function_lowering.LowerBlock(block_id);
   }
+
+  // LLVM requires that the entry block has no predecessors.
+  auto* entry_block = &llvm_function->getEntryBlock();
+  if (entry_block->hasNPredecessorsOrMore(1)) {
+    auto* new_entry_block = llvm::BasicBlock::Create(
+        llvm_context(), "entry", llvm_function, entry_block);
+    llvm::BranchInst::Create(entry_block, new_entry_block);
+  }
 }
 
 auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
