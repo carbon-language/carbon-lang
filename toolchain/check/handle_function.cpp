@@ -57,8 +57,9 @@ static auto BuildFunctionDeclaration(Context& context)
        .return_type_id = return_type_id,
        .return_slot_id = return_slot_id,
        .body_block_ids = {}});
-  auto decl_id =
-      context.AddNode(SemIR::FunctionDeclaration(fn_node, function_id));
+  auto decl_id = context.AddNode(SemIR::FunctionDeclaration(
+      fn_node, context.CanonicalizeType(SemIR::NodeId::BuiltinFunctionType),
+      function_id));
   context.declaration_name_stack().AddNameToLookup(name_context, decl_id);
 
   if (SemIR::IsEntryPoint(context.semantics_ir(), function_id)) {

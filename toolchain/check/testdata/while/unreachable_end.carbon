@@ -20,11 +20,11 @@ fn While() {
 }
 
 // CHECK:STDOUT: file "unreachable_end.carbon" {
-// CHECK:STDOUT:   %Cond = fn_decl @Cond
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %G = fn_decl @G
-// CHECK:STDOUT:   %H = fn_decl @H
-// CHECK:STDOUT:   %While = fn_decl @While
+// CHECK:STDOUT:   %Cond: <function> = fn_decl @Cond
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %H: <function> = fn_decl @H
+// CHECK:STDOUT:   %While: <function> = fn_decl @While
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Cond() -> bool;
@@ -37,13 +37,13 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc14_4.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc14_4.2: init () = call @F()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
-// CHECK:STDOUT:   %Cond.ref = name_reference_untyped "Cond", package.%Cond
+// CHECK:STDOUT:   %Cond.ref: <function> = name_reference "Cond", package.%Cond
 // CHECK:STDOUT:   %.loc15_14.1: init bool = call @Cond()
 // CHECK:STDOUT:   %.loc15_14.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc15_14.3: ref bool = temporary %.loc15_14.2, %.loc15_14.1
@@ -51,12 +51,12 @@ fn While() {
 // CHECK:STDOUT:   if %.loc15_14.4 br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:
-// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
 // CHECK:STDOUT:   %.loc16: init () = call @G()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done:
-// CHECK:STDOUT:   %H.ref = name_reference_untyped "H", package.%H
+// CHECK:STDOUT:   %H.ref: <function> = name_reference "H", package.%H
 // CHECK:STDOUT:   %.loc19: init () = call @H()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

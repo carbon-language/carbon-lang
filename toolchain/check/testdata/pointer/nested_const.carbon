@@ -10,7 +10,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 }
 
 // CHECK:STDOUT: file "nested_const.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const (const (const i32*)*)) -> const i32 {

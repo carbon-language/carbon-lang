@@ -9,9 +9,9 @@ fn Bar() {}
 fn Baz() {}
 
 // CHECK:STDOUT: file "order.carbon" {
-// CHECK:STDOUT:   %Foo = fn_decl @Foo
-// CHECK:STDOUT:   %Bar = fn_decl @Bar
-// CHECK:STDOUT:   %Baz = fn_decl @Baz
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar
+// CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
