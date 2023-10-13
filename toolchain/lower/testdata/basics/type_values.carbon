@@ -4,6 +4,9 @@
 //
 // AUTOUPDATE
 
+// TODO: It would be nice to treat these functions as returning `void` instead
+// of `{}`.
+
 fn I32() -> type {
   return i32;
 }
