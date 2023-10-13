@@ -420,6 +420,8 @@ enum class ExpressionCategory : int8_t {
   // This node does not correspond to an expression, and as such has no
   // category.
   NotExpression,
+  // The category of this node is not known due to an error.
+  Error,
   // This node represents a value expression.
   Value,
   // This node represents a durable reference expression, that denotes an
