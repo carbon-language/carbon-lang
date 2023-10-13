@@ -78,9 +78,9 @@ cc_library(
 )
 
 cc_test(
-    name = "file_test",
+    name = "yaml_test",
     size = "small",
-    srcs = ["file_test.cpp"],
+    srcs = ["yaml_test.cpp"],
     deps = [
         "//common:ostream",
         "//testing/base:gtest_main",
