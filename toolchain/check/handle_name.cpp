@@ -22,7 +22,11 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     auto node_id =
         context.LookupName(parse_node, name_id, namespc->name_scope_id,
                            /*print_diagnostics=*/true);
-    context.node_stack().Push(parse_node, node_id);
+    auto node = context.semantics_ir().GetNode(node_id);
+    // TODO: Track that this node was named within `base_id`.
+    context.AddNodeAndPush(
+        parse_node,
+        SemIR::NameReference(parse_node, node.type_id(), name_id, node_id));
     return true;
   }
 

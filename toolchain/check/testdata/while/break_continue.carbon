@@ -60,7 +60,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond.loc17:
 // CHECK:STDOUT:   %A.ref: <function> = name_reference "A", package.%A
-// CHECK:STDOUT:   %.loc17_11.1: init bool = call @A()
+// CHECK:STDOUT:   %.loc17_11.1: init bool = call %A.ref()
 // CHECK:STDOUT:   %.loc17_11.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc17_11.3: ref bool = temporary %.loc17_11.2, %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_11.4: bool = bind_value %.loc17_11.3
@@ -68,7 +68,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body.loc17:
 // CHECK:STDOUT:   %B.ref: <function> = name_reference "B", package.%B
-// CHECK:STDOUT:   %.loc18_10.1: init bool = call @B()
+// CHECK:STDOUT:   %.loc18_10.1: init bool = call %B.ref()
 // CHECK:STDOUT:   %.loc18_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc18_10.3: ref bool = temporary %.loc18_10.2, %.loc18_10.1
 // CHECK:STDOUT:   %.loc18_10.4: bool = bind_value %.loc18_10.3
@@ -79,7 +79,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc18:
 // CHECK:STDOUT:   %C.ref: <function> = name_reference "C", package.%C
-// CHECK:STDOUT:   %.loc19_10.1: init bool = call @C()
+// CHECK:STDOUT:   %.loc19_10.1: init bool = call %C.ref()
 // CHECK:STDOUT:   %.loc19_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc19_10.3: ref bool = temporary %.loc19_10.2, %.loc19_10.1
 // CHECK:STDOUT:   %.loc19_10.4: bool = bind_value %.loc19_10.3
@@ -93,7 +93,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond.loc20:
 // CHECK:STDOUT:   %D.ref: <function> = name_reference "D", package.%D
-// CHECK:STDOUT:   %.loc20_13.1: init bool = call @D()
+// CHECK:STDOUT:   %.loc20_13.1: init bool = call %D.ref()
 // CHECK:STDOUT:   %.loc20_13.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc20_13.3: ref bool = temporary %.loc20_13.2, %.loc20_13.1
 // CHECK:STDOUT:   %.loc20_13.4: bool = bind_value %.loc20_13.3
@@ -101,7 +101,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body.loc20:
 // CHECK:STDOUT:   %E.ref: <function> = name_reference "E", package.%E
-// CHECK:STDOUT:   %.loc21_12.1: init bool = call @E()
+// CHECK:STDOUT:   %.loc21_12.1: init bool = call %E.ref()
 // CHECK:STDOUT:   %.loc21_12.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc21_12.3: ref bool = temporary %.loc21_12.2, %.loc21_12.1
 // CHECK:STDOUT:   %.loc21_12.4: bool = bind_value %.loc21_12.3
@@ -112,7 +112,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc21:
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
-// CHECK:STDOUT:   %.loc22_12.1: init bool = call @F()
+// CHECK:STDOUT:   %.loc22_12.1: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc22_12.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc22_12.3: ref bool = temporary %.loc22_12.2, %.loc22_12.1
 // CHECK:STDOUT:   %.loc22_12.4: bool = bind_value %.loc22_12.3
@@ -126,7 +126,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done.loc20:
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
-// CHECK:STDOUT:   %.loc24_10.1: init bool = call @G()
+// CHECK:STDOUT:   %.loc24_10.1: init bool = call %G.ref()
 // CHECK:STDOUT:   %.loc24_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc24_10.3: ref bool = temporary %.loc24_10.2, %.loc24_10.1
 // CHECK:STDOUT:   %.loc24_10.4: bool = bind_value %.loc24_10.3
@@ -137,7 +137,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc24:
 // CHECK:STDOUT:   %H.ref: <function> = name_reference "H", package.%H
-// CHECK:STDOUT:   %.loc25_10.1: init bool = call @H()
+// CHECK:STDOUT:   %.loc25_10.1: init bool = call %H.ref()
 // CHECK:STDOUT:   %.loc25_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc25_10.3: ref bool = temporary %.loc25_10.2, %.loc25_10.1
 // CHECK:STDOUT:   %.loc25_10.4: bool = bind_value %.loc25_10.3

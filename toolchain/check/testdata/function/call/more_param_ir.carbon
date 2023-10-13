@@ -34,6 +34,6 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_20: i32 = add %.loc11_18, %.loc11_22
 // CHECK:STDOUT:   %.loc11_25: i32 = int_literal 6
 // CHECK:STDOUT:   %.loc11_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc11_6.2: init () = call @Foo(%.loc11_13, %.loc11_20, %.loc11_25)
+// CHECK:STDOUT:   %.loc11_6.2: init () = call %Foo.ref(%.loc11_13, %.loc11_20, %.loc11_25)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

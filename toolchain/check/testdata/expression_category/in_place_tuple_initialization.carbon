@@ -30,16 +30,16 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %v: ref (i32, i32) = var "v"
 // CHECK:STDOUT:   %F.ref.loc10: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc10_7: ref (i32, i32) = splice_block %v {}
-// CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call @F() to %.loc10_7
+// CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call %F.ref.loc10() to %.loc10_7
 // CHECK:STDOUT:   assign %v, %.loc10_24
 // CHECK:STDOUT:   %v.ref: ref (i32, i32) = name_reference "v", %v
 // CHECK:STDOUT:   %F.ref.loc11: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc11_3: ref (i32, i32) = splice_block %v.ref {}
-// CHECK:STDOUT:   %.loc11_8: init (i32, i32) = call @F() to %.loc11_3
+// CHECK:STDOUT:   %.loc11_8: init (i32, i32) = call %F.ref.loc11() to %.loc11_3
 // CHECK:STDOUT:   assign %v.ref, %.loc11_8
 // CHECK:STDOUT:   %F.ref.loc12: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc9: ref (i32, i32) = splice_block %return {}
-// CHECK:STDOUT:   %.loc12: init (i32, i32) = call @F() to %.loc9
+// CHECK:STDOUT:   %.loc12: init (i32, i32) = call %F.ref.loc12() to %.loc9
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -47,7 +47,7 @@ fn H() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
 // CHECK:STDOUT:   %.loc16_11.1: ref (i32, i32) = temporary_storage
-// CHECK:STDOUT:   %.loc16_11.2: init (i32, i32) = call @G() to %.loc16_11.1
+// CHECK:STDOUT:   %.loc16_11.2: init (i32, i32) = call %G.ref() to %.loc16_11.1
 // CHECK:STDOUT:   %.loc16_14: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc16_11.3: ref (i32, i32) = temporary %.loc16_11.1, %.loc16_11.2
 // CHECK:STDOUT:   %.loc16_15.1: ref i32 = tuple_index %.loc16_11.3, %.loc16_14

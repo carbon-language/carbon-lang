@@ -56,6 +56,6 @@ fn F(cond: bool) {
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_5: {.a: i32, .b: i32} = block_arg !if.expr.result
 // CHECK:STDOUT:   %.loc11_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc11_4.2: init () = call @G(%.loc11_5)
+// CHECK:STDOUT:   %.loc11_4.2: init () = call %G.ref(%.loc11_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
