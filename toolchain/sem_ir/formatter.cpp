@@ -561,6 +561,7 @@ class Formatter {
         out_ << ": ";
         switch (GetExpressionCategory(semantics_ir_, node_id)) {
           case ExpressionCategory::NotExpression:
+          case ExpressionCategory::Error:
           case ExpressionCategory::Value:
           case ExpressionCategory::Mixed:
             break;
