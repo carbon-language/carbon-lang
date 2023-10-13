@@ -55,24 +55,21 @@ void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
 #define CARBON_TOKEN(Expected)                  \
   if (token_kind == Lex::TokenKind::Expected) { \
     return;                                     \
-  } else {                                      \
-    break;                                      \
-  }
+  }                                             \
+  break;
 
 #define CARBON_TOKEN_EITHER(Expected1, Expected2)               \
   if (token_kind == Lex::TokenKind::Expected1 ||                \
       (has_error && token_kind == Lex::TokenKind::Expected2)) { \
     return;                                                     \
-  } else {                                                      \
-    break;                                                      \
-  }
+  }                                                             \
+  break;
 
 #define CARBON_TOKEN_UNLESS_ERROR(Expected)                  \
   if (has_error || token_kind == Lex::TokenKind::Expected) { \
     return;                                                  \
-  } else {                                                   \
-    break;                                                   \
-  }
+  }                                                          \
+  break;
 
 #define CARBON_CASE(Name, MatchAction) \
   case NodeKind::Name:                 \
