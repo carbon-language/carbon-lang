@@ -50,6 +50,13 @@ auto NodeKind::child_count() const -> int32_t {
 void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
                                 bool has_error) {
   switch (node_kind) {
+    // Use `CARBON_LOG CARBON_ANY_TOKEN` to discover which combinations happen
+    // in practice.
+#define CARBON_LOG                                                        \
+  llvm::errs() << "ZZZ: Created parse node with NodeKind " << node_kind   \
+               << " and has_error " << has_error << " for lexical token " \
+               << token_kind << "\n";
+
 #define CARBON_ANY_TOKEN return;
 
 #define CARBON_TOKEN(Expected)                  \
@@ -64,7 +71,7 @@ void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
 
 #define CARBON_CASE(Name, MatchActions) \
   case NodeKind::Name:                  \
-    MatchActions                        \
+    MatchActions;                       \
     break;
 
 #define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, MatchActions) \
@@ -74,6 +81,8 @@ void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
   CARBON_CASE(Name, MatchActions)
 
 #include "toolchain/parse/node_kind.def"
+
+#undef CARBON_LOG
   }
   CARBON_FATAL() << "Created parse node with NodeKind " << node_kind
                  << " and has_error " << has_error
