@@ -33,7 +33,8 @@ static auto HandleDeclarationNameAndParams(Context& context, State after_name)
     context.emitter().Emit(*context.position(), ExpectedDeclarationName,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position());
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                        /*has_error=*/true);
   }
 }
 

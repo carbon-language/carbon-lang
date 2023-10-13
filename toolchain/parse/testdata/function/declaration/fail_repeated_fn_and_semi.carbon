@@ -13,7 +13,7 @@ fn fn;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'fn', has_error: yes},
 // CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
