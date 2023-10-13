@@ -480,10 +480,10 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
       return set_pointer_representation(value_rep);
     }
 
-    case ClassDeclaration::Kind: {
+    case SemIR::ClassDeclaration::Kind: {
       // TODO: Pick the default value representation in a smarter way.
       // TODO: Allow the value representation for a class to be customized.
-      return set_pointer_representation(value_rep);
+      return set_pointer_representation(type_id);
     }
 
     case SemIR::Builtin::Kind:

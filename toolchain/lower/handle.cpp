@@ -286,6 +286,7 @@ static auto GetStructOrTupleElement(FunctionContext& context,
   auto* aggr_value = context.GetLocal(aggr_node_id);
 
   switch (SemIR::GetExpressionCategory(context.semantics_ir(), aggr_node_id)) {
+    case SemIR::ExpressionCategory::Error:
     case SemIR::ExpressionCategory::NotExpression:
     case SemIR::ExpressionCategory::Initializing:
     case SemIR::ExpressionCategory::Mixed:
