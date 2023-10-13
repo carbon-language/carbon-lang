@@ -10,7 +10,7 @@
 fn Run(n: i32) {}
 
 // CHECK:STDOUT: file "fail_bad_run_2.carbon" {
-// CHECK:STDOUT:   %Run = fn_decl @Run
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run(%n: i32) {

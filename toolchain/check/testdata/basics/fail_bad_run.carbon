@@ -13,7 +13,7 @@
 fn Run() -> String {}
 
 // CHECK:STDOUT: file "fail_bad_run.carbon" {
-// CHECK:STDOUT:   %Run = fn_decl @Run
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT:   %.loc13: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -327,8 +327,6 @@ struct Dereference {
 };
 
 struct FunctionDeclaration {
-  using HasType = std::false_type;
-
   FunctionId function_id;
 };
 
@@ -349,14 +347,7 @@ struct NameReference {
   NodeId value_id;
 };
 
-struct NameReferenceUntyped {
-  StringId name_id;
-  NodeId value_id;
-};
-
 struct Namespace {
-  using HasType = std::false_type;
-
   NameScopeId name_scope_id;
 };
 
@@ -697,7 +688,7 @@ struct HasNoTypeBase {
 };
 
 // TypeBase<T> holds the `type_id` field if the node has a type, and is either
-// TypedNodeBase or UntypedNodeBase.
+// HasTypeBase or HasNoTypeBase.
 template <typename T>
 using TypeBase =
     std::conditional_t<GetWithDefault<T, GetHasType, std::true_type>{},

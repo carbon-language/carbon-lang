@@ -28,11 +28,12 @@ fn B() {}
 // CHECK:STDOUT:       A,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
+// CHECK:STDOUT:       nodeFunctionType,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     type_blocks: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     nodes: [
-// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0, type: type0},
 // CHECK:STDOUT:       {kind: Return},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     node_blocks: [
@@ -47,7 +48,7 @@ fn B() {}
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "a.carbon" {
-// CHECK:STDOUT:   %A = fn_decl @A
+// CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -68,11 +69,12 @@ fn B() {}
 // CHECK:STDOUT:       B,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
+// CHECK:STDOUT:       nodeFunctionType,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     type_blocks: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     nodes: [
-// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0, type: type0},
 // CHECK:STDOUT:       {kind: Return},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     node_blocks: [
@@ -87,7 +89,7 @@ fn B() {}
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "b.carbon" {
-// CHECK:STDOUT:   %B = fn_decl @B
+// CHECK:STDOUT:   %B: <function> = fn_decl @B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {

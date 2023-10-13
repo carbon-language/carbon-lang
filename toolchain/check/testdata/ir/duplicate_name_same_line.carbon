@@ -7,7 +7,7 @@
 fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
 
 // CHECK:STDOUT: file "duplicate_name_same_line.carbon" {
-// CHECK:STDOUT:   %A = fn_decl @A
+// CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {

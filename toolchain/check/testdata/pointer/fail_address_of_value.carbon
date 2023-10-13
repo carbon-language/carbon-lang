@@ -83,14 +83,14 @@ fn AddressOfParameter(param: i32) {
 }
 
 // CHECK:STDOUT: file "fail_address_of_value.carbon" {
-// CHECK:STDOUT:   %G = fn_decl @G
-// CHECK:STDOUT:   %H = fn_decl @H
-// CHECK:STDOUT:   %AddressOfLiteral = fn_decl @AddressOfLiteral
-// CHECK:STDOUT:   %AddressOfOperator = fn_decl @AddressOfOperator
-// CHECK:STDOUT:   %AddressOfCall = fn_decl @AddressOfCall
-// CHECK:STDOUT:   %AddressOfType = fn_decl @AddressOfType
-// CHECK:STDOUT:   %AddressOfTupleElementValue = fn_decl @AddressOfTupleElementValue
-// CHECK:STDOUT:   %AddressOfParameter = fn_decl @AddressOfParameter
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %H: <function> = fn_decl @H
+// CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral
+// CHECK:STDOUT:   %AddressOfOperator: <function> = fn_decl @AddressOfOperator
+// CHECK:STDOUT:   %AddressOfCall: <function> = fn_decl @AddressOfCall
+// CHECK:STDOUT:   %AddressOfType: <function> = fn_decl @AddressOfType
+// CHECK:STDOUT:   %AddressOfTupleElementValue: <function> = fn_decl @AddressOfTupleElementValue
+// CHECK:STDOUT:   %AddressOfParameter: <function> = fn_decl @AddressOfParameter
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;
@@ -130,7 +130,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc42_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc42_7: i32 = add %.loc42_5, %.loc42_9
 // CHECK:STDOUT:   %.loc42_3: i32* = address_of %.loc42_7
-// CHECK:STDOUT:   %H.ref = name_reference_untyped "H", package.%H
+// CHECK:STDOUT:   %H.ref: <function> = name_reference "H", package.%H
 // CHECK:STDOUT:   %.loc46_5.1: init {.a: i32} = call @H()
 // CHECK:STDOUT:   %.loc46_5.2: ref {.a: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc46_5.3: ref {.a: i32} = temporary %.loc46_5.2, %.loc46_5.1
@@ -144,7 +144,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfCall() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
 // CHECK:STDOUT:   %.loc57_5: init i32 = call @G()
 // CHECK:STDOUT:   %.loc57_3: i32* = address_of %.loc57_5
 // CHECK:STDOUT:   return

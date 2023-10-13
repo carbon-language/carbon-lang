@@ -15,7 +15,7 @@ fn F(a: i32) {
 }
 
 // CHECK:STDOUT: file "fail_duplicate_decl.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.loc7: i32) {

@@ -12,8 +12,8 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "more_param_ir.carbon" {
-// CHECK:STDOUT:   %Foo = fn_decl @Foo
-// CHECK:STDOUT:   %Main = fn_decl @Main
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32, %c: i32) {
@@ -23,7 +23,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref = name_reference_untyped "Foo", package.%Foo
+// CHECK:STDOUT:   %Foo.ref: <function> = name_reference "Foo", package.%Foo
 // CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc11_11: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc11_9: i32 = add %.loc11_7, %.loc11_11

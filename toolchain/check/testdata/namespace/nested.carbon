@@ -15,11 +15,11 @@ fn Foo.Bar.Baz() {
 }
 
 // CHECK:STDOUT: file "nested.carbon" {
-// CHECK:STDOUT:   %.loc7 = namespace {.Bar = %.loc8}
-// CHECK:STDOUT:   %Foo.ref = name_reference_untyped "Foo", %.loc7
-// CHECK:STDOUT:   %.loc8 = namespace {.Wiz = %Wiz, .Baz = %Baz}
-// CHECK:STDOUT:   %Wiz = fn_decl @Wiz
-// CHECK:STDOUT:   %Baz = fn_decl @Baz
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Bar = %.loc8}
+// CHECK:STDOUT:   %Foo.ref: <namespace> = name_reference "Foo", %.loc7
+// CHECK:STDOUT:   %.loc8: <namespace> = namespace {.Wiz = %Wiz, .Baz = %Baz}
+// CHECK:STDOUT:   %Wiz: <function> = fn_decl @Wiz
+// CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
@@ -29,7 +29,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref = name_reference_untyped "Foo", package.%.loc7
+// CHECK:STDOUT:   %Foo.ref: <namespace> = name_reference "Foo", package.%.loc7
 // CHECK:STDOUT:   %.loc14_14.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc14_14.2: init () = call @Wiz()
 // CHECK:STDOUT:   return

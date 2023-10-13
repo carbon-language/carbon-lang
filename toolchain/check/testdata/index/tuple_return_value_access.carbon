@@ -11,8 +11,8 @@ fn Run() -> i32 {
 }
 
 // CHECK:STDOUT: file "tuple_return_value_access.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %Run = fn_decl @Run
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {
@@ -25,7 +25,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc10_11.1: init (i32,) = call @F()
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc10_11.2: ref (i32,) = temporary_storage
