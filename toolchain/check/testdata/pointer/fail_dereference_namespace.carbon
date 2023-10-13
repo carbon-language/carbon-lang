@@ -7,9 +7,6 @@
 namespace A;
 
 fn F() {
-  // CHECK:STDERR: fail_dereference_namespace.carbon:[[@LINE+6]]:3: ERROR: Cannot dereference operand of non-pointer type `<namespace>`.
-  // CHECK:STDERR:   *A;
-  // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_dereference_namespace.carbon:[[@LINE+3]]:4: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
@@ -24,6 +21,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: <namespace> = name_reference "A", package.%.loc7
-// CHECK:STDOUT:   %.loc16: ref <error> = dereference <error>
+// CHECK:STDOUT:   %.loc13: ref <error> = dereference <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

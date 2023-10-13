@@ -617,9 +617,6 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
 
   // Start by making sure both sides are valid. If any part is invalid, the
   // result is invalid and we shouldn't error.
-  if (expr_id == SemIR::NodeId::BuiltinError) {
-    return expr_id;
-  }
   if (semantics_ir.GetNode(expr_id).type_id() == SemIR::TypeId::Error ||
       target.type_id == SemIR::TypeId::Error) {
     return SemIR::NodeId::BuiltinError;
@@ -664,6 +661,9 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
     case SemIR::ExpressionCategory::Mixed:
       CARBON_FATAL() << "Unexpected expression " << expr
                      << " after builtin conversions";
+
+    case SemIR::ExpressionCategory::Error:
+      return SemIR::NodeId::BuiltinError;
 
     case SemIR::ExpressionCategory::Initializing:
       if (target.is_initializer()) {

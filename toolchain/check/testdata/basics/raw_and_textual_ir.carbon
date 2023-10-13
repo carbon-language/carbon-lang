@@ -18,6 +18,8 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     functions: [
 // CHECK:STDOUT:       {name: str0, param_refs: block1, return_type: type4, return_slot: node+6, body: [block4]},
 // CHECK:STDOUT:     ]
+// CHECK:STDOUT:     classes: [
+// CHECK:STDOUT:     ]
 // CHECK:STDOUT:     integers: [
 // CHECK:STDOUT:       2,
 // CHECK:STDOUT:     ]

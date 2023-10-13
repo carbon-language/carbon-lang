@@ -20,6 +20,8 @@ fn B() {}
 // CHECK:STDOUT:     functions: [
 // CHECK:STDOUT:       {name: str0, param_refs: block0, body: [block1]},
 // CHECK:STDOUT:     ]
+// CHECK:STDOUT:     classes: [
+// CHECK:STDOUT:     ]
 // CHECK:STDOUT:     integers: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     reals: [
@@ -60,6 +62,8 @@ fn B() {}
 // CHECK:STDOUT:   - cross_reference_irs_size: 1
 // CHECK:STDOUT:     functions: [
 // CHECK:STDOUT:       {name: str0, param_refs: block0, body: [block1]},
+// CHECK:STDOUT:     ]
+// CHECK:STDOUT:     classes: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     integers: [
 // CHECK:STDOUT:     ]

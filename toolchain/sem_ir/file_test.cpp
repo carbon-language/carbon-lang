@@ -49,6 +49,7 @@ TEST(SemIRTest, YAML) {
   auto file = Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(
       Pair("cross_reference_irs_size", "1"),
       Pair("functions", Yaml::Sequence(SizeIs(1))),
+      Pair("classes", Yaml::Sequence(SizeIs(0))),
       Pair("integers", Yaml::Sequence(ElementsAre("0"))),
       Pair("reals", Yaml::Sequence(IsEmpty())),
       Pair("strings", Yaml::Sequence(ElementsAre("F", "x"))),

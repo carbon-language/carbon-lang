@@ -480,6 +480,12 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
       return set_pointer_representation(value_rep);
     }
 
+    case ClassDeclaration::Kind: {
+      // TODO: Pick the default value representation in a smarter way.
+      // TODO: Allow the value representation for a class to be customized.
+      return set_pointer_representation(value_rep);
+    }
+
     case SemIR::Builtin::Kind:
       CARBON_FATAL() << "Builtins should be named as cross-references";
 
@@ -569,6 +575,10 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
     case SemIR::Builtin::Kind:
       canonical_id.AddInteger(node.As<SemIR::Builtin>().builtin_kind.AsInt());
       break;
+    case SemIR::ClassDeclaration::Kind:
+      canonical_id.AddInteger(
+          node.As<SemIR::ClassDeclaration>().class_id.index);
+      break;
     case SemIR::CrossReference::Kind: {
       // TODO: Cross-references should be canonicalized by looking at their
       // target rather than treating them as new unique types.
@@ -618,6 +628,8 @@ auto Context::CanonicalizeTypeAndAddNodeIfNew(SemIR::Node node)
 }
 
 auto Context::CanonicalizeType(SemIR::NodeId node_id) -> SemIR::TypeId {
+  node_id = FollowNameReferences(node_id);
+
   auto it = canonical_types_.find(node_id);
   if (it != canonical_types_.end()) {
     return it->second;
