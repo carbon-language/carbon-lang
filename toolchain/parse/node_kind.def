@@ -64,7 +64,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDeclaration, 0,
 
 // A name in a non-expression context, such as a declaration.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0,
-                                   CARBON_TOKEN(Identifier) CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+                                   CARBON_TOKEN(Identifier)
+                                       CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // A name in an expression context.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpression, 0, CARBON_TOKEN(Identifier))
@@ -96,9 +97,11 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2, CARBON_TOKEN(Semi))
 //   _external_: statements
 // CodeBlock
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CodeBlockStart, 0,
-                                   CARBON_TOKEN(OpenCurlyBrace) CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+                                   CARBON_TOKEN(OpenCurlyBrace)
+                                       CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
-                               CARBON_TOKEN(CloseCurlyBrace) CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+                               CARBON_TOKEN(CloseCurlyBrace)
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `fn`:
 //     FunctionIntroducer
@@ -120,7 +123,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinitionStart, FunctionIntroducer,
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinition, FunctionDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDeclaration, FunctionIntroducer,
-                               CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(Fn)))
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Fn)))
 
 // A parameter list, possibly deduced:
 //   [Deduced]ParamertListStart
@@ -151,8 +155,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ArrayExpressionStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
 // May be associated with a `]` token on error.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ArrayExpressionSemi, 2,
-                                   CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(CloseSquareBracket)))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(
+    ArrayExpressionSemi, 2,
+    CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(CloseSquareBracket)))
 CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpression, ArrayExpressionSemi,
                                CARBON_TOKEN(CloseSquareBracket))
 
@@ -164,7 +169,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpression, ArrayExpressionSemi,
 // Address and Template may be parents to [Generic]PatternBinding, in that
 // order.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternBinding, 2,
-                                   CARBON_TOKEN(Colon) CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+                                   CARBON_TOKEN(Colon)
+                                       CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(GenericPatternBinding, 2,
                                    CARBON_TOKEN(ColonExclaim))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1, CARBON_TOKEN(Addr))
@@ -193,7 +199,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDeclaration, LetIntroducer,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0, CARBON_TOKEN(Var))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclaration, VariableIntroducer,
-                               CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(Var)))
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Var)))
 
 // An expression statement:
 //   _external_: expression
@@ -205,7 +212,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExpressionStatement, 1, CARBON_TOKEN(Semi))
 // BreakStatement
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatementStart, 0, CARBON_TOKEN(Break))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatement, 1,
-                                   CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(Break)))
+                                   CARBON_TOKEN(Semi)
+                                       CARBON_IF_ERROR(CARBON_TOKEN(Break)))
 
 // `continue`:
 //   ContinueStatementStart
@@ -213,7 +221,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatement, 1,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatementStart, 0,
                                    CARBON_TOKEN(Continue))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1,
-                                   CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(Continue)))
+                                   CARBON_TOKEN(Semi)
+                                       CARBON_IF_ERROR(CARBON_TOKEN(Continue)))
 
 // `return`:
 //   ReturnStatementStart
@@ -224,7 +233,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnStatementStart, 0,
                                    CARBON_TOKEN(Return))
 CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart,
-                               CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(Return)))
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Return)))
 
 // `for`:
 //     ForHeaderStart
@@ -239,11 +249,14 @@ CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart,
 //
 // Versus a normal `var`, ForIn replaces VariableDeclaration.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForHeaderStart, 0,
-                                   CARBON_TOKEN(OpenParen) CARBON_IF_ERROR(CARBON_TOKEN(For)))
+                                   CARBON_TOKEN(OpenParen)
+                                       CARBON_IF_ERROR(CARBON_TOKEN(For)))
 CARBON_PARSE_NODE_KIND_BRACKET(ForIn, VariableIntroducer,
-                               CARBON_TOKEN(In) CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+                               CARBON_TOKEN(In)
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 CARBON_PARSE_NODE_KIND_BRACKET(ForHeader, ForHeaderStart,
-                               CARBON_TOKEN(CloseParen) CARBON_IF_ERROR(CARBON_TOKEN(For)))
+                               CARBON_TOKEN(CloseParen)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(For)))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForStatement, 2, CARBON_TOKEN(For))
 
 // `if` statement + `else`:
@@ -257,9 +270,11 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForStatement, 2, CARBON_TOKEN(For))
 //
 // IfStatementElse and the following node are optional based on `else` presence.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfConditionStart, 0,
-                                   CARBON_TOKEN(OpenParen) CARBON_IF_ERROR(CARBON_TOKEN(If)))
+                                   CARBON_TOKEN(OpenParen)
+                                       CARBON_IF_ERROR(CARBON_TOKEN(If)))
 CARBON_PARSE_NODE_KIND_BRACKET(IfCondition, IfConditionStart,
-                               CARBON_TOKEN(CloseParen) CARBON_IF_ERROR(CARBON_TOKEN(If)))
+                               CARBON_TOKEN(CloseParen)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(If)))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatementElse, 0, CARBON_TOKEN(Else))
 CARBON_PARSE_NODE_KIND_BRACKET(IfStatement, IfCondition, CARBON_TOKEN(If))
 
@@ -348,33 +363,34 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(MemberAccessExpression, 2,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpression, 2,
                                    CARBON_TOKEN(MinusGreater))
 
+// clang-format off
+
 // A literal.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(
-    Literal, 0,
-    CARBON_TOKEN(False)
-        CARBON_TOKEN(True)
-        CARBON_TOKEN(IntegerLiteral)
-        CARBON_TOKEN(RealLiteral)
-        CARBON_TOKEN(StringLiteral)
-        CARBON_TOKEN(Bool)
-        CARBON_TOKEN(IntegerTypeLiteral)
-        CARBON_TOKEN(UnsignedIntegerTypeLiteral)
-        CARBON_TOKEN(FloatingPointTypeLiteral)
-        CARBON_TOKEN(StringTypeLiteral)
-        CARBON_TOKEN(Type))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Literal, 0,
+                                   CARBON_TOKEN(False)
+                                   CARBON_TOKEN(True)
+                                   CARBON_TOKEN(IntegerLiteral)
+                                   CARBON_TOKEN(RealLiteral)
+                                   CARBON_TOKEN(StringLiteral)
+                                   CARBON_TOKEN(Bool)
+                                   CARBON_TOKEN(IntegerTypeLiteral)
+                                   CARBON_TOKEN(UnsignedIntegerTypeLiteral)
+                                   CARBON_TOKEN(FloatingPointTypeLiteral)
+                                   CARBON_TOKEN(StringTypeLiteral)
+                                   CARBON_TOKEN(Type))
 
 // A prefix operator:
 //   _external_: expression
 // PrefixOperator
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PrefixOperator, 1,
-    CARBON_TOKEN(Star)
-    CARBON_TOKEN(Amp)
-    CARBON_TOKEN(Not)
-    CARBON_TOKEN(Minus)
-    CARBON_TOKEN(MinusMinus)
-    CARBON_TOKEN(PlusPlus)
-    CARBON_TOKEN(Caret)
-    CARBON_TOKEN(Const))
+                                   CARBON_TOKEN(Star)
+                                   CARBON_TOKEN(Amp)
+                                   CARBON_TOKEN(Not)
+                                   CARBON_TOKEN(Minus)
+                                   CARBON_TOKEN(MinusMinus)
+                                   CARBON_TOKEN(PlusPlus)
+                                   CARBON_TOKEN(Caret)
+                                   CARBON_TOKEN(Const))
 
 // An infix operator:
 //   _external_: lhs expression
@@ -412,12 +428,15 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2,
     CARBON_TOKEN(Star)
     CARBON_TOKEN(StarEqual))
 
+// clang-format on
+
 // The first operand of a short-circuiting infix operator:
 //     _external_: expression
 //   ShortCircuitOperand
 //   _external_: expression
 // _external_: InfixOperator
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperand, 1, CARBON_TOKEN(And) CARBON_TOKEN(Or))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperand, 1,
+                                   CARBON_TOKEN(And) CARBON_TOKEN(Or))
 
 // A postfix operator:
 //   _external_: expression
@@ -434,7 +453,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperator, 1, CARBON_TOKEN(Star))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionIf, 1, CARBON_TOKEN(If))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionThen, 1, CARBON_TOKEN(Then))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionElse, 3,
-                                   CARBON_TOKEN(Else) CARBON_IF_ERROR(CARBON_TOKEN(If)))
+                                   CARBON_TOKEN(Else)
+                                       CARBON_IF_ERROR(CARBON_TOKEN(If)))
 
 // Struct literals, such as `{.a = 0}`:
 //   StructLiteralOrStructTypeLiteralStart
@@ -466,7 +486,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldDesignator, 1,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldValue, 2, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldType, 2, CARBON_TOKEN(Colon))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldUnknown, 0,
-  CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructComma, 0, CARBON_TOKEN(Comma))
 CARBON_PARSE_NODE_KIND_BRACKET(StructLiteral,
                                StructLiteralOrStructTypeLiteralStart,
@@ -491,7 +511,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer,
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDeclaration, ClassIntroducer,
-                               CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(Class)))
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Class)))
 
 // `interface`:
 //     InterfaceIntroducer
@@ -510,7 +531,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinitionStart, InterfaceIntroducer,
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, InterfaceDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDeclaration, InterfaceIntroducer,
-                               CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(Interface)))
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Interface)))
 
 // `constraint`:
 //     NamedConstraintIntroducer
