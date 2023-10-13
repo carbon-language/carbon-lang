@@ -11,7 +11,8 @@ var x: {} = {.a = 1};
 
 // CHECK:STDOUT: file "fail_assign_to_empty.carbon" {
 // CHECK:STDOUT:   %.loc10_9.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc10_9.2: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_9.3: {} = struct_literal ()
 // CHECK:STDOUT:   %x: ref {} = var "x"
 // CHECK:STDOUT:   %.loc10_19: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_20.1: type = struct_type {.a: i32}

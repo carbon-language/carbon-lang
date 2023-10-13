@@ -12,7 +12,8 @@ var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 
 // CHECK:STDOUT: file "fail_array_large_index.carbon" {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
+// CHECK:STDOUT:   %.loc7_15.1: type = array_type %.loc7_14, i32
+// CHECK:STDOUT:   %.loc7_15.2: type = ptr_type [i32; 1]
 // CHECK:STDOUT:   %a: ref [i32; 1] = var "a"
 // CHECK:STDOUT:   %.loc7_20: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc7_23.1: type = tuple_type (i32)

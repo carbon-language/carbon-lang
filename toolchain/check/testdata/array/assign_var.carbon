@@ -9,8 +9,10 @@ var b: [i32; 3] = a;
 
 // CHECK:STDOUT: file "assign_var.carbon" {
 // CHECK:STDOUT:   %.loc7_22.1: type = tuple_type (type, type, type)
-// CHECK:STDOUT:   %.loc7_22.2: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc7_22.3: type = tuple_type (i32, i32, i32)
+// CHECK:STDOUT:   %.loc7_22.2: type = ptr_type (type, type, type)
+// CHECK:STDOUT:   %.loc7_22.3: (type, type, type) = tuple_literal (i32, i32, i32)
+// CHECK:STDOUT:   %.loc7_22.4: type = tuple_type (i32, i32, i32)
+// CHECK:STDOUT:   %.loc7_22.5: type = ptr_type (i32, i32, i32)
 // CHECK:STDOUT:   %a: ref (i32, i32, i32) = var "a"
 // CHECK:STDOUT:   %.loc7_27: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_30: i32 = int_literal 2
@@ -25,7 +27,8 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc7_34.8: init (i32, i32, i32) = tuple_init %.loc7_34.1, (%.loc7_34.3, %.loc7_34.5, %.loc7_34.7)
 // CHECK:STDOUT:   assign %a, %.loc7_34.8
 // CHECK:STDOUT:   %.loc8_14: i32 = int_literal 3
-// CHECK:STDOUT:   %.loc8_15: type = array_type %.loc8_14, i32
+// CHECK:STDOUT:   %.loc8_15.1: type = array_type %.loc8_14, i32
+// CHECK:STDOUT:   %.loc8_15.2: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %b: ref [i32; 3] = var "b"
 // CHECK:STDOUT:   %a.ref: ref (i32, i32, i32) = name_reference "a", %a
 // CHECK:STDOUT:   %.loc8_19.1: ref i32 = tuple_access %a.ref, member0

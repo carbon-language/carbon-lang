@@ -45,9 +45,10 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %.loc26_20: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc26_28: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc26_29.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc26_29.2: {.a: i32, .b: i32} = struct_literal (%.loc26_20, %.loc26_28)
+// CHECK:STDOUT:   %.loc26_29.2: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = struct_literal (%.loc26_20, %.loc26_28)
 // CHECK:STDOUT:   %.loc26_31: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = struct_value %.loc26_29.2, (%.loc26_20, %.loc26_28)
+// CHECK:STDOUT:   %.loc26_29.4: {.a: i32, .b: i32} = struct_value %.loc26_29.3, (%.loc26_20, %.loc26_28)
 // CHECK:STDOUT:   assign %c, <error>
 // CHECK:STDOUT:   %d: ref i32 = var "d"
 // CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32}

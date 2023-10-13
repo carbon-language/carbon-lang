@@ -49,13 +49,14 @@ fn F() -> i32 {
 // CHECK:STDOUT:   store i32 %7, ptr %9, align 4
 // CHECK:STDOUT:   %10 = getelementptr inbounds { i32, i32 }, ptr %tuple10, i32 0, i32 1
 // CHECK:STDOUT:   store i32 %8, ptr %10, align 4
-// CHECK:STDOUT:   %tuple11 = alloca { { i32, i32, i32 }, { i32, i32 } }, align 8
-// CHECK:STDOUT:   %11 = getelementptr inbounds { { i32, i32, i32 }, { i32, i32 } }, ptr %tuple11, i32 0, i32 0
+// CHECK:STDOUT:   %tuple11 = alloca { ptr, ptr }, align 8
+// CHECK:STDOUT:   %11 = getelementptr inbounds { ptr, ptr }, ptr %tuple11, i32 0, i32 0
 // CHECK:STDOUT:   store ptr %tuple, ptr %11, align 8
-// CHECK:STDOUT:   %12 = getelementptr inbounds { { i32, i32, i32 }, { i32, i32 } }, ptr %tuple11, i32 0, i32 1
+// CHECK:STDOUT:   %12 = getelementptr inbounds { ptr, ptr }, ptr %tuple11, i32 0, i32 1
 // CHECK:STDOUT:   store ptr %tuple10, ptr %12, align 8
-// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { { i32, i32, i32 }, { i32, i32 } }, ptr %tuple11, i32 0, i32 1
-// CHECK:STDOUT:   %tuple.index12 = getelementptr inbounds { i32, i32 }, ptr %tuple.index, i32 0, i32 1
-// CHECK:STDOUT:   %tuple.index.load = load i32, ptr %tuple.index12, align 4
-// CHECK:STDOUT:   ret i32 %tuple.index.load
+// CHECK:STDOUT:   %tuple.index = getelementptr inbounds { ptr, ptr }, ptr %tuple11, i32 0, i32 1
+// CHECK:STDOUT:   %tuple.index.load = load ptr, ptr %tuple.index, align 8
+// CHECK:STDOUT:   %tuple.index12 = getelementptr inbounds { i32, i32 }, ptr %tuple.index.load, i32 0, i32 1
+// CHECK:STDOUT:   %tuple.index.load13 = load i32, ptr %tuple.index12, align 4
+// CHECK:STDOUT:   ret i32 %tuple.index.load13
 // CHECK:STDOUT: }

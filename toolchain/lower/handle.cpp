@@ -286,39 +286,53 @@ static auto GetStructOrTupleElement(FunctionContext& context,
   auto aggr_node = context.semantics_ir().GetNode(aggr_node_id);
   auto* aggr_value = context.GetLocal(aggr_node_id);
 
-  auto aggr_cat =
-      SemIR::GetExpressionCategory(context.semantics_ir(), aggr_node_id);
-  if (aggr_cat == SemIR::ExpressionCategory::Value &&
-      SemIR::GetValueRepresentation(context.semantics_ir(), aggr_node.type_id())
-              .kind == SemIR::ValueRepresentation::Copy) {
-    // We are holding the values of the aggregate directly, elementwise.
-    return context.builder().CreateExtractValue(aggr_value, idx, name);
-  }
+  switch (SemIR::GetExpressionCategory(context.semantics_ir(), aggr_node_id)) {
+    case SemIR::ExpressionCategory::Error:
+    case SemIR::ExpressionCategory::NotExpression:
+    case SemIR::ExpressionCategory::Initializing:
+    case SemIR::ExpressionCategory::Mixed:
+      CARBON_FATAL() << "Unexpected expression category for aggregate access";
 
-  // Either we're accessing an element of a reference and producing a reference,
-  // or we're accessing an element of a value that is held by pointer and we're
-  // producing a value.
-  auto* aggr_type = context.GetType(aggr_node.type_id());
-  auto* elem_ptr =
-      context.builder().CreateStructGEP(aggr_type, aggr_value, idx, name);
+    case SemIR::ExpressionCategory::Value: {
+      auto value_rep = SemIR::GetValueRepresentation(context.semantics_ir(),
+                                                     aggr_node.type_id());
+      switch (value_rep.kind) {
+        case SemIR::ValueRepresentation::Unknown:
+          CARBON_FATAL() << "Lowering access to incomplete aggregate type";
+        case SemIR::ValueRepresentation::None:
+          return aggr_value;
+        case SemIR::ValueRepresentation::Copy:
+          // We are holding the values of the aggregate directly, elementwise.
+          return context.builder().CreateExtractValue(aggr_value, idx, name);
+        case SemIR::ValueRepresentation::Pointer: {
+          // The value representation is a pointer to an aggregate that we want
+          // to index into.
+          auto pointee_type_id =
+              context.semantics_ir().GetPointeeType(value_rep.type_id);
+          auto* value_type = context.GetType(pointee_type_id);
+          auto* elem_ptr = context.builder().CreateStructGEP(
+              value_type, aggr_value, idx, name);
+          auto result_value_type_id =
+              SemIR::GetValueRepresentation(context.semantics_ir(),
+                                            result_type_id)
+                  .type_id;
+          return context.builder().CreateLoad(
+              context.GetType(result_value_type_id), elem_ptr, name + ".load");
+        }
+        case SemIR::ValueRepresentation::Custom:
+          CARBON_FATAL()
+              << "Aggregate should never have custom value representation";
+      }
+    }
 
-  // If this is a value access, load the element if necessary.
-  if (aggr_cat == SemIR::ExpressionCategory::Value) {
-    switch (
-        SemIR::GetValueRepresentation(context.semantics_ir(), result_type_id)
-            .kind) {
-      case SemIR::ValueRepresentation::None:
-        return llvm::PoisonValue::get(context.GetType(result_type_id));
-      case SemIR::ValueRepresentation::Copy:
-        return context.builder().CreateLoad(context.GetType(result_type_id),
-                                            elem_ptr, name + ".load");
-      case SemIR::ValueRepresentation::Pointer:
-        return elem_ptr;
-      case SemIR::ValueRepresentation::Custom:
-        CARBON_FATAL() << "TODO: Add support for custom value representation";
+    case SemIR::ExpressionCategory::DurableReference:
+    case SemIR::ExpressionCategory::EphemeralReference: {
+      // Just locate the aggregate element.
+      auto* aggr_type = context.GetType(aggr_node.type_id());
+      return context.builder().CreateStructGEP(aggr_type, aggr_value, idx,
+                                               name);
     }
   }
-  return elem_ptr;
 }
 
 auto HandleStructAccess(FunctionContext& context, SemIR::NodeId node_id,
@@ -355,12 +369,15 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
                                           SemIR::TypeId type_id,
                                           SemIR::NodeBlockId refs_id,
                                           llvm::Twine name) -> llvm::Value* {
-  auto* llvm_type = context.GetType(type_id);
+  auto value_rep =
+      SemIR::GetValueRepresentation(context.semantics_ir(), type_id);
+  switch (value_rep.kind) {
+    case SemIR::ValueRepresentation::Unknown:
+      CARBON_FATAL() << "Incomplete aggregate type in lowering";
 
-  switch (SemIR::GetValueRepresentation(context.semantics_ir(), type_id).kind) {
     case SemIR::ValueRepresentation::None:
       // TODO: Add a helper to get a "no value representation" value.
-      return llvm::PoisonValue::get(llvm_type);
+      return llvm::PoisonValue::get(context.GetType(value_rep.type_id));
 
     case SemIR::ValueRepresentation::Copy: {
       auto refs = context.semantics_ir().GetNodeBlock(refs_id);
@@ -369,20 +386,25 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
       // TODO: Remove the LLVM StructType wrapper in this case, so we don't
       // need this `insert_value` wrapping.
       return context.builder().CreateInsertValue(
-          llvm::PoisonValue::get(llvm_type), context.GetLocal(refs[0]), {0});
+          llvm::PoisonValue::get(context.GetType(value_rep.type_id)),
+          context.GetLocal(refs[0]), {0});
     }
 
     case SemIR::ValueRepresentation::Pointer: {
-      // Write the object representation to a local alloca so we can produce a
-      // pointer to it as the value representation.
-      auto* alloca = context.builder().CreateAlloca(
-          llvm_type, /*ArraySize=*/nullptr, name);
+      auto pointee_type_id =
+          context.semantics_ir().GetPointeeType(value_rep.type_id);
+      auto* llvm_value_rep_type = context.GetType(pointee_type_id);
+
+      // Write the value representation to a local alloca so we can produce a
+      // pointer to it as the value representation of the struct or tuple.
+      auto* alloca =
+          context.builder().CreateAlloca(llvm_value_rep_type,
+                                         /*ArraySize=*/nullptr, name);
       for (auto [i, ref] :
            llvm::enumerate(context.semantics_ir().GetNodeBlock(refs_id))) {
-        auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
-        // TODO: We are loading a value representation here and storing an
-        // object representation!
-        context.builder().CreateStore(context.GetLocal(ref), gep);
+        context.builder().CreateStore(
+            context.GetLocal(ref),
+            context.builder().CreateStructGEP(llvm_value_rep_type, alloca, i));
       }
       return alloca;
     }

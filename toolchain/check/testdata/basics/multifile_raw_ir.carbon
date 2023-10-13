@@ -30,7 +30,7 @@ fn B() {}
 // CHECK:STDOUT:       A,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
-// CHECK:STDOUT:       nodeFunctionType,
+// CHECK:STDOUT:       {node: nodeFunctionType, value_rep: {kind: copy, type: type0}},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     type_blocks: [
 // CHECK:STDOUT:     ]
@@ -64,7 +64,7 @@ fn B() {}
 // CHECK:STDOUT:       B,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
-// CHECK:STDOUT:       nodeFunctionType,
+// CHECK:STDOUT:       {node: nodeFunctionType, value_rep: {kind: copy, type: type0}},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     type_blocks: [
 // CHECK:STDOUT:     ]

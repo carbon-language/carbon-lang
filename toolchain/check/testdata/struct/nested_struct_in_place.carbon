@@ -21,7 +21,9 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_29: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_50: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}
+// CHECK:STDOUT:   %.loc10_51.1: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}
+// CHECK:STDOUT:   %.loc10_51.2: type = struct_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
+// CHECK:STDOUT:   %.loc10_51.3: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
 // CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var "v"
 // CHECK:STDOUT:   %F.ref.loc10_61: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc10_74.1: ref (i32, i32, i32) = struct_access %v, member0

@@ -115,7 +115,6 @@ class Context {
   auto is_current_position_reachable() -> bool;
 
   // Canonicalizes a type which is tracked as a single node.
-  // TODO: This should eventually return a type ID.
   auto CanonicalizeType(SemIR::NodeId node_id) -> SemIR::TypeId;
 
   // Handles canonicalization of struct types. This may create a new struct type
@@ -133,6 +132,12 @@ class Context {
   auto CanonicalizeTupleType(Parse::Node parse_node,
                              llvm::ArrayRef<SemIR::TypeId> type_ids)
       -> SemIR::TypeId;
+
+  // Attempts to complete the type `type_id`. Returns `true` if the type is
+  // complete, or `false` if it could not be completed. A complete type has
+  // known object and value representations.
+  // TODO: For now, all types are always complete.
+  auto TryToCompleteType(SemIR::TypeId type_id) -> bool;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)

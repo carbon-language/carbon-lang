@@ -35,8 +35,10 @@ fn Main() {
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 9
 // CHECK:STDOUT:   assign %a.ref.loc9, %.loc9
 // CHECK:STDOUT:   %.loc11_19.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc11_19.2: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc11_19.3: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc11_19.2: type = ptr_type (type, type)
+// CHECK:STDOUT:   %.loc11_19.3: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc11_19.4: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc11_19.5: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %b: ref (i32, i32) = var "b"
 // CHECK:STDOUT:   %.loc11_24: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc11_27: i32 = int_literal 2
@@ -57,7 +59,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc13_6: ref i32 = tuple_index %b.ref.loc13, %.loc13_5
 // CHECK:STDOUT:   %.loc13_10: i32 = int_literal 4
 // CHECK:STDOUT:   assign %.loc13_6, %.loc13_10
-// CHECK:STDOUT:   %.loc15_27: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc15_27.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc15_27.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %c: ref {.a: i32, .b: i32} = var "c"
 // CHECK:STDOUT:   %.loc15_37: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc15_45: i32 = int_literal 2

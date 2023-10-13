@@ -279,6 +279,235 @@ auto Context::ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::NodeBlockId {
   return ParamOrArgPop();
 }
 
+// Attempts to complete the given type.
+auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
+  auto node_id = semantics_ir().GetTypeAllowBuiltinTypes(type_id);
+  auto node = semantics_ir().GetNode(node_id);
+
+  auto set_empty_representation = [&]() {
+    semantics_ir().CompleteType(
+        type_id, {.kind = SemIR::ValueRepresentation::None,
+                  .type_id = CanonicalizeTupleType(node.parse_node(), {})});
+    return true;
+  };
+
+  auto set_copy_representation = [&](SemIR::TypeId rep_id) {
+    semantics_ir().CompleteType(
+        type_id, {.kind = SemIR::ValueRepresentation::Copy, .type_id = rep_id});
+    return true;
+  };
+
+  auto set_pointer_representation = [&](SemIR::TypeId pointee_id) {
+    // TODO: Should we add `const` qualification to `pointee_id`?
+    semantics_ir().CompleteType(
+        type_id, {.kind = SemIR::ValueRepresentation::Pointer,
+                  .type_id = GetPointerType(node.parse_node(), pointee_id)});
+    return true;
+  };
+
+  // clang warns on unhandled enum values; clang-tidy is incorrect here.
+  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
+  switch (node.kind()) {
+    case SemIR::AddressOf::Kind:
+    case SemIR::ArrayIndex::Kind:
+    case SemIR::ArrayInit::Kind:
+    case SemIR::Assign::Kind:
+    case SemIR::BinaryOperatorAdd::Kind:
+    case SemIR::BindName::Kind:
+    case SemIR::BindValue::Kind:
+    case SemIR::BlockArg::Kind:
+    case SemIR::BoolLiteral::Kind:
+    case SemIR::Branch::Kind:
+    case SemIR::BranchIf::Kind:
+    case SemIR::BranchWithArg::Kind:
+    case SemIR::Call::Kind:
+    case SemIR::Dereference::Kind:
+    case SemIR::FunctionDeclaration::Kind:
+    case SemIR::InitializeFrom::Kind:
+    case SemIR::IntegerLiteral::Kind:
+    case SemIR::NameReference::Kind:
+    case SemIR::Namespace::Kind:
+    case SemIR::NoOp::Kind:
+    case SemIR::Parameter::Kind:
+    case SemIR::RealLiteral::Kind:
+    case SemIR::Return::Kind:
+    case SemIR::ReturnExpression::Kind:
+    case SemIR::SpliceBlock::Kind:
+    case SemIR::StringLiteral::Kind:
+    case SemIR::StructAccess::Kind:
+    case SemIR::StructTypeField::Kind:
+    case SemIR::StructLiteral::Kind:
+    case SemIR::StructInit::Kind:
+    case SemIR::StructValue::Kind:
+    case SemIR::Temporary::Kind:
+    case SemIR::TemporaryStorage::Kind:
+    case SemIR::TupleAccess::Kind:
+    case SemIR::TupleIndex::Kind:
+    case SemIR::TupleLiteral::Kind:
+    case SemIR::TupleInit::Kind:
+    case SemIR::TupleValue::Kind:
+    case SemIR::UnaryOperatorNot::Kind:
+    case SemIR::ValueAsReference::Kind:
+    case SemIR::VarStorage::Kind:
+      CARBON_FATAL() << "Type refers to non-type node " << node;
+
+    case SemIR::CrossReference::Kind: {
+      auto xref = node.As<SemIR::CrossReference>();
+      auto xref_node =
+          semantics_ir().GetCrossReferenceIR(xref.ir_id).GetNode(xref.node_id);
+
+      // The canonical description of a type should only have cross-references
+      // for entities owned by another File, such as builtins, which are owned
+      // by the prelude, and named entities like classes and interfaces, which
+      // we don't support yet.
+      CARBON_CHECK(xref_node.kind() == SemIR::Builtin::Kind)
+          << "TODO: Handle other kinds of node cross-references";
+
+      // clang warns on unhandled enum values; clang-tidy is incorrect here.
+      // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
+      switch (xref_node.As<SemIR::Builtin>().builtin_kind) {
+        case SemIR::BuiltinKind::TypeType:
+        case SemIR::BuiltinKind::Error:
+        case SemIR::BuiltinKind::Invalid:
+        case SemIR::BuiltinKind::BoolType:
+        case SemIR::BuiltinKind::IntegerType:
+        case SemIR::BuiltinKind::FloatingPointType:
+        case SemIR::BuiltinKind::NamespaceType:
+        case SemIR::BuiltinKind::FunctionType:
+          return set_copy_representation(type_id);
+
+        case SemIR::BuiltinKind::StringType:
+          // TODO: Decide on string value semantics. This should probably be a
+          // custom value representation carrying a pointer and size or
+          // similar.
+          return set_pointer_representation(type_id);
+      }
+      llvm_unreachable("All builtin kinds were handled above");
+    }
+
+    case SemIR::ArrayType::Kind:
+      // For arrays, it's convenient to always use a pointer representation,
+      // even when the array has zero or one element, in order to support
+      // indexing.
+      return set_pointer_representation(type_id);
+
+    case SemIR::StructType::Kind: {
+      auto fields =
+          semantics_ir().GetNodeBlock(node.As<SemIR::StructType>().fields_id);
+      if (fields.empty()) {
+        return set_empty_representation();
+      }
+
+      // Find the value representation for each field, and construct a struct
+      // of value representations.
+      llvm::SmallVector<SemIR::NodeId> value_rep_fields;
+      value_rep_fields.reserve(fields.size());
+      bool same_as_object_rep = true;
+      for (auto field_id : fields) {
+        auto field = semantics_ir().GetNodeAs<SemIR::StructTypeField>(field_id);
+
+        // A struct is complete if and only if all its fields are complete.
+        auto field_value_rep =
+            semantics_ir().GetValueRepresentation(field.type_id);
+        if (field_value_rep.kind == SemIR::ValueRepresentation::Unknown) {
+          // TODO: If the field type might have become complete after we formed
+          // it, we should attempt to complete its type.
+          return false;
+        }
+        if (field_value_rep.type_id != field.type_id) {
+          same_as_object_rep = false;
+          field.type_id = field_value_rep.type_id;
+          field_id = AddNode(field);
+        }
+        value_rep_fields.push_back(field_id);
+      }
+
+      auto value_rep = same_as_object_rep
+                           ? type_id
+                           : CanonicalizeStructType(
+                                 node.parse_node(),
+                                 semantics_ir().AddNodeBlock(value_rep_fields));
+      if (fields.size() == 1) {
+        // The value representation for a struct with a single field is a struct
+        // containing the value representation of the field.
+        // TODO: Consider doing the same for structs with multiple small fields.
+        return set_copy_representation(value_rep);
+      }
+      // For a struct with multiple fields, we use a pointer representation.
+      return set_pointer_representation(value_rep);
+    }
+
+    case SemIR::TupleType::Kind: {
+      // TODO: Extract and share code with structs and maybe arrays.
+      auto elements =
+          semantics_ir().GetTypeBlock(node.As<SemIR::TupleType>().elements_id);
+      if (elements.empty()) {
+        return set_empty_representation();
+      }
+
+      // Find the value representation for each element, and construct a tuple
+      // of value representations.
+      llvm::SmallVector<SemIR::TypeId> value_rep_elements;
+      value_rep_elements.reserve(elements.size());
+      bool same_as_object_rep = true;
+      for (auto element_type_id : elements) {
+        // A tuple is complete if and only if all its elements are complete.
+        auto element_value_rep =
+            semantics_ir().GetValueRepresentation(element_type_id);
+        if (element_value_rep.kind == SemIR::ValueRepresentation::Unknown) {
+          // TODO: If the element type might have become complete after we
+          // formed it, we should attempt to complete its type.
+          return false;
+        }
+        if (element_value_rep.type_id != element_type_id) {
+          same_as_object_rep = false;
+        }
+        value_rep_elements.push_back(element_value_rep.type_id);
+      }
+
+      auto value_rep =
+          same_as_object_rep
+              ? type_id
+              : CanonicalizeTupleType(node.parse_node(), value_rep_elements);
+      if (elements.size() == 1) {
+        // The value representation for a tuple with a single element is a tuple
+        // containing the value representation of that element.
+        // TODO: Consider doing the same for tuples with multiple small
+        // elements.
+        return set_copy_representation(value_rep);
+      }
+      // For a tuple with multiple elements, we use a pointer representation.
+      return set_pointer_representation(value_rep);
+    }
+
+    case SemIR::ClassDeclaration::Kind: {
+      // TODO: Pick the default value representation in a smarter way.
+      // TODO: Allow the value representation for a class to be customized.
+      return set_pointer_representation(type_id);
+    }
+
+    case SemIR::Builtin::Kind:
+      CARBON_FATAL() << "Builtins should be named as cross-references";
+
+    case SemIR::PointerType::Kind:
+      return set_copy_representation(type_id);
+
+    case SemIR::ConstType::Kind: {
+      // The value representation of `const T` is the same as that of `T`.
+      // Objects are not modifiable through their value representations.
+      auto inner_value_rep = semantics_ir().GetValueRepresentation(
+          node.As<SemIR::ConstType>().inner_id);
+      if (inner_value_rep.kind == SemIR::ValueRepresentation::Unknown) {
+        return false;
+      }
+      semantics_ir().CompleteType(type_id, inner_value_rep);
+      return true;
+    }
+  }
+
+  llvm_unreachable("All node kinds were handled above");
+}
+
 auto Context::CanonicalizeTypeImpl(
     SemIR::NodeKind kind,
     llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)> profile_type,
@@ -310,6 +539,16 @@ auto Context::CanonicalizeTypeImpl(
   }()) << "Type was created recursively during canonicalization";
 
   canonical_type_nodes_.InsertNode(type_node_storage_.back().get(), insert_pos);
+
+  // Now we've formed the type, try to complete it and build its value
+  // representation.
+  // TODO: Delay doing this until a complete type is required, and issue a
+  // diagnostic if it fails.
+  // TODO: Consider emitting this into the file's global node block
+  // (or somewhere else that better reflects the definition of the type
+  // rather than the coincidental first use).
+  bool complete = TryToCompleteType(type_id);
+  CARBON_CHECK(complete) << "Incomplete types should not exist yet";
   return type_id;
 }
 

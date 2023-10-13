@@ -22,7 +22,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_27: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc8_27.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc8_27.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %s: ref {.a: i32, .b: i32} = var "s"
 // CHECK:STDOUT:   %.loc8_37: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc8_45: i32 = int_literal 2
@@ -52,8 +53,10 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_17: i32* = address_of %.loc12_19
 // CHECK:STDOUT:   assign %r, %.loc12_17
 // CHECK:STDOUT:   %.loc14_19.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc14_19.2: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc14_19.3: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc14_19.2: type = ptr_type (type, type)
+// CHECK:STDOUT:   %.loc14_19.3: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc14_19.4: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc14_19.5: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %t: ref (i32, i32) = var "t"
 // CHECK:STDOUT:   %.loc14_24: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc14_27: i32 = int_literal 2

@@ -11,8 +11,10 @@ var x: (i32, i32) = (2, );
 
 // CHECK:STDOUT: file "fail_too_few_element.carbon" {
 // CHECK:STDOUT:   %.loc10_17.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc10_17.2: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc10_17.3: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc10_17.2: type = ptr_type (type, type)
+// CHECK:STDOUT:   %.loc10_17.3: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc10_17.4: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc10_17.5: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %x: ref (i32, i32) = var "x"
 // CHECK:STDOUT:   %.loc10_22: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_25.1: type = tuple_type (i32)

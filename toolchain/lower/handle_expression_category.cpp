@@ -12,6 +12,9 @@ auto HandleBindValue(FunctionContext& context, SemIR::NodeId node_id,
   switch (auto rep = SemIR::GetValueRepresentation(context.semantics_ir(),
                                                    node.type_id);
           rep.kind) {
+    case SemIR::ValueRepresentation::Unknown:
+      CARBON_FATAL()
+          << "Value binding for type with incomplete value representation";
     case SemIR::ValueRepresentation::None:
       // Nothing should use this value, but StubReference needs a value to
       // propagate.

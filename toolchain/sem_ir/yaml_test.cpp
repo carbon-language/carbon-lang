@@ -43,6 +43,8 @@ TEST(SemIRTest, YAML) {
   auto node_id = Yaml::Scalar(MatchesRegex(R"(node\+\d+)"));
   auto node_builtin = Yaml::Scalar(MatchesRegex(R"(node\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
+  auto type_builtin = Yaml::Mapping(ElementsAre(
+      Pair("node", node_builtin), Pair("value_rep", Yaml::Mapping(_))));
 
   auto file = Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(
       Pair("cross_reference_irs_size", "1"),
@@ -51,7 +53,7 @@ TEST(SemIRTest, YAML) {
       Pair("integers", Yaml::Sequence(ElementsAre("0"))),
       Pair("reals", Yaml::Sequence(IsEmpty())),
       Pair("strings", Yaml::Sequence(ElementsAre("F", "x"))),
-      Pair("types", Yaml::Sequence(ElementsAre(node_builtin, node_builtin))),
+      Pair("types", Yaml::Sequence(Each(type_builtin))),
       Pair("type_blocks", Yaml::Sequence(IsEmpty())),
       Pair("nodes",
            Yaml::Sequence(AllOf(
