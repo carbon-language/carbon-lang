@@ -83,6 +83,7 @@ void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
 #include "toolchain/parse/node_kind.def"
 
 #undef CARBON_LOG
+#undef CARBON_CASE
   }
   CARBON_FATAL() << "Created parse node with NodeKind " << node_kind
                  << " and has_error " << has_error
