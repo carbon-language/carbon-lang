@@ -438,6 +438,7 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
     }
 
     case SemIR::TupleType::Kind: {
+      // TODO: Extract and share code with structs and maybe arrays.
       auto elements =
           semantics_ir().GetTypeBlock(node.As<SemIR::TupleType>().elements_id);
       if (elements.empty()) {
@@ -537,6 +538,9 @@ auto Context::CanonicalizeTypeImpl(
   // representation.
   // TODO: Delay doing this until a complete type is required, and issue a
   // diagnostic if it fails.
+  // TODO: Consider emitting this into the file's global node block
+  // (or somewhere else that better reflects the definition of the type
+  // rather than the coincidental first use).
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Incomplete types should not exist yet";
   return type_id;
