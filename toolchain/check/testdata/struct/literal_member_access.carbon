@@ -22,7 +22,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
 // CHECK:STDOUT:   %.loc10_25.1: ref {.x: i32, .y: i32, .z: i32} = temporary_storage
-// CHECK:STDOUT:   %.loc10_25.2: init {.x: i32, .y: i32, .z: i32} = call @G() to %.loc10_25.1
+// CHECK:STDOUT:   %.loc10_25.2: init {.x: i32, .y: i32, .z: i32} = call %G.ref() to %.loc10_25.1
 // CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc10_35.1: type = struct_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32}
 // CHECK:STDOUT:   %.loc10_35.2: type = struct_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}*, .c: i32}

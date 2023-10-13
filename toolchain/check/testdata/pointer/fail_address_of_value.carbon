@@ -131,7 +131,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc42_7: i32 = add %.loc42_5, %.loc42_9
 // CHECK:STDOUT:   %.loc42_3: i32* = address_of %.loc42_7
 // CHECK:STDOUT:   %H.ref: <function> = name_reference "H", package.%H
-// CHECK:STDOUT:   %.loc46_5.1: init {.a: i32} = call @H()
+// CHECK:STDOUT:   %.loc46_5.1: init {.a: i32} = call %H.ref()
 // CHECK:STDOUT:   %.loc46_5.2: ref {.a: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc46_5.3: ref {.a: i32} = temporary %.loc46_5.2, %.loc46_5.1
 // CHECK:STDOUT:   %.loc46_7: ref i32 = struct_access %.loc46_5.3, member0
@@ -145,7 +145,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT: fn @AddressOfCall() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
-// CHECK:STDOUT:   %.loc57_5: init i32 = call @G()
+// CHECK:STDOUT:   %.loc57_5: init i32 = call %G.ref()
 // CHECK:STDOUT:   %.loc57_3: i32* = address_of %.loc57_5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -28,7 +28,7 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: ref i32 = var "x"
 // CHECK:STDOUT:   %Foo.ref: <function> = name_reference "Foo", package.%Foo
-// CHECK:STDOUT:   %.loc13: init f64 = call @Foo()
+// CHECK:STDOUT:   %.loc13: init f64 = call %Foo.ref()
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

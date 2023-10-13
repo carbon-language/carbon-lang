@@ -36,7 +36,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: <function> = name_reference "A", package.%A
-// CHECK:STDOUT:   %.loc11_21.1: init i32 = call @A()
+// CHECK:STDOUT:   %.loc11_21.1: init i32 = call %A.ref()
 // CHECK:STDOUT:   %.loc11_21.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc11_21.3: ref i32 = temporary %.loc11_21.2, %.loc11_21.1
 // CHECK:STDOUT:   %.loc11_21.4: i32 = bind_value %.loc11_21.3
@@ -44,7 +44,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_reference "B", package.%B
-// CHECK:STDOUT:   %.loc11_30.1: init i32 = call @B()
+// CHECK:STDOUT:   %.loc11_30.1: init i32 = call %B.ref()
 // CHECK:STDOUT:   %.loc11_30.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc11_30.3: ref i32 = temporary %.loc11_30.2, %.loc11_30.1
 // CHECK:STDOUT:   %.loc11_30.4: i32 = bind_value %.loc11_30.3
