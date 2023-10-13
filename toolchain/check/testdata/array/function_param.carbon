@@ -13,8 +13,8 @@ fn G() -> i32 {
 }
 
 // CHECK:STDOUT: file "function_param.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%arr: [i32; 3], %i: i32) -> i32 {
@@ -29,7 +29,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3

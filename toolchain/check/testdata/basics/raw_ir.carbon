@@ -34,6 +34,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       node+1,
 // CHECK:STDOUT:       nodeFloatingPointType,
 // CHECK:STDOUT:       node+3,
+// CHECK:STDOUT:       nodeFunctionType,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     type_blocks: [
 // CHECK:STDOUT:       [
@@ -51,7 +52,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       {kind: TupleLiteral, arg0: block2, type: type1},
 // CHECK:STDOUT:       {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
 // CHECK:STDOUT:       {kind: VarStorage, arg0: str2, type: type3},
-// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0, type: type4},
 // CHECK:STDOUT:       {kind: NameReference, arg0: str1, arg1: node+0, type: type0},
 // CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:       {kind: BinaryOperatorAdd, arg0: node+6, arg1: node+7, type: type0},

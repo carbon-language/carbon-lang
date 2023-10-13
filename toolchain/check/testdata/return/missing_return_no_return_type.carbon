@@ -8,7 +8,7 @@ fn F() {
 }
 
 // CHECK:STDOUT: file "missing_return_no_return_type.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

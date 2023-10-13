@@ -28,11 +28,12 @@ fn B() {}
 // CHECK:STDOUT:       A,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
+// CHECK:STDOUT:       nodeFunctionType,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     type_blocks: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     nodes: [
-// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0, type: type0},
 // CHECK:STDOUT:       {kind: Return},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     node_blocks: [
@@ -59,11 +60,12 @@ fn B() {}
 // CHECK:STDOUT:       B,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
+// CHECK:STDOUT:       nodeFunctionType,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     type_blocks: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     nodes: [
-// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0, type: type0},
 // CHECK:STDOUT:       {kind: Return},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     node_blocks: [

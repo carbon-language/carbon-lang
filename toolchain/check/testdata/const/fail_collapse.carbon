@@ -15,7 +15,7 @@ fn G(p: const (const i32)**) -> i32** {
 }
 
 // CHECK:STDOUT: file "fail_collapse.carbon" {
-// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {

@@ -12,7 +12,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "fail_init_type_mismatch.carbon" {
-// CHECK:STDOUT:   %Main = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

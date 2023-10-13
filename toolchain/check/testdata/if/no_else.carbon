@@ -15,9 +15,9 @@ fn If(b: bool) {
 }
 
 // CHECK:STDOUT: file "no_else.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %G = fn_decl @G
-// CHECK:STDOUT:   %If = fn_decl @If
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %If: <function> = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -36,13 +36,13 @@ fn If(b: bool) {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc12_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc12_6.2: init () = call @F()
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
 // CHECK:STDOUT:   %.loc14: init () = call @G()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

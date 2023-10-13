@@ -12,7 +12,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 }
 
 // CHECK:STDOUT: file "fail_type_mismatch.carbon" {
-// CHECK:STDOUT:   %ConstMismatch = fn_decl @ConstMismatch
+// CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {

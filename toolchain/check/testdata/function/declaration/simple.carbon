@@ -9,15 +9,15 @@ fn F();
 fn G() { F(); }
 
 // CHECK:STDOUT: file "simple.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc9_11.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc9_11.2: init () = call @F()
 // CHECK:STDOUT:   return

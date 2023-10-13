@@ -16,10 +16,10 @@ fn G() -> i32 {
 }
 
 // CHECK:STDOUT: file "constant_condition.carbon" {
-// CHECK:STDOUT:   %A = fn_decl @A
-// CHECK:STDOUT:   %B = fn_decl @B
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %G = fn_decl @G
+// CHECK:STDOUT:   %A: <function> = fn_decl @A
+// CHECK:STDOUT:   %B: <function> = fn_decl @B
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
@@ -40,7 +40,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   if %.loc11_13 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %A.ref = name_reference_untyped "A", package.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_reference "A", package.%A
 // CHECK:STDOUT:   %.loc11_24.1: init i32 = call @A()
 // CHECK:STDOUT:   %.loc11_24.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc11_24.3: ref i32 = temporary %.loc11_24.2, %.loc11_24.1
@@ -48,7 +48,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_24.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %B.ref = name_reference_untyped "B", package.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_reference "B", package.%B
 // CHECK:STDOUT:   %.loc11_33.1: init i32 = call @B()
 // CHECK:STDOUT:   %.loc11_33.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc11_33.3: ref i32 = temporary %.loc11_33.2, %.loc11_33.1
@@ -66,7 +66,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   if %.loc15_13 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %A.ref = name_reference_untyped "A", package.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_reference "A", package.%A
 // CHECK:STDOUT:   %.loc15_25.1: init i32 = call @A()
 // CHECK:STDOUT:   %.loc15_25.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc15_25.3: ref i32 = temporary %.loc15_25.2, %.loc15_25.1
@@ -74,7 +74,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   br !if.expr.result(%.loc15_25.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %B.ref = name_reference_untyped "B", package.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_reference "B", package.%B
 // CHECK:STDOUT:   %.loc15_34.1: init i32 = call @B()
 // CHECK:STDOUT:   %.loc15_34.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc15_34.3: ref i32 = temporary %.loc15_34.2, %.loc15_34.1

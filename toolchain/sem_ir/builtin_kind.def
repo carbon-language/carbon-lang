@@ -64,6 +64,12 @@ CARBON_SEMANTICS_BUILTIN_KIND(FloatingPointType, "f64")
 // The type of string values and String literals.
 CARBON_SEMANTICS_BUILTIN_KIND(StringType, "String")
 
+// The type of function values.
+CARBON_SEMANTICS_BUILTIN_KIND(FunctionType, "<function>")
+
+// The type of namespace names.
+CARBON_SEMANTICS_BUILTIN_KIND(NamespaceType, "<namespace>")
+
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.
 CARBON_SEMANTICS_BUILTIN_KIND_NAME(Invalid)

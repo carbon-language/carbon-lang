@@ -7,7 +7,7 @@
 fn Run() -> i32 { return 0; }
 
 // CHECK:STDOUT: file "run_i32.carbon" {
-// CHECK:STDOUT:   %Run = fn_decl @Run
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
