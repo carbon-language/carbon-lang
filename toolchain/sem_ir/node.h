@@ -59,6 +59,15 @@ struct FunctionId : public IndexBase, public Printable<FunctionId> {
   }
 };
 
+// The ID of a class.
+struct ClassId : public IndexBase, public Printable<ClassId> {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "class";
+    IndexBase::Print(out);
+  }
+};
+
 // The ID of a cross-referenced IR.
 struct CrossReferenceIRId : public IndexBase,
                             public Printable<CrossReferenceIRId> {
@@ -306,6 +315,10 @@ struct Builtin {
 struct Call {
   NodeBlockId args_id;
   FunctionId function_id;
+};
+
+struct ClassDeclaration {
+  ClassId class_id;
 };
 
 struct ConstType {
