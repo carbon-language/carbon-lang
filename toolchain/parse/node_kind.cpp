@@ -59,12 +59,12 @@ void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
     break;                                      \
   }
 
-#define CARBON_TOKEN_EITHER(Expected1, Expected2) \
-  if (token_kind == Lex::TokenKind::Expected1 ||  \
-      token_kind == Lex::TokenKind::Expected2) {  \
-    return;                                       \
-  } else {                                        \
-    break;                                        \
+#define CARBON_TOKEN_EITHER(Expected1, Expected2)               \
+  if (token_kind == Lex::TokenKind::Expected1 ||                \
+      (has_error && token_kind == Lex::TokenKind::Expected2)) { \
+    return;                                                     \
+  } else {                                                      \
+    break;                                                      \
   }
 
 #define CARBON_TOKEN_UNLESS_ERROR(Expected)                  \
