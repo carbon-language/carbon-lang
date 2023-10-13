@@ -28,6 +28,8 @@
 // CHECK:STDOUT:       {kind: CrossReference, arg0: ir0, arg1: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:       {kind: CrossReference, arg0: ir0, arg1: nodeFloatingPointType, type: typeTypeType},
 // CHECK:STDOUT:       {kind: CrossReference, arg0: ir0, arg1: nodeStringType, type: typeTypeType},
+// CHECK:STDOUT:       {kind: CrossReference, arg0: ir0, arg1: nodeFunctionType, type: typeTypeType},
+// CHECK:STDOUT:       {kind: CrossReference, arg0: ir0, arg1: nodeNamespaceType, type: typeTypeType},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     node_blocks: [
 // CHECK:STDOUT:       [

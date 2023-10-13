@@ -12,9 +12,9 @@ fn And() -> bool {
 }
 
 // CHECK:STDOUT: file "and.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %G = fn_decl @G
-// CHECK:STDOUT:   %And = fn_decl @And
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %And: <function> = fn_decl @And
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
@@ -31,7 +31,7 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc11_11.1: init bool = call @F()
 // CHECK:STDOUT:   %.loc11_11.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc11_11.3: ref bool = temporary %.loc11_11.2, %.loc11_11.1
@@ -40,7 +40,7 @@ fn And() -> bool {
 // CHECK:STDOUT:   if %.loc11_11.4 br !and.rhs else br !and.result(%.loc11_14.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %G.ref = name_reference_untyped "G", package.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
 // CHECK:STDOUT:   %.loc11_19.1: init bool = call @G()
 // CHECK:STDOUT:   %.loc11_19.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc11_19.3: ref bool = temporary %.loc11_19.2, %.loc11_19.1

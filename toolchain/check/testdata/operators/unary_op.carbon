@@ -9,7 +9,7 @@ fn Not(b: bool) -> bool {
 }
 
 // CHECK:STDOUT: file "unary_op.carbon" {
-// CHECK:STDOUT:   %Not = fn_decl @Not
+// CHECK:STDOUT:   %Not: <function> = fn_decl @Not
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {

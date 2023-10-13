@@ -15,7 +15,7 @@ fn Run() {
 }
 
 // CHECK:STDOUT: file "fail_not_callable.carbon" {
-// CHECK:STDOUT:   %Run = fn_decl @Run
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

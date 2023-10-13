@@ -8,8 +8,8 @@ fn Foo(a: i32) {}
 fn Bar(a: i32) {}
 
 // CHECK:STDOUT: file "same_param_name.carbon" {
-// CHECK:STDOUT:   %Foo = fn_decl @Foo
-// CHECK:STDOUT:   %Bar = fn_decl @Bar
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {

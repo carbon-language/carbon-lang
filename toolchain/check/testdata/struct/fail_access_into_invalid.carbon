@@ -11,7 +11,7 @@
 fn F() { a.b; }
 
 // CHECK:STDOUT: file "fail_access_into_invalid.carbon" {
-// CHECK:STDOUT:   %F = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

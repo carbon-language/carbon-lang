@@ -399,13 +399,6 @@ class NodeNamer {
               ".ref");
           continue;
         }
-        case NameReferenceUntyped::Kind: {
-          add_node_name(
-              semantics_ir_.GetString(node.As<NameReferenceUntyped>().name_id)
-                  .str() +
-              ".ref");
-          continue;
-        }
         case Parameter::Kind: {
           add_node_name_id(node.As<Parameter>().name_id);
           continue;
@@ -580,10 +573,6 @@ class Formatter {
             break;
         }
         FormatType(node.type_id());
-        out_ << " = ";
-        break;
-      case NodeValueKind::Untyped:
-        FormatNodeName(node_id);
         out_ << " = ";
         break;
       case NodeValueKind::None:
