@@ -45,8 +45,10 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 // We expect the parse node kind to fit compactly into 8 bits.
 static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
 
-auto CheckNodeMatchesLexerToken(NodeKind parse_node_kind,
-                                Lex::TokenKind lex_token_kind);
+// Validates that a `parse_node_kind` parser node can be generated for a
+// `lex_token_kind` lexer token.
+void CheckNodeMatchesLexerToken(NodeKind parse_node_kind,
+                                Lex::TokenKind lex_token_kind, bool has_error);
 
 }  // namespace Carbon::Parse
 

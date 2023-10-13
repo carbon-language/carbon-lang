@@ -47,4 +47,48 @@ auto NodeKind::child_count() const -> int32_t {
   return child_count;
 }
 
+void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
+                                bool has_error) {
+  switch (node_kind) {
+#define CARBON_ANY_TOKEN return;
+
+#define CARBON_TOKEN(Expected)                  \
+  if (token_kind == Lex::TokenKind::Expected) { \
+    return;                                     \
+  } else {                                      \
+    break;                                      \
+  }
+
+#define CARBON_TOKEN_EITHER(Expected1, Expected2) \
+  if (token_kind == Lex::TokenKind::Expected1 ||  \
+      token_kind == Lex::TokenKind::Expected2) {  \
+    return;                                       \
+  } else {                                        \
+    break;                                        \
+  }
+
+#define CARBON_TOKEN_UNLESS_ERROR(Expected)                  \
+  if (has_error || token_kind == Lex::TokenKind::Expected) { \
+    return;                                                  \
+  } else {                                                   \
+    break;                                                   \
+  }
+
+#define CARBON_CASE(Name, MatchAction) \
+  case NodeKind::Name:                 \
+    MatchAction
+
+#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, MatchAction) \
+  CARBON_CASE(Name, MatchAction)
+
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, MatchAction) \
+  CARBON_CASE(Name, MatchAction)
+
+#include "toolchain/parse/node_kind.def"
+  }
+  CARBON_FATAL() << "Created parse node with NodeKind " << node_kind
+                 << " and has_error " << has_error
+                 << " for unexpected lexical token " << token_kind;
+}
+
 }  // namespace Carbon::Parse
