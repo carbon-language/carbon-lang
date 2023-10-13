@@ -21,6 +21,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:enum_base",
+        "//toolchain/lex:token_kind",
     ],
 )
 
