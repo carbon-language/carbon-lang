@@ -471,7 +471,6 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
-      case Builtin::Kind:
       case ClassDeclaration::Kind:
       case ConstType::Kind:
       case IntegerLiteral::Kind:
@@ -485,6 +484,13 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case TupleType::Kind:
       case UnaryOperatorNot::Kind:
         return ExpressionCategory::Value;
+
+      case Builtin::Kind: {
+        if (node.As<Builtin>().builtin_kind == BuiltinKind::Error) {
+          return ExpressionCategory::Error;
+        }
+        return ExpressionCategory::Value;
+      }
 
       case BindName::Kind: {
         node_id = node.As<BindName>().value_id;

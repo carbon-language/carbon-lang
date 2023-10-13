@@ -54,8 +54,10 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
     }
     case Lex::TokenKind::Equal: {
       // TODO: handle complex assignment expression such as `a += 1`.
-      if (SemIR::GetExpressionCategory(context.semantics_ir(), lhs_id) !=
-          SemIR::ExpressionCategory::DurableReference) {
+      if (auto lhs_cat =
+              SemIR::GetExpressionCategory(context.semantics_ir(), lhs_id);
+          lhs_cat != SemIR::ExpressionCategory::DurableReference &&
+          lhs_cat != SemIR::ExpressionCategory::Error) {
         CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
                           "Expression is not assignable.");
         context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
@@ -105,6 +107,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       // Only durable reference expressions can have their address taken.
       switch (SemIR::GetExpressionCategory(context.semantics_ir(), value_id)) {
         case SemIR::ExpressionCategory::DurableReference:
+        case SemIR::ExpressionCategory::Error:
           break;
         case SemIR::ExpressionCategory::EphemeralReference:
           CARBON_DIAGNOSTIC(AddressOfEphemeralReference, Error,
@@ -157,6 +160,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       return true;
 
     case Lex::TokenKind::Star: {
+      value_id = ConvertToValueExpression(context, value_id);
       auto type_id = context.GetUnqualifiedType(
           context.semantics_ir().GetNode(value_id).type_id());
       auto type_node = context.semantics_ir().GetNode(
@@ -164,7 +168,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       auto result_type_id = SemIR::TypeId::Error;
       if (auto pointer_type = type_node.TryAs<SemIR::PointerType>()) {
         result_type_id = pointer_type->pointee_id;
-      } else {
+      } else if (type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(
             DereferenceOfNonPointer, Error,
             "Cannot dereference operand of non-pointer type `{0}`.",
@@ -181,7 +185,6 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
         }
         builder.Emit();
       }
-      value_id = ConvertToValueExpression(context, value_id);
       context.AddNodeAndPush(
           parse_node, SemIR::Dereference(parse_node, result_type_id, value_id));
       return true;
