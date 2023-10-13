@@ -150,6 +150,7 @@ auto File::Print(llvm::raw_ostream& out, bool include_builtins) const -> void {
       << "\n";
 
   PrintList(out, "functions", functions_);
+  PrintList(out, "classes", classes_);
   // Integer values are APInts, and default to a signed print, but we currently
   // treat them as unsigned.
   PrintList(out, "integers", integers_,
@@ -179,6 +180,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
   switch (kind) {
     case ArrayType::Kind:
     case Builtin::Kind:
+    case ClassDeclaration::Kind:
     case StructType::Kind:
     case TupleType::Kind:
       return 0;
@@ -283,6 +285,12 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
         } else if (step.index == 1) {
           out << "; " << GetArrayBoundValue(array.bound_id) << "]";
         }
+        break;
+      }
+      case ClassDeclaration::Kind: {
+        auto class_name_id =
+            GetClass(node.As<ClassDeclaration>().class_id).name_id;
+        out << GetString(class_name_id);
         break;
       }
       case ConstType::Kind: {
@@ -464,6 +472,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case BlockArg::Kind:
       case BoolLiteral::Kind:
       case Builtin::Kind:
+      case ClassDeclaration::Kind:
       case ConstType::Kind:
       case IntegerLiteral::Kind:
       case Parameter::Kind:
@@ -628,6 +637,12 @@ auto GetValueRepresentation(const File& file, TypeId type_id)
           continue;
         }
         // For any other tuple, use a pointer representation.
+        return {.kind = ValueRepresentation::Pointer, .type = type_id};
+      }
+
+      case ClassDeclaration::Kind: {
+        // TODO: Pick the default value representation in a smarter way.
+        // TODO: Allow the value representation for a class to be customized.
         return {.kind = ValueRepresentation::Pointer, .type = type_id};
       }
 

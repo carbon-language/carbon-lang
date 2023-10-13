@@ -51,6 +51,17 @@ struct Function : public Printable<Function> {
   llvm::SmallVector<NodeBlockId> body_block_ids;
 };
 
+// A class.
+struct Class : public Printable<Class> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{name: " << name_id;
+    out << "}";
+  }
+
+  // The class name.
+  StringId name_id;
+};
+
 // TODO: Replace this with a Rational type, per the design:
 // docs/design/expressions/literals.md
 struct Real : public Printable<Real> {
@@ -120,6 +131,23 @@ class File : public Printable<File> {
   auto GetFunction(FunctionId function_id) -> Function& {
     return functions_[function_id.index];
   }
+
+  // Adds a class, returning an ID to reference it.
+  auto AddClass(Class class_info) -> ClassId {
+    ClassId id(classes_.size());
+    // TODO: Return failure on overflow instead of crashing.
+    CARBON_CHECK(id.index >= 0);
+    classes_.push_back(class_info);
+    return id;
+  }
+
+  // Returns the requested class.
+  auto GetClass(ClassId class_id) const -> const Class& {
+    return classes_[class_id.index];
+  }
+
+  // Returns the requested class.
+  auto GetClass(ClassId class_id) -> Class& { return classes_[class_id.index]; }
 
   // Adds an integer value, returning an ID to reference it.
   auto AddInteger(llvm::APInt integer) -> IntegerId {
@@ -327,6 +355,7 @@ class File : public Printable<File> {
       -> std::string;
 
   auto functions_size() const -> int { return functions_.size(); }
+  auto classes_size() const -> int { return classes_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
   auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
@@ -374,6 +403,9 @@ class File : public Printable<File> {
 
   // Storage for callable objects.
   llvm::SmallVector<Function> functions_;
+
+  // Storage for classes.
+  llvm::SmallVector<Class> classes_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
