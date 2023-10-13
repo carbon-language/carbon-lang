@@ -8,6 +8,7 @@
 #include <cstdint>
 
 #include "common/enum_base.h"
+#include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Parse {
 
@@ -43,6 +44,9 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 
 // We expect the parse node kind to fit compactly into 8 bits.
 static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
+
+auto CheckNodeMatchesLexerToken(NodeKind parse_node_kind,
+                                Lex::TokenKind lex_token_kind);
 
 }  // namespace Carbon::Parse
 

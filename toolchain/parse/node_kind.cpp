@@ -26,7 +26,8 @@ auto NodeKind::bracket() const -> NodeKind {
   // Nodes are never self-bracketed, so we use that for nodes that instead set
   // child_count.
   static constexpr NodeKind Bracket[] = {
-#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName) NodeKind::BracketName,
+#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, ...) \
+  NodeKind::BracketName,
 #define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ...) NodeKind::Name,
 #include "toolchain/parse/node_kind.def"
   };
@@ -38,7 +39,7 @@ auto NodeKind::bracket() const -> NodeKind {
 auto NodeKind::child_count() const -> int32_t {
   static constexpr int32_t ChildCount[] = {
 #define CARBON_PARSE_NODE_KIND_BRACKET(...) -1,
-#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size) Size,
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, ...) Size,
 #include "toolchain/parse/node_kind.def"
   };
   auto child_count = ChildCount[AsInt()];
