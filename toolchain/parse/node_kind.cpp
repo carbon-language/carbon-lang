@@ -55,31 +55,23 @@ void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
 #define CARBON_TOKEN(Expected)                  \
   if (token_kind == Lex::TokenKind::Expected) { \
     return;                                     \
-  }                                             \
-  break;
+  }
 
-#define CARBON_TOKEN_EITHER(Expected1, Expected2)               \
-  if (token_kind == Lex::TokenKind::Expected1 ||                \
-      (has_error && token_kind == Lex::TokenKind::Expected2)) { \
-    return;                                                     \
-  }                                                             \
-  break;
+#define CARBON_IF_ERROR(MatchActions) \
+  if (has_error) {                    \
+    MatchActions                      \
+  }
 
-#define CARBON_TOKEN_UNLESS_ERROR(Expected)                  \
-  if (has_error || token_kind == Lex::TokenKind::Expected) { \
-    return;                                                  \
-  }                                                          \
-  break;
+#define CARBON_CASE(Name, MatchActions) \
+  case NodeKind::Name:                  \
+    MatchActions                        \
+    break;
 
-#define CARBON_CASE(Name, MatchAction) \
-  case NodeKind::Name:                 \
-    MatchAction
+#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, MatchActions) \
+  CARBON_CASE(Name, MatchActions)
 
-#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, MatchAction) \
-  CARBON_CASE(Name, MatchAction)
-
-#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, MatchAction) \
-  CARBON_CASE(Name, MatchAction)
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, MatchActions) \
+  CARBON_CASE(Name, MatchActions)
 
 #include "toolchain/parse/node_kind.def"
   }

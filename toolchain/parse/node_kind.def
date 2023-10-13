@@ -18,16 +18,12 @@
 //     Defines a parse node with a set number of children, often 0. This count
 //     must be correct even when the node contains errors.
 //
-//   In both cases, LexTokenKind says which Lex::TokenKind values that this
-//   parse node can correspond to:
-//   - CARBON_TOKEN(kind): This node always corresponds to one kind of token.
-//   - CARBON_TOKEN_EITHER(kind1, kind2): This node corresponds to one of two
-//     kinds of tokens. Generally this will be the first kind of token, but in
-//     error cases where that token is not available in the source, it will
-//     fall back to using the second kind of token.
-//   - CARBON_TOKEN_UNLESS_ERROR(kind): this node corresponds to one kind of
-//     token unless there is an error, or
-//   - CARBON_ANY_TOKEN: this node can correspond to many kinds of tokens.
+//   In both cases, LexTokenKinds says which Lex::TokenKind values that this
+//   parse node can correspond to, and is a sequence of:
+//   - CARBON_TOKEN(kind): This node can correspond to this kind of token.
+//   - CARBON_ANY_TOKEN: This node can correspond to many kinds of tokens.
+//   - CARBON_IF_ERROR(LexTokenKinds): This node can additionally correspond
+//     to the given kinds of tokens if its `has_error` flag is set.
 //
 // This tree represents the subset relationship between these macros, where if a
 // specific x-macro isn't defined, it'll fall back to the parent macro.
@@ -58,11 +54,13 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0, CARBON_TOKEN(StartOfFile))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, CARBON_TOKEN(EndOfFile))
 
 // An invalid parse. Used to balance the parse tree. Always has an error.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0, CARBON_ANY_TOKEN)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0,
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // An empty declaration, such as `;`.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDeclaration, 0,
-                                   CARBON_TOKEN_UNLESS_ERROR(Semi))
+                                   CARBON_TOKEN(Semi)
+                                       CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // A name in a non-expression context, such as a declaration.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0,
@@ -83,7 +81,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageApi, 0, CARBON_TOKEN(Api))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageImpl, 0, CARBON_TOKEN(Impl))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageLibrary, 1, CARBON_TOKEN(Library))
 CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer,
-                               CARBON_TOKEN_EITHER(Semi, Package))
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Package)))
 
 // `namespace`:
 //   NamespaceStart
@@ -351,7 +350,19 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpression, 2,
                                    CARBON_TOKEN(MinusGreater))
 
 // A literal.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Literal, 0, CARBON_ANY_TOKEN)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(
+    Literal, 0,
+    CARBON_TOKEN(False)
+        CARBON_TOKEN(True)
+        CARBON_TOKEN(IntegerLiteral)
+        CARBON_TOKEN(RealLiteral)
+        CARBON_TOKEN(StringLiteral)
+        CARBON_TOKEN(Bool)
+        CARBON_TOKEN(IntegerTypeLiteral)
+        CARBON_TOKEN(UnsignedIntegerTypeLiteral)
+        CARBON_TOKEN(FloatingPointTypeLiteral)
+        CARBON_TOKEN(StringTypeLiteral)
+        CARBON_TOKEN(Type))
 
 // A prefix operator:
 //   _external_: expression
