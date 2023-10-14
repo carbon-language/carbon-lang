@@ -85,8 +85,7 @@ struct ValueRepresentation : public Printable<ValueRepresentation> {
 
   enum Kind : int8_t {
     // The value representation is not yet known. This is used for incomplete
-    // types, in cases where the incompleteness means the value representation
-    // can't be determined.
+    // types.
     Unknown,
     // The type has no value representation. This is used for empty types, such
     // as `()`, where there is no value.
@@ -115,7 +114,7 @@ struct TypeInfo : public Printable<TypeInfo> {
 
   // The node that defines this type.
   NodeId node_id;
-  // The value representation for this type.
+  // The value representation for this type. Only set when the type is complete.
   ValueRepresentation value_representation;
 };
 
@@ -391,6 +390,12 @@ class File : public Printable<File> {
       return {.kind = ValueRepresentation::Copy, .type_id = type_id};
     }
     return types_[type_id.index].value_representation;
+  }
+
+  // Determines whether the given type is known to be complete. This does not
+  // determine whether the type could be completed, only whether it has been.
+  auto IsTypeComplete(TypeId type_id) const -> bool {
+    return GetValueRepresentation(type_id).kind != ValueRepresentation::Unknown;
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.

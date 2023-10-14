@@ -21,8 +21,7 @@
 
 namespace Carbon::Check {
 
-Context::Context(const Lex::TokenizedBuffer& tokens,
-                 DiagnosticEmitter<Parse::Node>& emitter,
+Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
                  const Parse::Tree& parse_tree, SemIR::File& semantics_ir,
                  llvm::raw_ostream* vlog_stream)
     : tokens_(&tokens),
@@ -280,7 +279,14 @@ auto Context::ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::NodeBlockId {
 }
 
 // Attempts to complete the given type.
-auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
+auto Context::TryToCompleteType(
+    SemIR::TypeId type_id,
+    std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser)
+    -> bool {
+  if (semantics_ir().IsTypeComplete(type_id)) {
+    return true;
+  }
+
   auto node_id = semantics_ir().GetTypeAllowBuiltinTypes(type_id);
   auto node = semantics_ir().GetNode(node_id);
 
@@ -303,6 +309,35 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
         type_id, {.kind = SemIR::ValueRepresentation::Pointer,
                   .type_id = GetPointerType(node.parse_node(), pointee_id)});
     return true;
+  };
+
+  // Requires a type nested within this one to be complete.
+  auto try_to_complete_nested_type = [&](SemIR::TypeId nested_type_id,
+                                         auto diagnostic_annotator) -> bool {
+    decltype(diagnoser) nested_diagnoser;
+    if (diagnoser) {
+      nested_diagnoser = [&]() -> DiagnosticBuilder {
+        auto builder = (*diagnoser)();
+        diagnostic_annotator(builder);
+        return builder;
+      };
+    }
+    // TODO: Make this non-recursive.
+    return TryToCompleteType(nested_type_id, nested_diagnoser);
+  };
+
+  // Requires a type nested within this one to be complete, and returns its
+  // value representation. If the type is not complete, returns std::nullopt.
+  auto get_nested_value_representation = [&](SemIR::TypeId nested_type_id,
+                                             auto diagnostic_annotator)
+      -> std::optional<SemIR::ValueRepresentation> {
+    if (!try_to_complete_nested_type(nested_type_id, diagnostic_annotator)) {
+      return std::nullopt;
+    }
+    auto value_rep = semantics_ir().GetValueRepresentation(nested_type_id);
+    CARBON_CHECK(value_rep.kind != SemIR::ValueRepresentation::Unknown)
+        << "Complete type should have a value representation";
+    return value_rep;
   };
 
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
@@ -385,11 +420,19 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
       llvm_unreachable("All builtin kinds were handled above");
     }
 
-    case SemIR::ArrayType::Kind:
+    case SemIR::ArrayType::Kind: {
+      if (!try_to_complete_nested_type(
+              node.As<SemIR::ArrayType>().element_type_id,
+              [&](DiagnosticBuilder& /*builder*/) {
+                // TODO: Add a note mentioning the array.
+              })) {
+        return false;
+      }
       // For arrays, it's convenient to always use a pointer representation,
       // even when the array has zero or one element, in order to support
       // indexing.
       return set_pointer_representation(type_id);
+    }
 
     case SemIR::StructType::Kind: {
       auto fields =
@@ -407,16 +450,16 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
         auto field = semantics_ir().GetNodeAs<SemIR::StructTypeField>(field_id);
 
         // A struct is complete if and only if all its fields are complete.
-        auto field_value_rep =
-            semantics_ir().GetValueRepresentation(field.type_id);
-        if (field_value_rep.kind == SemIR::ValueRepresentation::Unknown) {
-          // TODO: If the field type might have become complete after we formed
-          // it, we should attempt to complete its type.
+        auto field_value_rep = get_nested_value_representation(
+            field.type_id, [&](DiagnosticBuilder& /*builder*/) {
+              // TODO: Add a note mentioning the field.
+            });
+        if (!field_value_rep) {
           return false;
         }
-        if (field_value_rep.type_id != field.type_id) {
+        if (field_value_rep->type_id != field.type_id) {
           same_as_object_rep = false;
-          field.type_id = field_value_rep.type_id;
+          field.type_id = field_value_rep->type_id;
           field_id = AddNode(field);
         }
         value_rep_fields.push_back(field_id);
@@ -438,7 +481,7 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
     }
 
     case SemIR::TupleType::Kind: {
-      // TODO: Extract and share code with structs and maybe arrays.
+      // TODO: Extract and share code with structs.
       auto elements =
           semantics_ir().GetTypeBlock(node.As<SemIR::TupleType>().elements_id);
       if (elements.empty()) {
@@ -452,17 +495,17 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
       bool same_as_object_rep = true;
       for (auto element_type_id : elements) {
         // A tuple is complete if and only if all its elements are complete.
-        auto element_value_rep =
-            semantics_ir().GetValueRepresentation(element_type_id);
-        if (element_value_rep.kind == SemIR::ValueRepresentation::Unknown) {
-          // TODO: If the element type might have become complete after we
-          // formed it, we should attempt to complete its type.
+        auto element_value_rep = get_nested_value_representation(
+            element_type_id, [&](DiagnosticBuilder& /*builder*/) {
+              // TODO: Add a note mentioning the tuple element.
+            });
+        if (!element_value_rep) {
           return false;
         }
-        if (element_value_rep.type_id != element_type_id) {
+        if (element_value_rep->type_id != element_type_id) {
           same_as_object_rep = false;
         }
-        value_rep_elements.push_back(element_value_rep.type_id);
+        value_rep_elements.push_back(element_value_rep->type_id);
       }
 
       auto value_rep =
@@ -481,9 +524,13 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
     }
 
     case SemIR::ClassDeclaration::Kind: {
-      // TODO: Pick the default value representation in a smarter way.
-      // TODO: Allow the value representation for a class to be customized.
-      return set_pointer_representation(type_id);
+      // TODO: Support class definitions and complete class types.
+      if (diagnoser) {
+        CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                          "Class was forward declared here.");
+        (*diagnoser)().Note(node.parse_node(), ClassForwardDeclaredHere).Emit();
+      }
+      return false;
     }
 
     case SemIR::Builtin::Kind:
@@ -495,12 +542,13 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
     case SemIR::ConstType::Kind: {
       // The value representation of `const T` is the same as that of `T`.
       // Objects are not modifiable through their value representations.
-      auto inner_value_rep = semantics_ir().GetValueRepresentation(
-          node.As<SemIR::ConstType>().inner_id);
-      if (inner_value_rep.kind == SemIR::ValueRepresentation::Unknown) {
+      auto inner_value_rep = get_nested_value_representation(
+          node.As<SemIR::ConstType>().inner_id,
+          [&](DiagnosticBuilder& /*builder*/) {});
+      if (!inner_value_rep) {
         return false;
       }
-      semantics_ir().CompleteType(type_id, inner_value_rep);
+      semantics_ir().CompleteType(type_id, *inner_value_rep);
       return true;
     }
   }
@@ -547,8 +595,7 @@ auto Context::CanonicalizeTypeImpl(
   // TODO: Consider emitting this into the file's global node block
   // (or somewhere else that better reflects the definition of the type
   // rather than the coincidental first use).
-  bool complete = TryToCompleteType(type_id);
-  CARBON_CHECK(complete) << "Incomplete types should not exist yet";
+  TryToCompleteType(type_id);
   return type_id;
 }
 

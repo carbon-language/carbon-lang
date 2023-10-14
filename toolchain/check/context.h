@@ -21,6 +21,9 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
+  using DiagnosticEmitter = Carbon::DiagnosticEmitter<Parse::Node>;
+  using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
+
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
     SemIR::NodeBlockId break_target;
@@ -29,7 +32,7 @@ class Context {
 
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
-                   DiagnosticEmitter<Parse::Node>& emitter,
+                   DiagnosticEmitter& emitter,
                    const Parse::Tree& parse_tree, SemIR::File& semantics,
                    llvm::raw_ostream* vlog_stream);
 
@@ -136,8 +139,14 @@ class Context {
   // Attempts to complete the type `type_id`. Returns `true` if the type is
   // complete, or `false` if it could not be completed. A complete type has
   // known object and value representations.
-  // TODO: For now, all types are always complete.
-  auto TryToCompleteType(SemIR::TypeId type_id) -> bool;
+  //
+  // If the type is not complete, `diagnoser` is invoked to diagnose the issue.
+  // The builder it returns will be annotated to describe the reason why the
+  // type is not complete.
+  auto TryToCompleteType(
+      SemIR::TypeId type_id,
+      std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
+          std::nullopt) -> bool;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)
@@ -179,7 +188,7 @@ class Context {
 
   auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
 
-  auto emitter() -> DiagnosticEmitter<Parse::Node>& { return *emitter_; }
+  auto emitter() -> DiagnosticEmitter& { return *emitter_; }
 
   auto parse_tree() -> const Parse::Tree& { return *parse_tree_; }
 
@@ -255,7 +264,7 @@ class Context {
   const Lex::TokenizedBuffer* tokens_;
 
   // Handles diagnostics.
-  DiagnosticEmitter<Parse::Node>* emitter_;
+  DiagnosticEmitter* emitter_;
 
   // The file's parse tree.
   const Parse::Tree* parse_tree_;

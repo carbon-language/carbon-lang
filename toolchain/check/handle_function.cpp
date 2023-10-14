@@ -26,14 +26,27 @@ static auto BuildFunctionDeclaration(Context& context)
   auto return_slot_id = SemIR::NodeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       Parse::NodeKind::ReturnType) {
-    return_slot_id = context.node_stack().Pop<Parse::NodeKind::ReturnType>();
-    return_type_id = context.semantics_ir().GetNode(return_slot_id).type_id();
+    auto [return_node, return_storage_id] =
+        context.node_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
+    auto return_node_copy = return_node;
+    return_type_id =
+        context.semantics_ir().GetNode(return_storage_id).type_id();
 
-    // The function only has a return slot if it uses in-place initialization.
-    if (!SemIR::GetInitializingRepresentation(context.semantics_ir(),
-                                              return_type_id)
-             .has_return_slot()) {
-      return_slot_id = SemIR::NodeId::Invalid;
+    if (!context.TryToCompleteType(return_type_id, [&] {
+          CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
+                            "Function returns incomplete type `{0}`.",
+                            std::string);
+          return context.emitter().Build(
+              return_node_copy, IncompleteTypeInFunctionReturnType,
+              context.semantics_ir().StringifyType(return_type_id, true));
+        })) {
+      return_type_id = SemIR::TypeId::Error;
+    } else if (!SemIR::GetInitializingRepresentation(context.semantics_ir(),
+                                                     return_type_id)
+                    .has_return_slot()) {
+      // The function only has a return slot if it uses in-place initialization.
+    } else {
+      return_slot_id = return_storage_id;
     }
   }
 
