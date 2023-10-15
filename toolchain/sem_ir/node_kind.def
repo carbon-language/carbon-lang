@@ -45,7 +45,7 @@
 #elif defined(CARBON_SEMANTICS_NODE_KIND_WITH_HAS_PARSE_NODE)
 #define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, ValueKind,              \
                                         TerminatorKind, HasParseNode, Fields) \
-  CARBON_SEMANTICS_NODE_KIND_WITH_HAS_PARSE_NODE(Name, ValueKind)
+  CARBON_SEMANTICS_NODE_KIND_WITH_HAS_PARSE_NODE(Name, HasParseNode)
 #elif defined(CARBON_SEMANTICS_NODE_KIND_WITH_FIELDS)
 #if !defined(CARBON_FIELD)
 #error \
@@ -53,16 +53,10 @@
 #endif
 #define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, ValueKind,              \
                                         TerminatorKind, HasParseNode, Fields) \
-  CARBON_SEMANTICS_NODE_KIND_WITH_WITH_FIELDS(Name, Fields)
+  CARBON_SEMANTICS_NODE_KIND_WITH_FIELDS(Name, Fields)
 #else
 #error "Must define the x-macro to use this file."
 #endif
-
-// A cross-reference between IRs.
-CARBON_SEMANTICS_NODE_KIND_IMPL(CrossReference, "xref", Typed, NotTerminator,
-                                false,
-                                CARBON_FIELD(CrossReferenceIRId, ir_id)
-                                    CARBON_FIELD(NodeId, node_id))
 
 CARBON_SEMANTICS_NODE_KIND_IMPL(AddressOf, "address_of", Typed, NotTerminator,
                                 true, CARBON_FIELD(NodeId, lvalue_id))
@@ -70,6 +64,11 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(ArrayIndex, "array_index", Typed, NotTerminator,
                                 true,
                                 CARBON_FIELD(NodeId, array_id)
                                     CARBON_FIELD(NodeId, index_id))
+
+// Initializes an array from a tuple. `tuple_id` is the source tuple
+// expression. `inits_and_return_slot_id` contains one initializer per array
+// element, plus a final element that is the return slot for the
+// initialization.
 CARBON_SEMANTICS_NODE_KIND_IMPL(ArrayInit, "array_init", Typed, NotTerminator,
                                 true,
                                 CARBON_FIELD(NodeId, tuple_id)
@@ -79,6 +78,10 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(ArrayType, "array_type", Typed, NotTerminator,
                                 true,
                                 CARBON_FIELD(NodeId, bound_id)
                                     CARBON_FIELD(TypeId, element_type_id))
+
+// Performs a source-level initialization or assignment of `lhs_id` from
+// `rhs_id`. This finishes initialization of `lhs_id` in the same way as
+// `InitializeFrom`.
 CARBON_SEMANTICS_NODE_KIND_IMPL(Assign, "assign", None, NotTerminator, true,
                                 CARBON_FIELD(NodeId, lhs_id)
                                     CARBON_FIELD(NodeId, rhs_id))
@@ -105,8 +108,11 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(BranchIf, "br", None, TerminatorSequence, true,
 CARBON_SEMANTICS_NODE_KIND_IMPL(BranchWithArg, "br", None, Terminator, true,
                                 CARBON_FIELD(NodeBlockId, target_id)
                                     CARBON_FIELD(NodeId, arg_id))
+
+// Builtins don't have a parse node associated with them.
 CARBON_SEMANTICS_NODE_KIND_IMPL(Builtin, "builtin", Typed, NotTerminator, false,
                                 CARBON_FIELD(BuiltinKind, builtin_kind))
+
 CARBON_SEMANTICS_NODE_KIND_IMPL(Call, "call", Typed, NotTerminator, true,
                                 CARBON_FIELD(NodeId, callee_id)
                                     CARBON_FIELD(NodeBlockId, args_id))
@@ -115,16 +121,31 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(ClassDeclaration, "class_declaration", Typed,
                                 CARBON_FIELD(ClassId, class_id))
 CARBON_SEMANTICS_NODE_KIND_IMPL(ConstType, "const_type", Typed, NotTerminator,
                                 true, CARBON_FIELD(TypeId, inner_id))
+
+// A cross-reference between IRs.
+// A node's parse tree node must refer to a node in the current parse tree.
+// This cannot use the cross-referenced node's parse tree node because it
+// will be in a different parse tree.
+CARBON_SEMANTICS_NODE_KIND_IMPL(CrossReference, "xref", Typed, NotTerminator,
+                                false,
+                                CARBON_FIELD(CrossReferenceIRId, ir_id)
+                                    CARBON_FIELD(NodeId, node_id))
+
 CARBON_SEMANTICS_NODE_KIND_IMPL(Dereference, "dereference", Typed,
                                 NotTerminator, true,
                                 CARBON_FIELD(NodeId, pointer_id))
 CARBON_SEMANTICS_NODE_KIND_IMPL(FunctionDeclaration, "fn_decl", Typed,
                                 NotTerminator, true,
                                 CARBON_FIELD(FunctionId, function_id))
+
+// Finalizes the initialization of `dest_id` from the initializer expression
+// `src_id`, by performing a final copy from source to destination, for types
+// whose initialization is not in-place.
 CARBON_SEMANTICS_NODE_KIND_IMPL(InitializeFrom, "initialize_from", Typed,
                                 NotTerminator, true,
                                 CARBON_FIELD(NodeId, src_id)
                                     CARBON_FIELD(NodeId, dest_id))
+
 CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_literal", Typed,
                                 NotTerminator, true,
                                 CARBON_FIELD(IntegerId, integer_id))
