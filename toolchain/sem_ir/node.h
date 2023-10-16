@@ -400,6 +400,7 @@ namespace NodeInternals {
 // Handle whether the typed node has a `Parse::Node` field.
 //
 
+// FIXME: Should this be an enum instead of a bool?
 template <bool HasParseNode>
 struct HasParseNodeBase;
 
@@ -433,6 +434,8 @@ struct HasParseNodeBase<false> {
 // `HasParseNodeBase<false>`.
 template <typename T>
 struct ParseNodeBase;
+
+// FIXME: Is there a conventional name for the `Base` member?
 
 #define CARBON_SEMANTICS_NODE_KIND_WITH_HAS_PARSE_NODE(Name, HasParseNode) \
   template <>                                                              \
