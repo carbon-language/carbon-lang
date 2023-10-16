@@ -382,12 +382,18 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
                         "Trailing comments are not permitted.");
 
       emitter_.Emit(source_text.begin() + position, TrailingComment);
+
+      // Note that we cannot fall-through here as the logic below doesn't handle
+      // trailing comments. For simplicity, we just consume the trailing comment
+      // itself and let the normal lexer handle the newline as if there weren't
+      // a comment at all.
+      position = line_info->start + line_info->length;
+      return;
     }
 
     // The introducer '//' must be followed by whitespace or EOF.
-    if (LLVM_UNLIKELY(position + 2 <
-                      static_cast<ssize_t>(source_text.size())) &&
-        !IsSpace(source_text[position + 2])) {
+    if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
+        LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
       CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                         "Whitespace is required after '//'.");
       emitter_.Emit(source_text.begin() + position + 2,

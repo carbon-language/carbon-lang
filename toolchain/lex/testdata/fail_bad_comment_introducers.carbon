@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: - filename: fail_bad_comment_introducers.carbon
 // CHECK:STDOUT:   tokens: [
-// CHECK:STDOUT:     { index: 0, kind: 'StartOfFile', line: {{ *\d+}}, column:   1, indent: 1, spelling: '', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 0, kind: 'StartOfFile', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 //
 
 // Comments have to have whitespace after `//` currently.
