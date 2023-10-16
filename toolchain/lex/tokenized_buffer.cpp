@@ -446,6 +446,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 
         skip_to_next_line();
       } while (position + 16 < static_cast<ssize_t>(source_text.size()));
+#elif CARBON_USE_SIMD
+#error Unknown target for SIMD comment skipping.
 #endif
     } else {
       while (position + indent + 3 < static_cast<ssize_t>(source_text.size()) &&
