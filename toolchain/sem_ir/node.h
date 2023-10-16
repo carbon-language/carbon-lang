@@ -23,8 +23,7 @@ struct NodeId : public IndexBase, public Printable<NodeId> {
   static const NodeId Invalid;
 
 // Builtin node IDs.
-#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
-  static const NodeId Builtin##Name;
+#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) static const NodeId Builtin##Name;
 #include "toolchain/sem_ir/builtin_kind.def"
 
   using IndexBase::IndexBase;
@@ -46,7 +45,7 @@ constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
 
 // Uses the cross-reference node ID for a builtin. This relies on File
 // guarantees for builtin cross-reference placement.
-#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
+#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
   constexpr NodeId NodeId::Builtin##Name = NodeId(BuiltinKind::Name.AsInt());
 #include "toolchain/sem_ir/builtin_kind.def"
 
@@ -224,9 +223,9 @@ namespace NodeData {
 // name describes the kind-specific storage for that node. A node kind can
 // store up to two IDs.
 
-#define CARBON_SEMANTICS_NODE_KIND_WITH_FIELDS(Name, Fields) \
-  struct Name {                                              \
-    Fields                                                   \
+#define CARBON_SEM_IR_NODE_KIND_WITH_FIELDS(Name, Fields) \
+  struct Name {                                           \
+    Fields                                                \
   };
 
 #define CARBON_FIELD(Type, Name) Type Name;
@@ -389,7 +388,7 @@ struct TypedNode : NodeInternals::TypedNodeImpl<DataT>,
 };
 
 // Declare type names for each specific kind of node.
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
+#define CARBON_SEM_IR_NODE_KIND(Name) \
   using Name = TypedNode<NodeKind::Name, NodeData::Name>;
 #include "toolchain/sem_ir/node_kind.def"
 
@@ -437,10 +436,10 @@ struct ParseNodeBase;
 
 // FIXME: Is there a conventional name for the `Base` member?
 
-#define CARBON_SEMANTICS_NODE_KIND_WITH_HAS_PARSE_NODE(Name, HasParseNode) \
-  template <>                                                              \
-  struct ParseNodeBase<NodeData::Name> {                                   \
-    using Base = HasParseNodeBase<HasParseNode>;                           \
+#define CARBON_SEM_IR_NODE_KIND_WITH_HAS_PARSE_NODE(Name, HasParseNode) \
+  template <>                                                           \
+  struct ParseNodeBase<NodeData::Name> {                                \
+    using Base = HasParseNodeBase<HasParseNode>;                        \
   };
 
 #include "toolchain/sem_ir/node_kind.def"
@@ -480,10 +479,10 @@ struct HasTypeBase<NodeValueKind::None> {
 template <typename T>
 struct TypeBase;
 
-#define CARBON_SEMANTICS_NODE_KIND_WITH_VALUE_KIND(Name, ValueKind) \
-  template <>                                                       \
-  struct TypeBase<NodeData::Name> {                                 \
-    using Base = HasTypeBase<NodeValueKind::ValueKind>;             \
+#define CARBON_SEM_IR_NODE_KIND_WITH_VALUE_KIND(Name, ValueKind) \
+  template <>                                                    \
+  struct TypeBase<NodeData::Name> {                              \
+    using Base = HasTypeBase<NodeValueKind::ValueKind>;          \
   };
 
 #include "toolchain/sem_ir/node_kind.def"
