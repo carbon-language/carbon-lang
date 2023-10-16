@@ -32,9 +32,8 @@ class Context {
 
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
-                   DiagnosticEmitter& emitter,
-                   const Parse::Tree& parse_tree, SemIR::File& semantics,
-                   llvm::raw_ostream* vlog_stream);
+                   DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
+                   SemIR::File& semantics, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(Parse::Node parse_node, std::string label) -> bool;
@@ -147,6 +146,9 @@ class Context {
       SemIR::TypeId type_id,
       std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
           std::nullopt) -> bool;
+
+  // Gets a builtin type.
+  auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)

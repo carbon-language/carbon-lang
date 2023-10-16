@@ -21,6 +21,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT: fn @F(%cond: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_27: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %a: ref {.a: i32, .b: i32} = var "a"
 // CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_45: i32 = int_literal 2
