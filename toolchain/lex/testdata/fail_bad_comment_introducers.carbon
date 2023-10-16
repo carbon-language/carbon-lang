@@ -26,8 +26,8 @@
 // CHECK:STDERR: //abc
 // CHECK:STDERR:   ^
 //abc
-//abc
-//abc
+//123
+//dce
 
         // CHECK:STDERR: fail_bad_comment_introducers.carbon:[[@LINE+3]]:11: ERROR: Whitespace is required after '//'.
         // CHECK:STDERR:         //indented block

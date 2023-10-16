@@ -392,12 +392,16 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     }
 
     // The introducer '//' must be followed by whitespace or EOF.
+    bool is_valid_after_slashes = true;
     if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
         LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
       CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                         "Whitespace is required after '//'.");
       emitter_.Emit(source_text.begin() + position + 2,
                     NoWhitespaceAfterCommentIntroducer);
+
+      // We use this to tweak the lexing of blocks below.
+      is_valid_after_slashes = false;
     }
 
     // Skip over this line.
@@ -418,6 +422,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     constexpr int MaxIndent = 13;
     const int indent = line_info->indent;
     const ssize_t first_line_start = line_info->start;
+    ssize_t prefix_size = indent + (is_valid_after_slashes ? 3 : 2);
     auto skip_to_next_line = [this, indent, &line_index, &position] {
       // We're guaranteed to have a line here even on a comment on the last line
       // as we ensure there is an empty line structure at the end of every file.
@@ -431,7 +436,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         indent <= MaxIndent) {
 #if __x86_64__
       // Load a mask based on the amount of text we want to compare.
-      auto mask = prefix_masks[indent + 3];
+      auto mask = prefix_masks[prefix_size];
       // And use the current line's prefix as the exemplar to compare against.
       // We don't mask here as we will mask when doing the comparison.
       auto prefix = _mm_loadu_si128(reinterpret_cast<const __m128i*>(
@@ -456,9 +461,9 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 #error Unknown target for SIMD comment skipping.
 #endif
     } else {
-      while (position + indent + 3 < static_cast<ssize_t>(source_text.size()) &&
+      while (position + prefix_size < static_cast<ssize_t>(source_text.size()) &&
              memcmp(source_text.data() + first_line_start,
-                    source_text.data() + position, indent + 3) == 0) {
+                    source_text.data() + position, prefix_size) == 0) {
         skip_to_next_line();
       }
     }
