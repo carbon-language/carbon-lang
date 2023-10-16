@@ -147,7 +147,7 @@ class Context {
       std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
           std::nullopt) -> bool;
 
-  // Gets a builtin type.
+  // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
