@@ -461,7 +461,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 #error Unknown target for SIMD comment skipping.
 #endif
     } else {
-      while (position + prefix_size < static_cast<ssize_t>(source_text.size()) &&
+      while (position + prefix_size <
+                 static_cast<ssize_t>(source_text.size()) &&
              memcmp(source_text.data() + first_line_start,
                     source_text.data() + position, prefix_size) == 0) {
         skip_to_next_line();
