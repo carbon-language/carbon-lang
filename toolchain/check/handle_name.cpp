@@ -15,12 +15,12 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   auto base_id = context.node_stack().PopExpression();
 
-  if (auto namespc = context.semantics_ir()
-                         .GetNode(context.FollowNameReferences(base_id))
-                         .TryAs<SemIR::Namespace>()) {
+  if (auto base_namespace = context.semantics_ir()
+                                .GetNode(context.FollowNameReferences(base_id))
+                                .TryAs<SemIR::Namespace>()) {
     // For a namespace, just resolve the name.
     auto node_id =
-        context.LookupName(parse_node, name_id, namespc->name_scope_id,
+        context.LookupName(parse_node, name_id, base_namespace->name_scope_id,
                            /*print_diagnostics=*/true);
     auto node = context.semantics_ir().GetNode(node_id);
     // TODO: Track that this node was named within `base_id`.
