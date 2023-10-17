@@ -98,7 +98,7 @@ fn CallReturnIncomplete() {
 }
 
 // CHECK:STDOUT: file "fail_incomplete.carbon" {
-// CHECK:STDOUT:   %Class: type = class_declaration @Class
+// CHECK:STDOUT:   %Class: type = class_declaration @Class, ()
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", %Class
 // CHECK:STDOUT:   %global_var: ref <error> = var "global_var"
 // CHECK:STDOUT:   %ConvertFromStruct: <function> = fn_decl @ConvertFromStruct

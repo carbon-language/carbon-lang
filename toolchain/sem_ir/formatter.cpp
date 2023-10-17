@@ -89,7 +89,8 @@ class NodeNamer {
           class_info.name_id.is_valid()
               ? semantics_ir.GetString(class_info.name_id).str()
               : "");
-      // TODO: Handle names declared in the class scope.
+      AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
+      CollectNamesInBlock(class_scope, class_info.body_block_id);
     }
   }
 
@@ -509,9 +510,18 @@ class Formatter {
 
     out_ << "\nclass ";
     FormatClassName(id);
-    // TODO: Format class definitions.
-    (void)class_info;
-    out_ << ";\n";
+
+    llvm::SaveAndRestore class_scope(scope_, node_namer_.GetScopeFor(id));
+
+    if (class_info.scope_id.is_valid()) {
+      out_ << " {\n";
+      FormatCodeBlock(class_info.body_block_id);
+      out_ << "\n!members:";
+      FormatNameScope(class_info.scope_id, "", "\n  .");
+      out_ << "\n}\n";
+    } else {
+      out_ << ";\n";
+    }
   }
 
   auto FormatFunction(FunctionId id) -> void {
@@ -569,6 +579,26 @@ class Formatter {
 
     for (const NodeId node_id : semantics_ir_.GetNodeBlock(block_id)) {
       FormatInstruction(node_id);
+    }
+  }
+
+  auto FormatNameScope(NameScopeId id, llvm::StringRef separator,
+                       llvm::StringRef prefix) -> void {
+    // Name scopes aren't kept in any particular order. Sort the entries before
+    // we print them for stability and consistency.
+    std::vector<std::pair<NodeId, StringId>> entries;
+    for (auto [name_id, node_id] : semantics_ir_.GetNameScope(id)) {
+      entries.push_back({node_id, name_id});
+    }
+    llvm::sort(entries,
+               [](auto a, auto b) { return a.first.index < b.first.index; });
+
+    llvm::ListSeparator sep(separator);
+    for (auto [node_id, name_id] : entries) {
+      out_ << sep << prefix;
+      FormatString(name_id);
+      out_ << " = ";
+      FormatNodeName(node_id);
     }
   }
 
@@ -788,26 +818,9 @@ class Formatter {
 
   auto FormatArg(MemberIndex index) -> void { out_ << index; }
 
-  // TODO: Should we be printing scopes inline, or should we have a separate
-  // step to print them like we do for functions?
   auto FormatArg(NameScopeId id) -> void {
-    // Name scopes aren't kept in any particular order. Sort the entries before
-    // we print them for stability and consistency.
-    std::vector<std::pair<NodeId, StringId>> entries;
-    for (auto [name_id, node_id] : semantics_ir_.GetNameScope(id)) {
-      entries.push_back({node_id, name_id});
-    }
-    llvm::sort(entries,
-               [](auto a, auto b) { return a.first.index < b.first.index; });
-
     out_ << '{';
-    llvm::ListSeparator sep;
-    for (auto [node_id, name_id] : entries) {
-      out_ << sep << ".";
-      FormatString(name_id);
-      out_ << " = ";
-      FormatNodeName(node_id);
-    }
+    FormatNameScope(id, ", ", ".");
     out_ << '}';
   }
 

@@ -60,6 +60,17 @@ struct Class : public Printable<Class> {
 
   // The class name.
   StringId name_id;
+
+  // The definition, if the class has been defined or is currently being
+  // defined.
+  NodeId definition_id = NodeId::Invalid;
+
+  // The class scope.
+  NameScopeId scope_id = NameScopeId::Invalid;
+
+  // The first block of the class body.
+  // TODO: Handle control flow in the class body, such as if-expressions.
+  NodeBlockId body_block_id = NodeBlockId::Invalid;
 };
 
 // TODO: Replace this with a Rational type, per the design:
