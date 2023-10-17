@@ -114,8 +114,9 @@ struct TypeInfo : public Printable<TypeInfo> {
 
   // The node that defines this type.
   NodeId node_id;
-  // The value representation for this type. Only set when the type is complete.
-  ValueRepresentation value_representation;
+  // The value representation for this type. Will be `Unknown` if the type is
+  // not complete.
+  ValueRepresentation value_representation = ValueRepresentation();
 };
 
 // Provides semantic analysis on a Parse::Tree.
@@ -341,9 +342,7 @@ class File : public Printable<File> {
     TypeId type_id(types_.size());
     // Should never happen, will always overflow node_ids first.
     CARBON_DCHECK(type_id.index >= 0);
-    types_.push_back(
-        {.node_id = node_id,
-         .value_representation = {.kind = ValueRepresentation::Unknown}});
+    types_.push_back({.node_id = node_id});
     return type_id;
   }
 
