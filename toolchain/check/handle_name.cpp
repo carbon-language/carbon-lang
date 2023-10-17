@@ -15,9 +15,9 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   auto base_id = context.node_stack().PopExpression();
 
-  auto base =
-      context.semantics_ir().GetNode(context.FollowNameReferences(base_id));
-  if (auto namespc = base.TryAs<SemIR::Namespace>()) {
+  if (auto namespc = context.semantics_ir()
+                         .GetNode(context.FollowNameReferences(base_id))
+                         .TryAs<SemIR::Namespace>()) {
     // For a namespace, just resolve the name.
     auto node_id =
         context.LookupName(parse_node, name_id, namespc->name_scope_id,
@@ -32,9 +32,10 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   // Materialize a temporary for the base expression if necessary.
   base_id = ConvertToValueOrReferenceExpression(context, base_id);
+  auto base_type_id = context.semantics_ir().GetNode(base_id).type_id();
 
   auto base_type = context.semantics_ir().GetNode(
-      context.semantics_ir().GetTypeAllowBuiltinTypes(base.type_id()));
+      context.semantics_ir().GetTypeAllowBuiltinTypes(base_type_id));
 
   switch (base_type.kind()) {
     case SemIR::StructType::Kind: {
@@ -54,20 +55,19 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
       CARBON_DIAGNOSTIC(QualifiedExpressionNameNotFound, Error,
                         "Type `{0}` does not have a member `{1}`.", std::string,
                         llvm::StringRef);
-      context.emitter().Emit(
-          parse_node, QualifiedExpressionNameNotFound,
-          context.semantics_ir().StringifyType(base.type_id()),
-          context.semantics_ir().GetString(name_id));
+      context.emitter().Emit(parse_node, QualifiedExpressionNameNotFound,
+                             context.semantics_ir().StringifyType(base_type_id),
+                             context.semantics_ir().GetString(name_id));
       break;
     }
     default: {
-      if (base.type_id() != SemIR::TypeId::Error) {
+      if (base_type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
                           "Type `{0}` does not support qualified expressions.",
                           std::string);
         context.emitter().Emit(
             parse_node, QualifiedExpressionUnsupported,
-            context.semantics_ir().StringifyType(base.type_id()));
+            context.semantics_ir().StringifyType(base_type_id));
       }
       break;
     }
