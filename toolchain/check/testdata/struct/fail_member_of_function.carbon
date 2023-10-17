@@ -5,12 +5,9 @@
 // AUTOUPDATE
 
 fn A() {
-  // CHECK:STDERR: fail_member_of_function.carbon:[[@LINE+6]]:3: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR: fail_member_of_function.carbon:[[@LINE+3]]:3: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   A.y;
   // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_member_of_function.carbon:[[@LINE+3]]:4: ERROR: Type `<function>` does not support qualified expressions.
-  // CHECK:STDERR:   A.y;
-  // CHECK:STDERR:    ^
   A.y;
 }
 

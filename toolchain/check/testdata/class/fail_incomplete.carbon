@@ -28,22 +28,19 @@ fn ConvertFromStruct() -> Class { return {}; }
 // TODO: }
 
 fn MemberAccess(p: Class*) -> i32 {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:11: ERROR: Invalid use of incomplete type `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:11: ERROR: Invalid use of incomplete type `Class`.
   // CHECK:STDERR:   return (*p).n;
   // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-27]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+3]]:14: ERROR: Type `Class` does not support qualified expressions.
-  // CHECK:STDERR:   return (*p).n;
-  // CHECK:STDERR:              ^
   return (*p).n;
 }
 
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:20: ERROR: Function returns incomplete type `Class`.
 // CHECK:STDERR: fn Copy(p: Class*) -> Class {
 // CHECK:STDERR:                    ^
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-39]]:1: Class was forward declared here.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-36]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^
 fn Copy(p: Class*) -> Class {
@@ -54,7 +51,7 @@ fn Let(p: Class*) {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:10: ERROR: `let` binding has incomplete type `Class`.
   // CHECK:STDERR:   let c: Class = *p;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-50]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-47]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^
   let c: Class = *p;
@@ -67,7 +64,7 @@ fn TakeIncomplete(c: Class);
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:23: ERROR: Function returns incomplete type `Class`.
 // CHECK:STDERR: fn ReturnIncomplete() -> Class;
 // CHECK:STDERR:                       ^
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-63]]:1: Class was forward declared here.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-60]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^
 fn ReturnIncomplete() -> Class;
@@ -76,7 +73,7 @@ fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:17: ERROR: Forming value of incomplete type `Class`.
   // CHECK:STDERR:   TakeIncomplete(*p);
   // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-72]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-69]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-19]]:1: Initializing parameter 1 of function declared here.
@@ -87,7 +84,7 @@ fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:17: ERROR: Forming value of incomplete type `Class`.
   // CHECK:STDERR:   TakeIncomplete({});
   // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-83]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-80]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-30]]:1: Initializing parameter 1 of function declared here.
@@ -126,14 +123,14 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT: fn @MemberAccess(%p: Class*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
-// CHECK:STDOUT:   %.loc40: ref Class = dereference %p.ref
+// CHECK:STDOUT:   %.loc37: ref Class = dereference %p.ref
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Copy(%p: Class*) -> <error> {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
-// CHECK:STDOUT:   %.loc50: ref Class = dereference %p.ref
+// CHECK:STDOUT:   %.loc47: ref Class = dereference %p.ref
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,7 +138,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", package.%Class
 // CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
-// CHECK:STDOUT:   %.loc60: ref Class = dereference %p.ref
+// CHECK:STDOUT:   %.loc57: ref Class = dereference %p.ref
 // CHECK:STDOUT:   %c: <error> = bind_name "c", <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -152,18 +149,18 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallTakeIncomplete(%p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc85: <function> = name_reference "TakeIncomplete", package.%TakeIncomplete
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc82: <function> = name_reference "TakeIncomplete", package.%TakeIncomplete
 // CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
-// CHECK:STDOUT:   %.loc85_18: ref Class = dereference %p.ref
-// CHECK:STDOUT:   %.loc85_17: type = tuple_type ()
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc96: <function> = name_reference "TakeIncomplete", package.%TakeIncomplete
-// CHECK:STDOUT:   %.loc96: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc82_18: ref Class = dereference %p.ref
+// CHECK:STDOUT:   %.loc82_17: type = tuple_type ()
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc93: <function> = name_reference "TakeIncomplete", package.%TakeIncomplete
+// CHECK:STDOUT:   %.loc93: {} = struct_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnIncomplete() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ReturnIncomplete.ref: <function> = name_reference "ReturnIncomplete", package.%ReturnIncomplete
-// CHECK:STDOUT:   %.loc100: init <error> = call %ReturnIncomplete.ref()
+// CHECK:STDOUT:   %.loc97: init <error> = call %ReturnIncomplete.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
