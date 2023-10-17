@@ -53,6 +53,7 @@ auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
 #define CARBON_USE_SIMD 1
 
 // A table of masks to include 0-16 bytes of an SSE register.
+// TODO: Make this constexpr to avoid dynamic initialization.
 static const std::array<__m128i, sizeof(__m128i) + 1> prefix_masks = [] {
   std::array<__m128i, sizeof(__m128i) + 1> masks = {};
   for (auto [i, mask] : llvm::enumerate(masks)) {
@@ -457,6 +458,11 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 
         skip_to_next_line();
       } while (position + 16 < static_cast<ssize_t>(source_text.size()));
+      // TODO: If we finish the loop due to the position approaching the end of
+      // the buffer we may fail to skip the last line in a comment block that
+      // has an invalid initial sequence and thus emit extra diagnostics. We
+      // should really fall through to the generic skipping logic, but the code
+      // organization will need to change significantly to allow that.
 #elif CARBON_USE_SIMD
 #error Unknown target for SIMD comment skipping.
 #endif
