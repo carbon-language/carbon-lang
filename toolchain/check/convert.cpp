@@ -133,7 +133,7 @@ static auto MakeElemAccessNode(Context& context, Parse::Node parse_node,
     // so that we don't need an integer literal node here, and remove this
     // special case.
     auto index_id = block.AddNode(SemIR::IntegerLiteral(
-        parse_node, context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType),
+        parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
         context.semantics_ir().AddInteger(llvm::APInt(32, i))));
     return block.AddNode(
         AccessNodeT(parse_node, elem_type_id, aggregate_id, index_id));
@@ -634,6 +634,27 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
     return SemIR::NodeId::BuiltinError;
   }
 
+  // We can only perform initialization for complete types.
+  if (!context.TryToCompleteType(target.type_id, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInInitialization, Error,
+                          "Initialization of incomplete type `{0}`.",
+                          std::string);
+        CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
+                          "Forming value of incomplete type `{0}`.",
+                          std::string);
+        CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
+                          "Invalid use of incomplete type `{0}`.", std::string);
+        return context.emitter().Build(
+            parse_node,
+            target.is_initializer() ? IncompleteTypeInInitialization
+            : target.kind == ConversionTarget::Value
+                ? IncompleteTypeInValueConversion
+                : IncompleteTypeInConversion,
+            context.semantics_ir().StringifyType(target.type_id, true));
+      })) {
+    return SemIR::NodeId::BuiltinError;
+  }
+
   // Check whether any builtin conversion applies.
   expr_id = PerformBuiltinConversion(context, parse_node, expr_id, target);
   if (expr_id == SemIR::NodeId::BuiltinError) {
@@ -755,7 +776,7 @@ auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
                         SemIR::NodeId value_id) -> SemIR::NodeId {
   return ConvertToValueOfType(
       context, parse_node, value_id,
-      context.CanonicalizeType(SemIR::NodeId::BuiltinBoolType));
+      context.GetBuiltinType(SemIR::BuiltinKind::BoolType));
 }
 
 auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,

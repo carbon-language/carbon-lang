@@ -27,6 +27,12 @@ struct NodeId : public IndexBase, public Printable<NodeId> {
   static const NodeId Builtin##Name;
 #include "toolchain/sem_ir/builtin_kind.def"
 
+  // Returns the cross-reference node ID for a builtin. This relies on File
+  // guarantees for builtin cross-reference placement.
+  static constexpr auto ForBuiltin(BuiltinKind kind) -> NodeId {
+    return NodeId(kind.AsInt());
+  }
+
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "node";
@@ -44,10 +50,9 @@ struct NodeId : public IndexBase, public Printable<NodeId> {
 
 constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
 
-// Uses the cross-reference node ID for a builtin. This relies on File
-// guarantees for builtin cross-reference placement.
 #define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
-  constexpr NodeId NodeId::Builtin##Name = NodeId(BuiltinKind::Name.AsInt());
+  constexpr NodeId NodeId::Builtin##Name =       \
+      NodeId::ForBuiltin(BuiltinKind::Name);
 #include "toolchain/sem_ir/builtin_kind.def"
 
 // The ID of a function.

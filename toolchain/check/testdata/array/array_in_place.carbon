@@ -11,6 +11,7 @@ fn G() {
 }
 
 // CHECK:STDOUT: file "array_in_place.carbon" {
+// CHECK:STDOUT:   %.loc7: type = ptr_type (i32, i32, i32)
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
@@ -37,10 +38,8 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_40: init (i32, i32, i32) = call %F.ref.loc10_39() to %.loc10_42.6
 // CHECK:STDOUT:   %.loc10_42.7: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
-// CHECK:STDOUT:   %.loc10_42.8: type = tuple_type ((i32, i32, i32)*, (i32, i32, i32)*)
-// CHECK:STDOUT:   %.loc10_42.9: type = ptr_type ((i32, i32, i32)*, (i32, i32, i32)*)
-// CHECK:STDOUT:   %.loc10_42.10: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_35, %.loc10_40)
-// CHECK:STDOUT:   %.loc10_42.11: init [(i32, i32, i32); 2] = array_init %.loc10_42.10, (%.loc10_35, %.loc10_40) to %v
-// CHECK:STDOUT:   assign %v, %.loc10_42.11
+// CHECK:STDOUT:   %.loc10_42.8: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_35, %.loc10_40)
+// CHECK:STDOUT:   %.loc10_42.9: init [(i32, i32, i32); 2] = array_init %.loc10_42.8, (%.loc10_35, %.loc10_40) to %v
+// CHECK:STDOUT:   assign %v, %.loc10_42.9
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

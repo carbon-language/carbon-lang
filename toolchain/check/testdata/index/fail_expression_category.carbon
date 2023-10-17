@@ -30,6 +30,7 @@ fn G(b: [i32; 3]) {
 }
 
 // CHECK:STDOUT: file "fail_expression_category.carbon" {
+// CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
