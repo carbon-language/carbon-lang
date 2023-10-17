@@ -45,5 +45,6 @@ var c: i32 = 0.4; // still more trailing comment
 // CHECK:STDOUT:     { index: 19, kind:              'Equal', line: {{ *}}[[@LINE-35]], column: 12, indent: 1, spelling: '=', has_trailing_space: true },
 // CHECK:STDOUT:     { index: 20, kind:        'RealLiteral', line: {{ *}}[[@LINE-36]], column: 14, indent: 1, spelling: '0.4', value: `4*10^-1` },
 // CHECK:STDOUT:     { index: 21, kind:               'Semi', line: {{ *}}[[@LINE-37]], column: 17, indent: 1, spelling: ';', has_trailing_space: true },
-// CHECK:STDOUT:     { index: 22, kind:          'EndOfFile', line: {{ *}}[[@LINE-34]], column: {{ *\d+}}, indent: 1, spelling: '' },
+
+// CHECK:STDOUT:     { index: 22, kind:          'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]
