@@ -13,6 +13,7 @@ fn Foo(n: i32) -> (i32, f64) {
 }
 
 // CHECK:STDOUT: file "textual_ir.carbon" {
+// CHECK:STDOUT:   %.loc11: type = ptr_type (i32, f64)
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

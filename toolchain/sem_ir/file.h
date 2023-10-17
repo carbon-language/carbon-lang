@@ -85,8 +85,7 @@ struct ValueRepresentation : public Printable<ValueRepresentation> {
 
   enum Kind : int8_t {
     // The value representation is not yet known. This is used for incomplete
-    // types, in cases where the incompleteness means the value representation
-    // can't be determined.
+    // types.
     Unknown,
     // The type has no value representation. This is used for empty types, such
     // as `()`, where there is no value.
@@ -115,8 +114,9 @@ struct TypeInfo : public Printable<TypeInfo> {
 
   // The node that defines this type.
   NodeId node_id;
-  // The value representation for this type.
-  ValueRepresentation value_representation;
+  // The value representation for this type. Will be `Unknown` if the type is
+  // not complete.
+  ValueRepresentation value_representation = ValueRepresentation();
 };
 
 // Provides semantic analysis on a Parse::Tree.
@@ -342,9 +342,7 @@ class File : public Printable<File> {
     TypeId type_id(types_.size());
     // Should never happen, will always overflow node_ids first.
     CARBON_DCHECK(type_id.index >= 0);
-    types_.push_back(
-        {.node_id = node_id,
-         .value_representation = {.kind = ValueRepresentation::Unknown}});
+    types_.push_back({.node_id = node_id});
     return type_id;
   }
 
@@ -391,6 +389,12 @@ class File : public Printable<File> {
       return {.kind = ValueRepresentation::Copy, .type_id = type_id};
     }
     return types_[type_id.index].value_representation;
+  }
+
+  // Determines whether the given type is known to be complete. This does not
+  // determine whether the type could be completed, only whether it has been.
+  auto IsTypeComplete(TypeId type_id) const -> bool {
+    return GetValueRepresentation(type_id).kind != ValueRepresentation::Unknown;
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.

@@ -26,14 +26,27 @@ static auto BuildFunctionDeclaration(Context& context)
   auto return_slot_id = SemIR::NodeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       Parse::NodeKind::ReturnType) {
-    return_slot_id = context.node_stack().Pop<Parse::NodeKind::ReturnType>();
-    return_type_id = context.semantics_ir().GetNode(return_slot_id).type_id();
+    auto [return_node, return_storage_id] =
+        context.node_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
+    auto return_node_copy = return_node;
+    return_type_id =
+        context.semantics_ir().GetNode(return_storage_id).type_id();
 
-    // The function only has a return slot if it uses in-place initialization.
-    if (!SemIR::GetInitializingRepresentation(context.semantics_ir(),
-                                              return_type_id)
-             .has_return_slot()) {
-      return_slot_id = SemIR::NodeId::Invalid;
+    if (!context.TryToCompleteType(return_type_id, [&] {
+          CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
+                            "Function returns incomplete type `{0}`.",
+                            std::string);
+          return context.emitter().Build(
+              return_node_copy, IncompleteTypeInFunctionReturnType,
+              context.semantics_ir().StringifyType(return_type_id, true));
+        })) {
+      return_type_id = SemIR::TypeId::Error;
+    } else if (!SemIR::GetInitializingRepresentation(context.semantics_ir(),
+                                                     return_type_id)
+                    .has_return_slot()) {
+      // The function only has a return slot if it uses in-place initialization.
+    } else {
+      return_slot_id = return_storage_id;
     }
   }
 
@@ -58,7 +71,7 @@ static auto BuildFunctionDeclaration(Context& context)
        .return_slot_id = return_slot_id,
        .body_block_ids = {}});
   auto decl_id = context.AddNode(SemIR::FunctionDeclaration(
-      fn_node, context.CanonicalizeType(SemIR::NodeId::BuiltinFunctionType),
+      fn_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
       function_id));
   context.declaration_name_stack().AddNameToLookup(name_context, decl_id);
 
@@ -67,7 +80,7 @@ static auto BuildFunctionDeclaration(Context& context)
     if (!context.semantics_ir().GetNodeBlock(param_refs_id).empty() ||
         (return_slot_id.is_valid() &&
          return_type_id !=
-             context.CanonicalizeType(SemIR::NodeId::BuiltinBoolType) &&
+             context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
          return_type_id != context.CanonicalizeTupleType(fn_node, {}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
@@ -127,6 +140,18 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   for (auto param_id :
        context.semantics_ir().GetNodeBlock(function.param_refs_id)) {
     auto param = context.semantics_ir().GetNodeAs<SemIR::Parameter>(param_id);
+
+    // The parameter types need to be complete.
+    context.TryToCompleteType(param.type_id, [&] {
+      CARBON_DIAGNOSTIC(
+          IncompleteTypeInFunctionParam, Error,
+          "Parameter has incomplete type `{0}` in function definition.",
+          std::string);
+      return context.emitter().Build(
+          param.parse_node, IncompleteTypeInFunctionParam,
+          context.semantics_ir().StringifyType(param.type_id, true));
+    });
+
     context.AddNameToLookup(param.parse_node, param.name_id, param_id);
   }
 
