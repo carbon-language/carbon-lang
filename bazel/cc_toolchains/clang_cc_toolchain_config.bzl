@@ -99,7 +99,7 @@ def _impl(ctx):
         for name in [ACTION_NAMES.strip]
     ]
 
-    std_compile_flags = ["-std=c++17"]
+    std_compile_flags = ["-std=c++20"]
 
     # libc++ is only used on non-Windows platforms.
     if ctx.attr.target_cpu != "x64_windows":

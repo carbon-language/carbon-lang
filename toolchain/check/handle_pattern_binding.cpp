@@ -20,7 +20,6 @@ auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
 auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExpressionWithParseNode();
-  auto type_node_copy = type_node;
   auto cast_type_id = ExpressionAsType(context, type_node, parsed_type_id);
 
   // Get the name.
@@ -38,7 +37,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
                               "Variable has incomplete type `{0}`.",
                               std::string);
             return context.emitter().Build(
-                type_node_copy, IncompleteTypeInVarDeclaration,
+                type_node, IncompleteTypeInVarDeclaration,
                 context.semantics_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;
@@ -60,7 +59,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
                               "`let` binding has incomplete type `{0}`.",
                               std::string);
             return context.emitter().Build(
-                type_node_copy, IncompleteTypeInLetDeclaration,
+                type_node, IncompleteTypeInLetDeclaration,
                 context.semantics_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;

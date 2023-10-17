@@ -28,7 +28,6 @@ static auto BuildFunctionDeclaration(Context& context)
       Parse::NodeKind::ReturnType) {
     auto [return_node, return_storage_id] =
         context.node_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
-    auto return_node_copy = return_node;
     return_type_id =
         context.semantics_ir().GetNode(return_storage_id).type_id();
 
@@ -37,7 +36,7 @@ static auto BuildFunctionDeclaration(Context& context)
                             "Function returns incomplete type `{0}`.",
                             std::string);
           return context.emitter().Build(
-              return_node_copy, IncompleteTypeInFunctionReturnType,
+              return_node, IncompleteTypeInFunctionReturnType,
               context.semantics_ir().StringifyType(return_type_id, true));
         })) {
       return_type_id = SemIR::TypeId::Error;
