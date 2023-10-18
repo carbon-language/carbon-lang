@@ -510,6 +510,9 @@ constexpr auto ToRaw(BuiltinKind kind) -> int32_t { return kind.AsInt(); }
 template <typename T>
 struct FieldValues;
 
+// FIXME: Another approach that I got to work, but is similarly too clever:
+// https://godbolt.org/z/Yjbe4qzzn
+
 #define REMOVE_TRAILING_COMMA_0()
 #define REMOVE_TRAILING_COMMA_1(_1, _2) _1
 #define REMOVE_TRAILING_COMMA_2(_1, _2, _3) _1, _2
