@@ -70,15 +70,10 @@ using SIMDMaskArrayT = std::array<SIMDMaskT, sizeof(SIMDMaskT) + 1>;
 static constexpr SIMDMaskArrayT prefix_masks = []() constexpr {
   SIMDMaskArrayT masks = {};
   for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
-#if __ARM_NEON
-#elif __x86_64__
     // The SIMD types and constexpr require a C-style cast.
     // NOLINTNEXTLINE(google-readability-casting)
     masks[i] = (SIMDMaskT)((static_cast<unsigned __int128>(0) - 1) >>
                            ((sizeof(SIMDMaskT) - i) * 8));
-#else
-#error "Unsupported SIMD architecture!"
-#endif
   }
   return masks;
 }();
@@ -456,7 +451,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         indent <= MaxIndent) {
 #if __ARM_NEON
       // Load and mask the prefix if the current line.
-      auto mask = prefix_masks[indent + 3];
+      auto mask = prefix_masks[prefix_size];
       auto prefix = vld1q_u8(reinterpret_cast<const uint8_t*>(
           source_text.data() + first_line_start));
       prefix = vandq_u8(mask, prefix);
