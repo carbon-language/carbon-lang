@@ -67,22 +67,21 @@ using SIMDMaskT = __m128i;
 using SIMDMaskArrayT = std::array<SIMDMaskT, sizeof(SIMDMaskT) + 1>;
 }  // namespace
 // A table of masks to include 0-16 bytes of an SSE register.
-static constexpr
-        SIMDMaskArrayT prefix_masks = []() constexpr {
-          SIMDMaskArrayT masks = {};
-          for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
+static constexpr SIMDMaskArrayT prefix_masks = []() constexpr {
+  SIMDMaskArrayT masks = {};
+  for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
 #if __ARM_NEON
 #elif __x86_64__
-            // The SIMD types and constexpr require a C-style cast.
-            // NOLINTNEXTLINE(google-readability-casting)
-            masks[i] = (SIMDMaskT)((static_cast<unsigned __int128>(0) - 1) >>
-                               ((sizeof(SIMDMaskT) - i) * 8));
+    // The SIMD types and constexpr require a C-style cast.
+    // NOLINTNEXTLINE(google-readability-casting)
+    masks[i] = (SIMDMaskT)((static_cast<unsigned __int128>(0) - 1) >>
+                           ((sizeof(SIMDMaskT) - i) * 8));
 #else
 #error "Unsupported SIMD architecture!"
 #endif
-          }
-          return masks;
-        }();
+  }
+  return masks;
+}();
 #endif  // CARBON_USE_SIMD
 
 // Scans the provided text and returns the prefix `StringRef` of contiguous
