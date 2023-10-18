@@ -17,7 +17,7 @@ auto Node::Print(llvm::raw_ostream& out) const -> void {
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind_) {
-#define CARBON_SEMANTICS_NODE_KIND(Name)                    \
+#define CARBON_SEM_IR_NODE_KIND(Name)                       \
   case Name::Kind:                                          \
     std::apply(print_args, As<SemIR::Name>().args_tuple()); \
     break;
