@@ -56,28 +56,27 @@ auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
 }
 
 #if CARBON_USE_SIMD
-// A table of masks to include 0-16 bytes of an SSE register.
-// TODO: Make this constexpr to avoid dynamic initialization.
-static const
+namespace {
 #if __ARM_NEON
-    std::array<uint8x16_t, sizeof(uint8x16_t) + 1>
+using SIMDMaskT = uint8x16_t;
 #elif __x86_64__
-    std::array<__m128i, sizeof(__m128i) + 1>
+using SIMDMaskT = __m128i;
 #else
 #error "Unsupported SIMD architecture!"
 #endif
-        prefix_masks = [] {
-          using MaskArrayT = std::remove_const_t<decltype(prefix_masks)>;
-          using MaskT = MaskArrayT::value_type;
-          MaskArrayT masks = {};
-          for (auto [i, mask] : llvm::enumerate(masks)) {
-            std::array<uint8_t, sizeof(MaskT)> mask_bytes = {};
-            memset(&mask_bytes, 0xFF, i);
+using SIMDMaskArrayT = std::array<SIMDMaskT, sizeof(SIMDMaskT) + 1>;
+}  // namespace
+// A table of masks to include 0-16 bytes of an SSE register.
+static constexpr
+        SIMDMaskArrayT prefix_masks = []() constexpr {
+          SIMDMaskArrayT masks = {};
+          for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
 #if __ARM_NEON
-            mask = vld1q_u8(mask_bytes.data());
 #elif __x86_64__
-            mask = _mm_loadu_si128(
-                reinterpret_cast<const __m128i*>(mask_bytes.data()));
+            // The SIMD types and constexpr require a C-style cast.
+            // NOLINTNEXTLINE(google-readability-casting)
+            masks[i] = (SIMDMaskT)((static_cast<unsigned __int128>(0) - 1) >>
+                               ((sizeof(SIMDMaskT) - i) * 8));
 #else
 #error "Unsupported SIMD architecture!"
 #endif
