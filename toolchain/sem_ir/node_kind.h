@@ -36,13 +36,13 @@ enum class TerminatorKind : int8_t {
 };
 
 CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
-#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
+#define CARBON_SEM_IR_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/sem_ir/node_kind.def"
 };
 
 class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
  public:
-#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_SEM_IR_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/sem_ir/node_kind.def"
 
   using EnumBase::Create;
@@ -65,7 +65,7 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   void Profile(llvm::FoldingSetNodeID& id) { id.AddInteger(AsInt()); }
 };
 
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
+#define CARBON_SEM_IR_NODE_KIND(Name) \
   CARBON_ENUM_CONSTANT_DEFINITION(NodeKind, Name)
 #include "toolchain/sem_ir/node_kind.def"
 

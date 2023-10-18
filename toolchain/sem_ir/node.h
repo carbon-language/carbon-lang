@@ -23,8 +23,7 @@ struct NodeId : public IndexBase, public Printable<NodeId> {
   static const NodeId Invalid;
 
 // Builtin node IDs.
-#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
-  static const NodeId Builtin##Name;
+#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) static const NodeId Builtin##Name;
 #include "toolchain/sem_ir/builtin_kind.def"
 
   // Returns the cross-reference node ID for a builtin. This relies on File
@@ -50,8 +49,8 @@ struct NodeId : public IndexBase, public Printable<NodeId> {
 
 constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
 
-#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
-  constexpr NodeId NodeId::Builtin##Name =       \
+#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
+  constexpr NodeId NodeId::Builtin##Name =    \
       NodeId::ForBuiltin(BuiltinKind::Name);
 #include "toolchain/sem_ir/builtin_kind.def"
 
@@ -493,19 +492,21 @@ struct TypedNode;
 // - `type_id` for quick type checking.
 // - Up to two Kind-specific members.
 //
-// For each Kind in NodeKind, a typical flow looks like:
+// To create a specific kind of `Node`, use the appropriate `TypedNode`
+// constructor. A `TypedNode` implicitly converts to a `Node`.
 //
-// - Create a specific kind of `Node` using the appropriate `TypedNode`
-//   constructor.
-// - Access cross-Kind members using `node.type_id()` and similar.
+// Given a `Node`, you may:
+//
+// - Access non-Kind-specific members like `Print`.
+// - Use `node.kind()` or `Is<Kind>` to determine what kind of node it is.
 // - Access Kind-specific members using `node.As<Kind>()`, which produces a
 //   `TypedNode` with type-specific members, including `parse_node` and
 //   `type_id` for nodes that have associated parse nodes and types.
 //   - Using the wrong kind in `node.As<Kind>()` is a programming error, and
 //     will CHECK-fail in debug modes (opt may too, but it's not an API
 //     guarantee).
-//   - Use `node.TryAs<Kind>()` to safely access type-specific node data where
-//     the node's kind is not known.
+// - Use `node.TryAs<Kind>()` to safely access type-specific node data where
+//   the node's kind is not known.
 class Node : public Printable<Node> {
  public:
   template <NodeKind::RawEnumType Kind, typename Data>
@@ -634,7 +635,7 @@ struct TypedNode : NodeInternals::TypedNodeImpl<DataT>,
 };
 
 // Declare type names for each specific kind of node.
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
+#define CARBON_SEM_IR_NODE_KIND(Name) \
   using Name = TypedNode<NodeKind::Name, NodeData::Name>;
 #include "toolchain/sem_ir/node_kind.def"
 
