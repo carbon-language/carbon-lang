@@ -13,6 +13,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: file "empty_struct.carbon" {
+// CHECK:STDOUT:   %.loc7: type = tuple_type ()
 // CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }

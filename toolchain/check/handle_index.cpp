@@ -63,7 +63,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
       }
       auto cast_index_id = ConvertToValueOfType(
           context, index_node.parse_node(), index_node_id,
-          context.CanonicalizeType(SemIR::NodeId::BuiltinIntegerType));
+          context.GetBuiltinType(SemIR::BuiltinKind::IntegerType));
       auto array_cat =
           SemIR::GetExpressionCategory(context.semantics_ir(), operand_node_id);
       if (array_cat == SemIR::ExpressionCategory::Value) {

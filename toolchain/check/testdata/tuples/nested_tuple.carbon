@@ -8,17 +8,14 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 
 // CHECK:STDOUT: file "nested_tuple.carbon" {
 // CHECK:STDOUT:   %.loc7_18.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc7_18.2: type = ptr_type (type, type)
-// CHECK:STDOUT:   %.loc7_18.3: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc7_18.2: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_24.1: type = tuple_type ((type, type), type)
-// CHECK:STDOUT:   %.loc7_24.2: type = tuple_type ((type, type)*, type)
-// CHECK:STDOUT:   %.loc7_24.3: type = ptr_type ((type, type)*, type)
-// CHECK:STDOUT:   %.loc7_24.4: ((type, type), type) = tuple_literal (%.loc7_18.3, i32)
-// CHECK:STDOUT:   %.loc7_24.5: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc7_24.6: type = ptr_type (i32, i32)
-// CHECK:STDOUT:   %.loc7_24.7: type = tuple_type ((i32, i32), i32)
-// CHECK:STDOUT:   %.loc7_24.8: type = tuple_type ((i32, i32)*, i32)
-// CHECK:STDOUT:   %.loc7_24.9: type = ptr_type ((i32, i32)*, i32)
+// CHECK:STDOUT:   %.loc7_24.2: ((type, type), type) = tuple_literal (%.loc7_18.2, i32)
+// CHECK:STDOUT:   %.loc7_24.3: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc7_24.4: type = tuple_type ((i32, i32), i32)
+// CHECK:STDOUT:   %.loc7_24.5: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc7_24.6: type = tuple_type ((i32, i32)*, i32)
+// CHECK:STDOUT:   %.loc7_24.7: type = ptr_type ((i32, i32)*, i32)
 // CHECK:STDOUT:   %x: ref ((i32, i32), i32) = var "x"
 // CHECK:STDOUT:   %.loc7_30: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc7_34: i32 = int_literal 76
