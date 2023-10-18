@@ -84,6 +84,10 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 // We expect the node kind to fit compactly into 8 bits.
 static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
 
+// A definition of a node kind, including ancillary data such as the name to use
+// for the node kind in LLVM IR. These are not copyable, and only one instance
+// of this type is expected to exist per node kind. Use `NodeKind` instead as a
+// thin wrapper around a node kind index.
 class NodeKind::Definition : public NodeKind {
  public:
   // Returns the name to use for this node kind in Semantics IR.
@@ -103,6 +107,10 @@ class NodeKind::Definition : public NodeKind {
   constexpr Definition(NodeKind kind, llvm::StringLiteral ir_name,
                        TerminatorKind terminator_kind)
       : NodeKind(kind), ir_name_(ir_name), terminator_kind_(terminator_kind) {}
+
+  // Not copyable.
+  Definition(const Definition&) = delete;
+  Definition& operator=(const Definition&) = delete;
 
   llvm::StringLiteral ir_name_;
   TerminatorKind terminator_kind_;
