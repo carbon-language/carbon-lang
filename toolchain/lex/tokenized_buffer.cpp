@@ -449,9 +449,10 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     if (CARBON_USE_SIMD &&
         position + 16 < static_cast<ssize_t>(source_text.size()) &&
         indent <= MaxIndent) {
+      // Load a mask based on the amount of text we want to compare.
+      auto mask = PrefixMasks[prefix_size];
 #if __ARM_NEON
       // Load and mask the prefix if the current line.
-      auto mask = PrefixMasks[prefix_size];
       auto prefix = vld1q_u8(reinterpret_cast<const uint8_t*>(
           source_text.data() + first_line_start));
       prefix = vandq_u8(mask, prefix);
@@ -469,9 +470,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         skip_to_next_line();
       } while (position + 16 < static_cast<ssize_t>(source_text.size()));
 #elif __x86_64__
-      // Load a mask based on the amount of text we want to compare.
-      auto mask = prefix_masks[prefix_size];
-      // And use the current line's prefix as the exemplar to compare against.
+      // Use the current line's prefix as the exemplar to compare against.
       // We don't mask here as we will mask when doing the comparison.
       auto prefix = _mm_loadu_si128(reinterpret_cast<const __m128i*>(
           source_text.data() + first_line_start));
