@@ -187,6 +187,7 @@ struct ConstType {
   TypeId inner_id;
 };
 
+// A cross-reference between IRs.
 struct CrossReference {
   static constexpr auto Kind = NodeKind::CrossReference.Define("xref");
 

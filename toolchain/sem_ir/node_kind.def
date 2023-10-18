@@ -15,9 +15,8 @@
 #error "Must define the x-macro to use this file."
 #endif
 
-// A cross-reference between IRs.
-CARBON_SEM_IR_NODE_KIND(CrossReference)
-
+// For each node kind declared here there is a matching definition in
+// `typed.nodes.h`.
 CARBON_SEM_IR_NODE_KIND(AddressOf)
 CARBON_SEM_IR_NODE_KIND(ArrayIndex)
 CARBON_SEM_IR_NODE_KIND(ArrayInit)
@@ -35,6 +34,7 @@ CARBON_SEM_IR_NODE_KIND(Builtin)
 CARBON_SEM_IR_NODE_KIND(Call)
 CARBON_SEM_IR_NODE_KIND(ClassDeclaration)
 CARBON_SEM_IR_NODE_KIND(ConstType)
+CARBON_SEM_IR_NODE_KIND(CrossReference)
 CARBON_SEM_IR_NODE_KIND(Dereference)
 CARBON_SEM_IR_NODE_KIND(FunctionDeclaration)
 CARBON_SEM_IR_NODE_KIND(InitializeFrom)
