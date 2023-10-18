@@ -67,7 +67,7 @@ using SIMDMaskT = __m128i;
 using SIMDMaskArrayT = std::array<SIMDMaskT, sizeof(SIMDMaskT) + 1>;
 }  // namespace
 // A table of masks to include 0-16 bytes of an SSE register.
-static constexpr SIMDMaskArrayT prefix_masks = []() constexpr {
+static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
   SIMDMaskArrayT masks = {};
   for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
     // The SIMD types and constexpr require a C-style cast.
@@ -451,7 +451,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         indent <= MaxIndent) {
 #if __ARM_NEON
       // Load and mask the prefix if the current line.
-      auto mask = prefix_masks[prefix_size];
+      auto mask = PrefixMasks[prefix_size];
       auto prefix = vld1q_u8(reinterpret_cast<const uint8_t*>(
           source_text.data() + first_line_start));
       prefix = vandq_u8(mask, prefix);
