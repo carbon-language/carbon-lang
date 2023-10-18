@@ -465,8 +465,6 @@ struct VarStorage {
   StringId name_id;
 };
 
-#undef CARBON_SEM_IR_NODE
-
 // HasParseNode<T> is true if T has a `Parse::Node parse_node` field.
 template <typename T, typename ParseNodeType = Parse::Node T::*>
 constexpr bool HasParseNode = false;
