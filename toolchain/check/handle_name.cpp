@@ -10,17 +10,28 @@
 namespace Carbon::Check {
 
 static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
-    -> SemIR::NameScopeId {
+    -> std::optional<SemIR::NameScopeId> {
   auto base =
       context.semantics_ir().GetNode(context.FollowNameReferences(base_id));
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     return base_as_namespace->name_scope_id;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassDeclaration>()) {
-    // TODO: Reject if the class is not complete.
-    return context.semantics_ir().GetClass(base_as_class->class_id).scope_id;
+    auto& class_info = context.semantics_ir().GetClass(base_as_class->class_id);
+    if (!class_info.scope_id.is_valid()) {
+      CARBON_DIAGNOSTIC(QualifiedExpressionInIncompleteClassScope, Error,
+                        "Member access into incomplete class `{0}`.",
+                        std::string);
+      auto builder = context.emitter().Build(
+          context.semantics_ir().GetNode(base_id).parse_node(),
+          QualifiedExpressionInIncompleteClassScope,
+          context.semantics_ir().StringifyTypeExpression(base_id, true));
+      context.NoteIncompleteClass(*base_as_class, builder);
+      builder.Emit();
+    }
+    return class_info.scope_id;
   }
-  return SemIR::NameScopeId::Invalid;
+  return std::nullopt;
 }
 
 auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
@@ -30,10 +41,11 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
-  if (auto name_scope_id = GetAsNameScope(context, base_id);
-      name_scope_id.is_valid()) {
-    auto node_id = context.LookupName(parse_node, name_id, name_scope_id,
-                                      /*print_diagnostics=*/true);
+  if (auto name_scope_id = GetAsNameScope(context, base_id)) {
+    auto node_id = name_scope_id->is_valid()
+                       ? context.LookupName(parse_node, name_id, *name_scope_id,
+                                            /*print_diagnostics=*/true)
+                       : SemIR::NodeId::BuiltinError;
     auto node = context.semantics_ir().GetNode(node_id);
     // TODO: Track that this node was named within `base_id`.
     context.AddNodeAndPush(

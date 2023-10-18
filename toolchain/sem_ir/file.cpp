@@ -207,6 +207,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case ArrayType::Kind:
     case Builtin::Kind:
     case ClassDeclaration::Kind:
+    case NameReference::Kind:
     case StructType::Kind:
     case TupleType::Kind:
       return 0;
@@ -238,7 +239,6 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case FunctionDeclaration::Kind:
     case InitializeFrom::Kind:
     case IntegerLiteral::Kind:
-    case NameReference::Kind:
     case Namespace::Kind:
     case NoOp::Kind:
     case Parameter::Kind:
@@ -343,6 +343,10 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
         }
         break;
       }
+      case NameReference::Kind: {
+        out << GetString(node.As<NameReference>().name_id);
+        break;
+      }
       case PointerType::Kind: {
         if (step.index == 0) {
           steps.push_back(step.Next());
@@ -419,7 +423,6 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       case FunctionDeclaration::Kind:
       case InitializeFrom::Kind:
       case IntegerLiteral::Kind:
-      case NameReference::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
       case Parameter::Kind:

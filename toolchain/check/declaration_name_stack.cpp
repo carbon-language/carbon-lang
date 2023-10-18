@@ -172,13 +172,11 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
                                 .TryAs<SemIR::ClassDeclaration>()) {
         CARBON_DIAGNOSTIC(QualifiedDeclarationInIncompleteClassScope, Error,
                           "Cannot declare a member of incomplete class `{0}`.",
-                          llvm::StringRef);
-        auto& class_info =
-            context_->semantics_ir().GetClass(class_decl->class_id);
+                          std::string);
         auto builder = context_->emitter().Build(
             name_context.parse_node, QualifiedDeclarationInIncompleteClassScope,
-            // TODO: Add a better mechanism to print the name of a class.
-            context_->semantics_ir().GetString(class_info.name_id));
+            context_->semantics_ir().StringifyTypeExpression(
+                name_context.resolved_node_id, true));
         context_->NoteIncompleteClass(*class_decl, builder);
         builder.Emit();
       } else {
