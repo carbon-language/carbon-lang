@@ -89,13 +89,15 @@ static auto getName(Parse::Tree& p, Parse::Node node)
 void LanguageServer::OnDocumentSymbol(
     clang::clangd::DocumentSymbolParams const& params,
     clang::clangd::Callback<std::vector<clang::clangd::DocumentSymbol>> cb) {
+  CompileValueStores value_stores;
   llvm::vfs::InMemoryFileSystem vfs;
   auto file = params.textDocument.uri.file().str();
   vfs.addFile(file, /*mtime=*/0,
               llvm::MemoryBuffer::getMemBufferCopy(files_.at(file)));
 
   auto buf = SourceBuffer::CreateFromFile(vfs, file, NullDiagnosticConsumer());
-  auto lexed = Lex::TokenizedBuffer::Lex(*buf, NullDiagnosticConsumer());
+  auto lexed =
+      Lex::TokenizedBuffer::Lex(value_stores, *buf, NullDiagnosticConsumer());
   auto parsed = Parse::Tree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;
   for (const auto& node : parsed.postorder()) {

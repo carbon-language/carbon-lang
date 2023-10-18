@@ -383,9 +383,11 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
 // Ties together information for a file being compiled.
 class Driver::CompilationUnit {
  public:
-  explicit CompilationUnit(Driver* driver, const CompileOptions& options,
+  explicit CompilationUnit(Driver* driver, CompileValueStores* value_stores,
+                           const CompileOptions& options,
                            llvm::StringRef input_file_name)
       : driver_(driver),
+        value_stores_(value_stores),
         options_(options),
         input_file_name_(input_file_name),
         vlog_stream_(driver_->vlog_stream_),
@@ -410,8 +412,9 @@ class Driver::CompilationUnit {
     CARBON_VLOG() << "*** SourceBuffer ***\n```\n"
                   << source_->text() << "\n```\n";
 
-    LogCall("Lex::TokenizedBuffer::Lex",
-            [&] { tokens_ = Lex::TokenizedBuffer::Lex(*source_, *consumer_); });
+    LogCall("Lex::TokenizedBuffer::Lex", [&] {
+      tokens_ = Lex::TokenizedBuffer::Lex(*value_stores_, *source_, *consumer_);
+    });
     if (options_.dump_tokens) {
       consumer_->Flush();
       driver_->output_stream_ << tokens_;
@@ -570,6 +573,7 @@ class Driver::CompilationUnit {
   }
 
   Driver* driver_;
+  CompileValueStores* value_stores_;
   const CompileOptions& options_;
   llvm::StringRef input_file_name_;
 
@@ -595,6 +599,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return false;
   }
 
+  CompileValueStores value_stores;
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   auto flush = llvm::make_scope_exit([&]() {
     // The diagnostics consumer must be flushed before compilation artifacts are
@@ -605,8 +610,8 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     }
   });
   for (const auto& input_file_name : options.input_file_names) {
-    units.push_back(
-        std::make_unique<CompilationUnit>(this, options, input_file_name));
+    units.push_back(std::make_unique<CompilationUnit>(
+        this, &value_stores, options, input_file_name));
   }
 
   // Lex.

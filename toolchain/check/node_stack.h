@@ -114,7 +114,7 @@ class NodeStack {
       return back;
     }
     if constexpr (RequiredIdKind == IdKind::StringId) {
-      auto back = PopWithParseNode<SemIR::StringId>();
+      auto back = PopWithParseNode<StringId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
@@ -163,7 +163,7 @@ class NodeStack {
       return back.id<SemIR::ClassId>();
     }
     if constexpr (RequiredIdKind == IdKind::StringId) {
-      return back.id<SemIR::StringId>();
+      return back.id<StringId>();
     }
     if constexpr (RequiredIdKind == IdKind::TypeId) {
       return back.id<SemIR::TypeId>();
@@ -202,7 +202,7 @@ class NodeStack {
         : parse_node(parse_node), node_block_id(node_block_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::FunctionId function_id)
         : parse_node(parse_node), function_id(function_id) {}
-    explicit Entry(Parse::Node parse_node, SemIR::StringId name_id)
+    explicit Entry(Parse::Node parse_node, StringId name_id)
         : parse_node(parse_node), name_id(name_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::TypeId type_id)
         : parse_node(parse_node), type_id(type_id) {}
@@ -219,7 +219,7 @@ class NodeStack {
       if constexpr (std::is_same<T, SemIR::FunctionId>()) {
         return function_id;
       }
-      if constexpr (std::is_same<T, SemIR::StringId>()) {
+      if constexpr (std::is_same<T, StringId>()) {
         return name_id;
       }
       if constexpr (std::is_same<T, SemIR::TypeId>()) {
@@ -239,7 +239,7 @@ class NodeStack {
       SemIR::NodeId node_id;
       SemIR::NodeBlockId node_block_id;
       SemIR::FunctionId function_id;
-      SemIR::StringId name_id;
+      StringId name_id;
       SemIR::TypeId type_id;
     };
   };
@@ -315,7 +315,7 @@ class NodeStack {
     if constexpr (std::is_same_v<IdT, SemIR::ClassId>) {
       return IdKind::ClassId;
     }
-    if constexpr (std::is_same_v<IdT, SemIR::StringId>) {
+    if constexpr (std::is_same_v<IdT, StringId>) {
       return IdKind::StringId;
     }
     if constexpr (std::is_same_v<IdT, SemIR::TypeId>) {

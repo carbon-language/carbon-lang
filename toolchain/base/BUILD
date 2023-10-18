@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -20,5 +20,27 @@ cc_library(
     hdrs = ["pretty_stack_trace_function.h"],
     deps = [
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "value_store",
+    hdrs = ["value_store.h"],
+    deps = [
+        ":index_base",
+        "//common:check",
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "value_store_test",
+    size = "small",
+    srcs = ["value_store_test.cpp"],
+    deps = [
+        ":value_store",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

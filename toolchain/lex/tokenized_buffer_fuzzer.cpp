@@ -6,6 +6,7 @@
 
 #include "common/check.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
@@ -33,7 +34,9 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   auto source =
       SourceBuffer::CreateFromFile(fs, TestFileName, NullDiagnosticConsumer());
 
-  auto buffer = Lex::TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
+  CompileValueStores value_stores;
+  auto buffer = Lex::TokenizedBuffer::Lex(value_stores, *source,
+                                          NullDiagnosticConsumer());
   if (buffer.has_errors()) {
     return 0;
   }

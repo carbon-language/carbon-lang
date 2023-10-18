@@ -49,12 +49,12 @@ class Context {
   auto AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Parse::Node name_node, SemIR::StringId name_id,
+  auto AddNameToLookup(Parse::Node name_node, StringId name_id,
                        SemIR::NodeId target_id) -> void;
 
   // Performs name lookup in a specified scope, returning the referenced node.
   // If scope_id is invalid, uses the current contextual scope.
-  auto LookupName(Parse::Node parse_node, SemIR::StringId name_id,
+  auto LookupName(Parse::Node parse_node, StringId name_id,
                   SemIR::NameScopeId scope_id, bool print_diagnostics)
       -> SemIR::NodeId;
 
@@ -63,8 +63,7 @@ class Context {
       -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::StringId name_id)
-      -> void;
+  auto DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id) -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassDeclaration class_decl,
@@ -246,7 +245,7 @@ class Context {
 
     // Names which are registered with name_lookup_, and will need to be
     // deregistered when the scope ends.
-    llvm::DenseSet<SemIR::StringId> names;
+    llvm::DenseSet<StringId> names;
 
     // TODO: This likely needs to track things which need to be destructed.
   };
@@ -326,8 +325,7 @@ class Context {
   // reference.
   //
   // Names which no longer have lookup results are erased.
-  llvm::DenseMap<SemIR::StringId, llvm::SmallVector<SemIR::NodeId>>
-      name_lookup_;
+  llvm::DenseMap<StringId, llvm::SmallVector<SemIR::NodeId>> name_lookup_;
 
   // Cache of the mapping from nodes to types, to avoid recomputing the folding
   // set ID.

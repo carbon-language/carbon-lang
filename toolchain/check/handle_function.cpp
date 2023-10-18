@@ -97,7 +97,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : SemIR::StringId(SemIR::StringId::InvalidIndex),
+                        : StringId::Invalid,
          .param_refs_id = param_refs_id,
          .return_type_id = return_type_id,
          .return_slot_id = return_slot_id});
