@@ -114,9 +114,9 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc31_5: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc31_8: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc31_9.1: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc31_9.2: type = ptr_type (i32, i32)
-// CHECK:STDOUT:   %.loc31_9.3: (i32, i32) = tuple_literal (%.loc31_5, %.loc31_8)
-// CHECK:STDOUT:   %.loc31_3: (i32, i32)* = address_of %.loc31_9.3
+// CHECK:STDOUT:   %.loc31_9.2: (i32, i32) = tuple_literal (%.loc31_5, %.loc31_8)
+// CHECK:STDOUT:   %.loc31_3.1: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc31_3.2: (i32, i32)* = address_of %.loc31_9.2
 // CHECK:STDOUT:   %.loc35_10: i32 = int_literal 5
 // CHECK:STDOUT:   %.loc35_11: {.a: i32} = struct_literal (%.loc35_10)
 // CHECK:STDOUT:   %.loc35_3.1: type = ptr_type {.a: i32}

@@ -18,10 +18,9 @@ fn F() -> i32 {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_24.1: type = tuple_type (type, type, type)
-// CHECK:STDOUT:   %.loc8_24.2: type = ptr_type (type, type, type)
-// CHECK:STDOUT:   %.loc8_24.3: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc8_24.4: type = tuple_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc8_24.5: type = ptr_type (i32, i32, i32)
+// CHECK:STDOUT:   %.loc8_24.2: (type, type, type) = tuple_literal (i32, i32, i32)
+// CHECK:STDOUT:   %.loc8_24.3: type = tuple_type (i32, i32, i32)
+// CHECK:STDOUT:   %.loc8_24.4: type = ptr_type (i32, i32, i32)
 // CHECK:STDOUT:   %v: ref (i32, i32, i32) = var "v"
 // CHECK:STDOUT:   %.loc8_29: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc8_32: i32 = int_literal 2

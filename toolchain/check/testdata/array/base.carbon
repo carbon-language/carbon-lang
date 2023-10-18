@@ -28,16 +28,15 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc8_20: f64 = real_literal 111e-1
 // CHECK:STDOUT:   %.loc8_26: f64 = real_literal 22e-1
 // CHECK:STDOUT:   %.loc8_30.1: type = tuple_type (f64, f64)
-// CHECK:STDOUT:   %.loc8_30.2: type = ptr_type (f64, f64)
-// CHECK:STDOUT:   %.loc8_30.3: (f64, f64) = tuple_literal (%.loc8_20, %.loc8_26)
-// CHECK:STDOUT:   %.loc8_30.4: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc8_30.5: ref f64 = array_index %b, %.loc8_30.4
-// CHECK:STDOUT:   %.loc8_30.6: init f64 = initialize_from %.loc8_20 to %.loc8_30.5
-// CHECK:STDOUT:   %.loc8_30.7: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc8_30.8: ref f64 = array_index %b, %.loc8_30.7
-// CHECK:STDOUT:   %.loc8_30.9: init f64 = initialize_from %.loc8_26 to %.loc8_30.8
-// CHECK:STDOUT:   %.loc8_30.10: init [f64; 2] = array_init %.loc8_30.3, (%.loc8_30.6, %.loc8_30.9) to %b
-// CHECK:STDOUT:   assign %b, %.loc8_30.10
+// CHECK:STDOUT:   %.loc8_30.2: (f64, f64) = tuple_literal (%.loc8_20, %.loc8_26)
+// CHECK:STDOUT:   %.loc8_30.3: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc8_30.4: ref f64 = array_index %b, %.loc8_30.3
+// CHECK:STDOUT:   %.loc8_30.5: init f64 = initialize_from %.loc8_20 to %.loc8_30.4
+// CHECK:STDOUT:   %.loc8_30.6: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc8_30.7: ref f64 = array_index %b, %.loc8_30.6
+// CHECK:STDOUT:   %.loc8_30.8: init f64 = initialize_from %.loc8_26 to %.loc8_30.7
+// CHECK:STDOUT:   %.loc8_30.9: init [f64; 2] = array_init %.loc8_30.2, (%.loc8_30.5, %.loc8_30.8) to %b
+// CHECK:STDOUT:   assign %b, %.loc8_30.9
 // CHECK:STDOUT:   %.loc9_10.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc9_10.2: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_13: i32 = int_literal 5
@@ -50,13 +49,12 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc9_32.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_36.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_38.1: type = tuple_type ((), (), (), (), ())
-// CHECK:STDOUT:   %.loc9_38.2: type = ptr_type ((), (), (), (), ())
-// CHECK:STDOUT:   %.loc9_38.3: ((), (), (), (), ()) = tuple_literal (%.loc9_20.1, %.loc9_24.1, %.loc9_28.1, %.loc9_32.1, %.loc9_36.1)
+// CHECK:STDOUT:   %.loc9_38.2: ((), (), (), (), ()) = tuple_literal (%.loc9_20.1, %.loc9_24.1, %.loc9_28.1, %.loc9_32.1, %.loc9_36.1)
 // CHECK:STDOUT:   %.loc9_20.2: init () = tuple_init %.loc9_20.1, ()
 // CHECK:STDOUT:   %.loc9_24.2: init () = tuple_init %.loc9_24.1, ()
 // CHECK:STDOUT:   %.loc9_28.2: init () = tuple_init %.loc9_28.1, ()
 // CHECK:STDOUT:   %.loc9_32.2: init () = tuple_init %.loc9_32.1, ()
 // CHECK:STDOUT:   %.loc9_36.2: init () = tuple_init %.loc9_36.1, ()
-// CHECK:STDOUT:   %.loc9_38.4: init [(); 5] = array_init %.loc9_38.3, (%.loc9_20.2, %.loc9_24.2, %.loc9_28.2, %.loc9_32.2, %.loc9_36.2) to %c
-// CHECK:STDOUT:   assign %c, %.loc9_38.4
+// CHECK:STDOUT:   %.loc9_38.3: init [(); 5] = array_init %.loc9_38.2, (%.loc9_20.2, %.loc9_24.2, %.loc9_28.2, %.loc9_32.2, %.loc9_36.2) to %c
+// CHECK:STDOUT:   assign %c, %.loc9_38.3
 // CHECK:STDOUT: }
