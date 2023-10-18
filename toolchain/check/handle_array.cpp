@@ -42,9 +42,9 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
     if (bound_value.getActiveBits() <= 64) {
       context.AddNodeAndPush(
           parse_node,
-          SemIR::ArrayType(
+          SemIR::ArrayType{
               parse_node, SemIR::TypeId::TypeType, bound_node_id,
-              ExpressionAsType(context, parse_node, element_type_node_id)));
+              ExpressionAsType(context, parse_node, element_type_node_id)});
       return true;
     }
   }

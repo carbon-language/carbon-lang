@@ -26,7 +26,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     // TODO: Track that this node was named within `base_id`.
     context.AddNodeAndPush(
         parse_node,
-        SemIR::NameReference(parse_node, node.type_id(), name_id, node_id));
+        SemIR::NameReference{parse_node, node.type_id(), name_id, node_id});
     return true;
   }
 
@@ -47,8 +47,8 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
             context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(ref_id);
         if (name_id == field.name_id) {
           context.AddNodeAndPush(
-              parse_node, SemIR::StructAccess(parse_node, field.type_id,
-                                              base_id, SemIR::MemberIndex(i)));
+              parse_node, SemIR::StructAccess{parse_node, field.field_type_id,
+                                              base_id, SemIR::MemberIndex(i)});
           return true;
         }
       }
@@ -102,7 +102,7 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(value.kind().value_kind() == SemIR::NodeValueKind::Typed);
   context.AddNodeAndPush(
       parse_node,
-      SemIR::NameReference(parse_node, value.type_id(), name_id, value_id));
+      SemIR::NameReference{parse_node, value.type_id(), name_id, value_id});
   return true;
 }
 

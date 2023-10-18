@@ -635,7 +635,17 @@ class Formatter {
   template <typename NodeT>
   auto FormatInstructionRHS(NodeT node) -> void {
     // By default, an instruction has a comma-separated argument list.
-    std::apply([&](auto... args) { FormatArgs(args...); }, node.args_tuple());
+    using Info = TypedNodeArgsInfo<NodeT>;
+    if constexpr (Info::NumArgs == 2) {
+      auto tuple = StructReflection::AsTuple(node);
+      FormatArgs(std::get<Info::Arg0Field>(tuple),
+                 std::get<Info::Arg0Field + 1>(tuple));
+    } else if constexpr (Info::NumArgs == 1) {
+      auto tuple = StructReflection::AsTuple(node);
+      FormatArgs(std::get<Info::Arg0Field>(tuple));
+    } else {
+      FormatArgs();
+    }
   }
 
   auto FormatInstructionRHS(BlockArg node) -> void {
@@ -760,7 +770,7 @@ class Formatter {
       auto field = semantics_ir_.GetNodeAs<StructTypeField>(field_id);
       FormatString(field.name_id);
       out_ << ": ";
-      FormatType(field.type_id);
+      FormatType(field.field_type_id);
     }
     out_ << "}";
   }

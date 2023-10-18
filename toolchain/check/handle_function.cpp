@@ -70,9 +70,9 @@ static auto BuildFunctionDeclaration(Context& context)
        .return_type_id = return_type_id,
        .return_slot_id = return_slot_id,
        .body_block_ids = {}});
-  auto decl_id = context.AddNode(SemIR::FunctionDeclaration(
+  auto decl_id = context.AddNode(SemIR::FunctionDeclaration{
       fn_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-      function_id));
+      function_id});
   context.declaration_name_stack().AddNameToLookup(name_context, decl_id);
 
   if (SemIR::IsEntryPoint(context.semantics_ir(), function_id)) {
@@ -114,7 +114,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
           "Missing `return` at end of function with declared return type.");
       context.emitter().Emit(parse_node, MissingReturnStatement);
     } else {
-      context.AddNode(SemIR::Return(parse_node));
+      context.AddNode(SemIR::Return{parse_node});
     }
   }
 
@@ -179,8 +179,8 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   // TODO: Use a dedicated node rather than VarStorage here.
   context.AddNodeAndPush(
       parse_node,
-      SemIR::VarStorage(parse_node, type_id,
-                        context.semantics_ir().AddString("return")));
+      SemIR::VarStorage{parse_node, type_id,
+                        context.semantics_ir().AddString("return")});
   return true;
 }
 

@@ -51,10 +51,10 @@ File::File()
   // a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
 #define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                      \
-  nodes_.push_back(Builtin(BuiltinKind::Name == BuiltinKind::Error \
+  nodes_.push_back(Builtin{BuiltinKind::Name == BuiltinKind::Error \
                                ? TypeId::Error                     \
                                : TypeId::TypeType,                 \
-                           BuiltinKind::Name));
+                           BuiltinKind::Name});
 #include "toolchain/sem_ir/builtin_kind.def"
 
   CARBON_CHECK(nodes_.size() == BuiltinKind::ValidCount)
@@ -78,7 +78,7 @@ File::File(std::string filename, const File* builtins)
   for (auto [i, node] : llvm::enumerate(builtins->nodes_)) {
     // We can reuse builtin type IDs because they're special-cased values.
     nodes_.push_back(
-        CrossReference(node.type_id(), BuiltinIR, SemIR::NodeId(i)));
+        CrossReference{node.type_id(), BuiltinIR, SemIR::NodeId(i)});
   }
 }
 
@@ -369,7 +369,8 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case StructTypeField::Kind: {
         auto field = node.As<StructTypeField>();
         out << "." << GetString(field.name_id) << ": ";
-        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(field.type_id)});
+        steps.push_back(
+            {.node_id = GetTypeAllowBuiltinTypes(field.field_type_id)});
         break;
       }
       case TupleType::Kind: {

@@ -24,9 +24,9 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
 
       context.AddNodeAndPush(
           parse_node,
-          SemIR::BinaryOperatorAdd(
+          SemIR::BinaryOperatorAdd{
               parse_node, context.semantics_ir().GetNode(lhs_id).type_id(),
-              lhs_id, rhs_id));
+              lhs_id, rhs_id});
       return true;
 
     case Lex::TokenKind::And:
@@ -40,16 +40,16 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // its value.
       auto resume_block_id = context.node_block_stack().PeekOrAdd(/*depth=*/1);
       context.AddNode(
-          SemIR::BranchWithArg(parse_node, resume_block_id, rhs_id));
+          SemIR::BranchWithArg{parse_node, resume_block_id, rhs_id});
       context.node_block_stack().Pop();
       context.AddCurrentCodeBlockToFunction();
 
       // Collect the result from either the first or second operand.
       context.AddNodeAndPush(
           parse_node,
-          SemIR::BlockArg(parse_node,
+          SemIR::BlockArg{parse_node,
                           context.semantics_ir().GetNode(rhs_id).type_id(),
-                          resume_block_id));
+                          resume_block_id});
       return true;
     }
     case Lex::TokenKind::Equal: {
@@ -65,7 +65,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // TODO: Destroy the old value before reinitializing. This will require
       // building the destruction code before we build the RHS subexpression.
       rhs_id = Initialize(context, parse_node, lhs_id, rhs_id);
-      context.AddNode(SemIR::Assign(parse_node, lhs_id, rhs_id));
+      context.AddNode(SemIR::Assign{parse_node, lhs_id, rhs_id});
       // We model assignment as an expression, so we need to push a value for
       // it, even though it doesn't produce a value.
       // TODO: Consider changing our parse tree to model assignment as a
@@ -87,8 +87,8 @@ auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
     case Lex::TokenKind::Star: {
       auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
       context.AddNodeAndPush(
-          parse_node, SemIR::PointerType(parse_node, SemIR::TypeId::TypeType,
-                                         inner_type_id));
+          parse_node, SemIR::PointerType{parse_node, SemIR::TypeId::TypeType,
+                                         inner_type_id});
       return true;
     }
 
@@ -123,12 +123,12 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       }
       context.AddNodeAndPush(
           parse_node,
-          SemIR::AddressOf(
+          SemIR::AddressOf{
               parse_node,
               context.GetPointerType(
                   parse_node,
                   context.semantics_ir().GetNode(value_id).type_id()),
-              value_id));
+              value_id});
       return true;
     }
 
@@ -146,7 +146,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
       context.AddNodeAndPush(
           parse_node,
-          SemIR::ConstType(parse_node, SemIR::TypeId::TypeType, inner_type_id));
+          SemIR::ConstType{parse_node, SemIR::TypeId::TypeType, inner_type_id});
       return true;
     }
 
@@ -154,9 +154,9 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       value_id = ConvertToBoolValue(context, parse_node, value_id);
       context.AddNodeAndPush(
           parse_node,
-          SemIR::UnaryOperatorNot(
+          SemIR::UnaryOperatorNot{
               parse_node, context.semantics_ir().GetNode(value_id).type_id(),
-              value_id));
+              value_id});
       return true;
 
     case Lex::TokenKind::Star: {
@@ -186,7 +186,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
         builder.Emit();
       }
       context.AddNodeAndPush(
-          parse_node, SemIR::Dereference(parse_node, result_type_id, value_id));
+          parse_node, SemIR::Dereference{parse_node, result_type_id, value_id});
       return true;
     }
 
@@ -209,15 +209,15 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::And:
       branch_value_id = cond_value_id;
-      short_circuit_result_id = context.AddNode(SemIR::BoolLiteral(
-          parse_node, bool_type_id, SemIR::BoolValue::False));
+      short_circuit_result_id = context.AddNode(SemIR::BoolLiteral{
+          parse_node, bool_type_id, SemIR::BoolValue::False});
       break;
 
     case Lex::TokenKind::Or:
       branch_value_id = context.AddNode(
-          SemIR::UnaryOperatorNot(parse_node, bool_type_id, cond_value_id));
+          SemIR::UnaryOperatorNot{parse_node, bool_type_id, cond_value_id});
       short_circuit_result_id = context.AddNode(
-          SemIR::BoolLiteral(parse_node, bool_type_id, SemIR::BoolValue::True));
+          SemIR::BoolLiteral{parse_node, bool_type_id, SemIR::BoolValue::True});
       break;
 
     default:

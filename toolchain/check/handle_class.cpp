@@ -32,8 +32,8 @@ static auto BuildClassDeclaration(Context& context) -> void {
                           DeclarationNameStack::NameContext::State::Unresolved
                       ? name_context.unresolved_name_id
                       : SemIR::StringId(SemIR::StringId::InvalidIndex)});
-  auto class_decl_id = context.AddNode(SemIR::ClassDeclaration(
-      class_keyword, SemIR::TypeId::TypeType, class_id));
+  auto class_decl_id = context.AddNode(SemIR::ClassDeclaration{
+      class_keyword, SemIR::TypeId::TypeType, class_id});
   context.declaration_name_stack().AddNameToLookup(name_context, class_decl_id);
 }
 
