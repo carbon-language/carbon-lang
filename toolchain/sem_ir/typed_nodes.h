@@ -24,8 +24,15 @@
 // - Up to two `[...]Id` members describing the contents of the struct.
 //
 // The field names here matter -- the first two fields must have the names
-// specified above. When converting to a `SemIR::Node`, they will become the
-// parse node and type associated with the type-erased node.
+// specified above, when present. When converting to a `SemIR::Node`, they will
+// become the parse node and type associated with the type-erased node.
+//
+// In addition, each type defines a constant `Kind` that describes the node
+// kind for that node, including the name used in textual IR, and any other
+// information -- currently, just whether the node is a terminator instruction.
+// This information is associated with the specified node kind, and is
+// accessible through member functions on the corresponding `NodeKind` value
+// declared in `node_kind.h`.
 namespace Carbon::SemIR {
 
 struct AddressOf {

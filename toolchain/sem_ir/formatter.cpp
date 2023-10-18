@@ -669,7 +669,7 @@ class Formatter {
     if constexpr (Info::NumArgs == 2) {
       auto tuple = StructReflection::AsTuple(node);
       FormatArgs(std::get<Info::Arg0Field>(tuple),
-                 std::get<Info::Arg0Field + 1>(tuple));
+                 std::get<Info::Arg1Field>(tuple));
     } else if constexpr (Info::NumArgs == 1) {
       auto tuple = StructReflection::AsTuple(node);
       FormatArgs(std::get<Info::Arg0Field>(tuple));

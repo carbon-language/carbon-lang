@@ -28,6 +28,7 @@ struct TypedNodeArgsInfo {
 
   static constexpr int Arg0Field =
       HasParseNode<TypedNode> + HasTypeId<TypedNode>;
+  static constexpr int Arg1Field = Arg0Field + 1;
 
   static constexpr int NumArgs = std::tuple_size_v<Tuple> - Arg0Field;
   static_assert(NumArgs <= 2,
@@ -75,7 +76,7 @@ class Node : public Printable<Node> {
       auto tuple = StructReflection::AsTuple(typed_node);
       arg0_ = ToRaw(std::get<Info::Arg0Field>(tuple));
       if constexpr (Info::NumArgs > 1) {
-        arg1_ = ToRaw(std::get<Info::Arg0Field + 1>(tuple));
+        arg1_ = ToRaw(std::get<Info::Arg1Field>(tuple));
       }
     }
   }
