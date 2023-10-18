@@ -90,7 +90,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpression, 0, CARBON_TOKEN(Identifier))
 // -  `_external_:` if this node is the child of multiple kinds of nodes and
 //    is documented separately.
 // -  `_optional_` if this node may be present or omitted in valid parses,
-/     depending on which tokens are in the source code.
+//    depending on which tokens are in the source code.
 
 // ----------------------------------------------------------------------------
 
