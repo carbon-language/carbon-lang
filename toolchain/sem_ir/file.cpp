@@ -207,6 +207,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case ArrayType::Kind:
     case Builtin::Kind:
     case ClassDeclaration::Kind:
+    case NameReference::Kind:
     case StructType::Kind:
     case TupleType::Kind:
       return 0;
@@ -238,7 +239,6 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case FunctionDeclaration::Kind:
     case InitializeFrom::Kind:
     case IntegerLiteral::Kind:
-    case NameReference::Kind:
     case Namespace::Kind:
     case NoOp::Kind:
     case Parameter::Kind:
@@ -268,6 +268,12 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
 
 auto File::StringifyType(TypeId type_id, bool in_type_context) const
     -> std::string {
+  return StringifyTypeExpression(GetTypeAllowBuiltinTypes(type_id),
+                                 in_type_context);
+}
+
+auto File::StringifyTypeExpression(NodeId outer_node_id,
+                                   bool in_type_context) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -281,7 +287,6 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       return {.node_id = node_id, .index = index + 1};
     }
   };
-  auto outer_node_id = GetTypeAllowBuiltinTypes(type_id);
   llvm::SmallVector<Step> steps = {{.node_id = outer_node_id}};
 
   while (!steps.empty()) {
@@ -336,6 +341,10 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
         } else if (step.index == 1) {
           out << ")";
         }
+        break;
+      }
+      case NameReference::Kind: {
+        out << GetString(node.As<NameReference>().name_id);
         break;
       }
       case PointerType::Kind: {
@@ -414,7 +423,6 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case FunctionDeclaration::Kind:
       case InitializeFrom::Kind:
       case IntegerLiteral::Kind:
-      case NameReference::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
       case Parameter::Kind:
