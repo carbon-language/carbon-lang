@@ -44,6 +44,6 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 1
-// CHECK:STDOUT:   return %.loc15
+// CHECK:STDOUT:   %.loc21: i32 = int_literal 1
+// CHECK:STDOUT:   return %.loc21
 // CHECK:STDOUT: }
