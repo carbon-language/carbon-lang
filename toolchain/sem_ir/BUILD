@@ -27,22 +27,17 @@ cc_library(
 cc_library(
     name = "node_kind",
     srcs = ["node_kind.cpp"],
-    hdrs = ["node_kind.h"],
+    hdrs = [
+        "node_kind.h",
+        "typed_nodes.h",
+    ],
     textual_hdrs = ["node_kind.def"],
     deps = [
         "//common:enum_base",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "typed_nodes",
-    hdrs = ["typed_nodes.h"],
-    deps = [
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:ids",
-        "//toolchain/sem_ir:node_kind",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -58,7 +53,6 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:node_kind",
-        "//toolchain/sem_ir:typed_nodes",
         "@llvm-project//llvm:Support",
     ],
 )

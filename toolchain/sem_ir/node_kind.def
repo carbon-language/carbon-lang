@@ -7,101 +7,64 @@
 // inclusion to expand to the desired output. Macro definitions are cleaned up
 // at the end of this file.
 //
-// Exactly one of these macros should be defined before including this header:
+// This macro should be defined before including this header:
 // - CARBON_SEM_IR_NODE_KIND(Name)
 //   Invoked for each kind of semantic node.
-// - CARBON_SEM_IR_NODE_KIND_WITH_VALUE_KIND(Name, TypeFieldKind)
-//   Invoked for each kind of semantic node, along with information about
-//   whether the node produces a value, and if so, what kind of value.
-// - CARBON_SEM_IR_NODE_KIND_WITH_TERMINATOR_KIND(Name, TerminatorKind)
-//   Invoked for each kind of semantic node, along with information about
-//   whether the node is a terminator node.
-// - CARBON_SEM_IR_NODE_KIND_WITH_IR_NAME(Name, IRName)
-//   Invoked for each kind of semantic node, along with the name that is used
-//   to denote this node in textual Semantics IR.
 
-#if defined(CARBON_SEM_IR_NODE_KIND)
-#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind) \
-  CARBON_SEM_IR_NODE_KIND(Name)
-#elif defined(CARBON_SEM_IR_NODE_KIND_WITH_VALUE_KIND)
-#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind) \
-  CARBON_SEM_IR_NODE_KIND_WITH_VALUE_KIND(Name, ValueKind)
-#elif defined(CARBON_SEM_IR_NODE_KIND_WITH_TERMINATOR_KIND)
-#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind) \
-  CARBON_SEM_IR_NODE_KIND_WITH_TERMINATOR_KIND(Name, TerminatorKind)
-#elif defined(CARBON_SEM_IR_NODE_KIND_WITH_IR_NAME)
-#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind) \
-  CARBON_SEM_IR_NODE_KIND_WITH_IR_NAME(Name, IRName)
-#else
+#ifndef CARBON_SEM_IR_NODE_KIND
 #error "Must define the x-macro to use this file."
 #endif
 
 // A cross-reference between IRs.
-CARBON_SEM_IR_NODE_KIND_IMPL(CrossReference, "xref", Typed, NotTerminator)
+CARBON_SEM_IR_NODE_KIND(CrossReference)
 
-CARBON_SEM_IR_NODE_KIND_IMPL(AddressOf, "address_of", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(ArrayIndex, "array_index", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(ArrayInit, "array_init", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(ArrayType, "array_type", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(Assign, "assign", None, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(BinaryOperatorAdd, "add", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(BindName, "bind_name", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(BindValue, "bind_value", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(BlockArg, "block_arg", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(BoolLiteral, "bool_literal", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(Branch, "br", None, Terminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(BranchIf, "br", None, TerminatorSequence)
-CARBON_SEM_IR_NODE_KIND_IMPL(BranchWithArg, "br", None, Terminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(Builtin, "builtin", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(Call, "call", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(ClassDeclaration, "class_declaration", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(ConstType, "const_type", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(Dereference, "dereference", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(FunctionDeclaration, "fn_decl", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(InitializeFrom, "initialize_from", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(IntegerLiteral, "int_literal", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(NameReference, "name_reference", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(Namespace, "namespace", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(NoOp, "no_op", None, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(Parameter, "parameter", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(PointerType, "ptr_type", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(RealLiteral, "real_literal", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(ReturnExpression, "return", None, Terminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(Return, "return", None, Terminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(SpliceBlock, "splice_block", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(StringLiteral, "string_literal", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(StructAccess, "struct_access", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(StructInit, "struct_init", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(StructLiteral, "struct_literal", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(StructTypeField, "struct_type_field", None,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(StructType, "struct_type", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(StructValue, "struct_value", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(TemporaryStorage, "temporary_storage", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(Temporary, "temporary", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(TupleAccess, "tuple_access", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(TupleIndex, "tuple_index", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(TupleInit, "tuple_init", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(TupleLiteral, "tuple_literal", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(TupleType, "tuple_type", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(TupleValue, "tuple_value", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(UnaryOperatorNot, "not", Typed, NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(ValueAsReference, "value_as_reference", Typed,
-                             NotTerminator)
-CARBON_SEM_IR_NODE_KIND_IMPL(VarStorage, "var", Typed, NotTerminator)
+CARBON_SEM_IR_NODE_KIND(AddressOf)
+CARBON_SEM_IR_NODE_KIND(ArrayIndex)
+CARBON_SEM_IR_NODE_KIND(ArrayInit)
+CARBON_SEM_IR_NODE_KIND(ArrayType)
+CARBON_SEM_IR_NODE_KIND(Assign)
+CARBON_SEM_IR_NODE_KIND(BinaryOperatorAdd)
+CARBON_SEM_IR_NODE_KIND(BindName)
+CARBON_SEM_IR_NODE_KIND(BindValue)
+CARBON_SEM_IR_NODE_KIND(BlockArg)
+CARBON_SEM_IR_NODE_KIND(BoolLiteral)
+CARBON_SEM_IR_NODE_KIND(Branch)
+CARBON_SEM_IR_NODE_KIND(BranchIf)
+CARBON_SEM_IR_NODE_KIND(BranchWithArg)
+CARBON_SEM_IR_NODE_KIND(Builtin)
+CARBON_SEM_IR_NODE_KIND(Call)
+CARBON_SEM_IR_NODE_KIND(ClassDeclaration)
+CARBON_SEM_IR_NODE_KIND(ConstType)
+CARBON_SEM_IR_NODE_KIND(Dereference)
+CARBON_SEM_IR_NODE_KIND(FunctionDeclaration)
+CARBON_SEM_IR_NODE_KIND(InitializeFrom)
+CARBON_SEM_IR_NODE_KIND(IntegerLiteral)
+CARBON_SEM_IR_NODE_KIND(NameReference)
+CARBON_SEM_IR_NODE_KIND(Namespace)
+CARBON_SEM_IR_NODE_KIND(NoOp)
+CARBON_SEM_IR_NODE_KIND(Parameter)
+CARBON_SEM_IR_NODE_KIND(PointerType)
+CARBON_SEM_IR_NODE_KIND(RealLiteral)
+CARBON_SEM_IR_NODE_KIND(ReturnExpression)
+CARBON_SEM_IR_NODE_KIND(Return)
+CARBON_SEM_IR_NODE_KIND(SpliceBlock)
+CARBON_SEM_IR_NODE_KIND(StringLiteral)
+CARBON_SEM_IR_NODE_KIND(StructAccess)
+CARBON_SEM_IR_NODE_KIND(StructInit)
+CARBON_SEM_IR_NODE_KIND(StructLiteral)
+CARBON_SEM_IR_NODE_KIND(StructTypeField)
+CARBON_SEM_IR_NODE_KIND(StructType)
+CARBON_SEM_IR_NODE_KIND(StructValue)
+CARBON_SEM_IR_NODE_KIND(TemporaryStorage)
+CARBON_SEM_IR_NODE_KIND(Temporary)
+CARBON_SEM_IR_NODE_KIND(TupleAccess)
+CARBON_SEM_IR_NODE_KIND(TupleIndex)
+CARBON_SEM_IR_NODE_KIND(TupleInit)
+CARBON_SEM_IR_NODE_KIND(TupleLiteral)
+CARBON_SEM_IR_NODE_KIND(TupleType)
+CARBON_SEM_IR_NODE_KIND(TupleValue)
+CARBON_SEM_IR_NODE_KIND(UnaryOperatorNot)
+CARBON_SEM_IR_NODE_KIND(ValueAsReference)
+CARBON_SEM_IR_NODE_KIND(VarStorage)
 
 #undef CARBON_SEM_IR_NODE_KIND
-#undef CARBON_SEM_IR_NODE_KIND_WITH_VALUE_KIND
-#undef CARBON_SEM_IR_NODE_KIND_WITH_TERMINATOR_KIND
-#undef CARBON_SEM_IR_NODE_KIND_WITH_IR_NAME
-#undef CARBON_SEM_IR_NODE_KIND_IMPL

@@ -20,7 +20,8 @@ namespace Carbon::SemIR {
 
 // Data about the arguments of a typed node, to aid in type erasure. The `KindT`
 // parameter is used to check that `TypedNode` is a typed node.
-template <typename TypedNode, const NodeKind& KindT = TypedNode::Kind>
+template <typename TypedNode,
+          const NodeKind::Definition& KindT = TypedNode::Kind>
 struct TypedNodeArgsInfo {
   // A corresponding std::tuple<...> type.
   using Tuple = decltype(StructReflection::AsTuple(std::declval<TypedNode>()));

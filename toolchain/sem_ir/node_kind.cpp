@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/node_kind.h"
 
+#include "toolchain/sem_ir/typed_nodes.h"
+
 namespace Carbon::SemIR {
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) = {
@@ -11,30 +13,29 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) = {
 #include "toolchain/sem_ir/node_kind.def"
 };
 
-// Returns the name to use for this node kind in Semantics IR.
-[[nodiscard]] auto NodeKind::ir_name() const -> llvm::StringRef {
-  static constexpr llvm::StringRef Table[] = {
-#define CARBON_SEM_IR_NODE_KIND_WITH_IR_NAME(Name, IR_Name) IR_Name,
-#include "toolchain/sem_ir/node_kind.def"
-  };
-  return Table[AsInt()];
+auto NodeKind::ir_name() const -> llvm::StringLiteral {
+  return definition().ir_name();
 }
 
 auto NodeKind::value_kind() const -> NodeValueKind {
   static constexpr NodeValueKind Table[] = {
-#define CARBON_SEM_IR_NODE_KIND_WITH_VALUE_KIND(Name, Kind) NodeValueKind::Kind,
+#define CARBON_SEM_IR_NODE_KIND(Name) \
+  HasTypeId<SemIR::Name> ? NodeValueKind::Typed : NodeValueKind::None,
 #include "toolchain/sem_ir/node_kind.def"
   };
   return Table[AsInt()];
 }
 
 auto NodeKind::terminator_kind() const -> TerminatorKind {
-  static constexpr TerminatorKind Table[] = {
-#define CARBON_SEM_IR_NODE_KIND_WITH_TERMINATOR_KIND(Name, Kind) \
-  TerminatorKind::Kind,
+  return definition().terminator_kind();
+}
+
+auto NodeKind::definition() const -> const Definition& {
+  static constexpr const Definition* Table[] = {
+#define CARBON_SEM_IR_NODE_KIND(Name) &SemIR::Name::Kind,
 #include "toolchain/sem_ir/node_kind.def"
   };
-  return Table[AsInt()];
+  return *Table[AsInt()];
 }
 
 }  // namespace Carbon::SemIR
