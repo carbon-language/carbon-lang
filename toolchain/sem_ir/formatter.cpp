@@ -586,7 +586,7 @@ class Formatter {
                        llvm::StringRef prefix) -> void {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    std::vector<std::pair<NodeId, StringId>> entries;
+    llvm::SmallVector<std::pair<NodeId, StringId>> entries;
     for (auto [name_id, node_id] : semantics_ir_.GetNameScope(id)) {
       entries.push_back({node_id, name_id});
     }
