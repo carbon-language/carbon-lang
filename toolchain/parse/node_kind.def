@@ -81,10 +81,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpression, 0, CARBON_TOKEN(Identifier))
 //
 // In this, `Child1`, `Child2`, and `Parent` are all kinds of parse nodes, which
 // are then defined using the `CARBON_PARSE_NODE_KIND_*` macros. They are
-// written in the order they are emitted, and the indentation showing the tree
-// structure. Note that nodes are emitted in postorder (see
-// https://en.wikipedia.org/wiki/Tree_traversal#Depth-first_search), with the
-// parent after its children.
+// written in postorder, with the indentation showing the tree structure. See
+// tree.h for more information.
 //
 // A parse node kind may be preceded by:
 // -  `_external_:` if this node is the child of multiple kinds of nodes and
