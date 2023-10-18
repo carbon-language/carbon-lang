@@ -58,7 +58,7 @@ struct TypedNodeArgsInfo {
 class Node : public Printable<Node> {
  public:
   template <typename TypedNode, typename Info = TypedNodeArgsInfo<TypedNode>>
-  /*implicit*/
+  // NOLINTNEXTLINE(google-explicit-constructor)
   Node(TypedNode typed_node)
       : parse_node_(Parse::Node::Invalid),
         kind_(TypedNode::Kind),
@@ -140,6 +140,17 @@ class Node : public Printable<Node> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
+  friend class NodeTestHelper;
+
+  // Raw constructor, used for testing.
+  explicit Node(NodeKind kind, Parse::Node parse_node, TypeId type_id,
+                int32_t arg0, int32_t arg1)
+      : parse_node_(parse_node),
+        kind_(kind),
+        type_id_(type_id),
+        arg0_(arg0),
+        arg1_(arg1) {}
+
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
   static constexpr auto ToRaw(IndexBase base) -> int32_t { return base.index; }
   static constexpr auto ToRaw(BuiltinKind kind) -> int32_t {

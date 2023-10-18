@@ -94,6 +94,18 @@ cc_library(
 )
 
 cc_test(
+    name = "typed_nodes_test",
+    size = "small",
+    srcs = ["typed_nodes_test.cpp"],
+    deps = [
+        ":node",
+        ":node_kind",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_test(
     name = "yaml_test",
     size = "small",
     srcs = ["yaml_test.cpp"],
