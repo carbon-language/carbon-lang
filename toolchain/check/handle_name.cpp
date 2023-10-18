@@ -9,6 +9,8 @@
 
 namespace Carbon::Check {
 
+// Returns the name scope corresponding to base_id, or nullopt if not a scope.
+// On invalid scopes, prints a diagnostic and still returns the scope.
 static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
     -> std::optional<SemIR::NameScopeId> {
   auto base =
