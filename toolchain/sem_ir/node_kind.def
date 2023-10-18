@@ -27,32 +27,28 @@
 //   CARBON_FIELD(type, name) for the fields of the node.
 
 #if defined(CARBON_SEM_IR_NODE_KIND)
-#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind, \
-                                     HasParseNode, Fields)                    \
-  CARBON_SEM_IR_NODE_KIND(Name)
+#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, ...) CARBON_SEM_IR_NODE_KIND(Name)
 #elif defined(CARBON_SEM_IR_NODE_KIND_WITH_VALUE_KIND)
-#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind, \
-                                     HasParseNode, Fields)                    \
+#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, ...) \
   CARBON_SEM_IR_NODE_KIND_WITH_VALUE_KIND(Name, ValueKind)
 #elif defined(CARBON_SEM_IR_NODE_KIND_WITH_TERMINATOR_KIND)
 #define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind, \
-                                     HasParseNode, Fields)                    \
+                                     ...)                                     \
   CARBON_SEM_IR_NODE_KIND_WITH_TERMINATOR_KIND(Name, TerminatorKind)
 #elif defined(CARBON_SEM_IR_NODE_KIND_WITH_IR_NAME)
-#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind, \
-                                     HasParseNode, Fields)                    \
+#define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ...) \
   CARBON_SEM_IR_NODE_KIND_WITH_IR_NAME(Name, IRName)
 #elif defined(CARBON_SEM_IR_NODE_KIND_WITH_HAS_PARSE_NODE)
 #define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind, \
-                                     HasParseNode, Fields)                    \
+                                     HasParseNode, ...)                       \
   CARBON_SEM_IR_NODE_KIND_WITH_HAS_PARSE_NODE(Name, HasParseNode)
 #elif defined(CARBON_SEM_IR_NODE_KIND_WITH_FIELDS)
 #if !defined(CARBON_FIELD)
 #error "Must define CARBON_FIELD along with CARBON_SEM_IR_NODE_KIND_WITH_FIELDS"
 #endif
 #define CARBON_SEM_IR_NODE_KIND_IMPL(Name, IRName, ValueKind, TerminatorKind, \
-                                     HasParseNode, Fields)                    \
-  CARBON_SEM_IR_NODE_KIND_WITH_FIELDS(Name, Fields)
+                                     HasParseNode, ...)                       \
+  CARBON_SEM_IR_NODE_KIND_WITH_FIELDS(Name, __VA_ARGS__)
 #else
 #error "Must define the x-macro to use this file."
 #endif

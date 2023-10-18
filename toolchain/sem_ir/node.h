@@ -9,7 +9,6 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
-#include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
@@ -506,12 +505,65 @@ constexpr auto ToRaw(IndexBase base) -> int32_t { return base.index; }
 constexpr auto ToRaw(BuiltinKind kind) -> int32_t { return kind.AsInt(); }
 
 //
-// FIXME: Replace struct reflection with x-macros
+// Get the values of the fields of a value of type `T` as a `std::tuple<...>`.
 //
 template <typename T>
-using FieldTypes = decltype(StructReflection::AsTuple(std::declval<T>()));
+struct FieldValues;
 
+#define REMOVE_TRAILING_COMMA_0()
+#define REMOVE_TRAILING_COMMA_1(_1, _2) _1
+#define REMOVE_TRAILING_COMMA_2(_1, _2, _3) _1, _2
+#define REMOVE_TRAILING_COMMA_N(_1, _2, _3, N, ...) REMOVE_TRAILING_COMMA_##N
+#define REMOVE_TRAILING_COMMA(...) \
+  REMOVE_TRAILING_COMMA_N(__VA_ARGS__, 2, 1, 0, 0)(__VA_ARGS__)
+
+#define CARBON_SEM_IR_NODE_KIND_WITH_FIELDS(Name, ...)            \
+  template <>                                                     \
+  struct FieldValues<NodeData::Name> {                            \
+    static auto AsTuple(const NodeData::Name& value) -> auto {    \
+      value;                                                      \
+      return std::make_tuple(REMOVE_TRAILING_COMMA(__VA_ARGS__)); \
+    }                                                             \
+  };
+
+#define CARBON_FIELD(Type, Name) value.Name,
+
+#include "toolchain/sem_ir/node_kind.def"
+
+//
+// Get the types of the fields of `T` as a `std::tuple<...>`.
+//
+template <typename T>
+struct GetFieldTypes {
+  using AsTuple = decltype(FieldValues<T>::AsTuple(std::declval<T>()));
+};
+
+template <>
+struct GetFieldTypes<HasParseNodeBase<true>> {
+  using AsTuple = std::tuple<Parse::Node>;
+};
+
+template <>
+struct GetFieldTypes<HasParseNodeBase<false>> {
+  using AsTuple = std::tuple<>;
+};
+
+template <>
+struct GetFieldTypes<HasTypeBase<NodeValueKind::Typed>> {
+  using AsTuple = std::tuple<TypeId>;
+};
+
+template <>
+struct GetFieldTypes<HasTypeBase<NodeValueKind::None>> {
+  using AsTuple = std::tuple<>;
+};
+
+template <typename T>
+using FieldTypes = typename GetFieldTypes<T>::AsTuple;
+
+//
 // Base class for nodes that contains the node data.
+//
 template <typename T, typename = FieldTypes<T>>
 struct DataBase;
 
@@ -528,9 +580,7 @@ struct DataBase<T, std::tuple<Fields...>> : T {
   auto args() const -> T { return *this; }
 
   // Returns the operands of the node as a tuple.
-  auto args_tuple() const -> auto {
-    return StructReflection::AsTuple(static_cast<const T&>(*this));
-  }
+  auto args_tuple() const -> auto { return FieldValues<T>::AsTuple(*this); }
 
   auto arg0_or_invalid() const -> auto {
     if constexpr (sizeof...(Fields) >= 1) {
