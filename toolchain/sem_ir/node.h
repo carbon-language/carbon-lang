@@ -477,6 +477,10 @@ struct ValueAsReference {
   NodeId value_id;
 };
 
+struct ValueOfInitializer {
+  NodeId init_id;
+};
+
 struct VarStorage {
   StringId name_id;
 };

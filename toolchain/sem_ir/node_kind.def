@@ -108,6 +108,8 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(TupleValue, "tuple_value", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(UnaryOperatorNot, "not", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(ValueAsReference, "value_as_reference", Typed,
                                 NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(ValueOfInitializer, "value_of_initializer",
+                                Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(VarStorage, "var", Typed, NotTerminator)
 
 #undef CARBON_SEMANTICS_NODE_KIND

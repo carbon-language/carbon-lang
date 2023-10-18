@@ -59,4 +59,18 @@ auto HandleValueAsReference(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(node_id, context.GetLocal(node.value_id));
 }
 
+auto HandleValueOfInitializer(FunctionContext& context, SemIR::NodeId node_id,
+                              SemIR::ValueOfInitializer node) -> void {
+  CARBON_CHECK(
+      SemIR::GetExpressionCategory(context.semantics_ir(), node.init_id) ==
+      SemIR::ExpressionCategory::Initializing);
+  CARBON_CHECK(
+      SemIR::GetValueRepresentation(context.semantics_ir(), node.type_id)
+          .kind == SemIR::ValueRepresentation::Copy);
+  CARBON_CHECK(
+      SemIR::GetInitializingRepresentation(context.semantics_ir(), node.type_id)
+          .kind == SemIR::InitializingRepresentation::ByCopy);
+  context.SetLocal(node_id, context.GetLocal(node.init_id));
+}
+
 }  // namespace Carbon::Lower

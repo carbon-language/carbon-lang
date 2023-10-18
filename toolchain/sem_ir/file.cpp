@@ -261,6 +261,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case TupleValue::Kind:
     case UnaryOperatorNot::Kind:
     case ValueAsReference::Kind:
+    case ValueOfInitializer::Kind:
     case VarStorage::Kind:
       CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
   }
@@ -436,6 +437,7 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       case TupleValue::Kind:
       case UnaryOperatorNot::Kind:
       case ValueAsReference::Kind:
+      case ValueOfInitializer::Kind:
       case VarStorage::Kind:
         // We don't need to handle stringification for nodes that don't show up
         // in errors, but make it clear what's going on so that it's clearer
@@ -509,6 +511,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case TupleValue::Kind:
       case TupleType::Kind:
       case UnaryOperatorNot::Kind:
+      case ValueOfInitializer::Kind:
         return ExpressionCategory::Value;
 
       case Builtin::Kind: {
