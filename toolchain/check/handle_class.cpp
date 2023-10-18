@@ -20,22 +20,48 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
 static auto BuildClassDeclaration(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::NodeId> {
   auto name_context = context.declaration_name_stack().Pop();
-
   auto class_keyword =
       context.node_stack()
           .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
-
   auto decl_block_id = context.node_block_stack().Pop();
 
-  auto class_id = context.semantics_ir().AddClass(
-      {.name_id = name_context.state ==
-                          DeclarationNameStack::NameContext::State::Unresolved
-                      ? name_context.unresolved_name_id
-                      : SemIR::StringId(SemIR::StringId::InvalidIndex)});
-  auto class_decl_id = context.AddNode(SemIR::ClassDeclaration(
-      class_keyword, SemIR::TypeId::TypeType, class_id, decl_block_id));
-  context.declaration_name_stack().AddNameToLookup(name_context, class_decl_id);
-  return {class_id, class_decl_id};
+  // Add the class declaration.
+  auto class_decl =
+      SemIR::ClassDeclaration(class_keyword, SemIR::TypeId::TypeType,
+                              SemIR::ClassId::Invalid, decl_block_id);
+  auto class_decl_id = context.AddNode(class_decl);
+
+  // Check whether this is a redeclaration.
+  auto existing_id = context.declaration_name_stack().LookupOrAddName(
+      name_context, class_decl_id);
+  if (existing_id.is_valid()) {
+    if (auto existing_class_decl = context.semantics_ir()
+                                       .GetNode(existing_id)
+                                       .TryAs<SemIR::ClassDeclaration>()) {
+      // This is a redeclaration of an existing class.
+      class_decl.class_id = existing_class_decl->class_id;
+    } else {
+      // This is a redeclaration of something other than a class.
+      context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
+    }
+  }
+
+  // Create a new class if this isn't a valid redeclaration.
+  if (!class_decl.class_id.is_valid()) {
+    // TODO: If this is an invalid redeclaration of a non-class entity or there
+    // was an error in the qualifier, we will have lost track of the class name
+    // here. We should keep track of it even if the name is invalid.
+    class_decl.class_id = context.semantics_ir().AddClass(
+        {.name_id = name_context.state ==
+                            DeclarationNameStack::NameContext::State::Unresolved
+                        ? name_context.unresolved_name_id
+                        : SemIR::StringId(SemIR::StringId::InvalidIndex)});
+  }
+
+  // Write the class ID into the ClassDeclaration.
+  context.semantics_ir().ReplaceNode(class_decl_id, class_decl);
+
+  return {class_decl.class_id, class_decl_id};
 }
 
 auto HandleClassDeclaration(Context& context, Parse::Node /*parse_node*/)

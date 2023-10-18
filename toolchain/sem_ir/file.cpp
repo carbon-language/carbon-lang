@@ -268,6 +268,12 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
 
 auto File::StringifyType(TypeId type_id, bool in_type_context) const
     -> std::string {
+  return StringifyTypeExpression(GetTypeAllowBuiltinTypes(type_id),
+                                 in_type_context);
+}
+
+auto File::StringifyTypeExpression(NodeId outer_node_id,
+                                   bool in_type_context) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -281,7 +287,6 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
       return {.node_id = node_id, .index = index + 1};
     }
   };
-  auto outer_node_id = GetTypeAllowBuiltinTypes(type_id);
   llvm::SmallVector<Step> steps = {{.node_id = outer_node_id}};
 
   while (!steps.empty()) {

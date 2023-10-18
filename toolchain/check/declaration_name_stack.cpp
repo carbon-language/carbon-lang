@@ -127,12 +127,14 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
       context_->semantics_ir().GetNode(name_context.resolved_node_id);
   switch (resolved_node.kind()) {
     case SemIR::ClassDeclaration::Kind: {
-      auto class_id = resolved_node.As<SemIR::ClassDeclaration>().class_id;
-      auto& class_info = context_->semantics_ir().GetClass(class_id);
-      // TODO: Check that the class is complete and reject if not.
+      auto& class_info = context_->semantics_ir().GetClass(
+          resolved_node.As<SemIR::ClassDeclaration>().class_id);
+      // TODO: Check that the class is complete rather than that it has a scope.
       if (class_info.scope_id.is_valid()) {
         name_context.state = NameContext::State::Resolved;
         name_context.target_scope_id = class_info.scope_id;
+      } else {
+        name_context.state = NameContext::State::ResolvedNonScope;
       }
       break;
     }
@@ -165,16 +167,33 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
     case NameContext::State::ResolvedNonScope: {
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier didn't resolve to a scoped entity.
+      if (auto class_decl = context_->semantics_ir()
+                                .GetNode(name_context.resolved_node_id)
+                                .TryAs<SemIR::ClassDeclaration>()) {
+        CARBON_DIAGNOSTIC(QualifiedDeclarationInIncompleteClassScope, Error,
+                          "Cannot declare a member of incomplete class `{0}`.",
+                          llvm::StringRef);
+        auto& class_info =
+            context_->semantics_ir().GetClass(class_decl->class_id);
+        auto builder = context_->emitter().Build(
+            name_context.parse_node, QualifiedDeclarationInIncompleteClassScope,
+            // TODO: Add a better mechanism to print the name of a class.
+            context_->semantics_ir().GetString(class_info.name_id));
+        context_->NoteIncompleteClass(*class_decl, builder);
+        builder.Emit();
+      } else {
+        CARBON_DIAGNOSTIC(
+            QualifiedDeclarationInNonScope, Error,
+            "Declaration qualifiers are only allowed for entities "
+            "that provide a scope.");
+        CARBON_DIAGNOSTIC(QualifiedDeclarationNonScopeEntity, Note,
+                          "Non-scope entity referenced here.");
+        context_->emitter()
+            .Build(parse_node, QualifiedDeclarationInNonScope)
+            .Note(name_context.parse_node, QualifiedDeclarationNonScopeEntity)
+            .Emit();
+      }
       name_context.state = NameContext::State::Error;
-      CARBON_DIAGNOSTIC(QualifiedDeclarationInNonScope, Error,
-                        "Declaration qualifiers are only allowed for entities "
-                        "that provide a scope.");
-      CARBON_DIAGNOSTIC(QualifiedDeclarationNonScopeEntity, Note,
-                        "Non-scope entity referenced here.");
-      context_->emitter()
-          .Build(parse_node, QualifiedDeclarationInNonScope)
-          .Note(name_context.parse_node, QualifiedDeclarationNonScopeEntity)
-          .Emit();
       return false;
     }
 

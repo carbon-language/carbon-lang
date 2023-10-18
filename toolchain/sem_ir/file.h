@@ -35,6 +35,9 @@ struct Function : public Printable<Function> {
 
   // The function name.
   StringId name_id;
+  // The definition, if the function has been defined or is currently being
+  // defined. This is a FunctionDeclaration.
+  NodeId definition_id = NodeId::Invalid;
   // A block containing a single reference node per parameter.
   NodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
@@ -48,7 +51,7 @@ struct Function : public Printable<Function> {
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
-  llvm::SmallVector<NodeBlockId> body_block_ids;
+  llvm::SmallVector<NodeBlockId> body_block_ids = {};
 };
 
 // A class.
@@ -62,7 +65,7 @@ struct Class : public Printable<Class> {
   StringId name_id;
 
   // The definition, if the class has been defined or is currently being
-  // defined.
+  // defined. This is a ClassDeclaration.
   NodeId definition_id = NodeId::Invalid;
 
   // The class scope.
@@ -437,6 +440,12 @@ class File : public Printable<File> {
   // expression would otherwise have a different type, such as a tuple or
   // struct type.
   auto StringifyType(TypeId type_id, bool in_type_context = false) const
+      -> std::string;
+
+  // Same as `StringifyType`, but starting with a node representing a type
+  // expression rather than a canonical type.
+  auto StringifyTypeExpression(NodeId outer_node_id,
+                               bool in_type_context = false) const
       -> std::string;
 
   auto functions_size() const -> int { return functions_.size(); }

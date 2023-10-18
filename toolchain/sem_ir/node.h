@@ -57,6 +57,9 @@ constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
 
 // The ID of a function.
 struct FunctionId : public IndexBase, public Printable<FunctionId> {
+  // An explicitly invalid function ID.
+  static const FunctionId Invalid;
+
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "function";
@@ -64,14 +67,21 @@ struct FunctionId : public IndexBase, public Printable<FunctionId> {
   }
 };
 
+constexpr FunctionId FunctionId::Invalid = FunctionId(FunctionId::InvalidIndex);
+
 // The ID of a class.
 struct ClassId : public IndexBase, public Printable<ClassId> {
+  // An explicitly invalid class ID.
+  static const ClassId Invalid;
+
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "class";
     IndexBase::Print(out);
   }
 };
+
+constexpr ClassId ClassId::Invalid = ClassId(ClassId::InvalidIndex);
 
 // The ID of a cross-referenced IR.
 struct CrossReferenceIRId : public IndexBase,

@@ -89,6 +89,13 @@ auto Context::DiagnoseNameNotFound(Parse::Node parse_node,
   emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
 }
 
+auto Context::NoteIncompleteClass(SemIR::ClassDeclaration class_decl,
+                                  DiagnosticBuilder& builder) -> void {
+  CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                    "Class was forward declared here.");
+  builder.Note(class_decl.parse_node, ClassForwardDeclaredHere);
+}
+
 auto Context::AddNameToLookup(Parse::Node name_node, SemIR::StringId name_id,
                               SemIR::NodeId target_id) -> void {
   if (current_scope().names.insert(name_id).second) {
@@ -396,11 +403,10 @@ class TypeCompleter {
       case SemIR::ClassDeclaration::Kind:
         // TODO: Support class definitions and complete class types.
         if (diagnoser_) {
-          CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
-                            "Class was forward declared here.");
-          (*diagnoser_)()
-              .Note(type_node.parse_node(), ClassForwardDeclaredHere)
-              .Emit();
+          auto builder = (*diagnoser_)();
+          context_.NoteIncompleteClass(type_node.As<SemIR::ClassDeclaration>(),
+                                       builder);
+          builder.Emit();
         }
         return false;
 
