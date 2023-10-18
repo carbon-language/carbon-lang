@@ -20,7 +20,7 @@ var s: {.a: Incomplete};
 var p: Incomplete* = &s.a;
 
 // CHECK:STDOUT: file "fail_nested_incomplete.carbon" {
-// CHECK:STDOUT:   %Incomplete: type = class_declaration @Incomplete
+// CHECK:STDOUT:   %Incomplete: type = class_declaration @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_reference "Incomplete", %Incomplete
 // CHECK:STDOUT:   %.loc15: type = struct_type {.a: Incomplete}
 // CHECK:STDOUT:   %s: ref <error> = var "s"

@@ -11,7 +11,7 @@ namespace Carbon::Check {
 // Build a FunctionDeclaration describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
-static auto BuildFunctionDeclaration(Context& context)
+static auto BuildFunctionDeclaration(Context& context, bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::NodeId> {
   // TODO: This contains the IR block for the parameters and return type. At
   // present, it's just loose, but it's not strictly required for parameter
@@ -57,25 +57,56 @@ static auto BuildFunctionDeclaration(Context& context)
       context.node_stack()
           .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
-  // TODO: Support out-of-line definitions, which will have a resolved
-  // name_context. Right now, those become errors in AddNameToLookup.
-
-  // Add the callable.
-  auto function_id = context.semantics_ir().AddFunction(
-      {.name_id = name_context.state ==
-                          DeclarationNameStack::NameContext::State::Unresolved
-                      ? name_context.unresolved_name_id
-                      : SemIR::StringId(SemIR::StringId::InvalidIndex),
-       .param_refs_id = param_refs_id,
-       .return_type_id = return_type_id,
-       .return_slot_id = return_slot_id,
-       .body_block_ids = {}});
-  auto decl_id = context.AddNode(SemIR::FunctionDeclaration{
+  // Add the function declaration.
+  auto function_decl = SemIR::FunctionDeclaration{
       fn_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-      function_id});
-  context.declaration_name_stack().AddNameToLookup(name_context, decl_id);
+      SemIR::FunctionId::Invalid};
+  auto function_decl_id = context.AddNode(function_decl);
 
-  if (SemIR::IsEntryPoint(context.semantics_ir(), function_id)) {
+  // Check whether this is a redeclaration.
+  auto existing_id = context.declaration_name_stack().LookupOrAddName(
+      name_context, function_decl_id);
+  if (existing_id.is_valid()) {
+    if (auto existing_function_decl =
+            context.semantics_ir()
+                .GetNode(existing_id)
+                .TryAs<SemIR::FunctionDeclaration>()) {
+      // This is a redeclaration of an existing function.
+      function_decl.function_id = existing_function_decl->function_id;
+
+      // TODO: Check that the signature matches!
+
+      // Track the signature from the definition, so that IDs in the body match
+      // IDs in the signature.
+      if (is_definition) {
+        auto& function_info =
+            context.semantics_ir().GetFunction(function_decl.function_id);
+        function_info.param_refs_id = param_refs_id;
+        function_info.return_type_id = return_type_id;
+        function_info.return_slot_id = return_slot_id;
+      }
+    } else {
+      // This is a redeclaration of something other than a function.
+      context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
+    }
+  }
+
+  // Create a new function if this isn't a valid redeclaration.
+  if (!function_decl.function_id.is_valid()) {
+    function_decl.function_id = context.semantics_ir().AddFunction(
+        {.name_id = name_context.state ==
+                            DeclarationNameStack::NameContext::State::Unresolved
+                        ? name_context.unresolved_name_id
+                        : SemIR::StringId(SemIR::StringId::InvalidIndex),
+         .param_refs_id = param_refs_id,
+         .return_type_id = return_type_id,
+         .return_slot_id = return_slot_id});
+  }
+
+  // Write the function ID into the FunctionDeclaration.
+  context.semantics_ir().ReplaceNode(function_decl_id, function_decl);
+
+  if (SemIR::IsEntryPoint(context.semantics_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
     if (!context.semantics_ir().GetNodeBlock(param_refs_id).empty() ||
         (return_slot_id.is_valid() &&
@@ -89,12 +120,12 @@ static auto BuildFunctionDeclaration(Context& context)
     }
   }
 
-  return {function_id, decl_id};
+  return {function_decl.function_id, function_decl_id};
 }
 
 auto HandleFunctionDeclaration(Context& context, Parse::Node /*parse_node*/)
     -> bool {
-  BuildFunctionDeclaration(context);
+  BuildFunctionDeclaration(context, /*is_definition=*/false);
   return true;
 }
 
@@ -127,8 +158,26 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
 auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
     -> bool {
   // Process the declaration portion of the function.
-  auto [function_id, decl_id] = BuildFunctionDeclaration(context);
-  const auto& function = context.semantics_ir().GetFunction(function_id);
+  auto [function_id, decl_id] =
+      BuildFunctionDeclaration(context, /*is_definition=*/true);
+  auto& function = context.semantics_ir().GetFunction(function_id);
+
+  // Track that this declaration is the definition.
+  if (function.definition_id.is_valid()) {
+    CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
+                      "Redefinition of function {0}.", llvm::StringRef);
+    CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
+                      "Previous definition was here.");
+    context.emitter()
+        .Build(parse_node, FunctionRedefinition,
+               context.semantics_ir().GetString(function.name_id))
+        .Note(
+            context.semantics_ir().GetNode(function.definition_id).parse_node(),
+            FunctionPreviousDefinition)
+        .Emit();
+  } else {
+    function.definition_id = decl_id;
+  }
 
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back(decl_id);

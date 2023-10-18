@@ -11,7 +11,7 @@ namespace Carbon::Check {
 auto DeclarationNameStack::Push() -> void {
   declaration_name_stack_.push_back(
       {.state = NameContext::State::New,
-       .target_scope_id = SemIR::NameScopeId::Invalid,
+       .target_scope_id = context_->current_scope_id(),
        .resolved_node_id = SemIR::NodeId::Invalid});
 }
 
@@ -33,29 +33,29 @@ auto DeclarationNameStack::Pop() -> NameContext {
   return declaration_name_stack_.pop_back_val();
 }
 
-auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
-                                           SemIR::NodeId target_id) -> void {
+auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
+                                           SemIR::NodeId target_id)
+    -> SemIR::NodeId {
   switch (name_context.state) {
     case NameContext::State::Error:
       // The name is invalid and a diagnostic has already been emitted.
-      return;
+      return SemIR::NodeId::Invalid;
 
     case NameContext::State::New:
       CARBON_FATAL() << "Name is missing, not expected to call AddNameToLookup "
                         "(but that may change based on error handling).";
 
     case NameContext::State::Resolved:
-    case NameContext::State::ResolvedNonScope: {
-      context_->DiagnoseDuplicateName(name_context.parse_node,
-                                      name_context.resolved_node_id);
-      return;
-    }
+    case NameContext::State::ResolvedNonScope:
+      return name_context.resolved_node_id;
 
     case NameContext::State::Unresolved:
       if (name_context.target_scope_id == SemIR::NameScopeId::Invalid) {
         context_->AddNameToLookup(name_context.parse_node,
                                   name_context.unresolved_name_id, target_id);
       } else {
+        // TODO: Reject unless the scope is a namespace scope or the name is
+        // unqualified.
         bool success = context_->semantics_ir().AddNameScopeEntry(
             name_context.target_scope_id, name_context.unresolved_name_id,
             target_id);
@@ -64,7 +64,15 @@ auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
             << name_context.unresolved_name_id << " in "
             << name_context.target_scope_id;
       }
-      return;
+      return SemIR::NodeId::Invalid;
+  }
+}
+
+auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
+                                           SemIR::NodeId target_id) -> void {
+  auto existing_node_id = LookupOrAddName(name_context, target_id);
+  if (existing_node_id.is_valid()) {
+    context_->DiagnoseDuplicateName(name_context.parse_node, existing_node_id);
   }
 }
 
@@ -118,6 +126,18 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
   auto resolved_node =
       context_->semantics_ir().GetNode(name_context.resolved_node_id);
   switch (resolved_node.kind()) {
+    case SemIR::ClassDeclaration::Kind: {
+      auto& class_info = context_->semantics_ir().GetClass(
+          resolved_node.As<SemIR::ClassDeclaration>().class_id);
+      // TODO: Check that the class is complete rather than that it has a scope.
+      if (class_info.scope_id.is_valid()) {
+        name_context.state = NameContext::State::Resolved;
+        name_context.target_scope_id = class_info.scope_id;
+      } else {
+        name_context.state = NameContext::State::ResolvedNonScope;
+      }
+      break;
+    }
     case SemIR::Namespace::Kind:
       name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id =
@@ -147,16 +167,31 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
     case NameContext::State::ResolvedNonScope: {
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier didn't resolve to a scoped entity.
+      if (auto class_decl = context_->semantics_ir()
+                                .GetNode(name_context.resolved_node_id)
+                                .TryAs<SemIR::ClassDeclaration>()) {
+        CARBON_DIAGNOSTIC(QualifiedDeclarationInIncompleteClassScope, Error,
+                          "Cannot declare a member of incomplete class `{0}`.",
+                          std::string);
+        auto builder = context_->emitter().Build(
+            name_context.parse_node, QualifiedDeclarationInIncompleteClassScope,
+            context_->semantics_ir().StringifyTypeExpression(
+                name_context.resolved_node_id, true));
+        context_->NoteIncompleteClass(*class_decl, builder);
+        builder.Emit();
+      } else {
+        CARBON_DIAGNOSTIC(
+            QualifiedDeclarationInNonScope, Error,
+            "Declaration qualifiers are only allowed for entities "
+            "that provide a scope.");
+        CARBON_DIAGNOSTIC(QualifiedDeclarationNonScopeEntity, Note,
+                          "Non-scope entity referenced here.");
+        context_->emitter()
+            .Build(parse_node, QualifiedDeclarationInNonScope)
+            .Note(name_context.parse_node, QualifiedDeclarationNonScopeEntity)
+            .Emit();
+      }
       name_context.state = NameContext::State::Error;
-      CARBON_DIAGNOSTIC(QualifiedDeclarationInNonScope, Error,
-                        "Declaration qualifiers are only allowed for entities "
-                        "that provide a scope.");
-      CARBON_DIAGNOSTIC(QualifiedDeclarationNonScopeEntity, Note,
-                        "Non-scope entity referenced here.");
-      context_->emitter()
-          .Build(parse_node, QualifiedDeclarationInNonScope)
-          .Note(name_context.parse_node, QualifiedDeclarationNonScopeEntity)
-          .Emit();
       return false;
     }
 

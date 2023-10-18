@@ -66,11 +66,20 @@ class Context {
   auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::StringId name_id)
       -> void;
 
+  // Adds a note to a diagnostic explaining that a class is incomplete.
+  auto NoteIncompleteClass(SemIR::ClassDeclaration class_decl,
+                           DiagnosticBuilder& builder) -> void;
+
   // Pushes a new scope onto scope_stack_.
-  auto PushScope() -> void;
+  auto PushScope(SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid)
+      -> void;
 
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
+
+  auto current_scope_id() const -> SemIR::NameScopeId {
+    return scope_stack_.back().scope_id;
+  }
 
   // Follows NameReference nodes to find the value named by a given node.
   auto FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId;
@@ -232,6 +241,9 @@ class Context {
 
   // An entry in scope_stack_.
   struct ScopeStackEntry {
+    // The name scope associated with this entry, if any.
+    SemIR::NameScopeId scope_id;
+
     // Names which are registered with name_lookup_, and will need to be
     // deregistered when the scope ends.
     llvm::DenseSet<SemIR::StringId> names;
