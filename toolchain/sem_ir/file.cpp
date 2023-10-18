@@ -50,7 +50,7 @@ File::File()
   // Error uses a self-referential type so that it's not accidentally treated as
   // a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...)                   \
+#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                      \
   nodes_.push_back(Builtin(BuiltinKind::Name == BuiltinKind::Error \
                                ? TypeId::Error                     \
                                : TypeId::TypeType,                 \

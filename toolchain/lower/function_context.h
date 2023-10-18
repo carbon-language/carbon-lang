@@ -131,7 +131,7 @@ class FunctionContext {
 };
 
 // Declare handlers for each SemIR::File node.
-#define CARBON_SEMANTICS_NODE_KIND(Name)                             \
+#define CARBON_SEM_IR_NODE_KIND(Name)                                \
   auto Handle##Name(FunctionContext& context, SemIR::NodeId node_id, \
                     SemIR::Name node)                                \
       ->void;

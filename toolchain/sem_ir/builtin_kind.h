@@ -12,14 +12,13 @@
 namespace Carbon::SemIR {
 
 CARBON_DEFINE_RAW_ENUM_CLASS(BuiltinKind, uint8_t) {
-#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
-  CARBON_RAW_ENUM_ENUMERATOR(Name)
+#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/sem_ir/builtin_kind.def"
 };
 
 class BuiltinKind : public CARBON_ENUM_BASE(BuiltinKind) {
  public:
-#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
+#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
   CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/sem_ir/builtin_kind.def"
 
@@ -36,7 +35,7 @@ class BuiltinKind : public CARBON_ENUM_BASE(BuiltinKind) {
   using EnumBase::FromInt;
 };
 
-#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
+#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
   CARBON_ENUM_CONSTANT_DEFINITION(BuiltinKind, Name)
 #include "toolchain/sem_ir/builtin_kind.def"
 
