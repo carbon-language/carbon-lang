@@ -17,10 +17,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Pattern matching](#pattern-matching)
 -   [Typechecking](#typechecking)
     -   [Generalized tuple types](#generalized-tuple-types)
-    -   [Iterative typechecking](#iterative-typechecking)
-    -   [Pattern matching with generalized tuple types](#pattern-matching-with-generalized-tuple-types)
-        -   [Identifying potential matchings](#identifying-potential-matchings)
-        -   [The type-checking algorithm](#the-type-checking-algorithm)
+        -   [Tuple type equality and segment algebra](#tuple-type-equality-and-segment-algebra)
+    -   [Iterative typechecking of pack expansions](#iterative-typechecking-of-pack-expansions)
+    -   [Generalized tuple type deduction](#generalized-tuple-type-deduction)
+        -   [Step 1: Arity deduction](#step-1-arity-deduction)
+        -   [Step 2: Scrutinee adjustment](#step-2-scrutinee-adjustment)
+        -   [Step 3: Pattern adjustment](#step-3-pattern-adjustment)
+        -   [Step 4: Representative deduction](#step-4-representative-deduction)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -80,9 +83,22 @@ _subpattern_. Since _subpattern_ will be matched against multiple scrutinees (or
 none) in a single pattern-matching operation, it cannot contain ordinary binding
 patterns. However, it can contain _pack binding patterns_, which are binding
 patterns that begin with `each`, such as `each ElementType:! type`. A pack
-binding pattern can match any number of times (including zero), and binds to a
+binding pattern can match an arbitrarily large number of times, and binds to a
 pack consisting of all the matched values. A usage of a pack binding always has
 the form "`each` _identifier_".
+
+By default, a pack binding pattern can match any number of times, but `each` can
+optionally be followed by "`(>=` _integer-literal_ `)`", which constrains the
+binding to match at least that many times.
+
+> **TODO:** The minimum-arity constraint syntax is a placeholder. Choose a final
+> syntax.
+
+The declared type of a pack binding can contain a usage of another pack binding,
+but it must be a deduced parameter of the pattern.
+
+> **Future work:** That restriction can probably be relaxed, but we currently
+> don't have motivating use cases to constrain the design.
 
 Note that the operand of `each` is always an identifier name or a binding
 pattern, so it does not have a precedence. For example, the loop condition
@@ -212,11 +228,8 @@ fn StrCat[... each T:! ConvertibleToString](... each param: each T) -> String {
 
 ```carbon
 // Returns the minimum of its arguments, which must all have the same type T.
-//
-// Note that this implementation is not recursive. We split the parameters into
-// first and rest in order to forbid calling `Min` with no arguments.
-fn Min[T:! Comparable & Value](first: T, ... each next: T) -> T {
-  var result: T = first;
+fn Min[T:! Comparable & Value](... each(>=1) param: T) -> T {
+  let (var result: T, ... each next: T) = (... each param);
   ... if (each next < result) {
     result = each next;
   }
@@ -305,51 +318,115 @@ The `...` operator lets us form tuples out of sequences whose size is not known
 during typechecking. For example, in this code:
 
 ```carbon
-fn F[... each T:! type]((... each x: i32), (... each y: Optional(each T))) {
+fn F[... each T:! type]((... each x: i32), (... each(>=1) y: Optional(each T))) {
   let z: auto = (... each x, 0 as f32, ... each y);
 }
 ```
 
 The type of `z` is a tuple whose elements are an indeterminate number of
 repetitions of `i32`, followed by `f32`, followed by a different indeterminate
-number of types that all have the form `Optional(T)` for some type `T`. We can't
-represent this as an explicit list of element types until those indeterminate
-numbers are known, so we need a more general representation for tuple types.
+number of types (but at least one) that all have the form `Optional(T)` for some
+type `T`. We can't represent this as an explicit list of element types until
+those indeterminate numbers are known, so we need a more general representation
+for tuple types.
 
 In this model, a tuple type consists of a sequence of _segments_, and a segment
 consists of a type called the _representative_, and an arity, both of which may
-be symbolic. There is a special symbolic variable called the _pack index_, which
-can only be used in the representative of a segment, and only as the subscript
-of an indexing expression on a tuple. The pack index is used solely as a
-placeholder, and never has a value. There are also symbolic variables
-representing the arity of every pack binding. For purposes of illustration, the
-notation `<V, N>` represents a segment with representative `V` and arity `N`,
-`$I` represents the pack index, and given a pack binding `B`, `|B|` represents
-the arity of `B`, and `B[:$I:]` represents the `$I`th value bound by `B`.
+be symbolic expressions. The arity has a type, which is an instance of one of
+two generic types, `AtLeast(template N:! Core.BigInt)` and
+`Exactly(template N:! Core.BigInt)`, which constrain the arity to be at least
+`N` or exactly `N`, respectively (`N` cannot be negative). There is a subtype
+relation between arity types: `Exactly(N)` and `AtLeast(N)` are subtypes of
+`AtLeast(M)` if `M <= N`.
+
+Each segment is associated with a special symbolic variable called the _pack
+index_, which has type `AtLeast(0)` and is scoped to that segment's
+representative. The pack index can only be used in the subscript of an indexing
+expression on a pack, and only by adding it to an arity arithmetic expression
+(see [below](#tuple-type-equality-and-segment-algebra)) called the _offset_,
+which doesn't involve `$I`.
+
+Every pack expansion pattern also has a hidden deduced parameter that represents
+its arity.
+
+These types, values, variables, and operations are notional, and are not
+available to user code. For purposes of illustration, the notation `<R, A:T>`
+represents a segment with representative `R` and arity `A` of type `T`, `$I`
+represents the pack index, and given a pack binding `B`, `|B|` represents the
+deduced arity parameter of the expansion pattern that contains the definition of
+`B`, and `B[:$I:]` represents the `$I`th value bound by `B`.
 
 So, continuing the earlier example, the type of `z` is represented symbolically
-as `(<i32, |x|>, <f32, 1>, <Optional(T[:$I:]), |T|>)`.
+as
+`(<i32, |x|:AtLeast(0)>, <f32, 1:Exactly(1)>, <Optional(T[:$I:]), |T|:AtLeast(1)>)`.
 
-A segment is _variadic_ if its arity is unknown, and _singular_ if its arity is
-known to be 1 and its representative does not refer to the pack index. In
-contexts where all segments are known to be singular, we will sometimes refer to
-them as "elements". Segments are always assumed to be normalized, meaning that
-every segment is either singular or variadic. This is always possible because if
-a segment's arity is known to be some fixed value N other than 1, we can replace
-it with N singular segments. The _shape_ of a tuple type is the sequence of
-arities of its segments, so the shape of the type of `z` is `(|x|, 1, |T|)`.
+A segment is _variadic_ if its arity type is an instance of `AtLeast`, and
+_singular_ if its arity type is `Exactly(1)` and its representative does not
+refer to the pack index. In contexts where all segments are known to be
+singular, we will sometimes refer to them as "elements". Segments are always
+assumed to be normalized, meaning that every segment is either singular or
+variadic. This is always possible because if a segment's arity is known to be
+some fixed value N other than 1, we can replace it with N singular segments. The
+_shape_ of a tuple type is the sequence of arities of its segments, so the shape
+of the type of `z` is `(|x|:AtLeast(0), 1:Exactly(1), |T|:AtLeast(1))`.
+
+As a notational convenience, if the arity type is omitted, it is understood to
+be `Exactly(N)` if the arity value is an integer literal `N`, and `AtLeast(0)`
+in all other cases. So the type of `z` could also be written as
+`(<i32, |x|>, <f32, 1>, <Optional(T[:$I:]), |T|:AtLeast(1)>)`.
 
 In order to index into a tuple with subscript `I`, the tuple type's segment
 sequence must start with at least `I` singular segments, so that we can
 determine the type of the indexing expression. Note that this rule applies only
-to user-written subscript operations, not to the notional `[:$I:]` operations
+to user-written subscript operations, not to the notional `[: :]` operations
 introduced by the compiler when rewriting a pack expansion.
 
 Similarly, in order to pattern-match a tuple pattern that does not contain a
 pack expansion subpattern (and therefore contains a separate subpattern for each
 element), the scrutinee tuple type's segments must all be singular.
 
-### Iterative typechecking
+#### Tuple type equality and segment algebra
+
+Two generalized tuple types are _structurally equal_ if they have the same
+number of segments and the segments have equal representatives, arities, and
+arity types. They are _semantically equal_ if any instance of one is guaranteed
+to be an instance of the other, and the other way around. Generalized tuple
+types can be semantically equal without being structurally equal; for example,
+these three types are semantically equal, but all structurally different:
+
+-   `(<i32, |x|>, <f32, 1>, <Optional(T[:$I:]), |T|:AtLeast(1)>)`
+-   `(<i32, |x|>, <f32, 1>, <Optional(T[:0:]), 1>, <Optional(T[:$I+1:]), |T|-1>)`
+-   `(<i32, |x|>, <f32, 1>, <Optional(T[:$I:]), |T|-1:AtLeast(0)>, <Optional(T[:|T|-1:]), 1>)`
+
+We can use a kind of type algebra to transform generalized tuple types to
+different structural forms while preserving semantic equality.
+
+Arity types can be added and subtracted according to the following rules:
+
+-   `Exactly(M) + Exactly(N) == Exactly(M+N)`
+-   `Exactly(M) + AtLeast(N) == AtLeast(M+N)`
+-   `AtLeast(M) + Exactly(N) == AtLeast(M+N)`
+-   `AtLeast(M) + AtLeast(N) == AtLeast(M+N)`
+-   `Exactly(M) - Exactly(N) == Exactly(M-N)`
+-   `Exactly(M) - AtLeast(N)` is ill-formed.
+-   `AtLeast(M) - Exactly(N) == Exactly(M-N)`
+-   `AtLeast(M) - AtLeast(N)` is ill-formed. (Recall that `M` and `N` are always
+    template constants.)
+
+Arity values can also be added and subtracted, with a result type determined by
+applying the same operation to the operand types, so if we have `X:AtLeast(2)`
+and `Y:Exactly(3)`, then the type of `X+Y` is `AtLeast(2) + Exactly(3)`, or
+`AtLeast(5)`. These operations are valid if and only if the result type is
+well-formed.
+
+The **splitting rule**: A segment `<R, X+Y:Xt+Yt>` can be rewritten as a
+sequence of two segments `<R, X:Xt>, <S, Y:Yt>`, where `S` is obtained by
+substituting `$I + X` for every occurrence of `$I` in `R`. Notice that rewriting
+the representative in this way preserves the invariant that a pack indexing
+expression always indexes into a user-declared pack binding, with a subscript
+that is always the sum of `$I` and an offset (or an offset alone).
+
+### Iterative typechecking of pack expansions
 
 Since the execution semantics of an expansion are defined in terms of a notional
 rewritten form where we simultaneously iterate over the expansion sites, in
@@ -402,12 +479,13 @@ follows:
 -   If the expansion contains any non-deducing usages of pack bindings, the
     bindings they name must all have the same shape, and all other expansion
     sites are deduced to have the same shape.
--   Otherwise, the expansion must be part of a pattern. We invent a local
-    symbolic variable `N`, and all expansion sites are treated as having the
-    shape `(N,)` (representing a single segment with unknown arity). The value
-    of `N` will be deduced as part of type deduction, so the pattern must occur
-    in a context where type deduction is permitted. For example, if it's part of
-    a `let` statement, it must have an initializer.
+-   Otherwise, the expansion must be a pattern pack expansion, and as discussed
+    earlier, every pattern pack expansion is associated with a notional deduced
+    symbolic variable representing its arity. We therefore treat all expansion
+    sites as having a single segment with that arity. That arity will be deduced
+    as part of type deduction, so the pattern must occur in a context where type
+    deduction is permitted. For example, if it's part of a `let` statement, it
+    must have an initializer.
 
 The type packs of expressions and patterns in the expansion body are then
 determined by iterative typechecking: within the k'th typechecking iteration,
@@ -440,187 +518,113 @@ expansion itself is relatively straightforward:
 -   For a `...` tuple element expression or pattern, the segments of the
     operand's type pack become segments of the type of the enclosing tuple.
 
-### Pattern matching with generalized tuple types
+### Generalized tuple type deduction
 
-Tuple pattern matching involves unifying the type of the tuple pattern with the
-type of the scrutinee. This becomes substantially more challenging when the
-tuple types can contain variadic segments, because the two tuple types may not
-have the same shape. As a consequence, we don't necessarily know which pattern
-segments each scrutinee segment will match with, or the other way around. For
-example, consider the following code:
+The introduction of generalized tuple types complicates the design of type
+deduction in a tuple pattern, because the pattern and the scrutinee can have
+different shapes. We require that a tuple pattern contain no more than one
+variadic segment, but the scrutinee may be an arbitrary combination of singular
+and variadic segments.
+
+Type deduction for a tuple pattern proceeds in four steps:
+
+1. Deduce the arity of the variadic pattern segment.
+2. Adjust the shape of the scrutinee so that each singular pattern segment
+   corresponds to a singular scrutinee segment.
+3. Adjust the shape of the pattern so that each remaining scrutinee segment
+   corresponds to a pattern segment with the same arity.
+4. Deduce the representative of each pattern segment from the corresponding
+   scrutinee segment.
+
+Steps 1 and 4 are deduction steps: they apply information from the scrutinee
+type to infer the unknown properties of the pattern type. Steps 2 and 3 do not
+perform deduction; instead, they structurally transform the two types while
+preserving semantic equality (using the algebraic rules defined
+[earlier](#tuple-type-equality-and-segment-algebra)). The purpose of those steps
+is to enable the deduction in step 4, which is valid only if each segment of the
+pattern is guaranteed to match every element of the corresponding scrutinee
+segment. Step 2 ensures that property for the singular pattern segments, and
+step 3 ensures it for the variadic pattern segment.
+
+#### Step 1: Arity deduction
+
+Step 1 is straightforward: the sum of the arities of the pattern segments must
+equal the sum of the arities of the scrutinee segments, which gives us an
+equation that we can trivially solve for the unknown arity of the variadic
+pattern segment. This is why we require that there is only one variadic pattern
+segment: we cannot solve a single equation for more than one unknown.
+
+This equation is expressed in terms of _typed_ arity values, and when we solve
+for the arity of the variadic pattern segment, we are also deducing the arity
+type of that segment. And as always, the deduced type must be a valid type, and
+a subtype of the declared type. This requirement ensures that the scrutinee is
+guaranteed to have at least as many elements as the pattern expects.
+
+#### Step 2: Scrutinee adjustment
+
+The purpose of step 2 is to support cases like the first line of the body of
+`Min`:
 
 ```carbon
-fn F(a: i32, ... each b: i32, c: i32);
-
-fn G(... each x: i32) {
-  F(1, 2, ... each x);
-}
+fn Min[T:! Comparable & Value](... each(>=1) param: T) -> T {
+  let (var result: T, ... each next: T) = (... each param);
 ```
 
-If `G` is called with no arguments, the `2` will match with `c`, and otherwise
-the `2` will match with an element of `b`. Similarly, if `G` is called with one
-or more arguments, the last argument will match `c`, and the remaining elements
-(if any) will match values from `b`. However, at type-checking time we don't
-know how many arguments the caller will pass, so we don't know which will occur.
-On the other hand, the `1` will always match `a`.
+Here the pattern has type `(<T, 1>, <T, |next|:AtLeast(0))` and the scrutinee
+has type `(<T, |T|:AtLeast(1)>)`, so we must transform the scrutinee to a form
+that has a leading singular segment:
 
-In general, we want type checking to fail if any possible monomorphization of
-the generic code would fail to typecheck. In this case that means we want type
-checking to fail if any of the potential argument-parameter mappings could fail
-to typecheck after monomorphization. Furthermore, for reasons of readability as
-well as efficiency, we want type checking to fail if any two potential mappings
-would deduce inconsistent values for any deduced parameter. However, in general
-this requires exponential time.
+-   `(<T, |T|:AtLeast(1)>)`
+-   = `(<T, 1+(|T| - 1):(Exactly(1) + AtLeast(0))>)` (arity arithmetic)
+-   = `(<T, 1:Exactly(1)>, <T, |T|-1:AtLeast(0)>)` (splitting rule) (Note that
+    in this example we don't need to rewrite the representative expressions in
+    the last step, because the representative doesn't depend on `$I`).
 
-Introducing type deduction further complicates the situation. For example:
+In general, we can split out up to `N` leading or trailing singular segments
+from a variadic segment that has arity type `AtLeast(N)`. So if the pattern has
+`N` leading singular segments, and the scrutinee has `M` leading singular
+segments where `M < N`, step 2 verifies that the first variadic scrutinee
+segment's arity type is a subtype of `AtLeast(N-M)`, and splits out `N-M`
+leading singular segments from it. It then applies the same procedure to last
+variadic scrutinee segment to ensure there are enough trailing singular
+segments.
 
-```carbon
-fn H[each T:! type](a: i32, ... each b: each T, c: String) -> (... each T);
+The rewrites in step 2 do not take place when pattern matching as part of a
+function call: we assume that physically separate function parameters are
+logically separate as well, so if they are not separate at the callsite, that
+likely indicates a bug.
 
-external impl P as ImplicitAs(i32);
-external impl Q as ImplicitAs(String);
+#### Step 3: Pattern adjustment
 
-fn I((... each x: i32), (... each y: f32), (... each z: String)) {
-  var result: auto = H(... each x, {} as P, ... each y, {} as Q, ... each z);
-}
-```
+Step 2 ensures that at the start of step 3 we have a subsequence of scrutinee
+segments which contain all the elements that the variadic pattern segment will
+match, and which cannot match any other pattern segment. Furthermore, the arity
+of the pattern segment that we deduced in step 1 must be equal to the sum of the
+arities of that scrutinee subsequence. As a result, step 3 can apply the
+splitting rule to decompose the pattern segment into a sequence with the same
+shape as the scrutinee subsequence.
 
-Here, the deduced type of `result` can have one of four different forms. The
-most general case is
-`(<i32, |x|-1>, <P, 1>, <f32, |y|>, <Q, 1>, <String, |z|-1>)`, and the other
-three cases are formed by omitting the first two and/or last two segments
-(corresponding to the cases where `x` and/or `z` do not match any arguments).
-Extending the type system to support deduction that splits into multiple cases
-would add a fearsome amount of complexity to the type system.
+Note that any pack indexing expression in the original variadic pattern segment
+is guaranteed to have the form `B[:$I:]` (with no offset), where `B` is a
+deduced pack binding. The decomposition in this step will rewrite that
+expression in each segment to `B[:$I + A:]` (or `B[:A:]` if the segment is
+singular), where `A` is the sum of the arities of the earlier segments in the
+decomposition. This has the effect of decomposing the unknown contents of `B`
+into a sequence of segments with unknown representatives that has the same shape
+as the scrutinee subsequence.
 
-#### Identifying potential matchings
+#### Step 4: Representative deduction
 
-Our solution will rely on being able to identify which segments of the pattern
-can potentially match which segments of the scrutinee. We can do so as follows:
+Since the pattern and scrutinee now have identical shapes, each pattern segment
+is guaranteed to match all of the elements of the corresponding scrutinee
+segment. Consequently, we can perform type deduction segment-wise, deducing the
+representative type of each pattern segment from the representative type of the
+corresponding scrutinee segment.
 
-We will refer to the segments of the pattern as "parameters", and the segments
-of the scrutinee value as "symbolic arguments". We will use the term "actual
-arguments" to refer to the elements of the scrutinee after monomorphization, so
-a single symbolic argument may correspond to any number of actual arguments,
-including zero (but only if the expression is variadic). We will refer to
-arguments as "singular" if they have arity 1, and "variadic" if they have
-indeterminate arity (these are the only possibilities, because segments are
-normalized). Similarly, we will refer to the `...` parameter as "variadic" and
-the other parameters as "singular".
-
-A tuple pattern consists of $N$ leading singular parameters, optionally followed
-by a variadic parameter headed by the `...` operator, and then $M$ trailing
-singular parameters. The scrutinee must have a tuple type, and can have any
-number of singular and variadic segments, in any order.
-
-There must be at least $N+M$ singular symbolic arguments, because otherwise if
-all variadic symbolic arguments are empty, there will not be enough actual
-arguments to match all the singular parameters. We will refer to the $N$'th
-singular symbolic argument and the symbolic arguments before it as "leading
-symbolic arguments". Similarly, we will refer to the $M$'th-from-last singular
-symbolic argument and the symbolic arguments after it as "trailing symbolic
-arguments", and any remaining symbolic arguments as "central symbolic
-arguments". A "leading actual argument" is an argument that was produced by
-rewriting a leading symbolic argument, and likewise for "central actual
-argument" and "trailing actual argument". Note that if there is no variadic
-parameter, $M$ is 0, and so all parameters, symbolic arguments, and actual
-arguments are leading.
-
-By construction, there will always be at least $N$ leading actual arguments,
-because there are $N$ singular leading symbolic arguments. Likewise, there will
-always be at least $M$ trailing actual arguments. As a result, a leading
-parameter can only match a leading actual argument, and so it can only match a
-leading symbolic argument, and likewise for trailing parameters. Consequently, a
-leading symbolic argument cannot match a trailing parameter, a trailing symbolic
-argument cannot match a leading parameter, and a central symbolic argument can
-only match the variadic parameter.
-
-Consider the $i$'th singular leading symbolic argument $E$. If all the variadic
-symbolic arguments before it are empty, $E$ will match the $i$'th leading
-parameter, so $E$ cannot match any earlier parameter. If there are any earlier
-variadic symbolic arguments, $E$ can be made to match any later leading
-parameter or the variadic parameter, by making one of those earlier variadic
-arguments large enough, but as observed above, $E$ cannot match a trailing
-parameter. If there are no earlier variadic symbolic arguments, $E$ cannot be
-made to match any later parameter, so it can only match the i'th leading
-parameter.
-
-Next, consider a variadic leading symbolic argument $E$ that comes before the
-$i$'th singular leading symbolic argument, but not before any earlier singular
-symbolic argument. If $E$'s rewritten arity is sufficiently large, and all
-earlier variadic symbolic arguments are empty, it will simultaneously match the
-$i$'th leading parameter, all leading parameters after it, and the variadic
-parameter, but as before, it cannot match a trailing parameter.
-
-The same reasoning can be applied to trailing symbolic arguments, but with
-"before" and "after" reversed. And as noted earlier, central symbolic arguments
-can only match the variadic parameter. In summary, we can identify the possible
-matches for a symbolic argument $E$ as follows:
-
--   If $E$ is leading, let $i$ be one more than the number of earlier singular
-    symbolic arguments:
-    -   If $E$ is singular, and there are no earlier variadic argument
-        expressions, then $E$ can only match the $i$'th leading parameter.
-    -   Otherwise, $E$ can match the $i$'th leading parameter, any later leading
-        parameters, and the variadic parameter.
--   If $E$ is trailing, let $i$ be one more than the number of later singular
-    symbolic arguments:
-    -   If $E$ is singular, and there are no later variadic symbolic arguments,
-        then $E$ can only match the i'th trailing parameter from the end.
-    -   Otherwise, $E$ can match the $i$'th trailing parameter from the end, any
-        earlier trailing parameters, and the variadic parameter.
--   Otherwise, $E$ can only match the variadic parameter.
-
-#### The type-checking algorithm
-
-In order to avoid type deduction that splits into multiple cases, we require
-that if the variadic parameter's type involves a deduced value that is used in
-more than one place (as `T` is in the earlier example of this problem), there
-cannot be any leading or trailing variadic symbolic arguments (in the sense
-defined in the previous section). This ensures that each symbolic argument can
-only match one parameter, and so type deduction deterministically produces a
-single result.
-
-> **Open question:** Is that restriction too strict? If so, is it possible to
-> forbid only situations that would actually cause type deduction to split into
-> multiple cases. It would still disallow cases like the call to `H` above, but
-> that call seems unnatural for reasons that seem closely related to the fact
-> that its type splits into cases.
-
-To avoid a combinatorial explosion, we will use a much more tractable
-conservative approximation of the precise algorithm. We type-check each
-parameter as follows:
-
--   If the parameter is variadic, we check it against the sub-sequence
-    consisting of all symbolic arguments that it could potentially match. The
-    rule stated above ensures that this is safe: the concatenated type can only
-    become visible outside this local type-check if all variadic arguments have
-    a known arity, in which case that sub-sequence is known to be exactly
-    correct.
--   Otherwise:
-    -   If there is only one argument it can match, which is also not variadic,
-        we type-check the argument against the parameter in the ordinary way.
-    -   Otherwise:
-        -   If the parameter has a non-deduced type, we check each potential
-            argument against that type.
-        -   Otherwise, if the parameter has type `auto`, no further checking is
-            performed (`auto` can deduce to different types on different
-            iterations within a single segment).
-        -   Otherwise, we check that all potential arguments have the same type,
-            and then check that type against the parameter.
-
-> **Open question:** When deducing a single type from a sequence of types, can
-> and should we relax the requirement that all types in the sequence are the
-> same? We can identify the common type of a pair of types using
-> `CommonTypeWith`, but it is not clear whether or how we can generalize that to
-> a sequence of types, since it might not be associative.
-
-We believe that if the code type checks successfully under this algorithm, any
-possible monomorphization can type check using the types deduced here, because
-the restrictions imposed here are a superset of the restrictions that any
-monomorphization needs to satisfy, and the information available to type
-deduction here is a subset of the information that would be available after
-monomorphization.
+Within a segment, type deduction takes place as normal. The only aspect that's
+unique to variadics is that when unifying a pattern type expression
+`B[:$I + A:]` or `B[:A:]` with a scrutinee expression `S`, we deduce that `S` is
+the representative of the corresponding segment of `B`.
 
 ## Alternatives considered
 
