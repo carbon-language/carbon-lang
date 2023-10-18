@@ -114,7 +114,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     mangled_name = "main";
   } else {
     // TODO: Decide on a name mangling scheme.
-    mangled_name = semantics_ir().GetString(function.name_id);
+    mangled_name = semantics_ir().strings().Get(function.name_id);
   }
 
   llvm::FunctionType* function_type =
@@ -131,7 +131,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
     } else {
-      arg.setName(semantics_ir().GetString(
+      arg.setName(semantics_ir().strings().Get(
           semantics_ir().GetNodeAs<SemIR::Parameter>(node_id).name_id));
     }
   }

@@ -187,7 +187,7 @@ auto HandleInitializeFrom(FunctionContext& context, SemIR::NodeId /*node_id*/,
 
 auto HandleIntegerLiteral(FunctionContext& context, SemIR::NodeId node_id,
                           SemIR::IntegerLiteral node) -> void {
-  const llvm::APInt& i = context.semantics_ir().GetInteger(node.integer_id);
+  const llvm::APInt& i = context.semantics_ir().integers().Get(node.integer_id);
   // TODO: This won't offer correct semantics, but seems close enough for now.
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());
@@ -231,7 +231,7 @@ auto HandleParameter(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
 
 auto HandleRealLiteral(FunctionContext& context, SemIR::NodeId node_id,
                        SemIR::RealLiteral node) -> void {
-  const SemIR::Real& real = context.semantics_ir().GetReal(node.real_id);
+  const Real& real = context.semantics_ir().reals().Get(node.real_id);
   // TODO: This will probably have overflow issues, and should be fixed.
   double val =
       real.mantissa.getZExtValue() *
@@ -348,7 +348,7 @@ auto HandleStructAccess(FunctionContext& context, SemIR::NodeId node_id,
           .fields_id);
   auto field = context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(
       fields[node.index.index]);
-  auto member_name = context.semantics_ir().GetString(field.name_id);
+  auto member_name = context.semantics_ir().strings().Get(field.name_id);
 
   context.SetLocal(node_id, GetStructOrTupleElement(context, node.struct_id,
                                                     node.index.index,
@@ -461,8 +461,10 @@ auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
                       SemIR::TupleIndex node) -> void {
   auto index_node =
       context.semantics_ir().GetNodeAs<SemIR::IntegerLiteral>(node.index_id);
-  auto index =
-      context.semantics_ir().GetInteger(index_node.integer_id).getZExtValue();
+  auto index = context.semantics_ir()
+                   .integers()
+                   .Get(index_node.integer_id)
+                   .getZExtValue();
   context.SetLocal(node_id,
                    GetStructOrTupleElement(context, node.tuple_id, index,
                                            node.type_id, "tuple.index"));
@@ -516,7 +518,7 @@ auto HandleVarStorage(FunctionContext& context, SemIR::NodeId node_id,
   // TODO: Eventually this name will be optional, and we'll want to provide
   // something like `var` as a default. However, that's not possible right now
   // so cannot be tested.
-  auto name = context.semantics_ir().GetString(node.name_id);
+  auto name = context.semantics_ir().strings().Get(node.name_id);
   auto* alloca = context.builder().CreateAlloca(context.GetType(node.type_id),
                                                 /*ArraySize=*/nullptr, name);
   context.SetLocal(node_id, alloca);

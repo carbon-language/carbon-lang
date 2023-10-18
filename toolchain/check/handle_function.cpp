@@ -170,7 +170,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
-               context.semantics_ir().GetString(function.name_id))
+               context.semantics_ir().strings().Get(function.name_id))
         .Note(
             context.semantics_ir().GetNode(function.definition_id).parse_node(),
             FunctionPreviousDefinition)
@@ -229,7 +229,7 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   context.AddNodeAndPush(
       parse_node,
       SemIR::VarStorage(parse_node, type_id,
-                        context.semantics_ir().AddString("return")));
+                        context.semantics_ir().strings().Add("return")));
   return true;
 }
 

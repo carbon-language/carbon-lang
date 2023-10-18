@@ -107,12 +107,6 @@ class Tree : public Printable<Tree> {
 
   [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
 
-  // Returns the text backing the token for the given node.
-  //
-  // This is a convenience method for chaining from a node through its token to
-  // the underlying source text.
-  [[nodiscard]] auto GetNodeText(Node n) const -> llvm::StringRef;
-
   // See the other Print comments.
   auto Print(llvm::raw_ostream& output) const -> void;
 

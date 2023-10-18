@@ -108,11 +108,6 @@ auto Tree::node_subtree_size(Node n) const -> int32_t {
   return node_impls_[n.index].subtree_size;
 }
 
-auto Tree::GetNodeText(Node n) const -> llvm::StringRef {
-  CARBON_CHECK(n.is_valid());
-  return tokens_->GetTokenText(node_impls_[n.index].token);
-}
-
 auto Tree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
                      bool preorder) const -> bool {
   const auto& n_impl = node_impls_[n.index];

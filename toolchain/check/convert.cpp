@@ -134,7 +134,7 @@ static auto MakeElemAccessNode(Context& context, Parse::Node parse_node,
     // special case.
     auto index_id = block.AddNode(SemIR::IntegerLiteral(
         parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
-        context.semantics_ir().AddInteger(llvm::APInt(32, i))));
+        context.semantics_ir().integers().Add(llvm::APInt(32, i))));
     return block.AddNode(
         AccessNodeT(parse_node, elem_type_id, aggregate_id, index_id));
   } else {
@@ -454,8 +454,9 @@ static auto ConvertStructToStruct(Context& context,
           "source has field name `{1}`, destination has field name `{2}`.",
           size_t, llvm::StringRef, llvm::StringRef);
       context.emitter().Emit(value.parse_node(), StructInitFieldNameMismatch,
-                             i + 1, semantics_ir.GetString(src_field.name_id),
-                             semantics_ir.GetString(dest_field.name_id));
+                             i + 1,
+                             semantics_ir.strings().Get(src_field.name_id),
+                             semantics_ir.strings().Get(dest_field.name_id));
       return SemIR::NodeId::BuiltinError;
     }
 

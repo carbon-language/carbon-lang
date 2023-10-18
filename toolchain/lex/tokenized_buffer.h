@@ -151,13 +151,13 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   [[nodiscard]] auto GetIdentifier(Token token) const -> StringId;
 
   // Returns the value of an `IntegerLiteral()` token.
-  [[nodiscard]] auto GetIntegerLiteral(Token token) const -> const llvm::APInt&;
+  [[nodiscard]] auto GetIntegerLiteral(Token token) const -> IntegerId;
 
   // Returns the value of an `RealLiteral()` token.
-  [[nodiscard]] auto GetRealLiteral(Token token) const -> Real;
+  [[nodiscard]] auto GetRealLiteral(Token token) const -> RealId;
 
   // Returns the value of a `StringLiteral()` token.
-  [[nodiscard]] auto GetStringLiteral(Token token) const -> llvm::StringRef;
+  [[nodiscard]] auto GetStringLiteral(Token token) const -> StringId;
 
   // Returns the size specified in a `*TypeLiteral()` token.
   [[nodiscard]] auto GetTypeLiteralSize(Token token) const
