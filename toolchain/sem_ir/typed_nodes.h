@@ -284,14 +284,16 @@ struct RealLiteral {
 };
 
 struct Return {
-  static constexpr auto Kind = NodeKind::Return.Define("return");
+  static constexpr auto Kind =
+      NodeKind::Return.Define("return", TerminatorKind::Terminator);
 
   Parse::Node parse_node;
   // This is a statement, so has no type.
 };
 
 struct ReturnExpression {
-  static constexpr auto Kind = NodeKind::ReturnExpression.Define("return");
+  static constexpr auto Kind =
+      NodeKind::ReturnExpression.Define("return", TerminatorKind::Terminator);
 
   Parse::Node parse_node;
   // This is a statement, so has no type.
