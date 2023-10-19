@@ -98,9 +98,6 @@ class StringStore {
 //
 // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
 // fraction (mantissa * 10^exponent).
-//
-// `RealLiteralValue` carries a reference back to `TokenizedBuffer` which can be
-// invalidated if the buffer is edited or destroyed.
 class Real : public Printable<Real> {
  public:
   auto Print(llvm::raw_ostream& output_stream) const -> void {
