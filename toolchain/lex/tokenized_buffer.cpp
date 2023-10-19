@@ -72,7 +72,7 @@ static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
   for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
     // The SIMD types and constexpr require a C-style cast.
     // NOLINTNEXTLINE(google-readability-casting)
-    masks[i] = (SIMDMaskT)((static_cast<unsigned __int128>(0) - 1) >>
+    masks[i] = (SIMDMaskT)(std::numeric_limits<unsigned __int128>::max() >>
                            ((sizeof(SIMDMaskT) - i) * 8));
   }
   return masks;
@@ -452,7 +452,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
       // Load a mask based on the amount of text we want to compare.
       auto mask = PrefixMasks[prefix_size];
 #if __ARM_NEON
-      // Load and mask the prefix if the current line.
+      // Load and mask the prefix of the current line.
       auto prefix = vld1q_u8(reinterpret_cast<const uint8_t*>(
           source_text.data() + first_line_start));
       prefix = vandq_u8(mask, prefix);
