@@ -33,6 +33,8 @@ class Real : public Printable<Real> {
 
   // If false, the value is mantissa * 2^exponent.
   // If true, the value is mantissa * 10^exponent.
+  // TODO: This field increases Real from 32 bytes to 40 bytes. Consider
+  // changing how it's tracked for space savings.
   bool is_decimal;
 };
 
