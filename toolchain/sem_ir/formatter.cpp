@@ -667,12 +667,9 @@ class Formatter {
     // By default, an instruction has a comma-separated argument list.
     using Info = TypedNodeArgsInfo<NodeT>;
     if constexpr (Info::NumArgs == 2) {
-      auto tuple = StructReflection::AsTuple(node);
-      FormatArgs(std::get<Info::Arg0Field>(tuple),
-                 std::get<Info::Arg1Field>(tuple));
+      FormatArgs(Info::template Get<0>(node), Info::template Get<1>(node));
     } else if constexpr (Info::NumArgs == 1) {
-      auto tuple = StructReflection::AsTuple(node);
-      FormatArgs(std::get<Info::Arg0Field>(tuple));
+      FormatArgs(Info::template Get<0>(node));
     } else {
       FormatArgs();
     }

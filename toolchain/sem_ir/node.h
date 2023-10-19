@@ -26,16 +26,20 @@ struct TypedNodeArgsInfo {
   // A corresponding std::tuple<...> type.
   using Tuple = decltype(StructReflection::AsTuple(std::declval<TypedNode>()));
 
-  static constexpr int Arg0Field =
+  static constexpr int FirstArgField =
       HasParseNode<TypedNode> + HasTypeId<TypedNode>;
-  static constexpr int Arg1Field = Arg0Field + 1;
 
-  static constexpr int NumArgs = std::tuple_size_v<Tuple> - Arg0Field;
+  static constexpr int NumArgs = std::tuple_size_v<Tuple> - FirstArgField;
   static_assert(NumArgs <= 2,
                 "Unsupported: typed node has more than two data fields");
 
   template <int N>
-  using ArgType = std::tuple_element_t<N + Arg0Field, Tuple>;
+  using ArgType = std::tuple_element_t<FirstArgField + N, Tuple>;
+
+  template <int N>
+  static auto Get(TypedNode node) -> ArgType<N> {
+    return std::get<FirstArgField + N>(StructReflection::AsTuple(node));
+  }
 };
 
 // A type-erased representation of a SemIR node, that may be constructed from
@@ -46,8 +50,8 @@ struct TypedNodeArgsInfo {
 // - `kind` for run-time logic when the input Kind is unknown.
 // - `type_id` for quick type checking.
 //
-// In addition, any kind-specific data is stored and can be accessed by casting
-// to the specific kind of node:
+// In addition, kind-specific data can be accessed by casting to the specific
+// kind of node:
 //
 // - Use `node.kind()` or `Is<TypedNode>` to determine what kind of node it is.
 // - Cast to a specific type using `node.As<TypedNode>()`
@@ -73,11 +77,10 @@ class Node : public Printable<Node> {
       type_id_ = typed_node.type_id;
     }
     if constexpr (Info::NumArgs > 0) {
-      auto tuple = StructReflection::AsTuple(typed_node);
-      arg0_ = ToRaw(std::get<Info::Arg0Field>(tuple));
-      if constexpr (Info::NumArgs > 1) {
-        arg1_ = ToRaw(std::get<Info::Arg1Field>(tuple));
-      }
+      arg0_ = ToRaw(Info::template Get<0>(typed_node));
+    }
+    if constexpr (Info::NumArgs > 1) {
+      arg1_ = ToRaw(Info::template Get<1>(typed_node));
     }
   }
 
