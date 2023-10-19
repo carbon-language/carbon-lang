@@ -153,42 +153,6 @@ class File : public Printable<File> {
     return *cross_reference_irs_[xref_id.index];
   }
 
-  // Adds a callable, returning an ID to reference it.
-  auto AddFunction(Function function) -> FunctionId {
-    FunctionId id(functions_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    functions_.push_back(function);
-    return id;
-  }
-
-  // Returns the requested callable.
-  auto GetFunction(FunctionId function_id) const -> const Function& {
-    return functions_[function_id.index];
-  }
-
-  // Returns the requested callable.
-  auto GetFunction(FunctionId function_id) -> Function& {
-    return functions_[function_id.index];
-  }
-
-  // Adds a class, returning an ID to reference it.
-  auto AddClass(Class class_info) -> ClassId {
-    ClassId id(classes_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    classes_.push_back(class_info);
-    return id;
-  }
-
-  // Returns the requested class.
-  auto GetClass(ClassId class_id) const -> const Class& {
-    return classes_[class_id.index];
-  }
-
-  // Returns the requested class.
-  auto GetClass(ClassId class_id) -> Class& { return classes_[class_id.index]; }
-
   // Adds a name scope, returning an ID to reference it.
   auto AddNameScope() -> NameScopeId {
     NameScopeId name_scopes_id(name_scopes_.size());
@@ -287,15 +251,6 @@ class File : public Printable<File> {
     return node_blocks_[block_id.index];
   }
 
-  // Adds a type, returning an ID to reference it.
-  auto AddType(NodeId node_id) -> TypeId {
-    TypeId type_id(types_.size());
-    // Should never happen, will always overflow node_ids first.
-    CARBON_DCHECK(type_id.index >= 0);
-    types_.push_back({.node_id = node_id});
-    return type_id;
-  }
-
   // Marks a type as complete, and sets its value representation.
   auto CompleteType(TypeId object_type_id,
                     ValueRepresentation value_representation) -> void {
@@ -303,20 +258,10 @@ class File : public Printable<File> {
       // We already know our builtin types are complete.
       return;
     }
-    CARBON_CHECK(types_[object_type_id.index].value_representation.kind ==
+    CARBON_CHECK(types().Get(object_type_id).value_representation.kind ==
                  ValueRepresentation::Unknown)
         << "Type " << object_type_id << " completed more than once";
-    types_[object_type_id.index].value_representation = value_representation;
-  }
-
-  // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
-  // order to avoid a check; callers that need that should use
-  // GetTypeAllowBuiltinTypes.
-  auto GetType(TypeId type_id) const -> NodeId {
-    // Double-check it's not called with TypeType or InvalidType.
-    CARBON_CHECK(type_id.index >= 0)
-        << "Invalid argument for GetType: " << type_id;
-    return types_[type_id.index].node_id;
+    types().Get(object_type_id).value_representation = value_representation;
   }
 
   auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> NodeId {
@@ -327,7 +272,7 @@ class File : public Printable<File> {
     } else if (type_id == TypeId::Invalid) {
       return NodeId::Invalid;
     } else {
-      return GetType(type_id);
+      return types().Get(type_id).node_id;
     }
   }
 
@@ -338,7 +283,7 @@ class File : public Printable<File> {
       // TypeType and InvalidType are their own value representation.
       return {.kind = ValueRepresentation::Copy, .type_id = type_id};
     }
-    return types_[type_id.index].value_representation;
+    return types().Get(type_id).value_representation;
   }
 
   // Determines whether the given type is known to be complete. This does not
@@ -349,7 +294,7 @@ class File : public Printable<File> {
 
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
-    return GetNodeAs<PointerType>(GetType(pointer_id)).pointee_id;
+    return GetNodeAs<PointerType>(types().Get(pointer_id).node_id).pointee_id;
   }
 
   // Adds a type block with the given content, returning an ID to reference it.
@@ -399,12 +344,17 @@ class File : public Printable<File> {
     return value_stores_->strings();
   }
 
-  auto functions_size() const -> int { return functions_.size(); }
-  auto classes_size() const -> int { return classes_.size(); }
+  auto functions() -> ValueStore<FunctionId, Function>& { return functions_; }
+  auto functions() const -> const ValueStore<FunctionId, Function>& {
+    return functions_;
+  }
+  auto classes() -> ValueStore<ClassId, Class>& { return classes_; }
+  auto classes() const -> const ValueStore<ClassId, Class>& { return classes_; }
+  auto types() -> ValueStore<TypeId, TypeInfo>& { return types_; }
+  auto types() const -> const ValueStore<TypeId, TypeInfo>& { return types_; }
+
   auto nodes_size() const -> int { return nodes_.size(); }
   auto node_blocks_size() const -> int { return node_blocks_.size(); }
-
-  auto types() const -> llvm::ArrayRef<TypeInfo> { return types_; }
 
   auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
   auto set_top_node_block_id(NodeBlockId block_id) -> void {
@@ -450,10 +400,10 @@ class File : public Printable<File> {
   std::string filename_;
 
   // Storage for callable objects.
-  llvm::SmallVector<Function> functions_;
+  ValueStore<FunctionId, Function> functions_;
 
   // Storage for classes.
-  llvm::SmallVector<Class> classes_;
+  ValueStore<ClassId, Class> classes_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
@@ -464,7 +414,7 @@ class File : public Printable<File> {
   llvm::SmallVector<llvm::DenseMap<StringId, NodeId>> name_scopes_;
 
   // Descriptions of types used in this file.
-  llvm::SmallVector<TypeInfo> types_;
+  ValueStore<TypeId, TypeInfo> types_;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.

@@ -32,7 +32,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   auto fn_node = context.semantics_ir().GetNodeAs<SemIR::FunctionDeclaration>(
       context.return_scope_stack().back());
   const auto& callable =
-      context.semantics_ir().GetFunction(fn_node.function_id);
+      context.semantics_ir().functions().Get(fn_node.function_id);
 
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       Parse::NodeKind::ReturnStatementStart) {

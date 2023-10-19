@@ -51,7 +51,7 @@ static auto BuildClassDeclaration(Context& context)
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
-    class_decl.class_id = context.semantics_ir().AddClass(
+    class_decl.class_id = context.semantics_ir().classes().Add(
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
@@ -73,7 +73,7 @@ auto HandleClassDeclaration(Context& context, Parse::Node /*parse_node*/)
 auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
     -> bool {
   auto [class_id, class_decl_id] = BuildClassDeclaration(context);
-  auto& class_info = context.semantics_ir().GetClass(class_id);
+  auto& class_info = context.semantics_ir().classes().Get(class_id);
 
   // Track that this declaration is the definition.
   if (class_info.definition_id.is_valid()) {

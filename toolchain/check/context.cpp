@@ -246,7 +246,8 @@ auto Context::AddCurrentCodeBlockToFunction() -> void {
           .GetNodeAs<SemIR::FunctionDeclaration>(return_scope_stack().back())
           .function_id;
   semantics_ir()
-      .GetFunction(function_id)
+      .functions()
+      .Get(function_id)
       .body_block_ids.push_back(node_block_stack().PeekOrAdd());
 }
 
@@ -709,7 +710,7 @@ auto Context::CanonicalizeTypeImpl(
   }
 
   auto node_id = make_node();
-  auto type_id = semantics_ir_->AddType(node_id);
+  auto type_id = semantics_ir_->types().Add({.node_id = node_id});
   CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
   type_node_storage_.push_back(
       std::make_unique<TypeNode>(canonical_id, type_id));

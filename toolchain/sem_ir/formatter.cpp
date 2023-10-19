@@ -38,8 +38,8 @@ class NodeNamer {
         semantics_ir_(semantics_ir) {
     nodes.resize(semantics_ir.nodes_size());
     labels.resize(semantics_ir.node_blocks_size());
-    scopes.resize(1 + semantics_ir.functions_size() +
-                  semantics_ir.classes_size());
+    scopes.resize(1 + semantics_ir.functions().size() +
+                  semantics_ir.classes().size());
 
     // Build the package scope.
     GetScopeInfo(ScopeIndex::Package).name =
@@ -47,10 +47,9 @@ class NodeNamer {
     CollectNamesInBlock(ScopeIndex::Package, semantics_ir.top_node_block_id());
 
     // Build each function scope.
-    for (int i : llvm::seq(semantics_ir.functions_size())) {
+    for (auto [i, fn] : llvm::enumerate(semantics_ir.functions().array_ref())) {
       auto fn_id = FunctionId(i);
       auto fn_scope = GetScopeFor(fn_id);
-      const auto& fn = semantics_ir.GetFunction(fn_id);
       // TODO: Provide a location for the function for use as a
       // disambiguator.
       auto fn_loc = Parse::Node::Invalid;
@@ -78,10 +77,10 @@ class NodeNamer {
     }
 
     // Build each class scope.
-    for (int i : llvm::seq(semantics_ir.classes_size())) {
+    for (auto [i, class_info] :
+         llvm::enumerate(semantics_ir.classes().array_ref())) {
       auto class_id = ClassId(i);
       auto class_scope = GetScopeFor(class_id);
-      const auto& class_info = semantics_ir.GetClass(class_id);
       // TODO: Provide a location for the class for use as a
       // disambiguator.
       auto class_loc = Parse::Node::Invalid;
@@ -102,7 +101,7 @@ class NodeNamer {
 
   // Returns the scope index corresponding to a class.
   auto GetScopeFor(ClassId class_id) -> ScopeIndex {
-    return static_cast<ScopeIndex>(1 + semantics_ir_.functions_size() +
+    return static_cast<ScopeIndex>(1 + semantics_ir_.functions().size() +
                                    class_id.index);
   }
 
@@ -420,16 +419,15 @@ class NodeNamer {
           continue;
         }
         case FunctionDeclaration::Kind: {
-          add_node_name_id(
-              semantics_ir_
-                  .GetFunction(node.As<FunctionDeclaration>().function_id)
-                  .name_id);
+          add_node_name_id(semantics_ir_.functions()
+                               .Get(node.As<FunctionDeclaration>().function_id)
+                               .name_id);
           continue;
         }
         case ClassDeclaration::Kind: {
-          add_node_name_id(
-              semantics_ir_.GetClass(node.As<ClassDeclaration>().class_id)
-                  .name_id);
+          add_node_name_id(semantics_ir_.classes()
+                               .Get(node.As<ClassDeclaration>().class_id)
+                               .name_id);
           continue;
         }
         case NameReference::Kind: {
@@ -498,17 +496,17 @@ class Formatter {
     }
     out_ << "}\n";
 
-    for (int i : llvm::seq(semantics_ir_.classes_size())) {
+    for (int i : llvm::seq(semantics_ir_.classes().size())) {
       FormatClass(ClassId(i));
     }
 
-    for (int i : llvm::seq(semantics_ir_.functions_size())) {
+    for (int i : llvm::seq(semantics_ir_.functions().size())) {
       FormatFunction(FunctionId(i));
     }
   }
 
   auto FormatClass(ClassId id) -> void {
-    const Class& class_info = semantics_ir_.GetClass(id);
+    const Class& class_info = semantics_ir_.classes().Get(id);
 
     out_ << "\nclass ";
     FormatClassName(id);
@@ -527,7 +525,7 @@ class Formatter {
   }
 
   auto FormatFunction(FunctionId id) -> void {
-    const Function& fn = semantics_ir_.GetFunction(id);
+    const Function& fn = semantics_ir_.functions().Get(id);
 
     out_ << "\nfn ";
     FormatFunctionName(id);

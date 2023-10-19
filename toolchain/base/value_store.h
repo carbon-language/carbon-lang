@@ -80,19 +80,25 @@ constexpr StringId StringId::Invalid(StringId::InvalidIndex);
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
-template <typename IdT>
-class ValueStore : public Printable<ValueStore<IdT>> {
+template <typename IdT, typename ValueT = typename IdT::IndexedType>
+class ValueStore : public Printable<ValueStore<IdT, ValueT>> {
  public:
   // Stores the value and returns an ID to reference it.
-  auto Add(typename IdT::IndexedType value) -> IdT {
+  auto Add(ValueT value) -> IdT {
     IdT id = IdT(values_.size());
     CARBON_CHECK(id.index >= 0) << "Id overflow";
     values_.push_back(std::move(value));
     return id;
   }
 
+  // Returns a mutable value for an ID.
+  auto Get(IdT id) -> ValueT& {
+    CARBON_CHECK(id.index >= 0) << id.index;
+    return values_[id.index];
+  }
+
   // Returns the value for an ID.
-  auto Get(IdT id) const -> const typename IdT::IndexedType& {
+  auto Get(IdT id) const -> const ValueT& {
     CARBON_CHECK(id.index >= 0) << id.index;
     return values_[id.index];
   }
@@ -105,8 +111,11 @@ class ValueStore : public Printable<ValueStore<IdT>> {
     }
   }
 
+  auto array_ref() const -> llvm::ArrayRef<ValueT> { return values_; }
+  auto size() const -> int { return values_.size(); }
+
  private:
-  llvm::SmallVector<typename IdT::IndexedType> values_;
+  llvm::SmallVector<ValueT> values_;
 };
 
 // Storage for StringRefs. The caller is responsible for ensuring storage is

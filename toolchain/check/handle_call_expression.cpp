@@ -29,7 +29,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   }
 
   auto function_id = function_name->function_id;
-  const auto& callable = context.semantics_ir().GetFunction(function_id);
+  const auto& callable = context.semantics_ir().functions().Get(function_id);
 
   // For functions with an implicit return type, the return type is the empty
   // tuple type.

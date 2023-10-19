@@ -145,7 +145,7 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
       context_->semantics_ir().GetNode(name_context.resolved_node_id);
   switch (resolved_node.kind()) {
     case SemIR::ClassDeclaration::Kind: {
-      auto& class_info = context_->semantics_ir().GetClass(
+      const auto& class_info = context_->semantics_ir().classes().Get(
           resolved_node.As<SemIR::ClassDeclaration>().class_id);
       // TODO: Check that the class is complete rather than that it has a scope.
       if (class_info.scope_id.is_valid()) {

@@ -80,7 +80,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
       // IDs in the signature.
       if (is_definition) {
         auto& function_info =
-            context.semantics_ir().GetFunction(function_decl.function_id);
+            context.semantics_ir().functions().Get(function_decl.function_id);
         function_info.param_refs_id = param_refs_id;
         function_info.return_type_id = return_type_id;
         function_info.return_slot_id = return_slot_id;
@@ -93,7 +93,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
-    function_decl.function_id = context.semantics_ir().AddFunction(
+    function_decl.function_id = context.semantics_ir().functions().Add(
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
@@ -138,7 +138,8 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   // and otherwise add an implicit `return;`.
   if (context.is_current_position_reachable()) {
     if (context.semantics_ir()
-            .GetFunction(function_id)
+            .functions()
+            .Get(function_id)
             .return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
@@ -160,7 +161,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
       BuildFunctionDeclaration(context, /*is_definition=*/true);
-  auto& function = context.semantics_ir().GetFunction(function_id);
+  auto& function = context.semantics_ir().functions().Get(function_id);
 
   // Track that this declaration is the definition.
   if (function.definition_id.is_valid()) {
