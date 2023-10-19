@@ -1,0 +1,48 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+
+fn Main() {
+  var x: i32 = 0;
+  if (true) {
+    // TODO: We should reject the use of the shadowed variable `x`, not this
+    // shadowing declaration. Also the diagnostic text is wrong ("same scope").
+    // CHECK:STDERR: fail_shadowing.carbon:[[@LINE+6]]:9: ERROR: Duplicate name being declared in the same scope.
+    // CHECK:STDERR:     var x: i32 = 0;
+    // CHECK:STDERR:         ^
+    // CHECK:STDERR: fail_shadowing.carbon:[[@LINE-7]]:7: Name is previously declared here.
+    // CHECK:STDERR:   var x: i32 = 0;
+    // CHECK:STDERR:       ^
+    var x: i32 = 0;
+
+    x = 1;
+  }
+}
+
+// CHECK:STDOUT: file "fail_shadowing.carbon" {
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %x.loc9: ref i32 = var "x"
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 0
+// CHECK:STDOUT:   assign %x.loc9, %.loc9
+// CHECK:STDOUT:   %.loc10: bool = bool_literal true
+// CHECK:STDOUT:   if %.loc10 br !if.then else br !if.else
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.then:
+// CHECK:STDOUT:   %x.loc19: ref i32 = var "x"
+// CHECK:STDOUT:   %.loc19: i32 = int_literal 0
+// CHECK:STDOUT:   assign %x.loc19, %.loc19
+// CHECK:STDOUT:   %x.ref: ref i32 = name_reference "x", %x.loc9
+// CHECK:STDOUT:   %.loc21: i32 = int_literal 1
+// CHECK:STDOUT:   assign %x.ref, %.loc21
+// CHECK:STDOUT:   br !if.else
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.else:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

@@ -78,7 +78,7 @@ class DeclarationNameStack {
     // The scope which qualified names are added to. For unqualified names in
     // an unnamed scope, this will be Invalid to indicate the current scope
     // should be used.
-    SemIR::NameScopeId target_scope_id = SemIR::NameScopeId::Invalid;
+    SemIR::NameScopeId target_scope_id;
 
     // The last parse node used.
     Parse::Node parse_node = Parse::Node::Invalid;
@@ -104,6 +104,13 @@ class DeclarationNameStack {
   // node stack, which will be applied to the declaration name if appropriate.
   auto Pop() -> NameContext;
 
+  // Creates and returns a name context corresponding to declaring an
+  // unqualified name in the current context. This is suitable for adding to
+  // name lookup in situations where a qualified name is not permitted, such as
+  // a pattern binding.
+  auto MakeUnqualifiedName(Parse::Node parse_node, SemIR::StringId name_id)
+      -> NameContext;
+
   // Applies an expression from the node stack to the top of the declaration
   // name stack.
   auto ApplyExpressionQualifier(Parse::Node parse_node, SemIR::NodeId node_id)
@@ -124,6 +131,13 @@ class DeclarationNameStack {
       -> SemIR::NodeId;
 
  private:
+  // Returns a new name context corresponding to an empty name.
+  auto NewNameContext() -> NameContext;
+
+  // Applies a Name from the node stack to given name context.
+  auto ApplyNameQualifierTo(NameContext& name_context, Parse::Node parse_node,
+                            SemIR::StringId name_id) -> void;
+
   // Returns true if the context is in a state where it can resolve qualifiers.
   // Updates name_context as needed.
   auto CanResolveQualifier(NameContext& name_context, Parse::Node parse_node)

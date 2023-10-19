@@ -36,6 +36,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
+// CHECK:STDOUT:   .k = %k
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n: i32) -> i32 {

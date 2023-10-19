@@ -8,11 +8,22 @@
 
 namespace Carbon::Check {
 
+auto DeclarationNameStack::NewNameContext() -> NameContext {
+  return NameContext{.state = NameContext::State::New,
+                     .target_scope_id = context_->current_scope_id(),
+                     .resolved_node_id = SemIR::NodeId::Invalid};
+}
+
+auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
+                                               SemIR::StringId name_id)
+    -> NameContext {
+  NameContext context = NewNameContext();
+  ApplyNameQualifierTo(context, parse_node, name_id);
+  return context;
+}
+
 auto DeclarationNameStack::Push() -> void {
-  declaration_name_stack_.push_back(
-      {.state = NameContext::State::New,
-       .target_scope_id = context_->current_scope_id(),
-       .resolved_node_id = SemIR::NodeId::Invalid});
+  declaration_name_stack_.push_back(NewNameContext());
 }
 
 auto DeclarationNameStack::Pop() -> NameContext {
@@ -98,10 +109,20 @@ auto DeclarationNameStack::ApplyExpressionQualifier(Parse::Node parse_node,
 
 auto DeclarationNameStack::ApplyNameQualifier(Parse::Node parse_node,
                                               SemIR::StringId name_id) -> void {
-  auto& name_context = declaration_name_stack_.back();
+  ApplyNameQualifierTo(declaration_name_stack_.back(), parse_node, name_id);
+}
+
+auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
+                                                Parse::Node parse_node,
+                                                SemIR::StringId name_id)
+    -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     // This means the input node_id is actually a string ID.
+    //
+    // TODO: This doesn't perform the right kind of lookup. We will find names
+    // from enclosing lexical scopes here, in the case where `target_scope_id`
+    // is invalid.
     auto resolved_node_id = context_->LookupName(
         name_context.parse_node, name_id, name_context.target_scope_id,
         /*print_diagnostics=*/false);
