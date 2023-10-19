@@ -557,6 +557,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     }
 
     if (literal->is_terminated()) {
+      // TODO: Refactor to reduce copies.
+      // https://github.com/carbon-language/carbon-lang/pull/3311#discussion_r1366048360
       buffer_.computed_strings_.push_back(
           std::make_unique<std::string>(literal->ComputeValue(emitter_)));
       auto string_id = buffer_.value_stores_->strings().Add(
