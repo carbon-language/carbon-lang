@@ -32,7 +32,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
       SourceBuffer::CreateFromFile(fs, TestFileName, NullDiagnosticConsumer());
 
   // Lex the input.
-  CompileValueStores value_stores;
+  SharedValueStores value_stores;
   auto tokens = Lex::TokenizedBuffer::Lex(value_stores, *source,
                                           NullDiagnosticConsumer());
   if (tokens.has_errors()) {

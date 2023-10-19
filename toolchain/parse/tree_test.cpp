@@ -41,7 +41,7 @@ class TreeTest : public ::testing::Test {
     return token_storage_.front();
   }
 
-  CompileValueStores value_stores_;
+  SharedValueStores value_stores_;
   llvm::vfs::InMemoryFileSystem fs_;
   std::forward_list<SourceBuffer> source_storage_;
   std::forward_list<Lex::TokenizedBuffer> token_storage_;

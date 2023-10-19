@@ -8,91 +8,11 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
 #include "toolchain/base/index_base.h"
 
 namespace Carbon {
-
-// Corresponds to a StringRef.
-struct StringId : public IndexBase, public Printable<StringId> {
-  static const StringId Invalid;
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "str";
-    IndexBase::Print(out);
-  }
-};
-constexpr StringId StringId::Invalid(StringId::InvalidIndex);
-
-// Corresponds to an integer value represented by an APInt.
-struct IntegerId : public IndexBase, public Printable<IntegerId> {
-  static const IntegerId Invalid;
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "int";
-    IndexBase::Print(out);
-  }
-};
-constexpr IntegerId IntegerId::Invalid(IntegerId::InvalidIndex);
-
-// Corresponds to a Real value.
-struct RealId : public IndexBase, public Printable<RealId> {
-  static const RealId Invalid;
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "real";
-    IndexBase::Print(out);
-  }
-};
-constexpr RealId RealId::Invalid(RealId::InvalidIndex);
-
-// A simple wrapper for accumulating values, providing IDs to later retrieve the
-// value. This does not do deduplication.
-template <typename ValueT, typename IdT>
-class ValueStore {
- public:
-  // Stores the value and returns an ID to reference it.
-  auto Add(ValueT value) -> IdT {
-    auto id = IdT(values_.size());
-    values_.push_back(std::move(value));
-    return id;
-  }
-
-  // Returns the value for an ID.
-  auto Get(IdT id) const -> const ValueT& {
-    CARBON_CHECK(id.is_valid());
-    return values_[id.index];
-  }
-
- private:
-  llvm::SmallVector<ValueT> values_;
-};
-
-// Storage for StringRefs. The caller is responsible for ensuring storage is
-// allocated.
-class StringStore {
- public:
-  // Returns an ID to reference the value. May return an existing ID if the
-  // string was previously added.
-  auto Add(llvm::StringRef value) -> StringId {
-    auto [it, inserted] = map_.insert({value, StringId(values_.size())});
-    if (inserted) {
-      values_.push_back(value);
-    }
-    return it->second;
-  }
-
-  // Returns the value for an ID.
-  auto Get(StringId id) const -> llvm::StringRef {
-    CARBON_CHECK(id.is_valid());
-    return values_[id.index];
-  }
-
- private:
-  llvm::StringMap<StringId> map_;
-  llvm::SmallVector<llvm::StringRef> values_;
-};
 
 // The value of a real literal.
 //
@@ -116,18 +36,102 @@ class Real : public Printable<Real> {
   bool is_decimal;
 };
 
-// Stores that will be used across compiler steps. This is provided mainly so
-// that they don't need to be passed separately.
-class CompileValueStores {
+// Corresponds to an integer value represented by an APInt.
+struct IntegerId : public IndexBase, public Printable<IntegerId> {
+  using IndexedType = llvm::APInt;
+  static const IntegerId Invalid;
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "int";
+    IndexBase::Print(out);
+  }
+};
+constexpr IntegerId IntegerId::Invalid(IntegerId::InvalidIndex);
+
+// Corresponds to a Real value.
+struct RealId : public IndexBase, public Printable<RealId> {
+  using IndexedType = Real;
+  static const RealId Invalid;
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "real";
+    IndexBase::Print(out);
+  }
+};
+constexpr RealId RealId::Invalid(RealId::InvalidIndex);
+
+// Corresponds to a StringRef.
+struct StringId : public IndexBase, public Printable<StringId> {
+  using IndexedType = std::string;
+  static const StringId Invalid;
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "str";
+    IndexBase::Print(out);
+  }
+};
+constexpr StringId StringId::Invalid(StringId::InvalidIndex);
+
+// A simple wrapper for accumulating values, providing IDs to later retrieve the
+// value. This does not do deduplication.
+template <typename IdT>
+class ValueStore {
  public:
-  auto integers() -> ValueStore<llvm::APInt, IntegerId>& { return integers_; }
-  auto reals() -> ValueStore<Real, RealId>& { return reals_; }
-  auto strings() -> StringStore& { return strings_; }
+  // Stores the value and returns an ID to reference it.
+  auto Add(typename IdT::IndexedType value) -> IdT {
+    auto id = IdT(values_.size());
+    values_.push_back(std::move(value));
+    return id;
+  }
+
+  // Returns the value for an ID.
+  auto Get(IdT id) const -> const typename IdT::IndexedType& {
+    CARBON_CHECK(id.is_valid());
+    return values_[id.index];
+  }
 
  private:
-  ValueStore<llvm::APInt, IntegerId> integers_;
-  ValueStore<Real, RealId> reals_;
-  StringStore strings_;
+  llvm::SmallVector<typename IdT::IndexedType> values_;
+};
+
+// Storage for StringRefs. The caller is responsible for ensuring storage is
+// allocated.
+template <>
+class ValueStore<StringId> {
+ public:
+  // Returns an ID to reference the value. May return an existing ID if the
+  // string was previously added.
+  auto Add(llvm::StringRef value) -> StringId {
+    auto [it, inserted] = map_.insert({value, StringId(values_.size())});
+    if (inserted) {
+      values_.push_back(value);
+    }
+    return it->second;
+  }
+
+  // Returns the value for an ID.
+  auto Get(StringId id) const -> llvm::StringRef {
+    CARBON_CHECK(id.is_valid());
+    return values_[id.index];
+  }
+
+ private:
+  llvm::DenseMap<llvm::StringRef, StringId> map_;
+  llvm::SmallVector<llvm::StringRef> values_;
+};
+
+// Stores that will be used across compiler steps. This is provided mainly so
+// that they don't need to be passed separately.
+class SharedValueStores {
+ public:
+  auto integers() -> ValueStore<IntegerId>& { return integers_; }
+  auto reals() -> ValueStore<RealId>& { return reals_; }
+  auto strings() -> ValueStore<StringId>& { return strings_; }
+
+ private:
+  ValueStore<IntegerId> integers_;
+  ValueStore<RealId> reals_;
+  ValueStore<StringId> strings_;
 };
 
 }  // namespace Carbon

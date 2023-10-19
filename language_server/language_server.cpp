@@ -89,7 +89,7 @@ static auto getName(Parse::Tree& p, Parse::Node node)
 void LanguageServer::OnDocumentSymbol(
     clang::clangd::DocumentSymbolParams const& params,
     clang::clangd::Callback<std::vector<clang::clangd::DocumentSymbol>> cb) {
-  CompileValueStores value_stores;
+  SharedValueStores value_stores;
   llvm::vfs::InMemoryFileSystem vfs;
   auto file = params.textDocument.uri.file().str();
   vfs.addFile(file, /*mtime=*/0,

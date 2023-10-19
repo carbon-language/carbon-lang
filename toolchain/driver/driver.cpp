@@ -383,7 +383,7 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
 // Ties together information for a file being compiled.
 class Driver::CompilationUnit {
  public:
-  explicit CompilationUnit(Driver* driver, CompileValueStores* value_stores,
+  explicit CompilationUnit(Driver* driver, SharedValueStores* value_stores,
                            const CompileOptions& options,
                            llvm::StringRef input_file_name)
       : driver_(driver),
@@ -573,7 +573,7 @@ class Driver::CompilationUnit {
   }
 
   Driver* driver_;
-  CompileValueStores* value_stores_;
+  SharedValueStores* value_stores_;
   const CompileOptions& options_;
   llvm::StringRef input_file_name_;
 
@@ -599,7 +599,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return false;
   }
 
-  CompileValueStores value_stores;
+  SharedValueStores value_stores;
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   auto flush = llvm::make_scope_exit([&]() {
     // The diagnostics consumer must be flushed before compilation artifacts are

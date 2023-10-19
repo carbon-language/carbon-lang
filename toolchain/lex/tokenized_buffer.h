@@ -131,7 +131,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`
   // which will refer into the source.
-  static auto Lex(CompileValueStores& value_stores, SourceBuffer& source,
+  static auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
                   DiagnosticConsumer& consumer) -> TokenizedBuffer;
 
   [[nodiscard]] auto GetKind(Token token) const -> TokenKind;
@@ -335,7 +335,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // members. A working object of this type is built with the `lex` function
   // above so that its return can indicate if an error was encountered while
   // lexing.
-  explicit TokenizedBuffer(CompileValueStores& value_stores,
+  explicit TokenizedBuffer(SharedValueStores& value_stores,
                            SourceBuffer& source)
       : value_stores_(&value_stores), source_(&source) {}
 
@@ -349,7 +349,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto PrintToken(llvm::raw_ostream& output_stream, Token token,
                   PrintWidths widths) const -> void;
 
-  CompileValueStores* value_stores_;
+  SharedValueStores* value_stores_;
   SourceBuffer* source_;
 
   llvm::SmallVector<TokenInfo> token_infos_;

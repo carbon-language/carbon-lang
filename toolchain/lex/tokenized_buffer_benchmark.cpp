@@ -399,7 +399,7 @@ class LexerBenchHelper {
         fs_, filename_, ConsoleDiagnosticConsumer()));
   }
 
-  CompileValueStores value_stores_;
+  SharedValueStores value_stores_;
   llvm::vfs::InMemoryFileSystem fs_;
   std::string filename_ = "test.carbon";
   SourceBuffer source_;

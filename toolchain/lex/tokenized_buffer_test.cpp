@@ -49,7 +49,7 @@ class LexerTest : public ::testing::Test {
     return TokenizedBuffer::Lex(value_stores_, GetSourceBuffer(text), consumer);
   }
 
-  CompileValueStores value_stores_;
+  SharedValueStores value_stores_;
   llvm::vfs::InMemoryFileSystem fs_;
   int file_index_ = 0;
   std::forward_list<SourceBuffer> source_storage_;

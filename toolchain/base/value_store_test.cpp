@@ -14,7 +14,7 @@ using ::testing::Eq;
 using ::testing::Not;
 
 TEST(ValueStore, Integer) {
-  CompileValueStores value_stores;
+  SharedValueStores value_stores;
   IntegerId id1 = value_stores.integers().Add(llvm::APInt(64, 1));
   IntegerId id2 = value_stores.integers().Add(llvm::APInt(64, 2));
 
@@ -34,7 +34,7 @@ TEST(ValueStore, Real) {
              .exponent = llvm::APInt(64, 22),
              .is_decimal = false};
 
-  CompileValueStores value_stores;
+  SharedValueStores value_stores;
   RealId id1 = value_stores.reals().Add(real1);
   RealId id2 = value_stores.reals().Add(real2);
 
@@ -56,7 +56,7 @@ TEST(ValueStore, Real) {
 TEST(ValueStore, String) {
   std::string a = "a";
   std::string b = "b";
-  CompileValueStores value_stores;
+  SharedValueStores value_stores;
   StringId a_id = value_stores.strings().Add(a);
   StringId b_id = value_stores.strings().Add(b);
 

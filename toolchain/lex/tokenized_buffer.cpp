@@ -259,7 +259,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     bool formed_token_;
   };
 
-  Lexer(CompileValueStores& value_stores, SourceBuffer& source,
+  Lexer(SharedValueStores& value_stores, SourceBuffer& source,
         DiagnosticConsumer& consumer)
       : buffer_(value_stores, source),
         consumer_(consumer),
@@ -1115,9 +1115,8 @@ constexpr std::array<TokenKind, 256>
       return table;
     }();
 
-auto TokenizedBuffer::Lex(CompileValueStores& value_stores,
-                          SourceBuffer& source, DiagnosticConsumer& consumer)
-    -> TokenizedBuffer {
+auto TokenizedBuffer::Lex(SharedValueStores& value_stores, SourceBuffer& source,
+                          DiagnosticConsumer& consumer) -> TokenizedBuffer {
   Lexer lexer(value_stores, source, consumer);
   return std::move(lexer).Lex();
 }
