@@ -21,10 +21,6 @@ namespace Carbon::Internal {
 // It is specifically designed to compose with X-MACRO style `.def` files that
 // stamp out all the enumerators.
 //
-// It also supports some opt-in APIs that classes can enable by `using` the
-// names to make them public: `AsInt` and `FromInt` allow converting to and from
-// the underlying type of the enumerator.
-//
 // Users must be in the `Carbon` namespace and should look like the following.
 //
 // In `my_kind.h`:
@@ -38,6 +34,17 @@ namespace Carbon::Internal {
 //    public:
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
 //   #include ".../my_kind.def"
+//
+//     // OPTIONAL: To support converting to and from the underlying type of
+//     // the enumerator, add these lines:
+//     using EnumBase::AsInt;
+//     using EnumBase::FromInt;
+//
+//     // OPTIONAL: To expose the ability to create an instance from the raw
+//     // enumerator (for unusual use cases), add this:
+//     using EnumBase::Create;
+//
+//     // Plus, anything else you wish to include.
 //   };
 //
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CONSTANT_DEFINITION(MyKind, Name)
@@ -51,6 +58,44 @@ namespace Carbon::Internal {
 //   #include ".../my_kind.def"
 //   };
 //   ```
+//
+// The result of the above:
+// - An enum class ("RawEnumType") defined in an `Internal` namespace with one
+//   enumerator per call to CARBON_MY_KIND(Name) in ".../my_kind.def", with name
+//   `Name`.
+// - A type `MyKind` with a RawEnumType field that includes:
+//   - all the public members of `EnumBase`, like `name` and `Print`
+//     ```
+//     auto ErrorMessage(MyKind k) -> std::string {
+//       return k.name() + " not found";
+//     }
+//     ```
+//   - any protected members of `EnumBase` that were included with `using`, like
+//     `AsInt`, `FromInt`.
+//   - one static constant member of type `MyKind` per call to
+//     CARBON_MY_KIND(Name) in ".../my_kind.def" with name `Name` and the
+//     corresponding value from RawEnumType.
+//     ```
+//     ErrorMessage(MyKind::Name1);
+//     ```
+//   - an implicit conversion to the RawEnumType, which is used when writing
+//     a `switch` statement, as in:
+//     ```
+//     auto MyFunction(MyKind k) -> void {
+//       // Implicitly converts `k` and every `case` expression to RawEnumType:
+//       switch (k) {
+//         case MyKind::Name1:
+//           // ...
+//           break;
+//
+//         case MyKind::Name2:
+//           // ...
+//           break;
+//
+//         // No `default` case needed if the above cases are exhaustive.
+//       }
+//     }
+//     ```
 template <typename DerivedT, typename EnumT, const llvm::StringLiteral Names[]>
 class EnumBase : public Printable<DerivedT> {
  public:
