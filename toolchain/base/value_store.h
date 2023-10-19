@@ -36,7 +36,7 @@ struct IntegerId : public IndexBase, public Printable<IntegerId> {
 };
 constexpr IntegerId IntegerId::Invalid(IntegerId::InvalidIndex);
 
-// Corresponds to a RealValue.
+// Corresponds to a Real value.
 struct RealId : public IndexBase, public Printable<RealId> {
   static const RealId Invalid;
   using IndexBase::IndexBase;
