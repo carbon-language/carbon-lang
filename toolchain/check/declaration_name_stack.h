@@ -75,8 +75,9 @@ class DeclarationNameStack {
 
     State state = State::New;
 
-    // The scope which qualified names are added to. For unqualified names,
-    // this will be Invalid to indicate the current scope should be used.
+    // The scope which qualified names are added to. For unqualified names in
+    // an unnamed scope, this will be Invalid to indicate the current scope
+    // should be used.
     SemIR::NameScopeId target_scope_id = SemIR::NameScopeId::Invalid;
 
     // The last parse node used.
@@ -116,6 +117,11 @@ class DeclarationNameStack {
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(NameContext name_context, SemIR::NodeId target_id)
       -> void;
+
+  // Adds a name to name lookup, or returns the existing node if this name has
+  // already been declared in this scope.
+  auto LookupOrAddName(NameContext name_context, SemIR::NodeId target_id)
+      -> SemIR::NodeId;
 
  private:
   // Returns true if the context is in a state where it can resolve qualifiers.

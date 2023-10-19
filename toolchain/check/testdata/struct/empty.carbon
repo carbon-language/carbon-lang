@@ -9,8 +9,8 @@ var y: {} = x;
 
 // CHECK:STDOUT: file "empty.carbon" {
 // CHECK:STDOUT:   %.loc7_9.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc7_9.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_9.3: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc7_9.2: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc7_9.3: type = tuple_type ()
 // CHECK:STDOUT:   %x: ref {} = var "x"
 // CHECK:STDOUT:   %.loc7_14.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc7_14.2: init {} = struct_init %.loc7_14.1, ()

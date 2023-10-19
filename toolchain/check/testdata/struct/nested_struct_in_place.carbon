@@ -11,6 +11,7 @@ fn G() {
 }
 
 // CHECK:STDOUT: file "nested_struct_in_place.carbon" {
+// CHECK:STDOUT:   %.loc7: type = ptr_type (i32, i32, i32)
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }

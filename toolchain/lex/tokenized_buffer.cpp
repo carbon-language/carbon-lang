@@ -49,6 +49,22 @@ auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
   return std::visit(Overload{std::forward<Fs&&>(fs)...}, std::forward<V&&>(v));
 }
 
+#if __x86_64__
+#define CARBON_USE_SIMD 1
+
+// A table of masks to include 0-16 bytes of an SSE register.
+// TODO: Make this constexpr to avoid dynamic initialization.
+static const std::array<__m128i, sizeof(__m128i) + 1> prefix_masks = [] {
+  std::array<__m128i, sizeof(__m128i) + 1> masks = {};
+  for (auto [i, mask] : llvm::enumerate(masks)) {
+    memset(&mask, 0xFF, i);
+  }
+  return masks;
+}();
+#else
+#define CARBON_USE_SIMD 0
+#endif
+
 // Scans the provided text and returns the prefix `StringRef` of contiguous
 // identifier characters.
 //
@@ -83,7 +99,7 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
     return table;
   })();
 
-#if __x86_64__
+#if CARBON_USE_SIMD && __x86_64__
   // This code uses a scheme derived from the techniques in Geoff Langdale and
   // Daniel Lemire's work on parsing JSON[1]. Specifically, that paper outlines
   // a technique of using two 4-bit indexed in-register look-up tables (LUTs) to
@@ -277,6 +293,14 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     // The last line ends at the end of the file.
     buffer_.AddLine(LineInfo(start, size - start));
 
+    // If the last line wasn't empty, the file ends with an unterminated line.
+    // Add an extra blank line so that we never need to handle the special case
+    // of being on the last line inside the lexer and needing to not increment
+    // to the next line.
+    if (start != size) {
+      buffer_.AddLine(LineInfo(size, 0));
+    }
+
     // Now that all the infos are allocated, get a fresh pointer to the first
     // info for use while lexing.
     line_index_ = 0;
@@ -293,20 +317,20 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     return position - current_line_info()->start;
   }
 
-  // Perform the necessary bookkeeping to step past a newline at the current
-  // line and column.
-  auto HandleNewline(llvm::StringRef source_text, ssize_t& position) -> void {
-    CARBON_DCHECK(source_text[position] == '\n');
-    CARBON_DCHECK(current_line_info()->start + current_line_info()->length ==
-                  position);
-    ++position;
-    ++line_index_;
-    CARBON_DCHECK(current_line_info()->start = position);
-    set_indent_ = false;
-  }
-
   auto NoteWhitespace() -> void {
     buffer_.token_infos_.back().has_trailing_space = true;
+  }
+
+  auto SkipHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
+      -> void {
+    // Handle adjacent whitespace quickly. This comes up frequently for example
+    // due to indentation. We don't expect *huge* runs, so just use a scalar
+    // loop. While still scalar, this avoids repeated table dispatch and marking
+    // whitespace.
+    while (position < static_cast<ssize_t>(source_text.size()) &&
+           (source_text[position] == ' ' || source_text[position] == '\t')) {
+      ++position;
+    }
   }
 
   auto LexHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
@@ -314,20 +338,19 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     CARBON_DCHECK(source_text[position] == ' ' ||
                   source_text[position] == '\t');
     NoteWhitespace();
-    // Handle adjacent whitespace quickly. This comes up frequently for example
-    // due to indentation. We don't expect *huge* runs, so just use a scalar
-    // loop. While still scalar, this avoids repeated table dispatch and marking
-    // whitespace. We use `ssize_t` in the loop for performance.
-    while (position < static_cast<ssize_t>(source_text.size()) &&
-           (source_text[position] == ' ' || source_text[position] == '\t')) {
-      ++position;
-    }
+    // Skip runs using an optimized code path.
+    SkipHorizontalWhitespace(source_text, position);
   }
 
   auto LexVerticalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void {
     NoteWhitespace();
-    HandleNewline(source_text, position);
+    ++line_index_;
+    auto* line_info = current_line_info();
+    ssize_t line_start = line_info->start;
+    position = line_start;
+    SkipHorizontalWhitespace(source_text, position);
+    line_info->indent = position - line_start;
   }
 
   auto LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
@@ -336,9 +359,11 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 
     // Both comments and slash symbols start with a `/`. We disambiguate with a
     // max-munch rule -- if the next character is another `/` then we lex it as
-    // a comment start. If it isn't, then we lex as a slash.
-    if (position + 1 < static_cast<ssize_t>(source_text.size()) &&
-        source_text[position + 1] == '/') {
+    // a comment start. If it isn't, then we lex as a slash. We also optimize
+    // for the comment case as we expect that to be much more important for
+    // overall lexer performance.
+    if (LLVM_LIKELY(position + 1 < static_cast<ssize_t>(source_text.size()) &&
+                    source_text[position + 1] == '/')) {
       LexComment(source_text, position);
       return;
     }
@@ -352,32 +377,111 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     CARBON_DCHECK(source_text.substr(position).startswith("//"));
 
     // Any comment must be the only non-whitespace on the line.
-    if (set_indent_) {
+    const auto* line_info = current_line_info();
+    if (LLVM_UNLIKELY(position != line_info->start + line_info->indent)) {
       CARBON_DIAGNOSTIC(TrailingComment, Error,
                         "Trailing comments are not permitted.");
 
       emitter_.Emit(source_text.begin() + position, TrailingComment);
+
+      // Note that we cannot fall-through here as the logic below doesn't handle
+      // trailing comments. For simplicity, we just consume the trailing comment
+      // itself and let the normal lexer handle the newline as if there weren't
+      // a comment at all.
+      position = line_info->start + line_info->length;
+      return;
     }
 
     // The introducer '//' must be followed by whitespace or EOF.
+    bool is_valid_after_slashes = true;
     if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
-        !IsSpace(source_text[position + 2])) {
+        LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
       CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                         "Whitespace is required after '//'.");
       emitter_.Emit(source_text.begin() + position + 2,
                     NoWhitespaceAfterCommentIntroducer);
+
+      // We use this to tweak the lexing of blocks below.
+      is_valid_after_slashes = false;
     }
 
-    // Use the current line info to jump to the end of the line.
-    position = current_line_info()->start + current_line_info()->length;
-    // This may be the end of the file in which case we immediately return.
-    if (position == static_cast<ssize_t>(source_text.size())) {
-      // Finished lexing.
-      return;
+    // Skip over this line.
+    ssize_t line_index = line_index_;
+    ++line_index;
+    position = buffer_.line_infos_[line_index].start;
+
+    // A very common pattern is a long block of comment lines all with the same
+    // indent and comment start. We skip these comment blocks in bulk both for
+    // speed and to reduce redundant diagnostics if each line has the same
+    // erroneous comment start like `//!`.
+    //
+    // When we have SIMD support this is even more important for speed, as short
+    // indents can be scanned extremely quickly with SIMD and we expect these to
+    // be the dominant cases.
+    //
+    // TODO: We should extend this to 32-byte SIMD on platforms with support.
+    constexpr int MaxIndent = 13;
+    const int indent = line_info->indent;
+    const ssize_t first_line_start = line_info->start;
+    ssize_t prefix_size = indent + (is_valid_after_slashes ? 3 : 2);
+    auto skip_to_next_line = [this, indent, &line_index, &position] {
+      // We're guaranteed to have a line here even on a comment on the last line
+      // as we ensure there is an empty line structure at the end of every file.
+      ++line_index;
+      auto* next_line_info = &buffer_.line_infos_[line_index];
+      next_line_info->indent = indent;
+      position = next_line_info->start;
+    };
+    if (CARBON_USE_SIMD &&
+        position + 16 < static_cast<ssize_t>(source_text.size()) &&
+        indent <= MaxIndent) {
+#if __x86_64__
+      // Load a mask based on the amount of text we want to compare.
+      auto mask = prefix_masks[prefix_size];
+      // And use the current line's prefix as the exemplar to compare against.
+      // We don't mask here as we will mask when doing the comparison.
+      auto prefix = _mm_loadu_si128(reinterpret_cast<const __m128i*>(
+          source_text.data() + first_line_start));
+      do {
+        // Load the next line to consider's prefix.
+        auto next_prefix = _mm_loadu_si128(
+            reinterpret_cast<const __m128i*>(source_text.data() + position));
+        // Compute the difference between the next line and our exemplar. Again,
+        // we don't mask the difference because the comparison below will be
+        // masked.
+        auto prefix_diff = _mm_xor_si128(prefix, next_prefix);
+        // If we have any differences (non-zero bits) within the mask, we can't
+        // skip the next line too.
+        if (!_mm_test_all_zeros(mask, prefix_diff)) {
+          break;
+        }
+
+        skip_to_next_line();
+      } while (position + 16 < static_cast<ssize_t>(source_text.size()));
+      // TODO: If we finish the loop due to the position approaching the end of
+      // the buffer we may fail to skip the last line in a comment block that
+      // has an invalid initial sequence and thus emit extra diagnostics. We
+      // should really fall through to the generic skipping logic, but the code
+      // organization will need to change significantly to allow that.
+#elif CARBON_USE_SIMD
+#error Unknown target for SIMD comment skipping.
+#endif
+    } else {
+      while (position + prefix_size <
+                 static_cast<ssize_t>(source_text.size()) &&
+             memcmp(source_text.data() + first_line_start,
+                    source_text.data() + position, prefix_size) == 0) {
+        skip_to_next_line();
+      }
     }
 
-    // Otherwise, lex the newline.
-    LexVerticalWhitespace(source_text, position);
+    // Now compute the indent of this next line before we finish.
+    ssize_t line_start = position;
+    SkipHorizontalWhitespace(source_text, position);
+
+    // Now that we're done scanning, update to the latest line index and indent.
+    line_index_ = line_index;
+    current_line_info()->indent = position - line_start;
   }
 
   auto LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
@@ -391,11 +495,6 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     int int_column = ComputeColumn(position);
     int token_size = literal->text().size();
     position += token_size;
-
-    if (!set_indent_) {
-      current_line_info()->indent = int_column;
-      set_indent_ = true;
-    }
 
     return VariantMatch(
         literal->ComputeValue(emitter_),
@@ -444,11 +543,6 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     ssize_t literal_size = literal->text().size();
     position += literal_size;
 
-    if (!set_indent_) {
-      current_line_info()->indent = string_column;
-      set_indent_ = true;
-    }
-
     // Update line and column information.
     if (literal->is_multi_line()) {
       while (current_line_info()->start + current_line_info()->length <
@@ -493,14 +587,9 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         << "' instead of the spelling '" << kind.fixed_spelling()
         << "' of the incoming token kind '" << kind << "'";
 
-    int column = ComputeColumn(position);
-    if (!set_indent_) {
-      current_line_info()->indent = column;
-      set_indent_ = true;
-    }
-
-    Token token = buffer_.AddToken(
-        {.kind = kind, .token_line = current_line(), .column = column});
+    Token token = buffer_.AddToken({.kind = kind,
+                                    .token_line = current_line(),
+                                    .column = ComputeColumn(position)});
     ++position;
     return token;
   }
@@ -515,20 +604,13 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
   auto LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
                              ssize_t& position) -> LexResult {
     auto unmatched_error = [&] {
-      int column = ComputeColumn(position);
-      // We still need to set the indent here, and can't use the common code
-      // used by the non-error path.
-      if (!set_indent_) {
-        current_line_info()->indent = column;
-        set_indent_ = true;
-      }
       CARBON_DIAGNOSTIC(
           UnmatchedClosing, Error,
           "Closing symbol without a corresponding opening symbol.");
       emitter_.Emit(source_text.begin() + position, UnmatchedClosing);
       Token token = buffer_.AddToken({.kind = TokenKind::Error,
                                       .token_line = current_line(),
-                                      .column = column,
+                                      .column = ComputeColumn(position),
                                       .error_length = 1});
       ++position;
       return token;
@@ -581,14 +663,9 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
       return LexError(source_text, position);
     }
 
-    int column = ComputeColumn(position);
-    if (!set_indent_) {
-      current_line_info()->indent = column;
-      set_indent_ = true;
-    }
-
-    Token token = buffer_.AddToken(
-        {.kind = kind, .token_line = current_line(), .column = column});
+    Token token = buffer_.AddToken({.kind = kind,
+                                    .token_line = current_line(),
+                                    .column = ComputeColumn(position)});
     position += kind.fixed_spelling().size();
     return token;
   }
@@ -702,10 +779,6 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
                  source_text[position] == '_');
 
     int column = ComputeColumn(position);
-    if (!set_indent_) {
-      current_line_info()->indent = column;
-      set_indent_ = true;
-    }
 
     // Take the valid characters off the front of the source buffer.
     llvm::StringRef identifier_text =
@@ -774,7 +847,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     return token;
   }
 
-  auto LexStartOfFile(llvm::StringRef /*source_text*/) -> void {
+  auto LexStartOfFile(llvm::StringRef source_text, ssize_t& position) -> void {
     // Before lexing any source text, add the start-of-file token so that code
     // can assume a non-empty token buffer for the rest of lexing. Note that the
     // start-of-file always has trailing space because it *is* whitespace.
@@ -782,6 +855,13 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
                       .has_trailing_space = true,
                       .token_line = current_line(),
                       .column = 0});
+
+    // Also skip any horizontal whitespace and record the indentation of the
+    // first line.
+    SkipHorizontalWhitespace(source_text, position);
+    auto* line_info = current_line_info();
+    CARBON_CHECK(line_info->start == 0);
+    line_info->indent = position;
   }
 
   auto LexEndOfFile(llvm::StringRef source_text, ssize_t position) -> void {
@@ -891,11 +971,12 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     // First build up our line data structures.
     CreateLines(source_text);
 
-    LexStartOfFile(source_text);
+    ssize_t position = 0;
+    LexStartOfFile(source_text, position);
 
     // Manually enter the dispatch loop. This call will tail-recurse through the
     // dispatch table until everything from source_text is consumed.
-    DispatchNext(*this, source_text, /*position=*/0);
+    DispatchNext(*this, source_text, position);
 
     if (consumer_.seen_error()) {
       buffer_.has_errors_ = true;
@@ -1014,8 +1095,6 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
   TokenizedBuffer buffer_;
 
   ssize_t line_index_;
-
-  bool set_indent_ = false;
 
   llvm::SmallVector<Token> open_groups_;
 

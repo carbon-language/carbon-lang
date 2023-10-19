@@ -35,6 +35,9 @@ struct Function : public Printable<Function> {
 
   // The function name.
   StringId name_id;
+  // The definition, if the function has been defined or is currently being
+  // defined. This is a FunctionDeclaration.
+  NodeId definition_id = NodeId::Invalid;
   // A block containing a single reference node per parameter.
   NodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
@@ -48,7 +51,7 @@ struct Function : public Printable<Function> {
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
-  llvm::SmallVector<NodeBlockId> body_block_ids;
+  llvm::SmallVector<NodeBlockId> body_block_ids = {};
 };
 
 // A class.
@@ -60,6 +63,17 @@ struct Class : public Printable<Class> {
 
   // The class name.
   StringId name_id;
+
+  // The definition, if the class has been defined or is currently being
+  // defined. This is a ClassDeclaration.
+  NodeId definition_id = NodeId::Invalid;
+
+  // The class scope.
+  NameScopeId scope_id = NameScopeId::Invalid;
+
+  // The first block of the class body.
+  // TODO: Handle control flow in the class body, such as if-expressions.
+  NodeBlockId body_block_id = NodeBlockId::Invalid;
 };
 
 // TODO: Replace this with a Rational type, per the design:
@@ -85,8 +99,7 @@ struct ValueRepresentation : public Printable<ValueRepresentation> {
 
   enum Kind : int8_t {
     // The value representation is not yet known. This is used for incomplete
-    // types, in cases where the incompleteness means the value representation
-    // can't be determined.
+    // types.
     Unknown,
     // The type has no value representation. This is used for empty types, such
     // as `()`, where there is no value.
@@ -115,8 +128,9 @@ struct TypeInfo : public Printable<TypeInfo> {
 
   // The node that defines this type.
   NodeId node_id;
-  // The value representation for this type.
-  ValueRepresentation value_representation;
+  // The value representation for this type. Will be `Unknown` if the type is
+  // not complete.
+  ValueRepresentation value_representation = ValueRepresentation();
 };
 
 // Provides semantic analysis on a Parse::Tree.
@@ -342,9 +356,7 @@ class File : public Printable<File> {
     TypeId type_id(types_.size());
     // Should never happen, will always overflow node_ids first.
     CARBON_DCHECK(type_id.index >= 0);
-    types_.push_back(
-        {.node_id = node_id,
-         .value_representation = {.kind = ValueRepresentation::Unknown}});
+    types_.push_back({.node_id = node_id});
     return type_id;
   }
 
@@ -393,6 +405,12 @@ class File : public Printable<File> {
     return types_[type_id.index].value_representation;
   }
 
+  // Determines whether the given type is known to be complete. This does not
+  // determine whether the type could be completed, only whether it has been.
+  auto IsTypeComplete(TypeId type_id) const -> bool {
+    return GetValueRepresentation(type_id).kind != ValueRepresentation::Unknown;
+  }
+
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
     return GetNodeAs<PointerType>(GetType(pointer_id)).pointee_id;
@@ -422,6 +440,12 @@ class File : public Printable<File> {
   // expression would otherwise have a different type, such as a tuple or
   // struct type.
   auto StringifyType(TypeId type_id, bool in_type_context = false) const
+      -> std::string;
+
+  // Same as `StringifyType`, but starting with a node representing a type
+  // expression rather than a canonical type.
+  auto StringifyTypeExpression(NodeId outer_node_id,
+                               bool in_type_context = false) const
       -> std::string;
 
   auto functions_size() const -> int { return functions_.size(); }

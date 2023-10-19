@@ -10,6 +10,7 @@ fn Main() -> (i32, i32) {
 }
 
 // CHECK:STDOUT: file "tuple.carbon" {
+// CHECK:STDOUT:   %.loc8: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

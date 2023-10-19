@@ -9,7 +9,7 @@ class Class;
 fn F(p: Class*) -> Class* { return p; }
 
 // CHECK:STDOUT: file "forward_declared.carbon" {
-// CHECK:STDOUT:   %Class: type = class_declaration @Class
+// CHECK:STDOUT:   %Class: type = class_declaration @Class, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

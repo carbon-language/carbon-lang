@@ -35,10 +35,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 9
 // CHECK:STDOUT:   assign %a.ref.loc9, %.loc9
 // CHECK:STDOUT:   %.loc11_19.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc11_19.2: type = ptr_type (type, type)
-// CHECK:STDOUT:   %.loc11_19.3: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc11_19.4: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc11_19.5: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc11_19.2: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc11_19.3: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc11_19.4: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %b: ref (i32, i32) = var "b"
 // CHECK:STDOUT:   %.loc11_24: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc11_27: i32 = int_literal 2
