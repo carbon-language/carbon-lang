@@ -27,12 +27,13 @@
 // specified above, when present. When converting to a `SemIR::Node`, they will
 // become the parse node and type associated with the type-erased node.
 //
-// In addition, each type defines a constant `Kind` that describes the node
-// kind for that node, including the name used in textual IR, and any other
-// information -- currently, just whether the node is a terminator instruction.
-// This information is associated with the specified node kind, and is
-// accessible through member functions on the corresponding `NodeKind` value
-// declared in `node_kind.h`.
+// In addition, each type provides a constant `Kind` that associates the type
+// with a particular member of the `NodeKind` enumeration. This `Kind`
+// declaration also defines the node kind by calling `NodeKind::Define` and
+// specifying additional information about the node kind. This information is
+// available through the member functions of the `NodeKind` value declared in
+// `node_kind.h`, and includes the name used in textual IR and whether the node
+// is a terminator instruction.
 namespace Carbon::SemIR {
 
 struct AddressOf {
