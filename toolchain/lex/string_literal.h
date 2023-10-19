@@ -15,6 +15,17 @@ namespace Carbon::Lex {
 
 class StringLiteral {
  public:
+  // The result of ComputeValue.
+  struct ComputedValue {
+    // A StringRef that should be used for the value. May point at either
+    // `generated` or the original text.
+    llvm::StringRef value;
+
+    // An optional generated value which should be retained. Null if there is no
+    // need for it, such as if the string is unchanged.
+    std::unique_ptr<std::string> generated;
+  };
+
   // Extract a string literal token from the given text, if it has a suitable
   // form. Returning std::nullopt indicates no string literal was found;
   // returning an invalid literal indicates a string prefix was found, but it's
@@ -24,8 +35,11 @@ class StringLiteral {
 
   // Expand any escape sequences in the given string literal and compute the
   // resulting value. This handles error recovery internally and cannot fail.
+  //
+  // When content_needs_validation_ is false and the string has no indent to
+  // deal with, this can return the content directly.
   auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const
-      -> std::string;
+      -> ComputedValue;
 
   // Get the text corresponding to this literal.
   [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
@@ -46,10 +60,11 @@ class StringLiteral {
   struct Introducer;
 
   explicit StringLiteral(llvm::StringRef text, llvm::StringRef content,
-                         int hash_level, MultiLineKind multi_line,
-                         bool is_terminated)
+                         bool content_needs_validation, int hash_level,
+                         MultiLineKind multi_line, bool is_terminated)
       : text_(text),
         content_(content),
+        content_needs_validation_(content_needs_validation),
         hash_level_(hash_level),
         multi_line_(multi_line),
         is_terminated_(is_terminated) {}
@@ -61,6 +76,9 @@ class StringLiteral {
   // at the start of the closing `"""`. Leading whitespace is not removed from
   // either end.
   llvm::StringRef content_;
+  // Whether content needs validation, in particular due to either an escape
+  // (which needs modifications) or a tab character (which may cause a warning).
+  bool content_needs_validation_;
   // The number of `#`s preceding the opening `"` or `"""`.
   int hash_level_;
   // Whether this was a multi-line string literal.

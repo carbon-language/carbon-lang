@@ -114,11 +114,13 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
   terminator.resize(terminator.size() + hash_level, '#');
   escape.resize(escape.size() + hash_level, '#');
 
+  bool content_needs_validation = false;
+
   // TODO: Detect indent / dedent for multi-line string literals in order to
   // stop parsing on dedent before a terminator is found.
   for (; cursor < source_text_size; ++cursor) {
     // Use a lookup table to allow us to quickly skip uninteresting characters.
-    static constexpr CharSet InterestingChars = {'\\', '\n', '"', '\''};
+    static constexpr CharSet InterestingChars = {'\\', '\n', '"', '\'', '\t'};
     if (!InterestingChars[source_text[cursor]]) {
       continue;
     }
@@ -127,7 +129,12 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
     // escape sequences starting with a predictable character and not containing
     // embedded and unescaped terminators or newlines.
     switch (source_text[cursor]) {
+      case '\t':
+        // Tabs have extra validation.
+        content_needs_validation = true;
+        break;
       case '\\':
+        content_needs_validation = true;
         if (escape.size() == 1 ||
             source_text.substr(cursor + 1).startswith(escape.substr(1))) {
           cursor += escape.size();
@@ -137,7 +144,8 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
           if (cursor >= source_text_size || (introducer->kind == NotMultiLine &&
                                              source_text[cursor] == '\n')) {
             llvm::StringRef text = source_text.take_front(cursor);
-            return StringLiteral(text, text.drop_front(prefix_len), hash_level,
+            return StringLiteral(text, text.drop_front(prefix_len),
+                                 content_needs_validation, hash_level,
                                  introducer->kind,
                                  /*is_terminated=*/false);
           }
@@ -146,7 +154,8 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
       case '\n':
         if (introducer->kind == NotMultiLine) {
           llvm::StringRef text = source_text.take_front(cursor);
-          return StringLiteral(text, text.drop_front(prefix_len), hash_level,
+          return StringLiteral(text, text.drop_front(prefix_len),
+                               content_needs_validation, hash_level,
                                introducer->kind,
                                /*is_terminated=*/false);
         }
@@ -158,7 +167,8 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
               source_text.substr(0, cursor + terminator.size());
           llvm::StringRef content =
               source_text.substr(prefix_len, cursor - prefix_len);
-          return StringLiteral(text, content, hash_level, introducer->kind,
+          return StringLiteral(text, content, content_needs_validation,
+                               hash_level, introducer->kind,
                                /*is_terminated=*/true);
         }
         break;
@@ -169,7 +179,7 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
   }
   // No terminator was found.
   return StringLiteral(source_text, source_text.drop_front(prefix_len),
-                       hash_level, introducer->kind,
+                       content_needs_validation, hash_level, introducer->kind,
                        /*is_terminated=*/false);
 }
 
@@ -341,9 +351,9 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
 // Expand any escape sequences in the given string literal.
 static auto ExpandEscapeSequencesAndRemoveIndent(
     LexerDiagnosticEmitter& emitter, llvm::StringRef contents, int hash_level,
-    llvm::StringRef indent) -> std::string {
-  std::string result;
-  result.reserve(contents.size());
+    llvm::StringRef indent) -> StringLiteral::ComputedValue {
+  auto result = std::make_unique<std::string>();
+  result->reserve(contents.size());
 
   llvm::SmallString<16> escape("\\");
   escape.resize(1 + hash_level, '#');
@@ -376,22 +386,23 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         return c == '\n' || c == '\\' ||
                (IsHorizontalWhitespace(c) && c != ' ');
       });
-      result += contents.substr(0, end_of_regular_text);
+      *result += contents.substr(0, end_of_regular_text);
       contents = contents.substr(end_of_regular_text);
 
       if (contents.empty()) {
-        return result;
+        return {*result, std::move(result)};
       }
 
       if (contents.consume_front("\n")) {
         // Trailing whitespace in the source before a newline doesn't contribute
         // to the string literal value. However, escaped whitespace (like `\t`)
         // and any whitespace just before that does contribute.
-        while (!result.empty() && result.back() != '\n' &&
-               IsSpace(result.back()) && result.length() > last_escape_length) {
-          result.pop_back();
+        while (!result->empty() && result->back() != '\n' &&
+               IsSpace(result->back()) &&
+               result->length() > last_escape_length) {
+          result->pop_back();
         }
-        result += '\n';
+        *result += '\n';
         // Move onto to the next line.
         break;
       }
@@ -412,7 +423,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
               "escape sequence in a string literal.");
           emitter.Emit(contents.begin(), InvalidHorizontalWhitespaceInString);
           // Include the whitespace in the string contents for error recovery.
-          result += contents.substr(0, after_space);
+          *result += contents.substr(0, after_space);
         }
         contents = contents.substr(after_space);
         continue;
@@ -420,7 +431,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
       if (!contents.consume_front(escape)) {
         // This is not an escape sequence, just a raw `\`.
-        result += contents.front();
+        *result += contents.front();
         contents = contents.drop_front(1);
         continue;
       }
@@ -432,16 +443,16 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
 
       // Handle this escape sequence.
-      ExpandAndConsumeEscapeSequence(emitter, contents, result);
-      last_escape_length = result.length();
+      ExpandAndConsumeEscapeSequence(emitter, contents, *result);
+      last_escape_length = result->length();
     }
   }
 }
 
 auto StringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
-    -> std::string {
+    -> ComputedValue {
   if (!is_terminated_) {
-    return "";
+    return {"", nullptr};
   }
   if (multi_line_ == MultiLineWithDoubleQuotes) {
     CARBON_DIAGNOSTIC(
@@ -451,6 +462,9 @@ auto StringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
   }
   llvm::StringRef indent =
       multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
+  if (!content_needs_validation_ && (!multi_line_ || indent.empty())) {
+    return {content_, nullptr};
+  }
   return ExpandEscapeSequencesAndRemoveIndent(emitter, content_, hash_level_,
                                               indent);
 }

@@ -83,32 +83,41 @@ BENCHMARK(BM_IncompleteWithEscapes_MultilineDoubleQuote);
 BENCHMARK(BM_IncompleteWithEscapes_Raw);
 
 static void BM_SimpleStringValue(benchmark::State& state,
-                                 std::string_view introducer,
+                                 std::string_view introducer, bool add_escape,
                                  std::string_view terminator) {
   std::string x(introducer);
   x.append(100000, 'a');
+  if (add_escape) {
+    // Adds a basic escape that forces ComputeValue to generate a new string.
+    x.append("\\\\");
+  }
   x.append(terminator);
   for (auto _ : state) {
     StringLiteral::Lex(x)->ComputeValue(NullDiagnosticEmitter<const char*>());
   }
 }
 
+static void BM_SimpleStringValue_NoGeneratedString(benchmark::State& state) {
+  BM_SimpleStringValue(state, "\"", /*add_escape=*/false, "\"");
+}
+
 static void BM_SimpleStringValue_Simple(benchmark::State& state) {
-  BM_SimpleStringValue(state, "\"", "\"");
+  BM_SimpleStringValue(state, "\"", /*add_escape=*/true, "\"");
 }
 
 static void BM_SimpleStringValue_Multiline(benchmark::State& state) {
-  BM_SimpleStringValue(state, "'''\n", "\n'''");
+  BM_SimpleStringValue(state, "'''\n", /*add_escape=*/true, "\n'''");
 }
 
 static void BM_SimpleStringValue_MultilineDoubleQuote(benchmark::State& state) {
-  BM_SimpleStringValue(state, "\"\"\"\n", "\n\"\"\"");
+  BM_SimpleStringValue(state, "\"\"\"\n", /*add_escape=*/true, "\n\"\"\"");
 }
 
 static void BM_SimpleStringValue_Raw(benchmark::State& state) {
-  BM_SimpleStringValue(state, "#\"", "\"#");
+  BM_SimpleStringValue(state, "#\"", /*add_escape=*/true, "\"#");
 }
 
+BENCHMARK(BM_SimpleStringValue_NoGeneratedString);
 BENCHMARK(BM_SimpleStringValue_Simple);
 BENCHMARK(BM_SimpleStringValue_Multiline);
 BENCHMARK(BM_SimpleStringValue_MultilineDoubleQuote);
