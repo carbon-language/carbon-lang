@@ -8,22 +8,20 @@
 
 namespace Carbon::Check {
 
-auto DeclarationNameStack::NewNameContext() -> NameContext {
-  return NameContext{.state = NameContext::State::New,
-                     .target_scope_id = context_->current_scope_id(),
-                     .resolved_node_id = SemIR::NodeId::Invalid};
+auto DeclarationNameStack::MakeEmptyNameContext() -> NameContext {
+  return NameContext{.target_scope_id = context_->current_scope_id()};
 }
 
 auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
                                                SemIR::StringId name_id)
     -> NameContext {
-  NameContext context = NewNameContext();
+  NameContext context = MakeEmptyNameContext();
   ApplyNameQualifierTo(context, parse_node, name_id);
   return context;
 }
 
 auto DeclarationNameStack::Push() -> void {
-  declaration_name_stack_.push_back(NewNameContext());
+  declaration_name_stack_.push_back(MakeEmptyNameContext());
 }
 
 auto DeclarationNameStack::Pop() -> NameContext {
@@ -52,7 +50,7 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
       // The name is invalid and a diagnostic has already been emitted.
       return SemIR::NodeId::Invalid;
 
-    case NameContext::State::New:
+    case NameContext::State::Empty:
       CARBON_FATAL() << "Name is missing, not expected to call AddNameToLookup "
                         "(but that may change based on error handling).";
 
@@ -216,7 +214,7 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
       return false;
     }
 
-    case NameContext::State::New:
+    case NameContext::State::Empty:
     case NameContext::State::Resolved: {
       name_context.parse_node = parse_node;
       return true;

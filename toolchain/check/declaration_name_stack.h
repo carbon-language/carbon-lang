@@ -32,19 +32,19 @@ class Context;
 // Example state transitions:
 //
 // ```
-// // New -> Unresolved, because `MyNamespace` is newly declared.
+// // Empty -> Unresolved, because `MyNamespace` is newly declared.
 // namespace MyNamespace;
 //
-// // New -> Resolved -> Unresolved, because `MyType` is newly declared.
+// // Empty -> Resolved -> Unresolved, because `MyType` is newly declared.
 // class MyNamespace.MyType;
 //
-// // New -> Resolved -> Resolved, because `MyType` was forward declared.
+// // Empty -> Resolved -> Resolved, because `MyType` was forward declared.
 // class MyNamespace.MyType {
-//   // New -> Unresolved, because `DoSomething` is newly declared.
+//   // Empty -> Unresolved, because `DoSomething` is newly declared.
 //   fn DoSomething();
 // }
 //
-// // New -> Resolved -> Resolved -> ResolvedNonScope, because `DoSomething`
+// // Empty -> Resolved -> Resolved -> ResolvedNonScope, because `DoSomething`
 // // is forward declared in `MyType`, but is not a scope itself.
 // fn MyNamespace.MyType.DoSomething() { ... }
 // ```
@@ -53,8 +53,8 @@ class DeclarationNameStack {
   // Context for declaration name construction.
   struct NameContext {
     enum class State : int8_t {
-      // A new context which has not processed any parts of the qualifier.
-      New,
+      // A context that has not processed any parts of the qualifier.
+      Empty,
 
       // A node ID has been resolved, whether through an identifier or
       // expression. This provided a new scope, such as a type.
@@ -73,7 +73,7 @@ class DeclarationNameStack {
       Error,
     };
 
-    State state = State::New;
+    State state = State::Empty;
 
     // The scope which qualified names are added to. For unqualified names in
     // an unnamed scope, this will be Invalid to indicate the current scope
@@ -131,8 +131,8 @@ class DeclarationNameStack {
       -> SemIR::NodeId;
 
  private:
-  // Returns a new name context corresponding to an empty name.
-  auto NewNameContext() -> NameContext;
+  // Returns a name context corresponding to an empty name.
+  auto MakeEmptyNameContext() -> NameContext;
 
   // Applies a Name from the node stack to given name context.
   auto ApplyNameQualifierTo(NameContext& name_context, Parse::Node parse_node,
