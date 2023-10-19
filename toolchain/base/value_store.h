@@ -86,7 +86,7 @@ class ValueStore {
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> const typename IdT::IndexedType& {
-    CARBON_CHECK(id.is_valid());
+    CARBON_CHECK(id.index >= 0) << id.index;
     return values_[id.index];
   }
 
