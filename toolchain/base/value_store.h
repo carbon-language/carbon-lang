@@ -82,7 +82,7 @@ class ValueStore {
   // Stores the value and returns an ID to reference it.
   auto Add(typename IdT::IndexedType value) -> IdT {
     IdT id = IdT(values_.size());
-    CARBON_CHECK(id.index >= 0) << "Too many numeric literals";
+    CARBON_CHECK(id.index >= 0) << "Id overflow";
     values_.push_back(std::move(value));
     return id;
   }
@@ -107,7 +107,7 @@ class ValueStore<StringId> {
   auto Add(llvm::StringRef value) -> StringId {
     auto [it, inserted] = map_.insert({value, StringId(values_.size())});
     if (inserted) {
-      CARBON_CHECK(it->second.index >= 0) << "Too many unique string literals";
+      CARBON_CHECK(it->second.index >= 0) << "Too many unique strings";
       values_.push_back(value);
     }
     return it->second;
