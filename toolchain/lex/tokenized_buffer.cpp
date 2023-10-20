@@ -21,8 +21,14 @@
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
 
-#if __x86_64__
+#if __ARM_NEON
+#include <arm_neon.h>
+#define CARBON_USE_SIMD 1
+#elif __x86_64__
 #include <x86intrin.h>
+#define CARBON_USE_SIMD 1
+#else
+#define CARBON_USE_SIMD 0
 #endif
 
 namespace Carbon::Lex {
@@ -49,21 +55,29 @@ auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
   return std::visit(Overload{std::forward<Fs&&>(fs)...}, std::forward<V&&>(v));
 }
 
-#if __x86_64__
-#define CARBON_USE_SIMD 1
-
+#if CARBON_USE_SIMD
+namespace {
+#if __ARM_NEON
+using SIMDMaskT = uint8x16_t;
+#elif __x86_64__
+using SIMDMaskT = __m128i;
+#else
+#error "Unsupported SIMD architecture!"
+#endif
+using SIMDMaskArrayT = std::array<SIMDMaskT, sizeof(SIMDMaskT) + 1>;
+}  // namespace
 // A table of masks to include 0-16 bytes of an SSE register.
-// TODO: Make this constexpr to avoid dynamic initialization.
-static const std::array<__m128i, sizeof(__m128i) + 1> prefix_masks = [] {
-  std::array<__m128i, sizeof(__m128i) + 1> masks = {};
-  for (auto [i, mask] : llvm::enumerate(masks)) {
-    memset(&mask, 0xFF, i);
+static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
+  SIMDMaskArrayT masks = {};
+  for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
+    // The SIMD types and constexpr require a C-style cast.
+    // NOLINTNEXTLINE(google-readability-casting)
+    masks[i] = (SIMDMaskT)(std::numeric_limits<unsigned __int128>::max() >>
+                           ((sizeof(SIMDMaskT) - i) * 8));
   }
   return masks;
 }();
-#else
-#define CARBON_USE_SIMD 0
-#endif
+#endif  // CARBON_USE_SIMD
 
 // Scans the provided text and returns the prefix `StringRef` of contiguous
 // identifier characters.
@@ -435,10 +449,28 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     if (CARBON_USE_SIMD &&
         position + 16 < static_cast<ssize_t>(source_text.size()) &&
         indent <= MaxIndent) {
-#if __x86_64__
       // Load a mask based on the amount of text we want to compare.
-      auto mask = prefix_masks[prefix_size];
-      // And use the current line's prefix as the exemplar to compare against.
+      auto mask = PrefixMasks[prefix_size];
+#if __ARM_NEON
+      // Load and mask the prefix of the current line.
+      auto prefix = vld1q_u8(reinterpret_cast<const uint8_t*>(
+          source_text.data() + first_line_start));
+      prefix = vandq_u8(mask, prefix);
+      do {
+        // Load and mask the next line to consider's prefix.
+        auto next_prefix = vld1q_u8(
+            reinterpret_cast<const uint8_t*>(source_text.data() + position));
+        next_prefix = vandq_u8(mask, next_prefix);
+        // Compare the two prefixes and if any lanes differ, break.
+        auto compare = vceqq_u8(prefix, next_prefix);
+        if (vminvq_u8(compare) == 0) {
+          break;
+        }
+
+        skip_to_next_line();
+      } while (position + 16 < static_cast<ssize_t>(source_text.size()));
+#elif __x86_64__
+      // Use the current line's prefix as the exemplar to compare against.
       // We don't mask here as we will mask when doing the comparison.
       auto prefix = _mm_loadu_si128(reinterpret_cast<const __m128i*>(
           source_text.data() + first_line_start));
@@ -458,14 +490,14 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 
         skip_to_next_line();
       } while (position + 16 < static_cast<ssize_t>(source_text.size()));
+#else
+#error "Unsupported SIMD architecture!"
+#endif
       // TODO: If we finish the loop due to the position approaching the end of
       // the buffer we may fail to skip the last line in a comment block that
       // has an invalid initial sequence and thus emit extra diagnostics. We
       // should really fall through to the generic skipping logic, but the code
       // organization will need to change significantly to allow that.
-#elif CARBON_USE_SIMD
-#error Unknown target for SIMD comment skipping.
-#endif
     } else {
       while (position + prefix_size <
                  static_cast<ssize_t>(source_text.size()) &&
