@@ -144,4 +144,9 @@ class SharedValueStores {
 
 }  // namespace Carbon
 
+// Support use of StringId as DenseMap/DenseSet keys.
+template <>
+struct llvm::DenseMapInfo<Carbon::StringId>
+    : public Carbon::IndexMapInfo<Carbon::StringId> {};
+
 #endif  // CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_

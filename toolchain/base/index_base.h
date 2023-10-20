@@ -8,6 +8,7 @@
 #include <type_traits>
 
 #include "common/ostream.h"
+#include "llvm/ADT/DenseMapInfo.h"
 
 namespace Carbon {
 
@@ -77,6 +78,31 @@ template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
 auto operator>=(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index >= rhs.index;
 }
+
+// Provides base support for use of IndexBase types as DenseMap/DenseSet keys.
+//
+// Usage (in global namespace):
+//   template <>
+//   struct llvm::DenseMapInfo<Carbon::MyType>
+//       : public Carbon::IndexMapInfo<Carbon::MyType> {};
+template <typename Index>
+struct IndexMapInfo {
+  static inline auto getEmptyKey() -> Index {
+    return Index(llvm::DenseMapInfo<int32_t>::getEmptyKey());
+  }
+
+  static inline auto getTombstoneKey() -> Index {
+    return Index(llvm::DenseMapInfo<int32_t>::getTombstoneKey());
+  }
+
+  static auto getHashValue(const Index& val) -> unsigned {
+    return llvm::DenseMapInfo<int32_t>::getHashValue(val.index);
+  }
+
+  static auto isEqual(const Index& lhs, const Index& rhs) -> bool {
+    return lhs == rhs;
+  }
+};
 
 }  // namespace Carbon
 

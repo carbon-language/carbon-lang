@@ -200,39 +200,14 @@ struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
   }
 };
 
-// Provides base support for use of Id types as DenseMap/DenseSet keys.
-// Instantiated below.
-template <typename Id>
-struct IdMapInfo {
-  static inline auto getEmptyKey() -> Id {
-    return Id(llvm::DenseMapInfo<int32_t>::getEmptyKey());
-  }
-
-  static inline auto getTombstoneKey() -> Id {
-    return Id(llvm::DenseMapInfo<int32_t>::getTombstoneKey());
-  }
-
-  static auto getHashValue(const Id& val) -> unsigned {
-    return llvm::DenseMapInfo<int32_t>::getHashValue(val.index);
-  }
-
-  static auto isEqual(const Id& lhs, const Id& rhs) -> bool {
-    return lhs == rhs;
-  }
-};
-
 }  // namespace Carbon::SemIR
 
 // Support use of Id types as DenseMap/DenseSet keys.
 template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::NodeBlockId>
-    : public Carbon::SemIR::IdMapInfo<Carbon::SemIR::NodeBlockId> {};
+    : public Carbon::IdMapInfo<Carbon::SemIR::NodeBlockId> {};
 template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::NodeId>
-    : public Carbon::SemIR::IdMapInfo<Carbon::SemIR::NodeId> {};
-// TODO: This should live with `StringId`.
-template <>
-struct llvm::DenseMapInfo<Carbon::StringId>
-    : public Carbon::SemIR::IdMapInfo<Carbon::StringId> {};
+    : public Carbon::IdMapInfo<Carbon::SemIR::NodeId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_
