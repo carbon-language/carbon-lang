@@ -10,13 +10,13 @@
 
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/source/source_buffer.h"
@@ -61,25 +61,6 @@ struct Line : public ComparableIndexBase {
 
 constexpr Line Line::Invalid(Line::InvalidIndex);
 
-// A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
-//
-// `Identifier` objects are designed to be passed by value, not reference or
-// pointer. They are also designed to be small and efficient to store in data
-// structures.
-//
-// Each identifier lexed is canonicalized to a single entry in the identifier
-// table. `Identifier` objects will compare equal if they refer to the same
-// identifier spelling. Where the identifier was written is not preserved.
-//
-// All other APIs to query a `Identifier` are on the `TokenizedBuffer`.
-struct Identifier : public IndexBase {
-  using IndexBase::IndexBase;
-
-  static const Identifier Invalid;
-};
-
-constexpr Identifier Identifier::Invalid = Identifier(Identifier::InvalidIndex);
-
 // Random-access iterator over tokens within the buffer.
 class TokenIterator
     : public llvm::iterator_facade_base<
@@ -122,31 +103,6 @@ class TokenIterator
   Token token_;
 };
 
-// The value of a real literal.
-//
-// This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
-// fraction (mantissa * 10^exponent).
-//
-// `RealLiteralValue` carries a reference back to `TokenizedBuffer` which can be
-// invalidated if the buffer is edited or destroyed.
-class RealLiteralValue : public Printable<RealLiteralValue> {
- public:
-  auto Print(llvm::raw_ostream& output_stream) const -> void {
-    mantissa.print(output_stream, /*isSigned=*/false);
-    output_stream << "*" << (is_decimal ? "10" : "2") << "^" << exponent;
-  }
-
-  // The mantissa, represented as an unsigned integer.
-  const llvm::APInt& mantissa;
-
-  // The exponent, represented as a signed integer.
-  const llvm::APInt& exponent;
-
-  // If false, the value is mantissa * 2^exponent.
-  // If true, the value is mantissa * 10^exponent.
-  bool is_decimal;
-};
-
 // A diagnostic location translator that maps token locations into source
 // buffer locations.
 class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
@@ -175,8 +131,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`
   // which will refer into the source.
-  static auto Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
-      -> TokenizedBuffer;
+  static auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
+                  DiagnosticConsumer& consumer) -> TokenizedBuffer;
 
   [[nodiscard]] auto GetKind(Token token) const -> TokenKind;
   [[nodiscard]] auto GetLine(Token token) const -> Line;
@@ -192,13 +148,13 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Returns the identifier associated with this token. The token kind must be
   // an `Identifier`.
-  [[nodiscard]] auto GetIdentifier(Token token) const -> Identifier;
+  [[nodiscard]] auto GetIdentifier(Token token) const -> StringId;
 
   // Returns the value of an `IntegerLiteral()` token.
   [[nodiscard]] auto GetIntegerLiteral(Token token) const -> const llvm::APInt&;
 
   // Returns the value of an `RealLiteral()` token.
-  [[nodiscard]] auto GetRealLiteral(Token token) const -> RealLiteralValue;
+  [[nodiscard]] auto GetRealLiteral(Token token) const -> Real;
 
   // Returns the value of a `StringLiteral()` token.
   [[nodiscard]] auto GetStringLiteral(Token token) const -> llvm::StringRef;
@@ -238,9 +194,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Returns the previous line handle.
   [[nodiscard]] auto GetPrevLine(Line line) const -> Line;
-
-  // Returns the text for an identifier.
-  [[nodiscard]] auto GetIdentifierText(Identifier id) const -> llvm::StringRef;
 
   // Prints a description of the tokenized stream to the provided `raw_ostream`.
   //
@@ -320,6 +273,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     int indent;
   };
 
+  struct LiteralStringId : public IndexBase {
+    using IndexBase::IndexBase;
+  };
+
   struct TokenInfo {
     TokenKind kind;
 
@@ -341,8 +298,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
           sizeof(Token) <= sizeof(int32_t),
           "Unable to pack token and identifier index into the same space!");
 
-      Identifier id = Identifier::Invalid;
-      int32_t literal_index;
+      StringId string_id = StringId::Invalid;
+      IntegerId integer_id;
+      RealId real_id;
       Token closing_token;
       Token opening_token;
       int32_t error_length;
@@ -373,15 +331,13 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     int32_t indent;
   };
 
-  struct IdentifierInfo {
-    llvm::StringRef text;
-  };
-
   // The constructor is merely responsible for trivial initialization of
   // members. A working object of this type is built with the `lex` function
   // above so that its return can indicate if an error was encountered while
   // lexing.
-  explicit TokenizedBuffer(SourceBuffer& source) : source_(&source) {}
+  explicit TokenizedBuffer(SharedValueStores& value_stores,
+                           SourceBuffer& source)
+      : value_stores_(&value_stores), source_(&source) {}
 
   auto GetLineInfo(Line line) -> LineInfo&;
   [[nodiscard]] auto GetLineInfo(Line line) const -> const LineInfo&;
@@ -393,21 +349,16 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto PrintToken(llvm::raw_ostream& output_stream, Token token,
                   PrintWidths widths) const -> void;
 
+  SharedValueStores* value_stores_;
   SourceBuffer* source_;
 
   llvm::SmallVector<TokenInfo> token_infos_;
 
   llvm::SmallVector<LineInfo> line_infos_;
 
-  llvm::SmallVector<IdentifierInfo> identifier_infos_;
-
-  // Storage for integers that form part of the value of a numeric or type
-  // literal.
-  llvm::SmallVector<llvm::APInt> literal_int_storage_;
-
-  llvm::SmallVector<std::string> literal_string_storage_;
-
-  llvm::DenseMap<llvm::StringRef, Identifier> identifier_map_;
+  // Stores the computed value of string literals so that StringRefs are
+  // durable.
+  llvm::SmallVector<std::unique_ptr<std::string>> computed_strings_;
 
   // The number of parse tree nodes that we expect to be created for the tokens
   // in this buffer.

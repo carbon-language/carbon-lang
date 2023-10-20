@@ -82,8 +82,8 @@ auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::Node parse_node,
-                                   SemIR::StringId name_id) -> void {
+auto Context::DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id)
+    -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
   emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
@@ -96,7 +96,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassDeclaration class_decl,
   builder.Note(class_decl.parse_node, ClassForwardDeclaredHere);
 }
 
-auto Context::AddNameToLookup(Parse::Node name_node, SemIR::StringId name_id,
+auto Context::AddNameToLookup(Parse::Node name_node, StringId name_id,
                               SemIR::NodeId target_id) -> void {
   if (current_scope().names.insert(name_id).second) {
     name_lookup_[name_id].push_back(target_id);
@@ -105,7 +105,7 @@ auto Context::AddNameToLookup(Parse::Node name_node, SemIR::StringId name_id,
   }
 }
 
-auto Context::LookupName(Parse::Node parse_node, SemIR::StringId name_id,
+auto Context::LookupName(Parse::Node parse_node, StringId name_id,
                          SemIR::NameScopeId scope_id, bool print_diagnostics)
     -> SemIR::NodeId {
   if (scope_id == SemIR::NameScopeId::Invalid) {

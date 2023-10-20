@@ -115,15 +115,6 @@ struct BoolValue : public IndexBase, public Printable<BoolValue> {
 constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
-// The ID of an integer value.
-struct IntegerId : public IndexBase, public Printable<IntegerId> {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "int";
-    IndexBase::Print(out);
-  }
-};
-
 // The ID of a name scope.
 struct NameScopeId : public IndexBase, public Printable<NameScopeId> {
   // An explicitly invalid ID.
@@ -166,24 +157,6 @@ constexpr NodeBlockId NodeBlockId::Invalid =
     NodeBlockId(NodeBlockId::InvalidIndex);
 constexpr NodeBlockId NodeBlockId::Unreachable =
     NodeBlockId(NodeBlockId::InvalidIndex - 1);
-
-// The ID of a real number value.
-struct RealId : public IndexBase, public Printable<RealId> {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "real";
-    IndexBase::Print(out);
-  }
-};
-
-// The ID of a string.
-struct StringId : public IndexBase, public Printable<StringId> {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "str";
-    IndexBase::Print(out);
-  }
-};
 
 // The ID of a node block.
 struct TypeId : public IndexBase, public Printable<TypeId> {
@@ -850,7 +823,7 @@ template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::NodeId>
     : public Carbon::SemIR::IdMapInfo<Carbon::SemIR::NodeId> {};
 template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::StringId>
-    : public Carbon::SemIR::IdMapInfo<Carbon::SemIR::StringId> {};
+struct llvm::DenseMapInfo<Carbon::StringId>
+    : public Carbon::SemIR::IdMapInfo<Carbon::StringId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_NODE_H_

@@ -71,6 +71,7 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
         "//toolchain/lex:tokenized_buffer",
@@ -88,6 +89,7 @@ cc_fuzz_test(
     deps = [
         ":tree",
         "//common:check",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex:tokenized_buffer",
