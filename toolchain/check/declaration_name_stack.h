@@ -32,19 +32,19 @@ class Context;
 // Example state transitions:
 //
 // ```
-// // New -> Unresolved, because `MyNamespace` is newly declared.
+// // Empty -> Unresolved, because `MyNamespace` is newly declared.
 // namespace MyNamespace;
 //
-// // New -> Resolved -> Unresolved, because `MyType` is newly declared.
+// // Empty -> Resolved -> Unresolved, because `MyType` is newly declared.
 // class MyNamespace.MyType;
 //
-// // New -> Resolved -> Resolved, because `MyType` was forward declared.
+// // Empty -> Resolved -> Resolved, because `MyType` was forward declared.
 // class MyNamespace.MyType {
-//   // New -> Unresolved, because `DoSomething` is newly declared.
+//   // Empty -> Unresolved, because `DoSomething` is newly declared.
 //   fn DoSomething();
 // }
 //
-// // New -> Resolved -> Resolved -> ResolvedNonScope, because `DoSomething`
+// // Empty -> Resolved -> Resolved -> ResolvedNonScope, because `DoSomething`
 // // is forward declared in `MyType`, but is not a scope itself.
 // fn MyNamespace.MyType.DoSomething() { ... }
 // ```
@@ -53,8 +53,8 @@ class DeclarationNameStack {
   // Context for declaration name construction.
   struct NameContext {
     enum class State : int8_t {
-      // A new context which has not processed any parts of the qualifier.
-      New,
+      // A context that has not processed any parts of the qualifier.
+      Empty,
 
       // A node ID has been resolved, whether through an identifier or
       // expression. This provided a new scope, such as a type.
@@ -73,12 +73,12 @@ class DeclarationNameStack {
       Error,
     };
 
-    State state = State::New;
+    State state = State::Empty;
 
     // The scope which qualified names are added to. For unqualified names in
     // an unnamed scope, this will be Invalid to indicate the current scope
     // should be used.
-    SemIR::NameScopeId target_scope_id = SemIR::NameScopeId::Invalid;
+    SemIR::NameScopeId target_scope_id;
 
     // The last parse node used.
     Parse::Node parse_node = Parse::Node::Invalid;
@@ -89,7 +89,7 @@ class DeclarationNameStack {
       SemIR::NodeId resolved_node_id = SemIR::NodeId::Invalid;
 
       // The ID of an unresolved identifier.
-      SemIR::StringId unresolved_name_id;
+      StringId unresolved_name_id;
     };
   };
 
@@ -104,6 +104,13 @@ class DeclarationNameStack {
   // node stack, which will be applied to the declaration name if appropriate.
   auto Pop() -> NameContext;
 
+  // Creates and returns a name context corresponding to declaring an
+  // unqualified name in the current context. This is suitable for adding to
+  // name lookup in situations where a qualified name is not permitted, such as
+  // a pattern binding.
+  auto MakeUnqualifiedName(Parse::Node parse_node, StringId name_id)
+      -> NameContext;
+
   // Applies an expression from the node stack to the top of the declaration
   // name stack.
   auto ApplyExpressionQualifier(Parse::Node parse_node, SemIR::NodeId node_id)
@@ -111,8 +118,7 @@ class DeclarationNameStack {
 
   // Applies a Name from the node stack to the top of the declaration name
   // stack.
-  auto ApplyNameQualifier(Parse::Node parse_node, SemIR::StringId name_id)
-      -> void;
+  auto ApplyNameQualifier(Parse::Node parse_node, StringId name_id) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(NameContext name_context, SemIR::NodeId target_id)
@@ -124,6 +130,13 @@ class DeclarationNameStack {
       -> SemIR::NodeId;
 
  private:
+  // Returns a name context corresponding to an empty name.
+  auto MakeEmptyNameContext() -> NameContext;
+
+  // Applies a Name from the node stack to given name context.
+  auto ApplyNameQualifierTo(NameContext& name_context, Parse::Node parse_node,
+                            StringId name_id) -> void;
+
   // Returns true if the context is in a state where it can resolve qualifiers.
   // Updates name_context as needed.
   auto CanResolveQualifier(NameContext& name_context, Parse::Node parse_node)

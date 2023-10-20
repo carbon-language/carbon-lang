@@ -38,7 +38,7 @@ static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
 
 auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  SemIR::StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
   auto base_id = context.node_stack().PopExpression();
 
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -152,8 +152,7 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
 
   Parse::Node parse_node2 = context.node_stack().PeekParseNode();
   if (context.parse_tree().node_kind(parse_node2) == Parse::NodeKind::Name) {
-    SemIR::StringId name_id2 =
-        context.node_stack().Pop<Parse::NodeKind::Name>();
+    StringId name_id2 = context.node_stack().Pop<Parse::NodeKind::Name>();
     pop_and_apply_first_child();
     context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
   } else {

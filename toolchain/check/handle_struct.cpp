@@ -41,7 +41,7 @@ auto HandleStructFieldUnknown(Context& context, Parse::Node parse_node)
 auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   auto [value_parse_node, value_node_id] =
       context.node_stack().PopExpressionWithParseNode();
-  SemIR::StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
 
   // Store the name for the type.
   context.args_type_info_stack().AddNode(SemIR::StructTypeField{

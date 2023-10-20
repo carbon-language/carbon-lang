@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "testing/base/test_raw_ostream.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/tokenized_buffer_test_helpers.h"
@@ -45,9 +46,10 @@ class LexerTest : public ::testing::Test {
   auto Lex(llvm::StringRef text,
            DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer())
       -> TokenizedBuffer {
-    return TokenizedBuffer::Lex(GetSourceBuffer(text), consumer);
+    return TokenizedBuffer::Lex(value_stores_, GetSourceBuffer(text), consumer);
   }
 
+  SharedValueStores value_stores_;
   llvm::vfs::InMemoryFileSystem fs_;
   int file_index_ = 0;
   std::forward_list<SourceBuffer> source_storage_;
@@ -439,7 +441,8 @@ TEST_F(LexerTest, MatchingGroups) {
     auto it = ++buffer.tokens().begin();
     auto open_paren_token = *it++;
     auto open_curly_token = *it++;
-    ASSERT_EQ("x", buffer.GetIdentifierText(buffer.GetIdentifier(*it++)));
+
+    ASSERT_EQ("x", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
     auto close_curly_token = *it++;
     auto close_paren_token = *it++;
     EXPECT_EQ(close_paren_token,
@@ -453,7 +456,7 @@ TEST_F(LexerTest, MatchingGroups) {
 
     open_curly_token = *it++;
     open_paren_token = *it++;
-    ASSERT_EQ("y", buffer.GetIdentifierText(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("y", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
     close_paren_token = *it++;
     close_curly_token = *it++;
     EXPECT_EQ(close_curly_token,
@@ -469,7 +472,7 @@ TEST_F(LexerTest, MatchingGroups) {
     auto inner_open_curly_token = *it++;
     open_paren_token = *it++;
     auto inner_open_paren_token = *it++;
-    ASSERT_EQ("z", buffer.GetIdentifierText(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("z", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
     auto inner_close_paren_token = *it++;
     close_paren_token = *it++;
     auto inner_close_curly_token = *it++;

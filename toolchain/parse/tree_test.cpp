@@ -10,6 +10,7 @@
 #include <forward_list>
 
 #include "testing/base/test_raw_ostream.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -27,34 +28,35 @@ namespace Yaml = ::Carbon::Testing::Yaml;
 class TreeTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::StringRef t) -> SourceBuffer& {
-    CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
-                            llvm::MemoryBuffer::getMemBuffer(t)));
-    source_storage.push_front(
-        std::move(*SourceBuffer::CreateFromFile(fs, "test.carbon", consumer)));
-    return source_storage.front();
+    CARBON_CHECK(fs_.addFile("test.carbon", /*ModificationTime=*/0,
+                             llvm::MemoryBuffer::getMemBuffer(t)));
+    source_storage_.push_front(std::move(
+        *SourceBuffer::CreateFromFile(fs_, "test.carbon", consumer_)));
+    return source_storage_.front();
   }
 
   auto GetTokenizedBuffer(llvm::StringRef t) -> Lex::TokenizedBuffer& {
-    token_storage.push_front(
-        Lex::TokenizedBuffer::Lex(GetSourceBuffer(t), consumer));
-    return token_storage.front();
+    token_storage_.push_front(Lex::TokenizedBuffer::Lex(
+        value_stores_, GetSourceBuffer(t), consumer_));
+    return token_storage_.front();
   }
 
-  llvm::vfs::InMemoryFileSystem fs;
-  std::forward_list<SourceBuffer> source_storage;
-  std::forward_list<Lex::TokenizedBuffer> token_storage;
-  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
+  SharedValueStores value_stores_;
+  llvm::vfs::InMemoryFileSystem fs_;
+  std::forward_list<SourceBuffer> source_storage_;
+  std::forward_list<Lex::TokenizedBuffer> token_storage_;
+  DiagnosticConsumer& consumer_ = ConsoleDiagnosticConsumer();
 };
 
 TEST_F(TreeTest, IsValid) {
-  Lex::TokenizedBuffer tokens = GetTokenizedBuffer("");
-  Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("");
+  Tree tree = Tree::Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
   EXPECT_TRUE((*tree.postorder().begin()).is_valid());
 }
 
 TEST_F(TreeTest, PrintPostorderAsYAML) {
-  Lex::TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
-  Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("fn F();");
+  Tree tree = Tree::Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   TestRawOstream print_stream;
   tree.Print(print_stream);
@@ -80,8 +82,8 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
 }
 
 TEST_F(TreeTest, PrintPreorderAsYAML) {
-  Lex::TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
-  Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("fn F();");
+  Tree tree = Tree::Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   TestRawOstream print_stream;
   tree.Print(print_stream, /*preorder=*/true);
@@ -123,7 +125,7 @@ TEST_F(TreeTest, HighRecursion) {
   code.append(10000, '(');
   code.append(10000, ')');
   code += "; }";
-  Lex::TokenizedBuffer tokens = GetTokenizedBuffer(code);
+  Lex::TokenizedBuffer& tokens = GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
   Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);

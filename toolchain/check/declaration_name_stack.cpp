@@ -8,11 +8,20 @@
 
 namespace Carbon::Check {
 
+auto DeclarationNameStack::MakeEmptyNameContext() -> NameContext {
+  return NameContext{.target_scope_id = context_->current_scope_id()};
+}
+
+auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
+                                               StringId name_id)
+    -> NameContext {
+  NameContext context = MakeEmptyNameContext();
+  ApplyNameQualifierTo(context, parse_node, name_id);
+  return context;
+}
+
 auto DeclarationNameStack::Push() -> void {
-  declaration_name_stack_.push_back(
-      {.state = NameContext::State::New,
-       .target_scope_id = context_->current_scope_id(),
-       .resolved_node_id = SemIR::NodeId::Invalid});
+  declaration_name_stack_.push_back(MakeEmptyNameContext());
 }
 
 auto DeclarationNameStack::Pop() -> NameContext {
@@ -41,7 +50,7 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
       // The name is invalid and a diagnostic has already been emitted.
       return SemIR::NodeId::Invalid;
 
-    case NameContext::State::New:
+    case NameContext::State::Empty:
       CARBON_FATAL() << "Name is missing, not expected to call AddNameToLookup "
                         "(but that may change based on error handling).";
 
@@ -97,11 +106,20 @@ auto DeclarationNameStack::ApplyExpressionQualifier(Parse::Node parse_node,
 }
 
 auto DeclarationNameStack::ApplyNameQualifier(Parse::Node parse_node,
-                                              SemIR::StringId name_id) -> void {
-  auto& name_context = declaration_name_stack_.back();
+                                              StringId name_id) -> void {
+  ApplyNameQualifierTo(declaration_name_stack_.back(), parse_node, name_id);
+}
+
+auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
+                                                Parse::Node parse_node,
+                                                StringId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     // This means the input node_id is actually a string ID.
+    //
+    // TODO: This doesn't perform the right kind of lookup. We will find names
+    // from enclosing lexical scopes here, in the case where `target_scope_id`
+    // is invalid.
     auto resolved_node_id = context_->LookupName(
         name_context.parse_node, name_id, name_context.target_scope_id,
         /*print_diagnostics=*/false);
@@ -195,7 +213,7 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
       return false;
     }
 
-    case NameContext::State::New:
+    case NameContext::State::Empty:
     case NameContext::State::Resolved: {
       name_context.parse_node = parse_node;
       return true;
