@@ -205,9 +205,9 @@ struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
 // Support use of Id types as DenseMap/DenseSet keys.
 template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::NodeBlockId>
-    : public Carbon::IdMapInfo<Carbon::SemIR::NodeBlockId> {};
+    : public Carbon::IndexMapInfo<Carbon::SemIR::NodeBlockId> {};
 template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::NodeId>
-    : public Carbon::IdMapInfo<Carbon::SemIR::NodeId> {};
+    : public Carbon::IndexMapInfo<Carbon::SemIR::NodeId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_
