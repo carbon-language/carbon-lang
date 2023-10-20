@@ -44,14 +44,14 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
         cast_type_id = SemIR::TypeId::Error;
       }
       context.AddNodeAndPush(
-          parse_node, SemIR::VarStorage(name_node, cast_type_id, name_id));
+          parse_node, SemIR::VarStorage{name_node, cast_type_id, name_id});
       break;
 
     case Parse::NodeKind::ParameterListStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
       context.AddNodeAndPush(
-          parse_node, SemIR::Parameter(name_node, cast_type_id, name_id));
+          parse_node, SemIR::Parameter{name_node, cast_type_id, name_id});
       break;
 
     case Parse::NodeKind::LetIntroducer:
@@ -71,8 +71,8 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       // the `let` pattern before we see the initializer.
       context.node_stack().Push(
           parse_node,
-          context.semantics_ir().AddNodeInNoBlock(SemIR::BindName(
-              name_node, cast_type_id, name_id, SemIR::NodeId::Invalid)));
+          context.semantics_ir().AddNodeInNoBlock(SemIR::BindName{
+              name_node, cast_type_id, name_id, SemIR::NodeId::Invalid}));
       break;
 
     default:

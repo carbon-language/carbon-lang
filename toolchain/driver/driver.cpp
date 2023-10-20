@@ -182,6 +182,14 @@ and displaying them in source order.
 
     b.AddFlag(
         {
+            .name = "dump-shared-values",
+            .help = R"""(
+Dumps shared values. These aren't owned by any particular file or phase.
+)""",
+        },
+        [&](auto& arg_b) { arg_b.Set(&dump_shared_values); });
+    b.AddFlag(
+        {
             .name = "dump-tokens",
             .help = R"""(
 Dump the tokens to stdout when lexed.
@@ -257,6 +265,7 @@ Dump the generated assembly to stdout after codegen.
 
   bool asm_output = false;
   bool force_obj_output = false;
+  bool dump_shared_values = false;
   bool dump_tokens = false;
   bool dump_parse_tree = false;
   bool dump_raw_sem_ir = false;
@@ -599,7 +608,6 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     return false;
   }
 
-  SharedValueStores value_stores;
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   auto flush = llvm::make_scope_exit([&]() {
     // The diagnostics consumer must be flushed before compilation artifacts are
@@ -607,6 +615,12 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     // they're flushed in order of arguments, rather than order of destruction.
     for (auto& unit : units) {
       unit->Flush();
+    }
+  });
+  SharedValueStores value_stores;
+  auto dump_shared_values = llvm::make_scope_exit([&]() {
+    if (options.dump_shared_values) {
+      output_stream_ << value_stores;
     }
   });
   for (const auto& input_file_name : options.input_file_names) {

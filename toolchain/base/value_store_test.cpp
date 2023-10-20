@@ -66,6 +66,10 @@ TEST(ValueStore, String) {
   EXPECT_THAT(a_id, Not(Eq(b_id)));
   EXPECT_THAT(value_stores.strings().Get(a_id), Eq(a));
   EXPECT_THAT(value_stores.strings().Get(b_id), Eq(b));
+
+  // Adding the same string again should return the same id.
+  EXPECT_THAT(value_stores.strings().Add(a), Eq(a_id));
+  EXPECT_THAT(value_stores.strings().Add(b), Eq(b_id));
 }
 
 }  // namespace

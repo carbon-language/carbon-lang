@@ -168,7 +168,7 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
     return SemIR::NodeBlockId::Unreachable;
   }
   auto block_id = context.semantics_ir().AddNodeBlockId();
-  context.AddNode(BranchNode(parse_node, block_id, args...));
+  context.AddNode(BranchNode{parse_node, block_id, args...});
   return block_id;
 }
 
@@ -201,7 +201,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
         new_block_id = semantics_ir().AddNodeBlockId();
       }
-      AddNode(SemIR::Branch(parse_node, new_block_id));
+      AddNode(SemIR::Branch{parse_node, new_block_id});
     }
     node_block_stack().Pop();
   }
@@ -219,7 +219,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
         new_block_id = semantics_ir().AddNodeBlockId();
       }
-      AddNode(SemIR::BranchWithArg(parse_node, new_block_id, arg_id));
+      AddNode(SemIR::BranchWithArg{parse_node, new_block_id, arg_id});
     }
     node_block_stack().Pop();
   }
@@ -228,7 +228,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
   // Acquire the result value.
   SemIR::TypeId result_type_id =
       semantics_ir().GetNode(*block_args.begin()).type_id();
-  return AddNode(SemIR::BlockArg(parse_node, result_type_id, new_block_id));
+  return AddNode(SemIR::BlockArg{parse_node, result_type_id, new_block_id});
 }
 
 // Add the current code block to the enclosing function.
@@ -389,7 +389,7 @@ class TypeCompleter {
                  type_node.As<SemIR::StructType>().fields_id)) {
           Push(context_.semantics_ir()
                    .GetNodeAs<SemIR::StructTypeField>(field_id)
-                   .type_id);
+                   .field_type_id);
         }
         break;
 
@@ -511,10 +511,10 @@ class TypeCompleter {
     for (auto field_id : fields) {
       auto field =
           context_.semantics_ir().GetNodeAs<SemIR::StructTypeField>(field_id);
-      auto field_value_rep = GetNestedValueRepresentation(field.type_id);
-      if (field_value_rep.type_id != field.type_id) {
+      auto field_value_rep = GetNestedValueRepresentation(field.field_type_id);
+      if (field_value_rep.type_id != field.field_type_id) {
         same_as_object_rep = false;
-        field.type_id = field_value_rep.type_id;
+        field.field_type_id = field_value_rep.type_id;
         field_id = context_.AddNode(field);
       }
       value_rep_fields.push_back(field_id);
@@ -779,7 +779,7 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
             semantics_context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(
                 field_id);
         canonical_id.AddInteger(field.name_id.index);
-        canonical_id.AddInteger(field.type_id.index);
+        canonical_id.AddInteger(field.field_type_id.index);
       }
       break;
     }
@@ -822,7 +822,7 @@ auto Context::CanonicalizeStructType(Parse::Node parse_node,
                                      SemIR::NodeBlockId refs_id)
     -> SemIR::TypeId {
   return CanonicalizeTypeAndAddNodeIfNew(
-      SemIR::StructType(parse_node, SemIR::TypeId::TypeType, refs_id));
+      SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
 }
 
 auto Context::CanonicalizeTupleType(Parse::Node parse_node,
@@ -833,8 +833,8 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
     ProfileTupleType(type_ids, canonical_id);
   };
   auto make_tuple_node = [&] {
-    return AddNode(SemIR::TupleType(parse_node, SemIR::TypeId::TypeType,
-                                    semantics_ir_->AddTypeBlock(type_ids)));
+    return AddNode(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
+                                    semantics_ir_->AddTypeBlock(type_ids)});
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
                               make_tuple_node);
@@ -852,7 +852,7 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
 auto Context::GetPointerType(Parse::Node parse_node,
                              SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
   return CanonicalizeTypeAndAddNodeIfNew(
-      SemIR::PointerType(parse_node, SemIR::TypeId::TypeType, pointee_type_id));
+      SemIR::PointerType{parse_node, SemIR::TypeId::TypeType, pointee_type_id});
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
