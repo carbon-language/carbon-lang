@@ -10,6 +10,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/YAMLParser.h"
 #include "toolchain/base/index_base.h"
 
 namespace Carbon {
@@ -132,8 +133,7 @@ class ValueStore<StringId> : public Printable<ValueStore<StringId>> {
   auto Print(llvm::raw_ostream& out, int indent) const -> void {
     for (auto value : values_) {
       out.indent(indent);
-      // TODO: Consider making this more robust for strings that need escaping.
-      out << "- \"" << value << "\"\n";
+      out << "- \"" << llvm::yaml::escape(value) << "\"\n";
     }
   }
 

@@ -7,6 +7,7 @@
 // AUTOUPDATE
 
 var a: f64 = 1.0;
+var b: String = "ab\"c";
 
 // CHECK:STDOUT: shared_values:
 // CHECK:STDOUT:   - integers:
@@ -15,3 +16,5 @@ var a: f64 = 1.0;
 // CHECK:STDOUT:       - 10*10^-1
 // CHECK:STDOUT:   - strings:
 // CHECK:STDOUT:       - "a"
+// CHECK:STDOUT:       - "b"
+// CHECK:STDOUT:       - "ab\"c"
