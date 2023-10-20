@@ -344,7 +344,7 @@ auto HandleStructAccess(FunctionContext& context, SemIR::NodeId node_id,
   auto fields = context.semantics_ir().GetNodeBlock(
       context.semantics_ir()
           .GetNodeAs<SemIR::StructType>(
-              context.semantics_ir().GetType(struct_type_id))
+              context.semantics_ir().types().Get(struct_type_id).node_id)
           .fields_id);
   auto field = context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(
       fields[node.index.index]);

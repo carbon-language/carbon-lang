@@ -32,22 +32,22 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
   // Lower types.
-  auto types = semantics_ir_->types();
+  auto types = semantics_ir_->types().array_ref();
   types_.resize_for_overwrite(types.size());
   for (auto [i, type] : llvm::enumerate(types)) {
     types_[i] = BuildType(type.node_id);
   }
 
   // Lower function declarations.
-  functions_.resize_for_overwrite(semantics_ir_->functions_size());
-  for (auto i : llvm::seq(semantics_ir_->functions_size())) {
+  functions_.resize_for_overwrite(semantics_ir_->functions().size());
+  for (auto i : llvm::seq(semantics_ir_->functions().size())) {
     functions_[i] = BuildFunctionDeclaration(SemIR::FunctionId(i));
   }
 
   // TODO: Lower global variable declarations.
 
   // Lower function definitions.
-  for (auto i : llvm::seq(semantics_ir_->functions_size())) {
+  for (auto i : llvm::seq(semantics_ir_->functions().size())) {
     BuildFunctionDefinition(SemIR::FunctionId(i));
   }
 
@@ -58,7 +58,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 
 auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
-  const auto& function = semantics_ir().GetFunction(function_id);
+  const auto& function = semantics_ir().functions().Get(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
   auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
 
@@ -141,7 +141,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
 
 auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     -> void {
-  const auto& function = semantics_ir().GetFunction(function_id);
+  const auto& function = semantics_ir().functions().Get(function_id);
   const auto& body_block_ids = function.body_block_ids;
   if (body_block_ids.empty()) {
     // Function is probably defined in another file; not an error.

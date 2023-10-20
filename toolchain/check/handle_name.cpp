@@ -19,7 +19,8 @@ static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
     return base_as_namespace->name_scope_id;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassDeclaration>()) {
-    auto& class_info = context.semantics_ir().GetClass(base_as_class->class_id);
+    auto& class_info =
+        context.semantics_ir().classes().Get(base_as_class->class_id);
     if (!class_info.scope_id.is_valid()) {
       CARBON_DIAGNOSTIC(QualifiedExpressionInIncompleteClassScope, Error,
                         "Member access into incomplete class `{0}`.",

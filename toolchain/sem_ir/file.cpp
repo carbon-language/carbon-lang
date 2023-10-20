@@ -94,7 +94,7 @@ auto File::Verify() const -> ErrorOr<Success> {
 
   // Check that every code block has a terminator sequence that appears at the
   // end of the block.
-  for (const Function& function : functions_) {
+  for (const Function& function : functions_.array_ref()) {
     for (NodeBlockId block_id : function.body_block_ids) {
       TerminatorKind prior_kind = TerminatorKind::NotTerminator;
       for (NodeId node_id : GetNodeBlock(block_id)) {
@@ -125,7 +125,7 @@ auto File::Verify() const -> ErrorOr<Success> {
 static constexpr int BaseIndent = 4;
 static constexpr int IndentStep = 2;
 
-// Define PrintList for ArrayRef.
+// Prints a list of elements.
 template <typename T, typename PrintT =
                           std::function<void(llvm::raw_ostream&, const T& val)>>
 static auto PrintList(
@@ -140,16 +140,6 @@ static auto PrintList(
   }
   out.indent(BaseIndent);
   out << "]\n";
-}
-
-// Adapt PrintList for a vector.
-template <typename T, typename PrintT =
-                          std::function<void(llvm::raw_ostream&, const T& val)>>
-static auto PrintList(
-    llvm::raw_ostream& out, llvm::StringLiteral name,
-    const llvm::SmallVector<T>& list,
-    PrintT print = [](llvm::raw_ostream& out, const T& val) { out << val; }) {
-  PrintList(out, name, llvm::ArrayRef(list), print);
 }
 
 // PrintBlock is only used for vectors.
@@ -179,9 +169,9 @@ auto File::Print(llvm::raw_ostream& out, bool include_builtins) const -> void {
       << "  - cross_reference_irs_size: " << cross_reference_irs_.size()
       << "\n";
 
-  PrintList(out, "functions", functions_);
-  PrintList(out, "classes", classes_);
-  PrintList(out, "types", types_);
+  PrintList(out, "functions", functions_.array_ref());
+  PrintList(out, "classes", classes_.array_ref());
+  PrintList(out, "types", types_.array_ref());
   PrintBlock(out, "type_blocks", type_blocks_);
 
   llvm::ArrayRef nodes = nodes_;
@@ -316,7 +306,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       }
       case ClassDeclaration::Kind: {
         auto class_name_id =
-            GetClass(node.As<ClassDeclaration>().class_id).name_id;
+            classes().Get(node.As<ClassDeclaration>().class_id).name_id;
         out << strings().Get(class_name_id);
         break;
       }
