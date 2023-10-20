@@ -89,7 +89,9 @@ the form "`each` _identifier_".
 
 By default, a pack binding pattern can match any number of times, but `each` can
 optionally be followed by "`(>=` _integer-literal_ `)`", which constrains the
-binding to match at least that many times.
+binding to match at least that many times. This constraint also applies to all
+other packs in the same pack expansion, and all other packs that are deduced to
+have the same arity.
 
 > **TODO:** The minimum-arity constraint syntax is a placeholder. Choose a final
 > syntax.
@@ -645,6 +647,7 @@ the representative of the corresponding segment of `B`.
     -   [Keyword syntax](/proposals/p2240.md#keyword-syntax)
 -   [Require parentheses around `each`](/proposals/p2240.md#require-parentheses-around-each)
 -   [Fused expansion tokens](/proposals/p2240.md#fused-expansion-tokens)
+-   [Support merging parameters](/proposals/p2240.md#support-merging-parameters)
 
 ## References
 
