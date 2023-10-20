@@ -12,7 +12,6 @@
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/check/declaration_name_stack.h"
 #include "toolchain/check/node_block_stack.h"
-#include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/file.h"
@@ -86,7 +85,8 @@ auto Context::DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id)
     -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
+  emitter_->Emit(parse_node, NameNotFound,
+                 semantics_ir_->strings().Get(name_id));
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassDeclaration class_decl,
@@ -117,7 +117,7 @@ auto Context::LookupName(Parse::Node parse_node, StringId name_id,
       return SemIR::NodeId::BuiltinError;
     }
     CARBON_CHECK(!it->second.empty())
-        << "Should have been erased: " << semantics_ir_->GetString(name_id);
+        << "Should have been erased: " << semantics_ir_->strings().Get(name_id);
 
     // TODO: Check for ambiguous lookups.
     return it->second.back();

@@ -7,6 +7,7 @@
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/node.h"
 #include "toolchain/sem_ir/node_kind.h"
@@ -39,9 +40,10 @@ auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
   out << "{node: " << node_id << ", value_rep: " << value_representation << "}";
 }
 
-File::File()
-    // Builtins are always the first IR, even when self-referential.
-    : filename_("<builtins>"),
+File::File(SharedValueStores& value_stores)
+    : value_stores_(&value_stores),
+      filename_("<builtins>"),
+      // Builtins are always the first IR, even when self-referential.
       cross_reference_irs_({this}),
       // Default entry for NodeBlockId::Empty.
       node_blocks_(1) {
@@ -62,9 +64,11 @@ File::File()
       << " nodes, actual: " << nodes_.size();
 }
 
-File::File(std::string filename, const File* builtins)
-    // Builtins are always the first IR.
-    : filename_(std::move(filename)),
+File::File(SharedValueStores& value_stores, std::string filename,
+           const File* builtins)
+    : value_stores_(&value_stores),
+      filename_(std::move(filename)),
+      // Builtins are always the first IR.
       cross_reference_irs_({builtins}),
       // Default entry for NodeBlockId::Empty.
       node_blocks_(1) {
@@ -177,14 +181,6 @@ auto File::Print(llvm::raw_ostream& out, bool include_builtins) const -> void {
 
   PrintList(out, "functions", functions_);
   PrintList(out, "classes", classes_);
-  // Integer values are APInts, and default to a signed print, but we currently
-  // treat them as unsigned.
-  PrintList(out, "integers", integers_,
-            [](llvm::raw_ostream& out, const llvm::APInt& val) {
-              val.print(out, /*isSigned=*/false);
-            });
-  PrintList(out, "reals", reals_);
-  PrintList(out, "strings", strings_);
   PrintList(out, "types", types_);
   PrintBlock(out, "type_blocks", type_blocks_);
 
@@ -321,7 +317,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       case ClassDeclaration::Kind: {
         auto class_name_id =
             GetClass(node.As<ClassDeclaration>().class_id).name_id;
-        out << GetString(class_name_id);
+        out << strings().Get(class_name_id);
         break;
       }
       case ConstType::Kind: {
@@ -344,7 +340,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
         break;
       }
       case NameReference::Kind: {
-        out << GetString(node.As<NameReference>().name_id);
+        out << strings().Get(node.As<NameReference>().name_id);
         break;
       }
       case PointerType::Kind: {
@@ -377,7 +373,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       }
       case StructTypeField::Kind: {
         auto field = node.As<StructTypeField>();
-        out << "." << GetString(field.name_id) << ": ";
+        out << "." << strings().Get(field.name_id) << ": ";
         steps.push_back(
             {.node_id = GetTypeAllowBuiltinTypes(field.field_type_id)});
         break;

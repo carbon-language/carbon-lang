@@ -13,12 +13,6 @@
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     classes: [
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     integers: [
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     reals: [
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     strings: [
-// CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     type_blocks: [

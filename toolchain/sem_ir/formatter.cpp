@@ -6,6 +6,7 @@
 
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
@@ -55,7 +56,7 @@ class NodeNamer {
       auto fn_loc = Parse::Node::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this, fn_loc,
-          fn.name_id.is_valid() ? semantics_ir.GetString(fn.name_id).str()
+          fn.name_id.is_valid() ? semantics_ir.strings().Get(fn.name_id).str()
                                 : "");
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
@@ -87,7 +88,7 @@ class NodeNamer {
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
           class_info.name_id.is_valid()
-              ? semantics_ir.GetString(class_info.name_id).str()
+              ? semantics_ir.strings().Get(class_info.name_id).str()
               : "");
       AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
       CollectNamesInBlock(class_scope, class_info.body_block_id);
@@ -190,7 +191,7 @@ class NodeNamer {
       auto SetAmbiguous() -> void { value_->second.ambiguous = true; }
 
      private:
-      llvm::StringMapEntry<NameResult>* value_;
+      llvm::StringMapEntry<NameResult>* value_ = nullptr;
     };
 
     struct NameResult {
@@ -391,7 +392,7 @@ class NodeNamer {
       };
       auto add_node_name_id = [&](StringId name_id) {
         if (name_id.is_valid()) {
-          add_node_name(semantics_ir_.GetString(name_id).str());
+          add_node_name(semantics_ir_.strings().Get(name_id).str());
         } else {
           add_node_name("");
         }
@@ -432,9 +433,10 @@ class NodeNamer {
           continue;
         }
         case NameReference::Kind: {
-          add_node_name(
-              semantics_ir_.GetString(node.As<NameReference>().name_id).str() +
-              ".ref");
+          add_node_name(semantics_ir_.strings()
+                            .Get(node.As<NameReference>().name_id)
+                            .str() +
+                        ".ref");
           continue;
         }
         case Parameter::Kind: {
@@ -820,7 +822,7 @@ class Formatter {
   auto FormatArg(ClassId id) -> void { FormatClassName(id); }
 
   auto FormatArg(IntegerId id) -> void {
-    semantics_ir_.GetInteger(id).print(out_, /*isSigned=*/false);
+    semantics_ir_.integers().Get(id).print(out_, /*isSigned=*/false);
   }
 
   auto FormatArg(MemberIndex index) -> void { out_ << index; }
@@ -845,14 +847,14 @@ class Formatter {
 
   auto FormatArg(RealId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
-    const auto& real = semantics_ir_.GetReal(id);
+    const auto& real = semantics_ir_.reals().Get(id);
     real.mantissa.print(out_, /*isSigned=*/false);
     out_ << (real.is_decimal ? 'e' : 'p') << real.exponent;
   }
 
   auto FormatArg(StringId id) -> void {
     out_ << '"';
-    out_.write_escaped(semantics_ir_.GetString(id), /*UseHexEscapes=*/true);
+    out_.write_escaped(semantics_ir_.strings().Get(id), /*UseHexEscapes=*/true);
     out_ << '"';
   }
 
@@ -882,7 +884,7 @@ class Formatter {
   }
 
   auto FormatString(StringId id) -> void {
-    out_ << semantics_ir_.GetString(id);
+    out_ << semantics_ir_.strings().Get(id);
   }
 
   auto FormatFunctionName(FunctionId id) -> void {

@@ -83,7 +83,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, ClassRedefinition,
-               context.semantics_ir().GetString(class_info.name_id))
+               context.semantics_ir().strings().Get(class_info.name_id))
         .Note(context.semantics_ir()
                   .GetNode(class_info.definition_id)
                   .parse_node(),

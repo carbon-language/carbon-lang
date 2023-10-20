@@ -40,6 +40,7 @@ TEST(SemIRTest, YAML) {
 
   // Matches the ID of a node. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.
+  auto integer_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
   auto node_id = Yaml::Scalar(MatchesRegex(R"(node\+\d+)"));
   auto node_builtin = Yaml::Scalar(MatchesRegex(R"(node\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
@@ -50,9 +51,6 @@ TEST(SemIRTest, YAML) {
       Pair("cross_reference_irs_size", "1"),
       Pair("functions", Yaml::Sequence(SizeIs(1))),
       Pair("classes", Yaml::Sequence(SizeIs(0))),
-      Pair("integers", Yaml::Sequence(ElementsAre("0"))),
-      Pair("reals", Yaml::Sequence(IsEmpty())),
-      Pair("strings", Yaml::Sequence(ElementsAre("F", "x"))),
       Pair("types", Yaml::Sequence(Each(type_builtin))),
       Pair("type_blocks", Yaml::Sequence(IsEmpty())),
       Pair("nodes",
@@ -62,9 +60,9 @@ TEST(SemIRTest, YAML) {
                // A 0-arg node.
                Contains(Yaml::Mapping(ElementsAre(Pair("kind", "Return")))),
                // A 1-arg node.
-               Contains(Yaml::Mapping(
-                   ElementsAre(Pair("kind", "IntegerLiteral"),
-                               Pair("arg0", "int0"), Pair("type", type_id)))),
+               Contains(Yaml::Mapping(ElementsAre(
+                   Pair("kind", "IntegerLiteral"), Pair("arg0", integer_id),
+                   Pair("type", type_id)))),
                // A 2-arg node.
                Contains(Yaml::Mapping(ElementsAre(Pair("kind", "Assign"),
                                                   Pair("arg0", node_id),

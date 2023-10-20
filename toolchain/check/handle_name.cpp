@@ -83,7 +83,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                         llvm::StringRef);
       context.emitter().Emit(parse_node, QualifiedExpressionNameNotFound,
                              context.semantics_ir().StringifyType(base_type_id),
-                             context.semantics_ir().GetString(name_id));
+                             context.semantics_ir().strings().Get(name_id));
       break;
     }
     default: {
@@ -110,16 +110,16 @@ auto HandlePointerMemberAccessExpression(Context& context,
 }
 
 auto HandleName(Context& context, Parse::Node parse_node) -> bool {
-  auto name_str = context.parse_tree().GetNodeText(parse_node);
-  auto name_id = context.semantics_ir().AddString(name_str);
+  auto name_id = context.tokens().GetIdentifier(
+      context.parse_tree().node_token(parse_node));
   // The parent is responsible for binding the name.
   context.node_stack().Push(parse_node, name_id);
   return true;
 }
 
 auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
-  auto name_str = context.parse_tree().GetNodeText(parse_node);
-  auto name_id = context.semantics_ir().AddString(name_str);
+  auto name_id = context.tokens().GetIdentifier(
+      context.parse_tree().node_token(parse_node));
   auto value_id =
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);

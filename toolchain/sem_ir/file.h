@@ -7,10 +7,10 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/node.h"
 
 namespace Carbon::SemIR {
@@ -77,23 +77,6 @@ struct Class : public Printable<Class> {
   NodeBlockId body_block_id = NodeBlockId::Invalid;
 };
 
-// TODO: Replace this with a Rational type, per the design:
-// docs/design/expressions/literals.md
-struct Real : public Printable<Real> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{mantissa: ";
-    mantissa.print(out, /*isSigned=*/false);
-    out << ", exponent: " << exponent << ", is_decimal: " << is_decimal << "}";
-  }
-
-  llvm::APInt mantissa;
-  llvm::APInt exponent;
-
-  // If false, the value is mantissa * 2^exponent.
-  // If true, the value is mantissa * 10^exponent.
-  bool is_decimal;
-};
-
 // The value representation to use when passing by value.
 struct ValueRepresentation : public Printable<ValueRepresentation> {
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -138,10 +121,11 @@ struct TypeInfo : public Printable<TypeInfo> {
 class File : public Printable<File> {
  public:
   // Produces a file for the builtins.
-  explicit File();
+  explicit File(SharedValueStores& value_stores);
 
   // Starts a new file for Check::CheckParseTree. Builtins are required.
-  explicit File(std::string filename, const File* builtins);
+  explicit File(SharedValueStores& value_stores, std::string filename,
+                const File* builtins);
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
@@ -159,7 +143,8 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound node.
   auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
-    return GetInteger(GetNodeAs<IntegerLiteral>(bound_id).integer_id)
+    return integers()
+        .Get(GetNodeAs<IntegerLiteral>(bound_id).integer_id)
         .getZExtValue();
   }
 
@@ -203,20 +188,6 @@ class File : public Printable<File> {
 
   // Returns the requested class.
   auto GetClass(ClassId class_id) -> Class& { return classes_[class_id.index]; }
-
-  // Adds an integer value, returning an ID to reference it.
-  auto AddInteger(llvm::APInt integer) -> IntegerId {
-    IntegerId id(integers_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    integers_.push_back(integer);
-    return id;
-  }
-
-  // Returns the requested integer value.
-  auto GetInteger(IntegerId int_id) const -> const llvm::APInt& {
-    return integers_[int_id.index];
-  }
 
   // Adds a name scope, returning an ID to reference it.
   auto AddNameScope() -> NameScopeId {
@@ -316,42 +287,6 @@ class File : public Printable<File> {
     return node_blocks_[block_id.index];
   }
 
-  // Adds a real value, returning an ID to reference it.
-  auto AddReal(Real real) -> RealId {
-    RealId id(reals_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    reals_.push_back(real);
-    return id;
-  }
-
-  // Returns the requested real value.
-  auto GetReal(RealId real_id) const -> const Real& {
-    return reals_[real_id.index];
-  }
-
-  // Adds an string, returning an ID to reference it.
-  auto AddString(llvm::StringRef str) -> StringId {
-    // Look up the string, or add it if it's new.
-    StringId next_id(strings_.size());
-    auto [it, added] = string_to_id_.insert({str, next_id});
-
-    if (added) {
-      // TODO: Return failure on overflow instead of crashing.
-      CARBON_CHECK(next_id.index >= 0);
-      // Update the reverse mapping from IDs to strings.
-      CARBON_DCHECK(it->second == next_id);
-      strings_.push_back(it->first());
-    }
-
-    return it->second;
-  }
-
-  // Returns the requested string.
-  auto GetString(StringId string_id) const -> llvm::StringRef {
-    return strings_[string_id.index];
-  }
-
   // Adds a type, returning an ID to reference it.
   auto AddType(NodeId node_id) -> TypeId {
     TypeId type_id(types_.size());
@@ -449,6 +384,21 @@ class File : public Printable<File> {
                                bool in_type_context = false) const
       -> std::string;
 
+  // Directly expose SharedValueStores members.
+  auto integers() -> ValueStore<IntegerId>& {
+    return value_stores_->integers();
+  }
+  auto integers() const -> const ValueStore<IntegerId>& {
+    return value_stores_->integers();
+  }
+  auto reals() const -> const ValueStore<RealId>& {
+    return value_stores_->reals();
+  }
+  auto strings() -> ValueStore<StringId>& { return value_stores_->strings(); }
+  auto strings() const -> const ValueStore<StringId>& {
+    return value_stores_->strings();
+  }
+
   auto functions_size() const -> int { return functions_.size(); }
   auto classes_size() const -> int { return classes_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
@@ -489,6 +439,9 @@ class File : public Printable<File> {
 
   bool has_errors_ = false;
 
+  // Shared, compile-scoped values.
+  SharedValueStores* value_stores_;
+
   // Slab allocator, used to allocate node and type blocks.
   llvm::BumpPtrAllocator allocator_;
 
@@ -507,19 +460,8 @@ class File : public Printable<File> {
   // crossing node blocks).
   llvm::SmallVector<const File*> cross_reference_irs_;
 
-  // Storage for integer values.
-  llvm::SmallVector<llvm::APInt> integers_;
-
   // Storage for name scopes.
   llvm::SmallVector<llvm::DenseMap<StringId, NodeId>> name_scopes_;
-
-  // Storage for real values.
-  llvm::SmallVector<Real> reals_;
-
-  // Storage for strings. strings_ provides a list of allocated strings, while
-  // string_to_id_ provides a mapping to identify strings.
-  llvm::StringMap<StringId> string_to_id_;
-  llvm::SmallVector<llvm::StringRef> strings_;
 
   // Descriptions of types used in this file.
   llvm::SmallVector<TypeInfo> types_;

@@ -451,8 +451,8 @@ class Driver::CompilationUnit {
     CARBON_CHECK(parse_tree_);
 
     LogCall("Check::CheckParseTree", [&] {
-      sem_ir_ = Check::CheckParseTree(builtins, *tokens_, *parse_tree_,
-                                      *consumer_, vlog_stream_);
+      sem_ir_ = Check::CheckParseTree(*value_stores_, builtins, *tokens_,
+                                      *parse_tree_, *consumer_, vlog_stream_);
     });
 
     // We've finished all steps that can produce diagnostics. Emit the
@@ -632,7 +632,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
 
   // Check.
-  auto builtins = Check::MakeBuiltins();
+  auto builtins = Check::MakeBuiltins(value_stores);
   // TODO: Organize units to compile in dependency order.
   for (auto& unit : units) {
     success_before_lower &= unit->RunCheck(builtins);

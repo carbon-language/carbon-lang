@@ -21,6 +21,7 @@ cc_binary(
     copts = ["-Wno-unused-parameter"],
     deps = [
         "//common:error",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",

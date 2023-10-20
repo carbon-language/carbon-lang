@@ -202,6 +202,7 @@ cc_library(
     deps = [
         ":tokenized_buffer",
         "//common:check",
+        "//toolchain/base:value_store",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

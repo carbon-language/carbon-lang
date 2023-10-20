@@ -63,6 +63,7 @@ cc_library(
     hdrs = ["file.h"],
     deps = [
         "//common:check",
+        "//toolchain/base:value_store",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:node",
         "//toolchain/sem_ir:node_kind",
