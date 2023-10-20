@@ -43,7 +43,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
     // Tentatively put storage for a temporary in the function's return slot.
     // This will be replaced if necessary when we perform initialization.
     auto temp_id = context.AddNode(
-        SemIR::TemporaryStorage(call_expr_parse_node, callable.return_type_id));
+        SemIR::TemporaryStorage{call_expr_parse_node, callable.return_type_id});
     context.ParamOrArgSave(temp_id);
   }
 
@@ -57,7 +57,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   }
 
   auto call_node_id = context.AddNode(
-      SemIR::Call(call_expr_parse_node, type_id, callee_id, refs_id));
+      SemIR::Call{call_expr_parse_node, type_id, callee_id, refs_id});
 
   context.node_stack().Push(parse_node, call_node_id);
   return true;

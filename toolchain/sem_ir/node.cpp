@@ -9,17 +9,22 @@ namespace Carbon::SemIR {
 auto Node::Print(llvm::raw_ostream& out) const -> void {
   out << "{kind: " << kind_;
 
-  auto print_args = [&](auto... args) {
-    int n = 0;
-    ((out << ", arg" << n++ << ": " << args), ...);
+  auto print_args = [&](auto info) {
+    using Info = decltype(info);
+    if constexpr (Info::NumArgs > 0) {
+      out << ", arg0: " << FromRaw<typename Info::template ArgType<0>>(arg0_);
+    }
+    if constexpr (Info::NumArgs > 1) {
+      out << ", arg1: " << FromRaw<typename Info::template ArgType<1>>(arg1_);
+    }
   };
 
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind_) {
-#define CARBON_SEM_IR_NODE_KIND(Name)                       \
-  case Name::Kind:                                          \
-    std::apply(print_args, As<SemIR::Name>().args_tuple()); \
+#define CARBON_SEM_IR_NODE_KIND(Name)      \
+  case Name::Kind:                         \
+    print_args(TypedNodeArgsInfo<Name>()); \
     break;
 #include "toolchain/sem_ir/node_kind.def"
   }

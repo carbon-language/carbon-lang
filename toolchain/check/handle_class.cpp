@@ -27,8 +27,8 @@ static auto BuildClassDeclaration(Context& context)
 
   // Add the class declaration.
   auto class_decl =
-      SemIR::ClassDeclaration(class_keyword, SemIR::TypeId::TypeType,
-                              SemIR::ClassId::Invalid, decl_block_id);
+      SemIR::ClassDeclaration{class_keyword, SemIR::TypeId::TypeType,
+                              SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddNode(class_decl);
 
   // Check whether this is a redeclaration.
