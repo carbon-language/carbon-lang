@@ -203,7 +203,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetIntroducer, 0, CARBON_TOKEN(Let))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(LetDeclaration, LetIntroducer,
-                               CARBON_TOKEN(Semi))
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Let)))
 
 // `var`:
 //   VariableIntroducer
