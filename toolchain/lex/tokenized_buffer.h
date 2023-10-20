@@ -273,10 +273,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     int indent;
   };
 
-  struct LiteralStringId : public IndexBase {
-    using IndexBase::IndexBase;
-  };
-
   struct TokenInfo {
     TokenKind kind;
 
