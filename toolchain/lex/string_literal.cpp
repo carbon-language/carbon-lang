@@ -15,6 +15,8 @@
 namespace Carbon::Lex {
 
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
+using GeneratedString = llvm::SmallString<
+    llvm::CalculateSmallVectorDefaultInlinedElements<char>::NumElementsThatFit>;
 
 static constexpr char MultiLineIndicator[] = R"(''')";
 static constexpr char DoubleQuotedMultiLineIndicator[] = R"(""")";
@@ -224,7 +226,7 @@ static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
 // Expand a `\u{HHHHHH}` escape sequence into a sequence of UTF-8 code units.
 static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
-                                        std::string& result) -> bool {
+                                        GeneratedString& result) -> bool {
   unsigned code_point;
   if (!CanLexInteger(emitter, digits)) {
     return false;
@@ -267,7 +269,7 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 // `\n`), and will be updated to remove the leading escape sequence.
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
-                                           std::string& result) -> void {
+                                           GeneratedString& result) -> void {
   CARBON_CHECK(!content.empty()) << "should have escaped closing delimiter";
   char first = content.front();
   content = content.drop_front(1);
@@ -351,9 +353,9 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
 // Expand any escape sequences in the given string literal.
 static auto ExpandEscapeSequencesAndRemoveIndent(
     LexerDiagnosticEmitter& emitter, llvm::StringRef contents, int hash_level,
-    llvm::StringRef indent) -> StringLiteral::ComputedValue {
-  auto result = std::make_unique<std::string>();
-  result->reserve(contents.size());
+    llvm::StringRef indent) -> GeneratedString {
+  GeneratedString result;
+  result.reserve(contents.size());
 
   llvm::SmallString<16> escape("\\");
   escape.resize(1 + hash_level, '#');
@@ -386,23 +388,22 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         return c == '\n' || c == '\\' ||
                (IsHorizontalWhitespace(c) && c != ' ');
       });
-      *result += contents.substr(0, end_of_regular_text);
+      result += contents.substr(0, end_of_regular_text);
       contents = contents.substr(end_of_regular_text);
 
       if (contents.empty()) {
-        return {*result, std::move(result)};
+        return result;
       }
 
       if (contents.consume_front("\n")) {
         // Trailing whitespace in the source before a newline doesn't contribute
         // to the string literal value. However, escaped whitespace (like `\t`)
         // and any whitespace just before that does contribute.
-        while (!result->empty() && result->back() != '\n' &&
-               IsSpace(result->back()) &&
-               result->length() > last_escape_length) {
-          result->pop_back();
+        while (!result.empty() && result.back() != '\n' &&
+               IsSpace(result.back()) && result.size() > last_escape_length) {
+          result.pop_back();
         }
-        *result += '\n';
+        result += '\n';
         // Move onto to the next line.
         break;
       }
@@ -423,7 +424,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
               "escape sequence in a string literal.");
           emitter.Emit(contents.begin(), InvalidHorizontalWhitespaceInString);
           // Include the whitespace in the string contents for error recovery.
-          *result += contents.substr(0, after_space);
+          result += contents.substr(0, after_space);
         }
         contents = contents.substr(after_space);
         continue;
@@ -431,7 +432,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
       if (!contents.consume_front(escape)) {
         // This is not an escape sequence, just a raw `\`.
-        *result += contents.front();
+        result += contents.front();
         contents = contents.drop_front(1);
         continue;
       }
@@ -443,16 +444,17 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
 
       // Handle this escape sequence.
-      ExpandAndConsumeEscapeSequence(emitter, contents, *result);
-      last_escape_length = result->length();
+      ExpandAndConsumeEscapeSequence(emitter, contents, result);
+      last_escape_length = result.size();
     }
   }
 }
 
-auto StringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
-    -> ComputedValue {
+auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
+                                 LexerDiagnosticEmitter& emitter) const
+    -> llvm::StringRef {
   if (!is_terminated_) {
-    return {"", nullptr};
+    return "";
   }
   if (multi_line_ == MultiLineWithDoubleQuotes) {
     CARBON_DIAGNOSTIC(
@@ -463,10 +465,14 @@ auto StringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
   llvm::StringRef indent =
       multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
   if (!content_needs_validation_ && (!multi_line_ || indent.empty())) {
-    return {content_, nullptr};
+    return content_;
   }
-  return ExpandEscapeSequencesAndRemoveIndent(emitter, content_, hash_level_,
-                                              indent);
+
+  GeneratedString generated = ExpandEscapeSequencesAndRemoveIndent(
+      emitter, content_, hash_level_, indent);
+  auto* alloc = allocator.Allocate<char>(generated.size());
+  memcpy(alloc, generated.data(), generated.size());
+  return llvm::StringRef(alloc, generated.size());
 }
 
 }  // namespace Carbon::Lex

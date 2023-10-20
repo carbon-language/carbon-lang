@@ -652,13 +652,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     }
 
     if (literal->is_terminated()) {
-      auto computed = literal->ComputeValue(emitter_);
-      // If computing the value generated a string, we need to store it since
-      // the value will point at it.
-      if (computed.generated) {
-        buffer_.computed_strings_.push_back(std::move(computed.generated));
-      }
-      auto string_id = buffer_.value_stores_->strings().Add(computed.value);
+      auto string_id = buffer_.value_stores_->strings().Add(
+          literal->ComputeValue(buffer_.allocator_, emitter_));
       auto token = buffer_.AddToken({.kind = TokenKind::StringLiteral,
                                      .token_line = string_line,
                                      .column = string_column,

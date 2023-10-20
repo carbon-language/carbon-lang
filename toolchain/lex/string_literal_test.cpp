@@ -14,10 +14,6 @@
 namespace Carbon::Lex {
 namespace {
 
-using ::testing::Eq;
-using ::testing::Not;
-using ::testing::Pointee;
-
 class StringLiteralTest : public ::testing::Test {
  protected:
   StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
@@ -29,18 +25,14 @@ class StringLiteralTest : public ::testing::Test {
     return *result;
   }
 
-  auto ParseForComputedValue(llvm::StringRef text)
-      -> StringLiteral::ComputedValue {
+  auto Parse(llvm::StringRef text) -> llvm::StringRef {
     StringLiteral token = Lex(text);
     Testing::SingleTokenDiagnosticTranslator translator(text);
     DiagnosticEmitter<const char*> emitter(translator, error_tracker);
-    return token.ComputeValue(emitter);
+    return token.ComputeValue(allocator, emitter);
   }
 
-  auto Parse(llvm::StringRef text) -> std::string {
-    return ParseForComputedValue(text).value.str();
-  }
-
+  llvm::BumpPtrAllocator allocator;
   ErrorTrackingDiagnosticConsumer error_tracker;
 };
 
@@ -320,7 +312,7 @@ TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
 
   for (llvm::StringLiteral test : testcases) {
     error_tracker.Reset();
-    auto value = Parse(test);
+    Parse(test);
     EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
     // TODO: Test value produced by error recovery.
   }
@@ -351,28 +343,6 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   auto value = Parse("\"\\" + text + "\"");
   EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, text);
-}
-
-TEST_F(StringLiteralTest, ComputeValueNothingGenerated) {
-  auto val = ParseForComputedValue("\"abc\"");
-  EXPECT_THAT(val.generated, Eq(nullptr));
-  EXPECT_THAT(val.value, Eq("abc"));
-}
-
-TEST_F(StringLiteralTest, ComputeValueGenerateForTab) {
-  auto val = ParseForComputedValue("\"\tabc\"");
-  ASSERT_THAT(val.generated, Not(Eq(nullptr)));
-  EXPECT_THAT(val.generated, Pointee(Eq("\tabc")));
-  EXPECT_THAT(val.generated->data(), Eq(val.value.begin()));
-}
-
-TEST_F(StringLiteralTest, ComputeValueGenerateForMultiline) {
-  auto val = ParseForComputedValue(R"('''
-      indented contents
-      ''')");
-  ASSERT_THAT(val.generated, Not(Eq(nullptr)));
-  ASSERT_THAT(val.generated, Pointee(Eq("indented contents\n")));
-  EXPECT_THAT(val.generated->data(), Eq(val.value.begin()));
 }
 
 }  // namespace

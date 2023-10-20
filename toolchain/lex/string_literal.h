@@ -6,26 +6,15 @@
 #define CARBON_TOOLCHAIN_LEX_STRING_LITERAL_H_
 
 #include <optional>
-#include <string>
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Lex {
 
 class StringLiteral {
  public:
-  // The result of ComputeValue.
-  struct ComputedValue {
-    // A StringRef that should be used for the value. May point at either
-    // `generated` or the original text.
-    llvm::StringRef value;
-
-    // An optional generated value which should be retained. Null if there is no
-    // need for it, such as if the string is unchanged.
-    std::unique_ptr<std::string> generated;
-  };
-
   // Extract a string literal token from the given text, if it has a suitable
   // form. Returning std::nullopt indicates no string literal was found;
   // returning an invalid literal indicates a string prefix was found, but it's
@@ -37,9 +26,11 @@ class StringLiteral {
   // resulting value. This handles error recovery internally and cannot fail.
   //
   // When content_needs_validation_ is false and the string has no indent to
-  // deal with, this can return the content directly.
-  auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const
-      -> ComputedValue;
+  // deal with, this can return the content directly. Otherwise, the allocator
+  // will be used for the StringRef.
+  auto ComputeValue(llvm::BumpPtrAllocator& allocator,
+                    DiagnosticEmitter<const char*>& emitter) const
+      -> llvm::StringRef;
 
   // Get the text corresponding to this literal.
   [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
