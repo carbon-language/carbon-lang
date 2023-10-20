@@ -80,7 +80,7 @@ constexpr StringId StringId::Invalid(StringId::InvalidIndex);
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
 template <typename IdT>
-class ValueStore {
+class ValueStore : public Printable<ValueStore<IdT>> {
  public:
   // Stores the value and returns an ID to reference it.
   auto Add(typename IdT::IndexedType value) -> IdT {
@@ -95,6 +95,14 @@ class ValueStore {
     return values_[id.index];
   }
 
+  auto Print(llvm::raw_ostream& out) const -> void { Print(out, 0); }
+  auto Print(llvm::raw_ostream& out, int indent) const -> void {
+    for (const auto& value : values_) {
+      out.indent(indent);
+      out << "- " << value << "\n";
+    }
+  }
+
  private:
   llvm::SmallVector<typename IdT::IndexedType> values_;
 };
@@ -102,7 +110,7 @@ class ValueStore {
 // Storage for StringRefs. The caller is responsible for ensuring storage is
 // allocated.
 template <>
-class ValueStore<StringId> {
+class ValueStore<StringId> : public Printable<ValueStore<StringId>> {
  public:
   // Returns an ID to reference the value. May return an existing ID if the
   // string was previously added.
@@ -120,6 +128,15 @@ class ValueStore<StringId> {
     return values_[id.index];
   }
 
+  auto Print(llvm::raw_ostream& out) const -> void { Print(out, 0); }
+  auto Print(llvm::raw_ostream& out, int indent) const -> void {
+    for (auto value : values_) {
+      out.indent(indent);
+      // TODO: Consider making this more robust for strings that need escaping.
+      out << "- \"" << value << "\"\n";
+    }
+  }
+
  private:
   llvm::DenseMap<llvm::StringRef, StringId> map_;
   llvm::SmallVector<llvm::StringRef> values_;
@@ -127,7 +144,7 @@ class ValueStore<StringId> {
 
 // Stores that will be used across compiler steps. This is provided mainly so
 // that they don't need to be passed separately.
-class SharedValueStores {
+class SharedValueStores : public Printable<SharedValueStores> {
  public:
   auto integers() -> ValueStore<IntegerId>& { return integers_; }
   auto integers() const -> const ValueStore<IntegerId>& { return integers_; }
@@ -135,6 +152,16 @@ class SharedValueStores {
   auto reals() const -> const ValueStore<RealId>& { return reals_; }
   auto strings() -> ValueStore<StringId>& { return strings_; }
   auto strings() const -> const ValueStore<StringId>& { return strings_; }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "shared_values:\n"
+        << "  - integers:\n";
+    integers_.Print(out, 6);
+    out << "  - reals:\n";
+    reals_.Print(out, 6);
+    out << "  - strings:\n";
+    strings_.Print(out, 6);
+  }
 
  private:
   ValueStore<IntegerId> integers_;
