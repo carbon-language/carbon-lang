@@ -20,32 +20,25 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
       break;
     }
     case Lex::TokenKind::IntegerLiteral: {
-      auto id = context.semantics_ir().AddInteger(
-          context.tokens().GetIntegerLiteral(token));
       context.AddNodeAndPush(
           parse_node,
           SemIR::IntegerLiteral(
               parse_node,
-              context.GetBuiltinType(SemIR::BuiltinKind::IntegerType), id));
+              context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
+              context.tokens().GetIntegerLiteral(token)));
       break;
     }
     case Lex::TokenKind::RealLiteral: {
-      auto token_value = context.tokens().GetRealLiteral(token);
-      auto id = context.semantics_ir().AddReal(
-          {.mantissa = token_value.mantissa,
-           .exponent = token_value.exponent,
-           .is_decimal = token_value.is_decimal});
       context.AddNodeAndPush(
           parse_node,
           SemIR::RealLiteral(
               parse_node,
               context.GetBuiltinType(SemIR::BuiltinKind::FloatingPointType),
-              id));
+              context.tokens().GetRealLiteral(token)));
       break;
     }
     case Lex::TokenKind::StringLiteral: {
-      auto id = context.semantics_ir().AddString(
-          context.tokens().GetStringLiteral(token));
+      auto id = context.tokens().GetStringLiteral(token);
       context.AddNodeAndPush(
           parse_node,
           SemIR::StringLiteral(

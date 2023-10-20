@@ -22,13 +22,6 @@ fn B() {}
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     classes: [
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     integers: [
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     reals: [
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     strings: [
-// CHECK:STDOUT:       A,
-// CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
 // CHECK:STDOUT:       {node: nodeFunctionType, value_rep: {kind: copy, type: type0}},
 // CHECK:STDOUT:     ]
@@ -52,16 +45,9 @@ fn B() {}
 // CHECK:STDOUT:   sem_ir:
 // CHECK:STDOUT:   - cross_reference_irs_size: 1
 // CHECK:STDOUT:     functions: [
-// CHECK:STDOUT:       {name: str0, param_refs: block0, body: [block1]},
+// CHECK:STDOUT:       {name: str1, param_refs: block0, body: [block1]},
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     classes: [
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     integers: [
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     reals: [
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     strings: [
-// CHECK:STDOUT:       B,
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
 // CHECK:STDOUT:       {node: nodeFunctionType, value_rep: {kind: copy, type: type0}},

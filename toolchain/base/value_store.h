@@ -18,6 +18,9 @@ namespace Carbon {
 //
 // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
 // fraction (mantissa * 10^exponent).
+//
+// TODO: For SemIR, replace this with a Rational type, per the design:
+// docs/design/expressions/literals.md
 class Real : public Printable<Real> {
  public:
   auto Print(llvm::raw_ostream& output_stream) const -> void {
@@ -127,8 +130,11 @@ class ValueStore<StringId> {
 class SharedValueStores {
  public:
   auto integers() -> ValueStore<IntegerId>& { return integers_; }
+  auto integers() const -> const ValueStore<IntegerId>& { return integers_; }
   auto reals() -> ValueStore<RealId>& { return reals_; }
+  auto reals() const -> const ValueStore<RealId>& { return reals_; }
   auto strings() -> ValueStore<StringId>& { return strings_; }
+  auto strings() const -> const ValueStore<StringId>& { return strings_; }
 
  private:
   ValueStore<IntegerId> integers_;

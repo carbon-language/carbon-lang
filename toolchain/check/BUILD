@@ -55,6 +55,7 @@ cc_library(
         "//common:ostream",
         "//common:vlog",
         "//toolchain/base:pretty_stack_trace_function",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:diagnostic_kind",
         "//toolchain/lex:tokenized_buffer",

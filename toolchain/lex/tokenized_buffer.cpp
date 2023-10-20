@@ -1232,23 +1232,22 @@ auto TokenizedBuffer::GetIdentifier(Token token) const -> StringId {
   return token_info.string_id;
 }
 
-auto TokenizedBuffer::GetIntegerLiteral(Token token) const
-    -> const llvm::APInt& {
+auto TokenizedBuffer::GetIntegerLiteral(Token token) const -> IntegerId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral) << token_info.kind;
-  return value_stores_->integers().Get(token_info.integer_id);
+  return token_info.integer_id;
 }
 
-auto TokenizedBuffer::GetRealLiteral(Token token) const -> Real {
+auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::RealLiteral) << token_info.kind;
-  return value_stores_->reals().Get(token_info.real_id);
+  return token_info.real_id;
 }
 
-auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
+auto TokenizedBuffer::GetStringLiteral(Token token) const -> StringId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
-  return value_stores_->strings().Get(token_info.string_id);
+  return token_info.string_id;
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
@@ -1393,14 +1392,19 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
       break;
     case TokenKind::IntegerLiteral:
       output_stream << ", value: `";
-      GetIntegerLiteral(token).print(output_stream, /*isSigned=*/false);
+      value_stores_->integers()
+          .Get(GetIntegerLiteral(token))
+          .print(output_stream, /*isSigned=*/false);
       output_stream << "`";
       break;
     case TokenKind::RealLiteral:
-      output_stream << ", value: `" << GetRealLiteral(token) << "`";
+      output_stream << ", value: `"
+                    << value_stores_->reals().Get(GetRealLiteral(token)) << "`";
       break;
     case TokenKind::StringLiteral:
-      output_stream << ", value: `" << GetStringLiteral(token) << "`";
+      output_stream << ", value: `"
+                    << value_stores_->strings().Get(GetStringLiteral(token))
+                    << "`";
       break;
     default:
       if (token_info.kind.is_opening_symbol()) {

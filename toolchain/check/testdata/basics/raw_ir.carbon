@@ -20,17 +20,6 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     ]
 // CHECK:STDOUT:     classes: [
 // CHECK:STDOUT:     ]
-// CHECK:STDOUT:     integers: [
-// CHECK:STDOUT:       2,
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     reals: [
-// CHECK:STDOUT:       {mantissa: 34, exponent: -1, is_decimal: 1},
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     strings: [
-// CHECK:STDOUT:       Foo,
-// CHECK:STDOUT:       n,
-// CHECK:STDOUT:       return,
-// CHECK:STDOUT:     ]
 // CHECK:STDOUT:     types: [
 // CHECK:STDOUT:       {node: nodeIntegerType, value_rep: {kind: copy, type: type0}},
 // CHECK:STDOUT:       {node: node+1, value_rep: {kind: unknown, type: type<invalid>}},
@@ -58,7 +47,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       {kind: PointerType, arg0: type3, type: typeTypeType},
 // CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0, type: type5},
 // CHECK:STDOUT:       {kind: NameReference, arg0: str1, arg1: node+0, type: type0},
-// CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int3, type: type0},
 // CHECK:STDOUT:       {kind: BinaryOperatorAdd, arg0: node+7, arg1: node+8, type: type0},
 // CHECK:STDOUT:       {kind: RealLiteral, arg0: real0, type: type2},
 // CHECK:STDOUT:       {kind: TupleLiteral, arg0: block5, type: type3},
