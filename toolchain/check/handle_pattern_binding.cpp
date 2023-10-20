@@ -71,7 +71,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       // the `let` pattern before we see the initializer.
       context.node_stack().Push(
           parse_node,
-          context.semantics_ir().AddNodeInNoBlock(SemIR::BindName{
+          context.semantics_ir().nodes().AddInNoBlock(SemIR::BindName{
               name_node, cast_type_id, name_id, SemIR::NodeId::Invalid}));
       break;
 

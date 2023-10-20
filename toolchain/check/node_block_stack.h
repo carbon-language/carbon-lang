@@ -48,7 +48,7 @@ class NodeBlockStack {
   // Adds the given node to the block at the top of the stack and returns its
   // ID.
   auto AddNode(SemIR::Node node) -> SemIR::NodeId {
-    auto node_id = semantics_ir_->AddNodeInNoBlock(node);
+    auto node_id = semantics_ir_->nodes().AddInNoBlock(node);
     AddNodeId(node_id);
     return node_id;
   }

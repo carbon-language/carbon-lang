@@ -91,6 +91,13 @@ class ValueStore : public Printable<ValueStore<IdT, ValueT>> {
     return id;
   }
 
+  // Adds a default constructed value and returns an ID to reference it.
+  auto AddDefaultValue() -> IdT {
+    auto id = IdT(values_.size());
+    values_.resize(id.index + 1);
+    return id;
+  }
+
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> ValueT& {
     CARBON_CHECK(id.index >= 0) << id.index;
@@ -102,6 +109,9 @@ class ValueStore : public Printable<ValueStore<IdT, ValueT>> {
     CARBON_CHECK(id.index >= 0) << id.index;
     return values_[id.index];
   }
+
+  // Reserves space.
+  auto Reserve(size_t size) -> void { values_.reserve(size); }
 
   auto Print(llvm::raw_ostream& out) const -> void { Print(out, 0); }
   auto Print(llvm::raw_ostream& out, int indent) const -> void {

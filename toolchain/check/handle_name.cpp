@@ -14,7 +14,7 @@ namespace Carbon::Check {
 static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
     -> std::optional<SemIR::NameScopeId> {
   auto base =
-      context.semantics_ir().GetNode(context.FollowNameReferences(base_id));
+      context.semantics_ir().nodes().Get(context.FollowNameReferences(base_id));
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     return base_as_namespace->name_scope_id;
   }
@@ -26,7 +26,7 @@ static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
                         "Member access into incomplete class `{0}`.",
                         std::string);
       auto builder = context.emitter().Build(
-          context.semantics_ir().GetNode(base_id).parse_node(),
+          context.semantics_ir().nodes().Get(base_id).parse_node(),
           QualifiedExpressionInIncompleteClassScope,
           context.semantics_ir().StringifyTypeExpression(base_id, true));
       context.NoteIncompleteClass(base_as_class->class_id, builder);
@@ -49,7 +49,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                        ? context.LookupName(parse_node, name_id, *name_scope_id,
                                             /*print_diagnostics=*/true)
                        : SemIR::NodeId::BuiltinError;
-    auto node = context.semantics_ir().GetNode(node_id);
+    auto node = context.semantics_ir().nodes().Get(node_id);
     // TODO: Track that this node was named within `base_id`.
     context.AddNodeAndPush(
         parse_node,
@@ -59,19 +59,20 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   // Materialize a temporary for the base expression if necessary.
   base_id = ConvertToValueOrReferenceExpression(context, base_id);
-  auto base_type_id = context.semantics_ir().GetNode(base_id).type_id();
+  auto base_type_id = context.semantics_ir().nodes().Get(base_id).type_id();
 
-  auto base_type = context.semantics_ir().GetNode(
+  auto base_type = context.semantics_ir().nodes().Get(
       context.semantics_ir().GetTypeAllowBuiltinTypes(base_type_id));
 
   switch (base_type.kind()) {
     case SemIR::StructType::Kind: {
-      auto refs = context.semantics_ir().GetNodeBlock(
+      auto refs = context.semantics_ir().node_blocks().Get(
           base_type.As<SemIR::StructType>().fields_id);
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
         auto field =
-            context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(ref_id);
+            context.semantics_ir().nodes().GetAs<SemIR::StructTypeField>(
+                ref_id);
         if (name_id == field.name_id) {
           context.AddNodeAndPush(
               parse_node, SemIR::StructAccess{parse_node, field.field_type_id,
@@ -124,7 +125,7 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   auto value_id =
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);
-  auto value = context.semantics_ir().GetNode(value_id);
+  auto value = context.semantics_ir().nodes().Get(value_id);
 
   // If lookup finds a class declaration, the value is its `Self` type.
   if (auto class_decl = value.TryAs<SemIR::ClassDeclaration>()) {
@@ -133,7 +134,7 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
             .classes()
             .Get(class_decl->class_id)
             .self_type_id);
-    value = context.semantics_ir().GetNode(value_id);
+    value = context.semantics_ir().nodes().Get(value_id);
   }
 
   CARBON_CHECK(value.kind().value_kind() == SemIR::NodeValueKind::Typed);

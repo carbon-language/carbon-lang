@@ -35,7 +35,8 @@ static auto BuildClassDeclaration(Context& context)
       name_context, class_decl_id);
   if (existing_id.is_valid()) {
     if (auto existing_class_decl = context.semantics_ir()
-                                       .GetNode(existing_id)
+                                       .nodes()
+                                       .Get(existing_id)
                                        .TryAs<SemIR::ClassDeclaration>()) {
       // This is a redeclaration of an existing class.
       class_decl.class_id = existing_class_decl->class_id;
@@ -69,7 +70,7 @@ static auto BuildClassDeclaration(Context& context)
   }
 
   // Write the class ID into the ClassDeclaration.
-  context.semantics_ir().ReplaceNode(class_decl_id, class_decl);
+  context.semantics_ir().nodes().Set(class_decl_id, class_decl);
 
   return {class_decl.class_id, class_decl_id};
 }
@@ -95,13 +96,14 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
         .Build(parse_node, ClassRedefinition,
                context.semantics_ir().strings().Get(class_info.name_id))
         .Note(context.semantics_ir()
-                  .GetNode(class_info.definition_id)
+                  .nodes()
+                  .Get(class_info.definition_id)
                   .parse_node(),
               ClassPreviousDefinition)
         .Emit();
   } else {
     class_info.definition_id = class_decl_id;
-    class_info.scope_id = context.semantics_ir().AddNameScope();
+    class_info.scope_id = context.semantics_ir().name_scopes().Add();
 
     // TODO: Introduce `Self`.
   }

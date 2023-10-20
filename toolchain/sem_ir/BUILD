@@ -47,13 +47,13 @@ cc_library(
     srcs = ["node.cpp"],
     hdrs = ["node.h"],
     deps = [
+        ":builtin_kind",
+        ":node_kind",
         "//common:check",
         "//common:ostream",
         "//common:struct_reflection",
         "//toolchain/base:index_base",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:builtin_kind",
-        "//toolchain/sem_ir:node_kind",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -63,11 +63,12 @@ cc_library(
     srcs = ["file.cpp"],
     hdrs = ["file.h"],
     deps = [
+        ":builtin_kind",
+        ":node",
+        ":node_kind",
+        ":value_stores",
         "//common:check",
         "//toolchain/base:value_store",
-        "//toolchain/sem_ir:builtin_kind",
-        "//toolchain/sem_ir:node",
-        "//toolchain/sem_ir:node_kind",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -77,10 +78,10 @@ cc_library(
     srcs = ["formatter.cpp"],
     hdrs = ["formatter.h"],
     deps = [
+        ":file",
+        ":node_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:node_kind",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -91,6 +92,16 @@ cc_library(
     hdrs = ["entry_point.h"],
     deps = [
         ":file",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "value_stores",
+    hdrs = ["value_stores.h"],
+    deps = [
+        ":node",
+        "//toolchain/base:value_store",
         "@llvm-project//llvm:Support",
     ],
 )

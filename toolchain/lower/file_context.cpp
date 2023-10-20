@@ -62,7 +62,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = semantics_ir().functions().Get(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
-  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  auto param_refs = semantics_ir().node_blocks().Get(function.param_refs_id);
 
   SemIR::InitializingRepresentation return_rep =
       function.return_type_id.is_valid()
@@ -85,7 +85,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     param_node_ids.push_back(function.return_slot_id);
   }
   for (auto param_ref_id : param_refs) {
-    auto param_type_id = semantics_ir().GetNode(param_ref_id).type_id();
+    auto param_type_id = semantics_ir().nodes().Get(param_ref_id).type_id();
     switch (auto value_rep =
                 SemIR::GetValueRepresentation(semantics_ir(), param_type_id);
             value_rep.kind) {
@@ -134,7 +134,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
           llvm_context(), GetType(function.return_type_id)));
     } else {
       arg.setName(semantics_ir().strings().Get(
-          semantics_ir().GetNodeAs<SemIR::Parameter>(node_id).name_id));
+          semantics_ir().nodes().GetAs<SemIR::Parameter>(node_id).name_id));
     }
   }
 
@@ -159,7 +159,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // TODO: This duplicates the mapping between semantics nodes and LLVM
   // function parameters that was already computed in BuildFunctionDeclaration.
   // We should only do that once.
-  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  auto param_refs = semantics_ir().node_blocks().Get(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
     function_lowering.SetLocal(function.return_slot_id,
@@ -167,7 +167,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     ++param_index;
   }
   for (auto param_ref_id : param_refs) {
-    auto param_type_id = semantics_ir().GetNode(param_ref_id).type_id();
+    auto param_type_id = semantics_ir().nodes().Get(param_ref_id).type_id();
     if (SemIR::GetValueRepresentation(semantics_ir(), param_type_id).kind ==
         SemIR::ValueRepresentation::None) {
       function_lowering.SetLocal(
@@ -219,7 +219,7 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       break;
   }
 
-  auto node = semantics_ir_->GetNode(node_id);
+  auto node = semantics_ir_->nodes().Get(node_id);
   switch (node.kind()) {
     case SemIR::ArrayType::Kind: {
       auto array_type = node.As<SemIR::ArrayType>();
@@ -232,12 +232,13 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
     case SemIR::PointerType::Kind:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
     case SemIR::StructType::Kind: {
-      auto fields =
-          semantics_ir_->GetNodeBlock(node.As<SemIR::StructType>().fields_id);
+      auto fields = semantics_ir_->node_blocks().Get(
+          node.As<SemIR::StructType>().fields_id);
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(fields.size());
       for (auto field_id : fields) {
-        auto field = semantics_ir_->GetNodeAs<SemIR::StructTypeField>(field_id);
+        auto field =
+            semantics_ir_->nodes().GetAs<SemIR::StructTypeField>(field_id);
         // TODO: Handle recursive types. The restriction for builtins prevents
         // recursion while still letting them cache.
         CARBON_CHECK(field.field_type_id.index < SemIR::BuiltinKind::ValidCount)
@@ -251,8 +252,8 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       // can be collectively replaced with LLVM's void, particularly around
       // function returns. LLVM doesn't allow declaring variables with a void
       // type, so that may require significant special casing.
-      auto elements =
-          semantics_ir_->GetTypeBlock(node.As<SemIR::TupleType>().elements_id);
+      auto elements = semantics_ir_->type_blocks().Get(
+          node.As<SemIR::TupleType>().elements_id);
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(elements.size());
       for (auto element_id : elements) {
