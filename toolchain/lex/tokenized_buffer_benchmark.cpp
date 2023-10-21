@@ -451,6 +451,12 @@ BENCHMARK(BM_ValidIdentifiers<1, 1, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<3, 5, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<3, 16, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<12, 64, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<16, 16, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<24, 24, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<32, 32, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<48, 48, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<64, 64, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<80, 80, /*Uniform=*/true>);
 
 // Benchmark to stress the lexing of horizontal whitespace. This sets up what is
 // nearly a worst-case scenario of short-but-expensive-to-lex tokens with runs
