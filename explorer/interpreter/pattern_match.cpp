@@ -4,6 +4,8 @@
 
 #include "explorer/interpreter/pattern_match.h"
 
+#include <algorithm>
+
 #include "explorer/ast/value.h"
 #include "explorer/base/arena.h"
 #include "explorer/base/trace_stream.h"
@@ -212,7 +214,8 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
             return !TypeIsDeduceable(&p_arr.element_type());
           }
 
-          const size_t deduced_size = GetSize(v_tup.elements()[0]);
+          std::vector<Nonnull<const Value*>> deduced_types;
+          deduced_types.reserve(v_tup.elements().size());
           for (const auto& tup_elem : v_tup.elements()) {
             if (!PatternMatch(&p_arr.element_type(), make_expr_result(tup_elem),
                               source_loc, bindings, generic_args, trace_stream,
@@ -220,11 +223,14 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
               return false;
             }
 
-            if (deduced_size != GetSize(tup_elem)) {
-              return false;
-            }
+            deduced_types.emplace_back(
+                DeducePatternType(&p_arr.element_type(), tup_elem, arena));
           }  // for
-          return true;
+
+          return std::adjacent_find(deduced_types.begin(), deduced_types.end(),
+                                    [](const auto& lhs, const auto& rhs) {
+                                      return !TypeEqual(lhs, rhs, std::nullopt);
+                                    }) == deduced_types.end();
         }
         case Value::Kind::StaticArrayType: {
           const auto& v_arr = cast<StaticArrayType>(*v.value());

@@ -4321,7 +4321,7 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         // TODO: Per proposal #2188, we should be performing conversions at
         // this level rather than on the overall initializer.
-        if (!IsNonDeduceableType(type)) {
+        if (TypeIsDeduceable(type)) {
           BindingMap generic_args;
           if (!PatternMatch(type, ExpressionResult::Value(*expected),
                             binding.type().source_loc(), std::nullopt,
@@ -4331,8 +4331,9 @@ auto TypeChecker::TypeCheckPattern(
                    << "' does not match actual type '" << **expected << "'";
           }
 
-          type = Deduce(type, *expected);
+          type = DeducePatternType(type, *expected, arena_);
         }
+
       } else {
         CARBON_RETURN_IF_ERROR(ExpectResolvedBindingType(binding, type));
       }
@@ -6615,30 +6616,6 @@ auto TypeChecker::InstantiateImplDeclaration(
 auto TypeChecker::InterpExp(Nonnull<const Expression*> e)
     -> ErrorOr<Nonnull<const Value*>> {
   return Carbon::InterpExp(e, arena_, trace_stream_, print_stream_);
-}
-
-auto TypeChecker::Deduce(Nonnull<const Value*> type,
-                         Nonnull<const Value*> expected)
-    -> Nonnull<const Value*> {
-  if (type->kind() == Value::Kind::StaticArrayType) {
-    const auto& arr = cast<StaticArrayType>(*type);
-    const size_t size = arr.has_size() ? arr.size() : GetSize(expected);
-    if (!IsNonDeduceableType(&arr.element_type())) {
-      CARBON_CHECK(expected->kind() == Value::Kind::StaticArrayType ||
-                   expected->kind() == Value::Kind::TupleType);
-
-      Nonnull<const Value*> expected_elem_type =
-          expected->kind() == Value::Kind::StaticArrayType
-              ? &cast<StaticArrayType>(expected)->element_type()
-              : cast<TupleType>(expected)->elements()[0];
-      return arena_->New<StaticArrayType>(
-          Deduce(&arr.element_type(), expected_elem_type), size);
-    } else {
-      return arena_->New<StaticArrayType>(&arr.element_type(), size);
-    }
-  }
-
-  return expected;
 }
 
 }  // namespace Carbon
