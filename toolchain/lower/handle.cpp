@@ -210,6 +210,8 @@ auto HandleNameReference(FunctionContext& context, SemIR::NodeId node_id,
   auto target = context.sem_ir().nodes().Get(node.value_id);
   if (auto function_decl = target.TryAs<SemIR::FunctionDeclaration>()) {
     context.SetLocal(node_id, context.GetFunction(function_decl->function_id));
+  } else if (auto class_type = target.TryAs<SemIR::ClassType>()) {
+    context.SetLocal(node_id, context.GetTypeAsValue());
   } else {
     // TODO: Handle other kinds of name references to globals.
     context.SetLocal(node_id, context.GetLocal(node.value_id));
