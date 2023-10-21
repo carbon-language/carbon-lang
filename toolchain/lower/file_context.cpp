@@ -31,11 +31,13 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
 auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
-  // Lower types.
-  auto types = semantics_ir_->types().array_ref();
-  types_.resize_for_overwrite(types.size());
-  for (auto [i, type] : llvm::enumerate(types)) {
-    types_[i] = BuildType(type.node_id);
+  // Lower all types that were required to be complete. Note that this may
+  // leave some entries in `types_` null, if those types were mentioned but not
+  // used.
+  types_.resize(semantics_ir_->types().size());
+  for (auto type_id : semantics_ir_->complete_types()) {
+    types_[type_id.index] =
+        BuildType(semantics_ir_->types().Get(type_id).node_id);
   }
 
   // Lower function declarations.
@@ -259,7 +261,7 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
     default: {
-      CARBON_FATAL() << "Cannot use node as type: " << node_id;
+      CARBON_FATAL() << "Cannot use node as type: " << node_id << " " << node;
     }
   }
 }

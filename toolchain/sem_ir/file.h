@@ -262,6 +262,7 @@ class File : public Printable<File> {
                  ValueRepresentation::Unknown)
         << "Type " << object_type_id << " completed more than once";
     types().Get(object_type_id).value_representation = value_representation;
+    complete_types_.push_back(object_type_id);
   }
 
   auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> NodeId {
@@ -356,6 +357,13 @@ class File : public Printable<File> {
   auto nodes_size() const -> int { return nodes_.size(); }
   auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
+  // A list of types that were completed in this file, in the order in which
+  // they were completed. Earlier types in this list cannot contain instances of
+  // later types.
+  auto complete_types() const -> llvm::ArrayRef<TypeId> {
+    return complete_types_;
+  }
+
   auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
   auto set_top_node_block_id(NodeBlockId block_id) -> void {
     top_node_block_id_ = block_id;
@@ -415,6 +423,9 @@ class File : public Printable<File> {
 
   // Descriptions of types used in this file.
   ValueStore<TypeId, TypeInfo> types_;
+
+  // Types that were completed in this file.
+  llvm::SmallVector<TypeId> complete_types_;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.

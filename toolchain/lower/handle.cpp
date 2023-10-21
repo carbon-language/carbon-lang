@@ -355,12 +355,11 @@ auto HandleStructAccess(FunctionContext& context, SemIR::NodeId node_id,
                                                     node.type_id, member_name));
 }
 
-auto HandleStructLiteral(FunctionContext& context, SemIR::NodeId node_id,
-                         SemIR::StructLiteral node) -> void {
+auto HandleStructLiteral(FunctionContext& /*context*/,
+                         SemIR::NodeId /*node_id*/,
+                         SemIR::StructLiteral /*node*/) -> void {
   // A StructLiteral should always be converted to a StructInit or StructValue
   // if its value is needed.
-  context.SetLocal(node_id,
-                   llvm::PoisonValue::get(context.GetType(node.type_id)));
 }
 
 // Emits the value representation for a struct or tuple whose elements are the
@@ -470,12 +469,10 @@ auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
                                            node.type_id, "tuple.index"));
 }
 
-auto HandleTupleLiteral(FunctionContext& context, SemIR::NodeId node_id,
-                        SemIR::TupleLiteral node) -> void {
+auto HandleTupleLiteral(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
+                        SemIR::TupleLiteral /*node*/) -> void {
   // A TupleLiteral should always be converted to a TupleInit or TupleValue if
   // its value is needed.
-  context.SetLocal(node_id,
-                   llvm::PoisonValue::get(context.GetType(node.type_id)));
 }
 
 auto HandleTupleInit(FunctionContext& context, SemIR::NodeId node_id,
