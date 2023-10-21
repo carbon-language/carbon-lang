@@ -129,5 +129,17 @@ TYPED_TEST(TypedNodeTest, StructLayout) {
   }
 }
 
+TYPED_TEST(TypedNodeTest, NodeKindMatches) {
+  using TypedNode = TypeParam;
+
+  // TypedNode::Kind is a NodeKind::Definition that extends NodeKind, but
+  // has different definitions of the `ir_name()` and `terminator_kind()`
+  // methods. Here we test that values returned by the two different versions
+  // of those functions match.
+  NodeKind as_kind = TypedNode::Kind;
+  EXPECT_EQ(TypedNode::Kind.ir_name(), as_kind.ir_name());
+  EXPECT_EQ(TypedNode::Kind.terminator_kind(), as_kind.terminator_kind());
+}
+
 }  // namespace
 }  // namespace Carbon::SemIR
