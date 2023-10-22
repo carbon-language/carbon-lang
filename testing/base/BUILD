@@ -38,6 +38,7 @@ cc_library(
 
 cc_test(
     name = "test_raw_ostream_test",
+    size = "small",
     srcs = ["test_raw_ostream_test.cpp"],
     deps = [
         ":test_raw_ostream",

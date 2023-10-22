@@ -12,6 +12,7 @@ py_binary(
 
 py_test(
     name = "new_proposal_test",
+    size = "small",
     srcs = ["new_proposal_test.py"],
     data = ["template.md"],
     python_version = "PY3",

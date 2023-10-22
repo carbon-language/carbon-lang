@@ -35,6 +35,7 @@ cc_binary(
 
 cc_test(
     name = "ast_to_proto_test",
+    size = "small",
     srcs = ["ast_to_proto_test.cpp"],
     args = [
         "$(locations //explorer:standard_libraries)",
@@ -75,6 +76,7 @@ cc_library(
 
 cc_test(
     name = "fuzzer_util_test",
+    size = "small",
     srcs = ["fuzzer_util_test.cpp"],
     data = [
         "//explorer:standard_libraries",

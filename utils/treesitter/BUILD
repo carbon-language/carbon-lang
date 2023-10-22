@@ -27,6 +27,7 @@ cc_binary(
 
 cc_test(
     name = "explorer_tests",
+    size = "small",
     srcs = ["test_runner.cpp"],
     args = ["$(locations //explorer:treesitter_testdata)"],
     data = ["//explorer:treesitter_testdata"],
@@ -50,6 +51,7 @@ filegroup(
 
 cc_test(
     name = "string_tests",
+    size = "small",
     srcs = ["test_runner.cpp"],
     args = ["$(locations :string_testdata)"],
     data = [":string_testdata"],
@@ -60,6 +62,7 @@ cc_test(
 
 cc_test(
     name = "string_fail_tests",
+    size = "small",
     srcs = ["test_runner.cpp"],
     args = ["$(locations :string_fail_testdata)"],
     data = [":string_fail_testdata"],

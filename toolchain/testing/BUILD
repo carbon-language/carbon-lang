@@ -10,6 +10,7 @@ package(default_visibility = ["//visibility:public"])
 file_test(
     name = "file_test",
     srcs = ["file_test.cpp"],
+    size = "small",
     tests = [
         "//toolchain/check:testdata",
         "//toolchain/codegen:testdata",
