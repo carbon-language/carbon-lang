@@ -354,8 +354,6 @@ auto AllByteStringsHashedAndSorted() {
 
   std::sort(hashes.begin(), hashes.end(),
             [](const HashedString& lhs, const HashedString& rhs) {
-              CARBON_CHECK(lhs.v != rhs.v)
-                  << "Duplicate string: " << ToHexBytes(lhs.v);
               return static_cast<uint64_t>(lhs.hash) <
                      static_cast<uint64_t>(rhs.hash);
             });
