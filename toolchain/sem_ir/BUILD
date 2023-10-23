@@ -18,6 +18,7 @@ cc_library(
     name = "ids",
     hdrs = ["ids.h"],
     deps = [
+        "//common:check",
         "//common:ostream",
         "//toolchain/base:index_base",
         "//toolchain/sem_ir:builtin_kind",
