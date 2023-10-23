@@ -15,8 +15,6 @@
 namespace Carbon::Lex {
 
 using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
-using GeneratedString = llvm::SmallString<
-    llvm::CalculateSmallVectorDefaultInlinedElements<char>::NumElementsThatFit>;
 
 static constexpr char MultiLineIndicator[] = R"(''')";
 static constexpr char DoubleQuotedMultiLineIndicator[] = R"(""")";
@@ -226,7 +224,7 @@ static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
 // Expand a `\u{HHHHHH}` escape sequence into a sequence of UTF-8 code units.
 static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
-                                        GeneratedString& result) -> bool {
+                                        char*& buffer_cursor) -> bool {
   unsigned code_point;
   if (!CanLexInteger(emitter, digits)) {
     return false;
@@ -250,17 +248,21 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
   // Convert the code point to a sequence of UTF-8 code units.
   // Every code point fits in 6 UTF-8 code units.
   const llvm::UTF32 utf32_code_units[1] = {code_point};
-  llvm::UTF8 utf8_code_units[6];
   const llvm::UTF32* src_pos = utf32_code_units;
-  llvm::UTF8* dest_pos = utf8_code_units;
+  auto*& buffer_cursor_as_utf8 = reinterpret_cast<llvm::UTF8*&>(buffer_cursor);
   llvm::ConversionResult conv_result = llvm::ConvertUTF32toUTF8(
-      &src_pos, src_pos + 1, &dest_pos, dest_pos + 6, llvm::strictConversion);
+      &src_pos, src_pos + 1, &buffer_cursor_as_utf8, buffer_cursor_as_utf8 + 6,
+      llvm::strictConversion);
   if (conv_result != llvm::conversionOK) {
     llvm_unreachable("conversion of valid code point to UTF-8 cannot fail");
   }
-  result.insert(result.end(), reinterpret_cast<char*>(utf8_code_units),
-                reinterpret_cast<char*>(dest_pos));
   return true;
+}
+
+// Appends a character to the buffer and advances the cursor.
+static auto AppendChar(char*& buffer_cursor, char append_char) -> void {
+  buffer_cursor[0] = append_char;
+  ++buffer_cursor;
 }
 
 // Expand an escape sequence, appending the expanded value to the given
@@ -269,32 +271,32 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 // `\n`), and will be updated to remove the leading escape sequence.
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
-                                           GeneratedString& result) -> void {
+                                           char*& buffer_cursor) -> void {
   CARBON_CHECK(!content.empty()) << "should have escaped closing delimiter";
   char first = content.front();
   content = content.drop_front(1);
 
   switch (first) {
     case 't':
-      result += '\t';
+      AppendChar(buffer_cursor, '\t');
       return;
     case 'n':
-      result += '\n';
+      AppendChar(buffer_cursor, '\n');
       return;
     case 'r':
-      result += '\r';
+      AppendChar(buffer_cursor, '\r');
       return;
     case '"':
-      result += '"';
+      AppendChar(buffer_cursor, '"');
       return;
     case '\'':
-      result += '\'';
+      AppendChar(buffer_cursor, '\'');
       return;
     case '\\':
-      result += '\\';
+      AppendChar(buffer_cursor, '\\');
       return;
     case '0':
-      result += '\0';
+      AppendChar(buffer_cursor, '\0');
       if (!content.empty() && IsDecimalDigit(content.front())) {
         CARBON_DIAGNOSTIC(
             DecimalEscapeSequence, Error,
@@ -307,8 +309,8 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
     case 'x':
       if (content.size() >= 2 && IsUpperHexDigit(content[0]) &&
           IsUpperHexDigit(content[1])) {
-        result +=
-            static_cast<char>(llvm::hexFromNibbles(content[0], content[1]));
+        AppendChar(buffer_cursor, static_cast<char>(llvm::hexFromNibbles(
+                                      content[0], content[1])));
         content = content.drop_front(2);
         return;
       }
@@ -323,7 +325,7 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
         llvm::StringRef digits = remaining.take_while(IsUpperHexDigit);
         remaining = remaining.drop_front(digits.size());
         if (!digits.empty() && remaining.consume_front("}")) {
-          if (!ExpandUnicodeEscapeSequence(emitter, digits, result)) {
+          if (!ExpandUnicodeEscapeSequence(emitter, digits, buffer_cursor)) {
             break;
           }
           content = remaining;
@@ -347,15 +349,14 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
   // If we get here, we didn't recognize this escape sequence and have already
   // issued a diagnostic. For error recovery purposes, expand this escape
   // sequence to itself, dropping the introducer (for example, `\q` -> `q`).
-  result += first;
+  AppendChar(buffer_cursor, first);
 }
 
 // Expand any escape sequences in the given string literal.
 static auto ExpandEscapeSequencesAndRemoveIndent(
     LexerDiagnosticEmitter& emitter, llvm::StringRef contents, int hash_level,
-    llvm::StringRef indent) -> GeneratedString {
-  GeneratedString result;
-  result.reserve(contents.size());
+    llvm::StringRef indent, char* buffer) -> llvm::StringRef {
+  char* buffer_cursor = buffer;
 
   llvm::SmallString<16> escape("\\");
   escape.resize(1 + hash_level, '#');
@@ -377,9 +378,9 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
     }
 
-    // Tracks the length of the result at the last time we expanded an escape
-    // to ensure we don't misinterpret it as unescaped when backtracking.
-    size_t last_escape_length = 0;
+    // Tracks the position at the last time we expanded an escape to ensure we
+    // don't misinterpret it as unescaped when backtracking.
+    char* buffer_last_escape = buffer_cursor;
 
     // Process the contents of the line.
     while (true) {
@@ -388,22 +389,28 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         return c == '\n' || c == '\\' ||
                (IsHorizontalWhitespace(c) && c != ' ');
       });
-      result += contents.substr(0, end_of_regular_text);
-      contents = contents.substr(end_of_regular_text);
-
-      if (contents.empty()) {
-        return result;
+      int regular_text_len = end_of_regular_text == llvm::StringRef::npos
+                                 ? contents.size()
+                                 : end_of_regular_text;
+      memcpy(buffer_cursor, contents.data(), regular_text_len);
+      buffer_cursor += regular_text_len;
+      if (end_of_regular_text == llvm::StringRef::npos) {
+        return llvm::StringRef(buffer, buffer_cursor - buffer);
       }
+      contents = contents.drop_front(regular_text_len);
 
       if (contents.consume_front("\n")) {
         // Trailing whitespace in the source before a newline doesn't contribute
         // to the string literal value. However, escaped whitespace (like `\t`)
         // and any whitespace just before that does contribute.
-        while (!result.empty() && result.back() != '\n' &&
-               IsSpace(result.back()) && result.size() > last_escape_length) {
-          result.pop_back();
+        while (buffer_cursor > buffer_last_escape) {
+          char back = *(buffer_cursor - 1);
+          if (back == '\n' || !IsSpace(back)) {
+            break;
+          }
+          --buffer_cursor;
         }
-        result += '\n';
+        AppendChar(buffer_cursor, '\n');
         // Move onto to the next line.
         break;
       }
@@ -424,7 +431,10 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
               "escape sequence in a string literal.");
           emitter.Emit(contents.begin(), InvalidHorizontalWhitespaceInString);
           // Include the whitespace in the string contents for error recovery.
-          result += contents.substr(0, after_space);
+          int len = after_space == llvm::StringRef::npos ? contents.size()
+                                                         : after_space;
+          memcpy(buffer_cursor, contents.data(), len);
+          buffer_cursor += len;
         }
         contents = contents.substr(after_space);
         continue;
@@ -432,7 +442,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
       if (!contents.consume_front(escape)) {
         // This is not an escape sequence, just a raw `\`.
-        result += contents.front();
+        AppendChar(buffer_cursor, contents.front());
         contents = contents.drop_front(1);
         continue;
       }
@@ -444,8 +454,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
 
       // Handle this escape sequence.
-      ExpandAndConsumeEscapeSequence(emitter, contents, result);
-      last_escape_length = result.size();
+      ExpandAndConsumeEscapeSequence(emitter, contents, buffer_cursor);
+      buffer_last_escape = buffer_cursor;
     }
   }
 }
@@ -468,11 +478,13 @@ auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
     return content_;
   }
 
-  GeneratedString generated = ExpandEscapeSequencesAndRemoveIndent(
-      emitter, content_, hash_level_, indent);
-  auto* alloc = allocator.Allocate<char>(generated.size());
-  memcpy(alloc, generated.data(), generated.size());
-  return llvm::StringRef(alloc, generated.size());
+  auto result = ExpandEscapeSequencesAndRemoveIndent(
+      emitter, content_, hash_level_, indent,
+      allocator.Allocate<char>(content_.size()));
+  CARBON_CHECK(result.size() <= content_.size())
+      << "Content grew from " << content_.size() << " to " << result.size()
+      << ": `" << content_ << "`";
+  return result;
 }
 
 }  // namespace Carbon::Lex
