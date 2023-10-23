@@ -17,10 +17,7 @@ static auto HandleDeclarationNameAndParams(Context& context, State after_name)
     context.PushState(state);
 
     if (context.PositionIs(Lex::TokenKind::Period)) {
-      // Because there's a qualifier, we process the first segment as an
-      // expression for simplicity. This just means semantics has one less thing
-      // to handle here.
-      context.AddLeafNode(NodeKind::NameExpression, *identifier);
+      context.AddLeafNode(NodeKind::Name, *identifier);
       state.state = State::PeriodAsDeclaration;
       context.PushState(state);
     } else {

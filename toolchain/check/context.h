@@ -66,8 +66,8 @@ class Context {
   auto DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id) -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
-  auto NoteIncompleteClass(SemIR::ClassDeclaration class_decl,
-                           DiagnosticBuilder& builder) -> void;
+  auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
+      -> void;
 
   // Pushes a new scope onto scope_stack_.
   auto PushScope(SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid)

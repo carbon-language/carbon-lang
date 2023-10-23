@@ -18,7 +18,7 @@ static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     return base_as_namespace->name_scope_id;
   }
-  if (auto base_as_class = base.TryAs<SemIR::ClassDeclaration>()) {
+  if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
     auto& class_info =
         context.semantics_ir().classes().Get(base_as_class->class_id);
     if (!class_info.scope_id.is_valid()) {
@@ -29,7 +29,7 @@ static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
           context.semantics_ir().GetNode(base_id).parse_node(),
           QualifiedExpressionInIncompleteClassScope,
           context.semantics_ir().StringifyTypeExpression(base_id, true));
-      context.NoteIncompleteClass(*base_as_class, builder);
+      context.NoteIncompleteClass(base_as_class->class_id, builder);
       builder.Emit();
     }
     return class_info.scope_id;
@@ -125,7 +125,17 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);
   auto value = context.semantics_ir().GetNode(value_id);
-  // This is a reference to a name binding that has a value and a type.
+
+  // If lookup finds a class declaration, the value is its `Self` type.
+  if (auto class_decl = value.TryAs<SemIR::ClassDeclaration>()) {
+    value_id = context.semantics_ir().GetTypeAllowBuiltinTypes(
+        context.semantics_ir()
+            .classes()
+            .Get(class_decl->class_id)
+            .self_type_id);
+    value = context.semantics_ir().GetNode(value_id);
+  }
+
   CARBON_CHECK(value.kind().value_kind() == SemIR::NodeValueKind::Typed);
   context.AddNodeAndPush(
       parse_node,
@@ -136,18 +146,28 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
 auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
   auto pop_and_apply_first_child = [&]() {
-    if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-        Parse::NodeKind::QualifiedDeclaration) {
-      // First QualifiedDeclaration in a chain.
-      auto [parse_node1, node_id1] =
-          context.node_stack().PopExpressionWithParseNode();
-      context.declaration_name_stack().ApplyExpressionQualifier(
-          parse_node1, context.FollowNameReferences(node_id1));
-      // Add the QualifiedDeclaration so that it can be used for bracketing.
-      context.node_stack().Push(parse_node);
-    } else {
-      // Nothing to do: the QualifiedDeclaration remains as a bracketing node
-      // for later QualifiedDeclarations.
+    Parse::Node parse_node1 = context.node_stack().PeekParseNode();
+    switch (context.parse_tree().node_kind(parse_node1)) {
+      case Parse::NodeKind::QualifiedDeclaration:
+        // This is the second or subsequent QualifiedDeclaration in a chain.
+        // Nothing to do: the first QualifiedDeclaration remains as a
+        // bracketing node for later QualifiedDeclarations.
+        break;
+
+      case Parse::NodeKind::Name: {
+        // This is the first QualifiedDeclaration in a chain, and starts with a
+        // name.
+        auto name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+        context.declaration_name_stack().ApplyNameQualifier(parse_node1,
+                                                            name_id);
+        // Add the QualifiedDeclaration so that it can be used for bracketing.
+        context.node_stack().Push(parse_node);
+        break;
+      }
+
+      default:
+        CARBON_FATAL() << "Unexpected node kind on left side of qualified "
+                          "declaration name";
     }
   };
 
@@ -157,10 +177,8 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
     pop_and_apply_first_child();
     context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
   } else {
-    SemIR::NodeId node_id2 = context.node_stack().PopExpression();
-    pop_and_apply_first_child();
-    context.declaration_name_stack().ApplyExpressionQualifier(parse_node2,
-                                                              node_id2);
+    CARBON_FATAL() << "Unexpected node kind on right side of qualified "
+                      "declaration name";
   }
 
   return true;

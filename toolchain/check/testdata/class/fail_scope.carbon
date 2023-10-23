@@ -22,7 +22,8 @@ class Class {
 }
 
 // CHECK:STDOUT: file "fail_scope.carbon" {
-// CHECK:STDOUT:   %Class: type = class_declaration @Class, ()
+// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

@@ -354,7 +354,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CallExpression, CallExpressionStart,
                                CARBON_TOKEN(CloseParen))
 
 // A qualified declaration, such as `a.b`:
-//   _external_: NameExpression or QualifiedDeclaration
+//   _external_: Name or QualifiedDeclaration
 //   _external_: Name
 // QualifiedDeclaration
 //

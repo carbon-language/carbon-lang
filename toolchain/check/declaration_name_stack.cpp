@@ -85,26 +85,6 @@ auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
   }
 }
 
-auto DeclarationNameStack::ApplyExpressionQualifier(Parse::Node parse_node,
-                                                    SemIR::NodeId node_id)
-    -> void {
-  auto& name_context = declaration_name_stack_.back();
-  if (CanResolveQualifier(name_context, parse_node)) {
-    if (node_id == SemIR::NodeId::BuiltinError) {
-      // The input node is an error, so error the context.
-      name_context.state = NameContext::State::Error;
-      return;
-    }
-
-    // For other nodes, we expect a regular resolved node, for example a
-    // namespace or generic type. Store it and continue for the target scope
-    // update.
-    name_context.resolved_node_id = node_id;
-
-    UpdateScopeIfNeeded(name_context);
-  }
-}
-
 auto DeclarationNameStack::ApplyNameQualifier(Parse::Node parse_node,
                                               StringId name_id) -> void {
   ApplyNameQualifierTo(declaration_name_stack_.back(), parse_node, name_id);
@@ -193,9 +173,13 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
                           std::string);
         auto builder = context_->emitter().Build(
             name_context.parse_node, QualifiedDeclarationInIncompleteClassScope,
-            context_->semantics_ir().StringifyTypeExpression(
-                name_context.resolved_node_id, true));
-        context_->NoteIncompleteClass(*class_decl, builder);
+            context_->semantics_ir().StringifyType(
+                context_->semantics_ir()
+                    .classes()
+                    .Get(class_decl->class_id)
+                    .self_type_id,
+                true));
+        context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
       } else {
         CARBON_DIAGNOSTIC(

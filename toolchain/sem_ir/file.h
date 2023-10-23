@@ -64,14 +64,15 @@ struct Class : public Printable<Class> {
 
   // The class name.
   StringId name_id;
-
+  // The class type, which is the type of `Self` in the class definition.
+  TypeId self_type_id;
+  // The first declaration of the class. This is a ClassDeclaration.
+  NodeId declaration_id = NodeId::Invalid;
   // The definition, if the class has been defined or is currently being
   // defined. This is a ClassDeclaration.
   NodeId definition_id = NodeId::Invalid;
-
   // The class scope.
   NameScopeId scope_id = NameScopeId::Invalid;
-
   // The first block of the class body.
   // TODO: Handle control flow in the class body, such as if-expressions.
   NodeBlockId body_block_id = NodeBlockId::Invalid;

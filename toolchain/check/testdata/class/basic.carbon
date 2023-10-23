@@ -23,7 +23,8 @@ fn Run() -> i32 {
 }
 
 // CHECK:STDOUT: file "basic.carbon" {
-// CHECK:STDOUT:   %Class: type = class_declaration @Class, ()
+// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }

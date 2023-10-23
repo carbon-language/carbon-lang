@@ -180,11 +180,23 @@ struct ClassDeclaration {
       NodeKind::ClassDeclaration.Define("class_declaration");
 
   Parse::Node parse_node;
-  TypeId type_id;
+  // No type: a class declaration is not itself a value. The name of a class
+  // declaration becomes a class type value.
+  // TODO: For a generic class declaration, the name of the class declaration
+  // should become a parameterized entity name value.
   ClassId class_id;
   // The declaration block, containing the class name's qualifiers and the
   // class's generic parameters.
   NodeBlockId decl_block_id;
+};
+
+struct ClassType {
+  static constexpr auto Kind = NodeKind::ClassType.Define("class_type");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  ClassId class_id;
+  // TODO: Once we support generic classes, include the class's arguments here.
 };
 
 struct ConstType {

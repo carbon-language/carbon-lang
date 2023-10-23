@@ -20,7 +20,8 @@ var t: (i32, Incomplete);
 var p: Incomplete* = &t[1];
 
 // CHECK:STDOUT: file "fail_nested_incomplete.carbon" {
-// CHECK:STDOUT:   %Incomplete: type = class_declaration @Incomplete, ()
+// CHECK:STDOUT:   class_declaration @Incomplete, ()
+// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_reference "Incomplete", %Incomplete
 // CHECK:STDOUT:   %.loc15_24.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc15_24.2: (type, type) = tuple_literal (i32, %Incomplete.ref.loc15)

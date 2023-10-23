@@ -26,9 +26,8 @@ static auto BuildClassDeclaration(Context& context)
   auto decl_block_id = context.node_block_stack().Pop();
 
   // Add the class declaration.
-  auto class_decl =
-      SemIR::ClassDeclaration{class_keyword, SemIR::TypeId::TypeType,
-                              SemIR::ClassId::Invalid, decl_block_id};
+  auto class_decl = SemIR::ClassDeclaration{
+      class_keyword, SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddNode(class_decl);
 
   // Check whether this is a redeclaration.
@@ -55,7 +54,18 @@ static auto BuildClassDeclaration(Context& context)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : StringId::Invalid});
+                        : StringId::Invalid,
+         // `.self_type_id` depends on `class_id`, so is set below.
+         .self_type_id = SemIR::TypeId::Invalid,
+         .declaration_id = class_decl_id});
+
+    // Build the `Self` type.
+    auto& class_info =
+        context.semantics_ir().classes().Get(class_decl.class_id);
+    class_info.self_type_id =
+        context.CanonicalizeType(context.AddNode(SemIR::ClassType{
+            class_keyword, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+            class_decl.class_id}));
   }
 
   // Write the class ID into the ClassDeclaration.
