@@ -47,14 +47,16 @@ class FunctionContext {
     }
 
     auto it = locals_.find(node_id);
-    CARBON_CHECK(it != locals_.end()) << "Missing local: " << node_id;
+    CARBON_CHECK(it != locals_.end()) << "Missing local: " << node_id << " "
+                                      << semantics_ir().GetNode(node_id);
     return it->second;
   }
 
   // Sets the value for the given node.
   auto SetLocal(SemIR::NodeId node_id, llvm::Value* value) {
     bool added = locals_.insert({node_id, value}).second;
-    CARBON_CHECK(added) << "Duplicate local insert: " << node_id;
+    CARBON_CHECK(added) << "Duplicate local insert: " << node_id << " "
+                        << semantics_ir().GetNode(node_id);
   }
 
   // Gets a callable's function.

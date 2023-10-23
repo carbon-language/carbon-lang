@@ -370,6 +370,15 @@ class TypeCompleter {
           work_list_.push_back(
               {value_rep.type_id, Phase::BuildValueRepresentation});
         }
+        // For a pointer representation, the pointee also needs to be complete.
+        if (value_rep.kind == SemIR::ValueRepresentation::Pointer) {
+          auto pointee_type_id =
+              context_.semantics_ir().GetPointeeType(value_rep.type_id);
+          if (!context_.semantics_ir().IsTypeComplete(pointee_type_id)) {
+            work_list_.push_back(
+                {pointee_type_id, Phase::BuildValueRepresentation});
+          }
+        }
         break;
       }
     }
