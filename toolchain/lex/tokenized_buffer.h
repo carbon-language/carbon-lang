@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_store.h"
@@ -344,6 +345,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   [[nodiscard]] auto GetTokenPrintWidths(Token token) const -> PrintWidths;
   auto PrintToken(llvm::raw_ostream& output_stream, Token token,
                   PrintWidths widths) const -> void;
+
+  // Used to allocate computed string literals.
+  llvm::BumpPtrAllocator allocator_;
 
   SharedValueStores* value_stores_;
   SourceBuffer* source_;
