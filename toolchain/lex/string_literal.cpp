@@ -482,7 +482,7 @@ auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
   }
 
   // "Expanding" escape sequences should only ever shorten content. As a
-  // consequence, the output string should allows fit within this allocation.
+  // consequence, the output string should always fit within this allocation.
   // Although this may waste some space, it avoids a reallocation.
   auto result = ExpandEscapeSequencesAndRemoveIndent(
       emitter, content_, hash_level_, indent,
