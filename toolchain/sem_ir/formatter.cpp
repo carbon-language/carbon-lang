@@ -27,7 +27,7 @@ class NodeNamer {
   // NOLINTNEXTLINE(performance-enum-size)
   enum class ScopeIndex : int32_t {
     None = -1,
-    Package = 0,
+    File = 0,
   };
   static_assert(sizeof(ScopeIndex) == sizeof(FunctionId));
 
@@ -41,10 +41,9 @@ class NodeNamer {
     scopes.resize(1 + semantics_ir.functions().size() +
                   semantics_ir.classes().size());
 
-    // Build the package scope.
-    GetScopeInfo(ScopeIndex::Package).name =
-        globals.AddNameUnchecked("package");
-    CollectNamesInBlock(ScopeIndex::Package, semantics_ir.top_node_block_id());
+    // Build the file scope.
+    GetScopeInfo(ScopeIndex::File).name = globals.AddNameUnchecked("file");
+    CollectNamesInBlock(ScopeIndex::File, semantics_ir.top_node_block_id());
 
     // Build each function scope.
     for (auto [i, fn] : llvm::enumerate(semantics_ir.functions().array_ref())) {
@@ -483,15 +482,14 @@ class Formatter {
 
   auto Format() -> void {
     out_ << "file \"" << semantics_ir_.filename() << "\" {\n";
-    // TODO: Include information from the package declaration, once we
+    // TODO: Include information from the `package` declaration, once we
     // fully support it.
     // TODO: Handle the case where there are multiple top-level node blocks.
     // For example, there may be branching in the initializer of a global or a
     // type expression.
     if (auto block_id = semantics_ir_.top_node_block_id();
         block_id.is_valid()) {
-      llvm::SaveAndRestore package_scope(scope_,
-                                         NodeNamer::ScopeIndex::Package);
+      llvm::SaveAndRestore file_scope(scope_, NodeNamer::ScopeIndex::File);
       FormatCodeBlock(block_id);
     }
     out_ << "}\n";

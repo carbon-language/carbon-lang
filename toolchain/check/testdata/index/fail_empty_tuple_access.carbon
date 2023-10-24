@@ -25,7 +25,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
 // CHECK:STDOUT:   %.loc13_4.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc13_4.2: init () = call %F.ref()
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0

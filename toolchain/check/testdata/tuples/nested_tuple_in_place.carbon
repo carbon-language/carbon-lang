@@ -33,10 +33,10 @@ fn H() {
 // CHECK:STDOUT:   %.loc10_43.4: type = tuple_type ((i32, i32, i32)*, (i32, i32, i32)*)
 // CHECK:STDOUT:   %.loc10_43.5: type = ptr_type ((i32, i32, i32)*, (i32, i32, i32)*)
 // CHECK:STDOUT:   %v: ref ((i32, i32, i32), (i32, i32, i32)) = var "v"
-// CHECK:STDOUT:   %F.ref.loc10_48: <function> = name_reference "F", package.%F
+// CHECK:STDOUT:   %F.ref.loc10_48: <function> = name_reference "F", file.%F
 // CHECK:STDOUT:   %.loc10_56.1: ref (i32, i32, i32) = tuple_access %v, member0
 // CHECK:STDOUT:   %.loc10_49: init (i32, i32, i32) = call %F.ref.loc10_48() to %.loc10_56.1
-// CHECK:STDOUT:   %F.ref.loc10_53: <function> = name_reference "F", package.%F
+// CHECK:STDOUT:   %F.ref.loc10_53: <function> = name_reference "F", file.%F
 // CHECK:STDOUT:   %.loc10_56.2: ref (i32, i32, i32) = tuple_access %v, member1
 // CHECK:STDOUT:   %.loc10_54: init (i32, i32, i32) = call %F.ref.loc10_53() to %.loc10_56.2
 // CHECK:STDOUT:   %.loc10_56.3: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_49, %.loc10_54)
@@ -55,7 +55,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc14_36.5: type = ptr_type (i32, (i32, i32, i32)*, i32)
 // CHECK:STDOUT:   %v: ref (i32, (i32, i32, i32), i32) = var "v"
 // CHECK:STDOUT:   %.loc14_41: i32 = int_literal 1
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
 // CHECK:STDOUT:   %.loc14_50.1: ref (i32, i32, i32) = tuple_access %v, member1
 // CHECK:STDOUT:   %.loc14_45: init (i32, i32, i32) = call %F.ref() to %.loc14_50.1
 // CHECK:STDOUT:   %.loc14_49: i32 = int_literal 2
