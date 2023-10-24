@@ -94,8 +94,9 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
                     "Class was forward declared here.");
   const auto& class_info = semantics_ir().classes().Get(class_id);
-  builder.Note(semantics_ir().GetNode(class_info.declaration_id).parse_node(),
-               ClassForwardDeclaredHere);
+  builder.Note(
+      semantics_ir().nodes().Get(class_info.declaration_id).parse_node(),
+      ClassForwardDeclaredHere);
 }
 
 auto Context::AddNameToLookup(Parse::Node name_node, StringId name_id,
