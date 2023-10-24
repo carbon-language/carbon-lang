@@ -137,7 +137,14 @@ static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
 //
 // Bits 4-7 remain unused if we need to classify more characters.
 namespace {
+// Struct used to implement the nibble LUT for SIMD implementations.
+//
+// Forced to 16-byte alignment to ensure we can load it easily in SIMD code.
 struct alignas(16) NibbleLUT {
+  auto Load() const -> __m128i {
+    return _mm_load_si128(reinterpret_cast<const __m128i*>(this));
+  }
+
   uint8_t nibble_0;
   uint8_t nibble_1;
   uint8_t nibble_2;
@@ -154,10 +161,6 @@ struct alignas(16) NibbleLUT {
   uint8_t nibble_d;
   uint8_t nibble_e;
   uint8_t nibble_f;
-
-  auto Load() const -> __m128i {
-    return _mm_load_si128(reinterpret_cast<const __m128i*>(this));
-  }
 };
 }  // namespace
 
@@ -262,9 +265,9 @@ static auto ScanForIdentifierPrefixX86(llvm::StringRef text)
 // Scans the provided text and returns the prefix `StringRef` of contiguous
 // identifier characters.
 //
-// This is a performance sensitive function and uses vectorized code
-// sequences to optimize its scanning on supported platforms. When modifying, the identifier lexing
-// benchmarks should be checked for regressions.
+// This is a performance sensitive function and where profitable uses vectorized
+// code sequences to optimize its scanning. When modifying, the identifier
+// lexing benchmarks should be checked for regressions.
 //
 // Identifier characters here are currently the ASCII characters `[0-9A-Za-z_]`.
 //
