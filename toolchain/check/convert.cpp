@@ -21,10 +21,10 @@ namespace Carbon::Check {
 // Given an initializing expression, find its return slot. Returns `Invalid` if
 // there is no return slot, because the initialization is not performed in
 // place.
-static auto FindReturnSlotForInitializer(SemIR::File& semantics_ir,
+static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
                                          SemIR::NodeId init_id)
     -> SemIR::NodeId {
-  SemIR::Node init = semantics_ir.nodes().Get(init_id);
+  SemIR::Node init = sem_ir.nodes().Get(init_id);
   switch (init.kind()) {
     default:
       CARBON_FATAL() << "Initialization from unexpected node " << init;
@@ -42,15 +42,15 @@ static auto FindReturnSlotForInitializer(SemIR::File& semantics_ir,
 
     case SemIR::Call::Kind: {
       auto call = init.As<SemIR::Call>();
-      if (!SemIR::GetInitializingRepresentation(semantics_ir, call.type_id)
+      if (!SemIR::GetInitializingRepresentation(sem_ir, call.type_id)
                .has_return_slot()) {
         return SemIR::NodeId::Invalid;
       }
-      return semantics_ir.node_blocks().Get(call.args_id).back();
+      return sem_ir.node_blocks().Get(call.args_id).back();
     }
 
     case SemIR::ArrayInit::Kind: {
-      return semantics_ir.node_blocks()
+      return sem_ir.node_blocks()
           .Get(init.As<SemIR::ArrayInit>().inits_and_return_slot_id)
           .back();
     }
@@ -58,17 +58,17 @@ static auto FindReturnSlotForInitializer(SemIR::File& semantics_ir,
 }
 
 // Marks the initializer `init_id` as initializing `target_id`.
-static auto MarkInitializerFor(SemIR::File& semantics_ir, SemIR::NodeId init_id,
+static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::NodeId init_id,
                                SemIR::NodeId target_id,
                                PendingBlock& target_block) -> void {
-  auto return_slot_id = FindReturnSlotForInitializer(semantics_ir, init_id);
+  auto return_slot_id = FindReturnSlotForInitializer(sem_ir, init_id);
   if (return_slot_id.is_valid()) {
     // Replace the temporary in the return slot with a reference to our target.
-    CARBON_CHECK(semantics_ir.nodes().Get(return_slot_id).kind() ==
+    CARBON_CHECK(sem_ir.nodes().Get(return_slot_id).kind() ==
                  SemIR::TemporaryStorage::Kind)
         << "Return slot for initializer does not contain a temporary; "
         << "initialized multiple times? Have "
-        << semantics_ir.nodes().Get(return_slot_id);
+        << sem_ir.nodes().Get(return_slot_id);
     target_block.MergeReplacing(return_slot_id, target_id);
   }
 }
@@ -80,16 +80,16 @@ static auto MarkInitializerFor(SemIR::File& semantics_ir, SemIR::NodeId init_id,
 // return value will be `SemIR::NodeId::Invalid`.
 static auto FinalizeTemporary(Context& context, SemIR::NodeId init_id,
                               bool discarded) -> SemIR::NodeId {
-  auto& semantics_ir = context.semantics_ir();
-  auto return_slot_id = FindReturnSlotForInitializer(semantics_ir, init_id);
+  auto& sem_ir = context.sem_ir();
+  auto return_slot_id = FindReturnSlotForInitializer(sem_ir, init_id);
   if (return_slot_id.is_valid()) {
     // The return slot should already have a materialized temporary in it.
-    CARBON_CHECK(semantics_ir.nodes().Get(return_slot_id).kind() ==
+    CARBON_CHECK(sem_ir.nodes().Get(return_slot_id).kind() ==
                  SemIR::TemporaryStorage::Kind)
         << "Return slot for initializer does not contain a temporary; "
         << "initialized multiple times? Have "
-        << semantics_ir.nodes().Get(return_slot_id);
-    auto init = semantics_ir.nodes().Get(init_id);
+        << sem_ir.nodes().Get(return_slot_id);
+    auto init = sem_ir.nodes().Get(init_id);
     return context.AddNode(SemIR::Temporary{init.parse_node(), init.type_id(),
                                             return_slot_id, init_id});
   }
@@ -104,7 +104,7 @@ static auto FinalizeTemporary(Context& context, SemIR::NodeId init_id,
   // TODO: Consider using an invalid ID to mean that we immediately
   // materialize and initialize a temporary, rather than two separate
   // nodes.
-  auto init = semantics_ir.nodes().Get(init_id);
+  auto init = sem_ir.nodes().Get(init_id);
   auto temporary_id = context.AddNode(
       SemIR::TemporaryStorage{init.parse_node(), init.type_id()});
   return context.AddNode(SemIR::Temporary{init.parse_node(), init.type_id(),
@@ -115,7 +115,7 @@ static auto FinalizeTemporary(Context& context, SemIR::NodeId init_id,
 // an initializing expression.
 static auto MaterializeIfInitializing(Context& context, SemIR::NodeId expr_id)
     -> SemIR::NodeId {
-  if (GetExpressionCategory(context.semantics_ir(), expr_id) ==
+  if (GetExpressionCategory(context.sem_ir(), expr_id) ==
       SemIR::ExpressionCategory::Initializing) {
     return FinalizeTemporary(context, expr_id, /*discarded=*/false);
   }
@@ -134,7 +134,7 @@ static auto MakeElemAccessNode(Context& context, Parse::Node parse_node,
     // special case.
     auto index_id = block.AddNode(SemIR::IntegerLiteral{
         parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
-        context.semantics_ir().integers().Add(llvm::APInt(32, i))});
+        context.sem_ir().integers().Add(llvm::APInt(32, i))});
     return block.AddNode(
         AccessNodeT{parse_node, elem_type_id, aggregate_id, index_id});
   } else {
@@ -234,24 +234,23 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                 SemIR::ArrayType array_type,
                                 SemIR::NodeId value_id, ConversionTarget target)
     -> SemIR::NodeId {
-  auto& semantics_ir = context.semantics_ir();
-  auto tuple_elem_types =
-      semantics_ir.type_blocks().Get(tuple_type.elements_id);
+  auto& sem_ir = context.sem_ir();
+  auto tuple_elem_types = sem_ir.type_blocks().Get(tuple_type.elements_id);
 
-  auto value = semantics_ir.nodes().Get(value_id);
+  auto value = sem_ir.nodes().Get(value_id);
 
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
   // result.
   llvm::ArrayRef<SemIR::NodeId> literal_elems;
   if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
-    literal_elems = semantics_ir.node_blocks().Get(tuple_literal->elements_id);
+    literal_elems = sem_ir.node_blocks().Get(tuple_literal->elements_id);
   } else {
     value_id = MaterializeIfInitializing(context, value_id);
   }
 
   // Check that the tuple is the right size.
-  uint64_t array_bound = semantics_ir.GetArrayBoundValue(array_type.bound_id);
+  uint64_t array_bound = sem_ir.GetArrayBoundValue(array_type.bound_id);
   if (tuple_elem_types.size() != array_bound) {
     CARBON_DIAGNOSTIC(
         ArrayInitFromLiteralArgCountMismatch, Error,
@@ -306,9 +305,9 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   target_block->InsertHere();
   inits.push_back(return_slot_id);
 
-  return context.AddNode(
-      SemIR::ArrayInit{value.parse_node(), target.type_id, value_id,
-                       semantics_ir.node_blocks().Add(inits)});
+  return context.AddNode(SemIR::ArrayInit{value.parse_node(), target.type_id,
+                                          value_id,
+                                          sem_ir.node_blocks().Add(inits)});
 }
 
 // Performs a conversion from a tuple to a tuple type. Does not perform a
@@ -317,11 +316,11 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
                                 SemIR::TupleType dest_type,
                                 SemIR::NodeId value_id, ConversionTarget target)
     -> SemIR::NodeId {
-  auto& semantics_ir = context.semantics_ir();
-  auto src_elem_types = semantics_ir.type_blocks().Get(src_type.elements_id);
-  auto dest_elem_types = semantics_ir.type_blocks().Get(dest_type.elements_id);
+  auto& sem_ir = context.sem_ir();
+  auto src_elem_types = sem_ir.type_blocks().Get(src_type.elements_id);
+  auto dest_elem_types = sem_ir.type_blocks().Get(dest_type.elements_id);
 
-  auto value = semantics_ir.nodes().Get(value_id);
+  auto value = sem_ir.nodes().Get(value_id);
 
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -330,7 +329,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   auto literal_elems_id = SemIR::NodeBlockId::Invalid;
   if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
     literal_elems_id = tuple_literal->elements_id;
-    literal_elems = semantics_ir.node_blocks().Get(literal_elems_id);
+    literal_elems = sem_ir.node_blocks().Get(literal_elems_id);
   } else {
     value_id = MaterializeIfInitializing(context, value_id);
   }
@@ -353,16 +352,15 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   bool is_init = target.is_initializer();
   ConversionTarget::Kind inner_kind =
       !is_init ? ConversionTarget::Value
-      : SemIR::GetInitializingRepresentation(semantics_ir, target.type_id)
-                  .kind == SemIR::InitializingRepresentation::InPlace
+      : SemIR::GetInitializingRepresentation(sem_ir, target.type_id).kind ==
+              SemIR::InitializingRepresentation::InPlace
           ? ConversionTarget::FullInitializer
           : ConversionTarget::Initializer;
 
   // Initialize each element of the destination from the corresponding element
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
-  CopyOnWriteBlock new_block(semantics_ir, literal_elems_id,
-                             src_elem_types.size());
+  CopyOnWriteBlock new_block(sem_ir, literal_elems_id, src_elem_types.size());
   for (auto [i, src_type_id, dest_type_id] :
        llvm::enumerate(src_elem_types, dest_elem_types)) {
     // TODO: This call recurses back into conversion. Switch to an iterative
@@ -391,11 +389,11 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                                   SemIR::StructType dest_type,
                                   SemIR::NodeId value_id,
                                   ConversionTarget target) -> SemIR::NodeId {
-  auto& semantics_ir = context.semantics_ir();
-  auto src_elem_fields = semantics_ir.node_blocks().Get(src_type.fields_id);
-  auto dest_elem_fields = semantics_ir.node_blocks().Get(dest_type.fields_id);
+  auto& sem_ir = context.sem_ir();
+  auto src_elem_fields = sem_ir.node_blocks().Get(src_type.fields_id);
+  auto dest_elem_fields = sem_ir.node_blocks().Get(dest_type.fields_id);
 
-  auto value = semantics_ir.nodes().Get(value_id);
+  auto value = sem_ir.nodes().Get(value_id);
 
   // If we're initializing from a struct literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -404,7 +402,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
   auto literal_elems_id = SemIR::NodeBlockId::Invalid;
   if (auto struct_literal = value.TryAs<SemIR::StructLiteral>()) {
     literal_elems_id = struct_literal->elements_id;
-    literal_elems = semantics_ir.node_blocks().Get(literal_elems_id);
+    literal_elems = sem_ir.node_blocks().Get(literal_elems_id);
   } else {
     value_id = MaterializeIfInitializing(context, value_id);
   }
@@ -429,22 +427,20 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
   bool is_init = target.is_initializer();
   ConversionTarget::Kind inner_kind =
       !is_init ? ConversionTarget::Value
-      : SemIR::GetInitializingRepresentation(semantics_ir, target.type_id)
-                  .kind == SemIR::InitializingRepresentation::InPlace
+      : SemIR::GetInitializingRepresentation(sem_ir, target.type_id).kind ==
+              SemIR::InitializingRepresentation::InPlace
           ? ConversionTarget::FullInitializer
           : ConversionTarget::Initializer;
 
   // Initialize each element of the destination from the corresponding element
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
-  CopyOnWriteBlock new_block(semantics_ir, literal_elems_id,
-                             src_elem_fields.size());
+  CopyOnWriteBlock new_block(sem_ir, literal_elems_id, src_elem_fields.size());
   for (auto [i, src_field_id, dest_field_id] :
        llvm::enumerate(src_elem_fields, dest_elem_fields)) {
-    auto src_field =
-        semantics_ir.nodes().GetAs<SemIR::StructTypeField>(src_field_id);
+    auto src_field = sem_ir.nodes().GetAs<SemIR::StructTypeField>(src_field_id);
     auto dest_field =
-        semantics_ir.nodes().GetAs<SemIR::StructTypeField>(dest_field_id);
+        sem_ir.nodes().GetAs<SemIR::StructTypeField>(dest_field_id);
     if (src_field.name_id != dest_field.name_id) {
       CARBON_DIAGNOSTIC(
           StructInitFieldNameMismatch, Error,
@@ -452,9 +448,8 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
           "source has field name `{1}`, destination has field name `{2}`.",
           size_t, llvm::StringRef, llvm::StringRef);
       context.emitter().Emit(value.parse_node(), StructInitFieldNameMismatch,
-                             i + 1,
-                             semantics_ir.strings().Get(src_field.name_id),
-                             semantics_ir.strings().Get(dest_field.name_id));
+                             i + 1, sem_ir.strings().Get(src_field.name_id),
+                             sem_ir.strings().Get(dest_field.name_id));
       return SemIR::NodeId::BuiltinError;
     }
 
@@ -502,11 +497,11 @@ static bool IsValidExpressionCategoryForConversionTarget(
 static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
                                      SemIR::NodeId value_id,
                                      ConversionTarget target) -> SemIR::NodeId {
-  auto& semantics_ir = context.semantics_ir();
-  auto value = semantics_ir.nodes().Get(value_id);
+  auto& sem_ir = context.sem_ir();
+  auto value = sem_ir.nodes().Get(value_id);
   auto value_type_id = value.type_id();
-  auto target_type_node = semantics_ir.nodes().Get(
-      semantics_ir.GetTypeAllowBuiltinTypes(target.type_id));
+  auto target_type_node =
+      sem_ir.nodes().Get(sem_ir.GetTypeAllowBuiltinTypes(target.type_id));
 
   // Various forms of implicit conversion are supported as builtin conversions,
   // either in addition to or instead of `impl`s of `ImplicitAs` in the Carbon
@@ -540,15 +535,15 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   // and structs, so it's important that we bail out early in this case.
   if (value_type_id == target.type_id &&
       IsValidExpressionCategoryForConversionTarget(
-          SemIR::GetExpressionCategory(semantics_ir, value_id), target.kind)) {
+          SemIR::GetExpressionCategory(sem_ir, value_id), target.kind)) {
     return value_id;
   }
 
   // A tuple (T1, T2, ..., Tn) converts to (U1, U2, ..., Un) if each Ti
   // converts to Ui.
   if (auto target_tuple_type = target_type_node.TryAs<SemIR::TupleType>()) {
-    auto value_type_node = semantics_ir.nodes().Get(
-        semantics_ir.GetTypeAllowBuiltinTypes(value_type_id));
+    auto value_type_node =
+        sem_ir.nodes().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
     if (auto src_tuple_type = value_type_node.TryAs<SemIR::TupleType>()) {
       return ConvertTupleToTuple(context, *src_tuple_type, *target_tuple_type,
                                  value_id, target);
@@ -560,8 +555,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   // (p(1), ..., p(n)) is a permutation of (1, ..., n) and each Ti converts
   // to Ui.
   if (auto target_struct_type = target_type_node.TryAs<SemIR::StructType>()) {
-    auto value_type_node = semantics_ir.nodes().Get(
-        semantics_ir.GetTypeAllowBuiltinTypes(value_type_id));
+    auto value_type_node =
+        sem_ir.nodes().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
     if (auto src_struct_type = value_type_node.TryAs<SemIR::StructType>()) {
       return ConvertStructToStruct(context, *src_struct_type,
                                    *target_struct_type, value_id, target);
@@ -570,8 +565,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
 
   // A tuple (T1, T2, ..., Tn) converts to [T; n] if each Ti converts to T.
   if (auto target_array_type = target_type_node.TryAs<SemIR::ArrayType>()) {
-    auto value_type_node = semantics_ir.nodes().Get(
-        semantics_ir.GetTypeAllowBuiltinTypes(value_type_id));
+    auto value_type_node =
+        sem_ir.nodes().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
     if (auto src_tuple_type = value_type_node.TryAs<SemIR::TupleType>()) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
@@ -584,7 +579,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
     if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
       llvm::SmallVector<SemIR::TypeId> type_ids;
       for (auto tuple_node_id :
-           semantics_ir.node_blocks().Get(tuple_literal->elements_id)) {
+           sem_ir.node_blocks().Get(tuple_literal->elements_id)) {
         // TODO: This call recurses back into conversion. Switch to an
         // iterative approach.
         type_ids.push_back(
@@ -592,7 +587,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
       }
       auto tuple_type_id =
           context.CanonicalizeTupleType(parse_node, std::move(type_ids));
-      return semantics_ir.GetTypeAllowBuiltinTypes(tuple_type_id);
+      return sem_ir.GetTypeAllowBuiltinTypes(tuple_type_id);
     }
 
     // `{}` converts to `{} as type`.
@@ -601,7 +596,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
     if (auto struct_literal = value.TryAs<SemIR::StructLiteral>();
         struct_literal &&
         struct_literal->elements_id == SemIR::NodeBlockId::Empty) {
-      value_id = semantics_ir.GetTypeAllowBuiltinTypes(value_type_id);
+      value_id = sem_ir.GetTypeAllowBuiltinTypes(value_type_id);
     }
   }
 
@@ -611,24 +606,24 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
 
 auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
              ConversionTarget target) -> SemIR::NodeId {
-  auto& semantics_ir = context.semantics_ir();
+  auto& sem_ir = context.sem_ir();
   auto orig_expr_id = expr_id;
 
   // Start by making sure both sides are valid. If any part is invalid, the
   // result is invalid and we shouldn't error.
-  if (semantics_ir.nodes().Get(expr_id).type_id() == SemIR::TypeId::Error ||
+  if (sem_ir.nodes().Get(expr_id).type_id() == SemIR::TypeId::Error ||
       target.type_id == SemIR::TypeId::Error) {
     return SemIR::NodeId::BuiltinError;
   }
 
-  if (SemIR::GetExpressionCategory(semantics_ir, expr_id) ==
+  if (SemIR::GetExpressionCategory(sem_ir, expr_id) ==
       SemIR::ExpressionCategory::NotExpression) {
     // TODO: We currently encounter this for use of namespaces and functions.
     // We should provide a better diagnostic for inappropriate use of
     // namespace names, and allow use of functions as values.
     CARBON_DIAGNOSTIC(UseOfNonExpressionAsValue, Error,
                       "Expression cannot be used as a value.");
-    context.emitter().Emit(semantics_ir.nodes().Get(expr_id).parse_node(),
+    context.emitter().Emit(sem_ir.nodes().Get(expr_id).parse_node(),
                            UseOfNonExpressionAsValue);
     return SemIR::NodeId::BuiltinError;
   }
@@ -649,7 +644,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
             : target.kind == ConversionTarget::Value
                 ? IncompleteTypeInValueConversion
                 : IncompleteTypeInConversion,
-            context.semantics_ir().StringifyType(target.type_id, true));
+            context.sem_ir().StringifyType(target.type_id, true));
       })) {
     return SemIR::NodeId::BuiltinError;
   }
@@ -662,21 +657,21 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
 
   // If the types don't match at this point, we can't perform the conversion.
   // TODO: Look for an ImplicitAs impl.
-  SemIR::Node expr = semantics_ir.nodes().Get(expr_id);
+  SemIR::Node expr = sem_ir.nodes().Get(expr_id);
   if (expr.type_id() != target.type_id) {
     CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
                       "Cannot implicitly convert from `{0}` to `{1}`.",
                       std::string, std::string);
     context.emitter()
         .Build(parse_node, ImplicitAsConversionFailure,
-               semantics_ir.StringifyType(expr.type_id()),
-               semantics_ir.StringifyType(target.type_id))
+               sem_ir.StringifyType(expr.type_id()),
+               sem_ir.StringifyType(target.type_id))
         .Emit();
     return SemIR::NodeId::BuiltinError;
   }
 
   // Now perform any necessary value category conversions.
-  switch (SemIR::GetExpressionCategory(semantics_ir, expr_id)) {
+  switch (SemIR::GetExpressionCategory(sem_ir, expr_id)) {
     case SemIR::ExpressionCategory::NotExpression:
     case SemIR::ExpressionCategory::Mixed:
       CARBON_FATAL() << "Unexpected expression " << expr
@@ -692,7 +687,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
           // a conversion. In that case, we will have created it with the
           // target already set.
           // TODO: Find a better way to track whether we need to do this.
-          MarkInitializerFor(semantics_ir, expr_id, target.init_id,
+          MarkInitializerFor(sem_ir, expr_id, target.init_id,
                              *target.init_block);
         }
         break;
@@ -725,7 +720,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
   // Perform a final destination store, if necessary.
   if (target.kind == ConversionTarget::FullInitializer) {
     if (auto init_rep =
-            SemIR::GetInitializingRepresentation(semantics_ir, target.type_id);
+            SemIR::GetInitializingRepresentation(sem_ir, target.type_id);
         init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
       target.init_block->InsertHere();
       expr_id = context.AddNode(SemIR::InitializeFrom{
@@ -740,17 +735,16 @@ auto Initialize(Context& context, Parse::Node parse_node,
                 SemIR::NodeId target_id, SemIR::NodeId value_id)
     -> SemIR::NodeId {
   PendingBlock target_block(context);
-  return Convert(
-      context, parse_node, value_id,
-      {.kind = ConversionTarget::Initializer,
-       .type_id = context.semantics_ir().nodes().Get(target_id).type_id(),
-       .init_id = target_id,
-       .init_block = &target_block});
+  return Convert(context, parse_node, value_id,
+                 {.kind = ConversionTarget::Initializer,
+                  .type_id = context.sem_ir().nodes().Get(target_id).type_id(),
+                  .init_id = target_id,
+                  .init_block = &target_block});
 }
 
 auto ConvertToValueExpression(Context& context, SemIR::NodeId expr_id)
     -> SemIR::NodeId {
-  auto expr = context.semantics_ir().nodes().Get(expr_id);
+  auto expr = context.sem_ir().nodes().Get(expr_id);
   return Convert(context, expr.parse_node(), expr_id,
                  {.kind = ConversionTarget::Value, .type_id = expr.type_id()});
 }
@@ -758,7 +752,7 @@ auto ConvertToValueExpression(Context& context, SemIR::NodeId expr_id)
 auto ConvertToValueOrReferenceExpression(Context& context,
                                          SemIR::NodeId expr_id)
     -> SemIR::NodeId {
-  auto expr = context.semantics_ir().nodes().Get(expr_id);
+  auto expr = context.sem_ir().nodes().Get(expr_id);
   return Convert(
       context, expr.parse_node(), expr_id,
       {.kind = ConversionTarget::ValueOrReference, .type_id = expr.type_id()});
@@ -790,8 +784,8 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
     return true;
   }
 
-  auto arg_refs = context.semantics_ir().node_blocks().Get(arg_refs_id);
-  auto param_refs = context.semantics_ir().node_blocks().Get(param_refs_id);
+  auto arg_refs = context.sem_ir().node_blocks().Get(arg_refs_id);
+  auto param_refs = context.sem_ir().node_blocks().Get(param_refs_id);
 
   if (has_return_slot) {
     // There's no entry in the parameter block for the return slot, so ignore
@@ -835,7 +829,7 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
   for (auto [i, value_id, param_ref] : llvm::enumerate(arg_refs, param_refs)) {
     diag_param_index = i;
 
-    auto as_type_id = context.semantics_ir().nodes().Get(param_ref).type_id();
+    auto as_type_id = context.sem_ir().nodes().Get(param_ref).type_id();
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.
     value_id =

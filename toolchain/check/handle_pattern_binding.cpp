@@ -39,7 +39,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
                               std::string);
             return context.emitter().Build(
                 type_node_copy, IncompleteTypeInVarDeclaration,
-                context.semantics_ir().StringifyType(cast_type_id, true));
+                context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
@@ -61,7 +61,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
                               std::string);
             return context.emitter().Build(
                 type_node_copy, IncompleteTypeInLetDeclaration,
-                context.semantics_ir().StringifyType(cast_type_id, true));
+                context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
@@ -71,7 +71,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       // the `let` pattern before we see the initializer.
       context.node_stack().Push(
           parse_node,
-          context.semantics_ir().nodes().AddInNoBlock(SemIR::BindName{
+          context.nodes().AddInNoBlock(SemIR::BindName{
               name_node, cast_type_id, name_id, SemIR::NodeId::Invalid}));
       break;
 

@@ -17,16 +17,14 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
     case Lex::TokenKind::Plus:
       // TODO: This should search for a compatible interface. For now, it's a
       // very trivial check of validity on the operation.
-      lhs_id = ConvertToValueOfType(
-          context, parse_node, lhs_id,
-          context.semantics_ir().nodes().Get(rhs_id).type_id());
+      lhs_id = ConvertToValueOfType(context, parse_node, lhs_id,
+                                    context.nodes().Get(rhs_id).type_id());
       rhs_id = ConvertToValueExpression(context, rhs_id);
 
       context.AddNodeAndPush(
-          parse_node,
-          SemIR::BinaryOperatorAdd{
-              parse_node, context.semantics_ir().nodes().Get(lhs_id).type_id(),
-              lhs_id, rhs_id});
+          parse_node, SemIR::BinaryOperatorAdd{
+                          parse_node, context.nodes().Get(lhs_id).type_id(),
+                          lhs_id, rhs_id});
       return true;
 
     case Lex::TokenKind::And:
@@ -47,15 +45,13 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // Collect the result from either the first or second operand.
       context.AddNodeAndPush(
           parse_node,
-          SemIR::BlockArg{parse_node,
-                          context.semantics_ir().nodes().Get(rhs_id).type_id(),
+          SemIR::BlockArg{parse_node, context.nodes().Get(rhs_id).type_id(),
                           resume_block_id});
       return true;
     }
     case Lex::TokenKind::Equal: {
       // TODO: handle complex assignment expression such as `a += 1`.
-      if (auto lhs_cat =
-              SemIR::GetExpressionCategory(context.semantics_ir(), lhs_id);
+      if (auto lhs_cat = SemIR::GetExpressionCategory(context.sem_ir(), lhs_id);
           lhs_cat != SemIR::ExpressionCategory::DurableReference &&
           lhs_cat != SemIR::ExpressionCategory::Error) {
         CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
@@ -105,7 +101,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::Amp: {
       // Only durable reference expressions can have their address taken.
-      switch (SemIR::GetExpressionCategory(context.semantics_ir(), value_id)) {
+      switch (SemIR::GetExpressionCategory(context.sem_ir(), value_id)) {
         case SemIR::ExpressionCategory::DurableReference:
         case SemIR::ExpressionCategory::Error:
           break;
@@ -125,9 +121,8 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
           parse_node,
           SemIR::AddressOf{
               parse_node,
-              context.GetPointerType(
-                  parse_node,
-                  context.semantics_ir().nodes().Get(value_id).type_id()),
+              context.GetPointerType(parse_node,
+                                     context.nodes().Get(value_id).type_id()),
               value_id});
       return true;
     }
@@ -136,8 +131,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       // `const (const T)` is probably not what the developer intended.
       // TODO: Detect `const (const T)*` and suggest moving the `*` inside the
       // parentheses.
-      if (context.semantics_ir().nodes().Get(value_id).kind() ==
-          SemIR::ConstType::Kind) {
+      if (context.nodes().Get(value_id).kind() == SemIR::ConstType::Kind) {
         CARBON_DIAGNOSTIC(RepeatedConst, Warning,
                           "`const` applied repeatedly to the same type has no "
                           "additional effect.");
@@ -155,17 +149,15 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       context.AddNodeAndPush(
           parse_node,
           SemIR::UnaryOperatorNot{
-              parse_node,
-              context.semantics_ir().nodes().Get(value_id).type_id(),
-              value_id});
+              parse_node, context.nodes().Get(value_id).type_id(), value_id});
       return true;
 
     case Lex::TokenKind::Star: {
       value_id = ConvertToValueExpression(context, value_id);
-      auto type_id = context.GetUnqualifiedType(
-          context.semantics_ir().nodes().Get(value_id).type_id());
-      auto type_node = context.semantics_ir().nodes().Get(
-          context.semantics_ir().GetTypeAllowBuiltinTypes(type_id));
+      auto type_id =
+          context.GetUnqualifiedType(context.nodes().Get(value_id).type_id());
+      auto type_node = context.nodes().Get(
+          context.sem_ir().GetTypeAllowBuiltinTypes(type_id));
       auto result_type_id = SemIR::TypeId::Error;
       if (auto pointer_type = type_node.TryAs<SemIR::PointerType>()) {
         result_type_id = pointer_type->pointee_id;
@@ -174,9 +166,9 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
             DereferenceOfNonPointer, Error,
             "Cannot dereference operand of non-pointer type `{0}`.",
             std::string);
-        auto builder = context.emitter().Build(
-            parse_node, DereferenceOfNonPointer,
-            context.semantics_ir().StringifyType(type_id));
+        auto builder =
+            context.emitter().Build(parse_node, DereferenceOfNonPointer,
+                                    context.sem_ir().StringifyType(type_id));
         // TODO: Check for any facet here, rather than only a type.
         if (type_id == SemIR::TypeId::TypeType) {
           CARBON_DIAGNOSTIC(
@@ -201,8 +193,7 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().PopExpression();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
-  auto bool_type_id =
-      context.semantics_ir().nodes().Get(cond_value_id).type_id();
+  auto bool_type_id = context.nodes().Get(cond_value_id).type_id();
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
   auto token = context.parse_tree().node_token(parse_node);

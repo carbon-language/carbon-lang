@@ -14,7 +14,7 @@ static auto HandleDiscardedExpression(Context& context, SemIR::NodeId expr_id)
     -> void {
   // If we discard an initializing expression, convert it to a value or
   // reference so that it has something to initialize.
-  auto expr = context.semantics_ir().nodes().Get(expr_id);
+  auto expr = context.nodes().Get(expr_id);
   Convert(context, expr.parse_node(), expr_id,
           {.kind = ConversionTarget::Discarded, .type_id = expr.type_id()});
 
@@ -29,11 +29,9 @@ auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
 
 auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
-  auto fn_node =
-      context.semantics_ir().nodes().GetAs<SemIR::FunctionDeclaration>(
-          context.return_scope_stack().back());
-  const auto& callable =
-      context.semantics_ir().functions().Get(fn_node.function_id);
+  auto fn_node = context.nodes().GetAs<SemIR::FunctionDeclaration>(
+      context.return_scope_stack().back());
+  const auto& callable = context.functions().Get(fn_node.function_id);
 
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       Parse::NodeKind::ReturnStatementStart) {
@@ -46,7 +44,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
                         "Must return a {0}.", std::string);
       context.emitter()
           .Build(parse_node, ReturnStatementMissingExpression,
-                 context.semantics_ir().StringifyType(callable.return_type_id))
+                 context.sem_ir().StringifyType(callable.return_type_id))
           .Emit();
     }
 

@@ -65,7 +65,7 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
       } else {
         // TODO: Reject unless the scope is a namespace scope or the name is
         // unqualified.
-        bool success = context_->semantics_ir().name_scopes().AddEntry(
+        bool success = context_->name_scopes().AddEntry(
             name_context.target_scope_id, name_context.unresolved_name_id,
             target_id);
         CARBON_CHECK(success)
@@ -121,11 +121,10 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
     -> void {
   // This will only be reached for resolved nodes. We update the target
   // scope based on the resolved type.
-  auto resolved_node =
-      context_->semantics_ir().nodes().Get(name_context.resolved_node_id);
+  auto resolved_node = context_->nodes().Get(name_context.resolved_node_id);
   switch (resolved_node.kind()) {
     case SemIR::ClassDeclaration::Kind: {
-      const auto& class_info = context_->semantics_ir().classes().Get(
+      const auto& class_info = context_->classes().Get(
           resolved_node.As<SemIR::ClassDeclaration>().class_id);
       // TODO: Check that the class is complete rather than that it has a scope.
       if (class_info.scope_id.is_valid()) {
@@ -165,8 +164,7 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
     case NameContext::State::ResolvedNonScope: {
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier didn't resolve to a scoped entity.
-      if (auto class_decl = context_->semantics_ir()
-                                .nodes()
+      if (auto class_decl = context_->nodes()
                                 .Get(name_context.resolved_node_id)
                                 .TryAs<SemIR::ClassDeclaration>()) {
         CARBON_DIAGNOSTIC(QualifiedDeclarationInIncompleteClassScope, Error,
@@ -174,11 +172,8 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
                           std::string);
         auto builder = context_->emitter().Build(
             name_context.parse_node, QualifiedDeclarationInIncompleteClassScope,
-            context_->semantics_ir().StringifyType(
-                context_->semantics_ir()
-                    .classes()
-                    .Get(class_decl->class_id)
-                    .self_type_id,
+            context_->sem_ir().StringifyType(
+                context_->classes().Get(class_decl->class_id).self_type_id,
                 true));
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
