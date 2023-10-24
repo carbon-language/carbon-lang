@@ -11,6 +11,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/YAMLParser.h"
@@ -91,13 +92,18 @@ template <typename ValueT>
 inline auto PrintValue(llvm::raw_ostream& out, const ValueT& val) {
   out << val;
 };
-template <>
 inline auto PrintValue(llvm::raw_ostream& out, const llvm::APInt& val) {
   val.print(out, /*isSigned=*/false);
 };
-template <>
 inline auto PrintValue(llvm::raw_ostream& out, const llvm::StringRef& val) {
   out << "\"" << llvm::yaml::escape(val) << "\"";
+};
+
+struct DefaultPrinter {
+  template <typename ValueT>
+  void operator()(llvm::raw_ostream& out, const ValueT& value) {
+    PrintValue(out, value);
+  }
 };
 
 }  // namespace Internal
@@ -109,8 +115,8 @@ inline auto PrintValueRange(
     llvm::raw_ostream& out, llvm::iterator_range<const ValueT*> range,
     std::optional<llvm::StringRef> label, int first_line_indent,
     int later_indent, bool trailing_newline,
-    std::function<void(llvm::raw_ostream&, const ValueT& val)> print =
-        Internal::PrintValue<ValueT>) {
+    llvm::function_ref<void(llvm::raw_ostream&, const ValueT& val)> print =
+        Internal::DefaultPrinter()) {
   out.indent(first_line_indent);
   if (label) {
     out << *label << ":";
@@ -149,7 +155,8 @@ class ValueStore
                               Printable<ValueStore<IdT, ValueT>>,
                               Internal::ValueStoreNotPrintable> {
  public:
-  using PrintFn = std::function<void(llvm::raw_ostream&, const ValueT& val)>;
+  using PrintFn =
+      llvm::function_ref<void(llvm::raw_ostream&, const ValueT& val)>;
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueT value) -> IdT {
@@ -189,8 +196,7 @@ class ValueStore
              int first_line_indent, int later_indent,
              // This decays so that `const llvm::APInt` printing catches the
              // specialization.
-             PrintFn print = Internal::PrintValue<std::decay_t<ValueT>>) const
-      -> void {
+             PrintFn print = Internal::DefaultPrinter()) const -> void {
     PrintValueRange(out, llvm::iterator_range(values_), label,
                     first_line_indent, later_indent, /*trailing_newline=*/true,
                     print);
@@ -209,7 +215,7 @@ template <>
 class ValueStore<StringId> : public Printable<ValueStore<StringId>> {
  public:
   using PrintFn =
-      std::function<void(llvm::raw_ostream&, const llvm::StringRef& val)>;
+      llvm::function_ref<void(llvm::raw_ostream&, const llvm::StringRef& val)>;
 
   // Returns an ID to reference the value. May return an existing ID if the
   // string was previously added.
@@ -233,8 +239,7 @@ class ValueStore<StringId> : public Printable<ValueStore<StringId>> {
   }
   auto Print(llvm::raw_ostream& out, std::optional<llvm::StringRef> label,
              int first_line_indent, int later_indent,
-             PrintFn print = Internal::PrintValue<llvm::StringRef>) const
-      -> void {
+             PrintFn print = Internal::DefaultPrinter()) const -> void {
     PrintValueRange(out, llvm::iterator_range(values_), label,
                     first_line_indent, later_indent, /*trailing_newline=*/true,
                     print);
