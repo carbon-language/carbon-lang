@@ -14,5 +14,6 @@ var p: *i32;
 
 // CHECK:STDOUT: file "fail_dereference_type.carbon" {
 // CHECK:STDOUT:   %.loc13: ref <error> = dereference i32
-// CHECK:STDOUT:   %p: ref <error> = var "p"
+// CHECK:STDOUT:   %p.loc13_5.1: ref <error> = var "p"
+// CHECK:STDOUT:   %p.loc13_5.2: ref <error> = bind_name "p", %p.loc13_5.1
 // CHECK:STDOUT: }

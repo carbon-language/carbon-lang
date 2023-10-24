@@ -10,16 +10,20 @@ var test_str: String = "Test";
 var test_type: type = i32;
 
 // CHECK:STDOUT: file "builtin_types.carbon" {
-// CHECK:STDOUT:   %test_i32: ref i32 = var "test_i32"
+// CHECK:STDOUT:   %test_i32.loc7_5.1: ref i32 = var "test_i32"
+// CHECK:STDOUT:   %test_i32.loc7_5.2: ref i32 = bind_name "test_i32", %test_i32.loc7_5.1
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0
-// CHECK:STDOUT:   assign %test_i32, %.loc7
-// CHECK:STDOUT:   %test_f64: ref f64 = var "test_f64"
+// CHECK:STDOUT:   assign %test_i32.loc7_5.1, %.loc7
+// CHECK:STDOUT:   %test_f64.loc8_5.1: ref f64 = var "test_f64"
+// CHECK:STDOUT:   %test_f64.loc8_5.2: ref f64 = bind_name "test_f64", %test_f64.loc8_5.1
 // CHECK:STDOUT:   %.loc8: f64 = real_literal 1e-1
-// CHECK:STDOUT:   assign %test_f64, %.loc8
+// CHECK:STDOUT:   assign %test_f64.loc8_5.1, %.loc8
 // CHECK:STDOUT:   %.1: type = ptr_type String
-// CHECK:STDOUT:   %test_str: ref String = var "test_str"
+// CHECK:STDOUT:   %test_str.loc9_5.1: ref String = var "test_str"
+// CHECK:STDOUT:   %test_str.loc9_5.2: ref String = bind_name "test_str", %test_str.loc9_5.1
 // CHECK:STDOUT:   %.loc9: String = string_literal "Test"
-// CHECK:STDOUT:   assign %test_str, %.loc9
-// CHECK:STDOUT:   %test_type: ref type = var "test_type"
-// CHECK:STDOUT:   assign %test_type, i32
+// CHECK:STDOUT:   assign %test_str.loc9_5.1, %.loc9
+// CHECK:STDOUT:   %test_type.loc10_5.1: ref type = var "test_type"
+// CHECK:STDOUT:   %test_type.loc10_5.2: ref type = bind_name "test_type", %test_type.loc10_5.1
+// CHECK:STDOUT:   assign %test_type.loc10_5.1, i32
 // CHECK:STDOUT: }

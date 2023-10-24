@@ -124,7 +124,8 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1
 // CHECK:STDOUT:   %CallClassFunction: <function> = fn_decl @CallClassFunction
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", %Class
-// CHECK:STDOUT:   %global_var: ref <error> = var "global_var"
+// CHECK:STDOUT:   %global_var.loc36_5.1: ref <error> = var "global_var"
+// CHECK:STDOUT:   %global_var.loc36_5.2: ref <error> = bind_name "global_var", %global_var.loc36_5.1
 // CHECK:STDOUT:   %ConvertFromStruct: <function> = fn_decl @ConvertFromStruct
 // CHECK:STDOUT:   %MemberAccess: <function> = fn_decl @MemberAccess
 // CHECK:STDOUT:   %Copy: <function> = fn_decl @Copy

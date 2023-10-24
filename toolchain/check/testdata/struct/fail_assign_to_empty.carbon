@@ -13,9 +13,10 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:   %.loc10_9.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_9.2: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_9.3: type = tuple_type ()
-// CHECK:STDOUT:   %x: ref {} = var "x"
+// CHECK:STDOUT:   %x.loc10_5.1: ref {} = var "x"
+// CHECK:STDOUT:   %x.loc10_5.2: ref {} = bind_name "x", %x.loc10_5.1
 // CHECK:STDOUT:   %.loc10_19: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_20.1: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %.loc10_20.2: {.a: i32} = struct_literal (%.loc10_19)
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   assign %x.loc10_5.1, <error>
 // CHECK:STDOUT: }

@@ -25,10 +25,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b: ref i32 = var "b"
+// CHECK:STDOUT:   %b.loc12_7.1: ref i32 = var "b"
+// CHECK:STDOUT:   %b.loc12_7.2: ref i32 = bind_name "b", %b.loc12_7.1
 // CHECK:STDOUT:   %Echo.ref: <function> = name_reference "Echo", package.%Echo
 // CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_20: init i32 = call %Echo.ref(%.loc12_21)
-// CHECK:STDOUT:   assign %b, %.loc12_20
+// CHECK:STDOUT:   assign %b.loc12_7.1, %.loc12_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

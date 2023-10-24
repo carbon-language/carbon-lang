@@ -12,5 +12,6 @@ var a: [1; 39999999999999999993];
 // CHECK:STDOUT: file "fail_bound_overflow.carbon" {
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 39999999999999999993
-// CHECK:STDOUT:   %a: ref <error> = var "a"
+// CHECK:STDOUT:   %a.loc10_5.1: ref <error> = var "a"
+// CHECK:STDOUT:   %a.loc10_5.2: ref <error> = bind_name "a", %a.loc10_5.1
 // CHECK:STDOUT: }

@@ -14,9 +14,10 @@ var x: (i32, i32) = (2, );
 // CHECK:STDOUT:   %.loc10_17.2: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_17.3: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc10_17.4: type = ptr_type (i32, i32)
-// CHECK:STDOUT:   %x: ref (i32, i32) = var "x"
+// CHECK:STDOUT:   %x.loc10_5.1: ref (i32, i32) = var "x"
+// CHECK:STDOUT:   %x.loc10_5.2: ref (i32, i32) = bind_name "x", %x.loc10_5.1
 // CHECK:STDOUT:   %.loc10_22: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_25.1: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc10_25.2: (i32,) = tuple_literal (%.loc10_22)
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   assign %x.loc10_5.1, <error>
 // CHECK:STDOUT: }

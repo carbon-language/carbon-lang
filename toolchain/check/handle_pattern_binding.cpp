@@ -29,29 +29,52 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
   // Allocate a node of the appropriate kind, linked to the name for error
   // locations.
-  // TODO: Each of these cases should create a `BindName` node.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
-    case Parse::NodeKind::VariableIntroducer:
+    case Parse::NodeKind::VariableIntroducer: {
+      // A `var` declaration at class scope introduces a field.
+      bool is_field = context.parse_tree().node_kind(
+                          context.node_stack().PeekParseNode(1)) ==
+                      Parse::NodeKind::ClassDefinitionStart;
       if (!context.TryToCompleteType(cast_type_id, [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDeclaration, Error,
-                              "Variable has incomplete type `{0}`.",
+                              "{0} has incomplete type `{1}`.", llvm::StringRef,
                               std::string);
             return context.emitter().Build(
                 type_node_copy, IncompleteTypeInVarDeclaration,
+                is_field ? "Field" : "Variable",
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
+      SemIR::NodeId value_id = SemIR::NodeId::Invalid;
+      SemIR::TypeId value_type_id = cast_type_id;
+      if (is_field) {
+        auto class_id =
+            context.node_stack().Peek<Parse::NodeKind::ClassDefinitionStart>(1);
+        auto& class_info = context.classes().Get(class_id);
+        auto field_type_node_id = context.AddNode(SemIR::UnboundFieldType{
+            parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+            class_info.self_type_id, cast_type_id});
+        value_type_id = context.CanonicalizeType(field_type_node_id);
+        value_id =
+            context.AddNode(SemIR::Field{parse_node, value_type_id, name_id});
+      } else {
+        value_id = context.AddNode(
+            SemIR::VarStorage{name_node, value_type_id, name_id});
+      }
       context.AddNodeAndPush(
-          parse_node, SemIR::VarStorage{name_node, cast_type_id, name_id});
+          parse_node,
+          SemIR::BindName{name_node, value_type_id, name_id, value_id});
       break;
+    }
 
     case Parse::NodeKind::ParameterListStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
       context.AddNodeAndPush(
           parse_node, SemIR::Parameter{name_node, cast_type_id, name_id});
+      // TODO: Create a `BindName` node.
       break;
 
     case Parse::NodeKind::LetIntroducer:

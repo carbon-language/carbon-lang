@@ -28,12 +28,13 @@ fn H() -> i32 {
 // CHECK:STDOUT: fn @G() -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %v: ref (i32, i32) = var "v"
+// CHECK:STDOUT:   %v.loc10_7.1: ref (i32, i32) = var "v"
+// CHECK:STDOUT:   %v.loc10_7.2: ref (i32, i32) = bind_name "v", %v.loc10_7.1
 // CHECK:STDOUT:   %F.ref.loc10: <function> = name_reference "F", package.%F
-// CHECK:STDOUT:   %.loc10_7: ref (i32, i32) = splice_block %v {}
+// CHECK:STDOUT:   %.loc10_7: ref (i32, i32) = splice_block %v.loc10_7.1 {}
 // CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call %F.ref.loc10() to %.loc10_7
-// CHECK:STDOUT:   assign %v, %.loc10_24
-// CHECK:STDOUT:   %v.ref: ref (i32, i32) = name_reference "v", %v
+// CHECK:STDOUT:   assign %v.loc10_7.1, %.loc10_24
+// CHECK:STDOUT:   %v.ref: ref (i32, i32) = name_reference "v", %v.loc10_7.2
 // CHECK:STDOUT:   %F.ref.loc11: <function> = name_reference "F", package.%F
 // CHECK:STDOUT:   %.loc11_3: ref (i32, i32) = splice_block %v.ref {}
 // CHECK:STDOUT:   %.loc11_8: init (i32, i32) = call %F.ref.loc11() to %.loc11_3

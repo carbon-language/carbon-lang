@@ -76,11 +76,12 @@ fn Main() {
 // CHECK:STDOUT:   %.loc21_17.6: init (i32, i32) = tuple_init %.loc21_17.1, (%.loc21_17.3, %.loc21_17.5)
 // CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_17.6
 // CHECK:STDOUT:   %.loc21_8.4: (i32, i32) = tuple_value %.loc21_8.2, (%.loc21_4, %.loc21_7)
-// CHECK:STDOUT:   %n: ref i32 = var "n"
+// CHECK:STDOUT:   %n.loc22_7.1: ref i32 = var "n"
+// CHECK:STDOUT:   %n.loc22_7.2: ref i32 = bind_name "n", %n.loc22_7.1
 // CHECK:STDOUT:   %.loc22: i32 = int_literal 0
-// CHECK:STDOUT:   assign %n, %.loc22
-// CHECK:STDOUT:   %n.ref.loc26_4: ref i32 = name_reference "n", %n
-// CHECK:STDOUT:   %n.ref.loc26_7: ref i32 = name_reference "n", %n
+// CHECK:STDOUT:   assign %n.loc22_7.1, %.loc22
+// CHECK:STDOUT:   %n.ref.loc26_4: ref i32 = name_reference "n", %n.loc22_7.2
+// CHECK:STDOUT:   %n.ref.loc26_7: ref i32 = name_reference "n", %n.loc22_7.2
 // CHECK:STDOUT:   %.loc26_8.1: (i32, i32) = tuple_literal (%n.ref.loc26_4, %n.ref.loc26_7)
 // CHECK:STDOUT:   %.loc26_13: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc26_16: i32 = int_literal 2
@@ -126,17 +127,18 @@ fn Main() {
 // CHECK:STDOUT:   %.loc38_4: i32 = block_arg !if.expr.result.loc38
 // CHECK:STDOUT:   %.loc38_29: i32 = int_literal 3
 // CHECK:STDOUT:   assign %.loc38_4, %.loc38_29
-// CHECK:STDOUT:   %a: ref i32 = var "a"
+// CHECK:STDOUT:   %a.loc41_7.1: ref i32 = var "a"
+// CHECK:STDOUT:   %a.loc41_7.2: ref i32 = bind_name "a", %a.loc41_7.1
 // CHECK:STDOUT:   %.loc45_7: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc45_7 br !if.expr.then.loc45 else br !if.expr.else.loc45
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc45:
-// CHECK:STDOUT:   %a.ref.loc45_17: ref i32 = name_reference "a", %a
+// CHECK:STDOUT:   %a.ref.loc45_17: ref i32 = name_reference "a", %a.loc41_7.2
 // CHECK:STDOUT:   %.loc45_17: i32 = bind_value %a.ref.loc45_17
 // CHECK:STDOUT:   br !if.expr.result.loc45(%.loc45_17)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc45:
-// CHECK:STDOUT:   %a.ref.loc45_24: ref i32 = name_reference "a", %a
+// CHECK:STDOUT:   %a.ref.loc45_24: ref i32 = name_reference "a", %a.loc41_7.2
 // CHECK:STDOUT:   %.loc45_24: i32 = bind_value %a.ref.loc45_24
 // CHECK:STDOUT:   br !if.expr.result.loc45(%.loc45_24)
 // CHECK:STDOUT:

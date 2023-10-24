@@ -16,9 +16,10 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %.loc7_14 br !if.then.loc7_18 else br !if.else.loc7_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc7_18:
-// CHECK:STDOUT:   %n.loc7_26: ref i32 = var "n"
+// CHECK:STDOUT:   %n.loc7_26.1: ref i32 = var "n"
+// CHECK:STDOUT:   %n.loc7_26.2: ref i32 = bind_name "n", %n.loc7_26.1
 // CHECK:STDOUT:   %.loc7_35: i32 = int_literal 1
-// CHECK:STDOUT:   assign %n.loc7_26, %.loc7_35
+// CHECK:STDOUT:   assign %n.loc7_26.1, %.loc7_35
 // CHECK:STDOUT:   br !if.else.loc7_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc7_18:
@@ -26,9 +27,10 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %.loc7_44 br !if.then.loc7_48 else br !if.else.loc7_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc7_48:
-// CHECK:STDOUT:   %n.loc7_56: ref i32 = var "n"
+// CHECK:STDOUT:   %n.loc7_56.1: ref i32 = var "n"
+// CHECK:STDOUT:   %n.loc7_56.2: ref i32 = bind_name "n", %n.loc7_56.1
 // CHECK:STDOUT:   %.loc7_65: i32 = int_literal 2
-// CHECK:STDOUT:   assign %n.loc7_56, %.loc7_65
+// CHECK:STDOUT:   assign %n.loc7_56.1, %.loc7_65
 // CHECK:STDOUT:   br !if.else.loc7_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc7_48:

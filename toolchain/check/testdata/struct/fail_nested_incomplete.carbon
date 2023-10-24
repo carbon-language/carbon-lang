@@ -24,14 +24,16 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_reference "Incomplete", %Incomplete
 // CHECK:STDOUT:   %.loc15: type = struct_type {.a: Incomplete}
-// CHECK:STDOUT:   %s: ref <error> = var "s"
+// CHECK:STDOUT:   %s.loc15_5.1: ref <error> = var "s"
+// CHECK:STDOUT:   %s.loc15_5.2: ref <error> = bind_name "s", %s.loc15_5.1
 // CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_reference "Incomplete", %Incomplete
 // CHECK:STDOUT:   %.loc20_18: type = ptr_type Incomplete
-// CHECK:STDOUT:   %p: ref Incomplete* = var "p"
-// CHECK:STDOUT:   %s.ref: ref <error> = name_reference "s", %s
+// CHECK:STDOUT:   %p.loc20_5.1: ref Incomplete* = var "p"
+// CHECK:STDOUT:   %p.loc20_5.2: ref Incomplete* = bind_name "p", %p.loc20_5.1
+// CHECK:STDOUT:   %s.ref: ref <error> = name_reference "s", %s.loc15_5.2
 // CHECK:STDOUT:   %.loc20_22.1: type = ptr_type <error>
 // CHECK:STDOUT:   %.loc20_22.2: <error>* = address_of <error>
-// CHECK:STDOUT:   assign %p, <error>
+// CHECK:STDOUT:   assign %p.loc20_5.1, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

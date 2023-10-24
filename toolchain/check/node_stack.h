@@ -140,33 +140,37 @@ class NodeStack {
     return PopWithParseNode<RequiredParseKind>().second;
   }
 
-  // Peeks at the parse_node of the top of the stack.
-  auto PeekParseNode() -> Parse::Node { return stack_.back().parse_node; }
+  // Peeks at the parse_node of the given depth in the stack, or by default the
+  // top node.
+  auto PeekParseNode(int depth = 0) -> Parse::Node {
+    return stack_[stack_.size() - depth - 1].parse_node;
+  }
 
-  // Peeks at the ID of the top of the stack.
+  // Peeks at the ID of node at the given depth in the stack, or by default the
+  // top node.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
-  auto Peek() -> auto {
-    Entry back = stack_.back();
-    RequireParseKind<RequiredParseKind>(back.parse_node);
+  auto Peek(int depth = 0) -> auto {
+    Entry entry = stack_[stack_.size() - depth - 1];
+    RequireParseKind<RequiredParseKind>(entry.parse_node);
     constexpr IdKind RequiredIdKind =
         ParseNodeKindToIdKind(Parse::NodeKind::Create(RequiredParseKind));
     if constexpr (RequiredIdKind == IdKind::NodeId) {
-      return back.id<SemIR::NodeId>();
+      return entry.id<SemIR::NodeId>();
     }
     if constexpr (RequiredIdKind == IdKind::NodeBlockId) {
-      return back.id<SemIR::NodeBlockId>();
+      return entry.id<SemIR::NodeBlockId>();
     }
     if constexpr (RequiredIdKind == IdKind::FunctionId) {
-      return back.id<SemIR::FunctionId>();
+      return entry.id<SemIR::FunctionId>();
     }
     if constexpr (RequiredIdKind == IdKind::ClassId) {
-      return back.id<SemIR::ClassId>();
+      return entry.id<SemIR::ClassId>();
     }
     if constexpr (RequiredIdKind == IdKind::StringId) {
-      return back.id<StringId>();
+      return entry.id<StringId>();
     }
     if constexpr (RequiredIdKind == IdKind::TypeId) {
-      return back.id<SemIR::TypeId>();
+      return entry.id<SemIR::TypeId>();
     }
     CARBON_FATAL() << "Unpeekable IdKind for parse kind: "
                    << Parse::NodeKind::Create(RequiredParseKind)
@@ -202,6 +206,8 @@ class NodeStack {
         : parse_node(parse_node), node_block_id(node_block_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::FunctionId function_id)
         : parse_node(parse_node), function_id(function_id) {}
+    explicit Entry(Parse::Node parse_node, SemIR::ClassId class_id)
+        : parse_node(parse_node), class_id(class_id) {}
     explicit Entry(Parse::Node parse_node, StringId name_id)
         : parse_node(parse_node), name_id(name_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::TypeId type_id)
@@ -218,6 +224,9 @@ class NodeStack {
       }
       if constexpr (std::is_same<T, SemIR::FunctionId>()) {
         return function_id;
+      }
+      if constexpr (std::is_same<T, SemIR::ClassId>()) {
+        return class_id;
       }
       if constexpr (std::is_same<T, StringId>()) {
         return name_id;
@@ -239,6 +248,7 @@ class NodeStack {
       SemIR::NodeId node_id;
       SemIR::NodeBlockId node_block_id;
       SemIR::FunctionId function_id;
+      SemIR::ClassId class_id;
       StringId name_id;
       SemIR::TypeId type_id;
     };
@@ -278,11 +288,14 @@ class NodeStack {
         return IdKind::NodeBlockId;
       case Parse::NodeKind::FunctionDefinitionStart:
         return IdKind::FunctionId;
+      case Parse::NodeKind::ClassDefinitionStart:
+        return IdKind::ClassId;
       case Parse::NodeKind::Name:
         return IdKind::StringId;
       case Parse::NodeKind::ArrayExpressionSemi:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
+      case Parse::NodeKind::FileStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::LetIntroducer:
