@@ -424,9 +424,9 @@ class NodeNamer {
                                .name_id);
           continue;
         }
-        case ClassDeclaration::Kind: {
+        case ClassType::Kind: {
           add_node_name_id(semantics_ir_.classes()
-                               .Get(node.As<ClassDeclaration>().class_id)
+                               .Get(node.As<ClassType>().class_id)
                                .name_id);
           continue;
         }

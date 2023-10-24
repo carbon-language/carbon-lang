@@ -25,8 +25,9 @@ fn Class.G() {}
 fn Class.H() {}
 
 // CHECK:STDOUT: file "fail_redefinition.carbon" {
-// CHECK:STDOUT:   %Class.loc7: type = class_declaration @Class, ()
-// CHECK:STDOUT:   %Class.loc18: type = class_declaration @Class, ()
+// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
@@ -37,8 +38,8 @@ fn Class.H() {}
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = <unexpected noderef 9>
-// CHECK:STDOUT:   .H = <unexpected noderef 10>
+// CHECK:STDOUT:   .F = <unexpected noderef 10>
+// CHECK:STDOUT:   .H = <unexpected noderef 11>
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -15,10 +15,9 @@ class Context;
 
 // Provides support and stacking for qualified declaration name handling.
 //
-// A qualified declaration name will consist of entries which are either
-// Identifiers or full expressions. Expressions are expected to resolve to
-// types, such as how `fn Vector(i32).Clear() { ... }` uses the expression
-// `Vector(i32)` to indicate the type whose member is being declared.
+// A qualified declaration name will consist of entries, which are `Name`s
+// optionally followed by generic parameter lists, such as `Vector(T:! type)`
+// in `fn Vector(T:! type).Clear();`, but parameter lists aren't supported yet.
 // Identifiers such as `Clear` will be resolved to a name if possible, for
 // example when declaring things that are in a non-generic type or namespace,
 // and are otherwise marked as an unresolved identifier.
@@ -110,11 +109,6 @@ class DeclarationNameStack {
   // a pattern binding.
   auto MakeUnqualifiedName(Parse::Node parse_node, StringId name_id)
       -> NameContext;
-
-  // Applies an expression from the node stack to the top of the declaration
-  // name stack.
-  auto ApplyExpressionQualifier(Parse::Node parse_node, SemIR::NodeId node_id)
-      -> void;
 
   // Applies a Name from the node stack to the top of the declaration name
   // stack.

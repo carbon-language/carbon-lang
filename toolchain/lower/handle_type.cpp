@@ -11,6 +11,11 @@ auto HandleArrayType(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
+auto HandleClassType(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::ClassType /*node*/) -> void {
+  context.SetLocal(node_id, context.GetTypeAsValue());
+}
+
 auto HandleConstType(FunctionContext& context, SemIR::NodeId node_id,
                      SemIR::ConstType /*node*/) -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());

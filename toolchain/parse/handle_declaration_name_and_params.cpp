@@ -17,10 +17,7 @@ static auto HandleDeclarationNameAndParams(Context& context, State after_name)
     context.PushState(state);
 
     if (context.PositionIs(Lex::TokenKind::Period)) {
-      // Because there's a qualifier, we process the first segment as an
-      // expression for simplicity. This just means semantics has one less thing
-      // to handle here.
-      context.AddLeafNode(NodeKind::NameExpression, *identifier);
+      context.AddLeafNode(NodeKind::Name, *identifier);
       state.state = State::PeriodAsDeclaration;
       context.PushState(state);
     } else {
@@ -70,6 +67,15 @@ static auto HandleDeclarationNameAndParamsAfterName(Context& context,
     context.PushState(state);
     return;
   }
+
+  // TODO: We can have a parameter list after a name qualifier, regardless of
+  // whether the entity itself permits or requires parameters:
+  //
+  //   fn Class(T:! type).AnotherClass(U:! type).Function(v: T) {}
+  //
+  // We should retain a `DeclarationNameAndParams...` state on the stack in all
+  // cases below to check for a period after a parameter list, which indicates
+  // that we've not finished parsing the declaration name.
 
   if (params == Params::None) {
     return;

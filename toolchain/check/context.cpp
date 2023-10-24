@@ -89,11 +89,13 @@ auto Context::DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id)
                  semantics_ir_->strings().Get(name_id));
 }
 
-auto Context::NoteIncompleteClass(SemIR::ClassDeclaration class_decl,
+auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
                     "Class was forward declared here.");
-  builder.Note(class_decl.parse_node, ClassForwardDeclaredHere);
+  const auto& class_info = semantics_ir().classes().Get(class_id);
+  builder.Note(semantics_ir().GetNode(class_info.declaration_id).parse_node(),
+               ClassForwardDeclaredHere);
 }
 
 auto Context::AddNameToLookup(Parse::Node name_node, StringId name_id,
@@ -410,12 +412,12 @@ class TypeCompleter {
         }
         break;
 
-      case SemIR::ClassDeclaration::Kind:
+      case SemIR::ClassType::Kind:
         // TODO: Support class definitions and complete class types.
         if (diagnoser_) {
           auto builder = (*diagnoser_)();
-          context_.NoteIncompleteClass(type_node.As<SemIR::ClassDeclaration>(),
-                                       builder);
+          context_.NoteIncompleteClass(
+              type_node.As<SemIR::ClassType>().class_id, builder);
           builder.Emit();
         }
         return false;
@@ -610,6 +612,7 @@ class TypeCompleter {
       case SemIR::BranchIf::Kind:
       case SemIR::BranchWithArg::Kind:
       case SemIR::Call::Kind:
+      case SemIR::ClassDeclaration::Kind:
       case SemIR::Dereference::Kind:
       case SemIR::FunctionDeclaration::Kind:
       case SemIR::InitializeFrom::Kind:
@@ -659,7 +662,7 @@ class TypeCompleter {
         return BuildTupleTypeValueRepresentation(type_id,
                                                  node.As<SemIR::TupleType>());
 
-      case SemIR::ClassDeclaration::Kind:
+      case SemIR::ClassType::Kind:
         // TODO: Support class definitions and complete class types.
         CARBON_FATAL() << "Class types are currently never complete";
 
@@ -760,9 +763,8 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
     case SemIR::Builtin::Kind:
       canonical_id.AddInteger(node.As<SemIR::Builtin>().builtin_kind.AsInt());
       break;
-    case SemIR::ClassDeclaration::Kind:
-      canonical_id.AddInteger(
-          node.As<SemIR::ClassDeclaration>().class_id.index);
+    case SemIR::ClassType::Kind:
+      canonical_id.AddInteger(node.As<SemIR::ClassType>().class_id.index);
       break;
     case SemIR::CrossReference::Kind: {
       // TODO: Cross-references should be canonicalized by looking at their

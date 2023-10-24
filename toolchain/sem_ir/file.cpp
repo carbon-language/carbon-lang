@@ -196,6 +196,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case NameReference::Kind:
     case StructType::Kind:
     case TupleType::Kind:
+    case ClassType::Kind:
       return 0;
     case ConstType::Kind:
       return -1;
@@ -304,9 +305,9 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
         }
         break;
       }
-      case ClassDeclaration::Kind: {
+      case ClassType::Kind: {
         auto class_name_id =
-            classes().Get(node.As<ClassDeclaration>().class_id).name_id;
+            classes().Get(node.As<ClassType>().class_id).name_id;
         out << strings().Get(class_name_id);
         break;
       }
@@ -405,6 +406,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       case BranchWithArg::Kind:
       case Builtin::Kind:
       case Call::Kind:
+      case ClassDeclaration::Kind:
       case CrossReference::Kind:
       case Dereference::Kind:
       case FunctionDeclaration::Kind:
@@ -466,6 +468,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
+      case ClassDeclaration::Kind:
       case FunctionDeclaration::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
@@ -492,7 +495,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
-      case ClassDeclaration::Kind:
+      case ClassType::Kind:
       case ConstType::Kind:
       case IntegerLiteral::Kind:
       case Parameter::Kind:
