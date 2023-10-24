@@ -110,9 +110,8 @@ TEST(HashingTest, PairsAndTuples) {
   EXPECT_THAT(HashValue(std::tuple(0, 1, 0)), Ne(hash_3zero));
   EXPECT_THAT(HashValue(std::tuple(1, 0, 0)), Ne(hash_3zero));
 
-  // Hashing a 2-tuple and a pair should produce identical results though as we
-  // want to be able to have things like variadic tuple construction be
-  // indistinct from pairs.
+  // Hashing a 2-tuple and a pair should produce identical results, so pairs
+  // are compatible with code using things like variadic tuple construction.
   EXPECT_THAT(HashValue(std::tuple(0, 0)), Eq(hash_2zero));
   EXPECT_THAT(HashValue(std::tuple(0, 1)), Eq(HashValue(std::pair(0, 1))));
   EXPECT_THAT(HashValue(std::tuple(1, 0)), Eq(HashValue(std::pair(1, 0))));
@@ -156,7 +155,8 @@ TEST(HashingTest, PairsAndTuples) {
     EXPECT_THAT(HashValue(std::tuple(i_u32, i_i16, i_u64)), Eq(hash));
   }
 
-  // Pointers inside pairs and tuples should also work like pointers outside.
+  // Hash values of pointers in pairs and tuples reflect the address and not the type.
+  // Pairs and 2-tuples give the same hash values.
   HashCode hash_2null = HashValue(std::pair(nullptr, nullptr));
   EXPECT_THAT(HashValue(std::tuple(static_cast<int*>(nullptr),
                                    static_cast<double*>(nullptr))),
@@ -367,7 +367,7 @@ TEST(HashingTest, Collisions1ByteSized) {
 
   HashCode prev_hash = hashes[0].hash;
   llvm::StringRef prev_s = hashes[0].v;
-  for (const auto& [hash, s] : llvm::ArrayRef(hashes).slice(1)) {
+  for (const auto& [hash, s] : hashes.slice(1)) {
     if (hash != prev_hash) {
       prev_hash = hash;
       prev_s = s;
@@ -476,10 +476,10 @@ struct SparseHashTest : ::testing::Test {
 
   static auto GetHashedByteStrings() {
     llvm::SmallVector<HashedString> hashes;
-    constexpr int ByteCounts = ByteCount::End - ByteCount::Begin + 1;
-    constexpr int SetBitCounts = SetBitCount::End - SetBitCount::Begin + 1;
+    constexpr int NumByteCounts = ByteCount::End - ByteCount::Begin + 1;
+    constexpr int NumSetBitCounts = SetBitCount::End - SetBitCount::Begin + 1;
     hashes.reserve(
-        (static_cast<size_t>(ByteCounts * SetBitCounts * (ByteCounts * 8))));
+        (static_cast<size_t>(ByteCounts * SetBitCounts * (ByteCounts * 8 - SetBitCount::Begin + 1))));
     for (int byte_count :
          llvm::seq_inclusive(ByteCount::Begin, ByteCount::End)) {
       int bits = byte_count * 8;
@@ -490,7 +490,7 @@ struct SparseHashTest : ::testing::Test {
           hashes.push_back({HashValue(s, TestSeed), std::move(s)});
           continue;
         }
-        for (int begin_set_bit : llvm::seq(0, bits - set_bit_count)) {
+        for (int begin_set_bit : llvm::seq_inclusive(0, bits - set_bit_count)) {
           std::string s(byte_count, '\0');
 
           int begin_set_bit_byte_index = begin_set_bit / 8;
@@ -564,7 +564,7 @@ TYPED_TEST(SparseHashTest, Collisions) {
 
   HashCode prev_hash = hashes[0].hash;
   llvm::StringRef prev_s = hashes[0].v;
-  for (const auto& [hash, s] : llvm::ArrayRef(hashes).slice(1)) {
+  for (const auto& [hash, s] : hashes.slice(1)) {
     if (hash != prev_hash) {
       prev_hash = hash;
       prev_s = s;

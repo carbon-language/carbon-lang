@@ -97,6 +97,7 @@ struct RandStrings {
   size_t bytes = 0;
 
   auto Get(ssize_t i, uint64_t x) -> llvm::StringRef {
+    static_assert(MaxSize <= EntropyObjSize);
     size_t s = MaxSize;
     if constexpr (RandSize) {
       // When using random sizes, we leverage `i` which is guaranteed to range

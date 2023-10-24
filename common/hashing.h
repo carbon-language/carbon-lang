@@ -81,7 +81,7 @@ class HashCode : public Printable<HashCode> {
 //
 // This hash function is heavily optimized for *latency* over *quality*. Modern
 // hash tables designs can efficiently handle reasonable collision rates,
-// including using extra bits form the hash to avoid all efficiency coming from
+// including using extra bits from the hash to avoid all efficiency coming from
 // the same low bits. Because of this, low-latency is significantly more
 // important for performance than high-quality, and this is heavily leveraged.
 // The result is that the hash codes produced *do* have significant avalanche
@@ -105,7 +105,7 @@ class HashCode : public Printable<HashCode> {
 // with the following signature:
 //
 // ```cpp
-// auto CarbonHash(HashState& h, const YourType& value) -> void;
+// auto CarbonHash(Hasher hash, const YourType& value) -> Hasher;
 // ```
 //
 // See the comments on the `Hasher` type for more details about implementing
@@ -211,8 +211,8 @@ class Hasher {
   static auto HashSizedBytes(Hasher hash, llvm::ArrayRef<std::byte> bytes)
       -> Hasher;
 
-  // Even lower-level primitive APIs to facilitate reading specific sized data
-  // efficiently into one or two 64-bit values
+  // Read fixed-sized data efficiently into one or two 64-bit values.
+  // The size of the byte sequence is not incorporated into the output.
   static auto Read1(const std::byte* data) -> uint64_t;
   static auto Read2(const std::byte* data) -> uint64_t;
   static auto Read4(const std::byte* data) -> uint64_t;
@@ -235,7 +235,7 @@ class Hasher {
   // operations are not guaranteed to be stable but are described here for
   // hashing authors to understand what to expect.
   //
-  // Currently, this uses the same "mix" operation in Abseil, AHash, and several
+  // Currently, this uses the same "mix" operation as in Abseil, AHash, and several
   // other hashing algorithms. It takes two 64-bit integers, and multiplies
   // them, capturing both the high 64-bit result and the low 64-bit result, and
   // then XOR-ing those two halves together.
@@ -443,7 +443,7 @@ inline auto HashValue(const T& value, uint64_t seed) -> HashCode {
 template <typename T>
 inline auto HashValue(const T& value) -> HashCode {
   // When a seed isn't provided, use the last 64-bit chunk of random data. Other
-  // chunks (especially the first) is more often XOR-ed with the seed and risks
+  // chunks (especially the first) are more often XOR-ed with the seed and risk
   // cancelling each other out and feeding a zero to a `Mix` call in a way that
   // sharply increasing collisions.
   return HashValue(value, Hasher::StaticRandomData[7]);

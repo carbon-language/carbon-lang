@@ -12,7 +12,7 @@ auto Hasher::HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
   const ssize_t size = bytes.size();
   CARBON_DCHECK(size > 32);
 
-  __builtin_prefetch(data_ptr, 0, 0);
+  __builtin_prefetch(data_ptr, 0 /* read */, 0 /* discard after next use */);
 
   // If we have more than 32 bytes, we're going to handle two 32-byte chunks
   // at a time using a simplified version of the main algorithm. This is based
