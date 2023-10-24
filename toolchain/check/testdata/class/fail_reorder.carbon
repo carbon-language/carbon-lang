@@ -11,7 +11,7 @@ class Class {
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE+12]]:12: ERROR: Member access into incomplete class `Class`.
     // CHECK:STDERR:     return Class.F();
     // CHECK:STDERR:            ^
-    // CHECK:STDERR: fail_reorder.carbon:[[@LINE-7]]:1: Class was forward declared here.
+    // CHECK:STDERR: fail_reorder.carbon:[[@LINE-7]]:1: Class is incomplete within its definition.
     // CHECK:STDERR: class Class {
     // CHECK:STDERR: ^
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE+6]]:17: ERROR: Name `F` not found.

@@ -92,9 +92,17 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
                     "Class was forward declared here.");
+  CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                    "Class is incomplete within its definition.");
   const auto& class_info = classes().Get(class_id);
-  builder.Note(nodes().Get(class_info.declaration_id).parse_node(),
-               ClassForwardDeclaredHere);
+  CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
+  if (class_info.definition_id.is_valid()) {
+    builder.Note(nodes().Get(class_info.definition_id).parse_node(),
+                 ClassIncompleteWithinDefinition);
+  } else {
+    builder.Note(nodes().Get(class_info.declaration_id).parse_node(),
+                 ClassForwardDeclaredHere);
+  }
 }
 
 auto Context::AddNameToLookup(Parse::Node name_node, StringId name_id,
