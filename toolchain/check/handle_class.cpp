@@ -106,6 +106,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   context.PushScope(class_decl_id, class_info.scope_id);
   context.node_block_stack().Push();
   context.node_stack().Push(parse_node, class_id);
+  context.args_type_info_stack().Push();
 
   // TODO: Handle the case where there's control flow in the class body. For
   // example:
@@ -119,13 +120,17 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleClassDefinition(Context& context, Parse::Node /*parse_node*/)
+auto HandleClassDefinition(Context& context, Parse::Node parse_node)
     -> bool {
-  context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
+  auto fields_id = context.args_type_info_stack().Pop();
+  auto class_id = context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.node_block_stack().Pop();
   context.PopScope();
 
-  // TODO: Mark the class as a complete type.
+  // The class type is now fully defined.
+  auto& class_info = context.classes().Get(class_id);
+  class_info.object_representation_id =
+      context.CanonicalizeStructType(parse_node, fields_id);
   return true;
 }
 

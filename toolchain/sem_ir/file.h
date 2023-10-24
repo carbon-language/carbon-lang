@@ -62,6 +62,9 @@ struct Class : public Printable<Class> {
     out << "}";
   }
 
+  // Determine whether this class has been fully defined.
+  bool is_defined() const { return object_representation_id.is_valid(); }
+
   // The class name.
   StringId name_id;
   // The class type, which is the type of `Self` in the class definition.
@@ -76,6 +79,9 @@ struct Class : public Printable<Class> {
   // The first block of the class body.
   // TODO: Handle control flow in the class body, such as if-expressions.
   NodeBlockId body_block_id = NodeBlockId::Invalid;
+
+  // The object representation type to use for this class.
+  TypeId object_representation_id = TypeId::Invalid;
 };
 
 // The value representation to use when passing by value.

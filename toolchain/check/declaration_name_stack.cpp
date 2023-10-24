@@ -126,8 +126,7 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
     case SemIR::ClassDeclaration::Kind: {
       const auto& class_info = context_->classes().Get(
           resolved_node.As<SemIR::ClassDeclaration>().class_id);
-      // TODO: Check that the class is complete rather than that it has a scope.
-      if (class_info.scope_id.is_valid()) {
+      if (class_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
         name_context.target_scope_id = class_info.scope_id;
       } else {

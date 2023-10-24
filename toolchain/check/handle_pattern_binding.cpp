@@ -57,6 +57,10 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
         value_type_id = context.CanonicalizeType(field_type_node_id);
         value_id =
             context.AddNode(SemIR::Field{parse_node, value_type_id, name_id});
+
+        // Add a corresponding field to the object representation of the class.
+        context.args_type_info_stack().AddNode(
+            SemIR::StructTypeField{parse_node, name_id, cast_type_id});
       } else {
         value_id = context.AddNode(
             SemIR::VarStorage{name_node, value_type_id, name_id});
