@@ -102,8 +102,8 @@ cc_library(
 
 cc_test(
     name = "error_test",
-    srcs = ["error_test.cpp"],
     size = "small",
+    srcs = ["error_test.cpp"],
     deps = [
         ":error",
         "//testing/base:gtest_main",
