@@ -41,6 +41,8 @@ cc_test(
     deps = [
         ":value_store",
         "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "//toolchain/testing:yaml_test_helpers",
         "@com_google_googletest//:gtest",
     ],
 )

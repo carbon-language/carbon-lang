@@ -12,6 +12,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/YAMLParser.h"
 #include "toolchain/base/index_base.h"
 
@@ -84,7 +85,61 @@ namespace Internal {
 // Used as a parent class for non-printable types. This is just for
 // std::conditional, not as an API.
 class ValueStoreNotPrintable {};
+
+// Provides YAML printing of a value.
+template <typename ValueT>
+inline auto PrintValue(llvm::raw_ostream& out, const ValueT& val) {
+  out << val;
+};
+template <>
+inline auto PrintValue(llvm::raw_ostream& out, const llvm::APInt& val) {
+  val.print(out, /*isSigned=*/false);
+};
+template <>
+inline auto PrintValue(llvm::raw_ostream& out, const llvm::StringRef& val) {
+  out << "\"" << llvm::yaml::escape(val) << "\"";
+};
+
 }  // namespace Internal
+
+// Provides YAML printing of a list. The first line indent applies even if there
+// is no label, in which case it applies to the first element.
+template <typename ValueT>
+inline auto PrintValueRange(
+    llvm::raw_ostream& out, llvm::iterator_range<const ValueT*> range,
+    std::optional<llvm::StringRef> label, int first_line_indent,
+    int later_indent, bool trailing_newline,
+    std::function<void(llvm::raw_ostream&, const ValueT& val)> print =
+        Internal::PrintValue<ValueT>) {
+  out.indent(first_line_indent);
+  if (label) {
+    out << *label << ":";
+    if (range.empty()) {
+      // Add a space between the `:` and the `[]` printed below.
+      out << " ";
+    } else {
+      out << "\n";
+      out.indent(later_indent);
+    }
+  }
+  if (range.empty()) {
+    out << "[]";
+    if (trailing_newline) {
+      out << "\n";
+    }
+    return;
+  }
+  std::string sep_str = "\n";
+  sep_str.append(later_indent, ' ');
+  llvm::ListSeparator sep(sep_str);
+  for (const auto& val : range) {
+    out << sep << "- ";
+    print(out, val);
+  }
+  if (trailing_newline) {
+    out << "\n";
+  }
+}
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
@@ -94,6 +149,8 @@ class ValueStore
                               Printable<ValueStore<IdT, ValueT>>,
                               Internal::ValueStoreNotPrintable> {
  public:
+  using PrintFn = std::function<void(llvm::raw_ostream&, const ValueT& val)>;
+
   // Stores the value and returns an ID to reference it.
   auto Add(ValueT value) -> IdT {
     IdT id = IdT(values_.size());
@@ -125,12 +182,18 @@ class ValueStore
   auto Reserve(size_t size) -> void { values_.reserve(size); }
 
   // These are to support printable structures, and are not guaranteed.
-  auto Print(llvm::raw_ostream& out) const -> void { Print(out, 0); }
-  auto Print(llvm::raw_ostream& out, int indent) const -> void {
-    for (const auto& value : values_) {
-      out.indent(indent);
-      out << "- " << value << "\n";
-    }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    Print(out, std::nullopt, 0, 0);
+  }
+  auto Print(llvm::raw_ostream& out, std::optional<llvm::StringRef> label,
+             int first_line_indent, int later_indent,
+             // This decays so that `const llvm::APInt` printing catches the
+             // specialization.
+             PrintFn print = Internal::PrintValue<std::decay_t<ValueT>>) const
+      -> void {
+    PrintValueRange(out, llvm::iterator_range(values_), label,
+                    first_line_indent, later_indent, /*trailing_newline=*/true,
+                    print);
   }
 
   auto array_ref() const -> llvm::ArrayRef<ValueT> { return values_; }
@@ -145,6 +208,9 @@ class ValueStore
 template <>
 class ValueStore<StringId> : public Printable<ValueStore<StringId>> {
  public:
+  using PrintFn =
+      std::function<void(llvm::raw_ostream&, const llvm::StringRef& val)>;
+
   // Returns an ID to reference the value. May return an existing ID if the
   // string was previously added.
   auto Add(llvm::StringRef value) -> StringId {
@@ -162,12 +228,16 @@ class ValueStore<StringId> : public Printable<ValueStore<StringId>> {
     return values_[id.index];
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void { Print(out, 0); }
-  auto Print(llvm::raw_ostream& out, int indent) const -> void {
-    for (auto value : values_) {
-      out.indent(indent);
-      out << "- \"" << llvm::yaml::escape(value) << "\"\n";
-    }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    Print(out, std::nullopt, 0, 0);
+  }
+  auto Print(llvm::raw_ostream& out, std::optional<llvm::StringRef> label,
+             int first_line_indent, int later_indent,
+             PrintFn print = Internal::PrintValue<llvm::StringRef>) const
+      -> void {
+    PrintValueRange(out, llvm::iterator_range(values_), label,
+                    first_line_indent, later_indent, /*trailing_newline=*/true,
+                    print);
   }
 
  private:
@@ -188,12 +258,10 @@ class SharedValueStores : public Printable<SharedValueStores> {
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "shared_values:\n"
-        << "  - integers:\n";
-    integers_.Print(out, 6);
-    out << "  - reals:\n";
-    reals_.Print(out, 6);
-    out << "  - strings:\n";
-    strings_.Print(out, 6);
+        << "  - ";
+    integers_.Print(out, "integers", 0, 6);
+    reals_.Print(out, "reals", 4, 6);
+    strings_.Print(out, "strings", 4, 6);
   }
 
  private:

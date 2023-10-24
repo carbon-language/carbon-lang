@@ -88,6 +88,20 @@ class BlockValueStore {
   // Returns the requested block.
   auto Get(IdT id) -> llvm::MutableArrayRef<ValueT> { return values_.Get(id); }
 
+  auto Print(llvm::raw_ostream& out) const -> void {
+    Print(out, std::nullopt, 0, 0);
+  }
+  auto Print(llvm::raw_ostream& out, std::optional<llvm::StringRef> label,
+             int first_line_indent, int later_indent) const -> void {
+    values_.Print(out, label, first_line_indent, later_indent,
+                  [&](llvm::raw_ostream& out,
+                      const llvm::MutableArrayRef<ValueT>& value) {
+                    PrintValueRange<ValueT>(out, llvm::iterator_range(value),
+                                            std::nullopt, 0, later_indent + 2,
+                                            /*trailing_newline=*/false);
+                  });
+  }
+
   auto size() const -> int { return values_.size(); }
 
  protected:
