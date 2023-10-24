@@ -68,6 +68,15 @@ static auto HandleDeclarationNameAndParamsAfterName(Context& context,
     return;
   }
 
+  // TODO: We can have a parameter list after a name qualifier, regardless of
+  // whether the entity itself permits or requires parameters:
+  //
+  //   fn Class(T:! type).AnotherClass(U:! type).Function(v: T) {}
+  //
+  // We should retain a `DeclarationNameAndParams...` state on the stack in all
+  // cases below to check for a period after a parameter list, which indicates
+  // that we've not finished parsing the declaration name.
+
   if (params == Params::None) {
     return;
   }

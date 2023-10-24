@@ -145,42 +145,33 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
 
 auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
-  auto pop_and_apply_first_child = [&]() {
-    Parse::Node parse_node1 = context.node_stack().PeekParseNode();
-    switch (context.parse_tree().node_kind(parse_node1)) {
-      case Parse::NodeKind::QualifiedDeclaration:
-        // This is the second or subsequent QualifiedDeclaration in a chain.
-        // Nothing to do: the first QualifiedDeclaration remains as a
-        // bracketing node for later QualifiedDeclarations.
-        break;
+  auto [parse_node2, name_id2] =
+      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
-      case Parse::NodeKind::Name: {
-        // This is the first QualifiedDeclaration in a chain, and starts with a
-        // name.
-        auto name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
-        context.declaration_name_stack().ApplyNameQualifier(parse_node1,
-                                                            name_id);
-        // Add the QualifiedDeclaration so that it can be used for bracketing.
-        context.node_stack().Push(parse_node);
-        break;
-      }
+  Parse::Node parse_node1 = context.node_stack().PeekParseNode();
+  switch (context.parse_tree().node_kind(parse_node1)) {
+    case Parse::NodeKind::QualifiedDeclaration:
+      // This is the second or subsequent QualifiedDeclaration in a chain.
+      // Nothing to do: the first QualifiedDeclaration remains as a
+      // bracketing node for later QualifiedDeclarations.
+      break;
 
-      default:
-        CARBON_FATAL() << "Unexpected node kind on left side of qualified "
-                          "declaration name";
+    case Parse::NodeKind::Name: {
+      // This is the first QualifiedDeclaration in a chain, and starts with a
+      // name.
+      auto name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+      context.declaration_name_stack().ApplyNameQualifier(parse_node1, name_id);
+      // Add the QualifiedDeclaration so that it can be used for bracketing.
+      context.node_stack().Push(parse_node);
+      break;
     }
-  };
 
-  Parse::Node parse_node2 = context.node_stack().PeekParseNode();
-  if (context.parse_tree().node_kind(parse_node2) == Parse::NodeKind::Name) {
-    StringId name_id2 = context.node_stack().Pop<Parse::NodeKind::Name>();
-    pop_and_apply_first_child();
-    context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
-  } else {
-    CARBON_FATAL() << "Unexpected node kind on right side of qualified "
-                      "declaration name";
+    default:
+      CARBON_FATAL() << "Unexpected node kind on left side of qualified "
+                        "declaration name";
   }
 
+  context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
   return true;
 }
 
