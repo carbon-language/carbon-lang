@@ -120,10 +120,10 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleClassDefinition(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
-  auto class_id = context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
+  auto class_id =
+      context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.node_block_stack().Pop();
   context.PopScope();
 
