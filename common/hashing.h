@@ -105,11 +105,20 @@ class HashCode : public Printable<HashCode> {
 // with the following signature:
 //
 // ```cpp
-// auto CarbonHash(Hasher hash, const YourType& value) -> Hasher;
+// auto CarbonHash(Hasher hasher, const YourType& value) -> Hasher;
 // ```
 //
+// This function needs to ensure that values that compare the same (including
+// any comparisons with different types that might be used with a hash table of
+// `YourType` keys) have the exact same updates to the `Hasher` object. The
+// `Hasher` object should be updated with enough state so that values that
+// compare unequal of your type (or other types that might be compared) have a
+// high probability of different hashes. Typically this involves updating all of
+// the salient state of your type into the `Hasher`. The updated hasher should
+// be returned from the function.
+//
 // See the comments on the `Hasher` type for more details about implementing
-// these customization points.
+// these customization points and how best to incorporate state into the hasher.
 template <typename T>
 inline auto HashValue(const T& value, uint64_t seed) -> HashCode;
 
@@ -157,12 +166,11 @@ inline auto HashValue(const T& value) -> HashCode;
 // those integers, then the size (32 integers, or 128 bytes) doesn't need to be
 // included in the hash. But if a type has a *dynamic* amount of data, and the
 // sizes are compared as part of equality comparison, then that dynamic size
-// *does* need to be included in the hash. An interesting observation of this
-// principle is that C-strings don't need to incorporate their length into their
-// hash *if* they incorporate the null terminating byte in the hash -- because
-// that terminating byte will be the difference in equality comparison. But if
-// the C-strings can be compared with any kind of explicitly-sized string views,
-// the size *does* need to be incorporated.
+// should typically be included in the hash.
+//
+// It is essential that values that compare equal have equal hashes, and
+// desirable that values that compare unequal have a high probability of
+// different hashes.
 class Hasher {
  public:
   Hasher(Hasher&& arg) = default;
@@ -181,7 +189,7 @@ class Hasher {
   // aggregating several primitive types into a hash.
   template <typename T, typename = std::enable_if_t<
                             std::has_unique_object_representations_v<T>>>
-  static auto Hash(Hasher hash, const T& value) -> Hasher;
+  static auto Hash(Hasher hasher, const T& value) -> Hasher;
 
   // Convenience method to hash a variable number of objects whose object
   // representation when that is known to be valid. This is primarily useful for
@@ -195,13 +203,13 @@ class Hasher {
   template <typename... Ts,
             typename = std::enable_if_t<
                 (... && std::has_unique_object_representations_v<Ts>)>>
-  static auto Hash(Hasher hash, const Ts&... value) -> Hasher;
+  static auto Hash(Hasher hasher, const Ts&... value) -> Hasher;
 
   // The simplest three more primitive APIs to use when incorporating state. The
   // first two incorporate one or two unsized components of state represented as
   // a collection of 64 bits.
-  static auto HashOne(Hasher hash, uint64_t data) -> Hasher;
-  static auto HashTwo(Hasher hash, uint64_t data0, uint64_t data1) -> Hasher;
+  static auto HashOne(Hasher hasher, uint64_t data) -> Hasher;
+  static auto HashTwo(Hasher hasher, uint64_t data0, uint64_t data1) -> Hasher;
 
   // This is a heavily optimized routine for incorporating a dynamically sized
   // sequence of bytes into the state. It has carefully structured inline code
@@ -269,7 +277,7 @@ class Hasher {
 
   // A throughput-optimized routine for when the byte sequence size is
   // guaranteed to be >32.
-  static auto HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
+  static auto HashSizedBytesLarge(Hasher hasher, llvm::ArrayRef<std::byte> bytes)
       -> Hasher;
 
   // Random data taken from the hexadecimal digits of Pi's fractional component,
@@ -317,28 +325,28 @@ class Hasher {
 
 namespace Detail {
 
-inline auto CarbonHash(Hasher hash, llvm::ArrayRef<std::byte> bytes) -> Hasher {
-  hash = Hasher::HashSizedBytes(std::move(hash), bytes);
-  return hash;
+inline auto CarbonHash(Hasher hasher, llvm::ArrayRef<std::byte> bytes) -> Hasher {
+  hasher = Hasher::HashSizedBytes(std::move(hasher), bytes);
+  return hasher;
 }
 
-inline auto CarbonHash(Hasher hash, llvm::StringRef value) -> Hasher {
+inline auto CarbonHash(Hasher hasher, llvm::StringRef value) -> Hasher {
   return CarbonHash(
-      std::move(hash),
+      std::move(hasher),
       llvm::ArrayRef<std::byte>(
           reinterpret_cast<const std::byte*>(value.data()), value.size()));
 }
 
-inline auto CarbonHash(Hasher hash, std::string_view value) -> Hasher {
+inline auto CarbonHash(Hasher hasher, std::string_view value) -> Hasher {
   return CarbonHash(
-      std::move(hash),
+      std::move(hasher),
       llvm::ArrayRef<std::byte>(
           reinterpret_cast<const std::byte*>(value.data()), value.size()));
 }
 
-inline auto CarbonHash(Hasher hash, const std::string& value) -> Hasher {
+inline auto CarbonHash(Hasher hasher, const std::string& value) -> Hasher {
   return CarbonHash(
-      std::move(hash),
+      std::move(hasher),
       llvm::ArrayRef<std::byte>(
           reinterpret_cast<const std::byte*>(value.data()), value.size()));
 }
@@ -393,17 +401,17 @@ constexpr bool NullPtrOrHasUniqueObjectRepresentations =
 
 template <typename T, typename = std::enable_if_t<
                           NullPtrOrHasUniqueObjectRepresentations<T>>>
-inline auto CarbonHash(Hasher hash, const T& value) -> Hasher {
-  return Hasher::Hash(std::move(hash), MapNullPtrToVoidPtr(value));
+inline auto CarbonHash(Hasher hasher, const T& value) -> Hasher {
+  return Hasher::Hash(std::move(hasher), MapNullPtrToVoidPtr(value));
 }
 
 template <typename... Ts,
           typename = std::enable_if_t<
               (... && NullPtrOrHasUniqueObjectRepresentations<Ts>)>>
-inline auto CarbonHash(Hasher hash, const std::tuple<Ts...>& value) -> Hasher {
+inline auto CarbonHash(Hasher hasher, const std::tuple<Ts...>& value) -> Hasher {
   return std::apply(
       [&](const auto&... args) {
-        return Hasher::Hash(std::move(hash), MapNullPtrToVoidPtr(args)...);
+        return Hasher::Hash(std::move(hasher), MapNullPtrToVoidPtr(args)...);
       },
       value);
 }
@@ -413,24 +421,24 @@ template <typename T, typename U,
               NullPtrOrHasUniqueObjectRepresentations<T> &&
               NullPtrOrHasUniqueObjectRepresentations<U> &&
               sizeof(T) <= sizeof(uint64_t) && sizeof(U) <= sizeof(uint64_t)>>
-inline auto CarbonHash(Hasher hash, const std::pair<T, U>& value) -> Hasher {
-  return CarbonHash(std::move(hash), std::tuple(value.first, value.second));
+inline auto CarbonHash(Hasher hasher, const std::pair<T, U>& value) -> Hasher {
+  return CarbonHash(std::move(hasher), std::tuple(value.first, value.second));
 }
 
 template <typename T, typename = std::enable_if_t<
                           std::has_unique_object_representations_v<T>>>
-inline auto CarbonHash(Hasher hash, llvm::ArrayRef<T> objs) -> Hasher {
+inline auto CarbonHash(Hasher hasher, llvm::ArrayRef<T> objs) -> Hasher {
   return CarbonHash(
-      std::move(hash),
+      std::move(hasher),
       llvm::ArrayRef(reinterpret_cast<const std::byte*>(objs.data()),
                      objs.size() * sizeof(T)));
 }
 
 template <typename T>
-inline auto CarbonHashDispatch(Hasher hash, const T& value) -> Hasher {
+inline auto CarbonHashDispatch(Hasher hasher, const T& value) -> Hasher {
   // This unqualified call will find both the overloads in this namespace and
   // ADL-found functions in an associated namespace of `T`.
-  return CarbonHash(std::move(hash), value);
+  return CarbonHash(std::move(hasher), value);
 }
 
 }  // namespace Detail
@@ -508,15 +516,15 @@ inline auto Hasher::Mix(uint64_t lhs, uint64_t rhs) -> uint64_t {
          static_cast<uint64_t>(result >> 64);
 }
 
-inline auto Hasher::HashOne(Hasher hash, uint64_t data) -> Hasher {
+inline auto Hasher::HashOne(Hasher hasher, uint64_t data) -> Hasher {
   // When hashing exactly one 64-bit entity use the Phi-derived constant as this
   // is just multiplicative hashing. The initial buffer is mixed on input to
   // pipeline with materializing the constant.
-  hash.buffer = Mix(data ^ hash.buffer, MulConstant);
-  return hash;
+  hasher.buffer = Mix(data ^ hasher.buffer, MulConstant);
+  return hasher;
 }
 
-inline auto Hasher::HashTwo(Hasher hash, uint64_t data0, uint64_t data1)
+inline auto Hasher::HashTwo(Hasher hasher, uint64_t data0, uint64_t data1)
     -> Hasher {
   // When hashing two chunks of data at the same time, we XOR it with random
   // data to avoid common inputs from having especially bad multiplicative
@@ -535,20 +543,20 @@ inline auto Hasher::HashTwo(Hasher hash, uint64_t data0, uint64_t data1)
   // This roughly matches the mix pattern used in the larger mixing routines
   // from Abseil, which is a more minimal form than used in other algorithms
   // such as AHash and seems adequate for latency-optimized use cases.
-  hash.buffer = Mix(data0 ^ StaticRandomData[1],
-                    data1 ^ StaticRandomData[3] ^ hash.buffer);
-  return hash;
+  hasher.buffer = Mix(data0 ^ StaticRandomData[1],
+                    data1 ^ StaticRandomData[3] ^ hasher.buffer);
+  return hasher;
 }
 
-inline auto Hasher::HashSizedBytes(Hasher hash, llvm::ArrayRef<std::byte> bytes)
+inline auto Hasher::HashSizedBytes(Hasher hasher, llvm::ArrayRef<std::byte> bytes)
     -> Hasher {
   const std::byte* data_ptr = bytes.data();
   const ssize_t size = bytes.size();
 
   // First handle short sequences under 8 bytes.
   if (LLVM_UNLIKELY(size == 0)) {
-    hash = HashOne(std::move(hash), 0);
-    return hash;
+    hasher = HashOne(std::move(hasher), 0);
+    return hasher;
   }
   if (size <= 8) {
     uint64_t data;
@@ -572,8 +580,8 @@ inline auto Hasher::HashSizedBytes(Hasher hash, llvm::ArrayRef<std::byte> bytes)
     // this library and Abseil make for *fixed* size integers by using a weaker
     // single round of multiplicative hashing and a size-dependent constant
     // loaded from memory.
-    hash.buffer = Mix(data ^ hash.buffer, SampleRandomData(size));
-    return hash;
+    hasher.buffer = Mix(data ^ hasher.buffer, SampleRandomData(size));
+    return hasher;
   }
 
   if (size <= 16) {
@@ -590,31 +598,31 @@ inline auto Hasher::HashSizedBytes(Hasher hash, llvm::ArrayRef<std::byte> bytes)
     // becomes a non-flooding problem, we can restrict the size to <16 and send
     // the 16-byte case down the next tier of cost.
     auto data = Read8To16(data_ptr, size);
-    hash.buffer =
-        Mix(data.first ^ SampleRandomData(size), data.second ^ hash.buffer);
-    return hash;
+    hasher.buffer =
+        Mix(data.first ^ SampleRandomData(size), data.second ^ hasher.buffer);
+    return hasher;
   }
 
   if (size <= 32) {
     // Do two mixes of overlapping 16-byte ranges in parallel to minimize
     // latency. We also incorporate the size by sampling random data into the
     // seed before both.
-    hash.buffer ^= SampleRandomData(size);
+    hasher.buffer ^= SampleRandomData(size);
     uint64_t m0 = Mix(Read8(data_ptr) ^ StaticRandomData[1],
-                      Read8(data_ptr + 8) ^ hash.buffer);
+                      Read8(data_ptr + 8) ^ hasher.buffer);
 
     const std::byte* tail_16b_ptr = data_ptr + (size - 16);
     uint64_t m1 = Mix(Read8(tail_16b_ptr) ^ StaticRandomData[3],
-                      Read8(tail_16b_ptr + 8) ^ hash.buffer);
+                      Read8(tail_16b_ptr + 8) ^ hasher.buffer);
     // Just an XOR mix at the end is quite weak here, but we prefer that for
     // latency over a more robust approach. Doing another mix with the size (the
     // way longer string hashing does) increases the latency on x86-64
     // significantly (approx. 20%).
-    hash.buffer = m0 ^ m1;
-    return hash;
+    hasher.buffer = m0 ^ m1;
+    return hasher;
   }
 
-  return HashSizedBytesLarge(std::move(hash), bytes);
+  return HashSizedBytesLarge(std::move(hasher), bytes);
 }
 
 template <typename T, typename /*enable_if*/>
@@ -641,7 +649,7 @@ inline auto Hasher::ReadSmall(const T& value) -> uint64_t {
 }
 
 template <typename T, typename /*enable_if*/>
-inline auto Hasher::Hash(Hasher hash, const T& value) -> Hasher {
+inline auto Hasher::Hash(Hasher hasher, const T& value) -> Hasher {
   // For integer types up to 64-bit widths, we hash the 2's compliment value by
   // casting to unsigned and hashing as a `uint64_t`. This has the downside of
   // making negative integers hash differently based on their width, but
@@ -651,7 +659,7 @@ inline auto Hasher::Hash(Hasher hash, const T& value) -> Hasher {
   if constexpr (sizeof(T) <= 8 &&
                 (std::is_enum_v<T> || std::is_integral_v<T>)) {
     uint64_t ext_value = static_cast<std::make_unsigned_t<T>>(value);
-    return HashOne(std::move(hash), ext_value);
+    return HashOne(std::move(hasher), ext_value);
   }
 
   // We don't need the size to be part of the hash, as the size here is just a
@@ -659,61 +667,61 @@ inline auto Hasher::Hash(Hasher hash, const T& value) -> Hasher {
   // the same type. So we just dispatch to the fastest path for the specific
   // size in question.
   if constexpr (sizeof(T) <= 8) {
-    hash = HashOne(std::move(hash), ReadSmall(value));
-    return hash;
+    hasher = HashOne(std::move(hasher), ReadSmall(value));
+    return hasher;
   }
 
   const auto* data_ptr = reinterpret_cast<const std::byte*>(&value);
   if constexpr (8 < sizeof(T) && sizeof(T) <= 16) {
     auto values = Read8To16(data_ptr, sizeof(T));
-    hash = HashTwo(std::move(hash), values.first, values.second);
-    return hash;
+    hasher = HashTwo(std::move(hasher), values.first, values.second);
+    return hasher;
   }
 
   if constexpr (16 < sizeof(T) && sizeof(T) <= 32) {
     // Essentially the same technique used for dynamically sized byte sequences
     // of this size, but we start with a fixed XOR of random data.
-    hash.buffer ^= StaticRandomData[0];
+    hasher.buffer ^= StaticRandomData[0];
     uint64_t m0 = Mix(Read8(data_ptr) ^ StaticRandomData[1],
-                      Read8(data_ptr + 8) ^ hash.buffer);
+                      Read8(data_ptr + 8) ^ hasher.buffer);
     const std::byte* tail_16b_ptr = data_ptr + (sizeof(T) - 16);
     uint64_t m1 = Mix(Read8(tail_16b_ptr) ^ StaticRandomData[3],
-                      Read8(tail_16b_ptr + 8) ^ hash.buffer);
-    hash.buffer = m0 ^ m1;
-    return hash;
+                      Read8(tail_16b_ptr + 8) ^ hasher.buffer);
+    hasher.buffer = m0 ^ m1;
+    return hasher;
   }
 
   // Hashing the size isn't relevant here, but is harmless, so fall back to a
   // common code path.
-  return HashSizedBytesLarge(std::move(hash),
+  return HashSizedBytesLarge(std::move(hasher),
                              llvm::ArrayRef<std::byte>(data_ptr, sizeof(T)));
 }
 
 template <typename... Ts, typename /*enable_if*/>
-inline auto Hasher::Hash(Hasher hash, const Ts&... value) -> Hasher {
+inline auto Hasher::Hash(Hasher hasher, const Ts&... value) -> Hasher {
   if constexpr (sizeof...(Ts) == 0) {
-    return HashOne(std::move(hash), 0);
+    return HashOne(std::move(hasher), 0);
   }
   if constexpr (sizeof...(Ts) == 1) {
-    return Hash(std::move(hash), value...);
+    return Hash(std::move(hasher), value...);
   }
   if constexpr ((... && (sizeof(Ts) <= 8))) {
     if constexpr (sizeof...(Ts) == 2) {
-      return HashTwo(std::move(hash), ReadSmall(value)...);
+      return HashTwo(std::move(hasher), ReadSmall(value)...);
     }
 
     // More than two, but all small -- read each one into a contiguous buffer of
     // data. This may be a bit memory wasteful by padding everything out to
     // 8-byte chunks, but for that regularity the hashing is likely faster.
     const uint64_t data[] = {ReadSmall(value)...};
-    return Hash(std::move(hash), data);
+    return Hash(std::move(hasher), data);
   }
 
   // For larger objects, hash each one down to a hash code and then hash those
   // as a buffer.
   const uint64_t data[] = {static_cast<uint64_t>(
-      static_cast<HashCode>(Hash(Hasher(hash.buffer), value)))...};
-  return Hash(std::move(hash), data);
+      static_cast<HashCode>(Hash(Hasher(hasher.buffer), value)))...};
+  return Hash(std::move(hasher), data);
 }
 
 }  // namespace Carbon

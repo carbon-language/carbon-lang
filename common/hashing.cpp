@@ -14,12 +14,14 @@ auto Hasher::HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
 
   __builtin_prefetch(data_ptr, 0 /* read */, 0 /* discard after next use */);
 
-  // If we have more than 32 bytes, we're going to handle two 32-byte chunks
-  // at a time using a simplified version of the main algorithm. This is based
+  // If we have 64 bytes or more, we're going to handle two 32-byte chunks at a
+  // time using a simplified version of the main algorithm. This is based
   // heavily on the 64-byte and larger processing approach used by Abseil. The
-  // goal is to mix the input data using as few multiplies (or other
-  // operations) as we can and with as much ILP as we can. The ILP comes
-  // largely from creating parallel structures to the operations.
+  // goal is to mix the input data using as few multiplies (or other operations)
+  // as we can and with as much [ILP][1] as we can. The ILP comes largely from
+  // creating parallel structures to the operations.
+  //
+  // [1]: https://en.wikipedia.org/wiki/Instruction-level_parallelism
   auto mix32 = [](const std::byte* data_ptr, uint64_t buffer, uint64_t random0,
                   uint64_t random1) {
     uint64_t a = Read8(data_ptr);
@@ -38,7 +40,7 @@ auto Hasher::HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
   const std::byte* end_ptr = data_ptr + (size - 64);
   while (data_ptr < end_ptr) {
     // Prefetch the next cacheline.
-    __builtin_prefetch(data_ptr + 64, 0, 0);
+    __builtin_prefetch(data_ptr, 0 /* read */, 0 /* discard after next use */);
 
     buffer0 =
         mix32(data_ptr, buffer0, StaticRandomData[4], StaticRandomData[5]);

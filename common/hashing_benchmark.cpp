@@ -64,10 +64,27 @@ static const std::array<size_t, NumSizes> rand_sizes = []() {
   return sizes;
 }();
 
+// A small helper class to synthesize random values out of our entropy pool.
+// This is done in a way that depends on an arbitrary input (`x`) to allow us to
+// create a benchmark that measures a *dependent* chain of hashes of these
+// values.
+//
+// `T` needs to be default constructable and reasonable to synthesize an
+// instance by copying random bytes into its underlying storage.
+//
+// This helper class also accumulates tho number of bytes of data generated in
+// order to let us compute throughput measurements as well as latency
+// measurements.
+//
+// This helper class has the same API as the `RandStrings` helpers below so that
+// they can all be used as type parameters to a common benchmark routine below.
 template <typename T>
 struct RandValues {
   size_t bytes = 0;
 
+  // Get a random value. We don't need to iterate through sizes so `i` is
+  // ignored, but we use `x` to select our entropy ensuring a dependency on `x`
+  // for the benchmark.
   auto Get(ssize_t /*i*/, uint64_t x) -> T {
     static_assert(sizeof(T) <= EntropyObjSize);
     bytes += sizeof(T);
@@ -77,6 +94,7 @@ struct RandValues {
   }
 };
 
+// A specialization to help with building pairs of values.
 template <typename T, typename U>
 struct RandValues<std::pair<T, U>> {
   size_t bytes = 0;
@@ -92,10 +110,19 @@ struct RandValues<std::pair<T, U>> {
   }
 };
 
+// A helper class similar to `RandValues`, but for building strings rather than
+// values. The string content is pulled from the entropy pool. The size can be
+// random from [0, MaxSize], or it can be fixed at `MaxSize`. But the `MaxSize`
+// cannot be larger than a single byte sequence pulled from the entropy pool
+// (`EntropyObjSize`).
 template <bool RandSize, size_t MaxSize>
 struct RandStrings {
   size_t bytes = 0;
 
+  // Get a random string. If the sizes are random, we use `i` to select each
+  // size and require it to be in the range [0, NumSizes). Otherwise `i` is
+  // ignored. We always use `x` to select the entropy and establish a dependency
+  // on the input.
   auto Get(ssize_t i, uint64_t x) -> llvm::StringRef {
     static_assert(MaxSize <= EntropyObjSize);
     size_t s = MaxSize;
@@ -137,6 +164,8 @@ struct CarbonHash : HashBase {
 struct AbseilHash : HashBase {
   template <typename T>
   auto operator()(const T& value) -> uint64_t {
+    // Manually seed this with an after-the-fact XOR as there isn't a seeded
+    // version. This matches what Abseil's hash tables do as well.
     return absl::HashOf(value) ^ seed;
   }
 };
@@ -144,6 +173,8 @@ struct AbseilHash : HashBase {
 struct LLVMHash : HashBase {
   template <typename T>
   auto operator()(const T& value) -> uint64_t {
+    // Manually seed this with an after-the-fact XOR as there isn't a seeded
+    // version.
     return llvm::hash_value(value) ^ seed;
   }
 };

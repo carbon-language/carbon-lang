@@ -100,21 +100,63 @@ TEST(HashingTest, Pointers) {
 
 TEST(HashingTest, PairsAndTuples) {
   // Note that we can't compare hash codes across arity, or in general, compare
-  // hash codes for different types as the type isn't part of the hash.
-  HashCode hash_2zero = HashValue(std::pair(0, 0));
-  EXPECT_THAT(HashValue(std::pair(0, 1)), Ne(hash_2zero));
-  EXPECT_THAT(HashValue(std::pair(1, 0)), Ne(hash_2zero));
+  // hash codes for different types as the type isn't part of the hash. These
+  // hashes are targeted at use in hash tables which pick a single type that's
+  // the basis of any comparison.
+  HashCode hash_00 = HashValue(std::pair(0, 0));
+  HashCode hash_01 = HashValue(std::pair(0, 1));
+  HashCode hash_10 = HashValue(std::pair(1, 0));
+  HashCode hash_11 = HashValue(std::pair(1, 1));
+  EXPECT_THAT(hash_00, Ne(hash_01));
+  EXPECT_THAT(hash_00, Ne(hash_10));
+  EXPECT_THAT(hash_00, Ne(hash_11));
+  EXPECT_THAT(hash_01, Ne(hash_10));
+  EXPECT_THAT(hash_01, Ne(hash_11));
+  EXPECT_THAT(hash_10, Ne(hash_11));
 
-  HashCode hash_3zero = HashValue(std::tuple(0, 0, 0));
-  EXPECT_THAT(HashValue(std::tuple(0, 0, 1)), Ne(hash_3zero));
-  EXPECT_THAT(HashValue(std::tuple(0, 1, 0)), Ne(hash_3zero));
-  EXPECT_THAT(HashValue(std::tuple(1, 0, 0)), Ne(hash_3zero));
+  HashCode hash_000 = HashValue(std::tuple(0, 0, 0));
+  HashCode hash_001 = HashValue(std::tuple(0, 0, 1));
+  HashCode hash_010 = HashValue(std::tuple(0, 1, 0));
+  HashCode hash_011 = HashValue(std::tuple(0, 1, 1));
+  HashCode hash_100 = HashValue(std::tuple(1, 0, 0));
+  HashCode hash_101 = HashValue(std::tuple(1, 0, 1));
+  HashCode hash_110 = HashValue(std::tuple(1, 1, 0));
+  HashCode hash_111 = HashValue(std::tuple(1, 1, 1));
+  EXPECT_THAT(hash_000, Ne(hash_001));
+  EXPECT_THAT(hash_000, Ne(hash_010));
+  EXPECT_THAT(hash_000, Ne(hash_011));
+  EXPECT_THAT(hash_000, Ne(hash_100));
+  EXPECT_THAT(hash_000, Ne(hash_101));
+  EXPECT_THAT(hash_000, Ne(hash_110));
+  EXPECT_THAT(hash_000, Ne(hash_111));
+  EXPECT_THAT(hash_001, Ne(hash_010));
+  EXPECT_THAT(hash_001, Ne(hash_011));
+  EXPECT_THAT(hash_001, Ne(hash_100));
+  EXPECT_THAT(hash_001, Ne(hash_101));
+  EXPECT_THAT(hash_001, Ne(hash_110));
+  EXPECT_THAT(hash_001, Ne(hash_111));
+  EXPECT_THAT(hash_010, Ne(hash_011));
+  EXPECT_THAT(hash_010, Ne(hash_100));
+  EXPECT_THAT(hash_010, Ne(hash_101));
+  EXPECT_THAT(hash_010, Ne(hash_110));
+  EXPECT_THAT(hash_010, Ne(hash_111));
+  EXPECT_THAT(hash_011, Ne(hash_100));
+  EXPECT_THAT(hash_011, Ne(hash_101));
+  EXPECT_THAT(hash_011, Ne(hash_110));
+  EXPECT_THAT(hash_011, Ne(hash_111));
+  EXPECT_THAT(hash_100, Ne(hash_101));
+  EXPECT_THAT(hash_100, Ne(hash_110));
+  EXPECT_THAT(hash_100, Ne(hash_111));
+  EXPECT_THAT(hash_101, Ne(hash_110));
+  EXPECT_THAT(hash_101, Ne(hash_111));
+  EXPECT_THAT(hash_110, Ne(hash_111));
 
   // Hashing a 2-tuple and a pair should produce identical results, so pairs
   // are compatible with code using things like variadic tuple construction.
-  EXPECT_THAT(HashValue(std::tuple(0, 0)), Eq(hash_2zero));
-  EXPECT_THAT(HashValue(std::tuple(0, 1)), Eq(HashValue(std::pair(0, 1))));
-  EXPECT_THAT(HashValue(std::tuple(1, 0)), Eq(HashValue(std::pair(1, 0))));
+  EXPECT_THAT(HashValue(std::tuple(0, 0)), Eq(hash_00));
+  EXPECT_THAT(HashValue(std::tuple(0, 1)), Eq(hash_01));
+  EXPECT_THAT(HashValue(std::tuple(1, 0)), Eq(hash_10));
+  EXPECT_THAT(HashValue(std::tuple(1, 1)), Eq(hash_11));
 
   // Integers in tuples should work the same as outside of tuples w.r.t.
   // converting between different integer types.
@@ -125,9 +167,9 @@ TEST(HashingTest, PairsAndTuples) {
 
     // Zero should match, and other integers shouldn't collide trivially.
     if (i == 0) {
-      EXPECT_THAT(hash, Eq(hash_3zero));
+      EXPECT_THAT(hash, Eq(hash_000));
     } else {
-      EXPECT_THAT(hash, Ne(hash_3zero));
+      EXPECT_THAT(hash, Ne(hash_000));
     }
 
     // We shouldn't include the exact integer type used so that implicit
@@ -225,10 +267,6 @@ struct HashedValue {
 
 using HashedString = HashedValue<std::string>;
 
-auto operator<<(llvm::raw_ostream& os, HashedString hs) -> llvm::raw_ostream& {
-  return os << "hash " << hs.hash << " for bytes " << ToHexBytes(hs.v);
-}
-
 template <typename T>
 auto PrintFullWidthHex(llvm::raw_ostream& os, T value) {
   static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
@@ -262,10 +300,22 @@ auto operator<<(llvm::raw_ostream& os, HashedValue<std::pair<T, U>> hv)
 
 struct Collisions {
   int total;
-  int median_per_hash;
-  int max_per_hash;
+  int median;
+  int max;
 };
 
+// Analyzes a list of hashed values to find all of the hash codes which collide
+// within a specific bit-range.
+//
+// With `BitBegin=0` and `BitEnd=64`, this is equivalent to finding full
+// collisions. But when the begin and end of the bit range are narrower than the
+// 64-bits of the hash code, it allows this function to analyze a specific
+// window of bits within the 64-bit hash code to understand how many collisions
+// emerge purely within that bit range.
+//
+// With narrow ranges (we often look at the first N and last N bits for small
+// N), collisions are common and so this function summarizes this with the total
+// number of collisions and the median number of collisions for an input value.
 template <int BitBegin, int BitEnd, typename T>
 auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
     -> Collisions {
@@ -275,11 +325,20 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
   constexpr int BitShift = BitBegin;
   constexpr uint64_t BitMask = ((1ULL << BitCount) - 1) << BitShift;
 
+  // We collect counts of collisions in a vector. Initially, we just have a zero
+  // and all inputs map to that collision count. As we discover collisions,
+  // we'll create a dedicated counter for it and count how many inputs collide.
   llvm::SmallVector<int> collision_counts;
   collision_counts.push_back(0);
+  // The "map" for collision counts. Each input hashed value has a corresponding
+  // index stored here. That index is the index of the collision count in the
+  // container above. We resize this to fill it with zeros to start as the zero
+  // index above has a collision count of zero.
   llvm::SmallVector<int> collision_map;
   collision_map.resize(hashes.size());
 
+  // First, we extract the bit subsequence we want to examine from each hash and
+  // store it with an index back into the hashed values (or the collision map).
   llvm::SmallVector<std::pair<uint32_t, int>> bits_and_indices;
   bits_and_indices.reserve(hashes.size());
   for (const auto& [hash, v] : hashes) {
@@ -288,53 +347,72 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
     bits_and_indices.push_back(
         {static_cast<uint32_t>(hash_bits), bits_and_indices.size()});
   }
+
+  // Now we sort by the extracted bit sequence so we can efficiently scan for
+  // colliding bit patterns.
   std::sort(
       bits_and_indices.begin(), bits_and_indices.end(),
       [](const auto& lhs, const auto& rhs) { return lhs.first < rhs.first; });
 
+  // Scan the sorted bit sequences we've extracted looking for collisions. We
+  // count the total collisions, but we also track the number of individual
+  // inputs that collide with each specific bit pattern.
   uint32_t prev_hash_bits = bits_and_indices[0].first;
   int prev_index = bits_and_indices[0].second;
   bool in_collision = false;
   int total = 0;
-  int distinct_collisions = 0;
   for (const auto& [hash_bits, hash_index] :
        llvm::ArrayRef(bits_and_indices).slice(1)) {
+    // Check if we've found a new hash (and thus a new value), reset everything.
     if (hash_bits != prev_hash_bits) {
+      CARBON_CHECK(hashes[prev_index].hash != hashes[hash_index].hash);
+      CARBON_CHECK(hashes[prev_index].v != hashes[hash_index].v);
       prev_hash_bits = hash_bits;
       prev_index = hash_index;
       in_collision = false;
       continue;
     }
 
+    // Otherwise, we have a colliding bit sequence.
     ++total;
+
+    // If we've already created a collision count to track this, just increment
+    // it and map this hash to it.
     if (in_collision) {
       ++collision_counts.back();
       collision_map[hash_index] = collision_counts.size() - 1;
       continue;
     }
+
+    // If this is a new collision, create a dedicated count to track it and
+    // begin counting.
     in_collision = true;
     collision_map[hash_index] = collision_counts.size();
     collision_counts.push_back(1);
-
-    ++distinct_collisions;
-    if (0 && distinct_collisions < 10) {
-      llvm::errs() << "Hash mask " << llvm::formatv("{0:x16}", BitMask)
-                   << " collision: " << hashes[prev_index] << " vs. "
-                   << hashes[hash_index] << "\n";
-    }
   }
 
-  // Sort by collisions.
+  // Sort by collision count for each hash.
   std::sort(bits_and_indices.begin(), bits_and_indices.end(),
             [&](const auto& lhs, const auto& rhs) {
               return collision_counts[collision_map[lhs.second]] <
                      collision_counts[collision_map[rhs.second]];
             });
 
+  // And compute the median and max.
   int median = collision_counts
       [collision_map[bits_and_indices[bits_and_indices.size() / 2].second]];
-  int max = collision_counts.back();
-  return {.total = total, .median_per_hash = median, .max_per_hash = max};
+  int max = *std::max_element(collision_counts.begin(), collision_counts.end());
+  return {.total = total, .median = median, .max = max};
+}
+
+auto CheckNoHashedDuplicates(llvm::ArrayRef<HashedString> hashes) -> void {
+  for (int i = 0, size = hashes.size(); i < size; ++i) {
+    const auto& [hash, value] = hashes[i];
+    while (i + 1 < size && hash == hashes[i + 1].hash) {
+      CARBON_CHECK(value != hashes[i + 1].v) << "Duplicate value: " << value;
+      ++i;
+    }
+  }
 }
 
 template <int N>
@@ -357,14 +435,12 @@ auto AllByteStringsHashedAndSorted() {
               return static_cast<uint64_t>(lhs.hash) <
                      static_cast<uint64_t>(rhs.hash);
             });
+  CheckNoHashedDuplicates(hashes);
 
   return hashes;
 }
 
-TEST(HashingTest, Collisions1ByteSized) {
-  auto hashes_storage = AllByteStringsHashedAndSorted<1>();
-  auto hashes = llvm::ArrayRef(hashes_storage);
-
+auto ExpectNoHashCollisions(llvm::ArrayRef<HashedString> hashes) -> void {
   HashCode prev_hash = hashes[0].hash;
   llvm::StringRef prev_s = hashes[0].v;
   for (const auto& [hash, s] : hashes.slice(1)) {
@@ -374,16 +450,18 @@ TEST(HashingTest, Collisions1ByteSized) {
       continue;
     }
 
-    FAIL() << "Colliding hash '" << hash << "' of 1-byte strings "
+    FAIL() << "Colliding hash '" << hash << "' of strings "
            << ToHexBytes(prev_s) << " and " << ToHexBytes(s);
   }
+}
 
-  // With sufficiently unlucky seeding, we can end up with at most one collision
-  // in the low 32-bits. This has been observed in less than 1 in 100,000 runs.
+TEST(HashingTest, Collisions1ByteSized) {
+  auto hashes_storage = AllByteStringsHashedAndSorted<1>();
+  auto hashes = llvm::ArrayRef(hashes_storage);
+  ExpectNoHashCollisions(hashes);
+
   auto low_32bit_collisions = FindBitRangeCollisions<0, 32>(hashes);
-  EXPECT_THAT(low_32bit_collisions.total, Le(1));
-
-  // We have not observed any seeding that collides in the high 32-bits.
+  EXPECT_THAT(low_32bit_collisions.total, Eq(0));
   auto high_32bit_collisions = FindBitRangeCollisions<32, 64>(hashes);
   EXPECT_THAT(high_32bit_collisions.total, Eq(0));
 
@@ -392,64 +470,42 @@ TEST(HashingTest, Collisions1ByteSized) {
   // for faster searching. So we add some direct testing that the median and max
   // collisions for any given key stay within bounds. We express the bounds in
   // terms of the minimum expected "perfect" rate of collisions if uniformly
-  // distributed. So far, these bounds have been stable but can be adjusted if
-  // further testing uncovers more pernicious seedings for single byte keys.
+  // distributed.
   int min_7bit_collisions = llvm::NextPowerOf2(hashes.size() - 1) / (1 << 7);
   auto low_7bit_collisions = FindBitRangeCollisions<0, 7>(hashes);
-  EXPECT_THAT(low_7bit_collisions.median_per_hash, Le(4 * min_7bit_collisions));
-  EXPECT_THAT(low_7bit_collisions.max_per_hash, Le(16 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.median, Le(2 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.max, Le(4 * min_7bit_collisions));
   auto high_7bit_collisions = FindBitRangeCollisions<64 - 7, 64>(hashes);
-  EXPECT_THAT(high_7bit_collisions.median_per_hash,
-              Le(8 * min_7bit_collisions));
-  EXPECT_THAT(high_7bit_collisions.max_per_hash, Le(16 * min_7bit_collisions));
+  EXPECT_THAT(high_7bit_collisions.median,
+              Le(2 * min_7bit_collisions));
+  EXPECT_THAT(high_7bit_collisions.max, Le(4 * min_7bit_collisions));
 }
 
 TEST(HashingTest, Collisions2ByteSized) {
   auto hashes_storage = AllByteStringsHashedAndSorted<2>();
   auto hashes = llvm::ArrayRef(hashes_storage);
+  ExpectNoHashCollisions(hashes);
 
-  HashCode prev_hash = hashes[0].hash;
-  llvm::StringRef prev_s = hashes[0].v;
-  for (const auto& [hash, s] : llvm::ArrayRef(hashes).slice(1)) {
-    if (hash != prev_hash) {
-      prev_hash = hash;
-      prev_s = s;
-      continue;
-    }
-
-    FAIL() << "Colliding hash '" << hash << "' of 2-byte strings "
-           << ToHexBytes(prev_s) << " and " << ToHexBytes(s);
-  }
-
-  // As with one-byte strings, we see some collisions in the low 32-bits with
-  // sufficiently unlucky seeds. Since we've seen enough collisions here, we
-  // also check that the median collisions for a single hash is much more
-  // tightly bound.
   auto low_32bit_collisions = FindBitRangeCollisions<0, 32>(hashes);
-  EXPECT_THAT(low_32bit_collisions.total, Le(64));
-  EXPECT_THAT(low_32bit_collisions.median_per_hash, Le(1));
-
-  // So far we have not observed any seeds that result in collisions in the high
-  // 32-bits, but we can relax this to tolerate them if discovered.
+  EXPECT_THAT(low_32bit_collisions.total, Eq(0));
   auto high_32bit_collisions = FindBitRangeCollisions<32, 64>(hashes);
-  EXPECT_THAT(high_32bit_collisions.total, Le(1));
+  EXPECT_THAT(high_32bit_collisions.total, Eq(0));
 
-  // With 2-byte keys, we see more stable behavior of the median and max
-  // collisions relative to the expected rate given the narrow bit range. Still,
-  // if any of these are observed in practice, they can be raised.
+  // Similar to 1-byte keys, we do expect a certain rate of collisions here but
+  // bound the median and max.
   int min_7bit_collisions = llvm::NextPowerOf2(hashes.size() - 1) / (1 << 7);
   auto low_7bit_collisions = FindBitRangeCollisions<0, 7>(hashes);
-  EXPECT_THAT(low_7bit_collisions.median_per_hash, Le(2 * min_7bit_collisions));
-  EXPECT_THAT(low_7bit_collisions.max_per_hash, Le(8 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.median, Le(2 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.max, Le(2 * min_7bit_collisions));
   auto high_7bit_collisions = FindBitRangeCollisions<64 - 7, 64>(hashes);
-  EXPECT_THAT(high_7bit_collisions.median_per_hash,
+  EXPECT_THAT(high_7bit_collisions.median,
               Le(2 * min_7bit_collisions));
-  EXPECT_THAT(high_7bit_collisions.max_per_hash, Le(2 * min_7bit_collisions));
+  EXPECT_THAT(high_7bit_collisions.max, Le(2 * min_7bit_collisions));
 }
 
 // Generate and hash all strings of of [BeginByteCount, EndByteCount) bytes,
-// with [BeginSetBitCount, EndSetBitCount) contiguous bits set to one and all
-// other bits set to zero.
+// with [BeginSetBitCount, EndSetBitCount) contiguous bits at each possible bit
+// offset set to one and all other bits set to zero.
 template <int BeginByteCount, int EndByteCount, int BeginSetBitCount,
           int EndSetBitCount>
 struct SparseHashTestParamRanges {
@@ -457,6 +513,9 @@ struct SparseHashTestParamRanges {
   static_assert(BeginByteCount < EndByteCount);
   static_assert(BeginSetBitCount >= 0);
   static_assert(BeginSetBitCount < EndSetBitCount);
+  // Note that we intentionally allow the end-set-bit-count to result in more
+  // set bits than are available -- we truncate the number of set bits to fit
+  // within the byte string.
   static_assert(BeginSetBitCount <= BeginByteCount * 8);
 
   struct ByteCount {
@@ -476,10 +535,6 @@ struct SparseHashTest : ::testing::Test {
 
   static auto GetHashedByteStrings() {
     llvm::SmallVector<HashedString> hashes;
-    constexpr int NumByteCounts = ByteCount::End - ByteCount::Begin + 1;
-    constexpr int NumSetBitCounts = SetBitCount::End - SetBitCount::Begin + 1;
-    hashes.reserve(
-        (static_cast<size_t>(ByteCounts * SetBitCounts * (ByteCounts * 8 - SetBitCount::Begin + 1))));
     for (int byte_count :
          llvm::seq_inclusive(ByteCount::Begin, ByteCount::End)) {
       int bits = byte_count * 8;
@@ -539,11 +594,10 @@ struct SparseHashTest : ::testing::Test {
 
     std::sort(hashes.begin(), hashes.end(),
               [](const HashedString& lhs, const HashedString& rhs) {
-                CARBON_CHECK(lhs.v != rhs.v)
-                    << "Duplicate string: " << ToHexBytes(lhs.v);
                 return static_cast<uint64_t>(lhs.hash) <
                        static_cast<uint64_t>(rhs.hash);
               });
+    CheckNoHashedDuplicates(hashes);
 
     return hashes;
   }
@@ -561,28 +615,15 @@ TYPED_TEST_SUITE(SparseHashTest, SparseHashTestParams);
 TYPED_TEST(SparseHashTest, Collisions) {
   auto hashes_storage = this->GetHashedByteStrings();
   auto hashes = llvm::ArrayRef(hashes_storage);
-
-  HashCode prev_hash = hashes[0].hash;
-  llvm::StringRef prev_s = hashes[0].v;
-  for (const auto& [hash, s] : hashes.slice(1)) {
-    if (hash != prev_hash) {
-      prev_hash = hash;
-      prev_s = s;
-      continue;
-    }
-
-    FAIL() << "Colliding hash '" << hash << "' of strings "
-           << ToHexBytes(prev_s) << " and " << ToHexBytes(s);
-  }
+  ExpectNoHashCollisions(hashes);
 
   int min_7bit_collisions = llvm::NextPowerOf2(hashes.size() - 1) / (1 << 7);
   auto low_7bit_collisions = FindBitRangeCollisions<0, 7>(hashes);
-  EXPECT_THAT(low_7bit_collisions.median_per_hash, Le(2 * min_7bit_collisions));
-  EXPECT_THAT(low_7bit_collisions.max_per_hash, Le(2 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.median, Le(2 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.max, Le(2 * min_7bit_collisions));
   auto high_7bit_collisions = FindBitRangeCollisions<64 - 7, 64>(hashes);
-  EXPECT_THAT(high_7bit_collisions.median_per_hash,
-              Le(2 * min_7bit_collisions));
-  EXPECT_THAT(high_7bit_collisions.max_per_hash, Le(2 * min_7bit_collisions));
+  EXPECT_THAT(high_7bit_collisions.median, Le(2 * min_7bit_collisions));
+  EXPECT_THAT(high_7bit_collisions.max, Le(2 * min_7bit_collisions));
 }
 
 }  // namespace
