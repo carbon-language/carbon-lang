@@ -134,9 +134,9 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
         content_needs_validation = true;
         break;
       case '\\':
-        content_needs_validation = true;
         if (escape.size() == 1 ||
             source_text.substr(cursor + 1).startswith(escape.substr(1))) {
+          content_needs_validation = true;
           cursor += escape.size();
           // If there's either not a character following the escape, or it's a
           // single-line string and the escaped character is a newline, we
@@ -265,6 +265,16 @@ static auto AppendChar(char*& buffer_cursor, char append_char) -> void {
   ++buffer_cursor;
 }
 
+// Appends the front of contents to the buffer and advances the cursor.
+static auto AppendFrontOfContents(char*& buffer_cursor,
+                                  llvm::StringRef contents, size_t len_or_npos)
+    -> void {
+  auto len =
+      len_or_npos == llvm::StringRef::npos ? contents.size() : len_or_npos;
+  memcpy(buffer_cursor, contents.data(), len);
+  buffer_cursor += len;
+}
+
 // Expand an escape sequence, appending the expanded value to the given
 // `result` string. `content` is the string content, starting from the first
 // character after the escape sequence introducer (for example, the `n` in
@@ -389,15 +399,11 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         return c == '\n' || c == '\\' ||
                (IsHorizontalWhitespace(c) && c != ' ');
       });
-      int regular_text_len = end_of_regular_text == llvm::StringRef::npos
-                                 ? contents.size()
-                                 : end_of_regular_text;
-      memcpy(buffer_cursor, contents.data(), regular_text_len);
-      buffer_cursor += regular_text_len;
+      AppendFrontOfContents(buffer_cursor, contents, end_of_regular_text);
       if (end_of_regular_text == llvm::StringRef::npos) {
         return llvm::StringRef(buffer, buffer_cursor - buffer);
       }
-      contents = contents.drop_front(regular_text_len);
+      contents = contents.drop_front(end_of_regular_text);
 
       if (contents.consume_front("\n")) {
         // Trailing whitespace in the source before a newline doesn't contribute
@@ -431,10 +437,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
               "escape sequence in a string literal.");
           emitter.Emit(contents.begin(), InvalidHorizontalWhitespaceInString);
           // Include the whitespace in the string contents for error recovery.
-          int len = after_space == llvm::StringRef::npos ? contents.size()
-                                                         : after_space;
-          memcpy(buffer_cursor, contents.data(), len);
-          buffer_cursor += len;
+          AppendFrontOfContents(buffer_cursor, contents, after_space);
         }
         contents = contents.substr(after_space);
         continue;
@@ -478,6 +481,9 @@ auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
     return content_;
   }
 
+  // "Expanding" escape sequences should only ever shorten content. As a
+  // consequence, the output string should allows fit within this allocation.
+  // Although this may waste some space, it avoids a reallocation.
   auto result = ExpandEscapeSequencesAndRemoveIndent(
       emitter, content_, hash_level_, indent,
       allocator.Allocate<char>(content_.size()));
