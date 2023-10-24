@@ -20,10 +20,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.loc14_7.1: ref i32 = var "x"
-// CHECK:STDOUT:   %x.loc14_7.2: ref i32 = bind_name "x", %x.loc14_7.1
+// CHECK:STDOUT:   %x.var: ref i32 = var "x"
+// CHECK:STDOUT:   %x: ref i32 = bind_name "x", %x.var
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT:   %.loc14: String = string_literal "hello"
-// CHECK:STDOUT:   assign %x.loc14_7.1, <error>
+// CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

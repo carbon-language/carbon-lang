@@ -17,9 +17,9 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.loc11_7.1: ref i32 = var "x"
-// CHECK:STDOUT:   %x.loc11_7.2: ref i32 = bind_name "x", %x.loc11_7.1
+// CHECK:STDOUT:   %x.var: ref i32 = var "x"
+// CHECK:STDOUT:   %x: ref i32 = bind_name "x", %x.var
 // CHECK:STDOUT:   %x.ref: <error> = name_reference "x", <error>
-// CHECK:STDOUT:   assign %x.loc11_7.1, <error>
+// CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

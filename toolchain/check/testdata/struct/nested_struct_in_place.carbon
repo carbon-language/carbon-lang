@@ -25,16 +25,16 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_51.1: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}
 // CHECK:STDOUT:   %.loc10_51.2: type = struct_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
 // CHECK:STDOUT:   %.loc10_51.3: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
-// CHECK:STDOUT:   %v.loc10_7.1: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var "v"
-// CHECK:STDOUT:   %v.loc10_7.2: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = bind_name "v", %v.loc10_7.1
+// CHECK:STDOUT:   %v.var: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var "v"
+// CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = bind_name "v", %v.var
 // CHECK:STDOUT:   %F.ref.loc10_61: <function> = name_reference "F", package.%F
-// CHECK:STDOUT:   %.loc10_74.1: ref (i32, i32, i32) = struct_access %v.loc10_7.1, member0
+// CHECK:STDOUT:   %.loc10_74.1: ref (i32, i32, i32) = struct_access %v.var, member0
 // CHECK:STDOUT:   %.loc10_62: init (i32, i32, i32) = call %F.ref.loc10_61() to %.loc10_74.1
 // CHECK:STDOUT:   %F.ref.loc10_71: <function> = name_reference "F", package.%F
-// CHECK:STDOUT:   %.loc10_74.2: ref (i32, i32, i32) = struct_access %v.loc10_7.1, member1
+// CHECK:STDOUT:   %.loc10_74.2: ref (i32, i32, i32) = struct_access %v.var, member1
 // CHECK:STDOUT:   %.loc10_72: init (i32, i32, i32) = call %F.ref.loc10_71() to %.loc10_74.2
 // CHECK:STDOUT:   %.loc10_74.3: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_literal (%.loc10_62, %.loc10_72)
 // CHECK:STDOUT:   %.loc10_74.4: init {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_init %.loc10_74.3, (%.loc10_62, %.loc10_72)
-// CHECK:STDOUT:   assign %v.loc10_7.1, %.loc10_74.4
+// CHECK:STDOUT:   assign %v.var, %.loc10_74.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

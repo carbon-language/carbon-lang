@@ -26,17 +26,17 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %.loc15_24.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc15_24.2: (type, type) = tuple_literal (i32, %Incomplete.ref.loc15)
 // CHECK:STDOUT:   %.loc15_24.3: type = tuple_type (i32, Incomplete)
-// CHECK:STDOUT:   %t.loc15_5.1: ref <error> = var "t"
-// CHECK:STDOUT:   %t.loc15_5.2: ref <error> = bind_name "t", %t.loc15_5.1
+// CHECK:STDOUT:   %t.var: ref <error> = var "t"
+// CHECK:STDOUT:   %t: ref <error> = bind_name "t", %t.var
 // CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_reference "Incomplete", %Incomplete
 // CHECK:STDOUT:   %.loc20_18: type = ptr_type Incomplete
-// CHECK:STDOUT:   %p.loc20_5.1: ref Incomplete* = var "p"
-// CHECK:STDOUT:   %p.loc20_5.2: ref Incomplete* = bind_name "p", %p.loc20_5.1
-// CHECK:STDOUT:   %t.ref: ref <error> = name_reference "t", %t.loc15_5.2
+// CHECK:STDOUT:   %p.var: ref Incomplete* = var "p"
+// CHECK:STDOUT:   %p: ref Incomplete* = bind_name "p", %p.var
+// CHECK:STDOUT:   %t.ref: ref <error> = name_reference "t", %t
 // CHECK:STDOUT:   %.loc20_25: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc20_22.1: type = ptr_type <error>
 // CHECK:STDOUT:   %.loc20_22.2: <error>* = address_of <error>
-// CHECK:STDOUT:   assign %p.loc20_5.1, <error>
+// CHECK:STDOUT:   assign %p.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

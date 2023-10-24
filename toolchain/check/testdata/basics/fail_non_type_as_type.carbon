@@ -10,8 +10,8 @@
 var x: type = 42;
 
 // CHECK:STDOUT: file "fail_non_type_as_type.carbon" {
-// CHECK:STDOUT:   %x.loc10_5.1: ref type = var "x"
-// CHECK:STDOUT:   %x.loc10_5.2: ref type = bind_name "x", %x.loc10_5.1
+// CHECK:STDOUT:   %x.var: ref type = var "x"
+// CHECK:STDOUT:   %x: ref type = bind_name "x", %x.var
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 42
-// CHECK:STDOUT:   assign %x.loc10_5.1, <error>
+// CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }

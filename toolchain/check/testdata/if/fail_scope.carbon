@@ -25,11 +25,11 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %n.loc9_9.1: ref i32 = var "n"
-// CHECK:STDOUT:   %n.loc9_9.2: ref i32 = bind_name "n", %n.loc9_9.1
+// CHECK:STDOUT:   %n.var: ref i32 = var "n"
+// CHECK:STDOUT:   %n: ref i32 = bind_name "n", %n.var
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 2
-// CHECK:STDOUT:   assign %n.loc9_9.1, %.loc9
-// CHECK:STDOUT:   %n.ref.loc10: ref i32 = name_reference "n", %n.loc9_9.2
+// CHECK:STDOUT:   assign %n.var, %.loc9
+// CHECK:STDOUT:   %n.ref.loc10: ref i32 = name_reference "n", %n
 // CHECK:STDOUT:   %.loc10: i32 = bind_value %n.ref.loc10
 // CHECK:STDOUT:   return %.loc10
 // CHECK:STDOUT:
