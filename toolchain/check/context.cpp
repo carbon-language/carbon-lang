@@ -75,7 +75,7 @@ auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
                     "Duplicate name being declared in the same scope.");
   CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
                     "Name is previously declared here.");
-  auto prev_def = sem_ir_->nodes().Get(prev_def_id);
+  auto prev_def = nodes().Get(prev_def_id);
   emitter_->Build(parse_node, NameDeclarationDuplicate)
       .Note(prev_def.parse_node(), NameDeclarationPrevious)
       .Emit();
@@ -85,7 +85,7 @@ auto Context::DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id)
     -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, sem_ir_->strings().Get(name_id));
+  emitter_->Emit(parse_node, NameNotFound, strings().Get(name_id));
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -118,12 +118,12 @@ auto Context::LookupName(Parse::Node parse_node, StringId name_id,
       return SemIR::NodeId::BuiltinError;
     }
     CARBON_CHECK(!it->second.empty())
-        << "Should have been erased: " << sem_ir_->strings().Get(name_id);
+        << "Should have been erased: " << strings().Get(name_id);
 
     // TODO: Check for ambiguous lookups.
     return it->second.back();
   } else {
-    const auto& scope = sem_ir_->name_scopes().Get(scope_id);
+    const auto& scope = name_scopes().Get(scope_id);
     auto it = scope.find(name_id);
     if (it == scope.end()) {
       if (print_diagnostics) {
@@ -715,7 +715,7 @@ auto Context::CanonicalizeTypeImpl(
   }
 
   auto node_id = make_node();
-  auto type_id = sem_ir_->types().Add({.node_id = node_id});
+  auto type_id = types().Add({.node_id = node_id});
   CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
   type_node_storage_.push_back(
       std::make_unique<TypeNode>(canonical_id, type_id));
@@ -813,7 +813,7 @@ auto Context::CanonicalizeType(SemIR::NodeId node_id) -> SemIR::TypeId {
     return it->second;
   }
 
-  auto node = sem_ir_->nodes().Get(node_id);
+  auto node = nodes().Get(node_id);
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
     ProfileType(*this, node, canonical_id);
   };
@@ -837,7 +837,7 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
   };
   auto make_tuple_node = [&] {
     return AddNode(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
-                                    sem_ir_->type_blocks().Add(type_ids)});
+                                    type_blocks().Add(type_ids)});
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
                               make_tuple_node);
@@ -860,7 +860,7 @@ auto Context::GetPointerType(Parse::Node parse_node,
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
   SemIR::Node type_node =
-      sem_ir_->nodes().Get(sem_ir_->GetTypeAllowBuiltinTypes(type_id));
+      nodes().Get(sem_ir_->GetTypeAllowBuiltinTypes(type_id));
   if (auto const_type = type_node.TryAs<SemIR::ConstType>()) {
     return const_type->inner_id;
   }
