@@ -23,8 +23,7 @@ static auto ValidateIntegerLiteralBound(Context& context,
                                         SemIR::Node operand_node,
                                         SemIR::IntegerLiteral index_node,
                                         int size) -> const llvm::APInt* {
-  const auto& index_val =
-      context.semantics_ir().integers().Get(index_node.integer_id);
+  const auto& index_val = context.integers().Get(index_node.integer_id);
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(IndexOutOfBounds, Error,
                       "Index `{0}` is past the end of `{1}`.", llvm::APSInt,
@@ -32,7 +31,7 @@ static auto ValidateIntegerLiteralBound(Context& context,
     context.emitter().Emit(
         parse_node, IndexOutOfBounds,
         llvm::APSInt(index_val, /*isUnsigned=*/true),
-        context.semantics_ir().StringifyType(operand_node.type_id()));
+        context.sem_ir().StringifyType(operand_node.type_id()));
     return nullptr;
   }
   return &index_val;
@@ -40,14 +39,14 @@ static auto ValidateIntegerLiteralBound(Context& context,
 
 auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
   auto index_node_id = context.node_stack().PopExpression();
-  auto index_node = context.semantics_ir().nodes().Get(index_node_id);
+  auto index_node = context.nodes().Get(index_node_id);
   auto operand_node_id = context.node_stack().PopExpression();
   operand_node_id =
       ConvertToValueOrReferenceExpression(context, operand_node_id);
-  auto operand_node = context.semantics_ir().nodes().Get(operand_node_id);
+  auto operand_node = context.nodes().Get(operand_node_id);
   auto operand_type_id = operand_node.type_id();
-  auto operand_type_node = context.semantics_ir().nodes().Get(
-      context.semantics_ir().GetTypeAllowBuiltinTypes(operand_type_id));
+  auto operand_type_node = context.nodes().Get(
+      context.sem_ir().GetTypeAllowBuiltinTypes(operand_type_id));
 
   switch (operand_type_node.kind()) {
     case SemIR::ArrayType::Kind: {
@@ -58,14 +57,14 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
           index_literal &&
           !ValidateIntegerLiteralBound(
               context, parse_node, operand_node, *index_literal,
-              context.semantics_ir().GetArrayBoundValue(array_type.bound_id))) {
+              context.sem_ir().GetArrayBoundValue(array_type.bound_id))) {
         index_node_id = SemIR::NodeId::BuiltinError;
       }
       auto cast_index_id = ConvertToValueOfType(
           context, index_node.parse_node(), index_node_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntegerType));
       auto array_cat =
-          SemIR::GetExpressionCategory(context.semantics_ir(), operand_node_id);
+          SemIR::GetExpressionCategory(context.sem_ir(), operand_node_id);
       if (array_cat == SemIR::ExpressionCategory::Value) {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
@@ -88,7 +87,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
     case SemIR::TupleType::Kind: {
       SemIR::TypeId element_type_id = SemIR::TypeId::Error;
       if (auto index_literal = index_node.TryAs<SemIR::IntegerLiteral>()) {
-        auto type_block = context.semantics_ir().type_blocks().Get(
+        auto type_block = context.type_blocks().Get(
             operand_type_node.As<SemIR::TupleType>().elements_id);
         if (const auto* index_val = ValidateIntegerLiteralBound(
                 context, parse_node, operand_node, *index_literal,
@@ -112,9 +111,8 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
       if (operand_type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
                           "`{0}` does not support indexing.", std::string);
-        context.emitter().Emit(
-            parse_node, TypeNotIndexable,
-            context.semantics_ir().StringifyType(operand_type_id));
+        context.emitter().Emit(parse_node, TypeNotIndexable,
+                               context.sem_ir().StringifyType(operand_type_id));
       }
       context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
       return true;

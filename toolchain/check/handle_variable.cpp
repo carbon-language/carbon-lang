@@ -24,7 +24,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
   // Extract the name binding.
   SemIR::NodeId var_id =
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
-  auto var = context.semantics_ir().nodes().GetAs<SemIR::VarStorage>(var_id);
+  auto var = context.nodes().GetAs<SemIR::VarStorage>(var_id);
 
   // Form a corresponding name in the current context, and bind the name to the
   // variable.

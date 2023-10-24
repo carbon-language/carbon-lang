@@ -11,7 +11,7 @@
 namespace Carbon::SemIR {
 
 auto FormatFile(const Lex::TokenizedBuffer& tokenized_buffer,
-                const Parse::Tree& parse_tree, const File& semantics_ir,
+                const Parse::Tree& parse_tree, const File& sem_ir,
                 llvm::raw_ostream& out) -> void;
 
 }  // namespace Carbon::SemIR

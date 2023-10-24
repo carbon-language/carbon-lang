@@ -34,10 +34,8 @@ static auto BuildClassDeclaration(Context& context)
   auto existing_id = context.declaration_name_stack().LookupOrAddName(
       name_context, class_decl_id);
   if (existing_id.is_valid()) {
-    if (auto existing_class_decl = context.semantics_ir()
-                                       .nodes()
-                                       .Get(existing_id)
-                                       .TryAs<SemIR::ClassDeclaration>()) {
+    if (auto existing_class_decl =
+            context.nodes().Get(existing_id).TryAs<SemIR::ClassDeclaration>()) {
       // This is a redeclaration of an existing class.
       class_decl.class_id = existing_class_decl->class_id;
     } else {
@@ -51,7 +49,7 @@ static auto BuildClassDeclaration(Context& context)
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
-    class_decl.class_id = context.semantics_ir().classes().Add(
+    class_decl.class_id = context.classes().Add(
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
@@ -61,8 +59,7 @@ static auto BuildClassDeclaration(Context& context)
          .declaration_id = class_decl_id});
 
     // Build the `Self` type.
-    auto& class_info =
-        context.semantics_ir().classes().Get(class_decl.class_id);
+    auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id =
         context.CanonicalizeType(context.AddNode(SemIR::ClassType{
             class_keyword, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
@@ -70,7 +67,7 @@ static auto BuildClassDeclaration(Context& context)
   }
 
   // Write the class ID into the ClassDeclaration.
-  context.semantics_ir().nodes().Set(class_decl_id, class_decl);
+  context.nodes().Set(class_decl_id, class_decl);
 
   return {class_decl.class_id, class_decl_id};
 }
@@ -84,7 +81,7 @@ auto HandleClassDeclaration(Context& context, Parse::Node /*parse_node*/)
 auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
     -> bool {
   auto [class_id, class_decl_id] = BuildClassDeclaration(context);
-  auto& class_info = context.semantics_ir().classes().Get(class_id);
+  auto& class_info = context.classes().Get(class_id);
 
   // Track that this declaration is the definition.
   if (class_info.definition_id.is_valid()) {
@@ -94,16 +91,13 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, ClassRedefinition,
-               context.semantics_ir().strings().Get(class_info.name_id))
-        .Note(context.semantics_ir()
-                  .nodes()
-                  .Get(class_info.definition_id)
-                  .parse_node(),
+               context.strings().Get(class_info.name_id))
+        .Note(context.nodes().Get(class_info.definition_id).parse_node(),
               ClassPreviousDefinition)
         .Emit();
   } else {
     class_info.definition_id = class_decl_id;
-    class_info.scope_id = context.semantics_ir().name_scopes().Add();
+    class_info.scope_id = context.name_scopes().Add();
 
     // TODO: Introduce `Self`.
   }

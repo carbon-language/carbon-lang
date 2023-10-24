@@ -29,8 +29,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
     auto [return_node, return_storage_id] =
         context.node_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
     auto return_node_copy = return_node;
-    return_type_id =
-        context.semantics_ir().nodes().Get(return_storage_id).type_id();
+    return_type_id = context.nodes().Get(return_storage_id).type_id();
 
     if (!context.TryToCompleteType(return_type_id, [&] {
           CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
@@ -38,10 +37,10 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
                             std::string);
           return context.emitter().Build(
               return_node_copy, IncompleteTypeInFunctionReturnType,
-              context.semantics_ir().StringifyType(return_type_id, true));
+              context.sem_ir().StringifyType(return_type_id, true));
         })) {
       return_type_id = SemIR::TypeId::Error;
-    } else if (!SemIR::GetInitializingRepresentation(context.semantics_ir(),
+    } else if (!SemIR::GetInitializingRepresentation(context.sem_ir(),
                                                      return_type_id)
                     .has_return_slot()) {
       // The function only has a return slot if it uses in-place initialization.
@@ -68,8 +67,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
       name_context, function_decl_id);
   if (existing_id.is_valid()) {
     if (auto existing_function_decl =
-            context.semantics_ir()
-                .nodes()
+            context.nodes()
                 .Get(existing_id)
                 .TryAs<SemIR::FunctionDeclaration>()) {
       // This is a redeclaration of an existing function.
@@ -81,7 +79,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
       // IDs in the signature.
       if (is_definition) {
         auto& function_info =
-            context.semantics_ir().functions().Get(function_decl.function_id);
+            context.functions().Get(function_decl.function_id);
         function_info.param_refs_id = param_refs_id;
         function_info.return_type_id = return_type_id;
         function_info.return_slot_id = return_slot_id;
@@ -94,7 +92,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
-    function_decl.function_id = context.semantics_ir().functions().Add(
+    function_decl.function_id = context.functions().Add(
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
@@ -105,11 +103,11 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   }
 
   // Write the function ID into the FunctionDeclaration.
-  context.semantics_ir().nodes().Set(function_decl_id, function_decl);
+  context.nodes().Set(function_decl_id, function_decl);
 
-  if (SemIR::IsEntryPoint(context.semantics_ir(), function_decl.function_id)) {
+  if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
-    if (!context.semantics_ir().node_blocks().Get(param_refs_id).empty() ||
+    if (!context.node_blocks().Get(param_refs_id).empty() ||
         (return_slot_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
@@ -138,10 +136,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
   if (context.is_current_position_reachable()) {
-    if (context.semantics_ir()
-            .functions()
-            .Get(function_id)
-            .return_type_id.is_valid()) {
+    if (context.functions().Get(function_id).return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "Missing `return` at end of function with declared return type.");
@@ -162,7 +157,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
       BuildFunctionDeclaration(context, /*is_definition=*/true);
-  auto& function = context.semantics_ir().functions().Get(function_id);
+  auto& function = context.functions().Get(function_id);
 
   // Track that this declaration is the definition.
   if (function.definition_id.is_valid()) {
@@ -172,11 +167,8 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
-               context.semantics_ir().strings().Get(function.name_id))
-        .Note(context.semantics_ir()
-                  .nodes()
-                  .Get(function.definition_id)
-                  .parse_node(),
+               context.strings().Get(function.name_id))
+        .Note(context.nodes().Get(function.definition_id).parse_node(),
               FunctionPreviousDefinition)
         .Emit();
   } else {
@@ -190,10 +182,8 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   context.AddCurrentCodeBlockToFunction();
 
   // Bring the parameters into scope.
-  for (auto param_id :
-       context.semantics_ir().node_blocks().Get(function.param_refs_id)) {
-    auto param =
-        context.semantics_ir().nodes().GetAs<SemIR::Parameter>(param_id);
+  for (auto param_id : context.node_blocks().Get(function.param_refs_id)) {
+    auto param = context.nodes().GetAs<SemIR::Parameter>(param_id);
 
     // The parameter types need to be complete.
     context.TryToCompleteType(param.type_id, [&] {
@@ -203,7 +193,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
           std::string);
       return context.emitter().Build(
           param.parse_node, IncompleteTypeInFunctionParam,
-          context.semantics_ir().StringifyType(param.type_id, true));
+          context.sem_ir().StringifyType(param.type_id, true));
     });
 
     context.AddNameToLookup(param.parse_node, param.name_id, param_id);
@@ -233,8 +223,7 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   // TODO: Use a dedicated node rather than VarStorage here.
   context.AddNodeAndPush(
       parse_node,
-      SemIR::VarStorage{parse_node, type_id,
-                        context.semantics_ir().strings().Add("return")});
+      SemIR::VarStorage{parse_node, type_id, context.strings().Add("return")});
   return true;
 }
 

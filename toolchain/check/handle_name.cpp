@@ -13,22 +13,20 @@ namespace Carbon::Check {
 // On invalid scopes, prints a diagnostic and still returns the scope.
 static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
     -> std::optional<SemIR::NameScopeId> {
-  auto base =
-      context.semantics_ir().nodes().Get(context.FollowNameReferences(base_id));
+  auto base = context.nodes().Get(context.FollowNameReferences(base_id));
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     return base_as_namespace->name_scope_id;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
-    auto& class_info =
-        context.semantics_ir().classes().Get(base_as_class->class_id);
+    auto& class_info = context.classes().Get(base_as_class->class_id);
     if (!class_info.scope_id.is_valid()) {
       CARBON_DIAGNOSTIC(QualifiedExpressionInIncompleteClassScope, Error,
                         "Member access into incomplete class `{0}`.",
                         std::string);
       auto builder = context.emitter().Build(
-          context.semantics_ir().nodes().Get(base_id).parse_node(),
+          context.nodes().Get(base_id).parse_node(),
           QualifiedExpressionInIncompleteClassScope,
-          context.semantics_ir().StringifyTypeExpression(base_id, true));
+          context.sem_ir().StringifyTypeExpression(base_id, true));
       context.NoteIncompleteClass(base_as_class->class_id, builder);
       builder.Emit();
     }
@@ -49,7 +47,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                        ? context.LookupName(parse_node, name_id, *name_scope_id,
                                             /*print_diagnostics=*/true)
                        : SemIR::NodeId::BuiltinError;
-    auto node = context.semantics_ir().nodes().Get(node_id);
+    auto node = context.nodes().Get(node_id);
     // TODO: Track that this node was named within `base_id`.
     context.AddNodeAndPush(
         parse_node,
@@ -59,20 +57,18 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 
   // Materialize a temporary for the base expression if necessary.
   base_id = ConvertToValueOrReferenceExpression(context, base_id);
-  auto base_type_id = context.semantics_ir().nodes().Get(base_id).type_id();
+  auto base_type_id = context.nodes().Get(base_id).type_id();
 
-  auto base_type = context.semantics_ir().nodes().Get(
-      context.semantics_ir().GetTypeAllowBuiltinTypes(base_type_id));
+  auto base_type = context.nodes().Get(
+      context.sem_ir().GetTypeAllowBuiltinTypes(base_type_id));
 
   switch (base_type.kind()) {
     case SemIR::StructType::Kind: {
-      auto refs = context.semantics_ir().node_blocks().Get(
+      auto refs = context.node_blocks().Get(
           base_type.As<SemIR::StructType>().fields_id);
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
-        auto field =
-            context.semantics_ir().nodes().GetAs<SemIR::StructTypeField>(
-                ref_id);
+        auto field = context.nodes().GetAs<SemIR::StructTypeField>(ref_id);
         if (name_id == field.name_id) {
           context.AddNodeAndPush(
               parse_node, SemIR::StructAccess{parse_node, field.field_type_id,
@@ -84,8 +80,8 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                         "Type `{0}` does not have a member `{1}`.", std::string,
                         llvm::StringRef);
       context.emitter().Emit(parse_node, QualifiedExpressionNameNotFound,
-                             context.semantics_ir().StringifyType(base_type_id),
-                             context.semantics_ir().strings().Get(name_id));
+                             context.sem_ir().StringifyType(base_type_id),
+                             context.strings().Get(name_id));
       break;
     }
     default: {
@@ -93,9 +89,8 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
         CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
                           "Type `{0}` does not support qualified expressions.",
                           std::string);
-        context.emitter().Emit(
-            parse_node, QualifiedExpressionUnsupported,
-            context.semantics_ir().StringifyType(base_type_id));
+        context.emitter().Emit(parse_node, QualifiedExpressionUnsupported,
+                               context.sem_ir().StringifyType(base_type_id));
       }
       break;
     }
@@ -125,16 +120,13 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   auto value_id =
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);
-  auto value = context.semantics_ir().nodes().Get(value_id);
+  auto value = context.nodes().Get(value_id);
 
   // If lookup finds a class declaration, the value is its `Self` type.
   if (auto class_decl = value.TryAs<SemIR::ClassDeclaration>()) {
-    value_id = context.semantics_ir().GetTypeAllowBuiltinTypes(
-        context.semantics_ir()
-            .classes()
-            .Get(class_decl->class_id)
-            .self_type_id);
-    value = context.semantics_ir().nodes().Get(value_id);
+    value_id = context.sem_ir().GetTypeAllowBuiltinTypes(
+        context.classes().Get(class_decl->class_id).self_type_id);
+    value = context.nodes().Get(value_id);
   }
 
   CARBON_CHECK(value.kind().value_kind() == SemIR::NodeValueKind::Typed);
