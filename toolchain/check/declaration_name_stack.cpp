@@ -65,7 +65,7 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
       } else {
         // TODO: Reject unless the scope is a namespace scope or the name is
         // unqualified.
-        bool success = context_->semantics_ir().AddNameScopeEntry(
+        bool success = context_->semantics_ir().name_scopes().AddEntry(
             name_context.target_scope_id, name_context.unresolved_name_id,
             target_id);
         CARBON_CHECK(success)
@@ -122,7 +122,7 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
   // This will only be reached for resolved nodes. We update the target
   // scope based on the resolved type.
   auto resolved_node =
-      context_->semantics_ir().GetNode(name_context.resolved_node_id);
+      context_->semantics_ir().nodes().Get(name_context.resolved_node_id);
   switch (resolved_node.kind()) {
     case SemIR::ClassDeclaration::Kind: {
       const auto& class_info = context_->semantics_ir().classes().Get(
@@ -166,7 +166,8 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier didn't resolve to a scoped entity.
       if (auto class_decl = context_->semantics_ir()
-                                .GetNode(name_context.resolved_node_id)
+                                .nodes()
+                                .Get(name_context.resolved_node_id)
                                 .TryAs<SemIR::ClassDeclaration>()) {
         CARBON_DIAGNOSTIC(QualifiedDeclarationInIncompleteClassScope, Error,
                           "Cannot declare a member of incomplete class `{0}`.",

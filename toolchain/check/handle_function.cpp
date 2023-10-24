@@ -30,7 +30,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
         context.node_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
     auto return_node_copy = return_node;
     return_type_id =
-        context.semantics_ir().GetNode(return_storage_id).type_id();
+        context.semantics_ir().nodes().Get(return_storage_id).type_id();
 
     if (!context.TryToCompleteType(return_type_id, [&] {
           CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
@@ -69,7 +69,8 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   if (existing_id.is_valid()) {
     if (auto existing_function_decl =
             context.semantics_ir()
-                .GetNode(existing_id)
+                .nodes()
+                .Get(existing_id)
                 .TryAs<SemIR::FunctionDeclaration>()) {
       // This is a redeclaration of an existing function.
       function_decl.function_id = existing_function_decl->function_id;
@@ -104,11 +105,11 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   }
 
   // Write the function ID into the FunctionDeclaration.
-  context.semantics_ir().ReplaceNode(function_decl_id, function_decl);
+  context.semantics_ir().nodes().Set(function_decl_id, function_decl);
 
   if (SemIR::IsEntryPoint(context.semantics_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
-    if (!context.semantics_ir().GetNodeBlock(param_refs_id).empty() ||
+    if (!context.semantics_ir().node_blocks().Get(param_refs_id).empty() ||
         (return_slot_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
@@ -172,9 +173,11 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
                context.semantics_ir().strings().Get(function.name_id))
-        .Note(
-            context.semantics_ir().GetNode(function.definition_id).parse_node(),
-            FunctionPreviousDefinition)
+        .Note(context.semantics_ir()
+                  .nodes()
+                  .Get(function.definition_id)
+                  .parse_node(),
+              FunctionPreviousDefinition)
         .Emit();
   } else {
     function.definition_id = decl_id;
@@ -188,8 +191,9 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
 
   // Bring the parameters into scope.
   for (auto param_id :
-       context.semantics_ir().GetNodeBlock(function.param_refs_id)) {
-    auto param = context.semantics_ir().GetNodeAs<SemIR::Parameter>(param_id);
+       context.semantics_ir().node_blocks().Get(function.param_refs_id)) {
+    auto param =
+        context.semantics_ir().nodes().GetAs<SemIR::Parameter>(param_id);
 
     // The parameter types need to be complete.
     context.TryToCompleteType(param.type_id, [&] {

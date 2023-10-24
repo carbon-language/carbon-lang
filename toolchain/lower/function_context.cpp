@@ -38,8 +38,8 @@ auto FunctionContext::TryToReuseBlock(SemIR::NodeBlockId block_id,
 }
 
 auto FunctionContext::LowerBlock(SemIR::NodeBlockId block_id) -> void {
-  for (const auto& node_id : semantics_ir().GetNodeBlock(block_id)) {
-    auto node = semantics_ir().GetNode(node_id);
+  for (const auto& node_id : semantics_ir().node_blocks().Get(block_id)) {
+    auto node = semantics_ir().nodes().Get(node_id);
     CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)

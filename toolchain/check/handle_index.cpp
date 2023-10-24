@@ -40,13 +40,13 @@ static auto ValidateIntegerLiteralBound(Context& context,
 
 auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
   auto index_node_id = context.node_stack().PopExpression();
-  auto index_node = context.semantics_ir().GetNode(index_node_id);
+  auto index_node = context.semantics_ir().nodes().Get(index_node_id);
   auto operand_node_id = context.node_stack().PopExpression();
   operand_node_id =
       ConvertToValueOrReferenceExpression(context, operand_node_id);
-  auto operand_node = context.semantics_ir().GetNode(operand_node_id);
+  auto operand_node = context.semantics_ir().nodes().Get(operand_node_id);
   auto operand_type_id = operand_node.type_id();
-  auto operand_type_node = context.semantics_ir().GetNode(
+  auto operand_type_node = context.semantics_ir().nodes().Get(
       context.semantics_ir().GetTypeAllowBuiltinTypes(operand_type_id));
 
   switch (operand_type_node.kind()) {
@@ -88,7 +88,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
     case SemIR::TupleType::Kind: {
       SemIR::TypeId element_type_id = SemIR::TypeId::Error;
       if (auto index_literal = index_node.TryAs<SemIR::IntegerLiteral>()) {
-        auto type_block = context.semantics_ir().GetTypeBlock(
+        auto type_block = context.semantics_ir().type_blocks().Get(
             operand_type_node.As<SemIR::TupleType>().elements_id);
         if (const auto* index_val = ValidateIntegerLiteralBound(
                 context, parse_node, operand_node, *index_literal,

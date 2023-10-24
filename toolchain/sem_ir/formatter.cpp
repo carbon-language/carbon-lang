@@ -36,8 +36,8 @@ class NodeNamer {
       : tokenized_buffer_(tokenized_buffer),
         parse_tree_(parse_tree),
         semantics_ir_(semantics_ir) {
-    nodes.resize(semantics_ir.nodes_size());
-    labels.resize(semantics_ir.node_blocks_size());
+    nodes.resize(semantics_ir.nodes().size());
+    labels.resize(semantics_ir.node_blocks().size());
     scopes.resize(1 + semantics_ir.functions().size() +
                   semantics_ir.classes().size());
 
@@ -62,7 +62,7 @@ class NodeNamer {
         nodes[fn.return_slot_id.index] = {
             fn_scope,
             GetScopeInfo(fn_scope).nodes.AllocateName(
-                *this, semantics_ir.GetNode(fn.return_slot_id).parse_node(),
+                *this, semantics_ir.nodes().Get(fn.return_slot_id).parse_node(),
                 "return")};
       }
       if (!fn.body_block_ids.empty()) {
@@ -288,9 +288,9 @@ class NodeNamer {
     }
 
     if (parse_node == Parse::Node::Invalid) {
-      if (const auto& block = semantics_ir_.GetNodeBlock(block_id);
+      if (const auto& block = semantics_ir_.node_blocks().Get(block_id);
           !block.empty()) {
-        parse_node = semantics_ir_.GetNode(block.front()).parse_node();
+        parse_node = semantics_ir_.nodes().Get(block.front()).parse_node();
       }
     }
 
@@ -379,12 +379,12 @@ class NodeNamer {
     Scope& scope = GetScopeInfo(scope_idx);
 
     // Use bound names where available. Otherwise, assign a backup name.
-    for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
+    for (auto node_id : semantics_ir_.node_blocks().Get(block_id)) {
       if (!node_id.is_valid()) {
         continue;
       }
 
-      auto node = semantics_ir_.GetNode(node_id);
+      auto node = semantics_ir_.nodes().Get(node_id);
       auto add_node_name = [&](std::string name) {
         nodes[node_id.index] = {scope_idx, scope.nodes.AllocateName(
                                                *this, node.parse_node(), name)};
@@ -534,7 +534,8 @@ class Formatter {
     llvm::SaveAndRestore function_scope(scope_, node_namer_.GetScopeFor(id));
 
     llvm::ListSeparator sep;
-    for (const NodeId param_id : semantics_ir_.GetNodeBlock(fn.param_refs_id)) {
+    for (const NodeId param_id :
+         semantics_ir_.node_blocks().Get(fn.param_refs_id)) {
       out_ << sep;
       if (!param_id.is_valid()) {
         out_ << "invalid";
@@ -542,7 +543,7 @@ class Formatter {
       }
       FormatNodeName(param_id);
       out_ << ": ";
-      FormatType(semantics_ir_.GetNode(param_id).type_id());
+      FormatType(semantics_ir_.nodes().Get(param_id).type_id());
     }
     out_ << ")";
     if (fn.return_type_id.is_valid()) {
@@ -577,7 +578,7 @@ class Formatter {
       return;
     }
 
-    for (const NodeId node_id : semantics_ir_.GetNodeBlock(block_id)) {
+    for (const NodeId node_id : semantics_ir_.node_blocks().Get(block_id)) {
       FormatInstruction(node_id);
     }
   }
@@ -587,7 +588,7 @@ class Formatter {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
     llvm::SmallVector<std::pair<NodeId, StringId>> entries;
-    for (auto [name_id, node_id] : semantics_ir_.GetNameScope(id)) {
+    for (auto [name_id, node_id] : semantics_ir_.name_scopes().Get(id)) {
       entries.push_back({node_id, name_id});
     }
     llvm::sort(entries,
@@ -609,7 +610,7 @@ class Formatter {
       return;
     }
 
-    FormatInstruction(node_id, semantics_ir_.GetNode(node_id));
+    FormatInstruction(node_id, semantics_ir_.nodes().Get(node_id));
   }
 
   auto FormatInstruction(NodeId node_id, Node node) -> void {
@@ -719,7 +720,7 @@ class Formatter {
     FormatArg(node.tuple_id);
 
     llvm::ArrayRef<NodeId> inits_and_return_slot =
-        semantics_ir_.GetNodeBlock(node.inits_and_return_slot_id);
+        semantics_ir_.node_blocks().Get(node.inits_and_return_slot_id);
     auto inits = inits_and_return_slot.drop_back(1);
     auto return_slot_id = inits_and_return_slot.back();
 
@@ -737,7 +738,7 @@ class Formatter {
     out_ << " ";
     FormatArg(node.callee_id);
 
-    llvm::ArrayRef<NodeId> args = semantics_ir_.GetNodeBlock(node.args_id);
+    llvm::ArrayRef<NodeId> args = semantics_ir_.node_blocks().Get(node.args_id);
 
     bool has_return_slot =
         GetInitializingRepresentation(semantics_ir_, node.type_id)
@@ -775,7 +776,7 @@ class Formatter {
   auto FormatInstructionRHS(SpliceBlock node) -> void {
     FormatArgs(node.result_id);
     out_ << " {";
-    if (!semantics_ir_.GetNodeBlock(node.block_id).empty()) {
+    if (!semantics_ir_.node_blocks().Get(node.block_id).empty()) {
       out_ << "\n";
       indent_ += 2;
       FormatCodeBlock(node.block_id);
@@ -792,9 +793,9 @@ class Formatter {
   auto FormatInstructionRHS(StructType node) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
-    for (auto field_id : semantics_ir_.GetNodeBlock(node.fields_id)) {
+    for (auto field_id : semantics_ir_.node_blocks().Get(node.fields_id)) {
       out_ << sep << ".";
-      auto field = semantics_ir_.GetNodeAs<StructTypeField>(field_id);
+      auto field = semantics_ir_.nodes().GetAs<StructTypeField>(field_id);
       FormatString(field.name_id);
       out_ << ": ";
       FormatType(field.field_type_id);
@@ -836,7 +837,7 @@ class Formatter {
   auto FormatArg(NodeBlockId id) -> void {
     out_ << '(';
     llvm::ListSeparator sep;
-    for (auto node_id : semantics_ir_.GetNodeBlock(id)) {
+    for (auto node_id : semantics_ir_.node_blocks().Get(id)) {
       out_ << sep;
       FormatArg(node_id);
     }
@@ -861,7 +862,7 @@ class Formatter {
   auto FormatArg(TypeBlockId id) -> void {
     out_ << '(';
     llvm::ListSeparator sep;
-    for (auto type_id : semantics_ir_.GetTypeBlock(id)) {
+    for (auto type_id : semantics_ir_.type_blocks().Get(id)) {
       out_ << sep;
       FormatArg(type_id);
     }

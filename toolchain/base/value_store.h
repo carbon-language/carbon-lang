@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 
+#include <type_traits>
+
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
@@ -44,7 +46,7 @@ class Real : public Printable<Real> {
 
 // Corresponds to an integer value represented by an APInt.
 struct IntegerId : public IndexBase, public Printable<IntegerId> {
-  using IndexedType = llvm::APInt;
+  using IndexedType = const llvm::APInt;
   static const IntegerId Invalid;
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -56,7 +58,7 @@ constexpr IntegerId IntegerId::Invalid(IntegerId::InvalidIndex);
 
 // Corresponds to a Real value.
 struct RealId : public IndexBase, public Printable<RealId> {
-  using IndexedType = Real;
+  using IndexedType = const Real;
   static const RealId Invalid;
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -68,7 +70,7 @@ constexpr RealId RealId::Invalid(RealId::InvalidIndex);
 
 // Corresponds to a StringRef.
 struct StringId : public IndexBase, public Printable<StringId> {
-  using IndexedType = std::string;
+  using IndexedType = const std::string;
   static const StringId Invalid;
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -78,16 +80,32 @@ struct StringId : public IndexBase, public Printable<StringId> {
 };
 constexpr StringId StringId::Invalid(StringId::InvalidIndex);
 
+namespace Internal {
+// Used as a parent class for non-printable types. This is just for
+// std::conditional, not as an API.
+class ValueStoreNotPrintable {};
+}  // namespace Internal
+
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
 template <typename IdT, typename ValueT = typename IdT::IndexedType>
-class ValueStore : public Printable<ValueStore<IdT, ValueT>> {
+class ValueStore
+    : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
+                              Printable<ValueStore<IdT, ValueT>>,
+                              Internal::ValueStoreNotPrintable> {
  public:
   // Stores the value and returns an ID to reference it.
   auto Add(ValueT value) -> IdT {
     IdT id = IdT(values_.size());
     CARBON_CHECK(id.index >= 0) << "Id overflow";
     values_.push_back(std::move(value));
+    return id;
+  }
+
+  // Adds a default constructed value and returns an ID to reference it.
+  auto AddDefaultValue() -> IdT {
+    auto id = IdT(values_.size());
+    values_.resize(id.index + 1);
     return id;
   }
 
@@ -103,6 +121,10 @@ class ValueStore : public Printable<ValueStore<IdT, ValueT>> {
     return values_[id.index];
   }
 
+  // Reserves space.
+  auto Reserve(size_t size) -> void { values_.reserve(size); }
+
+  // These are to support printable structures, and are not guaranteed.
   auto Print(llvm::raw_ostream& out) const -> void { Print(out, 0); }
   auto Print(llvm::raw_ostream& out, int indent) const -> void {
     for (const auto& value : values_) {
@@ -115,7 +137,7 @@ class ValueStore : public Printable<ValueStore<IdT, ValueT>> {
   auto size() const -> int { return values_.size(); }
 
  private:
-  llvm::SmallVector<ValueT> values_;
+  llvm::SmallVector<std::decay_t<ValueT>> values_;
 };
 
 // Storage for StringRefs. The caller is responsible for ensuring storage is
