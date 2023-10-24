@@ -34,10 +34,9 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExpressionSemi>();
   auto element_type_node_id = context.node_stack().PopExpression();
-  auto bound_node = context.semantics_ir().nodes().Get(bound_node_id);
+  auto bound_node = context.nodes().Get(bound_node_id);
   if (auto literal = bound_node.TryAs<SemIR::IntegerLiteral>()) {
-    const auto& bound_value =
-        context.semantics_ir().integers().Get(literal->integer_id);
+    const auto& bound_value = context.integers().Get(literal->integer_id);
     // TODO: Produce an error if the array type is too large.
     if (bound_value.getActiveBits() <= 64) {
       context.AddNodeAndPush(

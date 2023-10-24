@@ -17,8 +17,8 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   auto [call_expr_parse_node, callee_id] =
       context.node_stack()
           .PopWithParseNode<Parse::NodeKind::CallExpressionStart>();
-  auto callee_node = context.semantics_ir().nodes().Get(
-      context.FollowNameReferences(callee_id));
+  auto callee_node =
+      context.nodes().Get(context.FollowNameReferences(callee_id));
   auto function_name = callee_node.TryAs<SemIR::FunctionDeclaration>();
   if (!function_name) {
     // TODO: Work on error.
@@ -29,7 +29,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   }
 
   auto function_id = function_name->function_id;
-  const auto& callable = context.semantics_ir().functions().Get(function_id);
+  const auto& callable = context.functions().Get(function_id);
 
   // For functions with an implicit return type, the return type is the empty
   // tuple type.

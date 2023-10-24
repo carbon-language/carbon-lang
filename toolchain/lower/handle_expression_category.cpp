@@ -9,8 +9,8 @@ namespace Carbon::Lower {
 
 auto HandleBindValue(FunctionContext& context, SemIR::NodeId node_id,
                      SemIR::BindValue node) -> void {
-  switch (auto rep = SemIR::GetValueRepresentation(context.semantics_ir(),
-                                                   node.type_id);
+  switch (auto rep =
+              SemIR::GetValueRepresentation(context.sem_ir(), node.type_id);
           rep.kind) {
     case SemIR::ValueRepresentation::Unknown:
       CARBON_FATAL()
@@ -50,12 +50,11 @@ auto HandleTemporaryStorage(FunctionContext& context, SemIR::NodeId node_id,
 
 auto HandleValueAsReference(FunctionContext& context, SemIR::NodeId node_id,
                             SemIR::ValueAsReference node) -> void {
+  CARBON_CHECK(SemIR::GetExpressionCategory(context.sem_ir(), node.value_id) ==
+               SemIR::ExpressionCategory::Value);
   CARBON_CHECK(
-      SemIR::GetExpressionCategory(context.semantics_ir(), node.value_id) ==
-      SemIR::ExpressionCategory::Value);
-  CARBON_CHECK(
-      SemIR::GetValueRepresentation(context.semantics_ir(), node.type_id)
-          .kind == SemIR::ValueRepresentation::Pointer);
+      SemIR::GetValueRepresentation(context.sem_ir(), node.type_id).kind ==
+      SemIR::ValueRepresentation::Pointer);
   context.SetLocal(node_id, context.GetLocal(node.value_id));
 }
 

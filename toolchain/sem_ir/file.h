@@ -223,6 +223,7 @@ class File : public Printable<File> {
   auto integers() const -> const ValueStore<IntegerId>& {
     return value_stores_->integers();
   }
+  auto reals() -> ValueStore<RealId>& { return value_stores_->reals(); }
   auto reals() const -> const ValueStore<RealId>& {
     return value_stores_->reals();
   }

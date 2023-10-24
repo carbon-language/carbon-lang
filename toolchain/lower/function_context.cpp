@@ -38,8 +38,8 @@ auto FunctionContext::TryToReuseBlock(SemIR::NodeBlockId block_id,
 }
 
 auto FunctionContext::LowerBlock(SemIR::NodeBlockId block_id) -> void {
-  for (const auto& node_id : semantics_ir().node_blocks().Get(block_id)) {
-    auto node = semantics_ir().nodes().Get(node_id);
+  for (const auto& node_id : sem_ir().node_blocks().Get(block_id)) {
+    auto node = sem_ir().nodes().Get(node_id);
     CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
@@ -81,7 +81,7 @@ auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
 auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
                                            SemIR::NodeId dest_id,
                                            SemIR::NodeId source_id) -> void {
-  switch (SemIR::GetInitializingRepresentation(semantics_ir(), type_id).kind) {
+  switch (SemIR::GetInitializingRepresentation(sem_ir(), type_id).kind) {
     case SemIR::InitializingRepresentation::None:
     case SemIR::InitializingRepresentation::InPlace:
       break;
@@ -93,7 +93,7 @@ auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
 
 auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::NodeId source_id,
                                 SemIR::NodeId dest_id) -> void {
-  switch (auto rep = SemIR::GetValueRepresentation(semantics_ir(), type_id);
+  switch (auto rep = SemIR::GetValueRepresentation(sem_ir(), type_id);
           rep.kind) {
     case SemIR::ValueRepresentation::Unknown:
       CARBON_FATAL() << "Attempt to copy incomplete type";

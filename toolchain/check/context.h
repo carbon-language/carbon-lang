@@ -202,7 +202,7 @@ class Context {
 
   auto parse_tree() -> const Parse::Tree& { return *parse_tree_; }
 
-  auto semantics_ir() -> SemIR::File& { return *semantics_ir_; }
+  auto sem_ir() -> SemIR::File& { return *sem_ir_; }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
@@ -222,6 +222,31 @@ class Context {
 
   auto declaration_name_stack() -> DeclarationNameStack& {
     return declaration_name_stack_;
+  }
+
+  // Directly expose SemIR::File data accessors for brevity in calls.
+  auto integers() -> ValueStore<IntegerId>& { return sem_ir().integers(); }
+  auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
+  auto strings() -> ValueStore<StringId>& { return sem_ir().strings(); }
+  auto functions() -> ValueStore<SemIR::FunctionId, SemIR::Function>& {
+    return sem_ir().functions();
+  }
+  auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
+    return sem_ir().classes();
+  }
+  auto name_scopes() -> SemIR::NameScopeStore& {
+    return sem_ir().name_scopes();
+  }
+  auto types() -> ValueStore<SemIR::TypeId, SemIR::TypeInfo>& {
+    return sem_ir().types();
+  }
+  auto type_blocks()
+      -> SemIR::BlockValueStore<SemIR::TypeBlockId, SemIR::TypeId>& {
+    return sem_ir().type_blocks();
+  }
+  auto nodes() -> SemIR::NodeStore& { return sem_ir().nodes(); }
+  auto node_blocks() -> SemIR::NodeBlockStore& {
+    return sem_ir().node_blocks();
   }
 
  private:
@@ -283,7 +308,7 @@ class Context {
   const Parse::Tree* parse_tree_;
 
   // The SemIR::File being added to.
-  SemIR::File* semantics_ir_;
+  SemIR::File* sem_ir_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
