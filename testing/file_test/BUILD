@@ -43,6 +43,7 @@ cc_library(
 
 file_test(
     name = "file_test_base_test",
+    size = "small",
     srcs = ["file_test_base_test.cpp"],
     tests = glob(["testdata/**"]),
     deps = [

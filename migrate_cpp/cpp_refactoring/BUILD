@@ -60,6 +60,7 @@ cc_library(
 
 cc_test(
     name = "fn_inserter_test",
+    size = "small",
     srcs = ["fn_inserter_test.cpp"],
     deps = [
         ":fn_inserter",
@@ -82,6 +83,7 @@ cc_library(
 
 cc_test(
     name = "for_range_test",
+    size = "small",
     srcs = ["for_range_test.cpp"],
     deps = [
         ":for_range",
@@ -106,6 +108,7 @@ cc_library(
 
 cc_test(
     name = "var_decl_test",
+    size = "small",
     srcs = ["var_decl_test.cpp"],
     deps = [
         ":matcher_test_base",

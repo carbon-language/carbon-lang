@@ -47,6 +47,7 @@ cc_library(
 
 cc_test(
     name = "rewriter_test",
+    size = "small",
     srcs = ["rewriter_test.cpp"],
     deps = [
         ":rewriter",
