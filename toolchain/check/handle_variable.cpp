@@ -22,26 +22,30 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
   }
 
   // Extract the name binding.
-  SemIR::NodeId var_id =
+  SemIR::NodeId bind_name_id =
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
-  auto var = context.nodes().GetAs<SemIR::VarStorage>(var_id);
+  auto bind_name = context.nodes().GetAs<SemIR::BindName>(bind_name_id);
 
   // Form a corresponding name in the current context, and bind the name to the
   // variable.
   context.declaration_name_stack().AddNameToLookup(
-      context.declaration_name_stack().MakeUnqualifiedName(var.parse_node,
-                                                           var.name_id),
-      var_id);
+      context.declaration_name_stack().MakeUnqualifiedName(bind_name.parse_node,
+                                                           bind_name.name_id),
+      bind_name_id);
 
   // If there was an initializer, assign it to the storage.
-  //
-  // TODO: In a class scope, we should instead save the initializer somewhere
-  // so that we can use it as a default.
   if (has_init) {
-    init_id = Initialize(context, parse_node, var_id, init_id);
-    // TODO: Consider using different node kinds for assignment versus
-    // initialization.
-    context.AddNode(SemIR::Assign{parse_node, var_id, init_id});
+    auto var_id = bind_name.value_id;
+    if (context.nodes().Get(var_id).Is<SemIR::VarStorage>()) {
+      init_id = Initialize(context, parse_node, var_id, init_id);
+      // TODO: Consider using different node kinds for assignment versus
+      // initialization.
+      context.AddNode(SemIR::Assign{parse_node, var_id, init_id});
+    } else {
+      // TODO: In a class scope, we should instead save the initializer
+      // somewhere so that we can use it as a default.
+      context.TODO(parse_node, "Field initializer");
+    }
   }
 
   context.node_stack()

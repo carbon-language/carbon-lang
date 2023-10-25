@@ -140,10 +140,12 @@ class NodeStack {
     return PopWithParseNode<RequiredParseKind>().second;
   }
 
-  // Peeks at the parse_node of the top of the stack.
+  // Peeks at the parse_node of the given depth in the stack, or by default the
+  // top node.
   auto PeekParseNode() -> Parse::Node { return stack_.back().parse_node; }
 
-  // Peeks at the ID of the top of the stack.
+  // Peeks at the ID of node at the given depth in the stack, or by default the
+  // top node.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
   auto Peek() -> auto {
     Entry back = stack_.back();
@@ -202,6 +204,8 @@ class NodeStack {
         : parse_node(parse_node), node_block_id(node_block_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::FunctionId function_id)
         : parse_node(parse_node), function_id(function_id) {}
+    explicit Entry(Parse::Node parse_node, SemIR::ClassId class_id)
+        : parse_node(parse_node), class_id(class_id) {}
     explicit Entry(Parse::Node parse_node, StringId name_id)
         : parse_node(parse_node), name_id(name_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::TypeId type_id)
@@ -218,6 +222,9 @@ class NodeStack {
       }
       if constexpr (std::is_same<T, SemIR::FunctionId>()) {
         return function_id;
+      }
+      if constexpr (std::is_same<T, SemIR::ClassId>()) {
+        return class_id;
       }
       if constexpr (std::is_same<T, StringId>()) {
         return name_id;
@@ -239,6 +246,7 @@ class NodeStack {
       SemIR::NodeId node_id;
       SemIR::NodeBlockId node_block_id;
       SemIR::FunctionId function_id;
+      SemIR::ClassId class_id;
       StringId name_id;
       SemIR::TypeId type_id;
     };
@@ -278,6 +286,8 @@ class NodeStack {
         return IdKind::NodeBlockId;
       case Parse::NodeKind::FunctionDefinitionStart:
         return IdKind::FunctionId;
+      case Parse::NodeKind::ClassDefinitionStart:
+        return IdKind::ClassId;
       case Parse::NodeKind::Name:
         return IdKind::StringId;
       case Parse::NodeKind::ArrayExpressionSemi:

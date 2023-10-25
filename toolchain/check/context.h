@@ -70,14 +70,27 @@ class Context {
       -> void;
 
   // Pushes a new scope onto scope_stack_.
-  auto PushScope(SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid)
+  auto PushScope(SemIR::NodeId scope_node_id = SemIR::NodeId::Invalid,
+                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid)
       -> void;
 
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
 
+  // Returns the name scope associated with the current lexical scope, if any.
   auto current_scope_id() const -> SemIR::NameScopeId {
-    return scope_stack_.back().scope_id;
+    return current_scope().scope_id;
+  }
+
+  // Returns the current scope, if it is of the specified kind. Otherwise,
+  // returns nullopt.
+  template <typename NodeT>
+  auto GetCurrentScopeAs() -> std::optional<NodeT> {
+    auto current_scope_node_id = current_scope().scope_node_id;
+    if (!current_scope_node_id.is_valid()) {
+      return std::nullopt;
+    }
+    return nodes().Get(current_scope_node_id).TryAs<NodeT>();
   }
 
   // Follows NameReference nodes to find the value named by a given node.
@@ -265,6 +278,14 @@ class Context {
 
   // An entry in scope_stack_.
   struct ScopeStackEntry {
+    // The node associated with this entry, if any. This can be one of:
+    //
+    // - A `ClassDeclaration`, for a class definition scope.
+    // - A `FunctionDeclaration`, for the outermost scope in a function
+    //   definition.
+    // - Invalid, for any other scope.
+    SemIR::NodeId scope_node_id;
+
     // The name scope associated with this entry, if any.
     SemIR::NameScopeId scope_id;
 
@@ -297,6 +318,9 @@ class Context {
   auto CanonicalizeTypeAndAddNodeIfNew(SemIR::Node node) -> SemIR::TypeId;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
+  auto current_scope() const -> const ScopeStackEntry& {
+    return scope_stack_.back();
+  }
 
   // Tokens for getting data on literals.
   const Lex::TokenizedBuffer* tokens_;

@@ -178,7 +178,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back(decl_id);
   context.node_block_stack().Push();
-  context.PushScope();
+  context.PushScope(decl_id);
   context.AddCurrentCodeBlockToFunction();
 
   // Bring the parameters into scope.

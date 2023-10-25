@@ -136,8 +136,10 @@ auto Context::LookupName(Parse::Node parse_node, StringId name_id,
   }
 }
 
-auto Context::PushScope(SemIR::NameScopeId scope_id) -> void {
-  scope_stack_.push_back({.scope_id = scope_id});
+auto Context::PushScope(SemIR::NodeId scope_node_id,
+                        SemIR::NameScopeId scope_id) -> void {
+  scope_stack_.push_back(
+      {.scope_node_id = scope_node_id, .scope_id = scope_id});
 }
 
 auto Context::PopScope() -> void {
@@ -607,6 +609,7 @@ class TypeCompleter {
       case SemIR::Call::Kind:
       case SemIR::ClassDeclaration::Kind:
       case SemIR::Dereference::Kind:
+      case SemIR::Field::Kind:
       case SemIR::FunctionDeclaration::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::IntegerLiteral::Kind:
@@ -663,6 +666,7 @@ class TypeCompleter {
         CARBON_FATAL() << "Builtins should be named as cross-references";
 
       case SemIR::PointerType::Kind:
+      case SemIR::UnboundFieldType::Kind:
         return MakeCopyRepresentation(type_id);
 
       case SemIR::ConstType::Kind:
@@ -791,6 +795,12 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
                            node.As<SemIR::TupleType>().elements_id),
                        canonical_id);
       break;
+    case SemIR::UnboundFieldType::Kind: {
+      auto unbound_field_type = node.As<SemIR::UnboundFieldType>();
+      canonical_id.AddInteger(unbound_field_type.class_type_id.index);
+      canonical_id.AddInteger(unbound_field_type.field_type_id.index);
+      break;
+    }
     default:
       CARBON_FATAL() << "Unexpected type node " << node;
   }

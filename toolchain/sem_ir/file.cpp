@@ -161,11 +161,11 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
   switch (kind) {
     case ArrayType::Kind:
     case Builtin::Kind:
-    case ClassDeclaration::Kind:
+    case ClassType::Kind:
     case NameReference::Kind:
     case StructType::Kind:
     case TupleType::Kind:
-    case ClassType::Kind:
+    case UnboundFieldType::Kind:
       return 0;
     case ConstType::Kind:
       return -1;
@@ -191,7 +191,9 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case BranchIf::Kind:
     case BranchWithArg::Kind:
     case Call::Kind:
+    case ClassDeclaration::Kind:
     case Dereference::Kind:
+    case Field::Kind:
     case FunctionDeclaration::Kind:
     case InitializeFrom::Kind:
     case IntegerLiteral::Kind:
@@ -361,6 +363,17 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
             {.node_id = GetTypeAllowBuiltinTypes(refs[step.index])});
         break;
       }
+      case UnboundFieldType::Kind: {
+        if (step.index == 0) {
+          out << "<unbound field of class ";
+          steps.push_back(step.Next());
+          steps.push_back({.node_id = GetTypeAllowBuiltinTypes(
+                               node.As<UnboundFieldType>().class_type_id)});
+        } else {
+          out << ">";
+        }
+        break;
+      }
       case AddressOf::Kind:
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
@@ -378,6 +391,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       case ClassDeclaration::Kind:
       case CrossReference::Kind:
       case Dereference::Kind:
+      case Field::Kind:
       case FunctionDeclaration::Kind:
       case InitializeFrom::Kind:
       case IntegerLiteral::Kind:
@@ -438,6 +452,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case BranchIf::Kind:
       case BranchWithArg::Kind:
       case ClassDeclaration::Kind:
+      case Field::Kind:
       case FunctionDeclaration::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
@@ -476,6 +491,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case TupleValue::Kind:
       case TupleType::Kind:
       case UnaryOperatorNot::Kind:
+      case UnboundFieldType::Kind:
         return ExpressionCategory::Value;
 
       case Builtin::Kind: {

@@ -385,11 +385,12 @@ class NodeNamer {
         nodes[node_id.index] = {scope_idx, scope.nodes.AllocateName(
                                                *this, node.parse_node(), name)};
       };
-      auto add_node_name_id = [&](StringId name_id) {
+      auto add_node_name_id = [&](StringId name_id,
+                                  llvm::StringRef suffix = "") {
         if (name_id.is_valid()) {
-          add_node_name(sem_ir_.strings().Get(name_id).str());
+          add_node_name((sem_ir_.strings().Get(name_id).str() + suffix).str());
         } else {
-          add_node_name("");
+          add_node_name(suffix.str());
         }
       };
 
@@ -426,9 +427,7 @@ class NodeNamer {
           continue;
         }
         case NameReference::Kind: {
-          add_node_name(
-              sem_ir_.strings().Get(node.As<NameReference>().name_id).str() +
-              ".ref");
+          add_node_name_id(node.As<NameReference>().name_id, ".ref");
           continue;
         }
         case Parameter::Kind: {
@@ -436,10 +435,7 @@ class NodeNamer {
           continue;
         }
         case VarStorage::Kind: {
-          // TODO: Eventually this name will be optional, and we'll want to
-          // provide something like `var` as a default. However, that's not
-          // possible right now so cannot be tested.
-          add_node_name_id(node.As<VarStorage>().name_id);
+          add_node_name_id(node.As<VarStorage>().name_id, ".var");
           continue;
         }
         default: {

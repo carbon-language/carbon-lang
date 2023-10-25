@@ -103,8 +103,9 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   }
 
   // Enter the class scope.
-  context.PushScope(class_info.scope_id);
+  context.PushScope(class_decl_id, class_info.scope_id);
   context.node_block_stack().Push();
+  context.node_stack().Push(parse_node, class_id);
 
   // TODO: Handle the case where there's control flow in the class body. For
   // example:
@@ -120,6 +121,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
 
 auto HandleClassDefinition(Context& context, Parse::Node /*parse_node*/)
     -> bool {
+  context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.node_block_stack().Pop();
   context.PopScope();
 

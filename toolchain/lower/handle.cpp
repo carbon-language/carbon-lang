@@ -171,6 +171,11 @@ auto HandleDereference(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(node_id, context.GetLocal(node.pointer_id));
 }
 
+auto HandleField(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
+                 SemIR::Field /*node*/) -> void {
+  // No action to perform.
+}
+
 auto HandleFunctionDeclaration(FunctionContext& /*context*/,
                                SemIR::NodeId /*node_id*/,
                                SemIR::FunctionDeclaration node) -> void {

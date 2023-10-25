@@ -36,4 +36,9 @@ auto HandleTupleType(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
+auto HandleUnboundFieldType(FunctionContext& context, SemIR::NodeId node_id,
+                            SemIR::UnboundFieldType /*node*/) -> void {
+  context.SetLocal(node_id, context.GetTypeAsValue());
+}
+
 }  // namespace Carbon::Lower

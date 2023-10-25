@@ -175,9 +175,10 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT: fn @AddressOfParameter(%param: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc82_22: type = ptr_type i32
-// CHECK:STDOUT:   %param_addr: ref i32* = var "param_addr"
+// CHECK:STDOUT:   %param_addr.var: ref i32* = var "param_addr"
+// CHECK:STDOUT:   %param_addr: ref i32* = bind_name "param_addr", %param_addr.var
 // CHECK:STDOUT:   %param.ref: i32 = name_reference "param", %param
 // CHECK:STDOUT:   %.loc82_26: i32* = address_of %param.ref
-// CHECK:STDOUT:   assign %param_addr, %.loc82_26
+// CHECK:STDOUT:   assign %param_addr.var, %.loc82_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -227,6 +227,16 @@ struct Dereference {
   NodeId pointer_id;
 };
 
+// A field in a class, of the form `var field: field_type;`. The type of the
+// `Field` node is an `UnboundFieldType`.
+struct Field {
+  static constexpr auto Kind = NodeKind::Field.Define("field");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  StringId name_id;
+};
+
 struct FunctionDeclaration {
   static constexpr auto Kind = NodeKind::FunctionDeclaration.Define("fn_decl");
 
@@ -467,6 +477,21 @@ struct UnaryOperatorNot {
   Parse::Node parse_node;
   TypeId type_id;
   NodeId operand_id;
+};
+
+// The type of an expression naming an unbound field, such as `Class.field`.
+// This can be used as the operand of a compound member access expression,
+// such as `instance.(Class.field)`.
+struct UnboundFieldType {
+  static constexpr auto Kind =
+      NodeKind::UnboundFieldType.Define("unbound_field_type");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  // The class of which the field is a member.
+  TypeId class_type_id;
+  // The type of the field.
+  TypeId field_type_id;
 };
 
 struct ValueAsReference {
