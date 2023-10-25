@@ -145,7 +145,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallClassFunction() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", package.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %Function.ref: <error> = name_reference "Function", <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -173,7 +173,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Let(%p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", package.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
 // CHECK:STDOUT:   %.loc78: ref Class = dereference %p.ref
 // CHECK:STDOUT:   %c: <error> = bind_name "c", <error>
@@ -186,18 +186,18 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallTakeIncomplete(%p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc103: <function> = name_reference "TakeIncomplete", package.%TakeIncomplete
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc103: <function> = name_reference "TakeIncomplete", file.%TakeIncomplete
 // CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
 // CHECK:STDOUT:   %.loc103_18: ref Class = dereference %p.ref
 // CHECK:STDOUT:   %.loc103_17: type = tuple_type ()
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc114: <function> = name_reference "TakeIncomplete", package.%TakeIncomplete
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc114: <function> = name_reference "TakeIncomplete", file.%TakeIncomplete
 // CHECK:STDOUT:   %.loc114: {} = struct_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnIncomplete() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ReturnIncomplete.ref: <function> = name_reference "ReturnIncomplete", package.%ReturnIncomplete
+// CHECK:STDOUT:   %ReturnIncomplete.ref: <function> = name_reference "ReturnIncomplete", file.%ReturnIncomplete
 // CHECK:STDOUT:   %.loc118: init <error> = call %ReturnIncomplete.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
