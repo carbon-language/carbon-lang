@@ -96,6 +96,9 @@ class Context {
   // Follows NameReference nodes to find the value named by a given node.
   auto FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId;
 
+  // Gets the constant value of the given node, if it has one.
+  auto GetConstantValue(SemIR::NodeId node_id) -> SemIR::NodeId;
+
   // Adds a `Branch` node branching to a new node block, and returns the ID of
   // the new block. All paths to the branch target must go through the current
   // block, though not necessarily through this branch.

@@ -107,7 +107,7 @@ struct ValueRepresentation : public Printable<ValueRepresentation> {
     // The value representation is a copy of the value. On call boundaries, the
     // value itself will be passed. `type` is the value type.
     Copy,
-    // The value representation is a pointer to an object. When used as a
+    // The value representation is a pointer to the value. When used as a
     // parameter, the argument is a reference expression. `type` is the pointee
     // type.
     Pointer,
@@ -116,8 +116,31 @@ struct ValueRepresentation : public Printable<ValueRepresentation> {
     // TODO: This is not implemented or used yet.
     Custom,
   };
+
+  enum AggregateKind : int8_t {
+    // This type is not an aggregation of other types.
+    NotAggregate,
+    // This type is an aggregate that holds the value representations of its
+    // elements.
+    ValueAggregate,
+    // This type is an aggregate that holds the object representations of its
+    // elements.
+    ObjectAggregate,
+    // This type is an aggregate for which the value and object representation
+    // of all elements are the same, so it effectively holds both.
+    ValueAndObjectAggregate,
+  };
+
+  // Returns whether this is an aggregate that holds its elements by value.
+  auto elements_are_values() const {
+    return aggregate_kind == ValueAggregate ||
+           aggregate_kind == ValueAndObjectAggregate;
+  }
+
   // The kind of value representation used by this type.
   Kind kind = Unknown;
+  // The kind of aggregate representation used by this type.
+  AggregateKind aggregate_kind = AggregateKind::NotAggregate;
   // The type used to model the value representation.
   TypeId type_id = TypeId::Invalid;
 };

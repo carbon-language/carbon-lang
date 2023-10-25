@@ -31,7 +31,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8_12.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc8_12.2: <unbound field of class Class> = field "field"
+// CHECK:STDOUT:   %.loc8_12.2: <unbound field of class Class> = field "field", member0
 // CHECK:STDOUT:   %field: <unbound field of class Class> = bind_name "field", %.loc8_12.2
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:

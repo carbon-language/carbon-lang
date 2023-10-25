@@ -166,6 +166,113 @@ auto HandleClassDeclaration(FunctionContext& /*context*/,
   // No action to perform.
 }
 
+// Extracts an element of an aggregate, such as a struct, tuple, or class, by
+// index. Depending on the expression category and value representation of the
+// aggregate input, this will either produce a value or a reference.
+static auto GetAggregateElement(FunctionContext& context,
+                                SemIR::NodeId aggr_node_id,
+                                SemIR::MemberIndex idx,
+                                SemIR::TypeId result_type_id, llvm::Twine name)
+    -> llvm::Value* {
+  auto aggr_node = context.sem_ir().nodes().Get(aggr_node_id);
+  auto* aggr_value = context.GetLocal(aggr_node_id);
+
+  switch (SemIR::GetExpressionCategory(context.sem_ir(), aggr_node_id)) {
+    case SemIR::ExpressionCategory::Error:
+    case SemIR::ExpressionCategory::NotExpression:
+    case SemIR::ExpressionCategory::Initializing:
+    case SemIR::ExpressionCategory::Mixed:
+      CARBON_FATAL() << "Unexpected expression category for aggregate access";
+
+    case SemIR::ExpressionCategory::Value: {
+      auto value_rep =
+          SemIR::GetValueRepresentation(context.sem_ir(), aggr_node.type_id());
+      CARBON_CHECK(value_rep.aggregate_kind !=
+                   SemIR::ValueRepresentation::NotAggregate)
+          << "aggregate type should have aggregate value representation";
+      switch (value_rep.kind) {
+        case SemIR::ValueRepresentation::Unknown:
+          CARBON_FATAL() << "Lowering access to incomplete aggregate type";
+        case SemIR::ValueRepresentation::None:
+          return aggr_value;
+        case SemIR::ValueRepresentation::Copy:
+          // We are holding the values of the aggregate directly, elementwise.
+          return context.builder().CreateExtractValue(aggr_value, idx.index,
+                                                      name);
+        case SemIR::ValueRepresentation::Pointer: {
+          // The value representation is a pointer to an aggregate that we want
+          // to index into.
+          auto pointee_type_id =
+              context.sem_ir().GetPointeeType(value_rep.type_id);
+          auto* value_type = context.GetType(pointee_type_id);
+          auto* elem_ptr = context.builder().CreateStructGEP(
+              value_type, aggr_value, idx.index, name);
+
+          if (!value_rep.elements_are_values()) {
+            // `elem_ptr` points to an object representation, which is our
+            // result.
+            return elem_ptr;
+          }
+
+          // `elem_ptr` points to a value representation. Load it.
+          auto result_value_type_id =
+              SemIR::GetValueRepresentation(context.sem_ir(), result_type_id)
+                  .type_id;
+          return context.builder().CreateLoad(
+              context.GetType(result_value_type_id), elem_ptr, name + ".load");
+        }
+        case SemIR::ValueRepresentation::Custom:
+          CARBON_FATAL()
+              << "Aggregate should never have custom value representation";
+      }
+    }
+
+    case SemIR::ExpressionCategory::DurableReference:
+    case SemIR::ExpressionCategory::EphemeralReference: {
+      // Just locate the aggregate element.
+      auto* aggr_type = context.GetType(aggr_node.type_id());
+      return context.builder().CreateStructGEP(aggr_type, aggr_value, idx.index,
+                                               name);
+    }
+  }
+}
+
+static auto GetStructFieldName(FunctionContext& context,
+                               SemIR::TypeId struct_type_id,
+                               SemIR::MemberIndex index) -> llvm::StringRef {
+  auto fields = context.sem_ir().node_blocks().Get(
+      context.sem_ir()
+          .nodes()
+          .GetAs<SemIR::StructType>(
+              context.sem_ir().types().Get(struct_type_id).node_id)
+          .fields_id);
+  auto field = context.sem_ir().nodes().GetAs<SemIR::StructTypeField>(
+      fields[index.index]);
+  return context.sem_ir().strings().Get(field.name_id);
+}
+
+auto HandleClassFieldAccess(FunctionContext& context, SemIR::NodeId node_id,
+                            SemIR::ClassFieldAccess node) -> void {
+  // Find the class that we're performing access into.
+  auto class_type_id = context.sem_ir().nodes().Get(node.base_id).type_id();
+  auto class_id =
+      context.sem_ir()
+          .nodes()
+          .GetAs<SemIR::ClassType>(
+              context.sem_ir().GetTypeAllowBuiltinTypes(class_type_id))
+          .class_id;
+  auto& class_info = context.sem_ir().classes().Get(class_id);
+
+  // Translate the class field access into a struct access on the object
+  // representation.
+  context.SetLocal(
+      node_id,
+      GetAggregateElement(
+          context, node.base_id, node.index, node.type_id,
+          GetStructFieldName(context, class_info.object_representation_id,
+                             node.index)));
+}
+
 auto HandleDereference(FunctionContext& context, SemIR::NodeId node_id,
                        SemIR::Dereference node) -> void {
   context.SetLocal(node_id, context.GetLocal(node.pointer_id));
@@ -283,82 +390,13 @@ auto HandleStringLiteral(FunctionContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-// Extracts an element of either a struct or a tuple by index. Depending on the
-// expression category of the aggregate input, this will either produce a value
-// or a reference.
-static auto GetStructOrTupleElement(FunctionContext& context,
-                                    SemIR::NodeId aggr_node_id, unsigned idx,
-                                    SemIR::TypeId result_type_id,
-                                    llvm::Twine name) -> llvm::Value* {
-  auto aggr_node = context.sem_ir().nodes().Get(aggr_node_id);
-  auto* aggr_value = context.GetLocal(aggr_node_id);
-
-  switch (SemIR::GetExpressionCategory(context.sem_ir(), aggr_node_id)) {
-    case SemIR::ExpressionCategory::Error:
-    case SemIR::ExpressionCategory::NotExpression:
-    case SemIR::ExpressionCategory::Initializing:
-    case SemIR::ExpressionCategory::Mixed:
-      CARBON_FATAL() << "Unexpected expression category for aggregate access";
-
-    case SemIR::ExpressionCategory::Value: {
-      auto value_rep =
-          SemIR::GetValueRepresentation(context.sem_ir(), aggr_node.type_id());
-      switch (value_rep.kind) {
-        case SemIR::ValueRepresentation::Unknown:
-          CARBON_FATAL() << "Lowering access to incomplete aggregate type";
-        case SemIR::ValueRepresentation::None:
-          return aggr_value;
-        case SemIR::ValueRepresentation::Copy:
-          // We are holding the values of the aggregate directly, elementwise.
-          return context.builder().CreateExtractValue(aggr_value, idx, name);
-        case SemIR::ValueRepresentation::Pointer: {
-          // The value representation is a pointer to an aggregate that we want
-          // to index into.
-          auto pointee_type_id =
-              context.sem_ir().GetPointeeType(value_rep.type_id);
-          auto* value_type = context.GetType(pointee_type_id);
-          auto* elem_ptr = context.builder().CreateStructGEP(
-              value_type, aggr_value, idx, name);
-          auto result_value_type_id =
-              SemIR::GetValueRepresentation(context.sem_ir(), result_type_id)
-                  .type_id;
-          return context.builder().CreateLoad(
-              context.GetType(result_value_type_id), elem_ptr, name + ".load");
-        }
-        case SemIR::ValueRepresentation::Custom:
-          CARBON_FATAL()
-              << "Aggregate should never have custom value representation";
-      }
-    }
-
-    case SemIR::ExpressionCategory::DurableReference:
-    case SemIR::ExpressionCategory::EphemeralReference: {
-      // Just locate the aggregate element.
-      auto* aggr_type = context.GetType(aggr_node.type_id());
-      return context.builder().CreateStructGEP(aggr_type, aggr_value, idx,
-                                               name);
-    }
-  }
-}
-
 auto HandleStructAccess(FunctionContext& context, SemIR::NodeId node_id,
                         SemIR::StructAccess node) -> void {
   auto struct_type_id = context.sem_ir().nodes().Get(node.struct_id).type_id();
-
-  // Get type information for member names.
-  auto fields = context.sem_ir().node_blocks().Get(
-      context.sem_ir()
-          .nodes()
-          .GetAs<SemIR::StructType>(
-              context.sem_ir().types().Get(struct_type_id).node_id)
-          .fields_id);
-  auto field = context.sem_ir().nodes().GetAs<SemIR::StructTypeField>(
-      fields[node.index.index]);
-  auto member_name = context.sem_ir().strings().Get(field.name_id);
-
-  context.SetLocal(node_id, GetStructOrTupleElement(context, node.struct_id,
-                                                    node.index.index,
-                                                    node.type_id, member_name));
+  context.SetLocal(
+      node_id, GetAggregateElement(
+                   context, node.struct_id, node.index, node.type_id,
+                   GetStructFieldName(context, struct_type_id, node.index)));
 }
 
 auto HandleStructLiteral(FunctionContext& /*context*/,
@@ -454,8 +492,8 @@ auto HandleStructTypeField(FunctionContext& /*context*/,
 
 auto HandleTupleAccess(FunctionContext& context, SemIR::NodeId node_id,
                        SemIR::TupleAccess node) -> void {
-  context.SetLocal(
-      node_id, GetStructOrTupleElement(context, node.tuple_id, node.index.index,
+  context.SetLocal(node_id,
+                   GetAggregateElement(context, node.tuple_id, node.index,
                                        node.type_id, "tuple.elem"));
 }
 
@@ -465,9 +503,9 @@ auto HandleTupleIndex(FunctionContext& context, SemIR::NodeId node_id,
       context.sem_ir().nodes().GetAs<SemIR::IntegerLiteral>(node.index_id);
   auto index =
       context.sem_ir().integers().Get(index_node.integer_id).getZExtValue();
-  context.SetLocal(node_id,
-                   GetStructOrTupleElement(context, node.tuple_id, index,
-                                           node.type_id, "tuple.index"));
+  context.SetLocal(node_id, GetAggregateElement(context, node.tuple_id,
+                                                SemIR::MemberIndex(index),
+                                                node.type_id, "tuple.index"));
 }
 
 auto HandleTupleLiteral(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
