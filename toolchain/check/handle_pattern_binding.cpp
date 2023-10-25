@@ -9,7 +9,18 @@
 namespace Carbon::Check {
 
 auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleAddress");
+  auto self_param_id =
+      context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
+  if (auto self_param =
+          context.nodes().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
+    self_param->is_addr_self = SemIR::BoolValue::True;
+    context.nodes().Set(self_param_id, *self_param);
+  } else {
+    CARBON_DIAGNOSTIC(AddrOnNonSelfParameter, Error,
+                      "`addr` can only be applied to a `self` parameter");
+    context.emitter().Emit(parse_node, AddrOnNonSelfParameter);
+  }
+  return true;
 }
 
 auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
@@ -23,7 +34,27 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto type_node_copy = type_node;
   auto cast_type_id = ExpressionAsType(context, type_node, parsed_type_id);
 
-  // Get the name.
+  // A `self` binding doesn't have a name.
+  if (auto self_node =
+          context.node_stack()
+              .PopForSoloParseNodeIf<Parse::NodeKind::SelfValueName>()) {
+    if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
+        Parse::NodeKind::ImplicitParameterListStart) {
+      CARBON_DIAGNOSTIC(
+          SelfOutsideImplicitParameterList, Error,
+          "`self` can only be declared in an implicit parameter list");
+      context.emitter().Emit(parse_node, SelfOutsideImplicitParameterList);
+    }
+    context.AddNodeAndPush(
+        parse_node,
+        SemIR::SelfParameter{*self_node, cast_type_id,
+                             /*is_addr_self=*/SemIR::BoolValue::False});
+    return true;
+  }
+
+  // TODO: Handle `_` bindings.
+
+  // Every other kind of pattern binding has a name.
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
@@ -74,6 +105,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       break;
     }
 
+    case Parse::NodeKind::ImplicitParameterListStart:
     case Parse::NodeKind::ParameterListStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.

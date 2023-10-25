@@ -378,6 +378,12 @@ auto HandleReturnExpression(FunctionContext& context, SemIR::NodeId /*node_id*/,
   }
 }
 
+auto HandleSelfParameter(FunctionContext& /*context*/,
+                         SemIR::NodeId /*node_id*/,
+                         SemIR::SelfParameter /*node*/) -> void {
+  CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
+}
+
 auto HandleSpliceBlock(FunctionContext& context, SemIR::NodeId node_id,
                        SemIR::SpliceBlock node) -> void {
   context.LowerBlock(node.block_id);

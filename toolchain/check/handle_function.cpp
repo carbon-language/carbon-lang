@@ -51,6 +51,10 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
 
   SemIR::NodeBlockId param_refs_id =
       context.node_stack().Pop<Parse::NodeKind::ParameterList>();
+  SemIR::NodeBlockId implicit_param_refs_id =
+      context.node_stack()
+          .PopIf<Parse::NodeKind::ImplicitParameterList>()
+          .value_or(SemIR::NodeBlockId::Empty);
   auto name_context = context.declaration_name_stack().Pop();
   auto fn_node =
       context.node_stack()
@@ -80,6 +84,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
       if (is_definition) {
         auto& function_info =
             context.functions().Get(function_decl.function_id);
+        function_info.implicit_param_refs_id = implicit_param_refs_id;
         function_info.param_refs_id = param_refs_id;
         function_info.return_type_id = return_type_id;
         function_info.return_slot_id = return_slot_id;
@@ -97,6 +102,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
                         : StringId::Invalid,
+         .implicit_param_refs_id = implicit_param_refs_id,
          .param_refs_id = param_refs_id,
          .return_type_id = return_type_id,
          .return_slot_id = return_slot_id});
@@ -107,7 +113,8 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
-    if (!context.node_blocks().Get(param_refs_id).empty() ||
+    if (!context.node_blocks().Get(implicit_param_refs_id).empty() ||
+        !context.node_blocks().Get(param_refs_id).empty() ||
         (return_slot_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
@@ -181,22 +188,36 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   context.PushScope(decl_id);
   context.AddCurrentCodeBlockToFunction();
 
-  // Bring the parameters into scope.
-  for (auto param_id : context.node_blocks().Get(function.param_refs_id)) {
-    auto param = context.nodes().GetAs<SemIR::Parameter>(param_id);
+  // Bring the implicit and explicit parameters into scope.
+  for (auto param_id : llvm::concat<SemIR::NodeId>(
+           context.node_blocks().Get(function.implicit_param_refs_id),
+           context.node_blocks().Get(function.param_refs_id))) {
+    auto param = context.nodes().Get(param_id);
 
     // The parameter types need to be complete.
-    context.TryToCompleteType(param.type_id, [&] {
+    context.TryToCompleteType(param.type_id(), [&] {
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
           "Parameter has incomplete type `{0}` in function definition.",
           std::string);
       return context.emitter().Build(
-          param.parse_node, IncompleteTypeInFunctionParam,
-          context.sem_ir().StringifyType(param.type_id, true));
+          param.parse_node(), IncompleteTypeInFunctionParam,
+          context.sem_ir().StringifyType(param.type_id(), true));
     });
 
-    context.AddNameToLookup(param.parse_node, param.name_id, param_id);
+    if (auto fn_param = param.TryAs<SemIR::Parameter>()) {
+      context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
+                              param_id);
+    } else if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
+      // TODO: This will shadow a local variable named `r#self`, but should
+      // not. See #2984 and the corresponding code in
+      // HandleSelfTypeNameExpression.
+      context.AddNameToLookup(self_param->parse_node,
+                              context.strings().Add("self"), param_id);
+    } else {
+      CARBON_FATAL() << "Unexpected kind of parameter in function definition "
+                     << param;
+    }
   }
 
   context.node_stack().Push(parse_node, function_id);

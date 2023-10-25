@@ -63,6 +63,12 @@ class NodeStack {
     stack_.push_back(Entry(parse_node, id));
   }
 
+  // Returns whether the node on the top of the stack is the specified kind.
+  template <Parse::NodeKind::RawEnumType RequiredParseKind>
+  auto TopIs() const -> bool {
+    return parse_tree_->node_kind(PeekParseNode()) == RequiredParseKind;
+  }
+
   // Pops the top of the stack without any verification.
   auto PopAndIgnore() -> void { PopEntry<SemIR::NodeId>(); }
 
@@ -74,6 +80,16 @@ class NodeStack {
                   IdKind::SoloParseNode);
     RequireParseKind<RequiredParseKind>(back.parse_node);
     return back.parse_node;
+  }
+
+  // Pops the top of the stack if it is the given kind, and returns the
+  // parse_node. Otherwise, returns std::nullopt.
+  template <Parse::NodeKind::RawEnumType RequiredParseKind>
+  auto PopForSoloParseNodeIf() -> std::optional<Parse::Node> {
+    if (TopIs<RequiredParseKind>()) {
+      return PopForSoloParseNode<RequiredParseKind>();
+    }
+    return std::nullopt;
   }
 
   // Pops the top of the stack.
@@ -140,14 +156,24 @@ class NodeStack {
     return PopWithParseNode<RequiredParseKind>().second;
   }
 
+  // Pops the top of the stack if it has the given kind, and returns the ID.
+  // Otherwise returns std::nullopt.
+  template <Parse::NodeKind::RawEnumType RequiredParseKind>
+  auto PopIf() -> std::optional<decltype(Pop<RequiredParseKind>())> {
+    if (TopIs<RequiredParseKind>()) {
+      return Pop<RequiredParseKind>();
+    }
+    return std::nullopt;
+  }
+
   // Peeks at the parse_node of the given depth in the stack, or by default the
   // top node.
-  auto PeekParseNode() -> Parse::Node { return stack_.back().parse_node; }
+  auto PeekParseNode() const -> Parse::Node { return stack_.back().parse_node; }
 
   // Peeks at the ID of node at the given depth in the stack, or by default the
   // top node.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
-  auto Peek() -> auto {
+  auto Peek() const -> auto {
     Entry back = stack_.back();
     RequireParseKind<RequiredParseKind>(back.parse_node);
     constexpr IdKind RequiredIdKind =
@@ -271,6 +297,7 @@ class NodeStack {
       case Parse::NodeKind::PostfixOperator:
       case Parse::NodeKind::PrefixOperator:
       case Parse::NodeKind::ReturnType:
+      case Parse::NodeKind::SelfValueNameExpression:
       case Parse::NodeKind::ShortCircuitOperand:
       case Parse::NodeKind::StructFieldValue:
       case Parse::NodeKind::StructLiteral:
@@ -280,6 +307,7 @@ class NodeStack {
         return IdKind::NodeId;
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExpressionIf:
+      case Parse::NodeKind::ImplicitParameterList:
       case Parse::NodeKind::ParameterList:
       case Parse::NodeKind::WhileCondition:
       case Parse::NodeKind::WhileConditionStart:
@@ -295,11 +323,13 @@ class NodeStack {
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
+      case Parse::NodeKind::ImplicitParameterListStart:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::ParameterListStart:
       case Parse::NodeKind::ParenExpressionOrTupleLiteralStart:
       case Parse::NodeKind::QualifiedDeclaration:
       case Parse::NodeKind::ReturnStatementStart:
+      case Parse::NodeKind::SelfValueName:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
@@ -353,14 +383,14 @@ class NodeStack {
   }
 
   // Require a Parse::NodeKind be mapped to a particular IdKind.
-  auto RequireIdKind(Parse::NodeKind parse_kind, IdKind id_kind) -> void {
+  auto RequireIdKind(Parse::NodeKind parse_kind, IdKind id_kind) const -> void {
     CARBON_CHECK(ParseNodeKindToIdKind(parse_kind) == id_kind)
         << "Unexpected IdKind mapping for " << parse_kind;
   }
 
   // Require an entry to have the given Parse::NodeKind.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
-  auto RequireParseKind(Parse::Node parse_node) -> void {
+  auto RequireParseKind(Parse::Node parse_node) const -> void {
     auto actual_kind = parse_tree_->node_kind(parse_node);
     CARBON_CHECK(RequiredParseKind == actual_kind)
         << "Expected " << Parse::NodeKind::Create(RequiredParseKind)

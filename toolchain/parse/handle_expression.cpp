@@ -109,7 +109,7 @@ auto HandleExpressionInPostfix(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::SelfValueIdentifier: {
-      context.AddLeafNode(NodeKind::SelfValueName, context.Consume());
+      context.AddLeafNode(NodeKind::SelfValueNameExpression, context.Consume());
       context.PushState(state);
       break;
     }

@@ -39,6 +39,8 @@ struct Function : public Printable<Function> {
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDeclaration.
   NodeId definition_id = NodeId::Invalid;
+  // A block containing a single reference node per implicit parameter.
+  NodeBlockId implicit_param_refs_id;
   // A block containing a single reference node per parameter.
   NodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.

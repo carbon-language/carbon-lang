@@ -60,6 +60,8 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
+  auto implicit_param_refs =
+      sem_ir().node_blocks().Get(function.implicit_param_refs_id);
   auto param_refs = sem_ir().node_blocks().Get(function.param_refs_id);
 
   SemIR::InitializingRepresentation return_rep =
@@ -76,13 +78,16 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   // out a mechanism to compute the mapping between parameters and arguments on
   // demand.
   llvm::SmallVector<SemIR::NodeId> param_node_ids;
-  param_types.reserve(has_return_slot + param_refs.size());
-  param_node_ids.reserve(has_return_slot + param_refs.size());
+  auto max_llvm_params =
+      has_return_slot + implicit_param_refs.size() + param_refs.size();
+  param_types.reserve(max_llvm_params);
+  param_node_ids.reserve(max_llvm_params);
   if (has_return_slot) {
     param_types.push_back(GetType(function.return_type_id)->getPointerTo());
     param_node_ids.push_back(function.return_slot_id);
   }
-  for (auto param_ref_id : param_refs) {
+  for (auto param_ref_id :
+       llvm::concat<const SemIR::NodeId>(implicit_param_refs, param_refs)) {
     auto param_type_id = sem_ir().nodes().Get(param_ref_id).type_id();
     switch (auto value_rep =
                 SemIR::GetValueRepresentation(sem_ir(), param_type_id);
@@ -126,13 +131,15 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   // Set up parameters and the return slot.
   for (auto [node_id, arg] :
        llvm::zip_equal(param_node_ids, llvm_function->args())) {
+    auto node = sem_ir().nodes().Get(node_id);
     if (node_id == function.return_slot_id) {
       arg.setName("return");
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
+    } else if (node.Is<SemIR::SelfParameter>()) {
+      arg.setName("self");
     } else {
-      arg.setName(sem_ir().strings().Get(
-          sem_ir().nodes().GetAs<SemIR::Parameter>(node_id).name_id));
+      arg.setName(sem_ir().strings().Get(node.As<SemIR::Parameter>().name_id));
     }
   }
 
@@ -157,6 +164,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // TODO: This duplicates the mapping between semantics nodes and LLVM
   // function parameters that was already computed in BuildFunctionDeclaration.
   // We should only do that once.
+  auto implicit_param_refs =
+      sem_ir().node_blocks().Get(function.implicit_param_refs_id);
   auto param_refs = sem_ir().node_blocks().Get(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
@@ -164,7 +173,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
                                llvm_function->getArg(param_index));
     ++param_index;
   }
-  for (auto param_ref_id : param_refs) {
+  for (auto param_ref_id :
+       llvm::concat<const SemIR::NodeId>(implicit_param_refs, param_refs)) {
     auto param_type_id = sem_ir().nodes().Get(param_ref_id).type_id();
     if (SemIR::GetValueRepresentation(sem_ir(), param_type_id).kind ==
         SemIR::ValueRepresentation::None) {

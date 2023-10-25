@@ -181,7 +181,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpression, ArrayExpressionSemi,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // A pattern binding, such as `name: Type`:
-//       Name
+//       Name or SelfValueName
 //       _external_: type expression
 //     [Generic]PatternBinding
 //   _optional_ Address
@@ -574,9 +574,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDeclaration,
 // The `self` value and `Self` type identifier keywords. Typically of the form
 // `self: Self`:
 //   SelfValueName
+//   SelfValueNameExpression
 //   SelfTypeNameExpression
 // PatternBinding
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueName, 0,
+                                   CARBON_TOKEN(SelfValueIdentifier))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpression, 0,
                                    CARBON_TOKEN(SelfValueIdentifier))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpression, 0,
                                    CARBON_TOKEN(SelfTypeIdentifier))
