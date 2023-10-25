@@ -55,8 +55,11 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
             parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_info.self_type_id, cast_type_id});
         value_type_id = context.CanonicalizeType(field_type_node_id);
-        value_id =
-            context.AddNode(SemIR::Field{parse_node, value_type_id, name_id});
+        value_id = context.AddNode(
+            SemIR::Field{parse_node, value_type_id, name_id,
+                         SemIR::MemberIndex(context.args_type_info_stack()
+                                                .PeekCurrentBlockContents()
+                                                .size())});
 
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddNode(

@@ -55,14 +55,72 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     return true;
   }
 
+  // If the base isn't a scope, it must have a complete type.
+  auto base_type_id = context.nodes().Get(base_id).type_id();
+  if (!context.TryToCompleteType(base_type_id, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
+                          "Base of member access has incomplete type `{0}`.",
+                          std::string);
+        return context.emitter().Build(
+            context.nodes().Get(base_id).parse_node(),
+            IncompleteTypeInMemberAccess,
+            context.sem_ir().StringifyType(base_type_id, true));
+      })) {
+    context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+    return true;
+  }
+
   // Materialize a temporary for the base expression if necessary.
   base_id = ConvertToValueOrReferenceExpression(context, base_id);
-  auto base_type_id = context.nodes().Get(base_id).type_id();
+  base_type_id = context.nodes().Get(base_id).type_id();
 
   auto base_type = context.nodes().Get(
       context.sem_ir().GetTypeAllowBuiltinTypes(base_type_id));
 
   switch (base_type.kind()) {
+    case SemIR::ClassType::Kind: {
+      // Perform lookup for the name in the class scope.
+      auto class_scope_id = context.classes()
+                                .Get(base_type.As<SemIR::ClassType>().class_id)
+                                .scope_id;
+      auto member_id = context.LookupName(parse_node, name_id, class_scope_id,
+                                          /*print_diagnostics=*/true);
+      if (!member_id.is_valid()) {
+        break;
+      }
+
+      // Perform instance binding if we found an instance member.
+      auto member_type_id = context.nodes().Get(member_id).type_id();
+      auto member_type_node = context.nodes().Get(
+          context.sem_ir().GetTypeAllowBuiltinTypes(member_type_id));
+      if (auto unbound_field_type =
+              member_type_node.TryAs<SemIR::UnboundFieldType>()) {
+        // TODO: Check that the unbound field type describes a member of this
+        // class. Perform a conversion of the base if necessary.
+
+        // Find the named field and build a field access expression.
+        auto field_id = context.GetConstantValue(member_id);
+        CARBON_CHECK(field_id.is_valid())
+            << "Non-constant value " << context.nodes().Get(member_id)
+            << " of unbound field type";
+        auto field = context.nodes().Get(field_id).TryAs<SemIR::Field>();
+        CARBON_CHECK(field)
+            << "Unexpected value " << context.nodes().Get(field_id)
+            << " for field name expression";
+        context.AddNodeAndPush(
+            parse_node, SemIR::ClassFieldAccess{
+                            parse_node, unbound_field_type->field_type_id,
+                            base_id, field->index});
+        return true;
+      }
+
+      // For a non-instance member, the result is that member.
+      // TODO: Track that this was named within `base_id`.
+      context.AddNodeAndPush(
+          parse_node,
+          SemIR::NameReference{parse_node, member_type_id, name_id, member_id});
+      return true;
+    }
     case SemIR::StructType::Kind: {
       auto refs = context.node_blocks().Get(
           base_type.As<SemIR::StructType>().fields_id);
@@ -84,6 +142,9 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                              context.strings().Get(name_id));
       break;
     }
+    // TODO: `ConstType` should support member access just like the
+    // corresponding non-const type, except that the result should have `const`
+    // type if it creates a reference expression performing field access.
     default: {
       if (base_type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,

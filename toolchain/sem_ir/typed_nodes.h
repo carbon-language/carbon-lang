@@ -190,6 +190,16 @@ struct ClassDeclaration {
   NodeBlockId decl_block_id;
 };
 
+struct ClassFieldAccess {
+  static constexpr auto Kind =
+      NodeKind::ClassFieldAccess.Define("class_field_access");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  NodeId base_id;
+  MemberIndex index;
+};
+
 struct ClassType {
   static constexpr auto Kind = NodeKind::ClassType.Define("class_type");
 
@@ -235,6 +245,7 @@ struct Field {
   Parse::Node parse_node;
   TypeId type_id;
   StringId name_id;
+  MemberIndex index;
 };
 
 struct FunctionDeclaration {

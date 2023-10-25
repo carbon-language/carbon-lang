@@ -49,7 +49,7 @@ fn ConvertFromStruct() -> Class { return {}; }
 // TODO: }
 
 fn MemberAccess(p: Class*) -> i32 {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:11: ERROR: Invalid use of incomplete type `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:11: ERROR: Base of member access has incomplete type `Class`.
   // CHECK:STDERR:   return (*p).n;
   // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-48]]:1: Class was forward declared here.

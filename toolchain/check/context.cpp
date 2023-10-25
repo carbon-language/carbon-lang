@@ -170,6 +170,30 @@ auto Context::FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId {
   return node_id;
 }
 
+auto Context::GetConstantValue(SemIR::NodeId node_id) -> SemIR::NodeId {
+  // TODO: The constant value of a node should be computed as we build the
+  // node, or at least cached once computed.
+  while (true) {
+    auto node = nodes().Get(node_id);
+    switch (node.kind()) {
+      case SemIR::NameReference::Kind:
+        node_id = node.As<SemIR::NameReference>().value_id;
+        break;
+
+      case SemIR::BindName::Kind:
+        node_id = node.As<SemIR::BindName>().value_id;
+        break;
+
+      case SemIR::Field::Kind:
+        return node_id;
+
+      default:
+        // TODO: Handle the remaining cases.
+        return SemIR::NodeId::Invalid;
+    }
+  }
+}
+
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
                                            Parse::Node parse_node, Args... args)
@@ -620,6 +644,7 @@ class TypeCompleter {
       case SemIR::BranchIf::Kind:
       case SemIR::BranchWithArg::Kind:
       case SemIR::Call::Kind:
+      case SemIR::ClassFieldAccess::Kind:
       case SemIR::ClassDeclaration::Kind:
       case SemIR::Dereference::Kind:
       case SemIR::Field::Kind:

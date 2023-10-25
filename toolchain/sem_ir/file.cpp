@@ -192,6 +192,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case BranchWithArg::Kind:
     case Call::Kind:
     case ClassDeclaration::Kind:
+    case ClassFieldAccess::Kind:
     case Dereference::Kind:
     case Field::Kind:
     case FunctionDeclaration::Kind:
@@ -389,6 +390,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       case Builtin::Kind:
       case Call::Kind:
       case ClassDeclaration::Kind:
+      case ClassFieldAccess::Kind:
       case CrossReference::Kind:
       case Dereference::Kind:
       case Field::Kind:
@@ -508,6 +510,11 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
 
       case ArrayIndex::Kind: {
         node_id = node.As<ArrayIndex>().array_id;
+        continue;
+      }
+
+      case ClassFieldAccess::Kind: {
+        node_id = node.As<ClassFieldAccess>().base_id;
         continue;
       }
 
