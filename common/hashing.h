@@ -222,7 +222,7 @@ class Hasher {
 
   // A heavily optimized routine for incorporating a dynamically sized sequence
   // of bytes into `hasher`s state. The updated state is returned.
-  // 
+  //
   // This routine has carefully structured inline code paths for short byte
   // sequences and a reasonably high bandwidth code path for longer sequences.
   // The size of the byte sequence is always incorporated into the hasher's
@@ -255,10 +255,10 @@ class Hasher {
   // operations are not guaranteed to be stable but are described here for
   // hashing authors to understand what to expect.
   //
-  // Currently, this uses the same "mix" operation as in Abseil, AHash, and several
-  // other hashing algorithms. It takes two 64-bit integers, and multiplies
-  // them, capturing both the high 64-bit result and the low 64-bit result, and
-  // then XOR-ing those two halves together.
+  // Currently, this uses the same "mix" operation as in Abseil, AHash, and
+  // several other hashing algorithms. It takes two 64-bit integers, and
+  // multiplies them, capturing both the high 64-bit result and the low 64-bit
+  // result, and then XOR-ing those two halves together.
   //
   // A consequence of this operation is that a zero on either side will fail to
   // incorporate any bits from the other side. Often, this is an acceptable rate
@@ -290,8 +290,8 @@ class Hasher {
 
   // A throughput-optimized routine for when the byte sequence size is
   // guaranteed to be >32.
-  static auto HashSizedBytesLarge(Hasher hasher, llvm::ArrayRef<std::byte> bytes)
-      -> Hasher;
+  static auto HashSizedBytesLarge(Hasher hasher,
+                                  llvm::ArrayRef<std::byte> bytes) -> Hasher;
 
   // Random data taken from the hexadecimal digits of Pi's fractional component,
   // written in lexical order for convenience of reading. The resulting
@@ -341,7 +341,8 @@ class Hasher {
 // overloads for types in LLVM's libraries.
 namespace Detail {
 
-inline auto CarbonHash(Hasher hasher, llvm::ArrayRef<std::byte> bytes) -> Hasher {
+inline auto CarbonHash(Hasher hasher, llvm::ArrayRef<std::byte> bytes)
+    -> Hasher {
   hasher = Hasher::HashSizedBytes(std::move(hasher), bytes);
   return hasher;
 }
@@ -410,7 +411,8 @@ inline auto CarbonHash(Hasher hasher, const T& value) -> Hasher {
 template <typename... Ts,
           typename = std::enable_if_t<
               (... && NullPtrOrHasUniqueObjectRepresentations<Ts>)>>
-inline auto CarbonHash(Hasher hasher, const std::tuple<Ts...>& value) -> Hasher {
+inline auto CarbonHash(Hasher hasher, const std::tuple<Ts...>& value)
+    -> Hasher {
   return std::apply(
       [&](const auto&... args) {
         return Hasher::Hash(std::move(hasher), MapNullPtrToVoidPtr(args)...);
@@ -545,12 +547,12 @@ inline auto Hasher::HashTwo(Hasher hasher, uint64_t data0, uint64_t data1)
   // from Abseil, which is a more minimal form than used in other algorithms
   // such as AHash and seems adequate for latency-optimized use cases.
   hasher.buffer = Mix(data0 ^ StaticRandomData[1],
-                    data1 ^ StaticRandomData[3] ^ hasher.buffer);
+                      data1 ^ StaticRandomData[3] ^ hasher.buffer);
   return hasher;
 }
 
-inline auto Hasher::HashSizedBytes(Hasher hasher, llvm::ArrayRef<std::byte> bytes)
-    -> Hasher {
+inline auto Hasher::HashSizedBytes(Hasher hasher,
+                                   llvm::ArrayRef<std::byte> bytes) -> Hasher {
   const std::byte* data_ptr = bytes.data();
   const ssize_t size = bytes.size();
 

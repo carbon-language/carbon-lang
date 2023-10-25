@@ -200,8 +200,8 @@ TEST(HashingTest, PairsAndTuples) {
     EXPECT_THAT(HashValue(std::tuple(i_u32, i_i16, i_u64)), Eq(hash));
   }
 
-  // Hash values of pointers in pairs and tuples reflect the address and not the type.
-  // Pairs and 2-tuples give the same hash values.
+  // Hash values of pointers in pairs and tuples reflect the address and not the
+  // type. Pairs and 2-tuples give the same hash values.
   HashCode hash_2null = HashValue(std::pair(nullptr, nullptr));
   EXPECT_THAT(HashValue(std::tuple(static_cast<int*>(nullptr),
                                    static_cast<double*>(nullptr))),
@@ -479,8 +479,7 @@ TEST(HashingTest, Collisions1ByteSized) {
   EXPECT_THAT(low_7bit_collisions.median, Le(2 * min_7bit_collisions));
   EXPECT_THAT(low_7bit_collisions.max, Le(4 * min_7bit_collisions));
   auto high_7bit_collisions = FindBitRangeCollisions<64 - 7, 64>(hashes);
-  EXPECT_THAT(high_7bit_collisions.median,
-              Le(2 * min_7bit_collisions));
+  EXPECT_THAT(high_7bit_collisions.median, Le(2 * min_7bit_collisions));
   EXPECT_THAT(high_7bit_collisions.max, Le(4 * min_7bit_collisions));
 }
 
@@ -501,8 +500,7 @@ TEST(HashingTest, Collisions2ByteSized) {
   EXPECT_THAT(low_7bit_collisions.median, Le(2 * min_7bit_collisions));
   EXPECT_THAT(low_7bit_collisions.max, Le(2 * min_7bit_collisions));
   auto high_7bit_collisions = FindBitRangeCollisions<64 - 7, 64>(hashes);
-  EXPECT_THAT(high_7bit_collisions.median,
-              Le(2 * min_7bit_collisions));
+  EXPECT_THAT(high_7bit_collisions.median, Le(2 * min_7bit_collisions));
   EXPECT_THAT(high_7bit_collisions.max, Le(2 * min_7bit_collisions));
 }
 
