@@ -6,14 +6,14 @@
 
 namespace Carbon::Check {
 
-auto HandleDeducedParameterList(Context& context, Parse::Node parse_node)
+auto HandleImplicitParameterList(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_node, "HandleDeducedParameterList");
+  return context.TODO(parse_node, "HandleImplicitParameterList");
 }
 
-auto HandleDeducedParameterListStart(Context& context, Parse::Node parse_node)
+auto HandleImplicitParameterListStart(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_node, "HandleDeducedParameterListStart");
+  return context.TODO(parse_node, "HandleImplicitParameterListStart");
 }
 
 auto HandleParameterList(Context& context, Parse::Node parse_node) -> bool {

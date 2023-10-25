@@ -179,10 +179,9 @@ CARBON_PARSE_STATE(CodeBlockFinish)
 //   2. PeriodAsDeclaration
 // Else:
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(DeclarationNameAndParams, None, Optional,
-                              Required)
+CARBON_PARSE_STATE_VARIANTS3(DeclarationNameAndParams, None, Optional, Required)
 
-// Handles a declaration name between the main name and deduced parameters.
+// Handles a declaration name between the main name and implicit parameters.
 //
 // For `None`, parameters aren't supported so only `Period` or `Else` paths are
 // used.
@@ -191,23 +190,23 @@ CARBON_PARSE_STATE_VARIANTS3(DeclarationNameAndParams, None, Optional,
 //   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
 //   2. PeriodAsDeclaration
 // If `OpenSquareBracket`:
-//   1. ParameterListAsDeduced
-//   2. DeclarationNameAndParamsAfterDeduced
+//   1. ParameterListAsImplicit
+//   2. DeclarationNameAndParamsAfterImplicit
 // If `OpenParen`:
 //   1. ParameterListAsRegular
 // Else:
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(DeclarationNameAndParamsAfterName, None, Optional,
-                              Required)
+                             Required)
 
 // Handles regular parameters such as `(...)` for the general declaration case.
-// Only used after deduced parameters.
+// Only used after implicit parameters.
 //
 // If `OpenParen`:
 //   1. ParameterListAsRegular
 // Else:
 //   (state done)
-CARBON_PARSE_STATE(DeclarationNameAndParamsAfterDeduced)
+CARBON_PARSE_STATE(DeclarationNameAndParamsAfterImplicit)
 
 // Handles processing of a declaration scope. Things like fn, class, interface,
 // and so on.
@@ -439,36 +438,36 @@ CARBON_PARSE_STATE(NamespaceFinish)
 //   (state done)
 CARBON_PARSE_STATE(Package)
 
-// Starts deduced parameter processing.
+// Starts implicit parameter processing.
 //
 // Always:
-//   1. PatternAs(DeducedParameter|Parameter)
-//   2. ParameterFinishAs(Deduced|Regular)
-CARBON_PARSE_STATE_VARIANTS2(Parameter, Deduced, Regular)
+//   1. PatternAs(ImplicitParameter|Parameter)
+//   2. ParameterFinishAs(Implicit|Regular)
+CARBON_PARSE_STATE_VARIANTS2(Parameter, Implicit, Regular)
 
-// Finishes deduced parameter processing, including `,`. If there are more
+// Finishes implicit parameter processing, including `,`. If there are more
 // parameters, enqueues another parameter processing state.
 //
 // If `Comma` without the list close token:
-//   1. ParameterAs(Deduced|Regular)
+//   1. ParameterAs(Implicit|Regular)
 // Else:
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParameterFinish, Deduced, Regular)
+CARBON_PARSE_STATE_VARIANTS2(ParameterFinish, Implicit, Regular)
 
 // Handles processing of a parameter list `[` or `(`.
 //
 // If the list close token:
-//   1. ParameterListFinishAs(Deduced|Regular)
+//   1. ParameterListFinishAs(Implicit|Regular)
 // Else:
-//   1. ParameterAs(Deduced|Regular)
-//   2. ParameterListFinishAs(Deduced|Regular)
-CARBON_PARSE_STATE_VARIANTS2(ParameterList, Deduced, Regular)
+//   1. ParameterAs(Implicit|Regular)
+//   2. ParameterListFinishAs(Implicit|Regular)
+CARBON_PARSE_STATE_VARIANTS2(ParameterList, Implicit, Regular)
 
 // Handles processing of a parameter list `]` or `)`.
 //
 // Always:
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParameterListFinish, Deduced, Regular)
+CARBON_PARSE_STATE_VARIANTS2(ParameterListFinish, Implicit, Regular)
 
 // Handles the processing of a `(condition)` up through the expression.
 //
@@ -524,7 +523,7 @@ CARBON_PARSE_STATE_VARIANTS2(ParenExpressionFinish, Normal, Tuple)
 //   2. PatternFinishAs(Generic|Regular)
 // Else:
 //   1. PatternFinish
-CARBON_PARSE_STATE_VARIANTS4(Pattern, DeducedParameter, Parameter, Variable, Let)
+CARBON_PARSE_STATE_VARIANTS4(Pattern, ImplicitParameter, Parameter, Variable, Let)
 
 // Handles `addr` in a pattern.
 //
