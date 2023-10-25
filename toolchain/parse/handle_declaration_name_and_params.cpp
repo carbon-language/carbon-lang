@@ -82,8 +82,8 @@ static auto HandleDeclarationNameAndParamsAfterName(Context& context,
   }
 
   if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
-    context.PushState(State::DeclarationNameAndParamsAfterDeduced);
-    context.PushState(State::ParameterListAsDeduced);
+    context.PushState(State::DeclarationNameAndParamsAfterImplicit);
+    context.PushState(State::ParameterListAsImplicit);
   } else if (context.PositionIs(Lex::TokenKind::OpenParen)) {
     context.PushState(State::ParameterListAsRegular);
   } else if (params == Params::Required) {
@@ -109,16 +109,17 @@ auto HandleDeclarationNameAndParamsAfterNameAsRequired(Context& context)
   HandleDeclarationNameAndParamsAfterName(context, Params::Required);
 }
 
-auto HandleDeclarationNameAndParamsAfterDeduced(Context& context) -> void {
+auto HandleDeclarationNameAndParamsAfterImplicit(Context& context) -> void {
   context.PopAndDiscardState();
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {
     context.PushState(State::ParameterListAsRegular);
   } else {
     CARBON_DIAGNOSTIC(
-        ParametersRequiredByDeduced, Error,
-        "A `(` for parameters is required after deduced parameters.");
-    context.emitter().Emit(*context.position(), ParametersRequiredByDeduced);
+        ParametersRequiredAfterImplicit, Error,
+        "A `(` for parameters is required after implicit parameters.");
+    context.emitter().Emit(*context.position(),
+                           ParametersRequiredAfterImplicit);
     context.ReturnErrorOnState();
   }
 }

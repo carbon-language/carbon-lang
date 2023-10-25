@@ -6,7 +6,7 @@
 
 namespace Carbon::Parse {
 
-// Handles ParameterAs(Deduced|Regular).
+// Handles ParameterAs(Implicit|Regular).
 static auto HandleParameter(Context& context, State pattern_state,
                             State finish_state) -> void {
   context.PopAndDiscardState();
@@ -15,9 +15,9 @@ static auto HandleParameter(Context& context, State pattern_state,
   context.PushState(pattern_state);
 }
 
-auto HandleParameterAsDeduced(Context& context) -> void {
-  HandleParameter(context, State::PatternAsDeducedParameter,
-                  State::ParameterFinishAsDeduced);
+auto HandleParameterAsImplicit(Context& context) -> void {
+  HandleParameter(context, State::PatternAsImplicitParameter,
+                  State::ParameterFinishAsImplicit);
 }
 
 auto HandleParameterAsRegular(Context& context) -> void {
@@ -25,7 +25,7 @@ auto HandleParameterAsRegular(Context& context) -> void {
                   State::ParameterFinishAsRegular);
 }
 
-// Handles ParameterFinishAs(Deduced|Regular).
+// Handles ParameterFinishAs(Implicit|Regular).
 static auto HandleParameterFinish(Context& context, Lex::TokenKind close_token,
                                   State param_state) -> void {
   auto state = context.PopState();
@@ -41,9 +41,9 @@ static auto HandleParameterFinish(Context& context, Lex::TokenKind close_token,
   }
 }
 
-auto HandleParameterFinishAsDeduced(Context& context) -> void {
+auto HandleParameterFinishAsImplicit(Context& context) -> void {
   HandleParameterFinish(context, Lex::TokenKind::CloseSquareBracket,
-                        State::ParameterAsDeduced);
+                        State::ParameterAsImplicit);
 }
 
 auto HandleParameterFinishAsRegular(Context& context) -> void {
@@ -51,7 +51,7 @@ auto HandleParameterFinishAsRegular(Context& context) -> void {
                         State::ParameterAsRegular);
 }
 
-// Handles ParameterListAs(Deduced|Regular).
+// Handles ParameterListAs(Implicit|Regular).
 static auto HandleParameterList(Context& context, NodeKind parse_node_kind,
                                 Lex::TokenKind open_token_kind,
                                 Lex::TokenKind close_token_kind,
@@ -66,11 +66,11 @@ static auto HandleParameterList(Context& context, NodeKind parse_node_kind,
   }
 }
 
-auto HandleParameterListAsDeduced(Context& context) -> void {
+auto HandleParameterListAsImplicit(Context& context) -> void {
   HandleParameterList(
-      context, NodeKind::DeducedParameterListStart,
+      context, NodeKind::ImplicitParameterListStart,
       Lex::TokenKind::OpenSquareBracket, Lex::TokenKind::CloseSquareBracket,
-      State::ParameterAsDeduced, State::ParameterListFinishAsDeduced);
+      State::ParameterAsImplicit, State::ParameterListFinishAsImplicit);
 }
 
 auto HandleParameterListAsRegular(Context& context) -> void {
@@ -80,7 +80,7 @@ auto HandleParameterListAsRegular(Context& context) -> void {
                       State::ParameterListFinishAsRegular);
 }
 
-// Handles ParameterListFinishAs(Deduced|Regular).
+// Handles ParameterListFinishAs(Implicit|Regular).
 static auto HandleParameterListFinish(Context& context,
                                       NodeKind parse_node_kind,
                                       Lex::TokenKind token_kind) -> void {
@@ -90,8 +90,8 @@ static auto HandleParameterListFinish(Context& context,
                   state.subtree_start, state.has_error);
 }
 
-auto HandleParameterListFinishAsDeduced(Context& context) -> void {
-  HandleParameterListFinish(context, NodeKind::DeducedParameterList,
+auto HandleParameterListFinishAsImplicit(Context& context) -> void {
+  HandleParameterListFinish(context, NodeKind::ImplicitParameterList,
                             Lex::TokenKind::CloseSquareBracket);
 }
 

@@ -100,8 +100,8 @@ CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationSemi)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationSemiOrDefinition)
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
+CARBON_DIAGNOSTIC_KIND(ParametersRequiredAfterImplicit)
 CARBON_DIAGNOSTIC_KIND(ParametersRequiredByIntroducer)
-CARBON_DIAGNOSTIC_KIND(ParametersRequiredByDeduced)
 
 // ============================================================================
 // Semantics diagnostics
