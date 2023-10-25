@@ -225,6 +225,13 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
           GetType(array_type.element_type_id),
           sem_ir_->GetArrayBoundValue(array_type.bound_id));
     }
+    case SemIR::ClassType::Kind: {
+      auto object_representation_id =
+          sem_ir_->classes()
+              .Get(node.As<SemIR::ClassType>().class_id)
+              .object_representation_id;
+      return GetType(object_representation_id);
+    }
     case SemIR::ConstType::Kind:
       return GetType(node.As<SemIR::ConstType>().inner_id);
     case SemIR::PointerType::Kind:
@@ -257,6 +264,10 @@ auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
         subtypes.push_back(GetType(element_id));
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
+    }
+    case SemIR::UnboundFieldType::Kind: {
+      // Return an empty struct as a placeholder.
+      return llvm::StructType::get(*llvm_context_);
     }
     default: {
       CARBON_FATAL() << "Cannot use node as type: " << node_id << " " << node;

@@ -24,6 +24,7 @@ fn T.F() {}
 // CHECK:STDOUT: file "fail_member_of_let.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc9: type = struct_type {}
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", %Class
 // CHECK:STDOUT:   %T: type = bind_name "T", %Class.ref
 // CHECK:STDOUT:   %.loc22: <function> = fn_decl @.1

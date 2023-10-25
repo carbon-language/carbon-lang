@@ -92,9 +92,17 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
                     "Class was forward declared here.");
+  CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                    "Class is incomplete within its definition.");
   const auto& class_info = classes().Get(class_id);
-  builder.Note(nodes().Get(class_info.declaration_id).parse_node(),
-               ClassForwardDeclaredHere);
+  CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
+  if (class_info.definition_id.is_valid()) {
+    builder.Note(nodes().Get(class_info.definition_id).parse_node(),
+                 ClassIncompleteWithinDefinition);
+  } else {
+    builder.Note(nodes().Get(class_info.declaration_id).parse_node(),
+                 ClassForwardDeclaredHere);
+  }
 }
 
 auto Context::AddNameToLookup(Parse::Node name_node, StringId name_id,
@@ -410,15 +418,20 @@ class TypeCompleter {
         }
         break;
 
-      case SemIR::ClassType::Kind:
-        // TODO: Support class definitions and complete class types.
-        if (diagnoser_) {
-          auto builder = (*diagnoser_)();
-          context_.NoteIncompleteClass(
-              type_node.As<SemIR::ClassType>().class_id, builder);
-          builder.Emit();
+      case SemIR::ClassType::Kind: {
+        auto class_type = type_node.As<SemIR::ClassType>();
+        auto& class_info = context_.classes().Get(class_type.class_id);
+        if (!class_info.is_defined()) {
+          if (diagnoser_) {
+            auto builder = (*diagnoser_)();
+            context_.NoteIncompleteClass(class_type.class_id, builder);
+            builder.Emit();
+          }
+          return false;
         }
-        return false;
+        Push(class_info.object_representation_id);
+        break;
+      }
 
       case SemIR::ConstType::Kind:
         Push(type_node.As<SemIR::ConstType>().inner_id);
@@ -659,8 +672,14 @@ class TypeCompleter {
                                                  node.As<SemIR::TupleType>());
 
       case SemIR::ClassType::Kind:
-        // TODO: Support class definitions and complete class types.
-        CARBON_FATAL() << "Class types are currently never complete";
+        // The value representation for a class is a pointer to the object
+        // representation.
+        // TODO: Support customized value representations for classes.
+        // TODO: Pick a better value representation when possible.
+        return MakePointerRepresentation(
+            node.parse_node(), context_.classes()
+                                   .Get(node.As<SemIR::ClassType>().class_id)
+                                   .object_representation_id);
 
       case SemIR::Builtin::Kind:
         CARBON_FATAL() << "Builtins should be named as cross-references";
