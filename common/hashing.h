@@ -159,7 +159,11 @@ inline auto HashValue(const T& value) -> HashCode;
 // Another important note is that types only need to include the data that would
 // lead to an object comparing equal or not-equal to some other object,
 // including objects of other types if a type supports heterogeneous equality
-// comparison.
+// comparison. Note that only truly transparent types can be used
+// heterogeneously with this hash function such as strings and string views, or
+// vectors and array refs. A notable counter example are signed integers -- in
+// order to make hashing of them efficient the hash will be different for
+// different bit-widths, preventing heterogeneous lookup along that axis.
 //
 // To illustrate this -- if a type has some fixed amount of data, maybe 32
 // 4-byte integers, and equality comparison only operates on the *values* of
@@ -180,47 +184,56 @@ class Hasher {
   // Extracts the current state as a `HashCode` for use.
   explicit operator HashCode() const { return HashCode(buffer); }
 
-  // Convenience method to hash an object by its object representation when that
-  // is known to be valid. This is primarily useful for builtin and primitive
-  // types.
+  // Incorporates an object into the `hasher`s state by hashing its object
+  // representation, and returns the updated `hasher`. Requires `value`'s type
+  // to have a unique object representation. This is primarily useful for
+  // builtin and primitive types.
   //
   // This can be directly used for simple users combining some aggregation of
-  // objects. However, when possible, prefer the tuple version below for
+  // objects. However, when possible, prefer the variadic version below for
   // aggregating several primitive types into a hash.
   template <typename T, typename = std::enable_if_t<
                             std::has_unique_object_representations_v<T>>>
   static auto Hash(Hasher hasher, const T& value) -> Hasher;
 
-  // Convenience method to hash a variable number of objects whose object
-  // representation when that is known to be valid. This is primarily useful for
-  // for builtin and primitive type objects.
+  // Incorporates a variable number of objects into the `hasher`s state in a
+  // similar manner to applying the above function to each one in series. It has
+  // the same requirements as the above function fer each `value`. And it
+  // returns the updated `hasher`.
   //
   // There is no guaranteed correspondence between the behavior of a single call
   // with multiple parameters and multiple calls. This routine is also optimized
   // for handling relatively small numbers of objects. For hashing large
   // aggregations, consider some Merkle-tree decomposition or arranging for a
-  // byte buffer that can be hashed as a single buffer.
+  // byte buffer that can be hashed as a single buffer. However, hashing large
+  // aggregations of data in this way is rarely results in effectively
+  // high-performance hash table data structures and so should generally be
+  // avoided.
   template <typename... Ts,
             typename = std::enable_if_t<
                 (... && std::has_unique_object_representations_v<Ts>)>>
   static auto Hash(Hasher hasher, const Ts&... value) -> Hasher;
 
-  // The simplest three more primitive APIs to use when incorporating state. The
-  // first two incorporate one or two unsized components of state represented as
-  // a collection of 64 bits.
+  // Simpler and more primitive functions to incorporate state represented in
+  // `uint64_t` values into the `hasher` state. The updated `hasher` is
+  // returned.
   static auto HashOne(Hasher hasher, uint64_t data) -> Hasher;
   static auto HashTwo(Hasher hasher, uint64_t data0, uint64_t data1) -> Hasher;
 
-  // This is a heavily optimized routine for incorporating a dynamically sized
-  // sequence of bytes into the state. It has carefully structured inline code
-  // paths for short byte sequences and a reasonably high bandwidth code path
-  // for longer sequences. The size of the byte sequence is always incorporated
-  // into the hash.
-  static auto HashSizedBytes(Hasher hash, llvm::ArrayRef<std::byte> bytes)
+  // A heavily optimized routine for incorporating a dynamically sized sequence
+  // of bytes into `hasher`s state. The updated state is returned.
+  // 
+  // This routine has carefully structured inline code paths for short byte
+  // sequences and a reasonably high bandwidth code path for longer sequences.
+  // The size of the byte sequence is always incorporated into the hasher's
+  // state along with the contents.
+  static auto HashSizedBytes(Hasher hasher, llvm::ArrayRef<std::byte> bytes)
       -> Hasher;
 
-  // Read fixed-sized data efficiently into one or two 64-bit values.
-  // The size of the byte sequence is not incorporated into the output.
+  // Read data of various sizes efficiently into one or two 64-bit values. These
+  // pointers need-not be aligned, and can alias other objects. The
+  // representation of the read data in the `uint64_t` returned is not stable or
+  // guaranteed.
   static auto Read1(const std::byte* data) -> uint64_t;
   static auto Read2(const std::byte* data) -> uint64_t;
   static auto Read4(const std::byte* data) -> uint64_t;
@@ -230,10 +243,9 @@ class Hasher {
   static auto Read8To16(const std::byte* data, ssize_t size)
       -> std::pair<uint64_t, uint64_t>;
 
-  // A routine that reads the underlying object representation of a type into a
-  // 64-bit integer efficiently. Only supports types with unique object
-  // representation and at most 8-bytes large. This is typically used to read
-  // primitive types.
+  // Reads the underlying object representation of a type into a 64-bit integer
+  // efficiently. Only supports types with unique object representation and at
+  // most 8-bytes large. This is typically used to read primitive types.
   template <typename T,
             typename = std::enable_if_t<
                 std::has_unique_object_representations_v<T> && sizeof(T) <= 8>>
@@ -259,8 +271,9 @@ class Hasher {
   // Another consequence of the particular implementation is that it is useful
   // to have a reasonable distribution of bits throughout both sides of the
   // multiplication. However, it is not *necessary* as we do capture the
-  // complete 128-bit result. Where reasonable, we XOR random data into operands
-  // here to try and increase the distribution of bits feeding the multiply.
+  // complete 128-bit result. Where reasonable, the caller should XOR random
+  // data into operands before calling `Mix` to try and increase the
+  // distribution of bits feeding the multiply.
   static auto Mix(uint64_t lhs, uint64_t rhs) -> uint64_t;
 
   // We have a 64-byte random data pool designed to fit on a single cache line.
@@ -323,6 +336,9 @@ class Hasher {
   uint64_t buffer;
 };
 
+// A dedicated namespace for `CarbonHash` overloads that are not found by ADL
+// with their associated types. For example, primitive type overloads or
+// overloads for types in LLVM's libraries.
 namespace Detail {
 
 inline auto CarbonHash(Hasher hasher, llvm::ArrayRef<std::byte> bytes) -> Hasher {
@@ -359,28 +375,14 @@ static_assert(std::has_unique_object_representations_v<int32_t>);
 static_assert(std::has_unique_object_representations_v<int64_t>);
 static_assert(std::has_unique_object_representations_v<void*>);
 
-// C++ uses `std::nullptr_t` but doesn't make it have a unique object
-// representation infuriatingly. Turn it back into a real pointer to fix this.
-// This is quite tricky to do in C++. For example, one might think to *just* use
-// the type function below, but that won't work because we'll still at some
-// point need to convert to a `const void*` value in generic code, and there is
-// a *lot* of generic code below this dispatch level. One might then think,
-// fine, *just* use the function that actually maps the value, but that's
-// difficult because it needs to pass along a `const &` in one specialization,
-// but *can't* pass it along on the other because then it would return a `const
-// &` to a local: converting from a `nullptr` to a `const void*` creates a
-// temporary pointer.
-template <typename T>
-struct MapNullPtrTToVoidPtrImpl {
-  using Type = T;
-};
-template <>
-struct MapNullPtrTToVoidPtrImpl<std::nullptr_t> {
-  using Type = const void*;
-};
-template <typename T>
-using MapNullPtrTToVoidPtr = typename MapNullPtrTToVoidPtrImpl<T>::Type;
-
+// C++ uses `std::nullptr_t` but unfortunately doesn't make it have a unique
+// object representation. To address that, we need a function that converts
+// `nullptr` back into a `void*` that will have a unique object representation.
+// And this needs to be done by-value as we need to build a temporary object to
+// return, which requires a separate overload rather than just using a type
+// function that could be used in parallel in the predicate below. Instead, we
+// build the predicate independently of the mapping overload, but together they
+// should produce the correct result.
 template <typename T>
 inline auto MapNullPtrToVoidPtr(const T& value) -> const T& {
   // This overload should never be selected for `std::nullptr_t`, so
@@ -388,16 +390,16 @@ inline auto MapNullPtrToVoidPtr(const T& value) -> const T& {
   static_assert(!std::is_same_v<T, std::nullptr_t>);
   return value;
 }
-
-// Overload to map `nullptr` values to actual pointer values that are null. This
-// includes returning by-value as the new pointer value will be a temporary.
 inline auto MapNullPtrToVoidPtr(std::nullptr_t /*value*/) -> const void* {
   return nullptr;
 }
 
+// Predicate to be used in conjunction with a `nullptr` mapping routine like the
+// above.
 template <typename T>
 constexpr bool NullPtrOrHasUniqueObjectRepresentations =
-    std::has_unique_object_representations_v<MapNullPtrTToVoidPtr<T>>;
+    std::is_same_v<T, std::nullptr_t> ||
+    std::has_unique_object_representations_v<T>;
 
 template <typename T, typename = std::enable_if_t<
                           NullPtrOrHasUniqueObjectRepresentations<T>>>
@@ -512,8 +514,7 @@ inline auto Hasher::Mix(uint64_t lhs, uint64_t rhs) -> uint64_t {
   // language extension.
   using U128 = unsigned _BitInt(128);
   U128 result = static_cast<U128>(lhs) * static_cast<U128>(rhs);
-  return static_cast<uint64_t>(result & ~static_cast<uint64_t>(0)) ^
-         static_cast<uint64_t>(result >> 64);
+  return static_cast<uint64_t>(result) ^ static_cast<uint64_t>(result >> 64);
 }
 
 inline auto Hasher::HashOne(Hasher hasher, uint64_t data) -> Hasher {
