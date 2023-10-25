@@ -33,26 +33,24 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
-      bool is_field = context.parse_tree().node_kind(
-                          context.node_stack().PeekParseNode(1)) ==
-                      Parse::NodeKind::ClassDefinitionStart;
+      auto enclosing_class_decl =
+          context.GetCurrentScopeAs<SemIR::ClassDeclaration>();
       if (!context.TryToCompleteType(cast_type_id, [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDeclaration, Error,
                               "{0} has incomplete type `{1}`.", llvm::StringRef,
                               std::string);
             return context.emitter().Build(
                 type_node_copy, IncompleteTypeInVarDeclaration,
-                is_field ? "Field" : "Variable",
+                enclosing_class_decl ? "Field" : "Variable",
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
       SemIR::NodeId value_id = SemIR::NodeId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
-      if (is_field) {
-        auto class_id =
-            context.node_stack().Peek<Parse::NodeKind::ClassDefinitionStart>(1);
-        auto& class_info = context.classes().Get(class_id);
+      if (enclosing_class_decl) {
+        auto& class_info =
+            context.classes().Get(enclosing_class_decl->class_id);
         auto field_type_node_id = context.AddNode(SemIR::UnboundFieldType{
             parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_info.self_type_id, cast_type_id});

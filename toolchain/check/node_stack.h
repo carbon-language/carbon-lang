@@ -142,35 +142,33 @@ class NodeStack {
 
   // Peeks at the parse_node of the given depth in the stack, or by default the
   // top node.
-  auto PeekParseNode(int depth = 0) -> Parse::Node {
-    return stack_[stack_.size() - depth - 1].parse_node;
-  }
+  auto PeekParseNode() -> Parse::Node { return stack_.back().parse_node; }
 
   // Peeks at the ID of node at the given depth in the stack, or by default the
   // top node.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
-  auto Peek(int depth = 0) -> auto {
-    Entry entry = stack_[stack_.size() - depth - 1];
-    RequireParseKind<RequiredParseKind>(entry.parse_node);
+  auto Peek() -> auto {
+    Entry back = stack_.back();
+    RequireParseKind<RequiredParseKind>(back.parse_node);
     constexpr IdKind RequiredIdKind =
         ParseNodeKindToIdKind(Parse::NodeKind::Create(RequiredParseKind));
     if constexpr (RequiredIdKind == IdKind::NodeId) {
-      return entry.id<SemIR::NodeId>();
+      return back.id<SemIR::NodeId>();
     }
     if constexpr (RequiredIdKind == IdKind::NodeBlockId) {
-      return entry.id<SemIR::NodeBlockId>();
+      return back.id<SemIR::NodeBlockId>();
     }
     if constexpr (RequiredIdKind == IdKind::FunctionId) {
-      return entry.id<SemIR::FunctionId>();
+      return back.id<SemIR::FunctionId>();
     }
     if constexpr (RequiredIdKind == IdKind::ClassId) {
-      return entry.id<SemIR::ClassId>();
+      return back.id<SemIR::ClassId>();
     }
     if constexpr (RequiredIdKind == IdKind::StringId) {
-      return entry.id<StringId>();
+      return back.id<StringId>();
     }
     if constexpr (RequiredIdKind == IdKind::TypeId) {
-      return entry.id<SemIR::TypeId>();
+      return back.id<SemIR::TypeId>();
     }
     CARBON_FATAL() << "Unpeekable IdKind for parse kind: "
                    << Parse::NodeKind::Create(RequiredParseKind)

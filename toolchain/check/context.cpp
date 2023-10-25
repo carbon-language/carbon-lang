@@ -136,8 +136,10 @@ auto Context::LookupName(Parse::Node parse_node, StringId name_id,
   }
 }
 
-auto Context::PushScope(SemIR::NameScopeId scope_id) -> void {
-  scope_stack_.push_back({.scope_id = scope_id});
+auto Context::PushScope(SemIR::NodeId scope_node_id,
+                        SemIR::NameScopeId scope_id) -> void {
+  scope_stack_.push_back(
+      {.scope_node_id = scope_node_id, .scope_id = scope_id});
 }
 
 auto Context::PopScope() -> void {
