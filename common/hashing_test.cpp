@@ -7,7 +7,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <cstddef>
 #include <type_traits>
 
 #include "llvm/ADT/Sequence.h"
@@ -37,9 +36,9 @@ TEST(HashingTest, Integers) {
       EXPECT_THAT(hash, Ne(hash_zero));
     }
 
-    // We shouldn't include the exact integer type used so that implicit
-    // conversions don't shift the hash for non-negative integers, making all of
-    // these match.
+    // Make sure all the different integer sizes hash. Note that while these
+    // *happen* to be equal for positive integers, there is no particular
+    // guarantee of that and negative integers have distinct hashes.
     EXPECT_THAT(HashValue(static_cast<int8_t>(i)), Eq(hash));
     EXPECT_THAT(HashValue(static_cast<uint8_t>(i)), Eq(hash));
     EXPECT_THAT(HashValue(static_cast<int16_t>(i)), Eq(hash));
@@ -57,6 +56,10 @@ TEST(HashingTest, Integers) {
     // size -- doing so would force sign extensions that are often expensive.
     // Instead, we can check that the exact 2s compliment form at the bit-width
     // of the signed integer is used.
+    //
+    // The specific value expected here is an implementation detail that can be
+    // freely changed, but the fact that negative integers do hash remains
+    // important.
     EXPECT_THAT(HashValue(static_cast<int8_t>(i)),
                 Eq(HashValue(static_cast<uint8_t>(static_cast<int8_t>(i)))));
     EXPECT_THAT(HashValue(static_cast<int16_t>(i)),
