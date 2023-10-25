@@ -47,7 +47,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", package.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference "field", @Class.%field
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
