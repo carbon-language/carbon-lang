@@ -7,11 +7,17 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-namespace Carbon {
+#include "testing/base/test_raw_ostream.h"
+#include "toolchain/testing/yaml_test_helpers.h"
+
+namespace Carbon::Testing {
 namespace {
 
+using ::testing::ElementsAre;
 using ::testing::Eq;
+using ::testing::IsEmpty;
 using ::testing::Not;
+using ::testing::Pair;
 
 TEST(ValueStore, Integer) {
   SharedValueStores value_stores;
@@ -72,5 +78,39 @@ TEST(ValueStore, String) {
   EXPECT_THAT(value_stores.strings().Add(b), Eq(b_id));
 }
 
+auto MatchSharedValues(testing::Matcher<Yaml::SequenceValue> integers,
+                       testing::Matcher<Yaml::SequenceValue> reals,
+                       testing::Matcher<Yaml::SequenceValue> strings) -> auto {
+  return Yaml::IsYaml(Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(Pair(
+      "shared_values", Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(
+                           Pair("integers", Yaml::Sequence(integers)),
+                           Pair("reals", Yaml::Sequence(reals)),
+                           Pair("strings", Yaml::Sequence(strings))))))))))));
+}
+
+TEST(ValueStore, PrintEmpty) {
+  SharedValueStores value_stores;
+  TestRawOstream out;
+  value_stores.Print(out);
+  EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
+              MatchSharedValues(IsEmpty(), IsEmpty(), IsEmpty()));
+}
+
+TEST(ValueStore, PrintVals) {
+  SharedValueStores value_stores;
+  llvm::APInt apint(64, 8, /*isSigned=*/true);
+  value_stores.integers().Add(apint);
+  value_stores.reals().Add(
+      Real{.mantissa = apint, .exponent = apint, .is_decimal = true});
+  value_stores.strings().Add("foo'\"baz");
+  TestRawOstream out;
+  value_stores.Print(out);
+
+  EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
+              MatchSharedValues(ElementsAre(Yaml::Scalar("8")),
+                                ElementsAre(Yaml::Scalar("8*10^8")),
+                                ElementsAre(Yaml::Scalar("foo'\"baz"))));
+}
+
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Testing
