@@ -25,10 +25,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F(ptr %c) {
 // CHECK:STDOUT:   %b = getelementptr inbounds { i32, ptr }, ptr %c, i32 0, i32 1
-// CHECK:STDOUT:   %b.load = load ptr, ptr %b, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { i32, ptr }, ptr %b.load, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %a, align 4
-// CHECK:STDOUT:   ret i32 %1
+// CHECK:STDOUT:   %1 = load ptr, ptr %b, align 8
+// CHECK:STDOUT:   %a = getelementptr inbounds { i32, ptr }, ptr %1, i32 0, i32 0
+// CHECK:STDOUT:   %2 = load i32, ptr %a, align 4
+// CHECK:STDOUT:   ret i32 %2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() {

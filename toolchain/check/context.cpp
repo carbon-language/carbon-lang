@@ -478,18 +478,26 @@ class TypeCompleter {
 
   // Makes a value representation that uses pass-by-copy, copying the given
   // type.
-  auto MakeCopyRepresentation(SemIR::TypeId rep_id) const
+  auto MakeCopyRepresentation(
+      SemIR::TypeId rep_id,
+      SemIR::ValueRepresentation::AggregateKind aggregate_kind =
+          SemIR::ValueRepresentation::NotAggregate) const
       -> SemIR::ValueRepresentation {
-    return {.kind = SemIR::ValueRepresentation::Copy, .type_id = rep_id};
+    return {.kind = SemIR::ValueRepresentation::Copy,
+            .aggregate_kind = aggregate_kind,
+            .type_id = rep_id};
   }
 
   // Makes a value representation that uses pass-by-address with the given
   // pointee type.
-  auto MakePointerRepresentation(Parse::Node parse_node,
-                                 SemIR::TypeId pointee_id) const
+  auto MakePointerRepresentation(
+      Parse::Node parse_node, SemIR::TypeId pointee_id,
+      SemIR::ValueRepresentation::AggregateKind aggregate_kind =
+          SemIR::ValueRepresentation::NotAggregate) const
       -> SemIR::ValueRepresentation {
     // TODO: Should we add `const` qualification to `pointee_id`?
     return {.kind = SemIR::ValueRepresentation::Pointer,
+            .aggregate_kind = aggregate_kind,
             .type_id = context_.GetPointerType(parse_node, pointee_id)};
   }
 
@@ -541,10 +549,33 @@ class TypeCompleter {
     llvm_unreachable("All builtin kinds were handled above");
   }
 
+  auto BuildStructOrTupleValueRepresentation(Parse::Node parse_node,
+                                             std::size_t num_elements,
+                                             SemIR::TypeId elementwise_rep,
+                                             bool same_as_object_rep) const
+      -> SemIR::ValueRepresentation {
+    SemIR::ValueRepresentation::AggregateKind aggregate_kind =
+        same_as_object_rep ? SemIR::ValueRepresentation::ValueAndObjectAggregate
+                           : SemIR::ValueRepresentation::ValueAggregate;
+
+    if (num_elements == 1) {
+      // The value representation for a struct or tuple with a single element
+      // is a struct or tuple containing the value representation of the
+      // element.
+      // TODO: Consider doing the same whenever `elementwise_rep` is
+      // sufficiently small.
+      return MakeCopyRepresentation(elementwise_rep, aggregate_kind);
+    }
+    // For a struct or tuple with multiple fields, we use a pointer
+    // to the elementwise value representation.
+    return MakePointerRepresentation(parse_node, elementwise_rep,
+                                     aggregate_kind);
+  }
+
   auto BuildStructTypeValueRepresentation(SemIR::TypeId type_id,
                                           SemIR::StructType struct_type) const
       -> SemIR::ValueRepresentation {
-    // TODO: Share code with tuples.
+    // TODO: Share more code with tuples.
     auto fields = context_.node_blocks().Get(struct_type.fields_id);
     if (fields.empty()) {
       return MakeEmptyRepresentation(struct_type.parse_node);
@@ -571,21 +602,14 @@ class TypeCompleter {
                          : context_.CanonicalizeStructType(
                                struct_type.parse_node,
                                context_.node_blocks().Add(value_rep_fields));
-    if (fields.size() == 1) {
-      // The value representation for a struct with a single field is a
-      // struct containing the value representation of the field.
-      // TODO: Consider doing the same for structs with multiple small
-      // fields.
-      return MakeCopyRepresentation(value_rep);
-    }
-    // For a struct with multiple fields, we use a pointer representation.
-    return MakePointerRepresentation(struct_type.parse_node, value_rep);
+    return BuildStructOrTupleValueRepresentation(
+        struct_type.parse_node, fields.size(), value_rep, same_as_object_rep);
   }
 
   auto BuildTupleTypeValueRepresentation(SemIR::TypeId type_id,
                                          SemIR::TupleType tuple_type) const
       -> SemIR::ValueRepresentation {
-    // TODO: Share code with structs.
+    // TODO: Share more code with structs.
     auto elements = context_.type_blocks().Get(tuple_type.elements_id);
     if (elements.empty()) {
       return MakeEmptyRepresentation(tuple_type.parse_node);
@@ -608,15 +632,8 @@ class TypeCompleter {
                          ? type_id
                          : context_.CanonicalizeTupleType(tuple_type.parse_node,
                                                           value_rep_elements);
-    if (elements.size() == 1) {
-      // The value representation for a tuple with a single element is a
-      // tuple containing the value representation of that element.
-      // TODO: Consider doing the same for tuples with multiple small
-      // elements.
-      return MakeCopyRepresentation(value_rep);
-    }
-    // For a tuple with multiple elements, we use a pointer representation.
-    return MakePointerRepresentation(tuple_type.parse_node, value_rep);
+    return BuildStructOrTupleValueRepresentation(
+        tuple_type.parse_node, elements.size(), value_rep, same_as_object_rep);
   }
 
   // Builds and returns the value representation for the given type. All nested
@@ -685,7 +702,9 @@ class TypeCompleter {
         // For arrays, it's convenient to always use a pointer representation,
         // even when the array has zero or one element, in order to support
         // indexing.
-        return MakePointerRepresentation(node.parse_node(), type_id);
+        return MakePointerRepresentation(
+            node.parse_node(), type_id,
+            SemIR::ValueRepresentation::ObjectAggregate);
       }
 
       case SemIR::StructType::Kind:
@@ -702,9 +721,11 @@ class TypeCompleter {
         // TODO: Support customized value representations for classes.
         // TODO: Pick a better value representation when possible.
         return MakePointerRepresentation(
-            node.parse_node(), context_.classes()
-                                   .Get(node.As<SemIR::ClassType>().class_id)
-                                   .object_representation_id);
+            node.parse_node(),
+            context_.classes()
+                .Get(node.As<SemIR::ClassType>().class_id)
+                .object_representation_id,
+            SemIR::ValueRepresentation::ObjectAggregate);
 
       case SemIR::Builtin::Kind:
         CARBON_FATAL() << "Builtins should be named as cross-references";

@@ -444,6 +444,10 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
 auto GetExpressionCategory(const File& file, NodeId node_id)
     -> ExpressionCategory {
   const File* ir = &file;
+
+  // The overall expression category if the current node is a value expression.
+  ExpressionCategory value_category = ExpressionCategory::Value;
+
   while (true) {
     auto node = ir->nodes().Get(node_id);
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
@@ -494,13 +498,13 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case TupleType::Kind:
       case UnaryOperatorNot::Kind:
       case UnboundFieldType::Kind:
-        return ExpressionCategory::Value;
+        return value_category;
 
       case Builtin::Kind: {
         if (node.As<Builtin>().builtin_kind == BuiltinKind::Error) {
           return ExpressionCategory::Error;
         }
-        return ExpressionCategory::Value;
+        return value_category;
       }
 
       case BindName::Kind: {
@@ -515,6 +519,10 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
 
       case ClassFieldAccess::Kind: {
         node_id = node.As<ClassFieldAccess>().base_id;
+        // A value of class type is a pointer to an object representation.
+        // Therefore, if the base is a value, the result is an ephemeral
+        // reference.
+        value_category = ExpressionCategory::EphemeralReference;
         continue;
       }
 
