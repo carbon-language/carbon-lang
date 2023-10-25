@@ -6,15 +6,15 @@
 
 namespace Carbon::Check {
 
-auto HandleFileStart(Context& context, Parse::Node parse_node) -> bool {
-  // Push the file as a sentinel so that it's always safe to peek at the
-  // enclosing node on the node stack to determine what context we're in.
-  context.node_stack().Push(parse_node);
+auto HandleFileStart(Context& /*context*/, Parse::Node /*parse_node*/) -> bool {
+  // No action to perform.
+  // TODO: We may want to push `FileStart` as a sentinel so that `Peek`s can't
+  // fail.
   return true;
 }
 
-auto HandleFileEnd(Context& context, Parse::Node /*parse_node*/) -> bool {
-  context.node_stack().PopForSoloParseNode<Parse::NodeKind::FileStart>();
+auto HandleFileEnd(Context& /*context*/, Parse::Node /*parse_node*/) -> bool {
+  // No action to perform.
   return true;
 }
 

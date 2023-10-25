@@ -293,7 +293,6 @@ class NodeStack {
       case Parse::NodeKind::ArrayExpressionSemi:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
-      case Parse::NodeKind::FileStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::LetIntroducer:
