@@ -131,18 +131,18 @@ struct ValueRepresentation : public Printable<ValueRepresentation> {
     ValueAndObjectAggregate,
   };
 
+  // Returns whether this is an aggregate that holds its elements by value.
+  auto elements_are_values() const {
+    return aggregate_kind == ValueAggregate ||
+           aggregate_kind == ValueAndObjectAggregate;
+  }
+
   // The kind of value representation used by this type.
   Kind kind = Unknown;
   // The kind of aggregate representation used by this type.
   AggregateKind aggregate_kind = AggregateKind::NotAggregate;
   // The type used to model the value representation.
   TypeId type_id = TypeId::Invalid;
-
-  // Returns whether this is an aggregate that holds its elements by value.
-  auto elements_are_values() const {
-    return aggregate_kind == ValueAggregate ||
-           aggregate_kind == ValueAndObjectAggregate;
-  }
 };
 
 // Information stored about a TypeId.
