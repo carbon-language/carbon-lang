@@ -59,7 +59,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
   auto base_type_id = context.nodes().Get(base_id).type_id();
   if (!context.TryToCompleteType(base_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
-                          "Base of member access has incomplete type `{0}`.",
+                          "Member access into object of incomplete type `{0}`.",
                           std::string);
         return context.emitter().Build(
             context.nodes().Get(base_id).parse_node(),
