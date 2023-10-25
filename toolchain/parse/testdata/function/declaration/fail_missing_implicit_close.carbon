@@ -5,18 +5,18 @@
 // AUTOUPDATE
 
 // Fix and uncomment this to test error handling.
-// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+6]]:7: ERROR: Closing symbol does not match most recent opening symbol.
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+6]]:7: ERROR: Closing symbol does not match most recent opening symbol.
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:       ^
-// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+3]]:8: ERROR: Expected parameter declaration.
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+3]]:8: ERROR: Expected parameter declaration.
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:        ^
 fn Div[();
 
-// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+15]]:21: ERROR: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+15]]:21: ERROR: A `(` for parameters is required after implicit parameters.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
-// CHECK:STDOUT: - filename: fail_missing_deduced_close.carbon
+// CHECK:STDOUT: - filename: fail_missing_implicit_close.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
