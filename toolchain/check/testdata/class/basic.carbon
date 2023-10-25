@@ -54,7 +54,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", package.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", @Class.%F
 // CHECK:STDOUT:   %.loc22_18: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc22_17.1: init i32 = call %F.ref(%.loc22_18)

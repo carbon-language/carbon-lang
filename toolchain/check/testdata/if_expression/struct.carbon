@@ -32,7 +32,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc10_46.5: init i32 = initialize_from %.loc10_45 to %.loc10_46.4
 // CHECK:STDOUT:   %.loc10_46.6: init {.a: i32, .b: i32} = struct_init %.loc10_46.1, (%.loc10_46.3, %.loc10_46.5)
 // CHECK:STDOUT:   assign %a, %.loc10_46.6
-// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", file.%G
 // CHECK:STDOUT:   %cond.ref: bool = name_reference "cond", %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
