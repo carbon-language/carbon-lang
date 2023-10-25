@@ -28,6 +28,7 @@ cc_library(
     hdrs = ["value_store.h"],
     deps = [
         ":index_base",
+        ":yaml",
         "//common:check",
         "//common:ostream",
         "@llvm-project//llvm:Support",
@@ -44,5 +45,15 @@ cc_test(
         "//testing/base:test_raw_ostream",
         "//toolchain/testing:yaml_test_helpers",
         "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "yaml",
+    hdrs = ["yaml.h"],
+    deps = [
+        "//common:check",
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
     ],
 )

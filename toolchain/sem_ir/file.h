@@ -10,6 +10,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/node.h"
 #include "toolchain/sem_ir/value_stores.h"
 
@@ -174,11 +175,11 @@ class File : public Printable<File> {
   // TODO: In the future, the things to print may change, for example by adding
   // preludes. We may then want the ability to omit other things similar to
   // builtins.
-  auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
-
-  auto Print(llvm::raw_ostream& out) const -> void {
-    Print(out, /*include_builtins=*/false);
+  auto Print(llvm::raw_ostream& out, bool include_builtins = false) const
+      -> void {
+    Yaml::Print(out, OutputYaml(include_builtins));
   }
+  auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
 
   // Returns array bound value from the bound node.
   auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {

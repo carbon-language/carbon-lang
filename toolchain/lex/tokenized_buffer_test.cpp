@@ -1057,7 +1057,7 @@ TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Lex("\b", consumer);
 }
 
-TEST_F(LexerTest, PrintingAsYaml) {
+TEST_F(LexerTest, PrintingOutputYaml) {
   // Test that we can parse this into YAML and verify line and indent data.
   auto buffer = Lex("\n ;\n\n\n; ;\n\n\n\n\n\n\n\n\n\n\n");
   ASSERT_FALSE(buffer.has_errors());

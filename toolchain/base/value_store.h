@@ -12,10 +12,13 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/YAMLParser.h"
+#include "llvm/Support/YAMLTraits.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/yaml.h"
 
 namespace Carbon {
 
@@ -99,60 +102,14 @@ inline auto PrintValue(llvm::raw_ostream& out, const llvm::StringRef& val) {
   out << "\"" << llvm::yaml::escape(val) << "\"";
 };
 
-struct DefaultPrinter {
-  template <typename ValueT>
-  void operator()(llvm::raw_ostream& out, const ValueT& value) {
-    PrintValue(out, value);
-  }
-};
-
 }  // namespace Internal
-
-// Provides YAML printing of a list. The first line indent applies even if there
-// is no label, in which case it applies to the first element.
-template <typename ValueT>
-inline auto PrintValueRange(
-    llvm::raw_ostream& out, llvm::iterator_range<const ValueT*> range,
-    std::optional<llvm::StringRef> label, int first_line_indent,
-    int later_indent, bool trailing_newline,
-    llvm::function_ref<void(llvm::raw_ostream&, const ValueT& val)> print =
-        Internal::DefaultPrinter()) {
-  out.indent(first_line_indent);
-  if (label) {
-    out << *label << ":";
-    if (range.empty()) {
-      // Add a space between the `:` and the `[]` printed below.
-      out << " ";
-    } else {
-      out << "\n";
-      out.indent(later_indent);
-    }
-  }
-  if (range.empty()) {
-    out << "[]";
-    if (trailing_newline) {
-      out << "\n";
-    }
-    return;
-  }
-  std::string sep_str = "\n";
-  sep_str.append(later_indent, ' ');
-  llvm::ListSeparator sep(sep_str);
-  for (const auto& val : range) {
-    out << sep << "- ";
-    print(out, val);
-  }
-  if (trailing_newline) {
-    out << "\n";
-  }
-}
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
 template <typename IdT, typename ValueT = typename IdT::IndexedType>
 class ValueStore
     : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
-                              Printable<ValueStore<IdT, ValueT>>,
+                              Yaml::Printable<ValueStore<IdT, ValueT>>,
                               Internal::ValueStoreNotPrintable> {
  public:
   using PrintFn =
@@ -189,17 +146,17 @@ class ValueStore
   auto Reserve(size_t size) -> void { values_.reserve(size); }
 
   // These are to support printable structures, and are not guaranteed.
-  auto Print(llvm::raw_ostream& out) const -> void {
-    Print(out, std::nullopt, 0, 0);
-  }
-  auto Print(llvm::raw_ostream& out, std::optional<llvm::StringRef> label,
-             int first_line_indent, int later_indent,
-             // This decays so that `const llvm::APInt` printing catches the
-             // specialization.
-             PrintFn print = Internal::DefaultPrinter()) const -> void {
-    PrintValueRange(out, llvm::iterator_range(values_), label,
-                    first_line_indent, later_indent, /*trailing_newline=*/true,
-                    print);
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return Yaml::OutputMapping([&](llvm::yaml::IO& io) {
+      for (auto i : llvm::seq(values_.size())) {
+        auto id = IdT(i);
+        Yaml::OutputMapping::Map(
+            io, PrintToString(id),
+            Yaml::OutputScalar([&](llvm::raw_ostream& out) {
+              Internal::PrintValue<ValueT>(out, Get(id));
+            }));
+      }
+    });
   }
 
   auto array_ref() const -> llvm::ArrayRef<ValueT> { return values_; }
@@ -212,7 +169,7 @@ class ValueStore
 // Storage for StringRefs. The caller is responsible for ensuring storage is
 // allocated.
 template <>
-class ValueStore<StringId> : public Printable<ValueStore<StringId>> {
+class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
  public:
   using PrintFn =
       llvm::function_ref<void(llvm::raw_ostream&, const llvm::StringRef& val)>;
@@ -234,15 +191,12 @@ class ValueStore<StringId> : public Printable<ValueStore<StringId>> {
     return values_[id.index];
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    Print(out, std::nullopt, 0, 0);
-  }
-  auto Print(llvm::raw_ostream& out, std::optional<llvm::StringRef> label,
-             int first_line_indent, int later_indent,
-             PrintFn print = Internal::DefaultPrinter()) const -> void {
-    PrintValueRange(out, llvm::iterator_range(values_), label,
-                    first_line_indent, later_indent, /*trailing_newline=*/true,
-                    print);
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return Yaml::OutputMapping([&](llvm::yaml::IO& io) {
+      for (auto [i, val] : llvm::enumerate(values_)) {
+        Yaml::OutputMapping::Map(io, PrintToString(StringId(i)), val);
+      }
+    });
   }
 
  private:
@@ -252,7 +206,7 @@ class ValueStore<StringId> : public Printable<ValueStore<StringId>> {
 
 // Stores that will be used across compiler steps. This is provided mainly so
 // that they don't need to be passed separately.
-class SharedValueStores : public Printable<SharedValueStores> {
+class SharedValueStores : public Yaml::Printable<SharedValueStores> {
  public:
   auto integers() -> ValueStore<IntegerId>& { return integers_; }
   auto integers() const -> const ValueStore<IntegerId>& { return integers_; }
@@ -261,12 +215,15 @@ class SharedValueStores : public Printable<SharedValueStores> {
   auto strings() -> ValueStore<StringId>& { return strings_; }
   auto strings() const -> const ValueStore<StringId>& { return strings_; }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "shared_values:\n"
-        << "  - ";
-    integers_.Print(out, "integers", 0, 6);
-    reals_.Print(out, "reals", 4, 6);
-    strings_.Print(out, "strings", 4, 6);
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return Yaml::OutputMapping([&](llvm::yaml::IO& io) {
+      Yaml::OutputMapping::Map(
+          io, "shared_values", Yaml::OutputMapping([&](llvm::yaml::IO& io) {
+            Yaml::OutputMapping::Map(io, "integers", integers_.OutputYaml());
+            Yaml::OutputMapping::Map(io, "reals", reals_.OutputYaml());
+            Yaml::OutputMapping::Map(io, "strings", strings_.OutputYaml());
+          }));
+    });
   }
 
  private:

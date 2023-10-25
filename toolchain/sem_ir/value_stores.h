@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/node.h"
 
 namespace Carbon::SemIR {
@@ -72,7 +73,7 @@ class NameScopeStore {
 // BlockValueStore is used as-is, but there are also children that expose the
 // protected members for type-specific functionality.
 template <typename IdT, typename ValueT>
-class BlockValueStore {
+class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
  public:
   explicit BlockValueStore(llvm::BumpPtrAllocator& allocator)
       : allocator_(&allocator) {}
@@ -88,18 +89,23 @@ class BlockValueStore {
   // Returns the requested block.
   auto Get(IdT id) -> llvm::MutableArrayRef<ValueT> { return values_.Get(id); }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    Print(out, std::nullopt, 0, 0);
-  }
-  auto Print(llvm::raw_ostream& out, std::optional<llvm::StringRef> label,
-             int first_line_indent, int later_indent) const -> void {
-    values_.Print(out, label, first_line_indent, later_indent,
-                  [&](llvm::raw_ostream& out,
-                      const llvm::MutableArrayRef<ValueT>& value) {
-                    PrintValueRange<ValueT>(out, llvm::iterator_range(value),
-                                            std::nullopt, 0, later_indent + 2,
-                                            /*trailing_newline=*/false);
-                  });
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return Yaml::OutputMapping([&](llvm::yaml::IO& io) {
+      for (auto block_index : llvm::seq(values_.size())) {
+        auto block_id = IdT(block_index);
+        Yaml::OutputMapping::Map(
+            io, PrintToString(block_id),
+            Yaml::OutputMapping([&](llvm::yaml::IO& io) {
+              auto block = Get(block_id);
+              for (auto i : llvm::seq(block.size())) {
+                Yaml::OutputMapping::Map(
+                    io, llvm::itostr(i),
+                    Yaml::OutputScalar(
+                        [&](llvm::raw_ostream& out) { out << block[i]; }));
+              }
+            }));
+      }
+    });
   }
 
   auto size() const -> int { return values_.size(); }

@@ -69,6 +69,7 @@ cc_library(
         ":value_stores",
         "//common:check",
         "//toolchain/base:value_store",
+        "//toolchain/base:yaml",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -102,6 +103,7 @@ cc_library(
     deps = [
         ":node",
         "//toolchain/base:value_store",
+        "//toolchain/base:yaml",
         "@llvm-project//llvm:Support",
     ],
 )
