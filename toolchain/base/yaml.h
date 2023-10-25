@@ -49,25 +49,28 @@ class OutputScalar {
 // Adapts a function for outputting YAML as a mapping.
 class OutputMapping {
  public:
-  // Maps a value. This mainly takes responsibility for copying the value,
-  // letting mapRequired take `&value`.
-  template <typename T>
-  static auto Map(llvm::yaml::IO& io, llvm::StringRef key, T value) -> void {
-    io.mapRequired(key.data(), value);
-  }
-  static auto Map(llvm::yaml::IO& io, llvm::StringRef key,
-                  const llvm::StringRef value) -> void {
-    llvm::StringRef v = value;
-    io.mapRequired(key.data(), v);
-  }
+  class Map {
+   public:
+    explicit Map(llvm::yaml::IO& io) : io_(io) {}
 
-  explicit OutputMapping(std::function<void(llvm::yaml::IO&)> output)
+    // Maps a value. This mainly takes responsibility for copying the value,
+    // letting mapRequired take `&value`.
+    template <typename T>
+    auto Add(llvm::StringRef key, T value) -> void {
+      io_.mapRequired(key.data(), value);
+    }
+
+   private:
+    llvm::yaml::IO& io_;
+  };
+
+  explicit OutputMapping(std::function<void(OutputMapping::Map)> output)
       : output_(std::move(output)) {}
 
-  auto Output(llvm::yaml::IO& io) -> void { output_(io); }
+  auto Output(llvm::yaml::IO& io) -> void { output_(Map(io)); }
 
  private:
-  std::function<void(llvm::yaml::IO&)> output_;
+  std::function<void(OutputMapping::Map)> output_;
 };
 
 }  // namespace Carbon::Yaml

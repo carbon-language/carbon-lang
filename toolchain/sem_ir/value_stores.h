@@ -90,20 +90,19 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
   auto Get(IdT id) -> llvm::MutableArrayRef<ValueT> { return values_.Get(id); }
 
   auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](llvm::yaml::IO& io) {
+    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto block_index : llvm::seq(values_.size())) {
         auto block_id = IdT(block_index);
-        Yaml::OutputMapping::Map(
-            io, PrintToString(block_id),
-            Yaml::OutputMapping([&](llvm::yaml::IO& io) {
-              auto block = Get(block_id);
-              for (auto i : llvm::seq(block.size())) {
-                Yaml::OutputMapping::Map(
-                    io, llvm::itostr(i),
-                    Yaml::OutputScalar(
-                        [&](llvm::raw_ostream& out) { out << block[i]; }));
-              }
-            }));
+        map.Add(PrintToString(block_id),
+                Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                  auto block = Get(block_id);
+                  for (auto i : llvm::seq(block.size())) {
+                    map.Add(llvm::itostr(i),
+                            Yaml::OutputScalar([&](llvm::raw_ostream& out) {
+                              out << block[i];
+                            }));
+                  }
+                }));
       }
     });
   }

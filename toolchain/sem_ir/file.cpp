@@ -131,32 +131,29 @@ auto File::Verify() const -> ErrorOr<Success> {
 }
 
 auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
-  return Yaml::OutputMapping([this, include_builtins](llvm::yaml::IO& io) {
-    Yaml::OutputMapping::Map(io, "filename", filename_);
-    Yaml::OutputMapping::Map(
-        io, "sem_ir", Yaml::OutputMapping([&](llvm::yaml::IO& io) {
-          Yaml::OutputMapping::Map(io, "cross_reference_irs_size",
-                                   cross_reference_irs_.size());
-          Yaml::OutputMapping::Map(io, "functions", functions_.OutputYaml());
-          Yaml::OutputMapping::Map(io, "classes", classes_.OutputYaml());
-          Yaml::OutputMapping::Map(io, "types", types_.OutputYaml());
-          Yaml::OutputMapping::Map(io, "type_blocks",
-                                   type_blocks_.OutputYaml());
-          Yaml::OutputMapping::Map(
-              io, "nodes", Yaml::OutputMapping([&](llvm::yaml::IO& io) {
-                int start = include_builtins ? 0 : BuiltinKind::ValidCount;
-                for (int i : llvm::seq(start, nodes_.size())) {
-                  auto id = NodeId(i);
-                  Yaml::OutputMapping::Map(
-                      io, PrintToString(id),
-                      Yaml::OutputScalar([&](llvm::raw_ostream& out) {
-                        out << nodes_.Get(id);
-                      }));
-                }
-              }));
-          Yaml::OutputMapping::Map(io, "node_blocks",
-                                   node_blocks_.OutputYaml());
-        }));
+  return Yaml::OutputMapping([this,
+                              include_builtins](Yaml::OutputMapping::Map map) {
+    map.Add("filename", filename_);
+    map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+              map.Add("cross_reference_irs_size", cross_reference_irs_.size());
+              map.Add("functions", functions_.OutputYaml());
+              map.Add("classes", classes_.OutputYaml());
+              map.Add("types", types_.OutputYaml());
+              map.Add("type_blocks", type_blocks_.OutputYaml());
+              map.Add(
+                  "nodes",
+                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                    int start = include_builtins ? 0 : BuiltinKind::ValidCount;
+                    for (int i : llvm::seq(start, nodes_.size())) {
+                      auto id = NodeId(i);
+                      map.Add(PrintToString(id),
+                              Yaml::OutputScalar([&](llvm::raw_ostream& out) {
+                                out << nodes_.Get(id);
+                              }));
+                    }
+                  }));
+              map.Add("node_blocks", node_blocks_.OutputYaml());
+            }));
   });
 }
 

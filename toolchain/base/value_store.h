@@ -16,7 +16,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/YAMLParser.h"
-#include "llvm/Support/YAMLTraits.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/yaml.h"
 
@@ -147,14 +146,13 @@ class ValueStore
 
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](llvm::yaml::IO& io) {
+    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto i : llvm::seq(values_.size())) {
         auto id = IdT(i);
-        Yaml::OutputMapping::Map(
-            io, PrintToString(id),
-            Yaml::OutputScalar([&](llvm::raw_ostream& out) {
-              Internal::PrintValue<ValueT>(out, Get(id));
-            }));
+        map.Add(PrintToString(id),
+                Yaml::OutputScalar([&](llvm::raw_ostream& out) {
+                  Internal::PrintValue(out, Get(id));
+                }));
       }
     });
   }
@@ -192,9 +190,9 @@ class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
   }
 
   auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](llvm::yaml::IO& io) {
+    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto [i, val] : llvm::enumerate(values_)) {
-        Yaml::OutputMapping::Map(io, PrintToString(StringId(i)), val);
+        map.Add(PrintToString(StringId(i)), val);
       }
     });
   }
@@ -216,13 +214,13 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   auto strings() const -> const ValueStore<StringId>& { return strings_; }
 
   auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](llvm::yaml::IO& io) {
-      Yaml::OutputMapping::Map(
-          io, "shared_values", Yaml::OutputMapping([&](llvm::yaml::IO& io) {
-            Yaml::OutputMapping::Map(io, "integers", integers_.OutputYaml());
-            Yaml::OutputMapping::Map(io, "reals", reals_.OutputYaml());
-            Yaml::OutputMapping::Map(io, "strings", strings_.OutputYaml());
-          }));
+    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+      map.Add("shared_values",
+              Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                map.Add("integers", integers_.OutputYaml());
+                map.Add("reals", reals_.OutputYaml());
+                map.Add("strings", strings_.OutputYaml());
+              }));
     });
   }
 
