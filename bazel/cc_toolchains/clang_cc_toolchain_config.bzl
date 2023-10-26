@@ -105,6 +105,14 @@ def _impl(ctx):
     if ctx.attr.target_cpu != "x64_windows":
         std_compile_flags.append("-stdlib=libc++")
 
+    # TODO: Regression that warns on anonymous unions; remove depending on fix.
+    # Sets the flag for unknown clang versions, which are assumed to be at head.
+    # https://github.com/llvm/llvm-project/issues/70384
+    if not clang_version or clang_version == 18:
+        missing_field_init_flags = ["-Wno-missing-field-initializers"]
+    else:
+        missing_field_init_flags = []
+
     default_flags_feature = feature(
         name = "default_flags",
         enabled = True,
@@ -138,7 +146,7 @@ def _impl(ctx):
                             "--system-header-prefix=external/",
                             # Compile actions shouldn't link anything.
                             "-c",
-                        ],
+                        ] + missing_field_init_flags,
                     ),
                     flag_group(
                         expand_if_available = "output_assembly_file",
