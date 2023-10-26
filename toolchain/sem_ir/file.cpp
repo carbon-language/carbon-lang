@@ -8,6 +8,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/node.h"
 #include "toolchain/sem_ir/node_kind.h"
@@ -129,27 +130,30 @@ auto File::Verify() const -> ErrorOr<Success> {
   return Success();
 }
 
-auto File::Print(llvm::raw_ostream& out, bool include_builtins) const -> void {
-  out << "- filename: " << filename_ << "\n"
-      << "  sem_ir:\n"
-      << "  - cross_reference_irs_size: " << cross_reference_irs_.size()
-      << "\n";
-
-  static constexpr int FirstLineIndent = 4;
-  static constexpr int LaterIndent = 6;
-  functions_.Print(out, "functions", FirstLineIndent, LaterIndent);
-  classes_.Print(out, "classes", FirstLineIndent, LaterIndent);
-  types_.Print(out, "types", FirstLineIndent, LaterIndent);
-  type_blocks_.Print(out, "type_blocks", FirstLineIndent, LaterIndent);
-
-  auto nodes = nodes_.array_ref();
-  if (!include_builtins) {
-    nodes = nodes.drop_front(BuiltinKind::ValidCount);
-  }
-  PrintValueRange(out, llvm::iterator_range(nodes), "nodes", FirstLineIndent,
-                  LaterIndent, /*trailing_newline=*/true);
-
-  node_blocks_.Print(out, "node_blocks", FirstLineIndent, LaterIndent);
+auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
+  return Yaml::OutputMapping([this,
+                              include_builtins](Yaml::OutputMapping::Map map) {
+    map.Add("filename", filename_);
+    map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+              map.Add("cross_reference_irs_size",
+                      Yaml::OutputScalar(cross_reference_irs_.size()));
+              map.Add("functions", functions_.OutputYaml());
+              map.Add("classes", classes_.OutputYaml());
+              map.Add("types", types_.OutputYaml());
+              map.Add("type_blocks", type_blocks_.OutputYaml());
+              map.Add("nodes",
+                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                        int start =
+                            include_builtins ? 0 : BuiltinKind::ValidCount;
+                        for (int i : llvm::seq(start, nodes_.size())) {
+                          auto id = NodeId(i);
+                          map.Add(PrintToString(id),
+                                  Yaml::OutputScalar(nodes_.Get(id)));
+                        }
+                      }));
+              map.Add("node_blocks", node_blocks_.OutputYaml());
+            }));
+  });
 }
 
 // Map a node kind representing a type into an integer describing the
