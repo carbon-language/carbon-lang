@@ -675,6 +675,7 @@ class TypeCompleter {
       case SemIR::RealLiteral::Kind:
       case SemIR::Return::Kind:
       case SemIR::ReturnExpression::Kind:
+      case SemIR::SelfParameter::Kind:
       case SemIR::SpliceBlock::Kind:
       case SemIR::StringLiteral::Kind:
       case SemIR::StructAccess::Kind:

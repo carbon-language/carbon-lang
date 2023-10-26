@@ -235,7 +235,24 @@ auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
 }
 
 auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleSelfValueName");
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleSelfValueNameExpression(Context& context, Parse::Node parse_node)
+    -> bool {
+  // TODO: This will find a local variable declared with name `r#self`, but
+  // should not. See #2984 and the corresponding code in
+  // HandleFunctionDefinitionStart.
+  auto name_id = context.strings().Add(SemIR::SelfParameter::Name);
+  auto value_id =
+      context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
+                         /*print_diagnostics=*/true);
+  auto value = context.nodes().Get(value_id);
+  context.AddNodeAndPush(
+      parse_node,
+      SemIR::NameReference{parse_node, value.type_id(), name_id, value_id});
+  return true;
 }
 
 }  // namespace Carbon::Check

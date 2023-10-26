@@ -54,6 +54,7 @@ class NodeNamer {
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this, fn_loc,
           fn.name_id.is_valid() ? sem_ir.strings().Get(fn.name_id).str() : "");
+      CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
         nodes[fn.return_slot_id.index] = {
@@ -434,6 +435,12 @@ class NodeNamer {
           add_node_name_id(node.As<Parameter>().name_id);
           continue;
         }
+        case SelfParameter::Kind: {
+          add_node_name(node.As<SelfParameter>().is_addr_self.index
+                            ? "self.addr"
+                            : "self");
+          continue;
+        }
         case VarStorage::Kind: {
           add_node_name_id(node.As<VarStorage>().name_id, ".var");
           continue;
@@ -517,22 +524,19 @@ class Formatter {
 
     out_ << "\nfn ";
     FormatFunctionName(id);
-    out_ << "(";
 
     llvm::SaveAndRestore function_scope(scope_, node_namer_.GetScopeFor(id));
 
-    llvm::ListSeparator sep;
-    for (const NodeId param_id : sem_ir_.node_blocks().Get(fn.param_refs_id)) {
-      out_ << sep;
-      if (!param_id.is_valid()) {
-        out_ << "invalid";
-        continue;
-      }
-      FormatNodeName(param_id);
-      out_ << ": ";
-      FormatType(sem_ir_.nodes().Get(param_id).type_id());
+    if (fn.implicit_param_refs_id != SemIR::NodeBlockId::Empty) {
+      out_ << "[";
+      FormatParameterList(fn.implicit_param_refs_id);
+      out_ << "]";
     }
+
+    out_ << "(";
+    FormatParameterList(fn.param_refs_id);
     out_ << ")";
+
     if (fn.return_type_id.is_valid()) {
       out_ << " -> ";
       if (fn.return_slot_id.is_valid()) {
@@ -557,6 +561,20 @@ class Formatter {
       out_ << "}\n";
     } else {
       out_ << ";\n";
+    }
+  }
+
+  auto FormatParameterList(NodeBlockId param_refs_id) -> void {
+    llvm::ListSeparator sep;
+    for (const NodeId param_id : sem_ir_.node_blocks().Get(param_refs_id)) {
+      out_ << sep;
+      if (!param_id.is_valid()) {
+        out_ << "invalid";
+        continue;
+      }
+      FormatNodeName(param_id);
+      out_ << ": ";
+      FormatType(sem_ir_.nodes().Get(param_id).type_id());
     }
   }
 

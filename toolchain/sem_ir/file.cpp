@@ -208,6 +208,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case RealLiteral::Kind:
     case Return::Kind:
     case ReturnExpression::Kind:
+    case SelfParameter::Kind:
     case SpliceBlock::Kind:
     case StringLiteral::Kind:
     case StructAccess::Kind:
@@ -407,6 +408,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       case RealLiteral::Kind:
       case Return::Kind:
       case ReturnExpression::Kind:
+      case SelfParameter::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:
@@ -495,6 +497,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case Parameter::Kind:
       case PointerType::Kind:
       case RealLiteral::Kind:
+      case SelfParameter::Kind:
       case StringLiteral::Kind:
       case StructValue::Kind:
       case StructType::Kind:

@@ -23,7 +23,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   if (!function_name) {
     // TODO: Work on error.
     context.TODO(parse_node, "Not a callable name");
-    context.node_stack().Push(parse_node, callee_id);
+    context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
     context.ParamOrArgPop();
     return true;
   }
@@ -45,6 +45,20 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
     auto temp_id = context.AddNode(
         SemIR::TemporaryStorage{call_expr_parse_node, callable.return_type_id});
     context.ParamOrArgSave(temp_id);
+  }
+
+  for (auto implicit_param_id :
+       context.node_blocks().Get(callable.implicit_param_refs_id)) {
+    auto param = context.nodes().Get(implicit_param_id);
+    if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
+      // TODO: Handle `self` parameter.
+    }
+
+    // TODO: Form argument values for implicit parameters.
+    context.TODO(parse_node, "Call with implicit parameters");
+    context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+    context.ParamOrArgPop();
+    return true;
   }
 
   // Convert the arguments to match the parameters.

@@ -342,6 +342,15 @@ struct ReturnExpression {
   NodeId expr_id;
 };
 
+struct SelfParameter {
+  static constexpr auto Kind = NodeKind::SelfParameter.Define("self_parameter");
+  static constexpr llvm::StringLiteral Name = "self";
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  BoolValue is_addr_self;
+};
+
 struct SpliceBlock {
   static constexpr auto Kind = NodeKind::SpliceBlock.Define("splice_block");
 

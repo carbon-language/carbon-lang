@@ -8,12 +8,23 @@ namespace Carbon::Check {
 
 auto HandleImplicitParameterList(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_node, "HandleImplicitParameterList");
+  auto refs_id =
+      context.ParamOrArgEnd(Parse::NodeKind::ImplicitParameterListStart);
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<
+          Parse::NodeKind::ImplicitParameterListStart>();
+  context.node_stack().Push(parse_node, refs_id);
+  // The implicit parameter list's scope extends to the end of the following
+  // parameter list.
+  return true;
 }
 
 auto HandleImplicitParameterListStart(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_node, "HandleImplicitParameterListStart");
+  context.PushScope();
+  context.node_stack().Push(parse_node);
+  context.ParamOrArgStart();
+  return true;
 }
 
 auto HandleParameterList(Context& context, Parse::Node parse_node) -> bool {
@@ -33,7 +44,18 @@ auto HandleParameterListComma(Context& context, Parse::Node /*parse_node*/)
 
 auto HandleParameterListStart(Context& context, Parse::Node parse_node)
     -> bool {
-  context.PushScope();
+  // A parameter list following an implicit parameter list shares the same
+  // scope.
+  //
+  // TODO: For a declaration like
+  //
+  //   fn A(T:! type).B(U:! T).C(x: X(U)) { ... }
+  //
+  // ... all the earlier parameter should be in scope in the later parameter
+  // lists too.
+  if (!context.node_stack().PeekIs<Parse::NodeKind::ImplicitParameterList>()) {
+    context.PushScope();
+  }
   context.node_stack().Push(parse_node);
   context.ParamOrArgStart();
   return true;
