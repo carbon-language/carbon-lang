@@ -15,7 +15,7 @@ fn Class.F[self: Class]() -> i32 {
 }
 
 fn Call(c: Class) -> i32 {
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `Call with implicit parameters`.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `Not a callable name`.
   // CHECK:STDERR:   return c.F();
   // CHECK:STDERR:              ^
   return c.F();
@@ -52,6 +52,6 @@ fn Call(c: Class) -> i32 {
 // CHECK:STDOUT: fn @Call(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: Class = name_reference "c", %c
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", @Class.%F
+// CHECK:STDOUT:   %.loc21: <bound method> = bound_method %c.ref, @Class.%F
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

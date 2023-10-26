@@ -185,6 +185,7 @@ auto Context::GetConstantValue(SemIR::NodeId node_id) -> SemIR::NodeId {
         break;
 
       case SemIR::Field::Kind:
+      case SemIR::FunctionDeclaration::Kind:
         return node_id;
 
       default:
