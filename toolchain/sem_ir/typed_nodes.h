@@ -344,6 +344,7 @@ struct ReturnExpression {
 
 struct SelfParameter {
   static constexpr auto Kind = NodeKind::SelfParameter.Define("self_parameter");
+  static constexpr llvm::StringLiteral Name = "self";
 
   Parse::Node parse_node;
   TypeId type_id;

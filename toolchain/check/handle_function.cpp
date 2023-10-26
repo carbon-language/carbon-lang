@@ -213,7 +213,8 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
       // not. See #2984 and the corresponding code in
       // HandleSelfTypeNameExpression.
       context.AddNameToLookup(self_param->parse_node,
-                              context.strings().Add("self"), param_id);
+                              context.strings().Add(SemIR::SelfParameter::Name),
+                              param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
                      << param;

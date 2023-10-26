@@ -53,7 +53,7 @@ auto HandleParameterListStart(Context& context, Parse::Node parse_node)
   //
   // ... all the earlier parameter should be in scope in the later parameter
   // lists too.
-  if (!context.node_stack().TopIs<Parse::NodeKind::ImplicitParameterList>()) {
+  if (!context.node_stack().PeekIs<Parse::NodeKind::ImplicitParameterList>()) {
     context.PushScope();
   }
   context.node_stack().Push(parse_node);

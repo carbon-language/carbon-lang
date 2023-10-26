@@ -244,7 +244,7 @@ auto HandleSelfValueNameExpression(Context& context, Parse::Node parse_node)
   // TODO: This will find a local variable declared with name `r#self`, but
   // should not. See #2984 and the corresponding code in
   // HandleFunctionDefinitionStart.
-  auto name_id = context.strings().Add("self");
+  auto name_id = context.strings().Add(SemIR::SelfParameter::Name);
   auto value_id =
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);

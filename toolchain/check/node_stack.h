@@ -65,7 +65,7 @@ class NodeStack {
 
   // Returns whether the node on the top of the stack is the specified kind.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
-  auto TopIs() const -> bool {
+  auto PeekIs() const -> bool {
     return parse_tree_->node_kind(PeekParseNode()) == RequiredParseKind;
   }
 
@@ -86,7 +86,7 @@ class NodeStack {
   // parse_node. Otherwise, returns std::nullopt.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
   auto PopForSoloParseNodeIf() -> std::optional<Parse::Node> {
-    if (TopIs<RequiredParseKind>()) {
+    if (PeekIs<RequiredParseKind>()) {
       return PopForSoloParseNode<RequiredParseKind>();
     }
     return std::nullopt;
@@ -160,7 +160,7 @@ class NodeStack {
   // Otherwise returns std::nullopt.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
   auto PopIf() -> std::optional<decltype(Pop<RequiredParseKind>())> {
-    if (TopIs<RequiredParseKind>()) {
+    if (PeekIs<RequiredParseKind>()) {
       return Pop<RequiredParseKind>();
     }
     return std::nullopt;
