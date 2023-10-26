@@ -99,9 +99,11 @@ cc_library(
 
 cc_library(
     name = "value_stores",
+    srcs = ["value_stores.cpp"],
     hdrs = ["value_stores.h"],
     deps = [
         ":node",
+        "//toolchain/lex:token_kind",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "@llvm-project//llvm:Support",

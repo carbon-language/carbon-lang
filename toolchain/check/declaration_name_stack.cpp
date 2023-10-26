@@ -13,8 +13,7 @@ auto DeclarationNameStack::MakeEmptyNameContext() -> NameContext {
 }
 
 auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
-                                               StringId name_id)
-    -> NameContext {
+                                               SemIR::NameId name_id) -> NameContext {
   NameContext context = MakeEmptyNameContext();
   ApplyNameQualifierTo(context, parse_node, name_id);
   return context;
@@ -86,13 +85,13 @@ auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
 }
 
 auto DeclarationNameStack::ApplyNameQualifier(Parse::Node parse_node,
-                                              StringId name_id) -> void {
+                                              SemIR::NameId name_id) -> void {
   ApplyNameQualifierTo(declaration_name_stack_.back(), parse_node, name_id);
 }
 
 auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
                                                 Parse::Node parse_node,
-                                                StringId name_id) -> void {
+                                                SemIR::NameId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     // This means the input node_id is actually a string ID.

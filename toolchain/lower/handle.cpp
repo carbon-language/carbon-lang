@@ -248,7 +248,7 @@ static auto GetStructFieldName(FunctionContext& context,
           .fields_id);
   auto field = context.sem_ir().nodes().GetAs<SemIR::StructTypeField>(
       fields[index.index]);
-  return context.sem_ir().strings().Get(field.name_id);
+  return context.sem_ir().names().GetIRBaseName(field.name_id);
 }
 
 auto HandleClassFieldAccess(FunctionContext& context, SemIR::NodeId node_id,
@@ -559,7 +559,7 @@ auto HandleVarStorage(FunctionContext& context, SemIR::NodeId node_id,
   // TODO: Eventually this name will be optional, and we'll want to provide
   // something like `var` as a default. However, that's not possible right now
   // so cannot be tested.
-  auto name = context.sem_ir().strings().Get(node.name_id);
+  auto name = context.sem_ir().names().GetIRBaseName(node.name_id);
   auto* alloca = context.builder().CreateAlloca(context.GetType(node.type_id),
                                                 /*ArraySize=*/nullptr, name);
   context.SetLocal(node_id, alloca);

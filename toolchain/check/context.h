@@ -49,12 +49,12 @@ class Context {
   auto AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Parse::Node name_node, StringId name_id,
+  auto AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,
                        SemIR::NodeId target_id) -> void;
 
   // Performs name lookup in a specified scope, returning the referenced node.
   // If scope_id is invalid, uses the current contextual scope.
-  auto LookupName(Parse::Node parse_node, StringId name_id,
+  auto LookupName(Parse::Node parse_node, SemIR::NameId name_id,
                   SemIR::NameScopeId scope_id, bool print_diagnostics)
       -> SemIR::NodeId;
 
@@ -63,7 +63,7 @@ class Context {
       -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id) -> void;
+  auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::NameId name_id) -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
@@ -90,7 +90,7 @@ class Context {
     if (!current_scope_node_id.is_valid()) {
       return std::nullopt;
     }
-    return nodes().Get(current_scope_node_id).TryAs<NodeT>();
+    return sem_ir().nodes().Get(current_scope_node_id).TryAs<NodeT>();
   }
 
   // Follows NameReference nodes to find the value named by a given node.
@@ -241,29 +241,17 @@ class Context {
   }
 
   // Directly expose SemIR::File data accessors for brevity in calls.
-  auto integers() -> ValueStore<IntegerId>& { return sem_ir().integers(); }
-  auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
-  auto strings() -> ValueStore<StringId>& { return sem_ir().strings(); }
-  auto functions() -> ValueStore<SemIR::FunctionId, SemIR::Function>& {
-    return sem_ir().functions();
-  }
-  auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
-    return sem_ir().classes();
-  }
-  auto name_scopes() -> SemIR::NameScopeStore& {
-    return sem_ir().name_scopes();
-  }
-  auto types() -> ValueStore<SemIR::TypeId, SemIR::TypeInfo>& {
-    return sem_ir().types();
-  }
-  auto type_blocks()
-      -> SemIR::BlockValueStore<SemIR::TypeBlockId, SemIR::TypeId>& {
-    return sem_ir().type_blocks();
-  }
-  auto nodes() -> SemIR::NodeStore& { return sem_ir().nodes(); }
-  auto node_blocks() -> SemIR::NodeBlockStore& {
-    return sem_ir().node_blocks();
-  }
+  auto integers() -> decltype(auto) { return sem_ir().integers(); }
+  auto reals() -> decltype(auto) { return sem_ir().reals(); }
+  auto strings() -> decltype(auto) { return sem_ir().strings(); }
+  auto functions() -> decltype(auto) { return sem_ir().functions(); }
+  auto classes() -> decltype(auto) { return sem_ir().classes(); }
+  auto names() -> decltype(auto) { return sem_ir().names(); }
+  auto name_scopes() -> decltype(auto) { return sem_ir().name_scopes(); }
+  auto types() -> decltype(auto) { return sem_ir().types(); }
+  auto type_blocks() -> decltype(auto) { return sem_ir().type_blocks(); }
+  auto nodes() -> decltype(auto) { return sem_ir().nodes(); }
+  auto node_blocks() -> decltype(auto) { return sem_ir().node_blocks(); }
 
  private:
   // A FoldingSet node for a type.
@@ -294,7 +282,7 @@ class Context {
 
     // Names which are registered with name_lookup_, and will need to be
     // deregistered when the scope ends.
-    llvm::DenseSet<StringId> names;
+    llvm::DenseSet<SemIR::NameId> names;
 
     // TODO: This likely needs to track things which need to be destructed.
   };
@@ -377,7 +365,7 @@ class Context {
   // reference.
   //
   // Names which no longer have lookup results are erased.
-  llvm::DenseMap<StringId, llvm::SmallVector<SemIR::NodeId>> name_lookup_;
+  llvm::DenseMap<SemIR::NameId, llvm::SmallVector<SemIR::NodeId>> name_lookup_;
 
   // Cache of the mapping from nodes to types, to avoid recomputing the folding
   // set ID.

@@ -117,9 +117,12 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
     mangled_name = "main";
-  } else {
+  } else if (auto name = sem_ir().names().GetAsString(function.name_id)) {
     // TODO: Decide on a name mangling scheme.
-    mangled_name = sem_ir().strings().Get(function.name_id);
+    mangled_name = *name;
+  } else {
+    CARBON_FATAL() << "Unexpected special name for function: "
+                   << function.name_id;
   }
 
   llvm::FunctionType* function_type =
@@ -132,15 +135,17 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   for (auto [node_id, arg] :
        llvm::zip_equal(param_node_ids, llvm_function->args())) {
     auto node = sem_ir().nodes().Get(node_id);
+    auto name_id = SemIR::NameId::Invalid;
     if (node_id == function.return_slot_id) {
-      arg.setName("return");
+      name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
     } else if (node.Is<SemIR::SelfParameter>()) {
-      arg.setName("self");
+      name_id = SemIR::NameId::SelfValue;
     } else {
-      arg.setName(sem_ir().strings().Get(node.As<SemIR::Parameter>().name_id));
+      name_id = node.As<SemIR::Parameter>().name_id;
     }
+    arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
 
   return llvm_function;

@@ -52,8 +52,7 @@ class NodeNamer {
       // disambiguator.
       auto fn_loc = Parse::Node::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
-          *this, fn_loc,
-          fn.name_id.is_valid() ? sem_ir.strings().Get(fn.name_id).str() : "");
+          *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
       CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
@@ -83,9 +82,7 @@ class NodeNamer {
       auto class_loc = Parse::Node::Invalid;
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
-          class_info.name_id.is_valid()
-              ? sem_ir.strings().Get(class_info.name_id).str()
-              : "");
+          sem_ir.names().GetIRBaseName(class_info.name_id).str());
       AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
       CollectNamesInBlock(class_scope, class_info.body_block_id);
     }
@@ -386,13 +383,9 @@ class NodeNamer {
         nodes[node_id.index] = {scope_idx, scope.nodes.AllocateName(
                                                *this, node.parse_node(), name)};
       };
-      auto add_node_name_id = [&](StringId name_id,
-                                  llvm::StringRef suffix = "") {
-        if (name_id.is_valid()) {
-          add_node_name((sem_ir_.strings().Get(name_id).str() + suffix).str());
-        } else {
-          add_node_name(suffix.str());
-        }
+      auto add_node_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
+        add_node_name(
+            (sem_ir_.names().GetIRBaseName(name_id).str() + suffix).str());
       };
 
       switch (node.kind()) {
@@ -592,7 +585,7 @@ class Formatter {
                        llvm::StringRef prefix) -> void {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<NodeId, StringId>> entries;
+    llvm::SmallVector<std::pair<NodeId, NameId>> entries;
     for (auto [name_id, node_id] : sem_ir_.name_scopes().Get(id)) {
       entries.push_back({node_id, name_id});
     }
@@ -602,7 +595,7 @@ class Formatter {
     llvm::ListSeparator sep(separator);
     for (auto [node_id, name_id] : entries) {
       out_ << sep << prefix;
-      FormatString(name_id);
+      FormatName(name_id);
       out_ << " = ";
       FormatNodeName(node_id);
     }
@@ -800,7 +793,7 @@ class Formatter {
     for (auto field_id : sem_ir_.node_blocks().Get(node.fields_id)) {
       out_ << sep << ".";
       auto field = sem_ir_.nodes().GetAs<StructTypeField>(field_id);
-      FormatString(field.name_id);
+      FormatName(field.name_id);
       out_ << ": ";
       FormatType(field.field_type_id);
     }
@@ -861,6 +854,12 @@ class Formatter {
     out_ << '"';
   }
 
+  auto FormatArg(NameId id) -> void {
+    out_ << '"';
+    FormatName(id);
+    out_ << '"';
+  }
+
   auto FormatArg(TypeId id) -> void { FormatType(id); }
 
   auto FormatArg(TypeBlockId id) -> void {
@@ -878,6 +877,10 @@ class Formatter {
     FormatArg(dest_id);
   }
 
+  auto FormatName(NameId id) -> void {
+    out_ << sem_ir_.names().GetFormatted(id);
+  }
+
   auto FormatNodeName(NodeId id) -> void {
     out_ << node_namer_.GetNameFor(scope_, id);
   }
@@ -885,8 +888,6 @@ class Formatter {
   auto FormatLabel(NodeBlockId id) -> void {
     out_ << node_namer_.GetLabelFor(scope_, id);
   }
-
-  auto FormatString(StringId id) -> void { out_ << sem_ir_.strings().Get(id); }
 
   auto FormatFunctionName(FunctionId id) -> void {
     out_ << node_namer_.GetNameFor(id);

@@ -43,6 +43,48 @@ class NodeStore {
   ValueStore<NodeId, Node> values_;
 };
 
+// Provides a ValueStore-like interface for names. This is currently a wrapper
+// around a string store that has no state of its own.
+class NameStore {
+ public:
+  NameStore(ValueStore<StringId>* strings) : strings_(strings) {}
+
+  // Adds a string name, returning an ID to reference it.
+  auto Add(StringId string_id) -> NameId { return NameId(string_id.index); }
+
+  // Returns the requested name as a string ID, if it is a string name. This
+  // returns std::nullopt for special names.
+  auto GetAsStringId(NameId name_id) const -> std::optional<StringId> {
+    if (name_id.index >= 0) {
+      return StringId(name_id.index);
+    }
+    return std::nullopt;
+  }
+
+  // Returns the requested name as a string, if it is a string name. This
+  // returns std::nullopt for special names.
+  auto GetAsString(NameId name_id) const -> std::optional<llvm::StringRef> {
+    auto id = GetAsStringId(name_id);
+    if (id) {
+      return strings_->Get(*id);
+    }
+    return std::nullopt;
+  }
+
+  // Returns the requested name as a string for formatted output. This returns
+  // `"r#name"` if `name` is a keyword.
+  auto GetFormatted(NameId name_id) const -> llvm::StringRef;
+
+  // Returns a best-effort name to use as the basis for SemIR and LLVM IR
+  // names. This is always an identifier, but may be ambiguous, for example if
+  // there is both a `self` and an `r#self` in the same scope. Returns "" for
+  // an invalid name.
+  auto GetIRBaseName(NameId name_id) const -> llvm::StringRef;
+
+ private:
+  ValueStore<StringId>* strings_;
+};
+
 // Provides a ValueStore wrapper for an API specific to name scopes.
 class NameScopeStore {
  public:
@@ -51,19 +93,19 @@ class NameScopeStore {
 
   // Adds an entry to a name scope. Returns true on success, false on
   // duplicates.
-  auto AddEntry(NameScopeId scope_id, StringId name_id, NodeId target_id)
+  auto AddEntry(NameScopeId scope_id, NameId name_id, NodeId target_id)
       -> bool {
     return values_.Get(scope_id).insert({name_id, target_id}).second;
   }
 
   // Returns the requested name scope.
   auto Get(NameScopeId scope_id) const
-      -> const llvm::DenseMap<StringId, NodeId>& {
+      -> const llvm::DenseMap<NameId, NodeId>& {
     return values_.Get(scope_id);
   }
 
  private:
-  ValueStore<NameScopeId, llvm::DenseMap<StringId, NodeId>> values_;
+  ValueStore<NameScopeId, llvm::DenseMap<NameId, NodeId>> values_;
 };
 
 // Provides a block-based ValueStore, which uses slab allocation of added
@@ -163,5 +205,10 @@ class NodeBlockStore : public BlockValueStore<NodeBlockId, NodeId> {
 };
 
 }  // namespace Carbon::SemIR
+
+// Support use of NameId as DenseMap/DenseSet keys.
+template <>
+struct llvm::DenseMapInfo<Carbon::SemIR::NameId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::NameId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_VALUE_STORES_H_

@@ -112,6 +112,36 @@ struct BoolValue : public IndexBase, public Printable<BoolValue> {
 constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
+// The ID of a name. A name is either a string or a special name such as
+// `self`, or eventually `Self` or `base`.
+struct NameId : public IndexBase, public Printable<NameId> {
+  // An explicitly invalid ID.
+  static const NameId Invalid;
+  // The name of `self`.
+  static const NameId SelfValue;
+  // The name of the return slot in a function.
+  static const NameId ReturnSlot;
+
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "name";
+    if (*this == Invalid) {
+      out << "Invalid";
+    } else if (*this == SelfValue) {
+      out << "SelfValue";
+    } else if (*this == ReturnSlot) {
+      out << "ReturnSlot";
+    } else {
+      CARBON_CHECK(index >= 0) << "Unknown index";
+      IndexBase::Print(out);
+    }
+  }
+};
+
+constexpr NameId NameId::Invalid = NameId(NameId::InvalidIndex);
+constexpr NameId NameId::SelfValue = NameId(NameId::InvalidIndex - 1);
+constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 2);
+
 // The ID of a name scope.
 struct NameScopeId : public IndexBase, public Printable<NameScopeId> {
   // An explicitly invalid ID.

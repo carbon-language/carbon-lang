@@ -101,7 +101,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : StringId::Invalid,
+                        : SemIR::NameId::Invalid,
          .implicit_param_refs_id = implicit_param_refs_id,
          .param_refs_id = param_refs_id,
          .return_type_id = return_type_id,
@@ -174,7 +174,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
-               context.strings().Get(function.name_id))
+               context.names().GetFormatted(function.name_id))
         .Note(context.nodes().Get(function.definition_id).parse_node(),
               FunctionPreviousDefinition)
         .Emit();
@@ -209,11 +209,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
       context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
                               param_id);
     } else if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
-      // TODO: This will shadow a local variable named `r#self`, but should
-      // not. See #2984 and the corresponding code in
-      // HandleSelfTypeNameExpression.
-      context.AddNameToLookup(self_param->parse_node,
-                              context.strings().Add(SemIR::SelfParameter::Name),
+      context.AddNameToLookup(self_param->parse_node, SemIR::NameId::SelfValue,
                               param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
@@ -245,7 +241,7 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   // TODO: Use a dedicated node rather than VarStorage here.
   context.AddNodeAndPush(
       parse_node,
-      SemIR::VarStorage{parse_node, type_id, context.strings().Add("return")});
+      SemIR::VarStorage{parse_node, type_id, SemIR::NameId::ReturnSlot});
   return true;
 }
 

@@ -448,8 +448,9 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
           "source has field name `{1}`, destination has field name `{2}`.",
           size_t, llvm::StringRef, llvm::StringRef);
       context.emitter().Emit(value.parse_node(), StructInitFieldNameMismatch,
-                             i + 1, sem_ir.strings().Get(src_field.name_id),
-                             sem_ir.strings().Get(dest_field.name_id));
+                             i + 1,
+                             sem_ir.names().GetFormatted(src_field.name_id),
+                             sem_ir.names().GetFormatted(dest_field.name_id));
       return SemIR::NodeId::BuiltinError;
     }
 

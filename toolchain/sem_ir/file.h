@@ -36,7 +36,7 @@ struct Function : public Printable<Function> {
   }
 
   // The function name.
-  StringId name_id;
+  NameId name_id;
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDeclaration.
   NodeId definition_id = NodeId::Invalid;
@@ -73,7 +73,7 @@ struct Class : public Printable<Class> {
   // lifetime of the class.
 
   // The class name.
-  StringId name_id;
+  NameId name_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDeclaration.
@@ -279,6 +279,10 @@ class File : public Printable<File> {
   }
   auto classes() -> ValueStore<ClassId, Class>& { return classes_; }
   auto classes() const -> const ValueStore<ClassId, Class>& { return classes_; }
+  auto names() -> NameStore { return NameStore(&value_stores_->strings()); }
+  auto names() const -> const NameStore {
+    return NameStore(&value_stores_->strings());
+  }
   auto name_scopes() -> NameScopeStore& { return name_scopes_; }
   auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }
   auto types() -> ValueStore<TypeId, TypeInfo>& { return types_; }
