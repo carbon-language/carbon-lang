@@ -129,6 +129,15 @@ struct BoolLiteral {
   BoolValue value;
 };
 
+struct BoundMethod {
+  static constexpr auto Kind = NodeKind::BoundMethod.Define("bound_method");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  NodeId object_id;
+  NodeId function_id;
+};
+
 struct Branch {
   static constexpr auto Kind =
       NodeKind::Branch.Define("br", TerminatorKind::Terminator);

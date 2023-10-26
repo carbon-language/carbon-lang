@@ -73,6 +73,13 @@ auto HandleBoolLiteral(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(node_id, v);
 }
 
+auto HandleBoundMethod(FunctionContext& context, SemIR::NodeId node_id,
+                       SemIR::BoundMethod node) -> void {
+  // Propagate just the function; the object is separately provided to the
+  // enclosing call as an implicit argument.
+  context.SetLocal(node_id, context.GetLocal(node.function_id));
+}
+
 auto HandleBranch(FunctionContext& context, SemIR::NodeId /*node_id*/,
                   SemIR::Branch node) -> void {
   // Opportunistically avoid creating a BasicBlock that contains just a branch.
