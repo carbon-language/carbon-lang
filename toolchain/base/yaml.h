@@ -37,6 +37,16 @@ class Printable : public Carbon::Printable<T> {
 // scalars passed through this should be quoted.
 class OutputScalar {
  public:
+  template <typename T>
+  explicit OutputScalar(const T& val)
+      : output_([&](llvm::raw_ostream& out) -> void { out << val; }) {}
+
+  explicit OutputScalar(const llvm::APInt& val)
+      : output_([&](llvm::raw_ostream& out) -> void {
+          // Carbon's plain APInt storage is typically unsigned.
+          val.print(out, /*isSigned=*/false);
+        }) {}
+
   explicit OutputScalar(std::function<void(llvm::raw_ostream&)> output)
       : output_(std::move(output)) {}
 

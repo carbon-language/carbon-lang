@@ -135,23 +135,22 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
                               include_builtins](Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-              map.Add("cross_reference_irs_size", cross_reference_irs_.size());
+              map.Add("cross_reference_irs_size",
+                      Yaml::OutputScalar(cross_reference_irs_.size()));
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
               map.Add("types", types_.OutputYaml());
               map.Add("type_blocks", type_blocks_.OutputYaml());
-              map.Add(
-                  "nodes",
-                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                    int start = include_builtins ? 0 : BuiltinKind::ValidCount;
-                    for (int i : llvm::seq(start, nodes_.size())) {
-                      auto id = NodeId(i);
-                      map.Add(PrintToString(id),
-                              Yaml::OutputScalar([&](llvm::raw_ostream& out) {
-                                out << nodes_.Get(id);
-                              }));
-                    }
-                  }));
+              map.Add("nodes",
+                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                        int start =
+                            include_builtins ? 0 : BuiltinKind::ValidCount;
+                        for (int i : llvm::seq(start, nodes_.size())) {
+                          auto id = NodeId(i);
+                          map.Add(PrintToString(id),
+                                  Yaml::OutputScalar(nodes_.Get(id)));
+                        }
+                      }));
               map.Add("node_blocks", node_blocks_.OutputYaml());
             }));
   });

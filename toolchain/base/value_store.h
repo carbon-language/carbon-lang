@@ -88,19 +88,6 @@ namespace Internal {
 // Used as a parent class for non-printable types. This is just for
 // std::conditional, not as an API.
 class ValueStoreNotPrintable {};
-
-// Provides YAML printing of a value.
-template <typename ValueT>
-inline auto PrintValue(llvm::raw_ostream& out, const ValueT& val) {
-  out << val;
-};
-inline auto PrintValue(llvm::raw_ostream& out, const llvm::APInt& val) {
-  val.print(out, /*isSigned=*/false);
-};
-inline auto PrintValue(llvm::raw_ostream& out, const llvm::StringRef& val) {
-  out << "\"" << llvm::yaml::escape(val) << "\"";
-};
-
 }  // namespace Internal
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
@@ -149,10 +136,7 @@ class ValueStore
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto i : llvm::seq(values_.size())) {
         auto id = IdT(i);
-        map.Add(PrintToString(id),
-                Yaml::OutputScalar([&](llvm::raw_ostream& out) {
-                  Internal::PrintValue(out, Get(id));
-                }));
+        map.Add(PrintToString(id), Yaml::OutputScalar(Get(id)));
       }
     });
   }

@@ -97,10 +97,7 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
                 Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                   auto block = Get(block_id);
                   for (auto i : llvm::seq(block.size())) {
-                    map.Add(llvm::itostr(i),
-                            Yaml::OutputScalar([&](llvm::raw_ostream& out) {
-                              out << block[i];
-                            }));
+                    map.Add(llvm::itostr(i), Yaml::OutputScalar(block[i]));
                   }
                 }));
       }
