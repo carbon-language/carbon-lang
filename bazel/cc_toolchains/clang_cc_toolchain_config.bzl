@@ -133,6 +133,7 @@ def _impl(ctx):
                             "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
                             "-Wdelete-non-virtual-dtor",
+                            "-Wno-missing-field-initializers",
                             # Don't warn on external code as we can't
                             # necessarily patch it easily.
                             "--system-header-prefix=external/",
