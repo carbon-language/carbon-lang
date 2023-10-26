@@ -854,9 +854,7 @@ class Formatter {
     out_ << '"';
   }
 
-  auto FormatArg(NameId id) -> void {
-    FormatName(id);
-  }
+  auto FormatArg(NameId id) -> void { FormatName(id); }
 
   auto FormatArg(TypeId id) -> void { FormatType(id); }
 

@@ -63,7 +63,8 @@ class Context {
       -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::NameId name_id) -> void;
+  auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::NameId name_id)
+      -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)

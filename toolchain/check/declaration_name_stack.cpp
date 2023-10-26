@@ -13,7 +13,8 @@ auto DeclarationNameStack::MakeEmptyNameContext() -> NameContext {
 }
 
 auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
-                                               SemIR::NameId name_id) -> NameContext {
+                                               SemIR::NameId name_id)
+    -> NameContext {
   NameContext context = MakeEmptyNameContext();
   ApplyNameQualifierTo(context, parse_node, name_id);
   return context;

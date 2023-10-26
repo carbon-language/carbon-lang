@@ -112,7 +112,8 @@ class DeclarationNameStack {
 
   // Applies a Name from the node stack to the top of the declaration name
   // stack.
-  auto ApplyNameQualifier(Parse::Node parse_node, SemIR::NameId name_id) -> void;
+  auto ApplyNameQualifier(Parse::Node parse_node, SemIR::NameId name_id)
+      -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(NameContext name_context, SemIR::NodeId target_id)
