@@ -36,8 +36,8 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref: <namespace> = name_reference "Foo", file.%.loc7
-// CHECK:STDOUT:   %Baz.ref: <function> = name_reference "Baz", file.%Baz.loc13
+// CHECK:STDOUT:   %Foo.ref: <namespace> = name_reference Foo, file.%.loc7
+// CHECK:STDOUT:   %Baz.ref: <function> = name_reference Baz, file.%Baz.loc13
 // CHECK:STDOUT:   %.loc17_10.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc17_10.2: init () = call %Baz.ref()
 // CHECK:STDOUT:   return

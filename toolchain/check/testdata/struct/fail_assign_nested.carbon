@@ -15,8 +15,8 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   %.loc10_15.1: type = struct_type {.a: {}}
 // CHECK:STDOUT:   %.loc10_14.3: type = tuple_type ()
 // CHECK:STDOUT:   %.loc10_15.2: type = struct_type {.a: ()}
-// CHECK:STDOUT:   %x.var: ref {.a: {}} = var "x"
-// CHECK:STDOUT:   %x: ref {.a: {}} = bind_name "x", %x.var
+// CHECK:STDOUT:   %x.var: ref {.a: {}} = var x
+// CHECK:STDOUT:   %x: ref {.a: {}} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_26: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_27.1: type = struct_type {.b: {}}
 // CHECK:STDOUT:   %.loc10_27.2: {.b: {}} = struct_literal (%.loc10_26)

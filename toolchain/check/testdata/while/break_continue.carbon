@@ -59,7 +59,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond.loc17:
-// CHECK:STDOUT:   %A.ref: <function> = name_reference "A", file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_reference A, file.%A
 // CHECK:STDOUT:   %.loc17_11.1: init bool = call %A.ref()
 // CHECK:STDOUT:   %.loc17_11.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc17_11.3: ref bool = temporary %.loc17_11.2, %.loc17_11.1
@@ -67,7 +67,7 @@ fn While() {
 // CHECK:STDOUT:   if %.loc17_11.4 br !while.body.loc17 else br !while.done.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body.loc17:
-// CHECK:STDOUT:   %B.ref: <function> = name_reference "B", file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_reference B, file.%B
 // CHECK:STDOUT:   %.loc18_10.1: init bool = call %B.ref()
 // CHECK:STDOUT:   %.loc18_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc18_10.3: ref bool = temporary %.loc18_10.2, %.loc18_10.1
@@ -78,7 +78,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc18:
-// CHECK:STDOUT:   %C.ref: <function> = name_reference "C", file.%C
+// CHECK:STDOUT:   %C.ref: <function> = name_reference C, file.%C
 // CHECK:STDOUT:   %.loc19_10.1: init bool = call %C.ref()
 // CHECK:STDOUT:   %.loc19_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc19_10.3: ref bool = temporary %.loc19_10.2, %.loc19_10.1
@@ -92,7 +92,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond.loc20:
-// CHECK:STDOUT:   %D.ref: <function> = name_reference "D", file.%D
+// CHECK:STDOUT:   %D.ref: <function> = name_reference D, file.%D
 // CHECK:STDOUT:   %.loc20_13.1: init bool = call %D.ref()
 // CHECK:STDOUT:   %.loc20_13.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc20_13.3: ref bool = temporary %.loc20_13.2, %.loc20_13.1
@@ -100,7 +100,7 @@ fn While() {
 // CHECK:STDOUT:   if %.loc20_13.4 br !while.body.loc20 else br !while.done.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body.loc20:
-// CHECK:STDOUT:   %E.ref: <function> = name_reference "E", file.%E
+// CHECK:STDOUT:   %E.ref: <function> = name_reference E, file.%E
 // CHECK:STDOUT:   %.loc21_12.1: init bool = call %E.ref()
 // CHECK:STDOUT:   %.loc21_12.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc21_12.3: ref bool = temporary %.loc21_12.2, %.loc21_12.1
@@ -111,7 +111,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc21:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
 // CHECK:STDOUT:   %.loc22_12.1: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc22_12.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc22_12.3: ref bool = temporary %.loc22_12.2, %.loc22_12.1
@@ -125,7 +125,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done.loc20:
-// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", file.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_reference G, file.%G
 // CHECK:STDOUT:   %.loc24_10.1: init bool = call %G.ref()
 // CHECK:STDOUT:   %.loc24_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc24_10.3: ref bool = temporary %.loc24_10.2, %.loc24_10.1
@@ -136,7 +136,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc24:
-// CHECK:STDOUT:   %H.ref: <function> = name_reference "H", file.%H
+// CHECK:STDOUT:   %H.ref: <function> = name_reference H, file.%H
 // CHECK:STDOUT:   %.loc25_10.1: init bool = call %H.ref()
 // CHECK:STDOUT:   %.loc25_10.2: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc25_10.3: ref bool = temporary %.loc25_10.2, %.loc25_10.1

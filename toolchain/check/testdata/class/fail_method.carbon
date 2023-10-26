@@ -32,8 +32,8 @@ fn Call(c: Class) -> i32 {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %.loc10_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc10_8.2: <unbound field of class Class> = field "k", member0
-// CHECK:STDOUT:   %k: <unbound field of class Class> = bind_name "k", %.loc10_8.2
+// CHECK:STDOUT:   %.loc10_8.2: <unbound field of class Class> = field k, member0
+// CHECK:STDOUT:   %k: <unbound field of class Class> = bind_name k, %.loc10_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -43,7 +43,7 @@ fn Call(c: Class) -> i32 {
 // CHECK:STDOUT: fn @F[%self: Class]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
-// CHECK:STDOUT:   %self.ref: Class = name_reference "self", %self
+// CHECK:STDOUT:   %self.ref: Class = name_reference self, %self
 // CHECK:STDOUT:   %.loc14_14.1: ref i32 = class_field_access %self.ref, member0
 // CHECK:STDOUT:   %.loc14_14.2: i32 = bind_value %.loc14_14.1
 // CHECK:STDOUT:   return %.loc14_14.2
@@ -51,7 +51,7 @@ fn Call(c: Class) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: Class = name_reference "c", %c
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", @Class.%F
+// CHECK:STDOUT:   %c.ref: Class = name_reference c, %c
+// CHECK:STDOUT:   %F.ref: <function> = name_reference F, @Class.%F
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

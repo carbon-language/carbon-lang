@@ -31,13 +31,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
 // CHECK:STDOUT:   %.loc9: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
-// CHECK:STDOUT:   %c.var: ref Class = var "c"
-// CHECK:STDOUT:   %c: ref Class = bind_name "c", %c.var
-// CHECK:STDOUT:   %c.ref: ref Class = name_reference "c", %c
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", @Class.%F
+// CHECK:STDOUT:   %c.var: ref Class = var c
+// CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
+// CHECK:STDOUT:   %c.ref: ref Class = name_reference c, %c
+// CHECK:STDOUT:   %F.ref: <function> = name_reference F, @Class.%F
 // CHECK:STDOUT:   %.loc13_13.1: init i32 = call %F.ref()
 // CHECK:STDOUT:   %.loc13_13.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc13_13.3: ref i32 = temporary %.loc13_13.2, %.loc13_13.1

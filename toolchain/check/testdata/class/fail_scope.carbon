@@ -44,6 +44,6 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <error> = name_reference "F", <error>
+// CHECK:STDOUT:   %F.ref: <error> = name_reference F, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

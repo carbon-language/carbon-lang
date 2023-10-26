@@ -20,8 +20,8 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @F(%arr: [i32; 3], %i: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
-// CHECK:STDOUT:   %arr.ref: [i32; 3] = name_reference "arr", %arr
-// CHECK:STDOUT:   %i.ref: i32 = name_reference "i", %i
+// CHECK:STDOUT:   %arr.ref: [i32; 3] = name_reference arr, %arr
+// CHECK:STDOUT:   %i.ref: i32 = name_reference i, %i
 // CHECK:STDOUT:   %.loc8_15.1: ref [i32; 3] = value_as_reference %arr.ref
 // CHECK:STDOUT:   %.loc8_15.2: ref i32 = array_index %.loc8_15.1, %i.ref
 // CHECK:STDOUT:   %.loc8_15.3: i32 = bind_value %.loc8_15.2
@@ -30,7 +30,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
 // CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3

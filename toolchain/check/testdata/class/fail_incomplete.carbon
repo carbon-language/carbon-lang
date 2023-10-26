@@ -123,9 +123,9 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1
 // CHECK:STDOUT:   %CallClassFunction: <function> = fn_decl @CallClassFunction
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", %Class
-// CHECK:STDOUT:   %global_var.var: ref <error> = var "global_var"
-// CHECK:STDOUT:   %global_var: ref <error> = bind_name "global_var", %global_var.var
+// CHECK:STDOUT:   %Class.ref: type = name_reference Class, %Class
+// CHECK:STDOUT:   %global_var.var: ref <error> = var global_var
+// CHECK:STDOUT:   %global_var: ref <error> = bind_name global_var, %global_var.var
 // CHECK:STDOUT:   %ConvertFromStruct: <function> = fn_decl @ConvertFromStruct
 // CHECK:STDOUT:   %MemberAccess: <function> = fn_decl @MemberAccess
 // CHECK:STDOUT:   %Copy: <function> = fn_decl @Copy
@@ -145,8 +145,8 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallClassFunction() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %Function.ref: <error> = name_reference "Function", <error>
+// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %Function.ref: <error> = name_reference Function, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -159,24 +159,24 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MemberAccess(%p: Class*) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
+// CHECK:STDOUT:   %p.ref: Class* = name_reference p, %p
 // CHECK:STDOUT:   %.loc58: ref Class = dereference %p.ref
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Copy(%p: Class*) -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
+// CHECK:STDOUT:   %p.ref: Class* = name_reference p, %p
 // CHECK:STDOUT:   %.loc68: ref Class = dereference %p.ref
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Let(%p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
+// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %p.ref: Class* = name_reference p, %p
 // CHECK:STDOUT:   %.loc78: ref Class = dereference %p.ref
-// CHECK:STDOUT:   %c: <error> = bind_name "c", <error>
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -186,18 +186,18 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallTakeIncomplete(%p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc103: <function> = name_reference "TakeIncomplete", file.%TakeIncomplete
-// CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc103: <function> = name_reference TakeIncomplete, file.%TakeIncomplete
+// CHECK:STDOUT:   %p.ref: Class* = name_reference p, %p
 // CHECK:STDOUT:   %.loc103_18: ref Class = dereference %p.ref
 // CHECK:STDOUT:   %.loc103_17: type = tuple_type ()
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc114: <function> = name_reference "TakeIncomplete", file.%TakeIncomplete
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc114: <function> = name_reference TakeIncomplete, file.%TakeIncomplete
 // CHECK:STDOUT:   %.loc114: {} = struct_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnIncomplete() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ReturnIncomplete.ref: <function> = name_reference "ReturnIncomplete", file.%ReturnIncomplete
+// CHECK:STDOUT:   %ReturnIncomplete.ref: <function> = name_reference ReturnIncomplete, file.%ReturnIncomplete
 // CHECK:STDOUT:   %.loc118: init <error> = call %ReturnIncomplete.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

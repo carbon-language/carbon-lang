@@ -47,10 +47,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref.loc18_10: <function> = name_reference "F", file.%F
+// CHECK:STDOUT:   %F.ref.loc18_10: <function> = name_reference F, file.%F
 // CHECK:STDOUT:   %.loc18_11.1: init i32 = call %F.ref.loc18_10()
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %F.ref.loc18_21: <function> = name_reference "F", @Class.%F
+// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %F.ref.loc18_21: <function> = name_reference F, @Class.%F
 // CHECK:STDOUT:   %.loc18_23.1: init i32 = call %F.ref.loc18_21()
 // CHECK:STDOUT:   %.loc18_11.2: ref i32 = temporary_storage
 // CHECK:STDOUT:   %.loc18_11.3: ref i32 = temporary %.loc18_11.2, %.loc18_11.1
