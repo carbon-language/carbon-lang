@@ -170,7 +170,7 @@ CARBON_PARSE_STATE(CodeBlockFinish)
 // Allowed parameters:
 // - None: `Foo` only.
 // - Optional: `Foo`, `Foo(...)`, or `Foo[...](...)`.
-// - Required: ``Foo(...)` or `Foo[...](...)`.
+// - Required: `Foo(...)` or `Foo[...](...)`.
 //
 // If `Identifier` followed by `Period`:
 //   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
