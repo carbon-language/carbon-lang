@@ -428,20 +428,15 @@ void BM_ValidKeywords(benchmark::State& state) {
 BENCHMARK(BM_ValidKeywords);
 
 void BM_ValidKeywordsAsRawIdentifiers(benchmark::State& state) {
-  llvm::SmallVector<std::string> raw_keywords;
-  raw_keywords.resize(TokenKind::KeywordTokens.size(), "r#");
-  for (auto [keyword, raw_keyword] :
-       llvm::zip(TokenKind::KeywordTokens, raw_keywords)) {
-    raw_keyword.append(keyword.fixed_spelling());
-  }
-
   absl::BitGen gen;
   std::array<llvm::StringRef, NumTokens> tokens;
   for (int i : llvm::seq(NumTokens)) {
-    tokens[i] = raw_keywords[i % raw_keywords.size()];
+    tokens[i] = TokenKind::KeywordTokens[i % TokenKind::KeywordTokens.size()]
+                    .fixed_spelling();
   }
   std::shuffle(tokens.begin(), tokens.end(), gen);
-  std::string source = llvm::join(tokens, " ");
+  std::string source("r#");
+  source.append(llvm::join(tokens, " r#"));
 
   LexerBenchHelper helper(source);
   for (auto _ : state) {
@@ -460,17 +455,22 @@ BENCHMARK(BM_ValidKeywordsAsRawIdentifiers);
 void BM_RawIdentifierFocus(benchmark::State& state) {
   const std::array<std::string, NumTokens>& ids = GetRandomIdentifiers();
 
-  llvm::SmallVector<std::string> raw_ids;
-  raw_ids.resize(NumTokens / 2, "r#");
-  for (auto [id, raw_id] : llvm::zip(ids, raw_ids)) {
-    raw_id.append(id);
+  llvm::SmallVector<std::string> modified_ids;
+  // As we resize, start with the in-use prefix. Note that `r#` uses the first
+  // character of the original identifier.
+  modified_ids.resize(NumTokens / 2, "r#");
+  modified_ids.resize(NumTokens, "r");
+  for (int i : llvm::seq(NumTokens / 2)) {
+    // Use the same identifier both ways.
+    modified_ids[i].append(ids[i]);
+    modified_ids[i + NumTokens / 2].append(
+        llvm::StringRef(ids[i]).drop_front());
   }
 
   absl::BitGen gen;
   std::array<llvm::StringRef, NumTokens> tokens;
-  for (int i : llvm::seq(NumTokens / 2)) {
-    tokens[i] = raw_ids[i];
-    tokens[i + NumTokens / 2] = ids[i];
+  for (int i : llvm::seq(NumTokens)) {
+    tokens[i] = modified_ids[i];
   }
   std::shuffle(tokens.begin(), tokens.end(), gen);
   std::string source = llvm::join(tokens, " ");
