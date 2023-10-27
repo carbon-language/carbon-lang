@@ -21,6 +21,13 @@ fn F(c: Class) {
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^
   Class.WithSelf();
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:17: ERROR: 1 argument(s) passed to function expecting 0 argument(s).
+  // CHECK:STDERR:   Class.WithSelf(c);
+  // CHECK:STDERR:                 ^
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-18]]:3: Calling function declared here.
+  // CHECK:STDERR:   fn WithSelf[self: Class]();
+  // CHECK:STDERR:   ^
+  Class.WithSelf(c);
 }
 
 // CHECK:STDOUT: file "fail_method.carbon" {
@@ -57,7 +64,11 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %NoSelf.ref.loc16: <function> = name_reference "NoSelf", @Class.%NoSelf
 // CHECK:STDOUT:   %.loc16: init () = call %NoSelf.ref.loc16()
 // CHECK:STDOUT:   %Class.ref.loc23: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %WithSelf.ref: <function> = name_reference "WithSelf", @Class.%WithSelf
-// CHECK:STDOUT:   %.loc23: init () = call %WithSelf.ref(<invalid>)
+// CHECK:STDOUT:   %WithSelf.ref.loc23: <function> = name_reference "WithSelf", @Class.%WithSelf
+// CHECK:STDOUT:   %.loc23: init () = call %WithSelf.ref.loc23(<invalid>)
+// CHECK:STDOUT:   %Class.ref.loc24: type = name_reference "Class", file.%Class
+// CHECK:STDOUT:   %WithSelf.ref.loc24: <function> = name_reference "WithSelf", @Class.%WithSelf
+// CHECK:STDOUT:   %c.ref.loc24: Class = name_reference "c", %c
+// CHECK:STDOUT:   %.loc24: init () = call %WithSelf.ref.loc24(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
