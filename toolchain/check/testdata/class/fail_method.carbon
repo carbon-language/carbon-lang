@@ -66,9 +66,9 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %Class.ref.loc23: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %WithSelf.ref.loc23: <function> = name_reference "WithSelf", @Class.%WithSelf
 // CHECK:STDOUT:   %.loc23: init () = call %WithSelf.ref.loc23(<invalid>)
-// CHECK:STDOUT:   %Class.ref.loc24: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %WithSelf.ref.loc24: <function> = name_reference "WithSelf", @Class.%WithSelf
-// CHECK:STDOUT:   %c.ref.loc24: Class = name_reference "c", %c
-// CHECK:STDOUT:   %.loc24: init () = call %WithSelf.ref.loc24(<invalid>)
+// CHECK:STDOUT:   %Class.ref.loc30: type = name_reference "Class", file.%Class
+// CHECK:STDOUT:   %WithSelf.ref.loc30: <function> = name_reference "WithSelf", @Class.%WithSelf
+// CHECK:STDOUT:   %c.ref.loc30: Class = name_reference "c", %c
+// CHECK:STDOUT:   %.loc30: init () = call %WithSelf.ref.loc30(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
