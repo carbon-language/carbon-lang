@@ -16,7 +16,7 @@ auto IsEntryPoint(const SemIR::File& file, SemIR::FunctionId function_id)
   const auto& function = file.functions().Get(function_id);
   // TODO: Check if `function` is in a namespace.
   return function.name_id.is_valid() &&
-         file.names().GetAsString(function.name_id) == EntryPointFunction;
+         file.names().GetIfIdentifier(function.name_id) == EntryPointFunction;
 }
 
 }  // namespace Carbon::SemIR

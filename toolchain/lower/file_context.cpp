@@ -117,7 +117,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
     mangled_name = "main";
-  } else if (auto name = sem_ir().names().GetAsString(function.name_id)) {
+  } else if (auto name = sem_ir().names().GetIfIdentifier(function.name_id)) {
     // TODO: Decide on a name mangling scheme.
     mangled_name = *name;
   } else {

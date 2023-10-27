@@ -43,30 +43,28 @@ class NodeStore {
   ValueStore<NodeId, Node> values_;
 };
 
-// Provides a ValueStore-like interface for names. This is currently a wrapper
-// around a string store that has no state of its own.
+// Provides a ValueStore-like interface for names.
+//
+// A name is either an identifier name, or a special name such as `self` that
+// does not correspond to an identifier token. Identifier names are represented
+// as `NameId`s with the same non-negative index as the `StringId` of the
+// identifier. Special names are represented as `NameId`s with a negative
+// index.
+//
+// As we do not require any additional explicit storage for names, this is
+// currently a wrapper around a string store that has no state of its own.
 class NameStore {
  public:
   NameStore(ValueStore<StringId>* strings) : strings_(strings) {}
 
-  // Adds a string name, returning an ID to reference it.
+  // Adds an identifier name, returning an ID to reference it.
   auto Add(StringId string_id) -> NameId { return NameId(string_id.index); }
 
-  // Returns the requested name as a string ID, if it is a string name. This
+  // Returns the requested name as a string, if it is an identifier name. This
   // returns std::nullopt for special names.
-  auto GetAsStringId(NameId name_id) const -> std::optional<StringId> {
+  auto GetIfIdentifier(NameId name_id) const -> std::optional<llvm::StringRef> {
     if (name_id.index >= 0) {
-      return StringId(name_id.index);
-    }
-    return std::nullopt;
-  }
-
-  // Returns the requested name as a string, if it is a string name. This
-  // returns std::nullopt for special names.
-  auto GetAsString(NameId name_id) const -> std::optional<llvm::StringRef> {
-    auto id = GetAsStringId(name_id);
-    if (id) {
-      return strings_->Get(*id);
+      return strings_->Get(StringId(name_id.index));
     }
     return std::nullopt;
   }
