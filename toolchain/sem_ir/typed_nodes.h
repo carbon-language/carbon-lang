@@ -129,6 +129,20 @@ struct BoolLiteral {
   BoolValue value;
 };
 
+// A bound method, that combines a function with the value to use for its
+// `self` parameter, such as `object.MethodName`.
+struct BoundMethod {
+  static constexpr auto Kind = NodeKind::BoundMethod.Define("bound_method");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  // The object argument in the bound method, which will be used to initialize
+  // `self`, or whose address will be used to initialize `self` for an `addr
+  // self` parameter.
+  NodeId object_id;
+  NodeId function_id;
+};
+
 struct Branch {
   static constexpr auto Kind =
       NodeKind::Branch.Define("br", TerminatorKind::Terminator);
@@ -172,6 +186,10 @@ struct Call {
   Parse::Node parse_node;
   TypeId type_id;
   NodeId callee_id;
+  // The arguments block contains IDs for the following arguments, in order:
+  //  - The argument for each implicit parameter.
+  //  - The argument for each explicit parameter.
+  //  - The argument for the return slot, if present.
   NodeBlockId args_id;
 };
 

@@ -773,27 +773,17 @@ auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
 }
 
 auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
-                     SemIR::NodeBlockId arg_refs_id,
-                     Parse::Node param_parse_node,
-                     SemIR::NodeBlockId param_refs_id, bool has_return_slot)
-    -> bool {
-  // If both arguments and parameters are empty, return quickly. Otherwise,
-  // we'll fetch both so that errors are consistent.
-  if (arg_refs_id == SemIR::NodeBlockId::Empty &&
-      param_refs_id == SemIR::NodeBlockId::Empty) {
-    return true;
-  }
-
-  auto arg_refs = context.sem_ir().node_blocks().Get(arg_refs_id);
+                     SemIR::NodeId self_id,
+                     llvm::ArrayRef<SemIR::NodeId> arg_refs,
+                     SemIR::NodeId return_storage_id,
+                     Parse::Node callee_parse_node,
+                     SemIR::NodeBlockId implicit_param_refs_id,
+                     SemIR::NodeBlockId param_refs_id) -> SemIR::NodeBlockId {
+  auto implicit_param_refs =
+      context.sem_ir().node_blocks().Get(implicit_param_refs_id);
   auto param_refs = context.sem_ir().node_blocks().Get(param_refs_id);
 
-  if (has_return_slot) {
-    // There's no entry in the parameter block for the return slot, so ignore
-    // the corresponding entry in the argument block.
-    // TODO: Consider adding the return slot to the parameter list.
-    CARBON_CHECK(!arg_refs.empty()) << "missing return slot";
-    arg_refs = arg_refs.drop_back();
-  }
+  CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
@@ -801,18 +791,53 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
                       "{0} argument(s) passed to function expecting "
                       "{1} argument(s).",
                       int, int);
-    CARBON_DIAGNOSTIC(InCallToFunction, Note,
-                      "Calling function declared here.");
     context.emitter()
         .Build(call_parse_node, CallArgCountMismatch, arg_refs.size(),
                param_refs.size())
-        .Note(param_parse_node, InCallToFunction)
+        .Note(callee_parse_node, InCallToFunction)
         .Emit();
-    return false;
+    return SemIR::NodeBlockId::Invalid;
   }
 
-  if (param_refs.empty()) {
-    return true;
+  // Start building a block to hold the converted arguments.
+  llvm::SmallVector<SemIR::NodeId> args;
+  args.reserve(implicit_param_refs.size() + param_refs.size() +
+               return_storage_id.is_valid());
+
+  // Check implicit parameters.
+  for (auto implicit_param_id : implicit_param_refs) {
+    auto param = context.nodes().Get(implicit_param_id);
+    if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
+      if (!self_id.is_valid()) {
+        CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
+                          "Missing object argument in method call.");
+        context.emitter()
+            .Build(call_parse_node, MissingObjectInMethodCall)
+            .Note(callee_parse_node, InCallToFunction)
+            .Emit();
+        return SemIR::NodeBlockId::Invalid;
+      }
+
+      DiagnosticAnnotationScope annotate_diagnostics(
+          &context.emitter(), [&](auto& builder) {
+            CARBON_DIAGNOSTIC(
+                InCallToFunctionSelf, Note,
+                "Initializing self parameter of method declared here.");
+            builder.Note(self_param->parse_node, InCallToFunctionSelf);
+          });
+
+      // TODO: Handle `addr self`.
+      auto converted_self_id = ConvertToValueOfType(
+          context, call_parse_node, self_id, self_param->type_id);
+      if (converted_self_id == SemIR::NodeId::BuiltinError) {
+        return SemIR::NodeBlockId::Invalid;
+      }
+      args.push_back(converted_self_id);
+    } else {
+      // TODO: Form argument values for implicit parameters.
+      context.TODO(call_parse_node, "Call with implicit parameters");
+      return SemIR::NodeBlockId::Invalid;
+    }
   }
 
   int diag_param_index;
@@ -821,26 +846,32 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
         CARBON_DIAGNOSTIC(
             InCallToFunctionParam, Note,
             "Initializing parameter {0} of function declared here.", int);
-        builder.Note(param_parse_node, InCallToFunctionParam,
+        builder.Note(callee_parse_node, InCallToFunctionParam,
                      diag_param_index + 1);
       });
 
   // Check type conversions per-element.
-  for (auto [i, value_id, param_ref] : llvm::enumerate(arg_refs, param_refs)) {
+  for (auto [i, arg_id, param_id] : llvm::enumerate(arg_refs, param_refs)) {
     diag_param_index = i;
 
-    auto as_type_id = context.sem_ir().nodes().Get(param_ref).type_id();
+    auto param_type_id = context.sem_ir().nodes().Get(param_id).type_id();
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.
-    value_id =
-        ConvertToValueOfType(context, call_parse_node, value_id, as_type_id);
-    if (value_id == SemIR::NodeId::BuiltinError) {
-      return false;
+    auto converted_arg_id =
+        ConvertToValueOfType(context, call_parse_node, arg_id, param_type_id);
+    if (converted_arg_id == SemIR::NodeId::BuiltinError) {
+      return SemIR::NodeBlockId::Invalid;
     }
-    arg_refs[i] = value_id;
+
+    args.push_back(converted_arg_id);
   }
 
-  return true;
+  // Track the return storage, if present.
+  if (return_storage_id.is_valid()) {
+    args.push_back(return_storage_id);
+  }
+
+  return context.node_blocks().Add(args);
 }
 
 auto ExpressionAsType(Context& context, Parse::Node parse_node,

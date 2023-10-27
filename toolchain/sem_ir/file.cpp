@@ -191,6 +191,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case BindValue::Kind:
     case BlockArg::Kind:
     case BoolLiteral::Kind:
+    case BoundMethod::Kind:
     case Branch::Kind:
     case BranchIf::Kind:
     case BranchWithArg::Kind:
@@ -389,6 +390,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
+      case BoundMethod::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
@@ -491,6 +493,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
+      case BoundMethod::Kind:
       case ClassType::Kind:
       case ConstType::Kind:
       case IntegerLiteral::Kind:

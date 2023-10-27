@@ -77,12 +77,15 @@ auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
                         SemIR::NodeId value_id) -> SemIR::NodeId;
 
 // Implicitly converts a set of arguments to match the parameter types in a
-// function call.
+// function call. Returns a block containing the converted implicit and explicit
+// argument values.
 auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
-                     SemIR::NodeBlockId arg_refs_id,
-                     Parse::Node param_parse_node,
-                     SemIR::NodeBlockId param_refs_id, bool has_return_slot)
-    -> bool;
+                     SemIR::NodeId self_id,
+                     llvm::ArrayRef<SemIR::NodeId> arg_refs,
+                     SemIR::NodeId return_storage_id,
+                     Parse::Node callee_parse_node,
+                     SemIR::NodeBlockId implicit_param_refs_id,
+                     SemIR::NodeBlockId param_refs_id) -> SemIR::NodeBlockId;
 
 // Converts an expression for use as a type.
 auto ExpressionAsType(Context& context, Parse::Node parse_node,

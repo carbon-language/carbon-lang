@@ -22,6 +22,7 @@
 // CHECK:STDOUT:     nodeFloatingPointType: {kind: CrossReference, arg0: ir0, arg1: nodeFloatingPointType, type: typeTypeType}
 // CHECK:STDOUT:     nodeStringType:  {kind: CrossReference, arg0: ir0, arg1: nodeStringType, type: typeTypeType}
 // CHECK:STDOUT:     nodeFunctionType: {kind: CrossReference, arg0: ir0, arg1: nodeFunctionType, type: typeTypeType}
+// CHECK:STDOUT:     nodeBoundMethodType: {kind: CrossReference, arg0: ir0, arg1: nodeBoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     nodeNamespaceType: {kind: CrossReference, arg0: ir0, arg1: nodeNamespaceType, type: typeTypeType}
 // CHECK:STDOUT:   node_blocks:
 // CHECK:STDOUT:     block0:          {}

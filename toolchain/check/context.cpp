@@ -185,6 +185,7 @@ auto Context::GetConstantValue(SemIR::NodeId node_id) -> SemIR::NodeId {
         break;
 
       case SemIR::Field::Kind:
+      case SemIR::FunctionDeclaration::Kind:
         return node_id;
 
       default:
@@ -538,6 +539,7 @@ class TypeCompleter {
       case SemIR::BuiltinKind::FloatingPointType:
       case SemIR::BuiltinKind::NamespaceType:
       case SemIR::BuiltinKind::FunctionType:
+      case SemIR::BuiltinKind::BoundMethodType:
         return MakeCopyRepresentation(type_id);
 
       case SemIR::BuiltinKind::StringType:
@@ -657,6 +659,7 @@ class TypeCompleter {
       case SemIR::BindValue::Kind:
       case SemIR::BlockArg::Kind:
       case SemIR::BoolLiteral::Kind:
+      case SemIR::BoundMethod::Kind:
       case SemIR::Branch::Kind:
       case SemIR::BranchIf::Kind:
       case SemIR::BranchWithArg::Kind:

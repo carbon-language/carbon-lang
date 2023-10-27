@@ -743,6 +743,11 @@ class Formatter {
     out_ << " ";
     FormatArg(node.callee_id);
 
+    if (!node.args_id.is_valid()) {
+      out_ << "(<invalid>)";
+      return;
+    }
+
     llvm::ArrayRef<NodeId> args = sem_ir_.node_blocks().Get(node.args_id);
 
     bool has_return_slot =

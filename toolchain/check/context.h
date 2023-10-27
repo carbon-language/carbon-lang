@@ -224,6 +224,10 @@ class Context {
 
   auto node_block_stack() -> NodeBlockStack& { return node_block_stack_; }
 
+  auto params_or_args_stack() -> NodeBlockStack& {
+    return params_or_args_stack_;
+  }
+
   auto args_type_info_stack() -> NodeBlockStack& {
     return args_type_info_stack_;
   }

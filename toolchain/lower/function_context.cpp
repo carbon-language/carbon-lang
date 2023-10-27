@@ -78,6 +78,18 @@ auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
   return synthetic_block_;
 }
 
+auto FunctionContext::GetLocalOrGlobal(SemIR::NodeId node_id) -> llvm::Value* {
+  auto target = sem_ir().nodes().Get(node_id);
+  if (auto function_decl = target.TryAs<SemIR::FunctionDeclaration>()) {
+    return GetFunction(function_decl->function_id);
+  }
+  if (auto class_type = target.TryAs<SemIR::ClassType>()) {
+    return GetTypeAsValue();
+  }
+  // TODO: Handle other kinds of name references to globals.
+  return GetLocal(node_id);
+}
+
 auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
                                            SemIR::NodeId dest_id,
                                            SemIR::NodeId source_id) -> void {

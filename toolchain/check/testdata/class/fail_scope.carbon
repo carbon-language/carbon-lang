@@ -11,12 +11,9 @@ class Class {
 
   // TODO: This `F()` should find `Class.F`.
   fn G() -> i32 {
-    // CHECK:STDERR: fail_scope.carbon:[[@LINE+6]]:12: ERROR: Name `F` not found.
+    // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:12: ERROR: Name `F` not found.
     // CHECK:STDERR:     return F();
     // CHECK:STDERR:            ^
-    // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `Not a callable name`.
-    // CHECK:STDERR:     return F();
-    // CHECK:STDERR:              ^
     return F();
   }
 }
@@ -24,7 +21,7 @@ class Class {
 // CHECK:STDOUT: file "fail_scope.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc22: type = struct_type {}
+// CHECK:STDOUT:   %.loc19: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

@@ -36,16 +36,33 @@ fn Class.G() -> Class {
   return self;
 }
 
+class WrongSelf {
+  fn F[self: Class]();
+}
+
+fn CallWrongSelf(ws: WrongSelf) {
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:7: ERROR: Cannot implicitly convert from `WrongSelf` to `Class`.
+  // CHECK:STDERR:   ws.F();
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing self parameter of method declared here.
+  // CHECK:STDERR:   fn F[self: Class]();
+  // CHECK:STDERR:        ^
+  ws.F();
+}
+
 // CHECK:STDOUT: file "fail_self.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %.loc20: type = struct_type {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   class_declaration @WrongSelf, ()
+// CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf
+// CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -53,7 +70,14 @@ fn Class.G() -> Class {
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%self: Class) {
+// CHECK:STDOUT: class @WrongSelf {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.1(%self: Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc20: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
@@ -66,4 +90,14 @@ fn Class.G() -> Class {
 // CHECK:STDOUT:   %self: Class = self_parameter false
 // CHECK:STDOUT:   %self.ref: <error> = name_reference "self", <error>
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.2[%self: Class]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallWrongSelf(%ws: WrongSelf) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %ws.ref: WrongSelf = name_reference "ws", %ws
+// CHECK:STDOUT:   %.loc50_5: <bound method> = bound_method %ws.ref, @WrongSelf.%F
+// CHECK:STDOUT:   %.loc50_7: init () = call %.loc50_5(<invalid>)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }

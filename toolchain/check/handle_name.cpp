@@ -113,6 +113,33 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                             base_id, field->index});
         return true;
       }
+      if (member_type_id ==
+          context.GetBuiltinType(SemIR::BuiltinKind::FunctionType)) {
+        // Find the named function and check whether it's an instance method.
+        auto function_name_id = context.GetConstantValue(member_id);
+        CARBON_CHECK(function_name_id.is_valid())
+            << "Non-constant value " << context.nodes().Get(member_id)
+            << " of function type";
+        auto function_decl = context.nodes()
+                                 .Get(function_name_id)
+                                 .TryAs<SemIR::FunctionDeclaration>();
+        CARBON_CHECK(function_decl)
+            << "Unexpected value " << context.nodes().Get(function_name_id)
+            << " of function type";
+        auto& function = context.functions().Get(function_decl->function_id);
+        for (auto param_id :
+             context.node_blocks().Get(function.implicit_param_refs_id)) {
+          if (context.nodes().Get(param_id).Is<SemIR::SelfParameter>()) {
+            context.AddNodeAndPush(
+                parse_node,
+                SemIR::BoundMethod{
+                    parse_node,
+                    context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
+                    base_id, member_id});
+            return true;
+          }
+        }
+      }
 
       // For a non-instance member, the result is that member.
       // TODO: Track that this was named within `base_id`.

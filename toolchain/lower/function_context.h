@@ -59,6 +59,9 @@ class FunctionContext {
                         << sem_ir().nodes().Get(node_id);
   }
 
+  // Returns a value for the given node, which might not be local.
+  auto GetLocalOrGlobal(SemIR::NodeId node_id) -> llvm::Value*;
+
   // Gets a callable's function.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
     return file_context_->GetFunction(function_id);
