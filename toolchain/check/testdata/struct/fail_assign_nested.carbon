@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:27: ERROR: Mismatched names for field 1 in struct initialization: source has field name `b`, destination has field name `a`.
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:27: ERROR: Missing value for field `a` in struct initialization.
 // CHECK:STDERR: var x: {.a: {}} = {.b = {}};
 // CHECK:STDERR:                           ^
 var x: {.a: {}} = {.b = {}};

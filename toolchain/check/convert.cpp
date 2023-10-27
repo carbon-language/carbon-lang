@@ -408,8 +408,8 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
   }
 
   // Check that the structs are the same size.
-  // TODO: Check the field names are the same up to permutation, compute the
-  // permutation, and use it below.
+  // TODO: If not, include the name of the first source field that doesn't
+  // exist in the destination in the diagnostic.
   if (src_elem_fields.size() != dest_elem_fields.size()) {
     CARBON_DIAGNOSTIC(StructInitElementCountMismatch, Error,
                       "Cannot initialize struct of {0} element(s) from struct "
@@ -418,6 +418,15 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
     context.emitter().Emit(value.parse_node(), StructInitElementCountMismatch,
                            dest_elem_fields.size(), src_elem_fields.size());
     return SemIR::NodeId::BuiltinError;
+  }
+
+  // Prepare to look up fields in the source by index.
+  llvm::SmallDenseMap<StringId, int32_t> src_field_indexes;
+  if (src_type.fields_id != dest_type.fields_id) {
+    for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
+      src_field_indexes
+          [context.nodes().GetAs<SemIR::StructTypeField>(field_id).name_id] = i;
+    }
   }
 
   // If we're forming an initializer, then we want an initializer for each
@@ -436,22 +445,40 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
   CopyOnWriteBlock new_block(sem_ir, literal_elems_id, src_elem_fields.size());
-  for (auto [i, src_field_id, dest_field_id] :
-       llvm::enumerate(src_elem_fields, dest_elem_fields)) {
-    auto src_field = sem_ir.nodes().GetAs<SemIR::StructTypeField>(src_field_id);
+  for (auto [i, dest_field_id] : llvm::enumerate(dest_elem_fields)) {
     auto dest_field =
         sem_ir.nodes().GetAs<SemIR::StructTypeField>(dest_field_id);
-    if (src_field.name_id != dest_field.name_id) {
-      CARBON_DIAGNOSTIC(
-          StructInitFieldNameMismatch, Error,
-          "Mismatched names for field {0} in struct initialization: "
-          "source has field name `{1}`, destination has field name `{2}`.",
-          size_t, llvm::StringRef, llvm::StringRef);
-      context.emitter().Emit(value.parse_node(), StructInitFieldNameMismatch,
-                             i + 1, sem_ir.strings().Get(src_field.name_id),
-                             sem_ir.strings().Get(dest_field.name_id));
-      return SemIR::NodeId::BuiltinError;
+
+    // Find the matching source field.
+    auto src_field_index = i;
+    if (src_type.fields_id != dest_type.fields_id) {
+      auto src_field_it = src_field_indexes.find(dest_field.name_id);
+      if (src_field_it == src_field_indexes.end()) {
+        CARBON_DIAGNOSTIC(
+            StructInitMissingFieldInLiteral, Error,
+            "Missing value for field `{0}` in struct initialization.",
+            llvm::StringRef);
+        CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
+                          "Cannot convert from struct type `{0}` to `{1}`: "
+                          "missing field `{2}` in source type.",
+                          std::string, std::string, llvm::StringRef);
+        if (literal_elems_id.is_valid()) {
+          context.emitter().Emit(value.parse_node(),
+                                 StructInitMissingFieldInLiteral,
+                                 sem_ir.strings().Get(dest_field.name_id));
+        } else {
+          context.emitter().Emit(value.parse_node(),
+                                 StructInitMissingFieldInConversion,
+                                 sem_ir.StringifyType(value.type_id()),
+                                 sem_ir.StringifyType(target.type_id),
+                                 sem_ir.strings().Get(dest_field.name_id));
+        }
+        return SemIR::NodeId::BuiltinError;
+      }
+      src_field_index = src_field_it->second;
     }
+    auto src_field = sem_ir.nodes().GetAs<SemIR::StructTypeField>(
+        src_elem_fields[src_field_index]);
 
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
@@ -459,7 +486,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
         ConvertAggregateElement<SemIR::StructAccess, SemIR::StructAccess>(
             context, value.parse_node(), value_id, src_field.field_type_id,
             literal_elems, inner_kind, target.init_id, dest_field.field_type_id,
-            target.init_block, i);
+            target.init_block, src_field_index);
     if (init_id == SemIR::NodeId::BuiltinError) {
       return SemIR::NodeId::BuiltinError;
     }
