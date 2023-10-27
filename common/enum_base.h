@@ -64,7 +64,7 @@ namespace Carbon::Internal {
 //   enumerator per call to CARBON_MY_KIND(Name) in ".../my_kind.def", with name
 //   `Name`. This won't generally be used directly, but may be needed for niche
 //   use cases such as a template argument.
-// - A type `MyKind` that extends `Carbon::Internal::EnumBase`. As a result:
+// - A type `MyKind` that extends `Carbon::Internal::EnumBase`.
 //   - `MyKind` includes all the public members of `EnumBase`, like `name` and
 //     `Print`. For example, you might call `name()` to construct an error
 //     message:
@@ -78,8 +78,8 @@ namespace Carbon::Internal {
 //     were included in a `using` declaration.
 //   - `MyKind` includes a member `static const MyKind Name;` per call to
 //     `CARBON_MY_KIND(Name)` in ".../my_kind.def". It will have the
-//     corresponding value from `RawEnumType`. For example, it might be used
-//     like:
+//     corresponding value from `RawEnumType`. This is the primary way to create
+//     an instance of `MyKind`. For example, it might be used like:
 //     ```
 //     ErrorMessage(MyKind::Name1);
 //     ```
