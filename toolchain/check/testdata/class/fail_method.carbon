@@ -15,9 +15,9 @@ fn Class.F[self: Class]() -> i32 {
 }
 
 fn Call(c: Class) -> i32 {
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `Not a callable name`.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+3]]:13: ERROR: Value of type <bound method> is not callable.
   // CHECK:STDERR:   return c.F();
-  // CHECK:STDERR:              ^
+  // CHECK:STDERR:             ^
   return c.F();
 }
 

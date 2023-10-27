@@ -181,6 +181,10 @@ struct Call {
   Parse::Node parse_node;
   TypeId type_id;
   NodeId callee_id;
+  // The arguments block contains IDs for the following arguments, in order:
+  //  - The argument for each implicit parameter.
+  //  - The argument for each explicit parameter.
+  //  - The argument for the return slot, if present.
   NodeBlockId args_id;
 };
 

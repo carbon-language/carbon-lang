@@ -8,18 +8,15 @@ class Class {
   fn G() -> i32 {
     // TODO: This should find the member function `F` even though it's declared
     // later.
-    // CHECK:STDERR: fail_reorder.carbon:[[@LINE+12]]:12: ERROR: Member access into incomplete class `Class`.
+    // CHECK:STDERR: fail_reorder.carbon:[[@LINE+9]]:12: ERROR: Member access into incomplete class `Class`.
     // CHECK:STDERR:     return Class.F();
     // CHECK:STDERR:            ^
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE-7]]:1: Class is incomplete within its definition.
     // CHECK:STDERR: class Class {
     // CHECK:STDERR: ^
-    // CHECK:STDERR: fail_reorder.carbon:[[@LINE+6]]:17: ERROR: Name `F` not found.
+    // CHECK:STDERR: fail_reorder.carbon:[[@LINE+3]]:17: ERROR: Name `F` not found.
     // CHECK:STDERR:     return Class.F();
     // CHECK:STDERR:                 ^
-    // CHECK:STDERR: fail_reorder.carbon:[[@LINE+3]]:20: ERROR: Semantics TODO: `Not a callable name`.
-    // CHECK:STDERR:     return Class.F();
-    // CHECK:STDERR:                    ^
     return Class.F();
   }
 
@@ -31,7 +28,7 @@ class Class {
 // CHECK:STDOUT: file "fail_reorder.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc29: type = struct_type {}
+// CHECK:STDOUT:   %.loc26: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -52,6 +49,6 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc27: i32 = int_literal 1
-// CHECK:STDOUT:   return %.loc27
+// CHECK:STDOUT:   %.loc24: i32 = int_literal 1
+// CHECK:STDOUT:   return %.loc24
 // CHECK:STDOUT: }
