@@ -15,13 +15,12 @@ fn Class.F[self: Class]() -> i32 {
 }
 
 fn Call(c: Class) -> i32 {
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+3]]:13: ERROR: Value of type <bound method> is not callable.
-  // CHECK:STDERR:   return c.F();
-  // CHECK:STDERR:             ^
+  // TODO: The sem-ir for this call doesn't distinguish the `self` argument from
+  // the explicit arguments.
   return c.F();
 }
 
-// CHECK:STDOUT: file "fail_method.carbon" {
+// CHECK:STDOUT: file "method.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %.loc11: type = struct_type {.k: i32}
@@ -52,6 +51,10 @@ fn Call(c: Class) -> i32 {
 // CHECK:STDOUT: fn @Call(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: Class = name_reference "c", %c
-// CHECK:STDOUT:   %.loc21: <bound method> = bound_method %c.ref, @Class.%F
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %.loc18_11: <bound method> = bound_method %c.ref, @Class.%F
+// CHECK:STDOUT:   %.loc18_13.1: init i32 = call %.loc18_11(%c.ref)
+// CHECK:STDOUT:   %.loc18_13.2: ref i32 = temporary_storage
+// CHECK:STDOUT:   %.loc18_13.3: ref i32 = temporary %.loc18_13.2, %.loc18_13.1
+// CHECK:STDOUT:   %.loc18_13.4: i32 = bind_value %.loc18_13.3
+// CHECK:STDOUT:   return %.loc18_13.4
 // CHECK:STDOUT: }

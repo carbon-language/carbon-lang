@@ -34,26 +34,26 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
     return true;
   };
 
-  auto callee_node_id = context.GetConstantValue(callee_id);
-  if (!callee_node_id.is_valid()) {
-    return diagnose_not_callable();
-  }
-  auto callee_node = context.nodes().Get(callee_node_id);
-
   // For a method call, pick out the `self` value.
+  auto function_callee_id = callee_id;
   SemIR::NodeId self_id = SemIR::NodeId::Invalid;
-  if (auto bound_method = callee_node.TryAs<SemIR::BoundMethod>()) {
+  if (auto bound_method =
+          context.nodes().Get(callee_id).TryAs<SemIR::BoundMethod>()) {
     self_id = bound_method->object_id;
-    callee_node_id = context.GetConstantValue(bound_method->function_id);
-    callee_node = context.nodes().Get(callee_node_id);
+    function_callee_id = bound_method->function_id;
   }
 
   // Identify the function we're calling.
-  auto function_name = callee_node.TryAs<SemIR::FunctionDeclaration>();
-  if (!function_name) {
+  auto function_decl_id = context.GetConstantValue(function_callee_id);
+  if (!function_decl_id.is_valid()) {
     return diagnose_not_callable();
   }
-  auto function_id = function_name->function_id;
+  auto function_decl =
+      context.nodes().Get(function_decl_id).TryAs<SemIR::FunctionDeclaration>();
+  if (!function_decl) {
+    return diagnose_not_callable();
+  }
+  auto function_id = function_decl->function_id;
   const auto& callable = context.functions().Get(function_id);
 
   // For functions with an implicit return type, the return type is the empty
@@ -76,7 +76,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   auto converted_args_id =
       ConvertCallArgs(context, call_expr_parse_node, self_id,
                       context.params_or_args_stack().PeekCurrentBlockContents(),
-                      return_storage_id, callee_node.parse_node(),
+                      return_storage_id, function_decl->parse_node,
                       callable.implicit_param_refs_id, callable.param_refs_id);
   auto call_node_id = context.AddNode(
       SemIR::Call{call_expr_parse_node, type_id, callee_id, converted_args_id});
