@@ -150,9 +150,11 @@ This serves to emphasize that the keyword is not part of the expansion body, but
 rather a modifier on the syntax and semantics of `...`.
 
 In a pack expansion, the statement, expression, or pattern embedded in the
-expansion is called the _body_ of the expansion, and a pack expansion body must
-contain at least one expansion site. All sites of a given expansion must have
-the same arity (which we will also refer to as the arity of the expansion).
+expansion is called the _body_ of the expansion. All sites of a given expansion
+must have the same arity, which we will also refer to as the arity of the
+expansion. If an expansion has no expansion sites, it must be a pack expansion
+pattern, or an expression in the type position of a binding pattern, and its
+arity is deduced from the scrutinee.
 
 A pack expansion or `...expand` expression cannot contain another pack expansion
 or `...expand` expression.
@@ -348,7 +350,8 @@ expression on a pack, and only by adding it to an arity arithmetic expression
 (see [below](#tuple-type-equality-and-segment-algebra)) called the _offset_,
 which doesn't involve `$I`.
 
-Every pack expansion pattern also has a hidden deduced parameter that represents
+Every pack expansion pattern, and every pack expansion expression in the type
+position of a binding pattern, has a hidden deduced parameter that represents
 its arity.
 
 These types, values, variables, and operations are notional, and are not
