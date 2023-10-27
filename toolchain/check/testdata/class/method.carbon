@@ -51,10 +51,10 @@ fn Call(c: Class) -> i32 {
 // CHECK:STDOUT: fn @Call(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: Class = name_reference "c", %c
-// CHECK:STDOUT:   %.loc18_11: <bound method> = bound_method %c.ref, @Class.%F
-// CHECK:STDOUT:   %.loc18_13.1: init i32 = call %.loc18_11(%c.ref)
-// CHECK:STDOUT:   %.loc18_13.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc18_13.3: ref i32 = temporary %.loc18_13.2, %.loc18_13.1
-// CHECK:STDOUT:   %.loc18_13.4: i32 = bind_value %.loc18_13.3
-// CHECK:STDOUT:   return %.loc18_13.4
+// CHECK:STDOUT:   %.loc20_11: <bound method> = bound_method %c.ref, @Class.%F
+// CHECK:STDOUT:   %.loc20_13.1: init i32 = call %.loc20_11(%c.ref)
+// CHECK:STDOUT:   %.loc20_13.2: ref i32 = temporary_storage
+// CHECK:STDOUT:   %.loc20_13.3: ref i32 = temporary %.loc20_13.2, %.loc20_13.1
+// CHECK:STDOUT:   %.loc20_13.4: i32 = bind_value %.loc20_13.3
+// CHECK:STDOUT:   return %.loc20_13.4
 // CHECK:STDOUT: }

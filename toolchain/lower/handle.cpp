@@ -77,7 +77,7 @@ auto HandleBoundMethod(FunctionContext& context, SemIR::NodeId node_id,
                        SemIR::BoundMethod node) -> void {
   // Propagate just the function; the object is separately provided to the
   // enclosing call as an implicit argument.
-  context.SetLocal(node_id, context.GetLocal(node.function_id));
+  context.SetLocal(node_id, context.GetLocalOrGlobal(node.function_id));
 }
 
 auto HandleBranch(FunctionContext& context, SemIR::NodeId /*node_id*/,
@@ -321,15 +321,7 @@ auto HandleNameReference(FunctionContext& context, SemIR::NodeId node_id,
     return;
   }
 
-  auto target = context.sem_ir().nodes().Get(node.value_id);
-  if (auto function_decl = target.TryAs<SemIR::FunctionDeclaration>()) {
-    context.SetLocal(node_id, context.GetFunction(function_decl->function_id));
-  } else if (auto class_type = target.TryAs<SemIR::ClassType>()) {
-    context.SetLocal(node_id, context.GetTypeAsValue());
-  } else {
-    // TODO: Handle other kinds of name references to globals.
-    context.SetLocal(node_id, context.GetLocal(node.value_id));
-  }
+  context.SetLocal(node_id, context.GetLocalOrGlobal(node.value_id));
 }
 
 auto HandleNamespace(FunctionContext& /*context*/, SemIR::NodeId /*node_id*/,
