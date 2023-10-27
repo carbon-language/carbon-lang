@@ -23,7 +23,7 @@ namespace Carbon::Internal {
 //
 // Users must be in the `Carbon` namespace and should look like the following.
 //
-// In "my_kind.h":
+// In `my_kind.h`:
 //   ```
 //   CARBON_DEFINE_RAW_ENUM_CLASS(MyKind, uint8_t) {
 //   #define CARBON_MY_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
@@ -51,7 +51,7 @@ namespace Carbon::Internal {
 //   #include ".../my_kind.def"
 //   ```
 //
-// In "my_kind.cpp":
+// In `my_kind.cpp`:
 //   ```
 //   CARBON_DEFINE_ENUM_CLASS_NAMES(MyKind) = {
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
@@ -61,7 +61,7 @@ namespace Carbon::Internal {
 //
 // The result of the above:
 // - An enum class (`RawEnumType`) defined in an `Internal` namespace with one
-//   enumerator per call to CARBON_MY_KIND(Name) in ".../my_kind.def", with name
+//   enumerator per call to CARBON_MY_KIND(Name) in `.../my_kind.def`, with name
 //   `Name`. This won't generally be used directly, but may be needed for niche
 //   use cases such as a template argument.
 // - A type `MyKind` that extends `Carbon::Internal::EnumBase`.
@@ -77,7 +77,7 @@ namespace Carbon::Internal {
 //     `FromInt`. They will be part of the public API of `EnumBase` if they
 //     were included in a `using` declaration.
 //   - `MyKind` includes a member `static const MyKind Name;` per call to
-//     `CARBON_MY_KIND(Name)` in ".../my_kind.def". It will have the
+//     `CARBON_MY_KIND(Name)` in `.../my_kind.def`. It will have the
 //     corresponding value from `RawEnumType`. This is the primary way to create
 //     an instance of `MyKind`. For example, it might be used like:
 //     ```
