@@ -604,6 +604,35 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   return value_id;
 }
 
+// Given a value expression, form a corresponding initializer that copies from
+// that value, if it is possible to do so.
+auto PerformCopy(Context& context, SemIR::NodeId expr_id) -> SemIR::NodeId {
+  auto expr = context.nodes().Get(expr_id);
+  auto type_id = expr.type_id();
+  if (type_id == SemIR::TypeId::Error) {
+    return SemIR::NodeId::BuiltinError;
+  }
+
+  // TODO: Directly track on the value representation whether it's a copy of
+  // the object representation.
+  auto value_rep = SemIR::GetValueRepresentation(context.sem_ir(), type_id);
+  if (value_rep.kind == SemIR::ValueRepresentation::Copy &&
+      value_rep.aggregate_kind == SemIR::ValueRepresentation::NotAggregate &&
+      value_rep.type_id == type_id) {
+    // For by-value scalar types, no explicit action is required. Initializing
+    // from a value expression is treated as copying the value.
+    return expr_id;
+  }
+
+  // TODO: We don't yet have rules for whether and when a class type is
+  // copyable, or how to perform the copy.
+  CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
+                    "Cannot copy value of type `{0}`.", std::string);
+  context.emitter().Emit(expr.parse_node(), CopyOfUncopyableType,
+                         context.sem_ir().StringifyType(type_id));
+  return SemIR::NodeId::BuiltinError;
+}
+
 auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
              ConversionTarget target) -> SemIR::NodeId {
   auto& sem_ir = context.sem_ir();
@@ -702,18 +731,25 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
       [[fallthrough]];
 
     case SemIR::ExpressionCategory::DurableReference:
-    case SemIR::ExpressionCategory::EphemeralReference: {
-      // If we have a reference and don't want one, form a value binding.
-      if (target.kind != ConversionTarget::ValueOrReference &&
-          target.kind != ConversionTarget::Discarded) {
-        // TODO: Support types with custom value representations.
-        expr_id = context.AddNode(
-            SemIR::BindValue{expr.parse_node(), expr.type_id(), expr_id});
+    case SemIR::ExpressionCategory::EphemeralReference:
+      // If a reference expression is an acceptable result, we're done.
+      if (target.kind == ConversionTarget::ValueOrReference ||
+          target.kind == ConversionTarget::Discarded) {
+        break;
       }
-      break;
-    }
+
+      // If we have a reference and don't want one, form a value binding.
+      // TODO: Support types with custom value representations.
+      expr_id = context.AddNode(
+          SemIR::BindValue{expr.parse_node(), expr.type_id(), expr_id});
+      // We now have a value expression.
+      [[fallthrough]];
 
     case SemIR::ExpressionCategory::Value:
+      // When initializing from a value, perform a copy.
+      if (target.is_initializer()) {
+        expr_id = PerformCopy(context, expr_id);
+      }
       break;
   }
 
