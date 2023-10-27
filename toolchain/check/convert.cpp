@@ -783,8 +783,7 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
       context.sem_ir().node_blocks().Get(implicit_param_refs_id);
   auto param_refs = context.sem_ir().node_blocks().Get(param_refs_id);
 
-  CARBON_DIAGNOSTIC(InCallToFunction, Note,
-                    "Calling function declared here.");
+  CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {

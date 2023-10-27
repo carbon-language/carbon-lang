@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "llvm/ADT/ScopeExit.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/node.h"
-#include "llvm/ADT/ScopeExit.h"
 
 namespace Carbon::Check {
 
