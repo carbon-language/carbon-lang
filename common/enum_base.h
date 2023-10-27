@@ -85,7 +85,7 @@ namespace Carbon::Internal {
 //     ```
 //   - `MyKind` includes an implicit conversion to the `RawEnumType`, returning
 //     the value of a private field in `EnumBase`. This is used when writing a
-//      `switch` statement, as in this example:
+//     `switch` statement, as in this example:
 //     ```
 //     auto MyFunction(MyKind k) -> void {
 //       // Implicitly converts `k` and every `case` expression to
