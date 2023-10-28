@@ -424,8 +424,9 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
   llvm::SmallDenseMap<StringId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
-      src_field_indexes
-          [context.nodes().GetAs<SemIR::StructTypeField>(field_id).name_id] = i;
+      auto [it, added] = src_field_indexes.insert(
+          {context.nodes().GetAs<SemIR::StructTypeField>(field_id).name_id, i});
+      CARBON_CHECK(added) << "Duplicate field in source structure";
     }
   }
 
