@@ -606,7 +606,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
 
 // Given a value expression, form a corresponding initializer that copies from
 // that value, if it is possible to do so.
-auto PerformCopy(Context& context, SemIR::NodeId expr_id) -> SemIR::NodeId {
+static auto PerformCopy(Context& context, SemIR::NodeId expr_id) -> SemIR::NodeId {
   auto expr = context.nodes().Get(expr_id);
   auto type_id = expr.type_id();
   if (type_id == SemIR::TypeId::Error) {
