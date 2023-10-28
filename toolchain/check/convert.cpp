@@ -409,7 +409,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
 
   // Check that the structs are the same size.
   // TODO: If not, include the name of the first source field that doesn't
-  // exist in the destination in the diagnostic.
+  // exist in the destination or vice versa in the diagnostic.
   if (src_elem_fields.size() != dest_elem_fields.size()) {
     CARBON_DIAGNOSTIC(StructInitElementCountMismatch, Error,
                       "Cannot initialize struct of {0} element(s) from struct "
@@ -454,19 +454,19 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
     if (src_type.fields_id != dest_type.fields_id) {
       auto src_field_it = src_field_indexes.find(dest_field.name_id);
       if (src_field_it == src_field_indexes.end()) {
-        CARBON_DIAGNOSTIC(
-            StructInitMissingFieldInLiteral, Error,
-            "Missing value for field `{0}` in struct initialization.",
-            llvm::StringRef);
-        CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
-                          "Cannot convert from struct type `{0}` to `{1}`: "
-                          "missing field `{2}` in source type.",
-                          std::string, std::string, llvm::StringRef);
         if (literal_elems_id.is_valid()) {
+          CARBON_DIAGNOSTIC(
+              StructInitMissingFieldInLiteral, Error,
+              "Missing value for field `{0}` in struct initialization.",
+              llvm::StringRef);
           context.emitter().Emit(value.parse_node(),
                                  StructInitMissingFieldInLiteral,
                                  sem_ir.strings().Get(dest_field.name_id));
         } else {
+          CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
+                            "Cannot convert from struct type `{0}` to `{1}`: "
+                            "missing field `{2}` in source type.",
+                            std::string, std::string, llvm::StringRef);
           context.emitter().Emit(value.parse_node(),
                                  StructInitMissingFieldInConversion,
                                  sem_ir.StringifyType(value.type_id()),
