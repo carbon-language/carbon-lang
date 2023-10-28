@@ -52,7 +52,8 @@ static const std::array<size_t, NumSizes> rand_sizes = []() {
   // range [0, MaxSize). We scale the steps in sizes to cover the range at least
   // 128 times, even if it means not covering all the sizes within that range.
   static_assert(NumSizes > 128);
-  constexpr size_t Scale = std::max<size_t>(1, MaxSize / (NumSizes / 128));
+  constexpr double phi = 1.61803398875;
+  constexpr size_t Scale = std::max<size_t>(1, MaxSize / phi);
   for (auto [i, size] : llvm::enumerate(sizes)) {
     size = (i * Scale) % MaxSize;
   }

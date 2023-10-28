@@ -390,6 +390,7 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
     // If this is a new collision, create a dedicated count to track it and
     // begin counting.
     in_collision = true;
+    collision_map[prev_index] = collision_counts.size();
     collision_map[hash_index] = collision_counts.size();
     collision_counts.push_back(1);
   }
