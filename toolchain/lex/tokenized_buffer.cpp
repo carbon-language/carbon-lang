@@ -81,13 +81,9 @@ static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
 #endif  // CARBON_USE_SIMD
 
 // A table of booleans that we can use to classify bytes as being valid
-// identifier (or keyword) characters. This is used in the generic,
-// non-vectorized fallback code to scan for length of an identifier.
-constexpr std::array<bool, 256> IsIdByteTable = [] {
+// identifier start. This is used by raw identifier detection.
+constexpr std::array<bool, 256> IsIdStartByteTable = [] {
   std::array<bool, 256> table = {};
-  for (char c = '0'; c <= '9'; ++c) {
-    table[c] = true;
-  }
   for (char c = 'A'; c <= 'Z'; ++c) {
     table[c] = true;
   }
@@ -95,6 +91,17 @@ constexpr std::array<bool, 256> IsIdByteTable = [] {
     table[c] = true;
   }
   table['_'] = true;
+  return table;
+}();
+
+// A table of booleans that we can use to classify bytes as being valid
+// identifier (or keyword) characters. This is used in the generic,
+// non-vectorized fallback code to scan for length of an identifier.
+constexpr std::array<bool, 256> IsIdByteTable = [] {
+  std::array<bool, 256> table = IsIdStartByteTable;
+  for (char c = '0'; c <= '9'; ++c) {
+    table[c] = true;
+  }
   return table;
 }();
 
@@ -859,8 +866,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
       // TODO: Need to add support for Unicode lexing.
       return LexError(source_text, position);
     }
-    CARBON_CHECK(IsAlpha(source_text[position]) ||
-                 source_text[position] == '_');
+    CARBON_CHECK(IsIdStartByteTable[source_text[position]]);
 
     int column = ComputeColumn(position);
 
@@ -887,6 +893,42 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     }
 
     // Otherwise we have a generic identifier.
+    return buffer_.AddToken(
+        {.kind = TokenKind::Identifier,
+         .token_line = current_line(),
+         .column = column,
+         .string_id = buffer_.value_stores_->strings().Add(identifier_text)});
+  }
+
+  auto LexKeywordOrIdentifierMaybeRaw(llvm::StringRef source_text,
+                                      ssize_t& position) -> LexResult {
+    CARBON_CHECK(source_text[position] == 'r');
+    // Raw identifiers must look like `r#<valid identifier>`, otherwise it's an
+    // identifier starting with the 'r'.
+    // TODO: Need to add support for Unicode lexing.
+    if (LLVM_LIKELY(position + 2 >= static_cast<ssize_t>(source_text.size()) ||
+                    source_text[position + 1] != '#' ||
+                    !IsIdStartByteTable[source_text[position + 2]])) {
+      // TODO: Should this print a different error when there is `r#`, but it
+      // isn't followed by identifier text? Or is it right to put it back so
+      // that the `#` could be parsed as part of a raw string literal?
+      return LexKeywordOrIdentifier(source_text, position);
+    }
+
+    int column = ComputeColumn(position);
+
+    // Take the valid characters off the front of the source buffer.
+    llvm::StringRef identifier_text =
+        ScanForIdentifierPrefix(source_text.substr(position + 2));
+    CARBON_CHECK(!identifier_text.empty())
+        << "Must have at least one character!";
+    position += identifier_text.size() + 2;
+
+    // Versus LexKeywordOrIdentifier, raw identifiers do not do keyword checks.
+
+    // Otherwise we have a raw identifier.
+    // TODO: This token doesn't carry any indicator that it's raw, so
+    // diagnostics are unclear.
     return buffer_.AddToken(
         {.kind = TokenKind::Identifier,
          .token_line = current_line(),
@@ -1018,6 +1060,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
   CARBON_DISPATCH_LEX_TOKEN(LexError)
   CARBON_DISPATCH_LEX_TOKEN(LexSymbolToken)
   CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
+  CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifierMaybeRaw)
   CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
   CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
@@ -1147,6 +1190,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     for (unsigned char c = 'a'; c <= 'z'; ++c) {
       table[c] = &DispatchLexKeywordOrIdentifier;
     }
+    table['r'] = &DispatchLexKeywordOrIdentifierMaybeRaw;
     for (unsigned char c = 'A'; c <= 'Z'; ++c) {
       table[c] = &DispatchLexKeywordOrIdentifier;
     }
