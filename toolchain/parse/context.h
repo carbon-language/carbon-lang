@@ -46,10 +46,10 @@ class Context {
 
   // Used for restricting ordering of `package` and `import` directives.
   enum class PackagingState : int8_t {
-    PackageOrImportsAllowed,
-    PackageEncountered,
-    ImportsAllowed,
-    PackageOrImportsInvalid,
+    StartOfFile,
+    AfterPackageDeclaration,
+    AfterImportDeclaration,
+    AfterNonPackagingDeclaration,
   };
 
   // Used to track state on state_stack_.
