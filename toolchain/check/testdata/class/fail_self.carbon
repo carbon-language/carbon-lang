@@ -44,7 +44,7 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:7: ERROR: Cannot implicitly convert from `WrongSelf` to `Class`.
   // CHECK:STDERR:   ws.F();
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing self parameter of method declared here.
+  // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^
   ws.F();
