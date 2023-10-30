@@ -80,7 +80,8 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
     }
   }
   // Because a non-packaging keyword was encountered, packaging is complete.
-  context.set_packaging_state(Context::PackagingState::PackageOrImportsInvalid);
+  context.set_packaging_state(
+      Context::PackagingState::AfterNonPackagingDeclaration);
 }
 
 }  // namespace Carbon::Parse

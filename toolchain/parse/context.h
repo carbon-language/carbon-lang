@@ -47,8 +47,8 @@ class Context {
   // Used for restricting ordering of `package` and `import` directives.
   enum class PackagingState : int8_t {
     StartOfFile,
-    AfterPackageDeclaration,
-    AfterImportDeclaration,
+    AfterPackageDirective,
+    AfterImportDirective,
     AfterNonPackagingDeclaration,
   };
 
@@ -334,7 +334,7 @@ class Context {
   llvm::SmallVector<StateStackEntry> state_stack_;
 
   // The current packaging state, whether `import`/`pacakge` are allowed.
-  PackagingState packaging_state_ = PackagingState::PackageOrImportsAllowed;
+  PackagingState packaging_state_ = PackagingState::StartOfFile;
 };
 
 // `clang-format` has a bug with spacing around `->` returns in macros. See

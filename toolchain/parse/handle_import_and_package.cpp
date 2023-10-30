@@ -98,18 +98,19 @@ auto HandleImport(Context& context) -> void {
   context.AddLeafNode(NodeKind::ImportIntroducer, context.Consume());
 
   switch (context.packaging_state()) {
-    case Context::PackagingState::PackageOrImportsAllowed:
-    case Context::PackagingState::PackageEncountered:
+    case Context::PackagingState::StartOfFile:
+    case Context::PackagingState::AfterPackageDirective:
       // `package` is no longer allowed, but `import` may repeat.
-      context.set_packaging_state(Context::PackagingState::ImportsAllowed);
+      context.set_packaging_state(
+          Context::PackagingState::AfterImportDirective);
       [[clang::fallthrough]];
 
-    case Context::PackagingState::ImportsAllowed:
+    case Context::PackagingState::AfterImportDirective:
       HandleImportAndPackage(context, state, NodeKind::ImportDirective,
                              /*expect_api_or_impl=*/false);
       break;
 
-    case Context::PackagingState::PackageOrImportsInvalid:
+    case Context::PackagingState::AfterNonPackagingDeclaration:
       CARBON_DIAGNOSTIC(
           ImportTooLate, Error,
           "`import` directives must come after the `package` directive (if "
@@ -126,14 +127,18 @@ auto HandlePackage(Context& context) -> void {
   context.AddLeafNode(NodeKind::PackageIntroducer, context.Consume());
 
   switch (context.packaging_state()) {
-    case Context::PackagingState::PackageOrImportsAllowed:
+    case Context::PackagingState::StartOfFile:
       // `package` is no longer allowed, but `import` may repeat.
-      context.set_packaging_state(Context::PackagingState::PackageEncountered);
+      context.set_packaging_state(
+          Context::PackagingState::AfterPackageDirective);
       HandleImportAndPackage(context, state, NodeKind::PackageDirective,
                              /*expect_api_or_impl=*/true);
       break;
 
-    case Context::PackagingState::PackageEncountered:
+    case Context::PackagingState::AfterPackageDirective:
+      // This issues a different error, mainly to make it clear that a repeat
+      // `package` at the top of the file is distinct. We could also instead
+      // come up with better phrasing for the not-at-top-of-file error.
       CARBON_DIAGNOSTIC(PackageRepeated, Error,
                         "Multiple `package` directives were found; only one is "
                         "allowed per file.");
@@ -141,8 +146,8 @@ auto HandlePackage(Context& context) -> void {
       ExitOnParseError(context, state, NodeKind::PackageDirective);
       break;
 
-    case Context::PackagingState::ImportsAllowed:
-    case Context::PackagingState::PackageOrImportsInvalid:
+    case Context::PackagingState::AfterImportDirective:
+    case Context::PackagingState::AfterNonPackagingDeclaration:
       CARBON_DIAGNOSTIC(PackageTooLate, Error,
                         "The `package` directive must come before all other "
                         "entities in the file.");

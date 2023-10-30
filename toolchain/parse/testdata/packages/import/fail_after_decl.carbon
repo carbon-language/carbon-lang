@@ -7,9 +7,9 @@
 fn A();
 
 // CHECK:STDERR: fail_after_decl.carbon:[[@LINE+3]]:8: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
-// CHECK:STDERR: import B api;
+// CHECK:STDERR: import B;
 // CHECK:STDERR:        ^
-import B api;
+import B;
 
 // CHECK:STDOUT: - filename: fail_after_decl.carbon
 // CHECK:STDOUT:   parse_tree: [
