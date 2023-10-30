@@ -74,7 +74,7 @@ static auto HandleImportAndPackage(Context& context,
       }
       default: {
         CARBON_DIAGNOSTIC(ExpectedApiOrImpl, Error,
-                          "Expected a `api` or `impl`.");
+                          "Expected `api` or `impl`.");
         context.emitter().Emit(*context.position(), ExpectedApiOrImpl);
         ExitOnParseError(context, state, directive);
         return;
