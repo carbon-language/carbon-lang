@@ -81,7 +81,10 @@ CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDeclaration)
 
 // Package-related diagnostics.
-CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterPackage)
+CARBON_DIAGNOSTIC_KIND(PackageRepeated)
+CARBON_DIAGNOSTIC_KIND(PackageTooLate)
+CARBON_DIAGNOSTIC_KIND(ImportTooLate)
+CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterKeyword)
 CARBON_DIAGNOSTIC_KIND(ExpectedLibraryName)
 CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
 CARBON_DIAGNOSTIC_KIND(ExpectedApiOrImpl)

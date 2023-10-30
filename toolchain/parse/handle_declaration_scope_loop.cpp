@@ -27,8 +27,21 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
     case Lex::TokenKind::EndOfFile: {
       // This is the end of the scope, so the loop state ends.
       context.PopAndDiscardState();
-      break;
+      return;
     }
+    // `import` and `package` manage their packaging state, so return to avoid
+    // the `set_packaging_state` at the end.
+    case Lex::TokenKind::Import: {
+      context.PushState(State::Import);
+      return;
+    }
+    case Lex::TokenKind::Package: {
+      context.PushState(State::Package);
+      return;
+    }
+    // Remaining keywords are only valid after imports are complete, and so all
+    // result in a `set_packaging_state` call. Note, this may not always be
+    // necessary but is probably cheaper than validating.
     case Lex::TokenKind::Class: {
       context.PushState(State::TypeIntroducerAsClass);
       break;
@@ -66,6 +79,8 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
       break;
     }
   }
+  // Because a non-packaging keyword was encountered, packaging is complete.
+  context.set_packaging_state(Context::PackagingState::PackageOrImportsInvalid);
 }
 
 }  // namespace Carbon::Parse

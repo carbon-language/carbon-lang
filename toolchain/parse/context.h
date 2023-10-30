@@ -44,6 +44,14 @@ class Context {
     NamedConstraint,
   };
 
+  // Used for restricting ordering of `package` and `import` directives.
+  enum class PackagingState : int8_t {
+    PackageOrImportsAllowed,
+    PackageEncountered,
+    ImportsAllowed,
+    PackageOrImportsInvalid,
+  };
+
   // Used to track state on state_stack_.
   struct StateStackEntry : public Printable<StateStackEntry> {
     explicit StateStackEntry(State state, PrecedenceGroup ambient_precedence,
@@ -301,6 +309,11 @@ class Context {
     return state_stack_;
   }
 
+  auto packaging_state() const -> PackagingState { return packaging_state_; }
+  auto set_packaging_state(PackagingState packaging_state) -> void {
+    packaging_state_ = packaging_state;
+  }
+
  private:
   // Prints a single token for a stack dump. Used by PrintForStackDump.
   auto PrintTokenForStackDump(llvm::raw_ostream& output, Lex::Token token) const
@@ -319,6 +332,9 @@ class Context {
   Lex::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
+
+  // The current packaging state, whether `import`/`pacakge` are allowed.
+  PackagingState packaging_state_ = PackagingState::PackageOrImportsAllowed;
 };
 
 // `clang-format` has a bug with spacing around `->` returns in macros. See
