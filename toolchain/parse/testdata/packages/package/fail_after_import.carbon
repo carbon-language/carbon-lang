@@ -6,9 +6,12 @@
 
 import A;
 
-// CHECK:STDERR: fail_after_import.carbon:[[@LINE+3]]:9: ERROR: The `package` directive must come before all other entities in the file.
+// CHECK:STDERR: fail_after_import.carbon:[[@LINE+6]]:1: ERROR: The `package` directive must be the first non-comment line.
 // CHECK:STDERR: package B api;
-// CHECK:STDERR:         ^
+// CHECK:STDERR: ^
+// CHECK:STDERR: fail_after_import.carbon:[[@LINE-5]]:1: First non-comment line is here.
+// CHECK:STDERR: import A;
+// CHECK:STDERR: ^
 package B api;
 
 // CHECK:STDOUT: - filename: fail_after_import.carbon

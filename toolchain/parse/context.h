@@ -47,8 +47,7 @@ class Context {
   // Used for restricting ordering of `package` and `import` directives.
   enum class PackagingState : int8_t {
     StartOfFile,
-    AfterPackageDirective,
-    AfterImportDirective,
+    InImports,
     AfterNonPackagingDeclaration,
   };
 
@@ -310,8 +309,13 @@ class Context {
   }
 
   auto packaging_state() const -> PackagingState { return packaging_state_; }
-  auto set_packaging_state(PackagingState packaging_state) -> void {
+  auto packaging_state_token() const -> Lex::Token {
+    return packaging_state_token_;
+  }
+  auto set_packaging_state(PackagingState packaging_state, Lex::Token token)
+      -> void {
     packaging_state_ = packaging_state;
+    packaging_state_token_ = token;
   }
 
  private:
@@ -333,8 +337,10 @@ class Context {
 
   llvm::SmallVector<StateStackEntry> state_stack_;
 
-  // The current packaging state, whether `import`/`pacakge` are allowed.
+  // The current packaging state, whether `import`/`package` are allowed.
   PackagingState packaging_state_ = PackagingState::StartOfFile;
+  // The token that led to the current packaging state, starting as invalid.
+  Lex::Token packaging_state_token_ = Lex::Token::Invalid;
 };
 
 // `clang-format` has a bug with spacing around `->` returns in macros. See

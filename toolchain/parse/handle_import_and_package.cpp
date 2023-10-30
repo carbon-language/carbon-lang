@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
 
 namespace Carbon::Parse {
@@ -13,6 +14,13 @@ static auto ExitOnParseError(Context& context, Context::StateStackEntry state,
   return context.AddNode(directive, semi_token ? *semi_token : state.token,
                          state.subtree_start,
                          /*has_error=*/true);
+}
+
+static auto NoteFirstDeclaration(
+    Context& context,
+    DiagnosticEmitter<Lex::Token>::DiagnosticBuilder& diagnostic) {
+  CARBON_DIAGNOSTIC(FirstDeclaration, Note, "First declaration is here.");
+  diagnostic.Note(context.packaging_state_token(), FirstDeclaration);
 }
 
 // Handles the main parsing of `import`/`package`. It's expected that the
@@ -95,65 +103,71 @@ static auto HandleImportAndPackage(Context& context,
 auto HandleImport(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddLeafNode(NodeKind::ImportIntroducer, context.Consume());
+  auto intro_token = context.Consume();
+  context.AddLeafNode(NodeKind::ImportIntroducer, intro_token);
 
   switch (context.packaging_state()) {
     case Context::PackagingState::StartOfFile:
-    case Context::PackagingState::AfterPackageDirective:
       // `package` is no longer allowed, but `import` may repeat.
-      context.set_packaging_state(
-          Context::PackagingState::AfterImportDirective);
+      context.set_packaging_state(Context::PackagingState::InImports,
+                                  intro_token);
       [[clang::fallthrough]];
 
-    case Context::PackagingState::AfterImportDirective:
+    case Context::PackagingState::InImports:
       HandleImportAndPackage(context, state, NodeKind::ImportDirective,
                              /*expect_api_or_impl=*/false);
       break;
 
-    case Context::PackagingState::AfterNonPackagingDeclaration:
+    case Context::PackagingState::AfterNonPackagingDeclaration: {
       CARBON_DIAGNOSTIC(
           ImportTooLate, Error,
           "`import` directives must come after the `package` directive (if "
           "present) and before any other entities in the file.");
-      context.emitter().Emit(*context.position(), ImportTooLate);
+      auto diagnostic = context.emitter().Build(intro_token, ImportTooLate);
+      NoteFirstDeclaration(context, diagnostic);
+      diagnostic.Emit();
       ExitOnParseError(context, state, NodeKind::ImportDirective);
       break;
+    }
   }
 }
 
 auto HandlePackage(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddLeafNode(NodeKind::PackageIntroducer, context.Consume());
+  auto intro_token = context.Consume();
+  context.AddLeafNode(NodeKind::PackageIntroducer, intro_token);
+
+  CARBON_DIAGNOSTIC(
+      PackageTooLate, Error,
+      "The `package` directive must be the first non-comment line.");
 
   switch (context.packaging_state()) {
     case Context::PackagingState::StartOfFile:
       // `package` is no longer allowed, but `import` may repeat.
-      context.set_packaging_state(
-          Context::PackagingState::AfterPackageDirective);
+      context.set_packaging_state(Context::PackagingState::InImports,
+                                  intro_token);
       HandleImportAndPackage(context, state, NodeKind::PackageDirective,
                              /*expect_api_or_impl=*/true);
       break;
 
-    case Context::PackagingState::AfterPackageDirective:
-      // This issues a different error, mainly to make it clear that a repeat
-      // `package` at the top of the file is distinct. We could also instead
-      // come up with better phrasing for the not-at-top-of-file error.
-      CARBON_DIAGNOSTIC(PackageRepeated, Error,
-                        "Multiple `package` directives were found; only one is "
-                        "allowed per file.");
-      context.emitter().Emit(*context.position(), PackageRepeated);
+    case Context::PackagingState::InImports: {
+      auto diagnostic = context.emitter().Build(intro_token, PackageTooLate);
+      CARBON_DIAGNOSTIC(FirstNonCommentLine, Note,
+                        "First non-comment line is here.");
+      diagnostic.Note(context.packaging_state_token(), FirstNonCommentLine);
+      diagnostic.Emit();
       ExitOnParseError(context, state, NodeKind::PackageDirective);
       break;
+    }
 
-    case Context::PackagingState::AfterImportDirective:
-    case Context::PackagingState::AfterNonPackagingDeclaration:
-      CARBON_DIAGNOSTIC(PackageTooLate, Error,
-                        "The `package` directive must come before all other "
-                        "entities in the file.");
-      context.emitter().Emit(*context.position(), PackageTooLate);
+    case Context::PackagingState::AfterNonPackagingDeclaration: {
+      auto diagnostic = context.emitter().Build(intro_token, PackageTooLate);
+      NoteFirstDeclaration(context, diagnostic);
+      diagnostic.Emit();
       ExitOnParseError(context, state, NodeKind::PackageDirective);
       break;
+    }
   }
 }
 

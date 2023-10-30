@@ -5,9 +5,12 @@
 // AUTOUPDATE
 
 package A api;
-// CHECK:STDERR: fail_after_package.carbon:[[@LINE+3]]:9: ERROR: Multiple `package` directives were found; only one is allowed per file.
+// CHECK:STDERR: fail_after_package.carbon:[[@LINE+6]]:1: ERROR: The `package` directive must be the first non-comment line.
 // CHECK:STDERR: package B api;
-// CHECK:STDERR:         ^
+// CHECK:STDERR: ^
+// CHECK:STDERR: fail_after_package.carbon:[[@LINE-4]]:1: First non-comment line is here.
+// CHECK:STDERR: package A api;
+// CHECK:STDERR: ^
 package B api;
 
 // CHECK:STDOUT: - filename: fail_after_package.carbon

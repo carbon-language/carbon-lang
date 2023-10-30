@@ -22,66 +22,72 @@ static auto HandleUnrecognizedDeclaration(Context& context) -> void {
 auto HandleDeclarationScopeLoop(Context& context) -> void {
   // This maintains the current state unless we're at the end of the scope.
 
-  switch (context.PositionKind()) {
+  switch (auto position_kind = context.PositionKind()) {
     case Lex::TokenKind::CloseCurlyBrace:
     case Lex::TokenKind::EndOfFile: {
       // This is the end of the scope, so the loop state ends.
       context.PopAndDiscardState();
-      return;
+      break;
     }
-    // `import` and `package` manage their packaging state, so return to avoid
-    // the `set_packaging_state` at the end.
+    // `import` and `package` manage their packaging state.
     case Lex::TokenKind::Import: {
       context.PushState(State::Import);
-      return;
+      break;
     }
     case Lex::TokenKind::Package: {
       context.PushState(State::Package);
-      return;
-    }
-    // Remaining keywords are only valid after imports are complete, and so all
-    // result in a `set_packaging_state` call. Note, this may not always be
-    // necessary but is probably cheaper than validating.
-    case Lex::TokenKind::Class: {
-      context.PushState(State::TypeIntroducerAsClass);
       break;
     }
-    case Lex::TokenKind::Constraint: {
-      context.PushState(State::TypeIntroducerAsNamedConstraint);
-      break;
-    }
-    case Lex::TokenKind::Fn: {
-      context.PushState(State::FunctionIntroducer);
-      break;
-    }
-    case Lex::TokenKind::Interface: {
-      context.PushState(State::TypeIntroducerAsInterface);
-      break;
-    }
-    case Lex::TokenKind::Namespace: {
-      context.PushState(State::Namespace);
-      break;
-    }
-    case Lex::TokenKind::Semi: {
-      context.AddLeafNode(NodeKind::EmptyDeclaration, context.Consume());
-      break;
-    }
-    case Lex::TokenKind::Var: {
-      context.PushState(State::VarAsSemicolon);
-      break;
-    }
-    case Lex::TokenKind::Let: {
-      context.PushState(State::Let);
-      break;
-    }
-    default: {
-      HandleUnrecognizedDeclaration(context);
-      break;
-    }
+    default:
+      // Because a non-packaging keyword was encountered, packaging is complete.
+      if (context.packaging_state() !=
+          Context::PackagingState::AfterNonPackagingDeclaration) {
+        context.set_packaging_state(
+            Context::PackagingState::AfterNonPackagingDeclaration,
+            *context.position());
+      }
+      switch (position_kind) {
+        // Remaining keywords are only valid after imports are complete, and
+        // so all result in a `set_packaging_state` call. Note, this may not
+        // always be necessary but is probably cheaper than validating.
+        case Lex::TokenKind::Class: {
+          context.PushState(State::TypeIntroducerAsClass);
+          break;
+        }
+        case Lex::TokenKind::Constraint: {
+          context.PushState(State::TypeIntroducerAsNamedConstraint);
+          break;
+        }
+        case Lex::TokenKind::Fn: {
+          context.PushState(State::FunctionIntroducer);
+          break;
+        }
+        case Lex::TokenKind::Interface: {
+          context.PushState(State::TypeIntroducerAsInterface);
+          break;
+        }
+        case Lex::TokenKind::Namespace: {
+          context.PushState(State::Namespace);
+          break;
+        }
+        case Lex::TokenKind::Semi: {
+          context.AddLeafNode(NodeKind::EmptyDeclaration, context.Consume());
+          break;
+        }
+        case Lex::TokenKind::Var: {
+          context.PushState(State::VarAsSemicolon);
+          break;
+        }
+        case Lex::TokenKind::Let: {
+          context.PushState(State::Let);
+          break;
+        }
+        default: {
+          HandleUnrecognizedDeclaration(context);
+          break;
+        }
+      }
   }
-  // Because a non-packaging keyword was encountered, packaging is complete.
-  context.set_packaging_state(
-      Context::PackagingState::AfterNonPackagingDeclaration);
 }
 
 }  // namespace Carbon::Parse
