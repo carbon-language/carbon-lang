@@ -339,7 +339,7 @@ class Hasher {
 // A dedicated namespace for `CarbonHash` overloads that are not found by ADL
 // with their associated types. For example, primitive type overloads or
 // overloads for types in LLVM's libraries.
-namespace Detail {
+namespace HashDispatch {
 
 inline auto CarbonHash(Hasher hasher, llvm::ArrayRef<std::byte> bytes)
     -> Hasher {
@@ -439,17 +439,17 @@ inline auto CarbonHash(Hasher hasher, llvm::ArrayRef<T> objs) -> Hasher {
 }
 
 template <typename T>
-inline auto CarbonHashDispatch(Hasher hasher, const T& value) -> Hasher {
+inline auto DispatchImpl(Hasher hasher, const T& value) -> Hasher {
   // This unqualified call will find both the overloads in this namespace and
   // ADL-found functions in an associated namespace of `T`.
   return CarbonHash(std::move(hasher), value);
 }
 
-}  // namespace Detail
+}  // namespace HashDispatch
 
 template <typename T>
 inline auto HashValue(const T& value, uint64_t seed) -> HashCode {
-  return static_cast<HashCode>(Detail::CarbonHashDispatch(Hasher(seed), value));
+  return static_cast<HashCode>(HashDispatch::DispatchImpl(Hasher(seed), value));
 }
 
 template <typename T>
