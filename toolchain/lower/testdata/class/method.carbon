@@ -13,8 +13,7 @@ class C {
 
 fn F(p: C*) {
   let n: i32 = (*p).Get();
-  // TODO: Support `addr self`.
-  // (*p).Set(n);
+  (*p).Set(n);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'method.carbon'
@@ -26,5 +25,6 @@ fn F(p: C*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F(ptr %p) {
 // CHECK:STDOUT:   %Get = call i32 @Get(ptr %p)
+// CHECK:STDOUT:   call void @Set(ptr %p, i32 %Get)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

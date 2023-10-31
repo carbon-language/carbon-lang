@@ -9,18 +9,33 @@ class Class {
   fn G[addr self: Class]();
 }
 
-fn F(c: Class) {
-  // TODO: This is the wrong reason to reject this. We should complain that `c` is not an lvalue.
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:6: ERROR: Cannot implicitly convert from `Class` to `Class*`.
+fn F(c: Class, p: Class*) {
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:6: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:      ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-9]]:13: Initializing self parameter of method declared here.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-8]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: Class*]();
   // CHECK:STDERR:             ^
   c.F();
 
-  // TODO: This is invalid and should be rejected.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:6: ERROR: `addr self` method cannot be invoked on a value.
+  // CHECK:STDERR:   c.G();
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-15]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR:   fn G[addr self: Class]();
+  // CHECK:STDERR:             ^
   c.G();
+
+  // This call is OK.
+  (*p).F();
+
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:9: ERROR: Cannot implicitly convert from `Class*` to `Class`.
+  // CHECK:STDERR:   (*p).G();
+  // CHECK:STDERR:         ^
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-26]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR:   fn G[addr self: Class]();
+  // CHECK:STDERR:             ^
+  (*p).G();
 }
 
 // CHECK:STDOUT: file "fail_addr_self.carbon" {
@@ -43,15 +58,25 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[%self.addr: Class]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%c: Class) {
+// CHECK:STDOUT: fn @F.2(%c: Class, %p: Class*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
-// CHECK:STDOUT:   %c.ref.loc20: Class = name_reference "c", %c
-// CHECK:STDOUT:   %.loc20_4: <bound method> = bound_method %c.ref.loc20, @Class.%F
-// CHECK:STDOUT:   %.loc20_6: init () = call %.loc20_4(<invalid>)
-// CHECK:STDOUT:   %c.ref.loc23: Class = name_reference "c", %c
-// CHECK:STDOUT:   %.loc23_4: <bound method> = bound_method %c.ref.loc23, @Class.%G
-// CHECK:STDOUT:   %.loc23_6: init () = call %.loc23_4(%c.ref.loc23)
+// CHECK:STDOUT:   %c.ref.loc19: Class = name_reference "c", %c
+// CHECK:STDOUT:   %.loc19_4: <bound method> = bound_method %c.ref.loc19, @Class.%F
+// CHECK:STDOUT:   %.loc19_6: init () = call %.loc19_4(<invalid>)
+// CHECK:STDOUT:   %c.ref.loc27: Class = name_reference "c", %c
+// CHECK:STDOUT:   %.loc27_4: <bound method> = bound_method %c.ref.loc27, @Class.%G
+// CHECK:STDOUT:   %.loc27_6: init () = call %.loc27_4(<invalid>)
+// CHECK:STDOUT:   %p.ref.loc30: Class* = name_reference "p", %p
+// CHECK:STDOUT:   %.loc30_4.1: ref Class = dereference %p.ref.loc30
+// CHECK:STDOUT:   %.loc30_7: <bound method> = bound_method %.loc30_4.1, @Class.%F
+// CHECK:STDOUT:   %.loc30_4.2: Class* = address_of %.loc30_4.1
+// CHECK:STDOUT:   %.loc30_9: init () = call %.loc30_7(%.loc30_4.2)
+// CHECK:STDOUT:   %p.ref.loc38: Class* = name_reference "p", %p
+// CHECK:STDOUT:   %.loc38_4.1: ref Class = dereference %p.ref.loc38
+// CHECK:STDOUT:   %.loc38_7: <bound method> = bound_method %.loc38_4.1, @Class.%G
+// CHECK:STDOUT:   %.loc38_4.2: Class* = address_of %.loc38_4.1
+// CHECK:STDOUT:   %.loc38_9: init () = call %.loc38_7(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
