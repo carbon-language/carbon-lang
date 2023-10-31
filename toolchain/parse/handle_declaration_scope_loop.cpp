@@ -44,7 +44,14 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
           Context::PackagingState::AfterNonPackagingDeclaration) {
         context.set_packaging_state(
             Context::PackagingState::AfterNonPackagingDeclaration,
-            *context.position());
+            // If a warning was issued, we may warn again due to a
+            // non-sequential `import`, but we still keep the first declaration
+            // token.
+            context.packaging_state() ==
+                    Context::PackagingState::
+                        AfterNonPackagingDeclarationImportsWarned
+                ? context.packaging_state_token()
+                : *context.position());
       }
       switch (position_kind) {
         // Remaining keywords are only valid after imports are complete, and

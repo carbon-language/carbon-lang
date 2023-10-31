@@ -49,6 +49,10 @@ class Context {
     StartOfFile,
     InImports,
     AfterNonPackagingDeclaration,
+    // A warning about `import` placement has been issued so we don't keep
+    // issuing more (when `import` is repeated) until more non-`import`
+    // declarations come up.
+    AfterNonPackagingDeclarationImportsWarned,
   };
 
   // Used to track state on state_stack_.

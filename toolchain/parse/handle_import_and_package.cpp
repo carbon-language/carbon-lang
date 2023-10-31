@@ -119,6 +119,9 @@ auto HandleImport(Context& context) -> void {
       break;
 
     case Context::PackagingState::AfterNonPackagingDeclaration: {
+      context.set_packaging_state(
+          Context::PackagingState::AfterNonPackagingDeclarationImportsWarned,
+          context.packaging_state_token());
       CARBON_DIAGNOSTIC(
           ImportTooLate, Error,
           "`import` directives must come after the `package` directive (if "
@@ -129,6 +132,12 @@ auto HandleImport(Context& context) -> void {
       ExitOnParseError(context, state, NodeKind::ImportDirective);
       break;
     }
+    case Context::PackagingState::AfterNonPackagingDeclarationImportsWarned:
+      // There is a sequential block of misplaced `import` statements, which can
+      // occur if a declaration is added above `import`s. Avoid duplicate
+      // warnings.
+      ExitOnParseError(context, state, NodeKind::ImportDirective);
+      break;
   }
 }
 
@@ -161,7 +170,8 @@ auto HandlePackage(Context& context) -> void {
       break;
     }
 
-    case Context::PackagingState::AfterNonPackagingDeclaration: {
+    case Context::PackagingState::AfterNonPackagingDeclaration:
+    case Context::PackagingState::AfterNonPackagingDeclarationImportsWarned: {
       auto diagnostic = context.emitter().Build(intro_token, PackageTooLate);
       NoteFirstDeclaration(context, diagnostic);
       diagnostic.Emit();
