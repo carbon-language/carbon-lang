@@ -5,6 +5,7 @@
 #include "language_server/language_server.h"
 
 #include "clang-tools-extra/clangd/Protocol.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
@@ -76,11 +77,13 @@ auto LanguageServer::onReply(llvm::json::Value /*id*/,
 }
 
 // Returns the text of first child of kind Parse::NodeKind::Name.
-static auto getName(Parse::Tree& p, Parse::Node node)
-    -> std::optional<llvm::StringRef> {
+static auto GetName(const SharedValueStores& value_stores,
+                    const Lex::TokenizedBuffer& tokens, const Parse::Tree& p,
+                    Parse::Node node) -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
     if (p.node_kind(ch) == Parse::NodeKind::Name) {
-      return p.GetNodeText(ch);
+      return value_stores.strings().Get(
+          tokens.GetIdentifier(p.node_token(node)));
     }
   }
   return std::nullopt;
@@ -89,13 +92,15 @@ static auto getName(Parse::Tree& p, Parse::Node node)
 void LanguageServer::OnDocumentSymbol(
     clang::clangd::DocumentSymbolParams const& params,
     clang::clangd::Callback<std::vector<clang::clangd::DocumentSymbol>> cb) {
+  SharedValueStores value_stores;
   llvm::vfs::InMemoryFileSystem vfs;
   auto file = params.textDocument.uri.file().str();
   vfs.addFile(file, /*mtime=*/0,
               llvm::MemoryBuffer::getMemBufferCopy(files_.at(file)));
 
   auto buf = SourceBuffer::CreateFromFile(vfs, file, NullDiagnosticConsumer());
-  auto lexed = Lex::TokenizedBuffer::Lex(*buf, NullDiagnosticConsumer());
+  auto lexed =
+      Lex::TokenizedBuffer::Lex(value_stores, *buf, NullDiagnosticConsumer());
   auto parsed = Parse::Tree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;
   for (const auto& node : parsed.postorder()) {
@@ -119,7 +124,7 @@ void LanguageServer::OnDocumentSymbol(
         continue;
     }
 
-    if (auto name = getName(parsed, node)) {
+    if (auto name = GetName(value_stores, lexed, parsed, node)) {
       auto tok = parsed.node_token(node);
       clang::clangd::Position pos{lexed.GetLineNumber(tok) - 1,
                                   lexed.GetColumnNumber(tok) - 1};

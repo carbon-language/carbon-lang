@@ -21,10 +21,6 @@ namespace Carbon::Internal {
 // It is specifically designed to compose with X-MACRO style `.def` files that
 // stamp out all the enumerators.
 //
-// It also supports some opt-in APIs that classes can enable by `using` the
-// names to make them public: `AsInt` and `FromInt` allow converting to and from
-// the underlying type of the enumerator.
-//
 // Users must be in the `Carbon` namespace and should look like the following.
 //
 // In `my_kind.h`:
@@ -38,6 +34,17 @@ namespace Carbon::Internal {
 //    public:
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
 //   #include ".../my_kind.def"
+//
+//     // OPTIONAL: To support converting to and from the underlying type of
+//     // the enumerator, add these lines:
+//     using EnumBase::AsInt;
+//     using EnumBase::FromInt;
+//
+//     // OPTIONAL: To expose the ability to create an instance from the raw
+//     // enumerator (for unusual use cases), add this:
+//     using EnumBase::Create;
+//
+//     // Plus, anything else you wish to include.
 //   };
 //
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CONSTANT_DEFINITION(MyKind, Name)
@@ -51,6 +58,54 @@ namespace Carbon::Internal {
 //   #include ".../my_kind.def"
 //   };
 //   ```
+//
+// The result of the above:
+// - An enum class (`RawEnumType`) defined in an `Internal` namespace with one
+//   enumerator per call to CARBON_MY_KIND(Name) in `.../my_kind.def`, with name
+//   `Name`. This won't generally be used directly, but may be needed for niche
+//   use cases such as a template argument.
+// - A type `MyKind` that extends `Carbon::Internal::EnumBase`.
+//   - `MyKind` includes all the public members of `EnumBase`, like `name` and
+//     `Print`. For example, you might call `name()` to construct an error
+//     message:
+//     ```
+//     auto ErrorMessage(MyKind k) -> std::string {
+//       return k.name() + " not found";
+//     }
+//     ```
+//   - `MyKind` includes all protected members of `EnumBase`, like `AsInt`,
+//     `FromInt`. They will be part of the public API of `EnumBase` if they
+//     were included in a `using` declaration.
+//   - `MyKind` includes a member `static const MyKind Name;` per call to
+//     `CARBON_MY_KIND(Name)` in `.../my_kind.def`. It will have the
+//     corresponding value from `RawEnumType`. This is the primary way to create
+//     an instance of `MyKind`. For example, it might be used like:
+//     ```
+//     ErrorMessage(MyKind::Name1);
+//     ```
+//   - `MyKind` includes an implicit conversion to the `RawEnumType`, returning
+//     the value of a private field in `EnumBase`. This is used when writing a
+//     `switch` statement, as in this example:
+//     ```
+//     auto MyFunction(MyKind k) -> void {
+//       // Implicitly converts `k` and every `case` expression to
+//       // `RawEnumType`:
+//       switch (k) {
+//         case MyKind::Name1:
+//           // ...
+//           break;
+//
+//         case MyKind::Name2:
+//           // ...
+//           break;
+//
+//         // No `default` case needed if the above cases are exhaustive.
+//         // Prefer no `default` case when possible, to get an error if
+//         // a case is skipped.
+//       }
+//     }
+//     ```
+//
 template <typename DerivedT, typename EnumT, const llvm::StringLiteral Names[]>
 class EnumBase : public Printable<DerivedT> {
  public:

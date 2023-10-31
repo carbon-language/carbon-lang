@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "testing/base/test_raw_ostream.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/tokenized_buffer_test_helpers.h"
@@ -45,9 +46,10 @@ class LexerTest : public ::testing::Test {
   auto Lex(llvm::StringRef text,
            DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer())
       -> TokenizedBuffer {
-    return TokenizedBuffer::Lex(GetSourceBuffer(text), consumer);
+    return TokenizedBuffer::Lex(value_stores_, GetSourceBuffer(text), consumer);
   }
 
+  SharedValueStores value_stores_;
   llvm::vfs::InMemoryFileSystem fs_;
   int file_index_ = 0;
   std::forward_list<SourceBuffer> source_storage_;
@@ -151,21 +153,32 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
               }));
   auto token_start = buffer.tokens().begin();
   auto token_12 = token_start + 1;
-  EXPECT_EQ(buffer.GetIntegerLiteral(*token_12), 12);
+  EXPECT_EQ(value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_12)),
+            12);
   auto token_578 = token_12 + 2;
-  EXPECT_EQ(buffer.GetIntegerLiteral(*token_578), 578);
+  EXPECT_EQ(value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_578)),
+            578);
   auto token_1 = token_578 + 1;
-  EXPECT_EQ(buffer.GetIntegerLiteral(*token_1), 1);
+  EXPECT_EQ(value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_1)),
+            1);
   auto token_2 = token_1 + 1;
-  EXPECT_EQ(buffer.GetIntegerLiteral(*token_2), 2);
+  EXPECT_EQ(value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_2)),
+            2);
   auto token_0x12_3abc = token_2 + 1;
-  EXPECT_EQ(buffer.GetIntegerLiteral(*token_0x12_3abc), 0x12'3abc);
+  EXPECT_EQ(
+      value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_0x12_3abc)),
+      0x12'3abc);
   auto token_0b10_10_11 = token_0x12_3abc + 1;
-  EXPECT_EQ(buffer.GetIntegerLiteral(*token_0b10_10_11), 0b10'10'11);
+  EXPECT_EQ(
+      value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_0b10_10_11)),
+      0b10'10'11);
   auto token_1_234_567 = token_0b10_10_11 + 1;
-  EXPECT_EQ(buffer.GetIntegerLiteral(*token_1_234_567), 1'234'567);
+  EXPECT_EQ(
+      value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_1_234_567)),
+      1'234'567);
   auto token_1_5e9 = token_1_234_567 + 1;
-  auto value_1_5e9 = buffer.GetRealLiteral(*token_1_5e9);
+  auto value_1_5e9 =
+      value_stores_.reals().Get(buffer.GetRealLiteral(*token_1_5e9));
   EXPECT_EQ(value_1_5e9.mantissa.getZExtValue(), 15);
   EXPECT_EQ(value_1_5e9.exponent.getSExtValue(), 8);
   EXPECT_EQ(value_1_5e9.is_decimal, true);
@@ -439,7 +452,8 @@ TEST_F(LexerTest, MatchingGroups) {
     auto it = ++buffer.tokens().begin();
     auto open_paren_token = *it++;
     auto open_curly_token = *it++;
-    ASSERT_EQ("x", buffer.GetIdentifierText(buffer.GetIdentifier(*it++)));
+
+    ASSERT_EQ("x", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
     auto close_curly_token = *it++;
     auto close_paren_token = *it++;
     EXPECT_EQ(close_paren_token,
@@ -453,7 +467,7 @@ TEST_F(LexerTest, MatchingGroups) {
 
     open_curly_token = *it++;
     open_paren_token = *it++;
-    ASSERT_EQ("y", buffer.GetIdentifierText(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("y", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
     close_paren_token = *it++;
     close_curly_token = *it++;
     EXPECT_EQ(close_curly_token,
@@ -469,7 +483,7 @@ TEST_F(LexerTest, MatchingGroups) {
     auto inner_open_curly_token = *it++;
     open_paren_token = *it++;
     auto inner_open_paren_token = *it++;
-    ASSERT_EQ("z", buffer.GetIdentifierText(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("z", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
     auto inner_close_paren_token = *it++;
     close_paren_token = *it++;
     auto inner_close_curly_token = *it++;
@@ -756,11 +770,13 @@ TEST_F(LexerTest, StringLiterals) {
                    .line = 2,
                    .column = 5,
                    .indent_column = 5,
+                   .value_stores = &value_stores_,
                    .string_contents = {"hello world\n"}},
                   {.kind = TokenKind::StringLiteral,
                    .line = 4,
                    .column = 5,
                    .indent_column = 5,
+                   .value_stores = &value_stores_,
                    .string_contents = {" test  \xAB\n"}},
                   {.kind = TokenKind::Identifier,
                    .line = 7,
@@ -771,16 +787,19 @@ TEST_F(LexerTest, StringLiterals) {
                    .line = 9,
                    .column = 7,
                    .indent_column = 7,
+                   .value_stores = &value_stores_,
                    .string_contents = {"\""}},
                   {.kind = TokenKind::StringLiteral,
                    .line = 11,
                    .column = 5,
                    .indent_column = 5,
+                   .value_stores = &value_stores_,
                    .string_contents = llvm::StringLiteral::withInnerNUL("\0")},
                   {.kind = TokenKind::StringLiteral,
                    .line = 13,
                    .column = 5,
                    .indent_column = 5,
+                   .value_stores = &value_stores_,
                    .string_contents = {"\\0\"foo\"\\1"}},
 
                   // """x""" is three string literals, not one invalid
@@ -789,16 +808,19 @@ TEST_F(LexerTest, StringLiterals) {
                    .line = 15,
                    .column = 5,
                    .indent_column = 5,
+                   .value_stores = &value_stores_,
                    .string_contents = {""}},
                   {.kind = TokenKind::StringLiteral,
                    .line = 15,
                    .column = 7,
                    .indent_column = 5,
+                   .value_stores = &value_stores_,
                    .string_contents = {"x"}},
                   {.kind = TokenKind::StringLiteral,
                    .line = 15,
                    .column = 10,
                    .indent_column = 5,
+                   .value_stores = &value_stores_,
                    .string_contents = {""}},
                   {.kind = TokenKind::EndOfFile, .line = 16, .column = 3},
               }));
@@ -1035,7 +1057,7 @@ TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Lex("\b", consumer);
 }
 
-TEST_F(LexerTest, PrintingAsYaml) {
+TEST_F(LexerTest, PrintingOutputYaml) {
   // Test that we can parse this into YAML and verify line and indent data.
   auto buffer = Lex("\n ;\n\n\n; ;\n\n\n\n\n\n\n\n\n\n\n");
   ASSERT_FALSE(buffer.has_errors());

@@ -16,13 +16,20 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
 
-#if __x86_64__
+#if __ARM_NEON
+#include <arm_neon.h>
+#define CARBON_USE_SIMD 1
+#elif __x86_64__
 #include <x86intrin.h>
+#define CARBON_USE_SIMD 1
+#else
+#define CARBON_USE_SIMD 0
 #endif
 
 namespace Carbon::Lex {
@@ -49,114 +56,162 @@ auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
   return std::visit(Overload{std::forward<Fs&&>(fs)...}, std::forward<V&&>(v));
 }
 
-#if __x86_64__
-#define CARBON_USE_SIMD 1
-
+#if CARBON_USE_SIMD
+namespace {
+#if __ARM_NEON
+using SIMDMaskT = uint8x16_t;
+#elif __x86_64__
+using SIMDMaskT = __m128i;
+#else
+#error "Unsupported SIMD architecture!"
+#endif
+using SIMDMaskArrayT = std::array<SIMDMaskT, sizeof(SIMDMaskT) + 1>;
+}  // namespace
 // A table of masks to include 0-16 bytes of an SSE register.
-// TODO: Make this constexpr to avoid dynamic initialization.
-static const std::array<__m128i, sizeof(__m128i) + 1> prefix_masks = [] {
-  std::array<__m128i, sizeof(__m128i) + 1> masks = {};
-  for (auto [i, mask] : llvm::enumerate(masks)) {
-    memset(&mask, 0xFF, i);
+static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
+  SIMDMaskArrayT masks = {};
+  for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
+    // The SIMD types and constexpr require a C-style cast.
+    // NOLINTNEXTLINE(google-readability-casting)
+    masks[i] = (SIMDMaskT)(std::numeric_limits<unsigned __int128>::max() >>
+                           ((sizeof(SIMDMaskT) - i) * 8));
   }
   return masks;
 }();
-#else
-#define CARBON_USE_SIMD 0
-#endif
+#endif  // CARBON_USE_SIMD
 
-// Scans the provided text and returns the prefix `StringRef` of contiguous
-// identifier characters.
+// A table of booleans that we can use to classify bytes as being valid
+// identifier start. This is used by raw identifier detection.
+constexpr std::array<bool, 256> IsIdStartByteTable = [] {
+  std::array<bool, 256> table = {};
+  for (char c = 'A'; c <= 'Z'; ++c) {
+    table[c] = true;
+  }
+  for (char c = 'a'; c <= 'z'; ++c) {
+    table[c] = true;
+  }
+  table['_'] = true;
+  return table;
+}();
+
+// A table of booleans that we can use to classify bytes as being valid
+// identifier (or keyword) characters. This is used in the generic,
+// non-vectorized fallback code to scan for length of an identifier.
+constexpr std::array<bool, 256> IsIdByteTable = [] {
+  std::array<bool, 256> table = IsIdStartByteTable;
+  for (char c = '0'; c <= '9'; ++c) {
+    table[c] = true;
+  }
+  return table;
+}();
+
+// Baseline scalar version, also available for scalar-fallback in SIMD code.
+// Uses `ssize_t` for performance when indexing in the loop.
 //
-// This is a performance sensitive function and so uses vectorized code
-// sequences to optimize its scanning. When modifying, the identifier lexing
-// benchmarks should be checked for regressions.
-//
-// Identifier characters here are currently the ASCII characters `[0-9A-Za-z_]`.
-//
-// TODO: Currently, this code does not implement Carbon's design for Unicode
-// characters in identifiers. It does work on UTF-8 code unit sequences, but
-// currently considers non-ASCII characters to be non-identifier characters.
-// Some work has been done to ensure the hot loop, while optimized, retains
-// enough information to add Unicode handling without completely destroying the
-// relevant optimizations.
-static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
-  // A table of booleans that we can use to classify bytes as being valid
-  // identifier (or keyword) characters. This is used in the generic,
-  // non-vectorized fallback code to scan for length of an identifier.
-  static constexpr std::array<bool, 256> IsIdByteTable = ([]() constexpr {
-    std::array<bool, 256> table = {};
-    for (char c = '0'; c <= '9'; ++c) {
-      table[c] = true;
-    }
-    for (char c = 'A'; c <= 'Z'; ++c) {
-      table[c] = true;
-    }
-    for (char c = 'a'; c <= 'z'; ++c) {
-      table[c] = true;
-    }
-    table['_'] = true;
-    return table;
-  })();
+// TODO: This assumes all Unicode characters are non-identifiers.
+static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
+    -> llvm::StringRef {
+  const ssize_t size = text.size();
+  while (i < size && IsIdByteTable[static_cast<unsigned char>(text[i])]) {
+    ++i;
+  }
+
+  return text.substr(0, i);
+}
 
 #if CARBON_USE_SIMD && __x86_64__
-  // This code uses a scheme derived from the techniques in Geoff Langdale and
-  // Daniel Lemire's work on parsing JSON[1]. Specifically, that paper outlines
-  // a technique of using two 4-bit indexed in-register look-up tables (LUTs) to
-  // classify bytes in a branchless SIMD code sequence.
-  //
-  // [1]: https://arxiv.org/pdf/1902.08318.pdf
-  //
-  // The goal is to get a bit mask classifying different sets of bytes. For each
-  // input byte, we first test for a high bit indicating a UTF-8 encoded Unicode
-  // character. Otherwise, we want the mask bits to be set with the following
-  // logic derived by inspecting the high nibble and low nibble of the input:
-  // bit0 = 1 for `_`: high `0x5` and low `0xF`
-  // bit1 = 1 for `0-9`: high `0x3` and low `0x0` - `0x9`
-  // bit2 = 1 for `A-O` and `a-o`: high `0x4` or `0x6` and low `0x1` - `0xF`
-  // bit3 = 1 for `P-Z` and 'p-z': high `0x5` or `0x7` and low `0x0` - `0xA`
-  // bit4 = unused
-  // bit5 = unused
-  // bit6 = unused
-  // bit7 = unused
-  //
-  // No bits set means definitively non-ID ASCII character.
-  //
-  // bits 4-7 remain unused if we need to classify more characters.
-  const auto high_lut = _mm_setr_epi8(
-      /* __b0=*/0b0000'0000,
-      /* __b1=*/0b0000'0000,
-      /* __b2=*/0b0000'0000,
-      /* __b3=*/0b0000'0010,
-      /* __b4=*/0b0000'0100,
-      /* __b5=*/0b0000'1001,
-      /* __b6=*/0b0000'0100,
-      /* __b7=*/0b0000'1000,
-      /* __b8=*/0b0000'0000,
-      /* __b9=*/0b0000'0000,
-      /*__b10=*/0b0000'0000,
-      /*__b11=*/0b0000'0000,
-      /*__b12=*/0b0000'0000,
-      /*__b13=*/0b0000'0000,
-      /*__b14=*/0b0000'0000,
-      /*__b15=*/0b0000'0000);
-  const auto low_lut = _mm_setr_epi8(
-      /* __b0=*/0b0000'1010,
-      /* __b1=*/0b0000'1110,
-      /* __b2=*/0b0000'1110,
-      /* __b3=*/0b0000'1110,
-      /* __b4=*/0b0000'1110,
-      /* __b5=*/0b0000'1110,
-      /* __b6=*/0b0000'1110,
-      /* __b7=*/0b0000'1110,
-      /* __b8=*/0b0000'1110,
-      /* __b9=*/0b0000'1110,
-      /*__b10=*/0b0000'1100,
-      /*__b11=*/0b0000'0100,
-      /*__b12=*/0b0000'0100,
-      /*__b13=*/0b0000'0100,
-      /*__b14=*/0b0000'0100,
-      /*__b15=*/0b0000'0101);
+// The SIMD code paths uses a scheme derived from the techniques in Geoff
+// Langdale and Daniel Lemire's work on parsing JSON[1]. Specifically, that
+// paper outlines a technique of using two 4-bit indexed in-register look-up
+// tables (LUTs) to classify bytes in a branchless SIMD code sequence.
+//
+// [1]: https://arxiv.org/pdf/1902.08318.pdf
+//
+// The goal is to get a bit mask classifying different sets of bytes. For each
+// input byte, we first test for a high bit indicating a UTF-8 encoded Unicode
+// character. Otherwise, we want the mask bits to be set with the following
+// logic derived by inspecting the high nibble and low nibble of the input:
+// bit0 = 1 for `_`: high `0x5` and low `0xF`
+// bit1 = 1 for `0-9`: high `0x3` and low `0x0` - `0x9`
+// bit2 = 1 for `A-O` and `a-o`: high `0x4` or `0x6` and low `0x1` - `0xF`
+// bit3 = 1 for `P-Z` and 'p-z': high `0x5` or `0x7` and low `0x0` - `0xA`
+// bit4 = unused
+// bit5 = unused
+// bit6 = unused
+// bit7 = unused
+//
+// No bits set means definitively non-ID ASCII character.
+//
+// Bits 4-7 remain unused if we need to classify more characters.
+namespace {
+// Struct used to implement the nibble LUT for SIMD implementations.
+//
+// Forced to 16-byte alignment to ensure we can load it easily in SIMD code.
+struct alignas(16) NibbleLUT {
+  auto Load() const -> __m128i {
+    return _mm_load_si128(reinterpret_cast<const __m128i*>(this));
+  }
+
+  uint8_t nibble_0;
+  uint8_t nibble_1;
+  uint8_t nibble_2;
+  uint8_t nibble_3;
+  uint8_t nibble_4;
+  uint8_t nibble_5;
+  uint8_t nibble_6;
+  uint8_t nibble_7;
+  uint8_t nibble_8;
+  uint8_t nibble_9;
+  uint8_t nibble_a;
+  uint8_t nibble_b;
+  uint8_t nibble_c;
+  uint8_t nibble_d;
+  uint8_t nibble_e;
+  uint8_t nibble_f;
+};
+}  // namespace
+
+constexpr NibbleLUT HighLUT = {
+    .nibble_0 = 0b0000'0000,
+    .nibble_1 = 0b0000'0000,
+    .nibble_2 = 0b0000'0000,
+    .nibble_3 = 0b0000'0010,
+    .nibble_4 = 0b0000'0100,
+    .nibble_5 = 0b0000'1001,
+    .nibble_6 = 0b0000'0100,
+    .nibble_7 = 0b0000'1000,
+    .nibble_8 = 0b1000'0000,
+    .nibble_9 = 0b1000'0000,
+    .nibble_a = 0b1000'0000,
+    .nibble_b = 0b1000'0000,
+    .nibble_c = 0b1000'0000,
+    .nibble_d = 0b1000'0000,
+    .nibble_e = 0b1000'0000,
+    .nibble_f = 0b1000'0000,
+};
+constexpr NibbleLUT LowLUT = {
+    .nibble_0 = 0b1000'1010,
+    .nibble_1 = 0b1000'1110,
+    .nibble_2 = 0b1000'1110,
+    .nibble_3 = 0b1000'1110,
+    .nibble_4 = 0b1000'1110,
+    .nibble_5 = 0b1000'1110,
+    .nibble_6 = 0b1000'1110,
+    .nibble_7 = 0b1000'1110,
+    .nibble_8 = 0b1000'1110,
+    .nibble_9 = 0b1000'1110,
+    .nibble_a = 0b1000'1100,
+    .nibble_b = 0b1000'0100,
+    .nibble_c = 0b1000'0100,
+    .nibble_d = 0b1000'0100,
+    .nibble_e = 0b1000'0100,
+    .nibble_f = 0b1000'0101,
+};
+
+static auto ScanForIdentifierPrefixX86(llvm::StringRef text)
+    -> llvm::StringRef {
+  const auto high_lut = HighLUT.Load();
+  const auto low_lut = LowLUT.Load();
 
   // Use `ssize_t` for performance here as we index memory in a tight loop.
   ssize_t i = 0;
@@ -209,19 +264,49 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
     i += 16;
   }
 
-  // Fallback to scalar loop. We only end up here when we don't have >=16
-  // bytes to scan or we find a UTF-8 unicode character.
-  // TODO: This assumes all Unicode characters are non-identifiers.
-  while (i < size && IsIdByteTable[static_cast<unsigned char>(text[i])]) {
-    ++i;
-  }
+  return ScanForIdentifierPrefixScalar(text, i);
+}
 
-  return text.substr(0, i);
-#else
-  // TODO: Optimize this with SIMD for other architectures.
-  return text.take_while(
-      [](char c) { return IsIdByteTable[static_cast<unsigned char>(c)]; });
+#endif  // CARBON_USE_SIMD && __x86_64__
+
+// Scans the provided text and returns the prefix `StringRef` of contiguous
+// identifier characters.
+//
+// This is a performance sensitive function and where profitable uses vectorized
+// code sequences to optimize its scanning. When modifying, the identifier
+// lexing benchmarks should be checked for regressions.
+//
+// Identifier characters here are currently the ASCII characters `[0-9A-Za-z_]`.
+//
+// TODO: Currently, this code does not implement Carbon's design for Unicode
+// characters in identifiers. It does work on UTF-8 code unit sequences, but
+// currently considers non-ASCII characters to be non-identifier characters.
+// Some work has been done to ensure the hot loop, while optimized, retains
+// enough information to add Unicode handling without completely destroying the
+// relevant optimizations.
+static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
+  // Dispatch to an optimized architecture optimized routine.
+#if CARBON_USE_SIMD && __x86_64__
+  return ScanForIdentifierPrefixX86(text);
+#elif CARBON_USE_SIMD && __ARM_NEON
+  // Somewhat surprisingly, there is basically nothing worth doing in SIMD on
+  // Arm to optimize this scan. The Neon SIMD operations end up requiring you to
+  // move from the SIMD unit to the scalar unit in the critical path of finding
+  // the offset of the end of an identifier. Current ARM cores make the code
+  // sequences here (quite) unpleasant. For example, on Apple M1 and similar
+  // cores, the latency is as much as 10 cycles just to extract from the vector.
+  // SIMD might be more interesting on Neoverse cores, but it'd be nice to avoid
+  // core-specific tunings at this point.
+  //
+  // If this proves problematic and critical to optimize, the current leading
+  // theory is to have the newline searching code also create a bitmask for the
+  // entire source file of identifier and non-identifier bytes, and then use the
+  // bit-counting instructions here to do a fast scan of that bitmask. However,
+  // crossing that bridge will add substantial complexity to the newline
+  // scanner, and so currently we just use a boring scalar loop that pipelines
+  // well.
 #endif
+  return ScanForIdentifierPrefixScalar(text, 0);
 }
 
 // Implementation of the lexer logic itself.
@@ -258,8 +343,9 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     bool formed_token_;
   };
 
-  Lexer(SourceBuffer& source, DiagnosticConsumer& consumer)
-      : buffer_(source),
+  Lexer(SharedValueStores& value_stores, SourceBuffer& source,
+        DiagnosticConsumer& consumer)
+      : buffer_(value_stores, source),
         consumer_(consumer),
         translator_(&buffer_),
         emitter_(translator_, consumer_),
@@ -435,10 +521,28 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     if (CARBON_USE_SIMD &&
         position + 16 < static_cast<ssize_t>(source_text.size()) &&
         indent <= MaxIndent) {
-#if __x86_64__
       // Load a mask based on the amount of text we want to compare.
-      auto mask = prefix_masks[prefix_size];
-      // And use the current line's prefix as the exemplar to compare against.
+      auto mask = PrefixMasks[prefix_size];
+#if __ARM_NEON
+      // Load and mask the prefix of the current line.
+      auto prefix = vld1q_u8(reinterpret_cast<const uint8_t*>(
+          source_text.data() + first_line_start));
+      prefix = vandq_u8(mask, prefix);
+      do {
+        // Load and mask the next line to consider's prefix.
+        auto next_prefix = vld1q_u8(
+            reinterpret_cast<const uint8_t*>(source_text.data() + position));
+        next_prefix = vandq_u8(mask, next_prefix);
+        // Compare the two prefixes and if any lanes differ, break.
+        auto compare = vceqq_u8(prefix, next_prefix);
+        if (vminvq_u8(compare) == 0) {
+          break;
+        }
+
+        skip_to_next_line();
+      } while (position + 16 < static_cast<ssize_t>(source_text.size()));
+#elif __x86_64__
+      // Use the current line's prefix as the exemplar to compare against.
       // We don't mask here as we will mask when doing the comparison.
       auto prefix = _mm_loadu_si128(reinterpret_cast<const __m128i*>(
           source_text.data() + first_line_start));
@@ -458,14 +562,14 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 
         skip_to_next_line();
       } while (position + 16 < static_cast<ssize_t>(source_text.size()));
+#else
+#error "Unsupported SIMD architecture!"
+#endif
       // TODO: If we finish the loop due to the position approaching the end of
       // the buffer we may fail to skip the last line in a comment block that
       // has an invalid initial sequence and thus emit extra diagnostics. We
       // should really fall through to the generic skipping logic, but the code
       // organization will need to change significantly to allow that.
-#elif CARBON_USE_SIMD
-#error Unknown target for SIMD comment skipping.
-#endif
     } else {
       while (position + prefix_size <
                  static_cast<ssize_t>(source_text.size()) &&
@@ -502,21 +606,20 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
           auto token = buffer_.AddToken({.kind = TokenKind::IntegerLiteral,
                                          .token_line = current_line(),
                                          .column = int_column});
-          buffer_.GetTokenInfo(token).literal_index =
-              buffer_.literal_int_storage_.size();
-          buffer_.literal_int_storage_.push_back(std::move(value.value));
+          buffer_.GetTokenInfo(token).integer_id =
+              buffer_.value_stores_->integers().Add(std::move(value.value));
           return token;
         },
         [&](NumericLiteral::RealValue&& value) {
           auto token = buffer_.AddToken({.kind = TokenKind::RealLiteral,
                                          .token_line = current_line(),
                                          .column = int_column});
-          buffer_.GetTokenInfo(token).literal_index =
-              buffer_.literal_int_storage_.size();
-          buffer_.literal_int_storage_.push_back(std::move(value.mantissa));
-          buffer_.literal_int_storage_.push_back(std::move(value.exponent));
-          CARBON_CHECK(buffer_.GetRealLiteral(token).is_decimal ==
-                       (value.radix == NumericLiteral::Radix::Decimal));
+          buffer_.GetTokenInfo(token).real_id =
+              buffer_.value_stores_->reals().Add(
+                  Real{.mantissa = value.mantissa,
+                       .exponent = value.exponent,
+                       .is_decimal =
+                           (value.radix == NumericLiteral::Radix::Decimal)});
           return token;
         },
         [&](NumericLiteral::UnrecoverableError) {
@@ -556,14 +659,12 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     }
 
     if (literal->is_terminated()) {
-      auto token =
-          buffer_.AddToken({.kind = TokenKind::StringLiteral,
-                            .token_line = string_line,
-                            .column = string_column,
-                            .literal_index = static_cast<int32_t>(
-                                buffer_.literal_string_storage_.size())});
-      buffer_.literal_string_storage_.push_back(
-          literal->ComputeValue(emitter_));
+      auto string_id = buffer_.value_stores_->strings().Add(
+          literal->ComputeValue(buffer_.allocator_, emitter_));
+      auto token = buffer_.AddToken({.kind = TokenKind::StringLiteral,
+                                     .token_line = string_line,
+                                     .column = string_column,
+                                     .string_id = string_id});
       return token;
     } else {
       CARBON_DIAGNOSTIC(UnterminatedString, Error,
@@ -713,9 +814,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
 
     auto token = buffer_.AddToken(
         {.kind = *kind, .token_line = current_line(), .column = column});
-    buffer_.GetTokenInfo(token).literal_index =
-        buffer_.literal_int_storage_.size();
-    buffer_.literal_int_storage_.push_back(std::move(suffix_value));
+    buffer_.GetTokenInfo(token).integer_id =
+        buffer_.value_stores_->integers().Add(std::move(suffix_value));
     return token;
   }
 
@@ -760,23 +860,13 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     } while (!open_groups_.empty());
   }
 
-  auto GetOrCreateIdentifier(llvm::StringRef text) -> Identifier {
-    auto insert_result = buffer_.identifier_map_.insert(
-        {text, Identifier(buffer_.identifier_infos_.size())});
-    if (insert_result.second) {
-      buffer_.identifier_infos_.push_back({text});
-    }
-    return insert_result.first->second;
-  }
-
   auto LexKeywordOrIdentifier(llvm::StringRef source_text, ssize_t& position)
       -> LexResult {
     if (static_cast<unsigned char>(source_text[position]) > 0x7F) {
       // TODO: Need to add support for Unicode lexing.
       return LexError(source_text, position);
     }
-    CARBON_CHECK(IsAlpha(source_text[position]) ||
-                 source_text[position] == '_');
+    CARBON_CHECK(IsIdStartByteTable[source_text[position]]);
 
     int column = ComputeColumn(position);
 
@@ -803,10 +893,47 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     }
 
     // Otherwise we have a generic identifier.
-    return buffer_.AddToken({.kind = TokenKind::Identifier,
-                             .token_line = current_line(),
-                             .column = column,
-                             .id = GetOrCreateIdentifier(identifier_text)});
+    return buffer_.AddToken(
+        {.kind = TokenKind::Identifier,
+         .token_line = current_line(),
+         .column = column,
+         .string_id = buffer_.value_stores_->strings().Add(identifier_text)});
+  }
+
+  auto LexKeywordOrIdentifierMaybeRaw(llvm::StringRef source_text,
+                                      ssize_t& position) -> LexResult {
+    CARBON_CHECK(source_text[position] == 'r');
+    // Raw identifiers must look like `r#<valid identifier>`, otherwise it's an
+    // identifier starting with the 'r'.
+    // TODO: Need to add support for Unicode lexing.
+    if (LLVM_LIKELY(position + 2 >= static_cast<ssize_t>(source_text.size()) ||
+                    source_text[position + 1] != '#' ||
+                    !IsIdStartByteTable[source_text[position + 2]])) {
+      // TODO: Should this print a different error when there is `r#`, but it
+      // isn't followed by identifier text? Or is it right to put it back so
+      // that the `#` could be parsed as part of a raw string literal?
+      return LexKeywordOrIdentifier(source_text, position);
+    }
+
+    int column = ComputeColumn(position);
+
+    // Take the valid characters off the front of the source buffer.
+    llvm::StringRef identifier_text =
+        ScanForIdentifierPrefix(source_text.substr(position + 2));
+    CARBON_CHECK(!identifier_text.empty())
+        << "Must have at least one character!";
+    position += identifier_text.size() + 2;
+
+    // Versus LexKeywordOrIdentifier, raw identifiers do not do keyword checks.
+
+    // Otherwise we have a raw identifier.
+    // TODO: This token doesn't carry any indicator that it's raw, so
+    // diagnostics are unclear.
+    return buffer_.AddToken(
+        {.kind = TokenKind::Identifier,
+         .token_line = current_line(),
+         .column = column,
+         .string_id = buffer_.value_stores_->strings().Add(identifier_text)});
   }
 
   auto LexError(llvm::StringRef source_text, ssize_t& position) -> LexResult {
@@ -933,6 +1060,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
   CARBON_DISPATCH_LEX_TOKEN(LexError)
   CARBON_DISPATCH_LEX_TOKEN(LexSymbolToken)
   CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
+  CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifierMaybeRaw)
   CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
   CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
@@ -1062,6 +1190,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     for (unsigned char c = 'a'; c <= 'z'; ++c) {
       table[c] = &DispatchLexKeywordOrIdentifier;
     }
+    table['r'] = &DispatchLexKeywordOrIdentifierMaybeRaw;
     for (unsigned char c = 'A'; c <= 'Z'; ++c) {
       table[c] = &DispatchLexKeywordOrIdentifier;
     }
@@ -1123,9 +1252,9 @@ constexpr std::array<TokenKind, 256>
       return table;
     }();
 
-auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
-    -> TokenizedBuffer {
-  Lexer lexer(source, consumer);
+auto TokenizedBuffer::Lex(SharedValueStores& value_stores, SourceBuffer& source,
+                          DiagnosticConsumer& consumer) -> TokenizedBuffer {
+  Lexer lexer(value_stores, source, consumer);
   return std::move(lexer).Lex();
 }
 
@@ -1197,50 +1326,38 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   }
 
   CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return GetIdentifierText(token_info.id);
+  return value_stores_->strings().Get(token_info.string_id);
 }
 
-auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
+auto TokenizedBuffer::GetIdentifier(Token token) const -> StringId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return token_info.id;
+  return token_info.string_id;
 }
 
-auto TokenizedBuffer::GetIntegerLiteral(Token token) const
-    -> const llvm::APInt& {
+auto TokenizedBuffer::GetIntegerLiteral(Token token) const -> IntegerId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral) << token_info.kind;
-  return literal_int_storage_[token_info.literal_index];
+  return token_info.integer_id;
 }
 
-auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
+auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::RealLiteral) << token_info.kind;
-
-  // Note that every real literal is at least three characters long, so we can
-  // safely look at the second character to determine whether we have a
-  // decimal or hexadecimal literal.
-  const auto& line_info = GetLineInfo(token_info.token_line);
-  int64_t token_start = line_info.start + token_info.column;
-  char second_char = source_->text()[token_start + 1];
-  bool is_decimal = second_char != 'x' && second_char != 'b';
-
-  return {.mantissa = literal_int_storage_[token_info.literal_index],
-          .exponent = literal_int_storage_[token_info.literal_index + 1],
-          .is_decimal = is_decimal};
+  return token_info.real_id;
 }
 
-auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
+auto TokenizedBuffer::GetStringLiteral(Token token) const -> StringId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
-  return literal_string_storage_[token_info.literal_index];
+  return token_info.string_id;
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind.is_sized_type_literal()) << token_info.kind;
-  return literal_int_storage_[token_info.literal_index];
+  return value_stores_->integers().Get(token_info.integer_id);
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
@@ -1289,11 +1406,6 @@ auto TokenizedBuffer::GetPrevLine(Line line) const -> Line {
 
 auto TokenizedBuffer::GetIndentColumnNumber(Line line) const -> int {
   return GetLineInfo(line).indent + 1;
-}
-
-auto TokenizedBuffer::GetIdentifierText(Identifier identifier) const
-    -> llvm::StringRef {
-  return identifier_infos_[identifier.index].text;
 }
 
 auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
@@ -1383,14 +1495,19 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
       break;
     case TokenKind::IntegerLiteral:
       output_stream << ", value: `";
-      GetIntegerLiteral(token).print(output_stream, /*isSigned=*/false);
+      value_stores_->integers()
+          .Get(GetIntegerLiteral(token))
+          .print(output_stream, /*isSigned=*/false);
       output_stream << "`";
       break;
     case TokenKind::RealLiteral:
-      output_stream << ", value: `" << GetRealLiteral(token) << "`";
+      output_stream << ", value: `"
+                    << value_stores_->reals().Get(GetRealLiteral(token)) << "`";
       break;
     case TokenKind::StringLiteral:
-      output_stream << ", value: `" << GetStringLiteral(token) << "`";
+      output_stream << ", value: `"
+                    << value_stores_->strings().Get(GetStringLiteral(token))
+                    << "`";
       break;
     default:
       if (token_info.kind.is_opening_symbol()) {

@@ -182,6 +182,14 @@ and displaying them in source order.
 
     b.AddFlag(
         {
+            .name = "dump-shared-values",
+            .help = R"""(
+Dumps shared values. These aren't owned by any particular file or phase.
+)""",
+        },
+        [&](auto& arg_b) { arg_b.Set(&dump_shared_values); });
+    b.AddFlag(
+        {
             .name = "dump-tokens",
             .help = R"""(
 Dump the tokens to stdout when lexed.
@@ -257,6 +265,7 @@ Dump the generated assembly to stdout after codegen.
 
   bool asm_output = false;
   bool force_obj_output = false;
+  bool dump_shared_values = false;
   bool dump_tokens = false;
   bool dump_parse_tree = false;
   bool dump_raw_sem_ir = false;
@@ -383,9 +392,11 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
 // Ties together information for a file being compiled.
 class Driver::CompilationUnit {
  public:
-  explicit CompilationUnit(Driver* driver, const CompileOptions& options,
+  explicit CompilationUnit(Driver* driver, SharedValueStores* value_stores,
+                           const CompileOptions& options,
                            llvm::StringRef input_file_name)
       : driver_(driver),
+        value_stores_(value_stores),
         options_(options),
         input_file_name_(input_file_name),
         vlog_stream_(driver_->vlog_stream_),
@@ -410,8 +421,9 @@ class Driver::CompilationUnit {
     CARBON_VLOG() << "*** SourceBuffer ***\n```\n"
                   << source_->text() << "\n```\n";
 
-    LogCall("Lex::TokenizedBuffer::Lex",
-            [&] { tokens_ = Lex::TokenizedBuffer::Lex(*source_, *consumer_); });
+    LogCall("Lex::TokenizedBuffer::Lex", [&] {
+      tokens_ = Lex::TokenizedBuffer::Lex(*value_stores_, *source_, *consumer_);
+    });
     if (options_.dump_tokens) {
       consumer_->Flush();
       driver_->output_stream_ << tokens_;
@@ -448,8 +460,8 @@ class Driver::CompilationUnit {
     CARBON_CHECK(parse_tree_);
 
     LogCall("Check::CheckParseTree", [&] {
-      sem_ir_ = Check::CheckParseTree(builtins, *tokens_, *parse_tree_,
-                                      *consumer_, vlog_stream_);
+      sem_ir_ = Check::CheckParseTree(*value_stores_, builtins, *tokens_,
+                                      *parse_tree_, *consumer_, vlog_stream_);
     });
 
     // We've finished all steps that can produce diagnostics. Emit the
@@ -570,6 +582,7 @@ class Driver::CompilationUnit {
   }
 
   Driver* driver_;
+  SharedValueStores* value_stores_;
   const CompileOptions& options_;
   llvm::StringRef input_file_name_;
 
@@ -604,9 +617,15 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
       unit->Flush();
     }
   });
+  SharedValueStores value_stores;
+  auto dump_shared_values = llvm::make_scope_exit([&]() {
+    if (options.dump_shared_values) {
+      output_stream_ << value_stores;
+    }
+  });
   for (const auto& input_file_name : options.input_file_names) {
-    units.push_back(
-        std::make_unique<CompilationUnit>(this, options, input_file_name));
+    units.push_back(std::make_unique<CompilationUnit>(
+        this, &value_stores, options, input_file_name));
   }
 
   // Lex.
@@ -627,7 +646,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
 
   // Check.
-  auto builtins = Check::MakeBuiltins();
+  auto builtins = Check::MakeBuiltins(value_stores);
   // TODO: Organize units to compile in dependency order.
   for (auto& unit : units) {
     success_before_lower &= unit->RunCheck(builtins);

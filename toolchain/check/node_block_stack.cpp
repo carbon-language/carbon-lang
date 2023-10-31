@@ -27,7 +27,7 @@ auto NodeBlockStack::PeekOrAdd(int depth) -> SemIR::NodeBlockId {
   int index = size() - depth - 1;
   auto& slot = stack_[index];
   if (!slot.id.is_valid()) {
-    slot.id = semantics_ir_->AddNodeBlockId();
+    slot.id = sem_ir_->node_blocks().AddDefaultValue();
   }
   return slot.id;
 }
@@ -40,9 +40,9 @@ auto NodeBlockStack::Pop() -> SemIR::NodeBlockId {
   // Finalize the block.
   if (!back.content.empty() && back.id != SemIR::NodeBlockId::Unreachable) {
     if (back.id.is_valid()) {
-      semantics_ir_->SetNodeBlock(back.id, back.content);
+      sem_ir_->node_blocks().Set(back.id, back.content);
     } else {
-      back.id = semantics_ir_->AddNodeBlock(back.content);
+      back.id = sem_ir_->node_blocks().Add(back.content);
     }
   }
 

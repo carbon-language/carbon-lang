@@ -148,22 +148,22 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDeclaration, FunctionIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Fn)))
 
-// A parameter list, possibly deduced:
-//   [Deduced]ParamertListStart
+// A parameter list, possibly implicit:
+//   [Implicit]ParamertListStart
 //   _external_: [Generic]PatternBinding
 //   ParameterListComma
-// [Deduced]ParameterList
+// [Implicit]ParameterList
 //
 // Expressions and ParameterListComma may repeat with ParameterListComma as a
 // separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListStart, 0,
                                    CARBON_TOKEN(OpenParen))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeducedParameterListStart, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParameterListStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0, CARBON_TOKEN(Comma))
 CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart,
                                CARBON_TOKEN(CloseParen))
-CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParameterList, ImplicitParameterListStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // An array type, such as  `[i32; 3]` or `[i32;]`:
@@ -181,7 +181,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpression, ArrayExpressionSemi,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // A pattern binding, such as `name: Type`:
-//       Name
+//       Name or SelfValueName
 //       _external_: type expression
 //     [Generic]PatternBinding
 //   _optional_ Address
@@ -203,7 +203,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetIntroducer, 0, CARBON_TOKEN(Let))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(LetDeclaration, LetIntroducer,
-                               CARBON_TOKEN(Semi))
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Let)))
 
 // `var`:
 //   VariableIntroducer
@@ -353,7 +354,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CallExpression, CallExpressionStart,
                                CARBON_TOKEN(CloseParen))
 
 // A qualified declaration, such as `a.b`:
-//   _external_: NameExpression or QualifiedDeclaration
+//   _external_: Name or QualifiedDeclaration
 //   _external_: Name
 // QualifiedDeclaration
 //
@@ -573,9 +574,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDeclaration,
 // The `self` value and `Self` type identifier keywords. Typically of the form
 // `self: Self`:
 //   SelfValueName
+//   SelfValueNameExpression
 //   SelfTypeNameExpression
 // PatternBinding
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueName, 0,
+                                   CARBON_TOKEN(SelfValueIdentifier))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpression, 0,
                                    CARBON_TOKEN(SelfValueIdentifier))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpression, 0,
                                    CARBON_TOKEN(SelfTypeIdentifier))

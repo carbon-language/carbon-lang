@@ -80,6 +80,7 @@ cc_library(
 
 cc_test(
     name = "ast_test_matchers_test",
+    size = "small",
     srcs = ["ast_test_matchers_test.cpp"],
     deps = [
         ":ast",
@@ -92,6 +93,7 @@ cc_test(
 
 cc_test(
     name = "expression_test",
+    size = "small",
     srcs = ["expression_test.cpp"],
     deps = [
         ":ast",
@@ -119,6 +121,7 @@ cc_library(
 
 cc_test(
     name = "element_test",
+    size = "small",
     srcs = ["element_test.cpp"],
     deps = [
         ":ast",
@@ -132,6 +135,7 @@ cc_test(
 
 cc_test(
     name = "pattern_test",
+    size = "small",
     srcs = ["pattern_test.cpp"],
     deps = [
         ":ast",

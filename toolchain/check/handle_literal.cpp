@@ -13,44 +13,37 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
     case Lex::TokenKind::True: {
       context.AddNodeAndPush(
           parse_node,
-          SemIR::BoolLiteral(
+          SemIR::BoolLiteral{
               parse_node, context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
               token_kind == Lex::TokenKind::True ? SemIR::BoolValue::True
-                                                 : SemIR::BoolValue::False));
+                                                 : SemIR::BoolValue::False});
       break;
     }
     case Lex::TokenKind::IntegerLiteral: {
-      auto id = context.semantics_ir().AddInteger(
-          context.tokens().GetIntegerLiteral(token));
       context.AddNodeAndPush(
           parse_node,
-          SemIR::IntegerLiteral(
+          SemIR::IntegerLiteral{
               parse_node,
-              context.GetBuiltinType(SemIR::BuiltinKind::IntegerType), id));
+              context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
+              context.tokens().GetIntegerLiteral(token)});
       break;
     }
     case Lex::TokenKind::RealLiteral: {
-      auto token_value = context.tokens().GetRealLiteral(token);
-      auto id = context.semantics_ir().AddReal(
-          {.mantissa = token_value.mantissa,
-           .exponent = token_value.exponent,
-           .is_decimal = token_value.is_decimal});
       context.AddNodeAndPush(
           parse_node,
-          SemIR::RealLiteral(
+          SemIR::RealLiteral{
               parse_node,
               context.GetBuiltinType(SemIR::BuiltinKind::FloatingPointType),
-              id));
+              context.tokens().GetRealLiteral(token)});
       break;
     }
     case Lex::TokenKind::StringLiteral: {
-      auto id = context.semantics_ir().AddString(
-          context.tokens().GetStringLiteral(token));
+      auto id = context.tokens().GetStringLiteral(token);
       context.AddNodeAndPush(
           parse_node,
-          SemIR::StringLiteral(
+          SemIR::StringLiteral{
               parse_node,
-              context.GetBuiltinType(SemIR::BuiltinKind::StringType), id));
+              context.GetBuiltinType(SemIR::BuiltinKind::StringType), id});
       break;
     }
     case Lex::TokenKind::Type: {

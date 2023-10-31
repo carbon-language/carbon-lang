@@ -12,7 +12,6 @@
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/check/declaration_name_stack.h"
 #include "toolchain/check/node_block_stack.h"
-#include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/file.h"
@@ -22,17 +21,17 @@
 namespace Carbon::Check {
 
 Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
-                 const Parse::Tree& parse_tree, SemIR::File& semantics_ir,
+                 const Parse::Tree& parse_tree, SemIR::File& sem_ir,
                  llvm::raw_ostream* vlog_stream)
     : tokens_(&tokens),
       emitter_(&emitter),
       parse_tree_(&parse_tree),
-      semantics_ir_(&semantics_ir),
+      sem_ir_(&sem_ir),
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
-      node_block_stack_("node_block_stack_", semantics_ir, vlog_stream),
-      params_or_args_stack_("params_or_args_stack_", semantics_ir, vlog_stream),
-      args_type_info_stack_("args_type_info_stack_", semantics_ir, vlog_stream),
+      node_block_stack_("node_block_stack_", sem_ir, vlog_stream),
+      params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
+      args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       declaration_name_stack_(this) {
   // Inserts the "Error" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
@@ -76,20 +75,37 @@ auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
                     "Duplicate name being declared in the same scope.");
   CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
                     "Name is previously declared here.");
-  auto prev_def = semantics_ir_->GetNode(prev_def_id);
+  auto prev_def = nodes().Get(prev_def_id);
   emitter_->Build(parse_node, NameDeclarationDuplicate)
       .Note(prev_def.parse_node(), NameDeclarationPrevious)
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::Node parse_node,
-                                   SemIR::StringId name_id) -> void {
+auto Context::DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id)
+    -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
+  emitter_->Emit(parse_node, NameNotFound, strings().Get(name_id));
 }
 
-auto Context::AddNameToLookup(Parse::Node name_node, SemIR::StringId name_id,
+auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
+                                  DiagnosticBuilder& builder) -> void {
+  CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                    "Class was forward declared here.");
+  CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                    "Class is incomplete within its definition.");
+  const auto& class_info = classes().Get(class_id);
+  CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
+  if (class_info.definition_id.is_valid()) {
+    builder.Note(nodes().Get(class_info.definition_id).parse_node(),
+                 ClassIncompleteWithinDefinition);
+  } else {
+    builder.Note(nodes().Get(class_info.declaration_id).parse_node(),
+                 ClassForwardDeclaredHere);
+  }
+}
+
+auto Context::AddNameToLookup(Parse::Node name_node, StringId name_id,
                               SemIR::NodeId target_id) -> void {
   if (current_scope().names.insert(name_id).second) {
     name_lookup_[name_id].push_back(target_id);
@@ -98,7 +114,7 @@ auto Context::AddNameToLookup(Parse::Node name_node, SemIR::StringId name_id,
   }
 }
 
-auto Context::LookupName(Parse::Node parse_node, SemIR::StringId name_id,
+auto Context::LookupName(Parse::Node parse_node, StringId name_id,
                          SemIR::NameScopeId scope_id, bool print_diagnostics)
     -> SemIR::NodeId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
@@ -110,12 +126,12 @@ auto Context::LookupName(Parse::Node parse_node, SemIR::StringId name_id,
       return SemIR::NodeId::BuiltinError;
     }
     CARBON_CHECK(!it->second.empty())
-        << "Should have been erased: " << semantics_ir_->GetString(name_id);
+        << "Should have been erased: " << strings().Get(name_id);
 
     // TODO: Check for ambiguous lookups.
     return it->second.back();
   } else {
-    const auto& scope = semantics_ir_->GetNameScope(scope_id);
+    const auto& scope = name_scopes().Get(scope_id);
     auto it = scope.find(name_id);
     if (it == scope.end()) {
       if (print_diagnostics) {
@@ -128,7 +144,11 @@ auto Context::LookupName(Parse::Node parse_node, SemIR::StringId name_id,
   }
 }
 
-auto Context::PushScope() -> void { scope_stack_.push_back({}); }
+auto Context::PushScope(SemIR::NodeId scope_node_id,
+                        SemIR::NameScopeId scope_id) -> void {
+  scope_stack_.push_back(
+      {.scope_node_id = scope_node_id, .scope_id = scope_id});
+}
 
 auto Context::PopScope() -> void {
   auto scope = scope_stack_.pop_back_val();
@@ -144,11 +164,35 @@ auto Context::PopScope() -> void {
 }
 
 auto Context::FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId {
-  while (auto name_ref =
-             semantics_ir().GetNode(node_id).TryAs<SemIR::NameReference>()) {
+  while (auto name_ref = nodes().Get(node_id).TryAs<SemIR::NameReference>()) {
     node_id = name_ref->value_id;
   }
   return node_id;
+}
+
+auto Context::GetConstantValue(SemIR::NodeId node_id) -> SemIR::NodeId {
+  // TODO: The constant value of a node should be computed as we build the
+  // node, or at least cached once computed.
+  while (true) {
+    auto node = nodes().Get(node_id);
+    switch (node.kind()) {
+      case SemIR::NameReference::Kind:
+        node_id = node.As<SemIR::NameReference>().value_id;
+        break;
+
+      case SemIR::BindName::Kind:
+        node_id = node.As<SemIR::BindName>().value_id;
+        break;
+
+      case SemIR::Field::Kind:
+      case SemIR::FunctionDeclaration::Kind:
+        return node_id;
+
+      default:
+        // TODO: Handle the remaining cases.
+        return SemIR::NodeId::Invalid;
+    }
+  }
 }
 
 template <typename BranchNode, typename... Args>
@@ -158,8 +202,8 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
   if (!context.node_block_stack().is_current_block_reachable()) {
     return SemIR::NodeBlockId::Unreachable;
   }
-  auto block_id = context.semantics_ir().AddNodeBlockId();
-  context.AddNode(BranchNode(parse_node, block_id, args...));
+  auto block_id = context.node_blocks().AddDefaultValue();
+  context.AddNode(BranchNode{parse_node, block_id, args...});
   return block_id;
 }
 
@@ -190,9 +234,9 @@ auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
   for ([[maybe_unused]] auto _ : llvm::seq(num_blocks)) {
     if (node_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
-        new_block_id = semantics_ir().AddNodeBlockId();
+        new_block_id = node_blocks().AddDefaultValue();
       }
-      AddNode(SemIR::Branch(parse_node, new_block_id));
+      AddNode(SemIR::Branch{parse_node, new_block_id});
     }
     node_block_stack().Pop();
   }
@@ -208,18 +252,17 @@ auto Context::AddConvergenceBlockWithArgAndPush(
   for (auto arg_id : block_args) {
     if (node_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::NodeBlockId::Unreachable) {
-        new_block_id = semantics_ir().AddNodeBlockId();
+        new_block_id = node_blocks().AddDefaultValue();
       }
-      AddNode(SemIR::BranchWithArg(parse_node, new_block_id, arg_id));
+      AddNode(SemIR::BranchWithArg{parse_node, new_block_id, arg_id});
     }
     node_block_stack().Pop();
   }
   node_block_stack().Push(new_block_id);
 
   // Acquire the result value.
-  SemIR::TypeId result_type_id =
-      semantics_ir().GetNode(*block_args.begin()).type_id();
-  return AddNode(SemIR::BlockArg(parse_node, result_type_id, new_block_id));
+  SemIR::TypeId result_type_id = nodes().Get(*block_args.begin()).type_id();
+  return AddNode(SemIR::BlockArg{parse_node, result_type_id, new_block_id});
 }
 
 // Add the current code block to the enclosing function.
@@ -233,11 +276,11 @@ auto Context::AddCurrentCodeBlockToFunction() -> void {
   }
 
   auto function_id =
-      semantics_ir()
-          .GetNodeAs<SemIR::FunctionDeclaration>(return_scope_stack().back())
+      nodes()
+          .GetAs<SemIR::FunctionDeclaration>(return_scope_stack().back())
           .function_id;
-  semantics_ir()
-      .GetFunction(function_id)
+  functions()
+      .Get(function_id)
       .body_block_ids.push_back(node_block_stack().PeekOrAdd());
 }
 
@@ -252,7 +295,7 @@ auto Context::is_current_position_reachable() -> bool {
   if (block_contents.empty()) {
     return true;
   }
-  const auto& last_node = semantics_ir().GetNode(block_contents.back());
+  const auto& last_node = nodes().Get(block_contents.back());
   return last_node.kind().terminator_kind() !=
          SemIR::TerminatorKind::Terminator;
 }
@@ -314,7 +357,7 @@ class TypeCompleter {
  private:
   // Adds `type_id` to the work list, if it's not already complete.
   auto Push(SemIR::TypeId type_id) -> void {
-    if (!context_.semantics_ir().IsTypeComplete(type_id)) {
+    if (!context_.sem_ir().IsTypeComplete(type_id)) {
       work_list_.push_back({type_id, Phase::AddNestedIncompleteTypes});
     }
   }
@@ -325,13 +368,13 @@ class TypeCompleter {
 
     // We might have enqueued the same type more than once. Just skip the
     // type if it's already complete.
-    if (context_.semantics_ir().IsTypeComplete(type_id)) {
+    if (context_.sem_ir().IsTypeComplete(type_id)) {
       work_list_.pop_back();
       return true;
     }
 
-    auto node_id = context_.semantics_ir().GetTypeAllowBuiltinTypes(type_id);
-    auto node = context_.semantics_ir().GetNode(node_id);
+    auto node_id = context_.sem_ir().GetTypeAllowBuiltinTypes(type_id);
+    auto node = context_.nodes().Get(node_id);
 
     auto old_work_list_size = work_list_.size();
 
@@ -348,7 +391,7 @@ class TypeCompleter {
 
       case Phase::BuildValueRepresentation: {
         auto value_rep = BuildValueRepresentation(type_id, node);
-        context_.semantics_ir().CompleteType(type_id, value_rep);
+        context_.sem_ir().CompleteType(type_id, value_rep);
         CARBON_CHECK(old_work_list_size == work_list_.size())
             << "BuildValueRepresentation should not change work items";
         work_list_.pop_back();
@@ -356,9 +399,18 @@ class TypeCompleter {
         // Also complete the value representation type, if necessary. This
         // should never fail: the value representation shouldn't require any
         // additional nested types to be complete.
-        if (!context_.semantics_ir().IsTypeComplete(value_rep.type_id)) {
+        if (!context_.sem_ir().IsTypeComplete(value_rep.type_id)) {
           work_list_.push_back(
               {value_rep.type_id, Phase::BuildValueRepresentation});
+        }
+        // For a pointer representation, the pointee also needs to be complete.
+        if (value_rep.kind == SemIR::ValueRepresentation::Pointer) {
+          auto pointee_type_id =
+              context_.sem_ir().GetPointeeType(value_rep.type_id);
+          if (!context_.sem_ir().IsTypeComplete(pointee_type_id)) {
+            work_list_.push_back(
+                {pointee_type_id, Phase::BuildValueRepresentation});
+          }
         }
         break;
       }
@@ -376,31 +428,35 @@ class TypeCompleter {
         break;
 
       case SemIR::StructType::Kind:
-        for (auto field_id : context_.semantics_ir().GetNodeBlock(
+        for (auto field_id : context_.node_blocks().Get(
                  type_node.As<SemIR::StructType>().fields_id)) {
-          Push(context_.semantics_ir()
-                   .GetNodeAs<SemIR::StructTypeField>(field_id)
-                   .type_id);
+          Push(context_.nodes()
+                   .GetAs<SemIR::StructTypeField>(field_id)
+                   .field_type_id);
         }
         break;
 
       case SemIR::TupleType::Kind:
-        for (auto element_type_id : context_.semantics_ir().GetTypeBlock(
+        for (auto element_type_id : context_.type_blocks().Get(
                  type_node.As<SemIR::TupleType>().elements_id)) {
           Push(element_type_id);
         }
         break;
 
-      case SemIR::ClassDeclaration::Kind:
-        // TODO: Support class definitions and complete class types.
-        if (diagnoser_) {
-          CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
-                            "Class was forward declared here.");
-          (*diagnoser_)()
-              .Note(type_node.parse_node(), ClassForwardDeclaredHere)
-              .Emit();
+      case SemIR::ClassType::Kind: {
+        auto class_type = type_node.As<SemIR::ClassType>();
+        auto& class_info = context_.classes().Get(class_type.class_id);
+        if (!class_info.is_defined()) {
+          if (diagnoser_) {
+            auto builder = (*diagnoser_)();
+            context_.NoteIncompleteClass(class_type.class_id, builder);
+            builder.Emit();
+          }
+          return false;
         }
-        return false;
+        Push(class_info.object_representation_id);
+        break;
+      }
 
       case SemIR::ConstType::Kind:
         Push(type_node.As<SemIR::ConstType>().inner_id);
@@ -423,28 +479,35 @@ class TypeCompleter {
 
   // Makes a value representation that uses pass-by-copy, copying the given
   // type.
-  auto MakeCopyRepresentation(SemIR::TypeId rep_id) const
+  auto MakeCopyRepresentation(
+      SemIR::TypeId rep_id,
+      SemIR::ValueRepresentation::AggregateKind aggregate_kind =
+          SemIR::ValueRepresentation::NotAggregate) const
       -> SemIR::ValueRepresentation {
-    return {.kind = SemIR::ValueRepresentation::Copy, .type_id = rep_id};
+    return {.kind = SemIR::ValueRepresentation::Copy,
+            .aggregate_kind = aggregate_kind,
+            .type_id = rep_id};
   }
 
   // Makes a value representation that uses pass-by-address with the given
   // pointee type.
-  auto MakePointerRepresentation(Parse::Node parse_node,
-                                 SemIR::TypeId pointee_id) const
+  auto MakePointerRepresentation(
+      Parse::Node parse_node, SemIR::TypeId pointee_id,
+      SemIR::ValueRepresentation::AggregateKind aggregate_kind =
+          SemIR::ValueRepresentation::NotAggregate) const
       -> SemIR::ValueRepresentation {
     // TODO: Should we add `const` qualification to `pointee_id`?
     return {.kind = SemIR::ValueRepresentation::Pointer,
+            .aggregate_kind = aggregate_kind,
             .type_id = context_.GetPointerType(parse_node, pointee_id)};
   }
 
   // Gets the value representation of a nested type, which should already be
   // complete.
   auto GetNestedValueRepresentation(SemIR::TypeId nested_type_id) const {
-    CARBON_CHECK(context_.semantics_ir().IsTypeComplete(nested_type_id))
+    CARBON_CHECK(context_.sem_ir().IsTypeComplete(nested_type_id))
         << "Nested type should already be complete";
-    auto value_rep =
-        context_.semantics_ir().GetValueRepresentation(nested_type_id);
+    auto value_rep = context_.sem_ir().GetValueRepresentation(nested_type_id);
     CARBON_CHECK(value_rep.kind != SemIR::ValueRepresentation::Unknown)
         << "Complete type should have a value representation";
     return value_rep;
@@ -453,9 +516,10 @@ class TypeCompleter {
   auto BuildCrossReferenceValueRepresentation(SemIR::TypeId type_id,
                                               SemIR::CrossReference xref) const
       -> SemIR::ValueRepresentation {
-    auto xref_node = context_.semantics_ir()
+    auto xref_node = context_.sem_ir()
                          .GetCrossReferenceIR(xref.ir_id)
-                         .GetNode(xref.node_id);
+                         .nodes()
+                         .Get(xref.node_id);
 
     // The canonical description of a type should only have cross-references
     // for entities owned by another File, such as builtins, which are owned
@@ -475,6 +539,7 @@ class TypeCompleter {
       case SemIR::BuiltinKind::FloatingPointType:
       case SemIR::BuiltinKind::NamespaceType:
       case SemIR::BuiltinKind::FunctionType:
+      case SemIR::BuiltinKind::BoundMethodType:
         return MakeCopyRepresentation(type_id);
 
       case SemIR::BuiltinKind::StringType:
@@ -486,11 +551,34 @@ class TypeCompleter {
     llvm_unreachable("All builtin kinds were handled above");
   }
 
+  auto BuildStructOrTupleValueRepresentation(Parse::Node parse_node,
+                                             std::size_t num_elements,
+                                             SemIR::TypeId elementwise_rep,
+                                             bool same_as_object_rep) const
+      -> SemIR::ValueRepresentation {
+    SemIR::ValueRepresentation::AggregateKind aggregate_kind =
+        same_as_object_rep ? SemIR::ValueRepresentation::ValueAndObjectAggregate
+                           : SemIR::ValueRepresentation::ValueAggregate;
+
+    if (num_elements == 1) {
+      // The value representation for a struct or tuple with a single element
+      // is a struct or tuple containing the value representation of the
+      // element.
+      // TODO: Consider doing the same whenever `elementwise_rep` is
+      // sufficiently small.
+      return MakeCopyRepresentation(elementwise_rep, aggregate_kind);
+    }
+    // For a struct or tuple with multiple fields, we use a pointer
+    // to the elementwise value representation.
+    return MakePointerRepresentation(parse_node, elementwise_rep,
+                                     aggregate_kind);
+  }
+
   auto BuildStructTypeValueRepresentation(SemIR::TypeId type_id,
                                           SemIR::StructType struct_type) const
       -> SemIR::ValueRepresentation {
-    // TODO: Share code with tuples.
-    auto fields = context_.semantics_ir().GetNodeBlock(struct_type.fields_id);
+    // TODO: Share more code with tuples.
+    auto fields = context_.node_blocks().Get(struct_type.fields_id);
     if (fields.empty()) {
       return MakeEmptyRepresentation(struct_type.parse_node);
     }
@@ -501,40 +589,30 @@ class TypeCompleter {
     value_rep_fields.reserve(fields.size());
     bool same_as_object_rep = true;
     for (auto field_id : fields) {
-      auto field =
-          context_.semantics_ir().GetNodeAs<SemIR::StructTypeField>(field_id);
-      auto field_value_rep = GetNestedValueRepresentation(field.type_id);
-      if (field_value_rep.type_id != field.type_id) {
+      auto field = context_.nodes().GetAs<SemIR::StructTypeField>(field_id);
+      auto field_value_rep = GetNestedValueRepresentation(field.field_type_id);
+      if (field_value_rep.type_id != field.field_type_id) {
         same_as_object_rep = false;
-        field.type_id = field_value_rep.type_id;
+        field.field_type_id = field_value_rep.type_id;
         field_id = context_.AddNode(field);
       }
       value_rep_fields.push_back(field_id);
     }
 
-    auto value_rep =
-        same_as_object_rep
-            ? type_id
-            : context_.CanonicalizeStructType(
-                  struct_type.parse_node,
-                  context_.semantics_ir().AddNodeBlock(value_rep_fields));
-    if (fields.size() == 1) {
-      // The value representation for a struct with a single field is a
-      // struct containing the value representation of the field.
-      // TODO: Consider doing the same for structs with multiple small
-      // fields.
-      return MakeCopyRepresentation(value_rep);
-    }
-    // For a struct with multiple fields, we use a pointer representation.
-    return MakePointerRepresentation(struct_type.parse_node, value_rep);
+    auto value_rep = same_as_object_rep
+                         ? type_id
+                         : context_.CanonicalizeStructType(
+                               struct_type.parse_node,
+                               context_.node_blocks().Add(value_rep_fields));
+    return BuildStructOrTupleValueRepresentation(
+        struct_type.parse_node, fields.size(), value_rep, same_as_object_rep);
   }
 
   auto BuildTupleTypeValueRepresentation(SemIR::TypeId type_id,
                                          SemIR::TupleType tuple_type) const
       -> SemIR::ValueRepresentation {
-    // TODO: Share code with structs.
-    auto elements =
-        context_.semantics_ir().GetTypeBlock(tuple_type.elements_id);
+    // TODO: Share more code with structs.
+    auto elements = context_.type_blocks().Get(tuple_type.elements_id);
     if (elements.empty()) {
       return MakeEmptyRepresentation(tuple_type.parse_node);
     }
@@ -556,15 +634,8 @@ class TypeCompleter {
                          ? type_id
                          : context_.CanonicalizeTupleType(tuple_type.parse_node,
                                                           value_rep_elements);
-    if (elements.size() == 1) {
-      // The value representation for a tuple with a single element is a
-      // tuple containing the value representation of that element.
-      // TODO: Consider doing the same for tuples with multiple small
-      // elements.
-      return MakeCopyRepresentation(value_rep);
-    }
-    // For a tuple with multiple elements, we use a pointer representation.
-    return MakePointerRepresentation(tuple_type.parse_node, value_rep);
+    return BuildStructOrTupleValueRepresentation(
+        tuple_type.parse_node, elements.size(), value_rep, same_as_object_rep);
   }
 
   // Builds and returns the value representation for the given type. All nested
@@ -588,11 +659,15 @@ class TypeCompleter {
       case SemIR::BindValue::Kind:
       case SemIR::BlockArg::Kind:
       case SemIR::BoolLiteral::Kind:
+      case SemIR::BoundMethod::Kind:
       case SemIR::Branch::Kind:
       case SemIR::BranchIf::Kind:
       case SemIR::BranchWithArg::Kind:
       case SemIR::Call::Kind:
+      case SemIR::ClassDeclaration::Kind:
+      case SemIR::ClassFieldAccess::Kind:
       case SemIR::Dereference::Kind:
+      case SemIR::Field::Kind:
       case SemIR::FunctionDeclaration::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::IntegerLiteral::Kind:
@@ -603,6 +678,7 @@ class TypeCompleter {
       case SemIR::RealLiteral::Kind:
       case SemIR::Return::Kind:
       case SemIR::ReturnExpression::Kind:
+      case SemIR::SelfParameter::Kind:
       case SemIR::SpliceBlock::Kind:
       case SemIR::StringLiteral::Kind:
       case SemIR::StructAccess::Kind:
@@ -631,7 +707,9 @@ class TypeCompleter {
         // For arrays, it's convenient to always use a pointer representation,
         // even when the array has zero or one element, in order to support
         // indexing.
-        return MakePointerRepresentation(node.parse_node(), type_id);
+        return MakePointerRepresentation(
+            node.parse_node(), type_id,
+            SemIR::ValueRepresentation::ObjectAggregate);
       }
 
       case SemIR::StructType::Kind:
@@ -642,14 +720,23 @@ class TypeCompleter {
         return BuildTupleTypeValueRepresentation(type_id,
                                                  node.As<SemIR::TupleType>());
 
-      case SemIR::ClassDeclaration::Kind:
-        // TODO: Support class definitions and complete class types.
-        CARBON_FATAL() << "Class types are currently never complete";
+      case SemIR::ClassType::Kind:
+        // The value representation for a class is a pointer to the object
+        // representation.
+        // TODO: Support customized value representations for classes.
+        // TODO: Pick a better value representation when possible.
+        return MakePointerRepresentation(
+            node.parse_node(),
+            context_.classes()
+                .Get(node.As<SemIR::ClassType>().class_id)
+                .object_representation_id,
+            SemIR::ValueRepresentation::ObjectAggregate);
 
       case SemIR::Builtin::Kind:
         CARBON_FATAL() << "Builtins should be named as cross-references";
 
       case SemIR::PointerType::Kind:
+      case SemIR::UnboundFieldType::Kind:
         return MakeCopyRepresentation(type_id);
 
       case SemIR::ConstType::Kind:
@@ -702,7 +789,7 @@ auto Context::CanonicalizeTypeImpl(
   }
 
   auto node_id = make_node();
-  auto type_id = semantics_ir_->AddType(node_id);
+  auto type_id = types().Add({.node_id = node_id});
   CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
   type_node_storage_.push_back(
       std::make_unique<TypeNode>(canonical_id, type_id));
@@ -735,17 +822,15 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
     case SemIR::ArrayType::Kind: {
       auto array_type = node.As<SemIR::ArrayType>();
       canonical_id.AddInteger(
-          semantics_context.semantics_ir().GetArrayBoundValue(
-              array_type.bound_id));
+          semantics_context.sem_ir().GetArrayBoundValue(array_type.bound_id));
       canonical_id.AddInteger(array_type.element_type_id.index);
       break;
     }
     case SemIR::Builtin::Kind:
       canonical_id.AddInteger(node.As<SemIR::Builtin>().builtin_kind.AsInt());
       break;
-    case SemIR::ClassDeclaration::Kind:
-      canonical_id.AddInteger(
-          node.As<SemIR::ClassDeclaration>().class_id.index);
+    case SemIR::ClassType::Kind:
+      canonical_id.AddInteger(node.As<SemIR::ClassType>().class_id.index);
       break;
     case SemIR::CrossReference::Kind: {
       // TODO: Cross-references should be canonicalized by looking at their
@@ -765,22 +850,27 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
       canonical_id.AddInteger(node.As<SemIR::PointerType>().pointee_id.index);
       break;
     case SemIR::StructType::Kind: {
-      auto fields = semantics_context.semantics_ir().GetNodeBlock(
+      auto fields = semantics_context.node_blocks().Get(
           node.As<SemIR::StructType>().fields_id);
       for (const auto& field_id : fields) {
         auto field =
-            semantics_context.semantics_ir().GetNodeAs<SemIR::StructTypeField>(
-                field_id);
+            semantics_context.nodes().GetAs<SemIR::StructTypeField>(field_id);
         canonical_id.AddInteger(field.name_id.index);
-        canonical_id.AddInteger(field.type_id.index);
+        canonical_id.AddInteger(field.field_type_id.index);
       }
       break;
     }
     case SemIR::TupleType::Kind:
-      ProfileTupleType(semantics_context.semantics_ir().GetTypeBlock(
+      ProfileTupleType(semantics_context.type_blocks().Get(
                            node.As<SemIR::TupleType>().elements_id),
                        canonical_id);
       break;
+    case SemIR::UnboundFieldType::Kind: {
+      auto unbound_field_type = node.As<SemIR::UnboundFieldType>();
+      canonical_id.AddInteger(unbound_field_type.class_type_id.index);
+      canonical_id.AddInteger(unbound_field_type.field_type_id.index);
+      break;
+    }
     default:
       CARBON_FATAL() << "Unexpected type node " << node;
   }
@@ -803,7 +893,7 @@ auto Context::CanonicalizeType(SemIR::NodeId node_id) -> SemIR::TypeId {
     return it->second;
   }
 
-  auto node = semantics_ir_->GetNode(node_id);
+  auto node = nodes().Get(node_id);
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
     ProfileType(*this, node, canonical_id);
   };
@@ -815,7 +905,7 @@ auto Context::CanonicalizeStructType(Parse::Node parse_node,
                                      SemIR::NodeBlockId refs_id)
     -> SemIR::TypeId {
   return CanonicalizeTypeAndAddNodeIfNew(
-      SemIR::StructType(parse_node, SemIR::TypeId::TypeType, refs_id));
+      SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
 }
 
 auto Context::CanonicalizeTupleType(Parse::Node parse_node,
@@ -826,8 +916,8 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
     ProfileTupleType(type_ids, canonical_id);
   };
   auto make_tuple_node = [&] {
-    return AddNode(SemIR::TupleType(parse_node, SemIR::TypeId::TypeType,
-                                    semantics_ir_->AddTypeBlock(type_ids)));
+    return AddNode(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
+                                    type_blocks().Add(type_ids)});
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
                               make_tuple_node);
@@ -845,12 +935,12 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
 auto Context::GetPointerType(Parse::Node parse_node,
                              SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
   return CanonicalizeTypeAndAddNodeIfNew(
-      SemIR::PointerType(parse_node, SemIR::TypeId::TypeType, pointee_type_id));
+      SemIR::PointerType{parse_node, SemIR::TypeId::TypeType, pointee_type_id});
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
   SemIR::Node type_node =
-      semantics_ir_->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(type_id));
+      nodes().Get(sem_ir_->GetTypeAllowBuiltinTypes(type_id));
   if (auto const_type = type_node.TryAs<SemIR::ConstType>()) {
     return const_type->inner_id;
   }

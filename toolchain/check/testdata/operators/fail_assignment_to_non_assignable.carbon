@@ -57,7 +57,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc13_3: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 2
 // CHECK:STDOUT:   assign %.loc13_3, %.loc13_7
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
 // CHECK:STDOUT:   %.loc17_4: init i32 = call %F.ref()
 // CHECK:STDOUT:   %.loc17_9: i32 = int_literal 1
 // CHECK:STDOUT:   assign %.loc17_4, %.loc17_9
@@ -76,9 +76,10 @@ fn Main() {
 // CHECK:STDOUT:   %.loc21_17.6: init (i32, i32) = tuple_init %.loc21_17.1, (%.loc21_17.3, %.loc21_17.5)
 // CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_17.6
 // CHECK:STDOUT:   %.loc21_8.4: (i32, i32) = tuple_value %.loc21_8.2, (%.loc21_4, %.loc21_7)
-// CHECK:STDOUT:   %n: ref i32 = var "n"
+// CHECK:STDOUT:   %n.var: ref i32 = var "n"
+// CHECK:STDOUT:   %n: ref i32 = bind_name "n", %n.var
 // CHECK:STDOUT:   %.loc22: i32 = int_literal 0
-// CHECK:STDOUT:   assign %n, %.loc22
+// CHECK:STDOUT:   assign %n.var, %.loc22
 // CHECK:STDOUT:   %n.ref.loc26_4: ref i32 = name_reference "n", %n
 // CHECK:STDOUT:   %n.ref.loc26_7: ref i32 = name_reference "n", %n
 // CHECK:STDOUT:   %.loc26_8.1: (i32, i32) = tuple_literal (%n.ref.loc26_4, %n.ref.loc26_7)
@@ -126,7 +127,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc38_4: i32 = block_arg !if.expr.result.loc38
 // CHECK:STDOUT:   %.loc38_29: i32 = int_literal 3
 // CHECK:STDOUT:   assign %.loc38_4, %.loc38_29
-// CHECK:STDOUT:   %a: ref i32 = var "a"
+// CHECK:STDOUT:   %a.var: ref i32 = var "a"
+// CHECK:STDOUT:   %a: ref i32 = bind_name "a", %a.var
 // CHECK:STDOUT:   %.loc45_7: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc45_7 br !if.expr.then.loc45 else br !if.expr.else.loc45
 // CHECK:STDOUT:

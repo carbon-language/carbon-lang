@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
+fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 
 // CHECK:STDOUT: file "duplicate_name_same_line.carbon" {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
@@ -12,18 +12,27 @@ fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.loc7_14: ref i32 = var "n"
-// CHECK:STDOUT:   %.loc7_23: i32 = int_literal 1
-// CHECK:STDOUT:   assign %n.loc7_14, %.loc7_23
-// CHECK:STDOUT:   %.loc7_30: bool = bool_literal true
-// CHECK:STDOUT:   if %.loc7_30 br !if.then else br !if.else
+// CHECK:STDOUT:   %.loc7_14: bool = bool_literal true
+// CHECK:STDOUT:   if %.loc7_14 br !if.then.loc7_18 else br !if.else.loc7_18
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %n.loc7_42: ref i32 = var "n"
-// CHECK:STDOUT:   %.loc7_51: i32 = int_literal 2
-// CHECK:STDOUT:   assign %n.loc7_42, %.loc7_51
-// CHECK:STDOUT:   br !if.else
+// CHECK:STDOUT: !if.then.loc7_18:
+// CHECK:STDOUT:   %n.var.loc7_26: ref i32 = var "n"
+// CHECK:STDOUT:   %n.loc7_26: ref i32 = bind_name "n", %n.var.loc7_26
+// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 1
+// CHECK:STDOUT:   assign %n.var.loc7_26, %.loc7_35
+// CHECK:STDOUT:   br !if.else.loc7_18
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else:
+// CHECK:STDOUT: !if.else.loc7_18:
+// CHECK:STDOUT:   %.loc7_44: bool = bool_literal true
+// CHECK:STDOUT:   if %.loc7_44 br !if.then.loc7_48 else br !if.else.loc7_48
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.then.loc7_48:
+// CHECK:STDOUT:   %n.var.loc7_56: ref i32 = var "n"
+// CHECK:STDOUT:   %n.loc7_56: ref i32 = bind_name "n", %n.var.loc7_56
+// CHECK:STDOUT:   %.loc7_65: i32 = int_literal 2
+// CHECK:STDOUT:   assign %n.var.loc7_56, %.loc7_65
+// CHECK:STDOUT:   br !if.else.loc7_48
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.else.loc7_48:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

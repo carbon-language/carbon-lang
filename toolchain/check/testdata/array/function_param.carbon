@@ -30,7 +30,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
 // CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3

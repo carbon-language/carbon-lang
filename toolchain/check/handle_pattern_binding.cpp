@@ -9,7 +9,18 @@
 namespace Carbon::Check {
 
 auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleAddress");
+  auto self_param_id =
+      context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
+  if (auto self_param =
+          context.nodes().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
+    self_param->is_addr_self = SemIR::BoolValue::True;
+    context.nodes().Set(self_param_id, *self_param);
+  } else {
+    CARBON_DIAGNOSTIC(AddrOnNonSelfParameter, Error,
+                      "`addr` can only be applied to a `self` parameter");
+    context.emitter().Emit(parse_node, AddrOnNonSelfParameter);
+  }
+  return true;
 }
 
 auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
@@ -23,35 +34,84 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto type_node_copy = type_node;
   auto cast_type_id = ExpressionAsType(context, type_node, parsed_type_id);
 
-  // Get the name.
+  // A `self` binding doesn't have a name.
+  if (auto self_node =
+          context.node_stack()
+              .PopForSoloParseNodeIf<Parse::NodeKind::SelfValueName>()) {
+    if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
+        Parse::NodeKind::ImplicitParameterListStart) {
+      CARBON_DIAGNOSTIC(
+          SelfOutsideImplicitParameterList, Error,
+          "`self` can only be declared in an implicit parameter list");
+      context.emitter().Emit(parse_node, SelfOutsideImplicitParameterList);
+    }
+    context.AddNodeAndPush(
+        parse_node,
+        SemIR::SelfParameter{*self_node, cast_type_id,
+                             /*is_addr_self=*/SemIR::BoolValue::False});
+    return true;
+  }
+
+  // TODO: Handle `_` bindings.
+
+  // Every other kind of pattern binding has a name.
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
   // Allocate a node of the appropriate kind, linked to the name for error
   // locations.
-  // TODO: Each of these cases should create a `BindName` node.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
-    case Parse::NodeKind::VariableIntroducer:
+    case Parse::NodeKind::VariableIntroducer: {
+      // A `var` declaration at class scope introduces a field.
+      auto enclosing_class_decl =
+          context.GetCurrentScopeAs<SemIR::ClassDeclaration>();
       if (!context.TryToCompleteType(cast_type_id, [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDeclaration, Error,
-                              "Variable has incomplete type `{0}`.",
+                              "{0} has incomplete type `{1}`.", llvm::StringRef,
                               std::string);
             return context.emitter().Build(
                 type_node_copy, IncompleteTypeInVarDeclaration,
-                context.semantics_ir().StringifyType(cast_type_id, true));
+                enclosing_class_decl ? "Field" : "Variable",
+                context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
-      context.AddNodeAndPush(
-          parse_node, SemIR::VarStorage(name_node, cast_type_id, name_id));
-      break;
+      SemIR::NodeId value_id = SemIR::NodeId::Invalid;
+      SemIR::TypeId value_type_id = cast_type_id;
+      if (enclosing_class_decl) {
+        auto& class_info =
+            context.classes().Get(enclosing_class_decl->class_id);
+        auto field_type_node_id = context.AddNode(SemIR::UnboundFieldType{
+            parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+            class_info.self_type_id, cast_type_id});
+        value_type_id = context.CanonicalizeType(field_type_node_id);
+        value_id = context.AddNode(
+            SemIR::Field{parse_node, value_type_id, name_id,
+                         SemIR::MemberIndex(context.args_type_info_stack()
+                                                .PeekCurrentBlockContents()
+                                                .size())});
 
+        // Add a corresponding field to the object representation of the class.
+        context.args_type_info_stack().AddNode(
+            SemIR::StructTypeField{parse_node, name_id, cast_type_id});
+      } else {
+        value_id = context.AddNode(
+            SemIR::VarStorage{name_node, value_type_id, name_id});
+      }
+      context.AddNodeAndPush(
+          parse_node,
+          SemIR::BindName{name_node, value_type_id, name_id, value_id});
+      break;
+    }
+
+    case Parse::NodeKind::ImplicitParameterListStart:
     case Parse::NodeKind::ParameterListStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
       context.AddNodeAndPush(
-          parse_node, SemIR::Parameter(name_node, cast_type_id, name_id));
+          parse_node, SemIR::Parameter{name_node, cast_type_id, name_id});
+      // TODO: Create a `BindName` node.
       break;
 
     case Parse::NodeKind::LetIntroducer:
@@ -61,7 +121,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
                               std::string);
             return context.emitter().Build(
                 type_node_copy, IncompleteTypeInLetDeclaration,
-                context.semantics_ir().StringifyType(cast_type_id, true));
+                context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
@@ -71,8 +131,8 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       // the `let` pattern before we see the initializer.
       context.node_stack().Push(
           parse_node,
-          context.semantics_ir().AddNodeInNoBlock(SemIR::BindName(
-              name_node, cast_type_id, name_id, SemIR::NodeId::Invalid)));
+          context.nodes().AddInNoBlock(SemIR::BindName{
+              name_node, cast_type_id, name_id, SemIR::NodeId::Invalid}));
       break;
 
     default:

@@ -47,6 +47,7 @@ cc_binary(
 
 cc_test(
     name = "proto_to_carbon_test",
+    size = "small",
     srcs = ["proto_to_carbon_test.cpp"],
     deps = [
         ":carbon_cc_proto",

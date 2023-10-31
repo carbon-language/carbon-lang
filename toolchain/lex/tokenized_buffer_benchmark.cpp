@@ -11,6 +11,7 @@
 #include "common/check.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/token_kind.h"
@@ -374,14 +375,14 @@ class LexerBenchHelper {
 
   auto Lex() -> TokenizedBuffer {
     DiagnosticConsumer& consumer = NullDiagnosticConsumer();
-    return TokenizedBuffer::Lex(source_, consumer);
+    return TokenizedBuffer::Lex(value_stores_, source_, consumer);
   }
 
   auto DiagnoseErrors() -> std::string {
     std::string result;
     llvm::raw_string_ostream out(result);
     StreamDiagnosticConsumer consumer(out);
-    auto buffer = TokenizedBuffer::Lex(source_, consumer);
+    auto buffer = TokenizedBuffer::Lex(value_stores_, source_, consumer);
     consumer.Flush();
     CARBON_CHECK(buffer.has_errors())
         << "Asked to diagnose errors but none found!";
@@ -398,6 +399,7 @@ class LexerBenchHelper {
         fs_, filename_, ConsoleDiagnosticConsumer()));
   }
 
+  SharedValueStores value_stores_;
   llvm::vfs::InMemoryFileSystem fs_;
   std::string filename_ = "test.carbon";
   SourceBuffer source_;
@@ -425,6 +427,66 @@ void BM_ValidKeywords(benchmark::State& state) {
 }
 BENCHMARK(BM_ValidKeywords);
 
+void BM_ValidKeywordsAsRawIdentifiers(benchmark::State& state) {
+  absl::BitGen gen;
+  std::array<llvm::StringRef, NumTokens> tokens;
+  for (int i : llvm::seq(NumTokens)) {
+    tokens[i] = TokenKind::KeywordTokens[i % TokenKind::KeywordTokens.size()]
+                    .fixed_spelling();
+  }
+  std::shuffle(tokens.begin(), tokens.end(), gen);
+  std::string source("r#");
+  source.append(llvm::join(tokens, " r#"));
+
+  LexerBenchHelper helper(source);
+  for (auto _ : state) {
+    TokenizedBuffer buffer = helper.Lex();
+    CARBON_CHECK(!buffer.has_errors());
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_ValidKeywordsAsRawIdentifiers);
+
+// This benchmark does a 50-50 split of r-prefixed and r#-prefixed identifiers
+// to directly compare raw and non-raw performance.
+void BM_RawIdentifierFocus(benchmark::State& state) {
+  const std::array<std::string, NumTokens>& ids = GetRandomIdentifiers();
+
+  llvm::SmallVector<std::string> modified_ids;
+  // As we resize, start with the in-use prefix. Note that `r#` uses the first
+  // character of the original identifier.
+  modified_ids.resize(NumTokens / 2, "r#");
+  modified_ids.resize(NumTokens, "r");
+  for (int i : llvm::seq(NumTokens / 2)) {
+    // Use the same identifier both ways.
+    modified_ids[i].append(ids[i]);
+    modified_ids[i + NumTokens / 2].append(
+        llvm::StringRef(ids[i]).drop_front());
+  }
+
+  absl::BitGen gen;
+  std::array<llvm::StringRef, NumTokens> tokens;
+  for (int i : llvm::seq(NumTokens)) {
+    tokens[i] = modified_ids[i];
+  }
+  std::shuffle(tokens.begin(), tokens.end(), gen);
+  std::string source = llvm::join(tokens, " ");
+
+  LexerBenchHelper helper(source);
+  for (auto _ : state) {
+    TokenizedBuffer buffer = helper.Lex();
+    CARBON_CHECK(!buffer.has_errors());
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_RawIdentifierFocus);
+
 template <int MinLength, int MaxLength, bool Uniform>
 void BM_ValidIdentifiers(benchmark::State& state) {
   std::string source = RandomIdentifierSeq<MinLength, MaxLength, Uniform>();
@@ -449,6 +511,12 @@ BENCHMARK(BM_ValidIdentifiers<1, 1, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<3, 5, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<3, 16, /*Uniform=*/true>);
 BENCHMARK(BM_ValidIdentifiers<12, 64, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<16, 16, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<24, 24, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<32, 32, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<48, 48, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<64, 64, /*Uniform=*/true>);
+BENCHMARK(BM_ValidIdentifiers<80, 80, /*Uniform=*/true>);
 
 // Benchmark to stress the lexing of horizontal whitespace. This sets up what is
 // nearly a worst-case scenario of short-but-expensive-to-lex tokens with runs

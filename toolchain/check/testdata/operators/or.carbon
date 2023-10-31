@@ -31,7 +31,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
 // CHECK:STDOUT:   %.loc11_11: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
 // CHECK:STDOUT:   %.loc11_14.2: bool = not %.loc11_14.1
@@ -39,7 +39,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   if %.loc11_14.2 br !or.rhs else br !or.result(%.loc11_14.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
-// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", package.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", file.%G
 // CHECK:STDOUT:   %.loc11_18: init bool = call %G.ref()
 // CHECK:STDOUT:   %.loc11_14.4: bool = value_of_initializer %.loc11_18
 // CHECK:STDOUT:   br !or.result(%.loc11_14.4)

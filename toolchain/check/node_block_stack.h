@@ -19,9 +19,9 @@ namespace Carbon::Check {
 // All pushes and pops will be vlogged.
 class NodeBlockStack {
  public:
-  explicit NodeBlockStack(llvm::StringLiteral name, SemIR::File& semantics_ir,
+  explicit NodeBlockStack(llvm::StringLiteral name, SemIR::File& sem_ir,
                           llvm::raw_ostream* vlog_stream)
-      : name_(name), semantics_ir_(&semantics_ir), vlog_stream_(vlog_stream) {}
+      : name_(name), sem_ir_(&sem_ir), vlog_stream_(vlog_stream) {}
 
   // Pushes an existing node block.
   auto Push(SemIR::NodeBlockId id) -> void;
@@ -48,7 +48,7 @@ class NodeBlockStack {
   // Adds the given node to the block at the top of the stack and returns its
   // ID.
   auto AddNode(SemIR::Node node) -> SemIR::NodeId {
-    auto node_id = semantics_ir_->AddNodeInNoBlock(node);
+    auto node_id = sem_ir_->nodes().AddInNoBlock(node);
     AddNodeId(node_id);
     return node_id;
   }
@@ -102,7 +102,7 @@ class NodeBlockStack {
   llvm::StringLiteral name_;
 
   // The underlying SemIR::File instance. Always non-null.
-  SemIR::File* semantics_ir_;
+  SemIR::File* sem_ir_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;

@@ -17,8 +17,7 @@ namespace Carbon::Lower {
 class FileContext {
  public:
   explicit FileContext(llvm::LLVMContext& llvm_context,
-                       llvm::StringRef module_name,
-                       const SemIR::File& semantics_ir,
+                       llvm::StringRef module_name, const SemIR::File& sem_ir,
                        llvm::raw_ostream* vlog_stream);
 
   // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
@@ -38,6 +37,7 @@ class FileContext {
       return GetTypeType();
     }
     CARBON_CHECK(type_id.index >= 0) << type_id;
+    CARBON_CHECK(types_[type_id.index]) << "Missing type " << type_id;
     return types_[type_id.index];
   }
 
@@ -48,7 +48,7 @@ class FileContext {
 
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
-  auto semantics_ir() -> const SemIR::File& { return *semantics_ir_; }
+  auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
 
  private:
   // Builds the declaration for the given function, which should then be cached
@@ -78,7 +78,7 @@ class FileContext {
   std::unique_ptr<llvm::Module> llvm_module_;
 
   // The input SemIR.
-  const SemIR::File* const semantics_ir_;
+  const SemIR::File* const sem_ir_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

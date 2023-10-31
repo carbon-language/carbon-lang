@@ -11,6 +11,11 @@ auto HandleArrayType(FunctionContext& context, SemIR::NodeId node_id,
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
+auto HandleClassType(FunctionContext& context, SemIR::NodeId node_id,
+                     SemIR::ClassType /*node*/) -> void {
+  context.SetLocal(node_id, context.GetTypeAsValue());
+}
+
 auto HandleConstType(FunctionContext& context, SemIR::NodeId node_id,
                      SemIR::ConstType /*node*/) -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
@@ -28,6 +33,11 @@ auto HandleStructType(FunctionContext& context, SemIR::NodeId node_id,
 
 auto HandleTupleType(FunctionContext& context, SemIR::NodeId node_id,
                      SemIR::TupleType /*node*/) -> void {
+  context.SetLocal(node_id, context.GetTypeAsValue());
+}
+
+auto HandleUnboundFieldType(FunctionContext& context, SemIR::NodeId node_id,
+                            SemIR::UnboundFieldType /*node*/) -> void {
   context.SetLocal(node_id, context.GetTypeAsValue());
 }
 

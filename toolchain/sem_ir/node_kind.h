@@ -48,7 +48,7 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   using EnumBase::Create;
 
   // Returns the name to use for this node kind in Semantics IR.
-  [[nodiscard]] auto ir_name() const -> llvm::StringRef;
+  [[nodiscard]] auto ir_name() const -> llvm::StringLiteral;
 
   // Returns whether this kind of node is expected to produce a value.
   [[nodiscard]] auto value_kind() const -> NodeValueKind;
@@ -63,6 +63,18 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   // Compute a fingerprint for this node kind, allowing its use as part of the
   // key in a `FoldingSet`.
   void Profile(llvm::FoldingSetNodeID& id) { id.AddInteger(AsInt()); }
+
+  class Definition;
+
+  // Provides a definition for this node kind. Should only be called once, to
+  // construct the kind as part of defining it in `typed_nodes.h`.
+  constexpr auto Define(llvm::StringLiteral ir_name,
+                        TerminatorKind terminator_kind =
+                            TerminatorKind::NotTerminator) const -> Definition;
+
+ private:
+  // Looks up the definition for this node kind.
+  [[nodiscard]] auto definition() const -> const Definition&;
 };
 
 #define CARBON_SEM_IR_NODE_KIND(Name) \
@@ -71,6 +83,45 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 
 // We expect the node kind to fit compactly into 8 bits.
 static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
+
+// A definition of a node kind. This is a NodeKind value, plus ancillary data
+// such as the name to use for the node kind in LLVM IR. These are not
+// copyable, and only one instance of this type is expected to exist per node
+// kind, specifically `TypedNode::Kind`. Use `NodeKind` instead as a thin
+// wrapper around a node kind index.
+class NodeKind::Definition : public NodeKind {
+ public:
+  // Returns the name to use for this node kind in Semantics IR.
+  [[nodiscard]] constexpr auto ir_name() const -> llvm::StringLiteral {
+    return ir_name_;
+  }
+
+  // Returns whether this node kind is a code block terminator. See
+  // NodeKind::terminator_kind().
+  [[nodiscard]] constexpr auto terminator_kind() const -> TerminatorKind {
+    return terminator_kind_;
+  }
+
+ private:
+  friend class NodeKind;
+
+  constexpr Definition(NodeKind kind, llvm::StringLiteral ir_name,
+                       TerminatorKind terminator_kind)
+      : NodeKind(kind), ir_name_(ir_name), terminator_kind_(terminator_kind) {}
+
+  // Not copyable.
+  Definition(const Definition&) = delete;
+  Definition& operator=(const Definition&) = delete;
+
+  llvm::StringLiteral ir_name_;
+  TerminatorKind terminator_kind_;
+};
+
+constexpr auto NodeKind::Define(llvm::StringLiteral ir_name,
+                                TerminatorKind terminator_kind) const
+    -> Definition {
+  return Definition(*this, ir_name, terminator_kind);
+}
 
 }  // namespace Carbon::SemIR
 

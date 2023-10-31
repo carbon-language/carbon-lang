@@ -9,8 +9,8 @@ namespace Carbon::Lower {
 
 auto HandleBindValue(FunctionContext& context, SemIR::NodeId node_id,
                      SemIR::BindValue node) -> void {
-  switch (auto rep = SemIR::GetValueRepresentation(context.semantics_ir(),
-                                                   node.type_id);
+  switch (auto rep =
+              SemIR::GetValueRepresentation(context.sem_ir(), node.type_id);
           rep.kind) {
     case SemIR::ValueRepresentation::Unknown:
       CARBON_FATAL()
@@ -50,25 +50,23 @@ auto HandleTemporaryStorage(FunctionContext& context, SemIR::NodeId node_id,
 
 auto HandleValueAsReference(FunctionContext& context, SemIR::NodeId node_id,
                             SemIR::ValueAsReference node) -> void {
+  CARBON_CHECK(SemIR::GetExpressionCategory(context.sem_ir(), node.value_id) ==
+               SemIR::ExpressionCategory::Value);
   CARBON_CHECK(
-      SemIR::GetExpressionCategory(context.semantics_ir(), node.value_id) ==
-      SemIR::ExpressionCategory::Value);
-  CARBON_CHECK(
-      SemIR::GetValueRepresentation(context.semantics_ir(), node.type_id)
-          .kind == SemIR::ValueRepresentation::Pointer);
+      SemIR::GetValueRepresentation(context.sem_ir(), node.type_id).kind ==
+      SemIR::ValueRepresentation::Pointer);
   context.SetLocal(node_id, context.GetLocal(node.value_id));
 }
 
 auto HandleValueOfInitializer(FunctionContext& context, SemIR::NodeId node_id,
                               SemIR::ValueOfInitializer node) -> void {
+  CARBON_CHECK(SemIR::GetExpressionCategory(context.sem_ir(), node.init_id) ==
+               SemIR::ExpressionCategory::Initializing);
   CARBON_CHECK(
-      SemIR::GetExpressionCategory(context.semantics_ir(), node.init_id) ==
-      SemIR::ExpressionCategory::Initializing);
+      SemIR::GetValueRepresentation(context.sem_ir(), node.type_id).kind ==
+      SemIR::ValueRepresentation::Copy);
   CARBON_CHECK(
-      SemIR::GetValueRepresentation(context.semantics_ir(), node.type_id)
-          .kind == SemIR::ValueRepresentation::Copy);
-  CARBON_CHECK(
-      SemIR::GetInitializingRepresentation(context.semantics_ir(), node.type_id)
+      SemIR::GetInitializingRepresentation(context.sem_ir(), node.type_id)
           .kind == SemIR::InitializingRepresentation::ByCopy);
   context.SetLocal(node_id, context.GetLocal(node.init_id));
 }

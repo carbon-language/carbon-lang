@@ -14,12 +14,13 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %.loc10_17.2: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_17.3: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc10_17.4: type = ptr_type (i32, i32)
-// CHECK:STDOUT:   %x: ref (i32, i32) = var "x"
+// CHECK:STDOUT:   %x.var: ref (i32, i32) = var "x"
+// CHECK:STDOUT:   %x: ref (i32, i32) = bind_name "x", %x.var
 // CHECK:STDOUT:   %.loc10_22: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_25: f64 = real_literal 6589e-2
 // CHECK:STDOUT:   %.loc10_30.1: type = tuple_type (i32, f64)
 // CHECK:STDOUT:   %.loc10_30.2: (i32, f64) = tuple_literal (%.loc10_22, %.loc10_25)
-// CHECK:STDOUT:   %.loc10_30.3: ref i32 = tuple_access %x, member0
+// CHECK:STDOUT:   %.loc10_30.3: ref i32 = tuple_access %x.var, member0
 // CHECK:STDOUT:   %.loc10_30.4: init i32 = initialize_from %.loc10_22 to %.loc10_30.3
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }

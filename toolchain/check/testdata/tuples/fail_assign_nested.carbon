@@ -20,7 +20,8 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %.loc10_31.5: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %.loc10_31.6: type = tuple_type ((i32, i32)*, (i32, i32)*)
 // CHECK:STDOUT:   %.loc10_31.7: type = ptr_type ((i32, i32)*, (i32, i32)*)
-// CHECK:STDOUT:   %x: ref ((i32, i32), (i32, i32)) = var "x"
+// CHECK:STDOUT:   %x.var: ref ((i32, i32), (i32, i32)) = var "x"
+// CHECK:STDOUT:   %x: ref ((i32, i32), (i32, i32)) = bind_name "x", %x.var
 // CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_40: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_43: i32 = int_literal 3
@@ -32,5 +33,5 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %.loc10_55: (i32, i32, i32) = tuple_literal (%.loc10_48, %.loc10_51, %.loc10_54)
 // CHECK:STDOUT:   %.loc10_56.1: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
 // CHECK:STDOUT:   %.loc10_56.2: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_44.2, %.loc10_55)
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }

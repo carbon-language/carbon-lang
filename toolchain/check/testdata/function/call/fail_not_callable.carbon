@@ -5,12 +5,9 @@
 // AUTOUPDATE
 
 fn Run() {
-  // CHECK:STDERR: fail_not_callable.carbon:[[@LINE+6]]:24: ERROR: Semantics TODO: `Not a callable name`.
+  // CHECK:STDERR: fail_not_callable.carbon:[[@LINE+3]]:23: ERROR: Value of type `String` is not callable.
   // CHECK:STDERR:   var x: i32 = "hello"();
-  // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_not_callable.carbon:[[@LINE+3]]:25: ERROR: Cannot implicitly convert from `String` to `i32`.
-  // CHECK:STDERR:   var x: i32 = "hello"();
-  // CHECK:STDERR:                         ^
+  // CHECK:STDERR:                       ^
   var x: i32 = "hello"();
 }
 
@@ -20,9 +17,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x: ref i32 = var "x"
+// CHECK:STDOUT:   %x.var: ref i32 = var "x"
+// CHECK:STDOUT:   %x: ref i32 = bind_name "x", %x.var
 // CHECK:STDOUT:   %.1: type = ptr_type String
-// CHECK:STDOUT:   %.loc14: String = string_literal "hello"
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   %.loc11: String = string_literal "hello"
+// CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

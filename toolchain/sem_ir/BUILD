@@ -15,12 +15,29 @@ cc_library(
 )
 
 cc_library(
+    name = "ids",
+    hdrs = ["ids.h"],
+    deps = [
+        "//common:check",
+        "//common:ostream",
+        "//toolchain/base:index_base",
+        "//toolchain/sem_ir:builtin_kind",
+    ],
+)
+
+cc_library(
     name = "node_kind",
     srcs = ["node_kind.cpp"],
-    hdrs = ["node_kind.h"],
+    hdrs = [
+        "node_kind.h",
+        "typed_nodes.h",
+    ],
     textual_hdrs = ["node_kind.def"],
     deps = [
         "//common:enum_base",
+        "//toolchain/parse:tree",
+        "//toolchain/sem_ir:builtin_kind",
+        "//toolchain/sem_ir:ids",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -30,13 +47,13 @@ cc_library(
     srcs = ["node.cpp"],
     hdrs = ["node.h"],
     deps = [
+        ":builtin_kind",
+        ":node_kind",
         "//common:check",
         "//common:ostream",
         "//common:struct_reflection",
         "//toolchain/base:index_base",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:builtin_kind",
-        "//toolchain/sem_ir:node_kind",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -46,10 +63,13 @@ cc_library(
     srcs = ["file.cpp"],
     hdrs = ["file.h"],
     deps = [
+        ":builtin_kind",
+        ":node",
+        ":node_kind",
+        ":value_stores",
         "//common:check",
-        "//toolchain/sem_ir:builtin_kind",
-        "//toolchain/sem_ir:node",
-        "//toolchain/sem_ir:node_kind",
+        "//toolchain/base:value_store",
+        "//toolchain/base:yaml",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -59,10 +79,10 @@ cc_library(
     srcs = ["formatter.cpp"],
     hdrs = ["formatter.h"],
     deps = [
+        ":file",
+        ":node_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:node_kind",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -74,6 +94,29 @@ cc_library(
     deps = [
         ":file",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "value_stores",
+    hdrs = ["value_stores.h"],
+    deps = [
+        ":node",
+        "//toolchain/base:value_store",
+        "//toolchain/base:yaml",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "typed_nodes_test",
+    size = "small",
+    srcs = ["typed_nodes_test.cpp"],
+    deps = [
+        ":node",
+        ":node_kind",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 

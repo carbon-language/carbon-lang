@@ -49,12 +49,12 @@ class Context {
   auto AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Parse::Node name_node, SemIR::StringId name_id,
+  auto AddNameToLookup(Parse::Node name_node, StringId name_id,
                        SemIR::NodeId target_id) -> void;
 
   // Performs name lookup in a specified scope, returning the referenced node.
   // If scope_id is invalid, uses the current contextual scope.
-  auto LookupName(Parse::Node parse_node, SemIR::StringId name_id,
+  auto LookupName(Parse::Node parse_node, StringId name_id,
                   SemIR::NameScopeId scope_id, bool print_diagnostics)
       -> SemIR::NodeId;
 
@@ -63,17 +63,41 @@ class Context {
       -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::StringId name_id)
+  auto DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id) -> void;
+
+  // Adds a note to a diagnostic explaining that a class is incomplete.
+  auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
 
   // Pushes a new scope onto scope_stack_.
-  auto PushScope() -> void;
+  auto PushScope(SemIR::NodeId scope_node_id = SemIR::NodeId::Invalid,
+                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid)
+      -> void;
 
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
 
+  // Returns the name scope associated with the current lexical scope, if any.
+  auto current_scope_id() const -> SemIR::NameScopeId {
+    return current_scope().scope_id;
+  }
+
+  // Returns the current scope, if it is of the specified kind. Otherwise,
+  // returns nullopt.
+  template <typename NodeT>
+  auto GetCurrentScopeAs() -> std::optional<NodeT> {
+    auto current_scope_node_id = current_scope().scope_node_id;
+    if (!current_scope_node_id.is_valid()) {
+      return std::nullopt;
+    }
+    return nodes().Get(current_scope_node_id).TryAs<NodeT>();
+  }
+
   // Follows NameReference nodes to find the value named by a given node.
   auto FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId;
+
+  // Gets the constant value of the given node, if it has one.
+  auto GetConstantValue(SemIR::NodeId node_id) -> SemIR::NodeId;
 
   // Adds a `Branch` node branching to a new node block, and returns the ID of
   // the new block. All paths to the branch target must go through the current
@@ -194,11 +218,15 @@ class Context {
 
   auto parse_tree() -> const Parse::Tree& { return *parse_tree_; }
 
-  auto semantics_ir() -> SemIR::File& { return *semantics_ir_; }
+  auto sem_ir() -> SemIR::File& { return *sem_ir_; }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
   auto node_block_stack() -> NodeBlockStack& { return node_block_stack_; }
+
+  auto params_or_args_stack() -> NodeBlockStack& {
+    return params_or_args_stack_;
+  }
 
   auto args_type_info_stack() -> NodeBlockStack& {
     return args_type_info_stack_;
@@ -214,6 +242,31 @@ class Context {
 
   auto declaration_name_stack() -> DeclarationNameStack& {
     return declaration_name_stack_;
+  }
+
+  // Directly expose SemIR::File data accessors for brevity in calls.
+  auto integers() -> ValueStore<IntegerId>& { return sem_ir().integers(); }
+  auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
+  auto strings() -> ValueStore<StringId>& { return sem_ir().strings(); }
+  auto functions() -> ValueStore<SemIR::FunctionId, SemIR::Function>& {
+    return sem_ir().functions();
+  }
+  auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
+    return sem_ir().classes();
+  }
+  auto name_scopes() -> SemIR::NameScopeStore& {
+    return sem_ir().name_scopes();
+  }
+  auto types() -> ValueStore<SemIR::TypeId, SemIR::TypeInfo>& {
+    return sem_ir().types();
+  }
+  auto type_blocks()
+      -> SemIR::BlockValueStore<SemIR::TypeBlockId, SemIR::TypeId>& {
+    return sem_ir().type_blocks();
+  }
+  auto nodes() -> SemIR::NodeStore& { return sem_ir().nodes(); }
+  auto node_blocks() -> SemIR::NodeBlockStore& {
+    return sem_ir().node_blocks();
   }
 
  private:
@@ -232,9 +285,20 @@ class Context {
 
   // An entry in scope_stack_.
   struct ScopeStackEntry {
+    // The node associated with this entry, if any. This can be one of:
+    //
+    // - A `ClassDeclaration`, for a class definition scope.
+    // - A `FunctionDeclaration`, for the outermost scope in a function
+    //   definition.
+    // - Invalid, for any other scope.
+    SemIR::NodeId scope_node_id;
+
+    // The name scope associated with this entry, if any.
+    SemIR::NameScopeId scope_id;
+
     // Names which are registered with name_lookup_, and will need to be
     // deregistered when the scope ends.
-    llvm::DenseSet<SemIR::StringId> names;
+    llvm::DenseSet<StringId> names;
 
     // TODO: This likely needs to track things which need to be destructed.
   };
@@ -261,6 +325,9 @@ class Context {
   auto CanonicalizeTypeAndAddNodeIfNew(SemIR::Node node) -> SemIR::TypeId;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
+  auto current_scope() const -> const ScopeStackEntry& {
+    return scope_stack_.back();
+  }
 
   // Tokens for getting data on literals.
   const Lex::TokenizedBuffer* tokens_;
@@ -272,7 +339,7 @@ class Context {
   const Parse::Tree* parse_tree_;
 
   // The SemIR::File being added to.
-  SemIR::File* semantics_ir_;
+  SemIR::File* sem_ir_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
@@ -314,8 +381,7 @@ class Context {
   // reference.
   //
   // Names which no longer have lookup results are erased.
-  llvm::DenseMap<SemIR::StringId, llvm::SmallVector<SemIR::NodeId>>
-      name_lookup_;
+  llvm::DenseMap<StringId, llvm::SmallVector<SemIR::NodeId>> name_lookup_;
 
   // Cache of the mapping from nodes to types, to avoid recomputing the folding
   // set ID.

@@ -27,6 +27,7 @@ cc_library(
 
 cc_test(
     name = "command_line_test",
+    size = "small",
     srcs = ["command_line_test.cpp"],
     deps = [
         ":command_line",
@@ -52,6 +53,7 @@ cc_library(
 
 cc_test(
     name = "check_test",
+    size = "small",
     srcs = ["check_test.cpp"],
     deps = [
         ":check",
@@ -77,6 +79,7 @@ cc_library(
 
 cc_test(
     name = "enum_base_test",
+    size = "small",
     srcs = ["enum_base_test.cpp"],
     deps = [
         ":enum_base",
@@ -99,6 +102,7 @@ cc_library(
 
 cc_test(
     name = "error_test",
+    size = "small",
     srcs = ["error_test.cpp"],
     deps = [
         ":error",
@@ -115,6 +119,7 @@ cc_library(
 
 cc_test(
     name = "indirect_value_test",
+    size = "small",
     srcs = ["indirect_value_test.cpp"],
     deps = [
         ":indirect_value",
@@ -144,6 +149,7 @@ cc_library(
 
 cc_test(
     name = "string_helpers_test",
+    size = "small",
     srcs = ["string_helpers_test.cpp"],
     deps = [
         ":string_helpers",
@@ -181,6 +187,7 @@ cc_library(
 
 cc_test(
     name = "vlog_test",
+    size = "small",
     srcs = ["vlog_test.cpp"],
     deps = [
         ":vlog",

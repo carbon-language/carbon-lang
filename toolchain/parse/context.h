@@ -30,7 +30,7 @@ class Context {
 
   // Supported kinds for HandlePattern.
   enum class PatternKind : int8_t {
-    DeducedParameter,
+    ImplicitParameter,
     Parameter,
     Variable,
     Let
