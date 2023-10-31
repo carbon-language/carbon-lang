@@ -44,6 +44,17 @@ class Context {
     NamedConstraint,
   };
 
+  // Used for restricting ordering of `package` and `import` directives.
+  enum class PackagingState : int8_t {
+    StartOfFile,
+    InImports,
+    AfterNonPackagingDeclaration,
+    // A warning about `import` placement has been issued so we don't keep
+    // issuing more (when `import` is repeated) until more non-`import`
+    // declarations come up.
+    InImportsAfterNonPackagingDeclaration,
+  };
+
   // Used to track state on state_stack_.
   struct StateStackEntry : public Printable<StateStackEntry> {
     explicit StateStackEntry(State state, PrecedenceGroup ambient_precedence,
@@ -301,6 +312,18 @@ class Context {
     return state_stack_;
   }
 
+  auto packaging_state() const -> PackagingState { return packaging_state_; }
+  auto set_packaging_state(PackagingState packaging_state) -> void {
+    packaging_state_ = packaging_state;
+  }
+  auto first_non_packaging_token() const -> Lex::Token {
+    return first_non_packaging_token_;
+  }
+  auto set_first_non_packaging_token(Lex::Token token) -> void {
+    CARBON_CHECK(!first_non_packaging_token_.is_valid());
+    first_non_packaging_token_ = token;
+  }
+
  private:
   // Prints a single token for a stack dump. Used by PrintForStackDump.
   auto PrintTokenForStackDump(llvm::raw_ostream& output, Lex::Token token) const
@@ -319,6 +342,12 @@ class Context {
   Lex::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
+
+  // The current packaging state, whether `import`/`package` are allowed.
+  PackagingState packaging_state_ = PackagingState::StartOfFile;
+  // The first non-packaging token, starting as invalid. Used for packaging
+  // state warnings.
+  Lex::Token first_non_packaging_token_ = Lex::Token::Invalid;
 };
 
 // `clang-format` has a bug with spacing around `->` returns in macros. See

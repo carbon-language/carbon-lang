@@ -4,18 +4,18 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:27: ERROR: Expected a `api` or `impl`.
-// CHECK:STDERR: package Foo library "bar" "baz";
-// CHECK:STDERR:                           ^
-package Foo library "bar" "baz";
+// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:26: ERROR: `import` declarations must end with a `;`.
+// CHECK:STDERR: import Foo library "bar" "baz";
+// CHECK:STDERR:                          ^
+import Foo library "bar" "baz";
 
 // CHECK:STDOUT: - filename: fail_extra_string.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
+// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Foo'},
 // CHECK:STDOUT:         {kind: 'Literal', text: '"bar"'},
-// CHECK:STDOUT:       {kind: 'PackageLibrary', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'Library', text: 'library', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -92,20 +92,33 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpression, 0, CARBON_TOKEN(Identifier))
 
 // ----------------------------------------------------------------------------
 
+// `library`:
+//   _external_: Literal
+// Library
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Library, 1, CARBON_TOKEN(Library))
+
 // `package`:
 //   PackageIntroducer
 //   _external_: Name
-//     _external_: Literal
-//   PackageLibrary
+//   _optional_ _external_: Library
 //   PackageApi or PackageImpl
 // PackageDirective
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageIntroducer, 0, CARBON_TOKEN(Package))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageApi, 0, CARBON_TOKEN(Api))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageImpl, 0, CARBON_TOKEN(Impl))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageLibrary, 1, CARBON_TOKEN(Library))
 CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Package)))
+
+// `import`:
+//   ImportIntroducer
+//   _external_: Name
+//   _optional_ _external_: Library
+// ImportDirective
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImportIntroducer, 0, CARBON_TOKEN(Import))
+CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Import)))
 
 // `namespace`:
 //   NamespaceStart
