@@ -8,7 +8,7 @@
 namespace Carbon::Check {
 
 auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
-  auto rhs_id = context.node_stack().PopExpression();
+  auto [rhs_node, rhs_id] = context.node_stack().PopExpressionWithParseNode();
   auto [lhs_node, lhs_id] = context.node_stack().PopExpressionWithParseNode();
 
   // Figure out the operator for the token.
@@ -47,6 +47,13 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
           parse_node,
           SemIR::BlockArg{parse_node, context.nodes().Get(rhs_id).type_id(),
                           resume_block_id});
+      return true;
+    }
+    case Lex::TokenKind::As: {
+      auto rhs_type_id = ExpressionAsType(context, rhs_node, rhs_id);
+      context.node_stack().Push(
+          parse_node,
+          ConvertForExplicitAs(context, parse_node, lhs_id, rhs_type_id));
       return true;
     }
     case Lex::TokenKind::Equal: {

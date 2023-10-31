@@ -19,6 +19,11 @@ struct ConversionTarget {
     Value,
     // Convert to either a value or a reference of type `type`.
     ValueOrReference,
+    // Convert for an explicit `as` cast. This allows any expression category
+    // as the result, and uses the `As` interface instead of the `ImplicitAs`
+    // interface.
+    // TODO: Use of an interface for conversions is not yet supported.
+    ExplicitAs,
     // The result of the conversion is discarded. It can't be an initializing
     // expression, but can be anything else.
     Discarded,
@@ -75,6 +80,11 @@ auto ConvertToValueOfType(Context& context, Parse::Node parse_node,
 // Converts `value_id` to a value expression of type `bool`.
 auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
                         SemIR::NodeId value_id) -> SemIR::NodeId;
+
+// Converts `value_id` to type `type_id` for an `as` expression.
+auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
+                          SemIR::NodeId value_id, SemIR::TypeId type_id)
+    -> SemIR::NodeId;
 
 // Implicitly converts a set of arguments to match the parameter types in a
 // function call. Returns a block containing the converted implicit and explicit
