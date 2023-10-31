@@ -888,9 +888,11 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
             CARBON_DIAGNOSTIC(
                 InCallToFunctionSelf, Note,
                 "Initializing `{0}` parameter of method declared here.",
-                llvm::StringRef);
+                llvm::StringLiteral);
             builder.Note(self_param->parse_node, InCallToFunctionSelf,
-                         self_param->is_addr_self.index ? "addr self" : "self");
+                         self_param->is_addr_self.index
+                             ? llvm::StringLiteral("addr self")
+                             : llvm::StringLiteral("self"));
           });
 
       // For `addr self`, take the address of the object argument.
