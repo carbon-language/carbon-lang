@@ -297,6 +297,7 @@ class NodeStack {
       case Parse::NodeKind::PostfixOperator:
       case Parse::NodeKind::PrefixOperator:
       case Parse::NodeKind::ReturnType:
+      case Parse::NodeKind::SelfTypeNameExpression:
       case Parse::NodeKind::SelfValueNameExpression:
       case Parse::NodeKind::ShortCircuitOperand:
       case Parse::NodeKind::StructFieldValue:
