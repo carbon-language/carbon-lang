@@ -516,6 +516,8 @@ static bool IsValidExpressionCategoryForConversionTarget(
              category == SemIR::ExpressionCategory::DurableReference ||
              category == SemIR::ExpressionCategory::EphemeralReference ||
              category == SemIR::ExpressionCategory::Initializing;
+    case ConversionTarget::ExplicitAs:
+      return true;
     case ConversionTarget::Initializer:
     case ConversionTarget::FullInitializer:
       return category == SemIR::ExpressionCategory::Initializing;
@@ -714,18 +716,31 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId expr_id,
   }
 
   // If the types don't match at this point, we can't perform the conversion.
-  // TODO: Look for an ImplicitAs impl.
+  // TODO: Look for an `ImplicitAs` impl, or an `As` impl in the case where
+  // `target.kind == ConversionTarget::ExplicitAs`.
   SemIR::Node expr = sem_ir.nodes().Get(expr_id);
   if (expr.type_id() != target.type_id) {
     CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
                       "Cannot implicitly convert from `{0}` to `{1}`.",
                       std::string, std::string);
+    CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
+                      "Cannot convert from `{0}` to `{1}` with `as`.",
+                      std::string, std::string);
     context.emitter()
-        .Build(parse_node, ImplicitAsConversionFailure,
+        .Build(parse_node,
+               target.kind == ConversionTarget::ExplicitAs
+                   ? ExplicitAsConversionFailure
+                   : ImplicitAsConversionFailure,
                sem_ir.StringifyType(expr.type_id()),
                sem_ir.StringifyType(target.type_id))
         .Emit();
     return SemIR::NodeId::BuiltinError;
+  }
+
+  // For `as`, don't perform any value category conversions. In particular, an
+  // identity conversion shouldn't change the expression category.
+  if (target.kind == ConversionTarget::ExplicitAs) {
+    return expr_id;
   }
 
   // Now perform any necessary value category conversions.
@@ -835,6 +850,13 @@ auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
   return ConvertToValueOfType(
       context, parse_node, value_id,
       context.GetBuiltinType(SemIR::BuiltinKind::BoolType));
+}
+
+auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
+                          SemIR::NodeId value_id, SemIR::TypeId type_id)
+    -> SemIR::NodeId {
+  return Convert(context, as_node, value_id,
+                 {.kind = ConversionTarget::ExplicitAs, .type_id = type_id});
 }
 
 auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
