@@ -653,6 +653,7 @@ inline auto Hasher::ReadSmall(const T& value) -> uint64_t {
 
 template <typename T, typename /*enable_if*/>
 inline auto Hasher::Hash(Hasher hasher, const T& value) -> Hasher {
+#if 0
   // For integer types up to 64-bit widths, we hash the 2's compliment value by
   // casting to unsigned and hashing as a `uint64_t`. This has the downside of
   // making negative integers hash differently based on their width, but
@@ -664,6 +665,16 @@ inline auto Hasher::Hash(Hasher hasher, const T& value) -> Hasher {
     uint64_t ext_value = static_cast<std::make_unsigned_t<T>>(value);
     return HashOne(std::move(hasher), ext_value);
   }
+#else
+  if constexpr (sizeof(T) <= 4) {
+    // Get any entropy bits from a pointer seed into the low bits. Harmless if
+    // the seed isn't a pointer, and should fit into the XOR instruction on Arm
+    // and pipeline with the multiply even on x86.
+    hasher.buffer = llvm::rotr(hasher.buffer, 12);
+    hasher.buffer ^= static_cast<uint32_t>(ReadSmall(value)) * MulConstant;
+    return hasher;
+  }
+#endif
 
   // We don't need the size to be part of the hash, as the size here is just a
   // function of the type and we're hashing to distinguish different values of
