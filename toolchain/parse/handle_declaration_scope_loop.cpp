@@ -40,18 +40,14 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
     }
     default:
       // Because a non-packaging keyword was encountered, packaging is complete.
+      // Misplaced packaging keywords may lead to this being re-triggered.
       if (context.packaging_state() !=
           Context::PackagingState::AfterNonPackagingDeclaration) {
+        if (!context.first_non_packaging_token().is_valid()) {
+          context.set_first_non_packaging_token(*context.position());
+        }
         context.set_packaging_state(
-            Context::PackagingState::AfterNonPackagingDeclaration,
-            // If a warning was issued, we may warn again due to a
-            // non-sequential `import`, but we still keep the first declaration
-            // token.
-            context.packaging_state() ==
-                    Context::PackagingState::
-                        AfterNonPackagingDeclarationImportsWarned
-                ? context.packaging_state_token()
-                : *context.position());
+            Context::PackagingState::AfterNonPackagingDeclaration);
       }
       switch (position_kind) {
         // Remaining keywords are only valid after imports are complete, and

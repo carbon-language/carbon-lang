@@ -19,7 +19,7 @@ import C;
 // CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: The `package` directive must be the first non-comment line.
 // CHECK:STDERR: package D;
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-15]]:1: First declaration is here.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-15]]:1: First non-comment line is here.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^
 package D;

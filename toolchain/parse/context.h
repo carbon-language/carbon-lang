@@ -52,7 +52,7 @@ class Context {
     // A warning about `import` placement has been issued so we don't keep
     // issuing more (when `import` is repeated) until more non-`import`
     // declarations come up.
-    AfterNonPackagingDeclarationImportsWarned,
+    InImportsAfterNonPackagingDeclaration,
   };
 
   // Used to track state on state_stack_.
@@ -313,13 +313,15 @@ class Context {
   }
 
   auto packaging_state() const -> PackagingState { return packaging_state_; }
-  auto packaging_state_token() const -> Lex::Token {
-    return packaging_state_token_;
-  }
-  auto set_packaging_state(PackagingState packaging_state, Lex::Token token)
-      -> void {
+  auto set_packaging_state(PackagingState packaging_state) -> void {
     packaging_state_ = packaging_state;
-    packaging_state_token_ = token;
+  }
+  auto first_non_packaging_token() const -> Lex::Token {
+    return first_non_packaging_token_;
+  }
+  auto set_first_non_packaging_token(Lex::Token token) -> void {
+    CARBON_CHECK(!first_non_packaging_token_.is_valid());
+    first_non_packaging_token_ = token;
   }
 
  private:
@@ -343,8 +345,9 @@ class Context {
 
   // The current packaging state, whether `import`/`package` are allowed.
   PackagingState packaging_state_ = PackagingState::StartOfFile;
-  // The token that led to the current packaging state, starting as invalid.
-  Lex::Token packaging_state_token_ = Lex::Token::Invalid;
+  // The first non-packaging token, starting as invalid. Used for packaging
+  // state warnings.
+  Lex::Token first_non_packaging_token_ = Lex::Token::Invalid;
 };
 
 // `clang-format` has a bug with spacing around `->` returns in macros. See
