@@ -50,9 +50,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc12_20.13: init [i32; 3] = array_init %.loc12_20.2, (%.loc12_20.6, %.loc12_20.9, %.loc12_20.12) to %.loc12_20.3
 // CHECK:STDOUT:   %.loc12_20.14: ref [i32; 3] = temporary %.loc12_20.3, %.loc12_20.13
 // CHECK:STDOUT:   %.loc12_20.15: [i32; 3] = bind_value %.loc12_20.14
-// CHECK:STDOUT:   %.loc12_11.1: init i32 = call %F.ref(%.loc12_20.15, %.loc12_23)
-// CHECK:STDOUT:   %.loc12_11.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc12_11.3: ref i32 = temporary %.loc12_11.2, %.loc12_11.1
-// CHECK:STDOUT:   %.loc12_11.4: i32 = bind_value %.loc12_11.3
-// CHECK:STDOUT:   return %.loc12_11.4
+// CHECK:STDOUT:   %.loc12_11: init i32 = call %F.ref(%.loc12_20.15, %.loc12_23)
+// CHECK:STDOUT:   %.loc12_25: i32 = value_of_initializer %.loc12_11
+// CHECK:STDOUT:   return %.loc12_25
 // CHECK:STDOUT: }

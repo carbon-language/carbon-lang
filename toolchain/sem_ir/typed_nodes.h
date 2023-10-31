@@ -541,6 +541,15 @@ struct ValueAsReference {
   NodeId value_id;
 };
 
+struct ValueOfInitializer {
+  static constexpr auto Kind =
+      NodeKind::ValueOfInitializer.Define("value_of_initializer");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  NodeId init_id;
+};
+
 struct VarStorage {
   static constexpr auto Kind = NodeKind::VarStorage.Define("var");
 

@@ -563,10 +563,29 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   // If the value is already of the right kind and expression category, there's
   // nothing to do. Performing a conversion would decompose and rebuild tuples
   // and structs, so it's important that we bail out early in this case.
-  if (value_type_id == target.type_id &&
-      IsValidExpressionCategoryForConversionTarget(
-          SemIR::GetExpressionCategory(sem_ir, value_id), target.kind)) {
-    return value_id;
+  if (value_type_id == target.type_id) {
+    auto value_cat = SemIR::GetExpressionCategory(sem_ir, value_id);
+    if (IsValidExpressionCategoryForConversionTarget(value_cat, target.kind)) {
+      return value_id;
+    }
+
+    // If the source is an initializing expression, we may be able to pull a
+    // value right out of it.
+    if (value_cat == SemIR::ExpressionCategory::Initializing &&
+        IsValidExpressionCategoryForConversionTarget(
+            SemIR::ExpressionCategory::Value, target.kind) &&
+        SemIR::GetInitializingRepresentation(sem_ir, value_type_id).kind ==
+            SemIR::InitializingRepresentation::ByCopy) {
+      auto value_rep = SemIR::GetValueRepresentation(sem_ir, value_type_id);
+      if (value_rep.kind == SemIR::ValueRepresentation::Copy &&
+          value_rep.type_id == value_type_id) {
+        // The initializer produces an object representation by copy, and the
+        // value representation is a copy of the object representation, so we
+        // already have a value of the right form.
+        return context.AddNode(
+            SemIR::ValueOfInitializer{parse_node, value_type_id, value_id});
+      }
+    }
   }
 
   // A tuple (T1, T2, ..., Tn) converts to (U1, U2, ..., Un) if each Ti

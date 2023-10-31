@@ -38,8 +38,5 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %b = getelementptr inbounds { i32, ptr }, ptr %c, i32 0, i32 1
 // CHECK:STDOUT:   store ptr %c, ptr %b, align 8
 // CHECK:STDOUT:   %F = call i32 @F(ptr %c)
-// CHECK:STDOUT:   %temp = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %F, ptr %temp, align 4
-// CHECK:STDOUT:   %1 = load i32, ptr %temp, align 4
-// CHECK:STDOUT:   ret i32 %1
+// CHECK:STDOUT:   ret i32 %F
 // CHECK:STDOUT: }
