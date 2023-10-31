@@ -837,9 +837,7 @@ auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
       context.GetBuiltinType(SemIR::BuiltinKind::BoolType));
 }
 
-namespace {
 CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
-}
 
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
