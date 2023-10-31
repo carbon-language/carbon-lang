@@ -5,6 +5,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {
@@ -258,7 +259,19 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
 
 auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_node, "HandleSelfTypeNameExpression");
+  // TODO: This will find a local variable declared with name `r#Self`, but
+  // should not. See #2984 and the corresponding code in
+  // HandleClassDefinitionStart.
+  auto name_id = context.strings().Add(
+      Lex::TokenKind::SelfTypeIdentifier.fixed_spelling());
+  auto value_id =
+      context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
+                         /*print_diagnostics=*/true);
+  auto value = context.nodes().Get(value_id);
+  context.AddNodeAndPush(
+      parse_node,
+      SemIR::NameReference{parse_node, value.type_id(), name_id, value_id});
+  return true;
 }
 
 auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {

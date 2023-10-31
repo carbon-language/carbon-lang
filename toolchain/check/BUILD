@@ -58,6 +58,7 @@ cc_library(
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:diagnostic_kind",
+        "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
