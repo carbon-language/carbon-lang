@@ -859,6 +859,62 @@ auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
                  {.kind = ConversionTarget::ExplicitAs, .type_id = type_id});
 }
 
+CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
+
+// Convert the object argument in a method call to match the `self` parameter.
+static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
+                        Parse::Node callee_parse_node,
+                        SemIR::SelfParameter self_param, SemIR::NodeId self_id)
+    -> SemIR::NodeId {
+  if (!self_id.is_valid()) {
+    CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
+                      "Missing object argument in method call.");
+    context.emitter()
+        .Build(call_parse_node, MissingObjectInMethodCall)
+        .Note(callee_parse_node, InCallToFunction)
+        .Emit();
+    return SemIR::NodeId::BuiltinError;
+  }
+
+  DiagnosticAnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(
+            InCallToFunctionSelf, Note,
+            "Initializing `{0}` parameter of method declared here.",
+            llvm::StringLiteral);
+        builder.Note(self_param.parse_node, InCallToFunctionSelf,
+                     self_param.is_addr_self.index
+                         ? llvm::StringLiteral("addr self")
+                         : llvm::StringLiteral("self"));
+      });
+
+  // For `addr self`, take the address of the object argument.
+  auto self_or_addr_id = self_id;
+  if (self_param.is_addr_self.index) {
+    self_or_addr_id =
+        ConvertToValueOrReferenceExpression(context, self_or_addr_id);
+    auto self = context.nodes().Get(self_or_addr_id);
+    switch (SemIR::GetExpressionCategory(context.sem_ir(), self_id)) {
+      case SemIR::ExpressionCategory::Error:
+      case SemIR::ExpressionCategory::DurableReference:
+      case SemIR::ExpressionCategory::EphemeralReference:
+        break;
+      default:
+        CARBON_DIAGNOSTIC(AddrSelfIsNonReference, Error,
+                          "`addr self` method cannot be invoked on a value.");
+        context.emitter().Emit(call_parse_node, AddrSelfIsNonReference);
+        return SemIR::NodeId::BuiltinError;
+    }
+    self_or_addr_id = context.AddNode(SemIR::AddressOf{
+        self.parse_node(),
+        context.GetPointerType(self.parse_node(), self.type_id()),
+        self_or_addr_id});
+  }
+
+  return ConvertToValueOfType(context, call_parse_node, self_or_addr_id,
+                              self_param.type_id);
+}
+
 auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
                      SemIR::NodeId self_id,
                      llvm::ArrayRef<SemIR::NodeId> arg_refs,
@@ -869,8 +925,6 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
   auto implicit_param_refs =
       context.sem_ir().node_blocks().Get(implicit_param_refs_id);
   auto param_refs = context.sem_ir().node_blocks().Get(param_refs_id);
-
-  CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
@@ -895,27 +949,8 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
   for (auto implicit_param_id : implicit_param_refs) {
     auto param = context.nodes().Get(implicit_param_id);
     if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
-      if (!self_id.is_valid()) {
-        CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
-                          "Missing object argument in method call.");
-        context.emitter()
-            .Build(call_parse_node, MissingObjectInMethodCall)
-            .Note(callee_parse_node, InCallToFunction)
-            .Emit();
-        return SemIR::NodeBlockId::Invalid;
-      }
-
-      DiagnosticAnnotationScope annotate_diagnostics(
-          &context.emitter(), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(
-                InCallToFunctionSelf, Note,
-                "Initializing self parameter of method declared here.");
-            builder.Note(self_param->parse_node, InCallToFunctionSelf);
-          });
-
-      // TODO: Handle `addr self`.
-      auto converted_self_id = ConvertToValueOfType(
-          context, call_parse_node, self_id, self_param->type_id);
+      auto converted_self_id = ConvertSelf(
+          context, call_parse_node, callee_parse_node, *self_param, self_id);
       if (converted_self_id == SemIR::NodeId::BuiltinError) {
         return SemIR::NodeBlockId::Invalid;
       }

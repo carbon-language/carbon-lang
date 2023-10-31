@@ -110,6 +110,7 @@ CARBON_DIAGNOSTIC_KIND(ParametersRequiredByIntroducer)
 CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
 // Function call checking.
+CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonReference)
 CARBON_DIAGNOSTIC_KIND(CallArgCountMismatch)
 CARBON_DIAGNOSTIC_KIND(CallToNonCallable)
 CARBON_DIAGNOSTIC_KIND(InCallToFunction)
