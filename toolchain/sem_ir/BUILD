@@ -26,13 +26,13 @@ cc_library(
 )
 
 cc_library(
-    name = "node_kind",
-    srcs = ["node_kind.cpp"],
+    name = "inst_kind",
+    srcs = ["inst_kind.cpp"],
     hdrs = [
-        "node_kind.h",
+        "inst_kind.h",
         "typed_insts.h",
     ],
-    textual_hdrs = ["node_kind.def"],
+    textual_hdrs = ["inst_kind.def"],
     deps = [
         "//common:enum_base",
         "//toolchain/parse:tree",
@@ -48,7 +48,7 @@ cc_library(
     hdrs = ["node.h"],
     deps = [
         ":builtin_kind",
-        ":node_kind",
+        ":inst_kind",
         "//common:check",
         "//common:ostream",
         "//common:struct_reflection",
@@ -64,8 +64,8 @@ cc_library(
     hdrs = ["file.h"],
     deps = [
         ":builtin_kind",
+        ":inst_kind",
         ":node",
-        ":node_kind",
         ":value_stores",
         "//common:check",
         "//toolchain/base:value_store",
@@ -80,7 +80,7 @@ cc_library(
     hdrs = ["formatter.h"],
     deps = [
         ":file",
-        ":node_kind",
+        ":inst_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
@@ -113,8 +113,8 @@ cc_test(
     size = "small",
     srcs = ["typed_insts_test.cpp"],
     deps = [
+        ":inst_kind",
         ":node",
-        ":node_kind",
         "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],

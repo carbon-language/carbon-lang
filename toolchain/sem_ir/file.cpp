@@ -10,8 +10,8 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/node.h"
-#include "toolchain/sem_ir/node_kind.h"
 
 namespace Carbon::SemIR {
 

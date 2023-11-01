@@ -26,7 +26,7 @@ auto Node::Print(llvm::raw_ostream& out) const -> void {
   case Name::Kind:                         \
     print_args(TypedInstArgsInfo<Name>()); \
     break;
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
   }
   if (type_id_.is_valid()) {
     out << ", type: " << type_id_;

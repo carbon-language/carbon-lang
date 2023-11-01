@@ -48,7 +48,7 @@ auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   case SemIR::Name::Kind:                                 \
     Handle##Name(*this, inst_id, node.As<SemIR::Name>()); \
     break;
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
     }
   }
 }

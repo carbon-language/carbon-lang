@@ -29,7 +29,7 @@ namespace {
 // enumerator.
 #define CARBON_SEM_IR_NODE_KIND(Name) \
   static_assert(Name::Kind == InstKind::Name);
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
 
 template <typename Ignored, typename... Types>
 using TypesExceptFirst = ::testing::Types<Types...>;
@@ -38,7 +38,7 @@ using TypesExceptFirst = ::testing::Types<Types...>;
 // `void` to handle the problem that we only want N-1 commas in this list.
 using TypedInstTypes = TypesExceptFirst<void
 #define CARBON_SEM_IR_NODE_KIND(Name) , Name
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
                                         >;
 
 // Set up the test fixture.
