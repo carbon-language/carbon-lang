@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_TYPED_NODES_H_
-#define CARBON_TOOLCHAIN_SEM_IR_TYPED_NODES_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
+#define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
@@ -572,4 +572,4 @@ constexpr bool HasTypeId<T, decltype(&T::type_id)> = true;
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_TYPED_NODES_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_

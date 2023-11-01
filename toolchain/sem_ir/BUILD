@@ -30,7 +30,7 @@ cc_library(
     srcs = ["node_kind.cpp"],
     hdrs = [
         "node_kind.h",
-        "typed_nodes.h",
+        "typed_insts.h",
     ],
     textual_hdrs = ["node_kind.def"],
     deps = [
@@ -109,9 +109,9 @@ cc_library(
 )
 
 cc_test(
-    name = "typed_nodes_test",
+    name = "typed_insts_test",
     size = "small",
-    srcs = ["typed_nodes_test.cpp"],
+    srcs = ["typed_insts_test.cpp"],
     deps = [
         ":node",
         ":node_kind",

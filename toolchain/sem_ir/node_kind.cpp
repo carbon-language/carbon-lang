@@ -4,7 +4,7 @@
 
 #include "toolchain/sem_ir/node_kind.h"
 
-#include "toolchain/sem_ir/typed_nodes.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 

@@ -67,7 +67,7 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   class Definition;
 
   // Provides a definition for this node kind. Should only be called once, to
-  // construct the kind as part of defining it in `typed_nodes.h`.
+  // construct the kind as part of defining it in `typed_insts.h`.
   constexpr auto Define(llvm::StringLiteral ir_name,
                         TerminatorKind terminator_kind =
                             TerminatorKind::NotTerminator) const -> Definition;

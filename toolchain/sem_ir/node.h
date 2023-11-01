@@ -14,7 +14,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/node_kind.h"
-#include "toolchain/sem_ir/typed_nodes.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -43,7 +43,7 @@ struct TypedInstArgsInfo {
 };
 
 // A type-erased representation of a SemIR node, that may be constructed from
-// the specific kinds of node defined in `typed_nodes.h`. This provides access
+// the specific kinds of node defined in `typed_insts.h`. This provides access
 // to common fields present on most or all kinds of nodes:
 //
 // - `parse_node` for error placement.
@@ -64,23 +64,23 @@ class Node : public Printable<Node> {
  public:
   template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  Node(TypedInst typed_node)
+  Node(TypedInst typed_inst)
       : parse_node_(Parse::Node::Invalid),
         kind_(TypedInst::Kind),
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
     if constexpr (HasParseNode<TypedInst>) {
-      parse_node_ = typed_node.parse_node;
+      parse_node_ = typed_inst.parse_node;
     }
     if constexpr (HasTypeId<TypedInst>) {
-      type_id_ = typed_node.type_id;
+      type_id_ = typed_inst.type_id;
     }
     if constexpr (Info::NumArgs > 0) {
-      arg0_ = ToRaw(Info::template Get<0>(typed_node));
+      arg0_ = ToRaw(Info::template Get<0>(typed_inst));
     }
     if constexpr (Info::NumArgs > 1) {
-      arg1_ = ToRaw(Info::template Get<1>(typed_node));
+      arg1_ = ToRaw(Info::template Get<1>(typed_inst));
     }
   }
 
