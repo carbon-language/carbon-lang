@@ -11,6 +11,19 @@
 
 namespace Carbon::Check {
 
+// An index for a pushed scope, which may be a permanent scope with a
+// corresponding `NameScope`, or a temporary scope, such as is created for a
+// block.
+//
+// These are comparable, and lower values correspond to scopes entered earlier
+// in the file.
+//
+// TODO: Move this struct and the name lookup code in context.h to a separate
+// file.
+struct ScopeIndex : public ComparableIndexBase, public Printable<ScopeIndex> {
+  using ComparableIndexBase::ComparableIndexBase;
+};
+
 class Context;
 
 // Provides support and stacking for qualified declaration name handling.
@@ -72,6 +85,10 @@ class DeclarationNameStack {
       Error,
     };
 
+    // The current scope when this name began. This is the scope that we will
+    // return to at the end of the declaration.
+    ScopeIndex enclosing_scope;
+
     State state = State::Empty;
 
     // The scope which qualified names are added to. For unqualified names in
@@ -98,10 +115,16 @@ class DeclarationNameStack {
   // contextually.
   auto Push() -> void;
 
-  // Pops the current declaration name processing, returning the final context
-  // for adding the name to lookup. This also pops the final name node from the
-  // node stack, which will be applied to the declaration name if appropriate.
-  auto Pop() -> NameContext;
+  // Finishes the current declaration name processing, returning the final
+  // context for adding the name to lookup. This also pops the final name node
+  // from the node stack, which will be applied to the declaration name if
+  // appropriate.
+  auto Finish() -> NameContext;
+
+  // Pops the declaration name from the declaration name stack, and leaves all
+  // scopes that were entered as part of handling the declaration name. This
+  // should be called at the end of the declaration.
+  auto Pop() -> void;
 
   // Creates and returns a name context corresponding to declaring an
   // unqualified name in the current context. This is suitable for adding to

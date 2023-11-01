@@ -7,8 +7,7 @@
 class Class {
   var field: i32;
   fn F() -> i32 {
-    // TODO: Unqualified lookup should find this name.
-    // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+3]]:12: ERROR: Name `field` not found.
+    // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+3]]:12: ERROR: Expression cannot be used as a value.
     // CHECK:STDERR:     return field;
     // CHECK:STDERR:            ^
     return field;
@@ -25,7 +24,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: file "fail_unbound_field.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc16: type = struct_type {.field: i32}
+// CHECK:STDOUT:   %.loc15: type = struct_type {.field: i32}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -42,7 +41,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %field.ref: <error> = name_reference "field", <error>
+// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference "field", @Class.%field
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

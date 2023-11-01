@@ -44,10 +44,10 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
   if (auto name_scope_id = GetAsNameScope(context, base_id)) {
-    auto node_id = name_scope_id->is_valid()
-                       ? context.LookupName(parse_node, name_id, *name_scope_id,
-                                            /*print_diagnostics=*/true)
-                       : SemIR::NodeId::BuiltinError;
+    auto node_id =
+        name_scope_id->is_valid()
+            ? context.LookupQualifiedName(parse_node, name_id, *name_scope_id)
+            : SemIR::NodeId::BuiltinError;
     auto node = context.nodes().Get(node_id);
     // TODO: Track that this node was named within `base_id`.
     context.AddNodeAndPush(
@@ -84,8 +84,8 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
       auto class_scope_id = context.classes()
                                 .Get(base_type.As<SemIR::ClassType>().class_id)
                                 .scope_id;
-      auto member_id = context.LookupName(parse_node, name_id, class_scope_id,
-                                          /*print_diagnostics=*/true);
+      auto member_id =
+          context.LookupQualifiedName(parse_node, name_id, class_scope_id);
       if (!member_id.is_valid()) {
         break;
       }
@@ -206,9 +206,7 @@ auto HandleName(Context& context, Parse::Node parse_node) -> bool {
 auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   auto name_id = context.tokens().GetIdentifier(
       context.parse_tree().node_token(parse_node));
-  auto value_id =
-      context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
-                         /*print_diagnostics=*/true);
+  auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.nodes().Get(value_id);
 
   // If lookup finds a class declaration, the value is its `Self` type.
@@ -264,9 +262,7 @@ auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
   // HandleClassDefinitionStart.
   auto name_id = context.strings().Add(
       Lex::TokenKind::SelfTypeIdentifier.fixed_spelling());
-  auto value_id =
-      context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
-                         /*print_diagnostics=*/true);
+  auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.nodes().Get(value_id);
   context.AddNodeAndPush(
       parse_node,
@@ -285,9 +281,7 @@ auto HandleSelfValueNameExpression(Context& context, Parse::Node parse_node)
   // should not. See #2984 and the corresponding code in
   // HandleFunctionDefinitionStart.
   auto name_id = context.strings().Add(SemIR::SelfParameter::Name);
-  auto value_id =
-      context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
-                         /*print_diagnostics=*/true);
+  auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.nodes().Get(value_id);
   context.AddNodeAndPush(
       parse_node,

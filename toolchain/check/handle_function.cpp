@@ -55,7 +55,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
       context.node_stack()
           .PopIf<Parse::NodeKind::ImplicitParameterList>()
           .value_or(SemIR::NodeBlockId::Empty);
-  auto name_context = context.declaration_name_stack().Pop();
+  auto name_context = context.declaration_name_stack().Finish();
   auto fn_node =
       context.node_stack()
           .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
@@ -132,6 +132,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
 auto HandleFunctionDeclaration(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   BuildFunctionDeclaration(context, /*is_definition=*/false);
+  context.declaration_name_stack().Pop();
   return true;
 }
 
@@ -156,6 +157,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   context.PopScope();
   context.node_block_stack().Pop();
   context.return_scope_stack().pop_back();
+  context.declaration_name_stack().Pop();
   return true;
 }
 

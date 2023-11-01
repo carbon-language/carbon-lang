@@ -108,52 +108,145 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
 auto Context::AddNameToLookup(Parse::Node name_node, StringId name_id,
                               SemIR::NodeId target_id) -> void {
   if (current_scope().names.insert(name_id).second) {
-    name_lookup_[name_id].push_back(target_id);
+    // TODO: Reject if we previously performed a failed lookup for this name in
+    // this scope or a scope nested within it.
+    auto& lexical_results = name_lookup_[name_id];
+    CARBON_CHECK(lexical_results.empty() ||
+                 lexical_results.back().scope_index < current_scope_index())
+        << "Failed to clean up after scope nested within the current scope";
+    lexical_results.push_back(
+        {.node_id = target_id, .scope_index = current_scope_index()});
   } else {
-    DiagnoseDuplicateName(name_node, name_lookup_[name_id].back());
+    DiagnoseDuplicateName(name_node, name_lookup_[name_id].back().node_id);
   }
 }
 
-auto Context::LookupName(Parse::Node parse_node, StringId name_id,
-                         SemIR::NameScopeId scope_id, bool print_diagnostics)
+auto Context::LookupNameInDeclaration(Parse::Node parse_node, StringId name_id,
+                                      SemIR::NameScopeId scope_id)
     -> SemIR::NodeId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
-    auto it = name_lookup_.find(name_id);
-    if (it == name_lookup_.end()) {
-      if (print_diagnostics) {
-        DiagnoseNameNotFound(parse_node, name_id);
+    // Look for a name in the current scope only. There are two cases where the
+    // name would be in an outer scope:
+    //
+    //  - The name is the sole component of the declared name:
+    //
+    //    class A;
+    //    fn F() {
+    //      class A;
+    //    }
+    //
+    //    In this case, the inner A is not the same class as the outer A, so
+    //    lookup should not find the outer A.
+    //
+    //  - The name is a qualifier of some larger declared name:
+    //
+    //    class A { class B; }
+    //    fn F() {
+    //      class A.B {}
+    //    }
+    //
+    //    In this case, we're not in the correct scope to define a member of
+    //    class A, so we should reject, and we achieve this by not finding the
+    //    name A from the outer scope.
+    if (auto name_it = name_lookup_.find(name_id);
+        name_it != name_lookup_.end()) {
+      auto result = name_it->second.back();
+      if (result.scope_index == current_scope_index()) {
+        return result.node_id;
       }
-      return SemIR::NodeId::BuiltinError;
     }
-    CARBON_CHECK(!it->second.empty())
-        << "Should have been erased: " << strings().Get(name_id);
-
-    // TODO: Check for ambiguous lookups.
-    return it->second.back();
+    return SemIR::NodeId::Invalid;
   } else {
-    const auto& scope = name_scopes().Get(scope_id);
-    auto it = scope.find(name_id);
-    if (it == scope.end()) {
-      if (print_diagnostics) {
-        DiagnoseNameNotFound(parse_node, name_id);
-      }
-      return SemIR::NodeId::BuiltinError;
+    // TODO: Once we support `extend`, do not look into `extend`ed scopes here,
+    // following the same logic as above.
+    return LookupQualifiedName(parse_node, name_id, scope_id,
+                               /*required=*/false);
+  }
+}
+
+auto Context::LookupUnqualifiedName(Parse::Node parse_node, StringId name_id)
+    -> SemIR::NodeId {
+  // TODO: Check for shadowed lookup results.
+
+  // Find the results from enclosing lexical scopes. These will be combined with
+  // results from non-lexical scopes such as namespaces and classes.
+  llvm::ArrayRef<LexicalLookupResult> lexical_results;
+  if (auto name_it = name_lookup_.find(name_id);
+      name_it != name_lookup_.end()) {
+    lexical_results = name_it->second;
+    CARBON_CHECK(!lexical_results.empty())
+        << "Should have been erased: " << strings().Get(name_id);
+  }
+
+  // Walk the non-lexical scopes and perform lookups into each of them.
+  for (std::size_t non_lexical_scope_index :
+       llvm::reverse(non_lexical_scope_indexes_)) {
+    auto& non_lexical_scope = scope_stack_[non_lexical_scope_index];
+
+    // If the innermost lexical result is within this non-lexical scope, then
+    // it shadows all further non-lexical results and we're done.
+    if (!lexical_results.empty() &&
+        lexical_results.back().scope_index > non_lexical_scope.index) {
+      return lexical_results.back().node_id;
     }
 
-    return it->second;
+    auto non_lexical_result =
+        LookupQualifiedName(parse_node, name_id, non_lexical_scope.scope_id,
+                            /*required=*/false);
+    if (non_lexical_result.is_valid()) {
+      return non_lexical_result;
+    }
   }
+
+  if (!lexical_results.empty()) {
+    return lexical_results.back().node_id;
+  }
+
+  // We didn't find anything at all.
+  DiagnoseNameNotFound(parse_node, name_id);
+  return SemIR::NodeId::BuiltinError;
+}
+
+auto Context::LookupQualifiedName(Parse::Node parse_node, StringId name_id,
+                                  SemIR::NameScopeId scope_id, bool required)
+    -> SemIR::NodeId {
+  CARBON_CHECK(scope_id.is_valid()) << "No scope to perform lookup into";
+  const auto& scope = name_scopes().Get(scope_id);
+  auto it = scope.find(name_id);
+  if (it == scope.end()) {
+    // TODO: Also perform lookups into `extend`ed scopes.
+    if (required) {
+      DiagnoseNameNotFound(parse_node, name_id);
+      return SemIR::NodeId::BuiltinError;
+    }
+    return SemIR::NodeId::Invalid;
+  }
+
+  return it->second;
 }
 
 auto Context::PushScope(SemIR::NodeId scope_node_id,
                         SemIR::NameScopeId scope_id) -> void {
-  scope_stack_.push_back(
-      {.scope_node_id = scope_node_id, .scope_id = scope_id});
+  scope_stack_.push_back({.index = next_scope_index_,
+                          .scope_node_id = scope_node_id,
+                          .scope_id = scope_id});
+
+  // TODO: Handle this case more gracefully.
+  CARBON_CHECK(next_scope_index_.index != std::numeric_limits<int32_t>::max())
+      << "Ran out of scopes";
+  ++next_scope_index_.index;
+
+  if (scope_id.is_valid()) {
+    non_lexical_scope_indexes_.push_back(scope_stack_.size() - 1);
+  }
 }
 
 auto Context::PopScope() -> void {
   auto scope = scope_stack_.pop_back_val();
   for (const auto& str_id : scope.names) {
     auto it = name_lookup_.find(str_id);
+    CARBON_CHECK(it->second.back().scope_index == scope.index)
+        << "Inconsistent scope index for name " << strings().Get(str_id);
     if (it->second.size() == 1) {
       // Erase names that no longer resolve.
       name_lookup_.erase(it);
@@ -161,6 +254,20 @@ auto Context::PopScope() -> void {
       it->second.pop_back();
     }
   }
+
+  if (scope.scope_id.is_valid()) {
+    CARBON_CHECK(non_lexical_scope_indexes_.back() == scope_stack_.size());
+    non_lexical_scope_indexes_.pop_back();
+  }
+}
+
+auto Context::PopToScope(ScopeIndex index) -> void {
+  while (current_scope_index() > index) {
+    PopScope();
+  }
+  CARBON_CHECK(current_scope_index() == index)
+      << "Scope index " << index << " does not enclose the current scope "
+      << current_scope_index();
 }
 
 auto Context::FollowNameReferences(SemIR::NodeId node_id) -> SemIR::NodeId {
