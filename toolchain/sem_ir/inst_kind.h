@@ -12,26 +12,26 @@
 
 namespace Carbon::SemIR {
 
-// Whether a node produces or represents a value, and if so, what kind of value.
+// Whether a inst produces or represents a value, and if so, what kind of value.
 enum class InstValueKind : int8_t {
-  // This node doesn't produce a value, and shouldn't be referenced by other
-  // nodes.
+  // This inst doesn't produce a value, and shouldn't be referenced by other
+  // insts.
   None,
-  // This node represents an expression or expression-like construct that
+  // This inst represents an expression or expression-like construct that
   // produces a value of the type indicated by its `type_id` field.
   Typed,
 };
 
-// Whether a node is a terminator or part of the terminator sequence. The nodes
+// Whether a inst is a terminator or part of the terminator sequence. The insts
 // in a block appear in the order NotTerminator, then TerminatorSequence, then
 // Terminator, which is also the numerical order of these values.
 enum class TerminatorKind : int8_t {
-  // This node is not a terminator.
+  // This inst is not a terminator.
   NotTerminator,
-  // This node is not itself a terminator, but forms part of a terminator
+  // This inst is not itself a terminator, but forms part of a terminator
   // sequence.
   TerminatorSequence,
-  // This node is a terminator.
+  // This inst is a terminator.
   Terminator,
 };
 
@@ -47,33 +47,33 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 
   using EnumBase::Create;
 
-  // Returns the name to use for this node kind in Semantics IR.
+  // Returns the name to use for this inst kind in Semantics IR.
   [[nodiscard]] auto ir_name() const -> llvm::StringLiteral;
 
-  // Returns whether this kind of node is expected to produce a value.
+  // Returns whether this kind of inst is expected to produce a value.
   [[nodiscard]] auto value_kind() const -> InstValueKind;
 
-  // Returns whether this node kind is a code block terminator, such as an
+  // Returns whether this inst kind is a code block terminator, such as an
   // unconditional branch instruction, or part of the termination sequence,
   // such as a conditional branch instruction. The termination sequence of a
   // code block appears after all other instructions, and ends with a
   // terminator instruction.
   [[nodiscard]] auto terminator_kind() const -> TerminatorKind;
 
-  // Compute a fingerprint for this node kind, allowing its use as part of the
+  // Compute a fingerprint for this inst kind, allowing its use as part of the
   // key in a `FoldingSet`.
   void Profile(llvm::FoldingSetNodeID& id) { id.AddInteger(AsInt()); }
 
   class Definition;
 
-  // Provides a definition for this node kind. Should only be called once, to
+  // Provides a definition for this inst kind. Should only be called once, to
   // construct the kind as part of defining it in `typed_insts.h`.
   constexpr auto Define(llvm::StringLiteral ir_name,
                         TerminatorKind terminator_kind =
                             TerminatorKind::NotTerminator) const -> Definition;
 
  private:
-  // Looks up the definition for this node kind.
+  // Looks up the definition for this inst kind.
   [[nodiscard]] auto definition() const -> const Definition&;
 };
 
@@ -81,22 +81,22 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   CARBON_ENUM_CONSTANT_DEFINITION(InstKind, Name)
 #include "toolchain/sem_ir/inst_kind.def"
 
-// We expect the node kind to fit compactly into 8 bits.
+// We expect the inst kind to fit compactly into 8 bits.
 static_assert(sizeof(InstKind) == 1, "Kind objects include padding!");
 
-// A definition of a node kind. This is a InstKind value, plus ancillary data
+// A definition of a inst kind. This is a InstKind value, plus ancillary data
 // such as the name to use for the node kind in LLVM IR. These are not
-// copyable, and only one instance of this type is expected to exist per node
+// copyable, and only one instance of this type is expected to exist per inst
 // kind, specifically `TypedInst::Kind`. Use `InstKind` instead as a thin
-// wrapper around a node kind index.
+// wrapper around a inst kind index.
 class InstKind::Definition : public InstKind {
  public:
-  // Returns the name to use for this node kind in Semantics IR.
+  // Returns the name to use for this inst kind in Semantics IR.
   [[nodiscard]] constexpr auto ir_name() const -> llvm::StringLiteral {
     return ir_name_;
   }
 
-  // Returns whether this node kind is a code block terminator. See
+  // Returns whether this inst kind is a code block terminator. See
   // InstKind::terminator_kind().
   [[nodiscard]] constexpr auto terminator_kind() const -> TerminatorKind {
     return terminator_kind_;

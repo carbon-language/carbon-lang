@@ -40,9 +40,9 @@ struct Function : public Printable<Function> {
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDeclaration.
   InstId definition_id = InstId::Invalid;
-  // A block containing a single reference node per implicit parameter.
+  // A block containing a single reference inst per implicit parameter.
   InstBlockId implicit_param_refs_id;
-  // A block containing a single reference node per parameter.
+  // A block containing a single reference inst per parameter.
   InstBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   TypeId return_type_id;
@@ -152,7 +152,7 @@ struct ValueRepresentation : public Printable<ValueRepresentation> {
 struct TypeInfo : public Printable<TypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // The node that defines this type.
+  // The inst that defines this type.
   InstId inst_id;
   // The value representation for this type. Will be `Unknown` if the type is
   // not complete.
@@ -183,7 +183,7 @@ class File : public Printable<File> {
   }
   auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
 
-  // Returns array bound value from the bound node.
+  // Returns array bound value from the bound inst.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
     return integers()
         .Get(insts().GetAs<IntegerLiteral>(bound_id).integer_id)
@@ -251,7 +251,7 @@ class File : public Printable<File> {
   auto StringifyType(TypeId type_id, bool in_type_context = false) const
       -> std::string;
 
-  // Same as `StringifyType`, but starting with a node representing a type
+  // Same as `StringifyType`, but starting with a inst representing a type
   // expression rather than a canonical type.
   auto StringifyTypeExpression(InstId outer_inst_id,
                                bool in_type_context = false) const
@@ -318,7 +318,7 @@ class File : public Printable<File> {
   // Shared, compile-scoped values.
   SharedValueStores* value_stores_;
 
-  // Slab allocator, used to allocate node and type blocks.
+  // Slab allocator, used to allocate inst and type blocks.
   llvm::BumpPtrAllocator allocator_;
 
   // The associated filename.
@@ -333,7 +333,7 @@ class File : public Printable<File> {
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
-  // crossing node blocks).
+  // crossing inst blocks).
   llvm::SmallVector<const File*> cross_reference_irs_;
 
   // Storage for name scopes.
@@ -349,7 +349,7 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId, TypeId> type_blocks_;
 
-  // All nodes. The first entries will always be cross-references to builtins,
+  // All insts. The first entries will always be cross-references to builtins,
   // at indices matching BuiltinKind ordering.
   InstStore insts_;
 
@@ -357,30 +357,30 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   InstBlockStore inst_blocks_;
 
-  // The top node block ID.
+  // The top inst block ID.
   InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
 };
 
-// The expression category of a semantics node. See /docs/design/values.md for
+// The expression category of a sem_ir inst. See /docs/design/values.md for
 // details.
 enum class ExpressionCategory : int8_t {
-  // This node does not correspond to an expression, and as such has no
+  // This inst does not correspond to an expression, and as such has no
   // category.
   NotExpression,
-  // The category of this node is not known due to an error.
+  // The category of this inst is not known due to an error.
   Error,
-  // This node represents a value expression.
+  // This inst represents a value expression.
   Value,
-  // This node represents a durable reference expression, that denotes an
+  // This inst represents a durable reference expression, that denotes an
   // object that outlives the current full expression context.
   DurableReference,
-  // This node represents an ephemeral reference expression, that denotes an
+  // This inst represents an ephemeral reference expression, that denotes an
   // object that does not outlive the current full expression context.
   EphemeralReference,
-  // This node represents an initializing expression, that describes how to
+  // This inst represents an initializing expression, that describes how to
   // initialize an object.
   Initializing,
-  // This node represents a syntactic combination of expressions that are
+  // This inst represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple
   // and struct literals, where the subexpressions for different elements can
   // have different categories.
@@ -388,7 +388,7 @@ enum class ExpressionCategory : int8_t {
   Last = Mixed
 };
 
-// Returns the expression category for a node.
+// Returns the expression category for a inst.
 auto GetExpressionCategory(const File& file, InstId inst_id)
     -> ExpressionCategory;
 

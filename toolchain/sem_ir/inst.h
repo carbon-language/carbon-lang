@@ -84,17 +84,17 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  // Returns whether this node has the specified type.
+  // Returns whether this inst has the specified type.
   template <typename TypedInst>
   auto Is() const -> bool {
     return kind() == TypedInst::Kind;
   }
 
-  // Casts this node to the given typed node, which must match the node's kind,
-  // and returns the typed node.
+  // Casts this inst to the given typed inst, which must match the inst's kind,
+  // and returns the typed inst.
   template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
   auto As() const -> TypedInst {
-    CARBON_CHECK(Is<TypedInst>()) << "Casting node of kind " << kind()
+    CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
                                   << " to wrong kind " << TypedInst::Kind;
     auto build_with_type_id_and_args = [&](auto... type_id_and_args) {
       if constexpr (HasParseNode<TypedInst>) {
@@ -124,7 +124,7 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  // If this node is the given kind, returns a typed node, otherwise returns
+  // If this inst is the given kind, returns a typed inst, otherwise returns
   // nullopt.
   template <typename TypedInst>
   auto TryAs() const -> std::optional<TypedInst> {
@@ -138,7 +138,7 @@ class Inst : public Printable<Inst> {
   auto parse_lamp() const -> Parse::Lamp { return parse_lamp_; }
   auto kind() const -> InstKind { return kind_; }
 
-  // Gets the type of the value produced by evaluating this node.
+  // Gets the type of the value produced by evaluating this inst.
   auto type_id() const -> TypeId { return type_id_; }
 
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -186,10 +186,10 @@ class Inst : public Printable<Inst> {
 // may be worth investigating further.
 static_assert(sizeof(Inst) == 20, "Unexpected Inst size");
 
-// Typed nodes can be printed by converting them to nodes.
+// Typed insts can be printed by converting them to insts.
 template <typename TypedInst, typename = TypedInstArgsInfo<TypedInst>>
-inline llvm::raw_ostream& operator<<(llvm::raw_ostream& out, TypedInst node) {
-  Inst(node).Print(out);
+inline llvm::raw_ostream& operator<<(llvm::raw_ostream& out, TypedInst inst) {
+  Inst(inst).Print(out);
   return out;
 }
 
