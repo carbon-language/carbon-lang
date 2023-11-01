@@ -671,7 +671,7 @@ class Formatter {
   template <typename NodeT>
   auto FormatInstructionRHS(NodeT node) -> void {
     // By default, an instruction has a comma-separated argument list.
-    using Info = TypedNodeArgsInfo<NodeT>;
+    using Info = TypedInstArgsInfo<NodeT>;
     if constexpr (Info::NumArgs == 2) {
       FormatArgs(Info::template Get<0>(node), Info::template Get<1>(node));
     } else if constexpr (Info::NumArgs == 1) {

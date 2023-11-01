@@ -19,15 +19,15 @@
 namespace Carbon::SemIR {
 
 // Data about the arguments of a typed node, to aid in type erasure. The `KindT`
-// parameter is used to check that `TypedNode` is a typed node.
-template <typename TypedNode,
-          const NodeKind::Definition& KindT = TypedNode::Kind>
-struct TypedNodeArgsInfo {
+// parameter is used to check that `TypedInst` is a typed node.
+template <typename TypedInst,
+          const NodeKind::Definition& KindT = TypedInst::Kind>
+struct TypedInstArgsInfo {
   // A corresponding std::tuple<...> type.
-  using Tuple = decltype(StructReflection::AsTuple(std::declval<TypedNode>()));
+  using Tuple = decltype(StructReflection::AsTuple(std::declval<TypedInst>()));
 
   static constexpr int FirstArgField =
-      HasParseNode<TypedNode> + HasTypeId<TypedNode>;
+      HasParseNode<TypedInst> + HasTypeId<TypedInst>;
 
   static constexpr int NumArgs = std::tuple_size_v<Tuple> - FirstArgField;
   static_assert(NumArgs <= 2,
@@ -37,7 +37,7 @@ struct TypedNodeArgsInfo {
   using ArgType = std::tuple_element_t<FirstArgField + N, Tuple>;
 
   template <int N>
-  static auto Get(TypedNode node) -> ArgType<N> {
+  static auto Get(TypedInst node) -> ArgType<N> {
     return std::get<FirstArgField + N>(StructReflection::AsTuple(node));
   }
 };
@@ -53,27 +53,27 @@ struct TypedNodeArgsInfo {
 // In addition, kind-specific data can be accessed by casting to the specific
 // kind of node:
 //
-// - Use `node.kind()` or `Is<TypedNode>` to determine what kind of node it is.
-// - Cast to a specific type using `node.As<TypedNode>()`
-//   - Using the wrong kind in `node.As<TypedNode>()` is a programming error,
+// - Use `node.kind()` or `Is<TypedInst>` to determine what kind of node it is.
+// - Cast to a specific type using `node.As<TypedInst>()`
+//   - Using the wrong kind in `node.As<TypedInst>()` is a programming error,
 //     and will CHECK-fail in debug modes (opt may too, but it's not an API
 //     guarantee).
-// - Use `node.TryAs<TypedNode>()` to safely access type-specific node data
+// - Use `node.TryAs<TypedInst>()` to safely access type-specific node data
 //   where the node's kind is not known.
 class Node : public Printable<Node> {
  public:
-  template <typename TypedNode, typename Info = TypedNodeArgsInfo<TypedNode>>
+  template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  Node(TypedNode typed_node)
+  Node(TypedInst typed_node)
       : parse_node_(Parse::Node::Invalid),
-        kind_(TypedNode::Kind),
+        kind_(TypedInst::Kind),
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
-    if constexpr (HasParseNode<TypedNode>) {
+    if constexpr (HasParseNode<TypedInst>) {
       parse_node_ = typed_node.parse_node;
     }
-    if constexpr (HasTypeId<TypedNode>) {
+    if constexpr (HasTypeId<TypedInst>) {
       type_id_ = typed_node.type_id;
     }
     if constexpr (Info::NumArgs > 0) {
@@ -85,27 +85,27 @@ class Node : public Printable<Node> {
   }
 
   // Returns whether this node has the specified type.
-  template <typename TypedNode>
+  template <typename TypedInst>
   auto Is() const -> bool {
-    return kind() == TypedNode::Kind;
+    return kind() == TypedInst::Kind;
   }
 
   // Casts this node to the given typed node, which must match the node's kind,
   // and returns the typed node.
-  template <typename TypedNode, typename Info = TypedNodeArgsInfo<TypedNode>>
-  auto As() const -> TypedNode {
-    CARBON_CHECK(Is<TypedNode>()) << "Casting node of kind " << kind()
-                                  << " to wrong kind " << TypedNode::Kind;
+  template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
+  auto As() const -> TypedInst {
+    CARBON_CHECK(Is<TypedInst>()) << "Casting node of kind " << kind()
+                                  << " to wrong kind " << TypedInst::Kind;
     auto build_with_type_id_and_args = [&](auto... type_id_and_args) {
-      if constexpr (HasParseNode<TypedNode>) {
-        return TypedNode{parse_node(), type_id_and_args...};
+      if constexpr (HasParseNode<TypedInst>) {
+        return TypedInst{parse_node(), type_id_and_args...};
       } else {
-        return TypedNode{type_id_and_args...};
+        return TypedInst{type_id_and_args...};
       }
     };
 
     auto build_with_args = [&](auto... args) {
-      if constexpr (HasTypeId<TypedNode>) {
+      if constexpr (HasTypeId<TypedInst>) {
         return build_with_type_id_and_args(type_id(), args...);
       } else {
         return build_with_type_id_and_args(args...);
@@ -126,10 +126,10 @@ class Node : public Printable<Node> {
 
   // If this node is the given kind, returns a typed node, otherwise returns
   // nullopt.
-  template <typename TypedNode>
-  auto TryAs() const -> std::optional<TypedNode> {
-    if (Is<TypedNode>()) {
-      return As<TypedNode>();
+  template <typename TypedInst>
+  auto TryAs() const -> std::optional<TypedInst> {
+    if (Is<TypedInst>()) {
+      return As<TypedInst>();
     } else {
       return std::nullopt;
     }
@@ -187,8 +187,8 @@ class Node : public Printable<Node> {
 static_assert(sizeof(Node) == 20, "Unexpected Node size");
 
 // Typed nodes can be printed by converting them to nodes.
-template <typename TypedNode, typename = TypedNodeArgsInfo<TypedNode>>
-inline llvm::raw_ostream& operator<<(llvm::raw_ostream& out, TypedNode node) {
+template <typename TypedInst, typename = TypedInstArgsInfo<TypedInst>>
+inline llvm::raw_ostream& operator<<(llvm::raw_ostream& out, TypedInst node) {
   Node(node).Print(out);
   return out;
 }

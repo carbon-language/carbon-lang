@@ -24,7 +24,7 @@ auto Node::Print(llvm::raw_ostream& out) const -> void {
   switch (kind_) {
 #define CARBON_SEM_IR_NODE_KIND(Name)      \
   case Name::Kind:                         \
-    print_args(TypedNodeArgsInfo<Name>()); \
+    print_args(TypedInstArgsInfo<Name>()); \
     break;
 #include "toolchain/sem_ir/node_kind.def"
   }

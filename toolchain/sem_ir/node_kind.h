@@ -87,7 +87,7 @@ static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
 // A definition of a node kind. This is a NodeKind value, plus ancillary data
 // such as the name to use for the node kind in LLVM IR. These are not
 // copyable, and only one instance of this type is expected to exist per node
-// kind, specifically `TypedNode::Kind`. Use `NodeKind` instead as a thin
+// kind, specifically `TypedInst::Kind`. Use `NodeKind` instead as a thin
 // wrapper around a node kind index.
 class NodeKind::Definition : public NodeKind {
  public:
