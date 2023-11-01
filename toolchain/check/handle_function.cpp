@@ -101,7 +101,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : StringId::Invalid,
+                        : IdentifierId::Invalid,
          .implicit_param_refs_id = implicit_param_refs_id,
          .param_refs_id = param_refs_id,
          .return_type_id = return_type_id,
@@ -212,9 +212,10 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
       // TODO: This will shadow a local variable named `r#self`, but should
       // not. See #2984 and the corresponding code in
       // HandleSelfTypeNameExpression.
-      context.AddNameToLookup(self_param->parse_node,
-                              context.strings().Add(SemIR::SelfParameter::Name),
-                              param_id);
+      context.AddNameToLookup(
+          self_param->parse_node,
+          context.strings().Add<IdentifierId>(SemIR::SelfParameter::Name),
+          param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
                      << param;
@@ -245,7 +246,8 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   // TODO: Use a dedicated instruction rather than VarStorage here.
   context.AddInstAndPush(
       parse_node,
-      SemIR::VarStorage{parse_node, type_id, context.strings().Add("return")});
+      SemIR::VarStorage{parse_node, type_id,
+                        context.strings().Add<IdentifierId>("return")});
   return true;
 }
 

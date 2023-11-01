@@ -8,6 +8,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 
@@ -387,7 +388,7 @@ class InstNamer {
         insts[inst_id.index] = {scope_idx, scope.insts.AllocateName(
                                                *this, inst.parse_node(), name)};
       };
-      auto add_inst_name_id = [&](StringId name_id,
+      auto add_inst_name_id = [&](IdentifierId name_id,
                                   llvm::StringRef suffix = "") {
         if (name_id.is_valid()) {
           add_inst_name((sem_ir_.strings().Get(name_id).str() + suffix).str());
@@ -593,7 +594,7 @@ class Formatter {
                        llvm::StringRef prefix) -> void {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<InstId, StringId>> entries;
+    llvm::SmallVector<std::pair<InstId, IdentifierId>> entries;
     for (auto [name_id, inst_id] : sem_ir_.name_scopes().Get(id)) {
       entries.push_back({inst_id, name_id});
     }
@@ -830,6 +831,12 @@ class Formatter {
 
   auto FormatArg(ClassId id) -> void { FormatClassName(id); }
 
+  auto FormatArg(IdentifierId id) -> void {
+    out_ << '"';
+    out_.write_escaped(sem_ir_.strings().Get(id), /*UseHexEscapes=*/true);
+    out_ << '"';
+  }
+
   auto FormatArg(IntegerId id) -> void {
     sem_ir_.integers().Get(id).print(out_, /*isSigned=*/false);
   }
@@ -861,7 +868,7 @@ class Formatter {
     out_ << (real.is_decimal ? 'e' : 'p') << real.exponent;
   }
 
-  auto FormatArg(StringId id) -> void {
+  auto FormatArg(StringLiteralId id) -> void {
     out_ << '"';
     out_.write_escaped(sem_ir_.strings().Get(id), /*UseHexEscapes=*/true);
     out_ << '"';
@@ -892,7 +899,9 @@ class Formatter {
     out_ << inst_namer_.GetLabelFor(scope_, id);
   }
 
-  auto FormatString(StringId id) -> void { out_ << sem_ir_.strings().Get(id); }
+  auto FormatString(IdentifierId id) -> void {
+    out_ << sem_ir_.strings().Get(id);
+  }
 
   auto FormatFunctionName(FunctionId id) -> void {
     out_ << inst_namer_.GetNameFor(id);

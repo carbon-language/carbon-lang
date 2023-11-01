@@ -659,12 +659,12 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     }
 
     if (literal->is_terminated()) {
-      auto string_id = buffer_.value_stores_->strings().Add(
+      auto string_id = buffer_.value_stores_->strings().Add<StringLiteralId>(
           literal->ComputeValue(buffer_.allocator_, emitter_));
       auto token = buffer_.AddToken({.kind = TokenKind::StringLiteral,
                                      .token_line = string_line,
                                      .column = string_column,
-                                     .string_id = string_id});
+                                     .string_literal_id = string_id});
       return token;
     } else {
       CARBON_DIAGNOSTIC(UnterminatedString, Error,
@@ -897,7 +897,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         {.kind = TokenKind::Identifier,
          .token_line = current_line(),
          .column = column,
-         .string_id = buffer_.value_stores_->strings().Add(identifier_text)});
+         .ident_id = buffer_.value_stores_->strings().Add<IdentifierId>(
+             identifier_text)});
   }
 
   auto LexKeywordOrIdentifierMaybeRaw(llvm::StringRef source_text,
@@ -933,7 +934,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         {.kind = TokenKind::Identifier,
          .token_line = current_line(),
          .column = column,
-         .string_id = buffer_.value_stores_->strings().Add(identifier_text)});
+         .ident_id = buffer_.value_stores_->strings().Add<IdentifierId>(
+             identifier_text)});
   }
 
   auto LexError(llvm::StringRef source_text, ssize_t& position) -> LexResult {
@@ -1326,13 +1328,13 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   }
 
   CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return value_stores_->strings().Get(token_info.string_id);
+  return value_stores_->strings().Get(token_info.ident_id);
 }
 
-auto TokenizedBuffer::GetIdentifier(Token token) const -> StringId {
+auto TokenizedBuffer::GetIdentifier(Token token) const -> IdentifierId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return token_info.string_id;
+  return token_info.ident_id;
 }
 
 auto TokenizedBuffer::GetIntegerLiteral(Token token) const -> IntegerId {
@@ -1347,10 +1349,10 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealId {
   return token_info.real_id;
 }
 
-auto TokenizedBuffer::GetStringLiteral(Token token) const -> StringId {
+auto TokenizedBuffer::GetStringLiteral(Token token) const -> StringLiteralId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
-  return token_info.string_id;
+  return token_info.string_literal_id;
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(Token token) const

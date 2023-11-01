@@ -49,12 +49,12 @@ class Context {
   auto AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Parse::Node name_node, StringId name_id,
+  auto AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
                        SemIR::InstId target_id) -> void;
 
   // Performs name lookup in a specified scope, returning the referenced
   // instruction. If scope_id is invalid, uses the current contextual scope.
-  auto LookupName(Parse::Node parse_node, StringId name_id,
+  auto LookupName(Parse::Node parse_node, IdentifierId name_id,
                   SemIR::NameScopeId scope_id, bool print_diagnostics)
       -> SemIR::InstId;
 
@@ -63,7 +63,8 @@ class Context {
       -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id) -> void;
+  auto DiagnoseNameNotFound(Parse::Node parse_node, IdentifierId name_id)
+      -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
@@ -248,7 +249,7 @@ class Context {
   // Directly expose SemIR::File data accessors for brevity in calls.
   auto integers() -> ValueStore<IntegerId>& { return sem_ir().integers(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
-  auto strings() -> ValueStore<StringId>& { return sem_ir().strings(); }
+  auto strings() -> StringStore& { return sem_ir().strings(); }
   auto functions() -> ValueStore<SemIR::FunctionId, SemIR::Function>& {
     return sem_ir().functions();
   }
@@ -299,7 +300,7 @@ class Context {
 
     // Names which are registered with name_lookup_, and will need to be
     // deregistered when the scope ends.
-    llvm::DenseSet<StringId> names;
+    llvm::DenseSet<IdentifierId> names;
 
     // TODO: This likely needs to track things which need to be destructed.
   };
@@ -382,7 +383,7 @@ class Context {
   // reference.
   //
   // Names which no longer have lookup results are erased.
-  llvm::DenseMap<StringId, llvm::SmallVector<SemIR::InstId>> name_lookup_;
+  llvm::DenseMap<IdentifierId, llvm::SmallVector<SemIR::InstId>> name_lookup_;
 
   // Cache of the mapping from instructions to types, to avoid recomputing the
   // folding set ID.

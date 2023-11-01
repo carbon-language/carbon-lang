@@ -84,6 +84,29 @@ struct StringId : public IndexBase, public Printable<StringId> {
 };
 constexpr StringId StringId::Invalid(StringId::InvalidIndex);
 
+// Adapts StringId for identifiers.
+struct IdentifierId : public IndexBase, public Printable<IdentifierId> {
+  static const IdentifierId Invalid;
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "strId";
+    IndexBase::Print(out);
+  }
+};
+constexpr IdentifierId IdentifierId::Invalid(IdentifierId::InvalidIndex);
+
+// Adapts StringId for string literals.
+struct StringLiteralId : public IndexBase, public Printable<StringLiteralId> {
+  static const StringLiteralId Invalid;
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "strLit";
+    IndexBase::Print(out);
+  }
+};
+constexpr StringLiteralId StringLiteralId::Invalid(
+    StringLiteralId::InvalidIndex);
+
 namespace Internal {
 // Used as a parent class for non-printable types. This is just for
 // std::conditional, not as an API.
@@ -98,9 +121,6 @@ class ValueStore
                               Yaml::Printable<ValueStore<IdT, ValueT>>,
                               Internal::ValueStoreNotPrintable> {
  public:
-  using PrintFn =
-      llvm::function_ref<void(llvm::raw_ostream&, const ValueT& val)>;
-
   // Stores the value and returns an ID to reference it.
   auto Add(ValueT value) -> IdT {
     IdT id = IdT(values_.size());
@@ -153,9 +173,6 @@ class ValueStore
 template <>
 class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
  public:
-  using PrintFn =
-      llvm::function_ref<void(llvm::raw_ostream&, const llvm::StringRef& val)>;
-
   // Returns an ID to reference the value. May return an existing ID if the
   // string was previously added.
   auto Add(llvm::StringRef value) -> StringId {
@@ -186,6 +203,32 @@ class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
   llvm::SmallVector<llvm::StringRef> values_;
 };
 
+class StringStore : public Yaml::Printable<StringStore> {
+ public:
+  template <typename IdT>
+  static constexpr bool IsCompatibleId =
+      std::is_same_v<IdT, IdentifierId> || std::is_same_v<IdT, StringLiteralId>;
+
+  template <typename IdT,
+            typename std::enable_if_t<IsCompatibleId<IdT>>* = nullptr>
+  auto Add(llvm::StringRef value) -> IdT {
+    return IdT(values_.Add(value).index);
+  }
+
+  template <typename IdT,
+            typename std::enable_if_t<IsCompatibleId<IdT>>* = nullptr>
+  auto Get(IdT id) const -> llvm::StringRef {
+    return values_.Get(StringId(id.index));
+  }
+
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return values_.OutputYaml();
+  }
+
+ private:
+  ValueStore<StringId> values_;
+};
+
 // Stores that will be used across compiler phases for a given compilation unit.
 // This is provided mainly so that they don't need to be passed separately.
 class SharedValueStores : public Yaml::Printable<SharedValueStores> {
@@ -194,8 +237,8 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   auto integers() const -> const ValueStore<IntegerId>& { return integers_; }
   auto reals() -> ValueStore<RealId>& { return reals_; }
   auto reals() const -> const ValueStore<RealId>& { return reals_; }
-  auto strings() -> ValueStore<StringId>& { return strings_; }
-  auto strings() const -> const ValueStore<StringId>& { return strings_; }
+  auto strings() -> StringStore& { return strings_; }
+  auto strings() const -> const StringStore& { return strings_; }
 
   auto OutputYaml(std::optional<llvm::StringRef> filename = std::nullopt) const
       -> Yaml::OutputMapping {
@@ -215,11 +258,16 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
  private:
   ValueStore<IntegerId> integers_;
   ValueStore<RealId> reals_;
-  ValueStore<StringId> strings_;
+  StringStore strings_;
 };
 
 }  // namespace Carbon
 
+// Support use of IdentifierId as DenseMap/DenseSet keys.
+// TODO: Remove once NameId is used in checking.
+template <>
+struct llvm::DenseMapInfo<Carbon::IdentifierId>
+    : public Carbon::IndexMapInfo<Carbon::IdentifierId> {};
 // Support use of StringId as DenseMap/DenseSet keys.
 template <>
 struct llvm::DenseMapInfo<Carbon::StringId>
