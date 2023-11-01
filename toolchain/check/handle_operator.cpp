@@ -7,23 +7,23 @@
 
 namespace Carbon::Check {
 
-auto HandleInfixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
-  auto [rhs_node, rhs_id] = context.lamp_stack().PopExpressionWithParseLamp();
-  auto [lhs_node, lhs_id] = context.lamp_stack().PopExpressionWithParseLamp();
+auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
+  auto [rhs_node, rhs_id] = context.node_stack().PopExpressionWithParseNode();
+  auto [lhs_node, lhs_id] = context.node_stack().PopExpressionWithParseNode();
 
   // Figure out the operator for the token.
-  auto token = context.parse_tree().node_token(parse_lamp);
+  auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::Plus:
       // TODO: This should search for a compatible interface. For now, it's a
       // very trivial check of validity on the operation.
-      lhs_id = ConvertToValueOfType(context, parse_lamp, lhs_id,
+      lhs_id = ConvertToValueOfType(context, parse_node, lhs_id,
                                     context.insts().Get(rhs_id).type_id());
       rhs_id = ConvertToValueExpression(context, rhs_id);
 
       context.AddInstAndPush(
-          parse_lamp, SemIR::BinaryOperatorAdd{
-                          parse_lamp, context.insts().Get(lhs_id).type_id(),
+          parse_node, SemIR::BinaryOperatorAdd{
+                          parse_node, context.insts().Get(lhs_id).type_id(),
                           lhs_id, rhs_id});
       return true;
 
@@ -32,28 +32,28 @@ auto HandleInfixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
       // The first operand is wrapped in a ShortCircuitOperand, which we
       // already handled by creating a RHS block and a resumption block, which
       // are the current block and its enclosing block.
-      rhs_id = ConvertToBoolValue(context, parse_lamp, rhs_id);
+      rhs_id = ConvertToBoolValue(context, parse_node, rhs_id);
 
       // When the second operand is evaluated, the result of `and` and `or` is
       // its value.
       auto resume_block_id = context.inst_block_stack().PeekOrAdd(/*depth=*/1);
       context.AddInst(
-          SemIR::BranchWithArg{parse_lamp, resume_block_id, rhs_id});
+          SemIR::BranchWithArg{parse_node, resume_block_id, rhs_id});
       context.inst_block_stack().Pop();
       context.AddCurrentCodeBlockToFunction();
 
       // Collect the result from either the first or second operand.
       context.AddInstAndPush(
-          parse_lamp,
-          SemIR::BlockArg{parse_lamp, context.insts().Get(rhs_id).type_id(),
+          parse_node,
+          SemIR::BlockArg{parse_node, context.insts().Get(rhs_id).type_id(),
                           resume_block_id});
       return true;
     }
     case Lex::TokenKind::As: {
       auto rhs_type_id = ExpressionAsType(context, rhs_node, rhs_id);
-      context.lamp_stack().Push(
-          parse_lamp,
-          ConvertForExplicitAs(context, parse_lamp, lhs_id, rhs_type_id));
+      context.node_stack().Push(
+          parse_node,
+          ConvertForExplicitAs(context, parse_node, lhs_id, rhs_type_id));
       return true;
     }
     case Lex::TokenKind::Equal: {
@@ -67,30 +67,30 @@ auto HandleInfixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
       }
       // TODO: Destroy the old value before reinitializing. This will require
       // building the destruction code before we build the RHS subexpression.
-      rhs_id = Initialize(context, parse_lamp, lhs_id, rhs_id);
-      context.AddInst(SemIR::Assign{parse_lamp, lhs_id, rhs_id});
+      rhs_id = Initialize(context, parse_node, lhs_id, rhs_id);
+      context.AddInst(SemIR::Assign{parse_node, lhs_id, rhs_id});
       // We model assignment as an expression, so we need to push a value for
       // it, even though it doesn't produce a value.
       // TODO: Consider changing our parse tree to model assignment as a
       // different kind of statement than an expression statement.
-      context.lamp_stack().Push(parse_lamp, lhs_id);
+      context.node_stack().Push(parse_node, lhs_id);
       return true;
     }
     default:
-      return context.TODO(parse_lamp, llvm::formatv("Handle {0}", token_kind));
+      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
   }
 }
 
-auto HandlePostfixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
-  auto value_id = context.lamp_stack().PopExpression();
+auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
+  auto value_id = context.node_stack().PopExpression();
 
   // Figure out the operator for the token.
-  auto token = context.parse_tree().node_token(parse_lamp);
+  auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::Star: {
-      auto inner_type_id = ExpressionAsType(context, parse_lamp, value_id);
+      auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
       context.AddInstAndPush(
-          parse_lamp, SemIR::PointerType{parse_lamp, SemIR::TypeId::TypeType,
+          parse_node, SemIR::PointerType{parse_node, SemIR::TypeId::TypeType,
                                          inner_type_id});
       return true;
     }
@@ -100,11 +100,11 @@ auto HandlePostfixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
   }
 }
 
-auto HandlePrefixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
-  auto value_id = context.lamp_stack().PopExpression();
+auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
+  auto value_id = context.node_stack().PopExpression();
 
   // Figure out the operator for the token.
-  auto token = context.parse_tree().node_token(parse_lamp);
+  auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::Amp: {
       // Only durable reference expressions can have their address taken.
@@ -115,20 +115,20 @@ auto HandlePrefixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
         case SemIR::ExpressionCategory::EphemeralReference:
           CARBON_DIAGNOSTIC(AddressOfEphemeralReference, Error,
                             "Cannot take the address of a temporary object.");
-          context.emitter().Emit(parse_lamp, AddressOfEphemeralReference);
+          context.emitter().Emit(parse_node, AddressOfEphemeralReference);
           break;
         default:
           CARBON_DIAGNOSTIC(
               AddressOfNonReference, Error,
               "Cannot take the address of non-reference expression.");
-          context.emitter().Emit(parse_lamp, AddressOfNonReference);
+          context.emitter().Emit(parse_node, AddressOfNonReference);
           break;
       }
       context.AddInstAndPush(
-          parse_lamp,
+          parse_node,
           SemIR::AddressOf{
-              parse_lamp,
-              context.GetPointerType(parse_lamp,
+              parse_node,
+              context.GetPointerType(parse_node,
                                      context.insts().Get(value_id).type_id()),
               value_id});
       return true;
@@ -142,21 +142,21 @@ auto HandlePrefixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
         CARBON_DIAGNOSTIC(RepeatedConst, Warning,
                           "`const` applied repeatedly to the same type has no "
                           "additional effect.");
-        context.emitter().Emit(parse_lamp, RepeatedConst);
+        context.emitter().Emit(parse_node, RepeatedConst);
       }
-      auto inner_type_id = ExpressionAsType(context, parse_lamp, value_id);
+      auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
       context.AddInstAndPush(
-          parse_lamp,
-          SemIR::ConstType{parse_lamp, SemIR::TypeId::TypeType, inner_type_id});
+          parse_node,
+          SemIR::ConstType{parse_node, SemIR::TypeId::TypeType, inner_type_id});
       return true;
     }
 
     case Lex::TokenKind::Not:
-      value_id = ConvertToBoolValue(context, parse_lamp, value_id);
+      value_id = ConvertToBoolValue(context, parse_node, value_id);
       context.AddInstAndPush(
-          parse_lamp,
+          parse_node,
           SemIR::UnaryOperatorNot{
-              parse_lamp, context.insts().Get(value_id).type_id(), value_id});
+              parse_node, context.insts().Get(value_id).type_id(), value_id});
       return true;
 
     case Lex::TokenKind::Star: {
@@ -174,50 +174,50 @@ auto HandlePrefixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
             "Cannot dereference operand of non-pointer type `{0}`.",
             std::string);
         auto builder =
-            context.emitter().Build(parse_lamp, DereferenceOfNonPointer,
+            context.emitter().Build(parse_node, DereferenceOfNonPointer,
                                     context.sem_ir().StringifyType(type_id));
         // TODO: Check for any facet here, rather than only a type.
         if (type_id == SemIR::TypeId::TypeType) {
           CARBON_DIAGNOSTIC(
               DereferenceOfType, Note,
               "To form a pointer type, write the `*` after the pointee type.");
-          builder.Note(parse_lamp, DereferenceOfType);
+          builder.Note(parse_node, DereferenceOfType);
         }
         builder.Emit();
       }
       context.AddInstAndPush(
-          parse_lamp, SemIR::Dereference{parse_lamp, result_type_id, value_id});
+          parse_node, SemIR::Dereference{parse_node, result_type_id, value_id});
       return true;
     }
 
     default:
-      return context.TODO(parse_lamp, llvm::formatv("Handle {0}", token_kind));
+      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
   }
 }
 
-auto HandleShortCircuitOperand(Context& context, Parse::Lamp parse_lamp)
+auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
     -> bool {
   // Convert the condition to `bool`.
-  auto cond_value_id = context.lamp_stack().PopExpression();
-  cond_value_id = ConvertToBoolValue(context, parse_lamp, cond_value_id);
+  auto cond_value_id = context.node_stack().PopExpression();
+  cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
   auto bool_type_id = context.insts().Get(cond_value_id).type_id();
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
-  auto token = context.parse_tree().node_token(parse_lamp);
+  auto token = context.parse_tree().node_token(parse_node);
   SemIR::InstId branch_value_id = SemIR::InstId::Invalid;
   auto short_circuit_result_id = SemIR::InstId::Invalid;
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::And:
       branch_value_id = cond_value_id;
       short_circuit_result_id = context.AddInst(SemIR::BoolLiteral{
-          parse_lamp, bool_type_id, SemIR::BoolValue::False});
+          parse_node, bool_type_id, SemIR::BoolValue::False});
       break;
 
     case Lex::TokenKind::Or:
       branch_value_id = context.AddInst(
-          SemIR::UnaryOperatorNot{parse_lamp, bool_type_id, cond_value_id});
+          SemIR::UnaryOperatorNot{parse_node, bool_type_id, cond_value_id});
       short_circuit_result_id = context.AddInst(
-          SemIR::BoolLiteral{parse_lamp, bool_type_id, SemIR::BoolValue::True});
+          SemIR::BoolLiteral{parse_node, bool_type_id, SemIR::BoolValue::True});
       break;
 
     default:
@@ -226,9 +226,9 @@ auto HandleShortCircuitOperand(Context& context, Parse::Lamp parse_lamp)
 
   // Create a block for the right-hand side and for the continuation.
   auto rhs_block_id =
-      context.AddDominatedBlockAndBranchIf(parse_lamp, branch_value_id);
+      context.AddDominatedBlockAndBranchIf(parse_node, branch_value_id);
   auto end_block_id = context.AddDominatedBlockAndBranchWithArg(
-      parse_lamp, short_circuit_result_id);
+      parse_node, short_circuit_result_id);
 
   // Push the resumption and the right-hand side blocks, and start emitting the
   // right-hand operand.
@@ -238,7 +238,7 @@ auto HandleShortCircuitOperand(Context& context, Parse::Lamp parse_lamp)
   context.AddCurrentCodeBlockToFunction();
 
   // Put the condition back on the stack for HandleInfixOperator.
-  context.lamp_stack().Push(parse_lamp, cond_value_id);
+  context.node_stack().Push(parse_node, cond_value_id);
   return true;
 }
 

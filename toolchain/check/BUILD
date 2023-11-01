@@ -14,7 +14,7 @@ filegroup(
 )
 
 cc_library(
-    name = "lamp_stack",
+    name = "node_stack",
     srcs = ["node_stack.cpp"],
     hdrs = ["node_stack.h"],
     deps = [
@@ -50,7 +50,7 @@ cc_library(
         "pending_block.h",
     ],
     deps = [
-        ":lamp_stack",
+        ":node_stack",
         "//common:check",
         "//common:ostream",
         "//common:vlog",

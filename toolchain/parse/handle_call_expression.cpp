@@ -12,7 +12,7 @@ auto HandleCallExpression(Context& context) -> void {
   state.state = State::CallExpressionFinish;
   context.PushState(state);
 
-  context.AddInst(LampKind::CallExpressionStart, context.Consume(),
+  context.AddInst(NodeKind::CallExpressionStart, context.Consume(),
                   state.subtree_start, state.has_error);
   if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
     context.PushState(State::CallExpressionParameterFinish);
@@ -27,7 +27,7 @@ auto HandleCallExpressionParameterFinish(Context& context) -> void {
     context.ReturnErrorOnState();
   }
 
-  if (context.ConsumeListToken(LampKind::CallExpressionComma,
+  if (context.ConsumeListToken(NodeKind::CallExpressionComma,
                                Lex::TokenKind::CloseParen, state.has_error) ==
       Context::ListTokenKind::Comma) {
     context.PushState(State::CallExpressionParameterFinish);
@@ -38,7 +38,7 @@ auto HandleCallExpressionParameterFinish(Context& context) -> void {
 auto HandleCallExpressionFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddInst(LampKind::CallExpression, context.Consume(),
+  context.AddInst(NodeKind::CallExpression, context.Consume(),
                   state.subtree_start, state.has_error);
 }
 

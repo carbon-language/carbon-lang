@@ -90,7 +90,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
         << "initialized multiple times? Have "
         << sem_ir.insts().Get(return_slot_id);
     auto init = sem_ir.insts().Get(init_id);
-    return context.AddInst(SemIR::Temporary{init.parse_lamp(), init.type_id(),
+    return context.AddInst(SemIR::Temporary{init.parse_node(), init.type_id(),
                                             return_slot_id, init_id});
   }
 
@@ -106,8 +106,8 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   // insts.
   auto init = sem_ir.insts().Get(init_id);
   auto temporary_id = context.AddInst(
-      SemIR::TemporaryStorage{init.parse_lamp(), init.type_id()});
-  return context.AddInst(SemIR::Temporary{init.parse_lamp(), init.type_id(),
+      SemIR::TemporaryStorage{init.parse_node(), init.type_id()});
+  return context.AddInst(SemIR::Temporary{init.parse_node(), init.type_id(),
                                           temporary_id, init_id});
 }
 
@@ -124,7 +124,7 @@ static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
 
 // Creates and adds a inst to perform element access into an aggregate.
 template <typename AccessInstT, typename InstBlockT>
-static auto MakeElemAccessInst(Context& context, Parse::Lamp parse_lamp,
+static auto MakeElemAccessInst(Context& context, Parse::Node parse_node,
                                SemIR::InstId aggregate_id,
                                SemIR::TypeId elem_type_id, InstBlockT& block,
                                std::size_t i) {
@@ -133,12 +133,12 @@ static auto MakeElemAccessInst(Context& context, Parse::Lamp parse_lamp,
     // so that we don't need an integer literal inst here, and remove this
     // special case.
     auto index_id = block.AddInst(SemIR::IntegerLiteral{
-        parse_lamp, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
+        parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
         context.sem_ir().integers().Add(llvm::APInt(32, i))});
     return block.AddInst(
-        AccessInstT{parse_lamp, elem_type_id, aggregate_id, index_id});
+        AccessInstT{parse_node, elem_type_id, aggregate_id, index_id});
   } else {
-    return block.AddInst(AccessInstT{parse_lamp, elem_type_id, aggregate_id,
+    return block.AddInst(AccessInstT{parse_node, elem_type_id, aggregate_id,
                                      SemIR::MemberIndex(i)});
   }
 }
@@ -158,7 +158,7 @@ static auto MakeElemAccessInst(Context& context, Parse::Lamp parse_lamp,
 // used to access the destination element.
 template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
-    Context& context, Parse::Lamp parse_lamp, SemIR::InstId src_id,
+    Context& context, Parse::Node parse_node, SemIR::InstId src_id,
     SemIR::TypeId src_elem_type,
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
@@ -169,22 +169,22 @@ static auto ConvertAggregateElement(
   auto src_elem_id =
       !src_literal_elems.empty()
           ? src_literal_elems[i]
-          : MakeElemAccessInst<SourceAccessInstT>(context, parse_lamp, src_id,
+          : MakeElemAccessInst<SourceAccessInstT>(context, parse_node, src_id,
                                                   src_elem_type, context, i);
 
   // If we're performing a conversion rather than an initialization, we won't
   // have or need a target.
   ConversionTarget target = {.kind = kind, .type_id = target_elem_type};
   if (!target.is_initializer()) {
-    return Convert(context, parse_lamp, src_elem_id, target);
+    return Convert(context, parse_node, src_elem_id, target);
   }
 
   // Compute the location of the target element and initialize it.
   PendingBlock::DiscardUnusedInstsScope scope(target_block);
   target.init_block = target_block;
   target.init_id = MakeElemAccessInst<TargetAccessInstT>(
-      context, parse_lamp, target_id, target_elem_type, *target_block, i);
-  return Convert(context, parse_lamp, src_elem_id, target);
+      context, parse_node, target_id, target_elem_type, *target_block, i);
+  return Convert(context, parse_node, src_elem_id, target);
 }
 
 namespace {
@@ -260,7 +260,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                       "Cannot initialize array of {0} element(s) from tuple "
                       "with {1} element(s).",
                       uint64_t, size_t);
-    context.emitter().Emit(value.parse_lamp(),
+    context.emitter().Emit(value.parse_node(),
                            literal_elems.empty()
                                ? ArrayInitFromExpressionArgCountMismatch
                                : ArrayInitFromLiteralArgCountMismatch,
@@ -277,7 +277,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   SemIR::InstId return_slot_id = target.init_id;
   if (!target.init_id.is_valid()) {
     return_slot_id = target_block->AddInst(
-        SemIR::TemporaryStorage{value.parse_lamp(), target.type_id});
+        SemIR::TemporaryStorage{value.parse_node(), target.type_id});
   }
 
   // Initialize each element of the array from the corresponding element of the
@@ -291,7 +291,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
     // approach.
     auto init_id =
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
-            context, value.parse_lamp(), value_id, src_type_id, literal_elems,
+            context, value.parse_node(), value_id, src_type_id, literal_elems,
             ConversionTarget::FullInitializer, return_slot_id,
             array_type.element_type_id, target_block, i);
     if (init_id == SemIR::InstId::BuiltinError) {
@@ -305,7 +305,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   target_block->InsertHere();
   inits.push_back(return_slot_id);
 
-  return context.AddInst(SemIR::ArrayInit{value.parse_lamp(), target.type_id,
+  return context.AddInst(SemIR::ArrayInit{value.parse_node(), target.type_id,
                                           value_id,
                                           sem_ir.inst_blocks().Add(inits)});
 }
@@ -340,7 +340,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
                       "Cannot initialize tuple of {0} element(s) from tuple "
                       "with {1} element(s).",
                       size_t, size_t);
-    context.emitter().Emit(value.parse_lamp(), TupleInitElementCountMismatch,
+    context.emitter().Emit(value.parse_node(), TupleInitElementCountMismatch,
                            dest_elem_types.size(), src_elem_types.size());
     return SemIR::InstId::BuiltinError;
   }
@@ -367,7 +367,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     // approach.
     auto init_id =
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::TupleAccess>(
-            context, value.parse_lamp(), value_id, src_type_id, literal_elems,
+            context, value.parse_node(), value_id, src_type_id, literal_elems,
             inner_kind, target.init_id, dest_type_id, target.init_block, i);
     if (init_id == SemIR::InstId::BuiltinError) {
       return SemIR::InstId::BuiltinError;
@@ -375,10 +375,10 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     new_block.Set(i, init_id);
   }
 
-  return is_init ? context.AddInst(SemIR::TupleInit{value.parse_lamp(),
+  return is_init ? context.AddInst(SemIR::TupleInit{value.parse_node(),
                                                     target.type_id, value_id,
                                                     new_block.id()})
-                 : context.AddInst(SemIR::TupleValue{value.parse_lamp(),
+                 : context.AddInst(SemIR::TupleValue{value.parse_node(),
                                                      target.type_id, value_id,
                                                      new_block.id()});
 }
@@ -415,7 +415,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                       "Cannot initialize struct of {0} element(s) from struct "
                       "with {1} element(s).",
                       size_t, size_t);
-    context.emitter().Emit(value.parse_lamp(), StructInitElementCountMismatch,
+    context.emitter().Emit(value.parse_node(), StructInitElementCountMismatch,
                            dest_elem_fields.size(), src_elem_fields.size());
     return SemIR::InstId::BuiltinError;
   }
@@ -460,7 +460,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
               StructInitMissingFieldInLiteral, Error,
               "Missing value for field `{0}` in struct initialization.",
               llvm::StringRef);
-          context.emitter().Emit(value.parse_lamp(),
+          context.emitter().Emit(value.parse_node(),
                                  StructInitMissingFieldInLiteral,
                                  sem_ir.strings().Get(dest_field.name_id));
         } else {
@@ -468,7 +468,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                             "Cannot convert from struct type `{0}` to `{1}`: "
                             "missing field `{2}` in source type.",
                             std::string, std::string, llvm::StringRef);
-          context.emitter().Emit(value.parse_lamp(),
+          context.emitter().Emit(value.parse_node(),
                                  StructInitMissingFieldInConversion,
                                  sem_ir.StringifyType(value.type_id()),
                                  sem_ir.StringifyType(target.type_id),
@@ -485,7 +485,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
     // approach.
     auto init_id =
         ConvertAggregateElement<SemIR::StructAccess, SemIR::StructAccess>(
-            context, value.parse_lamp(), value_id, src_field.field_type_id,
+            context, value.parse_node(), value_id, src_field.field_type_id,
             literal_elems, inner_kind, target.init_id, dest_field.field_type_id,
             target.init_block, src_field_index);
     if (init_id == SemIR::InstId::BuiltinError) {
@@ -494,10 +494,10 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
     new_block.Set(i, init_id);
   }
 
-  return is_init ? context.AddInst(SemIR::StructInit{value.parse_lamp(),
+  return is_init ? context.AddInst(SemIR::StructInit{value.parse_node(),
                                                      target.type_id, value_id,
                                                      new_block.id()})
-                 : context.AddInst(SemIR::StructValue{value.parse_lamp(),
+                 : context.AddInst(SemIR::StructValue{value.parse_node(),
                                                       target.type_id, value_id,
                                                       new_block.id()});
 }
@@ -524,7 +524,7 @@ static bool IsValidExpressionCategoryForConversionTarget(
   }
 }
 
-static auto PerformBuiltinConversion(Context& context, Parse::Lamp parse_lamp,
+static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
                                      SemIR::InstId value_id,
                                      ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
@@ -583,7 +583,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Lamp parse_lamp,
         // value representation is a copy of the object representation, so we
         // already have a value of the right form.
         return context.AddInst(
-            SemIR::ValueOfInitializer{parse_lamp, value_type_id, value_id});
+            SemIR::ValueOfInitializer{parse_node, value_type_id, value_id});
       }
     }
   }
@@ -632,10 +632,10 @@ static auto PerformBuiltinConversion(Context& context, Parse::Lamp parse_lamp,
         // TODO: This call recurses back into conversion. Switch to an
         // iterative approach.
         type_ids.push_back(
-            ExpressionAsType(context, parse_lamp, tuple_inst_id));
+            ExpressionAsType(context, parse_node, tuple_inst_id));
       }
       auto tuple_type_id =
-          context.CanonicalizeTupleType(parse_lamp, std::move(type_ids));
+          context.CanonicalizeTupleType(parse_node, std::move(type_ids));
       return sem_ir.GetTypeAllowBuiltinTypes(tuple_type_id);
     }
 
@@ -678,12 +678,12 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   // copyable, or how to perform the copy.
   CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
                     "Cannot copy value of type `{0}`.", std::string);
-  context.emitter().Emit(expr.parse_lamp(), CopyOfUncopyableType,
+  context.emitter().Emit(expr.parse_node(), CopyOfUncopyableType,
                          context.sem_ir().StringifyType(type_id));
   return SemIR::InstId::BuiltinError;
 }
 
-auto Convert(Context& context, Parse::Lamp parse_lamp, SemIR::InstId expr_id,
+auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto orig_expr_id = expr_id;
@@ -702,7 +702,7 @@ auto Convert(Context& context, Parse::Lamp parse_lamp, SemIR::InstId expr_id,
     // namespace names, and allow use of functions as values.
     CARBON_DIAGNOSTIC(UseOfNonExpressionAsValue, Error,
                       "Expression cannot be used as a value.");
-    context.emitter().Emit(sem_ir.insts().Get(expr_id).parse_lamp(),
+    context.emitter().Emit(sem_ir.insts().Get(expr_id).parse_node(),
                            UseOfNonExpressionAsValue);
     return SemIR::InstId::BuiltinError;
   }
@@ -718,7 +718,7 @@ auto Convert(Context& context, Parse::Lamp parse_lamp, SemIR::InstId expr_id,
         CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
                           "Invalid use of incomplete type `{0}`.", std::string);
         return context.emitter().Build(
-            parse_lamp,
+            parse_node,
             target.is_initializer() ? IncompleteTypeInInitialization
             : target.kind == ConversionTarget::Value
                 ? IncompleteTypeInValueConversion
@@ -729,7 +729,7 @@ auto Convert(Context& context, Parse::Lamp parse_lamp, SemIR::InstId expr_id,
   }
 
   // Check whether any builtin conversion applies.
-  expr_id = PerformBuiltinConversion(context, parse_lamp, expr_id, target);
+  expr_id = PerformBuiltinConversion(context, parse_node, expr_id, target);
   if (expr_id == SemIR::InstId::BuiltinError) {
     return expr_id;
   }
@@ -746,7 +746,7 @@ auto Convert(Context& context, Parse::Lamp parse_lamp, SemIR::InstId expr_id,
                       "Cannot convert from `{0}` to `{1}` with `as`.",
                       std::string, std::string);
     context.emitter()
-        .Build(parse_lamp,
+        .Build(parse_node,
                target.kind == ConversionTarget::ExplicitAs
                    ? ExplicitAsConversionFailure
                    : ImplicitAsConversionFailure,
@@ -804,7 +804,7 @@ auto Convert(Context& context, Parse::Lamp parse_lamp, SemIR::InstId expr_id,
       // If we have a reference and don't want one, form a value binding.
       // TODO: Support types with custom value representations.
       expr_id = context.AddInst(
-          SemIR::BindValue{expr.parse_lamp(), expr.type_id(), expr_id});
+          SemIR::BindValue{expr.parse_node(), expr.type_id(), expr_id});
       // We now have a value expression.
       [[fallthrough]];
 
@@ -823,18 +823,18 @@ auto Convert(Context& context, Parse::Lamp parse_lamp, SemIR::InstId expr_id,
         init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
       target.init_block->InsertHere();
       expr_id = context.AddInst(SemIR::InitializeFrom{
-          parse_lamp, target.type_id, expr_id, target.init_id});
+          parse_node, target.type_id, expr_id, target.init_id});
     }
   }
 
   return expr_id;
 }
 
-auto Initialize(Context& context, Parse::Lamp parse_lamp,
+auto Initialize(Context& context, Parse::Node parse_node,
                 SemIR::InstId target_id, SemIR::InstId value_id)
     -> SemIR::InstId {
   PendingBlock target_block(context);
-  return Convert(context, parse_lamp, value_id,
+  return Convert(context, parse_node, value_id,
                  {.kind = ConversionTarget::Initializer,
                   .type_id = context.sem_ir().insts().Get(target_id).type_id(),
                   .init_id = target_id,
@@ -844,7 +844,7 @@ auto Initialize(Context& context, Parse::Lamp parse_lamp,
 auto ConvertToValueExpression(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
   auto expr = context.sem_ir().insts().Get(expr_id);
-  return Convert(context, expr.parse_lamp(), expr_id,
+  return Convert(context, expr.parse_node(), expr_id,
                  {.kind = ConversionTarget::Value, .type_id = expr.type_id()});
 }
 
@@ -853,25 +853,25 @@ auto ConvertToValueOrReferenceExpression(Context& context,
     -> SemIR::InstId {
   auto expr = context.sem_ir().insts().Get(expr_id);
   return Convert(
-      context, expr.parse_lamp(), expr_id,
+      context, expr.parse_node(), expr_id,
       {.kind = ConversionTarget::ValueOrReference, .type_id = expr.type_id()});
 }
 
-auto ConvertToValueOfType(Context& context, Parse::Lamp parse_lamp,
+auto ConvertToValueOfType(Context& context, Parse::Node parse_node,
                           SemIR::InstId value_id, SemIR::TypeId type_id)
     -> SemIR::InstId {
-  return Convert(context, parse_lamp, value_id,
+  return Convert(context, parse_node, value_id,
                  {.kind = ConversionTarget::Value, .type_id = type_id});
 }
 
-auto ConvertToBoolValue(Context& context, Parse::Lamp parse_lamp,
+auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
-      context, parse_lamp, value_id,
+      context, parse_node, value_id,
       context.GetBuiltinType(SemIR::BuiltinKind::BoolType));
 }
 
-auto ConvertForExplicitAs(Context& context, Parse::Lamp as_node,
+auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
                           SemIR::InstId value_id, SemIR::TypeId type_id)
     -> SemIR::InstId {
   return Convert(context, as_node, value_id,
@@ -881,16 +881,16 @@ auto ConvertForExplicitAs(Context& context, Parse::Lamp as_node,
 CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 
 // Convert the object argument in a method call to match the `self` parameter.
-static auto ConvertSelf(Context& context, Parse::Lamp call_parse_lamp,
-                        Parse::Lamp callee_parse_lamp,
+static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
+                        Parse::Node callee_parse_node,
                         SemIR::SelfParameter self_param, SemIR::InstId self_id)
     -> SemIR::InstId {
   if (!self_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
                       "Missing object argument in method call.");
     context.emitter()
-        .Build(call_parse_lamp, MissingObjectInMethodCall)
-        .Note(callee_parse_lamp, InCallToFunction)
+        .Build(call_parse_node, MissingObjectInMethodCall)
+        .Note(callee_parse_node, InCallToFunction)
         .Emit();
     return SemIR::InstId::BuiltinError;
   }
@@ -901,7 +901,7 @@ static auto ConvertSelf(Context& context, Parse::Lamp call_parse_lamp,
             InCallToFunctionSelf, Note,
             "Initializing `{0}` parameter of method declared here.",
             llvm::StringLiteral);
-        builder.Note(self_param.parse_lamp, InCallToFunctionSelf,
+        builder.Note(self_param.parse_node, InCallToFunctionSelf,
                      self_param.is_addr_self.index
                          ? llvm::StringLiteral("addr self")
                          : llvm::StringLiteral("self"));
@@ -921,24 +921,24 @@ static auto ConvertSelf(Context& context, Parse::Lamp call_parse_lamp,
       default:
         CARBON_DIAGNOSTIC(AddrSelfIsNonReference, Error,
                           "`addr self` method cannot be invoked on a value.");
-        context.emitter().Emit(call_parse_lamp, AddrSelfIsNonReference);
+        context.emitter().Emit(call_parse_node, AddrSelfIsNonReference);
         return SemIR::InstId::BuiltinError;
     }
     self_or_addr_id = context.AddInst(SemIR::AddressOf{
-        self.parse_lamp(),
-        context.GetPointerType(self.parse_lamp(), self.type_id()),
+        self.parse_node(),
+        context.GetPointerType(self.parse_node(), self.type_id()),
         self_or_addr_id});
   }
 
-  return ConvertToValueOfType(context, call_parse_lamp, self_or_addr_id,
+  return ConvertToValueOfType(context, call_parse_node, self_or_addr_id,
                               self_param.type_id);
 }
 
-auto ConvertCallArgs(Context& context, Parse::Lamp call_parse_lamp,
+auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_storage_id,
-                     Parse::Lamp callee_parse_lamp,
+                     Parse::Node callee_parse_node,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
   auto implicit_param_refs =
@@ -952,9 +952,9 @@ auto ConvertCallArgs(Context& context, Parse::Lamp call_parse_lamp,
                       "{1} argument(s).",
                       int, int);
     context.emitter()
-        .Build(call_parse_lamp, CallArgCountMismatch, arg_refs.size(),
+        .Build(call_parse_node, CallArgCountMismatch, arg_refs.size(),
                param_refs.size())
-        .Note(callee_parse_lamp, InCallToFunction)
+        .Note(callee_parse_node, InCallToFunction)
         .Emit();
     return SemIR::InstBlockId::Invalid;
   }
@@ -969,14 +969,14 @@ auto ConvertCallArgs(Context& context, Parse::Lamp call_parse_lamp,
     auto param = context.insts().Get(implicit_param_id);
     if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
       auto converted_self_id = ConvertSelf(
-          context, call_parse_lamp, callee_parse_lamp, *self_param, self_id);
+          context, call_parse_node, callee_parse_node, *self_param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }
       args.push_back(converted_self_id);
     } else {
       // TODO: Form argument values for implicit parameters.
-      context.TODO(call_parse_lamp, "Call with implicit parameters");
+      context.TODO(call_parse_node, "Call with implicit parameters");
       return SemIR::InstBlockId::Invalid;
     }
   }
@@ -987,7 +987,7 @@ auto ConvertCallArgs(Context& context, Parse::Lamp call_parse_lamp,
         CARBON_DIAGNOSTIC(
             InCallToFunctionParam, Note,
             "Initializing parameter {0} of function declared here.", int);
-        builder.Note(callee_parse_lamp, InCallToFunctionParam,
+        builder.Note(callee_parse_node, InCallToFunctionParam,
                      diag_param_index + 1);
       });
 
@@ -999,7 +999,7 @@ auto ConvertCallArgs(Context& context, Parse::Lamp call_parse_lamp,
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.
     auto converted_arg_id =
-        ConvertToValueOfType(context, call_parse_lamp, arg_id, param_type_id);
+        ConvertToValueOfType(context, call_parse_node, arg_id, param_type_id);
     if (converted_arg_id == SemIR::InstId::BuiltinError) {
       return SemIR::InstBlockId::Invalid;
     }
@@ -1015,10 +1015,10 @@ auto ConvertCallArgs(Context& context, Parse::Lamp call_parse_lamp,
   return context.inst_blocks().Add(args);
 }
 
-auto ExpressionAsType(Context& context, Parse::Lamp parse_lamp,
+auto ExpressionAsType(Context& context, Parse::Node parse_node,
                       SemIR::InstId value_id) -> SemIR::TypeId {
   return context.CanonicalizeType(ConvertToValueOfType(
-      context, parse_lamp, value_id, SemIR::TypeId::TypeType));
+      context, parse_node, value_id, SemIR::TypeId::TypeType));
 }
 
 }  // namespace Carbon::Check

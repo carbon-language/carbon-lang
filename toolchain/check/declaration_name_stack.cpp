@@ -12,11 +12,11 @@ auto DeclarationNameStack::MakeEmptyNameContext() -> NameContext {
   return NameContext{.target_scope_id = context_->current_scope_id()};
 }
 
-auto DeclarationNameStack::MakeUnqualifiedName(Parse::Lamp parse_lamp,
+auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
                                                StringId name_id)
     -> NameContext {
   NameContext context = MakeEmptyNameContext();
-  ApplyNameQualifierTo(context, parse_lamp, name_id);
+  ApplyNameQualifierTo(context, parse_node, name_id);
   return context;
 }
 
@@ -26,17 +26,17 @@ auto DeclarationNameStack::Push() -> void {
 
 auto DeclarationNameStack::Pop() -> NameContext {
   if (context_->parse_tree().node_kind(
-          context_->lamp_stack().PeekParseLamp()) ==
-      Parse::LampKind::QualifiedDeclaration) {
+          context_->node_stack().PeekParseNode()) ==
+      Parse::NodeKind::QualifiedDeclaration) {
     // Any parts from a QualifiedDeclaration will already have been processed
     // into the name.
-    context_->lamp_stack()
-        .PopAndDiscardSoloParseLamp<Parse::LampKind::QualifiedDeclaration>();
+    context_->node_stack()
+        .PopAndDiscardSoloParseNode<Parse::NodeKind::QualifiedDeclaration>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
-    auto [parse_lamp, name_id] =
-        context_->lamp_stack().PopWithParseLamp<Parse::LampKind::Name>();
-    ApplyNameQualifier(parse_lamp, name_id);
+    auto [parse_node, name_id] =
+        context_->node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+    ApplyNameQualifier(parse_node, name_id);
   }
 
   return declaration_name_stack_.pop_back_val();
@@ -60,7 +60,7 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
 
     case NameContext::State::Unresolved:
       if (name_context.target_scope_id == SemIR::NameScopeId::Invalid) {
-        context_->AddNameToLookup(name_context.parse_lamp,
+        context_->AddNameToLookup(name_context.parse_node,
                                   name_context.unresolved_name_id, target_id);
       } else {
         // TODO: Reject unless the scope is a namespace scope or the name is
@@ -81,19 +81,19 @@ auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
                                            SemIR::InstId target_id) -> void {
   SemIR::InstId existing_inst_id = LookupOrAddName(name_context, target_id);
   if (existing_inst_id.is_valid()) {
-    context_->DiagnoseDuplicateName(name_context.parse_lamp, existing_inst_id);
+    context_->DiagnoseDuplicateName(name_context.parse_node, existing_inst_id);
   }
 }
 
-auto DeclarationNameStack::ApplyNameQualifier(Parse::Lamp parse_lamp,
+auto DeclarationNameStack::ApplyNameQualifier(Parse::Node parse_node,
                                               StringId name_id) -> void {
-  ApplyNameQualifierTo(declaration_name_stack_.back(), parse_lamp, name_id);
+  ApplyNameQualifierTo(declaration_name_stack_.back(), parse_node, name_id);
 }
 
 auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
-                                                Parse::Lamp parse_lamp,
+                                                Parse::Node parse_node,
                                                 StringId name_id) -> void {
-  if (CanResolveQualifier(name_context, parse_lamp)) {
+  if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     // This means the input instruction name_id is actually a string ID.
     //
@@ -101,7 +101,7 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
     // from enclosing lexical scopes here, in the case where `target_scope_id`
     // is invalid.
     SemIR::InstId resolved_inst_id = context_->LookupName(
-        name_context.parse_lamp, name_id, name_context.target_scope_id,
+        name_context.parse_node, name_id, name_context.target_scope_id,
         /*print_diagnostics=*/false);
     if (resolved_inst_id == SemIR::InstId::BuiltinError) {
       // Invalid indicates an unresolved inst. Store it and return.
@@ -146,7 +146,7 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
 }
 
 auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
-                                               Parse::Lamp parse_lamp) -> bool {
+                                               Parse::Node parse_node) -> bool {
   switch (name_context.state) {
     case NameContext::State::Error:
       // Already in an error state, so return without examining.
@@ -156,7 +156,7 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier failed to resolve.
       name_context.state = NameContext::State::Error;
-      context_->DiagnoseNameNotFound(name_context.parse_lamp,
+      context_->DiagnoseNameNotFound(name_context.parse_node,
                                      name_context.unresolved_name_id);
       return false;
 
@@ -170,7 +170,7 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
                           "Cannot declare a member of incomplete class `{0}`.",
                           std::string);
         auto builder = context_->emitter().Build(
-            name_context.parse_lamp, QualifiedDeclarationInIncompleteClassScope,
+            name_context.parse_node, QualifiedDeclarationInIncompleteClassScope,
             context_->sem_ir().StringifyType(
                 context_->classes().Get(class_decl->class_id).self_type_id,
                 true));
@@ -184,8 +184,8 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
         CARBON_DIAGNOSTIC(QualifiedDeclarationNonScopeEntity, Note,
                           "Non-scope entity referenced here.");
         context_->emitter()
-            .Build(parse_lamp, QualifiedDeclarationInNonScope)
-            .Note(name_context.parse_lamp, QualifiedDeclarationNonScopeEntity)
+            .Build(parse_node, QualifiedDeclarationInNonScope)
+            .Note(name_context.parse_node, QualifiedDeclarationNonScopeEntity)
             .Emit();
       }
       name_context.state = NameContext::State::Error;
@@ -194,7 +194,7 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
 
     case NameContext::State::Empty:
     case NameContext::State::Resolved: {
-      name_context.parse_lamp = parse_lamp;
+      name_context.parse_node = parse_node;
       return true;
     }
   }

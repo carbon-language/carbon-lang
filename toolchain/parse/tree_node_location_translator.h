@@ -9,14 +9,14 @@
 
 namespace Carbon::Parse {
 
-class LampLocationTranslator : public DiagnosticLocationTranslator<Lamp> {
+class NodeLocationTranslator : public DiagnosticLocationTranslator<Node> {
  public:
-  explicit LampLocationTranslator(const Lex::TokenizedBuffer* tokens,
+  explicit NodeLocationTranslator(const Lex::TokenizedBuffer* tokens,
                                   const Tree* parse_tree)
       : token_translator_(tokens), parse_tree_(parse_tree) {}
 
   // Map the given token into a diagnostic location.
-  auto GetLocation(Lamp node) -> DiagnosticLocation override {
+  auto GetLocation(Node node) -> DiagnosticLocation override {
     return token_translator_.GetLocation(parse_tree_->node_token(node));
   }
 

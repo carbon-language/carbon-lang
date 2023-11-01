@@ -9,7 +9,7 @@ namespace Carbon::Parse {
 auto HandleNamespace(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddLeafNode(LampKind::NamespaceStart, context.Consume());
+  context.AddLeafNode(NodeKind::NamespaceStart, context.Consume());
 
   state.state = State::NamespaceFinish;
   context.PushState(state);
@@ -21,17 +21,17 @@ auto HandleNamespaceFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
-    context.RecoverFromDeclarationError(state, LampKind::Namespace,
+    context.RecoverFromDeclarationError(state, NodeKind::Namespace,
                                         /*skip_past_likely_end=*/true);
     return;
   }
 
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    context.AddInst(LampKind::Namespace, *semi, state.subtree_start,
+    context.AddInst(NodeKind::Namespace, *semi, state.subtree_start,
                     state.has_error);
   } else {
     context.EmitExpectedDeclarationSemi(Lex::TokenKind::Namespace);
-    context.RecoverFromDeclarationError(state, LampKind::Namespace,
+    context.RecoverFromDeclarationError(state, NodeKind::Namespace,
                                         /*skip_past_likely_end=*/true);
   }
 }

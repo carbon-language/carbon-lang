@@ -50,7 +50,7 @@ class InstNamer {
       auto fn_scope = GetScopeFor(fn_id);
       // TODO: Provide a location for the function for use as a
       // disambiguator.
-      auto fn_loc = Parse::Lamp::Invalid;
+      auto fn_loc = Parse::Node::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this, fn_loc,
           fn.name_id.is_valid() ? sem_ir.strings().Get(fn.name_id).str() : "");
@@ -60,7 +60,7 @@ class InstNamer {
         insts[fn.return_slot_id.index] = {
             fn_scope,
             GetScopeInfo(fn_scope).insts.AllocateName(
-                *this, sem_ir.insts().Get(fn.return_slot_id).parse_lamp(),
+                *this, sem_ir.insts().Get(fn.return_slot_id).parse_node(),
                 "return")};
       }
       if (!fn.body_block_ids.empty()) {
@@ -80,7 +80,7 @@ class InstNamer {
       auto class_scope = GetScopeFor(class_id);
       // TODO: Provide a location for the class for use as a
       // disambiguator.
-      auto class_loc = Parse::Lamp::Invalid;
+      auto class_loc = Parse::Node::Invalid;
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
           class_info.name_id.is_valid()
@@ -203,7 +203,7 @@ class InstNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const InstNamer& namer, Parse::Lamp node,
+    auto AllocateName(const InstNamer& namer, Parse::Node node,
                       std::string name = "") -> Name {
       // The best (shortest) name for this inst so far, and the current name
       // for it.
@@ -279,21 +279,21 @@ class InstNamer {
 
   auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
                      std::string name = "",
-                     Parse::Lamp parse_lamp = Parse::Lamp::Invalid) -> void {
+                     Parse::Node parse_node = Parse::Node::Invalid) -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
 
-    if (parse_lamp == Parse::Lamp::Invalid) {
+    if (parse_node == Parse::Node::Invalid) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
-        parse_lamp = sem_ir_.insts().Get(block.front()).parse_lamp();
+        parse_node = sem_ir_.insts().Get(block.front()).parse_node();
       }
     }
 
     labels[block_id.index] = {scope_idx,
                               GetScopeInfo(scope_idx).labels.AllocateName(
-                                  *this, parse_lamp, std::move(name))};
+                                  *this, parse_node, std::move(name))};
   }
 
   // Finds and adds a suitable block label for the given sem_ir inst that
@@ -301,8 +301,8 @@ class InstNamer {
   auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Inst inst)
       -> void {
     llvm::StringRef name;
-    switch (parse_tree_.node_kind(inst.parse_lamp())) {
-      case Parse::LampKind::IfExpressionIf:
+    switch (parse_tree_.node_kind(inst.parse_node())) {
+      case Parse::NodeKind::IfExpressionIf:
         switch (inst.kind()) {
           case BranchIf::Kind:
             name = "if.expr.then";
@@ -318,7 +318,7 @@ class InstNamer {
         }
         break;
 
-      case Parse::LampKind::IfCondition:
+      case Parse::NodeKind::IfCondition:
         switch (inst.kind()) {
           case BranchIf::Kind:
             name = "if.then";
@@ -331,24 +331,24 @@ class InstNamer {
         }
         break;
 
-      case Parse::LampKind::IfStatement:
+      case Parse::NodeKind::IfStatement:
         name = "if.done";
         break;
 
-      case Parse::LampKind::ShortCircuitOperand: {
+      case Parse::NodeKind::ShortCircuitOperand: {
         bool is_rhs = inst.Is<BranchIf>();
         bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
-                          inst.parse_lamp())) == Lex::TokenKind::And;
+                          inst.parse_node())) == Lex::TokenKind::And;
         name = is_and ? (is_rhs ? "and.rhs" : "and.result")
                       : (is_rhs ? "or.rhs" : "or.result");
         break;
       }
 
-      case Parse::LampKind::WhileConditionStart:
+      case Parse::NodeKind::WhileConditionStart:
         name = "while.cond";
         break;
 
-      case Parse::LampKind::WhileCondition:
+      case Parse::NodeKind::WhileCondition:
         switch (inst.kind()) {
           case InstKind::BranchIf:
             name = "while.body";
@@ -365,7 +365,7 @@ class InstNamer {
         break;
     }
 
-    AddBlockLabel(scope_idx, block_id, name.str(), inst.parse_lamp());
+    AddBlockLabel(scope_idx, block_id, name.str(), inst.parse_node());
   }
 
   auto CollectNamesInBlock(ScopeIndex scope_idx, InstBlockId block_id) -> void {
@@ -384,7 +384,7 @@ class InstNamer {
       auto inst = sem_ir_.insts().Get(inst_id);
       auto add_inst_name = [&](std::string name) {
         insts[inst_id.index] = {scope_idx, scope.insts.AllocateName(
-                                               *this, inst.parse_lamp(), name)};
+                                               *this, inst.parse_node(), name)};
       };
       auto add_inst_name_id = [&](StringId name_id,
                                   llvm::StringRef suffix = "") {

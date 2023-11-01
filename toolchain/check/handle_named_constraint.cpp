@@ -6,24 +6,24 @@
 
 namespace Carbon::Check {
 
-auto HandleNamedConstraintDeclaration(Context& context, Parse::Lamp parse_lamp)
+auto HandleNamedConstraintDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_lamp, "HandleNamedConstraintDeclaration");
+  return context.TODO(parse_node, "HandleNamedConstraintDeclaration");
 }
 
-auto HandleNamedConstraintDefinition(Context& context, Parse::Lamp parse_lamp)
+auto HandleNamedConstraintDefinition(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_lamp, "HandleNamedConstraintDefinition");
+  return context.TODO(parse_node, "HandleNamedConstraintDefinition");
 }
 
 auto HandleNamedConstraintDefinitionStart(Context& context,
-                                          Parse::Lamp parse_lamp) -> bool {
-  return context.TODO(parse_lamp, "HandleNamedConstraintDefinitionStart");
+                                          Parse::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleNamedConstraintDefinitionStart");
 }
 
-auto HandleNamedConstraintIntroducer(Context& context, Parse::Lamp parse_lamp)
+auto HandleNamedConstraintIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_lamp, "HandleNamedConstraintIntroducer");
+  return context.TODO(parse_node, "HandleNamedConstraintIntroducer");
 }
 
 }  // namespace Carbon::Check

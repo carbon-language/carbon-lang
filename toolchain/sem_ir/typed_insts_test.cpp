@@ -14,9 +14,9 @@ namespace Carbon::SemIR {
 // A friend of `SemIR::Inst` that is used to pierce the abstraction.
 class InstTestHelper {
  public:
-  static auto MakeInst(InstKind inst_kind, Parse::Lamp parse_lamp,
+  static auto MakeInst(InstKind inst_kind, Parse::Node parse_node,
                        TypeId type_id, int32_t arg0, int32_t arg1) -> Inst {
-    return Inst(inst_kind, parse_lamp, type_id, arg0, arg1);
+    return Inst(inst_kind, parse_node, type_id, arg0, arg1);
   }
 };
 
@@ -50,15 +50,15 @@ TYPED_TEST_SUITE(TypedInstTest, TypedInstTypes);
 TYPED_TEST(TypedInstTest, CommonFieldOrder) {
   using TypedInst = TypeParam;
 
-  Inst inst = InstTestHelper::MakeInst(TypeParam::Kind, Parse::Lamp(1),
+  Inst inst = InstTestHelper::MakeInst(TypeParam::Kind, Parse::Node(1),
                                        TypeId(2), 3, 4);
   EXPECT_EQ(inst.kind(), TypeParam::Kind);
-  EXPECT_EQ(inst.parse_lamp(), Parse::Lamp(1));
+  EXPECT_EQ(inst.parse_node(), Parse::Node(1));
   EXPECT_EQ(inst.type_id(), TypeId(2));
 
   TypedInst typed = inst.As<TypedInst>();
-  if constexpr (HasParseLamp<TypedInst>) {
-    EXPECT_EQ(typed.parse_lamp, Parse::Lamp(1));
+  if constexpr (HasParseNode<TypedInst>) {
+    EXPECT_EQ(typed.parse_node, Parse::Node(1));
   }
   if constexpr (HasTypeId<TypedInst>) {
     EXPECT_EQ(typed.type_id, TypeId(2));
@@ -68,18 +68,18 @@ TYPED_TEST(TypedInstTest, CommonFieldOrder) {
 TYPED_TEST(TypedInstTest, RoundTrip) {
   using TypedInst = TypeParam;
 
-  Inst inst1 = InstTestHelper::MakeInst(TypeParam::Kind, Parse::Lamp(1),
+  Inst inst1 = InstTestHelper::MakeInst(TypeParam::Kind, Parse::Node(1),
                                         TypeId(2), 3, 4);
   EXPECT_EQ(inst1.kind(), TypeParam::Kind);
-  EXPECT_EQ(inst1.parse_lamp(), Parse::Lamp(1));
+  EXPECT_EQ(inst1.parse_node(), Parse::Node(1));
   EXPECT_EQ(inst1.type_id(), TypeId(2));
 
   TypedInst typed1 = inst1.As<TypedInst>();
   Inst inst2 = typed1;
 
   EXPECT_EQ(inst1.kind(), inst2.kind());
-  if constexpr (HasParseLamp<TypedInst>) {
-    EXPECT_EQ(inst1.parse_lamp(), inst2.parse_lamp());
+  if constexpr (HasParseNode<TypedInst>) {
+    EXPECT_EQ(inst1.parse_node(), inst2.parse_node());
   }
   if constexpr (HasTypeId<TypedInst>) {
     EXPECT_EQ(inst1.type_id(), inst2.type_id());
@@ -105,7 +105,7 @@ TYPED_TEST(TypedInstTest, StructLayout) {
   using TypedInst = TypeParam;
 
   TypedInst typed =
-      InstTestHelper::MakeInst(TypeParam::Kind, Parse::Lamp(1), TypeId(2), 3, 4)
+      InstTestHelper::MakeInst(TypeParam::Kind, Parse::Node(1), TypeId(2), 3, 4)
           .template As<TypedInst>();
 
   // Check that the memory representation of the typed inst is what we expect.
@@ -113,7 +113,7 @@ TYPED_TEST(TypedInstTest, StructLayout) {
   // build environment. If so, we should disable it.
   int32_t fields[4] = {};
   int field = 0;
-  if constexpr (HasParseLamp<TypedInst>) {
+  if constexpr (HasParseNode<TypedInst>) {
     fields[field++] = 1;
   }
   if constexpr (HasTypeId<TypedInst>) {

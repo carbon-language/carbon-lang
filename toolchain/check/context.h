@@ -21,7 +21,7 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
-  using DiagnosticEmitter = Carbon::DiagnosticEmitter<Parse::Lamp>;
+  using DiagnosticEmitter = Carbon::DiagnosticEmitter<Parse::Node>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
 
   // A scope in which `break` and `continue` can be used.
@@ -36,7 +36,7 @@ class Context {
                    SemIR::File& semantics, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(Parse::Lamp parse_lamp, std::string label) -> bool;
+  auto TODO(Parse::Node parse_node, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
@@ -46,24 +46,24 @@ class Context {
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
-  auto AddInstAndPush(Parse::Lamp parse_lamp, SemIR::Inst inst) -> void;
+  auto AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Parse::Lamp name_node, StringId name_id,
+  auto AddNameToLookup(Parse::Node name_node, StringId name_id,
                        SemIR::InstId target_id) -> void;
 
   // Performs name lookup in a specified scope, returning the referenced inst.
   // If scope_id is invalid, uses the current contextual scope.
-  auto LookupName(Parse::Lamp parse_lamp, StringId name_id,
+  auto LookupName(Parse::Node parse_node, StringId name_id,
                   SemIR::NameScopeId scope_id, bool print_diagnostics)
       -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(Parse::Lamp parse_lamp, SemIR::InstId prev_def_id)
+  auto DiagnoseDuplicateName(Parse::Node parse_node, SemIR::InstId prev_def_id)
       -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::Lamp parse_lamp, StringId name_id) -> void;
+  auto DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id) -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
@@ -102,26 +102,26 @@ class Context {
   // Adds a `Branch` inst branching to a new inst block, and returns the ID of
   // the new block. All paths to the branch target must go through the current
   // block, though not necessarily through this branch.
-  auto AddDominatedBlockAndBranch(Parse::Lamp parse_lamp) -> SemIR::InstBlockId;
+  auto AddDominatedBlockAndBranch(Parse::Node parse_node) -> SemIR::InstBlockId;
 
   // Adds a `Branch` inst branching to a new inst block with a value, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block.
-  auto AddDominatedBlockAndBranchWithArg(Parse::Lamp parse_lamp,
+  auto AddDominatedBlockAndBranchWithArg(Parse::Node parse_node,
                                          SemIR::InstId arg_id)
       -> SemIR::InstBlockId;
 
   // Adds a `BranchIf` inst branching to a new inst block, and returns the ID
   // of the new block. All paths to the branch target must go through the
   // current block.
-  auto AddDominatedBlockAndBranchIf(Parse::Lamp parse_lamp,
+  auto AddDominatedBlockAndBranchIf(Parse::Node parse_node,
                                     SemIR::InstId cond_id)
       -> SemIR::InstBlockId;
 
   // Handles recovergence of control flow. Adds branches from the top
   // `num_blocks` on the inst block stack to a new block, pops the existing
   // blocks, and pushes the new block onto the inst block stack.
-  auto AddConvergenceBlockAndPush(Parse::Lamp parse_lamp, int num_blocks)
+  auto AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
       -> void;
 
   // Handles recovergence of control flow with a result value. Adds branches
@@ -131,7 +131,7 @@ class Context {
   // result values are the elements of `block_args`. Returns an inst referring
   // to the result value.
   auto AddConvergenceBlockWithArgAndPush(
-      Parse::Lamp parse_lamp,
+      Parse::Node parse_node,
       std::initializer_list<SemIR::InstId> blocks_and_args) -> SemIR::InstId;
 
   // Add the current code block to the enclosing function.
@@ -150,12 +150,12 @@ class Context {
   // Individual struct type fields aren't canonicalized because they may have
   // name conflicts or other diagnostics during creation, which can use the
   // parse node.
-  auto CanonicalizeStructType(Parse::Lamp parse_lamp,
+  auto CanonicalizeStructType(Parse::Node parse_node,
                               SemIR::InstBlockId refs_id) -> SemIR::TypeId;
 
   // Handles canonicalization of tuple types. This may create a new tuple type
   // if the `type_ids` doesn't match an existing tuple type.
-  auto CanonicalizeTupleType(Parse::Lamp parse_lamp,
+  auto CanonicalizeTupleType(Parse::Node parse_node,
                              llvm::ArrayRef<SemIR::TypeId> type_ids)
       -> SemIR::TypeId;
 
@@ -175,7 +175,7 @@ class Context {
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
-  auto GetPointerType(Parse::Lamp parse_lamp, SemIR::TypeId pointee_type_id)
+  auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)
       -> SemIR::TypeId;
 
   // Removes any top-level `const` qualifiers from a type.
@@ -184,7 +184,7 @@ class Context {
   // Starts handling parameters or arguments.
   auto ParamOrArgStart() -> void;
 
-  // On a comma, pushes the entry. On return, the top of lamp_stack_ will be
+  // On a comma, pushes the entry. On return, the top of node_stack_ will be
   // start_kind.
   auto ParamOrArgComma() -> void;
 
@@ -193,7 +193,7 @@ class Context {
   // list. Does not pop the list. `start_kind` is the node kind at the start
   // of the parameter or argument list, and will be at the top of the parse node
   // stack when this function returns.
-  auto ParamOrArgEndNoPop(Parse::LampKind start_kind) -> void;
+  auto ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void;
 
   // Pops the current parameter or argument list. Should only be called after
   // `ParamOrArgEndNoPop`.
@@ -201,9 +201,9 @@ class Context {
 
   // Detects whether there's an entry to push. Pops and returns the argument
   // list. This is the same as `ParamOrArgEndNoPop` followed by `ParamOrArgPop`.
-  auto ParamOrArgEnd(Parse::LampKind start_kind) -> SemIR::InstBlockId;
+  auto ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::InstBlockId;
 
-  // Saves a parameter from the top block in lamp_stack_ to the top block in
+  // Saves a parameter from the top block in node_stack_ to the top block in
   // params_or_args_stack_.
   auto ParamOrArgSave(SemIR::InstId inst_id) -> void {
     params_or_args_stack_.AddInstId(inst_id);
@@ -220,7 +220,7 @@ class Context {
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
 
-  auto lamp_stack() -> NodeStack& { return lamp_stack_; }
+  auto node_stack() -> NodeStack& { return node_stack_; }
 
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
 
@@ -345,7 +345,7 @@ class Context {
   llvm::raw_ostream* vlog_stream_;
 
   // The stack during Build. Will contain file-level parse nodes on return.
-  NodeStack lamp_stack_;
+  NodeStack node_stack_;
 
   // The stack of inst blocks being used for general IR generation.
   InstBlockStack inst_block_stack_;
@@ -397,7 +397,7 @@ class Context {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::Lamp parse_lamp)->bool;
+  auto Handle##Name(Context& context, Parse::Node parse_node)->bool;
 #include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Check

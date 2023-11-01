@@ -34,7 +34,7 @@ static auto HandleParameterFinish(Context& context, Lex::TokenKind close_token,
     context.ReturnErrorOnState();
   }
 
-  if (context.ConsumeListToken(LampKind::ParameterListComma, close_token,
+  if (context.ConsumeListToken(NodeKind::ParameterListComma, close_token,
                                state.has_error) ==
       Context::ListTokenKind::Comma) {
     context.PushState(param_state);
@@ -52,14 +52,14 @@ auto HandleParameterFinishAsRegular(Context& context) -> void {
 }
 
 // Handles ParameterListAs(Implicit|Regular).
-static auto HandleParameterList(Context& context, LampKind parse_lamp_kind,
+static auto HandleParameterList(Context& context, NodeKind parse_node_kind,
                                 Lex::TokenKind open_token_kind,
                                 Lex::TokenKind close_token_kind,
                                 State param_state, State finish_state) -> void {
   context.PopAndDiscardState();
 
   context.PushState(finish_state);
-  context.AddLeafNode(parse_lamp_kind, context.ConsumeChecked(open_token_kind));
+  context.AddLeafNode(parse_node_kind, context.ConsumeChecked(open_token_kind));
 
   if (!context.PositionIs(close_token_kind)) {
     context.PushState(param_state);
@@ -68,13 +68,13 @@ static auto HandleParameterList(Context& context, LampKind parse_lamp_kind,
 
 auto HandleParameterListAsImplicit(Context& context) -> void {
   HandleParameterList(
-      context, LampKind::ImplicitParameterListStart,
+      context, NodeKind::ImplicitParameterListStart,
       Lex::TokenKind::OpenSquareBracket, Lex::TokenKind::CloseSquareBracket,
       State::ParameterAsImplicit, State::ParameterListFinishAsImplicit);
 }
 
 auto HandleParameterListAsRegular(Context& context) -> void {
-  HandleParameterList(context, LampKind::ParameterListStart,
+  HandleParameterList(context, NodeKind::ParameterListStart,
                       Lex::TokenKind::OpenParen, Lex::TokenKind::CloseParen,
                       State::ParameterAsRegular,
                       State::ParameterListFinishAsRegular);
@@ -82,21 +82,21 @@ auto HandleParameterListAsRegular(Context& context) -> void {
 
 // Handles ParameterListFinishAs(Implicit|Regular).
 static auto HandleParameterListFinish(Context& context,
-                                      LampKind parse_lamp_kind,
+                                      NodeKind parse_node_kind,
                                       Lex::TokenKind token_kind) -> void {
   auto state = context.PopState();
 
-  context.AddInst(parse_lamp_kind, context.ConsumeChecked(token_kind),
+  context.AddInst(parse_node_kind, context.ConsumeChecked(token_kind),
                   state.subtree_start, state.has_error);
 }
 
 auto HandleParameterListFinishAsImplicit(Context& context) -> void {
-  HandleParameterListFinish(context, LampKind::ImplicitParameterList,
+  HandleParameterListFinish(context, NodeKind::ImplicitParameterList,
                             Lex::TokenKind::CloseSquareBracket);
 }
 
 auto HandleParameterListFinishAsRegular(Context& context) -> void {
-  HandleParameterListFinish(context, LampKind::ParameterList,
+  HandleParameterListFinish(context, NodeKind::ParameterList,
                             Lex::TokenKind::CloseParen);
 }
 

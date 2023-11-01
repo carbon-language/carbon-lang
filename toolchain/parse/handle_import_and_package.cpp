@@ -9,7 +9,7 @@ namespace Carbon::Parse {
 
 // Provides error exiting logic for `import`/`package`, skipping to the semi.
 static auto ExitOnParseError(Context& context, Context::StateStackEntry state,
-                             LampKind directive) {
+                             NodeKind directive) {
   auto semi_token = context.SkipPastLikelyEnd(state.token);
   return context.AddInst(directive, semi_token ? *semi_token : state.token,
                          state.subtree_start,
@@ -20,10 +20,10 @@ static auto ExitOnParseError(Context& context, Context::StateStackEntry state,
 // introducer is already added.
 static auto HandleImportAndPackage(Context& context,
                                    Context::StateStackEntry state,
-                                   LampKind directive, bool expect_api_or_impl)
+                                   NodeKind directive, bool expect_api_or_impl)
     -> void {
   if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                       LampKind::Name)) {
+                                       NodeKind::Name)) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterKeyword, Error,
                       "Expected identifier after `{0}`.", Lex::TokenKind);
     context.emitter().Emit(*context.position(), ExpectedIdentifierAfterKeyword,
@@ -37,7 +37,7 @@ static auto HandleImportAndPackage(Context& context,
     auto library_start = context.tree().size();
 
     if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::StringLiteral,
-                                         LampKind::Literal)) {
+                                         NodeKind::Literal)) {
       CARBON_DIAGNOSTIC(
           ExpectedLibraryName, Error,
           "Expected a string literal to specify the library name.");
@@ -46,7 +46,7 @@ static auto HandleImportAndPackage(Context& context,
       return;
     }
 
-    context.AddInst(LampKind::Library, *library_token, library_start,
+    context.AddInst(NodeKind::Library, *library_token, library_start,
                     /*has_error=*/false);
     library_parsed = true;
   }
@@ -66,11 +66,11 @@ static auto HandleImportAndPackage(Context& context,
   if (expect_api_or_impl) {
     switch (next_kind) {
       case Lex::TokenKind::Api: {
-        context.AddLeafNode(LampKind::PackageApi, context.Consume());
+        context.AddLeafNode(NodeKind::PackageApi, context.Consume());
         break;
       }
       case Lex::TokenKind::Impl: {
-        context.AddLeafNode(LampKind::PackageImpl, context.Consume());
+        context.AddLeafNode(NodeKind::PackageImpl, context.Consume());
         break;
       }
       default: {
@@ -97,7 +97,7 @@ auto HandleImport(Context& context) -> void {
   auto state = context.PopState();
 
   auto intro_token = context.Consume();
-  context.AddLeafNode(LampKind::ImportIntroducer, intro_token);
+  context.AddLeafNode(NodeKind::ImportIntroducer, intro_token);
 
   switch (context.packaging_state()) {
     case Context::PackagingState::StartOfFile:
@@ -106,7 +106,7 @@ auto HandleImport(Context& context) -> void {
       [[clang::fallthrough]];
 
     case Context::PackagingState::InImports:
-      HandleImportAndPackage(context, state, LampKind::ImportDirective,
+      HandleImportAndPackage(context, state, NodeKind::ImportDirective,
                              /*expect_api_or_impl=*/false);
       break;
 
@@ -122,14 +122,14 @@ auto HandleImport(Context& context) -> void {
           .Build(intro_token, ImportTooLate)
           .Note(context.first_non_packaging_token(), FirstDeclaration)
           .Emit();
-      ExitOnParseError(context, state, LampKind::ImportDirective);
+      ExitOnParseError(context, state, NodeKind::ImportDirective);
       break;
     }
     case Context::PackagingState::InImportsAfterNonPackagingDeclaration:
       // There is a sequential block of misplaced `import` statements, which can
       // occur if a declaration is added above `import`s. Avoid duplicate
       // warnings.
-      ExitOnParseError(context, state, LampKind::ImportDirective);
+      ExitOnParseError(context, state, NodeKind::ImportDirective);
       break;
   }
 }
@@ -138,7 +138,7 @@ auto HandlePackage(Context& context) -> void {
   auto state = context.PopState();
 
   auto intro_token = context.Consume();
-  context.AddLeafNode(LampKind::PackageIntroducer, intro_token);
+  context.AddLeafNode(NodeKind::PackageIntroducer, intro_token);
 
   if (intro_token != Lex::Token::FirstNonCommentToken) {
     CARBON_DIAGNOSTIC(
@@ -150,13 +150,13 @@ auto HandlePackage(Context& context) -> void {
         .Build(intro_token, PackageTooLate)
         .Note(Lex::Token::FirstNonCommentToken, FirstNonCommentLine)
         .Emit();
-    ExitOnParseError(context, state, LampKind::PackageDirective);
+    ExitOnParseError(context, state, NodeKind::PackageDirective);
     return;
   }
 
   // `package` is no longer allowed, but `import` may repeat.
   context.set_packaging_state(Context::PackagingState::InImports);
-  HandleImportAndPackage(context, state, LampKind::PackageDirective,
+  HandleImportAndPackage(context, state, NodeKind::PackageDirective,
                          /*expect_api_or_impl=*/true);
 }
 

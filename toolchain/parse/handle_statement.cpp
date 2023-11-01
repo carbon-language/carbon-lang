@@ -12,12 +12,12 @@ auto HandleStatement(Context& context) -> void {
   switch (context.PositionKind()) {
     case Lex::TokenKind::Break: {
       context.PushState(State::StatementBreakFinish);
-      context.AddLeafNode(LampKind::BreakStatementStart, context.Consume());
+      context.AddLeafNode(NodeKind::BreakStatementStart, context.Consume());
       break;
     }
     case Lex::TokenKind::Continue: {
       context.PushState(State::StatementContinueFinish);
-      context.AddLeafNode(LampKind::ContinueStatementStart, context.Consume());
+      context.AddLeafNode(NodeKind::ContinueStatementStart, context.Consume());
       break;
     }
     case Lex::TokenKind::For: {
@@ -55,7 +55,7 @@ auto HandleStatement(Context& context) -> void {
 }
 
 // Handles the `;` after a keyword statement.
-static auto HandleStatementKeywordFinish(Context& context, LampKind node_kind)
+static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
     -> void {
   auto state = context.PopState();
 
@@ -77,18 +77,18 @@ static auto HandleStatementKeywordFinish(Context& context, LampKind node_kind)
 }
 
 auto HandleStatementBreakFinish(Context& context) -> void {
-  HandleStatementKeywordFinish(context, LampKind::BreakStatement);
+  HandleStatementKeywordFinish(context, NodeKind::BreakStatement);
 }
 
 auto HandleStatementContinueFinish(Context& context) -> void {
-  HandleStatementKeywordFinish(context, LampKind::ContinueStatement);
+  HandleStatementKeywordFinish(context, NodeKind::ContinueStatement);
 }
 
 auto HandleStatementForHeader(Context& context) -> void {
   auto state = context.PopState();
 
   std::optional<Lex::Token> open_paren =
-      context.ConsumeAndAddOpenParen(state.token, LampKind::ForHeaderStart);
+      context.ConsumeAndAddOpenParen(state.token, NodeKind::ForHeaderStart);
   if (open_paren) {
     state.token = *open_paren;
   }
@@ -122,7 +122,7 @@ auto HandleStatementForHeaderIn(Context& context) -> void {
 auto HandleStatementForHeaderFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state, LampKind::ForHeader);
+  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::ForHeader);
 
   context.PushState(State::CodeBlock);
 }
@@ -130,7 +130,7 @@ auto HandleStatementForHeaderFinish(Context& context) -> void {
 auto HandleStatementForFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddInst(LampKind::ForStatement, state.token, state.subtree_start,
+  context.AddInst(NodeKind::ForStatement, state.token, state.subtree_start,
                   state.has_error);
 }
 
@@ -154,7 +154,7 @@ auto HandleStatementIfThenBlockFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Else,
-                                      LampKind::IfStatementElse)) {
+                                      NodeKind::IfStatementElse)) {
     state.state = State::StatementIfElseBlockFinish;
     context.PushState(state);
     // `else if` is permitted as a special case.
@@ -162,14 +162,14 @@ auto HandleStatementIfThenBlockFinish(Context& context) -> void {
                           ? State::StatementIf
                           : State::CodeBlock);
   } else {
-    context.AddInst(LampKind::IfStatement, state.token, state.subtree_start,
+    context.AddInst(NodeKind::IfStatement, state.token, state.subtree_start,
                     state.has_error);
   }
 }
 
 auto HandleStatementIfElseBlockFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddInst(LampKind::IfStatement, state.token, state.subtree_start,
+  context.AddInst(NodeKind::IfStatement, state.token, state.subtree_start,
                   state.has_error);
 }
 
@@ -178,14 +178,14 @@ auto HandleStatementReturn(Context& context) -> void {
   state.state = State::StatementReturnFinish;
   context.PushState(state);
 
-  context.AddLeafNode(LampKind::ReturnStatementStart, context.Consume());
+  context.AddLeafNode(NodeKind::ReturnStatementStart, context.Consume());
   if (!context.PositionIs(Lex::TokenKind::Semi)) {
     context.PushState(State::Expression);
   }
 }
 
 auto HandleStatementReturnFinish(Context& context) -> void {
-  HandleStatementKeywordFinish(context, LampKind::ReturnStatement);
+  HandleStatementKeywordFinish(context, NodeKind::ReturnStatement);
 }
 
 auto HandleStatementScopeLoop(Context& context) -> void {
@@ -221,7 +221,7 @@ auto HandleStatementWhileConditionFinish(Context& context) -> void {
 auto HandleStatementWhileBlockFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddInst(LampKind::WhileStatement, state.token, state.subtree_start,
+  context.AddInst(NodeKind::WhileStatement, state.token, state.subtree_start,
                   state.has_error);
 }
 

@@ -11,10 +11,10 @@ auto HandleCodeBlock(Context& context) -> void {
 
   context.PushState(State::CodeBlockFinish);
   if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::OpenCurlyBrace,
-                                      LampKind::CodeBlockStart)) {
+                                      NodeKind::CodeBlockStart)) {
     context.PushState(State::StatementScopeLoop);
   } else {
-    context.AddLeafNode(LampKind::CodeBlockStart, *context.position(),
+    context.AddLeafNode(NodeKind::CodeBlockStart, *context.position(),
                         /*has_error=*/true);
 
     // Recover by parsing a single statement.
@@ -30,10 +30,10 @@ auto HandleCodeBlockFinish(Context& context) -> void {
 
   // If the block started with an open curly, this is a close curly.
   if (context.tokens().GetKind(state.token) == Lex::TokenKind::OpenCurlyBrace) {
-    context.AddInst(LampKind::CodeBlock, context.Consume(), state.subtree_start,
+    context.AddInst(NodeKind::CodeBlock, context.Consume(), state.subtree_start,
                     state.has_error);
   } else {
-    context.AddInst(LampKind::CodeBlock, state.token, state.subtree_start,
+    context.AddInst(NodeKind::CodeBlock, state.token, state.subtree_start,
                     /*has_error=*/true);
   }
 }

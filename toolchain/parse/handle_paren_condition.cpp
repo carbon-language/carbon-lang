@@ -7,7 +7,7 @@
 namespace Carbon::Parse {
 
 // Handles ParenConditionAs(If|While).
-static auto HandleParenCondition(Context& context, LampKind start_kind,
+static auto HandleParenCondition(Context& context, NodeKind start_kind,
                                  State finish_state) -> void {
   auto state = context.PopState();
 
@@ -23,7 +23,7 @@ static auto HandleParenCondition(Context& context, LampKind start_kind,
     // For an open curly, assume the condition was completely omitted.
     // Expression parsing would treat the { as a struct, but instead assume it's
     // a code block and just emit an invalid parse.
-    context.AddLeafNode(LampKind::InvalidParse, *context.position(),
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
   } else {
     context.PushState(State::Expression);
@@ -31,26 +31,26 @@ static auto HandleParenCondition(Context& context, LampKind start_kind,
 }
 
 auto HandleParenConditionAsIf(Context& context) -> void {
-  HandleParenCondition(context, LampKind::IfConditionStart,
+  HandleParenCondition(context, NodeKind::IfConditionStart,
                        State::ParenConditionFinishAsIf);
 }
 
 auto HandleParenConditionAsWhile(Context& context) -> void {
-  HandleParenCondition(context, LampKind::WhileConditionStart,
+  HandleParenCondition(context, NodeKind::WhileConditionStart,
                        State::ParenConditionFinishAsWhile);
 }
 
 auto HandleParenConditionFinishAsIf(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state, LampKind::IfCondition);
+  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::IfCondition);
 }
 
 auto HandleParenConditionFinishAsWhile(Context& context) -> void {
   auto state = context.PopState();
 
   context.ConsumeAndAddCloseSymbol(state.token, state,
-                                   LampKind::WhileCondition);
+                                   NodeKind::WhileCondition);
 }
 
 }  // namespace Carbon::Parse

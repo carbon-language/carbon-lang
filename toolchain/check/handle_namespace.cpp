@@ -7,16 +7,16 @@
 
 namespace Carbon::Check {
 
-auto HandleNamespaceStart(Context& context, Parse::Lamp /*parse_lamp*/)
+auto HandleNamespaceStart(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   context.declaration_name_stack().Push();
   return true;
 }
 
-auto HandleNamespace(Context& context, Parse::Lamp parse_lamp) -> bool {
+auto HandleNamespace(Context& context, Parse::Node parse_node) -> bool {
   auto name_context = context.declaration_name_stack().Pop();
   auto namespace_id = context.AddInst(SemIR::Namespace{
-      parse_lamp, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+      parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
       context.name_scopes().Add()});
   context.declaration_name_stack().AddNameToLookup(name_context, namespace_id);
   return true;

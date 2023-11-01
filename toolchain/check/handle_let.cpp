@@ -8,17 +8,17 @@
 
 namespace Carbon::Check {
 
-auto HandleLetDeclaration(Context& context, Parse::Lamp parse_lamp) -> bool {
-  auto value_id = context.lamp_stack().PopExpression();
+auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
+  auto value_id = context.node_stack().PopExpression();
   SemIR::InstId pattern_id =
-      context.lamp_stack().Pop<Parse::LampKind::PatternBinding>();
-  context.lamp_stack()
-      .PopAndDiscardSoloParseLamp<Parse::LampKind::LetIntroducer>();
+      context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
 
   // Convert the value to match the type of the pattern.
   auto pattern = context.insts().Get(pattern_id);
   value_id =
-      ConvertToValueOfType(context, parse_lamp, value_id, pattern.type_id());
+      ConvertToValueOfType(context, parse_node, value_id, pattern.type_id());
 
   // Update the binding with its value and add it to the current block, after
   // the computation of the value.
@@ -31,17 +31,17 @@ auto HandleLetDeclaration(Context& context, Parse::Lamp parse_lamp) -> bool {
   context.inst_block_stack().AddInstId(pattern_id);
 
   // Add the name of the binding to the current scope.
-  context.AddNameToLookup(pattern.parse_lamp(), bind_name.name_id, pattern_id);
+  context.AddNameToLookup(pattern.parse_node(), bind_name.name_id, pattern_id);
   return true;
 }
 
-auto HandleLetIntroducer(Context& context, Parse::Lamp parse_lamp) -> bool {
+auto HandleLetIntroducer(Context& context, Parse::Node parse_node) -> bool {
   // Push a bracketing node to establish the pattern context.
-  context.lamp_stack().Push(parse_lamp);
+  context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleLetInitializer(Context& /*context*/, Parse::Lamp /*parse_lamp*/)
+auto HandleLetInitializer(Context& /*context*/, Parse::Node /*parse_node*/)
     -> bool {
   return true;
 }

@@ -9,28 +9,28 @@
 
 namespace Carbon::Check {
 
-auto HandleCallExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
+auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   // Process the final explicit call argument now, but leave the arguments
   // block on the stack until the end of this function.
-  context.ParamOrArgEndNoPop(Parse::LampKind::CallExpressionStart);
+  context.ParamOrArgEndNoPop(Parse::NodeKind::CallExpressionStart);
   auto discard_args_block = llvm::make_scope_exit(
       [&] { context.params_or_args_stack().PopAndDiscard(); });
 
-  auto [call_expr_parse_lamp, callee_id] =
-      context.lamp_stack()
-          .PopWithParseLamp<Parse::LampKind::CallExpressionStart>();
+  auto [call_expr_parse_node, callee_id] =
+      context.node_stack()
+          .PopWithParseNode<Parse::NodeKind::CallExpressionStart>();
 
-  auto diagnose_not_callable = [&, call_expr_parse_lamp = call_expr_parse_lamp,
+  auto diagnose_not_callable = [&, call_expr_parse_node = call_expr_parse_node,
                                 callee_id = callee_id] {
     auto callee_type_id = context.insts().Get(callee_id).type_id();
     if (callee_type_id != SemIR::TypeId::Error) {
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,
                         "Value of type `{0}` is not callable.", std::string);
       context.emitter().Emit(
-          call_expr_parse_lamp, CallToNonCallable,
+          call_expr_parse_node, CallToNonCallable,
           context.sem_ir().StringifyType(callee_type_id, true));
     }
-    context.lamp_stack().Push(parse_lamp, SemIR::InstId::BuiltinError);
+    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   };
 
@@ -60,7 +60,7 @@ auto HandleCallExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
   // tuple type.
   SemIR::TypeId type_id = callable.return_type_id;
   if (!type_id.is_valid()) {
-    type_id = context.CanonicalizeTupleType(call_expr_parse_lamp, {});
+    type_id = context.CanonicalizeTupleType(call_expr_parse_node, {});
   }
 
   // If there is a return slot, build storage for the result.
@@ -69,32 +69,32 @@ auto HandleCallExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
     // Tentatively put storage for a temporary in the function's return slot.
     // This will be replaced if necessary when we perform initialization.
     return_storage_id = context.AddInst(
-        SemIR::TemporaryStorage{call_expr_parse_lamp, callable.return_type_id});
+        SemIR::TemporaryStorage{call_expr_parse_node, callable.return_type_id});
   }
 
   // Convert the arguments to match the parameters.
   auto converted_args_id =
-      ConvertCallArgs(context, call_expr_parse_lamp, self_id,
+      ConvertCallArgs(context, call_expr_parse_node, self_id,
                       context.params_or_args_stack().PeekCurrentBlockContents(),
-                      return_storage_id, function_decl->parse_lamp,
+                      return_storage_id, function_decl->parse_node,
                       callable.implicit_param_refs_id, callable.param_refs_id);
   SemIR::InstId call_inst_id = context.AddInst(
-      SemIR::Call{call_expr_parse_lamp, type_id, callee_id, converted_args_id});
+      SemIR::Call{call_expr_parse_node, type_id, callee_id, converted_args_id});
 
-  context.lamp_stack().Push(parse_lamp, call_inst_id);
+  context.node_stack().Push(parse_node, call_inst_id);
   return true;
 }
 
-auto HandleCallExpressionComma(Context& context, Parse::Lamp /*parse_lamp*/)
+auto HandleCallExpressionComma(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleCallExpressionStart(Context& context, Parse::Lamp parse_lamp)
+auto HandleCallExpressionStart(Context& context, Parse::Node parse_node)
     -> bool {
-  auto name_id = context.lamp_stack().PopExpression();
-  context.lamp_stack().Push(parse_lamp, name_id);
+  auto name_id = context.node_stack().PopExpression();
+  context.node_stack().Push(parse_node, name_id);
   context.ParamOrArgStart();
   return true;
 }

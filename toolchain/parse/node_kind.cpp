@@ -8,12 +8,12 @@
 
 namespace Carbon::Parse {
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(LampKind) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) = {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/parse/node_kind.def"
 };
 
-auto LampKind::has_bracket() const -> bool {
+auto NodeKind::has_bracket() const -> bool {
   static constexpr bool HasBracket[] = {
 #define CARBON_PARSE_NODE_KIND_BRACKET(...) true,
 #define CARBON_PARSE_NODE_KIND_CHILD_COUNT(...) false,
@@ -22,13 +22,13 @@ auto LampKind::has_bracket() const -> bool {
   return HasBracket[AsInt()];
 }
 
-auto LampKind::bracket() const -> LampKind {
-  // Lamps are never self-bracketed, so we use that for nodes that instead set
+auto NodeKind::bracket() const -> NodeKind {
+  // Nodes are never self-bracketed, so we use that for nodes that instead set
   // child_count.
-  static constexpr LampKind Bracket[] = {
+  static constexpr NodeKind Bracket[] = {
 #define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, ...) \
-  LampKind::BracketName,
-#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ...) LampKind::Name,
+  NodeKind::BracketName,
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ...) NodeKind::Name,
 #include "toolchain/parse/node_kind.def"
   };
   auto bracket = Bracket[AsInt()];
@@ -36,7 +36,7 @@ auto LampKind::bracket() const -> LampKind {
   return bracket;
 }
 
-auto LampKind::child_count() const -> int32_t {
+auto NodeKind::child_count() const -> int32_t {
   static constexpr int32_t ChildCount[] = {
 #define CARBON_PARSE_NODE_KIND_BRACKET(...) -1,
 #define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, ...) Size,
@@ -47,13 +47,13 @@ auto LampKind::child_count() const -> int32_t {
   return child_count;
 }
 
-void CheckNodeMatchesLexerToken(LampKind node_kind, Lex::TokenKind token_kind,
+void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
                                 bool has_error) {
   switch (node_kind) {
     // Use `CARBON_LOG CARBON_ANY_TOKEN` to discover which combinations happen
     // in practice.
 #define CARBON_LOG                                                        \
-  llvm::errs() << "ZZZ: Created parse node with LampKind " << node_kind   \
+  llvm::errs() << "ZZZ: Created parse node with NodeKind " << node_kind   \
                << " and has_error " << has_error << " for lexical token " \
                << token_kind << "\n";
 
@@ -70,7 +70,7 @@ void CheckNodeMatchesLexerToken(LampKind node_kind, Lex::TokenKind token_kind,
   }
 
 #define CARBON_CASE(Name, MatchActions) \
-  case LampKind::Name:                  \
+  case NodeKind::Name:                  \
     MatchActions;                       \
     break;
 
@@ -85,7 +85,7 @@ void CheckNodeMatchesLexerToken(LampKind node_kind, Lex::TokenKind token_kind,
 #undef CARBON_LOG
 #undef CARBON_CASE
   }
-  CARBON_FATAL() << "Created parse node with LampKind " << node_kind
+  CARBON_FATAL() << "Created parse node with NodeKind " << node_kind
                  << " and has_error " << has_error
                  << " for unexpected lexical token " << token_kind;
 }

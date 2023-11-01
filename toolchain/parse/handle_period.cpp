@@ -9,7 +9,7 @@ namespace Carbon::Parse {
 // Handles PeriodAs variants and ArrowExpression.
 // TODO: This currently only supports identifiers on the rhs, but will in the
 // future need to handle things like `object.(Interface.member)` for qualifiers.
-static auto HandlePeriodOrArrow(Context& context, LampKind node_kind,
+static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
                                 bool is_arrow) -> void {
   auto state = context.PopState();
 
@@ -18,7 +18,7 @@ static auto HandlePeriodOrArrow(Context& context, LampKind node_kind,
                                              : Lex::TokenKind::Period);
 
   if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                       LampKind::Name)) {
+                                       NodeKind::Name)) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
                       "Expected identifier after `{0}`.", llvm::StringRef);
     context.emitter().Emit(*context.position(),
@@ -27,10 +27,10 @@ static auto HandlePeriodOrArrow(Context& context, LampKind node_kind,
     // If we see a keyword, assume it was intended to be a name.
     // TODO: Should keywords be valid here?
     if (context.PositionKind().is_keyword()) {
-      context.AddLeafNode(LampKind::Name, context.Consume(),
+      context.AddLeafNode(NodeKind::Name, context.Consume(),
                           /*has_error=*/true);
     } else {
-      context.AddLeafNode(LampKind::Name, *context.position(),
+      context.AddLeafNode(NodeKind::Name, *context.position(),
                           /*has_error=*/true);
       // Indicate the error to the parent state so that it can avoid producing
       // more errors.
@@ -42,22 +42,22 @@ static auto HandlePeriodOrArrow(Context& context, LampKind node_kind,
 }
 
 auto HandlePeriodAsDeclaration(Context& context) -> void {
-  HandlePeriodOrArrow(context, LampKind::QualifiedDeclaration,
+  HandlePeriodOrArrow(context, NodeKind::QualifiedDeclaration,
                       /*is_arrow=*/false);
 }
 
 auto HandlePeriodAsExpression(Context& context) -> void {
-  HandlePeriodOrArrow(context, LampKind::MemberAccessExpression,
+  HandlePeriodOrArrow(context, NodeKind::MemberAccessExpression,
                       /*is_arrow=*/false);
 }
 
 auto HandlePeriodAsStruct(Context& context) -> void {
-  HandlePeriodOrArrow(context, LampKind::StructFieldDesignator,
+  HandlePeriodOrArrow(context, NodeKind::StructFieldDesignator,
                       /*is_arrow=*/false);
 }
 
 auto HandleArrowExpression(Context& context) -> void {
-  HandlePeriodOrArrow(context, LampKind::PointerMemberAccessExpression,
+  HandlePeriodOrArrow(context, NodeKind::PointerMemberAccessExpression,
                       /*is_arrow=*/true);
 }
 

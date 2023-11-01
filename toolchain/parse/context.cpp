@@ -56,29 +56,29 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
       << tokens_->GetKind(*end_);
 }
 
-auto Context::AddLeafNode(LampKind kind, Lex::Token token, bool has_error)
+auto Context::AddLeafNode(NodeKind kind, Lex::Token token, bool has_error)
     -> void {
   CheckNodeMatchesLexerToken(kind, tokens_->GetKind(token), has_error);
   tree_->node_impls_.push_back(
-      Tree::LampImpl(kind, has_error, token, /*subtree_size=*/1));
+      Tree::NodeImpl(kind, has_error, token, /*subtree_size=*/1));
   if (has_error) {
     tree_->has_errors_ = true;
   }
 }
 
-auto Context::AddInst(LampKind kind, Lex::Token token, int subtree_start,
+auto Context::AddInst(NodeKind kind, Lex::Token token, int subtree_start,
                       bool has_error) -> void {
   CheckNodeMatchesLexerToken(kind, tokens_->GetKind(token), has_error);
   int subtree_size = tree_->size() - subtree_start + 1;
   tree_->node_impls_.push_back(
-      Tree::LampImpl(kind, has_error, token, subtree_size));
+      Tree::NodeImpl(kind, has_error, token, subtree_size));
   if (has_error) {
     tree_->has_errors_ = true;
   }
 }
 
 auto Context::ConsumeAndAddOpenParen(Lex::Token default_token,
-                                     LampKind start_kind)
+                                     NodeKind start_kind)
     -> std::optional<Lex::Token> {
   if (auto open_paren = ConsumeIf(Lex::TokenKind::OpenParen)) {
     AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
@@ -95,7 +95,7 @@ auto Context::ConsumeAndAddOpenParen(Lex::Token default_token,
 
 auto Context::ConsumeAndAddCloseSymbol(Lex::Token expected_open,
                                        StateStackEntry state,
-                                       LampKind close_kind) -> void {
+                                       NodeKind close_kind) -> void {
   Lex::TokenKind open_token_kind = tokens().GetKind(expected_open);
 
   if (!open_token_kind.is_opening_symbol()) {
@@ -116,7 +116,7 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::Token expected_open,
 }
 
 auto Context::ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind,
-                                      LampKind node_kind) -> bool {
+                                      NodeKind node_kind) -> bool {
   auto token = ConsumeIf(token_kind);
   if (!token) {
     return false;
@@ -361,7 +361,7 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   }
 }
 
-auto Context::ConsumeListToken(LampKind comma_kind, Lex::TokenKind close_kind,
+auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
                                bool already_has_error) -> ListTokenKind {
   if (!PositionIs(Lex::TokenKind::Comma) && !PositionIs(close_kind)) {
     // Don't error a second time on the same element.
@@ -416,7 +416,7 @@ auto Context::GetDeclarationContext() -> DeclarationContext {
 }
 
 auto Context::RecoverFromDeclarationError(StateStackEntry state,
-                                          LampKind parse_lamp_kind,
+                                          NodeKind parse_node_kind,
                                           bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {
@@ -424,7 +424,7 @@ auto Context::RecoverFromDeclarationError(StateStackEntry state,
       token = *semi;
     }
   }
-  AddInst(parse_lamp_kind, token, state.subtree_start,
+  AddInst(parse_node_kind, token, state.subtree_start,
           /*has_error=*/true);
 }
 

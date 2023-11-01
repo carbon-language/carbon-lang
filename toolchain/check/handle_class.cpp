@@ -7,12 +7,12 @@
 
 namespace Carbon::Check {
 
-auto HandleClassIntroducer(Context& context, Parse::Lamp parse_lamp) -> bool {
+auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   // Create a inst block to hold the insts created as part of the class
   // signature, such as generic parameters.
   context.inst_block_stack().Push();
   // Push the bracketing node.
-  context.lamp_stack().Push(parse_lamp);
+  context.node_stack().Push(parse_node);
   // A name should always follow.
   context.declaration_name_stack().Push();
   return true;
@@ -22,8 +22,8 @@ static auto BuildClassDeclaration(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.declaration_name_stack().Pop();
   auto class_keyword =
-      context.lamp_stack()
-          .PopForSoloParseLamp<Parse::LampKind::ClassIntroducer>();
+      context.node_stack()
+          .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
@@ -41,7 +41,7 @@ static auto BuildClassDeclaration(Context& context)
       class_decl.class_id = existing_class_decl->class_id;
     } else {
       // This is a redeclaration of something other than a class.
-      context.DiagnoseDuplicateName(name_context.parse_lamp, existing_id);
+      context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
     }
   }
 
@@ -73,13 +73,13 @@ static auto BuildClassDeclaration(Context& context)
   return {class_decl.class_id, class_decl_id};
 }
 
-auto HandleClassDeclaration(Context& context, Parse::Lamp /*parse_lamp*/)
+auto HandleClassDeclaration(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   BuildClassDeclaration(context);
   return true;
 }
 
-auto HandleClassDefinitionStart(Context& context, Parse::Lamp parse_lamp)
+auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
     -> bool {
   auto [class_id, class_decl_id] = BuildClassDeclaration(context);
   auto& class_info = context.classes().Get(class_id);
@@ -91,9 +91,9 @@ auto HandleClassDefinitionStart(Context& context, Parse::Lamp parse_lamp)
     CARBON_DIAGNOSTIC(ClassPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
-        .Build(parse_lamp, ClassRedefinition,
+        .Build(parse_node, ClassRedefinition,
                context.strings().Get(class_info.name_id))
-        .Note(context.insts().Get(class_info.definition_id).parse_lamp(),
+        .Note(context.insts().Get(class_info.definition_id).parse_node(),
               ClassPreviousDefinition)
         .Emit();
   } else {
@@ -109,13 +109,13 @@ auto HandleClassDefinitionStart(Context& context, Parse::Lamp parse_lamp)
   // should not. See #2984 and the corresponding code in
   // HandleSelfTypeNameExpression.
   context.AddNameToLookup(
-      parse_lamp,
+      parse_node,
       context.strings().Add(
           Lex::TokenKind::SelfTypeIdentifier.fixed_spelling()),
       context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
 
   context.inst_block_stack().Push();
-  context.lamp_stack().Push(parse_lamp, class_id);
+  context.node_stack().Push(parse_node, class_id);
   context.args_type_info_stack().Push();
 
   // TODO: Handle the case where there's control flow in the class body. For
@@ -130,17 +130,17 @@ auto HandleClassDefinitionStart(Context& context, Parse::Lamp parse_lamp)
   return true;
 }
 
-auto HandleClassDefinition(Context& context, Parse::Lamp parse_lamp) -> bool {
+auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
-      context.lamp_stack().Pop<Parse::LampKind::ClassDefinitionStart>();
+      context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.inst_block_stack().Pop();
   context.PopScope();
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);
   class_info.object_representation_id =
-      context.CanonicalizeStructType(parse_lamp, fields_id);
+      context.CanonicalizeStructType(parse_node, fields_id);
   return true;
 }
 
