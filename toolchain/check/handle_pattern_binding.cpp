@@ -8,9 +8,9 @@
 
 namespace Carbon::Check {
 
-auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
+auto HandleAddress(Context& context, Parse::Lamp parse_node) -> bool {
   auto self_param_id =
-      context.lamp_stack().Peek<Parse::NodeKind::PatternBinding>();
+      context.lamp_stack().Peek<Parse::LampKind::PatternBinding>();
   if (auto self_param =
           context.insts().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
     self_param->is_addr_self = SemIR::BoolValue::True;
@@ -23,12 +23,12 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
+auto HandleGenericPatternBinding(Context& context, Parse::Lamp parse_node)
     -> bool {
   return context.TODO(parse_node, "GenericPatternBinding");
 }
 
-auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
+auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.lamp_stack().PopExpressionWithParseNode();
   auto type_node_copy = type_node;
@@ -37,9 +37,9 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   // A `self` binding doesn't have a name.
   if (auto self_node =
           context.lamp_stack()
-              .PopForSoloParseNodeIf<Parse::NodeKind::SelfValueName>()) {
+              .PopForSoloParseNodeIf<Parse::LampKind::SelfValueName>()) {
     if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) !=
-        Parse::NodeKind::ImplicitParameterListStart) {
+        Parse::LampKind::ImplicitParameterListStart) {
       CARBON_DIAGNOSTIC(
           SelfOutsideImplicitParameterList, Error,
           "`self` can only be declared in an implicit parameter list");
@@ -56,13 +56,13 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] =
-      context.lamp_stack().PopWithParseNode<Parse::NodeKind::Name>();
+      context.lamp_stack().PopWithParseNode<Parse::LampKind::Name>();
 
   // Allocate a node of the appropriate kind, linked to the name for error
   // locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.lamp_stack().PeekParseNode())) {
-    case Parse::NodeKind::VariableIntroducer: {
+    case Parse::LampKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl =
           context.GetCurrentScopeAs<SemIR::ClassDeclaration>();
@@ -107,8 +107,8 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       break;
     }
 
-    case Parse::NodeKind::ImplicitParameterListStart:
-    case Parse::NodeKind::ParameterListStart:
+    case Parse::LampKind::ImplicitParameterListStart:
+    case Parse::LampKind::ParameterListStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
       context.AddNodeAndPush(
@@ -116,7 +116,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       // TODO: Create a `BindName` node.
       break;
 
-    case Parse::NodeKind::LetIntroducer:
+    case Parse::LampKind::LetIntroducer:
       if (!context.TryToCompleteType(cast_type_id, [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInLetDeclaration, Error,
                               "`let` binding has incomplete type `{0}`.",
@@ -144,7 +144,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleTemplate(Context& context, Parse::Node parse_node) -> bool {
+auto HandleTemplate(Context& context, Parse::Lamp parse_node) -> bool {
   return context.TODO(parse_node, "HandleTemplate");
 }
 

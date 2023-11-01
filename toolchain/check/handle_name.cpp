@@ -36,9 +36,9 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
   return std::nullopt;
 }
 
-auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
+auto HandleMemberAccessExpression(Context& context, Parse::Lamp parse_node)
     -> bool {
-  StringId name_id = context.lamp_stack().Pop<Parse::NodeKind::Name>();
+  StringId name_id = context.lamp_stack().Pop<Parse::LampKind::Name>();
   auto base_id = context.lamp_stack().PopExpression();
 
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -192,11 +192,11 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
 }
 
 auto HandlePointerMemberAccessExpression(Context& context,
-                                         Parse::Node parse_node) -> bool {
+                                         Parse::Lamp parse_node) -> bool {
   return context.TODO(parse_node, "HandlePointerMemberAccessExpression");
 }
 
-auto HandleName(Context& context, Parse::Node parse_node) -> bool {
+auto HandleName(Context& context, Parse::Lamp parse_node) -> bool {
   auto name_id = context.tokens().GetIdentifier(
       context.parse_tree().node_token(parse_node));
   // The parent is responsible for binding the name.
@@ -204,7 +204,7 @@ auto HandleName(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
+auto HandleNameExpression(Context& context, Parse::Lamp parse_node) -> bool {
   auto name_id = context.tokens().GetIdentifier(
       context.parse_tree().node_token(parse_node));
   auto value_id =
@@ -219,30 +219,30 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
     value = context.insts().Get(value_id);
   }
 
-  CARBON_CHECK(value.kind().value_kind() == SemIR::NodeValueKind::Typed);
+  CARBON_CHECK(value.kind().value_kind() == SemIR::InstValueKind::Typed);
   context.AddNodeAndPush(
       parse_node,
       SemIR::NameReference{parse_node, value.type_id(), name_id, value_id});
   return true;
 }
 
-auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
+auto HandleQualifiedDeclaration(Context& context, Parse::Lamp parse_node)
     -> bool {
   auto [parse_node2, name_id2] =
-      context.lamp_stack().PopWithParseNode<Parse::NodeKind::Name>();
+      context.lamp_stack().PopWithParseNode<Parse::LampKind::Name>();
 
-  Parse::Node parse_node1 = context.lamp_stack().PeekParseNode();
+  Parse::Lamp parse_node1 = context.lamp_stack().PeekParseNode();
   switch (context.parse_tree().node_kind(parse_node1)) {
-    case Parse::NodeKind::QualifiedDeclaration:
+    case Parse::LampKind::QualifiedDeclaration:
       // This is the second or subsequent QualifiedDeclaration in a chain.
       // Nothing to do: the first QualifiedDeclaration remains as a
       // bracketing node for later QualifiedDeclarations.
       break;
 
-    case Parse::NodeKind::Name: {
+    case Parse::LampKind::Name: {
       // This is the first QualifiedDeclaration in a chain, and starts with a
       // name.
-      auto name_id = context.lamp_stack().Pop<Parse::NodeKind::Name>();
+      auto name_id = context.lamp_stack().Pop<Parse::LampKind::Name>();
       context.declaration_name_stack().ApplyNameQualifier(parse_node1, name_id);
       // Add the QualifiedDeclaration so that it can be used for bracketing.
       context.lamp_stack().Push(parse_node);
@@ -258,7 +258,7 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
+auto HandleSelfTypeNameExpression(Context& context, Parse::Lamp parse_node)
     -> bool {
   // TODO: This will find a local variable declared with name `r#Self`, but
   // should not. See #2984 and the corresponding code in
@@ -275,12 +275,12 @@ auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
+auto HandleSelfValueName(Context& context, Parse::Lamp parse_node) -> bool {
   context.lamp_stack().Push(parse_node);
   return true;
 }
 
-auto HandleSelfValueNameExpression(Context& context, Parse::Node parse_node)
+auto HandleSelfValueNameExpression(Context& context, Parse::Lamp parse_node)
     -> bool {
   // TODO: This will find a local variable declared with name `r#self`, but
   // should not. See #2984 and the corresponding code in

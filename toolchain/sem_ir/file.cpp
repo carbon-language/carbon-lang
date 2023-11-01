@@ -108,7 +108,7 @@ auto File::Verify() const -> ErrorOr<Success> {
         TerminatorKind node_kind =
             insts().Get(inst_id).kind().terminator_kind();
         if (prior_kind == TerminatorKind::Terminator) {
-          return Error(llvm::formatv("Node {0} in block {1} follows terminator",
+          return Error(llvm::formatv("Inst {0} in block {1} follows terminator",
                                      inst_id, block_id));
         }
         if (prior_kind > node_kind) {

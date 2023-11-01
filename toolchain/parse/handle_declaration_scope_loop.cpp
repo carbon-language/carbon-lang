@@ -15,7 +15,7 @@ static auto HandleUnrecognizedDeclaration(Context& context) -> void {
   auto semi = context.SkipPastLikelyEnd(cursor);
   // Locate the EmptyDeclaration at the semi when found, but use the
   // original cursor location for an error when not.
-  context.AddLeafNode(NodeKind::EmptyDeclaration, semi ? *semi : cursor,
+  context.AddLeafNode(LampKind::EmptyDeclaration, semi ? *semi : cursor,
                       /*has_error=*/true);
 }
 
@@ -74,7 +74,7 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
           break;
         }
         case Lex::TokenKind::Semi: {
-          context.AddLeafNode(NodeKind::EmptyDeclaration, context.Consume());
+          context.AddLeafNode(LampKind::EmptyDeclaration, context.Consume());
           break;
         }
         case Lex::TokenKind::Var: {

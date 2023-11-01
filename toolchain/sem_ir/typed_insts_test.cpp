@@ -11,12 +11,12 @@
 
 namespace Carbon::SemIR {
 
-// A friend of `SemIR::Node` that is used to pierce the abstraction.
-class NodeTestHelper {
+// A friend of `SemIR::Inst` that is used to pierce the abstraction.
+class InstTestHelper {
  public:
-  static auto MakeNode(InstKind node_kind, Parse::Node parse_node,
-                       TypeId type_id, int32_t arg0, int32_t arg1) -> Node {
-    return Node(node_kind, parse_node, type_id, arg0, arg1);
+  static auto MakeNode(InstKind node_kind, Parse::Lamp parse_node,
+                       TypeId type_id, int32_t arg0, int32_t arg1) -> Inst {
+    return Inst(node_kind, parse_node, type_id, arg0, arg1);
   }
 };
 
@@ -50,15 +50,15 @@ TYPED_TEST_SUITE(TypedInstTest, TypedInstTypes);
 TYPED_TEST(TypedInstTest, CommonFieldOrder) {
   using TypedInst = TypeParam;
 
-  Node node = NodeTestHelper::MakeNode(TypeParam::Kind, Parse::Node(1),
+  Inst node = InstTestHelper::MakeNode(TypeParam::Kind, Parse::Lamp(1),
                                        TypeId(2), 3, 4);
   EXPECT_EQ(node.kind(), TypeParam::Kind);
-  EXPECT_EQ(node.parse_node(), Parse::Node(1));
+  EXPECT_EQ(node.parse_node(), Parse::Lamp(1));
   EXPECT_EQ(node.type_id(), TypeId(2));
 
   TypedInst typed = node.As<TypedInst>();
   if constexpr (HasParseNode<TypedInst>) {
-    EXPECT_EQ(typed.parse_node, Parse::Node(1));
+    EXPECT_EQ(typed.parse_node, Parse::Lamp(1));
   }
   if constexpr (HasTypeId<TypedInst>) {
     EXPECT_EQ(typed.type_id, TypeId(2));
@@ -68,14 +68,14 @@ TYPED_TEST(TypedInstTest, CommonFieldOrder) {
 TYPED_TEST(TypedInstTest, RoundTrip) {
   using TypedInst = TypeParam;
 
-  Node node1 = NodeTestHelper::MakeNode(TypeParam::Kind, Parse::Node(1),
+  Inst node1 = InstTestHelper::MakeNode(TypeParam::Kind, Parse::Lamp(1),
                                         TypeId(2), 3, 4);
   EXPECT_EQ(node1.kind(), TypeParam::Kind);
-  EXPECT_EQ(node1.parse_node(), Parse::Node(1));
+  EXPECT_EQ(node1.parse_node(), Parse::Lamp(1));
   EXPECT_EQ(node1.type_id(), TypeId(2));
 
   TypedInst typed1 = node1.As<TypedInst>();
-  Node node2 = typed1;
+  Inst node2 = typed1;
 
   EXPECT_EQ(node1.kind(), node2.kind());
   if constexpr (HasParseNode<TypedInst>) {
@@ -95,9 +95,9 @@ TYPED_TEST(TypedInstTest, RoundTrip) {
   // The original node might not be identical after one round trip, because the
   // fields not carried by the typed node are lost. But they should be stable
   // if we round-trip again.
-  Node node3 = typed2;
-  if constexpr (std::has_unique_object_representations_v<Node>) {
-    EXPECT_EQ(std::memcmp(&node2, &node3, sizeof(Node)), 0);
+  Inst node3 = typed2;
+  if constexpr (std::has_unique_object_representations_v<Inst>) {
+    EXPECT_EQ(std::memcmp(&node2, &node3, sizeof(Inst)), 0);
   }
 }
 
@@ -105,7 +105,7 @@ TYPED_TEST(TypedInstTest, StructLayout) {
   using TypedInst = TypeParam;
 
   TypedInst typed =
-      NodeTestHelper::MakeNode(TypeParam::Kind, Parse::Node(1), TypeId(2), 3, 4)
+      InstTestHelper::MakeNode(TypeParam::Kind, Parse::Lamp(1), TypeId(2), 3, 4)
           .template As<TypedInst>();
 
   // Check that the memory representation of the typed node is what we expect.

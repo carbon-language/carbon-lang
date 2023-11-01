@@ -44,7 +44,7 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
       }
     }
     // Add a placeholder for the type.
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+    context.AddLeafNode(LampKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
     state.state = State::PatternFinishAsRegular;
     state.has_error = true;
@@ -54,18 +54,18 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
   // The first item should be an identifier or `self`.
   bool has_name = false;
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-    context.AddLeafNode(NodeKind::Name, *identifier);
+    context.AddLeafNode(LampKind::Name, *identifier);
     has_name = true;
   } else if (auto self =
                  context.ConsumeIf(Lex::TokenKind::SelfValueIdentifier)) {
     // Checking will validate the `self` is only declared in the implicit
     // parameter list of a function.
-    context.AddLeafNode(NodeKind::SelfValueName, *self);
+    context.AddLeafNode(LampKind::SelfValueName, *self);
     has_name = true;
   }
   if (!has_name) {
     // Add a placeholder for the name.
-    context.AddLeafNode(NodeKind::Name, *context.position(),
+    context.AddLeafNode(LampKind::Name, *context.position(),
                         /*has_error=*/true);
     on_error();
     return;
@@ -102,7 +102,7 @@ auto HandlePatternAsLet(Context& context) -> void {
 }
 
 // Handles PatternFinishAs(Generic|Regular).
-static auto HandlePatternFinish(Context& context, NodeKind node_kind) -> void {
+static auto HandlePatternFinish(Context& context, LampKind node_kind) -> void {
   auto state = context.PopState();
 
   context.AddNode(node_kind, state.token, state.subtree_start, state.has_error);
@@ -115,17 +115,17 @@ static auto HandlePatternFinish(Context& context, NodeKind node_kind) -> void {
 }
 
 auto HandlePatternFinishAsGeneric(Context& context) -> void {
-  HandlePatternFinish(context, NodeKind::GenericPatternBinding);
+  HandlePatternFinish(context, LampKind::GenericPatternBinding);
 }
 
 auto HandlePatternFinishAsRegular(Context& context) -> void {
-  HandlePatternFinish(context, NodeKind::PatternBinding);
+  HandlePatternFinish(context, LampKind::PatternBinding);
 }
 
 auto HandlePatternAddress(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::Address, state.token, state.subtree_start,
+  context.AddNode(LampKind::Address, state.token, state.subtree_start,
                   state.has_error);
 
   // If an error was encountered, propagate it while adding a node.
@@ -137,7 +137,7 @@ auto HandlePatternAddress(Context& context) -> void {
 auto HandlePatternTemplate(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::Template, state.token, state.subtree_start,
+  context.AddNode(LampKind::Template, state.token, state.subtree_start,
                   state.has_error);
 
   // If an error was encountered, propagate it while adding a node.

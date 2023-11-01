@@ -6,15 +6,15 @@
 
 namespace Carbon::Check {
 
-auto HandleCodeBlockStart(Context& context, Parse::Node parse_node) -> bool {
+auto HandleCodeBlockStart(Context& context, Parse::Lamp parse_node) -> bool {
   context.lamp_stack().Push(parse_node);
   context.PushScope();
   return true;
 }
 
-auto HandleCodeBlock(Context& context, Parse::Node /*parse_node*/) -> bool {
+auto HandleCodeBlock(Context& context, Parse::Lamp /*parse_node*/) -> bool {
   context.PopScope();
-  context.lamp_stack().PopForSoloParseNode<Parse::NodeKind::CodeBlockStart>();
+  context.lamp_stack().PopForSoloParseNode<Parse::LampKind::CodeBlockStart>();
   return true;
 }
 

@@ -18,8 +18,8 @@
 
 namespace Carbon::SemIR {
 
-// Data about the arguments of a typed node, to aid in type erasure. The `KindT`
-// parameter is used to check that `TypedInst` is a typed node.
+// Data about the arguments of a typed inst, to aid in type erasure. The `KindT`
+// parameter is used to check that `TypedInst` is a typed inst.
 template <typename TypedInst,
           const InstKind::Definition& KindT = TypedInst::Kind>
 struct TypedInstArgsInfo {
@@ -31,41 +31,41 @@ struct TypedInstArgsInfo {
 
   static constexpr int NumArgs = std::tuple_size_v<Tuple> - FirstArgField;
   static_assert(NumArgs <= 2,
-                "Unsupported: typed node has more than two data fields");
+                "Unsupported: typed inst has more than two data fields");
 
   template <int N>
   using ArgType = std::tuple_element_t<FirstArgField + N, Tuple>;
 
   template <int N>
-  static auto Get(TypedInst node) -> ArgType<N> {
-    return std::get<FirstArgField + N>(StructReflection::AsTuple(node));
+  static auto Get(TypedInst inst) -> ArgType<N> {
+    return std::get<FirstArgField + N>(StructReflection::AsTuple(inst));
   }
 };
 
-// A type-erased representation of a SemIR node, that may be constructed from
-// the specific kinds of node defined in `typed_insts.h`. This provides access
-// to common fields present on most or all kinds of nodes:
+// A type-erased representation of a SemIR inst, that may be constructed from
+// the specific kinds of inst defined in `typed_insts.h`. This provides access
+// to common fields present on most or all kinds of insts:
 //
 // - `parse_node` for error placement.
 // - `kind` for run-time logic when the input Kind is unknown.
 // - `type_id` for quick type checking.
 //
 // In addition, kind-specific data can be accessed by casting to the specific
-// kind of node:
+// kind of inst:
 //
-// - Use `node.kind()` or `Is<TypedInst>` to determine what kind of node it is.
-// - Cast to a specific type using `node.As<TypedInst>()`
-//   - Using the wrong kind in `node.As<TypedInst>()` is a programming error,
+// - Use `inst.kind()` or `Is<TypedInst>` to determine what kind of inst it is.
+// - Cast to a specific type using `inst.As<TypedInst>()`
+//   - Using the wrong kind in `inst.As<TypedInst>()` is a programming error,
 //     and will CHECK-fail in debug modes (opt may too, but it's not an API
 //     guarantee).
-// - Use `node.TryAs<TypedInst>()` to safely access type-specific node data
-//   where the node's kind is not known.
-class Node : public Printable<Node> {
+// - Use `inst.TryAs<TypedInst>()` to safely access type-specific inst data
+//   where the inst's kind is not known.
+class Inst : public Printable<Inst> {
  public:
   template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  Node(TypedInst typed_inst)
-      : parse_node_(Parse::Node::Invalid),
+  Inst(TypedInst typed_inst)
+      : parse_node_(Parse::Lamp::Invalid),
         kind_(TypedInst::Kind),
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
@@ -135,7 +135,7 @@ class Node : public Printable<Node> {
     }
   }
 
-  auto parse_node() const -> Parse::Node { return parse_node_; }
+  auto parse_node() const -> Parse::Lamp { return parse_node_; }
   auto kind() const -> InstKind { return kind_; }
 
   // Gets the type of the value produced by evaluating this node.
@@ -144,10 +144,10 @@ class Node : public Printable<Node> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  friend class NodeTestHelper;
+  friend class InstTestHelper;
 
   // Raw constructor, used for testing.
-  explicit Node(InstKind kind, Parse::Node parse_node, TypeId type_id,
+  explicit Inst(InstKind kind, Parse::Lamp parse_node, TypeId type_id,
                 int32_t arg0, int32_t arg1)
       : parse_node_(parse_node),
         kind_(kind),
@@ -171,7 +171,7 @@ class Node : public Printable<Node> {
     return BuiltinKind::FromInt(raw);
   }
 
-  Parse::Node parse_node_;
+  Parse::Lamp parse_node_;
   InstKind kind_;
   TypeId type_id_;
 
@@ -181,15 +181,15 @@ class Node : public Printable<Node> {
 };
 
 // TODO: This is currently 20 bytes because we sometimes have 2 arguments for a
-// pair of Nodes. However, InstKind is 1 byte; if args
-// were 3.5 bytes, we could potentially shrink Node by 4 bytes. This
+// pair of Insts. However, InstKind is 1 byte; if args
+// were 3.5 bytes, we could potentially shrink Inst by 4 bytes. This
 // may be worth investigating further.
-static_assert(sizeof(Node) == 20, "Unexpected Node size");
+static_assert(sizeof(Inst) == 20, "Unexpected Inst size");
 
 // Typed nodes can be printed by converting them to nodes.
 template <typename TypedInst, typename = TypedInstArgsInfo<TypedInst>>
 inline llvm::raw_ostream& operator<<(llvm::raw_ostream& out, TypedInst node) {
-  Node(node).Print(out);
+  Inst(node).Print(out);
   return out;
 }
 

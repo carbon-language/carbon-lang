@@ -6,7 +6,7 @@
 
 namespace Carbon::SemIR {
 
-auto Node::Print(llvm::raw_ostream& out) const -> void {
+auto Inst::Print(llvm::raw_ostream& out) const -> void {
   out << "{kind: " << kind_;
 
   auto print_args = [&](auto info) {

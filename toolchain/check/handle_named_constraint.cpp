@@ -6,22 +6,22 @@
 
 namespace Carbon::Check {
 
-auto HandleNamedConstraintDeclaration(Context& context, Parse::Node parse_node)
+auto HandleNamedConstraintDeclaration(Context& context, Parse::Lamp parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleNamedConstraintDeclaration");
 }
 
-auto HandleNamedConstraintDefinition(Context& context, Parse::Node parse_node)
+auto HandleNamedConstraintDefinition(Context& context, Parse::Lamp parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleNamedConstraintDefinition");
 }
 
 auto HandleNamedConstraintDefinitionStart(Context& context,
-                                          Parse::Node parse_node) -> bool {
+                                          Parse::Lamp parse_node) -> bool {
   return context.TODO(parse_node, "HandleNamedConstraintDefinitionStart");
 }
 
-auto HandleNamedConstraintIntroducer(Context& context, Parse::Node parse_node)
+auto HandleNamedConstraintIntroducer(Context& context, Parse::Lamp parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleNamedConstraintIntroducer");
 }

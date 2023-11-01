@@ -14,7 +14,7 @@ auto HandleBraceExpression(Context& context) -> void {
 
   CARBON_CHECK(context.ConsumeAndAddLeafNodeIf(
       Lex::TokenKind::OpenCurlyBrace,
-      NodeKind::StructLiteralOrStructTypeLiteralStart));
+      LampKind::StructLiteralOrStructTypeLiteralStart));
   if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
     context.PushState(State::BraceExpressionParameterAsUnknown);
   }
@@ -156,12 +156,12 @@ auto HandleBraceExpressionParameterAfterDesignatorAsUnknown(Context& context)
 
 // Handles BraceExpressionParameterFinishAs(Type|Value|Unknown).
 static auto HandleBraceExpressionParameterFinish(Context& context,
-                                                 NodeKind node_kind,
+                                                 LampKind node_kind,
                                                  State param_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
-    context.AddLeafNode(NodeKind::StructFieldUnknown, state.token,
+    context.AddLeafNode(LampKind::StructFieldUnknown, state.token,
                         /*has_error=*/true);
   } else {
     context.AddNode(node_kind, state.token, state.subtree_start,
@@ -169,30 +169,30 @@ static auto HandleBraceExpressionParameterFinish(Context& context,
   }
 
   if (context.ConsumeListToken(
-          NodeKind::StructComma, Lex::TokenKind::CloseCurlyBrace,
+          LampKind::StructComma, Lex::TokenKind::CloseCurlyBrace,
           state.has_error) == Context::ListTokenKind::Comma) {
     context.PushState(param_state);
   }
 }
 
 auto HandleBraceExpressionParameterFinishAsType(Context& context) -> void {
-  HandleBraceExpressionParameterFinish(context, NodeKind::StructFieldType,
+  HandleBraceExpressionParameterFinish(context, LampKind::StructFieldType,
                                        State::BraceExpressionParameterAsType);
 }
 
 auto HandleBraceExpressionParameterFinishAsValue(Context& context) -> void {
-  HandleBraceExpressionParameterFinish(context, NodeKind::StructFieldValue,
+  HandleBraceExpressionParameterFinish(context, LampKind::StructFieldValue,
                                        State::BraceExpressionParameterAsValue);
 }
 
 auto HandleBraceExpressionParameterFinishAsUnknown(Context& context) -> void {
   HandleBraceExpressionParameterFinish(
-      context, NodeKind::StructFieldUnknown,
+      context, LampKind::StructFieldUnknown,
       State::BraceExpressionParameterAsUnknown);
 }
 
 // Handles BraceExpressionFinishAs(Type|Value|Unknown).
-static auto HandleBraceExpressionFinish(Context& context, NodeKind node_kind)
+static auto HandleBraceExpressionFinish(Context& context, LampKind node_kind)
     -> void {
   auto state = context.PopState();
 
@@ -201,15 +201,15 @@ static auto HandleBraceExpressionFinish(Context& context, NodeKind node_kind)
 }
 
 auto HandleBraceExpressionFinishAsType(Context& context) -> void {
-  HandleBraceExpressionFinish(context, NodeKind::StructTypeLiteral);
+  HandleBraceExpressionFinish(context, LampKind::StructTypeLiteral);
 }
 
 auto HandleBraceExpressionFinishAsValue(Context& context) -> void {
-  HandleBraceExpressionFinish(context, NodeKind::StructLiteral);
+  HandleBraceExpressionFinish(context, LampKind::StructLiteral);
 }
 
 auto HandleBraceExpressionFinishAsUnknown(Context& context) -> void {
-  HandleBraceExpressionFinish(context, NodeKind::StructLiteral);
+  HandleBraceExpressionFinish(context, LampKind::StructLiteral);
 }
 
 }  // namespace Carbon::Parse

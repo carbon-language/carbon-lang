@@ -6,13 +6,13 @@
 
 namespace Carbon::Check {
 
-auto HandleEmptyDeclaration(Context& /*context*/, Parse::Node /*parse_node*/)
+auto HandleEmptyDeclaration(Context& /*context*/, Parse::Lamp /*parse_node*/)
     -> bool {
   // Empty declarations have no actions associated.
   return true;
 }
 
-auto HandleInvalidParse(Context& context, Parse::Node parse_node) -> bool {
+auto HandleInvalidParse(Context& context, Parse::Lamp parse_node) -> bool {
   return context.TODO(parse_node, "HandleInvalidParse");
 }
 

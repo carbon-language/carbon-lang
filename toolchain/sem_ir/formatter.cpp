@@ -50,7 +50,7 @@ class NodeNamer {
       auto fn_scope = GetScopeFor(fn_id);
       // TODO: Provide a location for the function for use as a
       // disambiguator.
-      auto fn_loc = Parse::Node::Invalid;
+      auto fn_loc = Parse::Lamp::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this, fn_loc,
           fn.name_id.is_valid() ? sem_ir.strings().Get(fn.name_id).str() : "");
@@ -80,7 +80,7 @@ class NodeNamer {
       auto class_scope = GetScopeFor(class_id);
       // TODO: Provide a location for the class for use as a
       // disambiguator.
-      auto class_loc = Parse::Node::Invalid;
+      auto class_loc = Parse::Lamp::Invalid;
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
           class_info.name_id.is_valid()
@@ -203,7 +203,7 @@ class NodeNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const NodeNamer& namer, Parse::Node node,
+    auto AllocateName(const NodeNamer& namer, Parse::Lamp node,
                       std::string name = "") -> Name {
       // The best (shortest) name for this node so far, and the current name
       // for it.
@@ -279,12 +279,12 @@ class NodeNamer {
 
   auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
                      std::string name = "",
-                     Parse::Node parse_node = Parse::Node::Invalid) -> void {
+                     Parse::Lamp parse_node = Parse::Lamp::Invalid) -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
 
-    if (parse_node == Parse::Node::Invalid) {
+    if (parse_node == Parse::Lamp::Invalid) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
         parse_node = sem_ir_.insts().Get(block.front()).parse_node();
@@ -298,11 +298,11 @@ class NodeNamer {
 
   // Finds and adds a suitable block label for the given semantics node that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Node node)
+  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Inst node)
       -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(node.parse_node())) {
-      case Parse::NodeKind::IfExpressionIf:
+      case Parse::LampKind::IfExpressionIf:
         switch (node.kind()) {
           case BranchIf::Kind:
             name = "if.expr.then";
@@ -318,7 +318,7 @@ class NodeNamer {
         }
         break;
 
-      case Parse::NodeKind::IfCondition:
+      case Parse::LampKind::IfCondition:
         switch (node.kind()) {
           case BranchIf::Kind:
             name = "if.then";
@@ -331,11 +331,11 @@ class NodeNamer {
         }
         break;
 
-      case Parse::NodeKind::IfStatement:
+      case Parse::LampKind::IfStatement:
         name = "if.done";
         break;
 
-      case Parse::NodeKind::ShortCircuitOperand: {
+      case Parse::LampKind::ShortCircuitOperand: {
         bool is_rhs = node.Is<BranchIf>();
         bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
                           node.parse_node())) == Lex::TokenKind::And;
@@ -344,11 +344,11 @@ class NodeNamer {
         break;
       }
 
-      case Parse::NodeKind::WhileConditionStart:
+      case Parse::LampKind::WhileConditionStart:
         name = "while.cond";
         break;
 
-      case Parse::NodeKind::WhileCondition:
+      case Parse::LampKind::WhileCondition:
         switch (node.kind()) {
           case InstKind::BranchIf:
             name = "while.body";
@@ -451,7 +451,7 @@ class NodeNamer {
       }
 
       // Sequentially number all remaining values.
-      if (node.kind().value_kind() != NodeValueKind::None) {
+      if (node.kind().value_kind() != InstValueKind::None) {
         add_node_name("");
       }
     }
@@ -618,7 +618,7 @@ class Formatter {
     FormatInstruction(inst_id, sem_ir_.insts().Get(inst_id));
   }
 
-  auto FormatInstruction(InstId inst_id, Node node) -> void {
+  auto FormatInstruction(InstId inst_id, Inst node) -> void {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
@@ -641,9 +641,9 @@ class Formatter {
     out_ << "\n";
   }
 
-  auto FormatInstructionLHS(InstId inst_id, Node node) -> void {
+  auto FormatInstructionLHS(InstId inst_id, Inst node) -> void {
     switch (node.kind().value_kind()) {
-      case NodeValueKind::Typed:
+      case InstValueKind::Typed:
         FormatNodeName(inst_id);
         out_ << ": ";
         switch (GetExpressionCategory(sem_ir_, inst_id)) {
@@ -663,7 +663,7 @@ class Formatter {
         FormatType(node.type_id());
         out_ << " = ";
         break;
-      case NodeValueKind::None:
+      case InstValueKind::None:
         break;
     }
   }

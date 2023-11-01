@@ -7,7 +7,7 @@
 
 namespace Carbon::Check {
 
-auto HandleIfExpressionIf(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIfExpressionIf(Context& context, Parse::Lamp parse_node) -> bool {
   // Alias parse_node for if/then/else consistency.
   auto& if_node = parse_node;
 
@@ -28,10 +28,10 @@ auto HandleIfExpressionIf(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleIfExpressionThen(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIfExpressionThen(Context& context, Parse::Lamp parse_node) -> bool {
   auto then_value_id = context.lamp_stack().PopExpression();
   auto else_block_id =
-      context.lamp_stack().Peek<Parse::NodeKind::IfExpressionIf>();
+      context.lamp_stack().Peek<Parse::LampKind::IfExpressionIf>();
 
   // Convert the first operand to a value.
   then_value_id = ConvertToValueExpression(context, then_value_id);
@@ -44,15 +44,15 @@ auto HandleIfExpressionThen(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleIfExpressionElse(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIfExpressionElse(Context& context, Parse::Lamp parse_node) -> bool {
   // Alias parse_node for if/then/else consistency.
   auto& else_node = parse_node;
 
   auto else_value_id = context.lamp_stack().PopExpression();
   auto then_value_id =
-      context.lamp_stack().Pop<Parse::NodeKind::IfExpressionThen>();
+      context.lamp_stack().Pop<Parse::LampKind::IfExpressionThen>();
   auto [if_node, _] =
-      context.lamp_stack().PopWithParseNode<Parse::NodeKind::IfExpressionIf>();
+      context.lamp_stack().PopWithParseNode<Parse::LampKind::IfExpressionIf>();
 
   // Convert the `else` value to the `then` value's type, and finish the `else`
   // block.

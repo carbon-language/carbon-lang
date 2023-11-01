@@ -110,11 +110,11 @@ class Context {
                    llvm::raw_ostream* vlog_stream);
 
   // Adds a node to the parse tree that has no children (a leaf).
-  auto AddLeafNode(NodeKind kind, Lex::Token token, bool has_error = false)
+  auto AddLeafNode(LampKind kind, Lex::Token token, bool has_error = false)
       -> void;
 
   // Adds a node to the parse tree that has children.
-  auto AddNode(NodeKind kind, Lex::Token token, int subtree_start,
+  auto AddNode(LampKind kind, Lex::Token token, int subtree_start,
                bool has_error) -> void;
 
   // Returns the current position and moves past it.
@@ -123,7 +123,7 @@ class Context {
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
   // there's no open paren. Returns the open paren token if it was found.
-  auto ConsumeAndAddOpenParen(Lex::Token default_token, NodeKind start_kind)
+  auto ConsumeAndAddOpenParen(Lex::Token default_token, LampKind start_kind)
       -> std::optional<Lex::Token>;
 
   // Parses a closing symbol corresponding to the opening symbol
@@ -132,11 +132,11 @@ class Context {
   // an opening symbol, the parse node will be associated with `state.token`,
   // no input will be consumed, and no diagnostic will be emitted.
   auto ConsumeAndAddCloseSymbol(Lex::Token expected_open, StateStackEntry state,
-                                NodeKind close_kind) -> void;
+                                LampKind close_kind) -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
-  auto ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind, NodeKind node_kind)
+  auto ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind, LampKind node_kind)
       -> bool;
 
   // Returns the current position and moves past it. Requires the token is the
@@ -196,7 +196,7 @@ class Context {
   // `,)`). Handles cases where invalid tokens are present by advancing the
   // position, and may emit errors. Pass already_has_error in order to suppress
   // duplicate errors.
-  auto ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
+  auto ConsumeListToken(LampKind comma_kind, Lex::TokenKind close_kind,
                         bool already_has_error) -> ListTokenKind;
 
   // Gets the kind of the next token to be consumed.
@@ -289,7 +289,7 @@ class Context {
   // semicolon when it makes sense as a possible end, otherwise use the
   // introducer token for the error.
   auto RecoverFromDeclarationError(StateStackEntry state,
-                                   NodeKind parse_node_kind,
+                                   LampKind parse_node_kind,
                                    bool skip_past_likely_end) -> void;
 
   // Prints information for a stack dump.

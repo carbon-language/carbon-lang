@@ -19,10 +19,10 @@ class InstStore {
   // that this doesn't add the node to any node block. Check::Context::AddNode
   // or InstBlockStack::AddNode should usually be used instead, to add the node
   // to the current block.
-  auto AddInNoBlock(Node node) -> InstId { return values_.Add(node); }
+  auto AddInNoBlock(Inst node) -> InstId { return values_.Add(node); }
 
   // Returns the requested node.
-  auto Get(InstId inst_id) const -> Node { return values_.Get(inst_id); }
+  auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
 
   // Returns the requested node, which is known to have the specified type.
   template <typename NodeT>
@@ -31,16 +31,16 @@ class InstStore {
   }
 
   // Overwrites a given node with a new value.
-  auto Set(InstId inst_id, Node node) -> void { values_.Get(inst_id) = node; }
+  auto Set(InstId inst_id, Inst node) -> void { values_.Get(inst_id) = node; }
 
   // Reserves space.
   auto Reserve(size_t size) -> void { values_.Reserve(size); }
 
-  auto array_ref() const -> llvm::ArrayRef<Node> { return values_.array_ref(); }
+  auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
   auto size() const -> int { return values_.size(); }
 
  private:
-  ValueStore<InstId, Node> values_;
+  ValueStore<InstId, Inst> values_;
 };
 
 // Provides a ValueStore wrapper for an API specific to name scopes.

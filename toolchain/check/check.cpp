@@ -18,9 +18,9 @@ auto CheckParseTree(SharedValueStores& value_stores,
                     llvm::raw_ostream* vlog_stream) -> SemIR::File {
   auto sem_ir = SemIR::File(value_stores, tokens.filename().str(), &builtin_ir);
 
-  Parse::NodeLocationTranslator translator(&tokens, &parse_tree);
+  Parse::LampLocationTranslator translator(&tokens, &parse_tree);
   ErrorTrackingDiagnosticConsumer err_tracker(consumer);
-  DiagnosticEmitter<Parse::Node> emitter(translator, err_tracker);
+  DiagnosticEmitter<Parse::Lamp> emitter(translator, err_tracker);
 
   Check::Context context(tokens, emitter, parse_tree, sem_ir, vlog_stream);
   PrettyStackTraceFunction context_dumper(
@@ -37,7 +37,7 @@ auto CheckParseTree(SharedValueStores& value_stores,
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (auto parse_kind = parse_tree.node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
-  case Parse::NodeKind::Name: {                                              \
+  case Parse::LampKind::Name: {                                              \
     if (!Check::Handle##Name(context, parse_node)) {                         \
       CARBON_CHECK(err_tracker.seen_error())                                 \
           << "Handle" #Name " returned false without printing a diagnostic"; \

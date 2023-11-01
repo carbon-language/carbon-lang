@@ -17,11 +17,11 @@ static auto HandleDeclarationNameAndParams(Context& context, State after_name)
     context.PushState(state);
 
     if (context.PositionIs(Lex::TokenKind::Period)) {
-      context.AddLeafNode(NodeKind::Name, *identifier);
+      context.AddLeafNode(LampKind::Name, *identifier);
       state.state = State::PeriodAsDeclaration;
       context.PushState(state);
     } else {
-      context.AddLeafNode(NodeKind::Name, *identifier);
+      context.AddLeafNode(LampKind::Name, *identifier);
     }
   } else {
     CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
@@ -30,7 +30,7 @@ static auto HandleDeclarationNameAndParams(Context& context, State after_name)
     context.emitter().Emit(*context.position(), ExpectedDeclarationName,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+    context.AddLeafNode(LampKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
   }
 }

@@ -14,7 +14,7 @@ static auto HandleVar(Context& context, State finish_state) -> void {
   context.PushState(finish_state);
   context.PushState(State::VarAfterPattern);
 
-  context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
+  context.AddLeafNode(LampKind::VariableIntroducer, context.Consume());
 
   // This will start at the pattern.
   context.PushState(State::PatternAsVariable);
@@ -39,7 +39,7 @@ auto HandleVarAfterPattern(Context& context) -> void {
   }
 
   if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
-    context.AddLeafNode(NodeKind::VariableInitializer, *equals);
+    context.AddLeafNode(LampKind::VariableInitializer, *equals);
     context.PushState(State::Expression);
   }
 }
@@ -58,7 +58,7 @@ auto HandleVarFinishAsSemicolon(Context& context) -> void {
       end_token = *semi_token;
     }
   }
-  context.AddNode(NodeKind::VariableDeclaration, end_token, state.subtree_start,
+  context.AddNode(LampKind::VariableDeclaration, end_token, state.subtree_start,
                   state.has_error);
 }
 
@@ -81,7 +81,7 @@ auto HandleVarFinishAsFor(Context& context) -> void {
     state.has_error = true;
   }
 
-  context.AddNode(NodeKind::ForIn, end_token, state.subtree_start,
+  context.AddNode(LampKind::ForIn, end_token, state.subtree_start,
                   state.has_error);
 }
 

@@ -25,9 +25,9 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   auto return_type_id = SemIR::TypeId::Invalid;
   auto return_slot_id = SemIR::InstId::Invalid;
   if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
-      Parse::NodeKind::ReturnType) {
+      Parse::LampKind::ReturnType) {
     auto [return_node, return_storage_id] =
-        context.lamp_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
+        context.lamp_stack().PopWithParseNode<Parse::LampKind::ReturnType>();
     auto return_node_copy = return_node;
     return_type_id = context.insts().Get(return_storage_id).type_id();
 
@@ -50,15 +50,15 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   }
 
   SemIR::InstBlockId param_refs_id =
-      context.lamp_stack().Pop<Parse::NodeKind::ParameterList>();
+      context.lamp_stack().Pop<Parse::LampKind::ParameterList>();
   SemIR::InstBlockId implicit_param_refs_id =
       context.lamp_stack()
-          .PopIf<Parse::NodeKind::ImplicitParameterList>()
+          .PopIf<Parse::LampKind::ImplicitParameterList>()
           .value_or(SemIR::InstBlockId::Empty);
   auto name_context = context.declaration_name_stack().Pop();
   auto fn_node =
       context.lamp_stack()
-          .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
+          .PopForSoloParseNode<Parse::LampKind::FunctionIntroducer>();
 
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDeclaration{
@@ -129,16 +129,16 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   return {function_decl.function_id, function_decl_id};
 }
 
-auto HandleFunctionDeclaration(Context& context, Parse::Node /*parse_node*/)
+auto HandleFunctionDeclaration(Context& context, Parse::Lamp /*parse_node*/)
     -> bool {
   BuildFunctionDeclaration(context, /*is_definition=*/false);
   return true;
 }
 
-auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
+auto HandleFunctionDefinition(Context& context, Parse::Lamp parse_node)
     -> bool {
   SemIR::FunctionId function_id =
-      context.lamp_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
+      context.lamp_stack().Pop<Parse::LampKind::FunctionDefinitionStart>();
 
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
@@ -159,7 +159,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
+auto HandleFunctionDefinitionStart(Context& context, Parse::Lamp parse_node)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -225,7 +225,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
+auto HandleFunctionIntroducer(Context& context, Parse::Lamp parse_node)
     -> bool {
   // Create a node block to hold the nodes created as part of the function
   // signature, such as parameter and return types.
@@ -237,7 +237,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
+auto HandleReturnType(Context& context, Parse::Lamp parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_inst_id] =
       context.lamp_stack().PopExpressionWithParseNode();

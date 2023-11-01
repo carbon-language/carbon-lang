@@ -7,7 +7,7 @@
 namespace Carbon::Parse {
 
 // Handles processing of a type's introducer.
-static auto HandleTypeIntroducer(Context& context, NodeKind introducer_kind,
+static auto HandleTypeIntroducer(Context& context, LampKind introducer_kind,
                                  State after_params_state) -> void {
   auto state = context.PopState();
 
@@ -19,24 +19,24 @@ static auto HandleTypeIntroducer(Context& context, NodeKind introducer_kind,
 }
 
 auto HandleTypeIntroducerAsClass(Context& context) -> void {
-  HandleTypeIntroducer(context, NodeKind::ClassIntroducer,
+  HandleTypeIntroducer(context, LampKind::ClassIntroducer,
                        State::TypeAfterParamsAsClass);
 }
 
 auto HandleTypeIntroducerAsInterface(Context& context) -> void {
-  HandleTypeIntroducer(context, NodeKind::InterfaceIntroducer,
+  HandleTypeIntroducer(context, LampKind::InterfaceIntroducer,
                        State::TypeAfterParamsAsInterface);
 }
 
 auto HandleTypeIntroducerAsNamedConstraint(Context& context) -> void {
-  HandleTypeIntroducer(context, NodeKind::NamedConstraintIntroducer,
+  HandleTypeIntroducer(context, LampKind::NamedConstraintIntroducer,
                        State::TypeAfterParamsAsNamedConstraint);
 }
 
 // Handles processing after params, deciding whether it's a declaration or
 // definition.
-static auto HandleTypeAfterParams(Context& context, NodeKind declaration_kind,
-                                  NodeKind definition_start_kind,
+static auto HandleTypeAfterParams(Context& context, LampKind declaration_kind,
+                                  LampKind definition_start_kind,
                                   State definition_finish_state) -> void {
   auto state = context.PopState();
 
@@ -68,26 +68,26 @@ static auto HandleTypeAfterParams(Context& context, NodeKind declaration_kind,
 }
 
 auto HandleTypeAfterParamsAsClass(Context& context) -> void {
-  HandleTypeAfterParams(context, NodeKind::ClassDeclaration,
-                        NodeKind::ClassDefinitionStart,
+  HandleTypeAfterParams(context, LampKind::ClassDeclaration,
+                        LampKind::ClassDefinitionStart,
                         State::TypeDefinitionFinishAsClass);
 }
 
 auto HandleTypeAfterParamsAsInterface(Context& context) -> void {
-  HandleTypeAfterParams(context, NodeKind::InterfaceDeclaration,
-                        NodeKind::InterfaceDefinitionStart,
+  HandleTypeAfterParams(context, LampKind::InterfaceDeclaration,
+                        LampKind::InterfaceDefinitionStart,
                         State::TypeDefinitionFinishAsInterface);
 }
 
 auto HandleTypeAfterParamsAsNamedConstraint(Context& context) -> void {
-  HandleTypeAfterParams(context, NodeKind::NamedConstraintDeclaration,
-                        NodeKind::NamedConstraintDefinitionStart,
+  HandleTypeAfterParams(context, LampKind::NamedConstraintDeclaration,
+                        LampKind::NamedConstraintDefinitionStart,
                         State::TypeDefinitionFinishAsNamedConstraint);
 }
 
 // Handles parsing after the declaration scope of a type.
 static auto HandleTypeDefinitionFinish(Context& context,
-                                       NodeKind definition_kind) -> void {
+                                       LampKind definition_kind) -> void {
   auto state = context.PopState();
 
   context.AddNode(definition_kind, context.Consume(), state.subtree_start,
@@ -95,15 +95,15 @@ static auto HandleTypeDefinitionFinish(Context& context,
 }
 
 auto HandleTypeDefinitionFinishAsClass(Context& context) -> void {
-  HandleTypeDefinitionFinish(context, NodeKind::ClassDefinition);
+  HandleTypeDefinitionFinish(context, LampKind::ClassDefinition);
 }
 
 auto HandleTypeDefinitionFinishAsInterface(Context& context) -> void {
-  HandleTypeDefinitionFinish(context, NodeKind::InterfaceDefinition);
+  HandleTypeDefinitionFinish(context, LampKind::InterfaceDefinition);
 }
 
 auto HandleTypeDefinitionFinishAsNamedConstraint(Context& context) -> void {
-  HandleTypeDefinitionFinish(context, NodeKind::NamedConstraintDefinition);
+  HandleTypeDefinitionFinish(context, LampKind::NamedConstraintDefinition);
 }
 
 }  // namespace Carbon::Parse

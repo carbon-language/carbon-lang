@@ -8,21 +8,21 @@
 
 namespace Carbon::Check {
 
-auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
+auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_node)
     -> bool {
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
   bool has_init =
       context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) !=
-      Parse::NodeKind::PatternBinding;
+      Parse::LampKind::PatternBinding;
   if (has_init) {
     init_id = context.lamp_stack().PopExpression();
     context.lamp_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
+        .PopAndDiscardSoloParseNode<Parse::LampKind::VariableInitializer>();
   }
 
   // Extract the name binding.
-  auto value_id = context.lamp_stack().Pop<Parse::NodeKind::PatternBinding>();
+  auto value_id = context.lamp_stack().Pop<Parse::LampKind::PatternBinding>();
   if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.
@@ -48,19 +48,19 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
   }
 
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
+      .PopAndDiscardSoloParseNode<Parse::LampKind::VariableIntroducer>();
 
   return true;
 }
 
-auto HandleVariableIntroducer(Context& context, Parse::Node parse_node)
+auto HandleVariableIntroducer(Context& context, Parse::Lamp parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.lamp_stack().Push(parse_node);
   return true;
 }
 
-auto HandleVariableInitializer(Context& context, Parse::Node parse_node)
+auto HandleVariableInitializer(Context& context, Parse::Lamp parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.lamp_stack().Push(parse_node);

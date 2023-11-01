@@ -12,7 +12,7 @@ auto DeclarationNameStack::MakeEmptyNameContext() -> NameContext {
   return NameContext{.target_scope_id = context_->current_scope_id()};
 }
 
-auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
+auto DeclarationNameStack::MakeUnqualifiedName(Parse::Lamp parse_node,
                                                StringId name_id)
     -> NameContext {
   NameContext context = MakeEmptyNameContext();
@@ -27,15 +27,15 @@ auto DeclarationNameStack::Push() -> void {
 auto DeclarationNameStack::Pop() -> NameContext {
   if (context_->parse_tree().node_kind(
           context_->lamp_stack().PeekParseNode()) ==
-      Parse::NodeKind::QualifiedDeclaration) {
+      Parse::LampKind::QualifiedDeclaration) {
     // Any parts from a QualifiedDeclaration will already have been processed
     // into the name.
     context_->lamp_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::QualifiedDeclaration>();
+        .PopAndDiscardSoloParseNode<Parse::LampKind::QualifiedDeclaration>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
     auto [parse_node, name_id] =
-        context_->lamp_stack().PopWithParseNode<Parse::NodeKind::Name>();
+        context_->lamp_stack().PopWithParseNode<Parse::LampKind::Name>();
     ApplyNameQualifier(parse_node, name_id);
   }
 
@@ -85,13 +85,13 @@ auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
   }
 }
 
-auto DeclarationNameStack::ApplyNameQualifier(Parse::Node parse_node,
+auto DeclarationNameStack::ApplyNameQualifier(Parse::Lamp parse_node,
                                               StringId name_id) -> void {
   ApplyNameQualifierTo(declaration_name_stack_.back(), parse_node, name_id);
 }
 
 auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
-                                                Parse::Node parse_node,
+                                                Parse::Lamp parse_node,
                                                 StringId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
@@ -146,7 +146,7 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
 }
 
 auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
-                                               Parse::Node parse_node) -> bool {
+                                               Parse::Lamp parse_node) -> bool {
   switch (name_context.state) {
     case NameContext::State::Error:
       // Already in an error state, so return without examining.

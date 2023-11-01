@@ -52,13 +52,13 @@ struct ConversionTarget {
 };
 
 // Convert a value to another type and expression category.
-auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId value_id,
+auto Convert(Context& context, Parse::Lamp parse_node, SemIR::InstId value_id,
              ConversionTarget target) -> SemIR::InstId;
 
 // Performs initialization of `target_id` from `value_id`. Returns the
 // possibly-converted initializing expression, which should be assigned to the
 // target using a suitable node for the kind of initialization.
-auto Initialize(Context& context, Parse::Node parse_node,
+auto Initialize(Context& context, Parse::Lamp parse_node,
                 SemIR::InstId target_id, SemIR::InstId value_id)
     -> SemIR::InstId;
 
@@ -73,32 +73,32 @@ auto ConvertToValueOrReferenceExpression(Context& context,
     -> SemIR::InstId;
 
 // Converts `value_id` to a value expression of type `type_id`.
-auto ConvertToValueOfType(Context& context, Parse::Node parse_node,
+auto ConvertToValueOfType(Context& context, Parse::Lamp parse_node,
                           SemIR::InstId value_id, SemIR::TypeId type_id)
     -> SemIR::InstId;
 
 // Converts `value_id` to a value expression of type `bool`.
-auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
+auto ConvertToBoolValue(Context& context, Parse::Lamp parse_node,
                         SemIR::InstId value_id) -> SemIR::InstId;
 
 // Converts `value_id` to type `type_id` for an `as` expression.
-auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
+auto ConvertForExplicitAs(Context& context, Parse::Lamp as_node,
                           SemIR::InstId value_id, SemIR::TypeId type_id)
     -> SemIR::InstId;
 
 // Implicitly converts a set of arguments to match the parameter types in a
 // function call. Returns a block containing the converted implicit and explicit
 // argument values.
-auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
+auto ConvertCallArgs(Context& context, Parse::Lamp call_parse_node,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_storage_id,
-                     Parse::Node callee_parse_node,
+                     Parse::Lamp callee_parse_node,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId;
 
 // Converts an expression for use as a type.
-auto ExpressionAsType(Context& context, Parse::Node parse_node,
+auto ExpressionAsType(Context& context, Parse::Lamp parse_node,
                       SemIR::InstId value_id) -> SemIR::TypeId;
 
 }  // namespace Carbon::Check

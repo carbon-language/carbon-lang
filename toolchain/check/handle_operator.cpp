@@ -7,7 +7,7 @@
 
 namespace Carbon::Check {
 
-auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
+auto HandleInfixOperator(Context& context, Parse::Lamp parse_node) -> bool {
   auto [rhs_node, rhs_id] = context.lamp_stack().PopExpressionWithParseNode();
   auto [lhs_node, lhs_id] = context.lamp_stack().PopExpressionWithParseNode();
 
@@ -81,7 +81,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
   }
 }
 
-auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
+auto HandlePostfixOperator(Context& context, Parse::Lamp parse_node) -> bool {
   auto value_id = context.lamp_stack().PopExpression();
 
   // Figure out the operator for the token.
@@ -100,7 +100,7 @@ auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
   }
 }
 
-auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
+auto HandlePrefixOperator(Context& context, Parse::Lamp parse_node) -> bool {
   auto value_id = context.lamp_stack().PopExpression();
 
   // Figure out the operator for the token.
@@ -195,7 +195,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
   }
 }
 
-auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
+auto HandleShortCircuitOperand(Context& context, Parse::Lamp parse_node)
     -> bool {
   // Convert the condition to `bool`.
   auto cond_value_id = context.lamp_stack().PopExpression();

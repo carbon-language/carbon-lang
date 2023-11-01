@@ -8,38 +8,38 @@
 
 namespace Carbon::Check {
 
-auto HandleParenExpression(Context& context, Parse::Node parse_node) -> bool {
+auto HandleParenExpression(Context& context, Parse::Lamp parse_node) -> bool {
   auto value_id = context.lamp_stack().PopExpression();
   // ParamOrArgStart was called for tuple handling; clean up the ParamOrArg
   // support for non-tuple cases.
-  context.ParamOrArgEnd(Parse::NodeKind::ParenExpressionOrTupleLiteralStart);
+  context.ParamOrArgEnd(Parse::LampKind::ParenExpressionOrTupleLiteralStart);
   context.lamp_stack()
       .PopAndDiscardSoloParseNode<
-          Parse::NodeKind::ParenExpressionOrTupleLiteralStart>();
+          Parse::LampKind::ParenExpressionOrTupleLiteralStart>();
   context.lamp_stack().Push(parse_node, value_id);
   return true;
 }
 
 auto HandleParenExpressionOrTupleLiteralStart(Context& context,
-                                              Parse::Node parse_node) -> bool {
+                                              Parse::Lamp parse_node) -> bool {
   context.lamp_stack().Push(parse_node);
   context.ParamOrArgStart();
   return true;
 }
 
-auto HandleTupleLiteralComma(Context& context, Parse::Node /*parse_node*/)
+auto HandleTupleLiteralComma(Context& context, Parse::Lamp /*parse_node*/)
     -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleTupleLiteral(Context& context, Parse::Node parse_node) -> bool {
+auto HandleTupleLiteral(Context& context, Parse::Lamp parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      Parse::NodeKind::ParenExpressionOrTupleLiteralStart);
+      Parse::LampKind::ParenExpressionOrTupleLiteralStart);
 
   context.lamp_stack()
       .PopAndDiscardSoloParseNode<
-          Parse::NodeKind::ParenExpressionOrTupleLiteralStart>();
+          Parse::LampKind::ParenExpressionOrTupleLiteralStart>();
   const auto& inst_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::TypeId> type_ids;
   type_ids.reserve(inst_block.size());

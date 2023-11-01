@@ -8,12 +8,12 @@
 
 namespace Carbon::Check {
 
-auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
+auto HandleLetDeclaration(Context& context, Parse::Lamp parse_node) -> bool {
   auto value_id = context.lamp_stack().PopExpression();
   SemIR::InstId pattern_id =
-      context.lamp_stack().Pop<Parse::NodeKind::PatternBinding>();
+      context.lamp_stack().Pop<Parse::LampKind::PatternBinding>();
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
+      .PopAndDiscardSoloParseNode<Parse::LampKind::LetIntroducer>();
 
   // Convert the value to match the type of the pattern.
   auto pattern = context.insts().Get(pattern_id);
@@ -35,13 +35,13 @@ auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleLetIntroducer(Context& context, Parse::Node parse_node) -> bool {
+auto HandleLetIntroducer(Context& context, Parse::Lamp parse_node) -> bool {
   // Push a bracketing node to establish the pattern context.
   context.lamp_stack().Push(parse_node);
   return true;
 }
 
-auto HandleLetInitializer(Context& /*context*/, Parse::Node /*parse_node*/)
+auto HandleLetInitializer(Context& /*context*/, Parse::Lamp /*parse_node*/)
     -> bool {
   return true;
 }

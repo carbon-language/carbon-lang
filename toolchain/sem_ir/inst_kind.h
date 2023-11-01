@@ -13,7 +13,7 @@
 namespace Carbon::SemIR {
 
 // Whether a node produces or represents a value, and if so, what kind of value.
-enum class NodeValueKind : int8_t {
+enum class InstValueKind : int8_t {
   // This node doesn't produce a value, and shouldn't be referenced by other
   // nodes.
   None,
@@ -51,7 +51,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   [[nodiscard]] auto ir_name() const -> llvm::StringLiteral;
 
   // Returns whether this kind of node is expected to produce a value.
-  [[nodiscard]] auto value_kind() const -> NodeValueKind;
+  [[nodiscard]] auto value_kind() const -> InstValueKind;
 
   // Returns whether this node kind is a code block terminator, such as an
   // unconditional branch instruction, or part of the termination sequence,

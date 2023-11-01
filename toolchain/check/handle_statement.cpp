@@ -21,22 +21,22 @@ static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
   // TODO: This will eventually need to do some "do not discard" analysis.
 }
 
-auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
+auto HandleExpressionStatement(Context& context, Parse::Lamp /*parse_node*/)
     -> bool {
   HandleDiscardedExpression(context, context.lamp_stack().PopExpression());
   return true;
 }
 
-auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
+auto HandleReturnStatement(Context& context, Parse::Lamp parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
   auto fn_node = context.insts().GetAs<SemIR::FunctionDeclaration>(
       context.return_scope_stack().back());
   const auto& callable = context.functions().Get(fn_node.function_id);
 
   if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
-      Parse::NodeKind::ReturnStatementStart) {
+      Parse::LampKind::ReturnStatementStart) {
     context.lamp_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
+        .PopAndDiscardSoloParseNode<Parse::LampKind::ReturnStatementStart>();
 
     if (callable.return_type_id.is_valid()) {
       // TODO: Add a note pointing at the return type's parse node.
@@ -52,7 +52,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   } else {
     auto arg = context.lamp_stack().PopExpression();
     context.lamp_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
+        .PopAndDiscardSoloParseNode<Parse::LampKind::ReturnStatementStart>();
 
     if (!callable.return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(
@@ -82,7 +82,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleReturnStatementStart(Context& context, Parse::Node parse_node)
+auto HandleReturnStatementStart(Context& context, Parse::Lamp parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.lamp_stack().Push(parse_node);

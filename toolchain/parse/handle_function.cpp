@@ -9,7 +9,7 @@ namespace Carbon::Parse {
 auto HandleFunctionIntroducer(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddLeafNode(NodeKind::FunctionIntroducer, context.Consume());
+  context.AddLeafNode(LampKind::FunctionIntroducer, context.Consume());
 
   state.state = State::FunctionAfterParameters;
   context.PushState(state);
@@ -35,7 +35,7 @@ auto HandleFunctionAfterParameters(Context& context) -> void {
 auto HandleFunctionReturnTypeFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::ReturnType, state.token, state.subtree_start,
+  context.AddNode(LampKind::ReturnType, state.token, state.subtree_start,
                   state.has_error);
 }
 
@@ -44,7 +44,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
 
   switch (context.PositionKind()) {
     case Lex::TokenKind::Semi: {
-      context.AddNode(NodeKind::FunctionDeclaration, context.Consume(),
+      context.AddNode(LampKind::FunctionDeclaration, context.Consume(),
                       state.subtree_start, state.has_error);
       break;
     }
@@ -57,12 +57,12 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
             "Method implementations are not allowed in interfaces.");
         context.emitter().Emit(*context.position(), MethodImplNotAllowed);
         context.RecoverFromDeclarationError(state,
-                                            NodeKind::FunctionDeclaration,
+                                            LampKind::FunctionDeclaration,
                                             /*skip_past_likely_end=*/true);
         break;
       }
 
-      context.AddNode(NodeKind::FunctionDefinitionStart, context.Consume(),
+      context.AddNode(LampKind::FunctionDefinitionStart, context.Consume(),
                       state.subtree_start, state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.
       state.has_error = false;
@@ -79,7 +79,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       bool skip_past_likely_end =
           context.tokens().GetLine(*context.position()) ==
           context.tokens().GetLine(state.token);
-      context.RecoverFromDeclarationError(state, NodeKind::FunctionDeclaration,
+      context.RecoverFromDeclarationError(state, LampKind::FunctionDeclaration,
                                           skip_past_likely_end);
       break;
     }
@@ -88,7 +88,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
 
 auto HandleFunctionDefinitionFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::FunctionDefinition, context.Consume(),
+  context.AddNode(LampKind::FunctionDefinition, context.Consume(),
                   state.subtree_start, state.has_error);
 }
 

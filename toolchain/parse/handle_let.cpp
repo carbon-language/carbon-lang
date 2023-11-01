@@ -13,7 +13,7 @@ auto HandleLet(Context& context) -> void {
   context.PushState(State::LetFinish);
   context.PushState(State::LetAfterPattern);
 
-  context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
+  context.AddLeafNode(LampKind::LetIntroducer, context.Consume());
 
   // This will start at the pattern.
   context.PushState(State::PatternAsLet);
@@ -30,7 +30,7 @@ auto HandleLetAfterPattern(Context& context) -> void {
   }
 
   if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
-    context.AddLeafNode(NodeKind::LetInitializer, *equals);
+    context.AddLeafNode(LampKind::LetInitializer, *equals);
     context.PushState(State::Expression);
   } else if (!state.has_error) {
     CARBON_DIAGNOSTIC(
@@ -54,7 +54,7 @@ auto HandleLetFinish(Context& context) -> void {
       end_token = *semi_token;
     }
   }
-  context.AddNode(NodeKind::LetDeclaration, end_token, state.subtree_start,
+  context.AddNode(LampKind::LetDeclaration, end_token, state.subtree_start,
                   state.has_error);
 }
 

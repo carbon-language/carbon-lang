@@ -7,41 +7,41 @@
 
 namespace Carbon::Check {
 
-auto HandleStructComma(Context& context, Parse::Node /*parse_node*/) -> bool {
+auto HandleStructComma(Context& context, Parse::Lamp /*parse_node*/) -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleStructFieldDesignator(Context& context, Parse::Node /*parse_node*/)
+auto HandleStructFieldDesignator(Context& context, Parse::Lamp /*parse_node*/)
     -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
   CARBON_CHECK(
       context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
-      Parse::NodeKind::Name);
+      Parse::LampKind::Name);
   return true;
 }
 
-auto HandleStructFieldType(Context& context, Parse::Node parse_node) -> bool {
+auto HandleStructFieldType(Context& context, Parse::Lamp parse_node) -> bool {
   auto [type_node, type_id] = context.lamp_stack().PopExpressionWithParseNode();
   SemIR::TypeId cast_type_id = ExpressionAsType(context, type_node, type_id);
 
   auto [name_node, name_id] =
-      context.lamp_stack().PopWithParseNode<Parse::NodeKind::Name>();
+      context.lamp_stack().PopWithParseNode<Parse::LampKind::Name>();
 
   context.AddNodeAndPush(
       parse_node, SemIR::StructTypeField{name_node, name_id, cast_type_id});
   return true;
 }
 
-auto HandleStructFieldUnknown(Context& context, Parse::Node parse_node)
+auto HandleStructFieldUnknown(Context& context, Parse::Lamp parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleStructFieldUnknown");
 }
 
-auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
+auto HandleStructFieldValue(Context& context, Parse::Lamp parse_node) -> bool {
   auto [value_parse_node, value_inst_id] =
       context.lamp_stack().PopExpressionWithParseNode();
-  StringId name_id = context.lamp_stack().Pop<Parse::NodeKind::Name>();
+  StringId name_id = context.lamp_stack().Pop<Parse::LampKind::Name>();
 
   // Store the name for the type.
   context.args_type_info_stack().AddNode(SemIR::StructTypeField{
@@ -52,14 +52,14 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
+auto HandleStructLiteral(Context& context, Parse::Lamp parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
+      Parse::LampKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
   context.lamp_stack()
       .PopAndDiscardSoloParseNode<
-          Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
+          Parse::LampKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
 
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
@@ -71,7 +71,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
 }
 
 auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
-                                                 Parse::Node parse_node)
+                                                 Parse::Lamp parse_node)
     -> bool {
   context.PushScope();
   context.lamp_stack().Push(parse_node);
@@ -83,14 +83,14 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
   return true;
 }
 
-auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
+auto HandleStructTypeLiteral(Context& context, Parse::Lamp parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
-      Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
+      Parse::LampKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
   context.lamp_stack()
       .PopAndDiscardSoloParseNode<
-          Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
+          Parse::LampKind::StructLiteralOrStructTypeLiteralStart>();
   // This is only used for value literals.
   context.args_type_info_stack().Pop();
 

@@ -8,12 +8,12 @@
 
 namespace Carbon::Check {
 
-auto HandleIfConditionStart(Context& /*context*/, Parse::Node /*parse_node*/)
+auto HandleIfConditionStart(Context& /*context*/, Parse::Lamp /*parse_node*/)
     -> bool {
   return true;
 }
 
-auto HandleIfCondition(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIfCondition(Context& context, Parse::Lamp parse_node) -> bool {
   // Convert the condition to `bool`.
   auto cond_value_id = context.lamp_stack().PopExpression();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
@@ -34,8 +34,8 @@ auto HandleIfCondition(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleIfStatementElse(Context& context, Parse::Node parse_node) -> bool {
-  auto else_block_id = context.lamp_stack().Pop<Parse::NodeKind::IfCondition>();
+auto HandleIfStatementElse(Context& context, Parse::Lamp parse_node) -> bool {
+  auto else_block_id = context.lamp_stack().Pop<Parse::LampKind::IfCondition>();
 
   // Switch to emitting the `else` block.
   context.inst_block_stack().Push(else_block_id);
@@ -45,24 +45,24 @@ auto HandleIfStatementElse(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleIfStatement(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIfStatement(Context& context, Parse::Lamp parse_node) -> bool {
   switch (auto kind = context.parse_tree().node_kind(
               context.lamp_stack().PeekParseNode())) {
-    case Parse::NodeKind::IfCondition: {
+    case Parse::LampKind::IfCondition: {
       // Branch from then block to else block, and start emitting the else
       // block.
       auto else_block_id =
-          context.lamp_stack().Pop<Parse::NodeKind::IfCondition>();
+          context.lamp_stack().Pop<Parse::LampKind::IfCondition>();
       context.AddNode(SemIR::Branch{parse_node, else_block_id});
       context.inst_block_stack().Pop();
       context.inst_block_stack().Push(else_block_id);
       break;
     }
 
-    case Parse::NodeKind::IfStatementElse: {
+    case Parse::LampKind::IfStatementElse: {
       // Branch from the then and else blocks to a new resumption block.
       context.lamp_stack()
-          .PopAndDiscardSoloParseNode<Parse::NodeKind::IfStatementElse>();
+          .PopAndDiscardSoloParseNode<Parse::LampKind::IfStatementElse>();
       context.AddConvergenceBlockAndPush(parse_node, /*num_blocks=*/2);
       break;
     }
