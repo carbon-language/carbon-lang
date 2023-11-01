@@ -16,6 +16,7 @@ var str1: String = "abc";
 var str2: String = "ab'\"c";
 
 // CHECK:STDOUT: ---
+// CHECK:STDOUT: filename:        dump_shared_values.carbon
 // CHECK:STDOUT: shared_values:
 // CHECK:STDOUT:   integers:
 // CHECK:STDOUT:     int0:            32
