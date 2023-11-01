@@ -163,10 +163,10 @@ auto HandlePrefixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
       value_id = ConvertToValueExpression(context, value_id);
       auto type_id =
           context.GetUnqualifiedType(context.insts().Get(value_id).type_id());
-      auto type_node = context.insts().Get(
+      auto type_inst = context.insts().Get(
           context.sem_ir().GetTypeAllowBuiltinTypes(type_id));
       auto result_type_id = SemIR::TypeId::Error;
-      if (auto pointer_type = type_node.TryAs<SemIR::PointerType>()) {
+      if (auto pointer_type = type_inst.TryAs<SemIR::PointerType>()) {
         result_type_id = pointer_type->pointee_id;
       } else if (type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(

@@ -27,7 +27,7 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
   SemIR::Inst init = sem_ir.insts().Get(init_id);
   switch (init.kind()) {
     default:
-      CARBON_FATAL() << "Initialization from unexpected node " << init;
+      CARBON_FATAL() << "Initialization from unexpected inst " << init;
 
     case SemIR::StructInit::Kind:
     case SemIR::TupleInit::Kind:
@@ -103,7 +103,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   // object. Materialize one now.
   // TODO: Consider using an invalid ID to mean that we immediately
   // materialize and initialize a temporary, rather than two separate
-  // nodes.
+  // insts.
   auto init = sem_ir.insts().Get(init_id);
   auto temporary_id = context.AddInst(
       SemIR::TemporaryStorage{init.parse_lamp(), init.type_id()});
@@ -122,23 +122,23 @@ static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
   return expr_id;
 }
 
-// Creates and adds a node to perform element access into an aggregate.
-template <typename AccessNodeT, typename InstBlockT>
-static auto MakeElemAccessNode(Context& context, Parse::Lamp parse_lamp,
+// Creates and adds a inst to perform element access into an aggregate.
+template <typename AccessInstT, typename InstBlockT>
+static auto MakeElemAccessInst(Context& context, Parse::Lamp parse_lamp,
                                SemIR::InstId aggregate_id,
                                SemIR::TypeId elem_type_id, InstBlockT& block,
                                std::size_t i) {
-  if constexpr (std::is_same_v<AccessNodeT, SemIR::ArrayIndex>) {
-    // TODO: Add a new node kind for indexing an array at a constant index
-    // so that we don't need an integer literal node here, and remove this
+  if constexpr (std::is_same_v<AccessInstT, SemIR::ArrayIndex>) {
+    // TODO: Add a new inst kind for indexing an array at a constant index
+    // so that we don't need an integer literal inst here, and remove this
     // special case.
     auto index_id = block.AddInst(SemIR::IntegerLiteral{
         parse_lamp, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
         context.sem_ir().integers().Add(llvm::APInt(32, i))});
     return block.AddInst(
-        AccessNodeT{parse_lamp, elem_type_id, aggregate_id, index_id});
+        AccessInstT{parse_lamp, elem_type_id, aggregate_id, index_id});
   } else {
-    return block.AddInst(AccessNodeT{parse_lamp, elem_type_id, aggregate_id,
+    return block.AddInst(AccessInstT{parse_lamp, elem_type_id, aggregate_id,
                                      SemIR::MemberIndex(i)});
   }
 }
@@ -147,16 +147,16 @@ static auto MakeElemAccessNode(Context& context, Parse::Lamp parse_lamp,
 // another aggregate.
 //
 // For the source: `src_id` is the source aggregate, `src_elem_type` is the
-// element type, `i` is the index, and `SourceAccessNodeT` is the kind of node
+// element type, `i` is the index, and `SourceAccessInstT` is the kind of inst
 // used to access the source element.
 //
 // For the target: `kind` is the kind of conversion or initialization,
 // `target_elem_type` is the element type. For initialization, `target_id` is
 // the destination, `target_block` is a pending block for target location
 // calculations that will be spliced as the return slot of the initializer if
-// necessary, `i` is the index, and `TargetAccessNodeT` is the kind of node
+// necessary, `i` is the index, and `TargetAccessInstT` is the kind of inst
 // used to access the destination element.
-template <typename SourceAccessNodeT, typename TargetAccessNodeT>
+template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
     Context& context, Parse::Lamp parse_lamp, SemIR::InstId src_id,
     SemIR::TypeId src_elem_type,
@@ -165,11 +165,11 @@ static auto ConvertAggregateElement(
     SemIR::TypeId target_elem_type, PendingBlock* target_block, std::size_t i) {
   // Compute the location of the source element. This goes into the current code
   // block, not into the target block.
-  // TODO: Ideally we would discard this node if it's unused.
+  // TODO: Ideally we would discard this inst if it's unused.
   auto src_elem_id =
       !src_literal_elems.empty()
           ? src_literal_elems[i]
-          : MakeElemAccessNode<SourceAccessNodeT>(context, parse_lamp, src_id,
+          : MakeElemAccessInst<SourceAccessInstT>(context, parse_lamp, src_id,
                                                   src_elem_type, context, i);
 
   // If we're performing a conversion rather than an initialization, we won't
@@ -180,9 +180,9 @@ static auto ConvertAggregateElement(
   }
 
   // Compute the location of the target element and initialize it.
-  PendingBlock::DiscardUnusedNodesScope scope(target_block);
+  PendingBlock::DiscardUnusedInstsScope scope(target_block);
   target.init_block = target_block;
-  target.init_id = MakeElemAccessNode<TargetAccessNodeT>(
+  target.init_id = MakeElemAccessInst<TargetAccessInstT>(
       context, parse_lamp, target_id, target_elem_type, *target_block, i);
   return Convert(context, parse_lamp, src_elem_id, target);
 }
@@ -530,7 +530,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Lamp parse_lamp,
   auto& sem_ir = context.sem_ir();
   auto value = sem_ir.insts().Get(value_id);
   auto value_type_id = value.type_id();
-  auto target_type_node =
+  auto target_type_inst =
       sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(target.type_id));
 
   // Various forms of implicit conversion are supported as builtin conversions,
@@ -590,10 +590,10 @@ static auto PerformBuiltinConversion(Context& context, Parse::Lamp parse_lamp,
 
   // A tuple (T1, T2, ..., Tn) converts to (U1, U2, ..., Un) if each Ti
   // converts to Ui.
-  if (auto target_tuple_type = target_type_node.TryAs<SemIR::TupleType>()) {
-    auto value_type_node =
+  if (auto target_tuple_type = target_type_inst.TryAs<SemIR::TupleType>()) {
+    auto value_type_inst =
         sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_tuple_type = value_type_node.TryAs<SemIR::TupleType>()) {
+    if (auto src_tuple_type = value_type_inst.TryAs<SemIR::TupleType>()) {
       return ConvertTupleToTuple(context, *src_tuple_type, *target_tuple_type,
                                  value_id, target);
     }
@@ -603,20 +603,20 @@ static auto PerformBuiltinConversion(Context& context, Parse::Lamp parse_lamp,
   // {.f_p(1): U_p(1), .f_p(2): U_p(2), ..., .f_p(n): U_p(n)} if
   // (p(1), ..., p(n)) is a permutation of (1, ..., n) and each Ti converts
   // to Ui.
-  if (auto target_struct_type = target_type_node.TryAs<SemIR::StructType>()) {
-    auto value_type_node =
+  if (auto target_struct_type = target_type_inst.TryAs<SemIR::StructType>()) {
+    auto value_type_inst =
         sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_struct_type = value_type_node.TryAs<SemIR::StructType>()) {
+    if (auto src_struct_type = value_type_inst.TryAs<SemIR::StructType>()) {
       return ConvertStructToStruct(context, *src_struct_type,
                                    *target_struct_type, value_id, target);
     }
   }
 
   // A tuple (T1, T2, ..., Tn) converts to [T; n] if each Ti converts to T.
-  if (auto target_array_type = target_type_node.TryAs<SemIR::ArrayType>()) {
-    auto value_type_node =
+  if (auto target_array_type = target_type_inst.TryAs<SemIR::ArrayType>()) {
+    auto value_type_inst =
         sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_tuple_type = value_type_node.TryAs<SemIR::TupleType>()) {
+    if (auto src_tuple_type = value_type_inst.TryAs<SemIR::TupleType>()) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
     }

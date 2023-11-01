@@ -15,7 +15,8 @@
 
 namespace Carbon::Check {
 
-// Wraps the stack of nodes for Context.
+// Wraps the stack of parse nodes for Context. Each parse node can have an
+// associated id of some kind (inst, inst block, function, class, ...).
 //
 // All pushes and pops will be vlogged.
 //
@@ -166,7 +167,7 @@ class NodeStack {
     return std::nullopt;
   }
 
-  // Peeks at the parse_lamp of the given depth in the stack, or by default the
+  // Peeks at the parse lamp of the given depth in the stack, or by default the
   // top node.
   auto PeekParseLamp() const -> Parse::Lamp { return stack_.back().parse_lamp; }
 
@@ -260,7 +261,7 @@ class NodeStack {
       }
     }
 
-    // The node associated with the stack entry.
+    // The parse node associated with the stack entry.
     Parse::Lamp parse_lamp;
 
     // The entries will evaluate as invalid if and only if they're a solo

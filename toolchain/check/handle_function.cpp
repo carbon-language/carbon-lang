@@ -56,7 +56,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
           .PopIf<Parse::LampKind::ImplicitParameterList>()
           .value_or(SemIR::InstBlockId::Empty);
   auto name_context = context.declaration_name_stack().Pop();
-  auto fn_node =
+  Parse::Lamp fn_node =
       context.lamp_stack()
           .PopForSoloParseLamp<Parse::LampKind::FunctionIntroducer>();
 
@@ -227,7 +227,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Lamp parse_lamp)
 
 auto HandleFunctionIntroducer(Context& context, Parse::Lamp parse_lamp)
     -> bool {
-  // Create a node block to hold the nodes created as part of the function
+  // Create a inst block to hold the insts created as part of the function
   // signature, such as parameter and return types.
   context.inst_block_stack().Push();
   // Push the bracketing node.
@@ -242,7 +242,7 @@ auto HandleReturnType(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto [type_parse_lamp, type_inst_id] =
       context.lamp_stack().PopExpressionWithParseLamp();
   auto type_id = ExpressionAsType(context, type_parse_lamp, type_inst_id);
-  // TODO: Use a dedicated node rather than VarStorage here.
+  // TODO: Use a dedicated inst rather than VarStorage here.
   context.AddInstAndPush(
       parse_lamp,
       SemIR::VarStorage{parse_lamp, type_id, context.strings().Add("return")});

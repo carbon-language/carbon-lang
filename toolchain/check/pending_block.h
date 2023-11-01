@@ -19,16 +19,16 @@ class PendingBlock {
   PendingBlock(const PendingBlock&) = delete;
   PendingBlock& operator=(const PendingBlock&) = delete;
 
-  // A scope in which we will tentatively add nodes to a pending block. If we
-  // leave the scope without inserting or merging the block, nodes added after
+  // A scope in which we will tentatively add insts to a pending block. If we
+  // leave the scope without inserting or merging the block, insts added after
   // this point will be removed again.
-  class DiscardUnusedNodesScope {
+  class DiscardUnusedInstsScope {
    public:
     // If `block` is not null, enters the scope. If `block` is null, this object
     // has no effect.
-    DiscardUnusedNodesScope(PendingBlock* block)
+    DiscardUnusedInstsScope(PendingBlock* block)
         : block_(block), size_(block ? block->insts_.size() : 0) {}
-    ~DiscardUnusedNodesScope() {
+    ~DiscardUnusedInstsScope() {
       if (block_ && block_->insts_.size() > size_) {
         block_->insts_.truncate(size_);
       }
@@ -39,8 +39,8 @@ class PendingBlock {
     size_t size_;
   };
 
-  auto AddInst(SemIR::Inst node) -> SemIR::InstId {
-    SemIR::InstId inst_id = context_.insts().AddInNoBlock(node);
+  auto AddInst(SemIR::Inst inst) -> SemIR::InstId {
+    SemIR::InstId inst_id = context_.insts().AddInNoBlock(inst);
     insts_.push_back(inst_id);
     return inst_id;
   }
@@ -53,7 +53,7 @@ class PendingBlock {
     insts_.clear();
   }
 
-  // Replace the node at target_id with the nodes in this block. The new value
+  // Replace the inst at target_id with the insts in this block. The new value
   // for target_id should be value_id.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
     auto value = context_.insts().Get(value_id);
@@ -67,7 +67,7 @@ class PendingBlock {
           target_id, SemIR::SpliceBlock{value.parse_lamp(), value.type_id(),
                                         SemIR::InstBlockId::Empty, value_id});
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
-      // 2) The block is {value_id}. Replace `target_id` with the node referred
+      // 2) The block is {value_id}. Replace `target_id` with the inst referred
       // to by `value_id`. This is intended to be the common case.
       context_.insts().Set(target_id, value);
     } else {
