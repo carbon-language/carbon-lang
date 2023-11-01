@@ -8,9 +8,9 @@
 // NOAUTOUPDATE
 // SET-CHECK-SUBSET
 // CHECK:STDERR: Node Push 0: FunctionIntroducer -> <none>
-// CHECK:STDERR: AddNode: {kind: FunctionDeclaration, arg0: {{.*}}, type: type{{[0-9]+}}}
+// CHECK:STDERR: AddInst: {kind: FunctionDeclaration, arg0: {{.*}}, type: type{{[0-9]+}}}
 // CHECK:STDERR: inst_block_stack_ Push 1
-// CHECK:STDERR: AddNode: {kind: Return}
+// CHECK:STDERR: AddInst: {kind: Return}
 // CHECK:STDERR: inst_block_stack_ Pop 1: block{{[0-9]+}}
 
 fn Foo() {

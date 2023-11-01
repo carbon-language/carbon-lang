@@ -54,7 +54,7 @@ auto HandleLetFinish(Context& context) -> void {
       end_token = *semi_token;
     }
   }
-  context.AddNode(LampKind::LetDeclaration, end_token, state.subtree_start,
+  context.AddInst(LampKind::LetDeclaration, end_token, state.subtree_start,
                   state.has_error);
 }
 

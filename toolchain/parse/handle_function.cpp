@@ -35,7 +35,7 @@ auto HandleFunctionAfterParameters(Context& context) -> void {
 auto HandleFunctionReturnTypeFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(LampKind::ReturnType, state.token, state.subtree_start,
+  context.AddInst(LampKind::ReturnType, state.token, state.subtree_start,
                   state.has_error);
 }
 
@@ -44,7 +44,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
 
   switch (context.PositionKind()) {
     case Lex::TokenKind::Semi: {
-      context.AddNode(LampKind::FunctionDeclaration, context.Consume(),
+      context.AddInst(LampKind::FunctionDeclaration, context.Consume(),
                       state.subtree_start, state.has_error);
       break;
     }
@@ -62,7 +62,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
         break;
       }
 
-      context.AddNode(LampKind::FunctionDefinitionStart, context.Consume(),
+      context.AddInst(LampKind::FunctionDefinitionStart, context.Consume(),
                       state.subtree_start, state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.
       state.has_error = false;
@@ -88,7 +88,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
 
 auto HandleFunctionDefinitionFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(LampKind::FunctionDefinition, context.Consume(),
+  context.AddInst(LampKind::FunctionDefinition, context.Consume(),
                   state.subtree_start, state.has_error);
 }
 

@@ -42,11 +42,11 @@ class Context {
   auto VerifyOnFinish() -> void;
 
   // Adds a node to the current block, returning the produced ID.
-  auto AddNode(SemIR::Inst node) -> SemIR::InstId;
+  auto AddInst(SemIR::Inst node) -> SemIR::InstId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
-  auto AddNodeAndPush(Parse::Lamp parse_node, SemIR::Inst node) -> void;
+  auto AddInstAndPush(Parse::Lamp parse_node, SemIR::Inst node) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(Parse::Lamp name_node, StringId name_id,
@@ -322,7 +322,7 @@ class Context {
 
   // Forms a canonical type ID for a type. If the type is new, adds the node to
   // the current block.
-  auto CanonicalizeTypeAndAddNodeIfNew(SemIR::Inst node) -> SemIR::TypeId;
+  auto CanonicalizeTypeAndAddInstIfNew(SemIR::Inst node) -> SemIR::TypeId;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
   auto current_scope() const -> const ScopeStackEntry& {

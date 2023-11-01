@@ -39,7 +39,7 @@ auto HandleArrayExpression(Context& context, Parse::Lamp parse_node) -> bool {
     const auto& bound_value = context.integers().Get(literal->integer_id);
     // TODO: Produce an error if the array type is too large.
     if (bound_value.getActiveBits() <= 64) {
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::ArrayType{
               parse_node, SemIR::TypeId::TypeType, bound_inst_id,

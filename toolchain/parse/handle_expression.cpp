@@ -228,7 +228,7 @@ auto HandleExpressionLoop(Context& context) -> void {
         operator_kind == Lex::TokenKind::Or) {
       // For `and` and `or`, wrap the first operand in a virtual parse tree
       // node so that semantics can insert control flow here.
-      context.AddNode(LampKind::ShortCircuitOperand, state.token,
+      context.AddInst(LampKind::ShortCircuitOperand, state.token,
                       state.subtree_start, state.has_error);
     }
 
@@ -236,7 +236,7 @@ auto HandleExpressionLoop(Context& context) -> void {
     context.PushState(state);
     context.PushStateForExpression(operator_precedence);
   } else {
-    context.AddNode(LampKind::PostfixOperator, state.token, state.subtree_start,
+    context.AddInst(LampKind::PostfixOperator, state.token, state.subtree_start,
                     state.has_error);
     state.has_error = false;
     context.PushState(state);
@@ -246,7 +246,7 @@ auto HandleExpressionLoop(Context& context) -> void {
 auto HandleExpressionLoopForBinary(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(LampKind::InfixOperator, state.token, state.subtree_start,
+  context.AddInst(LampKind::InfixOperator, state.token, state.subtree_start,
                   state.has_error);
   state.state = State::ExpressionLoop;
   state.has_error = false;
@@ -256,7 +256,7 @@ auto HandleExpressionLoopForBinary(Context& context) -> void {
 auto HandleExpressionLoopForPrefix(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(LampKind::PrefixOperator, state.token, state.subtree_start,
+  context.AddInst(LampKind::PrefixOperator, state.token, state.subtree_start,
                   state.has_error);
   state.state = State::ExpressionLoop;
   state.has_error = false;
@@ -266,7 +266,7 @@ auto HandleExpressionLoopForPrefix(Context& context) -> void {
 auto HandleIfExpressionFinishCondition(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(LampKind::IfExpressionIf, state.token, state.subtree_start,
+  context.AddInst(LampKind::IfExpressionIf, state.token, state.subtree_start,
                   state.has_error);
 
   if (context.PositionIs(Lex::TokenKind::Then)) {
@@ -293,7 +293,7 @@ auto HandleIfExpressionFinishCondition(Context& context) -> void {
 auto HandleIfExpressionFinishThen(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(LampKind::IfExpressionThen, state.token, state.subtree_start,
+  context.AddInst(LampKind::IfExpressionThen, state.token, state.subtree_start,
                   state.has_error);
 
   if (context.PositionIs(Lex::TokenKind::Else)) {
@@ -328,7 +328,7 @@ auto HandleIfExpressionFinishElse(Context& context) -> void {
 auto HandleIfExpressionFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(LampKind::IfExpressionElse, state.token, state.subtree_start,
+  context.AddInst(LampKind::IfExpressionElse, state.token, state.subtree_start,
                   state.has_error);
 }
 
@@ -336,7 +336,7 @@ auto HandleExpressionStatementFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    context.AddNode(LampKind::ExpressionStatement, *semi, state.subtree_start,
+    context.AddInst(LampKind::ExpressionStatement, *semi, state.subtree_start,
                     state.has_error);
     return;
   }
@@ -348,7 +348,7 @@ auto HandleExpressionStatementFinish(Context& context) -> void {
   }
 
   if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
-    context.AddNode(LampKind::ExpressionStatement, *semi_token,
+    context.AddInst(LampKind::ExpressionStatement, *semi_token,
                     state.subtree_start,
                     /*has_error=*/true);
     return;

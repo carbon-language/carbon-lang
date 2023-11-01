@@ -73,7 +73,7 @@ static auto HandleStatementKeywordFinish(Context& context, LampKind node_kind)
       semi = state.token;
     }
   }
-  context.AddNode(node_kind, *semi, state.subtree_start, state.has_error);
+  context.AddInst(node_kind, *semi, state.subtree_start, state.has_error);
 }
 
 auto HandleStatementBreakFinish(Context& context) -> void {
@@ -130,7 +130,7 @@ auto HandleStatementForHeaderFinish(Context& context) -> void {
 auto HandleStatementForFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(LampKind::ForStatement, state.token, state.subtree_start,
+  context.AddInst(LampKind::ForStatement, state.token, state.subtree_start,
                   state.has_error);
 }
 
@@ -162,14 +162,14 @@ auto HandleStatementIfThenBlockFinish(Context& context) -> void {
                           ? State::StatementIf
                           : State::CodeBlock);
   } else {
-    context.AddNode(LampKind::IfStatement, state.token, state.subtree_start,
+    context.AddInst(LampKind::IfStatement, state.token, state.subtree_start,
                     state.has_error);
   }
 }
 
 auto HandleStatementIfElseBlockFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(LampKind::IfStatement, state.token, state.subtree_start,
+  context.AddInst(LampKind::IfStatement, state.token, state.subtree_start,
                   state.has_error);
 }
 
@@ -221,7 +221,7 @@ auto HandleStatementWhileConditionFinish(Context& context) -> void {
 auto HandleStatementWhileBlockFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(LampKind::WhileStatement, state.token, state.subtree_start,
+  context.AddInst(LampKind::WhileStatement, state.token, state.subtree_start,
                   state.has_error);
 }
 

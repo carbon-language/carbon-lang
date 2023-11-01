@@ -47,7 +47,7 @@ static auto HandleTypeAfterParams(Context& context, LampKind declaration_kind,
   }
 
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    context.AddNode(declaration_kind, *semi, state.subtree_start,
+    context.AddInst(declaration_kind, *semi, state.subtree_start,
                     state.has_error);
     return;
   }
@@ -63,7 +63,7 @@ static auto HandleTypeAfterParams(Context& context, LampKind declaration_kind,
   state.state = definition_finish_state;
   context.PushState(state);
   context.PushState(State::DeclarationScopeLoop);
-  context.AddNode(definition_start_kind, context.Consume(), state.subtree_start,
+  context.AddInst(definition_start_kind, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 
@@ -90,7 +90,7 @@ static auto HandleTypeDefinitionFinish(Context& context,
                                        LampKind definition_kind) -> void {
   auto state = context.PopState();
 
-  context.AddNode(definition_kind, context.Consume(), state.subtree_start,
+  context.AddInst(definition_kind, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 

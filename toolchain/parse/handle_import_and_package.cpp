@@ -11,7 +11,7 @@ namespace Carbon::Parse {
 static auto ExitOnParseError(Context& context, Context::StateStackEntry state,
                              LampKind directive) {
   auto semi_token = context.SkipPastLikelyEnd(state.token);
-  return context.AddNode(directive, semi_token ? *semi_token : state.token,
+  return context.AddInst(directive, semi_token ? *semi_token : state.token,
                          state.subtree_start,
                          /*has_error=*/true);
 }
@@ -46,7 +46,7 @@ static auto HandleImportAndPackage(Context& context,
       return;
     }
 
-    context.AddNode(LampKind::Library, *library_token, library_start,
+    context.AddInst(LampKind::Library, *library_token, library_start,
                     /*has_error=*/false);
     library_parsed = true;
   }
@@ -89,7 +89,7 @@ static auto HandleImportAndPackage(Context& context,
     return;
   }
 
-  context.AddNode(directive, context.Consume(), state.subtree_start,
+  context.AddInst(directive, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 

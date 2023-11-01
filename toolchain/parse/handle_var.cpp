@@ -58,7 +58,7 @@ auto HandleVarFinishAsSemicolon(Context& context) -> void {
       end_token = *semi_token;
     }
   }
-  context.AddNode(LampKind::VariableDeclaration, end_token, state.subtree_start,
+  context.AddInst(LampKind::VariableDeclaration, end_token, state.subtree_start,
                   state.has_error);
 }
 
@@ -81,7 +81,7 @@ auto HandleVarFinishAsFor(Context& context) -> void {
     state.has_error = true;
   }
 
-  context.AddNode(LampKind::ForIn, end_token, state.subtree_start,
+  context.AddInst(LampKind::ForIn, end_token, state.subtree_start,
                   state.has_error);
 }
 

@@ -45,7 +45,7 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
           "`self` can only be declared in an implicit parameter list");
       context.emitter().Emit(parse_node, SelfOutsideImplicitParameterList);
     }
-    context.AddNodeAndPush(
+    context.AddInstAndPush(
         parse_node,
         SemIR::SelfParameter{*self_node, cast_type_id,
                              /*is_addr_self=*/SemIR::BoolValue::False});
@@ -83,25 +83,25 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
         SemIR::InstId field_type_inst_id =
-            context.AddNode(SemIR::UnboundFieldType{
+            context.AddInst(SemIR::UnboundFieldType{
                 parse_node,
                 context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
                 class_info.self_type_id, cast_type_id});
         value_type_id = context.CanonicalizeType(field_type_inst_id);
-        value_id = context.AddNode(
+        value_id = context.AddInst(
             SemIR::Field{parse_node, value_type_id, name_id,
                          SemIR::MemberIndex(context.args_type_info_stack()
                                                 .PeekCurrentBlockContents()
                                                 .size())});
 
         // Add a corresponding field to the object representation of the class.
-        context.args_type_info_stack().AddNode(
+        context.args_type_info_stack().AddInst(
             SemIR::StructTypeField{parse_node, name_id, cast_type_id});
       } else {
-        value_id = context.AddNode(
+        value_id = context.AddInst(
             SemIR::VarStorage{name_node, value_type_id, name_id});
       }
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::BindName{name_node, value_type_id, name_id, value_id});
       break;
@@ -111,7 +111,7 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
     case Parse::LampKind::ParameterListStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node, SemIR::Parameter{name_node, cast_type_id, name_id});
       // TODO: Create a `BindName` node.
       break;

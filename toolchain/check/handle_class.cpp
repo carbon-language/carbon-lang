@@ -29,7 +29,7 @@ static auto BuildClassDeclaration(Context& context)
   // Add the class declaration.
   auto class_decl = SemIR::ClassDeclaration{
       class_keyword, SemIR::ClassId::Invalid, decl_block_id};
-  auto class_decl_id = context.AddNode(class_decl);
+  auto class_decl_id = context.AddInst(class_decl);
 
   // Check whether this is a redeclaration.
   auto existing_id = context.declaration_name_stack().LookupOrAddName(
@@ -62,7 +62,7 @@ static auto BuildClassDeclaration(Context& context)
     // Build the `Self` type.
     auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id =
-        context.CanonicalizeType(context.AddNode(SemIR::ClassType{
+        context.CanonicalizeType(context.AddInst(SemIR::ClassType{
             class_keyword, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_decl.class_id}));
   }

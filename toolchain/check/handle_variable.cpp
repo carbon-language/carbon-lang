@@ -39,7 +39,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_node)
       init_id = Initialize(context, parse_node, value_id, init_id);
       // TODO: Consider using different node kinds for assignment versus
       // initialization.
-      context.AddNode(SemIR::Assign{parse_node, value_id, init_id});
+      context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
     } else {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.

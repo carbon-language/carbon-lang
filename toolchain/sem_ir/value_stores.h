@@ -16,8 +16,8 @@ namespace Carbon::SemIR {
 class InstStore {
  public:
   // Adds a node to the node list, returning an ID to reference the node. Note
-  // that this doesn't add the node to any node block. Check::Context::AddNode
-  // or InstBlockStack::AddNode should usually be used instead, to add the node
+  // that this doesn't add the node to any node block. Check::Context::AddInst
+  // or InstBlockStack::AddInst should usually be used instead, to add the node
   // to the current block.
   auto AddInNoBlock(Inst node) -> InstId { return values_.Add(node); }
 

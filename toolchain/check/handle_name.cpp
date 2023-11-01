@@ -51,7 +51,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Lamp parse_node)
             : SemIR::InstId::BuiltinError;
     auto node = context.insts().Get(inst_id);
     // TODO: Track that this node was named within `base_id`.
-    context.AddNodeAndPush(
+    context.AddInstAndPush(
         parse_node,
         SemIR::NameReference{parse_node, node.type_id(), name_id, inst_id});
     return true;
@@ -109,7 +109,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Lamp parse_node)
         CARBON_CHECK(field)
             << "Unexpected value " << context.insts().Get(field_id)
             << " for field name expression";
-        context.AddNodeAndPush(
+        context.AddInstAndPush(
             parse_node, SemIR::ClassFieldAccess{
                             parse_node, unbound_field_type->field_type_id,
                             base_id, field->index});
@@ -132,7 +132,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Lamp parse_node)
         for (auto param_id :
              context.inst_blocks().Get(function.implicit_param_refs_id)) {
           if (context.insts().Get(param_id).Is<SemIR::SelfParameter>()) {
-            context.AddNodeAndPush(
+            context.AddInstAndPush(
                 parse_node,
                 SemIR::BoundMethod{
                     parse_node,
@@ -145,7 +145,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Lamp parse_node)
 
       // For a non-instance member, the result is that member.
       // TODO: Track that this was named within `base_id`.
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::NameReference{parse_node, member_type_id, name_id, member_id});
       return true;
@@ -157,7 +157,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Lamp parse_node)
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
         auto field = context.insts().GetAs<SemIR::StructTypeField>(ref_id);
         if (name_id == field.name_id) {
-          context.AddNodeAndPush(
+          context.AddInstAndPush(
               parse_node, SemIR::StructAccess{parse_node, field.field_type_id,
                                               base_id, SemIR::MemberIndex(i)});
           return true;
@@ -220,7 +220,7 @@ auto HandleNameExpression(Context& context, Parse::Lamp parse_node) -> bool {
   }
 
   CARBON_CHECK(value.kind().value_kind() == SemIR::InstValueKind::Typed);
-  context.AddNodeAndPush(
+  context.AddInstAndPush(
       parse_node,
       SemIR::NameReference{parse_node, value.type_id(), name_id, value_id});
   return true;
@@ -269,7 +269,7 @@ auto HandleSelfTypeNameExpression(Context& context, Parse::Lamp parse_node)
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);
   auto value = context.insts().Get(value_id);
-  context.AddNodeAndPush(
+  context.AddInstAndPush(
       parse_node,
       SemIR::NameReference{parse_node, value.type_id(), name_id, value_id});
   return true;
@@ -290,7 +290,7 @@ auto HandleSelfValueNameExpression(Context& context, Parse::Lamp parse_node)
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);
   auto value = context.insts().Get(value_id);
-  context.AddNodeAndPush(
+  context.AddInstAndPush(
       parse_node,
       SemIR::NameReference{parse_node, value.type_id(), name_id, value_id});
   return true;

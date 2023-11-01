@@ -58,14 +58,14 @@ auto Context::VerifyOnFinish() -> void {
   CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
 }
 
-auto Context::AddNode(SemIR::Inst node) -> SemIR::InstId {
-  auto inst_id = inst_block_stack_.AddNode(node);
-  CARBON_VLOG() << "AddNode: " << node << "\n";
+auto Context::AddInst(SemIR::Inst node) -> SemIR::InstId {
+  auto inst_id = inst_block_stack_.AddInst(node);
+  CARBON_VLOG() << "AddInst: " << node << "\n";
   return inst_id;
 }
 
-auto Context::AddNodeAndPush(Parse::Lamp parse_node, SemIR::Inst node) -> void {
-  auto inst_id = AddNode(node);
+auto Context::AddInstAndPush(Parse::Lamp parse_node, SemIR::Inst node) -> void {
+  auto inst_id = AddInst(node);
   lamp_stack_.Push(parse_node, inst_id);
 }
 
@@ -203,7 +203,7 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddDefaultValue();
-  context.AddNode(BranchNode{parse_node, block_id, args...});
+  context.AddInst(BranchNode{parse_node, block_id, args...});
   return block_id;
 }
 
@@ -236,7 +236,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::Lamp parse_node, int num_blocks)
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddNode(SemIR::Branch{parse_node, new_block_id});
+      AddInst(SemIR::Branch{parse_node, new_block_id});
     }
     inst_block_stack().Pop();
   }
@@ -254,7 +254,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddNode(SemIR::BranchWithArg{parse_node, new_block_id, arg_id});
+      AddInst(SemIR::BranchWithArg{parse_node, new_block_id, arg_id});
     }
     inst_block_stack().Pop();
   }
@@ -262,7 +262,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
-  return AddNode(SemIR::BlockArg{parse_node, result_type_id, new_block_id});
+  return AddInst(SemIR::BlockArg{parse_node, result_type_id, new_block_id});
 }
 
 // Add the current code block to the enclosing function.
@@ -594,7 +594,7 @@ class TypeCompleter {
       if (field_value_rep.type_id != field.field_type_id) {
         same_as_object_rep = false;
         field.field_type_id = field_value_rep.type_id;
-        field_id = context_.AddNode(field);
+        field_id = context_.AddInst(field);
       }
       value_rep_fields.push_back(field_id);
     }
@@ -876,12 +876,12 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst node,
   }
 }
 
-auto Context::CanonicalizeTypeAndAddNodeIfNew(SemIR::Inst node)
+auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst node)
     -> SemIR::TypeId {
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
     ProfileType(*this, node, canonical_id);
   };
-  auto make_node = [&] { return AddNode(node); };
+  auto make_node = [&] { return AddInst(node); };
   return CanonicalizeTypeImpl(node.kind(), profile_node, make_node);
 }
 
@@ -904,7 +904,7 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
 auto Context::CanonicalizeStructType(Parse::Lamp parse_node,
                                      SemIR::InstBlockId refs_id)
     -> SemIR::TypeId {
-  return CanonicalizeTypeAndAddNodeIfNew(
+  return CanonicalizeTypeAndAddInstIfNew(
       SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
 }
 
@@ -916,7 +916,7 @@ auto Context::CanonicalizeTupleType(Parse::Lamp parse_node,
     ProfileTupleType(type_ids, canonical_id);
   };
   auto make_tuple_node = [&] {
-    return AddNode(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
+    return AddInst(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
                                     type_blocks().Add(type_ids)});
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
@@ -934,7 +934,7 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
 
 auto Context::GetPointerType(Parse::Lamp parse_node,
                              SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
-  return CanonicalizeTypeAndAddNodeIfNew(
+  return CanonicalizeTypeAndAddInstIfNew(
       SemIR::PointerType{parse_node, SemIR::TypeId::TypeType, pointee_type_id});
 }
 

@@ -11,7 +11,7 @@ auto HandleLiteral(Context& context, Parse::Lamp parse_node) -> bool {
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::False:
     case Lex::TokenKind::True: {
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::BoolLiteral{
               parse_node, context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
@@ -20,7 +20,7 @@ auto HandleLiteral(Context& context, Parse::Lamp parse_node) -> bool {
       break;
     }
     case Lex::TokenKind::IntegerLiteral: {
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::IntegerLiteral{
               parse_node,
@@ -29,7 +29,7 @@ auto HandleLiteral(Context& context, Parse::Lamp parse_node) -> bool {
       break;
     }
     case Lex::TokenKind::RealLiteral: {
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::RealLiteral{
               parse_node,
@@ -39,7 +39,7 @@ auto HandleLiteral(Context& context, Parse::Lamp parse_node) -> bool {
     }
     case Lex::TokenKind::StringLiteral: {
       auto id = context.tokens().GetStringLiteral(token);
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::StringLiteral{
               parse_node,

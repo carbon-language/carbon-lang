@@ -90,7 +90,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
         << "initialized multiple times? Have "
         << sem_ir.insts().Get(return_slot_id);
     auto init = sem_ir.insts().Get(init_id);
-    return context.AddNode(SemIR::Temporary{init.parse_node(), init.type_id(),
+    return context.AddInst(SemIR::Temporary{init.parse_node(), init.type_id(),
                                             return_slot_id, init_id});
   }
 
@@ -105,9 +105,9 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   // materialize and initialize a temporary, rather than two separate
   // nodes.
   auto init = sem_ir.insts().Get(init_id);
-  auto temporary_id = context.AddNode(
+  auto temporary_id = context.AddInst(
       SemIR::TemporaryStorage{init.parse_node(), init.type_id()});
-  return context.AddNode(SemIR::Temporary{init.parse_node(), init.type_id(),
+  return context.AddInst(SemIR::Temporary{init.parse_node(), init.type_id(),
                                           temporary_id, init_id});
 }
 
@@ -132,13 +132,13 @@ static auto MakeElemAccessNode(Context& context, Parse::Lamp parse_node,
     // TODO: Add a new node kind for indexing an array at a constant index
     // so that we don't need an integer literal node here, and remove this
     // special case.
-    auto index_id = block.AddNode(SemIR::IntegerLiteral{
+    auto index_id = block.AddInst(SemIR::IntegerLiteral{
         parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
         context.sem_ir().integers().Add(llvm::APInt(32, i))});
-    return block.AddNode(
+    return block.AddInst(
         AccessNodeT{parse_node, elem_type_id, aggregate_id, index_id});
   } else {
-    return block.AddNode(AccessNodeT{parse_node, elem_type_id, aggregate_id,
+    return block.AddInst(AccessNodeT{parse_node, elem_type_id, aggregate_id,
                                      SemIR::MemberIndex(i)});
   }
 }
@@ -276,7 +276,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // destination for the array initialization if we weren't given one.
   SemIR::InstId return_slot_id = target.init_id;
   if (!target.init_id.is_valid()) {
-    return_slot_id = target_block->AddNode(
+    return_slot_id = target_block->AddInst(
         SemIR::TemporaryStorage{value.parse_node(), target.type_id});
   }
 
@@ -305,7 +305,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   target_block->InsertHere();
   inits.push_back(return_slot_id);
 
-  return context.AddNode(SemIR::ArrayInit{value.parse_node(), target.type_id,
+  return context.AddInst(SemIR::ArrayInit{value.parse_node(), target.type_id,
                                           value_id,
                                           sem_ir.inst_blocks().Add(inits)});
 }
@@ -375,10 +375,10 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     new_block.Set(i, init_id);
   }
 
-  return is_init ? context.AddNode(SemIR::TupleInit{value.parse_node(),
+  return is_init ? context.AddInst(SemIR::TupleInit{value.parse_node(),
                                                     target.type_id, value_id,
                                                     new_block.id()})
-                 : context.AddNode(SemIR::TupleValue{value.parse_node(),
+                 : context.AddInst(SemIR::TupleValue{value.parse_node(),
                                                      target.type_id, value_id,
                                                      new_block.id()});
 }
@@ -494,10 +494,10 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
     new_block.Set(i, init_id);
   }
 
-  return is_init ? context.AddNode(SemIR::StructInit{value.parse_node(),
+  return is_init ? context.AddInst(SemIR::StructInit{value.parse_node(),
                                                      target.type_id, value_id,
                                                      new_block.id()})
-                 : context.AddNode(SemIR::StructValue{value.parse_node(),
+                 : context.AddInst(SemIR::StructValue{value.parse_node(),
                                                       target.type_id, value_id,
                                                       new_block.id()});
 }
@@ -582,7 +582,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Lamp parse_node,
         // The initializer produces an object representation by copy, and the
         // value representation is a copy of the object representation, so we
         // already have a value of the right form.
-        return context.AddNode(
+        return context.AddInst(
             SemIR::ValueOfInitializer{parse_node, value_type_id, value_id});
       }
     }
@@ -803,7 +803,7 @@ auto Convert(Context& context, Parse::Lamp parse_node, SemIR::InstId expr_id,
 
       // If we have a reference and don't want one, form a value binding.
       // TODO: Support types with custom value representations.
-      expr_id = context.AddNode(
+      expr_id = context.AddInst(
           SemIR::BindValue{expr.parse_node(), expr.type_id(), expr_id});
       // We now have a value expression.
       [[fallthrough]];
@@ -822,7 +822,7 @@ auto Convert(Context& context, Parse::Lamp parse_node, SemIR::InstId expr_id,
             SemIR::GetInitializingRepresentation(sem_ir, target.type_id);
         init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
       target.init_block->InsertHere();
-      expr_id = context.AddNode(SemIR::InitializeFrom{
+      expr_id = context.AddInst(SemIR::InitializeFrom{
           parse_node, target.type_id, expr_id, target.init_id});
     }
   }
@@ -924,7 +924,7 @@ static auto ConvertSelf(Context& context, Parse::Lamp call_parse_node,
         context.emitter().Emit(call_parse_node, AddrSelfIsNonReference);
         return SemIR::InstId::BuiltinError;
     }
-    self_or_addr_id = context.AddNode(SemIR::AddressOf{
+    self_or_addr_id = context.AddInst(SemIR::AddressOf{
         self.parse_node(),
         context.GetPointerType(self.parse_node(), self.type_id()),
         self_or_addr_id});
