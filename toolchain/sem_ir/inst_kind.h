@@ -36,13 +36,13 @@ enum class TerminatorKind : int8_t {
 };
 
 CARBON_DEFINE_RAW_ENUM_CLASS(InstKind, uint8_t) {
-#define CARBON_SEM_IR_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
+#define CARBON_SEM_IR_INST_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 };
 
 class InstKind : public CARBON_ENUM_BASE(InstKind) {
  public:
-#define CARBON_SEM_IR_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 
   using EnumBase::Create;
@@ -77,7 +77,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   [[nodiscard]] auto definition() const -> const Definition&;
 };
 
-#define CARBON_SEM_IR_NODE_KIND(Name) \
+#define CARBON_SEM_IR_INST_KIND(Name) \
   CARBON_ENUM_CONSTANT_DEFINITION(InstKind, Name)
 #include "toolchain/sem_ir/inst_kind.def"
 

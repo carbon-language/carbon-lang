@@ -44,7 +44,7 @@ auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
-#define CARBON_SEM_IR_NODE_KIND(Name)                     \
+#define CARBON_SEM_IR_INST_KIND(Name)                     \
   case SemIR::Name::Kind:                                 \
     Handle##Name(*this, inst_id, node.As<SemIR::Name>()); \
     break;

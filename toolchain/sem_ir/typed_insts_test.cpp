@@ -27,7 +27,7 @@ namespace {
 
 // Check that each node kind defines a Kind member using the correct InstKind
 // enumerator.
-#define CARBON_SEM_IR_NODE_KIND(Name) \
+#define CARBON_SEM_IR_INST_KIND(Name) \
   static_assert(Name::Kind == InstKind::Name);
 #include "toolchain/sem_ir/inst_kind.def"
 
@@ -37,7 +37,7 @@ using TypesExceptFirst = ::testing::Types<Types...>;
 // Form a list of all typed node types. Use `TypesExceptFirst` and a leading
 // `void` to handle the problem that we only want N-1 commas in this list.
 using TypedInstTypes = TypesExceptFirst<void
-#define CARBON_SEM_IR_NODE_KIND(Name) , Name
+#define CARBON_SEM_IR_INST_KIND(Name) , Name
 #include "toolchain/sem_ir/inst_kind.def"
                                         >;
 

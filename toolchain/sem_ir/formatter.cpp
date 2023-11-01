@@ -622,7 +622,7 @@ class Formatter {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
-#define CARBON_SEM_IR_NODE_KIND(NodeT)            \
+#define CARBON_SEM_IR_INST_KIND(NodeT)            \
   case NodeT::Kind:                               \
     FormatInstruction(inst_id, node.As<NodeT>()); \
     break;
