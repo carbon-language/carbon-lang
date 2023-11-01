@@ -46,11 +46,11 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
                .has_return_slot()) {
         return SemIR::InstId::Invalid;
       }
-      return sem_ir.node_blocks().Get(call.args_id).back();
+      return sem_ir.inst_blocks().Get(call.args_id).back();
     }
 
     case SemIR::ArrayInit::Kind: {
-      return sem_ir.node_blocks()
+      return sem_ir.inst_blocks()
           .Get(init.As<SemIR::ArrayInit>().inits_and_return_slot_id)
           .back();
     }
@@ -205,20 +205,20 @@ class CopyOnWriteBlock {
   CopyOnWriteBlock(SemIR::File& file, SemIR::InstBlockId source_id, size_t size)
       : file_(file), source_id_(source_id) {
     if (!source_id_.is_valid()) {
-      id_ = file_.node_blocks().AddUninitialized(size);
+      id_ = file_.inst_blocks().AddUninitialized(size);
     }
   }
 
   auto id() -> SemIR::InstBlockId const { return id_; }
 
   auto Set(int i, SemIR::InstId value) -> void {
-    if (source_id_.is_valid() && file_.node_blocks().Get(id_)[i] == value) {
+    if (source_id_.is_valid() && file_.inst_blocks().Get(id_)[i] == value) {
       return;
     }
     if (id_ == source_id_) {
-      id_ = file_.node_blocks().Add(file_.node_blocks().Get(source_id_));
+      id_ = file_.inst_blocks().Add(file_.inst_blocks().Get(source_id_));
     }
-    file_.node_blocks().Get(id_)[i] = value;
+    file_.inst_blocks().Get(id_)[i] = value;
   }
 
  private:
@@ -244,7 +244,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // result.
   llvm::ArrayRef<SemIR::InstId> literal_elems;
   if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
-    literal_elems = sem_ir.node_blocks().Get(tuple_literal->elements_id);
+    literal_elems = sem_ir.inst_blocks().Get(tuple_literal->elements_id);
   } else {
     value_id = MaterializeIfInitializing(context, value_id);
   }
@@ -307,7 +307,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
 
   return context.AddNode(SemIR::ArrayInit{value.parse_node(), target.type_id,
                                           value_id,
-                                          sem_ir.node_blocks().Add(inits)});
+                                          sem_ir.inst_blocks().Add(inits)});
 }
 
 // Performs a conversion from a tuple to a tuple type. Does not perform a
@@ -329,7 +329,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   auto literal_elems_id = SemIR::InstBlockId::Invalid;
   if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
     literal_elems_id = tuple_literal->elements_id;
-    literal_elems = sem_ir.node_blocks().Get(literal_elems_id);
+    literal_elems = sem_ir.inst_blocks().Get(literal_elems_id);
   } else {
     value_id = MaterializeIfInitializing(context, value_id);
   }
@@ -390,8 +390,8 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                                   SemIR::InstId value_id,
                                   ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
-  auto src_elem_fields = sem_ir.node_blocks().Get(src_type.fields_id);
-  auto dest_elem_fields = sem_ir.node_blocks().Get(dest_type.fields_id);
+  auto src_elem_fields = sem_ir.inst_blocks().Get(src_type.fields_id);
+  auto dest_elem_fields = sem_ir.inst_blocks().Get(dest_type.fields_id);
 
   auto value = sem_ir.nodes().Get(value_id);
 
@@ -402,7 +402,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
   auto literal_elems_id = SemIR::InstBlockId::Invalid;
   if (auto struct_literal = value.TryAs<SemIR::StructLiteral>()) {
     literal_elems_id = struct_literal->elements_id;
-    literal_elems = sem_ir.node_blocks().Get(literal_elems_id);
+    literal_elems = sem_ir.inst_blocks().Get(literal_elems_id);
   } else {
     value_id = MaterializeIfInitializing(context, value_id);
   }
@@ -628,7 +628,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
     if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
       llvm::SmallVector<SemIR::TypeId> type_ids;
       for (SemIR::InstId tuple_inst_id :
-           sem_ir.node_blocks().Get(tuple_literal->elements_id)) {
+           sem_ir.inst_blocks().Get(tuple_literal->elements_id)) {
         // TODO: This call recurses back into conversion. Switch to an
         // iterative approach.
         type_ids.push_back(
@@ -942,8 +942,8 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
   auto implicit_param_refs =
-      context.sem_ir().node_blocks().Get(implicit_param_refs_id);
-  auto param_refs = context.sem_ir().node_blocks().Get(param_refs_id);
+      context.sem_ir().inst_blocks().Get(implicit_param_refs_id);
+  auto param_refs = context.sem_ir().inst_blocks().Get(param_refs_id);
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
@@ -1012,7 +1012,7 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
     args.push_back(return_storage_id);
   }
 
-  return context.node_blocks().Add(args);
+  return context.inst_blocks().Add(args);
 }
 
 auto ExpressionAsType(Context& context, Parse::Node parse_node,

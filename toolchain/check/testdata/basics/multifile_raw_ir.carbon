@@ -27,7 +27,7 @@ fn B() {}
 // CHECK:STDOUT:   nodes:
 // CHECK:STDOUT:     node+0:          {kind: FunctionDeclaration, arg0: function0, type: type0}
 // CHECK:STDOUT:     node+1:          {kind: Return}
-// CHECK:STDOUT:   node_blocks:
+// CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}
 // CHECK:STDOUT:     block1:
 // CHECK:STDOUT:       0:               node+1
@@ -47,7 +47,7 @@ fn B() {}
 // CHECK:STDOUT:   nodes:
 // CHECK:STDOUT:     node+0:          {kind: FunctionDeclaration, arg0: function0, type: type0}
 // CHECK:STDOUT:     node+1:          {kind: Return}
-// CHECK:STDOUT:   node_blocks:
+// CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}
 // CHECK:STDOUT:     block1:
 // CHECK:STDOUT:       0:               node+1

@@ -39,7 +39,7 @@ auto HandleArrayInit(FunctionContext& context, SemIR::InstId inst_id,
   // The result of initialization is the return slot of the initializer.
   context.SetLocal(inst_id,
                    context.GetLocal(context.sem_ir()
-                                        .node_blocks()
+                                        .inst_blocks()
                                         .Get(node.inits_and_return_slot_id)
                                         .back()));
 }
@@ -141,7 +141,7 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
 
   std::vector<llvm::Value*> args;
   llvm::ArrayRef<SemIR::InstId> arg_ids =
-      context.sem_ir().node_blocks().Get(node.args_id);
+      context.sem_ir().inst_blocks().Get(node.args_id);
 
   if (SemIR::GetInitializingRepresentation(context.sem_ir(), node.type_id)
           .has_return_slot()) {
@@ -247,7 +247,7 @@ static auto GetAggregateElement(FunctionContext& context,
 static auto GetStructFieldName(FunctionContext& context,
                                SemIR::TypeId struct_type_id,
                                SemIR::MemberIndex index) -> llvm::StringRef {
-  auto fields = context.sem_ir().node_blocks().Get(
+  auto fields = context.sem_ir().inst_blocks().Get(
       context.sem_ir()
           .nodes()
           .GetAs<SemIR::StructType>(
@@ -428,7 +428,7 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
       return llvm::PoisonValue::get(context.GetType(value_rep.type_id));
 
     case SemIR::ValueRepresentation::Copy: {
-      auto refs = context.sem_ir().node_blocks().Get(refs_id);
+      auto refs = context.sem_ir().inst_blocks().Get(refs_id);
       CARBON_CHECK(refs.size() == 1)
           << "Unexpected size for aggregate with by-copy value representation";
       // TODO: Remove the LLVM StructType wrapper in this case, so we don't
@@ -448,7 +448,7 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
           context.builder().CreateAlloca(llvm_value_rep_type,
                                          /*ArraySize=*/nullptr, name);
       for (auto [i, ref] :
-           llvm::enumerate(context.sem_ir().node_blocks().Get(refs_id))) {
+           llvm::enumerate(context.sem_ir().inst_blocks().Get(refs_id))) {
         context.builder().CreateStore(
             context.GetLocal(ref),
             context.builder().CreateStructGEP(llvm_value_rep_type, alloca, i));

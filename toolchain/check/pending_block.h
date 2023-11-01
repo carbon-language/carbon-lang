@@ -27,10 +27,10 @@ class PendingBlock {
     // If `block` is not null, enters the scope. If `block` is null, this object
     // has no effect.
     DiscardUnusedNodesScope(PendingBlock* block)
-        : block_(block), size_(block ? block->nodes_.size() : 0) {}
+        : block_(block), size_(block ? block->insts_.size() : 0) {}
     ~DiscardUnusedNodesScope() {
-      if (block_ && block_->nodes_.size() > size_) {
-        block_->nodes_.truncate(size_);
+      if (block_ && block_->insts_.size() > size_) {
+        block_->insts_.truncate(size_);
       }
     }
 
@@ -41,16 +41,16 @@ class PendingBlock {
 
   auto AddNode(SemIR::Node node) -> SemIR::InstId {
     SemIR::InstId inst_id = context_.nodes().AddInNoBlock(node);
-    nodes_.push_back(inst_id);
+    insts_.push_back(inst_id);
     return inst_id;
   }
 
   // Insert the pending block of code at the current position.
   auto InsertHere() -> void {
-    for (auto id : nodes_) {
+    for (auto id : insts_) {
       context_.node_block_stack().AddInstId(id);
     }
-    nodes_.clear();
+    insts_.clear();
   }
 
   // Replace the node at target_id with the nodes in this block. The new value
@@ -60,13 +60,13 @@ class PendingBlock {
 
     // There are three cases here:
 
-    if (nodes_.empty()) {
+    if (insts_.empty()) {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
       context_.nodes().Set(
           target_id, SemIR::SpliceBlock{value.parse_node(), value.type_id(),
                                         SemIR::InstBlockId::Empty, value_id});
-    } else if (nodes_.size() == 1 && nodes_[0] == value_id) {
+    } else if (insts_.size() == 1 && insts_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the node referred
       // to by `value_id`. This is intended to be the common case.
       context_.nodes().Set(target_id, value);
@@ -75,16 +75,16 @@ class PendingBlock {
       context_.nodes().Set(
           target_id,
           SemIR::SpliceBlock{value.parse_node(), value.type_id(),
-                             context_.node_blocks().Add(nodes_), value_id});
+                             context_.inst_blocks().Add(insts_), value_id});
     }
 
     // Prepare to stash more pending instructions.
-    nodes_.clear();
+    insts_.clear();
   }
 
  private:
   Context& context_;
-  llvm::SmallVector<SemIR::InstId> nodes_;
+  llvm::SmallVector<SemIR::InstId> insts_;
 };
 
 }  // namespace Carbon::Check

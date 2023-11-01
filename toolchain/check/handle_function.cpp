@@ -113,8 +113,8 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
-    if (!context.node_blocks().Get(implicit_param_refs_id).empty() ||
-        !context.node_blocks().Get(param_refs_id).empty() ||
+    if (!context.inst_blocks().Get(implicit_param_refs_id).empty() ||
+        !context.inst_blocks().Get(param_refs_id).empty() ||
         (return_slot_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
@@ -190,8 +190,8 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
 
   // Bring the implicit and explicit parameters into scope.
   for (auto param_id : llvm::concat<SemIR::InstId>(
-           context.node_blocks().Get(function.implicit_param_refs_id),
-           context.node_blocks().Get(function.param_refs_id))) {
+           context.inst_blocks().Get(function.implicit_param_refs_id),
+           context.inst_blocks().Get(function.param_refs_id))) {
     auto param = context.nodes().Get(param_id);
 
     // The parameter types need to be complete.

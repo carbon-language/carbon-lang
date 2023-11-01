@@ -291,8 +291,8 @@ class File : public Printable<File> {
   }
   auto nodes() -> NodeStore& { return nodes_; }
   auto nodes() const -> const NodeStore& { return nodes_; }
-  auto node_blocks() -> NodeBlockStore& { return node_blocks_; }
-  auto node_blocks() const -> const NodeBlockStore& { return node_blocks_; }
+  auto inst_blocks() -> InstBlockStore& { return inst_blocks_; }
+  auto inst_blocks() const -> const InstBlockStore& { return inst_blocks_; }
 
   // A list of types that were completed in this file, in the order in which
   // they were completed. Earlier types in this list cannot contain instances of
@@ -355,7 +355,7 @@ class File : public Printable<File> {
 
   // Node blocks within the IR. These reference entries in nodes_. Storage for
   // the data is provided by allocator_.
-  NodeBlockStore node_blocks_;
+  InstBlockStore inst_blocks_;
 
   // The top node block ID.
   InstBlockId top_node_block_id_ = InstBlockId::Invalid;

@@ -37,7 +37,7 @@ class NodeNamer {
         parse_tree_(parse_tree),
         sem_ir_(sem_ir) {
     nodes.resize(sem_ir.nodes().size());
-    labels.resize(sem_ir.node_blocks().size());
+    labels.resize(sem_ir.inst_blocks().size());
     scopes.resize(1 + sem_ir.functions().size() + sem_ir.classes().size());
 
     // Build the file scope.
@@ -285,7 +285,7 @@ class NodeNamer {
     }
 
     if (parse_node == Parse::Node::Invalid) {
-      if (const auto& block = sem_ir_.node_blocks().Get(block_id);
+      if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
         parse_node = sem_ir_.nodes().Get(block.front()).parse_node();
       }
@@ -376,7 +376,7 @@ class NodeNamer {
     Scope& scope = GetScopeInfo(scope_idx);
 
     // Use bound names where available. Otherwise, assign a backup name.
-    for (auto inst_id : sem_ir_.node_blocks().Get(block_id)) {
+    for (auto inst_id : sem_ir_.inst_blocks().Get(block_id)) {
       if (!inst_id.is_valid()) {
         continue;
       }
@@ -566,7 +566,7 @@ class Formatter {
 
   auto FormatParameterList(InstBlockId param_refs_id) -> void {
     llvm::ListSeparator sep;
-    for (const InstId param_id : sem_ir_.node_blocks().Get(param_refs_id)) {
+    for (const InstId param_id : sem_ir_.inst_blocks().Get(param_refs_id)) {
       out_ << sep;
       if (!param_id.is_valid()) {
         out_ << "invalid";
@@ -583,7 +583,7 @@ class Formatter {
       return;
     }
 
-    for (const InstId inst_id : sem_ir_.node_blocks().Get(block_id)) {
+    for (const InstId inst_id : sem_ir_.inst_blocks().Get(block_id)) {
       FormatInstruction(inst_id);
     }
   }
@@ -725,7 +725,7 @@ class Formatter {
     FormatArg(node.tuple_id);
 
     llvm::ArrayRef<InstId> inits_and_return_slot =
-        sem_ir_.node_blocks().Get(node.inits_and_return_slot_id);
+        sem_ir_.inst_blocks().Get(node.inits_and_return_slot_id);
     auto inits = inits_and_return_slot.drop_back(1);
     auto return_slot_id = inits_and_return_slot.back();
 
@@ -748,7 +748,7 @@ class Formatter {
       return;
     }
 
-    llvm::ArrayRef<InstId> args = sem_ir_.node_blocks().Get(node.args_id);
+    llvm::ArrayRef<InstId> args = sem_ir_.inst_blocks().Get(node.args_id);
 
     bool has_return_slot =
         GetInitializingRepresentation(sem_ir_, node.type_id).has_return_slot();
@@ -785,7 +785,7 @@ class Formatter {
   auto FormatInstructionRHS(SpliceBlock node) -> void {
     FormatArgs(node.result_id);
     out_ << " {";
-    if (!sem_ir_.node_blocks().Get(node.block_id).empty()) {
+    if (!sem_ir_.inst_blocks().Get(node.block_id).empty()) {
       out_ << "\n";
       indent_ += 2;
       FormatCodeBlock(node.block_id);
@@ -802,7 +802,7 @@ class Formatter {
   auto FormatInstructionRHS(StructType node) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
-    for (auto field_id : sem_ir_.node_blocks().Get(node.fields_id)) {
+    for (auto field_id : sem_ir_.inst_blocks().Get(node.fields_id)) {
       out_ << sep << ".";
       auto field = sem_ir_.nodes().GetAs<StructTypeField>(field_id);
       FormatString(field.name_id);
@@ -846,7 +846,7 @@ class Formatter {
   auto FormatArg(InstBlockId id) -> void {
     out_ << '(';
     llvm::ListSeparator sep;
-    for (auto inst_id : sem_ir_.node_blocks().Get(id)) {
+    for (auto inst_id : sem_ir_.inst_blocks().Get(id)) {
       out_ << sep;
       FormatArg(inst_id);
     }

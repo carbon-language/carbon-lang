@@ -265,8 +265,8 @@ class Context {
     return sem_ir().type_blocks();
   }
   auto nodes() -> SemIR::NodeStore& { return sem_ir().nodes(); }
-  auto node_blocks() -> SemIR::NodeBlockStore& {
-    return sem_ir().node_blocks();
+  auto inst_blocks() -> SemIR::InstBlockStore& {
+    return sem_ir().inst_blocks();
   }
 
  private:

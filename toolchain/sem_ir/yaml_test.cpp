@@ -73,7 +73,7 @@ TEST(SemIRTest, YAML) {
                                                 Pair("arg0", inst_id),
                                                 Pair("arg1", inst_id)))))))),
       // This production has only two node blocks.
-      Pair("node_blocks",
+      Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(
                Pair("block0", Yaml::Mapping(IsEmpty())),
                Pair("block1", Yaml::Mapping(Each(Pair(_, inst_id)))),

@@ -47,9 +47,9 @@ File::File(SharedValueStores& value_stores)
       // Builtins are always the first IR, even when self-referential.
       cross_reference_irs_({this}),
       type_blocks_(allocator_),
-      node_blocks_(allocator_) {
+      inst_blocks_(allocator_) {
   // Default entry for InstBlockId::Empty.
-  node_blocks_.AddDefaultValue();
+  inst_blocks_.AddDefaultValue();
 
   nodes_.Reserve(BuiltinKind::ValidCount);
 
@@ -75,13 +75,13 @@ File::File(SharedValueStores& value_stores, std::string filename,
       // Builtins are always the first IR.
       cross_reference_irs_({builtins}),
       type_blocks_(allocator_),
-      node_blocks_(allocator_) {
+      inst_blocks_(allocator_) {
   CARBON_CHECK(builtins != nullptr);
   CARBON_CHECK(builtins->cross_reference_irs_[0] == builtins)
       << "Not called with builtins!";
 
   // Default entry for InstBlockId::Empty.
-  node_blocks_.AddDefaultValue();
+  inst_blocks_.AddDefaultValue();
 
   // Copy builtins over.
   nodes_.Reserve(BuiltinKind::ValidCount);
@@ -104,7 +104,7 @@ auto File::Verify() const -> ErrorOr<Success> {
   for (const Function& function : functions_.array_ref()) {
     for (InstBlockId block_id : function.body_block_ids) {
       TerminatorKind prior_kind = TerminatorKind::NotTerminator;
-      for (InstId inst_id : node_blocks().Get(block_id)) {
+      for (InstId inst_id : inst_blocks().Get(block_id)) {
         TerminatorKind node_kind =
             nodes().Get(inst_id).kind().terminator_kind();
         if (prior_kind == TerminatorKind::Terminator) {
@@ -151,7 +151,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
                                   Yaml::OutputScalar(nodes_.Get(id)));
                         }
                       }));
-              map.Add("node_blocks", node_blocks_.OutputYaml());
+              map.Add("inst_blocks", inst_blocks_.OutputYaml());
             }));
   });
 }
@@ -324,7 +324,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
         break;
       }
       case StructType::Kind: {
-        auto refs = node_blocks().Get(node.As<StructType>().fields_id);
+        auto refs = inst_blocks().Get(node.As<StructType>().fields_id);
         if (refs.empty()) {
           out << "{}";
           break;
@@ -443,7 +443,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
     auto outer_node = nodes().Get(outer_inst_id);
     if (outer_node.Is<TupleType>() ||
         (outer_node.Is<StructType>() &&
-         node_blocks().Get(outer_node.As<StructType>().fields_id).empty())) {
+         inst_blocks().Get(outer_node.As<StructType>().fields_id).empty())) {
       out << " as type";
     }
   }

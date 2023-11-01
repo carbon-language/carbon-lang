@@ -24,6 +24,6 @@
 // CHECK:STDOUT:     nodeFunctionType: {kind: CrossReference, arg0: ir0, arg1: nodeFunctionType, type: typeTypeType}
 // CHECK:STDOUT:     nodeBoundMethodType: {kind: CrossReference, arg0: ir0, arg1: nodeBoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     nodeNamespaceType: {kind: CrossReference, arg0: ir0, arg1: nodeNamespaceType, type: typeTypeType}
-// CHECK:STDOUT:   node_blocks:
+// CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}
 // CHECK:STDOUT: ...

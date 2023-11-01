@@ -40,7 +40,7 @@ auto HandleTupleLiteral(Context& context, Parse::Node parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::ParenExpressionOrTupleLiteralStart>();
-  const auto& node_block = context.node_blocks().Get(refs_id);
+  const auto& node_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::TypeId> type_ids;
   type_ids.reserve(node_block.size());
   for (auto node : node_block) {

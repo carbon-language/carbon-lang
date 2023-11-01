@@ -148,7 +148,7 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
 };
 
 // Adapts BlockValueStore for node blocks.
-class NodeBlockStore : public BlockValueStore<InstBlockId, InstId> {
+class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
  public:
   using BaseType = BlockValueStore<InstBlockId, InstId>;
 

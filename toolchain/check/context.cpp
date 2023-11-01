@@ -202,7 +202,7 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
   if (!context.node_block_stack().is_current_block_reachable()) {
     return SemIR::InstBlockId::Unreachable;
   }
-  auto block_id = context.node_blocks().AddDefaultValue();
+  auto block_id = context.inst_blocks().AddDefaultValue();
   context.AddNode(BranchNode{parse_node, block_id, args...});
   return block_id;
 }
@@ -234,7 +234,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
   for ([[maybe_unused]] auto _ : llvm::seq(num_blocks)) {
     if (node_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
-        new_block_id = node_blocks().AddDefaultValue();
+        new_block_id = inst_blocks().AddDefaultValue();
       }
       AddNode(SemIR::Branch{parse_node, new_block_id});
     }
@@ -252,7 +252,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
   for (auto arg_id : block_args) {
     if (node_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
-        new_block_id = node_blocks().AddDefaultValue();
+        new_block_id = inst_blocks().AddDefaultValue();
       }
       AddNode(SemIR::BranchWithArg{parse_node, new_block_id, arg_id});
     }
@@ -428,7 +428,7 @@ class TypeCompleter {
         break;
 
       case SemIR::StructType::Kind:
-        for (auto field_id : context_.node_blocks().Get(
+        for (auto field_id : context_.inst_blocks().Get(
                  type_node.As<SemIR::StructType>().fields_id)) {
           Push(context_.nodes()
                    .GetAs<SemIR::StructTypeField>(field_id)
@@ -578,7 +578,7 @@ class TypeCompleter {
                                           SemIR::StructType struct_type) const
       -> SemIR::ValueRepresentation {
     // TODO: Share more code with tuples.
-    auto fields = context_.node_blocks().Get(struct_type.fields_id);
+    auto fields = context_.inst_blocks().Get(struct_type.fields_id);
     if (fields.empty()) {
       return MakeEmptyRepresentation(struct_type.parse_node);
     }
@@ -603,7 +603,7 @@ class TypeCompleter {
                          ? type_id
                          : context_.CanonicalizeStructType(
                                struct_type.parse_node,
-                               context_.node_blocks().Add(value_rep_fields));
+                               context_.inst_blocks().Add(value_rep_fields));
     return BuildStructOrTupleValueRepresentation(
         struct_type.parse_node, fields.size(), value_rep, same_as_object_rep);
   }
@@ -850,7 +850,7 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
       canonical_id.AddInteger(node.As<SemIR::PointerType>().pointee_id.index);
       break;
     case SemIR::StructType::Kind: {
-      auto fields = semantics_context.node_blocks().Get(
+      auto fields = semantics_context.inst_blocks().Get(
           node.As<SemIR::StructType>().fields_id);
       for (const auto& field_id : fields) {
         auto field =

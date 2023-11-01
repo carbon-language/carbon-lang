@@ -61,8 +61,8 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   const auto& function = sem_ir().functions().Get(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
   auto implicit_param_refs =
-      sem_ir().node_blocks().Get(function.implicit_param_refs_id);
-  auto param_refs = sem_ir().node_blocks().Get(function.param_refs_id);
+      sem_ir().inst_blocks().Get(function.implicit_param_refs_id);
+  auto param_refs = sem_ir().inst_blocks().Get(function.param_refs_id);
 
   SemIR::InitializingRepresentation return_rep =
       function.return_type_id.is_valid()
@@ -165,8 +165,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // function parameters that was already computed in BuildFunctionDeclaration.
   // We should only do that once.
   auto implicit_param_refs =
-      sem_ir().node_blocks().Get(function.implicit_param_refs_id);
-  auto param_refs = sem_ir().node_blocks().Get(function.param_refs_id);
+      sem_ir().inst_blocks().Get(function.implicit_param_refs_id);
+  auto param_refs = sem_ir().inst_blocks().Get(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
     function_lowering.SetLocal(function.return_slot_id,
@@ -249,7 +249,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
     case SemIR::StructType::Kind: {
       auto fields =
-          sem_ir_->node_blocks().Get(node.As<SemIR::StructType>().fields_id);
+          sem_ir_->inst_blocks().Get(node.As<SemIR::StructType>().fields_id);
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(fields.size());
       for (auto field_id : fields) {

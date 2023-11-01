@@ -38,7 +38,7 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
 }
 
 auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
-  for (const auto& inst_id : sem_ir().node_blocks().Get(block_id)) {
+  for (const auto& inst_id : sem_ir().inst_blocks().Get(block_id)) {
     auto node = sem_ir().nodes().Get(inst_id);
     CARBON_VLOG() << "Lowering " << inst_id << ": " << node << "\n";
     // clang warns on unhandled enum values; clang-tidy is incorrect here.

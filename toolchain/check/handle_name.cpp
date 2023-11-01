@@ -130,7 +130,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
             << " of function type";
         auto& function = context.functions().Get(function_decl->function_id);
         for (auto param_id :
-             context.node_blocks().Get(function.implicit_param_refs_id)) {
+             context.inst_blocks().Get(function.implicit_param_refs_id)) {
           if (context.nodes().Get(param_id).Is<SemIR::SelfParameter>()) {
             context.AddNodeAndPush(
                 parse_node,
@@ -151,7 +151,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
       return true;
     }
     case SemIR::StructType::Kind: {
-      auto refs = context.node_blocks().Get(
+      auto refs = context.inst_blocks().Get(
           base_type.As<SemIR::StructType>().fields_id);
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
