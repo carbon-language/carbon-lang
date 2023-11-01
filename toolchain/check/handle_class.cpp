@@ -36,7 +36,7 @@ static auto BuildClassDeclaration(Context& context)
       name_context, class_decl_id);
   if (existing_id.is_valid()) {
     if (auto existing_class_decl =
-            context.nodes().Get(existing_id).TryAs<SemIR::ClassDeclaration>()) {
+            context.insts().Get(existing_id).TryAs<SemIR::ClassDeclaration>()) {
       // This is a redeclaration of an existing class.
       class_decl.class_id = existing_class_decl->class_id;
     } else {
@@ -68,7 +68,7 @@ static auto BuildClassDeclaration(Context& context)
   }
 
   // Write the class ID into the ClassDeclaration.
-  context.nodes().Set(class_decl_id, class_decl);
+  context.insts().Set(class_decl_id, class_decl);
 
   return {class_decl.class_id, class_decl_id};
 }
@@ -93,7 +93,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
     context.emitter()
         .Build(parse_node, ClassRedefinition,
                context.strings().Get(class_info.name_id))
-        .Note(context.nodes().Get(class_info.definition_id).parse_node(),
+        .Note(context.insts().Get(class_info.definition_id).parse_node(),
               ClassPreviousDefinition)
         .Emit();
   } else {

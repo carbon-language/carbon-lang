@@ -51,21 +51,21 @@ File::File(SharedValueStores& value_stores)
   // Default entry for InstBlockId::Empty.
   inst_blocks_.AddDefaultValue();
 
-  nodes_.Reserve(BuiltinKind::ValidCount);
+  insts_.Reserve(BuiltinKind::ValidCount);
 
   // Error uses a self-referential type so that it's not accidentally treated as
   // a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
 #define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                         \
-  nodes_.AddInNoBlock(Builtin{BuiltinKind::Name == BuiltinKind::Error \
+  insts_.AddInNoBlock(Builtin{BuiltinKind::Name == BuiltinKind::Error \
                                   ? TypeId::Error                     \
                                   : TypeId::TypeType,                 \
                               BuiltinKind::Name});
 #include "toolchain/sem_ir/builtin_kind.def"
 
-  CARBON_CHECK(nodes_.size() == BuiltinKind::ValidCount)
+  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
       << "Builtins should produce " << BuiltinKind::ValidCount
-      << " nodes, actual: " << nodes_.size();
+      << " nodes, actual: " << insts_.size();
 }
 
 File::File(SharedValueStores& value_stores, std::string filename,
@@ -84,11 +84,11 @@ File::File(SharedValueStores& value_stores, std::string filename,
   inst_blocks_.AddDefaultValue();
 
   // Copy builtins over.
-  nodes_.Reserve(BuiltinKind::ValidCount);
+  insts_.Reserve(BuiltinKind::ValidCount);
   static constexpr auto BuiltinIR = CrossReferenceIRId(0);
-  for (auto [i, node] : llvm::enumerate(builtins->nodes_.array_ref())) {
+  for (auto [i, node] : llvm::enumerate(builtins->insts_.array_ref())) {
     // We can reuse builtin type IDs because they're special-cased values.
-    nodes_.AddInNoBlock(
+    insts_.AddInNoBlock(
         CrossReference{node.type_id(), BuiltinIR, SemIR::InstId(i)});
   }
 }
@@ -106,7 +106,7 @@ auto File::Verify() const -> ErrorOr<Success> {
       TerminatorKind prior_kind = TerminatorKind::NotTerminator;
       for (InstId inst_id : inst_blocks().Get(block_id)) {
         TerminatorKind node_kind =
-            nodes().Get(inst_id).kind().terminator_kind();
+            insts().Get(inst_id).kind().terminator_kind();
         if (prior_kind == TerminatorKind::Terminator) {
           return Error(llvm::formatv("Node {0} in block {1} follows terminator",
                                      inst_id, block_id));
@@ -145,10 +145,10 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
                       Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                         int start =
                             include_builtins ? 0 : BuiltinKind::ValidCount;
-                        for (int i : llvm::seq(start, nodes_.size())) {
+                        for (int i : llvm::seq(start, insts_.size())) {
                           auto id = InstId(i);
                           map.Add(PrintToString(id),
-                                  Yaml::OutputScalar(nodes_.Get(id)));
+                                  Yaml::OutputScalar(insts_.Get(id)));
                         }
                       }));
               map.Add("inst_blocks", inst_blocks_.OutputYaml());
@@ -268,7 +268,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
       continue;
     }
 
-    auto node = nodes().Get(step.inst_id);
+    auto node = insts().Get(step.inst_id);
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
@@ -297,7 +297,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
           // Add parentheses if required.
           auto inner_type_inst_id =
               GetTypeAllowBuiltinTypes(node.As<ConstType>().inner_id);
-          if (GetTypePrecedence(nodes().Get(inner_type_inst_id).kind()) <
+          if (GetTypePrecedence(insts().Get(inner_type_inst_id).kind()) <
               GetTypePrecedence(node.kind())) {
             out << "(";
             steps.push_back(step.Next());
@@ -440,7 +440,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
   // For `{}` or any tuple type, we've printed a non-type expression, so add a
   // conversion to type `type` if it's not implied by the context.
   if (!in_type_context) {
-    auto outer_node = nodes().Get(outer_inst_id);
+    auto outer_node = insts().Get(outer_inst_id);
     if (outer_node.Is<TupleType>() ||
         (outer_node.Is<StructType>() &&
          inst_blocks().Get(outer_node.As<StructType>().fields_id).empty())) {
@@ -459,7 +459,7 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
   ExpressionCategory value_category = ExpressionCategory::Value;
 
   while (true) {
-    auto node = ir->nodes().Get(inst_id);
+    auto node = ir->insts().Get(inst_id);
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {

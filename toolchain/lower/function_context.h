@@ -48,7 +48,7 @@ class FunctionContext {
 
     auto it = locals_.find(inst_id);
     CARBON_CHECK(it != locals_.end())
-        << "Missing local: " << inst_id << " " << sem_ir().nodes().Get(inst_id);
+        << "Missing local: " << inst_id << " " << sem_ir().insts().Get(inst_id);
     return it->second;
   }
 
@@ -56,7 +56,7 @@ class FunctionContext {
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) {
     bool added = locals_.insert({inst_id, value}).second;
     CARBON_CHECK(added) << "Duplicate local insert: " << inst_id << " "
-                        << sem_ir().nodes().Get(inst_id);
+                        << sem_ir().insts().Get(inst_id);
   }
 
   // Returns a value for the given node, which might not be local.

@@ -39,7 +39,7 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
 
 auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   for (const auto& inst_id : sem_ir().inst_blocks().Get(block_id)) {
-    auto node = sem_ir().nodes().Get(inst_id);
+    auto node = sem_ir().insts().Get(inst_id);
     CARBON_VLOG() << "Lowering " << inst_id << ": " << node << "\n";
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
@@ -79,7 +79,7 @@ auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
 }
 
 auto FunctionContext::GetLocalOrGlobal(SemIR::InstId inst_id) -> llvm::Value* {
-  auto target = sem_ir().nodes().Get(inst_id);
+  auto target = sem_ir().insts().Get(inst_id);
   if (auto function_decl = target.TryAs<SemIR::FunctionDeclaration>()) {
     return GetFunction(function_decl->function_id);
   }

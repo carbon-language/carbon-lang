@@ -13,7 +13,7 @@
 namespace Carbon::SemIR {
 
 // Provides a ValueStore wrapper for an API specific to nodes.
-class NodeStore {
+class InstStore {
  public:
   // Adds a node to the node list, returning an ID to reference the node. Note
   // that this doesn't add the node to any node block. Check::Context::AddNode

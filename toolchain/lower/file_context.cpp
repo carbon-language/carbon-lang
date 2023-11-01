@@ -88,7 +88,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto param_type_id = sem_ir().nodes().Get(param_ref_id).type_id();
+    auto param_type_id = sem_ir().insts().Get(param_ref_id).type_id();
     switch (auto value_rep =
                 SemIR::GetValueRepresentation(sem_ir(), param_type_id);
             value_rep.kind) {
@@ -131,7 +131,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   // Set up parameters and the return slot.
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
-    auto node = sem_ir().nodes().Get(inst_id);
+    auto node = sem_ir().insts().Get(inst_id);
     if (inst_id == function.return_slot_id) {
       arg.setName("return");
       arg.addAttr(llvm::Attribute::getWithStructRetType(
@@ -175,7 +175,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto param_type_id = sem_ir().nodes().Get(param_ref_id).type_id();
+    auto param_type_id = sem_ir().insts().Get(param_ref_id).type_id();
     if (SemIR::GetValueRepresentation(sem_ir(), param_type_id).kind ==
         SemIR::ValueRepresentation::None) {
       function_lowering.SetLocal(
@@ -228,7 +228,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       break;
   }
 
-  auto node = sem_ir_->nodes().Get(inst_id);
+  auto node = sem_ir_->insts().Get(inst_id);
   switch (node.kind()) {
     case SemIR::ArrayType::Kind: {
       auto array_type = node.As<SemIR::ArrayType>();
@@ -253,7 +253,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(fields.size());
       for (auto field_id : fields) {
-        auto field = sem_ir_->nodes().GetAs<SemIR::StructTypeField>(field_id);
+        auto field = sem_ir_->insts().GetAs<SemIR::StructTypeField>(field_id);
         // TODO: Handle recursive types. The restriction for builtins prevents
         // recursion while still letting them cache.
         CARBON_CHECK(field.field_type_id.index < SemIR::BuiltinKind::ValidCount)

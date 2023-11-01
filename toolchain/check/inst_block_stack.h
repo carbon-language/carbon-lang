@@ -48,7 +48,7 @@ class InstBlockStack {
   // Adds the given node to the block at the top of the stack and returns its
   // ID.
   auto AddNode(SemIR::Node node) -> SemIR::InstId {
-    auto inst_id = sem_ir_->nodes().AddInNoBlock(node);
+    auto inst_id = sem_ir_->insts().AddInNoBlock(node);
     AddInstId(inst_id);
     return inst_id;
   }

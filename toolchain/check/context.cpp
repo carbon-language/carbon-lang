@@ -75,7 +75,7 @@ auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
                     "Duplicate name being declared in the same scope.");
   CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
                     "Name is previously declared here.");
-  auto prev_def = nodes().Get(prev_def_id);
+  auto prev_def = insts().Get(prev_def_id);
   emitter_->Build(parse_node, NameDeclarationDuplicate)
       .Note(prev_def.parse_node(), NameDeclarationPrevious)
       .Emit();
@@ -97,10 +97,10 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   const auto& class_info = classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
   if (class_info.definition_id.is_valid()) {
-    builder.Note(nodes().Get(class_info.definition_id).parse_node(),
+    builder.Note(insts().Get(class_info.definition_id).parse_node(),
                  ClassIncompleteWithinDefinition);
   } else {
-    builder.Note(nodes().Get(class_info.declaration_id).parse_node(),
+    builder.Note(insts().Get(class_info.declaration_id).parse_node(),
                  ClassForwardDeclaredHere);
   }
 }
@@ -164,7 +164,7 @@ auto Context::PopScope() -> void {
 }
 
 auto Context::FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId {
-  while (auto name_ref = nodes().Get(inst_id).TryAs<SemIR::NameReference>()) {
+  while (auto name_ref = insts().Get(inst_id).TryAs<SemIR::NameReference>()) {
     inst_id = name_ref->value_id;
   }
   return inst_id;
@@ -174,7 +174,7 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
   // TODO: The constant value of a node should be computed as we build the
   // node, or at least cached once computed.
   while (true) {
-    auto node = nodes().Get(inst_id);
+    auto node = insts().Get(inst_id);
     switch (node.kind()) {
       case SemIR::NameReference::Kind:
         inst_id = node.As<SemIR::NameReference>().value_id;
@@ -261,7 +261,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
   inst_block_stack().Push(new_block_id);
 
   // Acquire the result value.
-  SemIR::TypeId result_type_id = nodes().Get(*block_args.begin()).type_id();
+  SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
   return AddNode(SemIR::BlockArg{parse_node, result_type_id, new_block_id});
 }
 
@@ -276,7 +276,7 @@ auto Context::AddCurrentCodeBlockToFunction() -> void {
   }
 
   auto function_id =
-      nodes()
+      insts()
           .GetAs<SemIR::FunctionDeclaration>(return_scope_stack().back())
           .function_id;
   functions()
@@ -295,7 +295,7 @@ auto Context::is_current_position_reachable() -> bool {
   if (block_contents.empty()) {
     return true;
   }
-  const auto& last_node = nodes().Get(block_contents.back());
+  const auto& last_node = insts().Get(block_contents.back());
   return last_node.kind().terminator_kind() !=
          SemIR::TerminatorKind::Terminator;
 }
@@ -374,7 +374,7 @@ class TypeCompleter {
     }
 
     SemIR::InstId inst_id = context_.sem_ir().GetTypeAllowBuiltinTypes(type_id);
-    auto node = context_.nodes().Get(inst_id);
+    auto node = context_.insts().Get(inst_id);
 
     auto old_work_list_size = work_list_.size();
 
@@ -430,7 +430,7 @@ class TypeCompleter {
       case SemIR::StructType::Kind:
         for (auto field_id : context_.inst_blocks().Get(
                  type_node.As<SemIR::StructType>().fields_id)) {
-          Push(context_.nodes()
+          Push(context_.insts()
                    .GetAs<SemIR::StructTypeField>(field_id)
                    .field_type_id);
         }
@@ -518,7 +518,7 @@ class TypeCompleter {
       -> SemIR::ValueRepresentation {
     auto xref_node = context_.sem_ir()
                          .GetCrossReferenceIR(xref.ir_id)
-                         .nodes()
+                         .insts()
                          .Get(xref.inst_id);
 
     // The canonical description of a type should only have cross-references
@@ -589,7 +589,7 @@ class TypeCompleter {
     value_rep_fields.reserve(fields.size());
     bool same_as_object_rep = true;
     for (auto field_id : fields) {
-      auto field = context_.nodes().GetAs<SemIR::StructTypeField>(field_id);
+      auto field = context_.insts().GetAs<SemIR::StructTypeField>(field_id);
       auto field_value_rep = GetNestedValueRepresentation(field.field_type_id);
       if (field_value_rep.type_id != field.field_type_id) {
         same_as_object_rep = false;
@@ -854,7 +854,7 @@ static auto ProfileType(Context& semantics_context, SemIR::Node node,
           node.As<SemIR::StructType>().fields_id);
       for (const auto& field_id : fields) {
         auto field =
-            semantics_context.nodes().GetAs<SemIR::StructTypeField>(field_id);
+            semantics_context.insts().GetAs<SemIR::StructTypeField>(field_id);
         canonical_id.AddInteger(field.name_id.index);
         canonical_id.AddInteger(field.field_type_id.index);
       }
@@ -893,7 +893,7 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
     return it->second;
   }
 
-  auto node = nodes().Get(inst_id);
+  auto node = insts().Get(inst_id);
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
     ProfileType(*this, node, canonical_id);
   };
@@ -940,7 +940,7 @@ auto Context::GetPointerType(Parse::Node parse_node,
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
   SemIR::Node type_node =
-      nodes().Get(sem_ir_->GetTypeAllowBuiltinTypes(type_id));
+      insts().Get(sem_ir_->GetTypeAllowBuiltinTypes(type_id));
   if (auto const_type = type_node.TryAs<SemIR::ConstType>()) {
     return const_type->inner_id;
   }

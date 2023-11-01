@@ -23,7 +23,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
 
   // Extract the name binding.
   auto value_id = context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
-  if (auto bind_name = context.nodes().Get(value_id).TryAs<SemIR::BindName>()) {
+  if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.
     context.declaration_name_stack().AddNameToLookup(
@@ -35,7 +35,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
 
   // If there was an initializer, assign it to the storage.
   if (has_init) {
-    if (context.nodes().Get(value_id).Is<SemIR::VarStorage>()) {
+    if (context.insts().Get(value_id).Is<SemIR::VarStorage>()) {
       init_id = Initialize(context, parse_node, value_id, init_id);
       // TODO: Consider using different node kinds for assignment versus
       // initialization.

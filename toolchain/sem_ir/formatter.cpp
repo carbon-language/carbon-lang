@@ -36,7 +36,7 @@ class NodeNamer {
       : tokenized_buffer_(tokenized_buffer),
         parse_tree_(parse_tree),
         sem_ir_(sem_ir) {
-    nodes.resize(sem_ir.nodes().size());
+    nodes.resize(sem_ir.insts().size());
     labels.resize(sem_ir.inst_blocks().size());
     scopes.resize(1 + sem_ir.functions().size() + sem_ir.classes().size());
 
@@ -60,7 +60,7 @@ class NodeNamer {
         nodes[fn.return_slot_id.index] = {
             fn_scope,
             GetScopeInfo(fn_scope).nodes.AllocateName(
-                *this, sem_ir.nodes().Get(fn.return_slot_id).parse_node(),
+                *this, sem_ir.insts().Get(fn.return_slot_id).parse_node(),
                 "return")};
       }
       if (!fn.body_block_ids.empty()) {
@@ -287,7 +287,7 @@ class NodeNamer {
     if (parse_node == Parse::Node::Invalid) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
-        parse_node = sem_ir_.nodes().Get(block.front()).parse_node();
+        parse_node = sem_ir_.insts().Get(block.front()).parse_node();
       }
     }
 
@@ -381,7 +381,7 @@ class NodeNamer {
         continue;
       }
 
-      auto node = sem_ir_.nodes().Get(inst_id);
+      auto node = sem_ir_.insts().Get(inst_id);
       auto add_node_name = [&](std::string name) {
         nodes[inst_id.index] = {scope_idx, scope.nodes.AllocateName(
                                                *this, node.parse_node(), name)};
@@ -574,7 +574,7 @@ class Formatter {
       }
       FormatNodeName(param_id);
       out_ << ": ";
-      FormatType(sem_ir_.nodes().Get(param_id).type_id());
+      FormatType(sem_ir_.insts().Get(param_id).type_id());
     }
   }
 
@@ -615,7 +615,7 @@ class Formatter {
       return;
     }
 
-    FormatInstruction(inst_id, sem_ir_.nodes().Get(inst_id));
+    FormatInstruction(inst_id, sem_ir_.insts().Get(inst_id));
   }
 
   auto FormatInstruction(InstId inst_id, Node node) -> void {
@@ -804,7 +804,7 @@ class Formatter {
     llvm::ListSeparator sep;
     for (auto field_id : sem_ir_.inst_blocks().Get(node.fields_id)) {
       out_ << sep << ".";
-      auto field = sem_ir_.nodes().GetAs<StructTypeField>(field_id);
+      auto field = sem_ir_.insts().GetAs<StructTypeField>(field_id);
       FormatString(field.name_id);
       out_ << ": ";
       FormatType(field.field_type_id);

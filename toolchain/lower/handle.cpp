@@ -25,7 +25,7 @@ auto HandleArrayIndex(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::ArrayIndex node) -> void {
   auto* array_value = context.GetLocal(node.array_id);
   auto* llvm_type =
-      context.GetType(context.sem_ir().nodes().Get(node.array_id).type_id());
+      context.GetType(context.sem_ir().insts().Get(node.array_id).type_id());
   llvm::Value* indexes[2] = {
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(context.llvm_context()), 0),
       context.GetLocal(node.index_id)};
@@ -46,7 +46,7 @@ auto HandleArrayInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
                   SemIR::Assign node) -> void {
-  auto storage_type_id = context.sem_ir().nodes().Get(node.lhs_id).type_id();
+  auto storage_type_id = context.sem_ir().insts().Get(node.lhs_id).type_id();
   context.FinishInitialization(storage_type_id, node.lhs_id, node.rhs_id);
 }
 
@@ -107,7 +107,7 @@ auto HandleBranchWithArg(FunctionContext& context, SemIR::InstId /*inst_id*/,
                          SemIR::BranchWithArg node) -> void {
   llvm::Value* arg = context.GetLocal(node.arg_id);
   SemIR::TypeId arg_type_id =
-      context.sem_ir().nodes().Get(node.arg_id).type_id();
+      context.sem_ir().insts().Get(node.arg_id).type_id();
 
   // Opportunistically avoid creating a BasicBlock that contains just a branch.
   // We only do this for a block that we know will only have a single
@@ -150,7 +150,7 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
   }
 
   for (auto arg_id : arg_ids) {
-    auto arg_type_id = context.sem_ir().nodes().Get(arg_id).type_id();
+    auto arg_type_id = context.sem_ir().insts().Get(arg_id).type_id();
     if (SemIR::GetValueRepresentation(context.sem_ir(), arg_type_id).kind !=
         SemIR::ValueRepresentation::None) {
       args.push_back(context.GetLocal(arg_id));
@@ -181,7 +181,7 @@ static auto GetAggregateElement(FunctionContext& context,
                                 SemIR::MemberIndex idx,
                                 SemIR::TypeId result_type_id, llvm::Twine name)
     -> llvm::Value* {
-  auto aggr_node = context.sem_ir().nodes().Get(aggr_inst_id);
+  auto aggr_node = context.sem_ir().insts().Get(aggr_inst_id);
   auto* aggr_value = context.GetLocal(aggr_inst_id);
 
   switch (SemIR::GetExpressionCategory(context.sem_ir(), aggr_inst_id)) {
@@ -249,11 +249,11 @@ static auto GetStructFieldName(FunctionContext& context,
                                SemIR::MemberIndex index) -> llvm::StringRef {
   auto fields = context.sem_ir().inst_blocks().Get(
       context.sem_ir()
-          .nodes()
+          .insts()
           .GetAs<SemIR::StructType>(
               context.sem_ir().types().Get(struct_type_id).inst_id)
           .fields_id);
-  auto field = context.sem_ir().nodes().GetAs<SemIR::StructTypeField>(
+  auto field = context.sem_ir().insts().GetAs<SemIR::StructTypeField>(
       fields[index.index]);
   return context.sem_ir().strings().Get(field.name_id);
 }
@@ -261,10 +261,10 @@ static auto GetStructFieldName(FunctionContext& context,
 auto HandleClassFieldAccess(FunctionContext& context, SemIR::InstId inst_id,
                             SemIR::ClassFieldAccess node) -> void {
   // Find the class that we're performing access into.
-  auto class_type_id = context.sem_ir().nodes().Get(node.base_id).type_id();
+  auto class_type_id = context.sem_ir().insts().Get(node.base_id).type_id();
   auto class_id =
       context.sem_ir()
-          .nodes()
+          .insts()
           .GetAs<SemIR::ClassType>(
               context.sem_ir().GetTypeAllowBuiltinTypes(class_type_id))
           .class_id;
@@ -301,7 +301,7 @@ auto HandleFunctionDeclaration(FunctionContext& /*context*/,
 
 auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
                           SemIR::InitializeFrom node) -> void {
-  auto storage_type_id = context.sem_ir().nodes().Get(node.dest_id).type_id();
+  auto storage_type_id = context.sem_ir().insts().Get(node.dest_id).type_id();
   context.FinishInitialization(storage_type_id, node.dest_id, node.src_id);
 }
 
@@ -364,7 +364,7 @@ auto HandleReturnExpression(FunctionContext& context, SemIR::InstId /*inst_id*/,
                             SemIR::ReturnExpression node) -> void {
   switch (SemIR::GetInitializingRepresentation(
               context.sem_ir(),
-              context.sem_ir().nodes().Get(node.expr_id).type_id())
+              context.sem_ir().insts().Get(node.expr_id).type_id())
               .kind) {
     case SemIR::InitializingRepresentation::None:
     case SemIR::InitializingRepresentation::InPlace:
@@ -398,7 +398,7 @@ auto HandleStringLiteral(FunctionContext& /*context*/,
 
 auto HandleStructAccess(FunctionContext& context, SemIR::InstId inst_id,
                         SemIR::StructAccess node) -> void {
-  auto struct_type_id = context.sem_ir().nodes().Get(node.struct_id).type_id();
+  auto struct_type_id = context.sem_ir().insts().Get(node.struct_id).type_id();
   context.SetLocal(
       inst_id, GetAggregateElement(
                    context, node.struct_id, node.index, node.type_id,
@@ -506,7 +506,7 @@ auto HandleTupleAccess(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleTupleIndex(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::TupleIndex node) -> void {
   auto index_node =
-      context.sem_ir().nodes().GetAs<SemIR::IntegerLiteral>(node.index_id);
+      context.sem_ir().insts().GetAs<SemIR::IntegerLiteral>(node.index_id);
   auto index =
       context.sem_ir().integers().Get(index_node.integer_id).getZExtValue();
   context.SetLocal(inst_id, GetAggregateElement(context, node.tuple_id,

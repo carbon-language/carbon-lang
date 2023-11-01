@@ -121,7 +121,7 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
     -> void {
   // This will only be reached for resolved nodes. We update the target
   // scope based on the resolved type.
-  auto resolved_node = context_->nodes().Get(name_context.resolved_inst_id);
+  auto resolved_node = context_->insts().Get(name_context.resolved_inst_id);
   switch (resolved_node.kind()) {
     case SemIR::ClassDeclaration::Kind: {
       const auto& class_info = context_->classes().Get(
@@ -163,7 +163,7 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
     case NameContext::State::ResolvedNonScope: {
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier didn't resolve to a scoped entity.
-      if (auto class_decl = context_->nodes()
+      if (auto class_decl = context_->insts()
                                 .Get(name_context.resolved_inst_id)
                                 .TryAs<SemIR::ClassDeclaration>()) {
         CARBON_DIAGNOSTIC(QualifiedDeclarationInIncompleteClassScope, Error,

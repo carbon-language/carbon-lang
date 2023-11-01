@@ -16,7 +16,7 @@ auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
 
   // Convert the value to match the type of the pattern.
-  auto pattern = context.nodes().Get(pattern_id);
+  auto pattern = context.insts().Get(pattern_id);
   value_id =
       ConvertToValueOfType(context, parse_node, value_id, pattern.type_id());
 
@@ -27,7 +27,7 @@ auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!bind_name.value_id.is_valid())
       << "Binding should not already have a value!";
   bind_name.value_id = value_id;
-  context.nodes().Set(pattern_id, bind_name);
+  context.insts().Set(pattern_id, bind_name);
   context.inst_block_stack().AddInstId(pattern_id);
 
   // Add the name of the binding to the current scope.

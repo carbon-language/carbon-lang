@@ -90,7 +90,7 @@ class Context {
     if (!current_scope_inst_id.is_valid()) {
       return std::nullopt;
     }
-    return nodes().Get(current_scope_inst_id).TryAs<NodeT>();
+    return insts().Get(current_scope_inst_id).TryAs<NodeT>();
   }
 
   // Follows NameReference nodes to find the value named by a given node.
@@ -264,7 +264,7 @@ class Context {
       -> SemIR::BlockValueStore<SemIR::TypeBlockId, SemIR::TypeId>& {
     return sem_ir().type_blocks();
   }
-  auto nodes() -> SemIR::NodeStore& { return sem_ir().nodes(); }
+  auto insts() -> SemIR::InstStore& { return sem_ir().insts(); }
   auto inst_blocks() -> SemIR::InstBlockStore& {
     return sem_ir().inst_blocks();
   }

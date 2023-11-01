@@ -39,13 +39,13 @@ static auto ValidateIntegerLiteralBound(Context& context,
 
 auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
   SemIR::InstId index_inst_id = context.node_stack().PopExpression();
-  auto index_node = context.nodes().Get(index_inst_id);
+  auto index_node = context.insts().Get(index_inst_id);
   SemIR::InstId operand_inst_id = context.node_stack().PopExpression();
   operand_inst_id =
       ConvertToValueOrReferenceExpression(context, operand_inst_id);
-  auto operand_node = context.nodes().Get(operand_inst_id);
+  auto operand_node = context.insts().Get(operand_inst_id);
   auto operand_type_id = operand_node.type_id();
-  auto operand_type_node = context.nodes().Get(
+  auto operand_type_node = context.insts().Get(
       context.sem_ir().GetTypeAllowBuiltinTypes(operand_type_id));
 
   switch (operand_type_node.kind()) {

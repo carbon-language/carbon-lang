@@ -40,7 +40,7 @@ class PendingBlock {
   };
 
   auto AddNode(SemIR::Node node) -> SemIR::InstId {
-    SemIR::InstId inst_id = context_.nodes().AddInNoBlock(node);
+    SemIR::InstId inst_id = context_.insts().AddInNoBlock(node);
     insts_.push_back(inst_id);
     return inst_id;
   }
@@ -56,23 +56,23 @@ class PendingBlock {
   // Replace the node at target_id with the nodes in this block. The new value
   // for target_id should be value_id.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
-    auto value = context_.nodes().Get(value_id);
+    auto value = context_.insts().Get(value_id);
 
     // There are three cases here:
 
     if (insts_.empty()) {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
-      context_.nodes().Set(
+      context_.insts().Set(
           target_id, SemIR::SpliceBlock{value.parse_node(), value.type_id(),
                                         SemIR::InstBlockId::Empty, value_id});
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the node referred
       // to by `value_id`. This is intended to be the common case.
-      context_.nodes().Set(target_id, value);
+      context_.insts().Set(target_id, value);
     } else {
       // 3) Anything else: splice it into the IR, replacing `target_id`.
-      context_.nodes().Set(
+      context_.insts().Set(
           target_id,
           SemIR::SpliceBlock{value.parse_node(), value.type_id(),
                              context_.inst_blocks().Add(insts_), value_id});

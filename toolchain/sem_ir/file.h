@@ -186,7 +186,7 @@ class File : public Printable<File> {
   // Returns array bound value from the bound node.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
     return integers()
-        .Get(nodes().GetAs<IntegerLiteral>(bound_id).integer_id)
+        .Get(insts().GetAs<IntegerLiteral>(bound_id).integer_id)
         .getZExtValue();
   }
 
@@ -239,7 +239,7 @@ class File : public Printable<File> {
 
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
-    return nodes()
+    return insts()
         .GetAs<PointerType>(types().Get(pointer_id).inst_id)
         .pointee_id;
   }
@@ -289,8 +289,8 @@ class File : public Printable<File> {
   auto type_blocks() const -> const BlockValueStore<TypeBlockId, TypeId>& {
     return type_blocks_;
   }
-  auto nodes() -> NodeStore& { return nodes_; }
-  auto nodes() const -> const NodeStore& { return nodes_; }
+  auto insts() -> InstStore& { return insts_; }
+  auto insts() const -> const InstStore& { return insts_; }
   auto inst_blocks() -> InstBlockStore& { return inst_blocks_; }
   auto inst_blocks() const -> const InstBlockStore& { return inst_blocks_; }
 
@@ -351,9 +351,9 @@ class File : public Printable<File> {
 
   // All nodes. The first entries will always be cross-references to builtins,
   // at indices matching BuiltinKind ordering.
-  NodeStore nodes_;
+  InstStore insts_;
 
-  // Node blocks within the IR. These reference entries in nodes_. Storage for
+  // Node blocks within the IR. These reference entries in insts_. Storage for
   // the data is provided by allocator_.
   InstBlockStore inst_blocks_;
 

@@ -14,7 +14,7 @@ static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
     -> void {
   // If we discard an initializing expression, convert it to a value or
   // reference so that it has something to initialize.
-  auto expr = context.nodes().Get(expr_id);
+  auto expr = context.insts().Get(expr_id);
   Convert(context, expr.parse_node(), expr_id,
           {.kind = ConversionTarget::Discarded, .type_id = expr.type_id()});
 
@@ -29,7 +29,7 @@ auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
 
 auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
-  auto fn_node = context.nodes().GetAs<SemIR::FunctionDeclaration>(
+  auto fn_node = context.insts().GetAs<SemIR::FunctionDeclaration>(
       context.return_scope_stack().back());
   const auto& callable = context.functions().Get(fn_node.function_id);
 

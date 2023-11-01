@@ -12,9 +12,9 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
   if (auto self_param =
-          context.nodes().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
+          context.insts().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
     self_param->is_addr_self = SemIR::BoolValue::True;
-    context.nodes().Set(self_param_id, *self_param);
+    context.insts().Set(self_param_id, *self_param);
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParameter, Error,
                       "`addr` can only be applied to a `self` parameter");
@@ -133,7 +133,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       // the `let` pattern before we see the initializer.
       context.node_stack().Push(
           parse_node,
-          context.nodes().AddInNoBlock(SemIR::BindName{
+          context.insts().AddInNoBlock(SemIR::BindName{
               name_node, cast_type_id, name_id, SemIR::InstId::Invalid}));
       break;
 

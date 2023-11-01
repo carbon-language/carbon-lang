@@ -22,7 +22,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
 
   auto diagnose_not_callable = [&, call_expr_parse_node = call_expr_parse_node,
                                 callee_id = callee_id] {
-    auto callee_type_id = context.nodes().Get(callee_id).type_id();
+    auto callee_type_id = context.insts().Get(callee_id).type_id();
     if (callee_type_id != SemIR::TypeId::Error) {
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,
                         "Value of type `{0}` is not callable.", std::string);
@@ -38,7 +38,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   auto function_callee_id = callee_id;
   SemIR::InstId self_id = SemIR::InstId::Invalid;
   if (auto bound_method =
-          context.nodes().Get(callee_id).TryAs<SemIR::BoundMethod>()) {
+          context.insts().Get(callee_id).TryAs<SemIR::BoundMethod>()) {
     self_id = bound_method->object_id;
     function_callee_id = bound_method->function_id;
   }
@@ -49,7 +49,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
     return diagnose_not_callable();
   }
   auto function_decl =
-      context.nodes().Get(function_decl_id).TryAs<SemIR::FunctionDeclaration>();
+      context.insts().Get(function_decl_id).TryAs<SemIR::FunctionDeclaration>();
   if (!function_decl) {
     return diagnose_not_callable();
   }

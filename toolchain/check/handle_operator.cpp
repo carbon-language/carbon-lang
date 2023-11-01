@@ -18,12 +18,12 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // TODO: This should search for a compatible interface. For now, it's a
       // very trivial check of validity on the operation.
       lhs_id = ConvertToValueOfType(context, parse_node, lhs_id,
-                                    context.nodes().Get(rhs_id).type_id());
+                                    context.insts().Get(rhs_id).type_id());
       rhs_id = ConvertToValueExpression(context, rhs_id);
 
       context.AddNodeAndPush(
           parse_node, SemIR::BinaryOperatorAdd{
-                          parse_node, context.nodes().Get(lhs_id).type_id(),
+                          parse_node, context.insts().Get(lhs_id).type_id(),
                           lhs_id, rhs_id});
       return true;
 
@@ -45,7 +45,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // Collect the result from either the first or second operand.
       context.AddNodeAndPush(
           parse_node,
-          SemIR::BlockArg{parse_node, context.nodes().Get(rhs_id).type_id(),
+          SemIR::BlockArg{parse_node, context.insts().Get(rhs_id).type_id(),
                           resume_block_id});
       return true;
     }
@@ -129,7 +129,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
           SemIR::AddressOf{
               parse_node,
               context.GetPointerType(parse_node,
-                                     context.nodes().Get(value_id).type_id()),
+                                     context.insts().Get(value_id).type_id()),
               value_id});
       return true;
     }
@@ -138,7 +138,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       // `const (const T)` is probably not what the developer intended.
       // TODO: Detect `const (const T)*` and suggest moving the `*` inside the
       // parentheses.
-      if (context.nodes().Get(value_id).kind() == SemIR::ConstType::Kind) {
+      if (context.insts().Get(value_id).kind() == SemIR::ConstType::Kind) {
         CARBON_DIAGNOSTIC(RepeatedConst, Warning,
                           "`const` applied repeatedly to the same type has no "
                           "additional effect.");
@@ -156,14 +156,14 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       context.AddNodeAndPush(
           parse_node,
           SemIR::UnaryOperatorNot{
-              parse_node, context.nodes().Get(value_id).type_id(), value_id});
+              parse_node, context.insts().Get(value_id).type_id(), value_id});
       return true;
 
     case Lex::TokenKind::Star: {
       value_id = ConvertToValueExpression(context, value_id);
       auto type_id =
-          context.GetUnqualifiedType(context.nodes().Get(value_id).type_id());
-      auto type_node = context.nodes().Get(
+          context.GetUnqualifiedType(context.insts().Get(value_id).type_id());
+      auto type_node = context.insts().Get(
           context.sem_ir().GetTypeAllowBuiltinTypes(type_id));
       auto result_type_id = SemIR::TypeId::Error;
       if (auto pointer_type = type_node.TryAs<SemIR::PointerType>()) {
@@ -200,7 +200,7 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().PopExpression();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
-  auto bool_type_id = context.nodes().Get(cond_value_id).type_id();
+  auto bool_type_id = context.insts().Get(cond_value_id).type_id();
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
   auto token = context.parse_tree().node_token(parse_node);

@@ -29,7 +29,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
     auto [return_node, return_storage_id] =
         context.node_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
     auto return_node_copy = return_node;
-    return_type_id = context.nodes().Get(return_storage_id).type_id();
+    return_type_id = context.insts().Get(return_storage_id).type_id();
 
     if (!context.TryToCompleteType(return_type_id, [&] {
           CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
@@ -71,7 +71,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
       name_context, function_decl_id);
   if (existing_id.is_valid()) {
     if (auto existing_function_decl =
-            context.nodes()
+            context.insts()
                 .Get(existing_id)
                 .TryAs<SemIR::FunctionDeclaration>()) {
       // This is a redeclaration of an existing function.
@@ -109,7 +109,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   }
 
   // Write the function ID into the FunctionDeclaration.
-  context.nodes().Set(function_decl_id, function_decl);
+  context.insts().Set(function_decl_id, function_decl);
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
@@ -175,7 +175,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
                context.strings().Get(function.name_id))
-        .Note(context.nodes().Get(function.definition_id).parse_node(),
+        .Note(context.insts().Get(function.definition_id).parse_node(),
               FunctionPreviousDefinition)
         .Emit();
   } else {
@@ -192,7 +192,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   for (auto param_id : llvm::concat<SemIR::InstId>(
            context.inst_blocks().Get(function.implicit_param_refs_id),
            context.inst_blocks().Get(function.param_refs_id))) {
-    auto param = context.nodes().Get(param_id);
+    auto param = context.insts().Get(param_id);
 
     // The parameter types need to be complete.
     context.TryToCompleteType(param.type_id(), [&] {
