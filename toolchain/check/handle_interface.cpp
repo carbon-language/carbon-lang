@@ -6,24 +6,24 @@
 
 namespace Carbon::Check {
 
-auto HandleInterfaceDeclaration(Context& context, Parse::Lamp parse_node)
+auto HandleInterfaceDeclaration(Context& context, Parse::Lamp parse_lamp)
     -> bool {
-  return context.TODO(parse_node, "HandleInterfaceDeclaration");
+  return context.TODO(parse_lamp, "HandleInterfaceDeclaration");
 }
 
-auto HandleInterfaceDefinition(Context& context, Parse::Lamp parse_node)
+auto HandleInterfaceDefinition(Context& context, Parse::Lamp parse_lamp)
     -> bool {
-  return context.TODO(parse_node, "HandleInterfaceDefinition");
+  return context.TODO(parse_lamp, "HandleInterfaceDefinition");
 }
 
-auto HandleInterfaceDefinitionStart(Context& context, Parse::Lamp parse_node)
+auto HandleInterfaceDefinitionStart(Context& context, Parse::Lamp parse_lamp)
     -> bool {
-  return context.TODO(parse_node, "HandleInterfaceDefinitionStart");
+  return context.TODO(parse_lamp, "HandleInterfaceDefinitionStart");
 }
 
-auto HandleInterfaceIntroducer(Context& context, Parse::Lamp parse_node)
+auto HandleInterfaceIntroducer(Context& context, Parse::Lamp parse_lamp)
     -> bool {
-  return context.TODO(parse_node, "HandleInterfaceIntroducer");
+  return context.TODO(parse_lamp, "HandleInterfaceIntroducer");
 }
 
 }  // namespace Carbon::Check

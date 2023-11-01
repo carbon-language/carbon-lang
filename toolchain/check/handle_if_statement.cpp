@@ -8,44 +8,44 @@
 
 namespace Carbon::Check {
 
-auto HandleIfConditionStart(Context& /*context*/, Parse::Lamp /*parse_node*/)
+auto HandleIfConditionStart(Context& /*context*/, Parse::Lamp /*parse_lamp*/)
     -> bool {
   return true;
 }
 
-auto HandleIfCondition(Context& context, Parse::Lamp parse_node) -> bool {
+auto HandleIfCondition(Context& context, Parse::Lamp parse_lamp) -> bool {
   // Convert the condition to `bool`.
   auto cond_value_id = context.lamp_stack().PopExpression();
-  cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
+  cond_value_id = ConvertToBoolValue(context, parse_lamp, cond_value_id);
 
   // Create the then block and the else block, and branch to the right one. If
   // there is no `else`, the then block will terminate with a branch to the
   // else block, which will be reused as the resumption block.
   auto then_block_id =
-      context.AddDominatedBlockAndBranchIf(parse_node, cond_value_id);
-  auto else_block_id = context.AddDominatedBlockAndBranch(parse_node);
+      context.AddDominatedBlockAndBranchIf(parse_lamp, cond_value_id);
+  auto else_block_id = context.AddDominatedBlockAndBranch(parse_lamp);
 
   // Start emitting the `then` block.
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(then_block_id);
   context.AddCurrentCodeBlockToFunction();
 
-  context.lamp_stack().Push(parse_node, else_block_id);
+  context.lamp_stack().Push(parse_lamp, else_block_id);
   return true;
 }
 
-auto HandleIfStatementElse(Context& context, Parse::Lamp parse_node) -> bool {
+auto HandleIfStatementElse(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto else_block_id = context.lamp_stack().Pop<Parse::LampKind::IfCondition>();
 
   // Switch to emitting the `else` block.
   context.inst_block_stack().Push(else_block_id);
   context.AddCurrentCodeBlockToFunction();
 
-  context.lamp_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_lamp);
   return true;
 }
 
-auto HandleIfStatement(Context& context, Parse::Lamp parse_node) -> bool {
+auto HandleIfStatement(Context& context, Parse::Lamp parse_lamp) -> bool {
   switch (auto kind = context.parse_tree().node_kind(
               context.lamp_stack().PeekParseNode())) {
     case Parse::LampKind::IfCondition: {
@@ -53,7 +53,7 @@ auto HandleIfStatement(Context& context, Parse::Lamp parse_node) -> bool {
       // block.
       auto else_block_id =
           context.lamp_stack().Pop<Parse::LampKind::IfCondition>();
-      context.AddInst(SemIR::Branch{parse_node, else_block_id});
+      context.AddInst(SemIR::Branch{parse_lamp, else_block_id});
       context.inst_block_stack().Pop();
       context.inst_block_stack().Push(else_block_id);
       break;
@@ -63,7 +63,7 @@ auto HandleIfStatement(Context& context, Parse::Lamp parse_node) -> bool {
       // Branch from the then and else blocks to a new resumption block.
       context.lamp_stack()
           .PopAndDiscardSoloParseNode<Parse::LampKind::IfStatementElse>();
-      context.AddConvergenceBlockAndPush(parse_node, /*num_blocks=*/2);
+      context.AddConvergenceBlockAndPush(parse_lamp, /*num_blocks=*/2);
       break;
     }
 

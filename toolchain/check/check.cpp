@@ -32,13 +32,13 @@ auto CheckParseTree(SharedValueStores& value_stores,
 
   // Loops over all nodes in the tree. On some errors, this may return early,
   // for example if an unrecoverable state is encountered.
-  for (auto parse_node : parse_tree.postorder()) {
+  for (auto parse_lamp : parse_tree.postorder()) {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (auto parse_kind = parse_tree.node_kind(parse_node)) {
+    switch (auto parse_kind = parse_tree.node_kind(parse_lamp)) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::LampKind::Name: {                                              \
-    if (!Check::Handle##Name(context, parse_node)) {                         \
+    if (!Check::Handle##Name(context, parse_lamp)) {                         \
       CARBON_CHECK(err_tracker.seen_error())                                 \
           << "Handle" #Name " returned false without printing a diagnostic"; \
       sem_ir.set_has_errors(true);                                           \

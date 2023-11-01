@@ -6,32 +6,32 @@
 
 namespace Carbon::Check {
 
-auto HandleImportIntroducer(Context& context, Parse::Lamp parse_node) -> bool {
-  return context.TODO(parse_node, "HandleImportIntroducer");
+auto HandleImportIntroducer(Context& context, Parse::Lamp parse_lamp) -> bool {
+  return context.TODO(parse_lamp, "HandleImportIntroducer");
 }
 
-auto HandlePackageIntroducer(Context& context, Parse::Lamp parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePackageIntroducer");
+auto HandlePackageIntroducer(Context& context, Parse::Lamp parse_lamp) -> bool {
+  return context.TODO(parse_lamp, "HandlePackageIntroducer");
 }
 
-auto HandleLibrary(Context& context, Parse::Lamp parse_node) -> bool {
-  return context.TODO(parse_node, "HandleLibrary");
+auto HandleLibrary(Context& context, Parse::Lamp parse_lamp) -> bool {
+  return context.TODO(parse_lamp, "HandleLibrary");
 }
 
-auto HandlePackageApi(Context& context, Parse::Lamp parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePackageApi");
+auto HandlePackageApi(Context& context, Parse::Lamp parse_lamp) -> bool {
+  return context.TODO(parse_lamp, "HandlePackageApi");
 }
 
-auto HandlePackageImpl(Context& context, Parse::Lamp parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePackageImpl");
+auto HandlePackageImpl(Context& context, Parse::Lamp parse_lamp) -> bool {
+  return context.TODO(parse_lamp, "HandlePackageImpl");
 }
 
-auto HandleImportDirective(Context& context, Parse::Lamp parse_node) -> bool {
-  return context.TODO(parse_node, "HandleImportDirective");
+auto HandleImportDirective(Context& context, Parse::Lamp parse_lamp) -> bool {
+  return context.TODO(parse_lamp, "HandleImportDirective");
 }
 
-auto HandlePackageDirective(Context& context, Parse::Lamp parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePackageDirective");
+auto HandlePackageDirective(Context& context, Parse::Lamp parse_lamp) -> bool {
+  return context.TODO(parse_lamp, "HandlePackageDirective");
 }
 
 }  // namespace Carbon::Check

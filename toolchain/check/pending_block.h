@@ -64,7 +64,7 @@ class PendingBlock {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
       context_.insts().Set(
-          target_id, SemIR::SpliceBlock{value.parse_node(), value.type_id(),
+          target_id, SemIR::SpliceBlock{value.parse_lamp(), value.type_id(),
                                         SemIR::InstBlockId::Empty, value_id});
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the node referred
@@ -74,7 +74,7 @@ class PendingBlock {
       // 3) Anything else: splice it into the IR, replacing `target_id`.
       context_.insts().Set(
           target_id,
-          SemIR::SpliceBlock{value.parse_node(), value.type_id(),
+          SemIR::SpliceBlock{value.parse_lamp(), value.type_id(),
                              context_.inst_blocks().Add(insts_), value_id});
     }
 

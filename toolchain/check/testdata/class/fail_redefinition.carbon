@@ -39,8 +39,8 @@ fn Class.H() {}
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = <unexpected noderef 11>
-// CHECK:STDOUT:   .H = <unexpected noderef 12>
+// CHECK:STDOUT:   .F = <unexpected instref 11>
+// CHECK:STDOUT:   .H = <unexpected instref 12>
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

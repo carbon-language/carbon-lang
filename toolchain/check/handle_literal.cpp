@@ -6,33 +6,33 @@
 
 namespace Carbon::Check {
 
-auto HandleLiteral(Context& context, Parse::Lamp parse_node) -> bool {
-  auto token = context.parse_tree().node_token(parse_node);
+auto HandleLiteral(Context& context, Parse::Lamp parse_lamp) -> bool {
+  auto token = context.parse_tree().node_token(parse_lamp);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::False:
     case Lex::TokenKind::True: {
       context.AddInstAndPush(
-          parse_node,
+          parse_lamp,
           SemIR::BoolLiteral{
-              parse_node, context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
+              parse_lamp, context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
               token_kind == Lex::TokenKind::True ? SemIR::BoolValue::True
                                                  : SemIR::BoolValue::False});
       break;
     }
     case Lex::TokenKind::IntegerLiteral: {
       context.AddInstAndPush(
-          parse_node,
+          parse_lamp,
           SemIR::IntegerLiteral{
-              parse_node,
+              parse_lamp,
               context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
               context.tokens().GetIntegerLiteral(token)});
       break;
     }
     case Lex::TokenKind::RealLiteral: {
       context.AddInstAndPush(
-          parse_node,
+          parse_lamp,
           SemIR::RealLiteral{
-              parse_node,
+              parse_lamp,
               context.GetBuiltinType(SemIR::BuiltinKind::FloatingPointType),
               context.tokens().GetRealLiteral(token)});
       break;
@@ -40,43 +40,43 @@ auto HandleLiteral(Context& context, Parse::Lamp parse_node) -> bool {
     case Lex::TokenKind::StringLiteral: {
       auto id = context.tokens().GetStringLiteral(token);
       context.AddInstAndPush(
-          parse_node,
+          parse_lamp,
           SemIR::StringLiteral{
-              parse_node,
+              parse_lamp,
               context.GetBuiltinType(SemIR::BuiltinKind::StringType), id});
       break;
     }
     case Lex::TokenKind::Type: {
-      context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinTypeType);
+      context.lamp_stack().Push(parse_lamp, SemIR::InstId::BuiltinTypeType);
       break;
     }
     case Lex::TokenKind::Bool: {
-      context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinBoolType);
+      context.lamp_stack().Push(parse_lamp, SemIR::InstId::BuiltinBoolType);
       break;
     }
     case Lex::TokenKind::IntegerTypeLiteral: {
       auto text = context.tokens().GetTokenText(token);
       if (text != "i32") {
-        return context.TODO(parse_node, "Currently only i32 is allowed");
+        return context.TODO(parse_lamp, "Currently only i32 is allowed");
       }
-      context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinIntegerType);
+      context.lamp_stack().Push(parse_lamp, SemIR::InstId::BuiltinIntegerType);
       break;
     }
     case Lex::TokenKind::FloatingPointTypeLiteral: {
       auto text = context.tokens().GetTokenText(token);
       if (text != "f64") {
-        return context.TODO(parse_node, "Currently only f64 is allowed");
+        return context.TODO(parse_lamp, "Currently only f64 is allowed");
       }
-      context.lamp_stack().Push(parse_node,
+      context.lamp_stack().Push(parse_lamp,
                                 SemIR::InstId::BuiltinFloatingPointType);
       break;
     }
     case Lex::TokenKind::StringTypeLiteral: {
-      context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinStringType);
+      context.lamp_stack().Push(parse_lamp, SemIR::InstId::BuiltinStringType);
       break;
     }
     default: {
-      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
+      return context.TODO(parse_lamp, llvm::formatv("Handle {0}", token_kind));
     }
   }
 

@@ -46,7 +46,7 @@ struct TypedInstArgsInfo {
 // the specific kinds of inst defined in `typed_insts.h`. This provides access
 // to common fields present on most or all kinds of insts:
 //
-// - `parse_node` for error placement.
+// - `parse_lamp` for error placement.
 // - `kind` for run-time logic when the input Kind is unknown.
 // - `type_id` for quick type checking.
 //
@@ -65,13 +65,13 @@ class Inst : public Printable<Inst> {
   template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
   // NOLINTNEXTLINE(google-explicit-constructor)
   Inst(TypedInst typed_inst)
-      : parse_node_(Parse::Lamp::Invalid),
+      : parse_lamp_(Parse::Lamp::Invalid),
         kind_(TypedInst::Kind),
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
     if constexpr (HasParseNode<TypedInst>) {
-      parse_node_ = typed_inst.parse_node;
+      parse_lamp_ = typed_inst.parse_lamp;
     }
     if constexpr (HasTypeId<TypedInst>) {
       type_id_ = typed_inst.type_id;
@@ -98,7 +98,7 @@ class Inst : public Printable<Inst> {
                                   << " to wrong kind " << TypedInst::Kind;
     auto build_with_type_id_and_args = [&](auto... type_id_and_args) {
       if constexpr (HasParseNode<TypedInst>) {
-        return TypedInst{parse_node(), type_id_and_args...};
+        return TypedInst{parse_lamp(), type_id_and_args...};
       } else {
         return TypedInst{type_id_and_args...};
       }
@@ -135,7 +135,7 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  auto parse_node() const -> Parse::Lamp { return parse_node_; }
+  auto parse_lamp() const -> Parse::Lamp { return parse_lamp_; }
   auto kind() const -> InstKind { return kind_; }
 
   // Gets the type of the value produced by evaluating this node.
@@ -147,9 +147,9 @@ class Inst : public Printable<Inst> {
   friend class InstTestHelper;
 
   // Raw constructor, used for testing.
-  explicit Inst(InstKind kind, Parse::Lamp parse_node, TypeId type_id,
+  explicit Inst(InstKind kind, Parse::Lamp parse_lamp, TypeId type_id,
                 int32_t arg0, int32_t arg1)
-      : parse_node_(parse_node),
+      : parse_lamp_(parse_lamp),
         kind_(kind),
         type_id_(type_id),
         arg0_(arg0),
@@ -171,7 +171,7 @@ class Inst : public Printable<Inst> {
     return BuiltinKind::FromInt(raw);
   }
 
-  Parse::Lamp parse_node_;
+  Parse::Lamp parse_lamp_;
   InstKind kind_;
   TypeId type_id_;
 

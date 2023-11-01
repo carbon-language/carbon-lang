@@ -7,9 +7,9 @@
 
 namespace Carbon::Check {
 
-auto HandleIfExpressionIf(Context& context, Parse::Lamp parse_node) -> bool {
-  // Alias parse_node for if/then/else consistency.
-  auto& if_node = parse_node;
+auto HandleIfExpressionIf(Context& context, Parse::Lamp parse_lamp) -> bool {
+  // Alias parse_lamp for if/then/else consistency.
+  auto& if_node = parse_lamp;
 
   auto cond_value_id = context.lamp_stack().PopExpression();
 
@@ -28,7 +28,7 @@ auto HandleIfExpressionIf(Context& context, Parse::Lamp parse_node) -> bool {
   return true;
 }
 
-auto HandleIfExpressionThen(Context& context, Parse::Lamp parse_node) -> bool {
+auto HandleIfExpressionThen(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto then_value_id = context.lamp_stack().PopExpression();
   auto else_block_id =
       context.lamp_stack().Peek<Parse::LampKind::IfExpressionIf>();
@@ -40,13 +40,13 @@ auto HandleIfExpressionThen(Context& context, Parse::Lamp parse_node) -> bool {
   context.inst_block_stack().Push(else_block_id);
   context.AddCurrentCodeBlockToFunction();
 
-  context.lamp_stack().Push(parse_node, then_value_id);
+  context.lamp_stack().Push(parse_lamp, then_value_id);
   return true;
 }
 
-auto HandleIfExpressionElse(Context& context, Parse::Lamp parse_node) -> bool {
-  // Alias parse_node for if/then/else consistency.
-  auto& else_node = parse_node;
+auto HandleIfExpressionElse(Context& context, Parse::Lamp parse_lamp) -> bool {
+  // Alias parse_lamp for if/then/else consistency.
+  auto& else_node = parse_lamp;
 
   auto else_value_id = context.lamp_stack().PopExpression();
   auto then_value_id =

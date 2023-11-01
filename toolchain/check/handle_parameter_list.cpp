@@ -6,43 +6,43 @@
 
 namespace Carbon::Check {
 
-auto HandleImplicitParameterList(Context& context, Parse::Lamp parse_node)
+auto HandleImplicitParameterList(Context& context, Parse::Lamp parse_lamp)
     -> bool {
   auto refs_id =
       context.ParamOrArgEnd(Parse::LampKind::ImplicitParameterListStart);
   context.lamp_stack()
       .PopAndDiscardSoloParseNode<
           Parse::LampKind::ImplicitParameterListStart>();
-  context.lamp_stack().Push(parse_node, refs_id);
+  context.lamp_stack().Push(parse_lamp, refs_id);
   // The implicit parameter list's scope extends to the end of the following
   // parameter list.
   return true;
 }
 
-auto HandleImplicitParameterListStart(Context& context, Parse::Lamp parse_node)
+auto HandleImplicitParameterListStart(Context& context, Parse::Lamp parse_lamp)
     -> bool {
   context.PushScope();
-  context.lamp_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_lamp);
   context.ParamOrArgStart();
   return true;
 }
 
-auto HandleParameterList(Context& context, Parse::Lamp parse_node) -> bool {
+auto HandleParameterList(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto refs_id = context.ParamOrArgEnd(Parse::LampKind::ParameterListStart);
   context.PopScope();
   context.lamp_stack()
       .PopAndDiscardSoloParseNode<Parse::LampKind::ParameterListStart>();
-  context.lamp_stack().Push(parse_node, refs_id);
+  context.lamp_stack().Push(parse_lamp, refs_id);
   return true;
 }
 
-auto HandleParameterListComma(Context& context, Parse::Lamp /*parse_node*/)
+auto HandleParameterListComma(Context& context, Parse::Lamp /*parse_lamp*/)
     -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleParameterListStart(Context& context, Parse::Lamp parse_node)
+auto HandleParameterListStart(Context& context, Parse::Lamp parse_lamp)
     -> bool {
   // A parameter list following an implicit parameter list shares the same
   // scope.
@@ -56,7 +56,7 @@ auto HandleParameterListStart(Context& context, Parse::Lamp parse_node)
   if (!context.lamp_stack().PeekIs<Parse::LampKind::ImplicitParameterList>()) {
     context.PushScope();
   }
-  context.lamp_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_lamp);
   context.ParamOrArgStart();
   return true;
 }

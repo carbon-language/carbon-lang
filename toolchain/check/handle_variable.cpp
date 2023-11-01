@@ -8,7 +8,7 @@
 
 namespace Carbon::Check {
 
-auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_node)
+auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_lamp)
     -> bool {
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
@@ -28,7 +28,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_node)
     // the variable.
     context.declaration_name_stack().AddNameToLookup(
         context.declaration_name_stack().MakeUnqualifiedName(
-            bind_name->parse_node, bind_name->name_id),
+            bind_name->parse_lamp, bind_name->name_id),
         value_id);
     value_id = bind_name->value_id;
   }
@@ -36,14 +36,14 @@ auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_node)
   // If there was an initializer, assign it to the storage.
   if (has_init) {
     if (context.insts().Get(value_id).Is<SemIR::VarStorage>()) {
-      init_id = Initialize(context, parse_node, value_id, init_id);
+      init_id = Initialize(context, parse_lamp, value_id, init_id);
       // TODO: Consider using different node kinds for assignment versus
       // initialization.
-      context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
+      context.AddInst(SemIR::Assign{parse_lamp, value_id, init_id});
     } else {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.
-      context.TODO(parse_node, "Field initializer");
+      context.TODO(parse_lamp, "Field initializer");
     }
   }
 
@@ -53,17 +53,17 @@ auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_node)
   return true;
 }
 
-auto HandleVariableIntroducer(Context& context, Parse::Lamp parse_node)
+auto HandleVariableIntroducer(Context& context, Parse::Lamp parse_lamp)
     -> bool {
   // No action, just a bracketing node.
-  context.lamp_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_lamp);
   return true;
 }
 
-auto HandleVariableInitializer(Context& context, Parse::Lamp parse_node)
+auto HandleVariableInitializer(Context& context, Parse::Lamp parse_lamp)
     -> bool {
   // No action, just a bracketing node.
-  context.lamp_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_lamp);
   return true;
 }
 

@@ -14,14 +14,14 @@
 namespace Carbon::SemIR {
 
 namespace {
-// Assigns names to nodes, blocks, and scopes in the Semantics IR.
+// Assigns names to insts, blocks, and scopes in the Semantics IR.
 //
 // TODOs / future work ideas:
 // - Add a documentation file for the textual format and link to the
 //   naming section here.
 // - Consider representing literals as just `literal` in the IR and using the
 //   type to distinguish.
-class NodeNamer {
+class InstNamer {
  public:
   // int32_t matches the input value size.
   // NOLINTNEXTLINE(performance-enum-size)
@@ -31,12 +31,12 @@ class NodeNamer {
   };
   static_assert(sizeof(ScopeIndex) == sizeof(FunctionId));
 
-  NodeNamer(const Lex::TokenizedBuffer& tokenized_buffer,
+  InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
             const Parse::Tree& parse_tree, const File& sem_ir)
       : tokenized_buffer_(tokenized_buffer),
         parse_tree_(parse_tree),
         sem_ir_(sem_ir) {
-    nodes.resize(sem_ir.insts().size());
+    insts.resize(sem_ir.insts().size());
     labels.resize(sem_ir.inst_blocks().size());
     scopes.resize(1 + sem_ir.functions().size() + sem_ir.classes().size());
 
@@ -57,10 +57,10 @@ class NodeNamer {
       CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
-        nodes[fn.return_slot_id.index] = {
+        insts[fn.return_slot_id.index] = {
             fn_scope,
-            GetScopeInfo(fn_scope).nodes.AllocateName(
-                *this, sem_ir.insts().Get(fn.return_slot_id).parse_node(),
+            GetScopeInfo(fn_scope).insts.AllocateName(
+                *this, sem_ir.insts().Get(fn.return_slot_id).parse_lamp(),
                 "return")};
       }
       if (!fn.body_block_ids.empty()) {
@@ -118,7 +118,7 @@ class NodeNamer {
     return GetScopeInfo(GetScopeFor(class_id)).name.str();
   }
 
-  // Returns the IR name to use for a node, when referenced from a given scope.
+  // Returns the IR name to use for a inst, when referenced from a given scope.
   auto GetNameFor(ScopeIndex scope_idx, InstId inst_id) -> std::string {
     if (!inst_id.is_valid()) {
       return "invalid";
@@ -129,15 +129,15 @@ class NodeNamer {
       return BuiltinKind::FromInt(inst_id.index).label().str();
     }
 
-    auto& [node_scope, node_name] = nodes[inst_id.index];
-    if (!node_name) {
+    auto& [inst_scope, inst_name] = insts[inst_id.index];
+    if (!inst_name) {
       // This should not happen in valid IR.
-      return "<unexpected noderef " + llvm::itostr(inst_id.index) + ">";
+      return "<unexpected instref " + llvm::itostr(inst_id.index) + ">";
     }
-    if (node_scope == scope_idx) {
-      return node_name.str().str();
+    if (inst_scope == scope_idx) {
+      return inst_name.str().str();
     }
-    return (GetScopeInfo(node_scope).name.str() + "." + node_name.str()).str();
+    return (GetScopeInfo(inst_scope).name.str() + "." + inst_name.str()).str();
   }
 
   // Returns the IR name to use for a label, when referenced from a given scope.
@@ -203,9 +203,9 @@ class NodeNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const NodeNamer& namer, Parse::Lamp node,
+    auto AllocateName(const InstNamer& namer, Parse::Lamp node,
                       std::string name = "") -> Name {
-      // The best (shortest) name for this node so far, and the current name
+      // The best (shortest) name for this inst so far, and the current name
       // for it.
       Name best;
       Name current;
@@ -217,8 +217,8 @@ class NodeNamer {
 
         if (!added) {
           if (mark_ambiguous) {
-            // This name was allocated for a different node. Mark it as
-            // ambiguous and keep looking for a name for this node.
+            // This name was allocated for a different inst. Mark it as
+            // ambiguous and keep looking for a name for this inst.
             new_name.SetAmbiguous();
           }
         } else {
@@ -269,7 +269,7 @@ class NodeNamer {
   // A named scope that contains named entities.
   struct Scope {
     Namespace::Name name;
-    Namespace nodes = {.prefix = "%"};
+    Namespace insts = {.prefix = "%"};
     Namespace labels = {.prefix = "!"};
   };
 
@@ -279,31 +279,31 @@ class NodeNamer {
 
   auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
                      std::string name = "",
-                     Parse::Lamp parse_node = Parse::Lamp::Invalid) -> void {
+                     Parse::Lamp parse_lamp = Parse::Lamp::Invalid) -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
 
-    if (parse_node == Parse::Lamp::Invalid) {
+    if (parse_lamp == Parse::Lamp::Invalid) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
-        parse_node = sem_ir_.insts().Get(block.front()).parse_node();
+        parse_lamp = sem_ir_.insts().Get(block.front()).parse_lamp();
       }
     }
 
     labels[block_id.index] = {scope_idx,
                               GetScopeInfo(scope_idx).labels.AllocateName(
-                                  *this, parse_node, std::move(name))};
+                                  *this, parse_lamp, std::move(name))};
   }
 
-  // Finds and adds a suitable block label for the given semantics node that
+  // Finds and adds a suitable block label for the given sem_ir inst that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Inst node)
+  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Inst inst)
       -> void {
     llvm::StringRef name;
-    switch (parse_tree_.node_kind(node.parse_node())) {
+    switch (parse_tree_.node_kind(inst.parse_lamp())) {
       case Parse::LampKind::IfExpressionIf:
-        switch (node.kind()) {
+        switch (inst.kind()) {
           case BranchIf::Kind:
             name = "if.expr.then";
             break;
@@ -319,7 +319,7 @@ class NodeNamer {
         break;
 
       case Parse::LampKind::IfCondition:
-        switch (node.kind()) {
+        switch (inst.kind()) {
           case BranchIf::Kind:
             name = "if.then";
             break;
@@ -336,9 +336,9 @@ class NodeNamer {
         break;
 
       case Parse::LampKind::ShortCircuitOperand: {
-        bool is_rhs = node.Is<BranchIf>();
+        bool is_rhs = inst.Is<BranchIf>();
         bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
-                          node.parse_node())) == Lex::TokenKind::And;
+                          inst.parse_lamp())) == Lex::TokenKind::And;
         name = is_and ? (is_rhs ? "and.rhs" : "and.result")
                       : (is_rhs ? "or.rhs" : "or.result");
         break;
@@ -349,7 +349,7 @@ class NodeNamer {
         break;
 
       case Parse::LampKind::WhileCondition:
-        switch (node.kind()) {
+        switch (inst.kind()) {
           case InstKind::BranchIf:
             name = "while.body";
             break;
@@ -365,7 +365,7 @@ class NodeNamer {
         break;
     }
 
-    AddBlockLabel(scope_idx, block_id, name.str(), node.parse_node());
+    AddBlockLabel(scope_idx, block_id, name.str(), inst.parse_lamp());
   }
 
   auto CollectNamesInBlock(ScopeIndex scope_idx, InstBlockId block_id) -> void {
@@ -381,68 +381,68 @@ class NodeNamer {
         continue;
       }
 
-      auto node = sem_ir_.insts().Get(inst_id);
-      auto add_node_name = [&](std::string name) {
-        nodes[inst_id.index] = {scope_idx, scope.nodes.AllocateName(
-                                               *this, node.parse_node(), name)};
+      auto inst = sem_ir_.insts().Get(inst_id);
+      auto add_inst_name = [&](std::string name) {
+        insts[inst_id.index] = {scope_idx, scope.insts.AllocateName(
+                                               *this, inst.parse_lamp(), name)};
       };
-      auto add_node_name_id = [&](StringId name_id,
+      auto add_inst_name_id = [&](StringId name_id,
                                   llvm::StringRef suffix = "") {
         if (name_id.is_valid()) {
-          add_node_name((sem_ir_.strings().Get(name_id).str() + suffix).str());
+          add_inst_name((sem_ir_.strings().Get(name_id).str() + suffix).str());
         } else {
-          add_node_name(suffix.str());
+          add_inst_name(suffix.str());
         }
       };
 
-      switch (node.kind()) {
+      switch (inst.kind()) {
         case Branch::Kind: {
-          AddBlockLabel(scope_idx, node.As<Branch>().target_id, node);
+          AddBlockLabel(scope_idx, inst.As<Branch>().target_id, inst);
           break;
         }
         case BranchIf::Kind: {
-          AddBlockLabel(scope_idx, node.As<BranchIf>().target_id, node);
+          AddBlockLabel(scope_idx, inst.As<BranchIf>().target_id, inst);
           break;
         }
         case BranchWithArg::Kind: {
-          AddBlockLabel(scope_idx, node.As<BranchWithArg>().target_id, node);
+          AddBlockLabel(scope_idx, inst.As<BranchWithArg>().target_id, inst);
           break;
         }
         case SpliceBlock::Kind: {
-          CollectNamesInBlock(scope_idx, node.As<SpliceBlock>().block_id);
+          CollectNamesInBlock(scope_idx, inst.As<SpliceBlock>().block_id);
           break;
         }
         case BindName::Kind: {
-          add_node_name_id(node.As<BindName>().name_id);
+          add_inst_name_id(inst.As<BindName>().name_id);
           continue;
         }
         case FunctionDeclaration::Kind: {
-          add_node_name_id(sem_ir_.functions()
-                               .Get(node.As<FunctionDeclaration>().function_id)
+          add_inst_name_id(sem_ir_.functions()
+                               .Get(inst.As<FunctionDeclaration>().function_id)
                                .name_id);
           continue;
         }
         case ClassType::Kind: {
-          add_node_name_id(
-              sem_ir_.classes().Get(node.As<ClassType>().class_id).name_id);
+          add_inst_name_id(
+              sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
           continue;
         }
         case NameReference::Kind: {
-          add_node_name_id(node.As<NameReference>().name_id, ".ref");
+          add_inst_name_id(inst.As<NameReference>().name_id, ".ref");
           continue;
         }
         case Parameter::Kind: {
-          add_node_name_id(node.As<Parameter>().name_id);
+          add_inst_name_id(inst.As<Parameter>().name_id);
           continue;
         }
         case SelfParameter::Kind: {
-          add_node_name(node.As<SelfParameter>().is_addr_self.index
+          add_inst_name(inst.As<SelfParameter>().is_addr_self.index
                             ? "self.addr"
                             : "self");
           continue;
         }
         case VarStorage::Kind: {
-          add_node_name_id(node.As<VarStorage>().name_id, ".var");
+          add_inst_name_id(inst.As<VarStorage>().name_id, ".var");
           continue;
         }
         default: {
@@ -451,8 +451,8 @@ class NodeNamer {
       }
 
       // Sequentially number all remaining values.
-      if (node.kind().value_kind() != InstValueKind::None) {
-        add_node_name("");
+      if (inst.kind().value_kind() != InstValueKind::None) {
+        add_inst_name("");
       }
     }
   }
@@ -462,7 +462,7 @@ class NodeNamer {
   const File& sem_ir_;
 
   Namespace globals = {.prefix = "@"};
-  std::vector<std::pair<ScopeIndex, Namespace::Name>> nodes;
+  std::vector<std::pair<ScopeIndex, Namespace::Name>> insts;
   std::vector<std::pair<ScopeIndex, Namespace::Name>> labels;
   std::vector<Scope> scopes;
 };
@@ -476,17 +476,17 @@ class Formatter {
                      llvm::raw_ostream& out)
       : sem_ir_(sem_ir),
         out_(out),
-        node_namer_(tokenized_buffer, parse_tree, sem_ir) {}
+        inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
 
   auto Format() -> void {
     out_ << "file \"" << sem_ir_.filename() << "\" {\n";
     // TODO: Include information from the `package` declaration, once we
     // fully support it.
-    // TODO: Handle the case where there are multiple top-level node blocks.
+    // TODO: Handle the case where there are multiple top-level inst blocks.
     // For example, there may be branching in the initializer of a global or a
     // type expression.
     if (auto block_id = sem_ir_.top_inst_block_id(); block_id.is_valid()) {
-      llvm::SaveAndRestore file_scope(scope_, NodeNamer::ScopeIndex::File);
+      llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeIndex::File);
       FormatCodeBlock(block_id);
     }
     out_ << "}\n";
@@ -506,7 +506,7 @@ class Formatter {
     out_ << "\nclass ";
     FormatClassName(id);
 
-    llvm::SaveAndRestore class_scope(scope_, node_namer_.GetScopeFor(id));
+    llvm::SaveAndRestore class_scope(scope_, inst_namer_.GetScopeFor(id));
 
     if (class_info.scope_id.is_valid()) {
       out_ << " {\n";
@@ -525,7 +525,7 @@ class Formatter {
     out_ << "\nfn ";
     FormatFunctionName(id);
 
-    llvm::SaveAndRestore function_scope(scope_, node_namer_.GetScopeFor(id));
+    llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
     if (fn.implicit_param_refs_id != SemIR::InstBlockId::Empty) {
       out_ << "[";
@@ -540,7 +540,7 @@ class Formatter {
     if (fn.return_type_id.is_valid()) {
       out_ << " -> ";
       if (fn.return_slot_id.is_valid()) {
-        FormatNodeName(fn.return_slot_id);
+        FormatInstName(fn.return_slot_id);
         out_ << ": ";
       }
       FormatType(fn.return_type_id);
@@ -572,7 +572,7 @@ class Formatter {
         out_ << "invalid";
         continue;
       }
-      FormatNodeName(param_id);
+      FormatInstName(param_id);
       out_ << ": ";
       FormatType(sem_ir_.insts().Get(param_id).type_id());
     }
@@ -604,7 +604,7 @@ class Formatter {
       out_ << sep << prefix;
       FormatString(name_id);
       out_ << " = ";
-      FormatNodeName(inst_id);
+      FormatInstName(inst_id);
     }
   }
 
@@ -618,13 +618,13 @@ class Formatter {
     FormatInstruction(inst_id, sem_ir_.insts().Get(inst_id));
   }
 
-  auto FormatInstruction(InstId inst_id, Inst node) -> void {
+  auto FormatInstruction(InstId inst_id, Inst inst) -> void {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
-#define CARBON_SEM_IR_INST_KIND(NodeT)            \
-  case NodeT::Kind:                               \
-    FormatInstruction(inst_id, node.As<NodeT>()); \
+    switch (inst.kind()) {
+#define CARBON_SEM_IR_INST_KIND(InstT)            \
+  case InstT::Kind:                               \
+    FormatInstruction(inst_id, inst.As<InstT>()); \
     break;
 #include "toolchain/sem_ir/inst_kind.def"
     }
@@ -632,19 +632,19 @@ class Formatter {
 
   auto Indent() -> void { out_.indent(indent_); }
 
-  template <typename NodeT>
-  auto FormatInstruction(InstId inst_id, NodeT node) -> void {
+  template <typename InstT>
+  auto FormatInstruction(InstId inst_id, InstT inst) -> void {
     Indent();
-    FormatInstructionLHS(inst_id, node);
-    out_ << NodeT::Kind.ir_name();
-    FormatInstructionRHS(node);
+    FormatInstructionLHS(inst_id, inst);
+    out_ << InstT::Kind.ir_name();
+    FormatInstructionRHS(inst);
     out_ << "\n";
   }
 
-  auto FormatInstructionLHS(InstId inst_id, Inst node) -> void {
-    switch (node.kind().value_kind()) {
+  auto FormatInstructionLHS(InstId inst_id, Inst inst) -> void {
+    switch (inst.kind().value_kind()) {
       case InstValueKind::Typed:
-        FormatNodeName(inst_id);
+        FormatInstName(inst_id);
         out_ << ": ";
         switch (GetExpressionCategory(sem_ir_, inst_id)) {
           case ExpressionCategory::NotExpression:
@@ -660,7 +660,7 @@ class Formatter {
             out_ << "init ";
             break;
         }
-        FormatType(node.type_id());
+        FormatType(inst.type_id());
         out_ << " = ";
         break;
       case InstValueKind::None:
@@ -668,64 +668,64 @@ class Formatter {
     }
   }
 
-  template <typename NodeT>
-  auto FormatInstructionRHS(NodeT node) -> void {
+  template <typename InstT>
+  auto FormatInstructionRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
-    using Info = TypedInstArgsInfo<NodeT>;
+    using Info = TypedInstArgsInfo<InstT>;
     if constexpr (Info::NumArgs == 2) {
-      FormatArgs(Info::template Get<0>(node), Info::template Get<1>(node));
+      FormatArgs(Info::template Get<0>(inst), Info::template Get<1>(inst));
     } else if constexpr (Info::NumArgs == 1) {
-      FormatArgs(Info::template Get<0>(node));
+      FormatArgs(Info::template Get<0>(inst));
     } else {
       FormatArgs();
     }
   }
 
-  auto FormatInstructionRHS(BlockArg node) -> void {
+  auto FormatInstructionRHS(BlockArg inst) -> void {
     out_ << " ";
-    FormatLabel(node.block_id);
+    FormatLabel(inst.block_id);
   }
 
-  auto FormatInstruction(InstId /*inst_id*/, BranchIf node) -> void {
+  auto FormatInstruction(InstId /*inst_id*/, BranchIf inst) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
     out_ << "if ";
-    FormatNodeName(node.cond_id);
+    FormatInstName(inst.cond_id);
     out_ << " " << Branch::Kind.ir_name() << " ";
-    FormatLabel(node.target_id);
+    FormatLabel(inst.target_id);
     out_ << " else ";
     in_terminator_sequence_ = true;
   }
 
-  auto FormatInstruction(InstId /*inst_id*/, BranchWithArg node) -> void {
+  auto FormatInstruction(InstId /*inst_id*/, BranchWithArg inst) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
     out_ << BranchWithArg::Kind.ir_name() << " ";
-    FormatLabel(node.target_id);
+    FormatLabel(inst.target_id);
     out_ << "(";
-    FormatNodeName(node.arg_id);
+    FormatInstName(inst.arg_id);
     out_ << ")\n";
     in_terminator_sequence_ = false;
   }
 
-  auto FormatInstruction(InstId /*inst_id*/, Branch node) -> void {
+  auto FormatInstruction(InstId /*inst_id*/, Branch inst) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
     out_ << Branch::Kind.ir_name() << " ";
-    FormatLabel(node.target_id);
+    FormatLabel(inst.target_id);
     out_ << "\n";
     in_terminator_sequence_ = false;
   }
 
-  auto FormatInstructionRHS(ArrayInit node) -> void {
+  auto FormatInstructionRHS(ArrayInit inst) -> void {
     out_ << " ";
-    FormatArg(node.tuple_id);
+    FormatArg(inst.tuple_id);
 
     llvm::ArrayRef<InstId> inits_and_return_slot =
-        sem_ir_.inst_blocks().Get(node.inits_and_return_slot_id);
+        sem_ir_.inst_blocks().Get(inst.inits_and_return_slot_id);
     auto inits = inits_and_return_slot.drop_back(1);
     auto return_slot_id = inits_and_return_slot.back();
 
@@ -739,19 +739,19 @@ class Formatter {
     FormatReturnSlot(return_slot_id);
   }
 
-  auto FormatInstructionRHS(Call node) -> void {
+  auto FormatInstructionRHS(Call inst) -> void {
     out_ << " ";
-    FormatArg(node.callee_id);
+    FormatArg(inst.callee_id);
 
-    if (!node.args_id.is_valid()) {
+    if (!inst.args_id.is_valid()) {
       out_ << "(<invalid>)";
       return;
     }
 
-    llvm::ArrayRef<InstId> args = sem_ir_.inst_blocks().Get(node.args_id);
+    llvm::ArrayRef<InstId> args = sem_ir_.inst_blocks().Get(inst.args_id);
 
     bool has_return_slot =
-        GetInitializingRepresentation(sem_ir_, node.type_id).has_return_slot();
+        GetInitializingRepresentation(sem_ir_, inst.type_id).has_return_slot();
     InstId return_slot_id = InstId::Invalid;
     if (has_return_slot) {
       return_slot_id = args.back();
@@ -771,24 +771,24 @@ class Formatter {
     }
   }
 
-  auto FormatInstructionRHS(InitializeFrom node) -> void {
-    FormatArgs(node.src_id);
-    FormatReturnSlot(node.dest_id);
+  auto FormatInstructionRHS(InitializeFrom inst) -> void {
+    FormatArgs(inst.src_id);
+    FormatReturnSlot(inst.dest_id);
   }
 
-  auto FormatInstructionRHS(CrossReference node) -> void {
+  auto FormatInstructionRHS(CrossReference inst) -> void {
     // TODO: Figure out a way to make this meaningful. We'll need some way to
-    // name cross-reference IRs, perhaps by the node ID of the import?
-    out_ << " " << node.ir_id << "." << node.inst_id;
+    // name cross-reference IRs, perhaps by the inst ID of the import?
+    out_ << " " << inst.ir_id << "." << inst.inst_id;
   }
 
-  auto FormatInstructionRHS(SpliceBlock node) -> void {
-    FormatArgs(node.result_id);
+  auto FormatInstructionRHS(SpliceBlock inst) -> void {
+    FormatArgs(inst.result_id);
     out_ << " {";
-    if (!sem_ir_.inst_blocks().Get(node.block_id).empty()) {
+    if (!sem_ir_.inst_blocks().Get(inst.block_id).empty()) {
       out_ << "\n";
       indent_ += 2;
-      FormatCodeBlock(node.block_id);
+      FormatCodeBlock(inst.block_id);
       indent_ -= 2;
       Indent();
     }
@@ -796,13 +796,13 @@ class Formatter {
   }
 
   // StructTypeFields are formatted as part of their StructType.
-  auto FormatInstruction(InstId /*inst_id*/, StructTypeField /*node*/) -> void {
+  auto FormatInstruction(InstId /*inst_id*/, StructTypeField /*inst*/) -> void {
   }
 
-  auto FormatInstructionRHS(StructType node) -> void {
+  auto FormatInstructionRHS(StructType inst) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
-    for (auto field_id : sem_ir_.inst_blocks().Get(node.fields_id)) {
+    for (auto field_id : sem_ir_.inst_blocks().Get(inst.fields_id)) {
       out_ << sep << ".";
       auto field = sem_ir_.insts().GetAs<StructTypeField>(field_id);
       FormatString(field.name_id);
@@ -841,7 +841,7 @@ class Formatter {
     out_ << '}';
   }
 
-  auto FormatArg(InstId id) -> void { FormatNodeName(id); }
+  auto FormatArg(InstId id) -> void { FormatInstName(id); }
 
   auto FormatArg(InstBlockId id) -> void {
     out_ << '(';
@@ -883,22 +883,22 @@ class Formatter {
     FormatArg(dest_id);
   }
 
-  auto FormatNodeName(InstId id) -> void {
-    out_ << node_namer_.GetNameFor(scope_, id);
+  auto FormatInstName(InstId id) -> void {
+    out_ << inst_namer_.GetNameFor(scope_, id);
   }
 
   auto FormatLabel(InstBlockId id) -> void {
-    out_ << node_namer_.GetLabelFor(scope_, id);
+    out_ << inst_namer_.GetLabelFor(scope_, id);
   }
 
   auto FormatString(StringId id) -> void { out_ << sem_ir_.strings().Get(id); }
 
   auto FormatFunctionName(FunctionId id) -> void {
-    out_ << node_namer_.GetNameFor(id);
+    out_ << inst_namer_.GetNameFor(id);
   }
 
   auto FormatClassName(ClassId id) -> void {
-    out_ << node_namer_.GetNameFor(id);
+    out_ << inst_namer_.GetNameFor(id);
   }
 
   auto FormatType(TypeId id) -> void {
@@ -912,8 +912,8 @@ class Formatter {
  private:
   const File& sem_ir_;
   llvm::raw_ostream& out_;
-  NodeNamer node_namer_;
-  NodeNamer::ScopeIndex scope_ = NodeNamer::ScopeIndex::None;
+  InstNamer inst_namer_;
+  InstNamer::ScopeIndex scope_ = InstNamer::ScopeIndex::None;
   bool in_terminator_sequence_ = false;
   int indent_ = 2;
 };

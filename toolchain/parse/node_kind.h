@@ -45,9 +45,9 @@ class LampKind : public CARBON_ENUM_BASE(LampKind) {
 // We expect the parse node kind to fit compactly into 8 bits.
 static_assert(sizeof(LampKind) == 1, "Kind objects include padding!");
 
-// Validates that a `parse_node_kind` parser node can be generated for a
+// Validates that a `parse_lamp_kind` parser node can be generated for a
 // `lex_token_kind` lexer token.
-void CheckNodeMatchesLexerToken(LampKind parse_node_kind,
+void CheckNodeMatchesLexerToken(LampKind parse_lamp_kind,
                                 Lex::TokenKind lex_token_kind, bool has_error);
 
 }  // namespace Carbon::Parse

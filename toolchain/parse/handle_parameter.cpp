@@ -52,14 +52,14 @@ auto HandleParameterFinishAsRegular(Context& context) -> void {
 }
 
 // Handles ParameterListAs(Implicit|Regular).
-static auto HandleParameterList(Context& context, LampKind parse_node_kind,
+static auto HandleParameterList(Context& context, LampKind parse_lamp_kind,
                                 Lex::TokenKind open_token_kind,
                                 Lex::TokenKind close_token_kind,
                                 State param_state, State finish_state) -> void {
   context.PopAndDiscardState();
 
   context.PushState(finish_state);
-  context.AddLeafNode(parse_node_kind, context.ConsumeChecked(open_token_kind));
+  context.AddLeafNode(parse_lamp_kind, context.ConsumeChecked(open_token_kind));
 
   if (!context.PositionIs(close_token_kind)) {
     context.PushState(param_state);
@@ -82,11 +82,11 @@ auto HandleParameterListAsRegular(Context& context) -> void {
 
 // Handles ParameterListFinishAs(Implicit|Regular).
 static auto HandleParameterListFinish(Context& context,
-                                      LampKind parse_node_kind,
+                                      LampKind parse_lamp_kind,
                                       Lex::TokenKind token_kind) -> void {
   auto state = context.PopState();
 
-  context.AddInst(parse_node_kind, context.ConsumeChecked(token_kind),
+  context.AddInst(parse_lamp_kind, context.ConsumeChecked(token_kind),
                   state.subtree_start, state.has_error);
 }
 

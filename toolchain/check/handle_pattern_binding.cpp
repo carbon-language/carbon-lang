@@ -8,7 +8,7 @@
 
 namespace Carbon::Check {
 
-auto HandleAddress(Context& context, Parse::Lamp parse_node) -> bool {
+auto HandleAddress(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto self_param_id =
       context.lamp_stack().Peek<Parse::LampKind::PatternBinding>();
   if (auto self_param =
@@ -18,17 +18,17 @@ auto HandleAddress(Context& context, Parse::Lamp parse_node) -> bool {
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParameter, Error,
                       "`addr` can only be applied to a `self` parameter");
-    context.emitter().Emit(parse_node, AddrOnNonSelfParameter);
+    context.emitter().Emit(parse_lamp, AddrOnNonSelfParameter);
   }
   return true;
 }
 
-auto HandleGenericPatternBinding(Context& context, Parse::Lamp parse_node)
+auto HandleGenericPatternBinding(Context& context, Parse::Lamp parse_lamp)
     -> bool {
-  return context.TODO(parse_node, "GenericPatternBinding");
+  return context.TODO(parse_lamp, "GenericPatternBinding");
 }
 
-auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
+auto HandlePatternBinding(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto [type_node, parsed_type_id] =
       context.lamp_stack().PopExpressionWithParseNode();
   auto type_node_copy = type_node;
@@ -43,10 +43,10 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
       CARBON_DIAGNOSTIC(
           SelfOutsideImplicitParameterList, Error,
           "`self` can only be declared in an implicit parameter list");
-      context.emitter().Emit(parse_node, SelfOutsideImplicitParameterList);
+      context.emitter().Emit(parse_lamp, SelfOutsideImplicitParameterList);
     }
     context.AddInstAndPush(
-        parse_node,
+        parse_lamp,
         SemIR::SelfParameter{*self_node, cast_type_id,
                              /*is_addr_self=*/SemIR::BoolValue::False});
     return true;
@@ -60,7 +60,7 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
 
   // Allocate a node of the appropriate kind, linked to the name for error
   // locations.
-  switch (auto context_parse_node_kind = context.parse_tree().node_kind(
+  switch (auto context_parse_lamp_kind = context.parse_tree().node_kind(
               context.lamp_stack().PeekParseNode())) {
     case Parse::LampKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
@@ -84,25 +84,25 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
             context.classes().Get(enclosing_class_decl->class_id);
         SemIR::InstId field_type_inst_id =
             context.AddInst(SemIR::UnboundFieldType{
-                parse_node,
+                parse_lamp,
                 context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
                 class_info.self_type_id, cast_type_id});
         value_type_id = context.CanonicalizeType(field_type_inst_id);
         value_id = context.AddInst(
-            SemIR::Field{parse_node, value_type_id, name_id,
+            SemIR::Field{parse_lamp, value_type_id, name_id,
                          SemIR::MemberIndex(context.args_type_info_stack()
                                                 .PeekCurrentBlockContents()
                                                 .size())});
 
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddInst(
-            SemIR::StructTypeField{parse_node, name_id, cast_type_id});
+            SemIR::StructTypeField{parse_lamp, name_id, cast_type_id});
       } else {
         value_id = context.AddInst(
             SemIR::VarStorage{name_node, value_type_id, name_id});
       }
       context.AddInstAndPush(
-          parse_node,
+          parse_lamp,
           SemIR::BindName{name_node, value_type_id, name_id, value_id});
       break;
     }
@@ -112,7 +112,7 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
       context.AddInstAndPush(
-          parse_node, SemIR::Parameter{name_node, cast_type_id, name_id});
+          parse_lamp, SemIR::Parameter{name_node, cast_type_id, name_id});
       // TODO: Create a `BindName` node.
       break;
 
@@ -132,20 +132,20 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_node) -> bool {
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
       context.lamp_stack().Push(
-          parse_node,
+          parse_lamp,
           context.insts().AddInNoBlock(SemIR::BindName{
               name_node, cast_type_id, name_id, SemIR::InstId::Invalid}));
       break;
 
     default:
       CARBON_FATAL() << "Found a pattern binding in unexpected context "
-                     << context_parse_node_kind;
+                     << context_parse_lamp_kind;
   }
   return true;
 }
 
-auto HandleTemplate(Context& context, Parse::Lamp parse_node) -> bool {
-  return context.TODO(parse_node, "HandleTemplate");
+auto HandleTemplate(Context& context, Parse::Lamp parse_lamp) -> bool {
+  return context.TODO(parse_lamp, "HandleTemplate");
 }
 
 }  // namespace Carbon::Check

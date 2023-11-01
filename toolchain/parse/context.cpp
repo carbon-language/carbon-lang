@@ -416,7 +416,7 @@ auto Context::GetDeclarationContext() -> DeclarationContext {
 }
 
 auto Context::RecoverFromDeclarationError(StateStackEntry state,
-                                          LampKind parse_node_kind,
+                                          LampKind parse_lamp_kind,
                                           bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {
@@ -424,7 +424,7 @@ auto Context::RecoverFromDeclarationError(StateStackEntry state,
       token = *semi;
     }
   }
-  AddInst(parse_node_kind, token, state.subtree_start,
+  AddInst(parse_lamp_kind, token, state.subtree_start,
           /*has_error=*/true);
 }
 

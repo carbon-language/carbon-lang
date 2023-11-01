@@ -289,7 +289,7 @@ class Context {
   // semicolon when it makes sense as a possible end, otherwise use the
   // introducer token for the error.
   auto RecoverFromDeclarationError(StateStackEntry state,
-                                   LampKind parse_node_kind,
+                                   LampKind parse_lamp_kind,
                                    bool skip_past_likely_end) -> void;
 
   // Prints information for a stack dump.

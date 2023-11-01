@@ -40,10 +40,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       {SemIR::InstId::BuiltinTypeType, SemIR::TypeId::TypeType});
 }
 
-auto Context::TODO(Parse::Lamp parse_node, std::string label) -> bool {
+auto Context::TODO(Parse::Lamp parse_lamp, std::string label) -> bool {
   CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: `{0}`.",
                     std::string);
-  emitter_->Emit(parse_node, SemanticsTodo, std::move(label));
+  emitter_->Emit(parse_lamp, SemanticsTodo, std::move(label));
   return false;
 }
 
@@ -64,28 +64,28 @@ auto Context::AddInst(SemIR::Inst node) -> SemIR::InstId {
   return inst_id;
 }
 
-auto Context::AddInstAndPush(Parse::Lamp parse_node, SemIR::Inst node) -> void {
+auto Context::AddInstAndPush(Parse::Lamp parse_lamp, SemIR::Inst node) -> void {
   auto inst_id = AddInst(node);
-  lamp_stack_.Push(parse_node, inst_id);
+  lamp_stack_.Push(parse_lamp, inst_id);
 }
 
-auto Context::DiagnoseDuplicateName(Parse::Lamp parse_node,
+auto Context::DiagnoseDuplicateName(Parse::Lamp parse_lamp,
                                     SemIR::InstId prev_def_id) -> void {
   CARBON_DIAGNOSTIC(NameDeclarationDuplicate, Error,
                     "Duplicate name being declared in the same scope.");
   CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
                     "Name is previously declared here.");
   auto prev_def = insts().Get(prev_def_id);
-  emitter_->Build(parse_node, NameDeclarationDuplicate)
-      .Note(prev_def.parse_node(), NameDeclarationPrevious)
+  emitter_->Build(parse_lamp, NameDeclarationDuplicate)
+      .Note(prev_def.parse_lamp(), NameDeclarationPrevious)
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::Lamp parse_node, StringId name_id)
+auto Context::DiagnoseNameNotFound(Parse::Lamp parse_lamp, StringId name_id)
     -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, strings().Get(name_id));
+  emitter_->Emit(parse_lamp, NameNotFound, strings().Get(name_id));
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -97,10 +97,10 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   const auto& class_info = classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
   if (class_info.definition_id.is_valid()) {
-    builder.Note(insts().Get(class_info.definition_id).parse_node(),
+    builder.Note(insts().Get(class_info.definition_id).parse_lamp(),
                  ClassIncompleteWithinDefinition);
   } else {
-    builder.Note(insts().Get(class_info.declaration_id).parse_node(),
+    builder.Note(insts().Get(class_info.declaration_id).parse_lamp(),
                  ClassForwardDeclaredHere);
   }
 }
@@ -114,14 +114,14 @@ auto Context::AddNameToLookup(Parse::Lamp name_node, StringId name_id,
   }
 }
 
-auto Context::LookupName(Parse::Lamp parse_node, StringId name_id,
+auto Context::LookupName(Parse::Lamp parse_lamp, StringId name_id,
                          SemIR::NameScopeId scope_id, bool print_diagnostics)
     -> SemIR::InstId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
     auto it = name_lookup_.find(name_id);
     if (it == name_lookup_.end()) {
       if (print_diagnostics) {
-        DiagnoseNameNotFound(parse_node, name_id);
+        DiagnoseNameNotFound(parse_lamp, name_id);
       }
       return SemIR::InstId::BuiltinError;
     }
@@ -135,7 +135,7 @@ auto Context::LookupName(Parse::Lamp parse_node, StringId name_id,
     auto it = scope.find(name_id);
     if (it == scope.end()) {
       if (print_diagnostics) {
-        DiagnoseNameNotFound(parse_node, name_id);
+        DiagnoseNameNotFound(parse_lamp, name_id);
       }
       return SemIR::InstId::BuiltinError;
     }
@@ -197,36 +197,36 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
 
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
-                                           Parse::Lamp parse_node, Args... args)
+                                           Parse::Lamp parse_lamp, Args... args)
     -> SemIR::InstBlockId {
   if (!context.inst_block_stack().is_current_block_reachable()) {
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddDefaultValue();
-  context.AddInst(BranchNode{parse_node, block_id, args...});
+  context.AddInst(BranchNode{parse_lamp, block_id, args...});
   return block_id;
 }
 
-auto Context::AddDominatedBlockAndBranch(Parse::Lamp parse_node)
+auto Context::AddDominatedBlockAndBranch(Parse::Lamp parse_lamp)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, parse_node);
+  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, parse_lamp);
 }
 
-auto Context::AddDominatedBlockAndBranchWithArg(Parse::Lamp parse_node,
+auto Context::AddDominatedBlockAndBranchWithArg(Parse::Lamp parse_lamp,
                                                 SemIR::InstId arg_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, parse_node,
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, parse_lamp,
                                                               arg_id);
 }
 
-auto Context::AddDominatedBlockAndBranchIf(Parse::Lamp parse_node,
+auto Context::AddDominatedBlockAndBranchIf(Parse::Lamp parse_lamp,
                                            SemIR::InstId cond_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, parse_node,
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, parse_lamp,
                                                          cond_id);
 }
 
-auto Context::AddConvergenceBlockAndPush(Parse::Lamp parse_node, int num_blocks)
+auto Context::AddConvergenceBlockAndPush(Parse::Lamp parse_lamp, int num_blocks)
     -> void {
   CARBON_CHECK(num_blocks >= 2) << "no convergence";
 
@@ -236,7 +236,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::Lamp parse_node, int num_blocks)
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst(SemIR::Branch{parse_node, new_block_id});
+      AddInst(SemIR::Branch{parse_lamp, new_block_id});
     }
     inst_block_stack().Pop();
   }
@@ -244,7 +244,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::Lamp parse_node, int num_blocks)
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
-    Parse::Lamp parse_node, std::initializer_list<SemIR::InstId> block_args)
+    Parse::Lamp parse_lamp, std::initializer_list<SemIR::InstId> block_args)
     -> SemIR::InstId {
   CARBON_CHECK(block_args.size() >= 2) << "no convergence";
 
@@ -254,7 +254,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst(SemIR::BranchWithArg{parse_node, new_block_id, arg_id});
+      AddInst(SemIR::BranchWithArg{parse_lamp, new_block_id, arg_id});
     }
     inst_block_stack().Pop();
   }
@@ -262,7 +262,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
-  return AddInst(SemIR::BlockArg{parse_node, result_type_id, new_block_id});
+  return AddInst(SemIR::BlockArg{parse_lamp, result_type_id, new_block_id});
 }
 
 // Add the current code block to the enclosing function.
@@ -471,10 +471,10 @@ class TypeCompleter {
 
   // Makes an empty value representation, which is used for types that have no
   // state, such as empty structs and tuples.
-  auto MakeEmptyRepresentation(Parse::Lamp parse_node) const
+  auto MakeEmptyRepresentation(Parse::Lamp parse_lamp) const
       -> SemIR::ValueRepresentation {
     return {.kind = SemIR::ValueRepresentation::None,
-            .type_id = context_.CanonicalizeTupleType(parse_node, {})};
+            .type_id = context_.CanonicalizeTupleType(parse_lamp, {})};
   }
 
   // Makes a value representation that uses pass-by-copy, copying the given
@@ -492,14 +492,14 @@ class TypeCompleter {
   // Makes a value representation that uses pass-by-address with the given
   // pointee type.
   auto MakePointerRepresentation(
-      Parse::Lamp parse_node, SemIR::TypeId pointee_id,
+      Parse::Lamp parse_lamp, SemIR::TypeId pointee_id,
       SemIR::ValueRepresentation::AggregateKind aggregate_kind =
           SemIR::ValueRepresentation::NotAggregate) const
       -> SemIR::ValueRepresentation {
     // TODO: Should we add `const` qualification to `pointee_id`?
     return {.kind = SemIR::ValueRepresentation::Pointer,
             .aggregate_kind = aggregate_kind,
-            .type_id = context_.GetPointerType(parse_node, pointee_id)};
+            .type_id = context_.GetPointerType(parse_lamp, pointee_id)};
   }
 
   // Gets the value representation of a nested type, which should already be
@@ -551,7 +551,7 @@ class TypeCompleter {
     llvm_unreachable("All builtin kinds were handled above");
   }
 
-  auto BuildStructOrTupleValueRepresentation(Parse::Lamp parse_node,
+  auto BuildStructOrTupleValueRepresentation(Parse::Lamp parse_lamp,
                                              std::size_t num_elements,
                                              SemIR::TypeId elementwise_rep,
                                              bool same_as_object_rep) const
@@ -570,7 +570,7 @@ class TypeCompleter {
     }
     // For a struct or tuple with multiple fields, we use a pointer
     // to the elementwise value representation.
-    return MakePointerRepresentation(parse_node, elementwise_rep,
+    return MakePointerRepresentation(parse_lamp, elementwise_rep,
                                      aggregate_kind);
   }
 
@@ -580,7 +580,7 @@ class TypeCompleter {
     // TODO: Share more code with tuples.
     auto fields = context_.inst_blocks().Get(struct_type.fields_id);
     if (fields.empty()) {
-      return MakeEmptyRepresentation(struct_type.parse_node);
+      return MakeEmptyRepresentation(struct_type.parse_lamp);
     }
 
     // Find the value representation for each field, and construct a struct
@@ -602,10 +602,10 @@ class TypeCompleter {
     auto value_rep = same_as_object_rep
                          ? type_id
                          : context_.CanonicalizeStructType(
-                               struct_type.parse_node,
+                               struct_type.parse_lamp,
                                context_.inst_blocks().Add(value_rep_fields));
     return BuildStructOrTupleValueRepresentation(
-        struct_type.parse_node, fields.size(), value_rep, same_as_object_rep);
+        struct_type.parse_lamp, fields.size(), value_rep, same_as_object_rep);
   }
 
   auto BuildTupleTypeValueRepresentation(SemIR::TypeId type_id,
@@ -614,7 +614,7 @@ class TypeCompleter {
     // TODO: Share more code with structs.
     auto elements = context_.type_blocks().Get(tuple_type.elements_id);
     if (elements.empty()) {
-      return MakeEmptyRepresentation(tuple_type.parse_node);
+      return MakeEmptyRepresentation(tuple_type.parse_lamp);
     }
 
     // Find the value representation for each element, and construct a tuple
@@ -632,10 +632,10 @@ class TypeCompleter {
 
     auto value_rep = same_as_object_rep
                          ? type_id
-                         : context_.CanonicalizeTupleType(tuple_type.parse_node,
+                         : context_.CanonicalizeTupleType(tuple_type.parse_lamp,
                                                           value_rep_elements);
     return BuildStructOrTupleValueRepresentation(
-        tuple_type.parse_node, elements.size(), value_rep, same_as_object_rep);
+        tuple_type.parse_lamp, elements.size(), value_rep, same_as_object_rep);
   }
 
   // Builds and returns the value representation for the given type. All nested
@@ -708,7 +708,7 @@ class TypeCompleter {
         // even when the array has zero or one element, in order to support
         // indexing.
         return MakePointerRepresentation(
-            node.parse_node(), type_id,
+            node.parse_lamp(), type_id,
             SemIR::ValueRepresentation::ObjectAggregate);
       }
 
@@ -726,7 +726,7 @@ class TypeCompleter {
         // TODO: Support customized value representations for classes.
         // TODO: Pick a better value representation when possible.
         return MakePointerRepresentation(
-            node.parse_node(),
+            node.parse_lamp(),
             context_.classes()
                 .Get(node.As<SemIR::ClassType>().class_id)
                 .object_representation_id,
@@ -901,14 +901,14 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
   return CanonicalizeTypeImpl(node.kind(), profile_node, make_node);
 }
 
-auto Context::CanonicalizeStructType(Parse::Lamp parse_node,
+auto Context::CanonicalizeStructType(Parse::Lamp parse_lamp,
                                      SemIR::InstBlockId refs_id)
     -> SemIR::TypeId {
   return CanonicalizeTypeAndAddInstIfNew(
-      SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
+      SemIR::StructType{parse_lamp, SemIR::TypeId::TypeType, refs_id});
 }
 
-auto Context::CanonicalizeTupleType(Parse::Lamp parse_node,
+auto Context::CanonicalizeTupleType(Parse::Lamp parse_lamp,
                                     llvm::ArrayRef<SemIR::TypeId> type_ids)
     -> SemIR::TypeId {
   // Defer allocating a SemIR::TypeBlockId until we know this is a new type.
@@ -916,7 +916,7 @@ auto Context::CanonicalizeTupleType(Parse::Lamp parse_node,
     ProfileTupleType(type_ids, canonical_id);
   };
   auto make_tuple_node = [&] {
-    return AddInst(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
+    return AddInst(SemIR::TupleType{parse_lamp, SemIR::TypeId::TypeType,
                                     type_blocks().Add(type_ids)});
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
@@ -932,10 +932,10 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   return type_id;
 }
 
-auto Context::GetPointerType(Parse::Lamp parse_node,
+auto Context::GetPointerType(Parse::Lamp parse_lamp,
                              SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
   return CanonicalizeTypeAndAddInstIfNew(
-      SemIR::PointerType{parse_node, SemIR::TypeId::TypeType, pointee_type_id});
+      SemIR::PointerType{parse_lamp, SemIR::TypeId::TypeType, pointee_type_id});
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {

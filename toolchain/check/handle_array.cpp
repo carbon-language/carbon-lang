@@ -11,23 +11,23 @@
 namespace Carbon::Check {
 
 auto HandleArrayExpressionStart(Context& /*context*/,
-                                Parse::Lamp /*parse_node*/) -> bool {
+                                Parse::Lamp /*parse_lamp*/) -> bool {
   return true;
 }
 
-auto HandleArrayExpressionSemi(Context& context, Parse::Lamp parse_node)
+auto HandleArrayExpressionSemi(Context& context, Parse::Lamp parse_lamp)
     -> bool {
-  context.lamp_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_lamp);
   return true;
 }
 
-auto HandleArrayExpression(Context& context, Parse::Lamp parse_node) -> bool {
+auto HandleArrayExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
   // TODO: Handle array type with undefined bound.
   if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
       Parse::LampKind::ArrayExpressionSemi) {
     context.lamp_stack().PopAndIgnore();
     context.lamp_stack().PopAndIgnore();
-    return context.TODO(parse_node, "HandleArrayExpressionWithoutBounds");
+    return context.TODO(parse_lamp, "HandleArrayExpressionWithoutBounds");
   }
 
   SemIR::InstId bound_inst_id = context.lamp_stack().PopExpression();
@@ -40,16 +40,16 @@ auto HandleArrayExpression(Context& context, Parse::Lamp parse_node) -> bool {
     // TODO: Produce an error if the array type is too large.
     if (bound_value.getActiveBits() <= 64) {
       context.AddInstAndPush(
-          parse_node,
+          parse_lamp,
           SemIR::ArrayType{
-              parse_node, SemIR::TypeId::TypeType, bound_inst_id,
-              ExpressionAsType(context, parse_node, element_type_inst_id)});
+              parse_lamp, SemIR::TypeId::TypeType, bound_inst_id,
+              ExpressionAsType(context, parse_lamp, element_type_inst_id)});
       return true;
     }
   }
   CARBON_DIAGNOSTIC(InvalidArrayExpression, Error, "Invalid array expression.");
-  context.emitter().Emit(parse_node, InvalidArrayExpression);
-  context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+  context.emitter().Emit(parse_lamp, InvalidArrayExpression);
+  context.lamp_stack().Push(parse_lamp, SemIR::InstId::BuiltinError);
   return true;
 }
 

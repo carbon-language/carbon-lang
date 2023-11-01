@@ -14,9 +14,9 @@ namespace Carbon::SemIR {
 // A friend of `SemIR::Inst` that is used to pierce the abstraction.
 class InstTestHelper {
  public:
-  static auto MakeNode(InstKind node_kind, Parse::Lamp parse_node,
+  static auto MakeNode(InstKind node_kind, Parse::Lamp parse_lamp,
                        TypeId type_id, int32_t arg0, int32_t arg1) -> Inst {
-    return Inst(node_kind, parse_node, type_id, arg0, arg1);
+    return Inst(node_kind, parse_lamp, type_id, arg0, arg1);
   }
 };
 
@@ -53,12 +53,12 @@ TYPED_TEST(TypedInstTest, CommonFieldOrder) {
   Inst node = InstTestHelper::MakeNode(TypeParam::Kind, Parse::Lamp(1),
                                        TypeId(2), 3, 4);
   EXPECT_EQ(node.kind(), TypeParam::Kind);
-  EXPECT_EQ(node.parse_node(), Parse::Lamp(1));
+  EXPECT_EQ(node.parse_lamp(), Parse::Lamp(1));
   EXPECT_EQ(node.type_id(), TypeId(2));
 
   TypedInst typed = node.As<TypedInst>();
   if constexpr (HasParseNode<TypedInst>) {
-    EXPECT_EQ(typed.parse_node, Parse::Lamp(1));
+    EXPECT_EQ(typed.parse_lamp, Parse::Lamp(1));
   }
   if constexpr (HasTypeId<TypedInst>) {
     EXPECT_EQ(typed.type_id, TypeId(2));
@@ -71,7 +71,7 @@ TYPED_TEST(TypedInstTest, RoundTrip) {
   Inst node1 = InstTestHelper::MakeNode(TypeParam::Kind, Parse::Lamp(1),
                                         TypeId(2), 3, 4);
   EXPECT_EQ(node1.kind(), TypeParam::Kind);
-  EXPECT_EQ(node1.parse_node(), Parse::Lamp(1));
+  EXPECT_EQ(node1.parse_lamp(), Parse::Lamp(1));
   EXPECT_EQ(node1.type_id(), TypeId(2));
 
   TypedInst typed1 = node1.As<TypedInst>();
@@ -79,7 +79,7 @@ TYPED_TEST(TypedInstTest, RoundTrip) {
 
   EXPECT_EQ(node1.kind(), node2.kind());
   if constexpr (HasParseNode<TypedInst>) {
-    EXPECT_EQ(node1.parse_node(), node2.parse_node());
+    EXPECT_EQ(node1.parse_lamp(), node2.parse_lamp());
   }
   if constexpr (HasTypeId<TypedInst>) {
     EXPECT_EQ(node1.type_id(), node2.type_id());
