@@ -104,12 +104,13 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
         name_context.parse_node, name_id, name_context.target_scope_id,
         /*print_diagnostics=*/false);
     if (resolved_inst_id == SemIR::InstId::BuiltinError) {
-      // Invalid indicates an unresolved inst. Store it and return.
+      // Invalid indicates an unresolved instruction. Store it and return.
       name_context.state = NameContext::State::Unresolved;
       name_context.unresolved_name_id = name_id;
       return;
     } else {
-      // Store the resolved inst and continue for the target scope update.
+      // Store the resolved instruction and continue for the target scope
+      // update.
       name_context.resolved_inst_id = resolved_inst_id;
     }
 

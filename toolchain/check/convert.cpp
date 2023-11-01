@@ -122,16 +122,16 @@ static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
   return expr_id;
 }
 
-// Creates and adds an inst to perform element access into an aggregate.
+// Creates and adds an instruction to perform element access into an aggregate.
 template <typename AccessInstT, typename InstBlockT>
 static auto MakeElemAccessInst(Context& context, Parse::Node parse_node,
                                SemIR::InstId aggregate_id,
                                SemIR::TypeId elem_type_id, InstBlockT& block,
                                std::size_t i) {
   if constexpr (std::is_same_v<AccessInstT, SemIR::ArrayIndex>) {
-    // TODO: Add a new inst kind for indexing an array at a constant index
-    // so that we don't need an integer literal inst here, and remove this
-    // special case.
+    // TODO: Add a new instruction kind for indexing an array at a constant
+    // index so that we don't need an integer literal instruction here, and
+    // remove this special case.
     auto index_id = block.AddInst(SemIR::IntegerLiteral{
         parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
         context.sem_ir().integers().Add(llvm::APInt(32, i))});
@@ -147,15 +147,15 @@ static auto MakeElemAccessInst(Context& context, Parse::Node parse_node,
 // another aggregate.
 //
 // For the source: `src_id` is the source aggregate, `src_elem_type` is the
-// element type, `i` is the index, and `SourceAccessInstT` is the kind of inst
-// used to access the source element.
+// element type, `i` is the index, and `SourceAccessInstT` is the kind of
+// instruction used to access the source element.
 //
 // For the target: `kind` is the kind of conversion or initialization,
 // `target_elem_type` is the element type. For initialization, `target_id` is
 // the destination, `target_block` is a pending block for target location
 // calculations that will be spliced as the return slot of the initializer if
-// necessary, `i` is the index, and `TargetAccessInstT` is the kind of inst
-// used to access the destination element.
+// necessary, `i` is the index, and `TargetAccessInstT` is the kind of
+// instruction used to access the destination element.
 template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
     Context& context, Parse::Node parse_node, SemIR::InstId src_id,
@@ -165,7 +165,7 @@ static auto ConvertAggregateElement(
     SemIR::TypeId target_elem_type, PendingBlock* target_block, std::size_t i) {
   // Compute the location of the source element. This goes into the current code
   // block, not into the target block.
-  // TODO: Ideally we would discard this inst if it's unused.
+  // TODO: Ideally we would discard this instruction if it's unused.
   auto src_elem_id =
       !src_literal_elems.empty()
           ? src_literal_elems[i]

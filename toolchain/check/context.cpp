@@ -171,8 +171,8 @@ auto Context::FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId {
 }
 
 auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
-  // TODO: The constant value of an inst should be computed as we build the
-  // inst, or at least cached once computed.
+  // TODO: The constant value of an instruction should be computed as we build
+  // the instruction, or at least cached once computed.
   while (true) {
     auto inst = insts().Get(inst_id);
     switch (inst.kind()) {
@@ -643,8 +643,8 @@ class TypeCompleter {
   auto BuildValueRepresentation(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepresentation {
     // TODO: This can emit new SemIR insts. Consider emitting them into a
-    // dedicated file-scope inst block where possible, or somewhere else that
-    // better reflects the definition of the type, rather than wherever the
+    // dedicated file-scope instruction block where possible, or somewhere else
+    // that better reflects the definition of the type, rather than wherever the
     // type happens to first be required to be complete.
 
     // clang warns on unhandled enum values; clang-tidy is incorrect here.

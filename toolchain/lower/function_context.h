@@ -39,7 +39,7 @@ class FunctionContext {
   auto GetBlockArg(SemIR::InstBlockId block_id, SemIR::TypeId type_id)
       -> llvm::PHINode*;
 
-  // Returns a local (versus global) value for the given inst.
+  // Returns a local (versus global) value for the given instruction.
   auto GetLocal(SemIR::InstId inst_id) -> llvm::Value* {
     // All builtins are types, with the same empty lowered value.
     if (inst_id.index < SemIR::BuiltinKind::ValidCount) {
@@ -52,14 +52,14 @@ class FunctionContext {
     return it->second;
   }
 
-  // Sets the value for the given inst.
+  // Sets the value for the given instruction.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) {
     bool added = locals_.insert({inst_id, value}).second;
     CARBON_CHECK(added) << "Duplicate local insert: " << inst_id << " "
                         << sem_ir().insts().Get(inst_id);
   }
 
-  // Returns a value for the given inst, which might not be local.
+  // Returns a value for the given instruction, which might not be local.
   auto GetLocalOrGlobal(SemIR::InstId inst_id) -> llvm::Value*;
 
   // Gets a callable's function.
@@ -133,7 +133,7 @@ class FunctionContext {
   llvm::DenseMap<SemIR::InstId, llvm::Value*> locals_;
 };
 
-// Declare handlers for each SemIR::File inst.
+// Declare handlers for each SemIR::File instruction.
 #define CARBON_SEM_IR_INST_KIND(Name)                                \
   auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
                     SemIR::Name inst)                                \

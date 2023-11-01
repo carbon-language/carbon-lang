@@ -25,15 +25,15 @@
 //
 // The field names here matter -- the first two fields must have the names
 // specified above, when present. When converting to a `SemIR::Inst`, they will
-// become the parse node and type associated with the type-erased inst.
+// become the parse node and type associated with the type-erased instruction.
 //
 // In addition, each type provides a constant `Kind` that associates the type
 // with a particular member of the `InstKind` enumeration. This `Kind`
-// declaration also defines the inst kind by calling `InstKind::Define` and
-// specifying additional information about the inst kind. This information is
-// available through the member functions of the `InstKind` value declared in
-// `inst_kind.h`, and includes the name used in textual IR and whether the inst
-// is a terminator instruction.
+// declaration also defines the instruction kind by calling `InstKind::Define`
+// and specifying additional information about the instruction kind. This
+// information is available through the member functions of the `InstKind` value
+// declared in `inst_kind.h`, and includes the name used in textual IR and
+// whether the instruction is a terminator instruction.
 namespace Carbon::SemIR {
 
 struct AddressOf {
@@ -239,9 +239,9 @@ struct ConstType {
 struct CrossReference {
   static constexpr auto Kind = InstKind::CrossReference.Define("xref");
 
-  // No parse node: an inst's parse tree node must refer to a node in the
-  // current parse tree. This cannot use the cross-referenced inst's parse tree
-  // node because it will be in a different parse tree.
+  // No parse node: an instruction's parse tree node must refer to a node in the
+  // current parse tree. This cannot use the cross-referenced instruction's
+  // parse tree node because it will be in a different parse tree.
   TypeId type_id;
   CrossReferenceIRId ir_id;
   InstId inst_id;
@@ -256,7 +256,7 @@ struct Dereference {
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the
-// `Field` inst is an `UnboundFieldType`.
+// `Field` instruction is an `UnboundFieldType`.
 struct Field {
   static constexpr auto Kind = InstKind::Field.Define("field");
 
@@ -316,7 +316,7 @@ struct NoOp {
   static constexpr auto Kind = InstKind::NoOp.Define("no_op");
 
   Parse::Node parse_node;
-  // This inst doesn't produce a value, so has no type.
+  // This instruction doesn't produce a value, so has no type.
 };
 
 struct Parameter {
@@ -425,8 +425,9 @@ struct StructTypeField {
       InstKind::StructTypeField.Define("struct_type_field");
 
   Parse::Node parse_node;
-  // This inst is an implementation detail of `StructType`, and doesn't produce
-  // a value, so has no type, even though it declares a field with a type.
+  // This instruction is an implementation detail of `StructType`, and doesn't
+  // produce a value, so has no type, even though it declares a field with a
+  // type.
   StringId name_id;
   TypeId field_type_id;
 };

@@ -55,11 +55,11 @@ class DeclarationNameStack {
       // A context that has not processed any parts of the qualifier.
       Empty,
 
-      // An inst ID has been resolved, whether through an identifier or
+      // An instruction ID has been resolved, whether through an identifier or
       // expression. This provided a new scope, such as a type.
       Resolved,
 
-      // An inst ID has been resolved, whether through an identifier or
+      // An instruction ID has been resolved, whether through an identifier or
       // expression. It did not provide a new scope, so must be the final part,
       // such as an out-of-line function definition.
       ResolvedNonScope,
@@ -118,8 +118,8 @@ class DeclarationNameStack {
   auto AddNameToLookup(NameContext name_context, SemIR::InstId target_id)
       -> void;
 
-  // Adds a name to name lookup, or returns the existing inst if this name has
-  // already been declared in this scope.
+  // Adds a name to name lookup, or returns the existing instruction if this
+  // name has already been declared in this scope.
   auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id)
       -> SemIR::InstId;
 

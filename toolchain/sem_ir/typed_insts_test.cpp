@@ -25,8 +25,8 @@ class InstTestHelper {
 namespace Carbon::SemIR {
 namespace {
 
-// Check that each inst kind defines a Kind member using the correct InstKind
-// enumerator.
+// Check that each instruction kind defines a Kind member using the correct
+// InstKind enumerator.
 #define CARBON_SEM_IR_INST_KIND(Name) \
   static_assert(Name::Kind == InstKind::Name);
 #include "toolchain/sem_ir/inst_kind.def"
@@ -34,8 +34,9 @@ namespace {
 template <typename Ignored, typename... Types>
 using TypesExceptFirst = ::testing::Types<Types...>;
 
-// Form a list of all typed inst types. Use `TypesExceptFirst` and a leading
-// `void` to handle the problem that we only want N-1 commas in this list.
+// Form a list of all typed instruction types. Use `TypesExceptFirst` and a
+// leading `void` to handle the problem that we only want N-1 commas in this
+// list.
 using TypedInstTypes = TypesExceptFirst<void
 #define CARBON_SEM_IR_INST_KIND(Name) , Name
 #include "toolchain/sem_ir/inst_kind.def"
@@ -85,16 +86,16 @@ TYPED_TEST(TypedInstTest, RoundTrip) {
     EXPECT_EQ(inst1.type_id(), inst2.type_id());
   }
 
-  // If the typed inst has no padding, we should get exactly the same thing
-  // if we convert back from an inst.
+  // If the typed instruction has no padding, we should get exactly the same
+  // thing if we convert back from an instruction.
   TypedInst typed2 = inst2.As<TypedInst>();
   if constexpr (std::has_unique_object_representations_v<TypedInst>) {
     EXPECT_EQ(std::memcmp(&typed1, &typed2, sizeof(TypedInst)), 0);
   }
 
-  // The original inst might not be identical after one round trip, because the
-  // fields not carried by the typed inst are lost. But they should be stable
-  // if we round-trip again.
+  // The original instruction might not be identical after one round trip,
+  // because the fields not carried by the typed instruction are lost. But they
+  // should be stable if we round-trip again.
   Inst inst3 = typed2;
   if constexpr (std::has_unique_object_representations_v<Inst>) {
     EXPECT_EQ(std::memcmp(&inst2, &inst3, sizeof(Inst)), 0);
@@ -108,7 +109,8 @@ TYPED_TEST(TypedInstTest, StructLayout) {
       InstTestHelper::MakeInst(TypeParam::Kind, Parse::Node(1), TypeId(2), 3, 4)
           .template As<TypedInst>();
 
-  // Check that the memory representation of the typed inst is what we expect.
+  // Check that the memory representation of the typed instruction is what we
+  // expect.
   // TODO: Struct layout is not guaranteed, and this test could fail in some
   // build environment. If so, we should disable it.
   int32_t fields[4] = {};
@@ -123,7 +125,7 @@ TYPED_TEST(TypedInstTest, StructLayout) {
   fields[field++] = 4;
 
   ASSERT_LE(sizeof(TypedInst), sizeof(fields));
-  // We can only do this check if the typed inst has no padding.
+  // We can only do this check if the typed instruction has no padding.
   if constexpr (std::has_unique_object_representations_v<TypedInst>) {
     EXPECT_EQ(std::memcmp(&fields, &typed, sizeof(TypedInst)), 0);
   }

@@ -53,8 +53,8 @@ class PendingBlock {
     insts_.clear();
   }
 
-  // Replace the inst at target_id with the insts in this block. The new value
-  // for target_id should be value_id.
+  // Replace the instruction at target_id with the insts in this block. The new
+  // value for target_id should be value_id.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
     auto value = context_.insts().Get(value_id);
 
@@ -67,8 +67,8 @@ class PendingBlock {
           target_id, SemIR::SpliceBlock{value.parse_node(), value.type_id(),
                                         SemIR::InstBlockId::Empty, value_id});
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
-      // 2) The block is {value_id}. Replace `target_id` with the inst referred
-      // to by `value_id`. This is intended to be the common case.
+      // 2) The block is {value_id}. Replace `target_id` with the instruction
+      // referred to by `value_id`. This is intended to be the common case.
       context_.insts().Set(target_id, value);
     } else {
       // 3) Anything else: splice it into the IR, replacing `target_id`.

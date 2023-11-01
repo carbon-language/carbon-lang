@@ -227,8 +227,8 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
 
 auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
-  // Create an inst block to hold the insts created as part of the function
-  // signature, such as parameter and return types.
+  // Create an instruction block to hold the insts created as part of the
+  // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
@@ -242,7 +242,7 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   auto [type_parse_node, type_inst_id] =
       context.node_stack().PopExpressionWithParseNode();
   auto type_id = ExpressionAsType(context, type_parse_node, type_inst_id);
-  // TODO: Use a dedicated inst rather than VarStorage here.
+  // TODO: Use a dedicated instruction rather than VarStorage here.
   context.AddInstAndPush(
       parse_node,
       SemIR::VarStorage{parse_node, type_id, context.strings().Add("return")});

@@ -74,7 +74,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
     context.AddInst(SemIR::ReturnExpression{parse_node, arg});
   }
 
-  // Switch to a new, unreachable, empty inst block. This typically won't
+  // Switch to a new, unreachable, empty instruction block. This typically won't
   // contain any semantics IR, but it can do if there are statements following
   // the `return` statement.
   context.inst_block_stack().Pop();

@@ -58,8 +58,8 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
-  // Allocate an inst of the appropriate kind, linked to the name for error
-  // locations.
+  // Allocate an instruction of the appropriate kind, linked to the name for
+  // error locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::VariableIntroducer: {
@@ -113,7 +113,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       // in a function definition. We don't know which kind we have here.
       context.AddInstAndPush(
           parse_node, SemIR::Parameter{name_node, cast_type_id, name_id});
-      // TODO: Create a `BindName` inst.
+      // TODO: Create a `BindName` instruction.
       break;
 
     case Parse::NodeKind::LetIntroducer:
@@ -127,8 +127,8 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
-      // Create the inst, but don't add it to a block until after we've formed
-      // its initializer.
+      // Create the instruction, but don't add it to a block until after we've
+      // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
       context.node_stack().Push(

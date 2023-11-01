@@ -18,8 +18,8 @@
 
 namespace Carbon::SemIR {
 
-// Data about the arguments of a typed inst, to aid in type erasure. The `KindT`
-// parameter is used to check that `TypedInst` is a typed inst.
+// Data about the arguments of a typed instruction, to aid in type erasure. The
+// `KindT` parameter is used to check that `TypedInst` is a typed instruction.
 template <typename TypedInst,
           const InstKind::Definition& KindT = TypedInst::Kind>
 struct TypedInstArgsInfo {
@@ -42,24 +42,26 @@ struct TypedInstArgsInfo {
   }
 };
 
-// A type-erased representation of a SemIR inst, that may be constructed from
-// the specific kinds of inst defined in `typed_insts.h`. This provides access
-// to common fields present on most or all kinds of insts:
+// A type-erased representation of a SemIR instruction, that may be constructed
+// from the specific kinds of instruction defined in `typed_insts.h`. This
+// provides access to common fields present on most or all kinds of insts:
 //
 // - `parse_node` for error placement.
 // - `kind` for run-time logic when the input Kind is unknown.
 // - `type_id` for quick type checking.
 //
 // In addition, kind-specific data can be accessed by casting to the specific
-// kind of inst:
+// kind of instruction:
 //
-// - Use `inst.kind()` or `Is<TypedInst>` to determine what kind of inst it is.
+// - Use `inst.kind()` or `Is<TypedInst>` to determine what kind of instruction
+// it is.
 // - Cast to a specific type using `inst.As<TypedInst>()`
 //   - Using the wrong kind in `inst.As<TypedInst>()` is a programming error,
 //     and will CHECK-fail in debug modes (opt may too, but it's not an API
 //     guarantee).
-// - Use `inst.TryAs<TypedInst>()` to safely access type-specific inst data
-//   where the inst's kind is not known.
+// - Use `inst.TryAs<TypedInst>()` to safely access type-specific instruction
+// data
+//   where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
   template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
@@ -84,14 +86,14 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  // Returns whether this inst has the specified type.
+  // Returns whether this instruction has the specified type.
   template <typename TypedInst>
   auto Is() const -> bool {
     return kind() == TypedInst::Kind;
   }
 
-  // Casts this inst to the given typed inst, which must match the inst's kind,
-  // and returns the typed inst.
+  // Casts this instruction to the given typed instruction, which must match the
+  // instruction's kind, and returns the typed instruction.
   template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
   auto As() const -> TypedInst {
     CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
@@ -124,8 +126,8 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  // If this inst is the given kind, returns a typed inst, otherwise returns
-  // nullopt.
+  // If this instruction is the given kind, returns a typed instruction,
+  // otherwise returns nullopt.
   template <typename TypedInst>
   auto TryAs() const -> std::optional<TypedInst> {
     if (Is<TypedInst>()) {
@@ -138,7 +140,7 @@ class Inst : public Printable<Inst> {
   auto parse_node() const -> Parse::Node { return parse_node_; }
   auto kind() const -> InstKind { return kind_; }
 
-  // Gets the type of the value produced by evaluating this inst.
+  // Gets the type of the value produced by evaluating this instruction.
   auto type_id() const -> TypeId { return type_id_; }
 
   auto Print(llvm::raw_ostream& out) const -> void;

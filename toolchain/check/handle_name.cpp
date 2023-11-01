@@ -50,7 +50,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                                  /*print_diagnostics=*/true)
             : SemIR::InstId::BuiltinError;
     auto inst = context.insts().Get(inst_id);
-    // TODO: Track that this inst was named within `base_id`.
+    // TODO: Track that this instruction was named within `base_id`.
     context.AddInstAndPush(
         parse_node,
         SemIR::NameReference{parse_node, inst.type_id(), name_id, inst_id});

@@ -38,7 +38,7 @@ TEST(SemIRTest, YAML) {
   d.RunCommand(
       {"compile", "--phase=check", "--dump-raw-sem-ir", "test.carbon"});
 
-  // Matches the ID of an inst. The numbers may change because of builtin
+  // Matches the ID of an instruction. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.
   auto integer_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
@@ -59,20 +59,20 @@ TEST(SemIRTest, YAML) {
                Each(Key(inst_id)),
                // kind is required, other parts are optional.
                Each(Pair(_, Yaml::Mapping(Contains(Pair("kind", _))))),
-               // A 0-arg inst.
+               // A 0-arg instruction.
                Contains(
                    Pair(_, Yaml::Mapping(ElementsAre(Pair("kind", "Return"))))),
-               // A 1-arg inst.
+               // A 1-arg instruction.
                Contains(Pair(
                    _, Yaml::Mapping(ElementsAre(Pair("kind", "IntegerLiteral"),
                                                 Pair("arg0", integer_id),
                                                 Pair("type", type_id))))),
-               // A 2-arg inst.
+               // A 2-arg instruction.
                Contains(Pair(
                    _, Yaml::Mapping(ElementsAre(Pair("kind", "Assign"),
                                                 Pair("arg0", inst_id),
                                                 Pair("arg1", inst_id)))))))),
-      // This production has only two inst blocks.
+      // This production has only two instruction blocks.
       Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(
                Pair("block0", Yaml::Mapping(IsEmpty())),

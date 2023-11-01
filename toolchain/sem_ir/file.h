@@ -40,9 +40,9 @@ struct Function : public Printable<Function> {
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDeclaration.
   InstId definition_id = InstId::Invalid;
-  // A block containing a single reference inst per implicit parameter.
+  // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
-  // A block containing a single reference inst per parameter.
+  // A block containing a single reference instruction per parameter.
   InstBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   TypeId return_type_id;
@@ -152,7 +152,7 @@ struct ValueRepresentation : public Printable<ValueRepresentation> {
 struct TypeInfo : public Printable<TypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // The inst that defines this type.
+  // The instruction that defines this type.
   InstId inst_id;
   // The value representation for this type. Will be `Unknown` if the type is
   // not complete.
@@ -183,7 +183,7 @@ class File : public Printable<File> {
   }
   auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
 
-  // Returns array bound value from the bound inst.
+  // Returns array bound value from the bound instruction.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
     return integers()
         .Get(insts().GetAs<IntegerLiteral>(bound_id).integer_id)
@@ -251,8 +251,8 @@ class File : public Printable<File> {
   auto StringifyType(TypeId type_id, bool in_type_context = false) const
       -> std::string;
 
-  // Same as `StringifyType`, but starting with an inst representing a type
-  // expression rather than a canonical type.
+  // Same as `StringifyType`, but starting with an instruction representing a
+  // type expression rather than a canonical type.
   auto StringifyTypeExpression(InstId outer_inst_id,
                                bool in_type_context = false) const
       -> std::string;
@@ -318,7 +318,7 @@ class File : public Printable<File> {
   // Shared, compile-scoped values.
   SharedValueStores* value_stores_;
 
-  // Slab allocator, used to allocate inst and type blocks.
+  // Slab allocator, used to allocate instruction and type blocks.
   llvm::BumpPtrAllocator allocator_;
 
   // The associated filename.
@@ -333,7 +333,7 @@ class File : public Printable<File> {
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
-  // crossing inst blocks).
+  // crossing instruction blocks).
   llvm::SmallVector<const File*> cross_reference_irs_;
 
   // Storage for name scopes.
@@ -357,30 +357,32 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   InstBlockStore inst_blocks_;
 
-  // The top inst block ID.
+  // The top instruction block ID.
   InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
 };
 
-// The expression category of a sem_ir inst. See /docs/design/values.md for
-// details.
+// The expression category of a sem_ir instruction. See /docs/design/values.md
+// for details.
 enum class ExpressionCategory : int8_t {
-  // This inst does not correspond to an expression, and as such has no
+  // This instruction does not correspond to an expression, and as such has no
   // category.
   NotExpression,
-  // The category of this inst is not known due to an error.
+  // The category of this instruction is not known due to an error.
   Error,
-  // This inst represents a value expression.
+  // This instruction represents a value expression.
   Value,
-  // This inst represents a durable reference expression, that denotes an
+  // This instruction represents a durable reference expression, that denotes an
   // object that outlives the current full expression context.
   DurableReference,
-  // This inst represents an ephemeral reference expression, that denotes an
+  // This instruction represents an ephemeral reference expression, that denotes
+  // an
   // object that does not outlive the current full expression context.
   EphemeralReference,
-  // This inst represents an initializing expression, that describes how to
+  // This instruction represents an initializing expression, that describes how
+  // to
   // initialize an object.
   Initializing,
-  // This inst represents a syntactic combination of expressions that are
+  // This instruction represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple
   // and struct literals, where the subexpressions for different elements can
   // have different categories.
@@ -388,7 +390,7 @@ enum class ExpressionCategory : int8_t {
   Last = Mixed
 };
 
-// Returns the expression category for an inst.
+// Returns the expression category for an instruction.
 auto GetExpressionCategory(const File& file, InstId inst_id)
     -> ExpressionCategory;
 

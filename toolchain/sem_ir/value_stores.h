@@ -15,22 +15,24 @@ namespace Carbon::SemIR {
 // Provides a ValueStore wrapper for an API specific to insts.
 class InstStore {
  public:
-  // Adds an inst to the inst list, returning an ID to reference the inst. Note
-  // that this doesn't add the inst to any inst block. Check::Context::AddInst
-  // or InstBlockStack::AddInst should usually be used instead, to add the inst
-  // to the current block.
+  // Adds an instruction to the instruction list, returning an ID to reference
+  // the instruction. Note that this doesn't add the instruction to any
+  // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
+  // should usually be used instead, to add the instruction to the current
+  // block.
   auto AddInNoBlock(Inst inst) -> InstId { return values_.Add(inst); }
 
-  // Returns the requested inst.
+  // Returns the requested instruction.
   auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
 
-  // Returns the requested inst, which is known to have the specified type.
+  // Returns the requested instruction, which is known to have the specified
+  // type.
   template <typename InstT>
   auto GetAs(InstId inst_id) const -> InstT {
     return Get(inst_id).As<InstT>();
   }
 
-  // Overwrites a given inst with a new value.
+  // Overwrites a given instruction with a new value.
   auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
 
   // Reserves space.
@@ -147,7 +149,7 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
   ValueStore<IdT, llvm::MutableArrayRef<ValueT>> values_;
 };
 
-// Adapts BlockValueStore for inst blocks.
+// Adapts BlockValueStore for instruction blocks.
 class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
  public:
   using BaseType = BlockValueStore<InstBlockId, InstId>;

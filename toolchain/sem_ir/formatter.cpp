@@ -118,7 +118,8 @@ class InstNamer {
     return GetScopeInfo(GetScopeFor(class_id)).name.str();
   }
 
-  // Returns the IR name to use for an inst, when referenced from a given scope.
+  // Returns the IR name to use for an instruction, when referenced from a given
+  // scope.
   auto GetNameFor(ScopeIndex scope_idx, InstId inst_id) -> std::string {
     if (!inst_id.is_valid()) {
       return "invalid";
@@ -205,8 +206,8 @@ class InstNamer {
 
     auto AllocateName(const InstNamer& namer, Parse::Node node,
                       std::string name = "") -> Name {
-      // The best (shortest) name for this inst so far, and the current name
-      // for it.
+      // The best (shortest) name for this instruction so far, and the current
+      // name for it.
       Name best;
       Name current;
 
@@ -217,8 +218,8 @@ class InstNamer {
 
         if (!added) {
           if (mark_ambiguous) {
-            // This name was allocated for a different inst. Mark it as
-            // ambiguous and keep looking for a name for this inst.
+            // This name was allocated for a different instruction. Mark it as
+            // ambiguous and keep looking for a name for this instruction.
             new_name.SetAmbiguous();
           }
         } else {
@@ -296,7 +297,7 @@ class InstNamer {
                                   *this, parse_node, std::move(name))};
   }
 
-  // Finds and adds a suitable block label for the given sem_ir inst that
+  // Finds and adds a suitable block label for the given sem_ir instruction that
   // represents some kind of branch.
   auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Inst inst)
       -> void {
@@ -482,9 +483,9 @@ class Formatter {
     out_ << "file \"" << sem_ir_.filename() << "\" {\n";
     // TODO: Include information from the `package` declaration, once we
     // fully support it.
-    // TODO: Handle the case where there are multiple top-level inst blocks.
-    // For example, there may be branching in the initializer of a global or a
-    // type expression.
+    // TODO: Handle the case where there are multiple top-level instruction
+    // blocks. For example, there may be branching in the initializer of a
+    // global or a type expression.
     if (auto block_id = sem_ir_.top_inst_block_id(); block_id.is_valid()) {
       llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeIndex::File);
       FormatCodeBlock(block_id);
@@ -778,7 +779,7 @@ class Formatter {
 
   auto FormatInstructionRHS(CrossReference inst) -> void {
     // TODO: Figure out a way to make this meaningful. We'll need some way to
-    // name cross-reference IRs, perhaps by the inst ID of the import?
+    // name cross-reference IRs, perhaps by the instruction ID of the import?
     out_ << " " << inst.ir_id << "." << inst.inst_id;
   }
 

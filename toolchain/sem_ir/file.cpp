@@ -125,8 +125,8 @@ auto File::Verify() const -> ErrorOr<Success> {
     }
   }
 
-  // TODO: Check that an inst only references other insts that are either global
-  // or that dominate it.
+  // TODO: Check that an instruction only references other insts that are either
+  // global or that dominate it.
   return Success();
 }
 
@@ -156,7 +156,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
   });
 }
 
-// Map an inst kind representing a type into an integer describing the
+// Map an instruction kind representing a type into an integer describing the
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
@@ -244,7 +244,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
   llvm::raw_string_ostream out(str);
 
   struct Step {
-    // The inst to print.
+    // The instruction to print.
     InstId inst_id;
     // The index into inst_id to print. Not used by all types.
     int index = 0;
@@ -455,7 +455,8 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
     -> ExpressionCategory {
   const File* ir = &file;
 
-  // The overall expression category if the current inst is a value expression.
+  // The overall expression category if the current instruction is a value
+  // expression.
   ExpressionCategory value_category = ExpressionCategory::Value;
 
   while (true) {

@@ -37,7 +37,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
   if (has_init) {
     if (context.insts().Get(value_id).Is<SemIR::VarStorage>()) {
       init_id = Initialize(context, parse_node, value_id, init_id);
-      // TODO: Consider using different inst kinds for assignment versus
+      // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
       context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
     } else {

@@ -41,7 +41,7 @@ class Context {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
 
-  // Adds an inst to the current block, returning the produced ID.
+  // Adds an instruction to the current block, returning the produced ID.
   auto AddInst(SemIR::Inst inst) -> SemIR::InstId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
@@ -52,8 +52,8 @@ class Context {
   auto AddNameToLookup(Parse::Node name_node, StringId name_id,
                        SemIR::InstId target_id) -> void;
 
-  // Performs name lookup in a specified scope, returning the referenced inst.
-  // If scope_id is invalid, uses the current contextual scope.
+  // Performs name lookup in a specified scope, returning the referenced
+  // instruction. If scope_id is invalid, uses the current contextual scope.
   auto LookupName(Parse::Node parse_node, StringId name_id,
                   SemIR::NameScopeId scope_id, bool print_diagnostics)
       -> SemIR::InstId;
@@ -93,43 +93,43 @@ class Context {
     return insts().Get(current_scope_inst_id).TryAs<InstT>();
   }
 
-  // Follows NameReference insts to find the value named by a given inst.
+  // Follows NameReference insts to find the value named by a given instruction.
   auto FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId;
 
-  // Gets the constant value of the given inst, if it has one.
+  // Gets the constant value of the given instruction, if it has one.
   auto GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId;
 
-  // Adds a `Branch` inst branching to a new inst block, and returns the ID of
-  // the new block. All paths to the branch target must go through the current
-  // block, though not necessarily through this branch.
+  // Adds a `Branch` instruction branching to a new instruction block, and
+  // returns the ID of the new block. All paths to the branch target must go
+  // through the current block, though not necessarily through this branch.
   auto AddDominatedBlockAndBranch(Parse::Node parse_node) -> SemIR::InstBlockId;
 
-  // Adds a `Branch` inst branching to a new inst block with a value, and
-  // returns the ID of the new block. All paths to the branch target must go
-  // through the current block.
+  // Adds a `Branch` instruction branching to a new instruction block with a
+  // value, and returns the ID of the new block. All paths to the branch target
+  // must go through the current block.
   auto AddDominatedBlockAndBranchWithArg(Parse::Node parse_node,
                                          SemIR::InstId arg_id)
       -> SemIR::InstBlockId;
 
-  // Adds a `BranchIf` inst branching to a new inst block, and returns the ID
-  // of the new block. All paths to the branch target must go through the
-  // current block.
+  // Adds a `BranchIf` instruction branching to a new instruction block, and
+  // returns the ID of the new block. All paths to the branch target must go
+  // through the current block.
   auto AddDominatedBlockAndBranchIf(Parse::Node parse_node,
                                     SemIR::InstId cond_id)
       -> SemIR::InstBlockId;
 
   // Handles recovergence of control flow. Adds branches from the top
-  // `num_blocks` on the inst block stack to a new block, pops the existing
-  // blocks, and pushes the new block onto the inst block stack.
+  // `num_blocks` on the instruction block stack to a new block, pops the
+  // existing blocks, and pushes the new block onto the instruction block stack.
   auto AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
       -> void;
 
   // Handles recovergence of control flow with a result value. Adds branches
-  // from the top few blocks on the inst block stack to a new block, pops the
-  // existing blocks, and pushes the new block onto the inst block stack. The
-  // number of blocks popped is the size of `block_args`, and the corresponding
-  // result values are the elements of `block_args`. Returns an inst referring
-  // to the result value.
+  // from the top few blocks on the instruction block stack to a new block, pops
+  // the existing blocks, and pushes the new block onto the instruction block
+  // stack. The number of blocks popped is the size of `block_args`, and the
+  // corresponding result values are the elements of `block_args`. Returns an
+  // instruction referring to the result value.
   auto AddConvergenceBlockWithArgAndPush(
       Parse::Node parse_node,
       std::initializer_list<SemIR::InstId> blocks_and_args) -> SemIR::InstId;
@@ -140,7 +140,7 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Canonicalizes a type which is tracked as a single inst.
+  // Canonicalizes a type which is tracked as a single instruction.
   auto CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId;
 
   // Handles canonicalization of struct types. This may create a new struct type
@@ -285,7 +285,7 @@ class Context {
 
   // An entry in scope_stack_.
   struct ScopeStackEntry {
-    // The inst associated with this entry, if any. This can be one of:
+    // The instruction associated with this entry, if any. This can be one of:
     //
     // - A `ClassDeclaration`, for a class definition scope.
     // - A `FunctionDeclaration`, for the outermost scope in a function
@@ -320,8 +320,8 @@ class Context {
           profile_type,
       llvm::function_ref<SemIR::InstId()> make_inst) -> SemIR::TypeId;
 
-  // Forms a canonical type ID for a type. If the type is new, adds the inst to
-  // the current block.
+  // Forms a canonical type ID for a type. If the type is new, adds the
+  // instruction to the current block.
   auto CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst) -> SemIR::TypeId;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
@@ -347,18 +347,18 @@ class Context {
   // The stack during Build. Will contain file-level parse nodes on return.
   NodeStack node_stack_;
 
-  // The stack of inst blocks being used for general IR generation.
+  // The stack of instruction blocks being used for general IR generation.
   InstBlockStack inst_block_stack_;
 
-  // The stack of inst blocks being used for per-element tracking of insts in
-  // parameter and argument inst blocks. Versus inst_block_stack_, an element
-  // will have 1 or more insts in blocks in inst_block_stack_, but only ever 1
-  // inst in blocks here.
+  // The stack of instruction blocks being used for per-element tracking of
+  // insts in parameter and argument instruction blocks. Versus
+  // inst_block_stack_, an element will have 1 or more insts in blocks in
+  // inst_block_stack_, but only ever 1 instruction in blocks here.
   InstBlockStack params_or_args_stack_;
 
-  // The stack of inst blocks being used for type information while processing
-  // arguments. This is used in parallel with params_or_args_stack_. It's
-  // currently only used for struct literals, where we need to track names
+  // The stack of instruction blocks being used for type information while
+  // processing arguments. This is used in parallel with params_or_args_stack_.
+  // It's currently only used for struct literals, where we need to track names
   // for a type separate from the literal arguments.
   InstBlockStack args_type_info_stack_;
 

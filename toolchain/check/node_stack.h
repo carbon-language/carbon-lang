@@ -16,7 +16,8 @@
 namespace Carbon::Check {
 
 // Wraps the stack of parse nodes for Context. Each parse node can have an
-// associated id of some kind (inst, inst block, function, class, ...).
+// associated id of some kind (instruction, instruction block, function, class,
+// ...).
 //
 // All pushes and pops will be vlogged.
 //

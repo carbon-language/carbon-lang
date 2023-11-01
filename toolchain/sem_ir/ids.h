@@ -14,17 +14,17 @@
 
 namespace Carbon::SemIR {
 
-// The ID of an inst.
+// The ID of an instruction.
 struct InstId : public IndexBase, public Printable<InstId> {
-  // An explicitly invalid inst ID.
+  // An explicitly invalid instruction ID.
   static const InstId Invalid;
 
-// Builtin inst IDs.
+// Builtin instruction IDs.
 #define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) static const InstId Builtin##Name;
 #include "toolchain/sem_ir/builtin_kind.def"
 
-  // Returns the cross-reference inst ID for a builtin. This relies on File
-  // guarantees for builtin cross-reference placement.
+  // Returns the cross-reference instruction ID for a builtin. This relies on
+  // File guarantees for builtin cross-reference placement.
   static constexpr auto ForBuiltin(BuiltinKind kind) -> InstId {
     return InstId(kind.AsInt());
   }
@@ -127,9 +127,9 @@ struct NameScopeId : public IndexBase, public Printable<NameScopeId> {
 constexpr NameScopeId NameScopeId::Invalid =
     NameScopeId(NameScopeId::InvalidIndex);
 
-// The ID of an inst block.
+// The ID of an instruction block.
 struct InstBlockId : public IndexBase, public Printable<InstBlockId> {
-  // All File instances must provide the 0th inst block as empty.
+  // All File instances must provide the 0th instruction block as empty.
   static const InstBlockId Empty;
 
   // An explicitly invalid ID.
