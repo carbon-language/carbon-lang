@@ -353,8 +353,8 @@ class File : public Printable<File> {
   // builtins, at indices matching BuiltinKind ordering.
   InstStore insts_;
 
-  // Inst blocks within the IR. These reference entries in insts_. Storage for
-  // the data is provided by allocator_.
+  // Instruction blocks within the IR. These reference entries in
+  // insts_. Storage for the data is provided by allocator_.
   InstBlockStore inst_blocks_;
 
   // The top instruction block ID.
