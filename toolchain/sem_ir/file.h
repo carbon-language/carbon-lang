@@ -258,6 +258,12 @@ class File : public Printable<File> {
       -> std::string;
 
   // Directly expose SharedValueStores members.
+  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+    return value_stores_->identifiers();
+  }
+  auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
+    return value_stores_->identifiers();
+  }
   auto integers() -> ValueStore<IntegerId>& {
     return value_stores_->integers();
   }
@@ -268,9 +274,11 @@ class File : public Printable<File> {
   auto reals() const -> const ValueStore<RealId>& {
     return value_stores_->reals();
   }
-  auto strings() -> StringStore& { return value_stores_->strings(); }
-  auto strings() const -> const StringStore& {
-    return value_stores_->strings();
+  auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
+    return value_stores_->string_literals();
+  }
+  auto string_literals() const -> const StringStoreWrapper<StringLiteralId>& {
+    return value_stores_->string_literals();
   }
 
   auto functions() -> ValueStore<FunctionId, Function>& { return functions_; }

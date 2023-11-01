@@ -124,7 +124,8 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
     if (expected.string_contents &&
         actual_kind == Lex::TokenKind::StringLiteral) {
       llvm::StringRef actual_contents =
-          expected.value_stores->strings().Get(buffer.GetStringLiteral(token));
+          expected.value_stores->string_literals().Get(
+              buffer.GetStringLiteral(token));
       if (actual_contents != *expected.string_contents) {
         *result_listener << "\nToken " << index << " has contents `"
                          << actual_contents.str() << "`, expected `"

@@ -659,7 +659,7 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     }
 
     if (literal->is_terminated()) {
-      auto string_id = buffer_.value_stores_->strings().Add<StringLiteralId>(
+      auto string_id = buffer_.value_stores_->string_literals().Add(
           literal->ComputeValue(buffer_.allocator_, emitter_));
       auto token = buffer_.AddToken({.kind = TokenKind::StringLiteral,
                                      .token_line = string_line,
@@ -897,8 +897,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         {.kind = TokenKind::Identifier,
          .token_line = current_line(),
          .column = column,
-         .ident_id = buffer_.value_stores_->strings().Add<IdentifierId>(
-             identifier_text)});
+         .ident_id =
+             buffer_.value_stores_->identifiers().Add(identifier_text)});
   }
 
   auto LexKeywordOrIdentifierMaybeRaw(llvm::StringRef source_text,
@@ -934,8 +934,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
         {.kind = TokenKind::Identifier,
          .token_line = current_line(),
          .column = column,
-         .ident_id = buffer_.value_stores_->strings().Add<IdentifierId>(
-             identifier_text)});
+         .ident_id =
+             buffer_.value_stores_->identifiers().Add(identifier_text)});
   }
 
   auto LexError(llvm::StringRef source_text, ssize_t& position) -> LexResult {
@@ -1328,7 +1328,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   }
 
   CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return value_stores_->strings().Get(token_info.ident_id);
+  return value_stores_->identifiers().Get(token_info.ident_id);
 }
 
 auto TokenizedBuffer::GetIdentifier(Token token) const -> IdentifierId {
@@ -1508,7 +1508,8 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
       break;
     case TokenKind::StringLiteral:
       output_stream << ", value: `"
-                    << value_stores_->strings().Get(GetStringLiteral(token))
+                    << value_stores_->string_literals().Get(
+                           GetStringLiteral(token))
                     << "`";
       break;
     default:

@@ -453,7 +453,8 @@ TEST_F(LexerTest, MatchingGroups) {
     auto open_paren_token = *it++;
     auto open_curly_token = *it++;
 
-    ASSERT_EQ("x", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("x",
+              value_stores_.identifiers().Get(buffer.GetIdentifier(*it++)));
     auto close_curly_token = *it++;
     auto close_paren_token = *it++;
     EXPECT_EQ(close_paren_token,
@@ -467,7 +468,8 @@ TEST_F(LexerTest, MatchingGroups) {
 
     open_curly_token = *it++;
     open_paren_token = *it++;
-    ASSERT_EQ("y", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("y",
+              value_stores_.identifiers().Get(buffer.GetIdentifier(*it++)));
     close_paren_token = *it++;
     close_curly_token = *it++;
     EXPECT_EQ(close_curly_token,
@@ -483,7 +485,8 @@ TEST_F(LexerTest, MatchingGroups) {
     auto inner_open_curly_token = *it++;
     open_paren_token = *it++;
     auto inner_open_paren_token = *it++;
-    ASSERT_EQ("z", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("z",
+              value_stores_.identifiers().Get(buffer.GetIdentifier(*it++)));
     auto inner_close_paren_token = *it++;
     close_paren_token = *it++;
     auto inner_close_curly_token = *it++;

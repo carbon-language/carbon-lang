@@ -92,7 +92,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, ClassRedefinition,
-               context.strings().Get(class_info.name_id))
+               context.identifiers().Get(class_info.name_id))
         .Note(context.insts().Get(class_info.definition_id).parse_node(),
               ClassPreviousDefinition)
         .Emit();
@@ -110,7 +110,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   // HandleSelfTypeNameExpression.
   context.AddNameToLookup(
       parse_node,
-      context.strings().Add<IdentifierId>(
+      context.identifiers().Add(
           Lex::TokenKind::SelfTypeIdentifier.fixed_spelling()),
       context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
 

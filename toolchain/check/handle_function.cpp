@@ -174,8 +174,13 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
+<<<<<<< HEAD
                context.strings().Get(function.name_id))
         .Note(context.insts().Get(function.definition_id).parse_node(),
+=======
+               context.identifiers().Get(function.name_id))
+        .Note(context.nodes().Get(function.definition_id).parse_node(),
+>>>>>>> b046898ff (Add StringStoreWrapper)
               FunctionPreviousDefinition)
         .Emit();
   } else {
@@ -214,8 +219,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
       // HandleSelfTypeNameExpression.
       context.AddNameToLookup(
           self_param->parse_node,
-          context.strings().Add<IdentifierId>(SemIR::SelfParameter::Name),
-          param_id);
+          context.identifiers().Add(SemIR::SelfParameter::Name), param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
                      << param;
@@ -247,7 +251,7 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   context.AddInstAndPush(
       parse_node,
       SemIR::VarStorage{parse_node, type_id,
-                        context.strings().Add<IdentifierId>("return")});
+                        context.identifiers().Add("return")});
   return true;
 }
 

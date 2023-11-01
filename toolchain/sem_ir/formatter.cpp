@@ -54,7 +54,8 @@ class InstNamer {
       auto fn_loc = Parse::Node::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this, fn_loc,
-          fn.name_id.is_valid() ? sem_ir.strings().Get(fn.name_id).str() : "");
+          fn.name_id.is_valid() ? sem_ir.identifiers().Get(fn.name_id).str()
+                                : "");
       CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
@@ -85,7 +86,7 @@ class InstNamer {
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
           class_info.name_id.is_valid()
-              ? sem_ir.strings().Get(class_info.name_id).str()
+              ? sem_ir.identifiers().Get(class_info.name_id).str()
               : "");
       AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
       CollectNamesInBlock(class_scope, class_info.body_block_id);
@@ -391,7 +392,8 @@ class InstNamer {
       auto add_inst_name_id = [&](IdentifierId name_id,
                                   llvm::StringRef suffix = "") {
         if (name_id.is_valid()) {
-          add_inst_name((sem_ir_.strings().Get(name_id).str() + suffix).str());
+          add_inst_name(
+              (sem_ir_.identifiers().Get(name_id).str() + suffix).str());
         } else {
           add_inst_name(suffix.str());
         }
@@ -833,7 +835,7 @@ class Formatter {
 
   auto FormatArg(IdentifierId id) -> void {
     out_ << '"';
-    out_.write_escaped(sem_ir_.strings().Get(id), /*UseHexEscapes=*/true);
+    out_.write_escaped(sem_ir_.identifiers().Get(id), /*UseHexEscapes=*/true);
     out_ << '"';
   }
 
@@ -870,7 +872,8 @@ class Formatter {
 
   auto FormatArg(StringLiteralId id) -> void {
     out_ << '"';
-    out_.write_escaped(sem_ir_.strings().Get(id), /*UseHexEscapes=*/true);
+    out_.write_escaped(sem_ir_.string_literals().Get(id),
+                       /*UseHexEscapes=*/true);
     out_ << '"';
   }
 
@@ -900,7 +903,7 @@ class Formatter {
   }
 
   auto FormatString(IdentifierId id) -> void {
-    out_ << sem_ir_.strings().Get(id);
+    out_ << sem_ir_.identifiers().Get(id);
   }
 
   auto FormatFunctionName(FunctionId id) -> void {

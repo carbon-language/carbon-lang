@@ -85,7 +85,7 @@ auto Context::DiagnoseNameNotFound(Parse::Node parse_node, IdentifierId name_id)
     -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, strings().Get(name_id));
+  emitter_->Emit(parse_node, NameNotFound, identifiers().Get(name_id));
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -126,7 +126,7 @@ auto Context::LookupName(Parse::Node parse_node, IdentifierId name_id,
       return SemIR::InstId::BuiltinError;
     }
     CARBON_CHECK(!it->second.empty())
-        << "Should have been erased: " << strings().Get(name_id);
+        << "Should have been erased: " << identifiers().Get(name_id);
 
     // TODO: Check for ambiguous lookups.
     return it->second.back();

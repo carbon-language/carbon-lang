@@ -203,42 +203,51 @@ class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
   llvm::SmallVector<llvm::StringRef> values_;
 };
 
-class StringStore : public Yaml::Printable<StringStore> {
+// A thin wrapper around a `ValueStore<StringId>` that provides a different IdT,
+// while using a unified storage for values. This avoids potentially
+// duplicative string hash maps, which are expensive.
+template <typename IdT>
+class StringStoreWrapper : public Printable<StringStoreWrapper<IdT>> {
  public:
-  template <typename IdT>
-  static constexpr bool IsCompatibleId =
-      std::is_same_v<IdT, IdentifierId> || std::is_same_v<IdT, StringLiteralId>;
+  explicit StringStoreWrapper(ValueStore<StringId>* values) : values_(values) {}
 
-  template <typename IdT,
-            typename std::enable_if_t<IsCompatibleId<IdT>>* = nullptr>
   auto Add(llvm::StringRef value) -> IdT {
-    return IdT(values_.Add(value).index);
+    return IdT(values_->Add(value).index);
   }
 
-  template <typename IdT,
-            typename std::enable_if_t<IsCompatibleId<IdT>>* = nullptr>
   auto Get(IdT id) const -> llvm::StringRef {
-    return values_.Get(StringId(id.index));
+    return values_->Get(StringId(id.index));
   }
 
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return values_.OutputYaml();
-  }
+  auto Print(llvm::raw_ostream& out) const -> void { out << *values_; }
 
  private:
-  ValueStore<StringId> values_;
+  ValueStore<StringId>* values_;
 };
 
 // Stores that will be used across compiler phases for a given compilation unit.
 // This is provided mainly so that they don't need to be passed separately.
 class SharedValueStores : public Yaml::Printable<SharedValueStores> {
  public:
+  explicit SharedValueStores()
+      : identifiers_(&strings_), string_literals_(&strings_) {}
+
+  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+    return identifiers_;
+  }
+  auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
+    return identifiers_;
+  }
   auto integers() -> ValueStore<IntegerId>& { return integers_; }
   auto integers() const -> const ValueStore<IntegerId>& { return integers_; }
   auto reals() -> ValueStore<RealId>& { return reals_; }
   auto reals() const -> const ValueStore<RealId>& { return reals_; }
-  auto strings() -> StringStore& { return strings_; }
-  auto strings() const -> const StringStore& { return strings_; }
+  auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
+    return string_literals_;
+  }
+  auto string_literals() const -> const StringStoreWrapper<StringLiteralId>& {
+    return string_literals_;
+  }
 
   auto OutputYaml(std::optional<llvm::StringRef> filename = std::nullopt) const
       -> Yaml::OutputMapping {
@@ -258,7 +267,10 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
  private:
   ValueStore<IntegerId> integers_;
   ValueStore<RealId> reals_;
-  StringStore strings_;
+
+  ValueStore<StringId> strings_;
+  StringStoreWrapper<IdentifierId> identifiers_;
+  StringStoreWrapper<StringLiteralId> string_literals_;
 };
 
 }  // namespace Carbon

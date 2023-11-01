@@ -462,7 +462,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
               llvm::StringRef);
           context.emitter().Emit(value.parse_node(),
                                  StructInitMissingFieldInLiteral,
-                                 sem_ir.strings().Get(dest_field.name_id));
+                                 sem_ir.identifiers().Get(dest_field.name_id));
         } else {
           CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
                             "Cannot convert from struct type `{0}` to `{1}`: "
@@ -472,7 +472,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                                  StructInitMissingFieldInConversion,
                                  sem_ir.StringifyType(value.type_id()),
                                  sem_ir.StringifyType(target.type_id),
-                                 sem_ir.strings().Get(dest_field.name_id));
+                                 sem_ir.identifiers().Get(dest_field.name_id));
         }
         return SemIR::InstId::BuiltinError;
       }

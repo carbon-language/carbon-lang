@@ -247,9 +247,14 @@ class Context {
   }
 
   // Directly expose SemIR::File data accessors for brevity in calls.
+  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+    return sem_ir().identifiers();
+  }
   auto integers() -> ValueStore<IntegerId>& { return sem_ir().integers(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
-  auto strings() -> StringStore& { return sem_ir().strings(); }
+  auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
+    return sem_ir().string_literals();
+  }
   auto functions() -> ValueStore<SemIR::FunctionId, SemIR::Function>& {
     return sem_ir().functions();
   }
