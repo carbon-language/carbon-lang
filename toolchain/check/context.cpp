@@ -58,14 +58,14 @@ auto Context::VerifyOnFinish() -> void {
   CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
 }
 
-auto Context::AddInst(SemIR::Inst node) -> SemIR::InstId {
-  auto inst_id = inst_block_stack_.AddInst(node);
-  CARBON_VLOG() << "AddInst: " << node << "\n";
+auto Context::AddInst(SemIR::Inst inst) -> SemIR::InstId {
+  auto inst_id = inst_block_stack_.AddInst(inst);
+  CARBON_VLOG() << "AddInst: " << inst << "\n";
   return inst_id;
 }
 
-auto Context::AddInstAndPush(Parse::Lamp parse_lamp, SemIR::Inst node) -> void {
-  auto inst_id = AddInst(node);
+auto Context::AddInstAndPush(Parse::Lamp parse_lamp, SemIR::Inst inst) -> void {
+  auto inst_id = AddInst(inst);
   lamp_stack_.Push(parse_lamp, inst_id);
 }
 
@@ -171,17 +171,17 @@ auto Context::FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId {
 }
 
 auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
-  // TODO: The constant value of a node should be computed as we build the
-  // node, or at least cached once computed.
+  // TODO: The constant value of a inst should be computed as we build the
+  // inst, or at least cached once computed.
   while (true) {
-    auto node = insts().Get(inst_id);
-    switch (node.kind()) {
+    auto inst = insts().Get(inst_id);
+    switch (inst.kind()) {
       case SemIR::NameReference::Kind:
-        inst_id = node.As<SemIR::NameReference>().value_id;
+        inst_id = inst.As<SemIR::NameReference>().value_id;
         break;
 
       case SemIR::BindName::Kind:
-        inst_id = node.As<SemIR::BindName>().value_id;
+        inst_id = inst.As<SemIR::BindName>().value_id;
         break;
 
       case SemIR::Field::Kind:
@@ -295,8 +295,8 @@ auto Context::is_current_position_reachable() -> bool {
   if (block_contents.empty()) {
     return true;
   }
-  const auto& last_node = insts().Get(block_contents.back());
-  return last_node.kind().terminator_kind() !=
+  const auto& last_inst = insts().Get(block_contents.back());
+  return last_inst.kind().terminator_kind() !=
          SemIR::TerminatorKind::Terminator;
 }
 
@@ -374,13 +374,13 @@ class TypeCompleter {
     }
 
     SemIR::InstId inst_id = context_.sem_ir().GetTypeAllowBuiltinTypes(type_id);
-    auto node = context_.insts().Get(inst_id);
+    auto inst = context_.insts().Get(inst_id);
 
     auto old_work_list_size = work_list_.size();
 
     switch (phase) {
       case Phase::AddNestedIncompleteTypes:
-        if (!AddNestedIncompleteTypes(node)) {
+        if (!AddNestedIncompleteTypes(inst)) {
           return false;
         }
         CARBON_CHECK(work_list_.size() >= old_work_list_size)
@@ -390,7 +390,7 @@ class TypeCompleter {
         break;
 
       case Phase::BuildValueRepresentation: {
-        auto value_rep = BuildValueRepresentation(type_id, node);
+        auto value_rep = BuildValueRepresentation(type_id, inst);
         context_.sem_ir().CompleteType(type_id, value_rep);
         CARBON_CHECK(old_work_list_size == work_list_.size())
             << "BuildValueRepresentation should not change work items";
@@ -419,17 +419,17 @@ class TypeCompleter {
     return true;
   }
 
-  // Adds any types nested within `type_node` that need to be complete for
-  // `type_node` to be complete to our work list.
-  auto AddNestedIncompleteTypes(SemIR::Inst type_node) -> bool {
-    switch (type_node.kind()) {
+  // Adds any types nested within `type_inst` that need to be complete for
+  // `type_inst` to be complete to our work list.
+  auto AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
+    switch (type_inst.kind()) {
       case SemIR::ArrayType::Kind:
-        Push(type_node.As<SemIR::ArrayType>().element_type_id);
+        Push(type_inst.As<SemIR::ArrayType>().element_type_id);
         break;
 
       case SemIR::StructType::Kind:
         for (auto field_id : context_.inst_blocks().Get(
-                 type_node.As<SemIR::StructType>().fields_id)) {
+                 type_inst.As<SemIR::StructType>().fields_id)) {
           Push(context_.insts()
                    .GetAs<SemIR::StructTypeField>(field_id)
                    .field_type_id);
@@ -438,13 +438,13 @@ class TypeCompleter {
 
       case SemIR::TupleType::Kind:
         for (auto element_type_id : context_.type_blocks().Get(
-                 type_node.As<SemIR::TupleType>().elements_id)) {
+                 type_inst.As<SemIR::TupleType>().elements_id)) {
           Push(element_type_id);
         }
         break;
 
       case SemIR::ClassType::Kind: {
-        auto class_type = type_node.As<SemIR::ClassType>();
+        auto class_type = type_inst.As<SemIR::ClassType>();
         auto& class_info = context_.classes().Get(class_type.class_id);
         if (!class_info.is_defined()) {
           if (diagnoser_) {
@@ -459,7 +459,7 @@ class TypeCompleter {
       }
 
       case SemIR::ConstType::Kind:
-        Push(type_node.As<SemIR::ConstType>().inner_id);
+        Push(type_inst.As<SemIR::ConstType>().inner_id);
         break;
 
       default:
@@ -516,7 +516,7 @@ class TypeCompleter {
   auto BuildCrossReferenceValueRepresentation(SemIR::TypeId type_id,
                                               SemIR::CrossReference xref) const
       -> SemIR::ValueRepresentation {
-    auto xref_node = context_.sem_ir()
+    auto xref_inst = context_.sem_ir()
                          .GetCrossReferenceIR(xref.ir_id)
                          .insts()
                          .Get(xref.inst_id);
@@ -525,12 +525,12 @@ class TypeCompleter {
     // for entities owned by another File, such as builtins, which are owned
     // by the prelude, and named entities like classes and interfaces, which
     // we don't support yet.
-    CARBON_CHECK(xref_node.kind() == SemIR::Builtin::Kind)
-        << "TODO: Handle other kinds of node cross-references";
+    CARBON_CHECK(xref_inst.kind() == SemIR::Builtin::Kind)
+        << "TODO: Handle other kinds of inst cross-references";
 
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (xref_node.As<SemIR::Builtin>().builtin_kind) {
+    switch (xref_inst.As<SemIR::Builtin>().builtin_kind) {
       case SemIR::BuiltinKind::TypeType:
       case SemIR::BuiltinKind::Error:
       case SemIR::BuiltinKind::Invalid:
@@ -640,16 +640,16 @@ class TypeCompleter {
 
   // Builds and returns the value representation for the given type. All nested
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
-  auto BuildValueRepresentation(SemIR::TypeId type_id, SemIR::Inst node) const
+  auto BuildValueRepresentation(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepresentation {
-    // TODO: This can emit new SemIR nodes. Consider emitting them into a
-    // dedicated file-scope node block where possible, or somewhere else that
+    // TODO: This can emit new SemIR insts. Consider emitting them into a
+    // dedicated file-scope inst block where possible, or somewhere else that
     // better reflects the definition of the type, rather than wherever the
     // type happens to first be required to be complete.
 
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
+    switch (inst.kind()) {
       case SemIR::AddressOf::Kind:
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
@@ -697,28 +697,28 @@ class TypeCompleter {
       case SemIR::ValueAsReference::Kind:
       case SemIR::ValueOfInitializer::Kind:
       case SemIR::VarStorage::Kind:
-        CARBON_FATAL() << "Type refers to non-type node " << node;
+        CARBON_FATAL() << "Type refers to non-type inst " << inst;
 
       case SemIR::CrossReference::Kind:
         return BuildCrossReferenceValueRepresentation(
-            type_id, node.As<SemIR::CrossReference>());
+            type_id, inst.As<SemIR::CrossReference>());
 
       case SemIR::ArrayType::Kind: {
         // For arrays, it's convenient to always use a pointer representation,
         // even when the array has zero or one element, in order to support
         // indexing.
         return MakePointerRepresentation(
-            node.parse_lamp(), type_id,
+            inst.parse_lamp(), type_id,
             SemIR::ValueRepresentation::ObjectAggregate);
       }
 
       case SemIR::StructType::Kind:
         return BuildStructTypeValueRepresentation(type_id,
-                                                  node.As<SemIR::StructType>());
+                                                  inst.As<SemIR::StructType>());
 
       case SemIR::TupleType::Kind:
         return BuildTupleTypeValueRepresentation(type_id,
-                                                 node.As<SemIR::TupleType>());
+                                                 inst.As<SemIR::TupleType>());
 
       case SemIR::ClassType::Kind:
         // The value representation for a class is a pointer to the object
@@ -726,9 +726,9 @@ class TypeCompleter {
         // TODO: Support customized value representations for classes.
         // TODO: Pick a better value representation when possible.
         return MakePointerRepresentation(
-            node.parse_lamp(),
+            inst.parse_lamp(),
             context_.classes()
-                .Get(node.As<SemIR::ClassType>().class_id)
+                .Get(inst.As<SemIR::ClassType>().class_id)
                 .object_representation_id,
             SemIR::ValueRepresentation::ObjectAggregate);
 
@@ -743,7 +743,7 @@ class TypeCompleter {
         // The value representation of `const T` is the same as that of `T`.
         // Objects are not modifiable through their value representations.
         return GetNestedValueRepresentation(
-            node.As<SemIR::ConstType>().inner_id);
+            inst.As<SemIR::ConstType>().inner_id);
     }
   }
 
@@ -776,7 +776,7 @@ auto Context::TryToCompleteType(
 auto Context::CanonicalizeTypeImpl(
     SemIR::InstKind kind,
     llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)> profile_type,
-    llvm::function_ref<SemIR::InstId()> make_node) -> SemIR::TypeId {
+    llvm::function_ref<SemIR::InstId()> make_inst) -> SemIR::TypeId {
   llvm::FoldingSetNodeID canonical_id;
   kind.Profile(canonical_id);
   profile_type(canonical_id);
@@ -788,14 +788,14 @@ auto Context::CanonicalizeTypeImpl(
     return node->type_id();
   }
 
-  auto inst_id = make_node();
+  auto inst_id = make_inst();
   auto type_id = types().Add({.inst_id = inst_id});
   CARBON_CHECK(canonical_types_.insert({inst_id, type_id}).second);
   type_node_storage_.push_back(
       std::make_unique<TypeNode>(canonical_id, type_id));
 
   // In a debug build, check that our insertion position is still valid. It
-  // could have been invalidated by a misbehaving `make_node`.
+  // could have been invalidated by a misbehaving `make_inst`.
   CARBON_DCHECK([&] {
     void* check_insert_pos;
     auto* check_node = canonical_type_nodes_.FindNodeOrInsertPos(
@@ -816,26 +816,26 @@ static auto ProfileTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids,
 }
 
 // Compute a fingerprint for a type, for use as a key in a folding set.
-static auto ProfileType(Context& semantics_context, SemIR::Inst node,
+static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
                         llvm::FoldingSetNodeID& canonical_id) -> void {
-  switch (node.kind()) {
+  switch (inst.kind()) {
     case SemIR::ArrayType::Kind: {
-      auto array_type = node.As<SemIR::ArrayType>();
+      auto array_type = inst.As<SemIR::ArrayType>();
       canonical_id.AddInteger(
           semantics_context.sem_ir().GetArrayBoundValue(array_type.bound_id));
       canonical_id.AddInteger(array_type.element_type_id.index);
       break;
     }
     case SemIR::Builtin::Kind:
-      canonical_id.AddInteger(node.As<SemIR::Builtin>().builtin_kind.AsInt());
+      canonical_id.AddInteger(inst.As<SemIR::Builtin>().builtin_kind.AsInt());
       break;
     case SemIR::ClassType::Kind:
-      canonical_id.AddInteger(node.As<SemIR::ClassType>().class_id.index);
+      canonical_id.AddInteger(inst.As<SemIR::ClassType>().class_id.index);
       break;
     case SemIR::CrossReference::Kind: {
       // TODO: Cross-references should be canonicalized by looking at their
       // target rather than treating them as new unique types.
-      auto xref = node.As<SemIR::CrossReference>();
+      auto xref = inst.As<SemIR::CrossReference>();
       canonical_id.AddInteger(xref.ir_id.index);
       canonical_id.AddInteger(xref.inst_id.index);
       break;
@@ -843,15 +843,15 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst node,
     case SemIR::ConstType::Kind:
       canonical_id.AddInteger(
           semantics_context
-              .GetUnqualifiedType(node.As<SemIR::ConstType>().inner_id)
+              .GetUnqualifiedType(inst.As<SemIR::ConstType>().inner_id)
               .index);
       break;
     case SemIR::PointerType::Kind:
-      canonical_id.AddInteger(node.As<SemIR::PointerType>().pointee_id.index);
+      canonical_id.AddInteger(inst.As<SemIR::PointerType>().pointee_id.index);
       break;
     case SemIR::StructType::Kind: {
       auto fields = semantics_context.inst_blocks().Get(
-          node.As<SemIR::StructType>().fields_id);
+          inst.As<SemIR::StructType>().fields_id);
       for (const auto& field_id : fields) {
         auto field =
             semantics_context.insts().GetAs<SemIR::StructTypeField>(field_id);
@@ -862,27 +862,27 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst node,
     }
     case SemIR::TupleType::Kind:
       ProfileTupleType(semantics_context.type_blocks().Get(
-                           node.As<SemIR::TupleType>().elements_id),
+                           inst.As<SemIR::TupleType>().elements_id),
                        canonical_id);
       break;
     case SemIR::UnboundFieldType::Kind: {
-      auto unbound_field_type = node.As<SemIR::UnboundFieldType>();
+      auto unbound_field_type = inst.As<SemIR::UnboundFieldType>();
       canonical_id.AddInteger(unbound_field_type.class_type_id.index);
       canonical_id.AddInteger(unbound_field_type.field_type_id.index);
       break;
     }
     default:
-      CARBON_FATAL() << "Unexpected type node " << node;
+      CARBON_FATAL() << "Unexpected type inst " << inst;
   }
 }
 
-auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst node)
+auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
     -> SemIR::TypeId {
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
-    ProfileType(*this, node, canonical_id);
+    ProfileType(*this, inst, canonical_id);
   };
-  auto make_node = [&] { return AddInst(node); };
-  return CanonicalizeTypeImpl(node.kind(), profile_node, make_node);
+  auto make_inst = [&] { return AddInst(inst); };
+  return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
 
 auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
@@ -893,12 +893,12 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
     return it->second;
   }
 
-  auto node = insts().Get(inst_id);
+  auto inst = insts().Get(inst_id);
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
-    ProfileType(*this, node, canonical_id);
+    ProfileType(*this, inst, canonical_id);
   };
-  auto make_node = [&] { return inst_id; };
-  return CanonicalizeTypeImpl(node.kind(), profile_node, make_node);
+  auto make_inst = [&] { return inst_id; };
+  return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
 
 auto Context::CanonicalizeStructType(Parse::Lamp parse_lamp,
@@ -915,12 +915,12 @@ auto Context::CanonicalizeTupleType(Parse::Lamp parse_lamp,
   auto profile_tuple = [&](llvm::FoldingSetNodeID& canonical_id) {
     ProfileTupleType(type_ids, canonical_id);
   };
-  auto make_tuple_node = [&] {
+  auto make_tuple_inst = [&] {
     return AddInst(SemIR::TupleType{parse_lamp, SemIR::TypeId::TypeType,
                                     type_blocks().Add(type_ids)});
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
-                              make_tuple_node);
+                              make_tuple_inst);
 }
 
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
@@ -939,9 +939,9 @@ auto Context::GetPointerType(Parse::Lamp parse_lamp,
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
-  SemIR::Inst type_node =
+  SemIR::Inst type_inst =
       insts().Get(sem_ir_->GetTypeAllowBuiltinTypes(type_id));
-  if (auto const_type = type_node.TryAs<SemIR::ConstType>()) {
+  if (auto const_type = type_inst.TryAs<SemIR::ConstType>()) {
     return const_type->inner_id;
   }
   return type_id;

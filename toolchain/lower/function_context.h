@@ -39,7 +39,7 @@ class FunctionContext {
   auto GetBlockArg(SemIR::InstBlockId block_id, SemIR::TypeId type_id)
       -> llvm::PHINode*;
 
-  // Returns a local (versus global) value for the given node.
+  // Returns a local (versus global) value for the given inst.
   auto GetLocal(SemIR::InstId inst_id) -> llvm::Value* {
     // All builtins are types, with the same empty lowered value.
     if (inst_id.index < SemIR::BuiltinKind::ValidCount) {
@@ -52,14 +52,14 @@ class FunctionContext {
     return it->second;
   }
 
-  // Sets the value for the given node.
+  // Sets the value for the given inst.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) {
     bool added = locals_.insert({inst_id, value}).second;
     CARBON_CHECK(added) << "Duplicate local insert: " << inst_id << " "
                         << sem_ir().insts().Get(inst_id);
   }
 
-  // Returns a value for the given node, which might not be local.
+  // Returns a value for the given inst, which might not be local.
   auto GetLocalOrGlobal(SemIR::InstId inst_id) -> llvm::Value*;
 
   // Gets a callable's function.
@@ -127,16 +127,16 @@ class FunctionContext {
   // such block.
   llvm::BasicBlock* synthetic_block_ = nullptr;
 
-  // Maps a function's SemIR::File nodes to lowered values.
+  // Maps a function's SemIR::File insts to lowered values.
   // TODO: Handle nested scopes. Right now this is just cleared at the end of
   // every block.
   llvm::DenseMap<SemIR::InstId, llvm::Value*> locals_;
 };
 
-// Declare handlers for each SemIR::File node.
+// Declare handlers for each SemIR::File inst.
 #define CARBON_SEM_IR_INST_KIND(Name)                                \
   auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
-                    SemIR::Name node)                                \
+                    SemIR::Name inst)                                \
       ->void;
 #include "toolchain/sem_ir/inst_kind.def"
 

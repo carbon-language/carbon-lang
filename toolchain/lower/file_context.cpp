@@ -131,15 +131,15 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   // Set up parameters and the return slot.
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
-    auto node = sem_ir().insts().Get(inst_id);
+    auto inst = sem_ir().insts().Get(inst_id);
     if (inst_id == function.return_slot_id) {
       arg.setName("return");
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
-    } else if (node.Is<SemIR::SelfParameter>()) {
+    } else if (inst.Is<SemIR::SelfParameter>()) {
       arg.setName("self");
     } else {
-      arg.setName(sem_ir().strings().Get(node.As<SemIR::Parameter>().name_id));
+      arg.setName(sem_ir().strings().Get(inst.As<SemIR::Parameter>().name_id));
     }
   }
 
@@ -161,7 +161,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   const bool has_return_slot = function.return_slot_id.is_valid();
 
   // Add parameters to locals.
-  // TODO: This duplicates the mapping between semantics nodes and LLVM
+  // TODO: This duplicates the mapping between sem_ir insts and LLVM
   // function parameters that was already computed in BuildFunctionDeclaration.
   // We should only do that once.
   auto implicit_param_refs =
@@ -228,10 +228,10 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       break;
   }
 
-  auto node = sem_ir_->insts().Get(inst_id);
-  switch (node.kind()) {
+  auto inst = sem_ir_->insts().Get(inst_id);
+  switch (inst.kind()) {
     case SemIR::ArrayType::Kind: {
-      auto array_type = node.As<SemIR::ArrayType>();
+      auto array_type = inst.As<SemIR::ArrayType>();
       return llvm::ArrayType::get(
           GetType(array_type.element_type_id),
           sem_ir_->GetArrayBoundValue(array_type.bound_id));
@@ -239,17 +239,17 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     case SemIR::ClassType::Kind: {
       auto object_representation_id =
           sem_ir_->classes()
-              .Get(node.As<SemIR::ClassType>().class_id)
+              .Get(inst.As<SemIR::ClassType>().class_id)
               .object_representation_id;
       return GetType(object_representation_id);
     }
     case SemIR::ConstType::Kind:
-      return GetType(node.As<SemIR::ConstType>().inner_id);
+      return GetType(inst.As<SemIR::ConstType>().inner_id);
     case SemIR::PointerType::Kind:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
     case SemIR::StructType::Kind: {
       auto fields =
-          sem_ir_->inst_blocks().Get(node.As<SemIR::StructType>().fields_id);
+          sem_ir_->inst_blocks().Get(inst.As<SemIR::StructType>().fields_id);
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(fields.size());
       for (auto field_id : fields) {
@@ -268,7 +268,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       // function returns. LLVM doesn't allow declaring variables with a void
       // type, so that may require significant special casing.
       auto elements =
-          sem_ir_->type_blocks().Get(node.As<SemIR::TupleType>().elements_id);
+          sem_ir_->type_blocks().Get(inst.As<SemIR::TupleType>().elements_id);
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(elements.size());
       for (auto element_id : elements) {
@@ -281,7 +281,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       return llvm::StructType::get(*llvm_context_);
     }
     default: {
-      CARBON_FATAL() << "Cannot use node as type: " << inst_id << " " << node;
+      CARBON_FATAL() << "Cannot use inst as type: " << inst_id << " " << inst;
     }
   }
 }

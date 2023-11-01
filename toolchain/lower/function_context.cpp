@@ -39,14 +39,14 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
 
 auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   for (const auto& inst_id : sem_ir().inst_blocks().Get(block_id)) {
-    auto node = sem_ir().insts().Get(inst_id);
-    CARBON_VLOG() << "Lowering " << inst_id << ": " << node << "\n";
+    auto inst = sem_ir().insts().Get(inst_id);
+    CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
+    switch (inst.kind()) {
 #define CARBON_SEM_IR_INST_KIND(Name)                     \
   case SemIR::Name::Kind:                                 \
-    Handle##Name(*this, inst_id, node.As<SemIR::Name>()); \
+    Handle##Name(*this, inst_id, inst.As<SemIR::Name>()); \
     break;
 #include "toolchain/sem_ir/inst_kind.def"
     }
