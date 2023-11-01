@@ -9,14 +9,14 @@
 //
 // This macro should be defined before including this header:
 // - CARBON_SEM_IR_INST_KIND(Name)
-//   Invoked for each kind of semantic node.
+//   Invoked for each kind of semantic inst.
 
 #ifndef CARBON_SEM_IR_INST_KIND
 #error "Must define the x-macro to use this file."
 #endif
 
-// For each node kind declared here there is a matching definition in
-// `typed.nodes.h`.
+// For each inst kind declared here there is a matching definition in
+// `typed_insts.h`.
 CARBON_SEM_IR_INST_KIND(AddressOf)
 CARBON_SEM_IR_INST_KIND(ArrayIndex)
 CARBON_SEM_IR_INST_KIND(ArrayInit)

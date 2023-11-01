@@ -14,9 +14,9 @@ namespace Carbon::SemIR {
 // A friend of `SemIR::Inst` that is used to pierce the abstraction.
 class InstTestHelper {
  public:
-  static auto MakeNode(InstKind node_kind, Parse::Lamp parse_lamp,
+  static auto MakeInst(InstKind inst_kind, Parse::Lamp parse_lamp,
                        TypeId type_id, int32_t arg0, int32_t arg1) -> Inst {
-    return Inst(node_kind, parse_lamp, type_id, arg0, arg1);
+    return Inst(inst_kind, parse_lamp, type_id, arg0, arg1);
   }
 };
 
@@ -25,7 +25,7 @@ class InstTestHelper {
 namespace Carbon::SemIR {
 namespace {
 
-// Check that each node kind defines a Kind member using the correct InstKind
+// Check that each inst kind defines a Kind member using the correct InstKind
 // enumerator.
 #define CARBON_SEM_IR_INST_KIND(Name) \
   static_assert(Name::Kind == InstKind::Name);
@@ -34,7 +34,7 @@ namespace {
 template <typename Ignored, typename... Types>
 using TypesExceptFirst = ::testing::Types<Types...>;
 
-// Form a list of all typed node types. Use `TypesExceptFirst` and a leading
+// Form a list of all typed inst types. Use `TypesExceptFirst` and a leading
 // `void` to handle the problem that we only want N-1 commas in this list.
 using TypedInstTypes = TypesExceptFirst<void
 #define CARBON_SEM_IR_INST_KIND(Name) , Name
@@ -50,13 +50,13 @@ TYPED_TEST_SUITE(TypedInstTest, TypedInstTypes);
 TYPED_TEST(TypedInstTest, CommonFieldOrder) {
   using TypedInst = TypeParam;
 
-  Inst node = InstTestHelper::MakeNode(TypeParam::Kind, Parse::Lamp(1),
+  Inst inst = InstTestHelper::MakeInst(TypeParam::Kind, Parse::Lamp(1),
                                        TypeId(2), 3, 4);
-  EXPECT_EQ(node.kind(), TypeParam::Kind);
-  EXPECT_EQ(node.parse_lamp(), Parse::Lamp(1));
-  EXPECT_EQ(node.type_id(), TypeId(2));
+  EXPECT_EQ(inst.kind(), TypeParam::Kind);
+  EXPECT_EQ(inst.parse_lamp(), Parse::Lamp(1));
+  EXPECT_EQ(inst.type_id(), TypeId(2));
 
-  TypedInst typed = node.As<TypedInst>();
+  TypedInst typed = inst.As<TypedInst>();
   if constexpr (HasParseNode<TypedInst>) {
     EXPECT_EQ(typed.parse_lamp, Parse::Lamp(1));
   }
@@ -68,36 +68,36 @@ TYPED_TEST(TypedInstTest, CommonFieldOrder) {
 TYPED_TEST(TypedInstTest, RoundTrip) {
   using TypedInst = TypeParam;
 
-  Inst node1 = InstTestHelper::MakeNode(TypeParam::Kind, Parse::Lamp(1),
+  Inst inst1 = InstTestHelper::MakeInst(TypeParam::Kind, Parse::Lamp(1),
                                         TypeId(2), 3, 4);
-  EXPECT_EQ(node1.kind(), TypeParam::Kind);
-  EXPECT_EQ(node1.parse_lamp(), Parse::Lamp(1));
-  EXPECT_EQ(node1.type_id(), TypeId(2));
+  EXPECT_EQ(inst1.kind(), TypeParam::Kind);
+  EXPECT_EQ(inst1.parse_lamp(), Parse::Lamp(1));
+  EXPECT_EQ(inst1.type_id(), TypeId(2));
 
-  TypedInst typed1 = node1.As<TypedInst>();
-  Inst node2 = typed1;
+  TypedInst typed1 = inst1.As<TypedInst>();
+  Inst inst2 = typed1;
 
-  EXPECT_EQ(node1.kind(), node2.kind());
+  EXPECT_EQ(inst1.kind(), inst2.kind());
   if constexpr (HasParseNode<TypedInst>) {
-    EXPECT_EQ(node1.parse_lamp(), node2.parse_lamp());
+    EXPECT_EQ(inst1.parse_lamp(), inst2.parse_lamp());
   }
   if constexpr (HasTypeId<TypedInst>) {
-    EXPECT_EQ(node1.type_id(), node2.type_id());
+    EXPECT_EQ(inst1.type_id(), inst2.type_id());
   }
 
-  // If the typed node has no padding, we should get exactly the same thing
-  // if we convert back from a node.
-  TypedInst typed2 = node2.As<TypedInst>();
+  // If the typed inst has no padding, we should get exactly the same thing
+  // if we convert back from an inst.
+  TypedInst typed2 = inst2.As<TypedInst>();
   if constexpr (std::has_unique_object_representations_v<TypedInst>) {
     EXPECT_EQ(std::memcmp(&typed1, &typed2, sizeof(TypedInst)), 0);
   }
 
-  // The original node might not be identical after one round trip, because the
-  // fields not carried by the typed node are lost. But they should be stable
+  // The original inst might not be identical after one round trip, because the
+  // fields not carried by the typed inst are lost. But they should be stable
   // if we round-trip again.
-  Inst node3 = typed2;
+  Inst inst3 = typed2;
   if constexpr (std::has_unique_object_representations_v<Inst>) {
-    EXPECT_EQ(std::memcmp(&node2, &node3, sizeof(Inst)), 0);
+    EXPECT_EQ(std::memcmp(&inst2, &inst3, sizeof(Inst)), 0);
   }
 }
 
@@ -105,10 +105,10 @@ TYPED_TEST(TypedInstTest, StructLayout) {
   using TypedInst = TypeParam;
 
   TypedInst typed =
-      InstTestHelper::MakeNode(TypeParam::Kind, Parse::Lamp(1), TypeId(2), 3, 4)
+      InstTestHelper::MakeInst(TypeParam::Kind, Parse::Lamp(1), TypeId(2), 3, 4)
           .template As<TypedInst>();
 
-  // Check that the memory representation of the typed node is what we expect.
+  // Check that the memory representation of the typed inst is what we expect.
   // TODO: Struct layout is not guaranteed, and this test could fail in some
   // build environment. If so, we should disable it.
   int32_t fields[4] = {};
@@ -123,7 +123,7 @@ TYPED_TEST(TypedInstTest, StructLayout) {
   fields[field++] = 4;
 
   ASSERT_LE(sizeof(TypedInst), sizeof(fields));
-  // We can only do this check if the typed node has no padding.
+  // We can only do this check if the typed inst has no padding.
   if constexpr (std::has_unique_object_representations_v<TypedInst>) {
     EXPECT_EQ(std::memcmp(&fields, &typed, sizeof(TypedInst)), 0);
   }

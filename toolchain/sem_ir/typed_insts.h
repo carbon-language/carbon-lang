@@ -10,29 +10,29 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
-// Representations for specific kinds of nodes.
+// Representations for specific kinds of insts.
 //
 // Each type should be a struct with up to four members:
 //
-// - Optionally, a `Parse::Lamp parse_lamp;` member, for nodes with an
-//   associated location. Almost all nodes should have this, with exceptions
+// - Optionally, a `Parse::Lamp parse_lamp;` member, for insts with an
+//   associated location. Almost all insts should have this, with exceptions
 //   being things that are generated internally, without any relation to source
 //   syntax, such as predeclared builtins.
-// - Optionally, a `TypeId type_id;` member, for nodes that produce a value.
-//   This includes nodes that produce an abstract value, such as a `Namespace`,
+// - Optionally, a `TypeId type_id;` member, for insts that produce a value.
+//   This includes insts that produce an abstract value, such as a `Namespace`,
 //   for which a placeholder type should be used.
 // - Up to two `[...]Id` members describing the contents of the struct.
 //
 // The field names here matter -- the first two fields must have the names
 // specified above, when present. When converting to a `SemIR::Inst`, they will
-// become the parse node and type associated with the type-erased node.
+// become the parse node and type associated with the type-erased inst.
 //
 // In addition, each type provides a constant `Kind` that associates the type
 // with a particular member of the `InstKind` enumeration. This `Kind`
-// declaration also defines the node kind by calling `InstKind::Define` and
-// specifying additional information about the node kind. This information is
+// declaration also defines the inst kind by calling `InstKind::Define` and
+// specifying additional information about the inst kind. This information is
 // available through the member functions of the `InstKind` value declared in
-// `node_kind.h`, and includes the name used in textual IR and whether the node
+// `inst_kind.h`, and includes the name used in textual IR and whether the inst
 // is a terminator instruction.
 namespace Carbon::SemIR {
 
@@ -239,8 +239,8 @@ struct ConstType {
 struct CrossReference {
   static constexpr auto Kind = InstKind::CrossReference.Define("xref");
 
-  // No parse node: a node's parse tree node must refer to a node in the
-  // current parse tree. This cannot use the cross-referenced node's parse tree
+  // No parse node: a inst's parse tree node must refer to a node in the
+  // current parse tree. This cannot use the cross-referenced inst's parse tree
   // node because it will be in a different parse tree.
   TypeId type_id;
   CrossReferenceIRId ir_id;
@@ -256,7 +256,7 @@ struct Dereference {
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the
-// `Field` node is an `UnboundFieldType`.
+// `Field` inst is an `UnboundFieldType`.
 struct Field {
   static constexpr auto Kind = InstKind::Field.Define("field");
 
@@ -316,7 +316,7 @@ struct NoOp {
   static constexpr auto Kind = InstKind::NoOp.Define("no_op");
 
   Parse::Lamp parse_lamp;
-  // This node doesn't produce a value, so has no type.
+  // This inst doesn't produce a value, so has no type.
 };
 
 struct Parameter {
@@ -425,7 +425,7 @@ struct StructTypeField {
       InstKind::StructTypeField.Define("struct_type_field");
 
   Parse::Lamp parse_lamp;
-  // This node is an implementation detail of `StructType`, and doesn't produce
+  // This inst is an implementation detail of `StructType`, and doesn't produce
   // a value, so has no type, even though it declares a field with a type.
   StringId name_id;
   TypeId field_type_id;
