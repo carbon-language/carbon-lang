@@ -40,9 +40,9 @@ class PendingBlock {
   };
 
   auto AddNode(SemIR::Node node) -> SemIR::InstId {
-    auto node_id = context_.nodes().AddInNoBlock(node);
-    nodes_.push_back(node_id);
-    return node_id;
+    SemIR::InstId inst_id = context_.nodes().AddInNoBlock(node);
+    nodes_.push_back(inst_id);
+    return inst_id;
   }
 
   // Insert the pending block of code at the current position.

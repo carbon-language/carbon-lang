@@ -56,7 +56,7 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
 
     case NameContext::State::Resolved:
     case NameContext::State::ResolvedNonScope:
-      return name_context.resolved_node_id;
+      return name_context.resolved_inst_id;
 
     case NameContext::State::Unresolved:
       if (name_context.target_scope_id == SemIR::NameScopeId::Invalid) {
@@ -79,9 +79,9 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
 
 auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
                                            SemIR::InstId target_id) -> void {
-  auto existing_node_id = LookupOrAddName(name_context, target_id);
-  if (existing_node_id.is_valid()) {
-    context_->DiagnoseDuplicateName(name_context.parse_node, existing_node_id);
+  SemIR::InstId existing_inst_id = LookupOrAddName(name_context, target_id);
+  if (existing_inst_id.is_valid()) {
+    context_->DiagnoseDuplicateName(name_context.parse_node, existing_inst_id);
   }
 }
 
@@ -95,22 +95,22 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
                                                 StringId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
-    // This means the input node_id is actually a string ID.
+    // This means the input inst_id is actually a string ID.
     //
     // TODO: This doesn't perform the right kind of lookup. We will find names
     // from enclosing lexical scopes here, in the case where `target_scope_id`
     // is invalid.
-    auto resolved_node_id = context_->LookupName(
+    SemIR::InstId resolved_inst_id = context_->LookupName(
         name_context.parse_node, name_id, name_context.target_scope_id,
         /*print_diagnostics=*/false);
-    if (resolved_node_id == SemIR::InstId::BuiltinError) {
+    if (resolved_inst_id == SemIR::InstId::BuiltinError) {
       // Invalid indicates an unresolved node. Store it and return.
       name_context.state = NameContext::State::Unresolved;
       name_context.unresolved_name_id = name_id;
       return;
     } else {
       // Store the resolved node and continue for the target scope update.
-      name_context.resolved_node_id = resolved_node_id;
+      name_context.resolved_inst_id = resolved_inst_id;
     }
 
     UpdateScopeIfNeeded(name_context);
@@ -121,7 +121,7 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
     -> void {
   // This will only be reached for resolved nodes. We update the target
   // scope based on the resolved type.
-  auto resolved_node = context_->nodes().Get(name_context.resolved_node_id);
+  auto resolved_node = context_->nodes().Get(name_context.resolved_inst_id);
   switch (resolved_node.kind()) {
     case SemIR::ClassDeclaration::Kind: {
       const auto& class_info = context_->classes().Get(
@@ -164,7 +164,7 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier didn't resolve to a scoped entity.
       if (auto class_decl = context_->nodes()
-                                .Get(name_context.resolved_node_id)
+                                .Get(name_context.resolved_inst_id)
                                 .TryAs<SemIR::ClassDeclaration>()) {
         CARBON_DIAGNOSTIC(QualifiedDeclarationInIncompleteClassScope, Error,
                           "Cannot declare a member of incomplete class `{0}`.",

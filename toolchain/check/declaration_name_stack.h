@@ -85,7 +85,7 @@ class DeclarationNameStack {
     union {
       // The ID of a resolved qualifier, including both identifiers and
       // expressions. Invalid indicates resolution failed.
-      SemIR::InstId resolved_node_id = SemIR::InstId::Invalid;
+      SemIR::InstId resolved_inst_id = SemIR::InstId::Invalid;
 
       // The ID of an unresolved identifier.
       StringId unresolved_name_id;

@@ -239,9 +239,9 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
 
 auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   // Propagate the type expression.
-  auto [type_parse_node, type_node_id] =
+  auto [type_parse_node, type_inst_id] =
       context.node_stack().PopExpressionWithParseNode();
-  auto type_id = ExpressionAsType(context, type_parse_node, type_node_id);
+  auto type_id = ExpressionAsType(context, type_parse_node, type_inst_id);
   // TODO: Use a dedicated node rather than VarStorage here.
   context.AddNodeAndPush(
       parse_node,

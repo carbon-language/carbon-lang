@@ -23,7 +23,7 @@ namespace Carbon::Check {
 //
 // - If receiving a pop_parse_kind, verify that the parse_node being popped is
 //   of pop_parse_kind.
-// - Validates presence of node_id based on whether it's a solo
+// - Validates presence of inst_id based on whether it's a solo
 //   parse_node.
 //
 // These should be assumed API constraints unless otherwise mentioned on a

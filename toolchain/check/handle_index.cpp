@@ -38,12 +38,12 @@ static auto ValidateIntegerLiteralBound(Context& context,
 }
 
 auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
-  auto index_node_id = context.node_stack().PopExpression();
-  auto index_node = context.nodes().Get(index_node_id);
-  auto operand_node_id = context.node_stack().PopExpression();
-  operand_node_id =
-      ConvertToValueOrReferenceExpression(context, operand_node_id);
-  auto operand_node = context.nodes().Get(operand_node_id);
+  SemIR::InstId index_inst_id = context.node_stack().PopExpression();
+  auto index_node = context.nodes().Get(index_inst_id);
+  SemIR::InstId operand_inst_id = context.node_stack().PopExpression();
+  operand_inst_id =
+      ConvertToValueOrReferenceExpression(context, operand_inst_id);
+  auto operand_node = context.nodes().Get(operand_inst_id);
   auto operand_type_id = operand_node.type_id();
   auto operand_type_node = context.nodes().Get(
       context.sem_ir().GetTypeAllowBuiltinTypes(operand_type_id));
@@ -58,22 +58,22 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
           !ValidateIntegerLiteralBound(
               context, parse_node, operand_node, *index_literal,
               context.sem_ir().GetArrayBoundValue(array_type.bound_id))) {
-        index_node_id = SemIR::InstId::BuiltinError;
+        index_inst_id = SemIR::InstId::BuiltinError;
       }
       auto cast_index_id = ConvertToValueOfType(
-          context, index_node.parse_node(), index_node_id,
+          context, index_node.parse_node(), index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntegerType));
       auto array_cat =
-          SemIR::GetExpressionCategory(context.sem_ir(), operand_node_id);
+          SemIR::GetExpressionCategory(context.sem_ir(), operand_inst_id);
       if (array_cat == SemIR::ExpressionCategory::Value) {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
-        operand_node_id = context.AddNode(SemIR::ValueAsReference{
-            parse_node, operand_type_id, operand_node_id});
+        operand_inst_id = context.AddNode(SemIR::ValueAsReference{
+            parse_node, operand_type_id, operand_inst_id});
       }
       auto elem_id = context.AddNode(
           SemIR::ArrayIndex{parse_node, array_type.element_type_id,
-                            operand_node_id, cast_index_id});
+                            operand_inst_id, cast_index_id});
       if (array_cat != SemIR::ExpressionCategory::DurableReference) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.
@@ -94,17 +94,17 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
                 type_block.size())) {
           element_type_id = type_block[index_val->getZExtValue()];
         } else {
-          index_node_id = SemIR::InstId::BuiltinError;
+          index_inst_id = SemIR::InstId::BuiltinError;
         }
       } else if (index_node.type_id() != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(TupleIndexIntegerLiteral, Error,
                           "Tuples indices must be integer literals.");
         context.emitter().Emit(parse_node, TupleIndexIntegerLiteral);
-        index_node_id = SemIR::InstId::BuiltinError;
+        index_inst_id = SemIR::InstId::BuiltinError;
       }
       context.AddNodeAndPush(parse_node,
                              SemIR::TupleIndex{parse_node, element_type_id,
-                                               operand_node_id, index_node_id});
+                                               operand_inst_id, index_inst_id});
       return true;
     }
     default: {

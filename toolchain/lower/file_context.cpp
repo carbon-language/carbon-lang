@@ -129,10 +129,10 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
                              mangled_name, llvm_module());
 
   // Set up parameters and the return slot.
-  for (auto [node_id, arg] :
+  for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
-    auto node = sem_ir().nodes().Get(node_id);
-    if (node_id == function.return_slot_id) {
+    auto node = sem_ir().nodes().Get(inst_id);
+    if (inst_id == function.return_slot_id) {
       arg.setName("return");
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
