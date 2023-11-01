@@ -47,11 +47,11 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
       break;
     }
     case Lex::TokenKind::Type: {
-      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinTypeType);
+      context.node_stack().Push(parse_node, SemIR::InstId::BuiltinTypeType);
       break;
     }
     case Lex::TokenKind::Bool: {
-      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinBoolType);
+      context.node_stack().Push(parse_node, SemIR::InstId::BuiltinBoolType);
       break;
     }
     case Lex::TokenKind::IntegerTypeLiteral: {
@@ -59,7 +59,7 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
       if (text != "i32") {
         return context.TODO(parse_node, "Currently only i32 is allowed");
       }
-      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinIntegerType);
+      context.node_stack().Push(parse_node, SemIR::InstId::BuiltinIntegerType);
       break;
     }
     case Lex::TokenKind::FloatingPointTypeLiteral: {
@@ -68,11 +68,11 @@ auto HandleLiteral(Context& context, Parse::Node parse_node) -> bool {
         return context.TODO(parse_node, "Currently only f64 is allowed");
       }
       context.node_stack().Push(parse_node,
-                                SemIR::NodeId::BuiltinFloatingPointType);
+                                SemIR::InstId::BuiltinFloatingPointType);
       break;
     }
     case Lex::TokenKind::StringTypeLiteral: {
-      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinStringType);
+      context.node_stack().Push(parse_node, SemIR::InstId::BuiltinStringType);
       break;
     }
     default: {

@@ -17,8 +17,8 @@ auto NodeStack::PrintForStackDump(llvm::raw_ostream& output) const -> void {
     if (parse_node_kind == Parse::NodeKind::PatternBinding) {
       output << " -> " << entry.name_id;
     } else {
-      if (entry.node_id.is_valid()) {
-        output << " -> " << entry.node_id;
+      if (entry.inst_id.is_valid()) {
+        output << " -> " << entry.inst_id;
       }
     }
     output << "\n";

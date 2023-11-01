@@ -41,7 +41,7 @@ struct AddressOf {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId lvalue_id;
+  InstId lvalue_id;
 };
 
 struct ArrayIndex {
@@ -49,8 +49,8 @@ struct ArrayIndex {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId array_id;
-  NodeId index_id;
+  InstId array_id;
+  InstId index_id;
 };
 
 // Initializes an array from a tuple. `tuple_id` is the source tuple
@@ -62,8 +62,8 @@ struct ArrayInit {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId tuple_id;
-  NodeBlockId inits_and_return_slot_id;
+  InstId tuple_id;
+  InstBlockId inits_and_return_slot_id;
 };
 
 struct ArrayType {
@@ -71,7 +71,7 @@ struct ArrayType {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId bound_id;
+  InstId bound_id;
   TypeId element_type_id;
 };
 
@@ -83,8 +83,8 @@ struct Assign {
 
   Parse::Node parse_node;
   // Assignments are statements, and so have no type.
-  NodeId lhs_id;
-  NodeId rhs_id;
+  InstId lhs_id;
+  InstId rhs_id;
 };
 
 struct BinaryOperatorAdd {
@@ -92,8 +92,8 @@ struct BinaryOperatorAdd {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId lhs_id;
-  NodeId rhs_id;
+  InstId lhs_id;
+  InstId rhs_id;
 };
 
 struct BindName {
@@ -102,7 +102,7 @@ struct BindName {
   Parse::Node parse_node;
   TypeId type_id;
   StringId name_id;
-  NodeId value_id;
+  InstId value_id;
 };
 
 struct BindValue {
@@ -110,7 +110,7 @@ struct BindValue {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId value_id;
+  InstId value_id;
 };
 
 struct BlockArg {
@@ -118,7 +118,7 @@ struct BlockArg {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId block_id;
+  InstBlockId block_id;
 };
 
 struct BoolLiteral {
@@ -139,8 +139,8 @@ struct BoundMethod {
   // The object argument in the bound method, which will be used to initialize
   // `self`, or whose address will be used to initialize `self` for an `addr
   // self` parameter.
-  NodeId object_id;
-  NodeId function_id;
+  InstId object_id;
+  InstId function_id;
 };
 
 struct Branch {
@@ -149,7 +149,7 @@ struct Branch {
 
   Parse::Node parse_node;
   // Branches don't produce a value, so have no type.
-  NodeBlockId target_id;
+  InstBlockId target_id;
 };
 
 struct BranchIf {
@@ -158,8 +158,8 @@ struct BranchIf {
 
   Parse::Node parse_node;
   // Branches don't produce a value, so have no type.
-  NodeBlockId target_id;
-  NodeId cond_id;
+  InstBlockId target_id;
+  InstId cond_id;
 };
 
 struct BranchWithArg {
@@ -168,8 +168,8 @@ struct BranchWithArg {
 
   Parse::Node parse_node;
   // Branches don't produce a value, so have no type.
-  NodeBlockId target_id;
-  NodeId arg_id;
+  InstBlockId target_id;
+  InstId arg_id;
 };
 
 struct Builtin {
@@ -185,12 +185,12 @@ struct Call {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId callee_id;
+  InstId callee_id;
   // The arguments block contains IDs for the following arguments, in order:
   //  - The argument for each implicit parameter.
   //  - The argument for each explicit parameter.
   //  - The argument for the return slot, if present.
-  NodeBlockId args_id;
+  InstBlockId args_id;
 };
 
 struct ClassDeclaration {
@@ -205,7 +205,7 @@ struct ClassDeclaration {
   ClassId class_id;
   // The declaration block, containing the class name's qualifiers and the
   // class's generic parameters.
-  NodeBlockId decl_block_id;
+  InstBlockId decl_block_id;
 };
 
 struct ClassFieldAccess {
@@ -214,7 +214,7 @@ struct ClassFieldAccess {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId base_id;
+  InstId base_id;
   MemberIndex index;
 };
 
@@ -244,7 +244,7 @@ struct CrossReference {
   // node because it will be in a different parse tree.
   TypeId type_id;
   CrossReferenceIRId ir_id;
-  NodeId node_id;
+  InstId inst_id;
 };
 
 struct Dereference {
@@ -252,7 +252,7 @@ struct Dereference {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId pointer_id;
+  InstId pointer_id;
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the
@@ -283,8 +283,8 @@ struct InitializeFrom {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeId dest_id;
+  InstId src_id;
+  InstId dest_id;
 };
 
 struct IntegerLiteral {
@@ -301,7 +301,7 @@ struct NameReference {
   Parse::Node parse_node;
   TypeId type_id;
   StringId name_id;
-  NodeId value_id;
+  InstId value_id;
 };
 
 struct Namespace {
@@ -357,7 +357,7 @@ struct ReturnExpression {
 
   Parse::Node parse_node;
   // This is a statement, so has no type.
-  NodeId expr_id;
+  InstId expr_id;
 };
 
 struct SelfParameter {
@@ -374,8 +374,8 @@ struct SpliceBlock {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId block_id;
-  NodeId result_id;
+  InstBlockId block_id;
+  InstId result_id;
 };
 
 struct StringLiteral {
@@ -391,7 +391,7 @@ struct StructAccess {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId struct_id;
+  InstId struct_id;
   MemberIndex index;
 };
 
@@ -400,8 +400,8 @@ struct StructInit {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeBlockId elements_id;
+  InstId src_id;
+  InstBlockId elements_id;
 };
 
 struct StructLiteral {
@@ -409,7 +409,7 @@ struct StructLiteral {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId elements_id;
+  InstBlockId elements_id;
 };
 
 struct StructType {
@@ -417,7 +417,7 @@ struct StructType {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId fields_id;
+  InstBlockId fields_id;
 };
 
 struct StructTypeField {
@@ -436,8 +436,8 @@ struct StructValue {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeBlockId elements_id;
+  InstId src_id;
+  InstBlockId elements_id;
 };
 
 struct Temporary {
@@ -445,8 +445,8 @@ struct Temporary {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId storage_id;
-  NodeId init_id;
+  InstId storage_id;
+  InstId init_id;
 };
 
 struct TemporaryStorage {
@@ -462,7 +462,7 @@ struct TupleAccess {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId tuple_id;
+  InstId tuple_id;
   MemberIndex index;
 };
 
@@ -471,8 +471,8 @@ struct TupleIndex {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId tuple_id;
-  NodeId index_id;
+  InstId tuple_id;
+  InstId index_id;
 };
 
 struct TupleInit {
@@ -480,8 +480,8 @@ struct TupleInit {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeBlockId elements_id;
+  InstId src_id;
+  InstBlockId elements_id;
 };
 
 struct TupleLiteral {
@@ -489,7 +489,7 @@ struct TupleLiteral {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId elements_id;
+  InstBlockId elements_id;
 };
 
 struct TupleType {
@@ -505,8 +505,8 @@ struct TupleValue {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeBlockId elements_id;
+  InstId src_id;
+  InstBlockId elements_id;
 };
 
 struct UnaryOperatorNot {
@@ -514,7 +514,7 @@ struct UnaryOperatorNot {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId operand_id;
+  InstId operand_id;
 };
 
 // The type of an expression naming an unbound field, such as `Class.field`.
@@ -538,7 +538,7 @@ struct ValueAsReference {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId value_id;
+  InstId value_id;
 };
 
 struct ValueOfInitializer {
@@ -547,7 +547,7 @@ struct ValueOfInitializer {
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId init_id;
+  InstId init_id;
 };
 
 struct VarStorage {

@@ -62,7 +62,7 @@ class FileContext {
 
   // Builds the type for the given node, which should then be cached by the
   // caller.
-  auto BuildType(SemIR::NodeId node_id) -> llvm::Type*;
+  auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
 
   // Returns the empty LLVM struct type used to represent the type `type`.
   auto GetTypeType() -> llvm::StructType* {

@@ -10,7 +10,7 @@ namespace Carbon::Check {
 
 auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
   auto value_id = context.node_stack().PopExpression();
-  SemIR::NodeId pattern_id =
+  SemIR::InstId pattern_id =
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
@@ -28,7 +28,7 @@ auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
       << "Binding should not already have a value!";
   bind_name.value_id = value_id;
   context.nodes().Set(pattern_id, bind_name);
-  context.node_block_stack().AddNodeId(pattern_id);
+  context.node_block_stack().AddInstId(pattern_id);
 
   // Add the name of the binding to the current scope.
   context.AddNameToLookup(pattern.parse_node(), bind_name.name_id, pattern_id);

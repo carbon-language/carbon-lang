@@ -204,8 +204,8 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
   auto token = context.parse_tree().node_token(parse_node);
-  SemIR::NodeId branch_value_id = SemIR::NodeId::Invalid;
-  auto short_circuit_result_id = SemIR::NodeId::Invalid;
+  SemIR::InstId branch_value_id = SemIR::InstId::Invalid;
+  auto short_circuit_result_id = SemIR::InstId::Invalid;
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::And:
       branch_value_id = cond_value_id;

@@ -119,20 +119,20 @@ class NodeNamer {
   }
 
   // Returns the IR name to use for a node, when referenced from a given scope.
-  auto GetNameFor(ScopeIndex scope_idx, NodeId node_id) -> std::string {
-    if (!node_id.is_valid()) {
+  auto GetNameFor(ScopeIndex scope_idx, InstId inst_id) -> std::string {
+    if (!inst_id.is_valid()) {
       return "invalid";
     }
 
     // Check for a builtin.
-    if (node_id.index < BuiltinKind::ValidCount) {
-      return BuiltinKind::FromInt(node_id.index).label().str();
+    if (inst_id.index < BuiltinKind::ValidCount) {
+      return BuiltinKind::FromInt(inst_id.index).label().str();
     }
 
-    auto& [node_scope, node_name] = nodes[node_id.index];
+    auto& [node_scope, node_name] = nodes[inst_id.index];
     if (!node_name) {
       // This should not happen in valid IR.
-      return "<unexpected noderef " + llvm::itostr(node_id.index) + ">";
+      return "<unexpected noderef " + llvm::itostr(inst_id.index) + ">";
     }
     if (node_scope == scope_idx) {
       return node_name.str().str();
@@ -141,7 +141,7 @@ class NodeNamer {
   }
 
   // Returns the IR name to use for a label, when referenced from a given scope.
-  auto GetLabelFor(ScopeIndex scope_idx, NodeBlockId block_id) -> std::string {
+  auto GetLabelFor(ScopeIndex scope_idx, InstBlockId block_id) -> std::string {
     if (!block_id.is_valid()) {
       return "!invalid";
     }
@@ -277,7 +277,7 @@ class NodeNamer {
     return scopes[static_cast<int>(scope_idx)];
   }
 
-  auto AddBlockLabel(ScopeIndex scope_idx, NodeBlockId block_id,
+  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
                      std::string name = "",
                      Parse::Node parse_node = Parse::Node::Invalid) -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
@@ -298,7 +298,7 @@ class NodeNamer {
 
   // Finds and adds a suitable block label for the given semantics node that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeIndex scope_idx, NodeBlockId block_id, Node node)
+  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Node node)
       -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(node.parse_node())) {
@@ -368,7 +368,7 @@ class NodeNamer {
     AddBlockLabel(scope_idx, block_id, name.str(), node.parse_node());
   }
 
-  auto CollectNamesInBlock(ScopeIndex scope_idx, NodeBlockId block_id) -> void {
+  auto CollectNamesInBlock(ScopeIndex scope_idx, InstBlockId block_id) -> void {
     if (!block_id.is_valid()) {
       return;
     }
@@ -376,14 +376,14 @@ class NodeNamer {
     Scope& scope = GetScopeInfo(scope_idx);
 
     // Use bound names where available. Otherwise, assign a backup name.
-    for (auto node_id : sem_ir_.node_blocks().Get(block_id)) {
-      if (!node_id.is_valid()) {
+    for (auto inst_id : sem_ir_.node_blocks().Get(block_id)) {
+      if (!inst_id.is_valid()) {
         continue;
       }
 
-      auto node = sem_ir_.nodes().Get(node_id);
+      auto node = sem_ir_.nodes().Get(inst_id);
       auto add_node_name = [&](std::string name) {
-        nodes[node_id.index] = {scope_idx, scope.nodes.AllocateName(
+        nodes[inst_id.index] = {scope_idx, scope.nodes.AllocateName(
                                                *this, node.parse_node(), name)};
       };
       auto add_node_name_id = [&](StringId name_id,
@@ -527,7 +527,7 @@ class Formatter {
 
     llvm::SaveAndRestore function_scope(scope_, node_namer_.GetScopeFor(id));
 
-    if (fn.implicit_param_refs_id != SemIR::NodeBlockId::Empty) {
+    if (fn.implicit_param_refs_id != SemIR::InstBlockId::Empty) {
       out_ << "[";
       FormatParameterList(fn.implicit_param_refs_id);
       out_ << "]";
@@ -564,9 +564,9 @@ class Formatter {
     }
   }
 
-  auto FormatParameterList(NodeBlockId param_refs_id) -> void {
+  auto FormatParameterList(InstBlockId param_refs_id) -> void {
     llvm::ListSeparator sep;
-    for (const NodeId param_id : sem_ir_.node_blocks().Get(param_refs_id)) {
+    for (const InstId param_id : sem_ir_.node_blocks().Get(param_refs_id)) {
       out_ << sep;
       if (!param_id.is_valid()) {
         out_ << "invalid";
@@ -578,13 +578,13 @@ class Formatter {
     }
   }
 
-  auto FormatCodeBlock(NodeBlockId block_id) -> void {
+  auto FormatCodeBlock(InstBlockId block_id) -> void {
     if (!block_id.is_valid()) {
       return;
     }
 
-    for (const NodeId node_id : sem_ir_.node_blocks().Get(block_id)) {
-      FormatInstruction(node_id);
+    for (const InstId inst_id : sem_ir_.node_blocks().Get(block_id)) {
+      FormatInstruction(inst_id);
     }
   }
 
@@ -592,39 +592,39 @@ class Formatter {
                        llvm::StringRef prefix) -> void {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<NodeId, StringId>> entries;
-    for (auto [name_id, node_id] : sem_ir_.name_scopes().Get(id)) {
-      entries.push_back({node_id, name_id});
+    llvm::SmallVector<std::pair<InstId, StringId>> entries;
+    for (auto [name_id, inst_id] : sem_ir_.name_scopes().Get(id)) {
+      entries.push_back({inst_id, name_id});
     }
     llvm::sort(entries,
                [](auto a, auto b) { return a.first.index < b.first.index; });
 
     llvm::ListSeparator sep(separator);
-    for (auto [node_id, name_id] : entries) {
+    for (auto [inst_id, name_id] : entries) {
       out_ << sep << prefix;
       FormatString(name_id);
       out_ << " = ";
-      FormatNodeName(node_id);
+      FormatNodeName(inst_id);
     }
   }
 
-  auto FormatInstruction(NodeId node_id) -> void {
-    if (!node_id.is_valid()) {
+  auto FormatInstruction(InstId inst_id) -> void {
+    if (!inst_id.is_valid()) {
       Indent();
       out_ << "invalid\n";
       return;
     }
 
-    FormatInstruction(node_id, sem_ir_.nodes().Get(node_id));
+    FormatInstruction(inst_id, sem_ir_.nodes().Get(inst_id));
   }
 
-  auto FormatInstruction(NodeId node_id, Node node) -> void {
+  auto FormatInstruction(InstId inst_id, Node node) -> void {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (node.kind()) {
 #define CARBON_SEM_IR_NODE_KIND(NodeT)            \
   case NodeT::Kind:                               \
-    FormatInstruction(node_id, node.As<NodeT>()); \
+    FormatInstruction(inst_id, node.As<NodeT>()); \
     break;
 #include "toolchain/sem_ir/node_kind.def"
     }
@@ -633,20 +633,20 @@ class Formatter {
   auto Indent() -> void { out_.indent(indent_); }
 
   template <typename NodeT>
-  auto FormatInstruction(NodeId node_id, NodeT node) -> void {
+  auto FormatInstruction(InstId inst_id, NodeT node) -> void {
     Indent();
-    FormatInstructionLHS(node_id, node);
+    FormatInstructionLHS(inst_id, node);
     out_ << NodeT::Kind.ir_name();
     FormatInstructionRHS(node);
     out_ << "\n";
   }
 
-  auto FormatInstructionLHS(NodeId node_id, Node node) -> void {
+  auto FormatInstructionLHS(InstId inst_id, Node node) -> void {
     switch (node.kind().value_kind()) {
       case NodeValueKind::Typed:
-        FormatNodeName(node_id);
+        FormatNodeName(inst_id);
         out_ << ": ";
-        switch (GetExpressionCategory(sem_ir_, node_id)) {
+        switch (GetExpressionCategory(sem_ir_, inst_id)) {
           case ExpressionCategory::NotExpression:
           case ExpressionCategory::Error:
           case ExpressionCategory::Value:
@@ -686,7 +686,7 @@ class Formatter {
     FormatLabel(node.block_id);
   }
 
-  auto FormatInstruction(NodeId /*node_id*/, BranchIf node) -> void {
+  auto FormatInstruction(InstId /*inst_id*/, BranchIf node) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
@@ -698,7 +698,7 @@ class Formatter {
     in_terminator_sequence_ = true;
   }
 
-  auto FormatInstruction(NodeId /*node_id*/, BranchWithArg node) -> void {
+  auto FormatInstruction(InstId /*inst_id*/, BranchWithArg node) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
@@ -710,7 +710,7 @@ class Formatter {
     in_terminator_sequence_ = false;
   }
 
-  auto FormatInstruction(NodeId /*node_id*/, Branch node) -> void {
+  auto FormatInstruction(InstId /*inst_id*/, Branch node) -> void {
     if (!in_terminator_sequence_) {
       Indent();
     }
@@ -724,16 +724,16 @@ class Formatter {
     out_ << " ";
     FormatArg(node.tuple_id);
 
-    llvm::ArrayRef<NodeId> inits_and_return_slot =
+    llvm::ArrayRef<InstId> inits_and_return_slot =
         sem_ir_.node_blocks().Get(node.inits_and_return_slot_id);
     auto inits = inits_and_return_slot.drop_back(1);
     auto return_slot_id = inits_and_return_slot.back();
 
     out_ << ", (";
     llvm::ListSeparator sep;
-    for (auto node_id : inits) {
+    for (auto inst_id : inits) {
       out_ << sep;
-      FormatArg(node_id);
+      FormatArg(inst_id);
     }
     out_ << ')';
     FormatReturnSlot(return_slot_id);
@@ -748,11 +748,11 @@ class Formatter {
       return;
     }
 
-    llvm::ArrayRef<NodeId> args = sem_ir_.node_blocks().Get(node.args_id);
+    llvm::ArrayRef<InstId> args = sem_ir_.node_blocks().Get(node.args_id);
 
     bool has_return_slot =
         GetInitializingRepresentation(sem_ir_, node.type_id).has_return_slot();
-    NodeId return_slot_id = NodeId::Invalid;
+    InstId return_slot_id = InstId::Invalid;
     if (has_return_slot) {
       return_slot_id = args.back();
       args = args.drop_back();
@@ -760,9 +760,9 @@ class Formatter {
 
     llvm::ListSeparator sep;
     out_ << '(';
-    for (auto node_id : args) {
+    for (auto inst_id : args) {
       out_ << sep;
-      FormatArg(node_id);
+      FormatArg(inst_id);
     }
     out_ << ')';
 
@@ -779,7 +779,7 @@ class Formatter {
   auto FormatInstructionRHS(CrossReference node) -> void {
     // TODO: Figure out a way to make this meaningful. We'll need some way to
     // name cross-reference IRs, perhaps by the node ID of the import?
-    out_ << " " << node.ir_id << "." << node.node_id;
+    out_ << " " << node.ir_id << "." << node.inst_id;
   }
 
   auto FormatInstructionRHS(SpliceBlock node) -> void {
@@ -796,7 +796,7 @@ class Formatter {
   }
 
   // StructTypeFields are formatted as part of their StructType.
-  auto FormatInstruction(NodeId /*node_id*/, StructTypeField /*node*/) -> void {
+  auto FormatInstruction(InstId /*inst_id*/, StructTypeField /*node*/) -> void {
   }
 
   auto FormatInstructionRHS(StructType node) -> void {
@@ -841,14 +841,14 @@ class Formatter {
     out_ << '}';
   }
 
-  auto FormatArg(NodeId id) -> void { FormatNodeName(id); }
+  auto FormatArg(InstId id) -> void { FormatNodeName(id); }
 
-  auto FormatArg(NodeBlockId id) -> void {
+  auto FormatArg(InstBlockId id) -> void {
     out_ << '(';
     llvm::ListSeparator sep;
-    for (auto node_id : sem_ir_.node_blocks().Get(id)) {
+    for (auto inst_id : sem_ir_.node_blocks().Get(id)) {
       out_ << sep;
-      FormatArg(node_id);
+      FormatArg(inst_id);
     }
     out_ << ')';
   }
@@ -878,16 +878,16 @@ class Formatter {
     out_ << ')';
   }
 
-  auto FormatReturnSlot(NodeId dest_id) -> void {
+  auto FormatReturnSlot(InstId dest_id) -> void {
     out_ << " to ";
     FormatArg(dest_id);
   }
 
-  auto FormatNodeName(NodeId id) -> void {
+  auto FormatNodeName(InstId id) -> void {
     out_ << node_namer_.GetNameFor(scope_, id);
   }
 
-  auto FormatLabel(NodeBlockId id) -> void {
+  auto FormatLabel(InstBlockId id) -> void {
     out_ << node_namer_.GetLabelFor(scope_, id);
   }
 

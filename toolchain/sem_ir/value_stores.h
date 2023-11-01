@@ -19,19 +19,19 @@ class NodeStore {
   // that this doesn't add the node to any node block. Check::Context::AddNode
   // or NodeBlockStack::AddNode should usually be used instead, to add the node
   // to the current block.
-  auto AddInNoBlock(Node node) -> NodeId { return values_.Add(node); }
+  auto AddInNoBlock(Node node) -> InstId { return values_.Add(node); }
 
   // Returns the requested node.
-  auto Get(NodeId node_id) const -> Node { return values_.Get(node_id); }
+  auto Get(InstId inst_id) const -> Node { return values_.Get(inst_id); }
 
   // Returns the requested node, which is known to have the specified type.
   template <typename NodeT>
-  auto GetAs(NodeId node_id) const -> NodeT {
-    return Get(node_id).As<NodeT>();
+  auto GetAs(InstId inst_id) const -> NodeT {
+    return Get(inst_id).As<NodeT>();
   }
 
   // Overwrites a given node with a new value.
-  auto Set(NodeId node_id, Node node) -> void { values_.Get(node_id) = node; }
+  auto Set(InstId inst_id, Node node) -> void { values_.Get(inst_id) = node; }
 
   // Reserves space.
   auto Reserve(size_t size) -> void { values_.Reserve(size); }
@@ -40,7 +40,7 @@ class NodeStore {
   auto size() const -> int { return values_.size(); }
 
  private:
-  ValueStore<NodeId, Node> values_;
+  ValueStore<InstId, Node> values_;
 };
 
 // Provides a ValueStore wrapper for an API specific to name scopes.
@@ -51,19 +51,19 @@ class NameScopeStore {
 
   // Adds an entry to a name scope. Returns true on success, false on
   // duplicates.
-  auto AddEntry(NameScopeId scope_id, StringId name_id, NodeId target_id)
+  auto AddEntry(NameScopeId scope_id, StringId name_id, InstId target_id)
       -> bool {
     return values_.Get(scope_id).insert({name_id, target_id}).second;
   }
 
   // Returns the requested name scope.
   auto Get(NameScopeId scope_id) const
-      -> const llvm::DenseMap<StringId, NodeId>& {
+      -> const llvm::DenseMap<StringId, InstId>& {
     return values_.Get(scope_id);
   }
 
  private:
-  ValueStore<NameScopeId, llvm::DenseMap<StringId, NodeId>> values_;
+  ValueStore<NameScopeId, llvm::DenseMap<StringId, InstId>> values_;
 };
 
 // Provides a block-based ValueStore, which uses slab allocation of added
@@ -109,15 +109,15 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
  protected:
   // Reserves and returns a block ID. The contents of the block
   // should be specified by calling Set, or similar.
-  auto AddDefaultValue() -> NodeBlockId { return values_.AddDefaultValue(); }
+  auto AddDefaultValue() -> InstBlockId { return values_.AddDefaultValue(); }
 
   // Adds an uninitialized block of the given size.
-  auto AddUninitialized(size_t size) -> NodeBlockId {
+  auto AddUninitialized(size_t size) -> InstBlockId {
     return values_.Add(AllocateUninitialized(size));
   }
 
   // Sets the contents of an empty block to the given content.
-  auto Set(NodeBlockId block_id, llvm::ArrayRef<NodeId> content) -> void {
+  auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
     CARBON_CHECK(Get(block_id).empty())
         << "node block content set more than once";
     values_.Get(block_id) = AllocateCopy(content);
@@ -148,17 +148,17 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
 };
 
 // Adapts BlockValueStore for node blocks.
-class NodeBlockStore : public BlockValueStore<NodeBlockId, NodeId> {
+class NodeBlockStore : public BlockValueStore<InstBlockId, InstId> {
  public:
-  using BaseType = BlockValueStore<NodeBlockId, NodeId>;
+  using BaseType = BlockValueStore<InstBlockId, InstId>;
 
   using BaseType::AddDefaultValue;
   using BaseType::AddUninitialized;
   using BaseType::BaseType;
 
-  auto Set(NodeBlockId block_id, llvm::ArrayRef<NodeId> content) -> void {
-    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
-    BlockValueStore<NodeBlockId, NodeId>::Set(block_id, content);
+  auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
+    CARBON_CHECK(block_id != InstBlockId::Unreachable);
+    BlockValueStore<InstBlockId, InstId>::Set(block_id, content);
   }
 };
 

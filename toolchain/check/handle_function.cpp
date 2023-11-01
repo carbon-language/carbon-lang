@@ -12,7 +12,7 @@ namespace Carbon::Check {
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
 static auto BuildFunctionDeclaration(Context& context, bool is_definition)
-    -> std::pair<SemIR::FunctionId, SemIR::NodeId> {
+    -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   // TODO: This contains the IR block for the parameters and return type. At
   // present, it's just loose, but it's not strictly required for parameter
   // refs; we should either stop constructing it completely or, if it turns out
@@ -23,7 +23,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   context.node_block_stack().Pop();
 
   auto return_type_id = SemIR::TypeId::Invalid;
-  auto return_slot_id = SemIR::NodeId::Invalid;
+  auto return_slot_id = SemIR::InstId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       Parse::NodeKind::ReturnType) {
     auto [return_node, return_storage_id] =
@@ -49,12 +49,12 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
     }
   }
 
-  SemIR::NodeBlockId param_refs_id =
+  SemIR::InstBlockId param_refs_id =
       context.node_stack().Pop<Parse::NodeKind::ParameterList>();
-  SemIR::NodeBlockId implicit_param_refs_id =
+  SemIR::InstBlockId implicit_param_refs_id =
       context.node_stack()
           .PopIf<Parse::NodeKind::ImplicitParameterList>()
-          .value_or(SemIR::NodeBlockId::Empty);
+          .value_or(SemIR::InstBlockId::Empty);
   auto name_context = context.declaration_name_stack().Pop();
   auto fn_node =
       context.node_stack()
@@ -189,7 +189,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   context.AddCurrentCodeBlockToFunction();
 
   // Bring the implicit and explicit parameters into scope.
-  for (auto param_id : llvm::concat<SemIR::NodeId>(
+  for (auto param_id : llvm::concat<SemIR::InstId>(
            context.node_blocks().Get(function.implicit_param_refs_id),
            context.node_blocks().Get(function.param_refs_id))) {
     auto param = context.nodes().Get(param_id);

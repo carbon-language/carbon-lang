@@ -19,7 +19,7 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
 }
 
 static auto BuildClassDeclaration(Context& context)
-    -> std::tuple<SemIR::ClassId, SemIR::NodeId> {
+    -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.declaration_name_stack().Pop();
   auto class_keyword =
       context.node_stack()

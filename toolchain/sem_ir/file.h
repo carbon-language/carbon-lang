@@ -39,11 +39,11 @@ struct Function : public Printable<Function> {
   StringId name_id;
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDeclaration.
-  NodeId definition_id = NodeId::Invalid;
+  InstId definition_id = InstId::Invalid;
   // A block containing a single reference node per implicit parameter.
-  NodeBlockId implicit_param_refs_id;
+  InstBlockId implicit_param_refs_id;
   // A block containing a single reference node per parameter.
-  NodeBlockId param_refs_id;
+  InstBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   TypeId return_type_id;
   // The storage for the return value, which is a reference expression whose
@@ -51,11 +51,11 @@ struct Function : public Printable<Function> {
   // doesn't have a return slot. If this is valid, a call to the function is
   // expected to have an additional final argument corresponding to the return
   // slot.
-  NodeId return_slot_id;
+  InstId return_slot_id;
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
-  llvm::SmallVector<NodeBlockId> body_block_ids = {};
+  llvm::SmallVector<InstBlockId> body_block_ids = {};
 };
 
 // A class.
@@ -77,17 +77,17 @@ struct Class : public Printable<Class> {
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDeclaration.
-  NodeId declaration_id = NodeId::Invalid;
+  InstId declaration_id = InstId::Invalid;
 
   // The following members are set at the `{` of the class definition.
 
   // The definition of the class. This is a ClassDeclaration.
-  NodeId definition_id = NodeId::Invalid;
+  InstId definition_id = InstId::Invalid;
   // The class scope.
   NameScopeId scope_id = NameScopeId::Invalid;
   // The first block of the class body.
   // TODO: Handle control flow in the class body, such as if-expressions.
-  NodeBlockId body_block_id = NodeBlockId::Invalid;
+  InstBlockId body_block_id = InstBlockId::Invalid;
 
   // The following members are set at the `}` of the class definition.
 
@@ -153,7 +153,7 @@ struct TypeInfo : public Printable<TypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
   // The node that defines this type.
-  NodeId node_id;
+  InstId inst_id;
   // The value representation for this type. Will be `Unknown` if the type is
   // not complete.
   ValueRepresentation value_representation = ValueRepresentation();
@@ -184,7 +184,7 @@ class File : public Printable<File> {
   auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
 
   // Returns array bound value from the bound node.
-  auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
+  auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
     return integers()
         .Get(nodes().GetAs<IntegerLiteral>(bound_id).integer_id)
         .getZExtValue();
@@ -209,15 +209,15 @@ class File : public Printable<File> {
     complete_types_.push_back(object_type_id);
   }
 
-  auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> NodeId {
+  auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> InstId {
     if (type_id == TypeId::TypeType) {
-      return NodeId::BuiltinTypeType;
+      return InstId::BuiltinTypeType;
     } else if (type_id == TypeId::Error) {
-      return NodeId::BuiltinError;
+      return InstId::BuiltinError;
     } else if (type_id == TypeId::Invalid) {
-      return NodeId::Invalid;
+      return InstId::Invalid;
     } else {
-      return types().Get(type_id).node_id;
+      return types().Get(type_id).inst_id;
     }
   }
 
@@ -240,7 +240,7 @@ class File : public Printable<File> {
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
     return nodes()
-        .GetAs<PointerType>(types().Get(pointer_id).node_id)
+        .GetAs<PointerType>(types().Get(pointer_id).inst_id)
         .pointee_id;
   }
 
@@ -253,7 +253,7 @@ class File : public Printable<File> {
 
   // Same as `StringifyType`, but starting with a node representing a type
   // expression rather than a canonical type.
-  auto StringifyTypeExpression(NodeId outer_node_id,
+  auto StringifyTypeExpression(InstId outer_inst_id,
                                bool in_type_context = false) const
       -> std::string;
 
@@ -301,8 +301,8 @@ class File : public Printable<File> {
     return complete_types_;
   }
 
-  auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
-  auto set_top_node_block_id(NodeBlockId block_id) -> void {
+  auto top_node_block_id() const -> InstBlockId { return top_node_block_id_; }
+  auto set_top_node_block_id(InstBlockId block_id) -> void {
     top_node_block_id_ = block_id;
   }
 
@@ -358,7 +358,7 @@ class File : public Printable<File> {
   NodeBlockStore node_blocks_;
 
   // The top node block ID.
-  NodeBlockId top_node_block_id_ = NodeBlockId::Invalid;
+  InstBlockId top_node_block_id_ = InstBlockId::Invalid;
 };
 
 // The expression category of a semantics node. See /docs/design/values.md for
@@ -389,7 +389,7 @@ enum class ExpressionCategory : int8_t {
 };
 
 // Returns the expression category for a node.
-auto GetExpressionCategory(const File& file, NodeId node_id)
+auto GetExpressionCategory(const File& file, InstId inst_id)
     -> ExpressionCategory;
 
 // Returns information about the value representation to use for a type.

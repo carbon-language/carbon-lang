@@ -68,8 +68,8 @@ class Node : public Printable<Node> {
       : parse_node_(Parse::Node::Invalid),
         kind_(TypedNode::Kind),
         type_id_(TypeId::Invalid),
-        arg0_(NodeId::InvalidIndex),
-        arg1_(NodeId::InvalidIndex) {
+        arg0_(InstId::InvalidIndex),
+        arg1_(InstId::InvalidIndex) {
     if constexpr (HasParseNode<TypedNode>) {
       parse_node_ = typed_node.parse_node;
     }

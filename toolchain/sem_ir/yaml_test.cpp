@@ -41,7 +41,7 @@ TEST(SemIRTest, YAML) {
   // Matches the ID of a node. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.
   auto integer_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
-  auto node_id = Yaml::Scalar(MatchesRegex(R"(node\+\d+)"));
+  auto inst_id = Yaml::Scalar(MatchesRegex(R"(node\+\d+)"));
   auto node_builtin = Yaml::Scalar(MatchesRegex(R"(node\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
   auto type_builtin = Pair(
@@ -56,7 +56,7 @@ TEST(SemIRTest, YAML) {
       Pair("type_blocks", Yaml::Mapping(IsEmpty())),
       Pair("nodes",
            Yaml::Mapping(AllOf(
-               Each(Key(node_id)),
+               Each(Key(inst_id)),
                // kind is required, other parts are optional.
                Each(Pair(_, Yaml::Mapping(Contains(Pair("kind", _))))),
                // A 0-arg node.
@@ -70,14 +70,14 @@ TEST(SemIRTest, YAML) {
                // A 2-arg node.
                Contains(Pair(
                    _, Yaml::Mapping(ElementsAre(Pair("kind", "Assign"),
-                                                Pair("arg0", node_id),
-                                                Pair("arg1", node_id)))))))),
+                                                Pair("arg0", inst_id),
+                                                Pair("arg1", inst_id)))))))),
       // This production has only two node blocks.
       Pair("node_blocks",
            Yaml::Mapping(ElementsAre(
                Pair("block0", Yaml::Mapping(IsEmpty())),
-               Pair("block1", Yaml::Mapping(Each(Pair(_, node_id)))),
-               Pair("block2", Yaml::Mapping(Each(Pair(_, node_id)))))))));
+               Pair("block1", Yaml::Mapping(Each(Pair(_, inst_id)))),
+               Pair("block2", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));

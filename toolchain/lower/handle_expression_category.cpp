@@ -7,7 +7,7 @@
 
 namespace Carbon::Lower {
 
-auto HandleBindValue(FunctionContext& context, SemIR::NodeId node_id,
+auto HandleBindValue(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::BindValue node) -> void {
   switch (auto rep =
               SemIR::GetValueRepresentation(context.sem_ir(), node.type_id);
@@ -19,46 +19,46 @@ auto HandleBindValue(FunctionContext& context, SemIR::NodeId node_id,
       // Nothing should use this value, but StubReference needs a value to
       // propagate.
       // TODO: Remove this now the StubReferences are gone.
-      context.SetLocal(node_id,
+      context.SetLocal(inst_id,
                        llvm::PoisonValue::get(context.GetType(node.type_id)));
       break;
     case SemIR::ValueRepresentation::Copy:
-      context.SetLocal(node_id, context.builder().CreateLoad(
+      context.SetLocal(inst_id, context.builder().CreateLoad(
                                     context.GetType(node.type_id),
                                     context.GetLocal(node.value_id)));
       break;
     case SemIR::ValueRepresentation::Pointer:
-      context.SetLocal(node_id, context.GetLocal(node.value_id));
+      context.SetLocal(inst_id, context.GetLocal(node.value_id));
       break;
     case SemIR::ValueRepresentation::Custom:
       CARBON_FATAL() << "TODO: Add support for BindValue with custom value rep";
   }
 }
 
-auto HandleTemporary(FunctionContext& context, SemIR::NodeId node_id,
+auto HandleTemporary(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::Temporary node) -> void {
   context.FinishInitialization(node.type_id, node.storage_id, node.init_id);
-  context.SetLocal(node_id, context.GetLocal(node.storage_id));
+  context.SetLocal(inst_id, context.GetLocal(node.storage_id));
 }
 
-auto HandleTemporaryStorage(FunctionContext& context, SemIR::NodeId node_id,
+auto HandleTemporaryStorage(FunctionContext& context, SemIR::InstId inst_id,
                             SemIR::TemporaryStorage node) -> void {
-  context.SetLocal(node_id,
+  context.SetLocal(inst_id,
                    context.builder().CreateAlloca(context.GetType(node.type_id),
                                                   nullptr, "temp"));
 }
 
-auto HandleValueAsReference(FunctionContext& context, SemIR::NodeId node_id,
+auto HandleValueAsReference(FunctionContext& context, SemIR::InstId inst_id,
                             SemIR::ValueAsReference node) -> void {
   CARBON_CHECK(SemIR::GetExpressionCategory(context.sem_ir(), node.value_id) ==
                SemIR::ExpressionCategory::Value);
   CARBON_CHECK(
       SemIR::GetValueRepresentation(context.sem_ir(), node.type_id).kind ==
       SemIR::ValueRepresentation::Pointer);
-  context.SetLocal(node_id, context.GetLocal(node.value_id));
+  context.SetLocal(inst_id, context.GetLocal(node.value_id));
 }
 
-auto HandleValueOfInitializer(FunctionContext& context, SemIR::NodeId node_id,
+auto HandleValueOfInitializer(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::ValueOfInitializer node) -> void {
   CARBON_CHECK(SemIR::GetExpressionCategory(context.sem_ir(), node.init_id) ==
                SemIR::ExpressionCategory::Initializing);
@@ -68,7 +68,7 @@ auto HandleValueOfInitializer(FunctionContext& context, SemIR::NodeId node_id,
   CARBON_CHECK(
       SemIR::GetInitializingRepresentation(context.sem_ir(), node.type_id)
           .kind == SemIR::InitializingRepresentation::ByCopy);
-  context.SetLocal(node_id, context.GetLocal(node.init_id));
+  context.SetLocal(inst_id, context.GetLocal(node.init_id));
 }
 
 }  // namespace Carbon::Lower

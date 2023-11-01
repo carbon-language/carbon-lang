@@ -58,7 +58,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
           !ValidateIntegerLiteralBound(
               context, parse_node, operand_node, *index_literal,
               context.sem_ir().GetArrayBoundValue(array_type.bound_id))) {
-        index_node_id = SemIR::NodeId::BuiltinError;
+        index_node_id = SemIR::InstId::BuiltinError;
       }
       auto cast_index_id = ConvertToValueOfType(
           context, index_node.parse_node(), index_node_id,
@@ -94,13 +94,13 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
                 type_block.size())) {
           element_type_id = type_block[index_val->getZExtValue()];
         } else {
-          index_node_id = SemIR::NodeId::BuiltinError;
+          index_node_id = SemIR::InstId::BuiltinError;
         }
       } else if (index_node.type_id() != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(TupleIndexIntegerLiteral, Error,
                           "Tuples indices must be integer literals.");
         context.emitter().Emit(parse_node, TupleIndexIntegerLiteral);
-        index_node_id = SemIR::NodeId::BuiltinError;
+        index_node_id = SemIR::InstId::BuiltinError;
       }
       context.AddNodeAndPush(parse_node,
                              SemIR::TupleIndex{parse_node, element_type_id,
@@ -114,7 +114,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
         context.emitter().Emit(parse_node, TypeNotIndexable,
                                context.sem_ir().StringifyType(operand_type_id));
       }
-      context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+      context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
       return true;
     }
   }

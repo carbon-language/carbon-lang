@@ -11,7 +11,7 @@ namespace Carbon::Check {
 auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
   // Handle the optional initializer.
-  auto init_id = SemIR::NodeId::Invalid;
+  auto init_id = SemIR::InstId::Invalid;
   bool has_init =
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
       Parse::NodeKind::PatternBinding;

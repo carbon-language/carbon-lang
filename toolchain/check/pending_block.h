@@ -39,7 +39,7 @@ class PendingBlock {
     size_t size_;
   };
 
-  auto AddNode(SemIR::Node node) -> SemIR::NodeId {
+  auto AddNode(SemIR::Node node) -> SemIR::InstId {
     auto node_id = context_.nodes().AddInNoBlock(node);
     nodes_.push_back(node_id);
     return node_id;
@@ -48,14 +48,14 @@ class PendingBlock {
   // Insert the pending block of code at the current position.
   auto InsertHere() -> void {
     for (auto id : nodes_) {
-      context_.node_block_stack().AddNodeId(id);
+      context_.node_block_stack().AddInstId(id);
     }
     nodes_.clear();
   }
 
   // Replace the node at target_id with the nodes in this block. The new value
   // for target_id should be value_id.
-  auto MergeReplacing(SemIR::NodeId target_id, SemIR::NodeId value_id) -> void {
+  auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
     auto value = context_.nodes().Get(value_id);
 
     // There are three cases here:
@@ -65,7 +65,7 @@ class PendingBlock {
       // pointing at `value_id`.
       context_.nodes().Set(
           target_id, SemIR::SpliceBlock{value.parse_node(), value.type_id(),
-                                        SemIR::NodeBlockId::Empty, value_id});
+                                        SemIR::InstBlockId::Empty, value_id});
     } else if (nodes_.size() == 1 && nodes_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the node referred
       // to by `value_id`. This is intended to be the common case.
@@ -84,7 +84,7 @@ class PendingBlock {
 
  private:
   Context& context_;
-  llvm::SmallVector<SemIR::NodeId> nodes_;
+  llvm::SmallVector<SemIR::InstId> nodes_;
 };
 
 }  // namespace Carbon::Check

@@ -77,7 +77,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
-      SemIR::NodeId value_id = SemIR::NodeId::Invalid;
+      SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
       if (enclosing_class_decl) {
         auto& class_info =
@@ -132,7 +132,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack().Push(
           parse_node,
           context.nodes().AddInNoBlock(SemIR::BindName{
-              name_node, cast_type_id, name_id, SemIR::NodeId::Invalid}));
+              name_node, cast_type_id, name_id, SemIR::InstId::Invalid}));
       break;
 
     default:

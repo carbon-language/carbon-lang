@@ -85,7 +85,7 @@ class DeclarationNameStack {
     union {
       // The ID of a resolved qualifier, including both identifiers and
       // expressions. Invalid indicates resolution failed.
-      SemIR::NodeId resolved_node_id = SemIR::NodeId::Invalid;
+      SemIR::InstId resolved_node_id = SemIR::InstId::Invalid;
 
       // The ID of an unresolved identifier.
       StringId unresolved_name_id;
@@ -115,13 +115,13 @@ class DeclarationNameStack {
   auto ApplyNameQualifier(Parse::Node parse_node, StringId name_id) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(NameContext name_context, SemIR::NodeId target_id)
+  auto AddNameToLookup(NameContext name_context, SemIR::InstId target_id)
       -> void;
 
   // Adds a name to name lookup, or returns the existing node if this name has
   // already been declared in this scope.
-  auto LookupOrAddName(NameContext name_context, SemIR::NodeId target_id)
-      -> SemIR::NodeId;
+  auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id)
+      -> SemIR::InstId;
 
  private:
   // Returns a name context corresponding to an empty name.

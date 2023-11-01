@@ -11,7 +11,7 @@
 
 namespace Carbon::Check {
 
-auto NodeBlockStack::Push(SemIR::NodeBlockId id) -> void {
+auto NodeBlockStack::Push(SemIR::InstBlockId id) -> void {
   CARBON_VLOG() << name_ << " Push " << size_ << "\n";
   CARBON_CHECK(size_ < (1 << 20))
       << "Excessive stack size: likely infinite loop";
@@ -22,7 +22,7 @@ auto NodeBlockStack::Push(SemIR::NodeBlockId id) -> void {
   ++size_;
 }
 
-auto NodeBlockStack::PeekOrAdd(int depth) -> SemIR::NodeBlockId {
+auto NodeBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
   CARBON_CHECK(size() > depth) << "no such block";
   int index = size() - depth - 1;
   auto& slot = stack_[index];
@@ -32,13 +32,13 @@ auto NodeBlockStack::PeekOrAdd(int depth) -> SemIR::NodeBlockId {
   return slot.id;
 }
 
-auto NodeBlockStack::Pop() -> SemIR::NodeBlockId {
+auto NodeBlockStack::Pop() -> SemIR::InstBlockId {
   CARBON_CHECK(!empty()) << "no current block";
   --size_;
   auto& back = stack_[size_];
 
   // Finalize the block.
-  if (!back.content.empty() && back.id != SemIR::NodeBlockId::Unreachable) {
+  if (!back.content.empty() && back.id != SemIR::InstBlockId::Unreachable) {
     if (back.id.is_valid()) {
       sem_ir_->node_blocks().Set(back.id, back.content);
     } else {
@@ -48,7 +48,7 @@ auto NodeBlockStack::Pop() -> SemIR::NodeBlockId {
 
   CARBON_VLOG() << name_ << " Pop " << size_ << ": " << back.id << "\n";
   if (!back.id.is_valid()) {
-    return SemIR::NodeBlockId::Empty;
+    return SemIR::InstBlockId::Empty;
   }
   return back.id;
 }

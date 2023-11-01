@@ -30,13 +30,13 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
           call_expr_parse_node, CallToNonCallable,
           context.sem_ir().StringifyType(callee_type_id, true));
     }
-    context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   };
 
   // For a method call, pick out the `self` value.
   auto function_callee_id = callee_id;
-  SemIR::NodeId self_id = SemIR::NodeId::Invalid;
+  SemIR::InstId self_id = SemIR::InstId::Invalid;
   if (auto bound_method =
           context.nodes().Get(callee_id).TryAs<SemIR::BoundMethod>()) {
     self_id = bound_method->object_id;
@@ -64,7 +64,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   }
 
   // If there is a return slot, build storage for the result.
-  SemIR::NodeId return_storage_id = SemIR::NodeId::Invalid;
+  SemIR::InstId return_storage_id = SemIR::InstId::Invalid;
   if (callable.return_slot_id.is_valid()) {
     // Tentatively put storage for a temporary in the function's return slot.
     // This will be replaced if necessary when we perform initialization.

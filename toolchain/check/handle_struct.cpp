@@ -94,7 +94,7 @@ auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   // This is only used for value literals.
   context.args_type_info_stack().Pop();
 
-  CARBON_CHECK(refs_id != SemIR::NodeBlockId::Empty)
+  CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
   context.AddNodeAndPush(

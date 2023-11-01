@@ -24,49 +24,49 @@ class NodeBlockStack {
       : name_(name), sem_ir_(&sem_ir), vlog_stream_(vlog_stream) {}
 
   // Pushes an existing node block.
-  auto Push(SemIR::NodeBlockId id) -> void;
+  auto Push(SemIR::InstBlockId id) -> void;
 
   // Pushes a new node block. It will be invalid unless PeekOrAdd is called in
   // order to support lazy allocation.
-  auto Push() -> void { Push(SemIR::NodeBlockId::Invalid); }
+  auto Push() -> void { Push(SemIR::InstBlockId::Invalid); }
 
   // Pushes a new unreachable code block.
-  auto PushUnreachable() -> void { Push(SemIR::NodeBlockId::Unreachable); }
+  auto PushUnreachable() -> void { Push(SemIR::InstBlockId::Unreachable); }
 
   // Returns the ID of the top node block, allocating one if necessary. If
   // `depth` is specified, returns the node at `depth` levels from the top of
   // the stack instead of the top block, where the top block is at depth 0.
-  auto PeekOrAdd(int depth = 0) -> SemIR::NodeBlockId;
+  auto PeekOrAdd(int depth = 0) -> SemIR::InstBlockId;
 
   // Pops the top node block. This will always return a valid node block;
-  // SemIR::NodeBlockId::Empty is returned if one wasn't allocated.
-  auto Pop() -> SemIR::NodeBlockId;
+  // SemIR::InstBlockId::Empty is returned if one wasn't allocated.
+  auto Pop() -> SemIR::InstBlockId;
 
   // Pops the top node block, and discards it if it hasn't had an ID allocated.
   auto PopAndDiscard() -> void;
 
   // Adds the given node to the block at the top of the stack and returns its
   // ID.
-  auto AddNode(SemIR::Node node) -> SemIR::NodeId {
-    auto node_id = sem_ir_->nodes().AddInNoBlock(node);
-    AddNodeId(node_id);
-    return node_id;
+  auto AddNode(SemIR::Node node) -> SemIR::InstId {
+    auto inst_id = sem_ir_->nodes().AddInNoBlock(node);
+    AddInstId(inst_id);
+    return inst_id;
   }
 
   // Adds the given node ID to the block at the top of the stack.
-  auto AddNodeId(SemIR::NodeId node_id) -> void {
+  auto AddInstId(SemIR::InstId inst_id) -> void {
     CARBON_CHECK(!empty()) << "no current block";
-    stack_[size_ - 1].content.push_back(node_id);
+    stack_[size_ - 1].content.push_back(inst_id);
   }
 
   // Returns whether the current block is statically reachable.
   auto is_current_block_reachable() -> bool {
     return size_ != 0 &&
-           stack_[size_ - 1].id != SemIR::NodeBlockId::Unreachable;
+           stack_[size_ - 1].id != SemIR::InstBlockId::Unreachable;
   }
 
   // Returns a view of the contents of the top node block on the stack.
-  auto PeekCurrentBlockContents() -> llvm::ArrayRef<SemIR::NodeId> {
+  auto PeekCurrentBlockContents() -> llvm::ArrayRef<SemIR::InstId> {
     CARBON_CHECK(!empty()) << "no current block";
     return stack_[size_ - 1].content;
   }
@@ -84,18 +84,18 @@ class NodeBlockStack {
     // reallocation.
     StackEntry() { content.reserve(32); }
 
-    auto Reset(SemIR::NodeBlockId new_id) {
+    auto Reset(SemIR::InstBlockId new_id) {
       id = new_id;
       content.clear();
     }
 
     // The block ID, if one has been allocated, Invalid if no block has been
     // allocated, or Unreachable if this block is known to be unreachable.
-    SemIR::NodeBlockId id = SemIR::NodeBlockId::Invalid;
+    SemIR::InstBlockId id = SemIR::InstBlockId::Invalid;
 
     // The content of the block. Stored as a vector rather than as a SmallVector
     // to reduce the cost of resizing `stack_` and performing swaps.
-    std::vector<SemIR::NodeId> content;
+    std::vector<SemIR::InstId> content;
   };
 
   // A name for debugging.

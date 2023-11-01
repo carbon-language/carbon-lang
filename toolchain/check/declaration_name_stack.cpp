@@ -43,12 +43,12 @@ auto DeclarationNameStack::Pop() -> NameContext {
 }
 
 auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
-                                           SemIR::NodeId target_id)
-    -> SemIR::NodeId {
+                                           SemIR::InstId target_id)
+    -> SemIR::InstId {
   switch (name_context.state) {
     case NameContext::State::Error:
       // The name is invalid and a diagnostic has already been emitted.
-      return SemIR::NodeId::Invalid;
+      return SemIR::InstId::Invalid;
 
     case NameContext::State::Empty:
       CARBON_FATAL() << "Name is missing, not expected to call AddNameToLookup "
@@ -73,12 +73,12 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
             << name_context.unresolved_name_id << " in "
             << name_context.target_scope_id;
       }
-      return SemIR::NodeId::Invalid;
+      return SemIR::InstId::Invalid;
   }
 }
 
 auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
-                                           SemIR::NodeId target_id) -> void {
+                                           SemIR::InstId target_id) -> void {
   auto existing_node_id = LookupOrAddName(name_context, target_id);
   if (existing_node_id.is_valid()) {
     context_->DiagnoseDuplicateName(name_context.parse_node, existing_node_id);
@@ -103,7 +103,7 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
     auto resolved_node_id = context_->LookupName(
         name_context.parse_node, name_id, name_context.target_scope_id,
         /*print_diagnostics=*/false);
-    if (resolved_node_id == SemIR::NodeId::BuiltinError) {
+    if (resolved_node_id == SemIR::InstId::BuiltinError) {
       // Invalid indicates an unresolved node. Store it and return.
       name_context.state = NameContext::State::Unresolved;
       name_context.unresolved_name_id = name_id;

@@ -10,7 +10,7 @@ namespace Carbon::Check {
 
 // TODO: Find a better home for this. We'll likely need it for more than just
 // expression statements.
-static auto HandleDiscardedExpression(Context& context, SemIR::NodeId expr_id)
+static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
     -> void {
   // If we discard an initializing expression, convert it to a value or
   // reference so that it has something to initialize.

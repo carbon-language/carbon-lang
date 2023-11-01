@@ -49,7 +49,7 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
   }
   CARBON_DIAGNOSTIC(InvalidArrayExpression, Error, "Invalid array expression.");
   context.emitter().Emit(parse_node, InvalidArrayExpression);
-  context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+  context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
   return true;
 }
 

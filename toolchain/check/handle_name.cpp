@@ -12,7 +12,7 @@ namespace Carbon::Check {
 
 // Returns the name scope corresponding to base_id, or nullopt if not a scope.
 // On invalid scopes, prints a diagnostic and still returns the scope.
-static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
+static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
     -> std::optional<SemIR::NameScopeId> {
   auto base = context.nodes().Get(context.FollowNameReferences(base_id));
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
@@ -47,7 +47,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     auto node_id = name_scope_id->is_valid()
                        ? context.LookupName(parse_node, name_id, *name_scope_id,
                                             /*print_diagnostics=*/true)
-                       : SemIR::NodeId::BuiltinError;
+                       : SemIR::InstId::BuiltinError;
     auto node = context.nodes().Get(node_id);
     // TODO: Track that this node was named within `base_id`.
     context.AddNodeAndPush(
@@ -67,7 +67,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
             IncompleteTypeInMemberAccess,
             context.sem_ir().StringifyType(base_type_id, true));
       })) {
-    context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   }
 
@@ -186,7 +186,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
   }
 
   // Should only be reached on error.
-  context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+  context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
   return true;
 }
 
