@@ -23,7 +23,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:node",
+        "//toolchain/sem_ir:inst",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -66,8 +66,8 @@ cc_library(
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
-        "//toolchain/sem_ir:node",
         "@llvm-project//llvm:Support",
     ],
 )

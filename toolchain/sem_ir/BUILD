@@ -43,9 +43,9 @@ cc_library(
 )
 
 cc_library(
-    name = "node",
-    srcs = ["node.cpp"],
-    hdrs = ["node.h"],
+    name = "inst",
+    srcs = ["inst.cpp"],
+    hdrs = ["inst.h"],
     deps = [
         ":builtin_kind",
         ":inst_kind",
@@ -64,8 +64,8 @@ cc_library(
     hdrs = ["file.h"],
     deps = [
         ":builtin_kind",
+        ":inst",
         ":inst_kind",
-        ":node",
         ":value_stores",
         "//common:check",
         "//toolchain/base:value_store",
@@ -101,7 +101,7 @@ cc_library(
     name = "value_stores",
     hdrs = ["value_stores.h"],
     deps = [
-        ":node",
+        ":inst",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "@llvm-project//llvm:Support",
@@ -113,8 +113,8 @@ cc_test(
     size = "small",
     srcs = ["typed_insts_test.cpp"],
     deps = [
+        ":inst",
         ":inst_kind",
-        ":node",
         "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],

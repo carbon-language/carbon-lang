@@ -11,7 +11,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 

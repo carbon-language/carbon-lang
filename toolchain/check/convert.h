@@ -8,7 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/pending_block.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 

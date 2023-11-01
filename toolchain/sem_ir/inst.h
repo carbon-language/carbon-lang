@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_NODE_H_
-#define CARBON_TOOLCHAIN_SEM_IR_NODE_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_INST_H_
+#define CARBON_TOOLCHAIN_SEM_IR_INST_H_
 
 #include <cstdint>
 
@@ -195,4 +195,4 @@ inline llvm::raw_ostream& operator<<(llvm::raw_ostream& out, TypedInst node) {
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_NODE_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_

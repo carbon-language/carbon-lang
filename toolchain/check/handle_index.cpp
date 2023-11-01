@@ -5,8 +5,8 @@
 #include "llvm/ADT/APSInt.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
-#include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {
 

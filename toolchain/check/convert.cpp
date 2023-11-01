@@ -13,8 +13,8 @@
 #include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
-#include "toolchain/sem_ir/node.h"
 
 namespace Carbon::Check {
 

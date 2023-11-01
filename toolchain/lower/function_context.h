@@ -10,7 +10,7 @@
 #include "llvm/IR/Module.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Lower {
 
