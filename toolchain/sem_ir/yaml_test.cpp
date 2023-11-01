@@ -38,14 +38,14 @@ TEST(SemIRTest, YAML) {
   d.RunCommand(
       {"compile", "--phase=check", "--dump-raw-sem-ir", "test.carbon"});
 
-  // Matches the ID of a node. The numbers may change because of builtin
+  // Matches the ID of a inst. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.
   auto integer_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
-  auto inst_id = Yaml::Scalar(MatchesRegex(R"(node\+\d+)"));
-  auto node_builtin = Yaml::Scalar(MatchesRegex(R"(node\w+)"));
+  auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
+  auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
   auto type_builtin = Pair(
-      type_id, Yaml::Mapping(ElementsAre(Pair("node", node_builtin),
+      type_id, Yaml::Mapping(ElementsAre(Pair("node", inst_builtin),
                                          Pair("value_rep", Yaml::Mapping(_)))));
 
   auto file = Yaml::Mapping(ElementsAre(
@@ -59,20 +59,20 @@ TEST(SemIRTest, YAML) {
                Each(Key(inst_id)),
                // kind is required, other parts are optional.
                Each(Pair(_, Yaml::Mapping(Contains(Pair("kind", _))))),
-               // A 0-arg node.
+               // A 0-arg inst.
                Contains(
                    Pair(_, Yaml::Mapping(ElementsAre(Pair("kind", "Return"))))),
-               // A 1-arg node.
+               // A 1-arg inst.
                Contains(Pair(
                    _, Yaml::Mapping(ElementsAre(Pair("kind", "IntegerLiteral"),
                                                 Pair("arg0", integer_id),
                                                 Pair("type", type_id))))),
-               // A 2-arg node.
+               // A 2-arg inst.
                Contains(Pair(
                    _, Yaml::Mapping(ElementsAre(Pair("kind", "Assign"),
                                                 Pair("arg0", inst_id),
                                                 Pair("arg1", inst_id)))))))),
-      // This production has only two node blocks.
+      // This production has only two inst blocks.
       Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(
                Pair("block0", Yaml::Mapping(IsEmpty())),

@@ -14,16 +14,16 @@
 
 namespace Carbon::SemIR {
 
-// The ID of a node.
+// The ID of a inst.
 struct InstId : public IndexBase, public Printable<InstId> {
-  // An explicitly invalid node ID.
+  // An explicitly invalid inst ID.
   static const InstId Invalid;
 
-// Builtin node IDs.
+// Builtin inst IDs.
 #define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) static const InstId Builtin##Name;
 #include "toolchain/sem_ir/builtin_kind.def"
 
-  // Returns the cross-reference node ID for a builtin. This relies on File
+  // Returns the cross-reference inst ID for a builtin. This relies on File
   // guarantees for builtin cross-reference placement.
   static constexpr auto ForBuiltin(BuiltinKind kind) -> InstId {
     return InstId(kind.AsInt());
@@ -31,7 +31,7 @@ struct InstId : public IndexBase, public Printable<InstId> {
 
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "node";
+    out << "inst";
     if (!is_valid()) {
       IndexBase::Print(out);
     } else if (index < BuiltinKind::ValidCount) {
@@ -127,9 +127,9 @@ struct NameScopeId : public IndexBase, public Printable<NameScopeId> {
 constexpr NameScopeId NameScopeId::Invalid =
     NameScopeId(NameScopeId::InvalidIndex);
 
-// The ID of a node block.
+// The ID of a inst block.
 struct InstBlockId : public IndexBase, public Printable<InstBlockId> {
-  // All File instances must provide the 0th node block as empty.
+  // All File instances must provide the 0th inst block as empty.
   static const InstBlockId Empty;
 
   // An explicitly invalid ID.
@@ -155,7 +155,7 @@ constexpr InstBlockId InstBlockId::Invalid =
 constexpr InstBlockId InstBlockId::Unreachable =
     InstBlockId(InstBlockId::InvalidIndex - 1);
 
-// The ID of a node block.
+// The ID of a type.
 struct TypeId : public IndexBase, public Printable<TypeId> {
   // The builtin TypeType.
   static const TypeId TypeType;
