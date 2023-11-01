@@ -186,8 +186,8 @@ class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
   llvm::SmallVector<llvm::StringRef> values_;
 };
 
-// Stores that will be used across compiler steps. This is provided mainly so
-// that they don't need to be passed separately.
+// Stores that will be used across compiler phases for a given compilation unit.
+// This is provided mainly so that they don't need to be passed separately.
 class SharedValueStores : public Yaml::Printable<SharedValueStores> {
  public:
   auto integers() -> ValueStore<IntegerId>& { return integers_; }
@@ -197,8 +197,12 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   auto strings() -> ValueStore<StringId>& { return strings_; }
   auto strings() const -> const ValueStore<StringId>& { return strings_; }
 
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+  auto OutputYaml(std::optional<llvm::StringRef> filename = std::nullopt) const
+      -> Yaml::OutputMapping {
+    return Yaml::OutputMapping([&, filename](Yaml::OutputMapping::Map map) {
+      if (filename) {
+        map.Add("filename", *filename);
+      }
       map.Add("shared_values",
               Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                 map.Add("integers", integers_.OutputYaml());
