@@ -35,12 +35,12 @@ enum class TerminatorKind : int8_t {
   Terminator,
 };
 
-CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
+CARBON_DEFINE_RAW_ENUM_CLASS(InstKind, uint8_t) {
 #define CARBON_SEM_IR_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/sem_ir/node_kind.def"
 };
 
-class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
+class InstKind : public CARBON_ENUM_BASE(InstKind) {
  public:
 #define CARBON_SEM_IR_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/sem_ir/node_kind.def"
@@ -78,18 +78,18 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 };
 
 #define CARBON_SEM_IR_NODE_KIND(Name) \
-  CARBON_ENUM_CONSTANT_DEFINITION(NodeKind, Name)
+  CARBON_ENUM_CONSTANT_DEFINITION(InstKind, Name)
 #include "toolchain/sem_ir/node_kind.def"
 
 // We expect the node kind to fit compactly into 8 bits.
-static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
+static_assert(sizeof(InstKind) == 1, "Kind objects include padding!");
 
-// A definition of a node kind. This is a NodeKind value, plus ancillary data
+// A definition of a node kind. This is a InstKind value, plus ancillary data
 // such as the name to use for the node kind in LLVM IR. These are not
 // copyable, and only one instance of this type is expected to exist per node
-// kind, specifically `TypedInst::Kind`. Use `NodeKind` instead as a thin
+// kind, specifically `TypedInst::Kind`. Use `InstKind` instead as a thin
 // wrapper around a node kind index.
-class NodeKind::Definition : public NodeKind {
+class InstKind::Definition : public InstKind {
  public:
   // Returns the name to use for this node kind in Semantics IR.
   [[nodiscard]] constexpr auto ir_name() const -> llvm::StringLiteral {
@@ -97,17 +97,17 @@ class NodeKind::Definition : public NodeKind {
   }
 
   // Returns whether this node kind is a code block terminator. See
-  // NodeKind::terminator_kind().
+  // InstKind::terminator_kind().
   [[nodiscard]] constexpr auto terminator_kind() const -> TerminatorKind {
     return terminator_kind_;
   }
 
  private:
-  friend class NodeKind;
+  friend class InstKind;
 
-  constexpr Definition(NodeKind kind, llvm::StringLiteral ir_name,
+  constexpr Definition(InstKind kind, llvm::StringLiteral ir_name,
                        TerminatorKind terminator_kind)
-      : NodeKind(kind), ir_name_(ir_name), terminator_kind_(terminator_kind) {}
+      : InstKind(kind), ir_name_(ir_name), terminator_kind_(terminator_kind) {}
 
   // Not copyable.
   Definition(const Definition&) = delete;
@@ -117,7 +117,7 @@ class NodeKind::Definition : public NodeKind {
   TerminatorKind terminator_kind_;
 };
 
-constexpr auto NodeKind::Define(llvm::StringLiteral ir_name,
+constexpr auto InstKind::Define(llvm::StringLiteral ir_name,
                                 TerminatorKind terminator_kind) const
     -> Definition {
   return Definition(*this, ir_name, terminator_kind);

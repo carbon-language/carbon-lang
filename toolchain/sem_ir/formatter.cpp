@@ -350,10 +350,10 @@ class NodeNamer {
 
       case Parse::NodeKind::WhileCondition:
         switch (node.kind()) {
-          case NodeKind::BranchIf:
+          case InstKind::BranchIf:
             name = "while.body";
             break;
-          case NodeKind::Branch:
+          case InstKind::Branch:
             name = "while.done";
             break;
           default:

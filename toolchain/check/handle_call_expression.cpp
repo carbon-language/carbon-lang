@@ -17,7 +17,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
       [&] { context.params_or_args_stack().PopAndDiscard(); });
 
   auto [call_expr_parse_node, callee_id] =
-      context.node_stack()
+      context.lamp_stack()
           .PopWithParseNode<Parse::NodeKind::CallExpressionStart>();
 
   auto diagnose_not_callable = [&, call_expr_parse_node = call_expr_parse_node,
@@ -30,7 +30,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
           call_expr_parse_node, CallToNonCallable,
           context.sem_ir().StringifyType(callee_type_id, true));
     }
-    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   };
 
@@ -81,7 +81,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   SemIR::InstId call_inst_id = context.AddNode(
       SemIR::Call{call_expr_parse_node, type_id, callee_id, converted_args_id});
 
-  context.node_stack().Push(parse_node, call_inst_id);
+  context.lamp_stack().Push(parse_node, call_inst_id);
   return true;
 }
 
@@ -93,8 +93,8 @@ auto HandleCallExpressionComma(Context& context, Parse::Node /*parse_node*/)
 
 auto HandleCallExpressionStart(Context& context, Parse::Node parse_node)
     -> bool {
-  auto name_id = context.node_stack().PopExpression();
-  context.node_stack().Push(parse_node, name_id);
+  auto name_id = context.lamp_stack().PopExpression();
+  context.lamp_stack().Push(parse_node, name_id);
   context.ParamOrArgStart();
   return true;
 }

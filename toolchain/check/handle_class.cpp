@@ -12,7 +12,7 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   // signature, such as generic parameters.
   context.inst_block_stack().Push();
   // Push the bracketing node.
-  context.node_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_node);
   // A name should always follow.
   context.declaration_name_stack().Push();
   return true;
@@ -22,7 +22,7 @@ static auto BuildClassDeclaration(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.declaration_name_stack().Pop();
   auto class_keyword =
-      context.node_stack()
+      context.lamp_stack()
           .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
   auto decl_block_id = context.inst_block_stack().Pop();
 
@@ -115,7 +115,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
       context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
 
   context.inst_block_stack().Push();
-  context.node_stack().Push(parse_node, class_id);
+  context.lamp_stack().Push(parse_node, class_id);
   context.args_type_info_stack().Push();
 
   // TODO: Handle the case where there's control flow in the class body. For
@@ -133,7 +133,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
 auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
-      context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
+      context.lamp_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.inst_block_stack().Pop();
   context.PopScope();
 

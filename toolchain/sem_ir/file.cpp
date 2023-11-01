@@ -159,7 +159,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 // Map a node kind representing a type into an integer describing the
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
-static auto GetTypePrecedence(NodeKind kind) -> int {
+static auto GetTypePrecedence(InstKind kind) -> int {
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {

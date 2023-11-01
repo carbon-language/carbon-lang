@@ -38,8 +38,8 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
 
 auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
-  auto base_id = context.node_stack().PopExpression();
+  StringId name_id = context.lamp_stack().Pop<Parse::NodeKind::Name>();
+  auto base_id = context.lamp_stack().PopExpression();
 
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
@@ -68,7 +68,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
             IncompleteTypeInMemberAccess,
             context.sem_ir().StringifyType(base_type_id, true));
       })) {
-    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   }
 
@@ -187,7 +187,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
   }
 
   // Should only be reached on error.
-  context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+  context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinError);
   return true;
 }
 
@@ -200,7 +200,7 @@ auto HandleName(Context& context, Parse::Node parse_node) -> bool {
   auto name_id = context.tokens().GetIdentifier(
       context.parse_tree().node_token(parse_node));
   // The parent is responsible for binding the name.
-  context.node_stack().Push(parse_node, name_id);
+  context.lamp_stack().Push(parse_node, name_id);
   return true;
 }
 
@@ -229,9 +229,9 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
 auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
   auto [parse_node2, name_id2] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+      context.lamp_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
-  Parse::Node parse_node1 = context.node_stack().PeekParseNode();
+  Parse::Node parse_node1 = context.lamp_stack().PeekParseNode();
   switch (context.parse_tree().node_kind(parse_node1)) {
     case Parse::NodeKind::QualifiedDeclaration:
       // This is the second or subsequent QualifiedDeclaration in a chain.
@@ -242,10 +242,10 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
     case Parse::NodeKind::Name: {
       // This is the first QualifiedDeclaration in a chain, and starts with a
       // name.
-      auto name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+      auto name_id = context.lamp_stack().Pop<Parse::NodeKind::Name>();
       context.declaration_name_stack().ApplyNameQualifier(parse_node1, name_id);
       // Add the QualifiedDeclaration so that it can be used for bracketing.
-      context.node_stack().Push(parse_node);
+      context.lamp_stack().Push(parse_node);
       break;
     }
 
@@ -276,7 +276,7 @@ auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
 }
 
 auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
-  context.node_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_node);
   return true;
 }
 

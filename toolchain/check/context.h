@@ -184,7 +184,7 @@ class Context {
   // Starts handling parameters or arguments.
   auto ParamOrArgStart() -> void;
 
-  // On a comma, pushes the entry. On return, the top of node_stack_ will be
+  // On a comma, pushes the entry. On return, the top of lamp_stack_ will be
   // start_kind.
   auto ParamOrArgComma() -> void;
 
@@ -203,7 +203,7 @@ class Context {
   // list. This is the same as `ParamOrArgEndNoPop` followed by `ParamOrArgPop`.
   auto ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::InstBlockId;
 
-  // Saves a parameter from the top block in node_stack_ to the top block in
+  // Saves a parameter from the top block in lamp_stack_ to the top block in
   // params_or_args_stack_.
   auto ParamOrArgSave(SemIR::InstId inst_id) -> void {
     params_or_args_stack_.AddInstId(inst_id);
@@ -220,7 +220,7 @@ class Context {
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
 
-  auto node_stack() -> NodeStack& { return node_stack_; }
+  auto lamp_stack() -> NodeStack& { return lamp_stack_; }
 
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
 
@@ -315,7 +315,7 @@ class Context {
   // to lazily build the `SemIR::Node`. `make_node()` is not permitted to
   // directly or indirectly canonicalize any types.
   auto CanonicalizeTypeImpl(
-      SemIR::NodeKind kind,
+      SemIR::InstKind kind,
       llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)>
           profile_type,
       llvm::function_ref<SemIR::InstId()> make_node) -> SemIR::TypeId;
@@ -345,7 +345,7 @@ class Context {
   llvm::raw_ostream* vlog_stream_;
 
   // The stack during Build. Will contain file-level parse nodes on return.
-  NodeStack node_stack_;
+  NodeStack lamp_stack_;
 
   // The stack of node blocks being used for general IR generation.
   InstBlockStack inst_block_stack_;

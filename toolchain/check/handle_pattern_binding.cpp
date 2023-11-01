@@ -10,7 +10,7 @@ namespace Carbon::Check {
 
 auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   auto self_param_id =
-      context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
+      context.lamp_stack().Peek<Parse::NodeKind::PatternBinding>();
   if (auto self_param =
           context.insts().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
     self_param->is_addr_self = SemIR::BoolValue::True;
@@ -30,15 +30,15 @@ auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
 
 auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
-      context.node_stack().PopExpressionWithParseNode();
+      context.lamp_stack().PopExpressionWithParseNode();
   auto type_node_copy = type_node;
   auto cast_type_id = ExpressionAsType(context, type_node, parsed_type_id);
 
   // A `self` binding doesn't have a name.
   if (auto self_node =
-          context.node_stack()
+          context.lamp_stack()
               .PopForSoloParseNodeIf<Parse::NodeKind::SelfValueName>()) {
-    if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
+    if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) !=
         Parse::NodeKind::ImplicitParameterListStart) {
       CARBON_DIAGNOSTIC(
           SelfOutsideImplicitParameterList, Error,
@@ -56,12 +56,12 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+      context.lamp_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
   // Allocate a node of the appropriate kind, linked to the name for error
   // locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
-              context.node_stack().PeekParseNode())) {
+              context.lamp_stack().PeekParseNode())) {
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl =
@@ -131,7 +131,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       // its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
-      context.node_stack().Push(
+      context.lamp_stack().Push(
           parse_node,
           context.insts().AddInNoBlock(SemIR::BindName{
               name_node, cast_type_id, name_id, SemIR::InstId::Invalid}));

@@ -10,10 +10,10 @@ auto HandleImplicitParameterList(Context& context, Parse::Node parse_node)
     -> bool {
   auto refs_id =
       context.ParamOrArgEnd(Parse::NodeKind::ImplicitParameterListStart);
-  context.node_stack()
+  context.lamp_stack()
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::ImplicitParameterListStart>();
-  context.node_stack().Push(parse_node, refs_id);
+  context.lamp_stack().Push(parse_node, refs_id);
   // The implicit parameter list's scope extends to the end of the following
   // parameter list.
   return true;
@@ -22,7 +22,7 @@ auto HandleImplicitParameterList(Context& context, Parse::Node parse_node)
 auto HandleImplicitParameterListStart(Context& context, Parse::Node parse_node)
     -> bool {
   context.PushScope();
-  context.node_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_node);
   context.ParamOrArgStart();
   return true;
 }
@@ -30,9 +30,9 @@ auto HandleImplicitParameterListStart(Context& context, Parse::Node parse_node)
 auto HandleParameterList(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ParameterListStart);
   context.PopScope();
-  context.node_stack()
+  context.lamp_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ParameterListStart>();
-  context.node_stack().Push(parse_node, refs_id);
+  context.lamp_stack().Push(parse_node, refs_id);
   return true;
 }
 
@@ -53,10 +53,10 @@ auto HandleParameterListStart(Context& context, Parse::Node parse_node)
   //
   // ... all the earlier parameter should be in scope in the later parameter
   // lists too.
-  if (!context.node_stack().PeekIs<Parse::NodeKind::ImplicitParameterList>()) {
+  if (!context.lamp_stack().PeekIs<Parse::NodeKind::ImplicitParameterList>()) {
     context.PushScope();
   }
-  context.node_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_node);
   context.ParamOrArgStart();
   return true;
 }

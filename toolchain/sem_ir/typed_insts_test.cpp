@@ -14,7 +14,7 @@ namespace Carbon::SemIR {
 // A friend of `SemIR::Node` that is used to pierce the abstraction.
 class NodeTestHelper {
  public:
-  static auto MakeNode(NodeKind node_kind, Parse::Node parse_node,
+  static auto MakeNode(InstKind node_kind, Parse::Node parse_node,
                        TypeId type_id, int32_t arg0, int32_t arg1) -> Node {
     return Node(node_kind, parse_node, type_id, arg0, arg1);
   }
@@ -25,10 +25,10 @@ class NodeTestHelper {
 namespace Carbon::SemIR {
 namespace {
 
-// Check that each node kind defines a Kind member using the correct NodeKind
+// Check that each node kind defines a Kind member using the correct InstKind
 // enumerator.
 #define CARBON_SEM_IR_NODE_KIND(Name) \
-  static_assert(Name::Kind == NodeKind::Name);
+  static_assert(Name::Kind == InstKind::Name);
 #include "toolchain/sem_ir/node_kind.def"
 
 template <typename Ignored, typename... Types>
@@ -129,14 +129,14 @@ TYPED_TEST(TypedInstTest, StructLayout) {
   }
 }
 
-TYPED_TEST(TypedInstTest, NodeKindMatches) {
+TYPED_TEST(TypedInstTest, InstKindMatches) {
   using TypedInst = TypeParam;
 
-  // TypedInst::Kind is a NodeKind::Definition that extends NodeKind, but
+  // TypedInst::Kind is a InstKind::Definition that extends InstKind, but
   // has different definitions of the `ir_name()` and `terminator_kind()`
   // methods. Here we test that values returned by the two different versions
   // of those functions match.
-  NodeKind as_kind = TypedInst::Kind;
+  InstKind as_kind = TypedInst::Kind;
   EXPECT_EQ(TypedInst::Kind.ir_name(), as_kind.ir_name());
   EXPECT_EQ(TypedInst::Kind.terminator_kind(), as_kind.terminator_kind());
 }

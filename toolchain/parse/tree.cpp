@@ -138,18 +138,18 @@ auto Tree::Print(llvm::raw_ostream& output) const -> void {
   llvm::SmallVector<int> indents;
   indents.append(size(), 0);
 
-  llvm::SmallVector<std::pair<Node, int>, 16> node_stack;
+  llvm::SmallVector<std::pair<Node, int>, 16> lamp_stack;
   for (Node n : roots()) {
-    node_stack.push_back({n, 0});
+    lamp_stack.push_back({n, 0});
   }
 
-  while (!node_stack.empty()) {
+  while (!lamp_stack.empty()) {
     Node n = Node::Invalid;
     int depth;
-    std::tie(n, depth) = node_stack.pop_back_val();
+    std::tie(n, depth) = lamp_stack.pop_back_val();
     for (Node sibling_n : children(n)) {
       indents[sibling_n.index] = depth + 1;
-      node_stack.push_back({sibling_n, depth + 1});
+      lamp_stack.push_back({sibling_n, depth + 1});
     }
   }
 
@@ -176,26 +176,26 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
 
   // The roots, like siblings, are in RPO (so reversed), but we add them in
   // order here because we'll pop off the stack effectively reversing then.
-  llvm::SmallVector<std::pair<Node, int>, 16> node_stack;
+  llvm::SmallVector<std::pair<Node, int>, 16> lamp_stack;
   for (Node n : roots()) {
-    node_stack.push_back({n, 0});
+    lamp_stack.push_back({n, 0});
   }
 
-  while (!node_stack.empty()) {
+  while (!lamp_stack.empty()) {
     Node n = Node::Invalid;
     int depth;
-    std::tie(n, depth) = node_stack.pop_back_val();
+    std::tie(n, depth) = lamp_stack.pop_back_val();
 
     if (PrintNode(output, n, depth, /*preorder=*/true)) {
       // Has children, so we descend. We append the children in order here as
       // well because they will get reversed when popped off the stack.
       for (Node sibling_n : children(n)) {
-        node_stack.push_back({sibling_n, depth + 1});
+        lamp_stack.push_back({sibling_n, depth + 1});
       }
       continue;
     }
 
-    int next_depth = node_stack.empty() ? 0 : node_stack.back().second;
+    int next_depth = lamp_stack.empty() ? 0 : lamp_stack.back().second;
     CARBON_CHECK(next_depth <= depth) << "Cannot have the next depth increase!";
     for (int close_children_count : llvm::seq(0, depth - next_depth)) {
       (void)close_children_count;

@@ -17,23 +17,23 @@ auto HandleArrayExpressionStart(Context& /*context*/,
 
 auto HandleArrayExpressionSemi(Context& context, Parse::Node parse_node)
     -> bool {
-  context.node_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_node);
   return true;
 }
 
 auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
   // TODO: Handle array type with undefined bound.
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
+  if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
       Parse::NodeKind::ArrayExpressionSemi) {
-    context.node_stack().PopAndIgnore();
-    context.node_stack().PopAndIgnore();
+    context.lamp_stack().PopAndIgnore();
+    context.lamp_stack().PopAndIgnore();
     return context.TODO(parse_node, "HandleArrayExpressionWithoutBounds");
   }
 
-  SemIR::InstId bound_inst_id = context.node_stack().PopExpression();
-  context.node_stack()
+  SemIR::InstId bound_inst_id = context.lamp_stack().PopExpression();
+  context.lamp_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExpressionSemi>();
-  SemIR::InstId element_type_inst_id = context.node_stack().PopExpression();
+  SemIR::InstId element_type_inst_id = context.lamp_stack().PopExpression();
   auto bound_node = context.insts().Get(bound_inst_id);
   if (auto literal = bound_node.TryAs<SemIR::IntegerLiteral>()) {
     const auto& bound_value = context.integers().Get(literal->integer_id);
@@ -49,7 +49,7 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
   }
   CARBON_DIAGNOSTIC(InvalidArrayExpression, Error, "Invalid array expression.");
   context.emitter().Emit(parse_node, InvalidArrayExpression);
-  context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+  context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinError);
   return true;
 }
 

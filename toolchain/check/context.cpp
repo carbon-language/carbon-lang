@@ -28,7 +28,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       parse_tree_(&parse_tree),
       sem_ir_(&sem_ir),
       vlog_stream_(vlog_stream),
-      node_stack_(parse_tree, vlog_stream),
+      lamp_stack_(parse_tree, vlog_stream),
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
       params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
@@ -51,7 +51,7 @@ auto Context::VerifyOnFinish() -> void {
   // Information in all the various context objects should be cleaned up as
   // various pieces of context go out of scope. At this point, nothing should
   // remain.
-  // node_stack_ will still contain top-level entities.
+  // lamp_stack_ will still contain top-level entities.
   CARBON_CHECK(name_lookup_.empty()) << name_lookup_.size();
   CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
   CARBON_CHECK(inst_block_stack_.empty()) << inst_block_stack_.size();
@@ -66,7 +66,7 @@ auto Context::AddNode(SemIR::Node node) -> SemIR::InstId {
 
 auto Context::AddNodeAndPush(Parse::Node parse_node, SemIR::Node node) -> void {
   auto inst_id = AddNode(node);
-  node_stack_.Push(parse_node, inst_id);
+  lamp_stack_.Push(parse_node, inst_id);
 }
 
 auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
@@ -303,12 +303,12 @@ auto Context::is_current_position_reachable() -> bool {
 auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
 
 auto Context::ParamOrArgComma() -> void {
-  ParamOrArgSave(node_stack_.PopExpression());
+  ParamOrArgSave(lamp_stack_.PopExpression());
 }
 
 auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
-  if (parse_tree_->node_kind(node_stack_.PeekParseNode()) != start_kind) {
-    ParamOrArgSave(node_stack_.PopExpression());
+  if (parse_tree_->node_kind(lamp_stack_.PeekParseNode()) != start_kind) {
+    ParamOrArgSave(lamp_stack_.PopExpression());
   }
 }
 
@@ -774,7 +774,7 @@ auto Context::TryToCompleteType(
 }
 
 auto Context::CanonicalizeTypeImpl(
-    SemIR::NodeKind kind,
+    SemIR::InstKind kind,
     llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)> profile_type,
     llvm::function_ref<SemIR::InstId()> make_node) -> SemIR::TypeId {
   llvm::FoldingSetNodeID canonical_id;
@@ -948,7 +948,7 @@ auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
-  node_stack_.PrintForStackDump(output);
+  lamp_stack_.PrintForStackDump(output);
   inst_block_stack_.PrintForStackDump(output);
   params_or_args_stack_.PrintForStackDump(output);
   args_type_info_stack_.PrintForStackDump(output);

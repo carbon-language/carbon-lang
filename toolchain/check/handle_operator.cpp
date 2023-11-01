@@ -8,8 +8,8 @@
 namespace Carbon::Check {
 
 auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
-  auto [rhs_node, rhs_id] = context.node_stack().PopExpressionWithParseNode();
-  auto [lhs_node, lhs_id] = context.node_stack().PopExpressionWithParseNode();
+  auto [rhs_node, rhs_id] = context.lamp_stack().PopExpressionWithParseNode();
+  auto [lhs_node, lhs_id] = context.lamp_stack().PopExpressionWithParseNode();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -51,7 +51,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
     }
     case Lex::TokenKind::As: {
       auto rhs_type_id = ExpressionAsType(context, rhs_node, rhs_id);
-      context.node_stack().Push(
+      context.lamp_stack().Push(
           parse_node,
           ConvertForExplicitAs(context, parse_node, lhs_id, rhs_type_id));
       return true;
@@ -73,7 +73,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // it, even though it doesn't produce a value.
       // TODO: Consider changing our parse tree to model assignment as a
       // different kind of statement than an expression statement.
-      context.node_stack().Push(parse_node, lhs_id);
+      context.lamp_stack().Push(parse_node, lhs_id);
       return true;
     }
     default:
@@ -82,7 +82,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
 }
 
 auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
-  auto value_id = context.node_stack().PopExpression();
+  auto value_id = context.lamp_stack().PopExpression();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -101,7 +101,7 @@ auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
 }
 
 auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
-  auto value_id = context.node_stack().PopExpression();
+  auto value_id = context.lamp_stack().PopExpression();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -198,7 +198,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
 auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
     -> bool {
   // Convert the condition to `bool`.
-  auto cond_value_id = context.node_stack().PopExpression();
+  auto cond_value_id = context.lamp_stack().PopExpression();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
   auto bool_type_id = context.insts().Get(cond_value_id).type_id();
 
@@ -238,7 +238,7 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
   context.AddCurrentCodeBlockToFunction();
 
   // Put the condition back on the stack for HandleInfixOperator.
-  context.node_stack().Push(parse_node, cond_value_id);
+  context.lamp_stack().Push(parse_node, cond_value_id);
   return true;
 }
 

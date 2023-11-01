@@ -16,17 +16,17 @@ auto HandleStructFieldDesignator(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
   CARBON_CHECK(
-      context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
+      context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
       Parse::NodeKind::Name);
   return true;
 }
 
 auto HandleStructFieldType(Context& context, Parse::Node parse_node) -> bool {
-  auto [type_node, type_id] = context.node_stack().PopExpressionWithParseNode();
+  auto [type_node, type_id] = context.lamp_stack().PopExpressionWithParseNode();
   SemIR::TypeId cast_type_id = ExpressionAsType(context, type_node, type_id);
 
   auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+      context.lamp_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
   context.AddNodeAndPush(
       parse_node, SemIR::StructTypeField{name_node, name_id, cast_type_id});
@@ -40,15 +40,15 @@ auto HandleStructFieldUnknown(Context& context, Parse::Node parse_node)
 
 auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   auto [value_parse_node, value_inst_id] =
-      context.node_stack().PopExpressionWithParseNode();
-  StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+      context.lamp_stack().PopExpressionWithParseNode();
+  StringId name_id = context.lamp_stack().Pop<Parse::NodeKind::Name>();
 
   // Store the name for the type.
   context.args_type_info_stack().AddNode(SemIR::StructTypeField{
       parse_node, name_id, context.insts().Get(value_inst_id).type_id()});
 
   // Push the value back on the stack as an argument.
-  context.node_stack().Push(parse_node, value_inst_id);
+  context.lamp_stack().Push(parse_node, value_inst_id);
   return true;
 }
 
@@ -57,7 +57,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
-  context.node_stack()
+  context.lamp_stack()
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
@@ -66,7 +66,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
 
   auto value_id =
       context.AddNode(SemIR::StructLiteral{parse_node, type_id, refs_id});
-  context.node_stack().Push(parse_node, value_id);
+  context.lamp_stack().Push(parse_node, value_id);
   return true;
 }
 
@@ -74,7 +74,7 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
                                                  Parse::Node parse_node)
     -> bool {
   context.PushScope();
-  context.node_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_node);
   // At this point we aren't sure whether this will be a value or type literal,
   // so we push onto args irrespective. It just won't be used for a type
   // literal.
@@ -88,7 +88,7 @@ auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
-  context.node_stack()
+  context.lamp_stack()
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   // This is only used for value literals.

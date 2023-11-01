@@ -23,7 +23,7 @@ static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
 
 auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
     -> bool {
-  HandleDiscardedExpression(context, context.node_stack().PopExpression());
+  HandleDiscardedExpression(context, context.lamp_stack().PopExpression());
   return true;
 }
 
@@ -33,9 +33,9 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
       context.return_scope_stack().back());
   const auto& callable = context.functions().Get(fn_node.function_id);
 
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
+  if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
       Parse::NodeKind::ReturnStatementStart) {
-    context.node_stack()
+    context.lamp_stack()
         .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
 
     if (callable.return_type_id.is_valid()) {
@@ -50,8 +50,8 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
 
     context.AddNode(SemIR::Return{parse_node});
   } else {
-    auto arg = context.node_stack().PopExpression();
-    context.node_stack()
+    auto arg = context.lamp_stack().PopExpression();
+    context.lamp_stack()
         .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
 
     if (!callable.return_type_id.is_valid()) {
@@ -85,7 +85,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
 auto HandleReturnStatementStart(Context& context, Parse::Node parse_node)
     -> bool {
   // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_node);
   return true;
 }
 

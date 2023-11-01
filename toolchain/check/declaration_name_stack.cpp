@@ -26,16 +26,16 @@ auto DeclarationNameStack::Push() -> void {
 
 auto DeclarationNameStack::Pop() -> NameContext {
   if (context_->parse_tree().node_kind(
-          context_->node_stack().PeekParseNode()) ==
+          context_->lamp_stack().PeekParseNode()) ==
       Parse::NodeKind::QualifiedDeclaration) {
     // Any parts from a QualifiedDeclaration will already have been processed
     // into the name.
-    context_->node_stack()
+    context_->lamp_stack()
         .PopAndDiscardSoloParseNode<Parse::NodeKind::QualifiedDeclaration>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
     auto [parse_node, name_id] =
-        context_->node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+        context_->lamp_stack().PopWithParseNode<Parse::NodeKind::Name>();
     ApplyNameQualifier(parse_node, name_id);
   }
 

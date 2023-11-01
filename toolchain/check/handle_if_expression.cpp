@@ -11,7 +11,7 @@ auto HandleIfExpressionIf(Context& context, Parse::Node parse_node) -> bool {
   // Alias parse_node for if/then/else consistency.
   auto& if_node = parse_node;
 
-  auto cond_value_id = context.node_stack().PopExpression();
+  auto cond_value_id = context.lamp_stack().PopExpression();
 
   // Convert the condition to `bool`, and branch on it.
   cond_value_id = ConvertToBoolValue(context, if_node, cond_value_id);
@@ -24,14 +24,14 @@ auto HandleIfExpressionIf(Context& context, Parse::Node parse_node) -> bool {
   context.inst_block_stack().Push(then_block_id);
   context.AddCurrentCodeBlockToFunction();
 
-  context.node_stack().Push(if_node, else_block_id);
+  context.lamp_stack().Push(if_node, else_block_id);
   return true;
 }
 
 auto HandleIfExpressionThen(Context& context, Parse::Node parse_node) -> bool {
-  auto then_value_id = context.node_stack().PopExpression();
+  auto then_value_id = context.lamp_stack().PopExpression();
   auto else_block_id =
-      context.node_stack().Peek<Parse::NodeKind::IfExpressionIf>();
+      context.lamp_stack().Peek<Parse::NodeKind::IfExpressionIf>();
 
   // Convert the first operand to a value.
   then_value_id = ConvertToValueExpression(context, then_value_id);
@@ -40,7 +40,7 @@ auto HandleIfExpressionThen(Context& context, Parse::Node parse_node) -> bool {
   context.inst_block_stack().Push(else_block_id);
   context.AddCurrentCodeBlockToFunction();
 
-  context.node_stack().Push(parse_node, then_value_id);
+  context.lamp_stack().Push(parse_node, then_value_id);
   return true;
 }
 
@@ -48,11 +48,11 @@ auto HandleIfExpressionElse(Context& context, Parse::Node parse_node) -> bool {
   // Alias parse_node for if/then/else consistency.
   auto& else_node = parse_node;
 
-  auto else_value_id = context.node_stack().PopExpression();
+  auto else_value_id = context.lamp_stack().PopExpression();
   auto then_value_id =
-      context.node_stack().Pop<Parse::NodeKind::IfExpressionThen>();
+      context.lamp_stack().Pop<Parse::NodeKind::IfExpressionThen>();
   auto [if_node, _] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::IfExpressionIf>();
+      context.lamp_stack().PopWithParseNode<Parse::NodeKind::IfExpressionIf>();
 
   // Convert the `else` value to the `then` value's type, and finish the `else`
   // block.
@@ -67,7 +67,7 @@ auto HandleIfExpressionElse(Context& context, Parse::Node parse_node) -> bool {
   context.AddCurrentCodeBlockToFunction();
 
   // Push the result value.
-  context.node_stack().Push(else_node, chosen_value_id);
+  context.lamp_stack().Push(else_node, chosen_value_id);
   return true;
 }
 

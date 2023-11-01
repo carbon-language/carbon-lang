@@ -24,10 +24,10 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
 
   auto return_type_id = SemIR::TypeId::Invalid;
   auto return_slot_id = SemIR::InstId::Invalid;
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
+  if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
       Parse::NodeKind::ReturnType) {
     auto [return_node, return_storage_id] =
-        context.node_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
+        context.lamp_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
     auto return_node_copy = return_node;
     return_type_id = context.insts().Get(return_storage_id).type_id();
 
@@ -50,14 +50,14 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   }
 
   SemIR::InstBlockId param_refs_id =
-      context.node_stack().Pop<Parse::NodeKind::ParameterList>();
+      context.lamp_stack().Pop<Parse::NodeKind::ParameterList>();
   SemIR::InstBlockId implicit_param_refs_id =
-      context.node_stack()
+      context.lamp_stack()
           .PopIf<Parse::NodeKind::ImplicitParameterList>()
           .value_or(SemIR::InstBlockId::Empty);
   auto name_context = context.declaration_name_stack().Pop();
   auto fn_node =
-      context.node_stack()
+      context.lamp_stack()
           .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
   // Add the function declaration.
@@ -138,7 +138,7 @@ auto HandleFunctionDeclaration(Context& context, Parse::Node /*parse_node*/)
 auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
     -> bool {
   SemIR::FunctionId function_id =
-      context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
+      context.lamp_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
@@ -221,7 +221,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
     }
   }
 
-  context.node_stack().Push(parse_node, function_id);
+  context.lamp_stack().Push(parse_node, function_id);
   return true;
 }
 
@@ -231,7 +231,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
   // signature, such as parameter and return types.
   context.inst_block_stack().Push();
   // Push the bracketing node.
-  context.node_stack().Push(parse_node);
+  context.lamp_stack().Push(parse_node);
   // A name should always follow.
   context.declaration_name_stack().Push();
   return true;
@@ -240,7 +240,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
 auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_inst_id] =
-      context.node_stack().PopExpressionWithParseNode();
+      context.lamp_stack().PopExpressionWithParseNode();
   auto type_id = ExpressionAsType(context, type_parse_node, type_inst_id);
   // TODO: Use a dedicated node rather than VarStorage here.
   context.AddNodeAndPush(

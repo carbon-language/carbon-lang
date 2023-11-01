@@ -21,7 +21,7 @@ namespace Carbon::SemIR {
 // Data about the arguments of a typed node, to aid in type erasure. The `KindT`
 // parameter is used to check that `TypedInst` is a typed node.
 template <typename TypedInst,
-          const NodeKind::Definition& KindT = TypedInst::Kind>
+          const InstKind::Definition& KindT = TypedInst::Kind>
 struct TypedInstArgsInfo {
   // A corresponding std::tuple<...> type.
   using Tuple = decltype(StructReflection::AsTuple(std::declval<TypedInst>()));
@@ -136,7 +136,7 @@ class Node : public Printable<Node> {
   }
 
   auto parse_node() const -> Parse::Node { return parse_node_; }
-  auto kind() const -> NodeKind { return kind_; }
+  auto kind() const -> InstKind { return kind_; }
 
   // Gets the type of the value produced by evaluating this node.
   auto type_id() const -> TypeId { return type_id_; }
@@ -147,7 +147,7 @@ class Node : public Printable<Node> {
   friend class NodeTestHelper;
 
   // Raw constructor, used for testing.
-  explicit Node(NodeKind kind, Parse::Node parse_node, TypeId type_id,
+  explicit Node(InstKind kind, Parse::Node parse_node, TypeId type_id,
                 int32_t arg0, int32_t arg1)
       : parse_node_(parse_node),
         kind_(kind),
@@ -172,7 +172,7 @@ class Node : public Printable<Node> {
   }
 
   Parse::Node parse_node_;
-  NodeKind kind_;
+  InstKind kind_;
   TypeId type_id_;
 
   // Use `As` to access arg0 and arg1.
@@ -181,7 +181,7 @@ class Node : public Printable<Node> {
 };
 
 // TODO: This is currently 20 bytes because we sometimes have 2 arguments for a
-// pair of Nodes. However, NodeKind is 1 byte; if args
+// pair of Nodes. However, InstKind is 1 byte; if args
 // were 3.5 bytes, we could potentially shrink Node by 4 bytes. This
 // may be worth investigating further.
 static_assert(sizeof(Node) == 20, "Unexpected Node size");

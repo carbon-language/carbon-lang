@@ -38,9 +38,9 @@ static auto ValidateIntegerLiteralBound(Context& context,
 }
 
 auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
-  SemIR::InstId index_inst_id = context.node_stack().PopExpression();
+  SemIR::InstId index_inst_id = context.lamp_stack().PopExpression();
   auto index_node = context.insts().Get(index_inst_id);
-  SemIR::InstId operand_inst_id = context.node_stack().PopExpression();
+  SemIR::InstId operand_inst_id = context.lamp_stack().PopExpression();
   operand_inst_id =
       ConvertToValueOrReferenceExpression(context, operand_inst_id);
   auto operand_node = context.insts().Get(operand_inst_id);
@@ -81,7 +81,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
         // and `IndirectIndexWith`.
         elem_id = ConvertToValueExpression(context, elem_id);
       }
-      context.node_stack().Push(parse_node, elem_id);
+      context.lamp_stack().Push(parse_node, elem_id);
       return true;
     }
     case SemIR::TupleType::Kind: {
@@ -114,7 +114,7 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
         context.emitter().Emit(parse_node, TypeNotIndexable,
                                context.sem_ir().StringifyType(operand_type_id));
       }
-      context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+      context.lamp_stack().Push(parse_node, SemIR::InstId::BuiltinError);
       return true;
     }
   }
