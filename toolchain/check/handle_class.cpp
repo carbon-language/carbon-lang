@@ -10,7 +10,7 @@ namespace Carbon::Check {
 auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   // Create a node block to hold the nodes created as part of the class
   // signature, such as generic parameters.
-  context.node_block_stack().Push();
+  context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.
@@ -24,7 +24,7 @@ static auto BuildClassDeclaration(Context& context)
   auto class_keyword =
       context.node_stack()
           .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
-  auto decl_block_id = context.node_block_stack().Pop();
+  auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
   auto class_decl = SemIR::ClassDeclaration{
@@ -114,7 +114,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
           Lex::TokenKind::SelfTypeIdentifier.fixed_spelling()),
       context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
 
-  context.node_block_stack().Push();
+  context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, class_id);
   context.args_type_info_stack().Push();
 
@@ -126,7 +126,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   //   }
   //
   // We may need to track a list of node blocks here, as we do for a function.
-  class_info.body_block_id = context.node_block_stack().PeekOrAdd();
+  class_info.body_block_id = context.inst_block_stack().PeekOrAdd();
   return true;
 }
 
@@ -134,7 +134,7 @@ auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
-  context.node_block_stack().Pop();
+  context.inst_block_stack().Pop();
   context.PopScope();
 
   // The class type is now fully defined.

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/node_block_stack.h"
+#include "toolchain/check/inst_block_stack.h"
 
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
@@ -11,7 +11,7 @@
 
 namespace Carbon::Check {
 
-auto NodeBlockStack::Push(SemIR::InstBlockId id) -> void {
+auto InstBlockStack::Push(SemIR::InstBlockId id) -> void {
   CARBON_VLOG() << name_ << " Push " << size_ << "\n";
   CARBON_CHECK(size_ < (1 << 20))
       << "Excessive stack size: likely infinite loop";
@@ -22,7 +22,7 @@ auto NodeBlockStack::Push(SemIR::InstBlockId id) -> void {
   ++size_;
 }
 
-auto NodeBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
+auto InstBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
   CARBON_CHECK(size() > depth) << "no such block";
   int index = size() - depth - 1;
   auto& slot = stack_[index];
@@ -32,7 +32,7 @@ auto NodeBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
   return slot.id;
 }
 
-auto NodeBlockStack::Pop() -> SemIR::InstBlockId {
+auto InstBlockStack::Pop() -> SemIR::InstBlockId {
   CARBON_CHECK(!empty()) << "no current block";
   --size_;
   auto& back = stack_[size_];
@@ -53,13 +53,13 @@ auto NodeBlockStack::Pop() -> SemIR::InstBlockId {
   return back.id;
 }
 
-auto NodeBlockStack::PopAndDiscard() -> void {
+auto InstBlockStack::PopAndDiscard() -> void {
   CARBON_CHECK(!empty()) << "no current block";
   --size_;
   CARBON_VLOG() << name_ << " PopAndDiscard " << size_ << "\n";
 }
 
-auto NodeBlockStack::PrintForStackDump(llvm::raw_ostream& output) const
+auto InstBlockStack::PrintForStackDump(llvm::raw_ostream& output) const
     -> void {
   output << name_ << ":\n";
   for (const auto& [i, entry] : llvm::enumerate(stack_)) {

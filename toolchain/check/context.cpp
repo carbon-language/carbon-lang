@@ -11,7 +11,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/check/declaration_name_stack.h"
-#include "toolchain/check/node_block_stack.h"
+#include "toolchain/check/inst_block_stack.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/file.h"
@@ -29,7 +29,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       sem_ir_(&sem_ir),
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
-      node_block_stack_("node_block_stack_", sem_ir, vlog_stream),
+      inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
       params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       declaration_name_stack_(this) {
@@ -54,12 +54,12 @@ auto Context::VerifyOnFinish() -> void {
   // node_stack_ will still contain top-level entities.
   CARBON_CHECK(name_lookup_.empty()) << name_lookup_.size();
   CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
-  CARBON_CHECK(node_block_stack_.empty()) << node_block_stack_.size();
+  CARBON_CHECK(inst_block_stack_.empty()) << inst_block_stack_.size();
   CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
 }
 
 auto Context::AddNode(SemIR::Node node) -> SemIR::InstId {
-  auto inst_id = node_block_stack_.AddNode(node);
+  auto inst_id = inst_block_stack_.AddNode(node);
   CARBON_VLOG() << "AddNode: " << node << "\n";
   return inst_id;
 }
@@ -199,7 +199,7 @@ template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
                                            Parse::Node parse_node, Args... args)
     -> SemIR::InstBlockId {
-  if (!context.node_block_stack().is_current_block_reachable()) {
+  if (!context.inst_block_stack().is_current_block_reachable()) {
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddDefaultValue();
@@ -232,15 +232,15 @@ auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
   for ([[maybe_unused]] auto _ : llvm::seq(num_blocks)) {
-    if (node_block_stack().is_current_block_reachable()) {
+    if (inst_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
       AddNode(SemIR::Branch{parse_node, new_block_id});
     }
-    node_block_stack().Pop();
+    inst_block_stack().Pop();
   }
-  node_block_stack().Push(new_block_id);
+  inst_block_stack().Push(new_block_id);
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
@@ -250,15 +250,15 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
   for (auto arg_id : block_args) {
-    if (node_block_stack().is_current_block_reachable()) {
+    if (inst_block_stack().is_current_block_reachable()) {
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
       AddNode(SemIR::BranchWithArg{parse_node, new_block_id, arg_id});
     }
-    node_block_stack().Pop();
+    inst_block_stack().Pop();
   }
-  node_block_stack().Push(new_block_id);
+  inst_block_stack().Push(new_block_id);
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = nodes().Get(*block_args.begin()).type_id();
@@ -267,10 +267,10 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 
 // Add the current code block to the enclosing function.
 auto Context::AddCurrentCodeBlockToFunction() -> void {
-  CARBON_CHECK(!node_block_stack().empty()) << "no current code block";
+  CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
   CARBON_CHECK(!return_scope_stack().empty()) << "no current function";
 
-  if (!node_block_stack().is_current_block_reachable()) {
+  if (!inst_block_stack().is_current_block_reachable()) {
     // Don't include unreachable blocks in the function.
     return;
   }
@@ -281,17 +281,17 @@ auto Context::AddCurrentCodeBlockToFunction() -> void {
           .function_id;
   functions()
       .Get(function_id)
-      .body_block_ids.push_back(node_block_stack().PeekOrAdd());
+      .body_block_ids.push_back(inst_block_stack().PeekOrAdd());
 }
 
 auto Context::is_current_position_reachable() -> bool {
-  if (!node_block_stack().is_current_block_reachable()) {
+  if (!inst_block_stack().is_current_block_reachable()) {
     return false;
   }
 
   // Our current position is at the end of a reachable block. That position is
   // reachable unless the previous instruction is a terminator instruction.
-  auto block_contents = node_block_stack().PeekCurrentBlockContents();
+  auto block_contents = inst_block_stack().PeekCurrentBlockContents();
   if (block_contents.empty()) {
     return true;
   }
@@ -949,7 +949,7 @@ auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   node_stack_.PrintForStackDump(output);
-  node_block_stack_.PrintForStackDump(output);
+  inst_block_stack_.PrintForStackDump(output);
   params_or_args_stack_.PrintForStackDump(output);
   args_type_info_stack_.PrintForStackDump(output);
 }

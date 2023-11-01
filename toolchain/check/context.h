@@ -10,7 +10,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/declaration_name_stack.h"
-#include "toolchain/check/node_block_stack.h"
+#include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
@@ -222,13 +222,13 @@ class Context {
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
-  auto node_block_stack() -> NodeBlockStack& { return node_block_stack_; }
+  auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
 
-  auto params_or_args_stack() -> NodeBlockStack& {
+  auto params_or_args_stack() -> InstBlockStack& {
     return params_or_args_stack_;
   }
 
-  auto args_type_info_stack() -> NodeBlockStack& {
+  auto args_type_info_stack() -> InstBlockStack& {
     return args_type_info_stack_;
   }
 
@@ -348,19 +348,19 @@ class Context {
   NodeStack node_stack_;
 
   // The stack of node blocks being used for general IR generation.
-  NodeBlockStack node_block_stack_;
+  InstBlockStack inst_block_stack_;
 
   // The stack of node blocks being used for per-element tracking of nodes in
-  // parameter and argument node blocks. Versus node_block_stack_, an element
-  // will have 1 or more nodes in blocks in node_block_stack_, but only ever 1
+  // parameter and argument node blocks. Versus inst_block_stack_, an element
+  // will have 1 or more nodes in blocks in inst_block_stack_, but only ever 1
   // node in blocks here.
-  NodeBlockStack params_or_args_stack_;
+  InstBlockStack params_or_args_stack_;
 
   // The stack of node blocks being used for type information while processing
   // arguments. This is used in parallel with params_or_args_stack_. It's
   // currently only used for struct literals, where we need to track names
   // for a type separate from the literal arguments.
-  NodeBlockStack args_type_info_stack_;
+  InstBlockStack args_type_info_stack_;
 
   // A stack of return scopes; i.e., targets for `return`. Inside a function,
   // this will be a FunctionDeclaration.

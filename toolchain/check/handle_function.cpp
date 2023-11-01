@@ -20,7 +20,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
   // nowhere clear to emit, so changing storage would require addressing that
   // problem. For comparison with function calls, the IR needs to be emitted
   // prior to the call.
-  context.node_block_stack().Pop();
+  context.inst_block_stack().Pop();
 
   auto return_type_id = SemIR::TypeId::Invalid;
   auto return_slot_id = SemIR::InstId::Invalid;
@@ -154,7 +154,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   }
 
   context.PopScope();
-  context.node_block_stack().Pop();
+  context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
   return true;
 }
@@ -184,7 +184,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
 
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back(decl_id);
-  context.node_block_stack().Push();
+  context.inst_block_stack().Push();
   context.PushScope(decl_id);
   context.AddCurrentCodeBlockToFunction();
 
@@ -229,7 +229,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
   // Create a node block to hold the nodes created as part of the function
   // signature, such as parameter and return types.
-  context.node_block_stack().Push();
+  context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.

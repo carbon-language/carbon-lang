@@ -36,10 +36,10 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
 
       // When the second operand is evaluated, the result of `and` and `or` is
       // its value.
-      auto resume_block_id = context.node_block_stack().PeekOrAdd(/*depth=*/1);
+      auto resume_block_id = context.inst_block_stack().PeekOrAdd(/*depth=*/1);
       context.AddNode(
           SemIR::BranchWithArg{parse_node, resume_block_id, rhs_id});
-      context.node_block_stack().Pop();
+      context.inst_block_stack().Pop();
       context.AddCurrentCodeBlockToFunction();
 
       // Collect the result from either the first or second operand.
@@ -232,9 +232,9 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
 
   // Push the resumption and the right-hand side blocks, and start emitting the
   // right-hand operand.
-  context.node_block_stack().Pop();
-  context.node_block_stack().Push(end_block_id);
-  context.node_block_stack().Push(rhs_block_id);
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().Push(end_block_id);
+  context.inst_block_stack().Push(rhs_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   // Put the condition back on the stack for HandleInfixOperator.

@@ -35,7 +35,7 @@ cc_library(
         "context.cpp",
         "convert.cpp",
         "declaration_name_stack.cpp",
-        "node_block_stack.cpp",
+        "inst_block_stack.cpp",
     ] +
     # Glob handler files to avoid missing any.
     glob([
@@ -46,7 +46,7 @@ cc_library(
         "context.h",
         "convert.h",
         "declaration_name_stack.h",
-        "node_block_stack.h",
+        "inst_block_stack.h",
         "pending_block.h",
     ],
     deps = [

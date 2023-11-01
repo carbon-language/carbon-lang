@@ -48,7 +48,7 @@ class PendingBlock {
   // Insert the pending block of code at the current position.
   auto InsertHere() -> void {
     for (auto id : insts_) {
-      context_.node_block_stack().AddInstId(id);
+      context_.inst_block_stack().AddInstId(id);
     }
     insts_.clear();
   }

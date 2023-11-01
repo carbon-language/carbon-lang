@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_NODE_BLOCK_STACK_H_
-#define CARBON_TOOLCHAIN_CHECK_NODE_BLOCK_STACK_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_INST_BLOCK_STACK_H_
+#define CARBON_TOOLCHAIN_CHECK_INST_BLOCK_STACK_H_
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/sem_ir/file.h"
@@ -17,9 +17,9 @@ namespace Carbon::Check {
 // long-term storage.
 //
 // All pushes and pops will be vlogged.
-class NodeBlockStack {
+class InstBlockStack {
  public:
-  explicit NodeBlockStack(llvm::StringLiteral name, SemIR::File& sem_ir,
+  explicit InstBlockStack(llvm::StringLiteral name, SemIR::File& sem_ir,
                           llvm::raw_ostream* vlog_stream)
       : name_(name), sem_ir_(&sem_ir), vlog_stream_(vlog_stream) {}
 
@@ -117,4 +117,4 @@ class NodeBlockStack {
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_NODE_BLOCK_STACK_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_INST_BLOCK_STACK_H_

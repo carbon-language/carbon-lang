@@ -77,8 +77,8 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   // Switch to a new, unreachable, empty node block. This typically won't
   // contain any semantics IR, but it can do if there are statements following
   // the `return` statement.
-  context.node_block_stack().Pop();
-  context.node_block_stack().PushUnreachable();
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().PushUnreachable();
   return true;
 }
 

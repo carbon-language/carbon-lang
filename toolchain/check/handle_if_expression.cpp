@@ -20,8 +20,8 @@ auto HandleIfExpressionIf(Context& context, Parse::Node parse_node) -> bool {
   auto else_block_id = context.AddDominatedBlockAndBranch(if_node);
 
   // Start emitting the `then` block.
-  context.node_block_stack().Pop();
-  context.node_block_stack().Push(then_block_id);
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().Push(then_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   context.node_stack().Push(if_node, else_block_id);
@@ -37,7 +37,7 @@ auto HandleIfExpressionThen(Context& context, Parse::Node parse_node) -> bool {
   then_value_id = ConvertToValueExpression(context, then_value_id);
 
   // Start emitting the `else` block.
-  context.node_block_stack().Push(else_block_id);
+  context.inst_block_stack().Push(else_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   context.node_stack().Push(parse_node, then_value_id);
