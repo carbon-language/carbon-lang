@@ -41,7 +41,7 @@ class Context {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
 
-  // Adds a inst to the current block, returning the produced ID.
+  // Adds an inst to the current block, returning the produced ID.
   auto AddInst(SemIR::Inst inst) -> SemIR::InstId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the

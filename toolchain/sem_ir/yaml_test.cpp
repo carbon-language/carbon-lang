@@ -38,7 +38,7 @@ TEST(SemIRTest, YAML) {
   d.RunCommand(
       {"compile", "--phase=check", "--dump-raw-sem-ir", "test.carbon"});
 
-  // Matches the ID of a inst. The numbers may change because of builtin
+  // Matches the ID of an inst. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.
   auto integer_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));

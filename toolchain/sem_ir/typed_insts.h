@@ -239,7 +239,7 @@ struct ConstType {
 struct CrossReference {
   static constexpr auto Kind = InstKind::CrossReference.Define("xref");
 
-  // No parse node: a inst's parse tree node must refer to a node in the
+  // No parse node: an inst's parse tree node must refer to a node in the
   // current parse tree. This cannot use the cross-referenced inst's parse tree
   // node because it will be in a different parse tree.
   TypeId type_id;

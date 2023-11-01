@@ -227,7 +227,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
 
 auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
-  // Create a inst block to hold the insts created as part of the function
+  // Create an inst block to hold the insts created as part of the function
   // signature, such as parameter and return types.
   context.inst_block_stack().Push();
   // Push the bracketing node.

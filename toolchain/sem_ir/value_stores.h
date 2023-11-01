@@ -15,7 +15,7 @@ namespace Carbon::SemIR {
 // Provides a ValueStore wrapper for an API specific to insts.
 class InstStore {
  public:
-  // Adds a inst to the inst list, returning an ID to reference the inst. Note
+  // Adds an inst to the inst list, returning an ID to reference the inst. Note
   // that this doesn't add the inst to any inst block. Check::Context::AddInst
   // or InstBlockStack::AddInst should usually be used instead, to add the inst
   // to the current block.

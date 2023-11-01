@@ -55,11 +55,11 @@ class DeclarationNameStack {
       // A context that has not processed any parts of the qualifier.
       Empty,
 
-      // A inst ID has been resolved, whether through an identifier or
+      // An inst ID has been resolved, whether through an identifier or
       // expression. This provided a new scope, such as a type.
       Resolved,
 
-      // A inst ID has been resolved, whether through an identifier or
+      // An inst ID has been resolved, whether through an identifier or
       // expression. It did not provide a new scope, so must be the final part,
       // such as an out-of-line function definition.
       ResolvedNonScope,

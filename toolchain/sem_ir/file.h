@@ -251,7 +251,7 @@ class File : public Printable<File> {
   auto StringifyType(TypeId type_id, bool in_type_context = false) const
       -> std::string;
 
-  // Same as `StringifyType`, but starting with a inst representing a type
+  // Same as `StringifyType`, but starting with an inst representing a type
   // expression rather than a canonical type.
   auto StringifyTypeExpression(InstId outer_inst_id,
                                bool in_type_context = false) const
@@ -388,7 +388,7 @@ enum class ExpressionCategory : int8_t {
   Last = Mixed
 };
 
-// Returns the expression category for a inst.
+// Returns the expression category for an inst.
 auto GetExpressionCategory(const File& file, InstId inst_id)
     -> ExpressionCategory;
 

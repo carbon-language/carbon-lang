@@ -12,7 +12,8 @@
 
 namespace Carbon::SemIR {
 
-// Whether a inst produces or represents a value, and if so, what kind of value.
+// Whether an inst produces or represents a value, and if so, what kind of
+// value.
 enum class InstValueKind : int8_t {
   // This inst doesn't produce a value, and shouldn't be referenced by other
   // insts.
@@ -22,7 +23,7 @@ enum class InstValueKind : int8_t {
   Typed,
 };
 
-// Whether a inst is a terminator or part of the terminator sequence. The insts
+// Whether an inst is a terminator or part of the terminator sequence. The insts
 // in a block appear in the order NotTerminator, then TerminatorSequence, then
 // Terminator, which is also the numerical order of these values.
 enum class TerminatorKind : int8_t {
@@ -84,11 +85,11 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 // We expect the inst kind to fit compactly into 8 bits.
 static_assert(sizeof(InstKind) == 1, "Kind objects include padding!");
 
-// A definition of a inst kind. This is a InstKind value, plus ancillary data
+// A definition of an inst kind. This is an InstKind value, plus ancillary data
 // such as the name to use for the node kind in LLVM IR. These are not
 // copyable, and only one instance of this type is expected to exist per inst
 // kind, specifically `TypedInst::Kind`. Use `InstKind` instead as a thin
-// wrapper around a inst kind index.
+// wrapper around an inst kind index.
 class InstKind::Definition : public InstKind {
  public:
   // Returns the name to use for this inst kind in Semantics IR.

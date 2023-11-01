@@ -171,7 +171,7 @@ auto Context::FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId {
 }
 
 auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
-  // TODO: The constant value of a inst should be computed as we build the
+  // TODO: The constant value of an inst should be computed as we build the
   // inst, or at least cached once computed.
   while (true) {
     auto inst = insts().Get(inst_id);

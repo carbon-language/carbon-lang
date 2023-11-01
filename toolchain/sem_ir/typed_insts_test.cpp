@@ -132,7 +132,7 @@ TYPED_TEST(TypedInstTest, StructLayout) {
 TYPED_TEST(TypedInstTest, InstKindMatches) {
   using TypedInst = TypeParam;
 
-  // TypedInst::Kind is a InstKind::Definition that extends InstKind, but
+  // TypedInst::Kind is an InstKind::Definition that extends InstKind, but
   // has different definitions of the `ir_name()` and `terminator_kind()`
   // methods. Here we test that values returned by the two different versions
   // of those functions match.

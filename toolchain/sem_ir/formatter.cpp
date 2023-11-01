@@ -118,7 +118,7 @@ class InstNamer {
     return GetScopeInfo(GetScopeFor(class_id)).name.str();
   }
 
-  // Returns the IR name to use for a inst, when referenced from a given scope.
+  // Returns the IR name to use for an inst, when referenced from a given scope.
   auto GetNameFor(ScopeIndex scope_idx, InstId inst_id) -> std::string {
     if (!inst_id.is_valid()) {
       return "invalid";

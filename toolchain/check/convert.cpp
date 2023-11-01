@@ -122,7 +122,7 @@ static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
   return expr_id;
 }
 
-// Creates and adds a inst to perform element access into an aggregate.
+// Creates and adds an inst to perform element access into an aggregate.
 template <typename AccessInstT, typename InstBlockT>
 static auto MakeElemAccessInst(Context& context, Parse::Node parse_node,
                                SemIR::InstId aggregate_id,

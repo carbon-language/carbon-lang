@@ -14,7 +14,7 @@
 
 namespace Carbon::SemIR {
 
-// The ID of a inst.
+// The ID of an inst.
 struct InstId : public IndexBase, public Printable<InstId> {
   // An explicitly invalid inst ID.
   static const InstId Invalid;
@@ -127,7 +127,7 @@ struct NameScopeId : public IndexBase, public Printable<NameScopeId> {
 constexpr NameScopeId NameScopeId::Invalid =
     NameScopeId(NameScopeId::InvalidIndex);
 
-// The ID of a inst block.
+// The ID of an inst block.
 struct InstBlockId : public IndexBase, public Printable<InstBlockId> {
   // All File instances must provide the 0th inst block as empty.
   static const InstBlockId Empty;
