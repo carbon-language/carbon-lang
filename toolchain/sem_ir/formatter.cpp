@@ -42,7 +42,7 @@ class NodeNamer {
 
     // Build the file scope.
     GetScopeInfo(ScopeIndex::File).name = globals.AddNameUnchecked("file");
-    CollectNamesInBlock(ScopeIndex::File, sem_ir.top_node_block_id());
+    CollectNamesInBlock(ScopeIndex::File, sem_ir.top_inst_block_id());
 
     // Build each function scope.
     for (auto [i, fn] : llvm::enumerate(sem_ir.functions().array_ref())) {
@@ -149,7 +149,7 @@ class NodeNamer {
     auto& [label_scope, label_name] = labels[block_id.index];
     if (!label_name) {
       // This should not happen in valid IR.
-      return "<unexpected nodeblockref " + llvm::itostr(block_id.index) + ">";
+      return "<unexpected instblockref " + llvm::itostr(block_id.index) + ">";
     }
     if (label_scope == scope_idx) {
       return label_name.str().str();
@@ -485,7 +485,7 @@ class Formatter {
     // TODO: Handle the case where there are multiple top-level node blocks.
     // For example, there may be branching in the initializer of a global or a
     // type expression.
-    if (auto block_id = sem_ir_.top_node_block_id(); block_id.is_valid()) {
+    if (auto block_id = sem_ir_.top_inst_block_id(); block_id.is_valid()) {
       llvm::SaveAndRestore file_scope(scope_, NodeNamer::ScopeIndex::File);
       FormatCodeBlock(block_id);
     }

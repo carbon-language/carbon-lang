@@ -51,7 +51,7 @@ auto CheckParseTree(SharedValueStores& value_stores,
   }
 
   // Pop information for the file-level scope.
-  sem_ir.set_top_node_block_id(context.inst_block_stack().Pop());
+  sem_ir.set_top_inst_block_id(context.inst_block_stack().Pop());
   context.PopScope();
 
   context.VerifyOnFinish();

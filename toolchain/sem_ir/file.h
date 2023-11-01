@@ -301,9 +301,9 @@ class File : public Printable<File> {
     return complete_types_;
   }
 
-  auto top_node_block_id() const -> InstBlockId { return top_node_block_id_; }
-  auto set_top_node_block_id(InstBlockId block_id) -> void {
-    top_node_block_id_ = block_id;
+  auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
+  auto set_top_inst_block_id(InstBlockId block_id) -> void {
+    top_inst_block_id_ = block_id;
   }
 
   // Returns true if there were errors creating the semantics IR.
@@ -358,7 +358,7 @@ class File : public Printable<File> {
   InstBlockStore inst_blocks_;
 
   // The top node block ID.
-  InstBlockId top_node_block_id_ = InstBlockId::Invalid;
+  InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
 };
 
 // The expression category of a semantics node. See /docs/design/values.md for

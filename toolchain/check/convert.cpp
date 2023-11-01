@@ -123,10 +123,10 @@ static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
 }
 
 // Creates and adds a node to perform element access into an aggregate.
-template <typename AccessNodeT, typename NodeBlockT>
+template <typename AccessNodeT, typename InstBlockT>
 static auto MakeElemAccessNode(Context& context, Parse::Node parse_node,
                                SemIR::InstId aggregate_id,
-                               SemIR::TypeId elem_type_id, NodeBlockT& block,
+                               SemIR::TypeId elem_type_id, InstBlockT& block,
                                std::size_t i) {
   if constexpr (std::is_same_v<AccessNodeT, SemIR::ArrayIndex>) {
     // TODO: Add a new node kind for indexing an array at a constant index
