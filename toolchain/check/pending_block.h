@@ -19,9 +19,9 @@ class PendingBlock {
   PendingBlock(const PendingBlock&) = delete;
   PendingBlock& operator=(const PendingBlock&) = delete;
 
-  // A scope in which we will tentatively add insts to a pending block. If we
-  // leave the scope without inserting or merging the block, insts added after
-  // this point will be removed again.
+  // A scope in which we will tentatively add instructions to a pending block.
+  // If we leave the scope without inserting or merging the block, instructions
+  // added after this point will be removed again.
   class DiscardUnusedInstsScope {
    public:
     // If `block` is not null, enters the scope. If `block` is null, this object
@@ -53,8 +53,8 @@ class PendingBlock {
     insts_.clear();
   }
 
-  // Replace the instruction at target_id with the insts in this block. The new
-  // value for target_id should be value_id.
+  // Replace the instruction at target_id with the instructions in this block.
+  // The new value for target_id should be value_id.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
     auto value = context_.insts().Get(value_id);
 

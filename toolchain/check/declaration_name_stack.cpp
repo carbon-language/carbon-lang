@@ -120,7 +120,7 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
 
 auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
     -> void {
-  // This will only be reached for resolved insts. We update the target
+  // This will only be reached for resolved instructions. We update the target
   // scope based on the resolved type.
   auto resolved_inst = context_->insts().Get(name_context.resolved_inst_id);
   switch (resolved_inst.kind()) {

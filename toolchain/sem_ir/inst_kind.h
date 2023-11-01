@@ -17,7 +17,7 @@ namespace Carbon::SemIR {
 enum class InstValueKind : int8_t {
   // This instruction doesn't produce a value, and shouldn't be referenced by
   // other
-  // insts.
+  // instructions.
   None,
   // This instruction represents an expression or expression-like construct that
   // produces a value of the type indicated by its `type_id` field.
@@ -25,7 +25,7 @@ enum class InstValueKind : int8_t {
 };
 
 // Whether an instruction is a terminator or part of the terminator sequence.
-// The insts in a block appear in the order NotTerminator, then
+// The instructions in a block appear in the order NotTerminator, then
 // TerminatorSequence, then Terminator, which is also the numerical order of
 // these values.
 enum class TerminatorKind : int8_t {

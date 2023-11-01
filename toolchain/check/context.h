@@ -93,7 +93,8 @@ class Context {
     return insts().Get(current_scope_inst_id).TryAs<InstT>();
   }
 
-  // Follows NameReference insts to find the value named by a given instruction.
+  // Follows NameReference instructions to find the value named by a given
+  // instruction.
   auto FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId;
 
   // Gets the constant value of the given instruction, if it has one.
@@ -351,8 +352,8 @@ class Context {
   InstBlockStack inst_block_stack_;
 
   // The stack of instruction blocks being used for per-element tracking of
-  // insts in parameter and argument instruction blocks. Versus
-  // inst_block_stack_, an element will have 1 or more insts in blocks in
+  // instructions in parameter and argument instruction blocks. Versus
+  // inst_block_stack_, an element will have 1 or more instructions in blocks in
   // inst_block_stack_, but only ever 1 instruction in blocks here.
   InstBlockStack params_or_args_stack_;
 
@@ -383,8 +384,8 @@ class Context {
   // Names which no longer have lookup results are erased.
   llvm::DenseMap<StringId, llvm::SmallVector<SemIR::InstId>> name_lookup_;
 
-  // Cache of the mapping from insts to types, to avoid recomputing the folding
-  // set ID.
+  // Cache of the mapping from instructions to types, to avoid recomputing the
+  // folding set ID.
   llvm::DenseMap<SemIR::InstId, SemIR::TypeId> canonical_types_;
 
   // Tracks the canonical representation of types that have been defined.

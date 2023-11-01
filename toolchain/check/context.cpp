@@ -642,7 +642,7 @@ class TypeCompleter {
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
   auto BuildValueRepresentation(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepresentation {
-    // TODO: This can emit new SemIR insts. Consider emitting them into a
+    // TODO: This can emit new SemIR instructions. Consider emitting them into a
     // dedicated file-scope instruction block where possible, or somewhere else
     // that better reflects the definition of the type, rather than wherever the
     // type happens to first be required to be complete.

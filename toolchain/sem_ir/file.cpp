@@ -125,8 +125,8 @@ auto File::Verify() const -> ErrorOr<Success> {
     }
   }
 
-  // TODO: Check that an instruction only references other insts that are either
-  // global or that dominate it.
+  // TODO: Check that an instruction only references other instructions that are
+  // either global or that dominate it.
   return Success();
 }
 
@@ -429,9 +429,9 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
       case ValueAsReference::Kind:
       case ValueOfInitializer::Kind:
       case VarStorage::Kind:
-        // We don't need to handle stringification for insts that don't show up
-        // in errors, but make it clear what's going on so that it's clearer
-        // when stringification is needed.
+        // We don't need to handle stringification for instructions that don't
+        // show up in errors, but make it clear what's going on so that it's
+        // clearer when stringification is needed.
         out << "<cannot stringify " << step.inst_id << ">";
         break;
     }

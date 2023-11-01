@@ -10,17 +10,17 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
-// Representations for specific kinds of insts.
+// Representations for specific kinds of instructions.
 //
 // Each type should be a struct with up to four members:
 //
-// - Optionally, a `Parse::Node parse_node;` member, for insts with an
-//   associated location. Almost all insts should have this, with exceptions
-//   being things that are generated internally, without any relation to source
-//   syntax, such as predeclared builtins.
-// - Optionally, a `TypeId type_id;` member, for insts that produce a value.
-//   This includes insts that produce an abstract value, such as a `Namespace`,
-//   for which a placeholder type should be used.
+// - Optionally, a `Parse::Node parse_node;` member, for instructions with an
+//   associated location. Almost all instructions should have this, with
+//   exceptions being things that are generated internally, without any relation
+//   to source syntax, such as predeclared builtins.
+// - Optionally, a `TypeId type_id;` member, for instructions that produce a
+//   value. This includes instructions that produce an abstract value, such as a
+//   `Namespace`, for which a placeholder type should be used.
 // - Up to two `[...]Id` members describing the contents of the struct.
 //
 // The field names here matter -- the first two fields must have the names

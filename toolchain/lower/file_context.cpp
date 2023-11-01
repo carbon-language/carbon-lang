@@ -161,7 +161,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   const bool has_return_slot = function.return_slot_id.is_valid();
 
   // Add parameters to locals.
-  // TODO: This duplicates the mapping between sem_ir insts and LLVM
+  // TODO: This duplicates the mapping between sem_ir instructions and LLVM
   // function parameters that was already computed in BuildFunctionDeclaration.
   // We should only do that once.
   auto implicit_param_refs =

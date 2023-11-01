@@ -44,7 +44,8 @@ struct TypedInstArgsInfo {
 
 // A type-erased representation of a SemIR instruction, that may be constructed
 // from the specific kinds of instruction defined in `typed_insts.h`. This
-// provides access to common fields present on most or all kinds of insts:
+// provides access to common fields present on most or all kinds of
+// instructions:
 //
 // - `parse_node` for error placement.
 // - `kind` for run-time logic when the input Kind is unknown.
@@ -188,7 +189,7 @@ class Inst : public Printable<Inst> {
 // may be worth investigating further.
 static_assert(sizeof(Inst) == 20, "Unexpected Inst size");
 
-// Typed insts can be printed by converting them to insts.
+// Typed instructions can be printed by converting them to instructions.
 template <typename TypedInst, typename = TypedInstArgsInfo<TypedInst>>
 inline llvm::raw_ostream& operator<<(llvm::raw_ostream& out, TypedInst inst) {
   Inst(inst).Print(out);

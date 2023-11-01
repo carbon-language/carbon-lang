@@ -127,7 +127,7 @@ class FunctionContext {
   // such block.
   llvm::BasicBlock* synthetic_block_ = nullptr;
 
-  // Maps a function's SemIR::File insts to lowered values.
+  // Maps a function's SemIR::File instructions to lowered values.
   // TODO: Handle nested scopes. Right now this is just cleared at the end of
   // every block.
   llvm::DenseMap<SemIR::InstId, llvm::Value*> locals_;

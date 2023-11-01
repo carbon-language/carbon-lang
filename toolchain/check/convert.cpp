@@ -103,7 +103,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   // object. Materialize one now.
   // TODO: Consider using an invalid ID to mean that we immediately
   // materialize and initialize a temporary, rather than two separate
-  // insts.
+  // instructions.
   auto init = sem_ir.insts().Get(init_id);
   auto temporary_id = context.AddInst(
       SemIR::TemporaryStorage{init.parse_node(), init.type_id()});

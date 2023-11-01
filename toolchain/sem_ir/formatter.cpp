@@ -14,7 +14,7 @@
 namespace Carbon::SemIR {
 
 namespace {
-// Assigns names to insts, blocks, and scopes in the Semantics IR.
+// Assigns names to instructions, blocks, and scopes in the Semantics IR.
 //
 // TODOs / future work ideas:
 // - Add a documentation file for the textual format and link to the

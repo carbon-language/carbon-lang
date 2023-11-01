@@ -8,8 +8,8 @@
 namespace Carbon::Check {
 
 auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
-  // Create an instruction block to hold the insts created as part of the class
-  // signature, such as generic parameters.
+  // Create an instruction block to hold the instructions created as part of the
+  // class signature, such as generic parameters.
   context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);

@@ -12,7 +12,7 @@
 
 namespace Carbon::SemIR {
 
-// Provides a ValueStore wrapper for an API specific to insts.
+// Provides a ValueStore wrapper for an API specific to instructions.
 class InstStore {
  public:
   // Adds an instruction to the instruction list, returning an ID to reference

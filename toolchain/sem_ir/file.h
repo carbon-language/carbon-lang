@@ -349,8 +349,8 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId, TypeId> type_blocks_;
 
-  // All insts. The first entries will always be cross-references to builtins,
-  // at indices matching BuiltinKind ordering.
+  // All instructions. The first entries will always be cross-references to
+  // builtins, at indices matching BuiltinKind ordering.
   InstStore insts_;
 
   // Inst blocks within the IR. These reference entries in insts_. Storage for
