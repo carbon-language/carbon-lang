@@ -60,7 +60,7 @@ class FileContext {
   // declaration with no definition, does nothing.
   auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
 
-  // Builds the type for the given node, which should then be cached by the
+  // Builds the type for the given inst, which should then be cached by the
   // caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
 
