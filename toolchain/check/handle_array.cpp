@@ -34,8 +34,8 @@ auto HandleArrayExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
   context.lamp_stack()
       .PopAndDiscardSoloParseLamp<Parse::LampKind::ArrayExpressionSemi>();
   SemIR::InstId element_type_inst_id = context.lamp_stack().PopExpression();
-  auto bound_node = context.insts().Get(bound_inst_id);
-  if (auto literal = bound_node.TryAs<SemIR::IntegerLiteral>()) {
+  auto bound_inst = context.insts().Get(bound_inst_id);
+  if (auto literal = bound_inst.TryAs<SemIR::IntegerLiteral>()) {
     const auto& bound_value = context.integers().Get(literal->integer_id);
     // TODO: Produce an error if the array type is too large.
     if (bound_value.getActiveBits() <= 64) {
