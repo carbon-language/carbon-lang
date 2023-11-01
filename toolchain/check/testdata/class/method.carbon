@@ -86,11 +86,9 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: Class = name_reference "c", %c
 // CHECK:STDOUT:   %.loc21_11: <bound method> = bound_method %c.ref, @Class.%F
-// CHECK:STDOUT:   %.loc21_13.1: init i32 = call %.loc21_11(%c.ref)
-// CHECK:STDOUT:   %.loc21_13.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc21_13.3: ref i32 = temporary %.loc21_13.2, %.loc21_13.1
-// CHECK:STDOUT:   %.loc21_13.4: i32 = bind_value %.loc21_13.3
-// CHECK:STDOUT:   return %.loc21_13.4
+// CHECK:STDOUT:   %.loc21_13: init i32 = call %.loc21_11(%c.ref)
+// CHECK:STDOUT:   %.loc21_15: i32 = value_of_initializer %.loc21_13
+// CHECK:STDOUT:   return %.loc21_15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWithAddr() -> i32 {
@@ -101,11 +99,9 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref Class = name_reference "c", %c
 // CHECK:STDOUT:   %.loc26_11: <bound method> = bound_method %c.ref, @Class.%G
 // CHECK:STDOUT:   %.loc26_10: Class* = address_of %c.ref
-// CHECK:STDOUT:   %.loc26_13.1: init i32 = call %.loc26_11(%.loc26_10)
-// CHECK:STDOUT:   %.loc26_13.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc26_13.3: ref i32 = temporary %.loc26_13.2, %.loc26_13.1
-// CHECK:STDOUT:   %.loc26_13.4: i32 = bind_value %.loc26_13.3
-// CHECK:STDOUT:   return %.loc26_13.4
+// CHECK:STDOUT:   %.loc26_13: init i32 = call %.loc26_11(%.loc26_10)
+// CHECK:STDOUT:   %.loc26_15: i32 = value_of_initializer %.loc26_13
+// CHECK:STDOUT:   return %.loc26_15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFThroughPointer(%p: Class*) -> i32 {
@@ -114,11 +110,9 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc30_11.1: ref Class = dereference %p.ref
 // CHECK:STDOUT:   %.loc30_14: <bound method> = bound_method %.loc30_11.1, @Class.%F
 // CHECK:STDOUT:   %.loc30_11.2: Class = bind_value %.loc30_11.1
-// CHECK:STDOUT:   %.loc30_16.1: init i32 = call %.loc30_14(%.loc30_11.2)
-// CHECK:STDOUT:   %.loc30_16.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc30_16.3: ref i32 = temporary %.loc30_16.2, %.loc30_16.1
-// CHECK:STDOUT:   %.loc30_16.4: i32 = bind_value %.loc30_16.3
-// CHECK:STDOUT:   return %.loc30_16.4
+// CHECK:STDOUT:   %.loc30_16: init i32 = call %.loc30_14(%.loc30_11.2)
+// CHECK:STDOUT:   %.loc30_18: i32 = value_of_initializer %.loc30_16
+// CHECK:STDOUT:   return %.loc30_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGThroughPointer(%p: Class*) -> i32 {
@@ -127,11 +121,9 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc34_11.1: ref Class = dereference %p.ref
 // CHECK:STDOUT:   %.loc34_14: <bound method> = bound_method %.loc34_11.1, @Class.%G
 // CHECK:STDOUT:   %.loc34_11.2: Class* = address_of %.loc34_11.1
-// CHECK:STDOUT:   %.loc34_16.1: init i32 = call %.loc34_14(%.loc34_11.2)
-// CHECK:STDOUT:   %.loc34_16.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc34_16.3: ref i32 = temporary %.loc34_16.2, %.loc34_16.1
-// CHECK:STDOUT:   %.loc34_16.4: i32 = bind_value %.loc34_16.3
-// CHECK:STDOUT:   return %.loc34_16.4
+// CHECK:STDOUT:   %.loc34_16: init i32 = call %.loc34_14(%.loc34_11.2)
+// CHECK:STDOUT:   %.loc34_18: i32 = value_of_initializer %.loc34_16
+// CHECK:STDOUT:   return %.loc34_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Class;
@@ -144,11 +136,9 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc40_14.3: ref Class = temporary %.loc40_14.1, %.loc40_14.2
 // CHECK:STDOUT:   %.loc40_16: <bound method> = bound_method %.loc40_14.3, @Class.%F
 // CHECK:STDOUT:   %.loc40_14.4: Class = bind_value %.loc40_14.3
-// CHECK:STDOUT:   %.loc40_18.1: init i32 = call %.loc40_16(%.loc40_14.4)
-// CHECK:STDOUT:   %.loc40_18.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc40_18.3: ref i32 = temporary %.loc40_18.2, %.loc40_18.1
-// CHECK:STDOUT:   %.loc40_18.4: i32 = bind_value %.loc40_18.3
-// CHECK:STDOUT:   return %.loc40_18.4
+// CHECK:STDOUT:   %.loc40_18: init i32 = call %.loc40_16(%.loc40_14.4)
+// CHECK:STDOUT:   %.loc40_20: i32 = value_of_initializer %.loc40_18
+// CHECK:STDOUT:   return %.loc40_20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGOnInitializingExpression() -> i32 {
@@ -159,9 +149,7 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc44_14.3: ref Class = temporary %.loc44_14.1, %.loc44_14.2
 // CHECK:STDOUT:   %.loc44_16: <bound method> = bound_method %.loc44_14.3, @Class.%G
 // CHECK:STDOUT:   %.loc44_14.4: Class* = address_of %.loc44_14.3
-// CHECK:STDOUT:   %.loc44_18.1: init i32 = call %.loc44_16(%.loc44_14.4)
-// CHECK:STDOUT:   %.loc44_18.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc44_18.3: ref i32 = temporary %.loc44_18.2, %.loc44_18.1
-// CHECK:STDOUT:   %.loc44_18.4: i32 = bind_value %.loc44_18.3
-// CHECK:STDOUT:   return %.loc44_18.4
+// CHECK:STDOUT:   %.loc44_18: init i32 = call %.loc44_16(%.loc44_14.4)
+// CHECK:STDOUT:   %.loc44_20: i32 = value_of_initializer %.loc44_18
+// CHECK:STDOUT:   return %.loc44_20
 // CHECK:STDOUT: }

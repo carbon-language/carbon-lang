@@ -22,49 +22,74 @@ static auto HandleUnrecognizedDeclaration(Context& context) -> void {
 auto HandleDeclarationScopeLoop(Context& context) -> void {
   // This maintains the current state unless we're at the end of the scope.
 
-  switch (context.PositionKind()) {
+  switch (auto position_kind = context.PositionKind()) {
     case Lex::TokenKind::CloseCurlyBrace:
     case Lex::TokenKind::EndOfFile: {
       // This is the end of the scope, so the loop state ends.
       context.PopAndDiscardState();
       break;
     }
-    case Lex::TokenKind::Class: {
-      context.PushState(State::TypeIntroducerAsClass);
+    // `import` and `package` manage their packaging state.
+    case Lex::TokenKind::Import: {
+      context.PushState(State::Import);
       break;
     }
-    case Lex::TokenKind::Constraint: {
-      context.PushState(State::TypeIntroducerAsNamedConstraint);
+    case Lex::TokenKind::Package: {
+      context.PushState(State::Package);
       break;
     }
-    case Lex::TokenKind::Fn: {
-      context.PushState(State::FunctionIntroducer);
-      break;
-    }
-    case Lex::TokenKind::Interface: {
-      context.PushState(State::TypeIntroducerAsInterface);
-      break;
-    }
-    case Lex::TokenKind::Namespace: {
-      context.PushState(State::Namespace);
-      break;
-    }
-    case Lex::TokenKind::Semi: {
-      context.AddLeafNode(NodeKind::EmptyDeclaration, context.Consume());
-      break;
-    }
-    case Lex::TokenKind::Var: {
-      context.PushState(State::VarAsSemicolon);
-      break;
-    }
-    case Lex::TokenKind::Let: {
-      context.PushState(State::Let);
-      break;
-    }
-    default: {
-      HandleUnrecognizedDeclaration(context);
-      break;
-    }
+    default:
+      // Because a non-packaging keyword was encountered, packaging is complete.
+      // Misplaced packaging keywords may lead to this being re-triggered.
+      if (context.packaging_state() !=
+          Context::PackagingState::AfterNonPackagingDeclaration) {
+        if (!context.first_non_packaging_token().is_valid()) {
+          context.set_first_non_packaging_token(*context.position());
+        }
+        context.set_packaging_state(
+            Context::PackagingState::AfterNonPackagingDeclaration);
+      }
+      switch (position_kind) {
+        // Remaining keywords are only valid after imports are complete, and
+        // so all result in a `set_packaging_state` call. Note, this may not
+        // always be necessary but is probably cheaper than validating.
+        case Lex::TokenKind::Class: {
+          context.PushState(State::TypeIntroducerAsClass);
+          break;
+        }
+        case Lex::TokenKind::Constraint: {
+          context.PushState(State::TypeIntroducerAsNamedConstraint);
+          break;
+        }
+        case Lex::TokenKind::Fn: {
+          context.PushState(State::FunctionIntroducer);
+          break;
+        }
+        case Lex::TokenKind::Interface: {
+          context.PushState(State::TypeIntroducerAsInterface);
+          break;
+        }
+        case Lex::TokenKind::Namespace: {
+          context.PushState(State::Namespace);
+          break;
+        }
+        case Lex::TokenKind::Semi: {
+          context.AddLeafNode(NodeKind::EmptyDeclaration, context.Consume());
+          break;
+        }
+        case Lex::TokenKind::Var: {
+          context.PushState(State::VarAsSemicolon);
+          break;
+        }
+        case Lex::TokenKind::Let: {
+          context.PushState(State::Let);
+          break;
+        }
+        default: {
+          HandleUnrecognizedDeclaration(context);
+          break;
+        }
+      }
   }
 }
 

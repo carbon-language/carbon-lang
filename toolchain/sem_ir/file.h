@@ -404,8 +404,8 @@ struct InitializingRepresentation {
     // The type has no initializing representation. This is used for empty
     // types, where no initialization is necessary.
     None,
-    // An initializing expression produces a value, which is copied into the
-    // initialized object.
+    // An initializing expression produces an object representation by value,
+    // which is copied into the initialized object.
     ByCopy,
     // An initializing expression takes a location as input, which is
     // initialized as a side effect of evaluating the expression.

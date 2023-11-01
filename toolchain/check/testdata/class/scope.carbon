@@ -48,11 +48,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", @Class.%F
-// CHECK:STDOUT:   %.loc13_13.1: init i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc13_13.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc13_13.3: ref i32 = temporary %.loc13_13.2, %.loc13_13.1
-// CHECK:STDOUT:   %.loc13_13.4: i32 = bind_value %.loc13_13.3
-// CHECK:STDOUT:   return %.loc13_13.4
+// CHECK:STDOUT:   %.loc13_13: init i32 = call %F.ref()
+// CHECK:STDOUT:   %.loc13_15: i32 = value_of_initializer %.loc13_13
+// CHECK:STDOUT:   return %.loc13_15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32 {
@@ -64,16 +62,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref.loc22_10: <function> = name_reference "F", file.%F
-// CHECK:STDOUT:   %.loc22_11.1: init i32 = call %F.ref.loc22_10()
+// CHECK:STDOUT:   %.loc22_11: init i32 = call %F.ref.loc22_10()
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %F.ref.loc22_21: <function> = name_reference "F", @Class.%F
 // CHECK:STDOUT:   %.loc22_23.1: init i32 = call %F.ref.loc22_21()
-// CHECK:STDOUT:   %.loc22_11.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc22_11.3: ref i32 = temporary %.loc22_11.2, %.loc22_11.1
-// CHECK:STDOUT:   %.loc22_11.4: i32 = bind_value %.loc22_11.3
-// CHECK:STDOUT:   %.loc22_23.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc22_23.3: ref i32 = temporary %.loc22_23.2, %.loc22_23.1
-// CHECK:STDOUT:   %.loc22_23.4: i32 = bind_value %.loc22_23.3
-// CHECK:STDOUT:   %.loc22_14: i32 = add %.loc22_11.4, %.loc22_23.4
-// CHECK:STDOUT:   return %.loc22_14
+// CHECK:STDOUT:   %.loc22_14.1: i32 = value_of_initializer %.loc22_11
+// CHECK:STDOUT:   %.loc22_23.2: i32 = value_of_initializer %.loc22_23.1
+// CHECK:STDOUT:   %.loc22_14.2: i32 = add %.loc22_14.1, %.loc22_23.2
+// CHECK:STDOUT:   return %.loc22_14.2
 // CHECK:STDOUT: }

@@ -60,9 +60,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", @Class.%F
 // CHECK:STDOUT:   %.loc22_18: i32 = int_literal 4
-// CHECK:STDOUT:   %.loc22_17.1: init i32 = call %F.ref(%.loc22_18)
-// CHECK:STDOUT:   %.loc22_17.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc22_17.3: ref i32 = temporary %.loc22_17.2, %.loc22_17.1
-// CHECK:STDOUT:   %.loc22_17.4: i32 = bind_value %.loc22_17.3
-// CHECK:STDOUT:   return %.loc22_17.4
+// CHECK:STDOUT:   %.loc22_17: init i32 = call %F.ref(%.loc22_18)
+// CHECK:STDOUT:   %.loc22_20: i32 = value_of_initializer %.loc22_17
+// CHECK:STDOUT:   return %.loc22_20
 // CHECK:STDOUT: }

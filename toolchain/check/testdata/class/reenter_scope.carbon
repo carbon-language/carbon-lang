@@ -32,11 +32,9 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", @Class.%G
-// CHECK:STDOUT:   %.loc13_11.1: init i32 = call %G.ref()
-// CHECK:STDOUT:   %.loc13_11.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc13_11.3: ref i32 = temporary %.loc13_11.2, %.loc13_11.1
-// CHECK:STDOUT:   %.loc13_11.4: i32 = bind_value %.loc13_11.3
-// CHECK:STDOUT:   return %.loc13_11.4
+// CHECK:STDOUT:   %.loc13_11: init i32 = call %G.ref()
+// CHECK:STDOUT:   %.loc13_13: i32 = value_of_initializer %.loc13_11
+// CHECK:STDOUT:   return %.loc13_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;

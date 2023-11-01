@@ -4,16 +4,16 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_no_type.carbon:[[@LINE+3]]:17: ERROR: Expected a `api` or `impl`.
-// CHECK:STDERR: package Geometry;
-// CHECK:STDERR:                 ^
-package Geometry;
+package Geometry library "Shapes" api;
 
-// CHECK:STDOUT: - filename: fail_no_type.carbon
+// CHECK:STDOUT: - filename: api_library.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'Literal', text: '"Shapes"'},
+// CHECK:STDOUT:       {kind: 'Library', text: 'library', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
+// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
