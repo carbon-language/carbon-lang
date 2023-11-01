@@ -13,7 +13,7 @@ auto HandleLetDeclaration(Context& context, Parse::Lamp parse_lamp) -> bool {
   SemIR::InstId pattern_id =
       context.lamp_stack().Pop<Parse::LampKind::PatternBinding>();
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<Parse::LampKind::LetIntroducer>();
+      .PopAndDiscardSoloParseLamp<Parse::LampKind::LetIntroducer>();
 
   // Convert the value to match the type of the pattern.
   auto pattern = context.insts().Get(pattern_id);

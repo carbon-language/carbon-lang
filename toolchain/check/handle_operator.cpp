@@ -8,8 +8,8 @@
 namespace Carbon::Check {
 
 auto HandleInfixOperator(Context& context, Parse::Lamp parse_lamp) -> bool {
-  auto [rhs_node, rhs_id] = context.lamp_stack().PopExpressionWithParseNode();
-  auto [lhs_node, lhs_id] = context.lamp_stack().PopExpressionWithParseNode();
+  auto [rhs_node, rhs_id] = context.lamp_stack().PopExpressionWithParseLamp();
+  auto [lhs_node, lhs_id] = context.lamp_stack().PopExpressionWithParseLamp();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_lamp);

@@ -11,7 +11,7 @@ auto HandleImplicitParameterList(Context& context, Parse::Lamp parse_lamp)
   auto refs_id =
       context.ParamOrArgEnd(Parse::LampKind::ImplicitParameterListStart);
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<
+      .PopAndDiscardSoloParseLamp<
           Parse::LampKind::ImplicitParameterListStart>();
   context.lamp_stack().Push(parse_lamp, refs_id);
   // The implicit parameter list's scope extends to the end of the following
@@ -31,7 +31,7 @@ auto HandleParameterList(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto refs_id = context.ParamOrArgEnd(Parse::LampKind::ParameterListStart);
   context.PopScope();
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<Parse::LampKind::ParameterListStart>();
+      .PopAndDiscardSoloParseLamp<Parse::LampKind::ParameterListStart>();
   context.lamp_stack().Push(parse_lamp, refs_id);
   return true;
 }

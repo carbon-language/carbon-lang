@@ -27,7 +27,7 @@ struct TypedInstArgsInfo {
   using Tuple = decltype(StructReflection::AsTuple(std::declval<TypedInst>()));
 
   static constexpr int FirstArgField =
-      HasParseNode<TypedInst> + HasTypeId<TypedInst>;
+      HasParseLamp<TypedInst> + HasTypeId<TypedInst>;
 
   static constexpr int NumArgs = std::tuple_size_v<Tuple> - FirstArgField;
   static_assert(NumArgs <= 2,
@@ -70,7 +70,7 @@ class Inst : public Printable<Inst> {
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
-    if constexpr (HasParseNode<TypedInst>) {
+    if constexpr (HasParseLamp<TypedInst>) {
       parse_lamp_ = typed_inst.parse_lamp;
     }
     if constexpr (HasTypeId<TypedInst>) {
@@ -97,7 +97,7 @@ class Inst : public Printable<Inst> {
     CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
                                   << " to wrong kind " << TypedInst::Kind;
     auto build_with_type_id_and_args = [&](auto... type_id_and_args) {
-      if constexpr (HasParseNode<TypedInst>) {
+      if constexpr (HasParseLamp<TypedInst>) {
         return TypedInst{parse_lamp(), type_id_and_args...};
       } else {
         return TypedInst{type_id_and_args...};

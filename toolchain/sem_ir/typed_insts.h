@@ -558,11 +558,11 @@ struct VarStorage {
   StringId name_id;
 };
 
-// HasParseNode<T> is true if T has a `Parse::Lamp parse_lamp` field.
-template <typename T, typename ParseNodeType = Parse::Lamp T::*>
-constexpr bool HasParseNode = false;
+// HasParseLamp<T> is true if T has a `Parse::Lamp parse_lamp` field.
+template <typename T, typename ParseLampType = Parse::Lamp T::*>
+constexpr bool HasParseLamp = false;
 template <typename T>
-constexpr bool HasParseNode<T, decltype(&T::parse_lamp)> = true;
+constexpr bool HasParseLamp<T, decltype(&T::parse_lamp)> = true;
 
 // HasTypeId<T> is true if T has a `TypeId type_id` field.
 template <typename T, typename TypeIdType = TypeId T::*>

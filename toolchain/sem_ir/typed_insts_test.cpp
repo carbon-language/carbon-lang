@@ -57,7 +57,7 @@ TYPED_TEST(TypedInstTest, CommonFieldOrder) {
   EXPECT_EQ(inst.type_id(), TypeId(2));
 
   TypedInst typed = inst.As<TypedInst>();
-  if constexpr (HasParseNode<TypedInst>) {
+  if constexpr (HasParseLamp<TypedInst>) {
     EXPECT_EQ(typed.parse_lamp, Parse::Lamp(1));
   }
   if constexpr (HasTypeId<TypedInst>) {
@@ -78,7 +78,7 @@ TYPED_TEST(TypedInstTest, RoundTrip) {
   Inst inst2 = typed1;
 
   EXPECT_EQ(inst1.kind(), inst2.kind());
-  if constexpr (HasParseNode<TypedInst>) {
+  if constexpr (HasParseLamp<TypedInst>) {
     EXPECT_EQ(inst1.parse_lamp(), inst2.parse_lamp());
   }
   if constexpr (HasTypeId<TypedInst>) {
@@ -113,7 +113,7 @@ TYPED_TEST(TypedInstTest, StructLayout) {
   // build environment. If so, we should disable it.
   int32_t fields[4] = {};
   int field = 0;
-  if constexpr (HasParseNode<TypedInst>) {
+  if constexpr (HasParseLamp<TypedInst>) {
     fields[field++] = 1;
   }
   if constexpr (HasTypeId<TypedInst>) {

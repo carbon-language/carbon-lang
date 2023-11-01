@@ -229,9 +229,9 @@ auto HandleNameExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
 auto HandleQualifiedDeclaration(Context& context, Parse::Lamp parse_lamp)
     -> bool {
   auto [parse_lamp2, name_id2] =
-      context.lamp_stack().PopWithParseNode<Parse::LampKind::Name>();
+      context.lamp_stack().PopWithParseLamp<Parse::LampKind::Name>();
 
-  Parse::Lamp parse_lamp1 = context.lamp_stack().PeekParseNode();
+  Parse::Lamp parse_lamp1 = context.lamp_stack().PeekParseLamp();
   switch (context.parse_tree().node_kind(parse_lamp1)) {
     case Parse::LampKind::QualifiedDeclaration:
       // This is the second or subsequent QualifiedDeclaration in a chain.

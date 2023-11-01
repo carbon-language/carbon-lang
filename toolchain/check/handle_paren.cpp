@@ -14,7 +14,7 @@ auto HandleParenExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
   // support for non-tuple cases.
   context.ParamOrArgEnd(Parse::LampKind::ParenExpressionOrTupleLiteralStart);
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<
+      .PopAndDiscardSoloParseLamp<
           Parse::LampKind::ParenExpressionOrTupleLiteralStart>();
   context.lamp_stack().Push(parse_lamp, value_id);
   return true;
@@ -38,13 +38,13 @@ auto HandleTupleLiteral(Context& context, Parse::Lamp parse_lamp) -> bool {
       Parse::LampKind::ParenExpressionOrTupleLiteralStart);
 
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<
+      .PopAndDiscardSoloParseLamp<
           Parse::LampKind::ParenExpressionOrTupleLiteralStart>();
   const auto& inst_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::TypeId> type_ids;
   type_ids.reserve(inst_block.size());
-  for (auto node : inst_block) {
-    type_ids.push_back(context.insts().Get(node).type_id());
+  for (auto inst : inst_block) {
+    type_ids.push_back(context.insts().Get(inst).type_id());
   }
   auto type_id = context.CanonicalizeTupleType(parse_lamp, std::move(type_ids));
 

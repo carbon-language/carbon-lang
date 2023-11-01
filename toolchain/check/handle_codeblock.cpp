@@ -14,7 +14,7 @@ auto HandleCodeBlockStart(Context& context, Parse::Lamp parse_lamp) -> bool {
 
 auto HandleCodeBlock(Context& context, Parse::Lamp /*parse_lamp*/) -> bool {
   context.PopScope();
-  context.lamp_stack().PopForSoloParseNode<Parse::LampKind::CodeBlockStart>();
+  context.lamp_stack().PopForSoloParseLamp<Parse::LampKind::CodeBlockStart>();
   return true;
 }
 

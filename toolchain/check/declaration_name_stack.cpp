@@ -26,16 +26,16 @@ auto DeclarationNameStack::Push() -> void {
 
 auto DeclarationNameStack::Pop() -> NameContext {
   if (context_->parse_tree().node_kind(
-          context_->lamp_stack().PeekParseNode()) ==
+          context_->lamp_stack().PeekParseLamp()) ==
       Parse::LampKind::QualifiedDeclaration) {
     // Any parts from a QualifiedDeclaration will already have been processed
     // into the name.
     context_->lamp_stack()
-        .PopAndDiscardSoloParseNode<Parse::LampKind::QualifiedDeclaration>();
+        .PopAndDiscardSoloParseLamp<Parse::LampKind::QualifiedDeclaration>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
     auto [parse_lamp, name_id] =
-        context_->lamp_stack().PopWithParseNode<Parse::LampKind::Name>();
+        context_->lamp_stack().PopWithParseLamp<Parse::LampKind::Name>();
     ApplyNameQualifier(parse_lamp, name_id);
   }
 
@@ -95,7 +95,7 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
                                                 StringId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_lamp)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
-    // This means the input inst_id is actually a string ID.
+    // This means the input instruction name_id is actually a string ID.
     //
     // TODO: This doesn't perform the right kind of lookup. We will find names
     // from enclosing lexical scopes here, in the case where `target_scope_id`
@@ -104,12 +104,12 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
         name_context.parse_lamp, name_id, name_context.target_scope_id,
         /*print_diagnostics=*/false);
     if (resolved_inst_id == SemIR::InstId::BuiltinError) {
-      // Invalid indicates an unresolved node. Store it and return.
+      // Invalid indicates an unresolved inst. Store it and return.
       name_context.state = NameContext::State::Unresolved;
       name_context.unresolved_name_id = name_id;
       return;
     } else {
-      // Store the resolved node and continue for the target scope update.
+      // Store the resolved inst and continue for the target scope update.
       name_context.resolved_inst_id = resolved_inst_id;
     }
 
@@ -119,13 +119,13 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
 
 auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
     -> void {
-  // This will only be reached for resolved nodes. We update the target
+  // This will only be reached for resolved insts. We update the target
   // scope based on the resolved type.
-  auto resolved_node = context_->insts().Get(name_context.resolved_inst_id);
-  switch (resolved_node.kind()) {
+  auto resolved_inst = context_->insts().Get(name_context.resolved_inst_id);
+  switch (resolved_inst.kind()) {
     case SemIR::ClassDeclaration::Kind: {
       const auto& class_info = context_->classes().Get(
-          resolved_node.As<SemIR::ClassDeclaration>().class_id);
+          resolved_inst.As<SemIR::ClassDeclaration>().class_id);
       if (class_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
         name_context.target_scope_id = class_info.scope_id;
@@ -137,7 +137,7 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
     case SemIR::Namespace::Kind:
       name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id =
-          resolved_node.As<SemIR::Namespace>().name_scope_id;
+          resolved_inst.As<SemIR::Namespace>().name_scope_id;
       break;
     default:
       name_context.state = NameContext::State::ResolvedNonScope;

@@ -13,12 +13,12 @@ auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_lamp)
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
   bool has_init =
-      context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) !=
+      context.parse_tree().node_kind(context.lamp_stack().PeekParseLamp()) !=
       Parse::LampKind::PatternBinding;
   if (has_init) {
     init_id = context.lamp_stack().PopExpression();
     context.lamp_stack()
-        .PopAndDiscardSoloParseNode<Parse::LampKind::VariableInitializer>();
+        .PopAndDiscardSoloParseLamp<Parse::LampKind::VariableInitializer>();
   }
 
   // Extract the name binding.
@@ -37,7 +37,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_lamp)
   if (has_init) {
     if (context.insts().Get(value_id).Is<SemIR::VarStorage>()) {
       init_id = Initialize(context, parse_lamp, value_id, init_id);
-      // TODO: Consider using different node kinds for assignment versus
+      // TODO: Consider using different inst kinds for assignment versus
       // initialization.
       context.AddInst(SemIR::Assign{parse_lamp, value_id, init_id});
     } else {
@@ -48,7 +48,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Lamp parse_lamp)
   }
 
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<Parse::LampKind::VariableIntroducer>();
+      .PopAndDiscardSoloParseLamp<Parse::LampKind::VariableIntroducer>();
 
   return true;
 }

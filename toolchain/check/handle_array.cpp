@@ -23,7 +23,7 @@ auto HandleArrayExpressionSemi(Context& context, Parse::Lamp parse_lamp)
 
 auto HandleArrayExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
   // TODO: Handle array type with undefined bound.
-  if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
+  if (context.parse_tree().node_kind(context.lamp_stack().PeekParseLamp()) ==
       Parse::LampKind::ArrayExpressionSemi) {
     context.lamp_stack().PopAndIgnore();
     context.lamp_stack().PopAndIgnore();
@@ -32,7 +32,7 @@ auto HandleArrayExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
 
   SemIR::InstId bound_inst_id = context.lamp_stack().PopExpression();
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<Parse::LampKind::ArrayExpressionSemi>();
+      .PopAndDiscardSoloParseLamp<Parse::LampKind::ArrayExpressionSemi>();
   SemIR::InstId element_type_inst_id = context.lamp_stack().PopExpression();
   auto bound_node = context.insts().Get(bound_inst_id);
   if (auto literal = bound_node.TryAs<SemIR::IntegerLiteral>()) {

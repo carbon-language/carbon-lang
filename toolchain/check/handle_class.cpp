@@ -23,7 +23,7 @@ static auto BuildClassDeclaration(Context& context)
   auto name_context = context.declaration_name_stack().Pop();
   auto class_keyword =
       context.lamp_stack()
-          .PopForSoloParseNode<Parse::LampKind::ClassIntroducer>();
+          .PopForSoloParseLamp<Parse::LampKind::ClassIntroducer>();
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.

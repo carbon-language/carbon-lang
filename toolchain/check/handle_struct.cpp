@@ -16,17 +16,17 @@ auto HandleStructFieldDesignator(Context& context, Parse::Lamp /*parse_lamp*/)
     -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
   CARBON_CHECK(
-      context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
+      context.parse_tree().node_kind(context.lamp_stack().PeekParseLamp()) ==
       Parse::LampKind::Name);
   return true;
 }
 
 auto HandleStructFieldType(Context& context, Parse::Lamp parse_lamp) -> bool {
-  auto [type_node, type_id] = context.lamp_stack().PopExpressionWithParseNode();
+  auto [type_node, type_id] = context.lamp_stack().PopExpressionWithParseLamp();
   SemIR::TypeId cast_type_id = ExpressionAsType(context, type_node, type_id);
 
   auto [name_node, name_id] =
-      context.lamp_stack().PopWithParseNode<Parse::LampKind::Name>();
+      context.lamp_stack().PopWithParseLamp<Parse::LampKind::Name>();
 
   context.AddInstAndPush(
       parse_lamp, SemIR::StructTypeField{name_node, name_id, cast_type_id});
@@ -40,7 +40,7 @@ auto HandleStructFieldUnknown(Context& context, Parse::Lamp parse_lamp)
 
 auto HandleStructFieldValue(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto [value_parse_lamp, value_inst_id] =
-      context.lamp_stack().PopExpressionWithParseNode();
+      context.lamp_stack().PopExpressionWithParseLamp();
   StringId name_id = context.lamp_stack().Pop<Parse::LampKind::Name>();
 
   // Store the name for the type.
@@ -58,7 +58,7 @@ auto HandleStructLiteral(Context& context, Parse::Lamp parse_lamp) -> bool {
 
   context.PopScope();
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<
+      .PopAndDiscardSoloParseLamp<
           Parse::LampKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
 
@@ -89,7 +89,7 @@ auto HandleStructTypeLiteral(Context& context, Parse::Lamp parse_lamp) -> bool {
 
   context.PopScope();
   context.lamp_stack()
-      .PopAndDiscardSoloParseNode<
+      .PopAndDiscardSoloParseLamp<
           Parse::LampKind::StructLiteralOrStructTypeLiteralStart>();
   // This is only used for value literals.
   context.args_type_info_stack().Pop();

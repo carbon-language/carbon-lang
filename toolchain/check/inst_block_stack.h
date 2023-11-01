@@ -11,8 +11,8 @@
 
 namespace Carbon::Check {
 
-// A stack of node blocks that are currently being constructed in a Context. The
-// contents of the node blocks are stored here until the node block is popped
+// A stack of inst blocks that are currently being constructed in a Context. The
+// contents of the inst blocks are stored here until the inst block is popped
 // from the stack, at which point they are transferred into the SemIR::File for
 // long-term storage.
 //
@@ -23,37 +23,37 @@ class InstBlockStack {
                           llvm::raw_ostream* vlog_stream)
       : name_(name), sem_ir_(&sem_ir), vlog_stream_(vlog_stream) {}
 
-  // Pushes an existing node block.
+  // Pushes an existing inst block.
   auto Push(SemIR::InstBlockId id) -> void;
 
-  // Pushes a new node block. It will be invalid unless PeekOrAdd is called in
+  // Pushes a new inst block. It will be invalid unless PeekOrAdd is called in
   // order to support lazy allocation.
   auto Push() -> void { Push(SemIR::InstBlockId::Invalid); }
 
   // Pushes a new unreachable code block.
   auto PushUnreachable() -> void { Push(SemIR::InstBlockId::Unreachable); }
 
-  // Returns the ID of the top node block, allocating one if necessary. If
-  // `depth` is specified, returns the node at `depth` levels from the top of
+  // Returns the ID of the top inst block, allocating one if necessary. If
+  // `depth` is specified, returns the inst at `depth` levels from the top of
   // the stack instead of the top block, where the top block is at depth 0.
   auto PeekOrAdd(int depth = 0) -> SemIR::InstBlockId;
 
-  // Pops the top node block. This will always return a valid node block;
+  // Pops the top inst block. This will always return a valid inst block;
   // SemIR::InstBlockId::Empty is returned if one wasn't allocated.
   auto Pop() -> SemIR::InstBlockId;
 
-  // Pops the top node block, and discards it if it hasn't had an ID allocated.
+  // Pops the top inst block, and discards it if it hasn't had an ID allocated.
   auto PopAndDiscard() -> void;
 
-  // Adds the given node to the block at the top of the stack and returns its
+  // Adds the given inst to the block at the top of the stack and returns its
   // ID.
-  auto AddInst(SemIR::Inst node) -> SemIR::InstId {
-    auto inst_id = sem_ir_->insts().AddInNoBlock(node);
+  auto AddInst(SemIR::Inst inst) -> SemIR::InstId {
+    auto inst_id = sem_ir_->insts().AddInNoBlock(inst);
     AddInstId(inst_id);
     return inst_id;
   }
 
-  // Adds the given node ID to the block at the top of the stack.
+  // Adds the given inst ID to the block at the top of the stack.
   auto AddInstId(SemIR::InstId inst_id) -> void {
     CARBON_CHECK(!empty()) << "no current block";
     stack_[size_ - 1].content.push_back(inst_id);
@@ -65,7 +65,7 @@ class InstBlockStack {
            stack_[size_ - 1].id != SemIR::InstBlockId::Unreachable;
   }
 
-  // Returns a view of the contents of the top node block on the stack.
+  // Returns a view of the contents of the top inst block on the stack.
   auto PeekCurrentBlockContents() -> llvm::ArrayRef<SemIR::InstId> {
     CARBON_CHECK(!empty()) << "no current block";
     return stack_[size_ - 1].content;

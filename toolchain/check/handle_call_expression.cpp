@@ -18,7 +18,7 @@ auto HandleCallExpression(Context& context, Parse::Lamp parse_lamp) -> bool {
 
   auto [call_expr_parse_lamp, callee_id] =
       context.lamp_stack()
-          .PopWithParseNode<Parse::LampKind::CallExpressionStart>();
+          .PopWithParseLamp<Parse::LampKind::CallExpressionStart>();
 
   auto diagnose_not_callable = [&, call_expr_parse_lamp = call_expr_parse_lamp,
                                 callee_id = callee_id] {

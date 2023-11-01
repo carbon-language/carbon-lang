@@ -30,15 +30,15 @@ auto HandleGenericPatternBinding(Context& context, Parse::Lamp parse_lamp)
 
 auto HandlePatternBinding(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto [type_node, parsed_type_id] =
-      context.lamp_stack().PopExpressionWithParseNode();
+      context.lamp_stack().PopExpressionWithParseLamp();
   auto type_node_copy = type_node;
   auto cast_type_id = ExpressionAsType(context, type_node, parsed_type_id);
 
   // A `self` binding doesn't have a name.
   if (auto self_node =
           context.lamp_stack()
-              .PopForSoloParseNodeIf<Parse::LampKind::SelfValueName>()) {
-    if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) !=
+              .PopForSoloParseLampIf<Parse::LampKind::SelfValueName>()) {
+    if (context.parse_tree().node_kind(context.lamp_stack().PeekParseLamp()) !=
         Parse::LampKind::ImplicitParameterListStart) {
       CARBON_DIAGNOSTIC(
           SelfOutsideImplicitParameterList, Error,
@@ -56,12 +56,12 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_lamp) -> bool {
 
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] =
-      context.lamp_stack().PopWithParseNode<Parse::LampKind::Name>();
+      context.lamp_stack().PopWithParseLamp<Parse::LampKind::Name>();
 
   // Allocate a node of the appropriate kind, linked to the name for error
   // locations.
   switch (auto context_parse_lamp_kind = context.parse_tree().node_kind(
-              context.lamp_stack().PeekParseNode())) {
+              context.lamp_stack().PeekParseLamp())) {
     case Parse::LampKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl =

@@ -307,7 +307,7 @@ auto Context::ParamOrArgComma() -> void {
 }
 
 auto Context::ParamOrArgEndNoPop(Parse::LampKind start_kind) -> void {
-  if (parse_tree_->node_kind(lamp_stack_.PeekParseNode()) != start_kind) {
+  if (parse_tree_->node_kind(lamp_stack_.PeekParseLamp()) != start_kind) {
     ParamOrArgSave(lamp_stack_.PopExpression());
   }
 }

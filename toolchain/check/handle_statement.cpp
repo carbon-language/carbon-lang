@@ -29,14 +29,14 @@ auto HandleExpressionStatement(Context& context, Parse::Lamp /*parse_lamp*/)
 
 auto HandleReturnStatement(Context& context, Parse::Lamp parse_lamp) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
-  auto fn_node = context.insts().GetAs<SemIR::FunctionDeclaration>(
+  auto fn_inst = context.insts().GetAs<SemIR::FunctionDeclaration>(
       context.return_scope_stack().back());
-  const auto& callable = context.functions().Get(fn_node.function_id);
+  const auto& callable = context.functions().Get(fn_inst.function_id);
 
-  if (context.parse_tree().node_kind(context.lamp_stack().PeekParseNode()) ==
+  if (context.parse_tree().node_kind(context.lamp_stack().PeekParseLamp()) ==
       Parse::LampKind::ReturnStatementStart) {
     context.lamp_stack()
-        .PopAndDiscardSoloParseNode<Parse::LampKind::ReturnStatementStart>();
+        .PopAndDiscardSoloParseLamp<Parse::LampKind::ReturnStatementStart>();
 
     if (callable.return_type_id.is_valid()) {
       // TODO: Add a note pointing at the return type's parse node.
@@ -52,7 +52,7 @@ auto HandleReturnStatement(Context& context, Parse::Lamp parse_lamp) -> bool {
   } else {
     auto arg = context.lamp_stack().PopExpression();
     context.lamp_stack()
-        .PopAndDiscardSoloParseNode<Parse::LampKind::ReturnStatementStart>();
+        .PopAndDiscardSoloParseLamp<Parse::LampKind::ReturnStatementStart>();
 
     if (!callable.return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(
@@ -62,7 +62,7 @@ auto HandleReturnStatement(Context& context, Parse::Lamp parse_lamp) -> bool {
                         "There was no return type provided.");
       context.emitter()
           .Build(parse_lamp, ReturnStatementDisallowExpression)
-          .Note(fn_node.parse_lamp, ReturnStatementImplicitNote)
+          .Note(fn_inst.parse_lamp, ReturnStatementImplicitNote)
           .Emit();
     } else if (callable.return_slot_id.is_valid()) {
       arg = Initialize(context, parse_lamp, callable.return_slot_id, arg);
@@ -74,7 +74,7 @@ auto HandleReturnStatement(Context& context, Parse::Lamp parse_lamp) -> bool {
     context.AddInst(SemIR::ReturnExpression{parse_lamp, arg});
   }
 
-  // Switch to a new, unreachable, empty node block. This typically won't
+  // Switch to a new, unreachable, empty inst block. This typically won't
   // contain any semantics IR, but it can do if there are statements following
   // the `return` statement.
   context.inst_block_stack().Pop();

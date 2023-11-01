@@ -52,7 +52,7 @@ auto HandleIfExpressionElse(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto then_value_id =
       context.lamp_stack().Pop<Parse::LampKind::IfExpressionThen>();
   auto [if_node, _] =
-      context.lamp_stack().PopWithParseNode<Parse::LampKind::IfExpressionIf>();
+      context.lamp_stack().PopWithParseLamp<Parse::LampKind::IfExpressionIf>();
 
   // Convert the `else` value to the `then` value's type, and finish the `else`
   // block.

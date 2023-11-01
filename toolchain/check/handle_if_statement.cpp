@@ -47,7 +47,7 @@ auto HandleIfStatementElse(Context& context, Parse::Lamp parse_lamp) -> bool {
 
 auto HandleIfStatement(Context& context, Parse::Lamp parse_lamp) -> bool {
   switch (auto kind = context.parse_tree().node_kind(
-              context.lamp_stack().PeekParseNode())) {
+              context.lamp_stack().PeekParseLamp())) {
     case Parse::LampKind::IfCondition: {
       // Branch from then block to else block, and start emitting the else
       // block.
@@ -62,7 +62,7 @@ auto HandleIfStatement(Context& context, Parse::Lamp parse_lamp) -> bool {
     case Parse::LampKind::IfStatementElse: {
       // Branch from the then and else blocks to a new resumption block.
       context.lamp_stack()
-          .PopAndDiscardSoloParseNode<Parse::LampKind::IfStatementElse>();
+          .PopAndDiscardSoloParseLamp<Parse::LampKind::IfStatementElse>();
       context.AddConvergenceBlockAndPush(parse_lamp, /*num_blocks=*/2);
       break;
     }
