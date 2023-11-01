@@ -45,7 +45,7 @@ TEST(SemIRTest, YAML) {
   auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
   auto type_builtin = Pair(
-      type_id, Yaml::Mapping(ElementsAre(Pair("node", inst_builtin),
+      type_id, Yaml::Mapping(ElementsAre(Pair("inst", inst_builtin),
                                          Pair("value_rep", Yaml::Mapping(_)))));
 
   auto file = Yaml::Mapping(ElementsAre(
@@ -54,7 +54,7 @@ TEST(SemIRTest, YAML) {
       Pair("classes", Yaml::Mapping(SizeIs(0))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
       Pair("type_blocks", Yaml::Mapping(IsEmpty())),
-      Pair("nodes",
+      Pair("insts",
            Yaml::Mapping(AllOf(
                Each(Key(inst_id)),
                // kind is required, other parts are optional.

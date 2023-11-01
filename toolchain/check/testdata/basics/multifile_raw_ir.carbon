@@ -22,9 +22,9 @@ fn B() {}
 // CHECK:STDOUT:     function0:       {name: str0, param_refs: block0, body: [block1]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     type0:           {node: instFunctionType, value_rep: {kind: copy, type: type0}}
+// CHECK:STDOUT:     type0:           {inst: instFunctionType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:   type_blocks:     {}
-// CHECK:STDOUT:   nodes:
+// CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst+0:          {kind: FunctionDeclaration, arg0: function0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: Return}
 // CHECK:STDOUT:   inst_blocks:
@@ -42,9 +42,9 @@ fn B() {}
 // CHECK:STDOUT:     function0:       {name: str1, param_refs: block0, body: [block1]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     type0:           {node: instFunctionType, value_rep: {kind: copy, type: type0}}
+// CHECK:STDOUT:     type0:           {inst: instFunctionType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:   type_blocks:     {}
-// CHECK:STDOUT:   nodes:
+// CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst+0:          {kind: FunctionDeclaration, arg0: function0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: Return}
 // CHECK:STDOUT:   inst_blocks:

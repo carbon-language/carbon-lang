@@ -14,7 +14,7 @@
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:           {}
 // CHECK:STDOUT:   type_blocks:     {}
-// CHECK:STDOUT:   nodes:
+// CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instTypeType:    {kind: CrossReference, arg0: ir0, arg1: instTypeType, type: typeTypeType}
 // CHECK:STDOUT:     instError:       {kind: CrossReference, arg0: ir0, arg1: instError, type: typeError}
 // CHECK:STDOUT:     instBoolType:    {kind: CrossReference, arg0: ir0, arg1: instBoolType, type: typeTypeType}

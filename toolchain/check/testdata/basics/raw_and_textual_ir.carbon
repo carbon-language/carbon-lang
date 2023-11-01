@@ -20,12 +20,12 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     function0:       {name: str0, param_refs: block1, return_type: type3, return_slot: inst+4, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     type0:           {node: instIntegerType, value_rep: {kind: copy, type: type0}}
-// CHECK:STDOUT:     type1:           {node: inst+1, value_rep: {kind: unknown, type: type<invalid>}}
-// CHECK:STDOUT:     type2:           {node: instFloatingPointType, value_rep: {kind: copy, type: type2}}
-// CHECK:STDOUT:     type3:           {node: inst+3, value_rep: {kind: pointer, type: type4}}
-// CHECK:STDOUT:     type4:           {node: inst+5, value_rep: {kind: copy, type: type4}}
-// CHECK:STDOUT:     type5:           {node: instFunctionType, value_rep: {kind: copy, type: type5}}
+// CHECK:STDOUT:     type0:           {inst: instIntegerType, value_rep: {kind: copy, type: type0}}
+// CHECK:STDOUT:     type1:           {inst: inst+1, value_rep: {kind: unknown, type: type<invalid>}}
+// CHECK:STDOUT:     type2:           {inst: instFloatingPointType, value_rep: {kind: copy, type: type2}}
+// CHECK:STDOUT:     type3:           {inst: inst+3, value_rep: {kind: pointer, type: type4}}
+// CHECK:STDOUT:     type4:           {inst: inst+5, value_rep: {kind: copy, type: type4}}
+// CHECK:STDOUT:     type5:           {inst: instFunctionType, value_rep: {kind: copy, type: type5}}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     typeBlock0:
 // CHECK:STDOUT:       0:               typeTypeType
@@ -33,7 +33,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     typeBlock1:
 // CHECK:STDOUT:       0:               type0
 // CHECK:STDOUT:       1:               type2
-// CHECK:STDOUT:   nodes:
+// CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst+0:          {kind: Parameter, arg0: str1, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
 // CHECK:STDOUT:     inst+2:          {kind: TupleLiteral, arg0: block2, type: type1}
