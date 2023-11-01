@@ -58,7 +58,7 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_lamp) -> bool {
   auto [name_node, name_id] =
       context.lamp_stack().PopWithParseLamp<Parse::LampKind::Name>();
 
-  // Allocate a node of the appropriate kind, linked to the name for error
+  // Allocate an inst of the appropriate kind, linked to the name for error
   // locations.
   switch (auto context_parse_lamp_kind = context.parse_tree().node_kind(
               context.lamp_stack().PeekParseLamp())) {
@@ -113,7 +113,7 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_lamp) -> bool {
       // in a function definition. We don't know which kind we have here.
       context.AddInstAndPush(
           parse_lamp, SemIR::Parameter{name_node, cast_type_id, name_id});
-      // TODO: Create a `BindName` node.
+      // TODO: Create a `BindName` inst.
       break;
 
     case Parse::LampKind::LetIntroducer:
@@ -127,7 +127,7 @@ auto HandlePatternBinding(Context& context, Parse::Lamp parse_lamp) -> bool {
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
-      // Create the node, but don't add it to a block until after we've formed
+      // Create the inst, but don't add it to a block until after we've formed
       // its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.

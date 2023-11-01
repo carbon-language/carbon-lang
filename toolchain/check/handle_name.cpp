@@ -49,11 +49,11 @@ auto HandleMemberAccessExpression(Context& context, Parse::Lamp parse_lamp)
             ? context.LookupName(parse_lamp, name_id, *name_scope_id,
                                  /*print_diagnostics=*/true)
             : SemIR::InstId::BuiltinError;
-    auto node = context.insts().Get(inst_id);
-    // TODO: Track that this node was named within `base_id`.
+    auto inst = context.insts().Get(inst_id);
+    // TODO: Track that this inst was named within `base_id`.
     context.AddInstAndPush(
         parse_lamp,
-        SemIR::NameReference{parse_lamp, node.type_id(), name_id, inst_id});
+        SemIR::NameReference{parse_lamp, inst.type_id(), name_id, inst_id});
     return true;
   }
 
@@ -93,10 +93,10 @@ auto HandleMemberAccessExpression(Context& context, Parse::Lamp parse_lamp)
 
       // Perform instance binding if we found an instance member.
       auto member_type_id = context.insts().Get(member_id).type_id();
-      auto member_type_node = context.insts().Get(
+      auto member_type_inst = context.insts().Get(
           context.sem_ir().GetTypeAllowBuiltinTypes(member_type_id));
       if (auto unbound_field_type =
-              member_type_node.TryAs<SemIR::UnboundFieldType>()) {
+              member_type_inst.TryAs<SemIR::UnboundFieldType>()) {
         // TODO: Check that the unbound field type describes a member of this
         // class. Perform a conversion of the base if necessary.
 
