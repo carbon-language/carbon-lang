@@ -229,8 +229,9 @@ class CopyOnWriteBlock {
 };
 }  // namespace
 
-// Performs a conversion from a tuple to an array type. Does not perform a
-// final conversion to the requested expression category.
+// Performs a conversion from a tuple to an array type. This function only
+// converts the type, and does not perform a final conversion to the requested
+// expression category.
 static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                 SemIR::ArrayType array_type,
                                 SemIR::NodeId value_id, ConversionTarget target)
@@ -311,8 +312,9 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                           sem_ir.node_blocks().Add(inits)});
 }
 
-// Performs a conversion from a tuple to a tuple type. Does not perform a
-// final conversion to the requested expression category.
+// Performs a conversion from a tuple to a tuple type. This function only
+// converts the type, and does not perform a final conversion to the requested
+// expression category.
 static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
                                 SemIR::TupleType dest_type,
                                 SemIR::NodeId value_id, ConversionTarget target)
@@ -513,8 +515,9 @@ static auto ConvertStructToStructOrClass(Context& context,
   }
 }
 
-// Performs a conversion from a struct to a struct type. Does not perform a
-// final conversion to the requested expression category.
+// Performs a conversion from a struct to a struct type. This function only
+// converts the type, and does not perform a final conversion to the requested
+// expression category.
 static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                                   SemIR::StructType dest_type,
                                   SemIR::NodeId value_id,
@@ -523,8 +526,9 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
       context, src_type, dest_type, value_id, target, /*is_class=*/false);
 }
 
-// Performs a conversion from a struct to a class type. Does not perform a
-// final conversion to the requested expression category.
+// Performs a conversion from a struct to a class type. This function only
+// converts the type, and does not perform a final conversion to the requested
+// expression category.
 static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  SemIR::ClassType dest_type,
                                  SemIR::NodeId value_id,
