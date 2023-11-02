@@ -12,8 +12,6 @@ auto Hasher::HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
   const ssize_t size = bytes.size();
   CARBON_DCHECK(size > 32);
 
-  __builtin_prefetch(data_ptr, 0 /* read */, 0 /* discard after next use */);
-
   // If we have 64 bytes or more, we're going to handle two 32-byte chunks at a
   // time using a simplified version of the main algorithm. This is based
   // heavily on the 64-byte and larger processing approach used by Abseil. The
@@ -33,14 +31,17 @@ auto Hasher::HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
     return (m0 ^ m1);
   };
 
+  // Prefetch the first bytes into cache.
+  __builtin_prefetch(data_ptr, 0 /* read */, 0 /* discard after next use */);
+
   uint64_t buffer0 = hash.buffer ^ StaticRandomData[0];
   uint64_t buffer1 = hash.buffer ^ StaticRandomData[2];
   const std::byte* tail_32b_ptr = data_ptr + (size - 32);
   const std::byte* tail_16b_ptr = data_ptr + (size - 16);
   const std::byte* end_ptr = data_ptr + (size - 64);
   while (data_ptr < end_ptr) {
-    // Prefetch the next cacheline.
-    __builtin_prefetch(data_ptr, 0 /* read */, 0 /* discard after next use */);
+    // Prefetch the next 64-bytes while we process the current 64-bytes.
+    __builtin_prefetch(data_ptr + 64, 0 /* read */, 0 /* discard after next use */);
 
     buffer0 =
         mix32(data_ptr, buffer0, StaticRandomData[4], StaticRandomData[5]);

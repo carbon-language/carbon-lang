@@ -131,6 +131,9 @@ struct RandStrings {
       // When using random sizes, we leverage `i` which is guaranteed to range
       // from [0, NumSizes).
       s = rand_sizes<MaxSize>[i];
+    } else {
+      // Prevent `s` from being constant folded when we directly use `MaxSize`.
+      benchmark::DoNotOptimize(s);
     }
     bytes += s;
     return llvm::StringRef(
@@ -246,6 +249,7 @@ LATENCY_STRING_BENCHMARKS(/*MaxSize=*/8192);
 // for size-related cliffs, all the runs for particular hash function are kept
 // together.
 #define LATENCY_STRING_SIZE_BENCHMARKS(Hash)                             \
+  BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 0>, Hash>);   \
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 1>, Hash>);   \
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 2>, Hash>);   \
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 3>, Hash>);   \

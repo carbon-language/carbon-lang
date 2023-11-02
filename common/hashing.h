@@ -461,6 +461,21 @@ inline auto HashValue(const T& value) -> HashCode {
   return HashValue(value, Hasher::StaticRandomData[7]);
 }
 
+// Building with `-DCARBON_MCA_MARKERS` will enable `llvm-mca` annotations in
+// the source code. These can interfere with optimization, but allows analyzing
+// the generated `.s` file with the `llvm-mca` tool. Documentation for these
+// markers is here:
+// https://llvm.org/docs/CommandGuide/llvm-mca.html#using-markers-to-analyze-specific-code-blocks
+#if CARBON_MCA_MARKERS
+#define CARBON_MCA_BEGIN(NAME) \
+  __asm volatile("# LLVM-MCA-BEGIN " NAME "" ::: "memory");
+#define CARBON_MCA_END(NAME) \
+  __asm volatile("# LLVM-MCA-END " NAME "" ::: "memory");
+#else
+#define CARBON_MCA_BEGIN(NAME)
+#define CARBON_MCA_END(NAME)
+#endif
+
 inline auto Hasher::Read1(const std::byte* data) -> uint64_t {
   uint8_t result;
   std::memcpy(&result, data, sizeof(result));
@@ -490,7 +505,7 @@ inline auto Hasher::Read1To3(const std::byte* data, ssize_t size) -> uint64_t {
   // reading.
   uint64_t byte0 = static_cast<uint8_t>(data[0]);
   uint64_t byte1 = static_cast<uint8_t>(data[size - 1]);
-  uint64_t byte2 = static_cast<uint8_t>(data[size / 2]);
+  uint64_t byte2 = static_cast<uint8_t>(data[size >> 1]);
   return byte0 | (byte1 << 16) | (byte2 << 8);
 }
 
@@ -551,83 +566,6 @@ inline auto Hasher::HashTwo(Hasher hasher, uint64_t data0, uint64_t data1)
   return hasher;
 }
 
-inline auto Hasher::HashSizedBytes(Hasher hasher,
-                                   llvm::ArrayRef<std::byte> bytes) -> Hasher {
-  const std::byte* data_ptr = bytes.data();
-  const ssize_t size = bytes.size();
-
-  // First handle short sequences under 8 bytes.
-  if (LLVM_UNLIKELY(size == 0)) {
-    hasher = HashOne(std::move(hasher), 0);
-    return hasher;
-  }
-  if (size <= 8) {
-    uint64_t data;
-    if (size >= 4) {
-      data = Read4To8(data_ptr, size);
-    } else {
-      data = Read1To3(data_ptr, size);
-    }
-    // We optimize for latency on short strings by hashing both the data and
-    // size in a single multiply here. This results in a *statistically* weak
-    // hash function. It would be improved by doing two rounds of multiplicative
-    // hashing which is what many other modern multiplicative hashes do,
-    // including Abseil and others:
-    //
-    // ```cpp
-    // hash = HashOne(std::move(hash), data);
-    // hash = HashOne(std::move(hash), size);
-    // ```
-    //
-    // We opt to make the same tradeoff here for small sized strings that both
-    // this library and Abseil make for *fixed* size integers by using a weaker
-    // single round of multiplicative hashing and a size-dependent constant
-    // loaded from memory.
-    hasher.buffer = Mix(data ^ hasher.buffer, SampleRandomData(size));
-    return hasher;
-  }
-
-  if (size <= 16) {
-    // Similar to the above, we optimize primarily for latency here and spread
-    // the incoming data across both ends of the multiply. Note that this does
-    // have a drawback -- any time one half of the mix function becomes zero it
-    // will fail to incorporate any bits from the other half. However, there is
-    // exactly 1 in 2^64 values for each side that achieve this, and only when
-    // the size is exactly 16 -- for smaller sizes there is an overlapping byte
-    // that makes this impossible unless the seed is *also* incredibly unlucky.
-    //
-    // Because this hash function makes no attempt to defend against hash
-    // flooding, we accept this risk in order to keep the latency low. If this
-    // becomes a non-flooding problem, we can restrict the size to <16 and send
-    // the 16-byte case down the next tier of cost.
-    auto data = Read8To16(data_ptr, size);
-    hasher.buffer =
-        Mix(data.first ^ SampleRandomData(size), data.second ^ hasher.buffer);
-    return hasher;
-  }
-
-  if (size <= 32) {
-    // Do two mixes of overlapping 16-byte ranges in parallel to minimize
-    // latency. We also incorporate the size by sampling random data into the
-    // seed before both.
-    hasher.buffer ^= SampleRandomData(size);
-    uint64_t m0 = Mix(Read8(data_ptr) ^ StaticRandomData[1],
-                      Read8(data_ptr + 8) ^ hasher.buffer);
-
-    const std::byte* tail_16b_ptr = data_ptr + (size - 16);
-    uint64_t m1 = Mix(Read8(tail_16b_ptr) ^ StaticRandomData[3],
-                      Read8(tail_16b_ptr + 8) ^ hasher.buffer);
-    // Just an XOR mix at the end is quite weak here, but we prefer that for
-    // latency over a more robust approach. Doing another mix with the size (the
-    // way longer string hashing does) increases the latency on x86-64
-    // significantly (approx. 20%).
-    hasher.buffer = m0 ^ m1;
-    return hasher;
-  }
-
-  return HashSizedBytesLarge(std::move(hasher), bytes);
-}
-
 template <typename T, typename /*enable_if*/>
 inline auto Hasher::ReadSmall(const T& value) -> uint64_t {
   const auto* storage = reinterpret_cast<const std::byte*>(&value);
@@ -653,46 +591,58 @@ inline auto Hasher::ReadSmall(const T& value) -> uint64_t {
 
 template <typename T, typename /*enable_if*/>
 inline auto Hasher::Hash(Hasher hasher, const T& value) -> Hasher {
-#if 0
-  // For integer types up to 64-bit widths, we hash the 2's compliment value by
-  // casting to unsigned and hashing as a `uint64_t`. This has the downside of
-  // making negative integers hash differently based on their width, but
-  // anything else would require potentially expensive sign extension. For
-  // positive integers though, there is no problem with using differently sized
-  // integers (for example literals) than the stored keys.
-  if constexpr (sizeof(T) <= 8 &&
-                (std::is_enum_v<T> || std::is_integral_v<T>)) {
-    uint64_t ext_value = static_cast<std::make_unsigned_t<T>>(value);
-    return HashOne(std::move(hasher), ext_value);
-  }
-#else
   if constexpr (sizeof(T) <= 4) {
-    // Get any entropy bits from a pointer seed into the low bits. Harmless if
-    // the seed isn't a pointer, and should fit into the XOR instruction on Arm
-    // and pipeline with the multiply even on x86.
+    // For values 4-bytes or smaller, a 64-bit multiply doesn't lose any
+    // information, and so we can avoid the `Mix` full-width multiply and use a
+    // (much) cheaper normal multiply here.
+    //
+    // However, unlike other code paths with the more complex use of `Mix`, that
+    // won't distribute any entropy from the initial buffer (potentially a seed)
+    // into the low bits where it is most useful for things like seeding hash
+    // tables. To minimize the loss, we rotate the entropy bits from a pointer
+    // seed in the buffer state into the low bits. This is harmless if the
+    // buffer isn't a pointer-based seed, and should fit into the XOR
+    // instruction on Arm and pipeline with the multiply even on x86.
+    //
+    // The goal of the rotate is to try and compensate for the buffer being a
+    // seed of a pointer address, typically a heap pointer or stack pointer. The
+    // low bits of these addresses will often have low entropy due to alignment
+    // and lack of ASLR. We rotate by `12` here which matches the smallest
+    // common page size of 4k. We're unlikely to have interesting alignment
+    // beyond that, and so it should put varying bits of the pointer into the
+    // low bits where they are the most useful. Even with larger page sizes
+    // (64KiB on AArch64 or 2MiB Linux huge pages), we generally expect both
+    // heap and stack allocations to have starting offsets that vary in lower
+    // bits.
+    CARBON_MCA_BEGIN("fixed-4b");
     hasher.buffer = llvm::rotr(hasher.buffer, 12);
-    hasher.buffer ^= static_cast<uint32_t>(ReadSmall(value)) * MulConstant;
+    hasher.buffer ^= ReadSmall(value) * MulConstant;
+    CARBON_MCA_END("fixed-4b");
     return hasher;
   }
-#endif
 
   // We don't need the size to be part of the hash, as the size here is just a
   // function of the type and we're hashing to distinguish different values of
   // the same type. So we just dispatch to the fastest path for the specific
   // size in question.
   if constexpr (sizeof(T) <= 8) {
+    CARBON_MCA_BEGIN("fixed-8b");
     hasher = HashOne(std::move(hasher), ReadSmall(value));
+    CARBON_MCA_END("fixed-8b");
     return hasher;
   }
 
   const auto* data_ptr = reinterpret_cast<const std::byte*>(&value);
   if constexpr (8 < sizeof(T) && sizeof(T) <= 16) {
+    CARBON_MCA_BEGIN("fixed-16b");
     auto values = Read8To16(data_ptr, sizeof(T));
     hasher = HashTwo(std::move(hasher), values.first, values.second);
+    CARBON_MCA_END("fixed-16b");
     return hasher;
   }
 
   if constexpr (16 < sizeof(T) && sizeof(T) <= 32) {
+    CARBON_MCA_BEGIN("fixed-32b");
     // Essentially the same technique used for dynamically sized byte sequences
     // of this size, but we start with a fixed XOR of random data.
     hasher.buffer ^= StaticRandomData[0];
@@ -702,6 +652,7 @@ inline auto Hasher::Hash(Hasher hasher, const T& value) -> Hasher {
     uint64_t m1 = Mix(Read8(tail_16b_ptr) ^ StaticRandomData[3],
                       Read8(tail_16b_ptr + 8) ^ hasher.buffer);
     hasher.buffer = m0 ^ m1;
+    CARBON_MCA_END("fixed-32b");
     return hasher;
   }
 
@@ -737,6 +688,97 @@ inline auto Hasher::Hash(Hasher hasher, const Ts&... value) -> Hasher {
       static_cast<HashCode>(Hash(Hasher(hasher.buffer), value)))...};
   return Hash(std::move(hasher), data);
 }
+
+inline auto Hasher::HashSizedBytes(Hasher hasher,
+                                   llvm::ArrayRef<std::byte> bytes) -> Hasher {
+  const std::byte* data_ptr = bytes.data();
+  const ssize_t size = bytes.size();
+
+  // First handle short sequences under 8 bytes. We distribute the branches a
+  // bit for short strings.
+  if (size <= 8) {
+    if (size >= 4) {
+      CARBON_MCA_BEGIN("dynamic-8b");
+      uint64_t data = Read4To8(data_ptr, size);
+      // We optimize for latency on short strings by hashing both the data and
+      // size in a single multiply here, using the small nature of size to
+      // sample a specific sequence of bytes with well distributed bits into one
+      // side of the multiply. This results in a *statistically* weak hash
+      // function, but one with very low latency.
+      hasher.buffer = Mix(data ^ hasher.buffer, SampleRandomData(size));
+      CARBON_MCA_END("dynamic-8b");
+      return hasher;
+    }
+
+    // When we only have 0-3 bytes of string, we can avoid doing both a low and
+    // high 64-bit multiply. Instead, for empty strings we can just XOR some of
+    // our data against the existing buffer. For 1-3 byte lengths we do 3
+    // one-byte reads adjusted to always read in-bounds without branching. Then
+    // we OR the size into the 4th byte and do a single 64-bit multiply witch a
+    // constant, similar to how we hash a 4-byte fixed-size type.
+    //
+    // For both of these cases, because we don't do the full `Mix` function
+    // incorporating the incoming buffer, we do the same rotation as we do when
+    // hashing a 4-byte fixed size type below to increase the chance of a seed
+    // based on a pointer influencing the exact low bits of the hash.
+    CARBON_MCA_BEGIN("dynamic-4b");
+    hasher.buffer = llvm::rotr(hasher.buffer, 12);
+    if (size == 0) {
+      hasher.buffer ^= StaticRandomData[0];
+    } else {
+      uint64_t data = Read1To3(data_ptr, size) | size << 24;
+      hasher.buffer ^= data * MulConstant;
+    }
+    CARBON_MCA_END("dynamic-4b");
+    return hasher;
+  }
+
+  if (size <= 16) {
+    CARBON_MCA_BEGIN("dynamic-16b");
+    // Similar to the above, we optimize primarily for latency here and spread
+    // the incoming data across both ends of the multiply. Note that this does
+    // have a drawback -- any time one half of the mix function becomes zero it
+    // will fail to incorporate any bits from the other half. However, there is
+    // exactly 1 in 2^64 values for each side that achieve this, and only when
+    // the size is exactly 16 -- for smaller sizes there is an overlapping byte
+    // that makes this impossible unless the seed is *also* incredibly unlucky.
+    //
+    // Because this hash function makes no attempt to defend against hash
+    // flooding, we accept this risk in order to keep the latency low. If this
+    // becomes a non-flooding problem, we can restrict the size to <16 and send
+    // the 16-byte case down the next tier of cost.
+    uint64_t size_hash = SampleRandomData(size);
+    auto data = Read8To16(data_ptr, size);
+    hasher.buffer =
+        Mix(data.first ^ size_hash, data.second ^ hasher.buffer);
+    CARBON_MCA_END("dynamic-16b");
+    return hasher;
+  }
+
+  if (size <= 32) {
+    CARBON_MCA_BEGIN("dynamic-32b");
+    // Do two mixes of overlapping 16-byte ranges in parallel to minimize
+    // latency. We also incorporate the size by sampling random data into the
+    // seed before both.
+    hasher.buffer ^= SampleRandomData(size);
+    uint64_t m0 = Mix(Read8(data_ptr) ^ StaticRandomData[1],
+                      Read8(data_ptr + 8) ^ hasher.buffer);
+
+    const std::byte* tail_16b_ptr = data_ptr + (size - 16);
+    uint64_t m1 = Mix(Read8(tail_16b_ptr) ^ StaticRandomData[3],
+                      Read8(tail_16b_ptr + 8) ^ hasher.buffer);
+    // Just an XOR mix at the end is quite weak here, but we prefer that for
+    // latency over a more robust approach. Doing another mix with the size (the
+    // way longer string hashing does) increases the latency on x86-64
+    // significantly (approx. 20%).
+    hasher.buffer = m0 ^ m1;
+    CARBON_MCA_END("dynamic-32b");
+    return hasher;
+  }
+
+  return HashSizedBytesLarge(std::move(hasher), bytes);
+}
+
 
 }  // namespace Carbon
 

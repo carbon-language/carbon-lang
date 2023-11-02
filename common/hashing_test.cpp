@@ -12,6 +12,7 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/TypeName.h"
 
 namespace Carbon {
 namespace {
@@ -20,54 +21,35 @@ using ::testing::Eq;
 using ::testing::Le;
 using ::testing::Ne;
 
-TEST(HashingTest, Integers) {
-  HashCode hash_zero = HashValue(0);
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+auto TestIntHashes(T i) -> void {
+  SCOPED_TRACE(
+      llvm::formatv("Hashing type: {0}", llvm::getTypeName<T>()).str());
+  HashCode hash = HashValue(i);
   // Hashes should be stable within the execution.
-  EXPECT_THAT(HashValue(0), Eq(hash_zero));
+  EXPECT_THAT(HashValue(i), Eq(hash));
 
-  for (int i : {0, 1, 2, 3, 42}) {
-    SCOPED_TRACE(llvm::formatv("Hashing: {0}", i).str());
-    HashCode hash = HashValue(i);
-
-    // Zero should match, and other integers shouldn't collide trivially.
-    if (i == 0) {
-      EXPECT_THAT(hash, Eq(hash_zero));
-    } else {
-      EXPECT_THAT(hash, Ne(hash_zero));
-    }
-
-    // Make sure all the different integer sizes hash. Note that while these
-    // *happen* to be equal for positive integers, there is no particular
-    // guarantee of that and negative integers have distinct hashes.
-    EXPECT_THAT(HashValue(static_cast<int8_t>(i)), Eq(hash));
-    EXPECT_THAT(HashValue(static_cast<uint8_t>(i)), Eq(hash));
-    EXPECT_THAT(HashValue(static_cast<int16_t>(i)), Eq(hash));
-    EXPECT_THAT(HashValue(static_cast<uint16_t>(i)), Eq(hash));
-    EXPECT_THAT(HashValue(static_cast<int32_t>(i)), Eq(hash));
-    EXPECT_THAT(HashValue(static_cast<uint32_t>(i)), Eq(hash));
-    EXPECT_THAT(HashValue(static_cast<int64_t>(i)), Eq(hash));
-    EXPECT_THAT(HashValue(static_cast<uint64_t>(i)), Eq(hash));
+  // Zero should match, and other integers shouldn't collide trivially.
+  HashCode hash_zero = HashValue(static_cast<T>(0));
+  if (i == 0) {
+    EXPECT_THAT(hash, Eq(hash_zero));
+  } else {
+    EXPECT_THAT(hash, Ne(hash_zero));
   }
+}
 
-  for (int i : {-1, -2, -3, -13}) {
+TEST(HashingTest, Integers) {
+  for (int64_t i : {0, 1, 2, 3, 42, -1, -2, -3, -13}) {
     SCOPED_TRACE(llvm::formatv("Hashing: {0}", i).str());
-
-    // Negative numbers can't be cheaply made to hash consistently regardless of
-    // size -- doing so would force sign extensions that are often expensive.
-    // Instead, we can check that the exact 2s compliment form at the bit-width
-    // of the signed integer is used.
-    //
-    // The specific value expected here is an implementation detail that can be
-    // freely changed, but the fact that negative integers do hash remains
-    // important.
-    EXPECT_THAT(HashValue(static_cast<int8_t>(i)),
-                Eq(HashValue(static_cast<uint8_t>(static_cast<int8_t>(i)))));
-    EXPECT_THAT(HashValue(static_cast<int16_t>(i)),
-                Eq(HashValue(static_cast<uint16_t>(static_cast<int16_t>(i)))));
-    EXPECT_THAT(HashValue(static_cast<int32_t>(i)),
-                Eq(HashValue(static_cast<uint32_t>(static_cast<int32_t>(i)))));
-    EXPECT_THAT(HashValue(static_cast<int64_t>(i)),
-                Eq(HashValue(static_cast<uint64_t>(static_cast<int64_t>(i)))));
+    TestIntHashes(i);
+    TestIntHashes(static_cast<int8_t>(i));
+    TestIntHashes(static_cast<uint8_t>(i));
+    TestIntHashes(static_cast<int16_t>(i));
+    TestIntHashes(static_cast<uint16_t>(i));
+    TestIntHashes(static_cast<int32_t>(i));
+    TestIntHashes(static_cast<uint32_t>(i));
+    TestIntHashes(static_cast<int64_t>(i));
+    TestIntHashes(static_cast<uint64_t>(i));
   }
 }
 
