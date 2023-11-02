@@ -4,35 +4,35 @@
 
 #include "toolchain/sem_ir/node_kind.h"
 
-#include "toolchain/sem_ir/typed_nodes.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) = {
-#define CARBON_SEM_IR_NODE_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
+CARBON_DEFINE_ENUM_CLASS_NAMES(InstKind) = {
+#define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/sem_ir/node_kind.def"
 };
 
-auto NodeKind::ir_name() const -> llvm::StringLiteral {
+auto InstKind::ir_name() const -> llvm::StringLiteral {
   return definition().ir_name();
 }
 
-auto NodeKind::value_kind() const -> NodeValueKind {
-  static constexpr NodeValueKind Table[] = {
-#define CARBON_SEM_IR_NODE_KIND(Name) \
-  HasTypeId<SemIR::Name> ? NodeValueKind::Typed : NodeValueKind::None,
+auto InstKind::value_kind() const -> InstValueKind {
+  static constexpr InstValueKind Table[] = {
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  HasTypeId<SemIR::Name> ? InstValueKind::Typed : InstValueKind::None,
 #include "toolchain/sem_ir/node_kind.def"
   };
   return Table[AsInt()];
 }
 
-auto NodeKind::terminator_kind() const -> TerminatorKind {
+auto InstKind::terminator_kind() const -> TerminatorKind {
   return definition().terminator_kind();
 }
 
-auto NodeKind::definition() const -> const Definition& {
+auto InstKind::definition() const -> const Definition& {
   static constexpr const Definition* Table[] = {
-#define CARBON_SEM_IR_NODE_KIND(Name) &SemIR::Name::Kind,
+#define CARBON_SEM_IR_INST_KIND(Name) &SemIR::Name::Kind,
 #include "toolchain/sem_ir/node_kind.def"
   };
   return *Table[AsInt()];

@@ -14,24 +14,24 @@
 
 namespace Carbon::SemIR {
 
-// The ID of a node.
-struct NodeId : public IndexBase, public Printable<NodeId> {
-  // An explicitly invalid node ID.
-  static const NodeId Invalid;
+// The ID of an instruction.
+struct InstId : public IndexBase, public Printable<InstId> {
+  // An explicitly invalid instruction ID.
+  static const InstId Invalid;
 
-// Builtin node IDs.
-#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) static const NodeId Builtin##Name;
+// Builtin instruction IDs.
+#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) static const InstId Builtin##Name;
 #include "toolchain/sem_ir/builtin_kind.def"
 
-  // Returns the cross-reference node ID for a builtin. This relies on File
-  // guarantees for builtin cross-reference placement.
-  static constexpr auto ForBuiltin(BuiltinKind kind) -> NodeId {
-    return NodeId(kind.AsInt());
+  // Returns the cross-reference instruction ID for a builtin. This relies on
+  // File guarantees for builtin cross-reference placement.
+  static constexpr auto ForBuiltin(BuiltinKind kind) -> InstId {
+    return InstId(kind.AsInt());
   }
 
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "node";
+    out << "inst";
     if (!is_valid()) {
       IndexBase::Print(out);
     } else if (index < BuiltinKind::ValidCount) {
@@ -44,11 +44,11 @@ struct NodeId : public IndexBase, public Printable<NodeId> {
   }
 };
 
-constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
+constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
 
 #define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
-  constexpr NodeId NodeId::Builtin##Name =    \
-      NodeId::ForBuiltin(BuiltinKind::Name);
+  constexpr InstId InstId::Builtin##Name =    \
+      InstId::ForBuiltin(BuiltinKind::Name);
 #include "toolchain/sem_ir/builtin_kind.def"
 
 // The ID of a function.
@@ -127,16 +127,16 @@ struct NameScopeId : public IndexBase, public Printable<NameScopeId> {
 constexpr NameScopeId NameScopeId::Invalid =
     NameScopeId(NameScopeId::InvalidIndex);
 
-// The ID of a node block.
-struct NodeBlockId : public IndexBase, public Printable<NodeBlockId> {
-  // All File instances must provide the 0th node block as empty.
-  static const NodeBlockId Empty;
+// The ID of an instruction block.
+struct InstBlockId : public IndexBase, public Printable<InstBlockId> {
+  // All File instances must provide the 0th instruction block as empty.
+  static const InstBlockId Empty;
 
   // An explicitly invalid ID.
-  static const NodeBlockId Invalid;
+  static const InstBlockId Invalid;
 
   // An ID for unreachable code.
-  static const NodeBlockId Unreachable;
+  static const InstBlockId Unreachable;
 
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -149,13 +149,13 @@ struct NodeBlockId : public IndexBase, public Printable<NodeBlockId> {
   }
 };
 
-constexpr NodeBlockId NodeBlockId::Empty = NodeBlockId(0);
-constexpr NodeBlockId NodeBlockId::Invalid =
-    NodeBlockId(NodeBlockId::InvalidIndex);
-constexpr NodeBlockId NodeBlockId::Unreachable =
-    NodeBlockId(NodeBlockId::InvalidIndex - 1);
+constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
+constexpr InstBlockId InstBlockId::Invalid =
+    InstBlockId(InstBlockId::InvalidIndex);
+constexpr InstBlockId InstBlockId::Unreachable =
+    InstBlockId(InstBlockId::InvalidIndex - 1);
 
-// The ID of a node block.
+// The ID of a type.
 struct TypeId : public IndexBase, public Printable<TypeId> {
   // The builtin TypeType.
   static const TypeId TypeType;
@@ -205,10 +205,10 @@ struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
 
 // Support use of Id types as DenseMap/DenseSet keys.
 template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::NodeBlockId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::NodeBlockId> {};
+struct llvm::DenseMapInfo<Carbon::SemIR::InstBlockId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::InstBlockId> {};
 template <>
-struct llvm::DenseMapInfo<Carbon::SemIR::NodeId>
-    : public Carbon::IndexMapInfo<Carbon::SemIR::NodeId> {};
+struct llvm::DenseMapInfo<Carbon::SemIR::InstId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::InstId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_

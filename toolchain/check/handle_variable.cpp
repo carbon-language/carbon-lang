@@ -4,14 +4,14 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
 auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
   // Handle the optional initializer.
-  auto init_id = SemIR::NodeId::Invalid;
+  auto init_id = SemIR::InstId::Invalid;
   bool has_init =
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
       Parse::NodeKind::PatternBinding;
@@ -23,7 +23,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
 
   // Extract the name binding.
   auto value_id = context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
-  if (auto bind_name = context.nodes().Get(value_id).TryAs<SemIR::BindName>()) {
+  if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.
     context.declaration_name_stack().AddNameToLookup(
@@ -35,11 +35,11 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
 
   // If there was an initializer, assign it to the storage.
   if (has_init) {
-    if (context.nodes().Get(value_id).Is<SemIR::VarStorage>()) {
+    if (context.insts().Get(value_id).Is<SemIR::VarStorage>()) {
       init_id = Initialize(context, parse_node, value_id, init_id);
-      // TODO: Consider using different node kinds for assignment versus
+      // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
-      context.AddNode(SemIR::Assign{parse_node, value_id, init_id});
+      context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
     } else {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.
