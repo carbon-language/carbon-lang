@@ -158,12 +158,8 @@ inline auto HashValue(const T& value) -> HashCode;
 //
 // Another important note is that types only need to include the data that would
 // lead to an object comparing equal or not-equal to some other object,
-// including objects of other types if a type supports heterogeneous equality
-// comparison. Note that only truly transparent types can be used
-// heterogeneously with this hash function such as strings and string views, or
-// vectors and array refs. A notable counter example are signed integers -- in
-// order to make hashing of them efficient the hash will be different for
-// different bit-widths, preventing heterogeneous lookup along that axis.
+// including objects of other types if you intend to support heterogeneous
+// lookup between those types and yours.
 //
 // To illustrate this -- if a type has some fixed amount of data, maybe 32
 // 4-byte integers, and equality comparison only operates on the *values* of
