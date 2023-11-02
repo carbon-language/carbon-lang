@@ -280,6 +280,39 @@ auto HandleClassFieldAccess(FunctionContext& context, SemIR::InstId inst_id,
                              inst.index)));
 }
 
+static auto EmitAggregateInitializer(FunctionContext& context,
+                                     SemIR::TypeId type_id,
+                                     SemIR::InstBlockId refs_id,
+                                     llvm::Twine name) -> llvm::Value* {
+  auto* llvm_type = context.GetType(type_id);
+
+  switch (
+      SemIR::GetInitializingRepresentation(context.sem_ir(), type_id).kind) {
+    case SemIR::InitializingRepresentation::None:
+    case SemIR::InitializingRepresentation::InPlace:
+      // TODO: Add a helper to poison a value slot.
+      return llvm::PoisonValue::get(llvm_type);
+
+    case SemIR::InitializingRepresentation::ByCopy: {
+      auto refs = context.sem_ir().inst_blocks().Get(refs_id);
+      CARBON_CHECK(refs.size() == 1)
+          << "Unexpected size for aggregate with by-copy value representation";
+      // TODO: Remove the LLVM StructType wrapper in this case, so we don't
+      // need this `insert_value` wrapping.
+      return context.builder().CreateInsertValue(
+          llvm::PoisonValue::get(llvm_type), context.GetLocal(refs[0]), {0},
+          name);
+    }
+  }
+}
+
+auto HandleClassInit(FunctionContext& context, SemIR::InstId inst_id,
+                     SemIR::ClassInit inst) -> void {
+  context.SetLocal(
+      inst_id, EmitAggregateInitializer(context, inst.type_id, inst.elements_id,
+                                        "class.init"));
+}
+
 auto HandleDereference(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::Dereference inst) -> void {
   context.SetLocal(inst_id, context.GetLocal(inst.pointer_id));
@@ -413,10 +446,10 @@ auto HandleStructLiteral(FunctionContext& /*context*/,
 
 // Emits the value representation for a struct or tuple whose elements are the
 // contents of `refs_id`.
-auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
-                                          SemIR::TypeId type_id,
-                                          SemIR::InstBlockId refs_id,
-                                          llvm::Twine name) -> llvm::Value* {
+auto EmitAggregateValueRepresentation(FunctionContext& context,
+                                      SemIR::TypeId type_id,
+                                      SemIR::InstBlockId refs_id,
+                                      llvm::Twine name) -> llvm::Value* {
   auto value_rep = SemIR::GetValueRepresentation(context.sem_ir(), type_id);
   switch (value_rep.kind) {
     case SemIR::ValueRepresentation::Unknown:
@@ -463,30 +496,16 @@ auto EmitStructOrTupleValueRepresentation(FunctionContext& context,
 
 auto HandleStructInit(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::StructInit inst) -> void {
-  auto* llvm_type = context.GetType(inst.type_id);
-
-  switch (SemIR::GetInitializingRepresentation(context.sem_ir(), inst.type_id)
-              .kind) {
-    case SemIR::InitializingRepresentation::None:
-    case SemIR::InitializingRepresentation::InPlace:
-      // TODO: Add a helper to poison a value slot.
-      context.SetLocal(inst_id, llvm::PoisonValue::get(llvm_type));
-      break;
-
-    case SemIR::InitializingRepresentation::ByCopy: {
-      context.SetLocal(
-          inst_id, EmitStructOrTupleValueRepresentation(
-                       context, inst.type_id, inst.elements_id, "struct.init"));
-      break;
-    }
-  }
+  context.SetLocal(
+      inst_id, EmitAggregateInitializer(context, inst.type_id, inst.elements_id,
+                                        "struct.init"));
 }
 
 auto HandleStructValue(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::StructValue inst) -> void {
-  context.SetLocal(inst_id,
-                   EmitStructOrTupleValueRepresentation(
-                       context, inst.type_id, inst.elements_id, "struct"));
+  context.SetLocal(
+      inst_id, EmitAggregateValueRepresentation(context, inst.type_id,
+                                                inst.elements_id, "struct"));
 }
 
 auto HandleStructTypeField(FunctionContext& /*context*/,
@@ -521,29 +540,15 @@ auto HandleTupleLiteral(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleTupleInit(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::TupleInit inst) -> void {
-  auto* llvm_type = context.GetType(inst.type_id);
-
-  switch (SemIR::GetInitializingRepresentation(context.sem_ir(), inst.type_id)
-              .kind) {
-    case SemIR::InitializingRepresentation::None:
-    case SemIR::InitializingRepresentation::InPlace:
-      // TODO: Add a helper to poison a value slot.
-      context.SetLocal(inst_id, llvm::PoisonValue::get(llvm_type));
-      break;
-
-    case SemIR::InitializingRepresentation::ByCopy: {
-      context.SetLocal(
-          inst_id, EmitStructOrTupleValueRepresentation(
-                       context, inst.type_id, inst.elements_id, "tuple.init"));
-      break;
-    }
-  }
+  context.SetLocal(
+      inst_id, EmitAggregateInitializer(context, inst.type_id, inst.elements_id,
+                                        "tuple.init"));
 }
 
 auto HandleTupleValue(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::TupleValue inst) -> void {
-  context.SetLocal(
-      inst_id, EmitStructOrTupleValueRepresentation(context, inst.type_id,
+  context.SetLocal(inst_id,
+                   EmitAggregateValueRepresentation(context, inst.type_id,
                                                     inst.elements_id, "tuple"));
 }
 

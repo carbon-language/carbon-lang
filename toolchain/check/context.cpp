@@ -666,6 +666,7 @@ class TypeCompleter {
       case SemIR::Call::Kind:
       case SemIR::ClassDeclaration::Kind:
       case SemIR::ClassFieldAccess::Kind:
+      case SemIR::ClassInit::Kind:
       case SemIR::Dereference::Kind:
       case SemIR::Field::Kind:
       case SemIR::FunctionDeclaration::Kind:

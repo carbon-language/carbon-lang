@@ -19,7 +19,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %y = alloca { i32 }, align 8
 // CHECK:STDOUT:   %a = getelementptr inbounds { i32 }, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   %1 = load i32, ptr %a, align 4
-// CHECK:STDOUT:   %2 = insertvalue { i32 } poison, i32 %1, 0
-// CHECK:STDOUT:   store { i32 } %2, ptr %y, align 4
+// CHECK:STDOUT:   %struct.init = insertvalue { i32 } poison, i32 %1, 0
+// CHECK:STDOUT:   store { i32 } %struct.init, ptr %y, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

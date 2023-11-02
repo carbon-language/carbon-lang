@@ -198,6 +198,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Call::Kind:
     case ClassDeclaration::Kind:
     case ClassFieldAccess::Kind:
+    case ClassInit::Kind:
     case Dereference::Kind:
     case Field::Kind:
     case FunctionDeclaration::Kind:
@@ -399,6 +400,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
       case Call::Kind:
       case ClassDeclaration::Kind:
       case ClassFieldAccess::Kind:
+      case ClassInit::Kind:
       case CrossReference::Kind:
       case Dereference::Kind:
       case Field::Kind:
@@ -567,6 +569,7 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
       case ArrayInit::Kind:
       case Call::Kind:
       case InitializeFrom::Kind:
+      case ClassInit::Kind:
       case StructInit::Kind:
       case TupleInit::Kind:
         return ExpressionCategory::Initializing;

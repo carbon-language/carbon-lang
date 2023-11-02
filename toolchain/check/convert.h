@@ -41,7 +41,7 @@ struct ConversionTarget {
   // For an initializer, the object being initialized.
   SemIR::InstId init_id = SemIR::InstId::Invalid;
   // For an initializer, a block of pending instructions that are needed to
-  // form the value of `target_id`, and that can be discarded if no
+  // form the value of `init_id`, and that can be discarded if no
   // initialization is needed.
   PendingBlock* init_block = nullptr;
 
