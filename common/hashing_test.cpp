@@ -21,35 +21,34 @@ using ::testing::Eq;
 using ::testing::Le;
 using ::testing::Ne;
 
-template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
-auto TestIntHashes(T i) -> void {
-  SCOPED_TRACE(
-      llvm::formatv("Hashing type: {0}", llvm::getTypeName<T>()).str());
-  HashCode hash = HashValue(i);
-  // Hashes should be stable within the execution.
-  EXPECT_THAT(HashValue(i), Eq(hash));
-
-  // Zero should match, and other integers shouldn't collide trivially.
-  HashCode hash_zero = HashValue(static_cast<T>(0));
-  if (i == 0) {
-    EXPECT_THAT(hash, Eq(hash_zero));
-  } else {
-    EXPECT_THAT(hash, Ne(hash_zero));
-  }
-}
-
 TEST(HashingTest, Integers) {
   for (int64_t i : {0, 1, 2, 3, 42, -1, -2, -3, -13}) {
     SCOPED_TRACE(llvm::formatv("Hashing: {0}", i).str());
-    TestIntHashes(i);
-    TestIntHashes(static_cast<int8_t>(i));
-    TestIntHashes(static_cast<uint8_t>(i));
-    TestIntHashes(static_cast<int16_t>(i));
-    TestIntHashes(static_cast<uint16_t>(i));
-    TestIntHashes(static_cast<int32_t>(i));
-    TestIntHashes(static_cast<uint32_t>(i));
-    TestIntHashes(static_cast<int64_t>(i));
-    TestIntHashes(static_cast<uint64_t>(i));
+    auto test_int_hash = [](auto i) {
+      using T = decltype(i);
+      SCOPED_TRACE(
+          llvm::formatv("Hashing type: {0}", llvm::getTypeName<T>()).str());
+      HashCode hash = HashValue(i);
+      // Hashes should be stable within the execution.
+      EXPECT_THAT(HashValue(i), Eq(hash));
+
+      // Zero should match, and other integers shouldn't collide trivially.
+      HashCode hash_zero = HashValue(static_cast<T>(0));
+      if (i == 0) {
+        EXPECT_THAT(hash, Eq(hash_zero));
+      } else {
+        EXPECT_THAT(hash, Ne(hash_zero));
+      }
+    };
+    test_int_hash(i);
+    test_int_hash(static_cast<int8_t>(i));
+    test_int_hash(static_cast<uint8_t>(i));
+    test_int_hash(static_cast<int16_t>(i));
+    test_int_hash(static_cast<uint16_t>(i));
+    test_int_hash(static_cast<int32_t>(i));
+    test_int_hash(static_cast<uint32_t>(i));
+    test_int_hash(static_cast<int64_t>(i));
+    test_int_hash(static_cast<uint64_t>(i));
   }
 }
 
@@ -143,43 +142,51 @@ TEST(HashingTest, PairsAndTuples) {
   EXPECT_THAT(HashValue(std::tuple(1, 0)), Eq(hash_10));
   EXPECT_THAT(HashValue(std::tuple(1, 1)), Eq(hash_11));
 
-  // Integers in tuples should work the same as outside of tuples w.r.t.
-  // converting between different integer types.
-  for (int i : {0, 1, 2, 3, 42}) {
+  // Integers in tuples should work the same as outside of tuples.
+  for (int i : {0, 1, 2, 3, 42, -1, -2, -3, -13}) {
     SCOPED_TRACE(llvm::formatv("Hashing: ({0}, {0}, {0})", i).str());
-    std::tuple v = {i, i, i};
-    HashCode hash = HashValue(v);
+    auto test_int_tuple_hash = [](auto i) {
+      using T = decltype(i);
+      SCOPED_TRACE(
+          llvm::formatv("Hashing integer type: {0}", llvm::getTypeName<T>())
+              .str());
+      std::tuple v = {i, i, i};
+      HashCode hash = HashValue(v);
 
-    // Zero should match, and other integers shouldn't collide trivially.
+      // Hashes should be stable within the execution.
+      EXPECT_THAT(HashValue(v), Eq(hash));
+
+      // Zero should match, and other integers shouldn't collide trivially.
+      T zero = 0;
+      std::tuple zero_tuple = {zero, zero, zero};
+      HashCode hash_zero = HashValue(zero_tuple);
+      if (i == 0) {
+        EXPECT_THAT(hash, Eq(hash_zero));
+      } else {
+        EXPECT_THAT(hash, Ne(hash_zero));
+      }
+    };
+    test_int_tuple_hash(i);
+    test_int_tuple_hash(static_cast<int8_t>(i));
+    test_int_tuple_hash(static_cast<uint8_t>(i));
+    test_int_tuple_hash(static_cast<int16_t>(i));
+    test_int_tuple_hash(static_cast<uint16_t>(i));
+    test_int_tuple_hash(static_cast<int32_t>(i));
+    test_int_tuple_hash(static_cast<uint32_t>(i));
+    test_int_tuple_hash(static_cast<int64_t>(i));
+    test_int_tuple_hash(static_cast<uint64_t>(i));
+
+    // Heterogeneous integer types should also work, but we only support
+    // comparing against hashes of tuples with the exact same type.
+    using T1 = std::tuple<int8_t, uint32_t, int16_t>;
+    using T2 = std::tuple<uint32_t, int16_t, uint64_t>;
     if (i == 0) {
-      EXPECT_THAT(hash, Eq(hash_000));
+      EXPECT_THAT(HashValue(T1{i, i, i}), Eq(HashValue(T1{0, 0, 0})));
+      EXPECT_THAT(HashValue(T2{i, i, i}), Eq(HashValue(T2{0, 0, 0})));
     } else {
-      EXPECT_THAT(hash, Ne(hash_000));
+      EXPECT_THAT(HashValue(T1{i, i, i}), Ne(HashValue(T1{0, 0, 0})));
+      EXPECT_THAT(HashValue(T2{i, i, i}), Ne(HashValue(T2{0, 0, 0})));
     }
-
-    // We shouldn't include the exact integer type used so that implicit
-    // conversions don't shift the hash for non-negative integers, making all of
-    // these match.
-    int8_t i_i8 = i;
-    EXPECT_THAT(HashValue(std::tuple(i_i8, i_i8, i_i8)), Eq(hash));
-    uint8_t i_u8 = i;
-    EXPECT_THAT(HashValue(std::tuple(i_u8, i_u8, i_u8)), Eq(hash));
-    int16_t i_i16 = i;
-    EXPECT_THAT(HashValue(std::tuple(i_i16, i_i16, i_i16)), Eq(hash));
-    uint16_t i_u16 = i;
-    EXPECT_THAT(HashValue(std::tuple(i_u16, i_u16, i_u16)), Eq(hash));
-    int32_t i_i32 = i;
-    EXPECT_THAT(HashValue(std::tuple(i_i32, i_i32, i_i32)), Eq(hash));
-    uint32_t i_u32 = i;
-    EXPECT_THAT(HashValue(std::tuple(i_u32, i_u32, i_u32)), Eq(hash));
-    int64_t i_i64 = i;
-    EXPECT_THAT(HashValue(std::tuple(i_i64, i_i64, i_i64)), Eq(hash));
-    uint64_t i_u64 = i;
-    EXPECT_THAT(HashValue(std::tuple(i_u64, i_u64, i_u64)), Eq(hash));
-
-    // Heterogeneous integer types should also work.
-    EXPECT_THAT(HashValue(std::tuple(i_i8, i_u32, i_i16)), Eq(hash));
-    EXPECT_THAT(HashValue(std::tuple(i_u32, i_i16, i_u64)), Eq(hash));
   }
 
   // Hash values of pointers in pairs and tuples reflect the address and not the
@@ -319,6 +326,9 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
   // index stored here. That index is the index of the collision count in the
   // container above. We resize this to fill it with zeros to start as the zero
   // index above has a collision count of zero.
+  //
+  // The result of this is that the number of collisions for `hashes[i]` is
+  // `collision_counts[collision_map[i]]`.
   llvm::SmallVector<int> collision_map;
   collision_map.resize(hashes.size());
 
@@ -419,7 +429,7 @@ auto AllByteStringsHashedAndSorted() {
               return static_cast<uint64_t>(lhs.hash) <
                      static_cast<uint64_t>(rhs.hash);
             });
-  CheckNoHashedDuplicates(hashes);
+  CheckNoDuplicateValues(hashes);
 
   return hashes;
 }
@@ -579,7 +589,7 @@ struct SparseHashTest : ::testing::Test {
                 return static_cast<uint64_t>(lhs.hash) <
                        static_cast<uint64_t>(rhs.hash);
               });
-    CheckNoHashedDuplicates(hashes);
+    CheckNoDuplicateValues(hashes);
 
     return hashes;
   }

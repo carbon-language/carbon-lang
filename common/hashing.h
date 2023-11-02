@@ -108,14 +108,14 @@ class HashCode : public Printable<HashCode> {
 // auto CarbonHash(Hasher hasher, const YourType& value) -> Hasher;
 // ```
 //
-// This function needs to ensure that values that compare the same (including
-// any comparisons with different types that might be used with a hash table of
+// This function needs to ensure that values that compare equal (including any
+// comparisons with different types that might be used with a hash table of
 // `YourType` keys) have the exact same updates to the `Hasher` object. The
-// `Hasher` object should be updated with enough state so that values that
-// compare unequal of your type (or other types that might be compared) have a
-// high probability of different hashes. Typically this involves updating all of
-// the salient state of your type into the `Hasher`. The updated hasher should
-// be returned from the function.
+// `Hasher` object should be updated with enough state so that values of your
+// type (or other types that might be compared) that compare unequal have a high
+// probability of different hashes. Typically this involves updating all of the
+// salient state of your type into the `Hasher`. The updated hasher should be
+// returned from the function.
 //
 // See the comments on the `Hasher` type for more details about implementing
 // these customization points and how best to incorporate state into the hasher.
@@ -194,7 +194,7 @@ class Hasher {
 
   // Incorporates a variable number of objects into the `hasher`s state in a
   // similar manner to applying the above function to each one in series. It has
-  // the same requirements as the above function fer each `value`. And it
+  // the same requirements as the above function for each `value`. And it
   // returns the updated `hasher`.
   //
   // There is no guaranteed correspondence between the behavior of a single call
@@ -234,6 +234,17 @@ class Hasher {
   static auto Read2(const std::byte* data) -> uint64_t;
   static auto Read4(const std::byte* data) -> uint64_t;
   static auto Read8(const std::byte* data) -> uint64_t;
+
+  // Similar to the `ReadN` functions, but supports reading a range of different
+  // bytes provided by the size *without branching on the size*. The lack of
+  // branches is often key, and the code in these routines works to be efficient
+  // in extracting a *dynamic* size of bytes into the returned `uint64_t`. There
+  // may be overlap between different routines, because these routines are based
+  // on different implementation techniques that do have some overlap in the
+  // range of sizes they can support. Which routine is the most efficient for a
+  // size in the overlap isn't trivial, and so these primitives are provided
+  // as-is and should be selected based on the localized generated code and
+  // benchmarked performance.
   static auto Read1To3(const std::byte* data, ssize_t size) -> uint64_t;
   static auto Read4To8(const std::byte* data, ssize_t size) -> uint64_t;
   static auto Read8To16(const std::byte* data, ssize_t size)
