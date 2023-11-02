@@ -749,8 +749,7 @@ inline auto Hasher::HashSizedBytes(Hasher hasher,
     // the 16-byte case down the next tier of cost.
     uint64_t size_hash = SampleRandomData(size);
     auto data = Read8To16(data_ptr, size);
-    hasher.buffer =
-        Mix(data.first ^ size_hash, data.second ^ hasher.buffer);
+    hasher.buffer = Mix(data.first ^ size_hash, data.second ^ hasher.buffer);
     CARBON_MCA_END("dynamic-16b");
     return hasher;
   }
@@ -778,7 +777,6 @@ inline auto Hasher::HashSizedBytes(Hasher hasher,
 
   return HashSizedBytesLarge(std::move(hasher), bytes);
 }
-
 
 }  // namespace Carbon
 

@@ -41,7 +41,8 @@ auto Hasher::HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
   const std::byte* end_ptr = data_ptr + (size - 64);
   while (data_ptr < end_ptr) {
     // Prefetch the next 64-bytes while we process the current 64-bytes.
-    __builtin_prefetch(data_ptr + 64, 0 /* read */, 0 /* discard after next use */);
+    __builtin_prefetch(data_ptr + 64, 0 /* read */,
+                       0 /* discard after next use */);
 
     buffer0 =
         mix32(data_ptr, buffer0, StaticRandomData[4], StaticRandomData[5]);
