@@ -2,71 +2,73 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_NODE_BLOCK_STACK_H_
-#define CARBON_TOOLCHAIN_CHECK_NODE_BLOCK_STACK_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_INST_BLOCK_STACK_H_
+#define CARBON_TOOLCHAIN_CHECK_INST_BLOCK_STACK_H_
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
-// A stack of node blocks that are currently being constructed in a Context. The
-// contents of the node blocks are stored here until the node block is popped
-// from the stack, at which point they are transferred into the SemIR::File for
-// long-term storage.
+// A stack of instruction blocks that are currently being constructed in a
+// Context. The contents of the instruction blocks are stored here until the
+// instruction block is popped from the stack, at which point they are
+// transferred into the SemIR::File for long-term storage.
 //
 // All pushes and pops will be vlogged.
-class NodeBlockStack {
+class InstBlockStack {
  public:
-  explicit NodeBlockStack(llvm::StringLiteral name, SemIR::File& sem_ir,
+  explicit InstBlockStack(llvm::StringLiteral name, SemIR::File& sem_ir,
                           llvm::raw_ostream* vlog_stream)
       : name_(name), sem_ir_(&sem_ir), vlog_stream_(vlog_stream) {}
 
-  // Pushes an existing node block.
-  auto Push(SemIR::NodeBlockId id) -> void;
+  // Pushes an existing instruction block.
+  auto Push(SemIR::InstBlockId id) -> void;
 
-  // Pushes a new node block. It will be invalid unless PeekOrAdd is called in
-  // order to support lazy allocation.
-  auto Push() -> void { Push(SemIR::NodeBlockId::Invalid); }
+  // Pushes a new instruction block. It will be invalid unless PeekOrAdd is
+  // called in order to support lazy allocation.
+  auto Push() -> void { Push(SemIR::InstBlockId::Invalid); }
 
   // Pushes a new unreachable code block.
-  auto PushUnreachable() -> void { Push(SemIR::NodeBlockId::Unreachable); }
+  auto PushUnreachable() -> void { Push(SemIR::InstBlockId::Unreachable); }
 
-  // Returns the ID of the top node block, allocating one if necessary. If
-  // `depth` is specified, returns the node at `depth` levels from the top of
-  // the stack instead of the top block, where the top block is at depth 0.
-  auto PeekOrAdd(int depth = 0) -> SemIR::NodeBlockId;
+  // Returns the ID of the top instruction block, allocating one if necessary.
+  // If `depth` is specified, returns the instruction at `depth` levels from the
+  // top of the stack instead of the top block, where the top block is at depth
+  // 0.
+  auto PeekOrAdd(int depth = 0) -> SemIR::InstBlockId;
 
-  // Pops the top node block. This will always return a valid node block;
-  // SemIR::NodeBlockId::Empty is returned if one wasn't allocated.
-  auto Pop() -> SemIR::NodeBlockId;
+  // Pops the top instruction block. This will always return a valid instruction
+  // block; SemIR::InstBlockId::Empty is returned if one wasn't allocated.
+  auto Pop() -> SemIR::InstBlockId;
 
-  // Pops the top node block, and discards it if it hasn't had an ID allocated.
+  // Pops the top instruction block, and discards it if it hasn't had an ID
+  // allocated.
   auto PopAndDiscard() -> void;
 
-  // Adds the given node to the block at the top of the stack and returns its
-  // ID.
-  auto AddNode(SemIR::Node node) -> SemIR::NodeId {
-    auto node_id = sem_ir_->nodes().AddInNoBlock(node);
-    AddNodeId(node_id);
-    return node_id;
+  // Adds the given instruction to the block at the top of the stack and returns
+  // its ID.
+  auto AddInst(SemIR::Inst inst) -> SemIR::InstId {
+    auto inst_id = sem_ir_->insts().AddInNoBlock(inst);
+    AddInstId(inst_id);
+    return inst_id;
   }
 
-  // Adds the given node ID to the block at the top of the stack.
-  auto AddNodeId(SemIR::NodeId node_id) -> void {
+  // Adds the given instruction ID to the block at the top of the stack.
+  auto AddInstId(SemIR::InstId inst_id) -> void {
     CARBON_CHECK(!empty()) << "no current block";
-    stack_[size_ - 1].content.push_back(node_id);
+    stack_[size_ - 1].content.push_back(inst_id);
   }
 
   // Returns whether the current block is statically reachable.
   auto is_current_block_reachable() -> bool {
     return size_ != 0 &&
-           stack_[size_ - 1].id != SemIR::NodeBlockId::Unreachable;
+           stack_[size_ - 1].id != SemIR::InstBlockId::Unreachable;
   }
 
-  // Returns a view of the contents of the top node block on the stack.
-  auto PeekCurrentBlockContents() -> llvm::ArrayRef<SemIR::NodeId> {
+  // Returns a view of the contents of the top instruction block on the stack.
+  auto PeekCurrentBlockContents() -> llvm::ArrayRef<SemIR::InstId> {
     CARBON_CHECK(!empty()) << "no current block";
     return stack_[size_ - 1].content;
   }
@@ -84,18 +86,18 @@ class NodeBlockStack {
     // reallocation.
     StackEntry() { content.reserve(32); }
 
-    auto Reset(SemIR::NodeBlockId new_id) {
+    auto Reset(SemIR::InstBlockId new_id) {
       id = new_id;
       content.clear();
     }
 
     // The block ID, if one has been allocated, Invalid if no block has been
     // allocated, or Unreachable if this block is known to be unreachable.
-    SemIR::NodeBlockId id = SemIR::NodeBlockId::Invalid;
+    SemIR::InstBlockId id = SemIR::InstBlockId::Invalid;
 
     // The content of the block. Stored as a vector rather than as a SmallVector
     // to reduce the cost of resizing `stack_` and performing swaps.
-    std::vector<SemIR::NodeId> content;
+    std::vector<SemIR::InstId> content;
   };
 
   // A name for debugging.
@@ -117,4 +119,4 @@ class NodeBlockStack {
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_NODE_BLOCK_STACK_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_INST_BLOCK_STACK_H_
