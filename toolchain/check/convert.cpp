@@ -384,8 +384,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
                                                      new_block.id()});
 }
 
-// Performs a conversion from a struct to a struct or class type. Does not
-// perform a final conversion to the requested expression category.
+// Common implementation for ConvertStructToStruct and ConvertStructToClass.
 template <typename TargetAccessNodeT>
 static auto ConvertStructToStructOrClass(Context& context,
                                          SemIR::StructType src_type,
@@ -416,17 +415,13 @@ static auto ConvertStructToStructOrClass(Context& context,
   // exist in the destination or vice versa in the diagnostic.
   if (src_elem_fields.size() != dest_elem_fields.size()) {
     CARBON_DIAGNOSTIC(StructInitElementCountMismatch, Error,
-                      "Cannot initialize struct of {0} element(s) from struct "
-                      "with {1} element(s).",
-                      size_t, size_t);
-    CARBON_DIAGNOSTIC(ClassInitElementCountMismatch, Error,
-                      "Cannot initialize class with {0} field(s) from struct "
-                      "with {1} element(s).",
-                      size_t, size_t);
-    context.emitter().Emit(value.parse_node(),
-                           is_class ? ClassInitElementCountMismatch
-                                    : StructInitElementCountMismatch,
-                           dest_elem_fields.size(), src_elem_fields.size());
+                      "Cannot initialize {0} with {1} field(s) from struct "
+                      "with {2} field(s).",
+                      llvm::StringLiteral, size_t, size_t);
+    context.emitter().Emit(
+        value.parse_node(), StructInitElementCountMismatch,
+        is_class ? llvm::StringLiteral("class") : llvm::StringLiteral("struct"),
+        dest_elem_fields.size(), src_elem_fields.size());
     return SemIR::NodeId::BuiltinError;
   }
 
@@ -504,17 +499,18 @@ static auto ConvertStructToStructOrClass(Context& context,
     new_block.Set(i, init_id);
   }
 
-  CARBON_CHECK(!is_class || is_init)
-      << "Converting directly to a class value is not supported";
-  return is_class  ? context.AddNode(SemIR::ClassInit{value.parse_node(),
-                                                     target.type_id, value_id,
-                                                     new_block.id()})
-         : is_init ? context.AddNode(SemIR::StructInit{value.parse_node(),
-                                                       target.type_id, value_id,
-                                                       new_block.id()})
-                   : context.AddNode(
-                         SemIR::StructValue{value.parse_node(), target.type_id,
+  if (is_class) {
+    CARBON_CHECK(is_init)
+        << "Converting directly to a class value is not supported";
+    return context.AddNode(SemIR::ClassInit{value.parse_node(), target.type_id,
                                             value_id, new_block.id()});
+  } else if (is_init) {
+    return context.AddNode(SemIR::StructInit{value.parse_node(), target.type_id,
+                                             value_id, new_block.id()});
+  } else {
+    return context.AddNode(SemIR::StructValue{
+        value.parse_node(), target.type_id, value_id, new_block.id()});
+  }
 }
 
 // Performs a conversion from a struct to a struct type. Does not perform a
@@ -681,7 +677,9 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   }
 
   // A struct {.f_1: T_1, .f_2: T_2, ..., .f_n: T_n} converts to a class type
-  // if it converts to the class's representation type.
+  // if it converts to the struct type that is the class's representation type,
+  // that is, a struct with the same fields as the class, plus a base field
+  // where relevant.
   if (auto target_class_type = target_type_node.TryAs<SemIR::ClassType>()) {
     auto value_type_node =
         sem_ir.nodes().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
