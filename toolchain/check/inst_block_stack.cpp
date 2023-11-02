@@ -2,10 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/inst_block_stack.h"
+
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
-#include "toolchain/check/node_block_stack.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {

@@ -7,7 +7,7 @@
 // AUTOUPDATE
 
 // CHECK:STDOUT: ---
-// CHECK:STDOUT: filename:        builtin_nodes.carbon
+// CHECK:STDOUT: filename:        builtin_insts.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_reference_irs_size: 1
 // CHECK:STDOUT:   functions:       {}

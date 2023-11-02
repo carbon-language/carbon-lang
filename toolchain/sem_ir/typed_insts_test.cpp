@@ -2,11 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/sem_ir/typed_insts.h"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -28,7 +29,7 @@ namespace {
 // InstKind enumerator.
 #define CARBON_SEM_IR_INST_KIND(Name) \
   static_assert(Name::Kind == InstKind::Name);
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
 
 template <typename Ignored, typename... Types>
 using TypesExceptFirst = ::testing::Types<Types...>;
@@ -38,7 +39,7 @@ using TypesExceptFirst = ::testing::Types<Types...>;
 // list.
 using TypedInstTypes = TypesExceptFirst<void
 #define CARBON_SEM_IR_INST_KIND(Name) , Name
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
                                         >;
 
 // Set up the test fixture.
