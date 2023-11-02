@@ -297,7 +297,7 @@ class InstNamer {
                                   *this, parse_node, std::move(name))};
   }
 
-  // Finds and adds a suitable block label for the given sem_ir instruction that
+  // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
   auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Inst inst)
       -> void {
