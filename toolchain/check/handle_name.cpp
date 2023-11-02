@@ -36,20 +36,20 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
   return std::nullopt;
 }
 
-// Given a node produced by a name lookup, get the value to use for that result
-// in an expression.
+// Given an instruction produced by a name lookup, get the value to use for that
+// result in an expression.
 static auto GetExpressionValueForLookupResult(Context& context,
-                                              SemIR::NodeId lookup_result_id)
-    -> SemIR::NodeId {
+                                              SemIR::InstId lookup_result_id)
+    -> SemIR::InstId {
   // If lookup finds a class declaration, the value is its `Self` type.
-  auto lookup_result = context.nodes().Get(lookup_result_id);
+  auto lookup_result = context.insts().Get(lookup_result_id);
   if (auto class_decl = lookup_result.TryAs<SemIR::ClassDeclaration>()) {
     return context.sem_ir().GetTypeAllowBuiltinTypes(
         context.classes().Get(class_decl->class_id).self_type_id);
   }
 
   // Anything else should be a typed value already.
-  CARBON_CHECK(lookup_result.kind().value_kind() == SemIR::NodeValueKind::Typed)
+  CARBON_CHECK(lookup_result.kind().value_kind() == SemIR::InstValueKind::Typed)
       << "Unexpected kind for lookup result";
   return lookup_result_id;
 }
@@ -229,7 +229,7 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
 
   value_id = GetExpressionValueForLookupResult(context, value_id);
   auto value = context.insts().Get(value_id);
-  context.AddNodeAndPush(
+  context.AddInstAndPush(
       parse_node,
       SemIR::NameReference{parse_node, value.type_id(), name_id, value_id});
   return true;

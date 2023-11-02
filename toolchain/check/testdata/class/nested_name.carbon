@@ -32,7 +32,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.n: i32}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Inner = <unexpected noderef 11>
+// CHECK:STDOUT:   .Inner = <unexpected instref 11>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
