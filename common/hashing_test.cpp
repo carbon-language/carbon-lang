@@ -398,7 +398,8 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
   int median = collision_counts
       [collision_map[bits_and_indices[bits_and_indices.size() / 2].second]];
   int max = *std::max_element(collision_counts.begin(), collision_counts.end());
-  CARBON_CHECK(max == collision_counts[collision_map[bits_and_indices.back().second]]);
+  CARBON_CHECK(max ==
+               collision_counts[collision_map[bits_and_indices.back().second]]);
   return {.total = total, .median = median, .max = max};
 }
 
