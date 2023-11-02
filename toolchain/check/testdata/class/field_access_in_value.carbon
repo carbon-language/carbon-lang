@@ -57,9 +57,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %c: Class = bind_name "c", %.loc16
 // CHECK:STDOUT:   %c.ref.loc17_10: Class = name_reference "c", %c
 // CHECK:STDOUT:   %.loc17_11.1: ref i32 = class_field_access %c.ref.loc17_10, member0
+// CHECK:STDOUT:   %.loc17_11.2: i32 = bind_value %.loc17_11.1
 // CHECK:STDOUT:   %c.ref.loc17_16: Class = name_reference "c", %c
 // CHECK:STDOUT:   %.loc17_17.1: ref i32 = class_field_access %c.ref.loc17_16, member1
-// CHECK:STDOUT:   %.loc17_11.2: i32 = bind_value %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_17.2: i32 = bind_value %.loc17_17.1
 // CHECK:STDOUT:   %.loc17_14: i32 = add %.loc17_11.2, %.loc17_17.2
 // CHECK:STDOUT:   return %.loc17_14

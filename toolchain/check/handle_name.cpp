@@ -125,10 +125,21 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
         CARBON_CHECK(field)
             << "Unexpected value " << context.insts().Get(field_id)
             << " for field name expression";
-        context.AddInstAndPush(
-            parse_node, SemIR::ClassFieldAccess{
-                            parse_node, unbound_field_type->field_type_id,
-                            base_id, field->index});
+        auto access_id = context.AddInst(SemIR::ClassFieldAccess{
+            parse_node, unbound_field_type->field_type_id, base_id,
+            field->index});
+        if (SemIR::GetExpressionCategory(context.sem_ir(), base_id) ==
+                SemIR::ExpressionCategory::Value &&
+            SemIR::GetExpressionCategory(context.sem_ir(), access_id) !=
+                SemIR::ExpressionCategory::Value) {
+          // Class field access on a value expression produces an ephemeral
+          // reference if the class's value representation is a pointer to the
+          // object representation. Add a value binding in that case so that the
+          // expression category of the result matches the expression category
+          // of the base.
+          access_id = ConvertToValueExpression(context, access_id);
+        }
+        context.node_stack().Push(parse_node, access_id);
         return true;
       }
       if (member_type_id ==
