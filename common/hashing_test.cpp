@@ -349,9 +349,9 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
   for (const auto& [hash_bits, hash_index] :
        llvm::ArrayRef(bits_and_indices).slice(1)) {
     // Check if we've found a new hash (and thus a new value), reset everything.
+    CARBON_CHECK(hashes[prev_index].v != hashes[hash_index].v);
     if (hash_bits != prev_hash_bits) {
       CARBON_CHECK(hashes[prev_index].hash != hashes[hash_index].hash);
-      CARBON_CHECK(hashes[prev_index].v != hashes[hash_index].v);
       prev_hash_bits = hash_bits;
       prev_index = hash_index;
       in_collision = false;
@@ -388,16 +388,14 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
   int median = collision_counts
       [collision_map[bits_and_indices[bits_and_indices.size() / 2].second]];
   int max = *std::max_element(collision_counts.begin(), collision_counts.end());
+  CARBON_CHECK(max == collision_counts[collision_map[bits_and_indices.back().second]]);
   return {.total = total, .median = median, .max = max};
 }
 
-auto CheckNoHashedDuplicates(llvm::ArrayRef<HashedString> hashes) -> void {
-  for (int i = 0, size = hashes.size(); i < size; ++i) {
-    const auto& [hash, value] = hashes[i];
-    while (i + 1 < size && hash == hashes[i + 1].hash) {
-      CARBON_CHECK(value != hashes[i + 1].v) << "Duplicate value: " << value;
-      ++i;
-    }
+auto CheckNoDuplicateValues(llvm::ArrayRef<HashedString> hashes) -> void {
+  for (int i = 0, size = hashes.size(); i < size - 1; ++i) {
+    const auto& [_, value] = hashes[i];
+    CARBON_CHECK(value != hashes[i + 1].v) << "Duplicate value: " << value;
   }
 }
 

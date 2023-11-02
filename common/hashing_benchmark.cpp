@@ -73,7 +73,7 @@ static const std::array<size_t, NumSizes> rand_sizes = []() {
 // `T` needs to be default constructable and reasonable to synthesize an
 // instance by copying random bytes into its underlying storage.
 //
-// This helper class also accumulates tho number of bytes of data generated in
+// This helper class also accumulates the number of bytes of data generated in
 // order to let us compute throughput measurements as well as latency
 // measurements.
 //
