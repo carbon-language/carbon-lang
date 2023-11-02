@@ -81,6 +81,7 @@ cc_library(
     deps = [
         ":file",
         ":inst_kind",
+        "//toolchain/base:value_store",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",

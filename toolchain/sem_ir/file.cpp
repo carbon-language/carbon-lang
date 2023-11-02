@@ -286,13 +286,8 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
       }
       case ClassType::Kind: {
         auto class_name_id =
-<<<<<<< HEAD
             classes().Get(inst.As<ClassType>().class_id).name_id;
-        out << strings().Get(class_name_id);
-=======
-            classes().Get(node.As<ClassType>().class_id).name_id;
         out << identifiers().Get(class_name_id);
->>>>>>> b046898ff (Add StringStoreWrapper)
         break;
       }
       case ConstType::Kind: {

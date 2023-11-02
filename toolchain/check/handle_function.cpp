@@ -174,13 +174,8 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
-<<<<<<< HEAD
-               context.strings().Get(function.name_id))
-        .Note(context.insts().Get(function.definition_id).parse_node(),
-=======
                context.identifiers().Get(function.name_id))
-        .Note(context.nodes().Get(function.definition_id).parse_node(),
->>>>>>> b046898ff (Add StringStoreWrapper)
+        .Note(context.insts().Get(function.definition_id).parse_node(),
               FunctionPreviousDefinition)
         .Emit();
   } else {
@@ -249,9 +244,8 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   auto type_id = ExpressionAsType(context, type_parse_node, type_inst_id);
   // TODO: Use a dedicated instruction rather than VarStorage here.
   context.AddInstAndPush(
-      parse_node,
-      SemIR::VarStorage{parse_node, type_id,
-                        context.identifiers().Add("return")});
+      parse_node, SemIR::VarStorage{parse_node, type_id,
+                                    context.identifiers().Add("return")});
   return true;
 }
 
