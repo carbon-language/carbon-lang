@@ -40,7 +40,7 @@ class PendingBlock {
   };
 
   auto AddInst(SemIR::Inst inst) -> SemIR::InstId {
-    SemIR::InstId inst_id = context_.insts().AddInNoBlock(inst);
+    auto inst_id = context_.insts().AddInNoBlock(inst);
     insts_.push_back(inst_id);
     return inst_id;
   }

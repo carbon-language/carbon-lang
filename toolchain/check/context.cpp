@@ -373,7 +373,7 @@ class TypeCompleter {
       return true;
     }
 
-    SemIR::InstId inst_id = context_.sem_ir().GetTypeAllowBuiltinTypes(type_id);
+    auto inst_id = context_.sem_ir().GetTypeAllowBuiltinTypes(type_id);
     auto inst = context_.insts().Get(inst_id);
 
     auto old_work_list_size = work_list_.size();

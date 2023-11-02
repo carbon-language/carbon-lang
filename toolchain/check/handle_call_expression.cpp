@@ -78,7 +78,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
                       context.params_or_args_stack().PeekCurrentBlockContents(),
                       return_storage_id, function_decl->parse_node,
                       callable.implicit_param_refs_id, callable.param_refs_id);
-  SemIR::InstId call_inst_id = context.AddInst(
+  auto call_inst_id = context.AddInst(
       SemIR::Call{call_expr_parse_node, type_id, callee_id, converted_args_id});
 
   context.node_stack().Push(parse_node, call_inst_id);

@@ -44,11 +44,10 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
   if (auto name_scope_id = GetAsNameScope(context, base_id)) {
-    SemIR::InstId inst_id =
-        name_scope_id->is_valid()
-            ? context.LookupName(parse_node, name_id, *name_scope_id,
-                                 /*print_diagnostics=*/true)
-            : SemIR::InstId::BuiltinError;
+    auto inst_id = name_scope_id->is_valid()
+                       ? context.LookupName(parse_node, name_id, *name_scope_id,
+                                            /*print_diagnostics=*/true)
+                       : SemIR::InstId::BuiltinError;
     auto inst = context.insts().Get(inst_id);
     // TODO: Track that this instruction was named within `base_id`.
     context.AddInstAndPush(

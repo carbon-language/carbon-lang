@@ -627,7 +627,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
     // TODO: This should apply even for non-literal tuples.
     if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
       llvm::SmallVector<SemIR::TypeId> type_ids;
-      for (SemIR::InstId tuple_inst_id :
+      for (auto tuple_inst_id :
            sem_ir.inst_blocks().Get(tuple_literal->elements_id)) {
         // TODO: This call recurses back into conversion. Switch to an
         // iterative approach.

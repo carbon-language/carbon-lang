@@ -79,7 +79,7 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
 
 auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
                                            SemIR::InstId target_id) -> void {
-  SemIR::InstId existing_inst_id = LookupOrAddName(name_context, target_id);
+  auto existing_inst_id = LookupOrAddName(name_context, target_id);
   if (existing_inst_id.is_valid()) {
     context_->DiagnoseDuplicateName(name_context.parse_node, existing_inst_id);
   }
@@ -100,7 +100,7 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
     // TODO: This doesn't perform the right kind of lookup. We will find names
     // from enclosing lexical scopes here, in the case where `target_scope_id`
     // is invalid.
-    SemIR::InstId resolved_inst_id = context_->LookupName(
+    auto resolved_inst_id = context_->LookupName(
         name_context.parse_node, name_id, name_context.target_scope_id,
         /*print_diagnostics=*/false);
     if (resolved_inst_id == SemIR::InstId::BuiltinError) {

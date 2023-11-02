@@ -30,10 +30,10 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
     return context.TODO(parse_node, "HandleArrayExpressionWithoutBounds");
   }
 
-  SemIR::InstId bound_inst_id = context.node_stack().PopExpression();
+  auto bound_inst_id = context.node_stack().PopExpression();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExpressionSemi>();
-  SemIR::InstId element_type_inst_id = context.node_stack().PopExpression();
+  auto element_type_inst_id = context.node_stack().PopExpression();
   auto bound_inst = context.insts().Get(bound_inst_id);
   if (auto literal = bound_inst.TryAs<SemIR::IntegerLiteral>()) {
     const auto& bound_value = context.integers().Get(literal->integer_id);

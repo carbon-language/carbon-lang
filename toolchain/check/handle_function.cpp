@@ -56,7 +56,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
           .PopIf<Parse::NodeKind::ImplicitParameterList>()
           .value_or(SemIR::InstBlockId::Empty);
   auto name_context = context.declaration_name_stack().Pop();
-  Parse::Node fn_node =
+  auto fn_node =
       context.node_stack()
           .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 

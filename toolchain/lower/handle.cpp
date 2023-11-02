@@ -316,8 +316,7 @@ auto HandleIntegerLiteral(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleNameReference(FunctionContext& context, SemIR::InstId inst_id,
                          SemIR::NameReference inst) -> void {
-  SemIR::InstId type_inst_id =
-      context.sem_ir().GetTypeAllowBuiltinTypes(inst.type_id);
+  auto type_inst_id = context.sem_ir().GetTypeAllowBuiltinTypes(inst.type_id);
   if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
     return;
   }

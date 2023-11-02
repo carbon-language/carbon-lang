@@ -38,9 +38,9 @@ static auto ValidateIntegerLiteralBound(Context& context,
 }
 
 auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
-  SemIR::InstId index_inst_id = context.node_stack().PopExpression();
+  auto index_inst_id = context.node_stack().PopExpression();
   auto index_inst = context.insts().Get(index_inst_id);
-  SemIR::InstId operand_inst_id = context.node_stack().PopExpression();
+  auto operand_inst_id = context.node_stack().PopExpression();
   operand_inst_id =
       ConvertToValueOrReferenceExpression(context, operand_inst_id);
   auto operand_inst = context.insts().Get(operand_inst_id);

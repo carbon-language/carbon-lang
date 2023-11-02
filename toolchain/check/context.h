@@ -86,7 +86,7 @@ class Context {
   // returns nullopt.
   template <typename InstT>
   auto GetCurrentScopeAs() -> std::optional<InstT> {
-    SemIR::InstId current_scope_inst_id = current_scope().scope_inst_id;
+    auto current_scope_inst_id = current_scope().scope_inst_id;
     if (!current_scope_inst_id.is_valid()) {
       return std::nullopt;
     }
