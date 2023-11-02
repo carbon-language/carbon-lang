@@ -10,7 +10,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/declaration_name_stack.h"
-#include "toolchain/check/node_block_stack.h"
+#include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"

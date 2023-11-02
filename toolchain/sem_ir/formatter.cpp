@@ -627,7 +627,7 @@ class Formatter {
   case InstT::Kind:                               \
     FormatInstruction(inst_id, inst.As<InstT>()); \
     break;
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
     }
   }
 
