@@ -11,12 +11,12 @@
 #include "common/vlog.h"
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/check/declaration_name_stack.h"
-#include "toolchain/check/inst_block_stack.h"
+#include "toolchain/check/node_block_stack.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/node_kind.h"
 
 namespace Carbon::Check {
 

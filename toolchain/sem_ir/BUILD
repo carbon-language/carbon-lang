@@ -27,12 +27,12 @@ cc_library(
 
 cc_library(
     name = "inst_kind",
-    srcs = ["inst_kind.cpp"],
+    srcs = ["node_kind.cpp"],
     hdrs = [
-        "inst_kind.h",
+        "node_kind.h",
         "typed_insts.h",
     ],
-    textual_hdrs = ["inst_kind.def"],
+    textual_hdrs = ["node_kind.def"],
     deps = [
         "//common:enum_base",
         "//toolchain/parse:tree",
@@ -111,7 +111,7 @@ cc_library(
 cc_test(
     name = "typed_insts_test",
     size = "small",
-    srcs = ["typed_insts_test.cpp"],
+    srcs = ["typed_nodes_test.cpp"],
     deps = [
         ":inst",
         ":inst_kind",

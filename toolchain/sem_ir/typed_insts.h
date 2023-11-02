@@ -8,7 +8,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/node_kind.h"
 
 // Representations for specific kinds of instructions.
 //

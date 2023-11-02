@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
-#define CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_NODE_KIND_H_
+#define CARBON_TOOLCHAIN_SEM_IR_NODE_KIND_H_
 
 #include <cstdint>
 
@@ -40,13 +40,13 @@ enum class TerminatorKind : int8_t {
 
 CARBON_DEFINE_RAW_ENUM_CLASS(InstKind, uint8_t) {
 #define CARBON_SEM_IR_INST_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
-#include "toolchain/sem_ir/inst_kind.def"
+#include "toolchain/sem_ir/node_kind.def"
 };
 
 class InstKind : public CARBON_ENUM_BASE(InstKind) {
  public:
 #define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
-#include "toolchain/sem_ir/inst_kind.def"
+#include "toolchain/sem_ir/node_kind.def"
 
   using EnumBase::Create;
 
@@ -82,7 +82,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 
 #define CARBON_SEM_IR_INST_KIND(Name) \
   CARBON_ENUM_CONSTANT_DEFINITION(InstKind, Name)
-#include "toolchain/sem_ir/inst_kind.def"
+#include "toolchain/sem_ir/node_kind.def"
 
 // We expect the instruction kind to fit compactly into 8 bits.
 static_assert(sizeof(InstKind) == 1, "Kind objects include padding!");
@@ -128,4 +128,4 @@ constexpr auto InstKind::Define(llvm::StringLiteral ir_name,
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_NODE_KIND_H_
