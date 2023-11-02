@@ -681,9 +681,9 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   }
 
   // A struct {.f_1: T_1, .f_2: T_2, ..., .f_n: T_n} converts to a class type
-  // if it converts to the struct type that is the class's representation type,
-  // that is, a struct with the same fields as the class, plus a base field
-  // where relevant.
+  // if it converts to the struct type that is the class's representation type
+  // (a struct with the same fields as the class, plus a base field
+  // where relevant).
   if (auto target_class_type = target_type_inst.TryAs<SemIR::ClassType>()) {
     auto value_type_inst =
         sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
