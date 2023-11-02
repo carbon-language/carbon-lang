@@ -38,7 +38,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     }
   }
 
-  context.AddInst(node_kind, dot, state.subtree_start, state.has_error);
+  context.AddNode(node_kind, dot, state.subtree_start, state.has_error);
 }
 
 auto HandlePeriodAsDeclaration(Context& context) -> void {

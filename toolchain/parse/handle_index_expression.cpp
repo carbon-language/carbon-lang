@@ -11,7 +11,7 @@ auto HandleIndexExpression(Context& context) -> void {
   auto state = context.PopState();
   state.state = State::IndexExpressionFinish;
   context.PushState(state);
-  context.AddInst(NodeKind::IndexExpressionStart,
+  context.AddNode(NodeKind::IndexExpressionStart,
                   context.ConsumeChecked(Lex::TokenKind::OpenSquareBracket),
                   state.subtree_start, state.has_error);
   context.PushState(State::Expression);

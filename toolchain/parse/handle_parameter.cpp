@@ -86,7 +86,7 @@ static auto HandleParameterListFinish(Context& context,
                                       Lex::TokenKind token_kind) -> void {
   auto state = context.PopState();
 
-  context.AddInst(parse_node_kind, context.ConsumeChecked(token_kind),
+  context.AddNode(parse_node_kind, context.ConsumeChecked(token_kind),
                   state.subtree_start, state.has_error);
 }
 

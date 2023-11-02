@@ -66,14 +66,14 @@ auto HandleParenExpressionParameterFinishAsTuple(Context& context) -> void {
 auto HandleParenExpressionFinishAsNormal(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddInst(NodeKind::ParenExpression, context.Consume(),
+  context.AddNode(NodeKind::ParenExpression, context.Consume(),
                   state.subtree_start, state.has_error);
 }
 
 auto HandleParenExpressionFinishAsTuple(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddInst(NodeKind::TupleLiteral, context.Consume(),
+  context.AddNode(NodeKind::TupleLiteral, context.Consume(),
                   state.subtree_start, state.has_error);
 }
 

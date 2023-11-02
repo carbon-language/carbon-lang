@@ -164,7 +164,7 @@ static auto HandleBraceExpressionParameterFinish(Context& context,
     context.AddLeafNode(NodeKind::StructFieldUnknown, state.token,
                         /*has_error=*/true);
   } else {
-    context.AddInst(node_kind, state.token, state.subtree_start,
+    context.AddNode(node_kind, state.token, state.subtree_start,
                     /*has_error=*/false);
   }
 
@@ -196,7 +196,7 @@ static auto HandleBraceExpressionFinish(Context& context, NodeKind node_kind)
     -> void {
   auto state = context.PopState();
 
-  context.AddInst(node_kind, context.Consume(), state.subtree_start,
+  context.AddNode(node_kind, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 

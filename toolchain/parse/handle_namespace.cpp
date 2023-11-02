@@ -27,7 +27,7 @@ auto HandleNamespaceFinish(Context& context) -> void {
   }
 
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    context.AddInst(NodeKind::Namespace, *semi, state.subtree_start,
+    context.AddNode(NodeKind::Namespace, *semi, state.subtree_start,
                     state.has_error);
   } else {
     context.EmitExpectedDeclarationSemi(Lex::TokenKind::Namespace);

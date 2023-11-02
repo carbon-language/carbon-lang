@@ -66,7 +66,7 @@ auto Context::AddLeafNode(NodeKind kind, Lex::Token token, bool has_error)
   }
 }
 
-auto Context::AddInst(NodeKind kind, Lex::Token token, int subtree_start,
+auto Context::AddNode(NodeKind kind, Lex::Token token, int subtree_start,
                       bool has_error) -> void {
   CheckNodeMatchesLexerToken(kind, tokens_->GetKind(token), has_error);
   int subtree_size = tree_->size() - subtree_start + 1;
@@ -99,9 +99,9 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::Token expected_open,
   Lex::TokenKind open_token_kind = tokens().GetKind(expected_open);
 
   if (!open_token_kind.is_opening_symbol()) {
-    AddInst(close_kind, state.token, state.subtree_start, /*has_error=*/true);
+    AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
   } else if (auto close_token = ConsumeIf(open_token_kind.closing_symbol())) {
-    AddInst(close_kind, *close_token, state.subtree_start, state.has_error);
+    AddNode(close_kind, *close_token, state.subtree_start, state.has_error);
   } else {
     // TODO: Include the location of the matching opening delimiter in the
     // diagnostic.
@@ -111,7 +111,7 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::Token expected_open,
                    open_token_kind.closing_symbol().fixed_spelling());
 
     SkipTo(tokens().GetMatchedClosingToken(expected_open));
-    AddInst(close_kind, Consume(), state.subtree_start, /*has_error=*/true);
+    AddNode(close_kind, Consume(), state.subtree_start, /*has_error=*/true);
   }
 }
 
@@ -424,7 +424,7 @@ auto Context::RecoverFromDeclarationError(StateStackEntry state,
       token = *semi;
     }
   }
-  AddInst(parse_node_kind, token, state.subtree_start,
+  AddNode(parse_node_kind, token, state.subtree_start,
           /*has_error=*/true);
 }
 

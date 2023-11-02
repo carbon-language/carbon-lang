@@ -24,13 +24,13 @@ auto HandleArrayExpressionSemi(Context& context) -> void {
   auto state = context.PopState();
   auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
   if (!semi) {
-    context.AddInst(NodeKind::ArrayExpressionSemi, *context.position(),
+    context.AddNode(NodeKind::ArrayExpressionSemi, *context.position(),
                     state.subtree_start, true);
     CARBON_DIAGNOSTIC(ExpectedArraySemi, Error, "Expected `;` in array type.");
     context.emitter().Emit(*context.position(), ExpectedArraySemi);
     state.has_error = true;
   } else {
-    context.AddInst(NodeKind::ArrayExpressionSemi, *semi, state.subtree_start,
+    context.AddNode(NodeKind::ArrayExpressionSemi, *semi, state.subtree_start,
                     state.has_error);
   }
   state.state = State::ArrayExpressionFinish;

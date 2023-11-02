@@ -114,7 +114,7 @@ class Context {
       -> void;
 
   // Adds a node to the parse tree that has children.
-  auto AddInst(NodeKind kind, Lex::Token token, int subtree_start,
+  auto AddNode(NodeKind kind, Lex::Token token, int subtree_start,
                bool has_error) -> void;
 
   // Returns the current position and moves past it.
