@@ -36,6 +36,24 @@ static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
   return std::nullopt;
 }
 
+// Given a node produced by a name lookup, get the value to use for that result
+// in an expression.
+static auto GetExpressionValueForLookupResult(Context& context,
+                                              SemIR::NodeId lookup_result_id)
+    -> SemIR::NodeId {
+  // If lookup finds a class declaration, the value is its `Self` type.
+  auto lookup_result = context.nodes().Get(lookup_result_id);
+  if (auto class_decl = lookup_result.TryAs<SemIR::ClassDeclaration>()) {
+    return context.sem_ir().GetTypeAllowBuiltinTypes(
+        context.classes().Get(class_decl->class_id).self_type_id);
+  }
+
+  // Anything else should be a typed value already.
+  CARBON_CHECK(lookup_result.kind().value_kind() == SemIR::NodeValueKind::Typed)
+      << "Unexpected kind for lookup result";
+  return lookup_result_id;
+}
+
 auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     -> bool {
   StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
@@ -48,6 +66,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                        ? context.LookupName(parse_node, name_id, *name_scope_id,
                                             /*print_diagnostics=*/true)
                        : SemIR::NodeId::BuiltinError;
+    node_id = GetExpressionValueForLookupResult(context, node_id);
     auto node = context.nodes().Get(node_id);
     // TODO: Track that this node was named within `base_id`.
     context.AddNodeAndPush(
@@ -86,9 +105,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                                 .scope_id;
       auto member_id = context.LookupName(parse_node, name_id, class_scope_id,
                                           /*print_diagnostics=*/true);
-      if (!member_id.is_valid()) {
-        break;
-      }
+      member_id = GetExpressionValueForLookupResult(context, member_id);
 
       // Perform instance binding if we found an instance member.
       auto member_type_id = context.nodes().Get(member_id).type_id();
@@ -209,16 +226,8 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   auto value_id =
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);
+  value_id = GetExpressionValueForLookupResult(context, value_id);
   auto value = context.nodes().Get(value_id);
-
-  // If lookup finds a class declaration, the value is its `Self` type.
-  if (auto class_decl = value.TryAs<SemIR::ClassDeclaration>()) {
-    value_id = context.sem_ir().GetTypeAllowBuiltinTypes(
-        context.classes().Get(class_decl->class_id).self_type_id);
-    value = context.nodes().Get(value_id);
-  }
-
-  CARBON_CHECK(value.kind().value_kind() == SemIR::NodeValueKind::Typed);
   context.AddNodeAndPush(
       parse_node,
       SemIR::NameReference{parse_node, value.type_id(), name_id, value_id});
