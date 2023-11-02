@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_NODE_BLOCK_STACK_H_
-#define CARBON_TOOLCHAIN_CHECK_NODE_BLOCK_STACK_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_INST_BLOCK_STACK_H_
+#define CARBON_TOOLCHAIN_CHECK_INST_BLOCK_STACK_H_
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/sem_ir/file.h"
@@ -119,4 +119,4 @@ class InstBlockStack {
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_NODE_BLOCK_STACK_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_INST_BLOCK_STACK_H_

@@ -154,7 +154,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Returns the identifier associated with this token. The token kind must be
   // an `Identifier`.
-  [[nodiscard]] auto GetIdentifier(Token token) const -> StringId;
+  [[nodiscard]] auto GetIdentifier(Token token) const -> IdentifierId;
 
   // Returns the value of an `IntegerLiteral()` token.
   [[nodiscard]] auto GetIntegerLiteral(Token token) const -> IntegerId;
@@ -163,7 +163,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   [[nodiscard]] auto GetRealLiteral(Token token) const -> RealId;
 
   // Returns the value of a `StringLiteral()` token.
-  [[nodiscard]] auto GetStringLiteral(Token token) const -> StringId;
+  [[nodiscard]] auto GetStringLiteral(Token token) const -> StringLiteralId;
 
   // Returns the size specified in a `*TypeLiteral()` token.
   [[nodiscard]] auto GetTypeLiteralSize(Token token) const
@@ -300,7 +300,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
           sizeof(Token) <= sizeof(int32_t),
           "Unable to pack token and identifier index into the same space!");
 
-      StringId string_id = StringId::Invalid;
+      IdentifierId ident_id = IdentifierId::Invalid;
+      StringLiteralId string_literal_id;
       IntegerId integer_id;
       RealId real_id;
       Token closing_token;

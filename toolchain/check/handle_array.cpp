@@ -6,7 +6,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/node_kind.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Check {
 

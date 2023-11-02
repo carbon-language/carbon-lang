@@ -46,7 +46,7 @@ cc_library(
         "context.h",
         "convert.h",
         "declaration_name_stack.h",
-        "node_block_stack.h",
+        "inst_block_stack.h",
         "pending_block.h",
     ],
     deps = [

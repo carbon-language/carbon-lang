@@ -11,7 +11,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/node_kind.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Lower {
 
@@ -119,7 +119,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     mangled_name = "main";
   } else {
     // TODO: Decide on a name mangling scheme.
-    mangled_name = sem_ir().strings().Get(function.name_id);
+    mangled_name = sem_ir().identifiers().Get(function.name_id);
   }
 
   llvm::FunctionType* function_type =
@@ -139,7 +139,8 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     } else if (inst.Is<SemIR::SelfParameter>()) {
       arg.setName("self");
     } else {
-      arg.setName(sem_ir().strings().Get(inst.As<SemIR::Parameter>().name_id));
+      arg.setName(
+          sem_ir().identifiers().Get(inst.As<SemIR::Parameter>().name_id));
     }
   }
 

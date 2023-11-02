@@ -131,8 +131,8 @@ class NodeStack {
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
-    if constexpr (RequiredIdKind == IdKind::StringId) {
-      auto back = PopWithParseNode<StringId>();
+    if constexpr (RequiredIdKind == IdKind::IdentifierId) {
+      auto back = PopWithParseNode<IdentifierId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
@@ -190,8 +190,8 @@ class NodeStack {
     if constexpr (RequiredIdKind == IdKind::ClassId) {
       return back.id<SemIR::ClassId>();
     }
-    if constexpr (RequiredIdKind == IdKind::StringId) {
-      return back.id<StringId>();
+    if constexpr (RequiredIdKind == IdKind::IdentifierId) {
+      return back.id<IdentifierId>();
     }
     if constexpr (RequiredIdKind == IdKind::TypeId) {
       return back.id<SemIR::TypeId>();
@@ -214,7 +214,7 @@ class NodeStack {
     InstBlockId,
     FunctionId,
     ClassId,
-    StringId,
+    IdentifierId,
     TypeId,
     // No associated ID type.
     SoloParseNode,
@@ -232,7 +232,7 @@ class NodeStack {
         : parse_node(parse_node), function_id(function_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::ClassId class_id)
         : parse_node(parse_node), class_id(class_id) {}
-    explicit Entry(Parse::Node parse_node, StringId name_id)
+    explicit Entry(Parse::Node parse_node, IdentifierId name_id)
         : parse_node(parse_node), name_id(name_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::TypeId type_id)
         : parse_node(parse_node), type_id(type_id) {}
@@ -252,7 +252,7 @@ class NodeStack {
       if constexpr (std::is_same<T, SemIR::ClassId>()) {
         return class_id;
       }
-      if constexpr (std::is_same<T, StringId>()) {
+      if constexpr (std::is_same<T, IdentifierId>()) {
         return name_id;
       }
       if constexpr (std::is_same<T, SemIR::TypeId>()) {
@@ -273,7 +273,7 @@ class NodeStack {
       SemIR::InstBlockId inst_block_id;
       SemIR::FunctionId function_id;
       SemIR::ClassId class_id;
-      StringId name_id;
+      IdentifierId name_id;
       SemIR::TypeId type_id;
     };
   };
@@ -318,7 +318,7 @@ class NodeStack {
       case Parse::NodeKind::ClassDefinitionStart:
         return IdKind::ClassId;
       case Parse::NodeKind::Name:
-        return IdKind::StringId;
+        return IdKind::IdentifierId;
       case Parse::NodeKind::ArrayExpressionSemi:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
@@ -356,8 +356,8 @@ class NodeStack {
     if constexpr (std::is_same_v<IdT, SemIR::ClassId>) {
       return IdKind::ClassId;
     }
-    if constexpr (std::is_same_v<IdT, StringId>) {
-      return IdKind::StringId;
+    if constexpr (std::is_same_v<IdT, IdentifierId>) {
+      return IdKind::IdentifierId;
     }
     if constexpr (std::is_same_v<IdT, SemIR::TypeId>) {
       return IdKind::TypeId;

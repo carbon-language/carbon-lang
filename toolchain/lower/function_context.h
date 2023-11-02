@@ -138,7 +138,7 @@ class FunctionContext {
   auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
                     SemIR::Name inst)                                \
       ->void;
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::Lower
 

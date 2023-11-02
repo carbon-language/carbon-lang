@@ -56,7 +56,7 @@ static auto GetExpressionValueForLookupResult(Context& context,
 
 auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  IdentifierId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
   auto base_id = context.node_stack().PopExpression();
 
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -195,7 +195,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                         llvm::StringRef);
       context.emitter().Emit(parse_node, QualifiedExpressionNameNotFound,
                              context.sem_ir().StringifyType(base_type_id),
-                             context.strings().Get(name_id));
+                             context.identifiers().Get(name_id));
       break;
     }
     // TODO: `ConstType` should support member access just like the
@@ -283,7 +283,7 @@ auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
   // TODO: This will find a local variable declared with name `r#Self`, but
   // should not. See #2984 and the corresponding code in
   // HandleClassDefinitionStart.
-  auto name_id = context.strings().Add(
+  auto name_id = context.identifiers().Add(
       Lex::TokenKind::SelfTypeIdentifier.fixed_spelling());
   auto value_id =
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
@@ -305,7 +305,7 @@ auto HandleSelfValueNameExpression(Context& context, Parse::Node parse_node)
   // TODO: This will find a local variable declared with name `r#self`, but
   // should not. See #2984 and the corresponding code in
   // HandleFunctionDefinitionStart.
-  auto name_id = context.strings().Add(SemIR::SelfParameter::Name);
+  auto name_id = context.identifiers().Add(SemIR::SelfParameter::Name);
   auto value_id =
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);
