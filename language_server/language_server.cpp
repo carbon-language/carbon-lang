@@ -82,7 +82,7 @@ static auto GetName(const SharedValueStores& value_stores,
                     Parse::Node node) -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
     if (p.node_kind(ch) == Parse::NodeKind::Name) {
-      return value_stores.strings().Get(
+      return value_stores.identifiers().Get(
           tokens.GetIdentifier(p.node_token(node)));
     }
   }

@@ -54,7 +54,7 @@ static auto BuildClassDeclaration(Context& context)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : StringId::Invalid,
+                        : IdentifierId::Invalid,
          // `.self_type_id` depends on `class_id`, so is set below.
          .self_type_id = SemIR::TypeId::Invalid,
          .declaration_id = class_decl_id});
@@ -92,7 +92,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, ClassRedefinition,
-               context.strings().Get(class_info.name_id))
+               context.identifiers().Get(class_info.name_id))
         .Note(context.insts().Get(class_info.definition_id).parse_node(),
               ClassPreviousDefinition)
         .Emit();
@@ -110,7 +110,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   // HandleSelfTypeNameExpression.
   context.AddNameToLookup(
       parse_node,
-      context.strings().Add(
+      context.identifiers().Add(
           Lex::TokenKind::SelfTypeIdentifier.fixed_spelling()),
       context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
 

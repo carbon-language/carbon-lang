@@ -8,6 +8,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 
@@ -53,7 +54,8 @@ class InstNamer {
       auto fn_loc = Parse::Node::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this, fn_loc,
-          fn.name_id.is_valid() ? sem_ir.strings().Get(fn.name_id).str() : "");
+          fn.name_id.is_valid() ? sem_ir.identifiers().Get(fn.name_id).str()
+                                : "");
       CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
@@ -84,7 +86,7 @@ class InstNamer {
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
           class_info.name_id.is_valid()
-              ? sem_ir.strings().Get(class_info.name_id).str()
+              ? sem_ir.identifiers().Get(class_info.name_id).str()
               : "");
       AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
       CollectNamesInBlock(class_scope, class_info.body_block_id);
@@ -387,10 +389,11 @@ class InstNamer {
         insts[inst_id.index] = {scope_idx, scope.insts.AllocateName(
                                                *this, inst.parse_node(), name)};
       };
-      auto add_inst_name_id = [&](StringId name_id,
+      auto add_inst_name_id = [&](IdentifierId name_id,
                                   llvm::StringRef suffix = "") {
         if (name_id.is_valid()) {
-          add_inst_name((sem_ir_.strings().Get(name_id).str() + suffix).str());
+          add_inst_name(
+              (sem_ir_.identifiers().Get(name_id).str() + suffix).str());
         } else {
           add_inst_name(suffix.str());
         }
@@ -593,7 +596,7 @@ class Formatter {
                        llvm::StringRef prefix) -> void {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<InstId, StringId>> entries;
+    llvm::SmallVector<std::pair<InstId, IdentifierId>> entries;
     for (auto [name_id, inst_id] : sem_ir_.name_scopes().Get(id)) {
       entries.push_back({inst_id, name_id});
     }
@@ -830,6 +833,12 @@ class Formatter {
 
   auto FormatArg(ClassId id) -> void { FormatClassName(id); }
 
+  auto FormatArg(IdentifierId id) -> void {
+    out_ << '"';
+    out_.write_escaped(sem_ir_.identifiers().Get(id), /*UseHexEscapes=*/true);
+    out_ << '"';
+  }
+
   auto FormatArg(IntegerId id) -> void {
     sem_ir_.integers().Get(id).print(out_, /*isSigned=*/false);
   }
@@ -861,9 +870,10 @@ class Formatter {
     out_ << (real.is_decimal ? 'e' : 'p') << real.exponent;
   }
 
-  auto FormatArg(StringId id) -> void {
+  auto FormatArg(StringLiteralId id) -> void {
     out_ << '"';
-    out_.write_escaped(sem_ir_.strings().Get(id), /*UseHexEscapes=*/true);
+    out_.write_escaped(sem_ir_.string_literals().Get(id),
+                       /*UseHexEscapes=*/true);
     out_ << '"';
   }
 
@@ -892,7 +902,9 @@ class Formatter {
     out_ << inst_namer_.GetLabelFor(scope_, id);
   }
 
-  auto FormatString(StringId id) -> void { out_ << sem_ir_.strings().Get(id); }
+  auto FormatString(IdentifierId id) -> void {
+    out_ << sem_ir_.identifiers().Get(id);
+  }
 
   auto FormatFunctionName(FunctionId id) -> void {
     out_ << inst_namer_.GetNameFor(id);

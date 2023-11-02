@@ -53,19 +53,19 @@ class NameScopeStore {
 
   // Adds an entry to a name scope. Returns true on success, false on
   // duplicates.
-  auto AddEntry(NameScopeId scope_id, StringId name_id, InstId target_id)
+  auto AddEntry(NameScopeId scope_id, IdentifierId name_id, InstId target_id)
       -> bool {
     return values_.Get(scope_id).insert({name_id, target_id}).second;
   }
 
   // Returns the requested name scope.
   auto Get(NameScopeId scope_id) const
-      -> const llvm::DenseMap<StringId, InstId>& {
+      -> const llvm::DenseMap<IdentifierId, InstId>& {
     return values_.Get(scope_id);
   }
 
  private:
-  ValueStore<NameScopeId, llvm::DenseMap<StringId, InstId>> values_;
+  ValueStore<NameScopeId, llvm::DenseMap<IdentifierId, InstId>> values_;
 };
 
 // Provides a block-based ValueStore, which uses slab allocation of added

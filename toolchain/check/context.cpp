@@ -81,11 +81,11 @@ auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::Node parse_node, StringId name_id)
+auto Context::DiagnoseNameNotFound(Parse::Node parse_node, IdentifierId name_id)
     -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, strings().Get(name_id));
+  emitter_->Emit(parse_node, NameNotFound, identifiers().Get(name_id));
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -105,7 +105,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   }
 }
 
-auto Context::AddNameToLookup(Parse::Node name_node, StringId name_id,
+auto Context::AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
                               SemIR::InstId target_id) -> void {
   if (current_scope().names.insert(name_id).second) {
     name_lookup_[name_id].push_back(target_id);
@@ -114,7 +114,7 @@ auto Context::AddNameToLookup(Parse::Node name_node, StringId name_id,
   }
 }
 
-auto Context::LookupName(Parse::Node parse_node, StringId name_id,
+auto Context::LookupName(Parse::Node parse_node, IdentifierId name_id,
                          SemIR::NameScopeId scope_id, bool print_diagnostics)
     -> SemIR::InstId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
@@ -126,7 +126,7 @@ auto Context::LookupName(Parse::Node parse_node, StringId name_id,
       return SemIR::InstId::BuiltinError;
     }
     CARBON_CHECK(!it->second.empty())
-        << "Should have been erased: " << strings().Get(name_id);
+        << "Should have been erased: " << identifiers().Get(name_id);
 
     // TODO: Check for ambiguous lookups.
     return it->second.back();

@@ -36,7 +36,7 @@ struct Function : public Printable<Function> {
   }
 
   // The function name.
-  StringId name_id;
+  IdentifierId name_id;
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDeclaration.
   InstId definition_id = InstId::Invalid;
@@ -73,7 +73,7 @@ struct Class : public Printable<Class> {
   // lifetime of the class.
 
   // The class name.
-  StringId name_id;
+  IdentifierId name_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDeclaration.
@@ -258,6 +258,12 @@ class File : public Printable<File> {
       -> std::string;
 
   // Directly expose SharedValueStores members.
+  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+    return value_stores_->identifiers();
+  }
+  auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
+    return value_stores_->identifiers();
+  }
   auto integers() -> ValueStore<IntegerId>& {
     return value_stores_->integers();
   }
@@ -268,9 +274,11 @@ class File : public Printable<File> {
   auto reals() const -> const ValueStore<RealId>& {
     return value_stores_->reals();
   }
-  auto strings() -> ValueStore<StringId>& { return value_stores_->strings(); }
-  auto strings() const -> const ValueStore<StringId>& {
-    return value_stores_->strings();
+  auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
+    return value_stores_->string_literals();
+  }
+  auto string_literals() const -> const StringStoreWrapper<StringLiteralId>& {
+    return value_stores_->string_literals();
   }
 
   auto functions() -> ValueStore<FunctionId, Function>& { return functions_; }
