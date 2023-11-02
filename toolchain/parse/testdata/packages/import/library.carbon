@@ -4,16 +4,15 @@
 //
 // AUTOUPDATE
 
-package Geometry library "Shapes" impl;
+import Geometry library "Shapes";
 
-// CHECK:STDOUT: - filename: impl_library.carbon
+// CHECK:STDOUT: - filename: library.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
+// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
 // CHECK:STDOUT:         {kind: 'Literal', text: '"Shapes"'},
-// CHECK:STDOUT:       {kind: 'PackageLibrary', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'PackageImpl', text: 'impl'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'Library', text: 'library', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

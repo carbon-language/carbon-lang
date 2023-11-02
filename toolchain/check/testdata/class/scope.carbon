@@ -48,16 +48,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref.loc18_10: <function> = name_reference "F", file.%F
-// CHECK:STDOUT:   %.loc18_11.1: init i32 = call %F.ref.loc18_10()
+// CHECK:STDOUT:   %.loc18_11: init i32 = call %F.ref.loc18_10()
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %F.ref.loc18_21: <function> = name_reference "F", @Class.%F
 // CHECK:STDOUT:   %.loc18_23.1: init i32 = call %F.ref.loc18_21()
-// CHECK:STDOUT:   %.loc18_11.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc18_11.3: ref i32 = temporary %.loc18_11.2, %.loc18_11.1
-// CHECK:STDOUT:   %.loc18_11.4: i32 = bind_value %.loc18_11.3
-// CHECK:STDOUT:   %.loc18_23.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc18_23.3: ref i32 = temporary %.loc18_23.2, %.loc18_23.1
-// CHECK:STDOUT:   %.loc18_23.4: i32 = bind_value %.loc18_23.3
-// CHECK:STDOUT:   %.loc18_14: i32 = add %.loc18_11.4, %.loc18_23.4
-// CHECK:STDOUT:   return %.loc18_14
+// CHECK:STDOUT:   %.loc18_14.1: i32 = value_of_initializer %.loc18_11
+// CHECK:STDOUT:   %.loc18_23.2: i32 = value_of_initializer %.loc18_23.1
+// CHECK:STDOUT:   %.loc18_14.2: i32 = add %.loc18_14.1, %.loc18_23.2
+// CHECK:STDOUT:   return %.loc18_14.2
 // CHECK:STDOUT: }

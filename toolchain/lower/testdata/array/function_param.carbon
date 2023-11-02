@@ -30,8 +30,5 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array.index2 = getelementptr inbounds [3 x i32], ptr %temp, i32 0, i32 2
 // CHECK:STDOUT:   store i32 3, ptr %array.index2, align 4
 // CHECK:STDOUT:   %F = call i32 @F(ptr %temp, i32 1)
-// CHECK:STDOUT:   %temp3 = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %F, ptr %temp3, align 4
-// CHECK:STDOUT:   %1 = load i32, ptr %temp3, align 4
-// CHECK:STDOUT:   ret i32 %1
+// CHECK:STDOUT:   ret i32 %F
 // CHECK:STDOUT: }

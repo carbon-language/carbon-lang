@@ -695,6 +695,7 @@ class TypeCompleter {
       case SemIR::TupleValue::Kind:
       case SemIR::UnaryOperatorNot::Kind:
       case SemIR::ValueAsReference::Kind:
+      case SemIR::ValueOfInitializer::Kind:
       case SemIR::VarStorage::Kind:
         CARBON_FATAL() << "Type refers to non-type node " << node;
 

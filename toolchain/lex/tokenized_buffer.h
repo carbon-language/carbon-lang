@@ -40,8 +40,14 @@ class TokenizedBuffer;
 //
 // All other APIs to query a `Token` are on the `TokenizedBuffer`.
 struct Token : public ComparableIndexBase {
+  static const Token Invalid;
+  // Comments aren't tokenized, so this is the first token after StartOfFile.
+  static const Token FirstNonCommentToken;
   using ComparableIndexBase::ComparableIndexBase;
 };
+
+constexpr Token Token::Invalid(Token::InvalidIndex);
+constexpr Token Token::FirstNonCommentToken(1);
 
 // A lightweight handle to a lexed line in a `TokenizedBuffer`.
 //
@@ -55,9 +61,8 @@ struct Token : public ComparableIndexBase {
 //
 // All other APIs to query a `Line` are on the `TokenizedBuffer`.
 struct Line : public ComparableIndexBase {
-  using ComparableIndexBase::ComparableIndexBase;
-
   static const Line Invalid;
+  using ComparableIndexBase::ComparableIndexBase;
 };
 
 constexpr Line Line::Invalid(Line::InvalidIndex);

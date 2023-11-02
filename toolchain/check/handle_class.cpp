@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Check {
 
@@ -98,12 +99,21 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   } else {
     class_info.definition_id = class_decl_id;
     class_info.scope_id = context.name_scopes().Add();
-
-    // TODO: Introduce `Self`.
   }
 
   // Enter the class scope.
   context.PushScope(class_decl_id, class_info.scope_id);
+
+  // Introduce `Self`.
+  // TODO: This will shadow a local variable declared with name `r#Self`, but
+  // should not. See #2984 and the corresponding code in
+  // HandleSelfTypeNameExpression.
+  context.AddNameToLookup(
+      parse_node,
+      context.strings().Add(
+          Lex::TokenKind::SelfTypeIdentifier.fixed_spelling()),
+      context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
+
   context.node_block_stack().Push();
   context.node_stack().Push(parse_node, class_id);
   context.args_type_info_stack().Push();

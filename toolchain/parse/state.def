@@ -419,6 +419,12 @@ CARBON_PARSE_STATE(FunctionSignatureFinish)
 //   (state done)
 CARBON_PARSE_STATE(FunctionDefinitionFinish)
 
+// Handles `import`.
+//
+// Always:
+//   (state done)
+CARBON_PARSE_STATE(Import)
+
 // Handles `namespace`.
 //
 // Always:

@@ -24,20 +24,14 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @Or() {
 // CHECK:STDOUT:   %F = call i1 @F()
-// CHECK:STDOUT:   %temp = alloca i1, align 1
-// CHECK:STDOUT:   store i1 %F, ptr %temp, align 1
-// CHECK:STDOUT:   %1 = load i1, ptr %temp, align 1
-// CHECK:STDOUT:   %2 = xor i1 %1, true
-// CHECK:STDOUT:   br i1 %2, label %3, label %5
+// CHECK:STDOUT:   %1 = xor i1 %F, true
+// CHECK:STDOUT:   br i1 %1, label %2, label %3
 // CHECK:STDOUT:
-// CHECK:STDOUT: 3:                                                ; preds = %0
+// CHECK:STDOUT: 2:                                                ; preds = %0
 // CHECK:STDOUT:   %G = call i1 @G()
-// CHECK:STDOUT:   %temp1 = alloca i1, align 1
-// CHECK:STDOUT:   store i1 %G, ptr %temp1, align 1
-// CHECK:STDOUT:   %4 = load i1, ptr %temp1, align 1
-// CHECK:STDOUT:   br label %5
+// CHECK:STDOUT:   br label %3
 // CHECK:STDOUT:
-// CHECK:STDOUT: 5:                                                ; preds = %3, %0
-// CHECK:STDOUT:   %6 = phi i1 [ true, %0 ], [ %4, %3 ]
-// CHECK:STDOUT:   ret i1 %6
+// CHECK:STDOUT: 3:                                                ; preds = %2, %0
+// CHECK:STDOUT:   %4 = phi i1 [ true, %0 ], [ %G, %2 ]
+// CHECK:STDOUT:   ret i1 %4
 // CHECK:STDOUT: }

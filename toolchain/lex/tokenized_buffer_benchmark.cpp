@@ -427,6 +427,66 @@ void BM_ValidKeywords(benchmark::State& state) {
 }
 BENCHMARK(BM_ValidKeywords);
 
+void BM_ValidKeywordsAsRawIdentifiers(benchmark::State& state) {
+  absl::BitGen gen;
+  std::array<llvm::StringRef, NumTokens> tokens;
+  for (int i : llvm::seq(NumTokens)) {
+    tokens[i] = TokenKind::KeywordTokens[i % TokenKind::KeywordTokens.size()]
+                    .fixed_spelling();
+  }
+  std::shuffle(tokens.begin(), tokens.end(), gen);
+  std::string source("r#");
+  source.append(llvm::join(tokens, " r#"));
+
+  LexerBenchHelper helper(source);
+  for (auto _ : state) {
+    TokenizedBuffer buffer = helper.Lex();
+    CARBON_CHECK(!buffer.has_errors());
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_ValidKeywordsAsRawIdentifiers);
+
+// This benchmark does a 50-50 split of r-prefixed and r#-prefixed identifiers
+// to directly compare raw and non-raw performance.
+void BM_RawIdentifierFocus(benchmark::State& state) {
+  const std::array<std::string, NumTokens>& ids = GetRandomIdentifiers();
+
+  llvm::SmallVector<std::string> modified_ids;
+  // As we resize, start with the in-use prefix. Note that `r#` uses the first
+  // character of the original identifier.
+  modified_ids.resize(NumTokens / 2, "r#");
+  modified_ids.resize(NumTokens, "r");
+  for (int i : llvm::seq(NumTokens / 2)) {
+    // Use the same identifier both ways.
+    modified_ids[i].append(ids[i]);
+    modified_ids[i + NumTokens / 2].append(
+        llvm::StringRef(ids[i]).drop_front());
+  }
+
+  absl::BitGen gen;
+  std::array<llvm::StringRef, NumTokens> tokens;
+  for (int i : llvm::seq(NumTokens)) {
+    tokens[i] = modified_ids[i];
+  }
+  std::shuffle(tokens.begin(), tokens.end(), gen);
+  std::string source = llvm::join(tokens, " ");
+
+  LexerBenchHelper helper(source);
+  for (auto _ : state) {
+    TokenizedBuffer buffer = helper.Lex();
+    CARBON_CHECK(!buffer.has_errors());
+  }
+
+  state.SetBytesProcessed(state.iterations() * source.size());
+  state.counters["tokens_per_second"] = benchmark::Counter(
+      NumTokens, benchmark::Counter::kIsIterationInvariantRate);
+}
+BENCHMARK(BM_RawIdentifierFocus);
+
 template <int MinLength, int MaxLength, bool Uniform>
 void BM_ValidIdentifiers(benchmark::State& state) {
   std::string source = RandomIdentifierSeq<MinLength, MaxLength, Uniform>();

@@ -21,6 +21,7 @@ cc_library(
     deps = [
         "//common:command_line",
         "//common:vlog",
+        "//toolchain/base:value_store",
         "//toolchain/check",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
