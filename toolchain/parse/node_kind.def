@@ -89,6 +89,9 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpression, 0, CARBON_TOKEN(Identifier))
 //    is documented separately.
 // -  `_optional_` if this node may be present or omitted in valid parses,
 //    depending on which tokens are in the source code.
+//
+// Generally all of the non-external nodes in one block will be created in the
+// same `handle_*.cpp` file.
 
 // ----------------------------------------------------------------------------
 

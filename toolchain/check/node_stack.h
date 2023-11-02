@@ -166,12 +166,10 @@ class NodeStack {
     return std::nullopt;
   }
 
-  // Peeks at the parse_node of the given depth in the stack, or by default the
-  // top node.
+  // Peeks at the parse_node of the top of the name stack.
   auto PeekParseNode() const -> Parse::Node { return stack_.back().parse_node; }
 
-  // Peeks at the ID of node at the given depth in the stack, or by default the
-  // top node.
+  // Peeks at the ID of node at the top of the name stack.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
   auto Peek() const -> auto {
     Entry back = stack_.back();

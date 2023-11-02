@@ -242,9 +242,9 @@ CARBON_PARSE_STATE(DeclarationScopeLoop)
 // responsible for handling chaining.
 //
 // The forms of this are:
-// - Designated names in structs.
 // - Qualified names in declarations.
 // - Member access expressions.
+// - Designated names in structs.
 //
 // Declarations and expressions have qualifiers such as `x.y`, while structs
 // have designators such as `.z`.
