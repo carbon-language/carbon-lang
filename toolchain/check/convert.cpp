@@ -29,6 +29,7 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
     default:
       CARBON_FATAL() << "Initialization from unexpected node " << init;
 
+    case SemIR::ClassInit::Kind:
     case SemIR::StructInit::Kind:
     case SemIR::TupleInit::Kind:
       // TODO: Track a return slot for these initializers.
@@ -383,12 +384,15 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
                                                      new_block.id()});
 }
 
-// Performs a conversion from a struct to a struct type. Does not perform a
-// final conversion to the requested expression category.
-static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
-                                  SemIR::StructType dest_type,
-                                  SemIR::NodeId value_id,
-                                  ConversionTarget target) -> SemIR::NodeId {
+// Performs a conversion from a struct to a struct or class type. Does not
+// perform a final conversion to the requested expression category.
+template <typename TargetAccessNodeT>
+static auto ConvertStructToStructOrClass(Context& context,
+                                         SemIR::StructType src_type,
+                                         SemIR::StructType dest_type,
+                                         SemIR::NodeId value_id,
+                                         ConversionTarget target, bool is_class)
+    -> SemIR::NodeId {
   auto& sem_ir = context.sem_ir();
   auto src_elem_fields = sem_ir.node_blocks().Get(src_type.fields_id);
   auto dest_elem_fields = sem_ir.node_blocks().Get(dest_type.fields_id);
@@ -415,7 +419,13 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
                       "Cannot initialize struct of {0} element(s) from struct "
                       "with {1} element(s).",
                       size_t, size_t);
-    context.emitter().Emit(value.parse_node(), StructInitElementCountMismatch,
+    CARBON_DIAGNOSTIC(ClassInitElementCountMismatch, Error,
+                      "Cannot initialize class with {0} field(s) from struct "
+                      "with {1} element(s).",
+                      size_t, size_t);
+    context.emitter().Emit(value.parse_node(),
+                           is_class ? ClassInitElementCountMismatch
+                                    : StructInitElementCountMismatch,
                            dest_elem_fields.size(), src_elem_fields.size());
     return SemIR::NodeId::BuiltinError;
   }
@@ -484,7 +494,7 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
     auto init_id =
-        ConvertAggregateElement<SemIR::StructAccess, SemIR::StructAccess>(
+        ConvertAggregateElement<SemIR::StructAccess, TargetAccessNodeT>(
             context, value.parse_node(), value_id, src_field.field_type_id,
             literal_elems, inner_kind, target.init_id, dest_field.field_type_id,
             target.init_block, src_field_index);
@@ -494,12 +504,60 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
     new_block.Set(i, init_id);
   }
 
-  return is_init ? context.AddNode(SemIR::StructInit{value.parse_node(),
+  CARBON_CHECK(!is_class || is_init)
+      << "Converting directly to a class value is not supported";
+  return is_class  ? context.AddNode(SemIR::ClassInit{value.parse_node(),
                                                      target.type_id, value_id,
                                                      new_block.id()})
-                 : context.AddNode(SemIR::StructValue{value.parse_node(),
-                                                      target.type_id, value_id,
-                                                      new_block.id()});
+         : is_init ? context.AddNode(SemIR::StructInit{value.parse_node(),
+                                                       target.type_id, value_id,
+                                                       new_block.id()})
+                   : context.AddNode(
+                         SemIR::StructValue{value.parse_node(), target.type_id,
+                                            value_id, new_block.id()});
+}
+
+// Performs a conversion from a struct to a struct type. Does not perform a
+// final conversion to the requested expression category.
+static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
+                                  SemIR::StructType dest_type,
+                                  SemIR::NodeId value_id,
+                                  ConversionTarget target) -> SemIR::NodeId {
+  return ConvertStructToStructOrClass<SemIR::StructAccess>(
+      context, src_type, dest_type, value_id, target, /*is_class=*/false);
+}
+
+// Performs a conversion from a struct to a class type. Does not perform a
+// final conversion to the requested expression category.
+static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
+                                 SemIR::ClassType dest_type,
+                                 SemIR::NodeId value_id,
+                                 ConversionTarget target) -> SemIR::NodeId {
+  PendingBlock target_block(context);
+  auto dest_struct_type = context.nodes().GetAs<SemIR::StructType>(
+      context.sem_ir().GetTypeAllowBuiltinTypes(
+          context.classes().Get(dest_type.class_id).object_representation_id));
+
+  // If we're trying to create a class value, form a temporary for the value to
+  // point to.
+  bool need_temporary = !target.is_initializer();
+  if (need_temporary) {
+    target.kind = ConversionTarget::Initializer;
+    target.init_block = &target_block;
+    target.init_id = target_block.AddNode(SemIR::TemporaryStorage{
+        context.nodes().Get(value_id).parse_node(), target.type_id});
+  }
+
+  auto result_id = ConvertStructToStructOrClass<SemIR::ClassFieldAccess>(
+      context, src_type, dest_struct_type, value_id, target, /*is_class=*/true);
+
+  if (need_temporary) {
+    target_block.InsertHere();
+    result_id = context.AddNode(
+        SemIR::Temporary{context.nodes().Get(value_id).parse_node(),
+                         target.type_id, target.init_id, result_id});
+  }
+  return result_id;
 }
 
 // Returns whether `category` is a valid expression category to produce as a
@@ -619,6 +677,17 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
     if (auto src_tuple_type = value_type_node.TryAs<SemIR::TupleType>()) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
+    }
+  }
+
+  // A struct {.f_1: T_1, .f_2: T_2, ..., .f_n: T_n} converts to a class type
+  // if it converts to the class's representation type.
+  if (auto target_class_type = target_type_node.TryAs<SemIR::ClassType>()) {
+    auto value_type_node =
+        sem_ir.nodes().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
+    if (auto src_struct_type = value_type_node.TryAs<SemIR::StructType>()) {
+      return ConvertStructToClass(context, *src_struct_type, *target_class_type,
+                                  value_id, target);
     }
   }
 

@@ -218,6 +218,15 @@ struct ClassFieldAccess {
   MemberIndex index;
 };
 
+struct ClassInit {
+  static constexpr auto Kind = NodeKind::ClassInit.Define("class_init");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  NodeId src_id;
+  NodeBlockId elements_id;
+};
+
 struct ClassType {
   static constexpr auto Kind = NodeKind::ClassType.Define("class_type");
 
