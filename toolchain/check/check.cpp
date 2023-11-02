@@ -27,7 +27,7 @@ auto CheckParseTree(SharedValueStores& value_stores,
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
   // Add a block for the Parse::Tree.
-  context.node_block_stack().Push();
+  context.inst_block_stack().Push();
   context.PushScope();
 
   // Loops over all nodes in the tree. On some errors, this may return early,
@@ -51,7 +51,7 @@ auto CheckParseTree(SharedValueStores& value_stores,
   }
 
   // Pop information for the file-level scope.
-  sem_ir.set_top_node_block_id(context.node_block_stack().Pop());
+  sem_ir.set_top_inst_block_id(context.inst_block_stack().Pop());
   context.PopScope();
 
   context.VerifyOnFinish();

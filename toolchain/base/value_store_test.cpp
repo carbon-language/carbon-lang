@@ -63,19 +63,20 @@ TEST(ValueStore, String) {
   std::string a = "a";
   std::string b = "b";
   SharedValueStores value_stores;
-  StringId a_id = value_stores.strings().Add(a);
-  StringId b_id = value_stores.strings().Add(b);
+  auto a_id = value_stores.identifiers().Add(a);
+  auto b_id = value_stores.string_literals().Add(b);
 
   ASSERT_TRUE(a_id.is_valid());
   ASSERT_TRUE(b_id.is_valid());
 
-  EXPECT_THAT(a_id, Not(Eq(b_id)));
-  EXPECT_THAT(value_stores.strings().Get(a_id), Eq(a));
-  EXPECT_THAT(value_stores.strings().Get(b_id), Eq(b));
+  EXPECT_THAT(a_id.index, Not(Eq(b_id.index)));
+  EXPECT_THAT(value_stores.identifiers().Get(a_id), Eq(a));
+  EXPECT_THAT(value_stores.string_literals().Get(b_id), Eq(b));
 
-  // Adding the same string again should return the same id.
-  EXPECT_THAT(value_stores.strings().Add(a), Eq(a_id));
-  EXPECT_THAT(value_stores.strings().Add(b), Eq(b_id));
+  // Adding the same string again, even with a different Id type, should return
+  // the same id.
+  EXPECT_THAT(value_stores.string_literals().Add(a).index, Eq(a_id.index));
+  EXPECT_THAT(value_stores.identifiers().Add(b).index, Eq(b_id.index));
 }
 
 auto MatchSharedValues(testing::Matcher<Yaml::MappingValue> integers,
@@ -102,7 +103,7 @@ TEST(ValueStore, PrintVals) {
   value_stores.integers().Add(apint);
   value_stores.reals().Add(
       Real{.mantissa = apint, .exponent = apint, .is_decimal = true});
-  value_stores.strings().Add("foo'\"baz");
+  value_stores.string_literals().Add("foo'\"baz");
   TestRawOstream out;
   value_stores.Print(out);
 

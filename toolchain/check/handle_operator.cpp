@@ -18,12 +18,12 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // TODO: This should search for a compatible interface. For now, it's a
       // very trivial check of validity on the operation.
       lhs_id = ConvertToValueOfType(context, parse_node, lhs_id,
-                                    context.nodes().Get(rhs_id).type_id());
+                                    context.insts().Get(rhs_id).type_id());
       rhs_id = ConvertToValueExpression(context, rhs_id);
 
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node, SemIR::BinaryOperatorAdd{
-                          parse_node, context.nodes().Get(lhs_id).type_id(),
+                          parse_node, context.insts().Get(lhs_id).type_id(),
                           lhs_id, rhs_id});
       return true;
 
@@ -36,16 +36,16 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
 
       // When the second operand is evaluated, the result of `and` and `or` is
       // its value.
-      auto resume_block_id = context.node_block_stack().PeekOrAdd(/*depth=*/1);
-      context.AddNode(
+      auto resume_block_id = context.inst_block_stack().PeekOrAdd(/*depth=*/1);
+      context.AddInst(
           SemIR::BranchWithArg{parse_node, resume_block_id, rhs_id});
-      context.node_block_stack().Pop();
+      context.inst_block_stack().Pop();
       context.AddCurrentCodeBlockToFunction();
 
       // Collect the result from either the first or second operand.
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
-          SemIR::BlockArg{parse_node, context.nodes().Get(rhs_id).type_id(),
+          SemIR::BlockArg{parse_node, context.insts().Get(rhs_id).type_id(),
                           resume_block_id});
       return true;
     }
@@ -68,7 +68,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // TODO: Destroy the old value before reinitializing. This will require
       // building the destruction code before we build the RHS subexpression.
       rhs_id = Initialize(context, parse_node, lhs_id, rhs_id);
-      context.AddNode(SemIR::Assign{parse_node, lhs_id, rhs_id});
+      context.AddInst(SemIR::Assign{parse_node, lhs_id, rhs_id});
       // We model assignment as an expression, so we need to push a value for
       // it, even though it doesn't produce a value.
       // TODO: Consider changing our parse tree to model assignment as a
@@ -89,7 +89,7 @@ auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::Star: {
       auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node, SemIR::PointerType{parse_node, SemIR::TypeId::TypeType,
                                          inner_type_id});
       return true;
@@ -124,12 +124,12 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
           context.emitter().Emit(parse_node, AddressOfNonReference);
           break;
       }
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::AddressOf{
               parse_node,
               context.GetPointerType(parse_node,
-                                     context.nodes().Get(value_id).type_id()),
+                                     context.insts().Get(value_id).type_id()),
               value_id});
       return true;
     }
@@ -138,14 +138,14 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       // `const (const T)` is probably not what the developer intended.
       // TODO: Detect `const (const T)*` and suggest moving the `*` inside the
       // parentheses.
-      if (context.nodes().Get(value_id).kind() == SemIR::ConstType::Kind) {
+      if (context.insts().Get(value_id).kind() == SemIR::ConstType::Kind) {
         CARBON_DIAGNOSTIC(RepeatedConst, Warning,
                           "`const` applied repeatedly to the same type has no "
                           "additional effect.");
         context.emitter().Emit(parse_node, RepeatedConst);
       }
       auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::ConstType{parse_node, SemIR::TypeId::TypeType, inner_type_id});
       return true;
@@ -153,20 +153,20 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
 
     case Lex::TokenKind::Not:
       value_id = ConvertToBoolValue(context, parse_node, value_id);
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::UnaryOperatorNot{
-              parse_node, context.nodes().Get(value_id).type_id(), value_id});
+              parse_node, context.insts().Get(value_id).type_id(), value_id});
       return true;
 
     case Lex::TokenKind::Star: {
       value_id = ConvertToValueExpression(context, value_id);
       auto type_id =
-          context.GetUnqualifiedType(context.nodes().Get(value_id).type_id());
-      auto type_node = context.nodes().Get(
+          context.GetUnqualifiedType(context.insts().Get(value_id).type_id());
+      auto type_inst = context.insts().Get(
           context.sem_ir().GetTypeAllowBuiltinTypes(type_id));
       auto result_type_id = SemIR::TypeId::Error;
-      if (auto pointer_type = type_node.TryAs<SemIR::PointerType>()) {
+      if (auto pointer_type = type_inst.TryAs<SemIR::PointerType>()) {
         result_type_id = pointer_type->pointee_id;
       } else if (type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(
@@ -185,7 +185,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
         }
         builder.Emit();
       }
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node, SemIR::Dereference{parse_node, result_type_id, value_id});
       return true;
     }
@@ -200,23 +200,23 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().PopExpression();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
-  auto bool_type_id = context.nodes().Get(cond_value_id).type_id();
+  auto bool_type_id = context.insts().Get(cond_value_id).type_id();
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
   auto token = context.parse_tree().node_token(parse_node);
-  SemIR::NodeId branch_value_id = SemIR::NodeId::Invalid;
-  auto short_circuit_result_id = SemIR::NodeId::Invalid;
+  SemIR::InstId branch_value_id = SemIR::InstId::Invalid;
+  auto short_circuit_result_id = SemIR::InstId::Invalid;
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::And:
       branch_value_id = cond_value_id;
-      short_circuit_result_id = context.AddNode(SemIR::BoolLiteral{
+      short_circuit_result_id = context.AddInst(SemIR::BoolLiteral{
           parse_node, bool_type_id, SemIR::BoolValue::False});
       break;
 
     case Lex::TokenKind::Or:
-      branch_value_id = context.AddNode(
+      branch_value_id = context.AddInst(
           SemIR::UnaryOperatorNot{parse_node, bool_type_id, cond_value_id});
-      short_circuit_result_id = context.AddNode(
+      short_circuit_result_id = context.AddInst(
           SemIR::BoolLiteral{parse_node, bool_type_id, SemIR::BoolValue::True});
       break;
 
@@ -232,9 +232,9 @@ auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
 
   // Push the resumption and the right-hand side blocks, and start emitting the
   // right-hand operand.
-  context.node_block_stack().Pop();
-  context.node_block_stack().Push(end_block_id);
-  context.node_block_stack().Push(rhs_block_id);
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().Push(end_block_id);
+  context.inst_block_stack().Push(rhs_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   // Put the condition back on the stack for HandleInfixOperator.

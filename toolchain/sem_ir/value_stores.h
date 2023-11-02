@@ -8,39 +8,41 @@
 #include "llvm/ADT/DenseMap.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::SemIR {
 
-// Provides a ValueStore wrapper for an API specific to nodes.
-class NodeStore {
+// Provides a ValueStore wrapper for an API specific to instructions.
+class InstStore {
  public:
-  // Adds a node to the node list, returning an ID to reference the node. Note
-  // that this doesn't add the node to any node block. Check::Context::AddNode
-  // or NodeBlockStack::AddNode should usually be used instead, to add the node
-  // to the current block.
-  auto AddInNoBlock(Node node) -> NodeId { return values_.Add(node); }
+  // Adds an instruction to the instruction list, returning an ID to reference
+  // the instruction. Note that this doesn't add the instruction to any
+  // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
+  // should usually be used instead, to add the instruction to the current
+  // block.
+  auto AddInNoBlock(Inst inst) -> InstId { return values_.Add(inst); }
 
-  // Returns the requested node.
-  auto Get(NodeId node_id) const -> Node { return values_.Get(node_id); }
+  // Returns the requested instruction.
+  auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
 
-  // Returns the requested node, which is known to have the specified type.
-  template <typename NodeT>
-  auto GetAs(NodeId node_id) const -> NodeT {
-    return Get(node_id).As<NodeT>();
+  // Returns the requested instruction, which is known to have the specified
+  // type.
+  template <typename InstT>
+  auto GetAs(InstId inst_id) const -> InstT {
+    return Get(inst_id).As<InstT>();
   }
 
-  // Overwrites a given node with a new value.
-  auto Set(NodeId node_id, Node node) -> void { values_.Get(node_id) = node; }
+  // Overwrites a given instruction with a new value.
+  auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
 
   // Reserves space.
   auto Reserve(size_t size) -> void { values_.Reserve(size); }
 
-  auto array_ref() const -> llvm::ArrayRef<Node> { return values_.array_ref(); }
+  auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
   auto size() const -> int { return values_.size(); }
 
  private:
-  ValueStore<NodeId, Node> values_;
+  ValueStore<InstId, Inst> values_;
 };
 
 // Provides a ValueStore wrapper for an API specific to name scopes.
@@ -51,19 +53,19 @@ class NameScopeStore {
 
   // Adds an entry to a name scope. Returns true on success, false on
   // duplicates.
-  auto AddEntry(NameScopeId scope_id, StringId name_id, NodeId target_id)
+  auto AddEntry(NameScopeId scope_id, IdentifierId name_id, InstId target_id)
       -> bool {
     return values_.Get(scope_id).insert({name_id, target_id}).second;
   }
 
   // Returns the requested name scope.
   auto Get(NameScopeId scope_id) const
-      -> const llvm::DenseMap<StringId, NodeId>& {
+      -> const llvm::DenseMap<IdentifierId, InstId>& {
     return values_.Get(scope_id);
   }
 
  private:
-  ValueStore<NameScopeId, llvm::DenseMap<StringId, NodeId>> values_;
+  ValueStore<NameScopeId, llvm::DenseMap<IdentifierId, InstId>> values_;
 };
 
 // Provides a block-based ValueStore, which uses slab allocation of added
@@ -109,17 +111,17 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
  protected:
   // Reserves and returns a block ID. The contents of the block
   // should be specified by calling Set, or similar.
-  auto AddDefaultValue() -> NodeBlockId { return values_.AddDefaultValue(); }
+  auto AddDefaultValue() -> InstBlockId { return values_.AddDefaultValue(); }
 
   // Adds an uninitialized block of the given size.
-  auto AddUninitialized(size_t size) -> NodeBlockId {
+  auto AddUninitialized(size_t size) -> InstBlockId {
     return values_.Add(AllocateUninitialized(size));
   }
 
   // Sets the contents of an empty block to the given content.
-  auto Set(NodeBlockId block_id, llvm::ArrayRef<NodeId> content) -> void {
+  auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
     CARBON_CHECK(Get(block_id).empty())
-        << "node block content set more than once";
+        << "inst block content set more than once";
     values_.Get(block_id) = AllocateCopy(content);
   }
 
@@ -147,18 +149,18 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
   ValueStore<IdT, llvm::MutableArrayRef<ValueT>> values_;
 };
 
-// Adapts BlockValueStore for node blocks.
-class NodeBlockStore : public BlockValueStore<NodeBlockId, NodeId> {
+// Adapts BlockValueStore for instruction blocks.
+class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
  public:
-  using BaseType = BlockValueStore<NodeBlockId, NodeId>;
+  using BaseType = BlockValueStore<InstBlockId, InstId>;
 
   using BaseType::AddDefaultValue;
   using BaseType::AddUninitialized;
   using BaseType::BaseType;
 
-  auto Set(NodeBlockId block_id, llvm::ArrayRef<NodeId> content) -> void {
-    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
-    BlockValueStore<NodeBlockId, NodeId>::Set(block_id, content);
+  auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
+    CARBON_CHECK(block_id != InstBlockId::Unreachable);
+    BlockValueStore<InstBlockId, InstId>::Set(block_id, content);
   }
 };
 

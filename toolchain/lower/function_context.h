@@ -10,7 +10,7 @@
 #include "llvm/IR/Module.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Lower {
 
@@ -23,44 +23,44 @@ class FunctionContext {
 
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
-  auto GetBlock(SemIR::NodeBlockId block_id) -> llvm::BasicBlock*;
+  auto GetBlock(SemIR::InstBlockId block_id) -> llvm::BasicBlock*;
 
   // If we have not yet allocated a `BasicBlock` for this `block_id`, set it to
   // `block`, and enqueue `block_id` for emission. Returns whether we set the
   // block.
-  auto TryToReuseBlock(SemIR::NodeBlockId block_id, llvm::BasicBlock* block)
+  auto TryToReuseBlock(SemIR::InstBlockId block_id, llvm::BasicBlock* block)
       -> bool;
 
   // Builds LLVM IR for the sequence of instructions in `block_id`.
-  auto LowerBlock(SemIR::NodeBlockId block_id) -> void;
+  auto LowerBlock(SemIR::InstBlockId block_id) -> void;
 
   // Returns a phi node corresponding to the block argument of the given basic
   // block.
-  auto GetBlockArg(SemIR::NodeBlockId block_id, SemIR::TypeId type_id)
+  auto GetBlockArg(SemIR::InstBlockId block_id, SemIR::TypeId type_id)
       -> llvm::PHINode*;
 
-  // Returns a local (versus global) value for the given node.
-  auto GetLocal(SemIR::NodeId node_id) -> llvm::Value* {
+  // Returns a local (versus global) value for the given instruction.
+  auto GetLocal(SemIR::InstId inst_id) -> llvm::Value* {
     // All builtins are types, with the same empty lowered value.
-    if (node_id.index < SemIR::BuiltinKind::ValidCount) {
+    if (inst_id.index < SemIR::BuiltinKind::ValidCount) {
       return GetTypeAsValue();
     }
 
-    auto it = locals_.find(node_id);
+    auto it = locals_.find(inst_id);
     CARBON_CHECK(it != locals_.end())
-        << "Missing local: " << node_id << " " << sem_ir().nodes().Get(node_id);
+        << "Missing local: " << inst_id << " " << sem_ir().insts().Get(inst_id);
     return it->second;
   }
 
-  // Sets the value for the given node.
-  auto SetLocal(SemIR::NodeId node_id, llvm::Value* value) {
-    bool added = locals_.insert({node_id, value}).second;
-    CARBON_CHECK(added) << "Duplicate local insert: " << node_id << " "
-                        << sem_ir().nodes().Get(node_id);
+  // Sets the value for the given instruction.
+  auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) {
+    bool added = locals_.insert({inst_id, value}).second;
+    CARBON_CHECK(added) << "Duplicate local insert: " << inst_id << " "
+                        << sem_ir().insts().Get(inst_id);
   }
 
-  // Returns a value for the given node, which might not be local.
-  auto GetLocalOrGlobal(SemIR::NodeId node_id) -> llvm::Value*;
+  // Returns a value for the given instruction, which might not be local.
+  auto GetLocalOrGlobal(SemIR::InstId inst_id) -> llvm::Value*;
 
   // Gets a callable's function.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
@@ -77,7 +77,7 @@ class FunctionContext {
     return file_context_->GetTypeAsValue();
   }
 
-  // Create a synthetic block that corresponds to no SemIR::NodeBlockId. Such
+  // Create a synthetic block that corresponds to no SemIR::InstBlockId. Such
   // a block should only ever have a single predecessor, and is used when we
   // need multiple `llvm::BasicBlock`s to model the linear control flow in a
   // single SemIR::File block.
@@ -92,8 +92,8 @@ class FunctionContext {
   // initialization of `dest_id` from that initializer. This is a no-op if the
   // initialization was performed in-place, and otherwise performs a store or a
   // copy.
-  auto FinishInitialization(SemIR::TypeId type_id, SemIR::NodeId dest_id,
-                            SemIR::NodeId init_id) -> void;
+  auto FinishInitialization(SemIR::TypeId type_id, SemIR::InstId dest_id,
+                            SemIR::InstId init_id) -> void;
 
   auto llvm_context() -> llvm::LLVMContext& {
     return file_context_->llvm_context();
@@ -106,8 +106,8 @@ class FunctionContext {
   // Emits a value copy for type `type_id` from `source_id` to `dest_id`.
   // `source_id` must produce a value representation for `type_id`, and
   // `dest_id` must be a pointer to a `type_id` object.
-  auto CopyValue(SemIR::TypeId type_id, SemIR::NodeId source_id,
-                 SemIR::NodeId dest_id) -> void;
+  auto CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
+                 SemIR::InstId dest_id) -> void;
 
   // Context for the overall lowering process.
   FileContext* file_context_;
@@ -121,24 +121,24 @@ class FunctionContext {
   llvm::raw_ostream* vlog_stream_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.
-  llvm::DenseMap<SemIR::NodeBlockId, llvm::BasicBlock*> blocks_;
+  llvm::DenseMap<SemIR::InstBlockId, llvm::BasicBlock*> blocks_;
 
   // The synthetic block we most recently created. May be null if there is no
   // such block.
   llvm::BasicBlock* synthetic_block_ = nullptr;
 
-  // Maps a function's SemIR::File nodes to lowered values.
+  // Maps a function's SemIR::File instructions to lowered values.
   // TODO: Handle nested scopes. Right now this is just cleared at the end of
   // every block.
-  llvm::DenseMap<SemIR::NodeId, llvm::Value*> locals_;
+  llvm::DenseMap<SemIR::InstId, llvm::Value*> locals_;
 };
 
-// Declare handlers for each SemIR::File node.
-#define CARBON_SEM_IR_NODE_KIND(Name)                                \
-  auto Handle##Name(FunctionContext& context, SemIR::NodeId node_id, \
-                    SemIR::Name node)                                \
+// Declare handlers for each SemIR::File instruction.
+#define CARBON_SEM_IR_INST_KIND(Name)                                \
+  auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
+                    SemIR::Name inst)                                \
       ->void;
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::Lower
 

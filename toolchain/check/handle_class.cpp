@@ -8,9 +8,9 @@
 namespace Carbon::Check {
 
 auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
-  // Create a node block to hold the nodes created as part of the class
-  // signature, such as generic parameters.
-  context.node_block_stack().Push();
+  // Create an instruction block to hold the instructions created as part of the
+  // class signature, such as generic parameters.
+  context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.
@@ -19,24 +19,24 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
 }
 
 static auto BuildClassDeclaration(Context& context)
-    -> std::tuple<SemIR::ClassId, SemIR::NodeId> {
+    -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.declaration_name_stack().Pop();
   auto class_keyword =
       context.node_stack()
           .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
-  auto decl_block_id = context.node_block_stack().Pop();
+  auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
   auto class_decl = SemIR::ClassDeclaration{
       class_keyword, SemIR::ClassId::Invalid, decl_block_id};
-  auto class_decl_id = context.AddNode(class_decl);
+  auto class_decl_id = context.AddInst(class_decl);
 
   // Check whether this is a redeclaration.
   auto existing_id = context.declaration_name_stack().LookupOrAddName(
       name_context, class_decl_id);
   if (existing_id.is_valid()) {
     if (auto existing_class_decl =
-            context.nodes().Get(existing_id).TryAs<SemIR::ClassDeclaration>()) {
+            context.insts().Get(existing_id).TryAs<SemIR::ClassDeclaration>()) {
       // This is a redeclaration of an existing class.
       class_decl.class_id = existing_class_decl->class_id;
     } else {
@@ -54,7 +54,7 @@ static auto BuildClassDeclaration(Context& context)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : StringId::Invalid,
+                        : IdentifierId::Invalid,
          // `.self_type_id` depends on `class_id`, so is set below.
          .self_type_id = SemIR::TypeId::Invalid,
          .declaration_id = class_decl_id});
@@ -62,13 +62,13 @@ static auto BuildClassDeclaration(Context& context)
     // Build the `Self` type.
     auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id =
-        context.CanonicalizeType(context.AddNode(SemIR::ClassType{
+        context.CanonicalizeType(context.AddInst(SemIR::ClassType{
             class_keyword, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_decl.class_id}));
   }
 
   // Write the class ID into the ClassDeclaration.
-  context.nodes().Set(class_decl_id, class_decl);
+  context.insts().Set(class_decl_id, class_decl);
 
   return {class_decl.class_id, class_decl_id};
 }
@@ -92,8 +92,8 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, ClassRedefinition,
-               context.strings().Get(class_info.name_id))
-        .Note(context.nodes().Get(class_info.definition_id).parse_node(),
+               context.identifiers().Get(class_info.name_id))
+        .Note(context.insts().Get(class_info.definition_id).parse_node(),
               ClassPreviousDefinition)
         .Emit();
   } else {
@@ -110,11 +110,11 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   // HandleSelfTypeNameExpression.
   context.AddNameToLookup(
       parse_node,
-      context.strings().Add(
+      context.identifiers().Add(
           Lex::TokenKind::SelfTypeIdentifier.fixed_spelling()),
       context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
 
-  context.node_block_stack().Push();
+  context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, class_id);
   context.args_type_info_stack().Push();
 
@@ -125,8 +125,9 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   //     var v: if true then i32 else f64;
   //   }
   //
-  // We may need to track a list of node blocks here, as we do for a function.
-  class_info.body_block_id = context.node_block_stack().PeekOrAdd();
+  // We may need to track a list of instruction blocks here, as we do for a
+  // function.
+  class_info.body_block_id = context.inst_block_stack().PeekOrAdd();
   return true;
 }
 
@@ -134,7 +135,7 @@ auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
-  context.node_block_stack().Pop();
+  context.inst_block_stack().Pop();
   context.PopScope();
 
   // The class type is now fully defined.

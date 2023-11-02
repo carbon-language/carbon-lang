@@ -26,13 +26,13 @@ cc_library(
 )
 
 cc_library(
-    name = "node_kind",
-    srcs = ["node_kind.cpp"],
+    name = "inst_kind",
+    srcs = ["inst_kind.cpp"],
     hdrs = [
-        "node_kind.h",
-        "typed_nodes.h",
+        "inst_kind.h",
+        "typed_insts.h",
     ],
-    textual_hdrs = ["node_kind.def"],
+    textual_hdrs = ["inst_kind.def"],
     deps = [
         "//common:enum_base",
         "//toolchain/parse:tree",
@@ -43,12 +43,12 @@ cc_library(
 )
 
 cc_library(
-    name = "node",
-    srcs = ["node.cpp"],
-    hdrs = ["node.h"],
+    name = "inst",
+    srcs = ["inst.cpp"],
+    hdrs = ["inst.h"],
     deps = [
         ":builtin_kind",
-        ":node_kind",
+        ":inst_kind",
         "//common:check",
         "//common:ostream",
         "//common:struct_reflection",
@@ -64,8 +64,8 @@ cc_library(
     hdrs = ["file.h"],
     deps = [
         ":builtin_kind",
-        ":node",
-        ":node_kind",
+        ":inst",
+        ":inst_kind",
         ":value_stores",
         "//common:check",
         "//toolchain/base:value_store",
@@ -80,7 +80,8 @@ cc_library(
     hdrs = ["formatter.h"],
     deps = [
         ":file",
-        ":node_kind",
+        ":inst_kind",
+        "//toolchain/base:value_store",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
@@ -101,7 +102,7 @@ cc_library(
     name = "value_stores",
     hdrs = ["value_stores.h"],
     deps = [
-        ":node",
+        ":inst",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "@llvm-project//llvm:Support",
@@ -109,12 +110,12 @@ cc_library(
 )
 
 cc_test(
-    name = "typed_nodes_test",
+    name = "typed_insts_test",
     size = "small",
-    srcs = ["typed_nodes_test.cpp"],
+    srcs = ["typed_insts_test.cpp"],
     deps = [
-        ":node",
-        ":node_kind",
+        ":inst",
+        ":inst_kind",
         "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],

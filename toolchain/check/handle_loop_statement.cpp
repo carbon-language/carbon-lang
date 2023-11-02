@@ -20,11 +20,11 @@ auto HandleBreakStatementStart(Context& context, Parse::Node parse_node)
                       "`break` can only be used in a loop.");
     context.emitter().Emit(parse_node, BreakOutsideLoop);
   } else {
-    context.AddNode(SemIR::Branch{parse_node, stack.back().break_target});
+    context.AddInst(SemIR::Branch{parse_node, stack.back().break_target});
   }
 
-  context.node_block_stack().Pop();
-  context.node_block_stack().PushUnreachable();
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().PushUnreachable();
   return true;
 }
 
@@ -41,11 +41,11 @@ auto HandleContinueStatementStart(Context& context, Parse::Node parse_node)
                       "`continue` can only be used in a loop.");
     context.emitter().Emit(parse_node, ContinueOutsideLoop);
   } else {
-    context.AddNode(SemIR::Branch{parse_node, stack.back().continue_target});
+    context.AddInst(SemIR::Branch{parse_node, stack.back().continue_target});
   }
 
-  context.node_block_stack().Pop();
-  context.node_block_stack().PushUnreachable();
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().PushUnreachable();
   return true;
 }
 
@@ -71,10 +71,10 @@ auto HandleWhileConditionStart(Context& context, Parse::Node parse_node)
   // if the current block is empty; this ensures that the loop always has a
   // preheader block.
   auto loop_header_id = context.AddDominatedBlockAndBranch(parse_node);
-  context.node_block_stack().Pop();
+  context.inst_block_stack().Pop();
 
   // Start emitting the loop header block.
-  context.node_block_stack().Push(loop_header_id);
+  context.inst_block_stack().Push(loop_header_id);
   context.AddCurrentCodeBlockToFunction();
 
   context.node_stack().Push(parse_node, loop_header_id);
@@ -91,10 +91,10 @@ auto HandleWhileCondition(Context& context, Parse::Node parse_node) -> bool {
   auto loop_body_id =
       context.AddDominatedBlockAndBranchIf(parse_node, cond_value_id);
   auto loop_exit_id = context.AddDominatedBlockAndBranch(parse_node);
-  context.node_block_stack().Pop();
+  context.inst_block_stack().Pop();
 
   // Start emitting the loop body.
-  context.node_block_stack().Push(loop_body_id);
+  context.inst_block_stack().Push(loop_body_id);
   context.AddCurrentCodeBlockToFunction();
   context.break_continue_stack().push_back(
       {.break_target = loop_exit_id, .continue_target = loop_header_id});
@@ -111,11 +111,11 @@ auto HandleWhileStatement(Context& context, Parse::Node parse_node) -> bool {
   context.break_continue_stack().pop_back();
 
   // Add the loop backedge.
-  context.AddNode(SemIR::Branch{parse_node, loop_header_id});
-  context.node_block_stack().Pop();
+  context.AddInst(SemIR::Branch{parse_node, loop_header_id});
+  context.inst_block_stack().Pop();
 
   // Start emitting the loop exit block.
-  context.node_block_stack().Push(loop_exit_id);
+  context.inst_block_stack().Push(loop_exit_id);
   context.AddCurrentCodeBlockToFunction();
   return true;
 }

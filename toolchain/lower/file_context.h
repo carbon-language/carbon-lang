@@ -9,7 +9,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Lower {
 
@@ -60,9 +60,9 @@ class FileContext {
   // declaration with no definition, does nothing.
   auto BuildFunctionDefinition(SemIR::FunctionId function_id) -> void;
 
-  // Builds the type for the given node, which should then be cached by the
-  // caller.
-  auto BuildType(SemIR::NodeId node_id) -> llvm::Type*;
+  // Builds the type for the given instruction, which should then be cached by
+  // the caller.
+  auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
 
   // Returns the empty LLVM struct type used to represent the type `type`.
   auto GetTypeType() -> llvm::StructType* {

@@ -5,7 +5,7 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -22,7 +22,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
 
   auto diagnose_not_callable = [&, call_expr_parse_node = call_expr_parse_node,
                                 callee_id = callee_id] {
-    auto callee_type_id = context.nodes().Get(callee_id).type_id();
+    auto callee_type_id = context.insts().Get(callee_id).type_id();
     if (callee_type_id != SemIR::TypeId::Error) {
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,
                         "Value of type `{0}` is not callable.", std::string);
@@ -30,15 +30,15 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
           call_expr_parse_node, CallToNonCallable,
           context.sem_ir().StringifyType(callee_type_id, true));
     }
-    context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   };
 
   // For a method call, pick out the `self` value.
   auto function_callee_id = callee_id;
-  SemIR::NodeId self_id = SemIR::NodeId::Invalid;
+  SemIR::InstId self_id = SemIR::InstId::Invalid;
   if (auto bound_method =
-          context.nodes().Get(callee_id).TryAs<SemIR::BoundMethod>()) {
+          context.insts().Get(callee_id).TryAs<SemIR::BoundMethod>()) {
     self_id = bound_method->object_id;
     function_callee_id = bound_method->function_id;
   }
@@ -49,7 +49,7 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
     return diagnose_not_callable();
   }
   auto function_decl =
-      context.nodes().Get(function_decl_id).TryAs<SemIR::FunctionDeclaration>();
+      context.insts().Get(function_decl_id).TryAs<SemIR::FunctionDeclaration>();
   if (!function_decl) {
     return diagnose_not_callable();
   }
@@ -64,11 +64,11 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   }
 
   // If there is a return slot, build storage for the result.
-  SemIR::NodeId return_storage_id = SemIR::NodeId::Invalid;
+  SemIR::InstId return_storage_id = SemIR::InstId::Invalid;
   if (callable.return_slot_id.is_valid()) {
     // Tentatively put storage for a temporary in the function's return slot.
     // This will be replaced if necessary when we perform initialization.
-    return_storage_id = context.AddNode(
+    return_storage_id = context.AddInst(
         SemIR::TemporaryStorage{call_expr_parse_node, callable.return_type_id});
   }
 
@@ -78,10 +78,10 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
                       context.params_or_args_stack().PeekCurrentBlockContents(),
                       return_storage_id, function_decl->parse_node,
                       callable.implicit_param_refs_id, callable.param_refs_id);
-  auto call_node_id = context.AddNode(
+  auto call_inst_id = context.AddInst(
       SemIR::Call{call_expr_parse_node, type_id, callee_id, converted_args_id});
 
-  context.node_stack().Push(parse_node, call_node_id);
+  context.node_stack().Push(parse_node, call_inst_id);
   return true;
 }
 

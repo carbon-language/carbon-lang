@@ -8,7 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/pending_block.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -39,7 +39,7 @@ struct ConversionTarget {
   // The target type for the conversion.
   SemIR::TypeId type_id;
   // For an initializer, the object being initialized.
-  SemIR::NodeId init_id = SemIR::NodeId::Invalid;
+  SemIR::InstId init_id = SemIR::InstId::Invalid;
   // For an initializer, a block of pending instructions that are needed to
   // form the value of `init_id`, and that can be discarded if no
   // initialization is needed.
@@ -52,54 +52,54 @@ struct ConversionTarget {
 };
 
 // Convert a value to another type and expression category.
-auto Convert(Context& context, Parse::Node parse_node, SemIR::NodeId value_id,
-             ConversionTarget target) -> SemIR::NodeId;
+auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId value_id,
+             ConversionTarget target) -> SemIR::InstId;
 
 // Performs initialization of `target_id` from `value_id`. Returns the
 // possibly-converted initializing expression, which should be assigned to the
 // target using a suitable node for the kind of initialization.
 auto Initialize(Context& context, Parse::Node parse_node,
-                SemIR::NodeId target_id, SemIR::NodeId value_id)
-    -> SemIR::NodeId;
+                SemIR::InstId target_id, SemIR::InstId value_id)
+    -> SemIR::InstId;
 
 // Convert the given expression to a value expression of the same type.
-auto ConvertToValueExpression(Context& context, SemIR::NodeId expr_id)
-    -> SemIR::NodeId;
+auto ConvertToValueExpression(Context& context, SemIR::InstId expr_id)
+    -> SemIR::InstId;
 
 // Convert the given expression to a value or reference expression of the same
 // type.
 auto ConvertToValueOrReferenceExpression(Context& context,
-                                         SemIR::NodeId expr_id)
-    -> SemIR::NodeId;
+                                         SemIR::InstId expr_id)
+    -> SemIR::InstId;
 
 // Converts `value_id` to a value expression of type `type_id`.
 auto ConvertToValueOfType(Context& context, Parse::Node parse_node,
-                          SemIR::NodeId value_id, SemIR::TypeId type_id)
-    -> SemIR::NodeId;
+                          SemIR::InstId value_id, SemIR::TypeId type_id)
+    -> SemIR::InstId;
 
 // Converts `value_id` to a value expression of type `bool`.
 auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
-                        SemIR::NodeId value_id) -> SemIR::NodeId;
+                        SemIR::InstId value_id) -> SemIR::InstId;
 
 // Converts `value_id` to type `type_id` for an `as` expression.
 auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
-                          SemIR::NodeId value_id, SemIR::TypeId type_id)
-    -> SemIR::NodeId;
+                          SemIR::InstId value_id, SemIR::TypeId type_id)
+    -> SemIR::InstId;
 
 // Implicitly converts a set of arguments to match the parameter types in a
 // function call. Returns a block containing the converted implicit and explicit
 // argument values.
 auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
-                     SemIR::NodeId self_id,
-                     llvm::ArrayRef<SemIR::NodeId> arg_refs,
-                     SemIR::NodeId return_storage_id,
+                     SemIR::InstId self_id,
+                     llvm::ArrayRef<SemIR::InstId> arg_refs,
+                     SemIR::InstId return_storage_id,
                      Parse::Node callee_parse_node,
-                     SemIR::NodeBlockId implicit_param_refs_id,
-                     SemIR::NodeBlockId param_refs_id) -> SemIR::NodeBlockId;
+                     SemIR::InstBlockId implicit_param_refs_id,
+                     SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId;
 
 // Converts an expression for use as a type.
 auto ExpressionAsType(Context& context, Parse::Node parse_node,
-                      SemIR::NodeId value_id) -> SemIR::TypeId;
+                      SemIR::InstId value_id) -> SemIR::TypeId;
 
 }  // namespace Carbon::Check
 
