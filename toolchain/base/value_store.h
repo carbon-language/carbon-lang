@@ -232,6 +232,10 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   explicit SharedValueStores()
       : identifiers_(&strings_), string_literals_(&strings_) {}
 
+  // Not copyable or movable.
+  SharedValueStores(const SharedValueStores&) = delete;
+  auto operator=(const SharedValueStores&) -> SharedValueStores& = delete;
+
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
     return identifiers_;
   }
