@@ -20,8 +20,8 @@ auto HandleIfExpressionIf(Context& context, Parse::Node parse_node) -> bool {
   auto else_block_id = context.AddDominatedBlockAndBranch(if_node);
 
   // Start emitting the `then` block.
-  context.node_block_stack().Pop();
-  context.node_block_stack().Push(then_block_id);
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().Push(then_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   context.node_stack().Push(if_node, else_block_id);
@@ -37,7 +37,7 @@ auto HandleIfExpressionThen(Context& context, Parse::Node parse_node) -> bool {
   then_value_id = ConvertToValueExpression(context, then_value_id);
 
   // Start emitting the `else` block.
-  context.node_block_stack().Push(else_block_id);
+  context.inst_block_stack().Push(else_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   context.node_stack().Push(parse_node, then_value_id);
@@ -57,7 +57,7 @@ auto HandleIfExpressionElse(Context& context, Parse::Node parse_node) -> bool {
   // Convert the `else` value to the `then` value's type, and finish the `else`
   // block.
   // TODO: Find a common type, and convert both operands to it instead.
-  auto result_type_id = context.nodes().Get(then_value_id).type_id();
+  auto result_type_id = context.insts().Get(then_value_id).type_id();
   else_value_id =
       ConvertToValueOfType(context, else_node, else_value_id, result_type_id);
 

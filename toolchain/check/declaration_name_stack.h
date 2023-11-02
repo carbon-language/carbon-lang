@@ -7,7 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -55,11 +55,11 @@ class DeclarationNameStack {
       // A context that has not processed any parts of the qualifier.
       Empty,
 
-      // A node ID has been resolved, whether through an identifier or
+      // An instruction ID has been resolved, whether through an identifier or
       // expression. This provided a new scope, such as a type.
       Resolved,
 
-      // A node ID has been resolved, whether through an identifier or
+      // An instruction ID has been resolved, whether through an identifier or
       // expression. It did not provide a new scope, so must be the final part,
       // such as an out-of-line function definition.
       ResolvedNonScope,
@@ -85,7 +85,7 @@ class DeclarationNameStack {
     union {
       // The ID of a resolved qualifier, including both identifiers and
       // expressions. Invalid indicates resolution failed.
-      SemIR::NodeId resolved_node_id = SemIR::NodeId::Invalid;
+      SemIR::InstId resolved_inst_id = SemIR::InstId::Invalid;
 
       // The ID of an unresolved identifier.
       StringId unresolved_name_id;
@@ -100,7 +100,7 @@ class DeclarationNameStack {
 
   // Pops the current declaration name processing, returning the final context
   // for adding the name to lookup. This also pops the final name node from the
-  // node stack, which will be applied to the declaration name if appropriate.
+  // name stack, which will be applied to the declaration name if appropriate.
   auto Pop() -> NameContext;
 
   // Creates and returns a name context corresponding to declaring an
@@ -110,24 +110,24 @@ class DeclarationNameStack {
   auto MakeUnqualifiedName(Parse::Node parse_node, StringId name_id)
       -> NameContext;
 
-  // Applies a Name from the node stack to the top of the declaration name
+  // Applies a Name from the name stack to the top of the declaration name
   // stack.
   auto ApplyNameQualifier(Parse::Node parse_node, StringId name_id) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(NameContext name_context, SemIR::NodeId target_id)
+  auto AddNameToLookup(NameContext name_context, SemIR::InstId target_id)
       -> void;
 
-  // Adds a name to name lookup, or returns the existing node if this name has
-  // already been declared in this scope.
-  auto LookupOrAddName(NameContext name_context, SemIR::NodeId target_id)
-      -> SemIR::NodeId;
+  // Adds a name to name lookup, or returns the existing instruction if this
+  // name has already been declared in this scope.
+  auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id)
+      -> SemIR::InstId;
 
  private:
   // Returns a name context corresponding to an empty name.
   auto MakeEmptyNameContext() -> NameContext;
 
-  // Applies a Name from the node stack to given name context.
+  // Applies a Name from the name stack to given name context.
   auto ApplyNameQualifierTo(NameContext& name_context, Parse::Node parse_node,
                             StringId name_id) -> void;
 

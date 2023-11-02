@@ -4,7 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -12,9 +12,9 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
   if (auto self_param =
-          context.nodes().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
+          context.insts().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
     self_param->is_addr_self = SemIR::BoolValue::True;
-    context.nodes().Set(self_param_id, *self_param);
+    context.insts().Set(self_param_id, *self_param);
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParameter, Error,
                       "`addr` can only be applied to a `self` parameter");
@@ -45,7 +45,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
           "`self` can only be declared in an implicit parameter list");
       context.emitter().Emit(parse_node, SelfOutsideImplicitParameterList);
     }
-    context.AddNodeAndPush(
+    context.AddInstAndPush(
         parse_node,
         SemIR::SelfParameter{*self_node, cast_type_id,
                              /*is_addr_self=*/SemIR::BoolValue::False});
@@ -58,8 +58,8 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
-  // Allocate a node of the appropriate kind, linked to the name for error
-  // locations.
+  // Allocate an instruction of the appropriate kind, linked to the name for
+  // error locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::VariableIntroducer: {
@@ -77,29 +77,29 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
-      SemIR::NodeId value_id = SemIR::NodeId::Invalid;
+      SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
       if (enclosing_class_decl) {
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
-        auto field_type_node_id = context.AddNode(SemIR::UnboundFieldType{
+        auto field_type_inst_id = context.AddInst(SemIR::UnboundFieldType{
             parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_info.self_type_id, cast_type_id});
-        value_type_id = context.CanonicalizeType(field_type_node_id);
-        value_id = context.AddNode(
+        value_type_id = context.CanonicalizeType(field_type_inst_id);
+        value_id = context.AddInst(
             SemIR::Field{parse_node, value_type_id, name_id,
                          SemIR::MemberIndex(context.args_type_info_stack()
                                                 .PeekCurrentBlockContents()
                                                 .size())});
 
         // Add a corresponding field to the object representation of the class.
-        context.args_type_info_stack().AddNode(
+        context.args_type_info_stack().AddInst(
             SemIR::StructTypeField{parse_node, name_id, cast_type_id});
       } else {
-        value_id = context.AddNode(
+        value_id = context.AddInst(
             SemIR::VarStorage{name_node, value_type_id, name_id});
       }
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::BindName{name_node, value_type_id, name_id, value_id});
       break;
@@ -109,9 +109,9 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
     case Parse::NodeKind::ParameterListStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node, SemIR::Parameter{name_node, cast_type_id, name_id});
-      // TODO: Create a `BindName` node.
+      // TODO: Create a `BindName` instruction.
       break;
 
     case Parse::NodeKind::LetIntroducer:
@@ -125,14 +125,14 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
-      // Create the node, but don't add it to a block until after we've formed
-      // its initializer.
+      // Create the instruction, but don't add it to a block until after we've
+      // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
       context.node_stack().Push(
           parse_node,
-          context.nodes().AddInNoBlock(SemIR::BindName{
-              name_node, cast_type_id, name_id, SemIR::NodeId::Invalid}));
+          context.insts().AddInNoBlock(SemIR::BindName{
+              name_node, cast_type_id, name_id, SemIR::InstId::Invalid}));
       break;
 
     default:
