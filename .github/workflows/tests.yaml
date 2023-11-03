@@ -132,24 +132,23 @@ jobs:
           which clang++
           clang++ --version
 
-      # Extract our access key for our build cache.
-      - name: Extract access key (read-only)
+      # Disable uploads when the remote cache is read-only.
+      - name: Set up remote cache access (read-only)
         if:
           steps.filter.outputs.ignore == 'false' && github.event_name ==
           'pull_request'
         run: |
-          # Disable uploads when the remote cache is read-only.
           echo "remote_cache_upload=--remote_upload_local_results=false" \
               >> $GITHUB_ENV
 
-      - name: Extract access key (read-write)
+      # Provide a cache key when the remote cache is read-write.
+      - name: Set up remote cache access (read-write)
         if:
           steps.filter.outputs.ignore == 'false' && github.event_name !=
           'pull_request'
         env:
-          REMOTE_CACHE_KEY: ${{ secrets.CARBON_GITHUB_BUILDS }}
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
         run: |
-          # Provide a cache key when the remote cache is read-write.
           echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
           echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
               >> $GITHUB_ENV
