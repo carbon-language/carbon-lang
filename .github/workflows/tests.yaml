@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [trunk]
+    branches: [action-test]
   pull_request_target:
   merge_group:
 
@@ -138,11 +138,10 @@ jobs:
           steps.filter.outputs.ignore == 'false' && github.event_name ==
           'pull_request_target'
         env:
-          CARBON_GITHUB_BUILDS: ${{ secrets.CARBON_GITHUB_BUILDS_READ_ONLY }}
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_GITHUB_BUILDS_READ_ONLY }}
         run: |
-          echo "$CARBON_GITHUB_BUILDS" \
-            | base64 -d > $HOME/gcp-builds-service-account.json
-          echo "bazelrc_upload=build --remote_upload_local_results=false" \
+          echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
+          echo "remote_cache_upload=build --remote_upload_local_results=false" \
               >> $GITHUB_ENV
 
       - name: Extract access key (read-write)
@@ -150,11 +149,10 @@ jobs:
           steps.filter.outputs.ignore == 'false' && github.event_name !=
           'pull_request_target'
         env:
-          CARBON_GITHUB_BUILDS: ${{ secrets.CARBON_GITHUB_BUILDS_READ_WRITE }}
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_GITHUB_BUILDS_READ_WRITE }}
         run: |
-          echo "$CARBON_GITHUB_BUILDS" \
-            | base64 -d > $HOME/gcp-builds-service-account.json
-          echo "bazelrc_upload=# read-write cache" >> $GITHUB_ENV
+          echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
+          echo "remote_cache_upload=# read-write cache" >> $GITHUB_ENV
 
       # We need to replace the `.` with a `_` for the build cache.
       - name: Setup LLVM and Clang (macOS)
@@ -178,11 +176,11 @@ jobs:
           cat >user.bazelrc <<EOF
           # Enable remote cache for our CI but minimize downloads.
           build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ env.os_for_cache }}
-          build --google_credentials=$HOME/gcp-builds-service-account.json
+          build --google_credentials=$HOME/remote_cache_key.json
           build --remote_download_minimal
 
           # Disable uploads if the remote cache is read-only.
-          ${{ env.bazelrc_upload }}
+          ${{ env.remote_cache_upload }}
 
           # Set an artificially high jobs count. This flag controls the number
           # of concurrency Bazel itself uses, which is essential for actions
