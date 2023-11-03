@@ -6,8 +6,7 @@
 
 namespace Carbon {
 
-auto Hasher::HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes)
-    -> void {
+auto Hasher::HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void {
   const std::byte* data_ptr = bytes.data();
   const ssize_t size = bytes.size();
   CARBON_DCHECK(size > 32);

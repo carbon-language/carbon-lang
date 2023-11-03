@@ -404,19 +404,22 @@ inline auto CarbonHash(llvm::ArrayRef<std::byte> bytes, uint64_t seed)
 inline auto CarbonHash(llvm::StringRef value, uint64_t seed) -> HashCode {
   return CarbonHash(
       llvm::ArrayRef<std::byte>(
-          reinterpret_cast<const std::byte*>(value.data()), value.size()), seed);
+          reinterpret_cast<const std::byte*>(value.data()), value.size()),
+      seed);
 }
 
 inline auto CarbonHash(std::string_view value, uint64_t seed) -> HashCode {
   return CarbonHash(
       llvm::ArrayRef<std::byte>(
-          reinterpret_cast<const std::byte*>(value.data()), value.size()), seed);
+          reinterpret_cast<const std::byte*>(value.data()), value.size()),
+      seed);
 }
 
 inline auto CarbonHash(const std::string& value, uint64_t seed) -> HashCode {
   return CarbonHash(
       llvm::ArrayRef<std::byte>(
-          reinterpret_cast<const std::byte*>(value.data()), value.size()), seed);
+          reinterpret_cast<const std::byte*>(value.data()), value.size()),
+      seed);
 }
 
 // C++ guarantees this is true for the unsigned variants, but we require it for
@@ -468,9 +471,7 @@ inline auto CarbonHash(const std::tuple<Ts...>& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   std::apply(
-      [&](const auto&... args) {
-        hasher.Hash(MapNullPtrToVoidPtr(args)...);
-      },
+      [&](const auto&... args) { hasher.Hash(MapNullPtrToVoidPtr(args)...); },
       value);
   return static_cast<HashCode>(hasher);
 }
@@ -480,7 +481,8 @@ template <typename T, typename U,
               NullPtrOrHasUniqueObjectRepresentations<T> &&
               NullPtrOrHasUniqueObjectRepresentations<U> &&
               sizeof(T) <= sizeof(uint64_t) && sizeof(U) <= sizeof(uint64_t)>>
-inline auto CarbonHash(const std::pair<T, U>& value, uint64_t seed) -> HashCode {
+inline auto CarbonHash(const std::pair<T, U>& value, uint64_t seed)
+    -> HashCode {
   return CarbonHash(std::tuple(value.first, value.second), seed);
 }
 
@@ -522,7 +524,8 @@ inline constexpr auto HashCode::ExtractIndex(ssize_t size) -> ssize_t {
 }
 
 template <int N>
-inline constexpr auto HashCode::ExtractIndexAndTag(ssize_t size) -> IndexAndTag {
+inline constexpr auto HashCode::ExtractIndexAndTag(ssize_t size)
+    -> IndexAndTag {
   static_assert(N >= 1);
   static_assert(N <= 32);
   CARBON_DCHECK(llvm::isPowerOf2_64(size));
@@ -623,8 +626,7 @@ inline auto Hasher::HashOne(uint64_t data) -> void {
   buffer = Mix(data ^ buffer, MulConstant);
 }
 
-inline auto Hasher::HashTwo(uint64_t data0, uint64_t data1)
-    -> void {
+inline auto Hasher::HashTwo(uint64_t data0, uint64_t data1) -> void {
   // When hashing two chunks of data at the same time, we XOR it with random
   // data to avoid common inputs from having especially bad multiplicative
   // effects. We also XOR in the starting buffer as seed or to chain. Note that
@@ -642,8 +644,8 @@ inline auto Hasher::HashTwo(uint64_t data0, uint64_t data1)
   // This roughly matches the mix pattern used in the larger mixing routines
   // from Abseil, which is a more minimal form than used in other algorithms
   // such as AHash and seems adequate for latency-optimized use cases.
-  buffer = Mix(data0 ^ StaticRandomData[1],
-                      data1 ^ StaticRandomData[3] ^ buffer);
+  buffer =
+      Mix(data0 ^ StaticRandomData[1], data1 ^ StaticRandomData[3] ^ buffer);
 }
 
 template <typename T, typename /*enable_if*/>
@@ -765,10 +767,11 @@ inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
       return;
     }
 
-    // When we only have 0-3 bytes of string, we can avoid the cost of `Mix`. Instead, for empty strings we can just XOR some of
-    // our data against the existing buffer. For 1-3 byte lengths we do 3
-    // one-byte reads adjusted to always read in-bounds without branching. Then
-    // we OR the size into the 4th byte and use `WeakMix`.
+    // When we only have 0-3 bytes of string, we can avoid the cost of `Mix`.
+    // Instead, for empty strings we can just XOR some of our data against the
+    // existing buffer. For 1-3 byte lengths we do 3 one-byte reads adjusted to
+    // always read in-bounds without branching. Then we OR the size into the 4th
+    // byte and use `WeakMix`.
     CARBON_MCA_BEGIN("dynamic-4b");
     if (size == 0) {
       buffer ^= StaticRandomData[0];
