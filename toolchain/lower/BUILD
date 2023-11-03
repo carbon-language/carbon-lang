@@ -30,10 +30,15 @@ cc_library(
         "file_context.cpp",
         "function_context.cpp",
     ] +
-    # Glob handler files to avoid missing any.
-    glob([
-        "handle*.cpp",
-    ]),
+    # Temporarily disable glob of handler files during split
+    # glob([
+    #     "handle*.cpp",
+    # ]),
+    [
+        "handle.cpp",
+        "handle_expression_category.cpp",
+        "handle_type.cpp",
+    ],
     hdrs = [
         "file_context.h",
         "function_context.h",
