@@ -181,7 +181,7 @@ jobs:
           build --google_credentials=$HOME/gcp-builds-service-account.json
           build --remote_download_minimal
 
-          # Set when determining whether the cache is read-write.
+          # Disable uploads if the remote cache is read-only.
           ${{ env.bazelrc_upload }}
 
           # Set an artificially high jobs count. This flag controls the number
