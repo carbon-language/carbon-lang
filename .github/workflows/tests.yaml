@@ -147,7 +147,7 @@ jobs:
           steps.filter.outputs.ignore == 'false' && github.event_name !=
           'pull_request'
         env:
-          REMOTE_CACHE_KEY: ${{ secrets.CARBON_GITHUB_BUILDS_READ_WRITE }}
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_GITHUB_BUILDS }}
         run: |
           # Provide a cache key when the remote cache is read-write.
           echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
