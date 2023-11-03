@@ -133,13 +133,6 @@ class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
 // `HasError` returning true.
 class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
-  // Lexes a buffer of source code into a tokenized buffer.
-  //
-  // The provided source buffer must outlive any returned `TokenizedBuffer`
-  // which will refer into the source.
-  static auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
-                  DiagnosticConsumer& consumer) -> TokenizedBuffer;
-
   [[nodiscard]] auto GetKind(Token token) const -> TokenKind;
   [[nodiscard]] auto GetLine(Token token) const -> Line;
 
@@ -243,10 +236,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto filename() const -> llvm::StringRef { return source_->filename(); }
 
  private:
-  // Implementation detail struct implementing the actual lexer logic.
-  class Lexer;
-  friend Lexer;
-
+  friend class Lexer;
   friend class TokenLocationTranslator;
 
   // A diagnostic location translator that maps token locations into source
@@ -335,9 +325,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   };
 
   // The constructor is merely responsible for trivial initialization of
-  // members. A working object of this type is built with the `lex` function
-  // above so that its return can indicate if an error was encountered while
-  // lexing.
+  // members. A working object of this type is built with `Lex::Lex` so that its
+  // return can indicate if an error was encountered while lexing.
   explicit TokenizedBuffer(SharedValueStores& value_stores,
                            SourceBuffer& source)
       : value_stores_(&value_stores), source_(&source) {}
