@@ -2733,19 +2733,29 @@ static auto IsInstanceMember(Nonnull<const Element*> element) {
   }
 }
 
-auto TypeChecker::CheckAddrMeAccess(
+auto TypeChecker::CheckAddrSelfAccess(
     Nonnull<MemberAccessExpression*> access,
     Nonnull<const FunctionDeclaration*> func_decl, const Bindings& bindings,
     const ImplScope& impl_scope) -> ErrorOr<Success> {
-  if (func_decl->is_method() &&
-      func_decl->self_pattern().kind() == PatternKind::AddrPattern) {
+  if (!func_decl->is_method()) {
+    return Success();
+  }
+
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const Value*> self_type,
+      Substitute(bindings, &func_decl->self_pattern().static_type()));
+  if (self_type->kind() == Value::Kind::PointerType &&
+      access->object().static_type().kind() != Value::Kind::PointerType) {
+    return ProgramError(access->source_loc())
+           << "method " << *access
+           << " does not match the target function's self pattern (did you "
+              "forget an `addr`?)";
+  }
+  if (func_decl->self_pattern().kind() == PatternKind::AddrPattern) {
     access->set_is_addr_me_method();
-    CARBON_ASSIGN_OR_RETURN(
-        Nonnull<const Value*> me_type,
-        Substitute(bindings, &func_decl->self_pattern().static_type()));
-    CARBON_RETURN_IF_ERROR(
-        ExpectExactType(access->source_loc(), "method access, receiver type",
-                        me_type, &access->object().static_type(), impl_scope));
+    CARBON_RETURN_IF_ERROR(ExpectExactType(
+        access->source_loc(), "method access, receiver type", self_type,
+        &access->object().static_type(), impl_scope));
     if (access->object().expression_category() !=
         ExpressionCategory::Reference) {
       return ProgramError(access->source_loc())
@@ -2916,7 +2926,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 break;
               case DeclarationKind::FunctionDeclaration: {
                 const auto* func_decl = cast<FunctionDeclaration>(member);
-                CARBON_RETURN_IF_ERROR(CheckAddrMeAccess(
+                CARBON_RETURN_IF_ERROR(CheckAddrSelfAccess(
                     &access, func_decl, t_class.bindings(), impl_scope));
                 if (access.is_type_access()) {
                   access.set_static_type(field_type);
@@ -3000,7 +3010,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           if (const auto* func_decl =
                   dyn_cast<FunctionDeclaration>(result.member)) {
             CARBON_RETURN_IF_ERROR(
-                CheckAddrMeAccess(&access, func_decl, bindings, impl_scope));
+                CheckAddrSelfAccess(&access, func_decl, bindings, impl_scope));
             if (access.is_type_access()) {
               access.set_static_type(inst_member_type);
             } else {
@@ -3344,8 +3354,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
             }
             access.set_expression_category(ExpressionCategory::Value);
             CARBON_RETURN_IF_ERROR(
-                CheckAddrMeAccess(&access, cast<FunctionDeclaration>(*decl),
-                                  bindings_for_member(), impl_scope));
+                CheckAddrSelfAccess(&access, cast<FunctionDeclaration>(*decl),
+                                    bindings_for_member(), impl_scope));
             return Success();
           }
           break;

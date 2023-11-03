@@ -182,10 +182,10 @@ class TypeChecker {
   // Checks a member access that might be accessing a function taking `addr
   // self: Self*`. If it does, this function marks the member access accordingly
   // and ensures the object argument is a reference expression.
-  auto CheckAddrMeAccess(Nonnull<MemberAccessExpression*> access,
-                         Nonnull<const FunctionDeclaration*> func_decl,
-                         const Bindings& bindings, const ImplScope& impl_scope)
-      -> ErrorOr<Success>;
+  auto CheckAddrSelfAccess(Nonnull<MemberAccessExpression*> access,
+                           Nonnull<const FunctionDeclaration*> func_decl,
+                           const Bindings& bindings,
+                           const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
