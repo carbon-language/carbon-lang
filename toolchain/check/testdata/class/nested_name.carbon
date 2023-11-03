@@ -18,19 +18,19 @@ fn G(o: Outer) {
   var i: o.Inner;
 }
 
-// CHECK:STDOUT: file "nested_name.carbon" {
-// CHECK:STDOUT:   class_declaration @Outer, ()
-// CHECK:STDOUT:   %Outer: type = class_type @Outer
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.n: i32}
 // CHECK:STDOUT:   %.loc11_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc8: type = ptr_type {.n: i32}
 // CHECK:STDOUT:   %.loc11_1.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "nested_name.carbon" {
+// CHECK:STDOUT:   class_declaration @Outer, ()
+// CHECK:STDOUT:   %Outer: type = class_type @Outer
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {

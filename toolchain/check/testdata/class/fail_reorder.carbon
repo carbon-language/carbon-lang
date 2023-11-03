@@ -25,13 +25,13 @@ class Class {
   }
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc26: type = struct_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_reorder.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc26: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

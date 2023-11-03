@@ -19,6 +19,10 @@ var s: {.a: Incomplete};
 // CHECK:STDERR:                          ^
 var p: Incomplete* = &s.a;
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc20: type = ptr_type <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_nested_incomplete.carbon" {
 // CHECK:STDOUT:   class_declaration @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
@@ -33,10 +37,6 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   %s.ref: ref <error> = name_reference "s", %s
 // CHECK:STDOUT:   %.loc20_22: <error>* = address_of <error>
 // CHECK:STDOUT:   assign %p.var, <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc20: type = ptr_type <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

@@ -17,15 +17,15 @@ fn Run() -> i32 {
   return c.j + c.k;
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.j: i32, .k: i32}
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.j: i32, .k: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "field_access_in_value.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.j: i32, .k: i32}
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.j: i32, .k: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

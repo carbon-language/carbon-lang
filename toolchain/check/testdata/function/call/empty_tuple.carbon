@@ -12,13 +12,13 @@ fn Main() {
   Echo(());
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "empty_tuple.carbon" {
 // CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {

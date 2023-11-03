@@ -8,6 +8,16 @@ var a: [i32; 1] = (1,);
 var b: [f64; 2] = (11.1, 2.2,);
 var c: [(); 5] = ((), (), (), (), (),);
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 1]
+// CHECK:STDOUT:   %.loc7_22: type = tuple_type (i32)
+// CHECK:STDOUT:   %.loc8_15: type = ptr_type [f64; 2]
+// CHECK:STDOUT:   %.loc8_30: type = tuple_type (f64, f64)
+// CHECK:STDOUT:   %.loc9_10: type = tuple_type ()
+// CHECK:STDOUT:   %.loc9_14: type = ptr_type [(); 5]
+// CHECK:STDOUT:   %.loc9_38: type = tuple_type ((), (), (), (), ())
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "base.carbon" {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
@@ -53,14 +63,4 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc9_36.2: init () = tuple_init %.loc9_36.1, ()
 // CHECK:STDOUT:   %.loc9_38.2: init [(); 5] = array_init %.loc9_38.1, (%.loc9_20.2, %.loc9_24.2, %.loc9_28.2, %.loc9_32.2, %.loc9_36.2) to %c.var
 // CHECK:STDOUT:   assign %c.var, %.loc9_38.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 1]
-// CHECK:STDOUT:   %.loc7_22: type = tuple_type (i32)
-// CHECK:STDOUT:   %.loc8_15: type = ptr_type [f64; 2]
-// CHECK:STDOUT:   %.loc8_30: type = tuple_type (f64, f64)
-// CHECK:STDOUT:   %.loc9_10: type = tuple_type ()
-// CHECK:STDOUT:   %.loc9_14: type = ptr_type [(); 5]
-// CHECK:STDOUT:   %.loc9_38: type = tuple_type ((), (), (), (), ())
 // CHECK:STDOUT: }

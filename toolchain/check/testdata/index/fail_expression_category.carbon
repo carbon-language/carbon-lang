@@ -29,13 +29,13 @@ fn G(b: [i32; 3]) {
   F()[0] = 4;
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_expression_category.carbon" {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: [i32; 3];

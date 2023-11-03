@@ -19,16 +19,16 @@ fn Class.G[addr self: Class*]() -> i32 {
   return (*self).n;
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc12: type = struct_type {.n: i32}
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "self.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12: type = struct_type {.n: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

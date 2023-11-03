@@ -22,17 +22,17 @@ fn F() {
   G(&c);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc22: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_init_as_inplace.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc22: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

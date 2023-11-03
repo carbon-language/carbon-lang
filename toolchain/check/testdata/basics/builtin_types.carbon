@@ -9,6 +9,10 @@ var test_f64: f64 = 0.1;
 let test_str: String = "Test";
 var test_type: type = i32;
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = ptr_type String
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "builtin_types.carbon" {
 // CHECK:STDOUT:   %test_i32.var: ref i32 = var "test_i32"
 // CHECK:STDOUT:   %test_i32: ref i32 = bind_name "test_i32", %test_i32.var
@@ -23,8 +27,4 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %test_type.var: ref type = var "test_type"
 // CHECK:STDOUT:   %test_type: ref type = bind_name "test_type", %test_type.var
 // CHECK:STDOUT:   assign %test_type.var, i32
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }

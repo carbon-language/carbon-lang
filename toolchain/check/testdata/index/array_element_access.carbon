@@ -9,6 +9,11 @@ var b: i32 = 1;
 var c: i32 = a[0];
 var d: i32 = a[b];
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 2]
+// CHECK:STDOUT:   %.loc7_26: type = tuple_type (i32, i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "array_element_access.carbon" {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
@@ -44,9 +49,4 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc10_17.1: ref i32 = array_index %a.ref.loc10, %.loc10_16
 // CHECK:STDOUT:   %.loc10_17.2: i32 = bind_value %.loc10_17.1
 // CHECK:STDOUT:   assign %d.var, %.loc10_17.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 2]
-// CHECK:STDOUT:   %.loc7_26: type = tuple_type (i32, i32)
 // CHECK:STDOUT: }

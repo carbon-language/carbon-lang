@@ -11,12 +11,12 @@ fn Run() {
   var x: i32 = "hello"();
 }
 
-// CHECK:STDOUT: file "fail_not_callable.carbon" {
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "fail_not_callable.carbon" {
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

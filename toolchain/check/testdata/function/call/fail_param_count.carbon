@@ -55,15 +55,15 @@ fn Main() {
   Run2(0);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc18: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_param_count.carbon" {
 // CHECK:STDOUT:   %Run0: <function> = fn_decl @Run0
 // CHECK:STDOUT:   %Run1: <function> = fn_decl @Run1
 // CHECK:STDOUT:   %Run2: <function> = fn_decl @Run2
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc18: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {

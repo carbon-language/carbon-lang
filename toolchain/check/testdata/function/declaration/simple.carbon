@@ -8,13 +8,13 @@ fn F();
 
 fn G() { F(); }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc9: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "simple.carbon" {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

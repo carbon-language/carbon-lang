@@ -16,15 +16,15 @@ fn F() {
   var t1: i32* = &t[1];
 }
 
-// CHECK:STDOUT: file "address_of_lvalue.carbon" {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc8: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc14_19.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc14_19.2: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc14_19.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "address_of_lvalue.carbon" {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

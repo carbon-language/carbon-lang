@@ -44,6 +44,11 @@ fn CallGOnInitializingExpression() -> i32 {
   return Make().G();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32}
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "method.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
@@ -55,11 +60,6 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %CallFOnInitializingExpression: <function> = fn_decl @CallFOnInitializingExpression
 // CHECK:STDOUT:   %CallGOnInitializingExpression: <function> = fn_decl @CallGOnInitializingExpression
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

@@ -17,15 +17,15 @@ fn If(b: bool) {
   H();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc13: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "else.carbon" {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:   %If: <function> = fn_decl @If
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc13: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

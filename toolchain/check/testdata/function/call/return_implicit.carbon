@@ -11,13 +11,13 @@ fn Main() {
   var b: () = MakeImplicitEmptyTuple();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "return_implicit.carbon" {
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple: <function> = fn_decl @MakeImplicitEmptyTuple
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeImplicitEmptyTuple() {

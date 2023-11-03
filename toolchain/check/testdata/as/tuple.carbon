@@ -20,14 +20,6 @@ fn Var() {
   var b: (X, X) = (Make(), Make()) as (X, X);
 }
 
-// CHECK:STDOUT: file "tuple.carbon" {
-// CHECK:STDOUT:   class_declaration @X, ()
-// CHECK:STDOUT:   %X: type = class_type @X
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make
-// CHECK:STDOUT:   %Let: <function> = fn_decl @Let
-// CHECK:STDOUT:   %Var: <function> = fn_decl @Var
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
@@ -36,6 +28,14 @@ fn Var() {
 // CHECK:STDOUT:   %.loc15_15.2: type = tuple_type (X, X)
 // CHECK:STDOUT:   %.loc15_15.3: type = tuple_type ({}*, {}*)
 // CHECK:STDOUT:   %.loc15_15.4: type = ptr_type ({}*, {}*)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "tuple.carbon" {
+// CHECK:STDOUT:   class_declaration @X, ()
+// CHECK:STDOUT:   %X: type = class_type @X
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make
+// CHECK:STDOUT:   %Let: <function> = fn_decl @Let
+// CHECK:STDOUT:   %Var: <function> = fn_decl @Var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {

@@ -10,17 +10,17 @@ fn G() {
   var v: [(i32, i32, i32); 2] = (F(), F());
 }
 
-// CHECK:STDOUT: file "array_in_place.carbon" {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
 // CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_29: type = ptr_type [(i32, i32, i32); 2]
 // CHECK:STDOUT:   %.loc10_42: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "array_in_place.carbon" {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: (i32, i32, i32);

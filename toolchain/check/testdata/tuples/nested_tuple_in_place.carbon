@@ -14,12 +14,6 @@ fn H() {
   var v: (i32, (i32, i32, i32), i32) = (1, F(), 2);
 }
 
-// CHECK:STDOUT: file "nested_tuple_in_place.carbon" {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %H: <function> = fn_decl @H
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
@@ -32,6 +26,12 @@ fn H() {
 // CHECK:STDOUT:   %.loc14_36.2: type = tuple_type (i32, (i32, i32, i32), i32)
 // CHECK:STDOUT:   %.loc14_36.3: type = tuple_type (i32, (i32, i32, i32)*, i32)
 // CHECK:STDOUT:   %.loc14_36.4: type = ptr_type (i32, (i32, i32, i32)*, i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "nested_tuple_in_place.carbon" {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: (i32, i32, i32);

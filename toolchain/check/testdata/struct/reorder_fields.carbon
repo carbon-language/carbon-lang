@@ -13,16 +13,16 @@ fn F() -> {.a: i32, .b: f64} {
   return y;
 }
 
-// CHECK:STDOUT: file "reorder_fields.carbon" {
-// CHECK:STDOUT:   %MakeI32: <function> = fn_decl @MakeI32
-// CHECK:STDOUT:   %MakeF64: <function> = fn_decl @MakeF64
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = ptr_type {.a: i32, .b: f64}
 // CHECK:STDOUT:   %.loc11_62.1: type = struct_type {.b: f64, .a: i32}
 // CHECK:STDOUT:   %.loc11_62.2: type = ptr_type {.b: f64, .a: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "reorder_fields.carbon" {
+// CHECK:STDOUT:   %MakeI32: <function> = fn_decl @MakeI32
+// CHECK:STDOUT:   %MakeF64: <function> = fn_decl @MakeF64
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeI32() -> i32;

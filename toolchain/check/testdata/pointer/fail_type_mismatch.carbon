@@ -11,12 +11,12 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
   return p;
 }
 
-// CHECK:STDOUT: file "fail_type_mismatch.carbon" {
-// CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = struct_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "fail_type_mismatch.carbon" {
+// CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {

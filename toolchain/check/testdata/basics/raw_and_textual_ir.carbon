@@ -85,14 +85,14 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       0:               inst+6
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "raw_and_textual_ir.carbon" {
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11_28.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc11_28.2: type = tuple_type (i32, f64)
 // CHECK:STDOUT:   %.loc11_28.3: type = ptr_type (i32, f64)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "raw_and_textual_ir.carbon" {
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, f64) {

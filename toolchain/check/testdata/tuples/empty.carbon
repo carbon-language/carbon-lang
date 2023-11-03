@@ -7,6 +7,10 @@
 var x: () = ();
 var y: () = x;
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "empty.carbon" {
 // CHECK:STDOUT:   %.loc7_9: () = tuple_literal ()
 // CHECK:STDOUT:   %x.var: ref () = var "x"
@@ -20,8 +24,4 @@ var y: () = x;
 // CHECK:STDOUT:   %x.ref: ref () = name_reference "x", %x
 // CHECK:STDOUT:   %.loc8_13: init () = tuple_init %x.ref, ()
 // CHECK:STDOUT:   assign %y.var, %.loc8_13
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = tuple_type ()
 // CHECK:STDOUT: }

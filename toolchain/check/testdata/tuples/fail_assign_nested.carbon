@@ -9,6 +9,18 @@
 // CHECK:STDERR:                                            ^
 var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_18: type = tuple_type (type, type)
+// CHECK:STDOUT:   %.loc10_31.1: type = tuple_type ((type, type), (type, type))
+// CHECK:STDOUT:   %.loc10_31.2: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc10_31.3: type = tuple_type ((i32, i32), (i32, i32))
+// CHECK:STDOUT:   %.loc10_31.4: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc10_31.5: type = tuple_type ((i32, i32)*, (i32, i32)*)
+// CHECK:STDOUT:   %.loc10_31.6: type = ptr_type ((i32, i32)*, (i32, i32)*)
+// CHECK:STDOUT:   %.loc10_44: type = tuple_type (i32, i32, i32)
+// CHECK:STDOUT:   %.loc10_56: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_assign_nested.carbon" {
 // CHECK:STDOUT:   %.loc10_18: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_30: (type, type) = tuple_literal (i32, i32)
@@ -25,16 +37,4 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %.loc10_55: (i32, i32, i32) = tuple_literal (%.loc10_48, %.loc10_51, %.loc10_54)
 // CHECK:STDOUT:   %.loc10_56: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_44, %.loc10_55)
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_18: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc10_31.1: type = tuple_type ((type, type), (type, type))
-// CHECK:STDOUT:   %.loc10_31.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc10_31.3: type = tuple_type ((i32, i32), (i32, i32))
-// CHECK:STDOUT:   %.loc10_31.4: type = ptr_type (i32, i32)
-// CHECK:STDOUT:   %.loc10_31.5: type = tuple_type ((i32, i32)*, (i32, i32)*)
-// CHECK:STDOUT:   %.loc10_31.6: type = ptr_type ((i32, i32)*, (i32, i32)*)
-// CHECK:STDOUT:   %.loc10_44: type = tuple_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_56: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
 // CHECK:STDOUT: }

@@ -18,16 +18,16 @@ fn While() {
   H();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc14: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "while.carbon" {
 // CHECK:STDOUT:   %Cond: <function> = fn_decl @Cond
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:   %While: <function> = fn_decl @While
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc14: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Cond() -> bool;

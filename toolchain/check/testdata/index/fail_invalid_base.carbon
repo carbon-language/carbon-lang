@@ -30,6 +30,11 @@ var c: i32 = {.a = 1, .b = 2}[0];
 // CHECK:STDERR:                                  ^
 var d: i32 = {.a: i32, .b: i32}[0];
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc26_29.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc26_29.2: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_invalid_base.carbon" {
 // CHECK:STDOUT:   %.loc11: <namespace> = namespace {}
 // CHECK:STDOUT:   %a.var: ref i32 = var "a"
@@ -56,11 +61,6 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc31_33: i32 = int_literal 0
 // CHECK:STDOUT:   assign %d.var, <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc26_29.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc26_29.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

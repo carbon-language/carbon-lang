@@ -38,16 +38,16 @@ fn F(c: Class, p: Class*) {
   (*p).G();
 }
 
-// CHECK:STDOUT: file "fail_addr_self.carbon" {
-// CHECK:STDOUT:   class_declaration @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_1.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "fail_addr_self.carbon" {
+// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

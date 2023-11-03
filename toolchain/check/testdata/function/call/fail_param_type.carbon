@@ -16,13 +16,13 @@ fn F() {
   G(1.0);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc16: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_param_type.carbon" {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc16: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a: i32) {

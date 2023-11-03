@@ -10,13 +10,13 @@ fn Main() {
   Foo(1);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "params_one.carbon" {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {

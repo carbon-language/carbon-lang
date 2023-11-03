@@ -82,17 +82,6 @@ fn AddressOfParameter(param: i32) {
   var param_addr: i32* = &param;
 }
 
-// CHECK:STDOUT: file "fail_address_of_value.carbon" {
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %H: <function> = fn_decl @H
-// CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral
-// CHECK:STDOUT:   %AddressOfOperator: <function> = fn_decl @AddressOfOperator
-// CHECK:STDOUT:   %AddressOfCall: <function> = fn_decl @AddressOfCall
-// CHECK:STDOUT:   %AddressOfType: <function> = fn_decl @AddressOfType
-// CHECK:STDOUT:   %AddressOfTupleElementValue: <function> = fn_decl @AddressOfTupleElementValue
-// CHECK:STDOUT:   %AddressOfParameter: <function> = fn_decl @AddressOfParameter
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = ptr_type i32
 // CHECK:STDOUT:   %.loc19: type = ptr_type bool
@@ -102,6 +91,17 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %.loc31_3: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %.loc35: type = ptr_type {.a: i32}
 // CHECK:STDOUT:   %.loc64: type = ptr_type type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "fail_address_of_value.carbon" {
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %H: <function> = fn_decl @H
+// CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral
+// CHECK:STDOUT:   %AddressOfOperator: <function> = fn_decl @AddressOfOperator
+// CHECK:STDOUT:   %AddressOfCall: <function> = fn_decl @AddressOfCall
+// CHECK:STDOUT:   %AddressOfType: <function> = fn_decl @AddressOfType
+// CHECK:STDOUT:   %AddressOfTupleElementValue: <function> = fn_decl @AddressOfTupleElementValue
+// CHECK:STDOUT:   %AddressOfParameter: <function> = fn_decl @AddressOfParameter
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;

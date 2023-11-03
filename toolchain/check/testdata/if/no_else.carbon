@@ -14,14 +14,14 @@ fn If(b: bool) {
   G();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc12: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "no_else.carbon" {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %If: <function> = fn_decl @If
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

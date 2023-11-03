@@ -26,6 +26,18 @@ var t2: (i32, i32);
 // CHECK:STDERR:                   ^
 var d: [i32; 3] = t2;
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_15: type = ptr_type [i32; 3]
+// CHECK:STDOUT:   %.1: type = ptr_type String
+// CHECK:STDOUT:   %.loc10_39.1: type = tuple_type (i32, String, String)
+// CHECK:STDOUT:   %.loc12: type = tuple_type (type, type, type)
+// CHECK:STDOUT:   %.loc10_39.2: type = tuple_type (i32, String*, String*)
+// CHECK:STDOUT:   %.loc10_39.3: type = ptr_type (i32, String*, String*)
+// CHECK:STDOUT:   %.loc21_24.1: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc23: type = tuple_type (type, type)
+// CHECK:STDOUT:   %.loc21_24.2: type = ptr_type (i32, i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_type_mismatch.carbon" {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32
@@ -71,16 +83,4 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %d: ref [i32; 3] = bind_name "d", %d.var
 // CHECK:STDOUT:   %t2.ref: ref (i32, i32) = name_reference "t2", %t2
 // CHECK:STDOUT:   assign %d.var, <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_15: type = ptr_type [i32; 3]
-// CHECK:STDOUT:   %.1: type = ptr_type String
-// CHECK:STDOUT:   %.loc10_39.1: type = tuple_type (i32, String, String)
-// CHECK:STDOUT:   %.loc12: type = tuple_type (type, type, type)
-// CHECK:STDOUT:   %.loc10_39.2: type = tuple_type (i32, String*, String*)
-// CHECK:STDOUT:   %.loc10_39.3: type = ptr_type (i32, String*, String*)
-// CHECK:STDOUT:   %.loc21_24.1: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc23: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc21_24.2: type = ptr_type (i32, i32)
 // CHECK:STDOUT: }

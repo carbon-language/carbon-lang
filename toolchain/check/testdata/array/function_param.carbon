@@ -12,14 +12,14 @@ fn G() -> i32 {
   return F((1, 2, 3), 1);
 }
 
-// CHECK:STDOUT: file "function_param.carbon" {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %.loc12: type = tuple_type (i32, i32, i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "function_param.carbon" {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%arr: [i32; 3], %i: i32) -> i32 {

@@ -115,6 +115,11 @@ fn CallReturnIncomplete() {
   ReturnIncomplete();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc41: type = struct_type {}
+// CHECK:STDOUT:   %.loc100: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_incomplete.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
@@ -131,11 +136,6 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %ReturnIncomplete: <function> = fn_decl @ReturnIncomplete
 // CHECK:STDOUT:   %CallTakeIncomplete: <function> = fn_decl @CallTakeIncomplete
 // CHECK:STDOUT:   %CallReturnIncomplete: <function> = fn_decl @CallReturnIncomplete
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc41: type = struct_type {}
-// CHECK:STDOUT:   %.loc100: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;

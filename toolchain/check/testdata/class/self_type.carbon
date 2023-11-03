@@ -16,15 +16,15 @@ fn Class.F[self: Class]() -> i32 {
   return (*self.p).F();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10: type = struct_type {.p: Class*}
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.p: Class*}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "self_type.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = struct_type {.p: Class*}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.p: Class*}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

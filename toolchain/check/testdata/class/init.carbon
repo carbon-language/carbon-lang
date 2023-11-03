@@ -17,17 +17,17 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
   return {.next = next, .n = n};
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.n: i32, .next: Class*}
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.n: i32, .next: Class*}
+// CHECK:STDOUT:   %.loc17: type = struct_type {.next: Class*, .n: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "init.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.n: i32, .next: Class*}
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.n: i32, .next: Class*}
-// CHECK:STDOUT:   %.loc17: type = struct_type {.next: Class*, .n: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

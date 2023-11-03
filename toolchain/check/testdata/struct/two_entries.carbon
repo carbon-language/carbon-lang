@@ -7,6 +7,10 @@
 var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 var y: {.a: i32, .b: i32} = x;
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "two_entries.carbon" {
 // CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: i32} = var "x"
@@ -34,8 +38,4 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc8_29.8: init i32 = initialize_from %.loc8_29.6 to %.loc8_29.7
 // CHECK:STDOUT:   %.loc8_29.9: init {.a: i32, .b: i32} = struct_init %x.ref, (%.loc8_29.4, %.loc8_29.8)
 // CHECK:STDOUT:   assign %y.var, %.loc8_29.9
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT: }

@@ -24,18 +24,18 @@ fn F() {
   {.a = 1, .b = 2, .c = 3} as Class;
 }
 
-// CHECK:STDOUT: file "fail_init.carbon" {
-// CHECK:STDOUT:   class_declaration @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc20: type = struct_type {.a: i32, .c: i32}
 // CHECK:STDOUT:   %.loc24: type = struct_type {.a: i32, .b: i32, .c: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "fail_init.carbon" {
+// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

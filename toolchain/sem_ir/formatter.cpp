@@ -44,14 +44,14 @@ class InstNamer {
     scopes.resize(static_cast<int32_t>(ScopeIndex::FirstFunction) +
                   sem_ir.functions().size() + sem_ir.classes().size());
 
-    // Build the file scope.
-    GetScopeInfo(ScopeIndex::File).name = globals.AddNameUnchecked("file");
-    CollectNamesInBlock(ScopeIndex::File, sem_ir.top_inst_block_id());
-
     // Build the constants scope.
     GetScopeInfo(ScopeIndex::Constants).name =
         globals.AddNameUnchecked("constants");
     CollectNamesInBlock(ScopeIndex::Constants, sem_ir.constants().array_ref());
+
+    // Build the file scope.
+    GetScopeInfo(ScopeIndex::File).name = globals.AddNameUnchecked("file");
+    CollectNamesInBlock(ScopeIndex::File, sem_ir.top_inst_block_id());
 
     // Build each function scope.
     for (auto [i, fn] : llvm::enumerate(sem_ir.functions().array_ref())) {
@@ -496,6 +496,8 @@ class Formatter {
         inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
 
   auto Format() -> void {
+    FormatConstants();
+
     out_ << "file \"" << sem_ir_.filename() << "\" {\n";
     // TODO: Include information from the `package` declaration, once we
     // fully support it.
@@ -507,8 +509,6 @@ class Formatter {
       FormatCodeBlock(block_id);
     }
     out_ << "}\n";
-
-    FormatConstants();
 
     for (int i : llvm::seq(sem_ir_.classes().size())) {
       FormatClass(ClassId(i));
@@ -526,9 +526,9 @@ class Formatter {
 
     llvm::SaveAndRestore constants_scope(scope_,
                                          InstNamer::ScopeIndex::Constants);
-    out_ << "\nconstants {\n";
+    out_ << "constants {\n";
     FormatCodeBlock(sem_ir_.constants().array_ref());
-    out_ << "}\n";
+    out_ << "}\n\n";
   }
 
   auto FormatClass(ClassId id) -> void {

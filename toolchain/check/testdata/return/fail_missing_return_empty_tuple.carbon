@@ -10,12 +10,12 @@ fn F() -> () {
 // CHECK:STDERR: ^
 }
 
-// CHECK:STDOUT: file "fail_missing_return_empty_tuple.carbon" {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "fail_missing_return_empty_tuple.carbon" {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> () {

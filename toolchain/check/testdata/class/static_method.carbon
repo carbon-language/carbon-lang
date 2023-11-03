@@ -13,16 +13,16 @@ fn Run() -> i32 {
   return c.F();
 }
 
-// CHECK:STDOUT: file "static_method.carbon" {
-// CHECK:STDOUT:   class_declaration @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "static_method.carbon" {
+// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
