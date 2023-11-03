@@ -48,7 +48,7 @@ We expect this to include a reasonably precise set of requirements across:
 
 -   Necessary language features
 -   Nice-to-have features
--   Features can we omit and reasonably expect to not obstruct credible
+-   Features we can omit and reasonably expect to not obstruct credible
     evaluation
 -   Implementation coverage of those features in the Carbon Explorer to validate
     the design
