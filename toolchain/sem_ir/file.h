@@ -11,7 +11,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::SemIR {
@@ -36,14 +36,14 @@ struct Function : public Printable<Function> {
   }
 
   // The function name.
-  StringId name_id;
+  IdentifierId name_id;
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDeclaration.
-  NodeId definition_id = NodeId::Invalid;
-  // A block containing a single reference node per implicit parameter.
-  NodeBlockId implicit_param_refs_id;
-  // A block containing a single reference node per parameter.
-  NodeBlockId param_refs_id;
+  InstId definition_id = InstId::Invalid;
+  // A block containing a single reference instruction per implicit parameter.
+  InstBlockId implicit_param_refs_id;
+  // A block containing a single reference instruction per parameter.
+  InstBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   TypeId return_type_id;
   // The storage for the return value, which is a reference expression whose
@@ -51,11 +51,11 @@ struct Function : public Printable<Function> {
   // doesn't have a return slot. If this is valid, a call to the function is
   // expected to have an additional final argument corresponding to the return
   // slot.
-  NodeId return_slot_id;
+  InstId return_slot_id;
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
-  llvm::SmallVector<NodeBlockId> body_block_ids = {};
+  llvm::SmallVector<InstBlockId> body_block_ids = {};
 };
 
 // A class.
@@ -73,21 +73,21 @@ struct Class : public Printable<Class> {
   // lifetime of the class.
 
   // The class name.
-  StringId name_id;
+  IdentifierId name_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDeclaration.
-  NodeId declaration_id = NodeId::Invalid;
+  InstId declaration_id = InstId::Invalid;
 
   // The following members are set at the `{` of the class definition.
 
   // The definition of the class. This is a ClassDeclaration.
-  NodeId definition_id = NodeId::Invalid;
+  InstId definition_id = InstId::Invalid;
   // The class scope.
   NameScopeId scope_id = NameScopeId::Invalid;
   // The first block of the class body.
   // TODO: Handle control flow in the class body, such as if-expressions.
-  NodeBlockId body_block_id = NodeBlockId::Invalid;
+  InstBlockId body_block_id = InstBlockId::Invalid;
 
   // The following members are set at the `}` of the class definition.
 
@@ -152,8 +152,8 @@ struct ValueRepresentation : public Printable<ValueRepresentation> {
 struct TypeInfo : public Printable<TypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // The node that defines this type.
-  NodeId node_id;
+  // The instruction that defines this type.
+  InstId inst_id;
   // The value representation for this type. Will be `Unknown` if the type is
   // not complete.
   ValueRepresentation value_representation = ValueRepresentation();
@@ -183,10 +183,10 @@ class File : public Printable<File> {
   }
   auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
 
-  // Returns array bound value from the bound node.
-  auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
+  // Returns array bound value from the bound instruction.
+  auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
     return integers()
-        .Get(nodes().GetAs<IntegerLiteral>(bound_id).integer_id)
+        .Get(insts().GetAs<IntegerLiteral>(bound_id).integer_id)
         .getZExtValue();
   }
 
@@ -209,15 +209,15 @@ class File : public Printable<File> {
     complete_types_.push_back(object_type_id);
   }
 
-  auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> NodeId {
+  auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> InstId {
     if (type_id == TypeId::TypeType) {
-      return NodeId::BuiltinTypeType;
+      return InstId::BuiltinTypeType;
     } else if (type_id == TypeId::Error) {
-      return NodeId::BuiltinError;
+      return InstId::BuiltinError;
     } else if (type_id == TypeId::Invalid) {
-      return NodeId::Invalid;
+      return InstId::Invalid;
     } else {
-      return types().Get(type_id).node_id;
+      return types().Get(type_id).inst_id;
     }
   }
 
@@ -239,8 +239,8 @@ class File : public Printable<File> {
 
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
-    return nodes()
-        .GetAs<PointerType>(types().Get(pointer_id).node_id)
+    return insts()
+        .GetAs<PointerType>(types().Get(pointer_id).inst_id)
         .pointee_id;
   }
 
@@ -251,13 +251,19 @@ class File : public Printable<File> {
   auto StringifyType(TypeId type_id, bool in_type_context = false) const
       -> std::string;
 
-  // Same as `StringifyType`, but starting with a node representing a type
-  // expression rather than a canonical type.
-  auto StringifyTypeExpression(NodeId outer_node_id,
+  // Same as `StringifyType`, but starting with an instruction representing a
+  // type expression rather than a canonical type.
+  auto StringifyTypeExpression(InstId outer_inst_id,
                                bool in_type_context = false) const
       -> std::string;
 
   // Directly expose SharedValueStores members.
+  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+    return value_stores_->identifiers();
+  }
+  auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
+    return value_stores_->identifiers();
+  }
   auto integers() -> ValueStore<IntegerId>& {
     return value_stores_->integers();
   }
@@ -268,9 +274,11 @@ class File : public Printable<File> {
   auto reals() const -> const ValueStore<RealId>& {
     return value_stores_->reals();
   }
-  auto strings() -> ValueStore<StringId>& { return value_stores_->strings(); }
-  auto strings() const -> const ValueStore<StringId>& {
-    return value_stores_->strings();
+  auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
+    return value_stores_->string_literals();
+  }
+  auto string_literals() const -> const StringStoreWrapper<StringLiteralId>& {
+    return value_stores_->string_literals();
   }
 
   auto functions() -> ValueStore<FunctionId, Function>& { return functions_; }
@@ -289,10 +297,10 @@ class File : public Printable<File> {
   auto type_blocks() const -> const BlockValueStore<TypeBlockId, TypeId>& {
     return type_blocks_;
   }
-  auto nodes() -> NodeStore& { return nodes_; }
-  auto nodes() const -> const NodeStore& { return nodes_; }
-  auto node_blocks() -> NodeBlockStore& { return node_blocks_; }
-  auto node_blocks() const -> const NodeBlockStore& { return node_blocks_; }
+  auto insts() -> InstStore& { return insts_; }
+  auto insts() const -> const InstStore& { return insts_; }
+  auto inst_blocks() -> InstBlockStore& { return inst_blocks_; }
+  auto inst_blocks() const -> const InstBlockStore& { return inst_blocks_; }
 
   // A list of types that were completed in this file, in the order in which
   // they were completed. Earlier types in this list cannot contain instances of
@@ -301,9 +309,9 @@ class File : public Printable<File> {
     return complete_types_;
   }
 
-  auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
-  auto set_top_node_block_id(NodeBlockId block_id) -> void {
-    top_node_block_id_ = block_id;
+  auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
+  auto set_top_inst_block_id(InstBlockId block_id) -> void {
+    top_inst_block_id_ = block_id;
   }
 
   // Returns true if there were errors creating the semantics IR.
@@ -318,7 +326,7 @@ class File : public Printable<File> {
   // Shared, compile-scoped values.
   SharedValueStores* value_stores_;
 
-  // Slab allocator, used to allocate node and type blocks.
+  // Slab allocator, used to allocate instruction and type blocks.
   llvm::BumpPtrAllocator allocator_;
 
   // The associated filename.
@@ -333,7 +341,7 @@ class File : public Printable<File> {
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
-  // crossing node blocks).
+  // crossing instruction blocks).
   llvm::SmallVector<const File*> cross_reference_irs_;
 
   // Storage for name scopes.
@@ -349,38 +357,40 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId, TypeId> type_blocks_;
 
-  // All nodes. The first entries will always be cross-references to builtins,
-  // at indices matching BuiltinKind ordering.
-  NodeStore nodes_;
+  // All instructions. The first entries will always be cross-references to
+  // builtins, at indices matching BuiltinKind ordering.
+  InstStore insts_;
 
-  // Node blocks within the IR. These reference entries in nodes_. Storage for
-  // the data is provided by allocator_.
-  NodeBlockStore node_blocks_;
+  // Instruction blocks within the IR. These reference entries in
+  // insts_. Storage for the data is provided by allocator_.
+  InstBlockStore inst_blocks_;
 
-  // The top node block ID.
-  NodeBlockId top_node_block_id_ = NodeBlockId::Invalid;
+  // The top instruction block ID.
+  InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
 };
 
-// The expression category of a semantics node. See /docs/design/values.md for
-// details.
+// The expression category of a sem_ir instruction. See /docs/design/values.md
+// for details.
 enum class ExpressionCategory : int8_t {
-  // This node does not correspond to an expression, and as such has no
+  // This instruction does not correspond to an expression, and as such has no
   // category.
   NotExpression,
-  // The category of this node is not known due to an error.
+  // The category of this instruction is not known due to an error.
   Error,
-  // This node represents a value expression.
+  // This instruction represents a value expression.
   Value,
-  // This node represents a durable reference expression, that denotes an
+  // This instruction represents a durable reference expression, that denotes an
   // object that outlives the current full expression context.
   DurableReference,
-  // This node represents an ephemeral reference expression, that denotes an
+  // This instruction represents an ephemeral reference expression, that denotes
+  // an
   // object that does not outlive the current full expression context.
   EphemeralReference,
-  // This node represents an initializing expression, that describes how to
+  // This instruction represents an initializing expression, that describes how
+  // to
   // initialize an object.
   Initializing,
-  // This node represents a syntactic combination of expressions that are
+  // This instruction represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple
   // and struct literals, where the subexpressions for different elements can
   // have different categories.
@@ -388,8 +398,8 @@ enum class ExpressionCategory : int8_t {
   Last = Mixed
 };
 
-// Returns the expression category for a node.
-auto GetExpressionCategory(const File& file, NodeId node_id)
+// Returns the expression category for an instruction.
+auto GetExpressionCategory(const File& file, InstId inst_id)
     -> ExpressionCategory;
 
 // Returns information about the value representation to use for a type.

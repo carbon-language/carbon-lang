@@ -1,0 +1,78 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
+//
+// This macro should be defined before including this header:
+// - CARBON_SEM_IR_INST_KIND(Name)
+//   Invoked for each kind of semantic instruction.
+
+#ifndef CARBON_SEM_IR_INST_KIND
+#error "Must define the x-macro to use this file."
+#endif
+
+// For each instruction kind declared here there is a matching definition in
+// `typed_insts.h`.
+CARBON_SEM_IR_INST_KIND(AddressOf)
+CARBON_SEM_IR_INST_KIND(ArrayIndex)
+CARBON_SEM_IR_INST_KIND(ArrayInit)
+CARBON_SEM_IR_INST_KIND(ArrayType)
+CARBON_SEM_IR_INST_KIND(Assign)
+CARBON_SEM_IR_INST_KIND(BinaryOperatorAdd)
+CARBON_SEM_IR_INST_KIND(BindName)
+CARBON_SEM_IR_INST_KIND(BindValue)
+CARBON_SEM_IR_INST_KIND(BlockArg)
+CARBON_SEM_IR_INST_KIND(BoolLiteral)
+CARBON_SEM_IR_INST_KIND(BoundMethod)
+CARBON_SEM_IR_INST_KIND(Branch)
+CARBON_SEM_IR_INST_KIND(BranchIf)
+CARBON_SEM_IR_INST_KIND(BranchWithArg)
+CARBON_SEM_IR_INST_KIND(Builtin)
+CARBON_SEM_IR_INST_KIND(Call)
+CARBON_SEM_IR_INST_KIND(ClassDeclaration)
+CARBON_SEM_IR_INST_KIND(ClassFieldAccess)
+CARBON_SEM_IR_INST_KIND(ClassInit)
+CARBON_SEM_IR_INST_KIND(ClassType)
+CARBON_SEM_IR_INST_KIND(ConstType)
+CARBON_SEM_IR_INST_KIND(CrossReference)
+CARBON_SEM_IR_INST_KIND(Dereference)
+CARBON_SEM_IR_INST_KIND(Field)
+CARBON_SEM_IR_INST_KIND(FunctionDeclaration)
+CARBON_SEM_IR_INST_KIND(InitializeFrom)
+CARBON_SEM_IR_INST_KIND(IntegerLiteral)
+CARBON_SEM_IR_INST_KIND(NameReference)
+CARBON_SEM_IR_INST_KIND(Namespace)
+CARBON_SEM_IR_INST_KIND(NoOp)
+CARBON_SEM_IR_INST_KIND(Parameter)
+CARBON_SEM_IR_INST_KIND(PointerType)
+CARBON_SEM_IR_INST_KIND(RealLiteral)
+CARBON_SEM_IR_INST_KIND(ReturnExpression)
+CARBON_SEM_IR_INST_KIND(Return)
+CARBON_SEM_IR_INST_KIND(SelfParameter)
+CARBON_SEM_IR_INST_KIND(SpliceBlock)
+CARBON_SEM_IR_INST_KIND(StringLiteral)
+CARBON_SEM_IR_INST_KIND(StructAccess)
+CARBON_SEM_IR_INST_KIND(StructInit)
+CARBON_SEM_IR_INST_KIND(StructLiteral)
+CARBON_SEM_IR_INST_KIND(StructTypeField)
+CARBON_SEM_IR_INST_KIND(StructType)
+CARBON_SEM_IR_INST_KIND(StructValue)
+CARBON_SEM_IR_INST_KIND(TemporaryStorage)
+CARBON_SEM_IR_INST_KIND(Temporary)
+CARBON_SEM_IR_INST_KIND(TupleAccess)
+CARBON_SEM_IR_INST_KIND(TupleIndex)
+CARBON_SEM_IR_INST_KIND(TupleInit)
+CARBON_SEM_IR_INST_KIND(TupleLiteral)
+CARBON_SEM_IR_INST_KIND(TupleType)
+CARBON_SEM_IR_INST_KIND(TupleValue)
+CARBON_SEM_IR_INST_KIND(UnaryOperatorNot)
+CARBON_SEM_IR_INST_KIND(UnboundFieldType)
+CARBON_SEM_IR_INST_KIND(ValueAsReference)
+CARBON_SEM_IR_INST_KIND(ValueOfInitializer)
+CARBON_SEM_IR_INST_KIND(VarStorage)
+
+#undef CARBON_SEM_IR_INST_KIND

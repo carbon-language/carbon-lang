@@ -17,7 +17,7 @@ FunctionContext::FunctionContext(FileContext& file_context,
       builder_(file_context.llvm_context()),
       vlog_stream_(vlog_stream) {}
 
-auto FunctionContext::GetBlock(SemIR::NodeBlockId block_id)
+auto FunctionContext::GetBlock(SemIR::InstBlockId block_id)
     -> llvm::BasicBlock* {
   llvm::BasicBlock*& entry = blocks_[block_id];
   if (!entry) {
@@ -26,7 +26,7 @@ auto FunctionContext::GetBlock(SemIR::NodeBlockId block_id)
   return entry;
 }
 
-auto FunctionContext::TryToReuseBlock(SemIR::NodeBlockId block_id,
+auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
                                       llvm::BasicBlock* block) -> bool {
   if (!blocks_.insert({block_id, block}).second) {
     return false;
@@ -37,23 +37,23 @@ auto FunctionContext::TryToReuseBlock(SemIR::NodeBlockId block_id,
   return true;
 }
 
-auto FunctionContext::LowerBlock(SemIR::NodeBlockId block_id) -> void {
-  for (const auto& node_id : sem_ir().node_blocks().Get(block_id)) {
-    auto node = sem_ir().nodes().Get(node_id);
-    CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
+auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
+  for (const auto& inst_id : sem_ir().inst_blocks().Get(block_id)) {
+    auto inst = sem_ir().insts().Get(inst_id);
+    CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
-#define CARBON_SEM_IR_NODE_KIND(Name)                     \
+    switch (inst.kind()) {
+#define CARBON_SEM_IR_INST_KIND(Name)                     \
   case SemIR::Name::Kind:                                 \
-    Handle##Name(*this, node_id, node.As<SemIR::Name>()); \
+    Handle##Name(*this, inst_id, inst.As<SemIR::Name>()); \
     break;
-#include "toolchain/sem_ir/node_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
     }
   }
 }
 
-auto FunctionContext::GetBlockArg(SemIR::NodeBlockId block_id,
+auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
                                   SemIR::TypeId type_id) -> llvm::PHINode* {
   llvm::BasicBlock* block = GetBlock(block_id);
 
@@ -78,8 +78,8 @@ auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
   return synthetic_block_;
 }
 
-auto FunctionContext::GetLocalOrGlobal(SemIR::NodeId node_id) -> llvm::Value* {
-  auto target = sem_ir().nodes().Get(node_id);
+auto FunctionContext::GetLocalOrGlobal(SemIR::InstId inst_id) -> llvm::Value* {
+  auto target = sem_ir().insts().Get(inst_id);
   if (auto function_decl = target.TryAs<SemIR::FunctionDeclaration>()) {
     return GetFunction(function_decl->function_id);
   }
@@ -87,12 +87,12 @@ auto FunctionContext::GetLocalOrGlobal(SemIR::NodeId node_id) -> llvm::Value* {
     return GetTypeAsValue();
   }
   // TODO: Handle other kinds of name references to globals.
-  return GetLocal(node_id);
+  return GetLocal(inst_id);
 }
 
 auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
-                                           SemIR::NodeId dest_id,
-                                           SemIR::NodeId source_id) -> void {
+                                           SemIR::InstId dest_id,
+                                           SemIR::InstId source_id) -> void {
   switch (SemIR::GetInitializingRepresentation(sem_ir(), type_id).kind) {
     case SemIR::InitializingRepresentation::None:
     case SemIR::InitializingRepresentation::InPlace:
@@ -103,8 +103,8 @@ auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
   }
 }
 
-auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::NodeId source_id,
-                                SemIR::NodeId dest_id) -> void {
+auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
+                                SemIR::InstId dest_id) -> void {
   switch (auto rep = SemIR::GetValueRepresentation(sem_ir(), type_id);
           rep.kind) {
     case SemIR::ValueRepresentation::Unknown:

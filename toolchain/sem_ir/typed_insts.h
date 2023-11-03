@@ -2,55 +2,55 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_TYPED_NODES_H_
-#define CARBON_TOOLCHAIN_SEM_IR_TYPED_NODES_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
+#define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/node_kind.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
-// Representations for specific kinds of nodes.
+// Representations for specific kinds of instructions.
 //
 // Each type should be a struct with up to four members:
 //
-// - Optionally, a `Parse::Node parse_node;` member, for nodes with an
-//   associated location. Almost all nodes should have this, with exceptions
-//   being things that are generated internally, without any relation to source
-//   syntax, such as predeclared builtins.
-// - Optionally, a `TypeId type_id;` member, for nodes that produce a value.
-//   This includes nodes that produce an abstract value, such as a `Namespace`,
-//   for which a placeholder type should be used.
+// - Optionally, a `Parse::Node parse_node;` member, for instructions with an
+//   associated location. Almost all instructions should have this, with
+//   exceptions being things that are generated internally, without any relation
+//   to source syntax, such as predeclared builtins.
+// - Optionally, a `TypeId type_id;` member, for instructions that produce a
+//   value. This includes instructions that produce an abstract value, such as a
+//   `Namespace`, for which a placeholder type should be used.
 // - Up to two `[...]Id` members describing the contents of the struct.
 //
 // The field names here matter -- the first two fields must have the names
-// specified above, when present. When converting to a `SemIR::Node`, they will
-// become the parse node and type associated with the type-erased node.
+// specified above, when present. When converting to a `SemIR::Inst`, they will
+// become the parse node and type associated with the type-erased instruction.
 //
 // In addition, each type provides a constant `Kind` that associates the type
-// with a particular member of the `NodeKind` enumeration. This `Kind`
-// declaration also defines the node kind by calling `NodeKind::Define` and
-// specifying additional information about the node kind. This information is
-// available through the member functions of the `NodeKind` value declared in
-// `node_kind.h`, and includes the name used in textual IR and whether the node
-// is a terminator instruction.
+// with a particular member of the `InstKind` enumeration. This `Kind`
+// declaration also defines the instruction kind by calling `InstKind::Define`
+// and specifying additional information about the instruction kind. This
+// information is available through the member functions of the `InstKind` value
+// declared in `inst_kind.h`, and includes the name used in textual IR and
+// whether the instruction is a terminator instruction.
 namespace Carbon::SemIR {
 
 struct AddressOf {
-  static constexpr auto Kind = NodeKind::AddressOf.Define("address_of");
+  static constexpr auto Kind = InstKind::AddressOf.Define("address_of");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId lvalue_id;
+  InstId lvalue_id;
 };
 
 struct ArrayIndex {
-  static constexpr auto Kind = NodeKind::ArrayIndex.Define("array_index");
+  static constexpr auto Kind = InstKind::ArrayIndex.Define("array_index");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId array_id;
-  NodeId index_id;
+  InstId array_id;
+  InstId index_id;
 };
 
 // Initializes an array from a tuple. `tuple_id` is the source tuple
@@ -58,20 +58,20 @@ struct ArrayIndex {
 // element, plus a final element that is the return slot for the
 // initialization.
 struct ArrayInit {
-  static constexpr auto Kind = NodeKind::ArrayInit.Define("array_init");
+  static constexpr auto Kind = InstKind::ArrayInit.Define("array_init");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId tuple_id;
-  NodeBlockId inits_and_return_slot_id;
+  InstId tuple_id;
+  InstBlockId inits_and_return_slot_id;
 };
 
 struct ArrayType {
-  static constexpr auto Kind = NodeKind::ArrayType.Define("array_type");
+  static constexpr auto Kind = InstKind::ArrayType.Define("array_type");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId bound_id;
+  InstId bound_id;
   TypeId element_type_id;
 };
 
@@ -79,50 +79,50 @@ struct ArrayType {
 // `rhs_id`. This finishes initialization of `lhs_id` in the same way as
 // `InitializeFrom`.
 struct Assign {
-  static constexpr auto Kind = NodeKind::Assign.Define("assign");
+  static constexpr auto Kind = InstKind::Assign.Define("assign");
 
   Parse::Node parse_node;
   // Assignments are statements, and so have no type.
-  NodeId lhs_id;
-  NodeId rhs_id;
+  InstId lhs_id;
+  InstId rhs_id;
 };
 
 struct BinaryOperatorAdd {
-  static constexpr auto Kind = NodeKind::BinaryOperatorAdd.Define("add");
+  static constexpr auto Kind = InstKind::BinaryOperatorAdd.Define("add");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId lhs_id;
-  NodeId rhs_id;
+  InstId lhs_id;
+  InstId rhs_id;
 };
 
 struct BindName {
-  static constexpr auto Kind = NodeKind::BindName.Define("bind_name");
+  static constexpr auto Kind = InstKind::BindName.Define("bind_name");
 
   Parse::Node parse_node;
   TypeId type_id;
-  StringId name_id;
-  NodeId value_id;
+  IdentifierId name_id;
+  InstId value_id;
 };
 
 struct BindValue {
-  static constexpr auto Kind = NodeKind::BindValue.Define("bind_value");
+  static constexpr auto Kind = InstKind::BindValue.Define("bind_value");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId value_id;
+  InstId value_id;
 };
 
 struct BlockArg {
-  static constexpr auto Kind = NodeKind::BlockArg.Define("block_arg");
+  static constexpr auto Kind = InstKind::BlockArg.Define("block_arg");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId block_id;
+  InstBlockId block_id;
 };
 
 struct BoolLiteral {
-  static constexpr auto Kind = NodeKind::BoolLiteral.Define("bool_literal");
+  static constexpr auto Kind = InstKind::BoolLiteral.Define("bool_literal");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -132,48 +132,48 @@ struct BoolLiteral {
 // A bound method, that combines a function with the value to use for its
 // `self` parameter, such as `object.MethodName`.
 struct BoundMethod {
-  static constexpr auto Kind = NodeKind::BoundMethod.Define("bound_method");
+  static constexpr auto Kind = InstKind::BoundMethod.Define("bound_method");
 
   Parse::Node parse_node;
   TypeId type_id;
   // The object argument in the bound method, which will be used to initialize
   // `self`, or whose address will be used to initialize `self` for an `addr
   // self` parameter.
-  NodeId object_id;
-  NodeId function_id;
+  InstId object_id;
+  InstId function_id;
 };
 
 struct Branch {
   static constexpr auto Kind =
-      NodeKind::Branch.Define("br", TerminatorKind::Terminator);
+      InstKind::Branch.Define("br", TerminatorKind::Terminator);
 
   Parse::Node parse_node;
   // Branches don't produce a value, so have no type.
-  NodeBlockId target_id;
+  InstBlockId target_id;
 };
 
 struct BranchIf {
   static constexpr auto Kind =
-      NodeKind::BranchIf.Define("br", TerminatorKind::TerminatorSequence);
+      InstKind::BranchIf.Define("br", TerminatorKind::TerminatorSequence);
 
   Parse::Node parse_node;
   // Branches don't produce a value, so have no type.
-  NodeBlockId target_id;
-  NodeId cond_id;
+  InstBlockId target_id;
+  InstId cond_id;
 };
 
 struct BranchWithArg {
   static constexpr auto Kind =
-      NodeKind::BranchWithArg.Define("br", TerminatorKind::Terminator);
+      InstKind::BranchWithArg.Define("br", TerminatorKind::Terminator);
 
   Parse::Node parse_node;
   // Branches don't produce a value, so have no type.
-  NodeBlockId target_id;
-  NodeId arg_id;
+  InstBlockId target_id;
+  InstId arg_id;
 };
 
 struct Builtin {
-  static constexpr auto Kind = NodeKind::Builtin.Define("builtin");
+  static constexpr auto Kind = InstKind::Builtin.Define("builtin");
 
   // Builtins don't have a parse node associated with them.
   TypeId type_id;
@@ -181,21 +181,21 @@ struct Builtin {
 };
 
 struct Call {
-  static constexpr auto Kind = NodeKind::Call.Define("call");
+  static constexpr auto Kind = InstKind::Call.Define("call");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId callee_id;
+  InstId callee_id;
   // The arguments block contains IDs for the following arguments, in order:
   //  - The argument for each implicit parameter.
   //  - The argument for each explicit parameter.
   //  - The argument for the return slot, if present.
-  NodeBlockId args_id;
+  InstBlockId args_id;
 };
 
 struct ClassDeclaration {
   static constexpr auto Kind =
-      NodeKind::ClassDeclaration.Define("class_declaration");
+      InstKind::ClassDeclaration.Define("class_declaration");
 
   Parse::Node parse_node;
   // No type: a class declaration is not itself a value. The name of a class
@@ -205,21 +205,30 @@ struct ClassDeclaration {
   ClassId class_id;
   // The declaration block, containing the class name's qualifiers and the
   // class's generic parameters.
-  NodeBlockId decl_block_id;
+  InstBlockId decl_block_id;
 };
 
 struct ClassFieldAccess {
   static constexpr auto Kind =
-      NodeKind::ClassFieldAccess.Define("class_field_access");
+      InstKind::ClassFieldAccess.Define("class_field_access");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId base_id;
+  InstId base_id;
   MemberIndex index;
 };
 
+struct ClassInit {
+  static constexpr auto Kind = InstKind::ClassInit.Define("class_init");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  InstId src_id;
+  InstBlockId elements_id;
+};
+
 struct ClassType {
-  static constexpr auto Kind = NodeKind::ClassType.Define("class_type");
+  static constexpr auto Kind = InstKind::ClassType.Define("class_type");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -228,7 +237,7 @@ struct ClassType {
 };
 
 struct ConstType {
-  static constexpr auto Kind = NodeKind::ConstType.Define("const_type");
+  static constexpr auto Kind = InstKind::ConstType.Define("const_type");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -237,37 +246,37 @@ struct ConstType {
 
 // A cross-reference between IRs.
 struct CrossReference {
-  static constexpr auto Kind = NodeKind::CrossReference.Define("xref");
+  static constexpr auto Kind = InstKind::CrossReference.Define("xref");
 
-  // No parse node: a node's parse tree node must refer to a node in the
-  // current parse tree. This cannot use the cross-referenced node's parse tree
-  // node because it will be in a different parse tree.
+  // No parse node: an instruction's parse tree node must refer to a node in the
+  // current parse tree. This cannot use the cross-referenced instruction's
+  // parse tree node because it will be in a different parse tree.
   TypeId type_id;
   CrossReferenceIRId ir_id;
-  NodeId node_id;
+  InstId inst_id;
 };
 
 struct Dereference {
-  static constexpr auto Kind = NodeKind::Dereference.Define("dereference");
+  static constexpr auto Kind = InstKind::Dereference.Define("dereference");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId pointer_id;
+  InstId pointer_id;
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the
-// `Field` node is an `UnboundFieldType`.
+// `Field` instruction is an `UnboundFieldType`.
 struct Field {
-  static constexpr auto Kind = NodeKind::Field.Define("field");
+  static constexpr auto Kind = InstKind::Field.Define("field");
 
   Parse::Node parse_node;
   TypeId type_id;
-  StringId name_id;
+  IdentifierId name_id;
   MemberIndex index;
 };
 
 struct FunctionDeclaration {
-  static constexpr auto Kind = NodeKind::FunctionDeclaration.Define("fn_decl");
+  static constexpr auto Kind = InstKind::FunctionDeclaration.Define("fn_decl");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -279,16 +288,16 @@ struct FunctionDeclaration {
 // whose initialization is not in-place.
 struct InitializeFrom {
   static constexpr auto Kind =
-      NodeKind::InitializeFrom.Define("initialize_from");
+      InstKind::InitializeFrom.Define("initialize_from");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeId dest_id;
+  InstId src_id;
+  InstId dest_id;
 };
 
 struct IntegerLiteral {
-  static constexpr auto Kind = NodeKind::IntegerLiteral.Define("int_literal");
+  static constexpr auto Kind = InstKind::IntegerLiteral.Define("int_literal");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -296,16 +305,16 @@ struct IntegerLiteral {
 };
 
 struct NameReference {
-  static constexpr auto Kind = NodeKind::NameReference.Define("name_reference");
+  static constexpr auto Kind = InstKind::NameReference.Define("name_reference");
 
   Parse::Node parse_node;
   TypeId type_id;
-  StringId name_id;
-  NodeId value_id;
+  IdentifierId name_id;
+  InstId value_id;
 };
 
 struct Namespace {
-  static constexpr auto Kind = NodeKind::Namespace.Define("namespace");
+  static constexpr auto Kind = InstKind::Namespace.Define("namespace");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -313,22 +322,22 @@ struct Namespace {
 };
 
 struct NoOp {
-  static constexpr auto Kind = NodeKind::NoOp.Define("no_op");
+  static constexpr auto Kind = InstKind::NoOp.Define("no_op");
 
   Parse::Node parse_node;
-  // This node doesn't produce a value, so has no type.
+  // This instruction doesn't produce a value, so has no type.
 };
 
 struct Parameter {
-  static constexpr auto Kind = NodeKind::Parameter.Define("parameter");
+  static constexpr auto Kind = InstKind::Parameter.Define("parameter");
 
   Parse::Node parse_node;
   TypeId type_id;
-  StringId name_id;
+  IdentifierId name_id;
 };
 
 struct PointerType {
-  static constexpr auto Kind = NodeKind::PointerType.Define("ptr_type");
+  static constexpr auto Kind = InstKind::PointerType.Define("ptr_type");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -336,7 +345,7 @@ struct PointerType {
 };
 
 struct RealLiteral {
-  static constexpr auto Kind = NodeKind::RealLiteral.Define("real_literal");
+  static constexpr auto Kind = InstKind::RealLiteral.Define("real_literal");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -345,7 +354,7 @@ struct RealLiteral {
 
 struct Return {
   static constexpr auto Kind =
-      NodeKind::Return.Define("return", TerminatorKind::Terminator);
+      InstKind::Return.Define("return", TerminatorKind::Terminator);
 
   Parse::Node parse_node;
   // This is a statement, so has no type.
@@ -353,15 +362,15 @@ struct Return {
 
 struct ReturnExpression {
   static constexpr auto Kind =
-      NodeKind::ReturnExpression.Define("return", TerminatorKind::Terminator);
+      InstKind::ReturnExpression.Define("return", TerminatorKind::Terminator);
 
   Parse::Node parse_node;
   // This is a statement, so has no type.
-  NodeId expr_id;
+  InstId expr_id;
 };
 
 struct SelfParameter {
-  static constexpr auto Kind = NodeKind::SelfParameter.Define("self_parameter");
+  static constexpr auto Kind = InstKind::SelfParameter.Define("self_parameter");
   static constexpr llvm::StringLiteral Name = "self";
 
   Parse::Node parse_node;
@@ -370,130 +379,131 @@ struct SelfParameter {
 };
 
 struct SpliceBlock {
-  static constexpr auto Kind = NodeKind::SpliceBlock.Define("splice_block");
+  static constexpr auto Kind = InstKind::SpliceBlock.Define("splice_block");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId block_id;
-  NodeId result_id;
+  InstBlockId block_id;
+  InstId result_id;
 };
 
 struct StringLiteral {
-  static constexpr auto Kind = NodeKind::StringLiteral.Define("string_literal");
+  static constexpr auto Kind = InstKind::StringLiteral.Define("string_literal");
 
   Parse::Node parse_node;
   TypeId type_id;
-  StringId string_id;
+  StringLiteralId string_literal_id;
 };
 
 struct StructAccess {
-  static constexpr auto Kind = NodeKind::StructAccess.Define("struct_access");
+  static constexpr auto Kind = InstKind::StructAccess.Define("struct_access");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId struct_id;
+  InstId struct_id;
   MemberIndex index;
 };
 
 struct StructInit {
-  static constexpr auto Kind = NodeKind::StructInit.Define("struct_init");
+  static constexpr auto Kind = InstKind::StructInit.Define("struct_init");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeBlockId elements_id;
+  InstId src_id;
+  InstBlockId elements_id;
 };
 
 struct StructLiteral {
-  static constexpr auto Kind = NodeKind::StructLiteral.Define("struct_literal");
+  static constexpr auto Kind = InstKind::StructLiteral.Define("struct_literal");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId elements_id;
+  InstBlockId elements_id;
 };
 
 struct StructType {
-  static constexpr auto Kind = NodeKind::StructType.Define("struct_type");
+  static constexpr auto Kind = InstKind::StructType.Define("struct_type");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId fields_id;
+  InstBlockId fields_id;
 };
 
 struct StructTypeField {
   static constexpr auto Kind =
-      NodeKind::StructTypeField.Define("struct_type_field");
+      InstKind::StructTypeField.Define("struct_type_field");
 
   Parse::Node parse_node;
-  // This node is an implementation detail of `StructType`, and doesn't produce
-  // a value, so has no type, even though it declares a field with a type.
-  StringId name_id;
+  // This instruction is an implementation detail of `StructType`, and doesn't
+  // produce a value, so has no type, even though it declares a field with a
+  // type.
+  IdentifierId name_id;
   TypeId field_type_id;
 };
 
 struct StructValue {
-  static constexpr auto Kind = NodeKind::StructValue.Define("struct_value");
+  static constexpr auto Kind = InstKind::StructValue.Define("struct_value");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeBlockId elements_id;
+  InstId src_id;
+  InstBlockId elements_id;
 };
 
 struct Temporary {
-  static constexpr auto Kind = NodeKind::Temporary.Define("temporary");
+  static constexpr auto Kind = InstKind::Temporary.Define("temporary");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId storage_id;
-  NodeId init_id;
+  InstId storage_id;
+  InstId init_id;
 };
 
 struct TemporaryStorage {
   static constexpr auto Kind =
-      NodeKind::TemporaryStorage.Define("temporary_storage");
+      InstKind::TemporaryStorage.Define("temporary_storage");
 
   Parse::Node parse_node;
   TypeId type_id;
 };
 
 struct TupleAccess {
-  static constexpr auto Kind = NodeKind::TupleAccess.Define("tuple_access");
+  static constexpr auto Kind = InstKind::TupleAccess.Define("tuple_access");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId tuple_id;
+  InstId tuple_id;
   MemberIndex index;
 };
 
 struct TupleIndex {
-  static constexpr auto Kind = NodeKind::TupleIndex.Define("tuple_index");
+  static constexpr auto Kind = InstKind::TupleIndex.Define("tuple_index");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId tuple_id;
-  NodeId index_id;
+  InstId tuple_id;
+  InstId index_id;
 };
 
 struct TupleInit {
-  static constexpr auto Kind = NodeKind::TupleInit.Define("tuple_init");
+  static constexpr auto Kind = InstKind::TupleInit.Define("tuple_init");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeBlockId elements_id;
+  InstId src_id;
+  InstBlockId elements_id;
 };
 
 struct TupleLiteral {
-  static constexpr auto Kind = NodeKind::TupleLiteral.Define("tuple_literal");
+  static constexpr auto Kind = InstKind::TupleLiteral.Define("tuple_literal");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeBlockId elements_id;
+  InstBlockId elements_id;
 };
 
 struct TupleType {
-  static constexpr auto Kind = NodeKind::TupleType.Define("tuple_type");
+  static constexpr auto Kind = InstKind::TupleType.Define("tuple_type");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -501,20 +511,20 @@ struct TupleType {
 };
 
 struct TupleValue {
-  static constexpr auto Kind = NodeKind::TupleValue.Define("tuple_value");
+  static constexpr auto Kind = InstKind::TupleValue.Define("tuple_value");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId src_id;
-  NodeBlockId elements_id;
+  InstId src_id;
+  InstBlockId elements_id;
 };
 
 struct UnaryOperatorNot {
-  static constexpr auto Kind = NodeKind::UnaryOperatorNot.Define("not");
+  static constexpr auto Kind = InstKind::UnaryOperatorNot.Define("not");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId operand_id;
+  InstId operand_id;
 };
 
 // The type of an expression naming an unbound field, such as `Class.field`.
@@ -522,7 +532,7 @@ struct UnaryOperatorNot {
 // such as `instance.(Class.field)`.
 struct UnboundFieldType {
   static constexpr auto Kind =
-      NodeKind::UnboundFieldType.Define("unbound_field_type");
+      InstKind::UnboundFieldType.Define("unbound_field_type");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -534,28 +544,28 @@ struct UnboundFieldType {
 
 struct ValueAsReference {
   static constexpr auto Kind =
-      NodeKind::ValueAsReference.Define("value_as_reference");
+      InstKind::ValueAsReference.Define("value_as_reference");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId value_id;
+  InstId value_id;
 };
 
 struct ValueOfInitializer {
   static constexpr auto Kind =
-      NodeKind::ValueOfInitializer.Define("value_of_initializer");
+      InstKind::ValueOfInitializer.Define("value_of_initializer");
 
   Parse::Node parse_node;
   TypeId type_id;
-  NodeId init_id;
+  InstId init_id;
 };
 
 struct VarStorage {
-  static constexpr auto Kind = NodeKind::VarStorage.Define("var");
+  static constexpr auto Kind = InstKind::VarStorage.Define("var");
 
   Parse::Node parse_node;
   TypeId type_id;
-  StringId name_id;
+  IdentifierId name_id;
 };
 
 // HasParseNode<T> is true if T has a `Parse::Node parse_node` field.
@@ -572,4 +582,4 @@ constexpr bool HasTypeId<T, decltype(&T::type_id)> = true;
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_TYPED_NODES_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_

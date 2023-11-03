@@ -6,39 +6,39 @@
 
 namespace Carbon::Lower {
 
-auto HandleArrayType(FunctionContext& context, SemIR::NodeId node_id,
-                     SemIR::ArrayType /*node*/) -> void {
-  context.SetLocal(node_id, context.GetTypeAsValue());
+auto HandleArrayType(FunctionContext& context, SemIR::InstId inst_id,
+                     SemIR::ArrayType /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
-auto HandleClassType(FunctionContext& context, SemIR::NodeId node_id,
-                     SemIR::ClassType /*node*/) -> void {
-  context.SetLocal(node_id, context.GetTypeAsValue());
+auto HandleClassType(FunctionContext& context, SemIR::InstId inst_id,
+                     SemIR::ClassType /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
-auto HandleConstType(FunctionContext& context, SemIR::NodeId node_id,
-                     SemIR::ConstType /*node*/) -> void {
-  context.SetLocal(node_id, context.GetTypeAsValue());
+auto HandleConstType(FunctionContext& context, SemIR::InstId inst_id,
+                     SemIR::ConstType /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
-auto HandlePointerType(FunctionContext& context, SemIR::NodeId node_id,
-                       SemIR::PointerType /*node*/) -> void {
-  context.SetLocal(node_id, context.GetTypeAsValue());
+auto HandlePointerType(FunctionContext& context, SemIR::InstId inst_id,
+                       SemIR::PointerType /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
-auto HandleStructType(FunctionContext& context, SemIR::NodeId node_id,
-                      SemIR::StructType /*node*/) -> void {
-  context.SetLocal(node_id, context.GetTypeAsValue());
+auto HandleStructType(FunctionContext& context, SemIR::InstId inst_id,
+                      SemIR::StructType /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
-auto HandleTupleType(FunctionContext& context, SemIR::NodeId node_id,
-                     SemIR::TupleType /*node*/) -> void {
-  context.SetLocal(node_id, context.GetTypeAsValue());
+auto HandleTupleType(FunctionContext& context, SemIR::InstId inst_id,
+                     SemIR::TupleType /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
-auto HandleUnboundFieldType(FunctionContext& context, SemIR::NodeId node_id,
-                            SemIR::UnboundFieldType /*node*/) -> void {
-  context.SetLocal(node_id, context.GetTypeAsValue());
+auto HandleUnboundFieldType(FunctionContext& context, SemIR::InstId inst_id,
+                            SemIR::UnboundFieldType /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
 }  // namespace Carbon::Lower

@@ -10,8 +10,8 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/builtin_kind.h"
-#include "toolchain/sem_ir/node.h"
-#include "toolchain/sem_ir/node_kind.h"
+#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::SemIR {
 
@@ -38,7 +38,7 @@ auto ValueRepresentation::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{node: " << node_id << ", value_rep: " << value_representation << "}";
+  out << "{inst: " << inst_id << ", value_rep: " << value_representation << "}";
 }
 
 File::File(SharedValueStores& value_stores)
@@ -47,25 +47,25 @@ File::File(SharedValueStores& value_stores)
       // Builtins are always the first IR, even when self-referential.
       cross_reference_irs_({this}),
       type_blocks_(allocator_),
-      node_blocks_(allocator_) {
-  // Default entry for NodeBlockId::Empty.
-  node_blocks_.AddDefaultValue();
+      inst_blocks_(allocator_) {
+  // Default entry for InstBlockId::Empty.
+  inst_blocks_.AddDefaultValue();
 
-  nodes_.Reserve(BuiltinKind::ValidCount);
+  insts_.Reserve(BuiltinKind::ValidCount);
 
   // Error uses a self-referential type so that it's not accidentally treated as
   // a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
 #define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                         \
-  nodes_.AddInNoBlock(Builtin{BuiltinKind::Name == BuiltinKind::Error \
+  insts_.AddInNoBlock(Builtin{BuiltinKind::Name == BuiltinKind::Error \
                                   ? TypeId::Error                     \
                                   : TypeId::TypeType,                 \
                               BuiltinKind::Name});
 #include "toolchain/sem_ir/builtin_kind.def"
 
-  CARBON_CHECK(nodes_.size() == BuiltinKind::ValidCount)
+  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
       << "Builtins should produce " << BuiltinKind::ValidCount
-      << " nodes, actual: " << nodes_.size();
+      << " insts, actual: " << insts_.size();
 }
 
 File::File(SharedValueStores& value_stores, std::string filename,
@@ -75,21 +75,21 @@ File::File(SharedValueStores& value_stores, std::string filename,
       // Builtins are always the first IR.
       cross_reference_irs_({builtins}),
       type_blocks_(allocator_),
-      node_blocks_(allocator_) {
+      inst_blocks_(allocator_) {
   CARBON_CHECK(builtins != nullptr);
   CARBON_CHECK(builtins->cross_reference_irs_[0] == builtins)
       << "Not called with builtins!";
 
-  // Default entry for NodeBlockId::Empty.
-  node_blocks_.AddDefaultValue();
+  // Default entry for InstBlockId::Empty.
+  inst_blocks_.AddDefaultValue();
 
   // Copy builtins over.
-  nodes_.Reserve(BuiltinKind::ValidCount);
+  insts_.Reserve(BuiltinKind::ValidCount);
   static constexpr auto BuiltinIR = CrossReferenceIRId(0);
-  for (auto [i, node] : llvm::enumerate(builtins->nodes_.array_ref())) {
+  for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
     // We can reuse builtin type IDs because they're special-cased values.
-    nodes_.AddInNoBlock(
-        CrossReference{node.type_id(), BuiltinIR, SemIR::NodeId(i)});
+    insts_.AddInNoBlock(
+        CrossReference{inst.type_id(), BuiltinIR, SemIR::InstId(i)});
   }
 }
 
@@ -102,22 +102,22 @@ auto File::Verify() const -> ErrorOr<Success> {
   // Check that every code block has a terminator sequence that appears at the
   // end of the block.
   for (const Function& function : functions_.array_ref()) {
-    for (NodeBlockId block_id : function.body_block_ids) {
+    for (InstBlockId block_id : function.body_block_ids) {
       TerminatorKind prior_kind = TerminatorKind::NotTerminator;
-      for (NodeId node_id : node_blocks().Get(block_id)) {
-        TerminatorKind node_kind =
-            nodes().Get(node_id).kind().terminator_kind();
+      for (InstId inst_id : inst_blocks().Get(block_id)) {
+        TerminatorKind inst_kind =
+            insts().Get(inst_id).kind().terminator_kind();
         if (prior_kind == TerminatorKind::Terminator) {
-          return Error(llvm::formatv("Node {0} in block {1} follows terminator",
-                                     node_id, block_id));
+          return Error(llvm::formatv("Inst {0} in block {1} follows terminator",
+                                     inst_id, block_id));
         }
-        if (prior_kind > node_kind) {
+        if (prior_kind > inst_kind) {
           return Error(
-              llvm::formatv("Non-terminator node {0} in block {1} follows "
+              llvm::formatv("Non-terminator inst {0} in block {1} follows "
                             "terminator sequence",
-                            node_id, block_id));
+                            inst_id, block_id));
         }
-        prior_kind = node_kind;
+        prior_kind = inst_kind;
       }
       if (prior_kind != TerminatorKind::Terminator) {
         return Error(llvm::formatv("No terminator in block {0}", block_id));
@@ -125,8 +125,8 @@ auto File::Verify() const -> ErrorOr<Success> {
     }
   }
 
-  // TODO: Check that a node only references other nodes that are either global
-  // or that dominate it.
+  // TODO: Check that an instruction only references other instructions that are
+  // either global or that dominate it.
   return Success();
 }
 
@@ -141,25 +141,25 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
               map.Add("classes", classes_.OutputYaml());
               map.Add("types", types_.OutputYaml());
               map.Add("type_blocks", type_blocks_.OutputYaml());
-              map.Add("nodes",
+              map.Add("insts",
                       Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                         int start =
                             include_builtins ? 0 : BuiltinKind::ValidCount;
-                        for (int i : llvm::seq(start, nodes_.size())) {
-                          auto id = NodeId(i);
+                        for (int i : llvm::seq(start, insts_.size())) {
+                          auto id = InstId(i);
                           map.Add(PrintToString(id),
-                                  Yaml::OutputScalar(nodes_.Get(id)));
+                                  Yaml::OutputScalar(insts_.Get(id)));
                         }
                       }));
-              map.Add("node_blocks", node_blocks_.OutputYaml());
+              map.Add("inst_blocks", inst_blocks_.OutputYaml());
             }));
   });
 }
 
-// Map a node kind representing a type into an integer describing the
+// Map an instruction kind representing a type into an integer describing the
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
-static auto GetTypePrecedence(NodeKind kind) -> int {
+static auto GetTypePrecedence(InstKind kind) -> int {
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
@@ -198,6 +198,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case Call::Kind:
     case ClassDeclaration::Kind:
     case ClassFieldAccess::Kind:
+    case ClassInit::Kind:
     case Dereference::Kind:
     case Field::Kind:
     case FunctionDeclaration::Kind:
@@ -228,7 +229,7 @@ static auto GetTypePrecedence(NodeKind kind) -> int {
     case ValueAsReference::Kind:
     case ValueOfInitializer::Kind:
     case VarStorage::Kind:
-      CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
+      CARBON_FATAL() << "GetTypePrecedence for non-type inst kind " << kind;
   }
 }
 
@@ -238,47 +239,47 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
                                  in_type_context);
 }
 
-auto File::StringifyTypeExpression(NodeId outer_node_id,
+auto File::StringifyTypeExpression(InstId outer_inst_id,
                                    bool in_type_context) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
   struct Step {
-    // The node to print.
-    NodeId node_id;
-    // The index into node_id to print. Not used by all types.
+    // The instruction to print.
+    InstId inst_id;
+    // The index into inst_id to print. Not used by all types.
     int index = 0;
 
     auto Next() const -> Step {
-      return {.node_id = node_id, .index = index + 1};
+      return {.inst_id = inst_id, .index = index + 1};
     }
   };
-  llvm::SmallVector<Step> steps = {{.node_id = outer_node_id}};
+  llvm::SmallVector<Step> steps = {{.inst_id = outer_inst_id}};
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
-    if (!step.node_id.is_valid()) {
+    if (!step.inst_id.is_valid()) {
       out << "<invalid type>";
       continue;
     }
 
     // Builtins have designated labels.
-    if (step.node_id.index < BuiltinKind::ValidCount) {
-      out << BuiltinKind::FromInt(step.node_id.index).label();
+    if (step.inst_id.index < BuiltinKind::ValidCount) {
+      out << BuiltinKind::FromInt(step.inst_id.index).label();
       continue;
     }
 
-    auto node = nodes().Get(step.node_id);
+    auto inst = insts().Get(step.inst_id);
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
+    switch (inst.kind()) {
       case ArrayType::Kind: {
-        auto array = node.As<ArrayType>();
+        auto array = inst.As<ArrayType>();
         if (step.index == 0) {
           out << "[";
           steps.push_back(step.Next());
           steps.push_back(
-              {.node_id = GetTypeAllowBuiltinTypes(array.element_type_id)});
+              {.inst_id = GetTypeAllowBuiltinTypes(array.element_type_id)});
         } else if (step.index == 1) {
           out << "; " << GetArrayBoundValue(array.bound_id) << "]";
         }
@@ -286,8 +287,8 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       }
       case ClassType::Kind: {
         auto class_name_id =
-            classes().Get(node.As<ClassType>().class_id).name_id;
-        out << strings().Get(class_name_id);
+            classes().Get(inst.As<ClassType>().class_id).name_id;
+        out << identifiers().Get(class_name_id);
         break;
       }
       case ConstType::Kind: {
@@ -295,36 +296,36 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
           out << "const ";
 
           // Add parentheses if required.
-          auto inner_type_node_id =
-              GetTypeAllowBuiltinTypes(node.As<ConstType>().inner_id);
-          if (GetTypePrecedence(nodes().Get(inner_type_node_id).kind()) <
-              GetTypePrecedence(node.kind())) {
+          auto inner_type_inst_id =
+              GetTypeAllowBuiltinTypes(inst.As<ConstType>().inner_id);
+          if (GetTypePrecedence(insts().Get(inner_type_inst_id).kind()) <
+              GetTypePrecedence(inst.kind())) {
             out << "(";
             steps.push_back(step.Next());
           }
 
-          steps.push_back({.node_id = inner_type_node_id});
+          steps.push_back({.inst_id = inner_type_inst_id});
         } else if (step.index == 1) {
           out << ")";
         }
         break;
       }
       case NameReference::Kind: {
-        out << strings().Get(node.As<NameReference>().name_id);
+        out << identifiers().Get(inst.As<NameReference>().name_id);
         break;
       }
       case PointerType::Kind: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back({.node_id = GetTypeAllowBuiltinTypes(
-                               node.As<PointerType>().pointee_id)});
+          steps.push_back({.inst_id = GetTypeAllowBuiltinTypes(
+                               inst.As<PointerType>().pointee_id)});
         } else if (step.index == 1) {
           out << "*";
         }
         break;
       }
       case StructType::Kind: {
-        auto refs = node_blocks().Get(node.As<StructType>().fields_id);
+        auto refs = inst_blocks().Get(inst.As<StructType>().fields_id);
         if (refs.empty()) {
           out << "{}";
           break;
@@ -338,18 +339,18 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
         }
 
         steps.push_back(step.Next());
-        steps.push_back({.node_id = refs[step.index]});
+        steps.push_back({.inst_id = refs[step.index]});
         break;
       }
       case StructTypeField::Kind: {
-        auto field = node.As<StructTypeField>();
-        out << "." << strings().Get(field.name_id) << ": ";
+        auto field = inst.As<StructTypeField>();
+        out << "." << identifiers().Get(field.name_id) << ": ";
         steps.push_back(
-            {.node_id = GetTypeAllowBuiltinTypes(field.field_type_id)});
+            {.inst_id = GetTypeAllowBuiltinTypes(field.field_type_id)});
         break;
       }
       case TupleType::Kind: {
-        auto refs = type_blocks().Get(node.As<TupleType>().elements_id);
+        auto refs = type_blocks().Get(inst.As<TupleType>().elements_id);
         if (refs.empty()) {
           out << "()";
           break;
@@ -368,15 +369,15 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
         }
         steps.push_back(step.Next());
         steps.push_back(
-            {.node_id = GetTypeAllowBuiltinTypes(refs[step.index])});
+            {.inst_id = GetTypeAllowBuiltinTypes(refs[step.index])});
         break;
       }
       case UnboundFieldType::Kind: {
         if (step.index == 0) {
           out << "<unbound field of class ";
           steps.push_back(step.Next());
-          steps.push_back({.node_id = GetTypeAllowBuiltinTypes(
-                               node.As<UnboundFieldType>().class_type_id)});
+          steps.push_back({.inst_id = GetTypeAllowBuiltinTypes(
+                               inst.As<UnboundFieldType>().class_type_id)});
         } else {
           out << ">";
         }
@@ -399,6 +400,7 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       case Call::Kind:
       case ClassDeclaration::Kind:
       case ClassFieldAccess::Kind:
+      case ClassInit::Kind:
       case CrossReference::Kind:
       case Dereference::Kind:
       case Field::Kind:
@@ -429,10 +431,10 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
       case ValueAsReference::Kind:
       case ValueOfInitializer::Kind:
       case VarStorage::Kind:
-        // We don't need to handle stringification for nodes that don't show up
-        // in errors, but make it clear what's going on so that it's clearer
-        // when stringification is needed.
-        out << "<cannot stringify " << step.node_id << ">";
+        // We don't need to handle stringification for instructions that don't
+        // show up in errors, but make it clear what's going on so that it's
+        // clearer when stringification is needed.
+        out << "<cannot stringify " << step.inst_id << ">";
         break;
     }
   }
@@ -440,10 +442,10 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
   // For `{}` or any tuple type, we've printed a non-type expression, so add a
   // conversion to type `type` if it's not implied by the context.
   if (!in_type_context) {
-    auto outer_node = nodes().Get(outer_node_id);
-    if (outer_node.Is<TupleType>() ||
-        (outer_node.Is<StructType>() &&
-         node_blocks().Get(outer_node.As<StructType>().fields_id).empty())) {
+    auto outer_inst = insts().Get(outer_inst_id);
+    if (outer_inst.Is<TupleType>() ||
+        (outer_inst.Is<StructType>() &&
+         inst_blocks().Get(outer_inst.As<StructType>().fields_id).empty())) {
       out << " as type";
     }
   }
@@ -451,18 +453,19 @@ auto File::StringifyTypeExpression(NodeId outer_node_id,
   return str;
 }
 
-auto GetExpressionCategory(const File& file, NodeId node_id)
+auto GetExpressionCategory(const File& file, InstId inst_id)
     -> ExpressionCategory {
   const File* ir = &file;
 
-  // The overall expression category if the current node is a value expression.
+  // The overall expression category if the current instruction is a value
+  // expression.
   ExpressionCategory value_category = ExpressionCategory::Value;
 
   while (true) {
-    auto node = ir->nodes().Get(node_id);
+    auto inst = ir->insts().Get(inst_id);
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
+    switch (inst.kind()) {
       case Assign::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
@@ -478,14 +481,14 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         return ExpressionCategory::NotExpression;
 
       case CrossReference::Kind: {
-        auto xref = node.As<CrossReference>();
+        auto xref = inst.As<CrossReference>();
         ir = &ir->GetCrossReferenceIR(xref.ir_id);
-        node_id = xref.node_id;
+        inst_id = xref.inst_id;
         continue;
       }
 
       case NameReference::Kind: {
-        node_id = node.As<NameReference>().value_id;
+        inst_id = inst.As<NameReference>().value_id;
         continue;
       }
 
@@ -514,24 +517,24 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
         return value_category;
 
       case Builtin::Kind: {
-        if (node.As<Builtin>().builtin_kind == BuiltinKind::Error) {
+        if (inst.As<Builtin>().builtin_kind == BuiltinKind::Error) {
           return ExpressionCategory::Error;
         }
         return value_category;
       }
 
       case BindName::Kind: {
-        node_id = node.As<BindName>().value_id;
+        inst_id = inst.As<BindName>().value_id;
         continue;
       }
 
       case ArrayIndex::Kind: {
-        node_id = node.As<ArrayIndex>().array_id;
+        inst_id = inst.As<ArrayIndex>().array_id;
         continue;
       }
 
       case ClassFieldAccess::Kind: {
-        node_id = node.As<ClassFieldAccess>().base_id;
+        inst_id = inst.As<ClassFieldAccess>().base_id;
         // A value of class type is a pointer to an object representation.
         // Therefore, if the base is a value, the result is an ephemeral
         // reference.
@@ -540,22 +543,22 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       }
 
       case StructAccess::Kind: {
-        node_id = node.As<StructAccess>().struct_id;
+        inst_id = inst.As<StructAccess>().struct_id;
         continue;
       }
 
       case TupleAccess::Kind: {
-        node_id = node.As<TupleAccess>().tuple_id;
+        inst_id = inst.As<TupleAccess>().tuple_id;
         continue;
       }
 
       case TupleIndex::Kind: {
-        node_id = node.As<TupleIndex>().tuple_id;
+        inst_id = inst.As<TupleIndex>().tuple_id;
         continue;
       }
 
       case SpliceBlock::Kind: {
-        node_id = node.As<SpliceBlock>().result_id;
+        inst_id = inst.As<SpliceBlock>().result_id;
         continue;
       }
 
@@ -566,6 +569,7 @@ auto GetExpressionCategory(const File& file, NodeId node_id)
       case ArrayInit::Kind:
       case Call::Kind:
       case InitializeFrom::Kind:
+      case ClassInit::Kind:
       case StructInit::Kind:
       case TupleInit::Kind:
         return ExpressionCategory::Initializing;

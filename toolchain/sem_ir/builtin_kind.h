@@ -30,7 +30,7 @@ class BuiltinKind : public CARBON_ENUM_BASE(BuiltinKind) {
   // constant.
   static const uint8_t ValidCount;
 
-  // Support conversion to and from an int32_t for SemanticNode storage.
+  // Support conversion to and from an int32_t for SemIR instruction storage.
   using EnumBase::AsInt;
   using EnumBase::FromInt;
 };

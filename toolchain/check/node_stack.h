@@ -11,11 +11,13 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
-// Wraps the stack of nodes for Context.
+// Wraps the stack of parse nodes for Context. Each parse node can have an
+// associated id of some kind (instruction, instruction block, function, class,
+// ...).
 //
 // All pushes and pops will be vlogged.
 //
@@ -23,7 +25,7 @@ namespace Carbon::Check {
 //
 // - If receiving a pop_parse_kind, verify that the parse_node being popped is
 //   of pop_parse_kind.
-// - Validates presence of node_id based on whether it's a solo
+// - Validates presence of inst_id based on whether it's a solo
 //   parse_node.
 //
 // These should be assumed API constraints unless otherwise mentioned on a
@@ -44,7 +46,7 @@ class NodeStack {
                   << parse_tree_->node_kind(parse_node) << " -> <none>\n";
     CARBON_CHECK(stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
-    stack_.push_back(Entry(parse_node, SemIR::NodeId::Invalid));
+    stack_.push_back(Entry(parse_node, SemIR::InstId::Invalid));
   }
 
   // Pushes a parse tree node onto the stack with an ID.
@@ -70,12 +72,12 @@ class NodeStack {
   }
 
   // Pops the top of the stack without any verification.
-  auto PopAndIgnore() -> void { PopEntry<SemIR::NodeId>(); }
+  auto PopAndIgnore() -> void { PopEntry<SemIR::InstId>(); }
 
   // Pops the top of the stack and returns the parse_node.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
   auto PopForSoloParseNode() -> Parse::Node {
-    Entry back = PopEntry<SemIR::NodeId>();
+    Entry back = PopEntry<SemIR::InstId>();
     RequireIdKind(Parse::NodeKind::Create(RequiredParseKind),
                   IdKind::SoloParseNode);
     RequireParseKind<RequiredParseKind>(back.parse_node);
@@ -100,8 +102,8 @@ class NodeStack {
 
   // Pops an expression from the top of the stack and returns the parse_node and
   // the ID.
-  auto PopExpressionWithParseNode() -> std::pair<Parse::Node, SemIR::NodeId> {
-    return PopWithParseNode<SemIR::NodeId>();
+  auto PopExpressionWithParseNode() -> std::pair<Parse::Node, SemIR::InstId> {
+    return PopWithParseNode<SemIR::InstId>();
   }
 
   // Pops the top of the stack and returns the parse_node and the ID.
@@ -109,13 +111,13 @@ class NodeStack {
   auto PopWithParseNode() -> auto {
     constexpr IdKind RequiredIdKind =
         ParseNodeKindToIdKind(Parse::NodeKind::Create(RequiredParseKind));
-    if constexpr (RequiredIdKind == IdKind::NodeId) {
-      auto back = PopWithParseNode<SemIR::NodeId>();
+    if constexpr (RequiredIdKind == IdKind::InstId) {
+      auto back = PopWithParseNode<SemIR::InstId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
-    if constexpr (RequiredIdKind == IdKind::NodeBlockId) {
-      auto back = PopWithParseNode<SemIR::NodeBlockId>();
+    if constexpr (RequiredIdKind == IdKind::InstBlockId) {
+      auto back = PopWithParseNode<SemIR::InstBlockId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
@@ -129,8 +131,8 @@ class NodeStack {
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
-    if constexpr (RequiredIdKind == IdKind::StringId) {
-      auto back = PopWithParseNode<StringId>();
+    if constexpr (RequiredIdKind == IdKind::IdentifierId) {
+      auto back = PopWithParseNode<IdentifierId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
@@ -145,8 +147,8 @@ class NodeStack {
   }
 
   // Pops an expression from the top of the stack and returns the ID.
-  // Expressions map multiple Parse::NodeKinds to SemIR::NodeId always.
-  auto PopExpression() -> SemIR::NodeId {
+  // Expressions map multiple Parse::NodeKinds to SemIR::InstId always.
+  auto PopExpression() -> SemIR::InstId {
     return PopExpressionWithParseNode().second;
   }
 
@@ -166,23 +168,21 @@ class NodeStack {
     return std::nullopt;
   }
 
-  // Peeks at the parse_node of the given depth in the stack, or by default the
-  // top node.
+  // Peeks at the parse node of the top of the name stack.
   auto PeekParseNode() const -> Parse::Node { return stack_.back().parse_node; }
 
-  // Peeks at the ID of node at the given depth in the stack, or by default the
-  // top node.
+  // Peeks at the ID associated with the top of the name stack.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
   auto Peek() const -> auto {
     Entry back = stack_.back();
     RequireParseKind<RequiredParseKind>(back.parse_node);
     constexpr IdKind RequiredIdKind =
         ParseNodeKindToIdKind(Parse::NodeKind::Create(RequiredParseKind));
-    if constexpr (RequiredIdKind == IdKind::NodeId) {
-      return back.id<SemIR::NodeId>();
+    if constexpr (RequiredIdKind == IdKind::InstId) {
+      return back.id<SemIR::InstId>();
     }
-    if constexpr (RequiredIdKind == IdKind::NodeBlockId) {
-      return back.id<SemIR::NodeBlockId>();
+    if constexpr (RequiredIdKind == IdKind::InstBlockId) {
+      return back.id<SemIR::InstBlockId>();
     }
     if constexpr (RequiredIdKind == IdKind::FunctionId) {
       return back.id<SemIR::FunctionId>();
@@ -190,8 +190,8 @@ class NodeStack {
     if constexpr (RequiredIdKind == IdKind::ClassId) {
       return back.id<SemIR::ClassId>();
     }
-    if constexpr (RequiredIdKind == IdKind::StringId) {
-      return back.id<StringId>();
+    if constexpr (RequiredIdKind == IdKind::IdentifierId) {
+      return back.id<IdentifierId>();
     }
     if constexpr (RequiredIdKind == IdKind::TypeId) {
       return back.id<SemIR::TypeId>();
@@ -210,11 +210,11 @@ class NodeStack {
  private:
   // Possible associated ID types.
   enum class IdKind : int8_t {
-    NodeId,
-    NodeBlockId,
+    InstId,
+    InstBlockId,
     FunctionId,
     ClassId,
-    StringId,
+    IdentifierId,
     TypeId,
     // No associated ID type.
     SoloParseNode,
@@ -224,15 +224,15 @@ class NodeStack {
 
   // An entry in stack_.
   struct Entry {
-    explicit Entry(Parse::Node parse_node, SemIR::NodeId node_id)
-        : parse_node(parse_node), node_id(node_id) {}
-    explicit Entry(Parse::Node parse_node, SemIR::NodeBlockId node_block_id)
-        : parse_node(parse_node), node_block_id(node_block_id) {}
+    explicit Entry(Parse::Node parse_node, SemIR::InstId inst_id)
+        : parse_node(parse_node), inst_id(inst_id) {}
+    explicit Entry(Parse::Node parse_node, SemIR::InstBlockId inst_block_id)
+        : parse_node(parse_node), inst_block_id(inst_block_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::FunctionId function_id)
         : parse_node(parse_node), function_id(function_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::ClassId class_id)
         : parse_node(parse_node), class_id(class_id) {}
-    explicit Entry(Parse::Node parse_node, StringId name_id)
+    explicit Entry(Parse::Node parse_node, IdentifierId name_id)
         : parse_node(parse_node), name_id(name_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::TypeId type_id)
         : parse_node(parse_node), type_id(type_id) {}
@@ -240,11 +240,11 @@ class NodeStack {
     // Returns the appropriate ID basaed on type.
     template <typename T>
     auto id() -> T& {
-      if constexpr (std::is_same<T, SemIR::NodeId>()) {
-        return node_id;
+      if constexpr (std::is_same<T, SemIR::InstId>()) {
+        return inst_id;
       }
-      if constexpr (std::is_same<T, SemIR::NodeBlockId>()) {
-        return node_block_id;
+      if constexpr (std::is_same<T, SemIR::InstBlockId>()) {
+        return inst_block_id;
       }
       if constexpr (std::is_same<T, SemIR::FunctionId>()) {
         return function_id;
@@ -252,7 +252,7 @@ class NodeStack {
       if constexpr (std::is_same<T, SemIR::ClassId>()) {
         return class_id;
       }
-      if constexpr (std::is_same<T, StringId>()) {
+      if constexpr (std::is_same<T, IdentifierId>()) {
         return name_id;
       }
       if constexpr (std::is_same<T, SemIR::TypeId>()) {
@@ -260,7 +260,7 @@ class NodeStack {
       }
     }
 
-    // The node associated with the stack entry.
+    // The parse node associated with the stack entry.
     Parse::Node parse_node;
 
     // The entries will evaluate as invalid if and only if they're a solo
@@ -269,11 +269,11 @@ class NodeStack {
     // A discriminator isn't needed because the caller can determine which field
     // is used based on the Parse::NodeKind.
     union {
-      SemIR::NodeId node_id;
-      SemIR::NodeBlockId node_block_id;
+      SemIR::InstId inst_id;
+      SemIR::InstBlockId inst_block_id;
       SemIR::FunctionId function_id;
       SemIR::ClassId class_id;
-      StringId name_id;
+      IdentifierId name_id;
       SemIR::TypeId type_id;
     };
   };
@@ -305,20 +305,20 @@ class NodeStack {
       case Parse::NodeKind::StructFieldType:
       case Parse::NodeKind::StructTypeLiteral:
       case Parse::NodeKind::TupleLiteral:
-        return IdKind::NodeId;
+        return IdKind::InstId;
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExpressionIf:
       case Parse::NodeKind::ImplicitParameterList:
       case Parse::NodeKind::ParameterList:
       case Parse::NodeKind::WhileCondition:
       case Parse::NodeKind::WhileConditionStart:
-        return IdKind::NodeBlockId;
+        return IdKind::InstBlockId;
       case Parse::NodeKind::FunctionDefinitionStart:
         return IdKind::FunctionId;
       case Parse::NodeKind::ClassDefinitionStart:
         return IdKind::ClassId;
       case Parse::NodeKind::Name:
-        return IdKind::StringId;
+        return IdKind::IdentifierId;
       case Parse::NodeKind::ArrayExpressionSemi:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
@@ -344,11 +344,11 @@ class NodeStack {
   // ParseNodeKindToIdKind.
   template <typename IdT>
   static constexpr auto IdTypeToIdKind() -> IdKind {
-    if constexpr (std::is_same_v<IdT, SemIR::NodeId>) {
-      return IdKind::NodeId;
+    if constexpr (std::is_same_v<IdT, SemIR::InstId>) {
+      return IdKind::InstId;
     }
-    if constexpr (std::is_same_v<IdT, SemIR::NodeBlockId>) {
-      return IdKind::NodeBlockId;
+    if constexpr (std::is_same_v<IdT, SemIR::InstBlockId>) {
+      return IdKind::InstBlockId;
     }
     if constexpr (std::is_same_v<IdT, SemIR::FunctionId>) {
       return IdKind::FunctionId;
@@ -356,8 +356,8 @@ class NodeStack {
     if constexpr (std::is_same_v<IdT, SemIR::ClassId>) {
       return IdKind::ClassId;
     }
-    if constexpr (std::is_same_v<IdT, StringId>) {
-      return IdKind::StringId;
+    if constexpr (std::is_same_v<IdT, IdentifierId>) {
+      return IdKind::IdentifierId;
     }
     if constexpr (std::is_same_v<IdT, SemIR::TypeId>) {
       return IdKind::TypeId;

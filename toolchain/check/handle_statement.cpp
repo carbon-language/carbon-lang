@@ -4,17 +4,17 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
 // TODO: Find a better home for this. We'll likely need it for more than just
 // expression statements.
-static auto HandleDiscardedExpression(Context& context, SemIR::NodeId expr_id)
+static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
     -> void {
   // If we discard an initializing expression, convert it to a value or
   // reference so that it has something to initialize.
-  auto expr = context.nodes().Get(expr_id);
+  auto expr = context.insts().Get(expr_id);
   Convert(context, expr.parse_node(), expr_id,
           {.kind = ConversionTarget::Discarded, .type_id = expr.type_id()});
 
@@ -29,9 +29,9 @@ auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
 
 auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
-  auto fn_node = context.nodes().GetAs<SemIR::FunctionDeclaration>(
+  auto fn_inst = context.insts().GetAs<SemIR::FunctionDeclaration>(
       context.return_scope_stack().back());
-  const auto& callable = context.functions().Get(fn_node.function_id);
+  const auto& callable = context.functions().Get(fn_inst.function_id);
 
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       Parse::NodeKind::ReturnStatementStart) {
@@ -48,7 +48,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
           .Emit();
     }
 
-    context.AddNode(SemIR::Return{parse_node});
+    context.AddInst(SemIR::Return{parse_node});
   } else {
     auto arg = context.node_stack().PopExpression();
     context.node_stack()
@@ -62,7 +62,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
                         "There was no return type provided.");
       context.emitter()
           .Build(parse_node, ReturnStatementDisallowExpression)
-          .Note(fn_node.parse_node, ReturnStatementImplicitNote)
+          .Note(fn_inst.parse_node, ReturnStatementImplicitNote)
           .Emit();
     } else if (callable.return_slot_id.is_valid()) {
       arg = Initialize(context, parse_node, callable.return_slot_id, arg);
@@ -71,14 +71,14 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
                                  callable.return_type_id);
     }
 
-    context.AddNode(SemIR::ReturnExpression{parse_node, arg});
+    context.AddInst(SemIR::ReturnExpression{parse_node, arg});
   }
 
-  // Switch to a new, unreachable, empty node block. This typically won't
+  // Switch to a new, unreachable, empty instruction block. This typically won't
   // contain any semantics IR, but it can do if there are statements following
   // the `return` statement.
-  context.node_block_stack().Pop();
-  context.node_block_stack().PushUnreachable();
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().PushUnreachable();
   return true;
 }
 

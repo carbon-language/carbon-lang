@@ -40,7 +40,7 @@
 // This has a deliberately self-referential type.
 CARBON_SEM_IR_BUILTIN_KIND(TypeType, "type")
 
-// Used when a semantic error has been detected, and a SemanticNodeId is still
+// Used when a semantic error has been detected, and a SemIR InstId is still
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.

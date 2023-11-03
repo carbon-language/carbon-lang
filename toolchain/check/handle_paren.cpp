@@ -40,16 +40,16 @@ auto HandleTupleLiteral(Context& context, Parse::Node parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::ParenExpressionOrTupleLiteralStart>();
-  const auto& node_block = context.node_blocks().Get(refs_id);
+  const auto& inst_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::TypeId> type_ids;
-  type_ids.reserve(node_block.size());
-  for (auto node : node_block) {
-    type_ids.push_back(context.nodes().Get(node).type_id());
+  type_ids.reserve(inst_block.size());
+  for (auto inst : inst_block) {
+    type_ids.push_back(context.insts().Get(inst).type_id());
   }
   auto type_id = context.CanonicalizeTupleType(parse_node, std::move(type_ids));
 
   auto value_id =
-      context.AddNode(SemIR::TupleLiteral{parse_node, type_id, refs_id});
+      context.AddInst(SemIR::TupleLiteral{parse_node, type_id, refs_id});
   context.node_stack().Push(parse_node, value_id);
   return true;
 }
