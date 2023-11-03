@@ -6,8 +6,7 @@ name: test
 
 on:
   push:
-    branches: [action-test]
-    #branches: [trunk]
+    branches: [trunk]
   pull_request_target:
   merge_group:
 
@@ -136,8 +135,8 @@ jobs:
       # Extract our access key for our build cache.
       - name: Extract access key (read-only)
         if:
-          steps.filter.outputs.ignore == 'false' &&
-          github.event_name == 'pull_request_target'
+          steps.filter.outputs.ignore == 'false' && github.event_name ==
+          'pull_request_target'
         env:
           CARBON_GITHUB_BUILDS: ${{ secrets.CARBON_GITHUB_BUILDS_READ_ONLY }}
         run: |
@@ -148,8 +147,8 @@ jobs:
 
       - name: Extract access key (read-write)
         if:
-          steps.filter.outputs.ignore == 'false' &&
-          github.event_name != 'pull_request_target'
+          steps.filter.outputs.ignore == 'false' && github.event_name !=
+          'pull_request_target'
         env:
           CARBON_GITHUB_BUILDS: ${{ secrets.CARBON_GITHUB_BUILDS_READ_WRITE }}
         run: |
