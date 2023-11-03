@@ -18,6 +18,10 @@ fn Run() {
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc13: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
@@ -26,11 +30,10 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
-// CHECK:STDOUT:   %.loc13_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc13_4.2: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc13_4.1: init () = call %F.ref()
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc13_4.3: ref () = temporary_storage
-// CHECK:STDOUT:   %.loc13_4.4: ref () = temporary %.loc13_4.3, %.loc13_4.2
-// CHECK:STDOUT:   %.loc13_8: ref <error> = tuple_index %.loc13_4.4, <error>
+// CHECK:STDOUT:   %.loc13_4.2: ref () = temporary_storage
+// CHECK:STDOUT:   %.loc13_4.3: ref () = temporary %.loc13_4.2, %.loc13_4.1
+// CHECK:STDOUT:   %.loc13_8: ref <error> = tuple_index %.loc13_4.3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

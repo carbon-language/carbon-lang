@@ -21,6 +21,10 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc14: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
@@ -31,7 +35,6 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_reference "Foo", file.%.loc7
 // CHECK:STDOUT:   %Bar.ref: <namespace> = name_reference "Bar", file.%.loc8
 // CHECK:STDOUT:   %Wiz.ref: <function> = name_reference "Wiz", file.%Wiz
-// CHECK:STDOUT:   %.loc14_14.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc14_14.2: init () = call %Wiz.ref()
+// CHECK:STDOUT:   %.loc14: init () = call %Wiz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

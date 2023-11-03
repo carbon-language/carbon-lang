@@ -25,10 +25,14 @@ fn ValueBinding(b: [i32; 3]) {
 }
 
 // CHECK:STDOUT: file "expression_category.carbon" {
-// CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %ValueBinding: <function> = fn_decl @ValueBinding
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
+// CHECK:STDOUT:   %.loc10: type = tuple_type (i32, i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: [i32; 3];
@@ -42,19 +46,18 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc10_22: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_25: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_28: i32 = int_literal 3
-// CHECK:STDOUT:   %.loc10_29.1: type = tuple_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_29.2: (i32, i32, i32) = tuple_literal (%.loc10_22, %.loc10_25, %.loc10_28)
-// CHECK:STDOUT:   %.loc10_29.3: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc10_29.4: ref i32 = array_index %a.var, %.loc10_29.3
-// CHECK:STDOUT:   %.loc10_29.5: init i32 = initialize_from %.loc10_22 to %.loc10_29.4
-// CHECK:STDOUT:   %.loc10_29.6: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_29.7: ref i32 = array_index %a.var, %.loc10_29.6
-// CHECK:STDOUT:   %.loc10_29.8: init i32 = initialize_from %.loc10_25 to %.loc10_29.7
-// CHECK:STDOUT:   %.loc10_29.9: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc10_29.10: ref i32 = array_index %a.var, %.loc10_29.9
-// CHECK:STDOUT:   %.loc10_29.11: init i32 = initialize_from %.loc10_28 to %.loc10_29.10
-// CHECK:STDOUT:   %.loc10_29.12: init [i32; 3] = array_init %.loc10_29.2, (%.loc10_29.5, %.loc10_29.8, %.loc10_29.11) to %a.var
-// CHECK:STDOUT:   assign %a.var, %.loc10_29.12
+// CHECK:STDOUT:   %.loc10_29.1: (i32, i32, i32) = tuple_literal (%.loc10_22, %.loc10_25, %.loc10_28)
+// CHECK:STDOUT:   %.loc10_29.2: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc10_29.3: ref i32 = array_index %a.var, %.loc10_29.2
+// CHECK:STDOUT:   %.loc10_29.4: init i32 = initialize_from %.loc10_22 to %.loc10_29.3
+// CHECK:STDOUT:   %.loc10_29.5: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_29.6: ref i32 = array_index %a.var, %.loc10_29.5
+// CHECK:STDOUT:   %.loc10_29.7: init i32 = initialize_from %.loc10_25 to %.loc10_29.6
+// CHECK:STDOUT:   %.loc10_29.8: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc10_29.9: ref i32 = array_index %a.var, %.loc10_29.8
+// CHECK:STDOUT:   %.loc10_29.10: init i32 = initialize_from %.loc10_28 to %.loc10_29.9
+// CHECK:STDOUT:   %.loc10_29.11: init [i32; 3] = array_init %.loc10_29.1, (%.loc10_29.4, %.loc10_29.7, %.loc10_29.10) to %a.var
+// CHECK:STDOUT:   assign %a.var, %.loc10_29.11
 // CHECK:STDOUT:   %.loc13_14: type = ptr_type i32
 // CHECK:STDOUT:   %pa.var: ref i32* = var "pa"
 // CHECK:STDOUT:   %pa: ref i32* = bind_name "pa", %pa.var

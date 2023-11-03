@@ -20,6 +20,10 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %If: <function> = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc12: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
@@ -37,8 +41,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
-// CHECK:STDOUT:   %.loc12_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc12_6.2: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc12: init () = call %F.ref()
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:

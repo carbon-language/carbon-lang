@@ -29,6 +29,8 @@ class InstNamer {
   enum class ScopeIndex : int32_t {
     None = -1,
     File = 0,
+    Constants = 1,
+    FirstFunction = 2,
   };
   static_assert(sizeof(ScopeIndex) == sizeof(FunctionId));
 
@@ -39,11 +41,17 @@ class InstNamer {
         sem_ir_(sem_ir) {
     insts.resize(sem_ir.insts().size());
     labels.resize(sem_ir.inst_blocks().size());
-    scopes.resize(1 + sem_ir.functions().size() + sem_ir.classes().size());
+    scopes.resize(static_cast<int32_t>(ScopeIndex::FirstFunction) +
+                  sem_ir.functions().size() + sem_ir.classes().size());
 
     // Build the file scope.
     GetScopeInfo(ScopeIndex::File).name = globals.AddNameUnchecked("file");
     CollectNamesInBlock(ScopeIndex::File, sem_ir.top_inst_block_id());
+
+    // Build the constants scope.
+    GetScopeInfo(ScopeIndex::Constants).name =
+        globals.AddNameUnchecked("constants");
+    CollectNamesInBlock(ScopeIndex::Constants, sem_ir.constants().array_ref());
 
     // Build each function scope.
     for (auto [i, fn] : llvm::enumerate(sem_ir.functions().array_ref())) {
@@ -95,13 +103,15 @@ class InstNamer {
 
   // Returns the scope index corresponding to a function.
   auto GetScopeFor(FunctionId fn_id) -> ScopeIndex {
-    return static_cast<ScopeIndex>(1 + fn_id.index);
+    return static_cast<ScopeIndex>(
+        static_cast<int32_t>(ScopeIndex::FirstFunction) + fn_id.index);
   }
 
   // Returns the scope index corresponding to a class.
   auto GetScopeFor(ClassId class_id) -> ScopeIndex {
-    return static_cast<ScopeIndex>(1 + sem_ir_.functions().size() +
-                                   class_id.index);
+    return static_cast<ScopeIndex>(
+        static_cast<int32_t>(ScopeIndex::FirstFunction) +
+        sem_ir_.functions().size() + class_id.index);
   }
 
   // Returns the IR name to use for a function.
@@ -372,14 +382,17 @@ class InstNamer {
   }
 
   auto CollectNamesInBlock(ScopeIndex scope_idx, InstBlockId block_id) -> void {
-    if (!block_id.is_valid()) {
-      return;
+    if (block_id.is_valid()) {
+      CollectNamesInBlock(scope_idx, sem_ir_.inst_blocks().Get(block_id));
     }
+  }
 
+  auto CollectNamesInBlock(ScopeIndex scope_idx, llvm::ArrayRef<InstId> block)
+      -> void {
     Scope& scope = GetScopeInfo(scope_idx);
 
     // Use bound names where available. Otherwise, assign a backup name.
-    for (auto inst_id : sem_ir_.inst_blocks().Get(block_id)) {
+    for (auto inst_id : block) {
       if (!inst_id.is_valid()) {
         continue;
       }
@@ -495,6 +508,8 @@ class Formatter {
     }
     out_ << "}\n";
 
+    FormatConstants();
+
     for (int i : llvm::seq(sem_ir_.classes().size())) {
       FormatClass(ClassId(i));
     }
@@ -502,6 +517,18 @@ class Formatter {
     for (int i : llvm::seq(sem_ir_.functions().size())) {
       FormatFunction(FunctionId(i));
     }
+  }
+
+  auto FormatConstants() -> void {
+    if (!sem_ir_.constants().size()) {
+      return;
+    }
+
+    llvm::SaveAndRestore constants_scope(scope_,
+                                         InstNamer::ScopeIndex::Constants);
+    out_ << "\nconstants {\n";
+    FormatCodeBlock(sem_ir_.constants().array_ref());
+    out_ << "}\n";
   }
 
   auto FormatClass(ClassId id) -> void {
@@ -531,7 +558,7 @@ class Formatter {
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
-    if (fn.implicit_param_refs_id != SemIR::InstBlockId::Empty) {
+    if (fn.implicit_param_refs_id != InstBlockId::Empty) {
       out_ << "[";
       FormatParameterList(fn.implicit_param_refs_id);
       out_ << "]";
@@ -583,11 +610,13 @@ class Formatter {
   }
 
   auto FormatCodeBlock(InstBlockId block_id) -> void {
-    if (!block_id.is_valid()) {
-      return;
+    if (block_id.is_valid()) {
+      FormatCodeBlock(sem_ir_.inst_blocks().Get(block_id));
     }
+  }
 
-    for (const InstId inst_id : sem_ir_.inst_blocks().Get(block_id)) {
+  auto FormatCodeBlock(llvm::ArrayRef<InstId> block) -> void {
+    for (const InstId inst_id : block) {
       FormatInstruction(inst_id);
     }
   }

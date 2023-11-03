@@ -21,6 +21,10 @@ fn F() {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc16: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
@@ -30,7 +34,6 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", file.%G
 // CHECK:STDOUT:   %.loc16_5: f64 = real_literal 10e-1
-// CHECK:STDOUT:   %.loc16_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc16_4.2: init () = call %G.ref(<invalid>)
+// CHECK:STDOUT:   %.loc16_4: init () = call %G.ref(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

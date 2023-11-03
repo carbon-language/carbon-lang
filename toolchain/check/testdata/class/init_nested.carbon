@@ -23,16 +23,19 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: file "init_nested.carbon" {
 // CHECK:STDOUT:   class_declaration @Inner, ()
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %MakeInner: <function> = fn_decl @MakeInner
 // CHECK:STDOUT:   class_declaration @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
+// CHECK:STDOUT:   %MakeOuter: <function> = fn_decl @MakeOuter
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc17_1.1: type = struct_type {.c: Inner, .d: Inner}
 // CHECK:STDOUT:   %.loc17_1.2: type = struct_type {.c: {.a: i32, .b: i32}*, .d: {.a: i32, .b: i32}*}
 // CHECK:STDOUT:   %.loc17_1.3: type = ptr_type {.c: {.a: i32, .b: i32}*, .d: {.a: i32, .b: i32}*}
 // CHECK:STDOUT:   %.loc14: type = ptr_type {.c: Inner, .d: Inner}
-// CHECK:STDOUT:   %MakeOuter: <function> = fn_decl @MakeOuter
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {

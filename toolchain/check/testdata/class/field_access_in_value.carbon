@@ -20,8 +20,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: file "field_access_in_value.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc10: type = struct_type {.j: i32, .k: i32}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.j: i32, .k: i32}
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.j: i32, .k: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -40,7 +44,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref.loc13: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %.loc10: type = ptr_type {.j: i32, .k: i32}
 // CHECK:STDOUT:   %cv.var: ref Class = var "cv"
 // CHECK:STDOUT:   %cv: ref Class = bind_name "cv", %cv.var
 // CHECK:STDOUT:   %cv.ref.loc14: ref Class = name_reference "cv", %cv

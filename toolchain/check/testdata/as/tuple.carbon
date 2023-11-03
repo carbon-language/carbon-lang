@@ -23,12 +23,19 @@ fn Var() {
 // CHECK:STDOUT: file "tuple.carbon" {
 // CHECK:STDOUT:   class_declaration @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
-// CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %Let: <function> = fn_decl @Let
 // CHECK:STDOUT:   %Var: <function> = fn_decl @Var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
+// CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
+// CHECK:STDOUT:   %.loc7: type = ptr_type {}
+// CHECK:STDOUT:   %.loc15_15.1: type = tuple_type (type, type)
+// CHECK:STDOUT:   %.loc15_15.2: type = tuple_type (X, X)
+// CHECK:STDOUT:   %.loc15_15.3: type = tuple_type ({}*, {}*)
+// CHECK:STDOUT:   %.loc15_15.4: type = ptr_type ({}*, {}*)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
@@ -42,11 +49,7 @@ fn Var() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc15_11: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %X.ref.loc15_14: type = name_reference "X", file.%X
-// CHECK:STDOUT:   %.loc15_15.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc15_15.2: (type, type) = tuple_literal (%X.ref.loc15_11, %X.ref.loc15_14)
-// CHECK:STDOUT:   %.loc15_15.3: type = tuple_type (X, X)
-// CHECK:STDOUT:   %.loc15_15.4: type = tuple_type ({}*, {}*)
-// CHECK:STDOUT:   %.loc15_15.5: type = ptr_type ({}*, {}*)
+// CHECK:STDOUT:   %.loc15_15: (type, type) = tuple_literal (%X.ref.loc15_11, %X.ref.loc15_14)
 // CHECK:STDOUT:   %Make.ref.loc15_20: <function> = name_reference "Make", file.%Make
 // CHECK:STDOUT:   %.loc15_24.1: ref X = temporary_storage
 // CHECK:STDOUT:   %.loc15_24.2: init X = call %Make.ref.loc15_20() to %.loc15_24.1

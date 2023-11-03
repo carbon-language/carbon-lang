@@ -62,6 +62,10 @@ fn Main() {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc18: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
@@ -81,8 +85,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Run0.ref.loc18: <function> = name_reference "Run0", file.%Run0
 // CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc18_7.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc18_7.2: init () = call %Run0.ref.loc18(<invalid>)
+// CHECK:STDOUT:   %.loc18_7: init () = call %Run0.ref.loc18(<invalid>)
 // CHECK:STDOUT:   %Run0.ref.loc25: <function> = name_reference "Run0", file.%Run0
 // CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1

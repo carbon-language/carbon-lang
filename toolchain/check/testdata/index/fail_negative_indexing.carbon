@@ -12,3 +12,9 @@ var b: i32 = a[-10];
 
 // CHECK:STDOUT: file "fail_negative_indexing.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)
+// CHECK:STDOUT:   %.loc7_17.2: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc7_17.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT: }

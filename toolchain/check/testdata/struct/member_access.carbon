@@ -9,8 +9,7 @@ var y: i32 = x.b;
 var z: i32 = y;
 
 // CHECK:STDOUT: file "member_access.carbon" {
-// CHECK:STDOUT:   %.loc7_25.1: type = struct_type {.a: f64, .b: i32}
-// CHECK:STDOUT:   %.loc7_25.2: type = ptr_type {.a: f64, .b: i32}
+// CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: f64, .b: i32}
 // CHECK:STDOUT:   %x.var: ref {.a: f64, .b: i32} = var "x"
 // CHECK:STDOUT:   %x: ref {.a: f64, .b: i32} = bind_name "x", %x.var
 // CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1
@@ -33,4 +32,8 @@ var z: i32 = y;
 // CHECK:STDOUT:   %y.ref: ref i32 = name_reference "y", %y
 // CHECK:STDOUT:   %.loc9: i32 = bind_value %y.ref
 // CHECK:STDOUT:   assign %z.var, %.loc9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: f64, .b: i32}
 // CHECK:STDOUT: }

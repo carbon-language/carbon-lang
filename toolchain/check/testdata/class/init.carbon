@@ -20,10 +20,14 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: file "init.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.n: i32, .next: Class*}
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.n: i32, .next: Class*}
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.n: i32, .next: Class*}
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.n: i32, .next: Class*}
+// CHECK:STDOUT:   %.loc17: type = struct_type {.next: Class*, .n: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -58,12 +62,11 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %next.ref: Class* = name_reference "next", %next
 // CHECK:STDOUT:   %n.ref: i32 = name_reference "n", %n
-// CHECK:STDOUT:   %.loc17_31.1: type = struct_type {.next: Class*, .n: i32}
-// CHECK:STDOUT:   %.loc17_31.2: {.next: Class*, .n: i32} = struct_literal (%next.ref, %n.ref)
-// CHECK:STDOUT:   %.loc17_31.3: ref i32 = class_field_access %return, member1
-// CHECK:STDOUT:   %.loc17_31.4: init i32 = initialize_from %n.ref to %.loc17_31.3
-// CHECK:STDOUT:   %.loc17_31.5: ref Class* = class_field_access %return, member0
-// CHECK:STDOUT:   %.loc17_31.6: init Class* = initialize_from %next.ref to %.loc17_31.5
-// CHECK:STDOUT:   %.loc17_31.7: init Class = class_init %.loc17_31.2, (%.loc17_31.4, %.loc17_31.6)
-// CHECK:STDOUT:   return %.loc17_31.7
+// CHECK:STDOUT:   %.loc17_31.1: {.next: Class*, .n: i32} = struct_literal (%next.ref, %n.ref)
+// CHECK:STDOUT:   %.loc17_31.2: ref i32 = class_field_access %return, member1
+// CHECK:STDOUT:   %.loc17_31.3: init i32 = initialize_from %n.ref to %.loc17_31.2
+// CHECK:STDOUT:   %.loc17_31.4: ref Class* = class_field_access %return, member0
+// CHECK:STDOUT:   %.loc17_31.5: init Class* = initialize_from %next.ref to %.loc17_31.4
+// CHECK:STDOUT:   %.loc17_31.6: init Class = class_init %.loc17_31.1, (%.loc17_31.3, %.loc17_31.5)
+// CHECK:STDOUT:   return %.loc17_31.6
 // CHECK:STDOUT: }

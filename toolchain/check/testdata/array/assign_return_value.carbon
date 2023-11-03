@@ -15,6 +15,12 @@ fn Run() {
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
+// CHECK:STDOUT:   %.loc7_16.2: type = tuple_type (i32)
+// CHECK:STDOUT:   %.loc10: type = ptr_type [i32; 1]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_28: i32 = int_literal 0
@@ -26,8 +32,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_17.1: type = array_type %.loc10_16, i32
-// CHECK:STDOUT:   %.loc10_17.2: type = ptr_type [i32; 1]
+// CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
 // CHECK:STDOUT:   %t.var: ref [i32; 1] = var "t"
 // CHECK:STDOUT:   %t: ref [i32; 1] = bind_name "t", %t.var
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F

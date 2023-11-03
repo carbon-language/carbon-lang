@@ -19,12 +19,15 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var "x"
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name "x", %x.var
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_27.1: type = struct_type {.b: i32}
-// CHECK:STDOUT:   %.loc10_27.2: {.b: i32} = struct_literal (%.loc10_26)
+// CHECK:STDOUT:   %.loc10_27: {.b: i32} = struct_literal (%.loc10_26)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %.loc15: type = struct_type {.b: i32}
 // CHECK:STDOUT:   %y.var: ref {.b: i32} = var "y"
 // CHECK:STDOUT:   %y: ref {.b: i32} = bind_name "y", %y.var
 // CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_reference "x", %x
 // CHECK:STDOUT:   assign %y.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10: type = struct_type {.b: i32}
 // CHECK:STDOUT: }

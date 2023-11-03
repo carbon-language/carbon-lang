@@ -15,6 +15,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = struct_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: const {}* = name_reference "p", %p

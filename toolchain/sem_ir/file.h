@@ -301,6 +301,8 @@ class File : public Printable<File> {
   auto insts() const -> const InstStore& { return insts_; }
   auto inst_blocks() -> InstBlockStore& { return inst_blocks_; }
   auto inst_blocks() const -> const InstBlockStore& { return inst_blocks_; }
+  auto constants() -> ConstantStore& { return constants_; }
+  auto constants() const -> const ConstantStore& { return constants_; }
 
   // A list of types that were completed in this file, in the order in which
   // they were completed. Earlier types in this list cannot contain instances of
@@ -367,6 +369,10 @@ class File : public Printable<File> {
 
   // The top instruction block ID.
   InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
+
+  // Storage for instructions that represent computed global constants, such as
+  // types.
+  ConstantStore constants_;
 };
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md

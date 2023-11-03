@@ -13,8 +13,11 @@
 fn Run() -> String {}
 
 // CHECK:STDOUT: file "fail_bad_run.carbon" {
-// CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT:   %.loc13: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

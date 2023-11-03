@@ -26,6 +26,10 @@ fn While() {
 // CHECK:STDOUT:   %While: <function> = fn_decl @While
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc14: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Cond() -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -37,8 +41,7 @@ fn While() {
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
-// CHECK:STDOUT:   %.loc14_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc14_4.2: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc14: init () = call %F.ref()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:

@@ -33,9 +33,12 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name "p", %p.var
 // CHECK:STDOUT:   %a.ref: ref <error> = name_reference "a", %a
 // CHECK:STDOUT:   %.loc20_25: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc20_22.1: type = ptr_type <error>
-// CHECK:STDOUT:   %.loc20_22.2: <error>* = address_of <error>
+// CHECK:STDOUT:   %.loc20_22: <error>* = address_of <error>
 // CHECK:STDOUT:   assign %p.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc20: type = ptr_type <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

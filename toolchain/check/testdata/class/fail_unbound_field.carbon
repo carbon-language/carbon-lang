@@ -25,8 +25,11 @@ fn G() -> i32 {
 // CHECK:STDOUT: file "fail_unbound_field.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc16: type = struct_type {.field: i32}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc16: type = struct_type {.field: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

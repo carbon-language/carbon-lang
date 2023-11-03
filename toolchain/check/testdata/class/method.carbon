@@ -47,7 +47,6 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT: file "method.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call
 // CHECK:STDOUT:   %CallWithAddr: <function> = fn_decl @CallWithAddr
@@ -56,6 +55,11 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %CallFOnInitializingExpression: <function> = fn_decl @CallFOnInitializingExpression
 // CHECK:STDOUT:   %CallGOnInitializingExpression: <function> = fn_decl @CallGOnInitializingExpression
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32}
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -73,7 +77,6 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self: Class]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
 // CHECK:STDOUT:   %self.ref: Class = name_reference "self", %self
 // CHECK:STDOUT:   %.loc15_14.1: ref i32 = class_field_access %self.ref, member0
 // CHECK:STDOUT:   %.loc15_14.2: i32 = bind_value %.loc15_14.1

@@ -133,6 +133,11 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %CallReturnIncomplete: <function> = fn_decl @CallReturnIncomplete
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc41: type = struct_type {}
+// CHECK:STDOUT:   %.loc100: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
@@ -149,8 +154,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertFromStruct() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc41_43.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc41_43.2: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc41: {} = struct_literal ()
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -186,8 +190,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc100: <function> = name_reference "TakeIncomplete", file.%TakeIncomplete
 // CHECK:STDOUT:   %p.ref: Class* = name_reference "p", %p
 // CHECK:STDOUT:   %.loc100_18: ref Class = dereference %p.ref
-// CHECK:STDOUT:   %.loc100_17.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc100_17.2: init () = call %TakeIncomplete.ref.loc100(<invalid>)
+// CHECK:STDOUT:   %.loc100_17: init () = call %TakeIncomplete.ref.loc100(<invalid>)
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc111: <function> = name_reference "TakeIncomplete", file.%TakeIncomplete
 // CHECK:STDOUT:   %.loc111_19: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc111_17: init () = call %TakeIncomplete.ref.loc111(<invalid>)

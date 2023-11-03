@@ -15,6 +15,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
+// CHECK:STDOUT:   %.loc7_16.2: type = tuple_type (i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_28: i32 = int_literal 0

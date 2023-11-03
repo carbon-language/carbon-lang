@@ -12,9 +12,7 @@ var b: (i32,) = a;
 var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 
 // CHECK:STDOUT: file "fail_tuple_large_index.carbon" {
-// CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc7_13.2: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %.loc7_13.3: type = tuple_type (i32)
+// CHECK:STDOUT:   %.loc7_13: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %a.var: ref (i32,) = var "a"
 // CHECK:STDOUT:   %a: ref (i32,) = bind_name "a", %a.var
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 12
@@ -35,4 +33,9 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 295147905179352825855
 // CHECK:STDOUT:   %.loc12_35: ref <error> = tuple_index %b.ref, <error>
 // CHECK:STDOUT:   assign %c.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type)
+// CHECK:STDOUT:   %.loc7_13.2: type = tuple_type (i32)
 // CHECK:STDOUT: }

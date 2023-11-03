@@ -16,6 +16,10 @@ fn Main() {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeImplicitEmptyTuple() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
@@ -23,8 +27,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc11_11.2: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_11: () = tuple_literal ()
 // CHECK:STDOUT:   %b.var: ref () = var "b"
 // CHECK:STDOUT:   %b: ref () = bind_name "b", %b.var
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: <function> = name_reference "MakeImplicitEmptyTuple", file.%MakeImplicitEmptyTuple

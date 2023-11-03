@@ -53,12 +53,17 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: file "fail_self.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc20: type = struct_type {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   class_declaration @WrongSelf, ()
 // CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf
 // CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc20_1.1: type = struct_type {}
+// CHECK:STDOUT:   %.loc20_1.2: type = tuple_type ()
+// CHECK:STDOUT:   %.loc7: type = ptr_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -79,8 +84,6 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1(%self: Class) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc20: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -36,11 +36,18 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: file "fail_memaccess_category.carbon" {
 // CHECK:STDOUT:   class_declaration @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
-// CHECK:STDOUT:   %.loc9: type = struct_type {}
 // CHECK:STDOUT:   class_declaration @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
-// CHECK:STDOUT:   %.loc13: type = struct_type {.a: A}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
+// CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
+// CHECK:STDOUT:   %.loc7: type = ptr_type {}
+// CHECK:STDOUT:   %.loc13_1.1: type = struct_type {.a: A}
+// CHECK:STDOUT:   %.loc13_1.2: type = struct_type {.a: {}*}
+// CHECK:STDOUT:   %.loc11: type = ptr_type {.a: A}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -52,8 +59,6 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_reference "A", file.%A
-// CHECK:STDOUT:   %.loc9: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}
 // CHECK:STDOUT:   %.loc12_8.1: type = unbound_field_type B, A
 // CHECK:STDOUT:   %.loc12_8.2: <unbound field of class B> = field "a", member0
 // CHECK:STDOUT:   %a: <unbound field of class B> = bind_name "a", %.loc12_8.2
@@ -66,8 +71,6 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: {.a: A}, %b: B) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: type = struct_type {.a: {}*}
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.a: A}
 // CHECK:STDOUT:   %s.ref: {.a: A} = name_reference "s", %s
 // CHECK:STDOUT:   %.loc23_4: A = struct_access %s.ref, member0
 // CHECK:STDOUT:   %.loc23_6: <bound method> = bound_method %.loc23_4, @A.%F
