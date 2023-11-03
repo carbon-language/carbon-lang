@@ -8,6 +8,9 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
+// NOTE: functions for handling aggregates (structs, classes, tuples) are
+// going to be moved into handle_aggregates.cpp!
+
 namespace Carbon::Lower {
 
 auto HandleCrossReference(FunctionContext& /*context*/,
