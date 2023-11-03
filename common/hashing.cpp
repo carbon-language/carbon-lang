@@ -6,8 +6,8 @@
 
 namespace Carbon {
 
-auto Hasher::HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
-    -> Hasher {
+auto Hasher::HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes)
+    -> void {
   const std::byte* data_ptr = bytes.data();
   const ssize_t size = bytes.size();
   CARBON_DCHECK(size > 32);
@@ -34,8 +34,8 @@ auto Hasher::HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
   // Prefetch the first bytes into cache.
   __builtin_prefetch(data_ptr, 0 /* read */, 0 /* discard after next use */);
 
-  uint64_t buffer0 = hash.buffer ^ StaticRandomData[0];
-  uint64_t buffer1 = hash.buffer ^ StaticRandomData[2];
+  uint64_t buffer0 = buffer ^ StaticRandomData[0];
+  uint64_t buffer1 = buffer ^ StaticRandomData[2];
   const std::byte* tail_32b_ptr = data_ptr + (size - 32);
   const std::byte* tail_16b_ptr = data_ptr + (size - 16);
   const std::byte* end_ptr = data_ptr + (size - 64);
@@ -73,9 +73,8 @@ auto Hasher::HashSizedBytesLarge(Hasher hash, llvm::ArrayRef<std::byte> bytes)
                   Read8(tail_16b_ptr + 8) ^ buffer1);
   }
 
-  hash.buffer = buffer0 ^ buffer1;
-  hash = HashOne(std::move(hash), size);
-  return hash;
+  buffer = buffer0 ^ buffer1;
+  HashOne(size);
 }
 
 }  // namespace Carbon
