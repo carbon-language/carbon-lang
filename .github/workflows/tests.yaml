@@ -133,13 +133,28 @@ jobs:
           clang++ --version
 
       # Extract our access key for our build cache.
-      - name: Extract access key
-        if: steps.filter.outputs.ignore == 'false'
+      - name: Extract access key (read-only)
+        if:
+          steps.filter.outputs.ignore == 'false' &&
+          github.event_name == 'pull_request_target'
         env:
-          GCP_BUILDS_SERVICE_ACCOUNT: ${{ secrets.GCP_BUILDS_SERVICE_ACCOUNT }}
+          CARBON_GITHUB_BUILDS: ${{ secrets.CARBON_GITHUB_BUILDS_READ_ONLY }}
         run: |
-          echo "$GCP_BUILDS_SERVICE_ACCOUNT" \
+          echo "$CARBON_GITHUB_BUILDS" \
             | base64 -d > $HOME/gcp-builds-service-account.json
+          echo "bazelrc_upload=build --remote_upload_local_results=false" \
+              >> $GITHUB_ENV
+
+      - name: Extract access key (read-write)
+        if:
+          steps.filter.outputs.ignore == 'false' &&
+          github.event_name != 'pull_request_target'
+        env:
+          CARBON_GITHUB_BUILDS: ${{ secrets.CARBON_GITHUB_BUILDS_READ_WRITE }}
+        run: |
+          echo "$CARBON_GITHUB_BUILDS" \
+            | base64 -d > $HOME/gcp-builds-service-account.json
+          echo "bazelrc_upload=# read-write cache" >> $GITHUB_ENV
 
       # We need to replace the `.` with a `_` for the build cache.
       - name: Setup LLVM and Clang (macOS)
@@ -165,6 +180,9 @@ jobs:
           build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ env.os_for_cache }}
           build --google_credentials=$HOME/gcp-builds-service-account.json
           build --remote_download_minimal
+
+          # Set when determining whether the cache is read-write.
+          ${{ env.bazelrc_upload }}
 
           # Set an artificially high jobs count. This flag controls the number
           # of concurrency Bazel itself uses, which is essential for actions

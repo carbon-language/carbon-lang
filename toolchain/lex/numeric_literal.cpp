@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lex/numeric_literal.h"
+#include  "toolchain/lex/numeric_literal.h"
 
 #include <bitset>
 
