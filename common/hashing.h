@@ -133,7 +133,7 @@ class HashCode : public Printable<HashCode> {
 // - `llvm::StringRef`
 // - `llvm::SmallString`
 //
-// This function supports heterogenous lookup between all of the string-like
+// This function supports heterogeneous lookup between all of the string-like
 // types. However, this is the only heterogeneous lookup support including for
 // the builtin in, standard, and LLVM types. Notably, each different size and
 // signedness integer type may hash differently for efficiency reasons. Hash
@@ -410,7 +410,7 @@ inline auto CarbonHash(llvm::ArrayRef<std::byte> bytes, uint64_t seed)
 }
 
 // Hashing implementation for `llvm::StringRef`. We forward all the other
-// string-like types that support heterogenous lookup to this one.
+// string-like types that support heterogeneous lookup to this one.
 inline auto CarbonHash(llvm::StringRef value, uint64_t seed) -> HashCode {
   return CarbonHash(
       llvm::ArrayRef(reinterpret_cast<const std::byte*>(value.data()),
