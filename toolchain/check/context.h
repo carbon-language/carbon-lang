@@ -408,8 +408,10 @@ class Context {
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
 
-  // Indexes in `scope_stack_` of non-lexical scopes.
-  llvm::SmallVector<std::size_t> non_lexical_scope_indexes_;
+  // Information about non-lexical scopes. This is a subset of the entries and
+  // the information in scope_stack_.
+  llvm::SmallVector<std::pair<ScopeIndex, SemIR::NameScopeId>>
+      non_lexical_scope_stack_;
 
   // The index of the next scope that will be pushed onto scope_stack_.
   ScopeIndex next_scope_index_ = ScopeIndex(0);

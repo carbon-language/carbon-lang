@@ -11,12 +11,12 @@
 
 namespace Carbon::Check {
 
-// An index for a pushed scope, which may be a permanent scope with a
-// corresponding `NameScope`, or a temporary scope, such as is created for a
+// An index for a pushed scope. This may be a permanent scope with a
+// corresponding `NameScope`, or a temporary scope such as is created for a
 // block.
 //
-// These are comparable, and lower values correspond to scopes entered earlier
-// in the file.
+// `ScopeIndex`es are comparable. Lower `ScopeIndex` values correspond to
+// scopes entered earlier in the file.
 //
 // TODO: Move this struct and the name lookup code in context.h to a separate
 // file.
@@ -40,6 +40,19 @@ class Context;
 // members, such as a namespace. Resolved identifiers in the last step will
 // occur for both out-of-line definitions and new declarations, depending on
 // context.
+//
+// For each name component that is processed and denotes a scope, the
+// corresponding scope is also entered. This is important for unqualified name
+// lookup both in the definition of the entity being declared, and for names
+// appearing later in the declaration name itself. For example, in:
+//
+// ```
+// fn ClassA.ClassB(T:! U).Fn() { var x: V; }
+// ```
+//
+// the lookup for `U` looks in `ClassA`, and the lookup for `V` looks in
+// `ClassA.ClassB` then in its enclosing scope `ClassA`. Scopes entered as part
+// of processing the name are exited when the name is popped from the stack.
 //
 // Example state transitions:
 //
@@ -80,6 +93,11 @@ class DeclarationNameStack {
       // An identifier didn't resolve.
       Unresolved,
 
+      // The name has already been finished. This is not set in the name
+      // returned by `FinishName`, but is used internally to track that
+      // `FinishName` has already been called.
+      Finished,
+
       // An error has occurred, such as an additional qualifier past an
       // unresolved name. No new diagnostics should be emitted.
       Error,
@@ -112,19 +130,24 @@ class DeclarationNameStack {
   explicit DeclarationNameStack(Context* context) : context_(context) {}
 
   // Pushes processing of a new declaration name, which will be used
-  // contextually.
-  auto Push() -> void;
+  // contextually, and prepares to enter scopes for that name. To pop this
+  // state, `FinishName` and `PopScope` must be called, in that order.
+  auto PushScopeAndStartName() -> void;
 
   // Finishes the current declaration name processing, returning the final
-  // context for adding the name to lookup. This also pops the final name
-  // instruction from the instruction stack, which will be applied to the
-  // declaration name if appropriate.
-  auto Finish() -> NameContext;
+  // context for adding the name to lookup.
+  //
+  // This also pops the final name instruction from the instruction stack,
+  // which will be applied to the declaration name if appropriate.
+  auto FinishName() -> NameContext;
 
-  // Pops the declaration name from the declaration name stack, and leaves all
-  // scopes that were entered as part of handling the declaration name. This
-  // should be called at the end of the declaration.
-  auto Pop() -> void;
+  // Pops the declaration name from the declaration name stack, and pops all
+  // scopes that were entered as part of handling the declaration name. These
+  // are the scopes corresponding to name qualifiers in the name, for example
+  // the `A.B` in `fn A.B.F()`.
+  //
+  // This should be called at the end of the declaration.
+  auto PopScope() -> void;
 
   // Creates and returns a name context corresponding to declaring an
   // unqualified name in the current context. This is suitable for adding to
@@ -134,7 +157,8 @@ class DeclarationNameStack {
       -> NameContext;
 
   // Applies a Name from the name stack to the top of the declaration name
-  // stack.
+  // stack. This will enter the scope corresponding to the name if the name
+  // describes an existing scope, such as a namespace or a defined class.
   auto ApplyNameQualifier(Parse::Node parse_node, IdentifierId name_id) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.

@@ -14,13 +14,13 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.
-  context.declaration_name_stack().Push();
+  context.declaration_name_stack().PushScopeAndStartName();
   return true;
 }
 
 static auto BuildClassDeclaration(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
-  auto name_context = context.declaration_name_stack().Finish();
+  auto name_context = context.declaration_name_stack().FinishName();
   auto class_keyword =
       context.node_stack()
           .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
@@ -76,7 +76,7 @@ static auto BuildClassDeclaration(Context& context)
 auto HandleClassDeclaration(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   BuildClassDeclaration(context);
-  context.declaration_name_stack().Pop();
+  context.declaration_name_stack().PopScope();
   return true;
 }
 
@@ -138,7 +138,7 @@ auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.inst_block_stack().Pop();
   context.PopScope();
-  context.declaration_name_stack().Pop();
+  context.declaration_name_stack().PopScope();
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);

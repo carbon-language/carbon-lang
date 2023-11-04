@@ -182,19 +182,16 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
   }
 
   // Walk the non-lexical scopes and perform lookups into each of them.
-  for (std::size_t non_lexical_scope_index :
-       llvm::reverse(non_lexical_scope_indexes_)) {
-    auto& non_lexical_scope = scope_stack_[non_lexical_scope_index];
-
+  for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scope_stack_)) {
     // If the innermost lexical result is within this non-lexical scope, then
     // it shadows all further non-lexical results and we're done.
     if (!lexical_results.empty() &&
-        lexical_results.back().scope_index > non_lexical_scope.index) {
+        lexical_results.back().scope_index > index) {
       return lexical_results.back().node_id;
     }
 
     auto non_lexical_result =
-        LookupQualifiedName(parse_node, name_id, non_lexical_scope.scope_id,
+        LookupQualifiedName(parse_node, name_id, name_scope_id,
                             /*required=*/false);
     if (non_lexical_result.is_valid()) {
       return non_lexical_result;
@@ -233,15 +230,14 @@ auto Context::PushScope(SemIR::InstId scope_inst_id,
   scope_stack_.push_back({.index = next_scope_index_,
                           .scope_inst_id = scope_inst_id,
                           .scope_id = scope_id});
+  if (scope_id.is_valid()) {
+    non_lexical_scope_stack_.push_back({next_scope_index_, scope_id});
+  }
 
   // TODO: Handle this case more gracefully.
   CARBON_CHECK(next_scope_index_.index != std::numeric_limits<int32_t>::max())
       << "Ran out of scopes";
   ++next_scope_index_.index;
-
-  if (scope_id.is_valid()) {
-    non_lexical_scope_indexes_.push_back(scope_stack_.size() - 1);
-  }
 }
 
 auto Context::PopScope() -> void {
@@ -259,8 +255,8 @@ auto Context::PopScope() -> void {
   }
 
   if (scope.scope_id.is_valid()) {
-    CARBON_CHECK(non_lexical_scope_indexes_.back() == scope_stack_.size());
-    non_lexical_scope_indexes_.pop_back();
+    CARBON_CHECK(non_lexical_scope_stack_.back().first == scope.index);
+    non_lexical_scope_stack_.pop_back();
   }
 }
 

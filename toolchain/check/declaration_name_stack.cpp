@@ -21,11 +21,14 @@ auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
   return context;
 }
 
-auto DeclarationNameStack::Push() -> void {
+auto DeclarationNameStack::PushScopeAndStartName() -> void {
   declaration_name_stack_.push_back(MakeEmptyNameContext());
 }
 
-auto DeclarationNameStack::Finish() -> NameContext {
+auto DeclarationNameStack::FinishName() -> NameContext {
+  CARBON_CHECK(declaration_name_stack_.back().state !=
+               NameContext::State::Finished)
+      << "Finished name twice";
   if (context_->parse_tree().node_kind(
           context_->node_stack().PeekParseNode()) ==
       Parse::NodeKind::QualifiedDeclaration) {
@@ -40,10 +43,15 @@ auto DeclarationNameStack::Finish() -> NameContext {
     ApplyNameQualifier(parse_node, name_id);
   }
 
-  return declaration_name_stack_.back();
+  NameContext result = declaration_name_stack_.back();
+  declaration_name_stack_.back().state = NameContext::State::Finished;
+  return result;
 }
 
-auto DeclarationNameStack::Pop() -> void {
+auto DeclarationNameStack::PopScope() -> void {
+  CARBON_CHECK(declaration_name_stack_.back().state ==
+               NameContext::State::Finished)
+      << "Missing call to FinishName before PopScope";
   context_->PopToScope(declaration_name_stack_.back().enclosing_scope);
   declaration_name_stack_.pop_back();
 }
@@ -80,6 +88,9 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
             << name_context.target_scope_id;
       }
       return SemIR::InstId::Invalid;
+
+    case NameContext::State::Finished:
+      CARBON_FATAL() << "Finished state should only be used internally";
   }
 }
 
@@ -201,6 +212,9 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
       name_context.parse_node = parse_node;
       return true;
     }
+
+    case NameContext::State::Finished:
+      CARBON_FATAL() << "Added a qualifier after calling FinishName";
   }
 }
 

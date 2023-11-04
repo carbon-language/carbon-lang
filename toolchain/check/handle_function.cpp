@@ -55,7 +55,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
       context.node_stack()
           .PopIf<Parse::NodeKind::ImplicitParameterList>()
           .value_or(SemIR::InstBlockId::Empty);
-  auto name_context = context.declaration_name_stack().Finish();
+  auto name_context = context.declaration_name_stack().FinishName();
   auto fn_node =
       context.node_stack()
           .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
@@ -132,7 +132,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
 auto HandleFunctionDeclaration(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   BuildFunctionDeclaration(context, /*is_definition=*/false);
-  context.declaration_name_stack().Pop();
+  context.declaration_name_stack().PopScope();
   return true;
 }
 
@@ -157,7 +157,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   context.PopScope();
   context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
-  context.declaration_name_stack().Pop();
+  context.declaration_name_stack().PopScope();
   return true;
 }
 
@@ -235,7 +235,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.
-  context.declaration_name_stack().Push();
+  context.declaration_name_stack().PushScopeAndStartName();
   return true;
 }
 
