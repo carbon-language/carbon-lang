@@ -52,8 +52,8 @@ static const std::array<size_t, NumSizes> rand_sizes = []() {
   // range [0, MaxSize). We scale the steps in sizes to cover the range at least
   // 128 times, even if it means not covering all the sizes within that range.
   static_assert(NumSizes > 128);
-  constexpr double phi = 1.61803398875;
-  constexpr size_t Scale = std::max<size_t>(1, MaxSize / phi);
+  constexpr double Phi = 1.61803398875;
+  constexpr size_t Scale = std::max<size_t>(1, MaxSize / Phi);
   for (auto [i, size] : llvm::enumerate(sizes)) {
     size = (i * Scale) % MaxSize;
   }
@@ -141,10 +141,10 @@ struct RandStrings {
   }
 };
 
-struct HashBase {
+struct HashBenchBase {
   uint64_t seed;
 
-  HashBase() {
+  HashBenchBase() {
     // The real-world use case we care about is in a hash table where we'll mix
     // in some seed state, likely some ASLR address. To simulate this for
     // benchmarking, compute a seed from the address of a stack local variable.
@@ -158,14 +158,14 @@ struct HashBase {
   }
 };
 
-struct CarbonHash : HashBase {
+struct CarbonHashBench : HashBenchBase {
   template <typename T>
   auto operator()(const T& value) -> uint64_t {
     return static_cast<uint64_t>(HashValue(value, seed));
   }
 };
 
-struct AbseilHash : HashBase {
+struct AbseilHashBench : HashBenchBase {
   template <typename T>
   auto operator()(const T& value) -> uint64_t {
     // Manually seed this with an after-the-fact XOR as there isn't a seeded
@@ -174,7 +174,7 @@ struct AbseilHash : HashBase {
   }
 };
 
-struct LLVMHash : HashBase {
+struct LLVMHashBench : HashBenchBase {
   template <typename T>
   auto operator()(const T& value) -> uint64_t {
     // Manually seed this with an after-the-fact XOR as there isn't a seeded
@@ -202,10 +202,10 @@ void BM_LatencyHash(benchmark::State& state) {
 // Latency benchmarks are grouped by the three different hash functions to
 // facilitate comparing their performance for a given value type or string size
 // bucket.
-#define LATENCY_VALUE_BENCHMARKS(...)                             \
-  BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, CarbonHash>); \
-  BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, AbseilHash>); \
-  BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, LLVMHash>)
+#define LATENCY_VALUE_BENCHMARKS(...)                                  \
+  BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, CarbonHashBench>); \
+  BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, AbseilHashBench>); \
+  BENCHMARK(BM_LatencyHash<RandValues<__VA_ARGS__>, LLVMHashBench>)
 LATENCY_VALUE_BENCHMARKS(uint8_t);
 LATENCY_VALUE_BENCHMARKS(uint16_t);
 LATENCY_VALUE_BENCHMARKS(std::pair<uint8_t, uint8_t>);
@@ -224,12 +224,13 @@ LATENCY_VALUE_BENCHMARKS(std::pair<int*, int*>);
 LATENCY_VALUE_BENCHMARKS(std::pair<uint64_t, int*>);
 LATENCY_VALUE_BENCHMARKS(std::pair<int*, uint64_t>);
 
-#define LATENCY_STRING_BENCHMARKS(MaxSize)                                  \
-  BENCHMARK(                                                                \
-      BM_LatencyHash<RandStrings</*RandSize=*/true, MaxSize>, CarbonHash>); \
-  BENCHMARK(                                                                \
-      BM_LatencyHash<RandStrings</*RandSize=*/true, MaxSize>, AbseilHash>); \
-  BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/true, MaxSize>, LLVMHash>)
+#define LATENCY_STRING_BENCHMARKS(MaxSize)                          \
+  BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/true, MaxSize>, \
+                           CarbonHashBench>);                       \
+  BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/true, MaxSize>, \
+                           AbseilHashBench>);                       \
+  BENCHMARK(                                                        \
+      BM_LatencyHash<RandStrings</*RandSize=*/true, MaxSize>, LLVMHashBench>)
 
 LATENCY_STRING_BENCHMARKS(/*MaxSize=*/4);
 LATENCY_STRING_BENCHMARKS(/*MaxSize=*/8);
@@ -281,8 +282,8 @@ LATENCY_STRING_BENCHMARKS(/*MaxSize=*/8192);
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 128>, Hash>); \
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 129>, Hash>)
 
-LATENCY_STRING_SIZE_BENCHMARKS(CarbonHash);
-LATENCY_STRING_SIZE_BENCHMARKS(AbseilHash);
+LATENCY_STRING_SIZE_BENCHMARKS(CarbonHashBench);
+LATENCY_STRING_SIZE_BENCHMARKS(AbseilHashBench);
 
 }  // namespace
 }  // namespace Carbon

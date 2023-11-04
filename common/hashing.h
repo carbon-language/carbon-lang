@@ -127,6 +127,19 @@ class HashCode : public Printable<HashCode> {
 // views, and types composing primitives transparently like pairs, tuples, and
 // array-ish views. It is also extensible to support user-defined types.
 //
+// The builtin support for string-like types include:
+// - `std::string_view`
+// - `std::string`
+// - `llvm::StringRef`
+// - `llvm::SmallString`
+//
+// This function supports heterogenous lookup between all of the string-like
+// types. However, this is the only heterogeneous lookup support including for
+// the builtin in, standard, and LLVM types. Notably, each different size and
+// signedness integer type may hash differently for efficiency reasons. Hash
+// tables should pick a single integer type in which to manage keys and do
+// lookups.
+//
 // To add support for your type, you need to implement a customization point --
 // a free function that can be found by ADL for your type -- called `CarbonHash`
 // with the following signature:
@@ -164,10 +177,11 @@ inline auto HashValue(const T& value) -> HashCode;
 // `CarbonHash` that will in turn be used by the `HashValue` function. See the
 // `HashValue` function for details of that extension point.
 //
-// The API of this type can be used to incorporate data from your user-defined
-// type into a hash code. The API is a low-level collection of primitives rather
-// than a higher-level abstraction. This reflects a fundamental priority: deep,
-// detailed, and latency-oriented optimization of any hash functions.
+// The methods on this type can be used to incorporate data from your
+// user-defined type into its internal state which can be converted to a
+// `HashCode` at any time. These methods will only produce the same `HashCode`
+// if they are called in the exact same order with the same arguments -- there
+// are no guaranteed equivalences between calling different methods.
 //
 // Example usage:
 // ```cpp
@@ -177,6 +191,18 @@ inline auto HashValue(const T& value) -> HashCode;
 //   return static_cast<HashCode>(hasher);
 // }
 // ```
+//
+// Another important note is that types only need to include the data that would
+// lead to an object comparing equal or not-equal to some other object,
+// including objects of other types if you intend to support heterogeneous
+// hash table lookups between those types.
+//
+// To illustrate this -- if a type has some fixed amount of data, maybe 32
+// 4-byte integers, and equality comparison only operates on the *values* of
+// those integers, then the size (32 integers, or 128 bytes) doesn't need to be
+// included in the hash. But if a type has a *dynamic* amount of data, and the
+// sizes are compared as part of equality comparison, then that dynamic size
+// should typically be included in the hash.
 //
 // This type's API also reflects the reality that high-performance hash tables
 // rely on keys that are generally small and cheap to hash. The result is
@@ -188,27 +214,10 @@ inline auto HashValue(const T& value) -> HashCode;
 // used as a local variable and not passed across function boundaries
 // unnecessarily.
 //
-// It is essential that values that compare equal have equal hashes, and
-// desirable that values that compare unequal have a high probability of
-// different hashes. This type only guarantees that the hash codes will be equal
-// if the *exact same sequence of method calls* are made with the same values.
-// Whenever building an extension point that intends for two different types
-// that can be compared to also have the same hashes when equal, the extension
-// points must ensure the sequence of calls to the `Hasher` objects match
-// *exactly*. The simplest approach is to ensure all types in the set delegate
-// to a single type's extension point.
-//
-// Another important note is that types only need to include the data that would
-// lead to an object comparing equal or not-equal to some other object,
-// including objects of other types if you intend to support heterogeneous
-// lookup between those types and yours.
-//
-// To illustrate this -- if a type has some fixed amount of data, maybe 32
-// 4-byte integers, and equality comparison only operates on the *values* of
-// those integers, then the size (32 integers, or 128 bytes) doesn't need to be
-// included in the hash. But if a type has a *dynamic* amount of data, and the
-// sizes are compared as part of equality comparison, then that dynamic size
-// should typically be included in the hash.
+// The type also provides a number of static helper functions and static data
+// members that may be used by authors of `CarbonHash` implementations to
+// efficiently compute the inputs to the methods, or even to manually do some
+// amounts of hashing performance-tuned ways.
 class Hasher {
  public:
   Hasher() = default;
@@ -400,25 +409,27 @@ inline auto CarbonHash(llvm::ArrayRef<std::byte> bytes, uint64_t seed)
   return static_cast<HashCode>(hasher);
 }
 
+// Hashing implementation for `llvm::StringRef`. We forward all the other
+// string-like types that support heterogenous lookup to this one.
 inline auto CarbonHash(llvm::StringRef value, uint64_t seed) -> HashCode {
   return CarbonHash(
-      llvm::ArrayRef<std::byte>(
-          reinterpret_cast<const std::byte*>(value.data()), value.size()),
+      llvm::ArrayRef(reinterpret_cast<const std::byte*>(value.data()),
+                     value.size()),
       seed);
 }
 
 inline auto CarbonHash(std::string_view value, uint64_t seed) -> HashCode {
-  return CarbonHash(
-      llvm::ArrayRef<std::byte>(
-          reinterpret_cast<const std::byte*>(value.data()), value.size()),
-      seed);
+  return CarbonHash(llvm::StringRef(value.data(), value.size()), seed);
 }
 
 inline auto CarbonHash(const std::string& value, uint64_t seed) -> HashCode {
-  return CarbonHash(
-      llvm::ArrayRef<std::byte>(
-          reinterpret_cast<const std::byte*>(value.data()), value.size()),
-      seed);
+  return CarbonHash(llvm::StringRef(value.data(), value.size()), seed);
+}
+
+template <unsigned Length>
+inline auto CarbonHash(const llvm::SmallString<Length>& value, uint64_t seed)
+    -> HashCode {
+  return CarbonHash(llvm::StringRef(value.data(), value.size()), seed);
 }
 
 // C++ guarantees this is true for the unsigned variants, but we require it for
