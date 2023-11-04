@@ -36,11 +36,16 @@ TEST(HashingTest, HashCodeAPI) {
   EXPECT_THAT(HashValue("a").ExtractIndex(2), Eq(a.ExtractIndex(2)));
   EXPECT_THAT(HashValue("a").ExtractIndex(4), Eq(a.ExtractIndex(4)));
   EXPECT_THAT(HashValue("a").ExtractIndex(8), Eq(a.ExtractIndex(8)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 10), Eq(a.ExtractIndex(1 << 10)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 20), Eq(a.ExtractIndex(1 << 20)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 30), Eq(a.ExtractIndex(1 << 30)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1LL << 40), Eq(a.ExtractIndex(1LL << 40)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1LL << 50), Eq(a.ExtractIndex(1LL << 50)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 10),
+              Eq(a.ExtractIndex(1 << 10)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 20),
+              Eq(a.ExtractIndex(1 << 20)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 30),
+              Eq(a.ExtractIndex(1 << 30)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1LL << 40),
+              Eq(a.ExtractIndex(1LL << 40)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1LL << 50),
+              Eq(a.ExtractIndex(1LL << 50)));
 
   EXPECT_THAT(a.ExtractIndex(8), Ne(b.ExtractIndex(8)));
   EXPECT_THAT(a.ExtractIndex(8), Ne(empty.ExtractIndex(8)));
