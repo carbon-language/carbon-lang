@@ -21,6 +21,55 @@ using ::testing::Eq;
 using ::testing::Le;
 using ::testing::Ne;
 
+TEST(HashingTest, HashCodeAPI) {
+  // Manually compute a few hash codes where we can exercise the underlying API.
+  HashCode empty = HashValue("");
+  HashCode a = HashValue("a");
+  HashCode b = HashValue("b");
+  ASSERT_THAT(HashValue(""), Eq(empty));
+  ASSERT_THAT(HashValue("a"), Eq(a));
+  ASSERT_THAT(HashValue("b"), Eq(b));
+  ASSERT_THAT(empty, Ne(a));
+  ASSERT_THAT(empty, Ne(b));
+  ASSERT_THAT(a, Ne(b));
+
+  EXPECT_THAT(HashValue("a").ExtractIndex(2), Eq(a.ExtractIndex(2)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(4), Eq(a.ExtractIndex(4)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(8), Eq(a.ExtractIndex(8)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 10), Eq(a.ExtractIndex(1 << 10)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 20), Eq(a.ExtractIndex(1 << 20)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 30), Eq(a.ExtractIndex(1 << 30)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1LL << 40), Eq(a.ExtractIndex(1LL << 40)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(1LL << 50), Eq(a.ExtractIndex(1LL << 50)));
+
+  EXPECT_THAT(a.ExtractIndex(8), Ne(b.ExtractIndex(8)));
+  EXPECT_THAT(a.ExtractIndex(8), Ne(empty.ExtractIndex(8)));
+
+  // Note that the index produced with a tag may be different from the index
+  // alone!
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<2>(2),
+              Eq(a.ExtractIndexAndTag<2>(2)));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<16>(4),
+              Eq(a.ExtractIndexAndTag<16>(4)));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(8),
+              Eq(a.ExtractIndexAndTag<7>(8)));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1 << 10),
+              Eq(a.ExtractIndexAndTag<7>(1 << 10)));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1 << 20),
+              Eq(a.ExtractIndexAndTag<7>(1 << 20)));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1 << 30),
+              Eq(a.ExtractIndexAndTag<7>(1 << 30)));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1LL << 40),
+              Eq(a.ExtractIndexAndTag<7>(1LL << 40)));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1LL << 50),
+              Eq(a.ExtractIndexAndTag<7>(1LL << 50)));
+
+  const auto [a_index, a_tag] = a.ExtractIndexAndTag<4>(8);
+  const auto [b_index, b_tag] = b.ExtractIndexAndTag<4>(8);
+  EXPECT_THAT(a_index, Ne(b_index));
+  EXPECT_THAT(a_tag, Ne(b_tag));
+}
+
 TEST(HashingTest, Integers) {
   for (int64_t i : {0, 1, 2, 3, 42, -1, -2, -3, -13}) {
     SCOPED_TRACE(llvm::formatv("Hashing: {0}", i).str());

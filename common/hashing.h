@@ -51,12 +51,6 @@ class HashCode : public Printable<HashCode> {
   // highest entropy.
   constexpr auto ExtractIndex(ssize_t size) -> ssize_t;
 
-  // A struct used to return an index and a tag from a hash code.
-  struct IndexAndTag {
-    ssize_t index;
-    uint32_t tag;
-  };
-
   // Extracts an index and a fixed `N`-bit tag from the hash code.
   //
   // This will both minimize overlap between the tag and the index as well as
@@ -65,10 +59,14 @@ class HashCode : public Printable<HashCode> {
   // The index will be in the range [0, `size`). The `size` must be a power of
   // two, and `N` must be in the range [1, 32].
   template <int N>
-  constexpr auto ExtractIndexAndTag(ssize_t size) -> IndexAndTag;
+  constexpr auto ExtractIndexAndTag(ssize_t size)
+      -> std::pair<ssize_t, uint32_t>;
 
-  // Extract the full 64-bit hash code as an integer. The methods above should
-  // be preferred rather than directly manipulating this integer.
+  // Extract the full 64-bit hash code as an integer.
+  //
+  // The methods above should be preferred rather than directly manipulating
+  // this integer. This is provided primarily to enable Merkle-tree hashing or
+  // other recursive hashing where that is needed or more efficient.
   explicit operator uint64_t() const { return value_; }
 
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -155,7 +153,8 @@ inline auto HashValue(const T& value, uint64_t seed) -> HashCode;
 //
 // Generally prefer the seeded version, but this is available if there is no
 // reasonable seed. In particular, this will behave better than using a seed of
-// `0`.
+// `0`. One important use case is for recursive hashing of sub-objects where
+// appropriate or needed.
 template <typename T>
 inline auto HashValue(const T& value) -> HashCode;
 
@@ -182,9 +181,8 @@ inline auto HashValue(const T& value) -> HashCode;
 // This type's API also reflects the reality that high-performance hash tables
 // rely on keys that are generally small and cheap to hash. The result is
 // prioritizing hashing a small number of integers (1 or 2 ideally), or some
-// contiguous byte buffer. We typically want hash tables whose key types work to
-// fit into this model rather than advanced or more complex hashing of more
-// complex input data.
+// contiguous byte buffer. We prioritize hash tables whose key types work to fit
+// into this model.
 //
 // To ensure this type's code is optimized effectively, it should typically be
 // used as a local variable and not passed across function boundaries
@@ -193,7 +191,7 @@ inline auto HashValue(const T& value) -> HashCode;
 // It is essential that values that compare equal have equal hashes, and
 // desirable that values that compare unequal have a high probability of
 // different hashes. This type only guarantees that the hash codes will be equal
-// if the exact same sequence of method calls are made with the same values.
+// if the *exact same sequence of method calls* are made with the same values.
 // Whenever building an extension point that intends for two different types
 // that can be compared to also have the same hashes when equal, the extension
 // points must ensure the sequence of calls to the `Hasher` objects match
@@ -255,9 +253,9 @@ class Hasher {
   // Simpler and more primitive functions to incorporate state represented in
   // `uint64_t` values into the hasher's state.
   //
-  // These may be slightly less efficient than the `Hash` method above and are
-  // designed to work well even when relevant data has been packed into the
-  // `uint64_t` parameters.
+  // These may be slightly less efficient than the `Hash` method above for a
+  // typical application code `uint64_t`, but are designed to work well even
+  // when relevant data has been packed into the `uint64_t` parameters densely.
   auto HashOne(uint64_t data) -> void;
   auto HashTwo(uint64_t data0, uint64_t data1) -> void;
 
@@ -270,8 +268,9 @@ class Hasher {
   // state along with the contents.
   auto HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void;
 
-  // A throughput-optimized routine for when the byte sequence size is
-  // guaranteed to be >32. The size is always incorporated into the state.
+  // An out-of-line, throughput-optimized routine for incorporating a
+  // dynamically sized sequence when the sequence size is guaranteed to be >32.
+  // The size is always incorporated into the state.
   auto HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void;
 
   // Utility functions to read data of various sizes efficiently into one or two
@@ -525,13 +524,13 @@ inline constexpr auto HashCode::ExtractIndex(ssize_t size) -> ssize_t {
 
 template <int N>
 inline constexpr auto HashCode::ExtractIndexAndTag(ssize_t size)
-    -> IndexAndTag {
+    -> std::pair<ssize_t, uint32_t> {
   static_assert(N >= 1);
   static_assert(N <= 32);
   CARBON_DCHECK(llvm::isPowerOf2_64(size));
-  CARBON_DCHECK(1 << (64 - N) >= size) << "Not enough bits for size and tag!";
-  return {.index = (value_ >> N) & (size - 1),
-          .tag = value_ & ((1U << (N + 1)) - 1)};
+  CARBON_DCHECK(1LL << (64 - N) >= size) << "Not enough bits for size and tag!";
+  return {static_cast<ssize_t>((value_ >> N) & (size - 1)),
+          static_cast<uint32_t>(value_ & ((1U << (N + 1)) - 1))};
 }
 
 // Building with `-DCARBON_MCA_MARKERS` will enable `llvm-mca` annotations in
