@@ -19,6 +19,10 @@ fn While() {
   H();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc14: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "unreachable_end.carbon" {
 // CHECK:STDOUT:   %Cond: <function> = fn_decl @Cond
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -38,8 +42,7 @@ fn While() {
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
-// CHECK:STDOUT:   %.loc14_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc14_4.2: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc14: init () = call %F.ref()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:

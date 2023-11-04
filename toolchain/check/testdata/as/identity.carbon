@@ -24,10 +24,15 @@ fn Initializing() {
   var x: X = (Make() as X);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11_1.1: type = struct_type {}
+// CHECK:STDOUT:   %.loc11_1.2: type = tuple_type ()
+// CHECK:STDOUT:   %.loc9: type = ptr_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "identity.carbon" {
 // CHECK:STDOUT:   class_declaration @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
-// CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT:   %Value: <function> = fn_decl @Value
 // CHECK:STDOUT:   %Reference: <function> = fn_decl @Reference
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
@@ -41,8 +46,6 @@ fn Initializing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Value(%n: X) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: type = tuple_type ()
-// CHECK:STDOUT:   %.loc9: type = ptr_type {}
 // CHECK:STDOUT:   %X.ref.loc14_10: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %n.ref: X = name_reference "n", %n
 // CHECK:STDOUT:   %X.ref.loc14_19: type = name_reference "X", file.%X

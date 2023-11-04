@@ -7,9 +7,12 @@
 var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 var y: {.a: i32, .b: i32} = x;
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "two_entries.carbon" {
-// CHECK:STDOUT:   %.loc7_25.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc7_25.2: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: i32} = var "x"
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: i32} = bind_name "x", %x.var
 // CHECK:STDOUT:   %.loc7_35: i32 = int_literal 1

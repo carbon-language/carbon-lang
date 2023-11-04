@@ -7,10 +7,13 @@
 var x: {} = {};
 var y: {} = x;
 
-// CHECK:STDOUT: file "empty.carbon" {
+// CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_9.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc7_9.2: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc7_9.3: type = tuple_type ()
+// CHECK:STDOUT:   %.loc7_9.2: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "empty.carbon" {
+// CHECK:STDOUT:   %.loc7_9: {} = struct_literal ()
 // CHECK:STDOUT:   %x.var: ref {} = var "x"
 // CHECK:STDOUT:   %x: ref {} = bind_name "x", %x.var
 // CHECK:STDOUT:   %.loc7_14.1: {} = struct_literal ()

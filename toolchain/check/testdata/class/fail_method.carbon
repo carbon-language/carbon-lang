@@ -30,10 +30,15 @@ fn F(c: Class) {
   Class.WithSelf(c);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {}
+// CHECK:STDOUT:   %.loc10_1.2: type = tuple_type ()
+// CHECK:STDOUT:   %.loc7: type = ptr_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_method.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -52,8 +57,6 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c: Class) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}
 // CHECK:STDOUT:   %c.ref.loc13: Class = name_reference "c", %c
 // CHECK:STDOUT:   %NoSelf.ref.loc13: <function> = name_reference "NoSelf", @Class.%NoSelf
 // CHECK:STDOUT:   %.loc13: init () = call %NoSelf.ref.loc13()

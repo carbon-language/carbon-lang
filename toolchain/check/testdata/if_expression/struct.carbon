@@ -11,6 +11,11 @@ fn F(cond: bool) {
   G(if cond then a else a);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc11: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "struct.carbon" {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -21,7 +26,6 @@ fn F(cond: bool) {
 // CHECK:STDOUT: fn @F(%cond: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_27: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %a.var: ref {.a: i32, .b: i32} = var "a"
 // CHECK:STDOUT:   %a: ref {.a: i32, .b: i32} = bind_name "a", %a.var
 // CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1
@@ -57,7 +61,6 @@ fn F(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_5: {.a: i32, .b: i32} = block_arg !if.expr.result
-// CHECK:STDOUT:   %.loc11_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc11_4.2: init () = call %G.ref(%.loc11_5)
+// CHECK:STDOUT:   %.loc11_4: init () = call %G.ref(%.loc11_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

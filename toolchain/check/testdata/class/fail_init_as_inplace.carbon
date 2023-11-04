@@ -22,10 +22,15 @@ fn F() {
   G(&c);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc22: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_init_as_inplace.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc10: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
@@ -48,7 +53,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref.loc21_10: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %.loc10: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %c.var: ref Class = var "c"
 // CHECK:STDOUT:   %c: ref Class = bind_name "c", %c.var
 // CHECK:STDOUT:   %.loc21_24: i32 = int_literal 1
@@ -67,7 +71,6 @@ fn F() {
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", file.%G
 // CHECK:STDOUT:   %c.ref: ref Class = name_reference "c", %c
 // CHECK:STDOUT:   %.loc22_5: Class* = address_of %c.ref
-// CHECK:STDOUT:   %.loc22_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc22_4.2: init () = call %G.ref(%.loc22_5)
+// CHECK:STDOUT:   %.loc22_4: init () = call %G.ref(%.loc22_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

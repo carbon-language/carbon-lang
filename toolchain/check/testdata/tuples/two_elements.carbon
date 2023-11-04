@@ -7,11 +7,14 @@
 var x: (i32, i32) = (4, 102);
 var y: (i32, i32) = x;
 
-// CHECK:STDOUT: file "two_elements.carbon" {
+// CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc7_17.2: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc7_17.3: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc7_17.4: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc7_17.2: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc7_17.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "two_elements.carbon" {
+// CHECK:STDOUT:   %.loc7_17: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %x.var: ref (i32, i32) = var "x"
 // CHECK:STDOUT:   %x: ref (i32, i32) = bind_name "x", %x.var
 // CHECK:STDOUT:   %.loc7_22: i32 = int_literal 4
