@@ -32,7 +32,7 @@ class ConstraintType;
 class NominalClassType;
 class MatchFirstDeclaration;
 
-// Abstract base class of all AST nodes representing patterns.
+// Abstract base class of all AST nodes representing declarations.
 //
 // Declaration and its derived classes support LLVM-style RTTI, including
 // llvm::isa, llvm::cast, and llvm::dyn_cast. To support this, every
