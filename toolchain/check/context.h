@@ -55,10 +55,20 @@ class Context {
   auto AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
                        SemIR::InstId target_id) -> void;
 
-  // Performs name lookup in a specified scope, returning the referenced
-  // instruction. If scope_id is invalid, uses the current contextual scope.
-  auto LookupName(Parse::Node parse_node, IdentifierId name_id,
-                  SemIR::NameScopeId scope_id, bool print_diagnostics)
+  // Performs name lookup in a specified scope for a name appearing in a
+  // declaration, returning the referenced instruction. If scope_id is invalid,
+  // uses the current contextual scope.
+  auto LookupNameInDeclaration(Parse::Node parse_node, IdentifierId name_id,
+                               SemIR::NameScopeId scope_id) -> SemIR::InstId;
+
+  // Performs an unqualified name lookup, returning the referenced instruction.
+  auto LookupUnqualifiedName(Parse::Node parse_node, IdentifierId name_id)
+      -> SemIR::InstId;
+
+  // Performs a qualified name lookup in a specified scope and in scopes that
+  // it extends, returning the referenced instruction.
+  auto LookupQualifiedName(Parse::Node parse_node, IdentifierId name_id,
+                           SemIR::NameScopeId scope_id, bool required = true)
       -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
@@ -80,6 +90,14 @@ class Context {
 
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
+
+  // Pops scopes until we return to the specified scope index.
+  auto PopToScope(ScopeIndex index) -> void;
+
+  // Returns the scope index associated with the current scope.
+  auto current_scope_index() const -> ScopeIndex {
+    return current_scope().index;
+  }
 
   // Returns the name scope associated with the current lexical scope, if any.
   auto current_scope_id() const -> SemIR::NameScopeId {
@@ -296,6 +314,9 @@ class Context {
 
   // An entry in scope_stack_.
   struct ScopeStackEntry {
+    // The sequential index of this scope entry within the file.
+    ScopeIndex index;
+
     // The instruction associated with this entry, if any. This can be one of:
     //
     // - A `ClassDeclaration`, for a class definition scope.
@@ -312,6 +333,14 @@ class Context {
     llvm::DenseSet<IdentifierId> names;
 
     // TODO: This likely needs to track things which need to be destructed.
+  };
+
+  // A lookup result in the lexical lookup table `name_lookup_`.
+  struct LexicalLookupResult {
+    // The node that was added to lookup.
+    SemIR::InstId node_id;
+    // The scope in which the node was added.
+    ScopeIndex scope_index;
   };
 
   // Forms a canonical type ID for a type. This function is given two
@@ -383,16 +412,27 @@ class Context {
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
 
+  // Information about non-lexical scopes. This is a subset of the entries and
+  // the information in scope_stack_.
+  llvm::SmallVector<std::pair<ScopeIndex, SemIR::NameScopeId>>
+      non_lexical_scope_stack_;
+
+  // The index of the next scope that will be pushed onto scope_stack_.
+  ScopeIndex next_scope_index_ = ScopeIndex(0);
+
   // The stack used for qualified declaration name construction.
   DeclarationNameStack declaration_name_stack_;
 
   // Maps identifiers to name lookup results. Values are a stack of name lookup
   // results in the ancestor scopes. This offers constant-time lookup of names,
   // regardless of how many scopes exist between the name declaration and
-  // reference.
+  // reference. The corresponding scope for each lookup result is tracked, so
+  // that lexical lookup results can be interleaved with lookup results from
+  // non-lexical scopes such as classes.
   //
   // Names which no longer have lookup results are erased.
-  llvm::DenseMap<IdentifierId, llvm::SmallVector<SemIR::InstId>> name_lookup_;
+  llvm::DenseMap<IdentifierId, llvm::SmallVector<LexicalLookupResult>>
+      name_lookup_;
 
   // Cache of the mapping from instructions to types, to avoid recomputing the
   // folding set ID.

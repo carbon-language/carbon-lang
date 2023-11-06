@@ -8,6 +8,10 @@ class Class {
   fn F() -> i32 {
     return 1;
   }
+
+  fn G() -> i32 {
+    return F();
+  }
 }
 
 fn F() -> i32 {
@@ -19,7 +23,7 @@ fn Run() -> i32 {
 }
 
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = struct_type {}
+// CHECK:STDOUT:   %.loc15: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "scope.carbon" {
@@ -31,9 +35,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() -> i32 {
@@ -42,21 +48,29 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", @Class.%F
+// CHECK:STDOUT:   %.loc13_13: init i32 = call %F.ref()
+// CHECK:STDOUT:   %.loc13_15: i32 = value_of_initializer %.loc13_13
+// CHECK:STDOUT:   return %.loc13_15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 2
-// CHECK:STDOUT:   return %.loc14
+// CHECK:STDOUT:   %.loc18: i32 = int_literal 2
+// CHECK:STDOUT:   return %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref.loc18_10: <function> = name_reference "F", file.%F
-// CHECK:STDOUT:   %.loc18_11: init i32 = call %F.ref.loc18_10()
+// CHECK:STDOUT:   %F.ref.loc22_10: <function> = name_reference "F", file.%F
+// CHECK:STDOUT:   %.loc22_11: init i32 = call %F.ref.loc22_10()
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %F.ref.loc18_21: <function> = name_reference "F", @Class.%F
-// CHECK:STDOUT:   %.loc18_23.1: init i32 = call %F.ref.loc18_21()
-// CHECK:STDOUT:   %.loc18_14.1: i32 = value_of_initializer %.loc18_11
-// CHECK:STDOUT:   %.loc18_23.2: i32 = value_of_initializer %.loc18_23.1
-// CHECK:STDOUT:   %.loc18_14.2: i32 = add %.loc18_14.1, %.loc18_23.2
-// CHECK:STDOUT:   return %.loc18_14.2
+// CHECK:STDOUT:   %F.ref.loc22_21: <function> = name_reference "F", @Class.%F
+// CHECK:STDOUT:   %.loc22_23.1: init i32 = call %F.ref.loc22_21()
+// CHECK:STDOUT:   %.loc22_14.1: i32 = value_of_initializer %.loc22_11
+// CHECK:STDOUT:   %.loc22_23.2: i32 = value_of_initializer %.loc22_23.1
+// CHECK:STDOUT:   %.loc22_14.2: i32 = add %.loc22_14.1, %.loc22_23.2
+// CHECK:STDOUT:   return %.loc22_14.2
 // CHECK:STDOUT: }

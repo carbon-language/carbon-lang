@@ -9,7 +9,8 @@
 namespace Carbon::Check {
 
 auto DeclarationNameStack::MakeEmptyNameContext() -> NameContext {
-  return NameContext{.target_scope_id = context_->current_scope_id()};
+  return NameContext{.enclosing_scope = context_->current_scope_index(),
+                     .target_scope_id = context_->current_scope_id()};
 }
 
 auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
@@ -20,11 +21,14 @@ auto DeclarationNameStack::MakeUnqualifiedName(Parse::Node parse_node,
   return context;
 }
 
-auto DeclarationNameStack::Push() -> void {
+auto DeclarationNameStack::PushScopeAndStartName() -> void {
   declaration_name_stack_.push_back(MakeEmptyNameContext());
 }
 
-auto DeclarationNameStack::Pop() -> NameContext {
+auto DeclarationNameStack::FinishName() -> NameContext {
+  CARBON_CHECK(declaration_name_stack_.back().state !=
+               NameContext::State::Finished)
+      << "Finished name twice";
   if (context_->parse_tree().node_kind(
           context_->node_stack().PeekParseNode()) ==
       Parse::NodeKind::QualifiedDeclaration) {
@@ -39,7 +43,17 @@ auto DeclarationNameStack::Pop() -> NameContext {
     ApplyNameQualifier(parse_node, name_id);
   }
 
-  return declaration_name_stack_.pop_back_val();
+  NameContext result = declaration_name_stack_.back();
+  declaration_name_stack_.back().state = NameContext::State::Finished;
+  return result;
+}
+
+auto DeclarationNameStack::PopScope() -> void {
+  CARBON_CHECK(declaration_name_stack_.back().state ==
+               NameContext::State::Finished)
+      << "Missing call to FinishName before PopScope";
+  context_->PopToScope(declaration_name_stack_.back().enclosing_scope);
+  declaration_name_stack_.pop_back();
 }
 
 auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
@@ -74,6 +88,9 @@ auto DeclarationNameStack::LookupOrAddName(NameContext name_context,
             << name_context.target_scope_id;
       }
       return SemIR::InstId::Invalid;
+
+    case NameContext::State::Finished:
+      CARBON_FATAL() << "Finished state should only be used internally";
   }
 }
 
@@ -95,16 +112,10 @@ auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
                                                 IdentifierId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
-    // This means the input instruction name_id is actually a string ID.
-    //
-    // TODO: This doesn't perform the right kind of lookup. We will find names
-    // from enclosing lexical scopes here, in the case where `target_scope_id`
-    // is invalid.
-    auto resolved_inst_id = context_->LookupName(
-        name_context.parse_node, name_id, name_context.target_scope_id,
-        /*print_diagnostics=*/false);
-    if (resolved_inst_id == SemIR::InstId::BuiltinError) {
-      // Invalid indicates an unresolved instruction. Store it and return.
+    auto resolved_inst_id = context_->LookupNameInDeclaration(
+        name_context.parse_node, name_id, name_context.target_scope_id);
+    if (!resolved_inst_id.is_valid()) {
+      // Invalid indicates an unresolved name. Store it and return.
       name_context.state = NameContext::State::Unresolved;
       name_context.unresolved_name_id = name_id;
       return;
@@ -130,16 +141,19 @@ auto DeclarationNameStack::UpdateScopeIfNeeded(NameContext& name_context)
       if (class_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
         name_context.target_scope_id = class_info.scope_id;
+        context_->PushScope(name_context.resolved_inst_id, class_info.scope_id);
       } else {
         name_context.state = NameContext::State::ResolvedNonScope;
       }
       break;
     }
-    case SemIR::Namespace::Kind:
+    case SemIR::Namespace::Kind: {
+      auto scope_id = resolved_inst.As<SemIR::Namespace>().name_scope_id;
       name_context.state = NameContext::State::Resolved;
-      name_context.target_scope_id =
-          resolved_inst.As<SemIR::Namespace>().name_scope_id;
+      name_context.target_scope_id = scope_id;
+      context_->PushScope(name_context.resolved_inst_id, scope_id);
       break;
+    }
     default:
       name_context.state = NameContext::State::ResolvedNonScope;
       break;
@@ -198,6 +212,9 @@ auto DeclarationNameStack::CanResolveQualifier(NameContext& name_context,
       name_context.parse_node = parse_node;
       return true;
     }
+
+    case NameContext::State::Finished:
+      CARBON_FATAL() << "Added a qualifier after calling FinishName";
   }
 }
 

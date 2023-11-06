@@ -5,43 +5,39 @@
 // AUTOUPDATE
 
 class Class {
-  fn F() -> i32 {
-    return 1;
-  }
+  fn F() -> i32;
+  fn G() -> i32;
 }
 
-fn G() -> i32 {
-  // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:10: ERROR: Name `F` not found.
-  // CHECK:STDERR:   return F();
-  // CHECK:STDERR:          ^
-  return F();
+fn Class.F() -> i32 {
+  return G();
 }
 
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = struct_type {}
+// CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_scope.carbon" {
+// CHECK:STDOUT: file "reenter_scope.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1
-// CHECK:STDOUT:   return %.loc9
+// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", @Class.%G
+// CHECK:STDOUT:   %.loc13_11: init i32 = call %G.ref()
+// CHECK:STDOUT:   %.loc13_13: i32 = value_of_initializer %.loc13_11
+// CHECK:STDOUT:   return %.loc13_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <error> = name_reference "F", <error>
-// CHECK:STDOUT:   return <error>
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @G() -> i32;
