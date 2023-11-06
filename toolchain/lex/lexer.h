@@ -52,7 +52,7 @@ auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
 }
 
 #if CARBON_USE_SIMD
-namespace {
+namespace Internal {
 #if __ARM_NEON
 using SIMDMaskT = uint8x16_t;
 #elif __x86_64__
@@ -61,15 +61,16 @@ using SIMDMaskT = __m128i;
 #error "Unsupported SIMD architecture!"
 #endif
 using SIMDMaskArrayT = std::array<SIMDMaskT, sizeof(SIMDMaskT) + 1>;
-}  // namespace
+}  // namespace Internal
 // A table of masks to include 0-16 bytes of an SSE register.
-static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
-  SIMDMaskArrayT masks = {};
+static constexpr Internal::SIMDMaskArrayT PrefixMasks = []() constexpr {
+  Internal::SIMDMaskArrayT masks = {};
   for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
-    // The SIMD types and constexpr require a C-style cast.
-    // NOLINTNEXTLINE(google-readability-casting)
-    masks[i] = (SIMDMaskT)(std::numeric_limits<unsigned __int128>::max() >>
-                           ((sizeof(SIMDMaskT) - i) * 8));
+    masks[i] =
+        // The SIMD types and constexpr require a C-style cast.
+        // NOLINTNEXTLINE(google-readability-casting)
+        (Internal::SIMDMaskT)(std::numeric_limits<unsigned __int128>::max() >>
+                              ((sizeof(Internal::SIMDMaskT) - i) * 8));
   }
   return masks;
 }();
@@ -138,7 +139,7 @@ static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
 // No bits set means definitively non-ID ASCII character.
 //
 // Bits 4-7 remain unused if we need to classify more characters.
-namespace {
+namespace Internal {
 // Struct used to implement the nibble LUT for SIMD implementations.
 //
 // Forced to 16-byte alignment to ensure we can load it easily in SIMD code.
@@ -164,9 +165,9 @@ struct alignas(16) NibbleLUT {
   uint8_t nibble_e;
   uint8_t nibble_f;
 };
-}  // namespace
+}  // namespace Internal
 
-constexpr NibbleLUT HighLUT = {
+constexpr Internal::NibbleLUT HighLUT = {
     .nibble_0 = 0b0000'0000,
     .nibble_1 = 0b0000'0000,
     .nibble_2 = 0b0000'0000,
@@ -184,7 +185,7 @@ constexpr NibbleLUT HighLUT = {
     .nibble_e = 0b1000'0000,
     .nibble_f = 0b1000'0000,
 };
-constexpr NibbleLUT LowLUT = {
+constexpr Internal::NibbleLUT LowLUT = {
     .nibble_0 = 0b1000'1010,
     .nibble_1 = 0b1000'1110,
     .nibble_2 = 0b1000'1110,
