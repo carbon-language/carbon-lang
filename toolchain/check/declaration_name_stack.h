@@ -11,11 +11,12 @@
 
 namespace Carbon::Check {
 
-// An index for a pushed scope. This may be a permanent scope with a
-// corresponding `NameScope`, or a temporary scope such as is created for a
-// block.
+// An index for a pushed scope. This may correspond to a permanent scope with a
+// corresponding `NameScope`, in which case a different index will be assigned
+// each time the scope is entered. Alternatively, it may be a temporary scope
+// such as is created for a block, and will only be entered once.
 //
-// `ScopeIndex`es are comparable. Lower `ScopeIndex` values correspond to
+// `ScopeIndex` values are comparable. Lower `ScopeIndex` values correspond to
 // scopes entered earlier in the file.
 //
 // TODO: Move this struct and the name lookup code in context.h to a separate
