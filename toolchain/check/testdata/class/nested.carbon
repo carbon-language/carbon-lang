@@ -28,17 +28,22 @@ fn F(a: Outer*) {
   (*(*a).pi).qi = (*a).pi;
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc12_3.1: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*}
+// CHECK:STDOUT:   %.loc17_1.1: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*}
+// CHECK:STDOUT:   %.loc17_1.2: type = ptr_type {.po: Outer*, .qo: Outer*, .pi: Inner*}
+// CHECK:STDOUT:   %.loc12_3.2: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "nested.carbon" {
 // CHECK:STDOUT:   class_declaration @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
-// CHECK:STDOUT:   %.loc17: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   class_declaration @Inner, ()
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
-// CHECK:STDOUT:   %.loc12: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*}
 // CHECK:STDOUT:   %Self.ref: type = name_reference "Self", file.%Outer
 // CHECK:STDOUT:   %.loc14_15: type = ptr_type Outer
 // CHECK:STDOUT:   %.loc14_9.1: type = unbound_field_type Outer, Outer*
@@ -89,7 +94,6 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref.loc23_5: Outer* = name_reference "a", %a
 // CHECK:STDOUT:   %.loc23_4: ref Outer = dereference %a.ref.loc23_5
-// CHECK:STDOUT:   %.loc17: type = ptr_type {.po: Outer*, .qo: Outer*, .pi: Inner*}
 // CHECK:STDOUT:   %.loc23_7: ref Outer* = class_field_access %.loc23_4, member0
 // CHECK:STDOUT:   %a.ref.loc23_13: Outer* = name_reference "a", %a
 // CHECK:STDOUT:   assign %.loc23_7, %a.ref.loc23_13
@@ -111,7 +115,6 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %.loc26_9.1: ref Inner* = class_field_access %.loc26_6, member2
 // CHECK:STDOUT:   %.loc26_9.2: Inner* = bind_value %.loc26_9.1
 // CHECK:STDOUT:   %.loc26_4: ref Inner = dereference %.loc26_9.2
-// CHECK:STDOUT:   %.loc12: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*}
 // CHECK:STDOUT:   %.loc26_13: ref Outer* = class_field_access %.loc26_4, member1
 // CHECK:STDOUT:   %a.ref.loc26_19: Outer* = name_reference "a", %a
 // CHECK:STDOUT:   assign %.loc26_13, %a.ref.loc26_19

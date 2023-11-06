@@ -11,6 +11,10 @@ fn Main() {
   Foo(1,);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "params_one_comma.carbon" {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
@@ -25,8 +29,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref.loc10: <function> = name_reference "Foo", file.%Foo
 // CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_6.2: init () = call %Foo.ref.loc10(%.loc10_7)
+// CHECK:STDOUT:   %.loc10_6: init () = call %Foo.ref.loc10(%.loc10_7)
 // CHECK:STDOUT:   %Foo.ref.loc11: <function> = name_reference "Foo", file.%Foo
 // CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc11_6: init () = call %Foo.ref.loc11(%.loc11_7)

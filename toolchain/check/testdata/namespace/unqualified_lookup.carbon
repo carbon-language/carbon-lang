@@ -26,6 +26,10 @@ fn OuterN.InnerN.CallABC() {
   C();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc15: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "unqualified_lookup.carbon" {
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {.InnerN = %.loc8, .B = %B, .CallAB = %CallAB}
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace {.C = %C, .CallABC = %CallABC}
@@ -46,8 +50,7 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT: fn @CallA() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: <function> = name_reference "A", file.%A
-// CHECK:STDOUT:   %.loc15_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc15_4.2: init () = call %A.ref()
+// CHECK:STDOUT:   %.loc15: init () = call %A.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

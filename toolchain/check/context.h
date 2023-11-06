@@ -44,6 +44,9 @@ class Context {
   // Adds an instruction to the current block, returning the produced ID.
   auto AddInst(SemIR::Inst inst) -> SemIR::InstId;
 
+  // Adds an instruction to the constants block, returning the produced ID.
+  auto AddConstantInst(SemIR::Inst inst) -> SemIR::InstId;
+
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
   auto AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void;
@@ -293,6 +296,7 @@ class Context {
   auto inst_blocks() -> SemIR::InstBlockStore& {
     return sem_ir().inst_blocks();
   }
+  auto constants() -> SemIR::ConstantStore& { return sem_ir().constants(); }
 
  private:
   // A FoldingSet node for a type.

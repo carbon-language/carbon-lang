@@ -64,6 +64,13 @@ auto Context::AddInst(SemIR::Inst inst) -> SemIR::InstId {
   return inst_id;
 }
 
+auto Context::AddConstantInst(SemIR::Inst inst) -> SemIR::InstId {
+  auto inst_id = insts().AddInNoBlock(inst);
+  constants().Add(inst_id);
+  CARBON_VLOG() << "AddConstantInst: " << inst << "\n";
+  return inst_id;
+}
+
 auto Context::AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void {
   auto inst_id = AddInst(inst);
   node_stack_.Push(parse_node, inst_id);
@@ -700,7 +707,7 @@ class TypeCompleter {
       if (field_value_rep.type_id != field.field_type_id) {
         same_as_object_rep = false;
         field.field_type_id = field_value_rep.type_id;
-        field_id = context_.AddInst(field);
+        field_id = context_.AddConstantInst(field);
       }
       value_rep_fields.push_back(field_id);
     }
@@ -988,7 +995,7 @@ auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
     ProfileType(*this, inst, canonical_id);
   };
-  auto make_inst = [&] { return AddInst(inst); };
+  auto make_inst = [&] { return AddConstantInst(inst); };
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
 
@@ -1023,8 +1030,8 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
     ProfileTupleType(type_ids, canonical_id);
   };
   auto make_tuple_inst = [&] {
-    return AddInst(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
-                                    type_blocks().Add(type_ids)});
+    return AddConstantInst(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
+                                            type_blocks().Add(type_ids)});
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
                               make_tuple_inst);

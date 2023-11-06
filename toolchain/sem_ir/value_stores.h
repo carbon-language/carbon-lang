@@ -45,6 +45,19 @@ class InstStore {
   ValueStore<InstId, Inst> values_;
 };
 
+// Provides storage for instructions representing global constants.
+class ConstantStore {
+ public:
+  // Add a constant instruction.
+  auto Add(InstId inst_id) -> void { values_.push_back(inst_id); }
+
+  auto array_ref() const -> llvm::ArrayRef<InstId> { return values_; }
+  auto size() const -> int { return values_.size(); }
+
+ private:
+  llvm::SmallVector<InstId> values_;
+};
+
 // Provides a ValueStore wrapper for an API specific to name scopes.
 class NameScopeStore {
  public:

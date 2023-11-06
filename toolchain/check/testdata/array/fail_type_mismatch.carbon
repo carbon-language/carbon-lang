@@ -26,26 +26,32 @@ var t2: (i32, i32);
 // CHECK:STDERR:                   ^
 var d: [i32; 3] = t2;
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_15: type = ptr_type [i32; 3]
+// CHECK:STDOUT:   %.1: type = ptr_type String
+// CHECK:STDOUT:   %.loc10_39.1: type = tuple_type (i32, String, String)
+// CHECK:STDOUT:   %.loc12: type = tuple_type (type, type, type)
+// CHECK:STDOUT:   %.loc10_39.2: type = tuple_type (i32, String*, String*)
+// CHECK:STDOUT:   %.loc10_39.3: type = ptr_type (i32, String*, String*)
+// CHECK:STDOUT:   %.loc21_24.1: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc23: type = tuple_type (type, type)
+// CHECK:STDOUT:   %.loc21_24.2: type = ptr_type (i32, i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_type_mismatch.carbon" {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 3
-// CHECK:STDOUT:   %.loc10_15.1: type = array_type %.loc10_14, i32
-// CHECK:STDOUT:   %.loc10_15.2: type = ptr_type [i32; 3]
+// CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32
 // CHECK:STDOUT:   %a.var: ref [i32; 3] = var "a"
 // CHECK:STDOUT:   %a: ref [i32; 3] = bind_name "a", %a.var
 // CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1
-// CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT:   %.loc10_23: String = string_literal "Hello"
 // CHECK:STDOUT:   %.loc10_32: String = string_literal "World"
-// CHECK:STDOUT:   %.loc10_39.1: type = tuple_type (i32, String, String)
-// CHECK:STDOUT:   %.loc10_39.2: (i32, String, String) = tuple_literal (%.loc10_20, %.loc10_23, %.loc10_32)
-// CHECK:STDOUT:   %.loc10_39.3: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc10_39.4: ref i32 = array_index %a.var, %.loc10_39.3
-// CHECK:STDOUT:   %.loc10_39.5: init i32 = initialize_from %.loc10_20 to %.loc10_39.4
+// CHECK:STDOUT:   %.loc10_39.1: (i32, String, String) = tuple_literal (%.loc10_20, %.loc10_23, %.loc10_32)
+// CHECK:STDOUT:   %.loc10_39.2: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc10_39.3: ref i32 = array_index %a.var, %.loc10_39.2
+// CHECK:STDOUT:   %.loc10_39.4: init i32 = initialize_from %.loc10_20 to %.loc10_39.3
 // CHECK:STDOUT:   assign %a.var, <error>
-// CHECK:STDOUT:   %.loc12_29.1: type = tuple_type (type, type, type)
-// CHECK:STDOUT:   %.loc12_29.2: (type, type, type) = tuple_literal (i32, String, String)
-// CHECK:STDOUT:   %.loc10_39.6: type = tuple_type (i32, String*, String*)
-// CHECK:STDOUT:   %.loc10_39.7: type = ptr_type (i32, String*, String*)
+// CHECK:STDOUT:   %.loc12: (type, type, type) = tuple_literal (i32, String, String)
 // CHECK:STDOUT:   %t1.var: ref (i32, String, String) = var "t1"
 // CHECK:STDOUT:   %t1: ref (i32, String, String) = bind_name "t1", %t1.var
 // CHECK:STDOUT:   %.loc16_14: i32 = int_literal 3
@@ -66,12 +72,9 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %c: ref [i32; 3] = bind_name "c", %c.var
 // CHECK:STDOUT:   %.loc21_20: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc21_23: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc21_24.1: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc21_24.2: (i32, i32) = tuple_literal (%.loc21_20, %.loc21_23)
+// CHECK:STDOUT:   %.loc21_24: (i32, i32) = tuple_literal (%.loc21_20, %.loc21_23)
 // CHECK:STDOUT:   assign %c.var, <error>
-// CHECK:STDOUT:   %.loc23_18.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc23_18.2: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc21_24.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc23: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %t2.var: ref (i32, i32) = var "t2"
 // CHECK:STDOUT:   %t2: ref (i32, i32) = bind_name "t2", %t2.var
 // CHECK:STDOUT:   %.loc27_14: i32 = int_literal 3

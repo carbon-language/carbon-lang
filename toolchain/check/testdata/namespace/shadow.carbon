@@ -23,6 +23,10 @@ fn N.M.B() -> i32 {
   return 0;
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc16: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "shadow.carbon" {
 // CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A.1
 // CHECK:STDOUT:   %.loc9: <namespace> = namespace {.A = %A.loc10, .M = %.loc12}
@@ -38,8 +42,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc16: <function> = name_reference "A", file.%A.loc10
-// CHECK:STDOUT:   %.loc16_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc16_4.2: init () = call %A.ref.loc16()
+// CHECK:STDOUT:   %.loc16: init () = call %A.ref.loc16()
 // CHECK:STDOUT:   %.loc17: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc17 br !if.then else br !if.else
 // CHECK:STDOUT:

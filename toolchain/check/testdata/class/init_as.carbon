@@ -13,10 +13,14 @@ fn F() -> i32 {
   return ({.a = 1, .b = 2} as Class).a;
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "init_as.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc10: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -39,7 +43,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_25: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc13_26.1: {.a: i32, .b: i32} = struct_literal (%.loc13_17, %.loc13_25)
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %.loc10: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc13_26.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc13_26.3: ref i32 = class_field_access %.loc13_26.2, member0
 // CHECK:STDOUT:   %.loc13_26.4: init i32 = initialize_from %.loc13_17 to %.loc13_26.3

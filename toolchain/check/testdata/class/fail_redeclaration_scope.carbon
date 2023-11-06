@@ -21,6 +21,10 @@ class Y {
   class A.B {}
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11: type = struct_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_redeclaration_scope.carbon" {
 // CHECK:STDOUT:   class_declaration @A.1, ()
 // CHECK:STDOUT:   %A: type = class_type @A.1
@@ -42,7 +46,6 @@ class Y {
 // CHECK:STDOUT: class @X {
 // CHECK:STDOUT:   class_declaration @A.2, ()
 // CHECK:STDOUT:   %A: type = class_type @A.2
-// CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT:   class_declaration @B.1, ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

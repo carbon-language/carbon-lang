@@ -61,10 +61,8 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       1:               instFloatingPointType
 // CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+0
-// CHECK:STDOUT:       1:               inst+1
-// CHECK:STDOUT:       2:               inst+2
-// CHECK:STDOUT:       3:               inst+3
-// CHECK:STDOUT:       4:               inst+4
+// CHECK:STDOUT:       1:               inst+2
+// CHECK:STDOUT:       2:               inst+4
 // CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+7
 // CHECK:STDOUT:       1:               inst+8
@@ -84,6 +82,5 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       0:               inst+13
 // CHECK:STDOUT:       1:               inst+15
 // CHECK:STDOUT:     block7:
-// CHECK:STDOUT:       0:               inst+5
-// CHECK:STDOUT:       1:               inst+6
+// CHECK:STDOUT:       0:               inst+6
 // CHECK:STDOUT: ...
