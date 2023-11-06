@@ -179,6 +179,18 @@ cc_library(
     srcs = ["lex.cpp"],
     hdrs = ["lex.h"],
     deps = [
+        ":lexer",
+        ":tokenized_buffer",
+        "//toolchain/base:value_store",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/source:source_buffer",
+    ],
+)
+
+cc_library(
+    name = "lexer",
+    hdrs = ["lexer.h"],
+    deps = [
         ":character_set",
         ":helpers",
         ":numeric_literal",
