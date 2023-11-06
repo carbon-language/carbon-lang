@@ -43,13 +43,15 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %A.ref: <function> = name_reference "A", file.%A
 // CHECK:STDOUT:   %.loc11_24.1: init i32 = call %A.ref()
 // CHECK:STDOUT:   %.loc11_24.2: i32 = value_of_initializer %.loc11_24.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_24.2)
+// CHECK:STDOUT:   %.loc11_24.3: i32 = conversion %.loc11_24.1, %.loc11_24.2
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_24.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_reference "B", file.%B
 // CHECK:STDOUT:   %.loc11_33: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc11_27: i32 = value_of_initializer %.loc11_33
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_27)
+// CHECK:STDOUT:   %.loc11_27.1: i32 = value_of_initializer %.loc11_33
+// CHECK:STDOUT:   %.loc11_27.2: i32 = conversion %.loc11_33, %.loc11_27.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_27.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.result
@@ -65,13 +67,15 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %A.ref: <function> = name_reference "A", file.%A
 // CHECK:STDOUT:   %.loc15_25.1: init i32 = call %A.ref()
 // CHECK:STDOUT:   %.loc15_25.2: i32 = value_of_initializer %.loc15_25.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc15_25.2)
+// CHECK:STDOUT:   %.loc15_25.3: i32 = conversion %.loc15_25.1, %.loc15_25.2
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_25.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_reference "B", file.%B
 // CHECK:STDOUT:   %.loc15_34: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc15_28: i32 = value_of_initializer %.loc15_34
-// CHECK:STDOUT:   br !if.expr.result(%.loc15_28)
+// CHECK:STDOUT:   %.loc15_28.1: i32 = value_of_initializer %.loc15_34
+// CHECK:STDOUT:   %.loc15_28.2: i32 = conversion %.loc15_34, %.loc15_28.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_28.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc15_10: i32 = block_arg !if.expr.result

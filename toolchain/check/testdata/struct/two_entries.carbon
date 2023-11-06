@@ -22,8 +22,9 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc7_44.3: init i32 = initialize_from %.loc7_35 to %.loc7_44.2
 // CHECK:STDOUT:   %.loc7_44.4: ref i32 = struct_access %x.var, member1
 // CHECK:STDOUT:   %.loc7_44.5: init i32 = initialize_from %.loc7_43 to %.loc7_44.4
-// CHECK:STDOUT:   %.loc7_44.6: init {.a: i32, .b: i32} = struct_init %.loc7_44.1, (%.loc7_44.3, %.loc7_44.5)
-// CHECK:STDOUT:   assign %x.var, %.loc7_44.6
+// CHECK:STDOUT:   %.loc7_44.6: init {.a: i32, .b: i32} = struct_init (%.loc7_44.3, %.loc7_44.5) to %x.var
+// CHECK:STDOUT:   %.loc7_44.7: init {.a: i32, .b: i32} = conversion %.loc7_44.1, %.loc7_44.6
+// CHECK:STDOUT:   assign %x.var, %.loc7_44.7
 // CHECK:STDOUT:   %.loc8_25: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %y.var: ref {.a: i32, .b: i32} = var "y"
 // CHECK:STDOUT:   %y: ref {.a: i32, .b: i32} = bind_name "y", %y.var
@@ -36,6 +37,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc8_29.6: i32 = bind_value %.loc8_29.5
 // CHECK:STDOUT:   %.loc8_29.7: ref i32 = struct_access %y.var, member1
 // CHECK:STDOUT:   %.loc8_29.8: init i32 = initialize_from %.loc8_29.6 to %.loc8_29.7
-// CHECK:STDOUT:   %.loc8_29.9: init {.a: i32, .b: i32} = struct_init %x.ref, (%.loc8_29.4, %.loc8_29.8)
-// CHECK:STDOUT:   assign %y.var, %.loc8_29.9
+// CHECK:STDOUT:   %.loc8_29.9: init {.a: i32, .b: i32} = struct_init (%.loc8_29.4, %.loc8_29.8) to %y.var
+// CHECK:STDOUT:   %.loc8_29.10: init {.a: i32, .b: i32} = conversion %x.ref, %.loc8_29.9
+// CHECK:STDOUT:   assign %y.var, %.loc8_29.10
 // CHECK:STDOUT: }

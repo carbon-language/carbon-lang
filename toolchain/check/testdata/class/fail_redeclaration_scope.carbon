@@ -40,7 +40,7 @@ class Y {
 // CHECK:STDOUT:   %B: type = class_type @B.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .B = <unexpected instref 20>
+// CHECK:STDOUT:   .B = <unexpected instref inst+11>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
@@ -49,7 +49,7 @@ class Y {
 // CHECK:STDOUT:   class_declaration @B.1, ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .A = <unexpected instref 13>
+// CHECK:STDOUT:   .A = <unexpected instref inst+4>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
@@ -57,7 +57,7 @@ class Y {
 // CHECK:STDOUT:   %B: type = class_type @B.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .B = <unexpected instref 15>
+// CHECK:STDOUT:   .B = <unexpected instref inst+6>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.1 {

@@ -33,6 +33,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   %.loc12_21.3: init i32 = initialize_from %.loc12_13 to %.loc12_21.2
 // CHECK:STDOUT:   %.loc12_21.4: ref f64 = tuple_access %return, member1
 // CHECK:STDOUT:   %.loc12_21.5: init f64 = initialize_from %.loc12_18 to %.loc12_21.4
-// CHECK:STDOUT:   %.loc12_21.6: init (i32, f64) = tuple_init %.loc12_21.1, (%.loc12_21.3, %.loc12_21.5)
-// CHECK:STDOUT:   return %.loc12_21.6
+// CHECK:STDOUT:   %.loc12_21.6: init (i32, f64) = tuple_init (%.loc12_21.3, %.loc12_21.5) to %return
+// CHECK:STDOUT:   %.loc12_21.7: init (i32, f64) = conversion %.loc12_21.1, %.loc12_21.6
+// CHECK:STDOUT:   return %.loc12_21.7
 // CHECK:STDOUT: }

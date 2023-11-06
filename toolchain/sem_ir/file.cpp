@@ -199,6 +199,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ClassDeclaration::Kind:
     case ClassFieldAccess::Kind:
     case ClassInit::Kind:
+    case Conversion::Kind:
     case Dereference::Kind:
     case Field::Kind:
     case FunctionDeclaration::Kind:
@@ -401,6 +402,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
       case ClassDeclaration::Kind:
       case ClassFieldAccess::Kind:
       case ClassInit::Kind:
+      case Conversion::Kind:
       case CrossReference::Kind:
       case Dereference::Kind:
       case Field::Kind:
@@ -489,6 +491,11 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
 
       case NameReference::Kind: {
         inst_id = inst.As<NameReference>().value_id;
+        continue;
+      }
+
+      case Conversion::Kind: {
+        inst_id = inst.As<Conversion>().converted_id;
         continue;
       }
 

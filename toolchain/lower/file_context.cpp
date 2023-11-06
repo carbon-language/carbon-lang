@@ -56,6 +56,24 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   return std::move(llvm_module_);
 }
 
+auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
+  // All builtins are types, with the same empty lowered value.
+  if (inst_id.index < SemIR::BuiltinKind::ValidCount) {
+    return GetTypeAsValue();
+  }
+
+  auto target = sem_ir().insts().Get(inst_id);
+  if (auto function_decl = target.TryAs<SemIR::FunctionDeclaration>()) {
+    return GetFunction(function_decl->function_id);
+  }
+
+  if (target.type_id() == SemIR::TypeId::TypeType) {
+    return GetTypeAsValue();
+  }
+
+  CARBON_FATAL() << "Missing value: " << inst_id << " " << target;
+}
+
 auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);

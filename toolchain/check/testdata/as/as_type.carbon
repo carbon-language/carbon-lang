@@ -12,6 +12,7 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "as_type.carbon" {
-// CHECK:STDOUT:   %.loc7: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %t: type = bind_name "t", constants.%.loc7_26
+// CHECK:STDOUT:   %.loc7_24: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc7_26: type = conversion %.loc7_24, constants.%.loc7_26
+// CHECK:STDOUT:   %t: type = bind_name "t", %.loc7_26
 // CHECK:STDOUT: }

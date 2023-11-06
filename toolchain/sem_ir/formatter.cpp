@@ -145,7 +145,9 @@ class InstNamer {
     auto& [inst_scope, inst_name] = insts[inst_id.index];
     if (!inst_name) {
       // This should not happen in valid IR.
-      return "<unexpected instref " + llvm::itostr(inst_id.index) + ">";
+      std::string str;
+      llvm::raw_string_ostream(str) << "<unexpected instref " << inst_id << ">";
+      return str;
     }
     if (inst_scope == scope_idx) {
       return inst_name.str().str();
@@ -162,7 +164,10 @@ class InstNamer {
     auto& [label_scope, label_name] = labels[block_id.index];
     if (!label_name) {
       // This should not happen in valid IR.
-      return "<unexpected instblockref " + llvm::itostr(block_id.index) + ">";
+      std::string str;
+      llvm::raw_string_ostream(str)
+          << "<unexpected instblockref " << block_id << ">";
+      return str;
     }
     if (label_scope == scope_idx) {
       return label_name.str().str();
@@ -753,25 +758,6 @@ class Formatter {
     in_terminator_sequence_ = false;
   }
 
-  auto FormatInstructionRHS(ArrayInit inst) -> void {
-    out_ << " ";
-    FormatArg(inst.tuple_id);
-
-    llvm::ArrayRef<InstId> inits_and_return_slot =
-        sem_ir_.inst_blocks().Get(inst.inits_and_return_slot_id);
-    auto inits = inits_and_return_slot.drop_back(1);
-    auto return_slot_id = inits_and_return_slot.back();
-
-    out_ << ", (";
-    llvm::ListSeparator sep;
-    for (auto inst_id : inits) {
-      out_ << sep;
-      FormatArg(inst_id);
-    }
-    out_ << ')';
-    FormatReturnSlot(return_slot_id);
-  }
-
   auto FormatInstructionRHS(Call inst) -> void {
     out_ << " ";
     FormatArg(inst.callee_id);
@@ -804,9 +790,24 @@ class Formatter {
     }
   }
 
+  auto FormatInstructionRHS(ArrayInit inst) -> void {
+    FormatArgs(inst.inits_id);
+    FormatReturnSlot(inst.dest_id);
+  }
+
   auto FormatInstructionRHS(InitializeFrom inst) -> void {
     FormatArgs(inst.src_id);
     FormatReturnSlot(inst.dest_id);
+  }
+
+  auto FormatInstructionRHS(StructInit init) -> void {
+    FormatArgs(init.elements_id);
+    FormatReturnSlot(init.dest_id);
+  }
+
+  auto FormatInstructionRHS(TupleInit init) -> void {
+    FormatArgs(init.elements_id);
+    FormatReturnSlot(init.dest_id);
   }
 
   auto FormatInstructionRHS(CrossReference inst) -> void {

@@ -38,7 +38,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Inner = <unexpected instref 11>
+// CHECK:STDOUT:   .Inner = <unexpected instref inst+2>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {

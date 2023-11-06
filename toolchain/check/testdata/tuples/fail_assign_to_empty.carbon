@@ -14,7 +14,8 @@ var x: () = (66);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_assign_to_empty.carbon" {
-// CHECK:STDOUT:   %.loc10_9: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = conversion %.loc10_9.1, constants.%.loc10
 // CHECK:STDOUT:   %x.var: ref () = var "x"
 // CHECK:STDOUT:   %x: ref () = bind_name "x", %x.var
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66

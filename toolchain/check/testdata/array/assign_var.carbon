@@ -15,7 +15,8 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "assign_var.carbon" {
-// CHECK:STDOUT:   %.loc7_22: (type, type, type) = tuple_literal (i32, i32, i32)
+// CHECK:STDOUT:   %.loc7_22.1: (type, type, type) = tuple_literal (i32, i32, i32)
+// CHECK:STDOUT:   %.loc7_22.2: type = conversion %.loc7_22.1, constants.%.loc7_22.2
 // CHECK:STDOUT:   %a.var: ref (i32, i32, i32) = var "a"
 // CHECK:STDOUT:   %a: ref (i32, i32, i32) = bind_name "a", %a.var
 // CHECK:STDOUT:   %.loc7_27: i32 = int_literal 1
@@ -28,8 +29,9 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc7_34.5: init i32 = initialize_from %.loc7_30 to %.loc7_34.4
 // CHECK:STDOUT:   %.loc7_34.6: ref i32 = tuple_access %a.var, member2
 // CHECK:STDOUT:   %.loc7_34.7: init i32 = initialize_from %.loc7_33 to %.loc7_34.6
-// CHECK:STDOUT:   %.loc7_34.8: init (i32, i32, i32) = tuple_init %.loc7_34.1, (%.loc7_34.3, %.loc7_34.5, %.loc7_34.7)
-// CHECK:STDOUT:   assign %a.var, %.loc7_34.8
+// CHECK:STDOUT:   %.loc7_34.8: init (i32, i32, i32) = tuple_init (%.loc7_34.3, %.loc7_34.5, %.loc7_34.7) to %a.var
+// CHECK:STDOUT:   %.loc7_34.9: init (i32, i32, i32) = conversion %.loc7_34.1, %.loc7_34.8
+// CHECK:STDOUT:   assign %a.var, %.loc7_34.9
 // CHECK:STDOUT:   %.loc8_14: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc8_15: type = array_type %.loc8_14, i32
 // CHECK:STDOUT:   %b.var: ref [i32; 3] = var "b"
@@ -50,6 +52,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc8_19.13: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc8_19.14: ref i32 = array_index %b.var, %.loc8_19.13
 // CHECK:STDOUT:   %.loc8_19.15: init i32 = initialize_from %.loc8_19.12 to %.loc8_19.14
-// CHECK:STDOUT:   %.loc8_19.16: init [i32; 3] = array_init %a.ref, (%.loc8_19.5, %.loc8_19.10, %.loc8_19.15) to %b.var
-// CHECK:STDOUT:   assign %b.var, %.loc8_19.16
+// CHECK:STDOUT:   %.loc8_19.16: init [i32; 3] = array_init (%.loc8_19.5, %.loc8_19.10, %.loc8_19.15) to %b.var
+// CHECK:STDOUT:   %.loc8_19.17: init [i32; 3] = conversion %a.ref, %.loc8_19.16
+// CHECK:STDOUT:   assign %b.var, %.loc8_19.17
 // CHECK:STDOUT: }
