@@ -73,7 +73,7 @@ static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
 
 // A table of booleans that we can use to classify bytes as being valid
 // identifier start. This is used by raw identifier detection.
-constexpr std::array<bool, 256> IsIdStartByteTable = [] {
+static constexpr std::array<bool, 256> IsIdStartByteTable = [] {
   std::array<bool, 256> table = {};
   for (char c = 'A'; c <= 'Z'; ++c) {
     table[c] = true;
@@ -88,7 +88,7 @@ constexpr std::array<bool, 256> IsIdStartByteTable = [] {
 // A table of booleans that we can use to classify bytes as being valid
 // identifier (or keyword) characters. This is used in the generic,
 // non-vectorized fallback code to scan for length of an identifier.
-constexpr std::array<bool, 256> IsIdByteTable = [] {
+static constexpr std::array<bool, 256> IsIdByteTable = [] {
   std::array<bool, 256> table = IsIdStartByteTable;
   for (char c = '0'; c <= '9'; ++c) {
     table[c] = true;
@@ -162,7 +162,7 @@ struct alignas(16) NibbleLUT {
 };
 }  // namespace
 
-constexpr NibbleLUT HighLUT = {
+static constexpr NibbleLUT HighLUT = {
     .nibble_0 = 0b0000'0000,
     .nibble_1 = 0b0000'0000,
     .nibble_2 = 0b0000'0000,
@@ -180,7 +180,7 @@ constexpr NibbleLUT HighLUT = {
     .nibble_e = 0b1000'0000,
     .nibble_f = 0b1000'0000,
 };
-constexpr NibbleLUT LowLUT = {
+static constexpr NibbleLUT LowLUT = {
     .nibble_0 = 0b1000'1010,
     .nibble_1 = 0b1000'1110,
     .nibble_2 = 0b1000'1110,
@@ -304,7 +304,7 @@ using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef source_text,
                                ssize_t position) -> void;
 using DispatchTableT = std::array<DispatchFunctionT*, 256>;
 
-constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
+static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
   std::array<TokenKind, 256> table = {};
 #define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
   table[(Spelling)[0]] = TokenKind::TokenName;
@@ -403,7 +403,7 @@ CARBON_DISPATCH_LEX_NON_TOKEN(LexCommentOrSlash)
 // of the lexer. This is based on the technique described more fully for any
 // kind of byte-stream loop structure here:
 // https://blog.reverberate.org/2021/04/21/musttail-efficient-interpreters.html
-constexpr static auto MakeDispatchTable() -> DispatchTableT {
+static constexpr auto MakeDispatchTable() -> DispatchTableT {
   DispatchTableT table = {};
   // First set the table entries to dispatch to our error token handler as the
   // base case. Everything valid comes from an override below.
@@ -471,7 +471,7 @@ constexpr static auto MakeDispatchTable() -> DispatchTableT {
   return table;
 };
 
-constexpr DispatchTableT DispatchTable = MakeDispatchTable();
+static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
 
 static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
                          ssize_t position) -> void {
