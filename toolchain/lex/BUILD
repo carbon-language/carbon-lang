@@ -189,6 +189,7 @@ cc_library(
 
 cc_library(
     name = "lexer",
+    srcs = ["lexer.cpp"],
     hdrs = ["lexer.h"],
     deps = [
         ":character_set",
