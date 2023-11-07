@@ -22,7 +22,7 @@ auto HandleIfExpressionIf(Context& context, Parse::Node parse_node) -> bool {
   // Start emitting the `then` block.
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(then_block_id);
-  context.AddCurrentCodeBlockToFunction();
+  context.AddCurrentCodeBlockToFunction(parse_node);
 
   context.node_stack().Push(if_node, else_block_id);
   return true;
@@ -38,7 +38,7 @@ auto HandleIfExpressionThen(Context& context, Parse::Node parse_node) -> bool {
 
   // Start emitting the `else` block.
   context.inst_block_stack().Push(else_block_id);
-  context.AddCurrentCodeBlockToFunction();
+  context.AddCurrentCodeBlockToFunction(parse_node);
 
   context.node_stack().Push(parse_node, then_value_id);
   return true;
@@ -64,7 +64,7 @@ auto HandleIfExpressionElse(Context& context, Parse::Node parse_node) -> bool {
   // Create a resumption block and branches to it.
   auto chosen_value_id = context.AddConvergenceBlockWithArgAndPush(
       if_node, {else_value_id, then_value_id});
-  context.AddCurrentCodeBlockToFunction();
+  context.AddCurrentCodeBlockToFunction(parse_node);
 
   // Push the result value.
   context.node_stack().Push(else_node, chosen_value_id);
