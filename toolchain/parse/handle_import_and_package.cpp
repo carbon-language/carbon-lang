@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
 
@@ -20,10 +21,13 @@ static auto ExitOnParseError(Context& context, Context::StateStackEntry state,
 // introducer is already added.
 static auto HandleImportAndPackage(Context& context,
                                    Context::StateStackEntry state,
-                                   NodeKind directive, bool expect_api_or_impl)
+                                   NodeKind directive, bool is_package)
     -> void {
-  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                       NodeKind::Name)) {
+  Tree::Package package{.node = Node(state.subtree_start)};
+  if (auto package_name_token = context.ConsumeIf(Lex::TokenKind::Identifier)) {
+    package.package_id = context.tokens().GetIdentifier(*package_name_token);
+    context.AddLeafNode(NodeKind::Name, *package_name_token);
+  } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterKeyword, Error,
                       "Expected identifier after `{0}`.", Lex::TokenKind);
     context.emitter().Emit(*context.position(), ExpectedIdentifierAfterKeyword,
@@ -32,12 +36,15 @@ static auto HandleImportAndPackage(Context& context,
     return;
   }
 
-  bool library_parsed = false;
   if (auto library_token = context.ConsumeIf(Lex::TokenKind::Library)) {
     auto library_start = context.tree().size();
 
-    if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::StringLiteral,
-                                         NodeKind::Literal)) {
+    if (auto library_name_token =
+            context.ConsumeIf(Lex::TokenKind::StringLiteral)) {
+      package.library_id =
+          context.tokens().GetStringLiteral(*library_name_token);
+      context.AddLeafNode(NodeKind::Literal, *library_name_token);
+    } else {
       CARBON_DIAGNOSTIC(
           ExpectedLibraryName, Error,
           "Expected a string literal to specify the library name.");
@@ -48,11 +55,11 @@ static auto HandleImportAndPackage(Context& context,
 
     context.AddNode(NodeKind::Library, *library_token, library_start,
                     /*has_error=*/false);
-    library_parsed = true;
   }
 
-  auto next_kind = context.tokens().GetKind(*(context.position()));
-  if (!library_parsed && next_kind == Lex::TokenKind::StringLiteral) {
+  auto next_kind = context.PositionKind();
+  if (!package.library_id.is_valid() &&
+      next_kind == Lex::TokenKind::StringLiteral) {
     // If we come acroess a string literal and we didn't parse `library
     // "..."` yet, then most probably the user forgot to add `library`
     // before the library name.
@@ -63,14 +70,17 @@ static auto HandleImportAndPackage(Context& context,
     return;
   }
 
-  if (expect_api_or_impl) {
+  Tree::ApiOrImpl api_or_impl;
+  if (is_package) {
     switch (next_kind) {
       case Lex::TokenKind::Api: {
         context.AddLeafNode(NodeKind::PackageApi, context.Consume());
+        api_or_impl = Tree::ApiOrImpl::Api;
         break;
       }
       case Lex::TokenKind::Impl: {
         context.AddLeafNode(NodeKind::PackageImpl, context.Consume());
+        api_or_impl = Tree::ApiOrImpl::Impl;
         break;
       }
       default: {
@@ -87,6 +97,12 @@ static auto HandleImportAndPackage(Context& context,
     context.EmitExpectedDeclSemi(context.tokens().GetKind(state.token));
     ExitOnParseError(context, state, directive);
     return;
+  }
+
+  if (is_package) {
+    context.SetPackage(package, api_or_impl);
+  } else {
+    context.AddImport(package);
   }
 
   context.AddNode(directive, context.Consume(), state.subtree_start,
@@ -107,7 +123,7 @@ auto HandleImport(Context& context) -> void {
 
     case Context::PackagingState::InImports:
       HandleImportAndPackage(context, state, NodeKind::ImportDirective,
-                             /*expect_api_or_impl=*/false);
+                             /*is_package=*/false);
       break;
 
     case Context::PackagingState::AfterNonPackagingDecl: {
@@ -157,7 +173,7 @@ auto HandlePackage(Context& context) -> void {
   // `package` is no longer allowed, but `import` may repeat.
   context.set_packaging_state(Context::PackagingState::InImports);
   HandleImportAndPackage(context, state, NodeKind::PackageDirective,
-                         /*expect_api_or_impl=*/true);
+                         /*is_package=*/true);
 }
 
 }  // namespace Carbon::Parse

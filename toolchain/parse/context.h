@@ -287,6 +287,17 @@ class Context {
   auto RecoverFromDeclError(StateStackEntry state, NodeKind parse_node_kind,
                             bool skip_past_likely_end) -> void;
 
+  // Sets the package directive information. Called at most once.
+  auto SetPackage(Tree::Package package, Tree::ApiOrImpl api_or_impl) -> void {
+    CARBON_CHECK(!tree_->package_);
+    tree_->package_ = {.package = package, .api_or_impl = api_or_impl};
+  }
+
+  // Adds an import.
+  auto AddImport(Tree::Package package) -> void {
+    tree_->imports_.push_back(package);
+  }
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 

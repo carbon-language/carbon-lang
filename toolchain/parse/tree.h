@@ -62,6 +62,26 @@ class Tree : public Printable<Tree> {
   class PostorderIterator;
   class SiblingIterator;
 
+  // For `package`.
+  enum class ApiOrImpl : uint8_t {
+    Api,
+    Impl,
+  };
+
+  // Used for both `package` and `import`. Links back to the node for
+  // diagnostics.
+  struct Package {
+    Node node;
+    IdentifierId package_id = IdentifierId::Invalid;
+    StringLiteralId library_id = StringLiteralId::Invalid;
+  };
+
+  // `package` information.
+  struct PackageDirective {
+    Package package;
+    ApiOrImpl api_or_impl;
+  };
+
   // Parses the token buffer into a `Tree`.
   //
   // This is the factory function which is used to build parse trees.
@@ -106,6 +126,11 @@ class Tree : public Printable<Tree> {
   [[nodiscard]] auto node_token(Node n) const -> Lex::Token;
 
   [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
+
+  auto package() const -> const std::optional<PackageDirective>& {
+    return package_;
+  }
+  auto imports() const -> llvm::ArrayRef<Package> { return imports_; }
 
   // See the other Print comments.
   auto Print(llvm::raw_ostream& output) const -> void;
@@ -241,6 +266,9 @@ class Tree : public Printable<Tree> {
   // is true we do *not* have the expected 1:1 mapping between tokens and parsed
   // nodes as some tokens may have been skipped.
   bool has_errors_ = false;
+
+  std::optional<PackageDirective> package_;
+  llvm::SmallVector<Package> imports_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes
