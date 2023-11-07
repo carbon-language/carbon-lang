@@ -952,8 +952,7 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int column)
   return token;
 }
 
-[[gnu::noinline]] auto Lexer::CloseInvalidOpenGroups(TokenKind kind,
-                                                     ssize_t position) -> void {
+auto Lexer::CloseInvalidOpenGroups(TokenKind kind, ssize_t position) -> void {
   CARBON_CHECK(kind.is_closing_symbol() || kind == TokenKind::Error);
   CARBON_CHECK(!open_groups_.empty());
 

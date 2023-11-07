@@ -55,10 +55,7 @@ class Lexer {
         token_translator_(&buffer_),
         token_emitter_(token_translator_, consumer_) {}
 
-  // Find all line endings and create the line data structures. Explicitly kept
-  // out-of-line because this is a significant loop that is useful to have in
-  // the profile and it doesn't simplify by inlining at all. But because it can,
-  // the compiler will flatten this otherwise.
+  // Find all line endings and create the line data structures.
   auto CreateLines(llvm::StringRef source_text) -> void;
 
   auto current_line() -> Line { return Line(line_index_); }
