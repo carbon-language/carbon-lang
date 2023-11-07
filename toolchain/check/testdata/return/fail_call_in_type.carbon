@@ -7,7 +7,7 @@
 // TODO: Some variant of this should work, once compile-time function calls are
 // supported.
 fn ReturnType() -> type { return i32; }
-// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+3]]:24: ERROR: Cannot convert expression to type `type`.
+// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+3]]:24: ERROR: Cannot evaluate type expression.
 // CHECK:STDERR: fn Six() -> ReturnType() { return 6; }
 // CHECK:STDERR:                        ^
 fn Six() -> ReturnType() { return 6; }

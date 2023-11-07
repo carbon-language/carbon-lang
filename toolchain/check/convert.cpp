@@ -1095,9 +1095,9 @@ auto ExpressionAsType(Context& context, Parse::Node parse_node,
   }
   auto type_id = context.CanonicalizeType(type_inst_id);
   if (type_id == SemIR::TypeId::Error) {
-    CARBON_DIAGNOSTIC(TypeConversionFailure, Error,
-                      "Cannot convert expression to type `type`.");
-    context.emitter().Emit(parse_node, TypeConversionFailure);
+    CARBON_DIAGNOSTIC(TypeExpressionEvaluationFailure, Error,
+                      "Cannot evaluate type expression.");
+    context.emitter().Emit(parse_node, TypeExpressionEvaluationFailure);
   }
   return type_id;
 }

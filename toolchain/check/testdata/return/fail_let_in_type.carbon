@@ -6,7 +6,7 @@
 
 // TODO: This should probably work, it just doesn't right now.
 let x: type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:13: ERROR: Cannot convert expression to type `type`.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:13: ERROR: Cannot evaluate type expression.
 // CHECK:STDERR: fn Six() -> x { return 6; }
 // CHECK:STDERR:             ^
 fn Six() -> x { return 6; }
