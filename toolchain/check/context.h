@@ -356,7 +356,7 @@ class Context {
   // directly or indirectly canonicalize any types.
   auto CanonicalizeTypeImpl(
       SemIR::InstKind kind,
-      llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)>
+      llvm::function_ref<bool(llvm::FoldingSetNodeID& canonical_id)>
           profile_type,
       llvm::function_ref<SemIR::InstId()> make_inst) -> SemIR::TypeId;
 

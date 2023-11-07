@@ -1088,8 +1088,18 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
 
 auto ExpressionAsType(Context& context, Parse::Node parse_node,
                       SemIR::InstId value_id) -> SemIR::TypeId {
-  return context.CanonicalizeType(ConvertToValueOfType(
-      context, parse_node, value_id, SemIR::TypeId::TypeType));
+  auto type_inst_id = ConvertToValueOfType(context, parse_node, value_id,
+                                           SemIR::TypeId::TypeType);
+  if (type_inst_id == SemIR::InstId::BuiltinError) {
+    return SemIR::TypeId::Error;
+  }
+  auto type_id = context.CanonicalizeType(type_inst_id);
+  if (type_id == SemIR::TypeId::Error) {
+    CARBON_DIAGNOSTIC(TypeExpressionEvaluationFailure, Error,
+                      "Cannot evaluate type expression.");
+    context.emitter().Emit(parse_node, TypeExpressionEvaluationFailure);
+  }
+  return type_id;
 }
 
 }  // namespace Carbon::Check

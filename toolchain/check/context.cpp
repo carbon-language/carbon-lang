@@ -889,11 +889,13 @@ auto Context::TryToCompleteType(
 
 auto Context::CanonicalizeTypeImpl(
     SemIR::InstKind kind,
-    llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)> profile_type,
+    llvm::function_ref<bool(llvm::FoldingSetNodeID& canonical_id)> profile_type,
     llvm::function_ref<SemIR::InstId()> make_inst) -> SemIR::TypeId {
   llvm::FoldingSetNodeID canonical_id;
   kind.Profile(canonical_id);
-  profile_type(canonical_id);
+  if (!profile_type(canonical_id)) {
+    return SemIR::TypeId::Error;
+  }
 
   void* insert_pos;
   auto* node =
@@ -929,9 +931,14 @@ static auto ProfileTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids,
   }
 }
 
-// Compute a fingerprint for a type, for use as a key in a folding set.
+// Compute a fingerprint for a type, for use as a key in a folding set. Returns
+// false if not supported, which is presently the case for compile-time
+// expressions.
+// TODO: Once support is more complete, in particular ensuring that various
+// valid compile-time expressions are supported, it may be desirable to switch
+// the default to a CARBON_FATAL error.
 static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
-                        llvm::FoldingSetNodeID& canonical_id) -> void {
+                        llvm::FoldingSetNodeID& canonical_id) -> bool {
   switch (inst.kind()) {
     case SemIR::ArrayType::Kind: {
       auto array_type = inst.As<SemIR::ArrayType>();
@@ -985,15 +992,19 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
       canonical_id.AddInteger(unbound_field_type.field_type_id.index);
       break;
     }
-    default:
-      CARBON_FATAL() << "Unexpected type inst " << inst;
+    default: {
+      // Right now, this is only expected to occur in calls from
+      // ExpressionAsType. Diagnostics are issued there.
+      return false;
+    }
   }
+  return true;
 }
 
 auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
     -> SemIR::TypeId {
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
-    ProfileType(*this, inst, canonical_id);
+    return ProfileType(*this, inst, canonical_id);
   };
   auto make_inst = [&] { return AddConstantInst(inst); };
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
@@ -1009,7 +1020,7 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
 
   auto inst = insts().Get(inst_id);
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
-    ProfileType(*this, inst, canonical_id);
+    return ProfileType(*this, inst, canonical_id);
   };
   auto make_inst = [&] { return inst_id; };
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
@@ -1028,6 +1039,7 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
   // Defer allocating a SemIR::TypeBlockId until we know this is a new type.
   auto profile_tuple = [&](llvm::FoldingSetNodeID& canonical_id) {
     ProfileTupleType(type_ids, canonical_id);
+    return true;
   };
   auto make_tuple_inst = [&] {
     return AddConstantInst(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
