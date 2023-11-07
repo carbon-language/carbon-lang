@@ -158,7 +158,11 @@ class Context {
       std::initializer_list<SemIR::InstId> blocks_and_args) -> SemIR::InstId;
 
   // Add the current code block to the enclosing function.
-  auto AddCurrentCodeBlockToFunction() -> void;
+  // TODO: The parse_node is taken for expressions, which can occur in
+  // non-function contexts. This should be refactored to support non-function
+  // contexts, and parse_node removed.
+  auto AddCurrentCodeBlockToFunction(
+      Parse::Node parse_node = Parse::Node::Invalid) -> void;
 
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;

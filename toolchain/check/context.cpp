@@ -379,9 +379,17 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 }
 
 // Add the current code block to the enclosing function.
-auto Context::AddCurrentCodeBlockToFunction() -> void {
+auto Context::AddCurrentCodeBlockToFunction(Parse::Node parse_node) -> void {
   CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
-  CARBON_CHECK(!return_scope_stack().empty()) << "no current function";
+
+  if (return_scope_stack().empty()) {
+    CARBON_CHECK(parse_node.is_valid())
+        << "No current function, but parse_node not provided";
+    TODO(parse_node,
+         "Control flow expressions are currently only supported inside "
+         "functions.");
+    return;
+  }
 
   if (!inst_block_stack().is_current_block_reachable()) {
     // Don't include unreachable blocks in the function.
