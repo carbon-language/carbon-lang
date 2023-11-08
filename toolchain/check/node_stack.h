@@ -100,6 +100,17 @@ class NodeStack {
     PopForSoloParseNode<RequiredParseKind>();
   }
 
+  // Pops the top of the stack if it is the given kind. Returns `true` if a node
+  // was popped.
+  template <Parse::NodeKind::RawEnumType RequiredParseKind>
+  auto PopAndDiscardSoloParseNodeIf() -> bool {
+    if (!PeekIs<RequiredParseKind>()) {
+      return false;
+    }
+    PopForSoloParseNode<RequiredParseKind>();
+    return true;
+  }
+
   // Pops an expression from the top of the stack and returns the parse_node and
   // the ID.
   auto PopExpressionWithParseNode() -> std::pair<Parse::Node, SemIR::InstId> {
@@ -329,6 +340,7 @@ class NodeStack {
       case Parse::NodeKind::ParameterListStart:
       case Parse::NodeKind::ParenExpressionOrTupleLiteralStart:
       case Parse::NodeKind::QualifiedDeclaration:
+      case Parse::NodeKind::ReturnedSpecifier:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::SelfValueName:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:

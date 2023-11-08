@@ -8,6 +8,26 @@
 
 namespace Carbon::Check {
 
+auto HandleVariableIntroducer(Context& context, Parse::Node parse_node)
+    -> bool {
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleReturnedSpecifier(Context& context, Parse::Node parse_node) -> bool {
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleVariableInitializer(Context& context, Parse::Node parse_node)
+    -> bool {
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
 auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
     -> bool {
   // Handle the optional initializer.
@@ -33,37 +53,27 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
     value_id = bind_name->value_id;
   }
 
+  // Pop the `returned` specifier if present.
+  context.node_stack()
+      .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ReturnedSpecifier>();
+
   // If there was an initializer, assign it to the storage.
   if (has_init) {
-    if (context.insts().Get(value_id).Is<SemIR::VarStorage>()) {
+    if (context.GetCurrentScopeAs<SemIR::ClassDeclaration>()) {
+      // TODO: In a class scope, we should instead save the initializer
+      // somewhere so that we can use it as a default.
+      context.TODO(parse_node, "Field initializer");
+    } else {
       init_id = Initialize(context, parse_node, value_id, init_id);
       // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
       context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
-    } else {
-      // TODO: In a class scope, we should instead save the initializer
-      // somewhere so that we can use it as a default.
-      context.TODO(parse_node, "Field initializer");
     }
   }
 
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
 
-  return true;
-}
-
-auto HandleVariableIntroducer(Context& context, Parse::Node parse_node)
-    -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
-auto HandleVariableInitializer(Context& context, Parse::Node parse_node)
-    -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
   return true;
 }
 

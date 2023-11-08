@@ -6,22 +6,41 @@
 
 namespace Carbon::Parse {
 
-// Handles VarAs(Semicolon|For).
+// Handles VarAs(Declaration|For).
 static auto HandleVar(Context& context, State finish_state) -> void {
   context.PopAndDiscardState();
 
-  // These will start at the `var`.
+  // These will start at the `var` or `returned`.
   context.PushState(finish_state);
   context.PushState(State::VarAfterPattern);
 
+  // Consume the `var` or `returned var`.
+  auto returned_token = context.ConsumeIf(Lex::TokenKind::Returned);
+  if (returned_token && !context.PositionIs(Lex::TokenKind::Var)) {
+    CARBON_DIAGNOSTIC(ExpectedVarAfterReturned, Error,
+                      "Expected `var` after `returned`.");
+    context.emitter().Emit(*context.position(), ExpectedVarAfterReturned);
+    context.PopAndDiscardState();
+    context.PopAndDiscardState();
+    auto semi = context.SkipPastLikelyEnd(*returned_token);
+    context.AddLeafNode(NodeKind::EmptyDeclaration,
+                        semi ? *semi : *returned_token,
+                        /*has_error=*/true);
+    return;
+  }
+
   context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
+
+  if (returned_token) {
+    context.AddLeafNode(NodeKind::ReturnedSpecifier, *returned_token);
+  }
 
   // This will start at the pattern.
   context.PushState(State::PatternAsVariable);
 }
 
-auto HandleVarAsSemicolon(Context& context) -> void {
-  HandleVar(context, State::VarFinishAsSemicolon);
+auto HandleVarAsDeclaration(Context& context) -> void {
+  HandleVar(context, State::VarFinishAsDeclaration);
 }
 
 auto HandleVarAsFor(Context& context) -> void {
@@ -44,7 +63,7 @@ auto HandleVarAfterPattern(Context& context) -> void {
   }
 }
 
-auto HandleVarFinishAsSemicolon(Context& context) -> void {
+auto HandleVarFinishAsDeclaration(Context& context) -> void {
   auto state = context.PopState();
 
   auto end_token = state.token;

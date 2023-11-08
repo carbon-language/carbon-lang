@@ -30,7 +30,7 @@ auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
 auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
   auto fn_inst = context.insts().GetAs<SemIR::FunctionDeclaration>(
-      context.return_scope_stack().back());
+      context.return_scope_stack().back().decl_id);
   const auto& callable = context.functions().Get(fn_inst.function_id);
 
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==

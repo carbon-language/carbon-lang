@@ -28,6 +28,69 @@ auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
   return context.TODO(parse_node, "GenericPatternBinding");
 }
 
+// Checks a `returned var` binding and returns the location of the return
+// value storage that the name should bind to.
+static auto CheckReturnedVar(Context& context, Parse::Node returned_node,
+                             Parse::Node name_node, IdentifierId name_id,
+                             Parse::Node type_node, SemIR::TypeId type_id)
+    -> SemIR::InstId {
+  CARBON_CHECK(!context.return_scope_stack().empty())
+      << "`returned var` not in a function";
+  auto function_id = context.insts()
+                         .GetAs<SemIR::FunctionDeclaration>(
+                             context.return_scope_stack().back().decl_id)
+                         .function_id;
+
+  // A `returned var` requires an explicit return type.
+  auto& function = context.functions().Get(function_id);
+  if (!function.return_type_id.is_valid()) {
+    CARBON_DIAGNOSTIC(ReturnedVarWithNoReturnType, Error,
+                      "Cannot declare a `returned var` in function with "
+                      "no declared return type.");
+    // TODO: Produce ReturnStatementImplicitNote here.
+    context.emitter().Emit(returned_node, ReturnedVarWithNoReturnType);
+    return SemIR::InstId::BuiltinError;
+  }
+
+  // The declared type of the var must match the return type of the function.
+  if (function.return_type_id != type_id) {
+    CARBON_DIAGNOSTIC(ReturnedVarWrongType, Error,
+                      "Type `{0}` of `returned var` does not match "
+                      "return type `{1}` of enclosing function.",
+                      std::string, std::string);
+    // TODO: Note the return type location.
+    context.emitter().Emit(
+        type_node, ReturnedVarWrongType,
+        context.sem_ir().StringifyType(type_id, true),
+        context.sem_ir().StringifyType(function.return_type_id, true));
+    return SemIR::InstId::BuiltinError;
+  }
+
+  // The variable aliases the return slot if there is one. If not, it has its
+  // own storage.
+  if (function.return_slot_id.is_valid()) {
+    return function.return_slot_id;
+  }
+  return context.AddInst(SemIR::VarStorage{name_node, type_id, name_id});
+}
+
+// Registers the given binding as the current `returned var` in this scope.
+static auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id)
+    -> void {
+  auto existing_id = context.SetReturnedVarOrGetExisting(bind_id);
+  if (existing_id.is_valid()) {
+    CARBON_DIAGNOSTIC(ReturnedVarShadowed, Error,
+                      "Cannot declare a `returned var` in the scope of "
+                      "another `returned var`.");
+    CARBON_DIAGNOSTIC(ReturnedVarHere, Note,
+                      "`returned var` was declared here.");
+    context.emitter()
+        .Build(context.insts().Get(bind_id).parse_node(), ReturnedVarShadowed)
+        .Note(context.insts().Get(existing_id).parse_node(), ReturnedVarHere)
+        .Emit();
+  }
+}
+
 auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExpressionWithParseNode();
@@ -62,6 +125,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   // error locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
+    case Parse::NodeKind::ReturnedSpecifier:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl =
@@ -79,7 +143,11 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       }
       SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
-      if (enclosing_class_decl) {
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+        value_id =
+            CheckReturnedVar(context, context.node_stack().PeekParseNode(),
+                             name_node, name_id, type_node, cast_type_id);
+      } else if (enclosing_class_decl) {
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
         auto field_type_inst_id = context.AddInst(SemIR::UnboundFieldType{
@@ -99,9 +167,13 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
         value_id = context.AddInst(
             SemIR::VarStorage{name_node, value_type_id, name_id});
       }
-      context.AddInstAndPush(
-          parse_node,
+      auto bind_id = context.AddInst(
           SemIR::BindName{name_node, value_type_id, name_id, value_id});
+      context.node_stack().Push(parse_node, bind_id);
+
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+        RegisterReturnedVar(context, bind_id);
+      }
       break;
     }
 

@@ -229,7 +229,7 @@ CARBON_PARSE_STATE(DeclarationNameAndParamsAfterImplicit)
 // If `Semi`:
 //   1. DeclarationScopeLoop
 // If `Var`:
-//   1. VarAsSemicolon
+//   1. VarAsDeclaration
 //   2. DeclarationScopeLoop
 // If `Let`:
 //   1. Let
@@ -567,7 +567,7 @@ CARBON_PARSE_STATE_VARIANTS2(PatternFinish, Generic, Regular)
 // If `Return`:
 //   1. StatementReturn
 // If `Var`:
-//   1. VarAsSemicolon
+//   1. VarAsDeclaration
 // If `While`:
 //   1. StatementWhile
 // Else:
@@ -730,8 +730,8 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface,
 // Always:
 //   1. PatternAsVariable
 //   2. VarAfterPattern
-//   3. VarFinishAs(Semicolon|For)
-CARBON_PARSE_STATE_VARIANTS2(Var, Semicolon, For)
+//   3. VarFinishAs(Declaration|For)
+CARBON_PARSE_STATE_VARIANTS2(Var, Declaration, For)
 
 // Handles `var` after the pattern, either followed by an initializer or the
 // semicolon.
@@ -746,7 +746,7 @@ CARBON_PARSE_STATE(VarAfterPattern)
 //
 // Always:
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(VarFinish, Semicolon, For)
+CARBON_PARSE_STATE_VARIANTS2(VarFinish, Declaration, For)
 
 // Handles the start of a `let`.
 //

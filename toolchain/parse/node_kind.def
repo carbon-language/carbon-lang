@@ -222,8 +222,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDeclaration, LetIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Let)))
 
-// `var`:
+// `var` and `returned var`:
 //   VariableIntroducer
+//   _optional_ ReturnedSpecifier
 //   _external_: PatternBinding
 //   _optional_ VariableInitializer
 //   _optional_ _external_: expression
@@ -231,11 +232,15 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDeclaration, LetIntroducer,
 //
 // The VariableInitializer and following expression are paired: either both will
 // be present, or neither will.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0, CARBON_TOKEN(Var))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0,
+                                   CARBON_TOKEN(Var)
+                                       CARBON_IF_ERROR(CARBON_TOKEN(Returned)))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnedSpecifier, 0, CARBON_TOKEN(Returned))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclaration, VariableIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Var)))
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Var)
+                                                       CARBON_TOKEN(Returned)))
 
 // An expression statement:
 //   _external_: expression

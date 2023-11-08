@@ -30,6 +30,16 @@ class Context {
     SemIR::InstBlockId continue_target;
   };
 
+  // A scope in which `return` can be used.
+  struct ReturnScope {
+    // The declaration from which we can return. Inside a function, this will
+    // be a `FunctionDeclaration`.
+    SemIR::InstId decl_id;
+
+    // The value corresponding to the current `returned var`, if any.
+    SemIR::InstId returned_var = SemIR::InstId::Invalid;
+  };
+
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
@@ -114,6 +124,10 @@ class Context {
     }
     return insts().Get(current_scope_inst_id).TryAs<InstT>();
   }
+
+  // Sets the given instruction to be the current `returned var`. If there is
+  // already a `returned var`, returns it instead.
+  auto SetReturnedVarOrGetExisting(SemIR::InstId bind_id) -> SemIR::InstId;
 
   // Follows NameReference instructions to find the value named by a given
   // instruction.
@@ -255,7 +269,7 @@ class Context {
     return args_type_info_stack_;
   }
 
-  auto return_scope_stack() -> llvm::SmallVector<SemIR::InstId>& {
+  auto return_scope_stack() -> llvm::SmallVector<ReturnScope>& {
     return return_scope_stack_;
   }
 
@@ -329,8 +343,12 @@ class Context {
     SemIR::NameScopeId scope_id;
 
     // Names which are registered with name_lookup_, and will need to be
-    // deregistered when the scope ends.
+    // unregistered when the scope ends.
     llvm::DenseSet<IdentifierId> names;
+
+    // Whether a `returned var` was introduced in this scope, and needs to be
+    // unregistered when the scope ends.
+    bool has_returned_var = false;
 
     // TODO: This likely needs to track things which need to be destructed.
   };
@@ -402,9 +420,8 @@ class Context {
   // for a type separate from the literal arguments.
   InstBlockStack args_type_info_stack_;
 
-  // A stack of return scopes; i.e., targets for `return`. Inside a function,
-  // this will be a FunctionDeclaration.
-  llvm::SmallVector<SemIR::InstId> return_scope_stack_;
+  // A stack of scopes from which we can `return`.
+  llvm::SmallVector<ReturnScope> return_scope_stack_;
 
   // A stack of `break` and `continue` targets.
   llvm::SmallVector<BreakContinueScope> break_continue_stack_;
