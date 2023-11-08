@@ -287,9 +287,8 @@ class File : public Printable<File> {
   }
   auto classes() -> ValueStore<ClassId, Class>& { return classes_; }
   auto classes() const -> const ValueStore<ClassId, Class>& { return classes_; }
-  auto names() -> NameStore { return NameStore(&value_stores_->strings()); }
-  auto names() const -> const NameStore {
-    return NameStore(&value_stores_->strings());
+  auto names() const -> NameStoreWrapper {
+    return NameStoreWrapper(&identifiers());
   }
   auto name_scopes() -> NameScopeStore& { return name_scopes_; }
   auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }

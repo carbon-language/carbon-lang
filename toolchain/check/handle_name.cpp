@@ -56,7 +56,7 @@ static auto GetExpressionValueForLookupResult(Context& context,
 
 auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  IdentifierId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
   auto base_id = context.node_stack().PopExpression();
 
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -224,7 +224,7 @@ auto HandlePointerMemberAccessExpression(Context& context,
 }
 
 auto HandleName(Context& context, Parse::Node parse_node) -> bool {
-  auto name_id = context.names().Add(context.tokens().GetIdentifier(
+  auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
       context.parse_tree().node_token(parse_node)));
   // The parent is responsible for binding the name.
   context.node_stack().Push(parse_node, name_id);
@@ -293,7 +293,7 @@ auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
 
 auto HandleSelfValueNameExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  auto name_id = StringId::SelfValue;
+  auto name_id = SemIR::NameId::SelfValue;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(

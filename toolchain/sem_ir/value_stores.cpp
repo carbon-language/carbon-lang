@@ -24,10 +24,10 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
   }
 }
 
-auto NameStore::GetFormatted(NameId name_id) const -> llvm::StringRef {
-  // If the name is a string name with a keyword spelling, format it with an
-  // `r#` prefix. Return any other string name as-is.
-  if (auto string_name = GetAsString(name_id)) {
+auto NameStoreWrapper::GetFormatted(NameId name_id) const -> llvm::StringRef {
+  // If the name is an identifier name with a keyword spelling, format it with
+  // an `r#` prefix. Format any other identifier name as just the identifier.
+  if (auto string_name = GetAsStringIfIdentifier(name_id)) {
     return llvm::StringSwitch<llvm::StringRef>(*string_name)
 #define CARBON_KEYWORD_TOKEN(Name, Spelling) .Case(Spelling, "r#" Spelling)
 #include "toolchain/lex/token_kind.def"
@@ -36,8 +36,8 @@ auto NameStore::GetFormatted(NameId name_id) const -> llvm::StringRef {
   return GetSpecialName(name_id, /*for_ir=*/false);
 }
 
-auto NameStore::GetIRBaseName(NameId name_id) const -> llvm::StringRef {
-  if (auto string_name = GetAsString(name_id)) {
+auto NameStoreWrapper::GetIRBaseName(NameId name_id) const -> llvm::StringRef {
+  if (auto string_name = GetAsStringIfIdentifier(name_id)) {
     return *string_name;
   }
   return GetSpecialName(name_id, /*for_ir=*/true);

@@ -101,7 +101,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : IdentifierId::Invalid,
+                        : SemIR::NameId::Invalid,
          .implicit_param_refs_id = implicit_param_refs_id,
          .param_refs_id = param_refs_id,
          .return_type_id = return_type_id,
@@ -211,7 +211,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
       context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
                               param_id);
     } else if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
-      context.AddNameToLookup(self_param->parse_node, StringId::SelfValue,
+      context.AddNameToLookup(self_param->parse_node, SemIR::NameId::SelfValue,
                               param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
@@ -241,9 +241,9 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack().PopExpressionWithParseNode();
   auto type_id = ExpressionAsType(context, type_parse_node, type_inst_id);
   // TODO: Use a dedicated instruction rather than VarStorage here.
-  context.AddNodeAndPush(
+  context.AddInstAndPush(
       parse_node,
-      SemIR::VarStorage{parse_node, type_id, StringId::ReturnSlot});
+      SemIR::VarStorage{parse_node, type_id, SemIR::NameId::ReturnSlot});
   return true;
 }
 

@@ -88,7 +88,7 @@ auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::Node parse_node, IdentifierId name_id)
+auto Context::DiagnoseNameNotFound(Parse::Node parse_node, SemIR::NameId name_id)
     -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
@@ -112,7 +112,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   }
 }
 
-auto Context::AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
+auto Context::AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,
                               SemIR::InstId target_id) -> void {
   if (current_scope().names.insert(name_id).second) {
     // TODO: Reject if we previously performed a failed lookup for this name in
@@ -129,7 +129,7 @@ auto Context::AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
 }
 
 auto Context::LookupNameInDeclaration(Parse::Node parse_node,
-                                      IdentifierId name_id,
+                                      SemIR::NameId name_id,
                                       SemIR::NameScopeId scope_id)
     -> SemIR::InstId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
@@ -175,7 +175,7 @@ auto Context::LookupNameInDeclaration(Parse::Node parse_node,
 }
 
 auto Context::LookupUnqualifiedName(Parse::Node parse_node,
-                                    IdentifierId name_id) -> SemIR::InstId {
+                                    SemIR::NameId name_id) -> SemIR::InstId {
   // TODO: Check for shadowed lookup results.
 
   // Find the results from enclosing lexical scopes. These will be combined with
@@ -214,7 +214,7 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupQualifiedName(Parse::Node parse_node, IdentifierId name_id,
+auto Context::LookupQualifiedName(Parse::Node parse_node, SemIR::NameId name_id,
                                   SemIR::NameScopeId scope_id, bool required)
     -> SemIR::InstId {
   CARBON_CHECK(scope_id.is_valid()) << "No scope to perform lookup into";

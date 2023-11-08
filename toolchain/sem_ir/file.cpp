@@ -311,7 +311,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
         break;
       }
       case NameReference::Kind: {
-        out << names().GetFormatted(node.As<NameReference>().name_id);
+        out << names().GetFormatted(inst.As<NameReference>().name_id);
         break;
       }
       case PointerType::Kind: {

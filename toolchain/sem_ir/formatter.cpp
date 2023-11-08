@@ -616,7 +616,7 @@ class Formatter {
                        llvm::StringRef prefix) -> void {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<NodeId, NameId>> entries;
+    llvm::SmallVector<std::pair<InstId, NameId>> entries;
     for (auto [name_id, inst_id] : sem_ir_.name_scopes().Get(id)) {
       entries.push_back({inst_id, name_id});
     }
@@ -852,12 +852,6 @@ class Formatter {
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 
   auto FormatArg(ClassId id) -> void { FormatClassName(id); }
-
-  auto FormatArg(IdentifierId id) -> void {
-    out_ << '"';
-    out_.write_escaped(sem_ir_.identifiers().Get(id), /*UseHexEscapes=*/true);
-    out_ << '"';
-  }
 
   auto FormatArg(IntegerId id) -> void {
     sem_ir_.integers().Get(id).print(out_, /*isSigned=*/false);

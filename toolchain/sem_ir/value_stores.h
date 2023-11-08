@@ -59,29 +59,22 @@ class ConstantStore {
 };
 
 // Provides a ValueStore-like interface for names. This is currently a wrapper
-// around a string store that has no state of its own.
-class NameStore {
+// around an identifier store that has no state of its own.
+//
+// `SemIR::NameId` values should be obtained by using `NameId::ForIdentifier`
+// or the named constants such as `NameId::SelfValue`.
+class NameStoreWrapper {
  public:
-  NameStore(ValueStore<StringId>* strings) : strings_(strings) {}
+  explicit NameStoreWrapper(const StringStoreWrapper<IdentifierId>* identifiers)
+      : identifiers_(identifiers) {}
 
-  // Adds a string name, returning an ID to reference it.
-  auto Add(StringId string_id) -> NameId { return NameId(string_id.index); }
-
-  // Returns the requested name as a string ID, if it is a string name. This
+  // Returns the requested name as a string, if it is an identifier name. This
   // returns std::nullopt for special names.
-  auto GetAsStringId(NameId name_id) const -> std::optional<StringId> {
-    if (name_id.index >= 0) {
-      return StringId(name_id.index);
-    }
-    return std::nullopt;
-  }
-
-  // Returns the requested name as a string, if it is a string name. This
-  // returns std::nullopt for special names.
-  auto GetAsString(NameId name_id) const -> std::optional<llvm::StringRef> {
-    auto id = GetAsStringId(name_id);
-    if (id) {
-      return strings_->Get(*id);
+  auto GetAsStringIfIdentifier(NameId name_id) const
+      -> std::optional<llvm::StringRef> {
+    if (auto identifier_id = name_id.AsIdentifierId();
+        identifier_id.is_valid()) {
+      return identifiers_->Get(identifier_id);
     }
     return std::nullopt;
   }
@@ -91,13 +84,13 @@ class NameStore {
   auto GetFormatted(NameId name_id) const -> llvm::StringRef;
 
   // Returns a best-effort name to use as the basis for SemIR and LLVM IR
-  // names. This is always an identifier, but may be ambiguous, for example if
-  // there is both a `self` and an `r#self` in the same scope. Returns "" for
-  // an invalid name.
+  // names. This is always identifier-shaped, but may be ambiguous, for example
+  // if there is both a `self` and an `r#self` in the same scope. Returns ""
+  // for an invalid name.
   auto GetIRBaseName(NameId name_id) const -> llvm::StringRef;
 
  private:
-  ValueStore<StringId>* strings_;
+  const StringStoreWrapper<IdentifierId>* identifiers_;
 };
 
 // Provides a ValueStore wrapper for an API specific to name scopes.

@@ -428,7 +428,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   }
 
   // Prepare to look up fields in the source by index.
-  llvm::SmallDenseMap<IdentifierId, int32_t> src_field_indexes;
+  llvm::SmallDenseMap<SemIR::NameId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
       auto [it, added] = src_field_indexes.insert(

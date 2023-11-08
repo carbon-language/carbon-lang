@@ -117,7 +117,8 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
     mangled_name = "main";
-  } else if (auto name = sem_ir().names().GetAsString(function.name_id)) {
+  } else if (auto name =
+                 sem_ir().names().GetAsStringIfIdentifier(function.name_id)) {
     // TODO: Decide on a name mangling scheme.
     mangled_name = *name;
   } else {
@@ -136,14 +137,14 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
     auto inst = sem_ir().insts().Get(inst_id);
     auto name_id = SemIR::NameId::Invalid;
-    if (node_id == function.return_slot_id) {
+    if (inst_id == function.return_slot_id) {
       name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
-    } else if (node.Is<SemIR::SelfParameter>()) {
+    } else if (inst.Is<SemIR::SelfParameter>()) {
       name_id = SemIR::NameId::SelfValue;
     } else {
-      name_id = node.As<SemIR::Parameter>().name_id;
+      name_id = inst.As<SemIR::Parameter>().name_id;
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }

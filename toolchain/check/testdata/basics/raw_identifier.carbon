@@ -40,6 +40,6 @@ fn C(r#if: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%if: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %if.ref: i32 = name_reference "if", %if
+// CHECK:STDOUT:   %if.ref: i32 = name_reference "r#if", %if
 // CHECK:STDOUT:   return %if.ref
 // CHECK:STDOUT: }

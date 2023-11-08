@@ -232,7 +232,7 @@ class NodeStack {
         : parse_node(parse_node), function_id(function_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::ClassId class_id)
         : parse_node(parse_node), class_id(class_id) {}
-    explicit Entry(Parse::Node parse_node, IdentifierId name_id)
+    explicit Entry(Parse::Node parse_node, SemIR::NameId name_id)
         : parse_node(parse_node), name_id(name_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::TypeId type_id)
         : parse_node(parse_node), type_id(type_id) {}
@@ -252,7 +252,7 @@ class NodeStack {
       if constexpr (std::is_same<T, SemIR::ClassId>()) {
         return class_id;
       }
-      if constexpr (std::is_same<T, IdentifierId>()) {
+      if constexpr (std::is_same<T, SemIR::NameId>()) {
         return name_id;
       }
       if constexpr (std::is_same<T, SemIR::TypeId>()) {
@@ -273,7 +273,7 @@ class NodeStack {
       SemIR::InstBlockId inst_block_id;
       SemIR::FunctionId function_id;
       SemIR::ClassId class_id;
-      IdentifierId name_id;
+      SemIR::NameId name_id;
       SemIR::TypeId type_id;
     };
   };

@@ -103,13 +103,13 @@ auto DeclarationNameStack::AddNameToLookup(NameContext name_context,
 }
 
 auto DeclarationNameStack::ApplyNameQualifier(Parse::Node parse_node,
-                                              IdentifierId name_id) -> void {
+                                              SemIR::NameId name_id) -> void {
   ApplyNameQualifierTo(declaration_name_stack_.back(), parse_node, name_id);
 }
 
 auto DeclarationNameStack::ApplyNameQualifierTo(NameContext& name_context,
                                                 Parse::Node parse_node,
-                                                IdentifierId name_id) -> void {
+                                                SemIR::NameId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     auto resolved_inst_id = context_->LookupNameInDeclaration(

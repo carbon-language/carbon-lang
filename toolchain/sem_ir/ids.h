@@ -124,6 +124,20 @@ struct NameId : public IndexBase, public Printable<NameId> {
   // The name of the return slot in a function.
   static const NameId ReturnSlot;
 
+  // Returns the NameId corresponding to a particular IdentifierId.
+  static auto ForIdentifier(IdentifierId id) -> NameId {
+    static_assert(NameId::InvalidIndex == IdentifierId::InvalidIndex);
+    CARBON_CHECK(id.index >= 0 || id.index == InvalidIndex)
+        << "Unexpected identifier ID";
+    return NameId(id.index);
+  }
+
+  // Returns the IdentifierId corresponding to this NameId, or an invalid
+  // IdentifierId if this is a special name.
+  auto AsIdentifierId() -> IdentifierId {
+    return index >= 0 ? IdentifierId(index) : IdentifierId::Invalid;
+  }
+
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "name";
