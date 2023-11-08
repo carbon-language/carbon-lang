@@ -37,6 +37,8 @@ struct Function : public Printable<Function> {
 
   // The function name.
   IdentifierId name_id;
+  // The first declaration of the function. This is a FunctionDeclaration.
+  InstId declaration_id = InstId::Invalid;
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDeclaration.
   InstId definition_id = InstId::Invalid;

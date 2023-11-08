@@ -36,6 +36,8 @@ cc_library(
         "convert.cpp",
         "declaration_name_stack.cpp",
         "inst_block_stack.cpp",
+        "return.cpp",
+        "return.h",
     ] +
     # Glob handler files to avoid missing any.
     glob([

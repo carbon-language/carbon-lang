@@ -102,6 +102,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
                         : IdentifierId::Invalid,
+         .declaration_id = function_decl_id,
          .implicit_param_refs_id = implicit_param_refs_id,
          .param_refs_id = param_refs_id,
          .return_type_id = return_type_id,
