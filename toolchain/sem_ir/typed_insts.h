@@ -249,7 +249,7 @@ struct Converted {
   Parse::Node parse_node;
   TypeId type_id;
   InstId original_id;
-  InstId converted_id;
+  InstId result_id;
 };
 
 // A cross-reference between IRs.

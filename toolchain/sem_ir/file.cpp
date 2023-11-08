@@ -495,7 +495,7 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
       }
 
       case Converted::Kind: {
-        inst_id = inst.As<Converted>().converted_id;
+        inst_id = inst.As<Converted>().result_id;
         continue;
       }
 

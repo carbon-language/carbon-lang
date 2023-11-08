@@ -31,7 +31,7 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
         CARBON_FATAL() << "Initialization from unexpected inst " << init;
 
       case SemIR::Converted::Kind:
-        init_id = init.As<SemIR::Converted>().converted_id;
+        init_id = init.As<SemIR::Converted>().result_id;
         continue;
 
       case SemIR::ArrayInit::Kind:

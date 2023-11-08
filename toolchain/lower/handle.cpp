@@ -171,7 +171,7 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::Converted inst) -> void {
-  context.SetLocal(inst_id, context.GetValue(inst.converted_id));
+  context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
 auto HandleDereference(FunctionContext& context, SemIR::InstId inst_id,
