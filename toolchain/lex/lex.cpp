@@ -81,7 +81,7 @@ class [[clang::internal_linkage]] Lexer {
   // Explicitly kept out-of-line because this is a significant loop that is
   // useful to have in the profile and it doesn't simplify by inlining at all.
   // But because it can, the compiler will flatten this otherwise.
-  LLVM_ATTRIBUTE_NOINLINE auto CreateLines(llvm::StringRef source_text) -> void;
+  [[gnu::noinline]] auto CreateLines(llvm::StringRef source_text) -> void;
 
   auto current_line() -> Line { return Line(line_index_); }
 
@@ -140,8 +140,8 @@ class [[clang::internal_linkage]] Lexer {
   // Explicitly kept out-of-line because it's on an error path, and so inlining
   // would be performance neutral. Keeping it out-of-line makes the generated
   // code easier to understand when profiling.
-  LLVM_ATTRIBUTE_NOINLINE auto CloseInvalidOpenGroups(TokenKind kind,
-                                                      ssize_t position) -> void;
+  [[gnu::noinline]] auto CloseInvalidOpenGroups(TokenKind kind,
+                                                ssize_t position) -> void;
 
   auto LexKeywordOrIdentifier(llvm::StringRef source_text, ssize_t& position)
       -> LexResult;
