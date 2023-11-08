@@ -185,7 +185,7 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
       name_it != name_lookup_.end()) {
     lexical_results = name_it->second;
     CARBON_CHECK(!lexical_results.empty())
-        << "Should have been erased: " << identifiers().Get(name_id);
+        << "Should have been erased: " << names().GetFormatted(name_id);
   }
 
   // Walk the non-lexical scopes and perform lookups into each of them.
@@ -252,7 +252,7 @@ auto Context::PopScope() -> void {
   for (const auto& str_id : scope.names) {
     auto it = name_lookup_.find(str_id);
     CARBON_CHECK(it->second.back().scope_index == scope.index)
-        << "Inconsistent scope index for name " << identifiers().Get(str_id);
+        << "Inconsistent scope index for name " << names().GetFormatted(str_id);
     if (it->second.size() == 1) {
       // Erase names that no longer resolve.
       name_lookup_.erase(it);

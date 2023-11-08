@@ -106,13 +106,8 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   context.PushScope(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
-  // TODO: This will shadow a local variable declared with name `r#Self`, but
-  // should not. See #2984 and the corresponding code in
-  // HandleSelfTypeNameExpression.
   context.AddNameToLookup(
-      parse_node,
-      context.identifiers().Add(
-          Lex::TokenKind::SelfTypeIdentifier.fixed_spelling()),
+      parse_node, SemIR::NameId::SelfType,
       context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
 
   context.inst_block_stack().Push();

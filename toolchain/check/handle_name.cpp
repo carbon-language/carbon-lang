@@ -277,11 +277,7 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
 
 auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  // TODO: This will find a local variable declared with name `r#Self`, but
-  // should not. See #2984 and the corresponding code in
-  // HandleClassDefinitionStart.
-  auto name_id = context.identifiers().Add(
-      Lex::TokenKind::SelfTypeIdentifier.fixed_spelling());
+  auto name_id = SemIR::NameId::SelfType;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(

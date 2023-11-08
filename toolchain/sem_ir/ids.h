@@ -119,6 +119,8 @@ struct NameId : public IndexBase, public Printable<NameId> {
   static const NameId Invalid;
   // The name of `self`.
   static const NameId SelfValue;
+  // The name of `Self`.
+  static const NameId SelfType;
   // The name of the return slot in a function.
   static const NameId ReturnSlot;
 
@@ -129,6 +131,8 @@ struct NameId : public IndexBase, public Printable<NameId> {
       out << "Invalid";
     } else if (*this == SelfValue) {
       out << "SelfValue";
+    } else if (*this == SelfType) {
+      out << "SelfType";
     } else if (*this == ReturnSlot) {
       out << "ReturnSlot";
     } else {
@@ -140,7 +144,8 @@ struct NameId : public IndexBase, public Printable<NameId> {
 
 constexpr NameId NameId::Invalid = NameId(NameId::InvalidIndex);
 constexpr NameId NameId::SelfValue = NameId(NameId::InvalidIndex - 1);
-constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 2);
+constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
+constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
 
 // The ID of a name scope.
 struct NameScopeId : public IndexBase, public Printable<NameScopeId> {
