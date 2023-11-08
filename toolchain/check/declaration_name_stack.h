@@ -160,7 +160,8 @@ class DeclarationNameStack {
   // Applies a Name from the name stack to the top of the declaration name
   // stack. This will enter the scope corresponding to the name if the name
   // describes an existing scope, such as a namespace or a defined class.
-  auto ApplyNameQualifier(Parse::Node parse_node, SemIR::NameId name_id) -> void;
+  auto ApplyNameQualifier(Parse::Node parse_node, SemIR::NameId name_id)
+      -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(NameContext name_context, SemIR::InstId target_id)

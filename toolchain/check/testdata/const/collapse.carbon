@@ -18,6 +18,6 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: const i32** = name_reference "p", %p
+// CHECK:STDOUT:   %p.ref: const i32** = name_reference p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }

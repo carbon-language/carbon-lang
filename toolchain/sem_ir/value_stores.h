@@ -58,11 +58,19 @@ class ConstantStore {
   llvm::SmallVector<InstId> values_;
 };
 
-// Provides a ValueStore-like interface for names. This is currently a wrapper
-// around an identifier store that has no state of its own.
+// Provides a ValueStore-like interface for names.
+//
+// A name is either an identifier name or a special name such as `self` that
+// does not correspond to an identifier token. Identifier names are represented
+// as `NameId`s with the same non-negative index as the `IdentifierId` of the
+// identifier. Special names are represented as `NameId`s with a negative
+// index.
 //
 // `SemIR::NameId` values should be obtained by using `NameId::ForIdentifier`
 // or the named constants such as `NameId::SelfValue`.
+//
+// As we do not require any additional explicit storage for names, this is
+// currently a wrapper around an identifier store that has no state of its own.
 class NameStoreWrapper {
  public:
   explicit NameStoreWrapper(const StringStoreWrapper<IdentifierId>* identifiers)

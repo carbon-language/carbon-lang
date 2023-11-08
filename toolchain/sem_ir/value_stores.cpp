@@ -11,16 +11,16 @@ namespace Carbon::SemIR {
 // Get the spelling to use for a special name.
 static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
   switch (name_id.index) {
-  case NameId::Invalid.index:
-    return for_ir ? "" : "<invalid>";
-  case NameId::SelfValue.index:
-    return "self";
-  case NameId::SelfType.index:
-    return "Self";
-  case NameId::ReturnSlot.index:
-    return for_ir ? "return" : "<return slot>";
-  default:
-    CARBON_FATAL() << "Unknown special name";
+    case NameId::Invalid.index:
+      return for_ir ? "" : "<invalid>";
+    case NameId::SelfValue.index:
+      return "self";
+    case NameId::SelfType.index:
+      return "Self";
+    case NameId::ReturnSlot.index:
+      return for_ir ? "return" : "<return slot>";
+    default:
+      CARBON_FATAL() << "Unknown special name";
   }
 }
 

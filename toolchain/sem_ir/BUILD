@@ -104,9 +104,9 @@ cc_library(
     hdrs = ["value_stores.h"],
     deps = [
         ":inst",
-        "//toolchain/lex:token_kind",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
+        "//toolchain/lex:token_kind",
         "@llvm-project//llvm:Support",
     ],
 )
