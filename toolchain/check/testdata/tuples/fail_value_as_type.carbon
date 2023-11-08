@@ -17,7 +17,7 @@ var x: (1, );
 // CHECK:STDOUT: file "fail_value_as_type.carbon" {
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_12.1: (i32,) = tuple_literal (%.loc10_9)
-// CHECK:STDOUT:   %.loc10_12.2: type = conversion %.loc10_12.1, constants.%.loc10_12.2
+// CHECK:STDOUT:   %.loc10_12.2: type = converted %.loc10_12.1, constants.%.loc10_12.2
 // CHECK:STDOUT:   %x.var: ref (<error>,) = var "x"
 // CHECK:STDOUT:   %x: ref (<error>,) = bind_name "x", %x.var
 // CHECK:STDOUT: }

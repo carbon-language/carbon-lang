@@ -243,8 +243,8 @@ struct ConstType {
   TypeId inner_id;
 };
 
-struct Conversion {
-  static constexpr auto Kind = InstKind::Conversion.Define("conversion");
+struct Converted {
+  static constexpr auto Kind = InstKind::Converted.Define("converted");
 
   Parse::Node parse_node;
   TypeId type_id;

@@ -25,7 +25,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc7_28: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_30.1: (i32,) = tuple_literal (%.loc7_28)
 // CHECK:STDOUT:   %.loc7_30.2: (i32,) = tuple_value (%.loc7_28)
-// CHECK:STDOUT:   %.loc7_30.3: (i32,) = conversion %.loc7_30.1, %.loc7_30.2
+// CHECK:STDOUT:   %.loc7_30.3: (i32,) = converted %.loc7_30.1, %.loc7_30.2
 // CHECK:STDOUT:   return %.loc7_30.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

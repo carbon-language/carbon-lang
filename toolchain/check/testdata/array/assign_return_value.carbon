@@ -26,7 +26,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_28: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_30.1: (i32,) = tuple_literal (%.loc7_28)
 // CHECK:STDOUT:   %.loc7_30.2: (i32,) = tuple_value (%.loc7_28)
-// CHECK:STDOUT:   %.loc7_30.3: (i32,) = conversion %.loc7_30.1, %.loc7_30.2
+// CHECK:STDOUT:   %.loc7_30.3: (i32,) = converted %.loc7_30.1, %.loc7_30.2
 // CHECK:STDOUT:   return %.loc7_30.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -46,7 +46,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_22.7: ref i32 = array_index %t.var, %.loc10_22.6
 // CHECK:STDOUT:   %.loc10_22.8: init i32 = initialize_from %.loc10_22.5 to %.loc10_22.7
 // CHECK:STDOUT:   %.loc10_22.9: init [i32; 1] = array_init (%.loc10_22.8) to %t.var
-// CHECK:STDOUT:   %.loc10_22.10: init [i32; 1] = conversion %.loc10_22.1, %.loc10_22.9
+// CHECK:STDOUT:   %.loc10_22.10: init [i32; 1] = converted %.loc10_22.1, %.loc10_22.9
 // CHECK:STDOUT:   assign %t.var, %.loc10_22.10
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

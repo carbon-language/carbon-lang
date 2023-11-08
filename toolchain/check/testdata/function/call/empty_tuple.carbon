@@ -32,7 +32,7 @@ fn Main() {
 // CHECK:STDOUT:   %Echo.ref: <function> = name_reference "Echo", file.%Echo
 // CHECK:STDOUT:   %.loc12_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: () = tuple_value ()
-// CHECK:STDOUT:   %.loc12_9.3: () = conversion %.loc12_9.1, %.loc12_9.2
+// CHECK:STDOUT:   %.loc12_9.3: () = converted %.loc12_9.1, %.loc12_9.2
 // CHECK:STDOUT:   %.loc12_7: init () = call %Echo.ref(%.loc12_9.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

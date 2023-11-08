@@ -34,7 +34,7 @@ fn And() -> bool {
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
 // CHECK:STDOUT:   %.loc11_11: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
-// CHECK:STDOUT:   %.loc11_14.2: bool = conversion %.loc11_11, %.loc11_14.1
+// CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_11, %.loc11_14.1
 // CHECK:STDOUT:   %.loc11_14.3: bool = bool_literal false
 // CHECK:STDOUT:   if %.loc11_14.2 br !and.rhs else br !and.result(%.loc11_14.3)
 // CHECK:STDOUT:
@@ -42,7 +42,7 @@ fn And() -> bool {
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", file.%G
 // CHECK:STDOUT:   %.loc11_19: init bool = call %G.ref()
 // CHECK:STDOUT:   %.loc11_14.4: bool = value_of_initializer %.loc11_19
-// CHECK:STDOUT:   %.loc11_14.5: bool = conversion %.loc11_19, %.loc11_14.4
+// CHECK:STDOUT:   %.loc11_14.5: bool = converted %.loc11_19, %.loc11_14.4
 // CHECK:STDOUT:   br !and.result(%.loc11_14.5)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:

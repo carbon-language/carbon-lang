@@ -34,7 +34,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
 // CHECK:STDOUT:   %.loc11_11: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
-// CHECK:STDOUT:   %.loc11_14.2: bool = conversion %.loc11_11, %.loc11_14.1
+// CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_11, %.loc11_14.1
 // CHECK:STDOUT:   %.loc11_14.3: bool = not %.loc11_14.2
 // CHECK:STDOUT:   %.loc11_14.4: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc11_14.3 br !or.rhs else br !or.result(%.loc11_14.4)
@@ -43,7 +43,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", file.%G
 // CHECK:STDOUT:   %.loc11_18: init bool = call %G.ref()
 // CHECK:STDOUT:   %.loc11_14.5: bool = value_of_initializer %.loc11_18
-// CHECK:STDOUT:   %.loc11_14.6: bool = conversion %.loc11_18, %.loc11_14.5
+// CHECK:STDOUT:   %.loc11_14.6: bool = converted %.loc11_18, %.loc11_14.5
 // CHECK:STDOUT:   br !or.result(%.loc11_14.6)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.result:

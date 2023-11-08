@@ -52,7 +52,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc10_39.4: init i32 = initialize_from %.loc10_20 to %.loc10_39.3
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %.loc12: (type, type, type) = tuple_literal (i32, String, String)
-// CHECK:STDOUT:   %.loc10_39.5: type = conversion %.loc12, constants.%.loc10_39.1
+// CHECK:STDOUT:   %.loc10_39.5: type = converted %.loc12, constants.%.loc10_39.1
 // CHECK:STDOUT:   %t1.var: ref (i32, String, String) = var "t1"
 // CHECK:STDOUT:   %t1: ref (i32, String, String) = bind_name "t1", %t1.var
 // CHECK:STDOUT:   %.loc16_14: i32 = int_literal 3
@@ -76,7 +76,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc21_24.1: (i32, i32) = tuple_literal (%.loc21_20, %.loc21_23)
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %.loc23: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc21_24.2: type = conversion %.loc23, constants.%.loc21_24.1
+// CHECK:STDOUT:   %.loc21_24.2: type = converted %.loc23, constants.%.loc21_24.1
 // CHECK:STDOUT:   %t2.var: ref (i32, i32) = var "t2"
 // CHECK:STDOUT:   %t2: ref (i32, i32) = bind_name "t2", %t2.var
 // CHECK:STDOUT:   %.loc27_14: i32 = int_literal 3

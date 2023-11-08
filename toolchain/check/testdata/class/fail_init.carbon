@@ -58,7 +58,7 @@ fn F() {
 // CHECK:STDOUT:   %Class.ref.loc16: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %.loc16_10.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc16_10.3: ref Class = temporary %.loc16_10.2, <error>
-// CHECK:STDOUT:   %.loc16_10.4: ref Class = conversion %.loc16_10.1, %.loc16_10.3
+// CHECK:STDOUT:   %.loc16_10.4: ref Class = converted %.loc16_10.1, %.loc16_10.3
 // CHECK:STDOUT:   %.loc20_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc20_17: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc20_18.1: {.a: i32, .c: i32} = struct_literal (%.loc20_9, %.loc20_17)
@@ -67,7 +67,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc20_18.3: ref i32 = class_field_access %.loc20_18.2, member0
 // CHECK:STDOUT:   %.loc20_18.4: init i32 = initialize_from %.loc20_9 to %.loc20_18.3
 // CHECK:STDOUT:   %.loc20_18.5: ref Class = temporary %.loc20_18.2, <error>
-// CHECK:STDOUT:   %.loc20_18.6: ref Class = conversion %.loc20_18.1, %.loc20_18.5
+// CHECK:STDOUT:   %.loc20_18.6: ref Class = converted %.loc20_18.1, %.loc20_18.5
 // CHECK:STDOUT:   %.loc24_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc24_17: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc24_25: i32 = int_literal 3
@@ -75,6 +75,6 @@ fn F() {
 // CHECK:STDOUT:   %Class.ref.loc24: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %.loc24_26.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc24_26.3: ref Class = temporary %.loc24_26.2, <error>
-// CHECK:STDOUT:   %.loc24_26.4: ref Class = conversion %.loc24_26.1, %.loc24_26.3
+// CHECK:STDOUT:   %.loc24_26.4: ref Class = converted %.loc24_26.1, %.loc24_26.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

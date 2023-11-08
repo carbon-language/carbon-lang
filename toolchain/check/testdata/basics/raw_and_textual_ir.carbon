@@ -38,7 +38,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     inst+1:          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
 // CHECK:STDOUT:     inst+2:          {kind: TupleLiteral, arg0: block2, type: type1}
 // CHECK:STDOUT:     inst+3:          {kind: TupleType, arg0: typeBlock1, type: typeTypeType}
-// CHECK:STDOUT:     inst+4:          {kind: Conversion, arg0: inst+2, arg1: inst+3, type: typeTypeType}
+// CHECK:STDOUT:     inst+4:          {kind: Converted, arg0: inst+2, arg1: inst+3, type: typeTypeType}
 // CHECK:STDOUT:     inst+5:          {kind: VarStorage, arg0: strId2, type: type3}
 // CHECK:STDOUT:     inst+6:          {kind: PointerType, arg0: type3, type: typeTypeType}
 // CHECK:STDOUT:     inst+7:          {kind: FunctionDeclaration, arg0: function0, type: type5}
@@ -52,7 +52,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     inst+15:         {kind: TupleAccess, arg0: inst+5, arg1: member1, type: type2}
 // CHECK:STDOUT:     inst+16:         {kind: InitializeFrom, arg0: inst+11, arg1: inst+15, type: type2}
 // CHECK:STDOUT:     inst+17:         {kind: TupleInit, arg0: block6, arg1: inst+5, type: type3}
-// CHECK:STDOUT:     inst+18:         {kind: Conversion, arg0: inst+12, arg1: inst+17, type: type3}
+// CHECK:STDOUT:     inst+18:         {kind: Converted, arg0: inst+12, arg1: inst+17, type: type3}
 // CHECK:STDOUT:     inst+19:         {kind: ReturnExpression, arg0: inst+18}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}
@@ -111,6 +111,6 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   %.loc12_21.4: ref f64 = tuple_access %return, member1
 // CHECK:STDOUT:   %.loc12_21.5: init f64 = initialize_from %.loc12_18 to %.loc12_21.4
 // CHECK:STDOUT:   %.loc12_21.6: init (i32, f64) = tuple_init (%.loc12_21.3, %.loc12_21.5) to %return
-// CHECK:STDOUT:   %.loc12_21.7: init (i32, f64) = conversion %.loc12_21.1, %.loc12_21.6
+// CHECK:STDOUT:   %.loc12_21.7: init (i32, f64) = converted %.loc12_21.1, %.loc12_21.6
 // CHECK:STDOUT:   return %.loc12_21.7
 // CHECK:STDOUT: }

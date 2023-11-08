@@ -24,7 +24,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc7_46.4: ref i32 = struct_access %x.var, member1
 // CHECK:STDOUT:   %.loc7_46.5: init i32 = initialize_from %.loc7_45 to %.loc7_46.4
 // CHECK:STDOUT:   %.loc7_46.6: init {.a: f64, .b: i32} = struct_init (%.loc7_46.3, %.loc7_46.5) to %x.var
-// CHECK:STDOUT:   %.loc7_46.7: init {.a: f64, .b: i32} = conversion %.loc7_46.1, %.loc7_46.6
+// CHECK:STDOUT:   %.loc7_46.7: init {.a: f64, .b: i32} = converted %.loc7_46.1, %.loc7_46.6
 // CHECK:STDOUT:   assign %x.var, %.loc7_46.7
 // CHECK:STDOUT:   %y.var: ref i32 = var "y"
 // CHECK:STDOUT:   %y: ref i32 = bind_name "y", %y.var

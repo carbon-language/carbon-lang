@@ -57,7 +57,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc10_29.9: ref i32 = array_index %a.var, %.loc10_29.8
 // CHECK:STDOUT:   %.loc10_29.10: init i32 = initialize_from %.loc10_28 to %.loc10_29.9
 // CHECK:STDOUT:   %.loc10_29.11: init [i32; 3] = array_init (%.loc10_29.4, %.loc10_29.7, %.loc10_29.10) to %a.var
-// CHECK:STDOUT:   %.loc10_29.12: init [i32; 3] = conversion %.loc10_29.1, %.loc10_29.11
+// CHECK:STDOUT:   %.loc10_29.12: init [i32; 3] = converted %.loc10_29.1, %.loc10_29.11
 // CHECK:STDOUT:   assign %a.var, %.loc10_29.12
 // CHECK:STDOUT:   %.loc13_14: type = ptr_type i32
 // CHECK:STDOUT:   %pa.var: ref i32* = var "pa"
@@ -95,7 +95,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc18_29.9: ref i32 = array_index %a.var, %.loc18_29.8
 // CHECK:STDOUT:   %.loc18_29.10: init i32 = initialize_from %.loc18_28 to %.loc18_29.9
 // CHECK:STDOUT:   %.loc18_29.11: init [i32; 3] = array_init (%.loc18_29.4, %.loc18_29.7, %.loc18_29.10) to %a.var
-// CHECK:STDOUT:   %.loc18_29.12: init [i32; 3] = conversion %.loc18_29.1, %.loc18_29.11
+// CHECK:STDOUT:   %.loc18_29.12: init [i32; 3] = converted %.loc18_29.1, %.loc18_29.11
 // CHECK:STDOUT:   assign %a.var, %.loc18_29.12
 // CHECK:STDOUT:   %a.ref: ref [i32; 3] = name_reference "a", %a
 // CHECK:STDOUT:   %.loc22_5: i32 = int_literal 0

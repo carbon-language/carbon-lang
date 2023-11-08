@@ -30,8 +30,8 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
       default:
         CARBON_FATAL() << "Initialization from unexpected inst " << init;
 
-      case SemIR::Conversion::Kind:
-        init_id = init.As<SemIR::Conversion>().converted_id;
+      case SemIR::Converted::Kind:
+        init_id = init.As<SemIR::Converted>().converted_id;
         continue;
 
       case SemIR::ArrayInit::Kind:
@@ -834,7 +834,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
 
   // Track that we performed a type conversion, if we did so.
   if (orig_expr_id != expr_id) {
-    expr_id = context.AddInst(SemIR::Conversion{
+    expr_id = context.AddInst(SemIR::Converted{
         expr.parse_node(), target.type_id, orig_expr_id, expr_id});
   }
 

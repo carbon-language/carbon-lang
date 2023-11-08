@@ -50,7 +50,7 @@ fn Var() {
 // CHECK:STDOUT:   %X.ref.loc15_11: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %X.ref.loc15_14: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %.loc15_15.1: (type, type) = tuple_literal (%X.ref.loc15_11, %X.ref.loc15_14)
-// CHECK:STDOUT:   %.loc15_15.2: type = conversion %.loc15_15.1, constants.%.loc15_15.2
+// CHECK:STDOUT:   %.loc15_15.2: type = converted %.loc15_15.1, constants.%.loc15_15.2
 // CHECK:STDOUT:   %Make.ref.loc15_20: <function> = name_reference "Make", file.%Make
 // CHECK:STDOUT:   %.loc15_24.1: ref X = temporary_storage
 // CHECK:STDOUT:   %.loc15_24.2: init X = call %Make.ref.loc15_20() to %.loc15_24.1
@@ -61,13 +61,13 @@ fn Var() {
 // CHECK:STDOUT:   %X.ref.loc15_40: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %X.ref.loc15_43: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %.loc15_44: (type, type) = tuple_literal (%X.ref.loc15_40, %X.ref.loc15_43)
-// CHECK:STDOUT:   %.loc15_15.3: type = conversion %.loc15_44, constants.%.loc15_15.2
+// CHECK:STDOUT:   %.loc15_15.3: type = converted %.loc15_44, constants.%.loc15_15.2
 // CHECK:STDOUT:   %.loc15_24.3: ref X = temporary %.loc15_24.1, %.loc15_24.2
 // CHECK:STDOUT:   %.loc15_24.4: X = bind_value %.loc15_24.3
 // CHECK:STDOUT:   %.loc15_32.3: ref X = temporary %.loc15_32.1, %.loc15_32.2
 // CHECK:STDOUT:   %.loc15_32.4: X = bind_value %.loc15_32.3
 // CHECK:STDOUT:   %.loc15_34.2: (X, X) = tuple_value (%.loc15_24.4, %.loc15_32.4)
-// CHECK:STDOUT:   %.loc15_34.3: (X, X) = conversion %.loc15_34.1, %.loc15_34.2
+// CHECK:STDOUT:   %.loc15_34.3: (X, X) = converted %.loc15_34.1, %.loc15_34.2
 // CHECK:STDOUT:   %a: (X, X) = bind_name "a", %.loc15_34.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -77,7 +77,7 @@ fn Var() {
 // CHECK:STDOUT:   %X.ref.loc20_11: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %X.ref.loc20_14: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %.loc20_15: (type, type) = tuple_literal (%X.ref.loc20_11, %X.ref.loc20_14)
-// CHECK:STDOUT:   %.loc15_15.1: type = conversion %.loc20_15, constants.%.loc15_15.2
+// CHECK:STDOUT:   %.loc15_15.1: type = converted %.loc20_15, constants.%.loc15_15.2
 // CHECK:STDOUT:   %b.var: ref (X, X) = var "b"
 // CHECK:STDOUT:   %b: ref (X, X) = bind_name "b", %b.var
 // CHECK:STDOUT:   %Make.ref.loc20_20: <function> = name_reference "Make", file.%Make
@@ -90,9 +90,9 @@ fn Var() {
 // CHECK:STDOUT:   %X.ref.loc20_40: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %X.ref.loc20_43: type = name_reference "X", file.%X
 // CHECK:STDOUT:   %.loc20_44: (type, type) = tuple_literal (%X.ref.loc20_40, %X.ref.loc20_43)
-// CHECK:STDOUT:   %.loc15_15.2: type = conversion %.loc20_44, constants.%.loc15_15.2
+// CHECK:STDOUT:   %.loc15_15.2: type = converted %.loc20_44, constants.%.loc15_15.2
 // CHECK:STDOUT:   %.loc20_34.4: init (X, X) = tuple_init (%.loc20_24, %.loc20_32) to %b.var
-// CHECK:STDOUT:   %.loc20_34.5: init (X, X) = conversion %.loc20_34.3, %.loc20_34.4
+// CHECK:STDOUT:   %.loc20_34.5: init (X, X) = converted %.loc20_34.3, %.loc20_34.4
 // CHECK:STDOUT:   assign %b.var, %.loc20_34.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

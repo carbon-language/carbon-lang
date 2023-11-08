@@ -169,8 +169,8 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
   }
 }
 
-auto HandleConversion(FunctionContext& context, SemIR::InstId inst_id,
-                      SemIR::Conversion inst) -> void {
+auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
+                     SemIR::Converted inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.converted_id));
 }
 

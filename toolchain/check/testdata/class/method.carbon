@@ -91,7 +91,7 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc21_11: <bound method> = bound_method %c.ref, @Class.%F
 // CHECK:STDOUT:   %.loc21_13: init i32 = call %.loc21_11(%c.ref)
 // CHECK:STDOUT:   %.loc21_15.1: i32 = value_of_initializer %.loc21_13
-// CHECK:STDOUT:   %.loc21_15.2: i32 = conversion %.loc21_13, %.loc21_15.1
+// CHECK:STDOUT:   %.loc21_15.2: i32 = converted %.loc21_13, %.loc21_15.1
 // CHECK:STDOUT:   return %.loc21_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,7 +105,7 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc26_10: Class* = address_of %c.ref
 // CHECK:STDOUT:   %.loc26_13: init i32 = call %.loc26_11(%.loc26_10)
 // CHECK:STDOUT:   %.loc26_15.1: i32 = value_of_initializer %.loc26_13
-// CHECK:STDOUT:   %.loc26_15.2: i32 = conversion %.loc26_13, %.loc26_15.1
+// CHECK:STDOUT:   %.loc26_15.2: i32 = converted %.loc26_13, %.loc26_15.1
 // CHECK:STDOUT:   return %.loc26_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -117,7 +117,7 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc30_11.2: Class = bind_value %.loc30_11.1
 // CHECK:STDOUT:   %.loc30_16: init i32 = call %.loc30_14(%.loc30_11.2)
 // CHECK:STDOUT:   %.loc30_18.1: i32 = value_of_initializer %.loc30_16
-// CHECK:STDOUT:   %.loc30_18.2: i32 = conversion %.loc30_16, %.loc30_18.1
+// CHECK:STDOUT:   %.loc30_18.2: i32 = converted %.loc30_16, %.loc30_18.1
 // CHECK:STDOUT:   return %.loc30_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,7 +129,7 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc34_11.2: Class* = address_of %.loc34_11.1
 // CHECK:STDOUT:   %.loc34_16: init i32 = call %.loc34_14(%.loc34_11.2)
 // CHECK:STDOUT:   %.loc34_18.1: i32 = value_of_initializer %.loc34_16
-// CHECK:STDOUT:   %.loc34_18.2: i32 = conversion %.loc34_16, %.loc34_18.1
+// CHECK:STDOUT:   %.loc34_18.2: i32 = converted %.loc34_16, %.loc34_18.1
 // CHECK:STDOUT:   return %.loc34_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -145,7 +145,7 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc40_14.4: Class = bind_value %.loc40_14.3
 // CHECK:STDOUT:   %.loc40_18: init i32 = call %.loc40_16(%.loc40_14.4)
 // CHECK:STDOUT:   %.loc40_20.1: i32 = value_of_initializer %.loc40_18
-// CHECK:STDOUT:   %.loc40_20.2: i32 = conversion %.loc40_18, %.loc40_20.1
+// CHECK:STDOUT:   %.loc40_20.2: i32 = converted %.loc40_18, %.loc40_20.1
 // CHECK:STDOUT:   return %.loc40_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -159,6 +159,6 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %.loc44_14.4: Class* = address_of %.loc44_14.3
 // CHECK:STDOUT:   %.loc44_18: init i32 = call %.loc44_16(%.loc44_14.4)
 // CHECK:STDOUT:   %.loc44_20.1: i32 = value_of_initializer %.loc44_18
-// CHECK:STDOUT:   %.loc44_20.2: i32 = conversion %.loc44_18, %.loc44_20.1
+// CHECK:STDOUT:   %.loc44_20.2: i32 = converted %.loc44_18, %.loc44_20.1
 // CHECK:STDOUT:   return %.loc44_20.2
 // CHECK:STDOUT: }

@@ -49,7 +49,7 @@ fn While() {
 // CHECK:STDOUT:   %Cond.ref: <function> = name_reference "Cond", file.%Cond
 // CHECK:STDOUT:   %.loc15_14: init bool = call %Cond.ref()
 // CHECK:STDOUT:   %.loc15_16.1: bool = value_of_initializer %.loc15_14
-// CHECK:STDOUT:   %.loc15_16.2: bool = conversion %.loc15_14, %.loc15_16.1
+// CHECK:STDOUT:   %.loc15_16.2: bool = converted %.loc15_14, %.loc15_16.1
 // CHECK:STDOUT:   if %.loc15_16.2 br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

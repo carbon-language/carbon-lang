@@ -55,7 +55,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc13_31.4: ref Class* = class_field_access %return, member1
 // CHECK:STDOUT:   %.loc13_31.5: init Class* = initialize_from %next.ref to %.loc13_31.4
 // CHECK:STDOUT:   %.loc13_31.6: init Class = class_init (%.loc13_31.3, %.loc13_31.5), %return
-// CHECK:STDOUT:   %.loc13_31.7: init Class = conversion %.loc13_31.1, %.loc13_31.6
+// CHECK:STDOUT:   %.loc13_31.7: init Class = converted %.loc13_31.1, %.loc13_31.6
 // CHECK:STDOUT:   return %.loc13_31.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,6 +69,6 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc17_31.4: ref Class* = class_field_access %return, member0
 // CHECK:STDOUT:   %.loc17_31.5: init Class* = initialize_from %next.ref to %.loc17_31.4
 // CHECK:STDOUT:   %.loc17_31.6: init Class = class_init (%.loc17_31.3, %.loc17_31.5), %return
-// CHECK:STDOUT:   %.loc17_31.7: init Class = conversion %.loc17_31.1, %.loc17_31.6
+// CHECK:STDOUT:   %.loc17_31.7: init Class = converted %.loc17_31.1, %.loc17_31.6
 // CHECK:STDOUT:   return %.loc17_31.7
 // CHECK:STDOUT: }

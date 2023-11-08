@@ -37,7 +37,7 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", @Class.%G
 // CHECK:STDOUT:   %.loc13_11: init i32 = call %G.ref()
 // CHECK:STDOUT:   %.loc13_13.1: i32 = value_of_initializer %.loc13_11
-// CHECK:STDOUT:   %.loc13_13.2: i32 = conversion %.loc13_11, %.loc13_13.1
+// CHECK:STDOUT:   %.loc13_13.2: i32 = converted %.loc13_11, %.loc13_13.1
 // CHECK:STDOUT:   return %.loc13_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

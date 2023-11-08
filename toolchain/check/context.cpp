@@ -780,7 +780,7 @@ class TypeCompleter {
       case SemIR::ClassDeclaration::Kind:
       case SemIR::ClassFieldAccess::Kind:
       case SemIR::ClassInit::Kind:
-      case SemIR::Conversion::Kind:
+      case SemIR::Converted::Kind:
       case SemIR::Dereference::Kind:
       case SemIR::Field::Kind:
       case SemIR::FunctionDeclaration::Kind:
@@ -1001,8 +1001,8 @@ auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
 }
 
 auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
-  while (auto conversion = insts().Get(inst_id).TryAs<SemIR::Conversion>()) {
-    inst_id = conversion->converted_id;
+  while (auto converted = insts().Get(inst_id).TryAs<SemIR::Converted>()) {
+    inst_id = converted->converted_id;
   }
   inst_id = FollowNameReferences(inst_id);
 
