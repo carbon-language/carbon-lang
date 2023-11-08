@@ -286,9 +286,7 @@ class Context {
   auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
     return sem_ir().classes();
   }
-  auto names() -> SemIR::NameStoreWrapper {
-    return sem_ir().names();
-  }
+  auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
   }
