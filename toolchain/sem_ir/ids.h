@@ -132,18 +132,17 @@ struct NameId : public IndexBase, public Printable<NameId> {
     return NameId(id.index);
   }
 
+  using IndexBase::IndexBase;
+
   // Returns the IdentifierId corresponding to this NameId, or an invalid
   // IdentifierId if this is a special name.
   auto AsIdentifierId() -> IdentifierId {
     return index >= 0 ? IdentifierId(index) : IdentifierId::Invalid;
   }
 
-  using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "name";
-    if (*this == Invalid) {
-      out << "Invalid";
-    } else if (*this == SelfValue) {
+    if (*this == SelfValue) {
       out << "SelfValue";
     } else if (*this == SelfType) {
       out << "SelfType";
