@@ -10,8 +10,15 @@ fn G() {
   var v: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = {.a = F(), .b = F()};
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
+// CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
+// CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32)
+// CHECK:STDOUT:   %.loc10_51.1: type = struct_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
+// CHECK:STDOUT:   %.loc10_51.2: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "nested_struct_in_place.carbon" {
-// CHECK:STDOUT:   %.loc7: type = ptr_type (i32, i32, i32)
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
@@ -22,9 +29,7 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_29: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_50: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_51.1: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}
-// CHECK:STDOUT:   %.loc10_51.2: type = struct_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
-// CHECK:STDOUT:   %.loc10_51.3: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
+// CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}
 // CHECK:STDOUT:   %v.var: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var "v"
 // CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = bind_name "v", %v.var
 // CHECK:STDOUT:   %F.ref.loc10_61: <function> = name_reference "F", file.%F

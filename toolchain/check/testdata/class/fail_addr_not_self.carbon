@@ -16,10 +16,13 @@ class Class {
   fn G(addr b: Class*);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc17: type = struct_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_addr_not_self.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc17: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

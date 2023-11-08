@@ -7,7 +7,7 @@ name: test
 on:
   push:
     branches: [trunk]
-  pull_request_target:
+  pull_request:
   merge_group:
 
 # Cancel previous workflows on the PR when there are multiple fast commits.
@@ -46,13 +46,13 @@ jobs:
 
       # Checkout the pull request head or the branch.
       - name: Checkout pull request
-        if: github.event_name == 'pull_request_target'
+        if: github.event_name == 'pull_request'
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Checkout branch
-        if: github.event_name != 'pull_request_target'
+        if: github.event_name != 'pull_request'
         uses: actions/checkout@v3
 
       # Tests should only run on applicable paths, but we still need to have an
@@ -132,14 +132,26 @@ jobs:
           which clang++
           clang++ --version
 
-      # Extract our access key for our build cache.
-      - name: Extract access key
-        if: steps.filter.outputs.ignore == 'false'
-        env:
-          GCP_BUILDS_SERVICE_ACCOUNT: ${{ secrets.GCP_BUILDS_SERVICE_ACCOUNT }}
+      # Disable uploads when the remote cache is read-only.
+      - name: Set up remote cache access (read-only)
+        if:
+          steps.filter.outputs.ignore == 'false' && github.event_name ==
+          'pull_request'
         run: |
-          echo "$GCP_BUILDS_SERVICE_ACCOUNT" \
-            | base64 -d > $HOME/gcp-builds-service-account.json
+          echo "remote_cache_upload=--remote_upload_local_results=false" \
+              >> $GITHUB_ENV
+
+      # Provide a cache key when the remote cache is read-write.
+      - name: Set up remote cache access (read-write)
+        if:
+          steps.filter.outputs.ignore == 'false' && github.event_name !=
+          'pull_request'
+        env:
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
+        run: |
+          echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
+          echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
+              >> $GITHUB_ENV
 
       # We need to replace the `.` with a `_` for the build cache.
       - name: Setup LLVM and Clang (macOS)
@@ -163,8 +175,9 @@ jobs:
           cat >user.bazelrc <<EOF
           # Enable remote cache for our CI but minimize downloads.
           build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ env.os_for_cache }}
-          build --google_credentials=$HOME/gcp-builds-service-account.json
           build --remote_download_minimal
+
+          build ${{ env.remote_cache_upload }}
 
           # Set an artificially high jobs count. This flag controls the number
           # of concurrency Bazel itself uses, which is essential for actions
@@ -222,7 +235,7 @@ jobs:
         env:
           # Compute the base SHA from the different event structures.
           GIT_BASE_SHA:
-            ${{ github.event_name == 'pull_request_target' &&
+            ${{ github.event_name == 'pull_request' &&
             github.event.pull_request.base.sha ||
             github.event.merge_group.base_sha }}
           TARGETS_FILE: ${{ runner.temp }}/targets

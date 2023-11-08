@@ -10,20 +10,23 @@ var a: [i32; 1] = (12,);
 // CHECK:STDERR:                 ^
 var b: i32 = a[2];
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 1]
+// CHECK:STDOUT:   %.loc7_23: type = tuple_type (i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_array_out_of_bound_access.carbon" {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc7_15.1: type = array_type %.loc7_14, i32
-// CHECK:STDOUT:   %.loc7_15.2: type = ptr_type [i32; 1]
+// CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
 // CHECK:STDOUT:   %a.var: ref [i32; 1] = var "a"
 // CHECK:STDOUT:   %a: ref [i32; 1] = bind_name "a", %a.var
 // CHECK:STDOUT:   %.loc7_20: i32 = int_literal 12
-// CHECK:STDOUT:   %.loc7_23.1: type = tuple_type (i32)
-// CHECK:STDOUT:   %.loc7_23.2: (i32,) = tuple_literal (%.loc7_20)
-// CHECK:STDOUT:   %.loc7_23.3: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc7_23.4: ref i32 = array_index %a.var, %.loc7_23.3
-// CHECK:STDOUT:   %.loc7_23.5: init i32 = initialize_from %.loc7_20 to %.loc7_23.4
-// CHECK:STDOUT:   %.loc7_23.6: init [i32; 1] = array_init %.loc7_23.2, (%.loc7_23.5) to %a.var
-// CHECK:STDOUT:   assign %a.var, %.loc7_23.6
+// CHECK:STDOUT:   %.loc7_23.1: (i32,) = tuple_literal (%.loc7_20)
+// CHECK:STDOUT:   %.loc7_23.2: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7_23.3: ref i32 = array_index %a.var, %.loc7_23.2
+// CHECK:STDOUT:   %.loc7_23.4: init i32 = initialize_from %.loc7_20 to %.loc7_23.3
+// CHECK:STDOUT:   %.loc7_23.5: init [i32; 1] = array_init %.loc7_23.1, (%.loc7_23.4) to %a.var
+// CHECK:STDOUT:   assign %a.var, %.loc7_23.5
 // CHECK:STDOUT:   %b.var: ref i32 = var "b"
 // CHECK:STDOUT:   %b: ref i32 = bind_name "b", %b.var
 // CHECK:STDOUT:   %a.ref: ref [i32; 1] = name_reference "a", %a

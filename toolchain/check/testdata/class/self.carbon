@@ -19,10 +19,14 @@ fn Class.G[addr self: Class*]() -> i32 {
   return (*self).n;
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc12: type = struct_type {.n: i32}
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "self.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc12: type = struct_type {.n: i32}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
@@ -42,7 +46,6 @@ fn Class.G[addr self: Class*]() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self: Class]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
 // CHECK:STDOUT:   %self.ref: Class = name_reference "self", %self
 // CHECK:STDOUT:   %.loc15_14.1: ref i32 = class_field_access %self.ref, member0
 // CHECK:STDOUT:   %.loc15_14.2: i32 = bind_value %.loc15_14.1

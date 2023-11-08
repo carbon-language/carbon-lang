@@ -5,8 +5,8 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/sem_ir/node.h"
-#include "toolchain/sem_ir/node_kind.h"
+#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -30,26 +30,26 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
     return context.TODO(parse_node, "HandleArrayExpressionWithoutBounds");
   }
 
-  auto bound_node_id = context.node_stack().PopExpression();
+  auto bound_inst_id = context.node_stack().PopExpression();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExpressionSemi>();
-  auto element_type_node_id = context.node_stack().PopExpression();
-  auto bound_node = context.nodes().Get(bound_node_id);
-  if (auto literal = bound_node.TryAs<SemIR::IntegerLiteral>()) {
+  auto element_type_inst_id = context.node_stack().PopExpression();
+  auto bound_inst = context.insts().Get(bound_inst_id);
+  if (auto literal = bound_inst.TryAs<SemIR::IntegerLiteral>()) {
     const auto& bound_value = context.integers().Get(literal->integer_id);
     // TODO: Produce an error if the array type is too large.
     if (bound_value.getActiveBits() <= 64) {
-      context.AddNodeAndPush(
+      context.AddInstAndPush(
           parse_node,
           SemIR::ArrayType{
-              parse_node, SemIR::TypeId::TypeType, bound_node_id,
-              ExpressionAsType(context, parse_node, element_type_node_id)});
+              parse_node, SemIR::TypeId::TypeType, bound_inst_id,
+              ExpressionAsType(context, parse_node, element_type_inst_id)});
       return true;
     }
   }
   CARBON_DIAGNOSTIC(InvalidArrayExpression, Error, "Invalid array expression.");
   context.emitter().Emit(parse_node, InvalidArrayExpression);
-  context.node_stack().Push(parse_node, SemIR::NodeId::BuiltinError);
+  context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
   return true;
 }
 

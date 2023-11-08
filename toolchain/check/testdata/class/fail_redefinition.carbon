@@ -24,10 +24,13 @@ fn Class.F() {}
 fn Class.G() {}
 fn Class.H() {}
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10: type = struct_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_redefinition.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
@@ -39,8 +42,8 @@ fn Class.H() {}
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = <unexpected noderef 10>
-// CHECK:STDOUT:   .H = <unexpected noderef 11>
+// CHECK:STDOUT:   .F = <unexpected instref 11>
+// CHECK:STDOUT:   .H = <unexpected instref 12>
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

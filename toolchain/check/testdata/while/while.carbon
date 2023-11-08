@@ -18,6 +18,10 @@ fn While() {
   H();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc14: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "while.carbon" {
 // CHECK:STDOUT:   %Cond: <function> = fn_decl @Cond
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -37,17 +41,14 @@ fn While() {
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
-// CHECK:STDOUT:   %.loc14_4.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc14_4.2: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc14: init () = call %F.ref()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
 // CHECK:STDOUT:   %Cond.ref: <function> = name_reference "Cond", file.%Cond
-// CHECK:STDOUT:   %.loc15_14.1: init bool = call %Cond.ref()
-// CHECK:STDOUT:   %.loc15_14.2: ref bool = temporary_storage
-// CHECK:STDOUT:   %.loc15_14.3: ref bool = temporary %.loc15_14.2, %.loc15_14.1
-// CHECK:STDOUT:   %.loc15_14.4: bool = bind_value %.loc15_14.3
-// CHECK:STDOUT:   if %.loc15_14.4 br !while.body else br !while.done
+// CHECK:STDOUT:   %.loc15_14: init bool = call %Cond.ref()
+// CHECK:STDOUT:   %.loc15_16: bool = value_of_initializer %.loc15_14
+// CHECK:STDOUT:   if %.loc15_16 br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:
 // CHECK:STDOUT:   %G.ref: <function> = name_reference "G", file.%G

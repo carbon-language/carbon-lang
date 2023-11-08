@@ -37,18 +37,14 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: <function> = name_reference "A", file.%A
 // CHECK:STDOUT:   %.loc11_21.1: init i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc11_21.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc11_21.3: ref i32 = temporary %.loc11_21.2, %.loc11_21.1
-// CHECK:STDOUT:   %.loc11_21.4: i32 = bind_value %.loc11_21.3
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_21.4)
+// CHECK:STDOUT:   %.loc11_21.2: i32 = value_of_initializer %.loc11_21.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_21.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_reference "B", file.%B
-// CHECK:STDOUT:   %.loc11_30.1: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc11_30.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc11_30.3: ref i32 = temporary %.loc11_30.2, %.loc11_30.1
-// CHECK:STDOUT:   %.loc11_30.4: i32 = bind_value %.loc11_30.3
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_30.4)
+// CHECK:STDOUT:   %.loc11_30: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc11_24: i32 = value_of_initializer %.loc11_30
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_24)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.result

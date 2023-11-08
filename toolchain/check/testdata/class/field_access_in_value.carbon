@@ -17,10 +17,14 @@ fn Run() -> i32 {
   return c.j + c.k;
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.j: i32, .k: i32}
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.j: i32, .k: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "field_access_in_value.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc10: type = struct_type {.j: i32, .k: i32}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -40,7 +44,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref.loc13: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %.loc10: type = ptr_type {.j: i32, .k: i32}
 // CHECK:STDOUT:   %cv.var: ref Class = var "cv"
 // CHECK:STDOUT:   %cv: ref Class = bind_name "cv", %cv.var
 // CHECK:STDOUT:   %cv.ref.loc14: ref Class = name_reference "cv", %cv
@@ -57,9 +60,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %c: Class = bind_name "c", %.loc16
 // CHECK:STDOUT:   %c.ref.loc17_10: Class = name_reference "c", %c
 // CHECK:STDOUT:   %.loc17_11.1: ref i32 = class_field_access %c.ref.loc17_10, member0
+// CHECK:STDOUT:   %.loc17_11.2: i32 = bind_value %.loc17_11.1
 // CHECK:STDOUT:   %c.ref.loc17_16: Class = name_reference "c", %c
 // CHECK:STDOUT:   %.loc17_17.1: ref i32 = class_field_access %c.ref.loc17_16, member1
-// CHECK:STDOUT:   %.loc17_11.2: i32 = bind_value %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_17.2: i32 = bind_value %.loc17_17.1
 // CHECK:STDOUT:   %.loc17_14: i32 = add %.loc17_11.2, %.loc17_17.2
 // CHECK:STDOUT:   return %.loc17_14

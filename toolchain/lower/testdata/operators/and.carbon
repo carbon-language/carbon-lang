@@ -24,19 +24,13 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @And() {
 // CHECK:STDOUT:   %F = call i1 @F()
-// CHECK:STDOUT:   %temp = alloca i1, align 1
-// CHECK:STDOUT:   store i1 %F, ptr %temp, align 1
-// CHECK:STDOUT:   %1 = load i1, ptr %temp, align 1
-// CHECK:STDOUT:   br i1 %1, label %2, label %4
+// CHECK:STDOUT:   br i1 %F, label %1, label %2
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %0
+// CHECK:STDOUT: 1:                                                ; preds = %0
 // CHECK:STDOUT:   %G = call i1 @G()
-// CHECK:STDOUT:   %temp1 = alloca i1, align 1
-// CHECK:STDOUT:   store i1 %G, ptr %temp1, align 1
-// CHECK:STDOUT:   %3 = load i1, ptr %temp1, align 1
-// CHECK:STDOUT:   br label %4
+// CHECK:STDOUT:   br label %2
 // CHECK:STDOUT:
-// CHECK:STDOUT: 4:                                                ; preds = %2, %0
-// CHECK:STDOUT:   %5 = phi i1 [ false, %0 ], [ %3, %2 ]
-// CHECK:STDOUT:   ret i1 %5
+// CHECK:STDOUT: 2:                                                ; preds = %1, %0
+// CHECK:STDOUT:   %3 = phi i1 [ false, %0 ], [ %G, %1 ]
+// CHECK:STDOUT:   ret i1 %3
 // CHECK:STDOUT: }

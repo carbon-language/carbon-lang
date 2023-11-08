@@ -31,12 +31,6 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
 
   context.PushState(State::DeclarationScopeLoop);
 
-  // The package should always be the first token, if it's present. Any other
-  // use is invalid.
-  if (context.PositionIs(Lex::TokenKind::Package)) {
-    context.PushState(State::Package);
-  }
-
   while (!context.state_stack().empty()) {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)

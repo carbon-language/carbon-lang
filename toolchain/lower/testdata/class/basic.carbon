@@ -9,10 +9,7 @@ class C {
   var b: C*;
 }
 
-fn F(c: C) -> C {
-  // TODO: We should copy `c` into the return slot here.
-  return c;
-}
+fn F(c: C) -> C;
 
 fn Run() {
   var c: C;
@@ -22,9 +19,7 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @F(ptr sret({ i32, ptr }) %return, ptr %c) {
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
+// CHECK:STDOUT: declare void @F(ptr sret({ i32, ptr }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() {
 // CHECK:STDOUT:   %c = alloca { i32, ptr }, align 8

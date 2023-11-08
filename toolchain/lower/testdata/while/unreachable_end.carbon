@@ -36,16 +36,13 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: 1:                                                ; preds = %0
 // CHECK:STDOUT:   %Cond = call i1 @Cond()
-// CHECK:STDOUT:   %temp = alloca i1, align 1
-// CHECK:STDOUT:   store i1 %Cond, ptr %temp, align 1
-// CHECK:STDOUT:   %2 = load i1, ptr %temp, align 1
-// CHECK:STDOUT:   br i1 %2, label %3, label %4
+// CHECK:STDOUT:   br i1 %Cond, label %2, label %3
 // CHECK:STDOUT:
-// CHECK:STDOUT: 3:                                                ; preds = %1
+// CHECK:STDOUT: 2:                                                ; preds = %1
 // CHECK:STDOUT:   call void @G()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT:
-// CHECK:STDOUT: 4:                                                ; preds = %1
+// CHECK:STDOUT: 3:                                                ; preds = %1
 // CHECK:STDOUT:   call void @H()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

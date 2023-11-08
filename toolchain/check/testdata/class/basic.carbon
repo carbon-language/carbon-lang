@@ -22,10 +22,13 @@ fn Run() -> i32 {
   return Class.F(4);
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc15: type = struct_type {.k: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "basic.carbon" {
 // CHECK:STDOUT:   class_declaration @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %.loc15: type = struct_type {.k: i32}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -60,9 +63,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
 // CHECK:STDOUT:   %F.ref: <function> = name_reference "F", @Class.%F
 // CHECK:STDOUT:   %.loc22_18: i32 = int_literal 4
-// CHECK:STDOUT:   %.loc22_17.1: init i32 = call %F.ref(%.loc22_18)
-// CHECK:STDOUT:   %.loc22_17.2: ref i32 = temporary_storage
-// CHECK:STDOUT:   %.loc22_17.3: ref i32 = temporary %.loc22_17.2, %.loc22_17.1
-// CHECK:STDOUT:   %.loc22_17.4: i32 = bind_value %.loc22_17.3
-// CHECK:STDOUT:   return %.loc22_17.4
+// CHECK:STDOUT:   %.loc22_17: init i32 = call %F.ref(%.loc22_18)
+// CHECK:STDOUT:   %.loc22_20: i32 = value_of_initializer %.loc22_17
+// CHECK:STDOUT:   return %.loc22_20
 // CHECK:STDOUT: }

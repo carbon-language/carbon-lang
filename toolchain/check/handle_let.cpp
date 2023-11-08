@@ -4,19 +4,19 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
 auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
   auto value_id = context.node_stack().PopExpression();
-  SemIR::NodeId pattern_id =
+  SemIR::InstId pattern_id =
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
 
   // Convert the value to match the type of the pattern.
-  auto pattern = context.nodes().Get(pattern_id);
+  auto pattern = context.insts().Get(pattern_id);
   value_id =
       ConvertToValueOfType(context, parse_node, value_id, pattern.type_id());
 
@@ -27,8 +27,8 @@ auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!bind_name.value_id.is_valid())
       << "Binding should not already have a value!";
   bind_name.value_id = value_id;
-  context.nodes().Set(pattern_id, bind_name);
-  context.node_block_stack().AddNodeId(pattern_id);
+  context.insts().Set(pattern_id, bind_name);
+  context.inst_block_stack().AddInstId(pattern_id);
 
   // Add the name of the binding to the current scope.
   context.AddNameToLookup(pattern.parse_node(), bind_name.name_id, pattern_id);

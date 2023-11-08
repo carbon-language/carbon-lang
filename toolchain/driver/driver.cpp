@@ -16,6 +16,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Path.h"
 #include "llvm/TargetParser/Host.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -392,11 +393,9 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
 // Ties together information for a file being compiled.
 class Driver::CompilationUnit {
  public:
-  explicit CompilationUnit(Driver* driver, SharedValueStores* value_stores,
-                           const CompileOptions& options,
+  explicit CompilationUnit(Driver* driver, const CompileOptions& options,
                            llvm::StringRef input_file_name)
       : driver_(driver),
-        value_stores_(value_stores),
         options_(options),
         input_file_name_(input_file_name),
         vlog_stream_(driver_->vlog_stream_),
@@ -422,7 +421,7 @@ class Driver::CompilationUnit {
                   << source_->text() << "\n```\n";
 
     LogCall("Lex::TokenizedBuffer::Lex", [&] {
-      tokens_ = Lex::TokenizedBuffer::Lex(*value_stores_, *source_, *consumer_);
+      tokens_ = Lex::TokenizedBuffer::Lex(value_stores_, *source_, *consumer_);
     });
     if (options_.dump_tokens) {
       consumer_->Flush();
@@ -460,7 +459,7 @@ class Driver::CompilationUnit {
     CARBON_CHECK(parse_tree_);
 
     LogCall("Check::CheckParseTree", [&] {
-      sem_ir_ = Check::CheckParseTree(*value_stores_, builtins, *tokens_,
+      sem_ir_ = Check::CheckParseTree(value_stores_, builtins, *tokens_,
                                       *parse_tree_, *consumer_, vlog_stream_);
     });
 
@@ -572,6 +571,11 @@ class Driver::CompilationUnit {
   // Flushes output.
   auto Flush() -> void { consumer_->Flush(); }
 
+  auto PrintSharedValues() const -> void {
+    Yaml::Print(driver_->output_stream_,
+                value_stores_.OutputYaml(input_file_name_));
+  }
+
  private:
   // Wraps a call with log statements to indicate start and end.
   auto LogCall(llvm::StringLiteral label, llvm::function_ref<void()> fn)
@@ -582,7 +586,7 @@ class Driver::CompilationUnit {
   }
 
   Driver* driver_;
-  SharedValueStores* value_stores_;
+  SharedValueStores value_stores_;
   const CompileOptions& options_;
   llvm::StringRef input_file_name_;
 
@@ -617,15 +621,17 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
       unit->Flush();
     }
   });
-  SharedValueStores value_stores;
+  // Shared values will always be printed last.
   auto dump_shared_values = llvm::make_scope_exit([&]() {
     if (options.dump_shared_values) {
-      output_stream_ << value_stores;
+      for (const auto& unit : units) {
+        unit->PrintSharedValues();
+      }
     }
   });
   for (const auto& input_file_name : options.input_file_names) {
-    units.push_back(std::make_unique<CompilationUnit>(
-        this, &value_stores, options, input_file_name));
+    units.push_back(
+        std::make_unique<CompilationUnit>(this, options, input_file_name));
   }
 
   // Lex.
@@ -646,7 +652,8 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
 
   // Check.
-  auto builtins = Check::MakeBuiltins(value_stores);
+  SharedValueStores builtin_value_stores;
+  auto builtins = Check::MakeBuiltins(builtin_value_stores);
   // TODO: Organize units to compile in dependency order.
   for (auto& unit : units) {
     success_before_lower &= unit->RunCheck(builtins);

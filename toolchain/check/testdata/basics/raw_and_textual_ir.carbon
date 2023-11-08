@@ -20,12 +20,12 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     function0:       {name: name0, param_refs: block1, return_type: type3, return_slot: node+4, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     type0:           {node: nodeIntegerType, value_rep: {kind: copy, type: type0}}
-// CHECK:STDOUT:     type1:           {node: node+1, value_rep: {kind: unknown, type: type<invalid>}}
-// CHECK:STDOUT:     type2:           {node: nodeFloatingPointType, value_rep: {kind: copy, type: type2}}
-// CHECK:STDOUT:     type3:           {node: node+3, value_rep: {kind: pointer, type: type4}}
-// CHECK:STDOUT:     type4:           {node: node+5, value_rep: {kind: copy, type: type4}}
-// CHECK:STDOUT:     type5:           {node: nodeFunctionType, value_rep: {kind: copy, type: type5}}
+// CHECK:STDOUT:     type0:           {inst: instIntegerType, value_rep: {kind: copy, type: type0}}
+// CHECK:STDOUT:     type1:           {inst: inst+1, value_rep: {kind: unknown, type: type<invalid>}}
+// CHECK:STDOUT:     type2:           {inst: instFloatingPointType, value_rep: {kind: copy, type: type2}}
+// CHECK:STDOUT:     type3:           {inst: inst+3, value_rep: {kind: pointer, type: type4}}
+// CHECK:STDOUT:     type4:           {inst: inst+5, value_rep: {kind: copy, type: type4}}
+// CHECK:STDOUT:     type5:           {inst: instFunctionType, value_rep: {kind: copy, type: type5}}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     typeBlock0:
 // CHECK:STDOUT:       0:               typeTypeType
@@ -55,41 +55,43 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   node_blocks:
 // CHECK:STDOUT:     block0:          {}
 // CHECK:STDOUT:     block1:
-// CHECK:STDOUT:       0:               node+0
+// CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:     block2:
-// CHECK:STDOUT:       0:               nodeIntegerType
-// CHECK:STDOUT:       1:               nodeFloatingPointType
+// CHECK:STDOUT:       0:               instIntegerType
+// CHECK:STDOUT:       1:               instFloatingPointType
 // CHECK:STDOUT:     block3:
-// CHECK:STDOUT:       0:               node+0
-// CHECK:STDOUT:       1:               node+1
-// CHECK:STDOUT:       2:               node+2
-// CHECK:STDOUT:       3:               node+3
-// CHECK:STDOUT:       4:               node+4
+// CHECK:STDOUT:       0:               inst+0
+// CHECK:STDOUT:       1:               inst+2
+// CHECK:STDOUT:       2:               inst+4
 // CHECK:STDOUT:     block4:
-// CHECK:STDOUT:       0:               node+7
-// CHECK:STDOUT:       1:               node+8
-// CHECK:STDOUT:       2:               node+9
-// CHECK:STDOUT:       3:               node+10
-// CHECK:STDOUT:       4:               node+11
-// CHECK:STDOUT:       5:               node+12
-// CHECK:STDOUT:       6:               node+13
-// CHECK:STDOUT:       7:               node+14
-// CHECK:STDOUT:       8:               node+15
-// CHECK:STDOUT:       9:               node+16
-// CHECK:STDOUT:       10:              node+17
+// CHECK:STDOUT:       0:               inst+7
+// CHECK:STDOUT:       1:               inst+8
+// CHECK:STDOUT:       2:               inst+9
+// CHECK:STDOUT:       3:               inst+10
+// CHECK:STDOUT:       4:               inst+11
+// CHECK:STDOUT:       5:               inst+12
+// CHECK:STDOUT:       6:               inst+13
+// CHECK:STDOUT:       7:               inst+14
+// CHECK:STDOUT:       8:               inst+15
+// CHECK:STDOUT:       9:               inst+16
+// CHECK:STDOUT:       10:              inst+17
 // CHECK:STDOUT:     block5:
-// CHECK:STDOUT:       0:               node+9
-// CHECK:STDOUT:       1:               node+10
+// CHECK:STDOUT:       0:               inst+9
+// CHECK:STDOUT:       1:               inst+10
 // CHECK:STDOUT:     block6:
-// CHECK:STDOUT:       0:               node+13
-// CHECK:STDOUT:       1:               node+15
+// CHECK:STDOUT:       0:               inst+13
+// CHECK:STDOUT:       1:               inst+15
 // CHECK:STDOUT:     block7:
-// CHECK:STDOUT:       0:               node+5
-// CHECK:STDOUT:       1:               node+6
+// CHECK:STDOUT:       0:               inst+6
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11_28.1: type = tuple_type (type, type)
+// CHECK:STDOUT:   %.loc11_28.2: type = tuple_type (i32, f64)
+// CHECK:STDOUT:   %.loc11_28.3: type = ptr_type (i32, f64)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "raw_and_textual_ir.carbon" {
-// CHECK:STDOUT:   %.loc11: type = ptr_type (i32, f64)
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
