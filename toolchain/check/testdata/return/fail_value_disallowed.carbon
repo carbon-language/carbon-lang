@@ -21,5 +21,5 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14: i32 = int_literal 0
-// CHECK:STDOUT:   return %.loc14
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

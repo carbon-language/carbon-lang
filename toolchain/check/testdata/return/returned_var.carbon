@@ -11,11 +11,12 @@ class C {
 
 fn F() -> C {
   returned var result: C = {.a = 1, .b = 2};
-  // TODO: return var;
-  // CHECK:STDERR: returned_var.carbon:[[@LINE+3]]:10: ERROR: Cannot copy value of type `C`.
-  // CHECK:STDERR:   return result;
-  // CHECK:STDERR:          ^
-  return result;
+  return var;
+}
+
+fn G() -> i32 {
+  returned var result: i32 = 0;
+  return var;
 }
 
 // CHECK:STDOUT: constants {
@@ -27,6 +28,7 @@ fn F() -> C {
 // CHECK:STDOUT:   class_declaration @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -55,7 +57,15 @@ fn F() -> C {
 // CHECK:STDOUT:   %.loc13_43.5: init i32 = initialize_from %.loc13_42 to %.loc13_43.4
 // CHECK:STDOUT:   %.loc13_43.6: init C = class_init %.loc13_43.1, (%.loc13_43.3, %.loc13_43.5)
 // CHECK:STDOUT:   assign %return, %.loc13_43.6
-// CHECK:STDOUT:   %result.ref: ref C = name_reference "result", %result
-// CHECK:STDOUT:   %.loc18: C = bind_value %result.ref
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return %result
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %result.var: ref i32 = var "result"
+// CHECK:STDOUT:   %result: ref i32 = bind_name "result", %result.var
+// CHECK:STDOUT:   %.loc18_30: i32 = int_literal 0
+// CHECK:STDOUT:   assign %result.var, %.loc18_30
+// CHECK:STDOUT:   %.loc18_16: i32 = bind_value %result
+// CHECK:STDOUT:   return %.loc18_16
 // CHECK:STDOUT: }

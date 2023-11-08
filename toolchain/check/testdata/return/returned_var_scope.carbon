@@ -14,12 +14,13 @@ fn UnrelatedScopes() -> i32 {
   return 0;
 }
 
-fn EnclosingButAfter() -> i32 {
-  if (true) {
+fn EnclosingButAfter(b: bool) -> i32 {
+  if (b) {
     returned var v: i32 = 0;
+    return var;
   }
   returned var w: i32 = 1;
-  return 0;
+  return var;
 }
 
 // CHECK:STDOUT: file "returned_var_scope.carbon" {
@@ -55,23 +56,24 @@ fn EnclosingButAfter() -> i32 {
 // CHECK:STDOUT:   return %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @EnclosingButAfter() -> i32 {
+// CHECK:STDOUT: fn @EnclosingButAfter(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: bool = bool_literal true
-// CHECK:STDOUT:   if %.loc18 br !if.then else br !if.else
+// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %v.var: ref i32 = var "v"
 // CHECK:STDOUT:   %v: ref i32 = bind_name "v", %v.var
-// CHECK:STDOUT:   %.loc19: i32 = int_literal 0
-// CHECK:STDOUT:   assign %v.var, %.loc19
-// CHECK:STDOUT:   br !if.else
+// CHECK:STDOUT:   %.loc19_27: i32 = int_literal 0
+// CHECK:STDOUT:   assign %v.var, %.loc19_27
+// CHECK:STDOUT:   %.loc19_18: i32 = bind_value %v
+// CHECK:STDOUT:   return %.loc19_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %w.var: ref i32 = var "w"
 // CHECK:STDOUT:   %w: ref i32 = bind_name "w", %w.var
-// CHECK:STDOUT:   %.loc21: i32 = int_literal 1
-// CHECK:STDOUT:   assign %w.var, %.loc21
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 0
-// CHECK:STDOUT:   return %.loc22
+// CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1
+// CHECK:STDOUT:   assign %w.var, %.loc22_25
+// CHECK:STDOUT:   %.loc22_16: i32 = bind_value %w
+// CHECK:STDOUT:   return %.loc22_16
 // CHECK:STDOUT: }

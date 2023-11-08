@@ -180,8 +180,15 @@ auto HandleStatementReturn(Context& context) -> void {
   context.PushState(state);
 
   context.AddLeafNode(NodeKind::ReturnStatementStart, context.Consume());
-  if (!context.PositionIs(Lex::TokenKind::Semi)) {
+
+  if (auto var_token = context.ConsumeIf(Lex::TokenKind::Var)) {
+    // `return var;`
+    context.AddLeafNode(NodeKind::ReturnVarSpecifier, *var_token);
+  } else if (!context.PositionIs(Lex::TokenKind::Semi)) {
+    // `return <expression>;`
     context.PushState(State::Expression);
+  } else {
+    // `return;`
   }
 }
 

@@ -342,6 +342,7 @@ class NodeStack {
       case Parse::NodeKind::QualifiedDeclaration:
       case Parse::NodeKind::ReturnedSpecifier:
       case Parse::NodeKind::ReturnStatementStart:
+      case Parse::NodeKind::ReturnVarSpecifier:
       case Parse::NodeKind::SelfValueName:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
       case Parse::NodeKind::VariableInitializer:

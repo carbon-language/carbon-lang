@@ -27,14 +27,31 @@ auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
   return true;
 }
 
+auto HandleReturnStatementStart(Context& context, Parse::Node parse_node)
+    -> bool {
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleReturnVarSpecifier(Context& context, Parse::Node parse_node)
+    -> bool {
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
 auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
-  auto fn_inst = context.insts().GetAs<SemIR::FunctionDeclaration>(
-      context.return_scope_stack().back().decl_id);
+  auto return_scope = context.return_scope_stack().back();
+  auto fn_inst =
+      context.insts().GetAs<SemIR::FunctionDeclaration>(return_scope.decl_id);
   const auto& callable = context.functions().Get(fn_inst.function_id);
 
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      Parse::NodeKind::ReturnStatementStart) {
+  auto outer_kind =
+      context.parse_tree().node_kind(context.node_stack().PeekParseNode());
+  if (outer_kind == Parse::NodeKind::ReturnStatementStart) {
+    // This is a `return;` statement.
     context.node_stack()
         .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
 
@@ -49,7 +66,27 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
     }
 
     context.AddInst(SemIR::Return{parse_node});
+  } else if (outer_kind == Parse::NodeKind::ReturnVarSpecifier) {
+    // This is a `return var;` statement.
+    context.node_stack()
+        .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnVarSpecifier>();
+    context.node_stack()
+        .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
+    auto returned_var_id = return_scope.returned_var;
+    if (!returned_var_id.is_valid()) {
+      CARBON_DIAGNOSTIC(ReturnVarWithNoReturnedVar, Error,
+                        "`return var;` with no `returned var` in scope.");
+      context.emitter().Emit(parse_node, ReturnVarWithNoReturnedVar);
+      returned_var_id = SemIR::InstId::BuiltinError;
+    }
+    if (!callable.return_slot_id.is_valid()) {
+      // If we don't have a return slot, we're returning by value. Convert to a
+      // value expression.
+      returned_var_id = ConvertToValueExpression(context, returned_var_id);
+    }
+    context.AddInst(SemIR::ReturnExpression{parse_node, returned_var_id});
   } else {
+    // This is a `return <expression>;` statement.
     auto arg = context.node_stack().PopExpression();
     context.node_stack()
         .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
@@ -64,6 +101,18 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
           .Build(parse_node, ReturnStatementDisallowExpression)
           .Note(fn_inst.parse_node, ReturnStatementImplicitNote)
           .Emit();
+      arg = SemIR::InstId::BuiltinError;
+    } else if (return_scope.returned_var.is_valid()) {
+      CARBON_DIAGNOSTIC(
+          ReturnExprWithReturnedVar, Error,
+          "Can only `return var;` in the scope of a `returned var`.");
+      context.emitter()
+          .Build(parse_node, ReturnExprWithReturnedVar)
+          // TODO: Note the location of the `returned var`.
+          //.Note(context.insts().Get(return_scope.returned_var).parse_node(),
+          //ReturnedVarHere)
+          .Emit();
+      arg = SemIR::InstId::BuiltinError;
     } else if (callable.return_slot_id.is_valid()) {
       arg = Initialize(context, parse_node, callable.return_slot_id, arg);
     } else {
@@ -79,13 +128,6 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   // the `return` statement.
   context.inst_block_stack().Pop();
   context.inst_block_stack().PushUnreachable();
-  return true;
-}
-
-auto HandleReturnStatementStart(Context& context, Parse::Node parse_node)
-    -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
   return true;
 }
 

@@ -6,12 +6,6 @@
 
 fn F() -> String {
   returned var s: String = "hello";
-  // CHECK:STDERR: returned_var.carbon:[[@LINE+6]]:10: ERROR: Expected expression.
-  // CHECK:STDERR:   return var;
-  // CHECK:STDERR:          ^
-  // CHECK:STDERR: returned_var.carbon:[[@LINE+3]]:10: ERROR: `return` statements must end with a `;`.
-  // CHECK:STDERR:   return var;
-  // CHECK:STDERR:          ^
   return var;
 }
 
@@ -34,8 +28,8 @@ fn F() -> String {
 // CHECK:STDOUT:         {kind: 'Literal', text: '"hello"'},
 // CHECK:STDOUT:       {kind: 'VariableDeclaration', text: ';', subtree_size: 8},
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'var', has_error: yes},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'ReturnVarSpecifier', text: 'var'},
+// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 19},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

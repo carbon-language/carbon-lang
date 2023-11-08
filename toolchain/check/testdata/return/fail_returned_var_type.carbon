@@ -9,7 +9,7 @@ fn Mismatch() -> i32 {
   // CHECK:STDERR:   returned var v: f64 = 0.0;
   // CHECK:STDERR:                   ^
   returned var v: f64 = 0.0;
-  return 0;
+  return var;
 }
 
 // CHECK:STDOUT: file "fail_returned_var_type.carbon" {
@@ -21,6 +21,5 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %v: f64 = bind_name "v", <error>
 // CHECK:STDOUT:   %.loc11: f64 = real_literal 0e-1
 // CHECK:STDOUT:   assign <error>, <error>
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 0
-// CHECK:STDOUT:   return %.loc12
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
