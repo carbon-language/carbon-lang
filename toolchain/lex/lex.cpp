@@ -10,8 +10,7 @@ namespace Carbon::Lex {
 
 auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
          DiagnosticConsumer& consumer) -> TokenizedBuffer {
-  Lexer lexer(value_stores, source, consumer);
-  return std::move(lexer).Lex();
+  return Lexer(value_stores, source, consumer).Lex();
 }
 
 }  // namespace Carbon::Lex
