@@ -130,7 +130,7 @@ class NodeStack {
       return back;
     }
     if constexpr (RequiredIdKind == IdKind::NameId) {
-      auto back = PopWithParseNode<SemIR::NameId>();
+      auto back = PopWithParseNode<StringId>();
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
@@ -191,7 +191,7 @@ class NodeStack {
       return back.id<SemIR::ClassId>();
     }
     if constexpr (RequiredIdKind == IdKind::NameId) {
-      return back.id<SemIR::NameId>();
+      return back.id<StringId>();
     }
     if constexpr (RequiredIdKind == IdKind::TypeId) {
       return back.id<SemIR::TypeId>();
@@ -232,7 +232,7 @@ class NodeStack {
         : parse_node(parse_node), function_id(function_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::ClassId class_id)
         : parse_node(parse_node), class_id(class_id) {}
-    explicit Entry(Parse::Node parse_node, SemIR::NameId name_id)
+    explicit Entry(Parse::Node parse_node, StringId name_id)
         : parse_node(parse_node), name_id(name_id) {}
     explicit Entry(Parse::Node parse_node, SemIR::TypeId type_id)
         : parse_node(parse_node), type_id(type_id) {}
@@ -252,7 +252,7 @@ class NodeStack {
       if constexpr (std::is_same<T, SemIR::ClassId>()) {
         return class_id;
       }
-      if constexpr (std::is_same<T, SemIR::NameId>()) {
+      if constexpr (std::is_same<T, StringId>()) {
         return name_id;
       }
       if constexpr (std::is_same<T, SemIR::TypeId>()) {
@@ -273,7 +273,7 @@ class NodeStack {
       SemIR::NodeBlockId node_block_id;
       SemIR::FunctionId function_id;
       SemIR::ClassId class_id;
-      SemIR::NameId name_id;
+      StringId name_id;
       SemIR::TypeId type_id;
     };
   };
@@ -355,7 +355,7 @@ class NodeStack {
     if constexpr (std::is_same_v<IdT, SemIR::ClassId>) {
       return IdKind::ClassId;
     }
-    if constexpr (std::is_same_v<IdT, SemIR::NameId>) {
+    if constexpr (std::is_same_v<IdT, StringId>) {
       return IdKind::NameId;
     }
     if constexpr (std::is_same_v<IdT, SemIR::TypeId>) {

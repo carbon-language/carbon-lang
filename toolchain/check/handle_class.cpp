@@ -53,7 +53,7 @@ static auto BuildClassDeclaration(Context& context)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : SemIR::NameId::Invalid,
+                        : StringId::Invalid,
          // `.self_type_id` depends on `class_id`, so is set below.
          .self_type_id = SemIR::TypeId::Invalid,
          .declaration_id = class_decl_id});

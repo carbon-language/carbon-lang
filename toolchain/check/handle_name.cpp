@@ -37,7 +37,7 @@ static auto GetAsNameScope(Context& context, SemIR::NodeId base_id)
 
 auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
   auto base_id = context.node_stack().PopExpression();
 
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -241,7 +241,7 @@ auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
 
 auto HandleSelfValueNameExpression(Context& context, Parse::Node parse_node)
     -> bool {
-  auto name_id = SemIR::NameId::SelfValue;
+  auto name_id = StringId::SelfValue;
   auto value_id =
       context.LookupName(parse_node, name_id, SemIR::NameScopeId::Invalid,
                          /*print_diagnostics=*/true);
