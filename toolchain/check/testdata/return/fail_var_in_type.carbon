@@ -11,8 +11,8 @@ var x: type = i32;
 fn Six() -> x { return 6; }
 
 // CHECK:STDOUT: file "fail_var_in_type.carbon" {
-// CHECK:STDOUT:   %x.var: ref type = var "x"
-// CHECK:STDOUT:   %x: ref type = bind_name "x", %x.var
+// CHECK:STDOUT:   %x.var: ref type = var x
+// CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
 // CHECK:STDOUT:   assign %x.var, i32
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six
 // CHECK:STDOUT: }

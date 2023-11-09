@@ -14,8 +14,8 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT: file "nine_elements.carbon" {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 9
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
-// CHECK:STDOUT:   %a.var: ref [i32; 9] = var "a"
-// CHECK:STDOUT:   %a: ref [i32; 9] = bind_name "a", %a.var
+// CHECK:STDOUT:   %a.var: ref [i32; 9] = var a
+// CHECK:STDOUT:   %a: ref [i32; 9] = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc7_20: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_23: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_26: i32 = int_literal 3

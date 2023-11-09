@@ -288,7 +288,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
       case ClassType::Kind: {
         auto class_name_id =
             classes().Get(inst.As<ClassType>().class_id).name_id;
-        out << identifiers().Get(class_name_id);
+        out << names().GetFormatted(class_name_id);
         break;
       }
       case ConstType::Kind: {
@@ -311,7 +311,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
         break;
       }
       case NameReference::Kind: {
-        out << identifiers().Get(inst.As<NameReference>().name_id);
+        out << names().GetFormatted(inst.As<NameReference>().name_id);
         break;
       }
       case PointerType::Kind: {
@@ -344,7 +344,7 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
       }
       case StructTypeField::Kind: {
         auto field = inst.As<StructTypeField>();
-        out << "." << identifiers().Get(field.name_id) << ": ";
+        out << "." << names().GetFormatted(field.name_id) << ": ";
         steps.push_back(
             {.inst_id = GetTypeAllowBuiltinTypes(field.field_type_id)});
         break;

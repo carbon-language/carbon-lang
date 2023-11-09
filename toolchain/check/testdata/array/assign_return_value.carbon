@@ -33,9 +33,9 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
-// CHECK:STDOUT:   %t.var: ref [i32; 1] = var "t"
-// CHECK:STDOUT:   %t: ref [i32; 1] = bind_name "t", %t.var
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
+// CHECK:STDOUT:   %t.var: ref [i32; 1] = var t
+// CHECK:STDOUT:   %t: ref [i32; 1] = bind_name t, %t.var
+// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
 // CHECK:STDOUT:   %.loc10_22.1: init (i32,) = call %F.ref()
 // CHECK:STDOUT:   %.loc10_22.2: ref (i32,) = temporary_storage
 // CHECK:STDOUT:   %.loc10_22.3: ref (i32,) = temporary %.loc10_22.2, %.loc10_22.1

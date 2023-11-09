@@ -40,23 +40,23 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
 // CHECK:STDOUT:   %.loc14: init () = call %F.ref()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
-// CHECK:STDOUT:   %Cond.ref: <function> = name_reference "Cond", file.%Cond
+// CHECK:STDOUT:   %Cond.ref: <function> = name_reference Cond, file.%Cond
 // CHECK:STDOUT:   %.loc15_14: init bool = call %Cond.ref()
 // CHECK:STDOUT:   %.loc15_16: bool = value_of_initializer %.loc15_14
 // CHECK:STDOUT:   if %.loc15_16 br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:
-// CHECK:STDOUT:   %G.ref: <function> = name_reference "G", file.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_reference G, file.%G
 // CHECK:STDOUT:   %.loc16: init () = call %G.ref()
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done:
-// CHECK:STDOUT:   %H.ref: <function> = name_reference "H", file.%H
+// CHECK:STDOUT:   %H.ref: <function> = name_reference H, file.%H
 // CHECK:STDOUT:   %.loc18: init () = call %H.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

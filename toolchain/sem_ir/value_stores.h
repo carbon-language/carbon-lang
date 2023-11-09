@@ -58,6 +58,49 @@ class ConstantStore {
   llvm::SmallVector<InstId> values_;
 };
 
+// Provides a ValueStore-like interface for names.
+//
+// A name is either an identifier name or a special name such as `self` that
+// does not correspond to an identifier token. Identifier names are represented
+// as `NameId`s with the same non-negative index as the `IdentifierId` of the
+// identifier. Special names are represented as `NameId`s with a negative
+// index.
+//
+// `SemIR::NameId` values should be obtained by using `NameId::ForIdentifier`
+// or the named constants such as `NameId::SelfValue`.
+//
+// As we do not require any additional explicit storage for names, this is
+// currently a wrapper around an identifier store that has no state of its own.
+class NameStoreWrapper {
+ public:
+  explicit NameStoreWrapper(const StringStoreWrapper<IdentifierId>* identifiers)
+      : identifiers_(identifiers) {}
+
+  // Returns the requested name as a string, if it is an identifier name. This
+  // returns std::nullopt for special names.
+  auto GetAsStringIfIdentifier(NameId name_id) const
+      -> std::optional<llvm::StringRef> {
+    if (auto identifier_id = name_id.AsIdentifierId();
+        identifier_id.is_valid()) {
+      return identifiers_->Get(identifier_id);
+    }
+    return std::nullopt;
+  }
+
+  // Returns the requested name as a string for formatted output. This returns
+  // `"r#name"` if `name` is a keyword.
+  auto GetFormatted(NameId name_id) const -> llvm::StringRef;
+
+  // Returns a best-effort name to use as the basis for SemIR and LLVM IR
+  // names. This is always identifier-shaped, but may be ambiguous, for example
+  // if there is both a `self` and an `r#self` in the same scope. Returns ""
+  // for an invalid name.
+  auto GetIRBaseName(NameId name_id) const -> llvm::StringRef;
+
+ private:
+  const StringStoreWrapper<IdentifierId>* identifiers_;
+};
+
 // Provides a ValueStore wrapper for an API specific to name scopes.
 class NameScopeStore {
  public:
@@ -66,19 +109,19 @@ class NameScopeStore {
 
   // Adds an entry to a name scope. Returns true on success, false on
   // duplicates.
-  auto AddEntry(NameScopeId scope_id, IdentifierId name_id, InstId target_id)
+  auto AddEntry(NameScopeId scope_id, NameId name_id, InstId target_id)
       -> bool {
     return values_.Get(scope_id).insert({name_id, target_id}).second;
   }
 
   // Returns the requested name scope.
   auto Get(NameScopeId scope_id) const
-      -> const llvm::DenseMap<IdentifierId, InstId>& {
+      -> const llvm::DenseMap<NameId, InstId>& {
     return values_.Get(scope_id);
   }
 
  private:
-  ValueStore<NameScopeId, llvm::DenseMap<IdentifierId, InstId>> values_;
+  ValueStore<NameScopeId, llvm::DenseMap<NameId, InstId>> values_;
 };
 
 // Provides a block-based ValueStore, which uses slab allocation of added
@@ -178,5 +221,10 @@ class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
 };
 
 }  // namespace Carbon::SemIR
+
+// Support use of NameId as DenseMap/DenseSet keys.
+template <>
+struct llvm::DenseMapInfo<Carbon::SemIR::NameId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::NameId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_VALUE_STORES_H_

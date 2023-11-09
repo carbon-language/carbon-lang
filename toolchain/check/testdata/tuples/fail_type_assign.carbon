@@ -16,8 +16,8 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_type_assign.carbon" {
 // CHECK:STDOUT:   %.loc10_14: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %x.var: ref (i32,) = var "x"
-// CHECK:STDOUT:   %x: ref (i32,) = bind_name "x", %x.var
+// CHECK:STDOUT:   %x.var: ref (i32,) = var x
+// CHECK:STDOUT:   %x: ref (i32,) = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_24: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }

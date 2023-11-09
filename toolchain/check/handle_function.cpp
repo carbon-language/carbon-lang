@@ -101,7 +101,7 @@ static auto BuildFunctionDeclaration(Context& context, bool is_definition)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : IdentifierId::Invalid,
+                        : SemIR::NameId::Invalid,
          .implicit_param_refs_id = implicit_param_refs_id,
          .param_refs_id = param_refs_id,
          .return_type_id = return_type_id,
@@ -176,7 +176,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
-               context.identifiers().Get(function.name_id))
+               context.names().GetFormatted(function.name_id))
         .Note(context.insts().Get(function.definition_id).parse_node(),
               FunctionPreviousDefinition)
         .Emit();
@@ -211,12 +211,8 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
       context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
                               param_id);
     } else if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
-      // TODO: This will shadow a local variable named `r#self`, but should
-      // not. See #2984 and the corresponding code in
-      // HandleSelfTypeNameExpression.
-      context.AddNameToLookup(
-          self_param->parse_node,
-          context.identifiers().Add(SemIR::SelfParameter::Name), param_id);
+      context.AddNameToLookup(self_param->parse_node, SemIR::NameId::SelfValue,
+                              param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
                      << param;
@@ -246,8 +242,8 @@ auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
   auto type_id = ExpressionAsType(context, type_parse_node, type_inst_id);
   // TODO: Use a dedicated instruction rather than VarStorage here.
   context.AddInstAndPush(
-      parse_node, SemIR::VarStorage{parse_node, type_id,
-                                    context.identifiers().Add("return")});
+      parse_node,
+      SemIR::VarStorage{parse_node, type_id, SemIR::NameId::ReturnSlot});
   return true;
 }
 
