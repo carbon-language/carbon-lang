@@ -21,8 +21,8 @@
 // the stack.
 //
 // Where state output is conditional on a lexed token, the name of
-// the Lex::TokenKind should be used rather than the string name in order to make it
-// easier to compare with code.
+// the Lex::TokenKind should be used rather than the string name in order to
+// make it easier to compare with code.
 
 #ifndef CARBON_PARSE_STATE
 #error "Must define the x-macro to use this file."
@@ -38,8 +38,9 @@
 #define CARBON_PARSE_STATE_VARIANTS3(State, Variant1, Variant2, Variant3) \
   CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
   CARBON_PARSE_STATE_VARIANTS2(State, Variant2, Variant3)
-#define CARBON_PARSE_STATE_VARIANTS4(State, Variant1, Variant2, Variant3, Variant4) \
-  CARBON_PARSE_STATE_VARIANT(State, Variant1)                                       \
+#define CARBON_PARSE_STATE_VARIANTS4(State, Variant1, Variant2, Variant3, \
+                                     Variant4)                            \
+  CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
   CARBON_PARSE_STATE_VARIANTS3(State, Variant2, Variant3, Variant4)
 
 // Handles an index expression `a[0]`.
@@ -105,8 +106,8 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParameter, Type, Value, Unknown)
 //   2. BraceExprParameterFinishAs(Type|Value|Unknown)
 // Else:
 //   1. BraceExprParameterFinishAs(Type|Value|Unknown)
-CARBON_PARSE_STATE_VARIANTS3(BraceExprParameterAfterDesignator, Type,
-                              Value, Unknown)
+CARBON_PARSE_STATE_VARIANTS3(BraceExprParameterAfterDesignator, Type, Value,
+                             Unknown)
 
 // Handles the end of a brace expression parameter.
 //
@@ -114,8 +115,7 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParameterAfterDesignator, Type,
 //   1. BraceExprParameterAsUnknown
 // Else:
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(BraceExprParameterFinish, Type, Value,
-                              Unknown)
+CARBON_PARSE_STATE_VARIANTS3(BraceExprParameterFinish, Type, Value, Unknown)
 
 // Handles the `}` of a brace expression.
 //
@@ -529,7 +529,8 @@ CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Normal, Tuple)
 //   2. PatternFinishAs(Generic|Regular)
 // Else:
 //   1. PatternFinish
-CARBON_PARSE_STATE_VARIANTS4(Pattern, ImplicitParameter, Parameter, Variable, Let)
+CARBON_PARSE_STATE_VARIANTS4(Pattern, ImplicitParameter, Parameter, Variable,
+                             Let)
 
 // Handles `addr` in a pattern.
 //
@@ -704,7 +705,7 @@ CARBON_PARSE_STATE(StatementWhileBlockFinish)
 // Always:
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
-                              NamedConstraint)
+                             NamedConstraint)
 
 // Handles processing of a type's introducer.
 //
@@ -722,8 +723,7 @@ CARBON_PARSE_STATE_VARIANTS3(TypeIntroducer, Class, Interface, NamedConstraint)
 //   2. TypeDefinitionFinishAs(Class|Interface|NamedConstraint)
 // Else:
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface,
-                              NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
 
 // Handles the start of a `var`.
 //

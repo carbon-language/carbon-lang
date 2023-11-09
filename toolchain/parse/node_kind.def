@@ -179,7 +179,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParameterListStart, 0,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0, CARBON_TOKEN(Comma))
 CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart,
                                CARBON_TOKEN(CloseParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParameterList, ImplicitParameterListStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParameterList,
+                               ImplicitParameterListStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // An array type, such as  `[i32; 3]` or `[i32;]`:
@@ -347,8 +348,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(IndexExpr, IndexExprStart,
 // separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExprOrTupleLiteralStart, 0,
                                    CARBON_TOKEN(OpenParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ParenExpr,
-                               ParenExprOrTupleLiteralStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ParenExpr, ParenExprOrTupleLiteralStart,
                                CARBON_TOKEN(CloseParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralComma, 0, CARBON_TOKEN(Comma))
 CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExprOrTupleLiteralStart,
@@ -363,8 +363,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExprOrTupleLiteralStart,
 //
 // Exprs and CallExprComma may repeat with CallExprComma as a
 // separator.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprStart, 1,
-                                   CARBON_TOKEN(OpenParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprStart, 1, CARBON_TOKEN(OpenParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprComma, 0, CARBON_TOKEN(Comma))
 CARBON_PARSE_NODE_KIND_BRACKET(CallExpr, CallExprStart,
                                CARBON_TOKEN(CloseParen))
@@ -384,8 +383,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedDeclaration, 2,
 //   _external_: lhs expression
 //   _external_: rhs expression
 // QualifiedExpr
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(MemberAccessExpr, 2,
-                                   CARBON_TOKEN(Period))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MemberAccessExpr, 2, CARBON_TOKEN(Period))
 
 // A pointer member access expression, such as `a->b` or
 // `GetObject()->(Interface.member)`:
