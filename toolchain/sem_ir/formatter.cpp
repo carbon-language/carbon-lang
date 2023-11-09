@@ -61,9 +61,7 @@ class InstNamer {
       // disambiguator.
       auto fn_loc = Parse::Node::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
-          *this, fn_loc,
-          fn.name_id.is_valid() ? sem_ir.identifiers().Get(fn.name_id).str()
-                                : "");
+          *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
       CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
@@ -93,9 +91,7 @@ class InstNamer {
       auto class_loc = Parse::Node::Invalid;
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
-          class_info.name_id.is_valid()
-              ? sem_ir.identifiers().Get(class_info.name_id).str()
-              : "");
+          sem_ir.names().GetIRBaseName(class_info.name_id).str());
       AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
       CollectNamesInBlock(class_scope, class_info.body_block_id);
     }
@@ -407,14 +403,9 @@ class InstNamer {
         insts[inst_id.index] = {scope_idx, scope.insts.AllocateName(
                                                *this, inst.parse_node(), name)};
       };
-      auto add_inst_name_id = [&](IdentifierId name_id,
-                                  llvm::StringRef suffix = "") {
-        if (name_id.is_valid()) {
-          add_inst_name(
-              (sem_ir_.identifiers().Get(name_id).str() + suffix).str());
-        } else {
-          add_inst_name(suffix.str());
-        }
+      auto add_inst_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
+        add_inst_name(
+            (sem_ir_.names().GetIRBaseName(name_id).str() + suffix).str());
       };
 
       switch (inst.kind()) {
@@ -630,7 +621,7 @@ class Formatter {
                        llvm::StringRef prefix) -> void {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<InstId, IdentifierId>> entries;
+    llvm::SmallVector<std::pair<InstId, NameId>> entries;
     for (auto [name_id, inst_id] : sem_ir_.name_scopes().Get(id)) {
       entries.push_back({inst_id, name_id});
     }
@@ -640,7 +631,7 @@ class Formatter {
     llvm::ListSeparator sep(separator);
     for (auto [inst_id, name_id] : entries) {
       out_ << sep << prefix;
-      FormatString(name_id);
+      FormatName(name_id);
       out_ << " = ";
       FormatInstName(inst_id);
     }
@@ -839,7 +830,7 @@ class Formatter {
     for (auto field_id : sem_ir_.inst_blocks().Get(inst.fields_id)) {
       out_ << sep << ".";
       auto field = sem_ir_.insts().GetAs<StructTypeField>(field_id);
-      FormatString(field.name_id);
+      FormatName(field.name_id);
       out_ << ": ";
       FormatType(field.field_type_id);
     }
@@ -862,12 +853,6 @@ class Formatter {
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 
   auto FormatArg(ClassId id) -> void { FormatClassName(id); }
-
-  auto FormatArg(IdentifierId id) -> void {
-    out_ << '"';
-    out_.write_escaped(sem_ir_.identifiers().Get(id), /*UseHexEscapes=*/true);
-    out_ << '"';
-  }
 
   auto FormatArg(IntegerId id) -> void {
     sem_ir_.integers().Get(id).print(out_, /*isSigned=*/false);
@@ -907,6 +892,8 @@ class Formatter {
     out_ << '"';
   }
 
+  auto FormatArg(NameId id) -> void { FormatName(id); }
+
   auto FormatArg(TypeId id) -> void { FormatType(id); }
 
   auto FormatArg(TypeBlockId id) -> void {
@@ -924,16 +911,16 @@ class Formatter {
     FormatArg(dest_id);
   }
 
+  auto FormatName(NameId id) -> void {
+    out_ << sem_ir_.names().GetFormatted(id);
+  }
+
   auto FormatInstName(InstId id) -> void {
     out_ << inst_namer_.GetNameFor(scope_, id);
   }
 
   auto FormatLabel(InstBlockId id) -> void {
     out_ << inst_namer_.GetLabelFor(scope_, id);
-  }
-
-  auto FormatString(IdentifierId id) -> void {
-    out_ << sem_ir_.identifiers().Get(id);
   }
 
   auto FormatFunctionName(FunctionId id) -> void {

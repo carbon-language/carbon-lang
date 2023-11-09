@@ -124,7 +124,7 @@ class DeclarationNameStack {
       SemIR::InstId resolved_inst_id = SemIR::InstId::Invalid;
 
       // The ID of an unresolved identifier.
-      IdentifierId unresolved_name_id;
+      SemIR::NameId unresolved_name_id;
     };
   };
 
@@ -154,13 +154,14 @@ class DeclarationNameStack {
   // unqualified name in the current context. This is suitable for adding to
   // name lookup in situations where a qualified name is not permitted, such as
   // a pattern binding.
-  auto MakeUnqualifiedName(Parse::Node parse_node, IdentifierId name_id)
+  auto MakeUnqualifiedName(Parse::Node parse_node, SemIR::NameId name_id)
       -> NameContext;
 
   // Applies a Name from the name stack to the top of the declaration name
   // stack. This will enter the scope corresponding to the name if the name
   // describes an existing scope, such as a namespace or a defined class.
-  auto ApplyNameQualifier(Parse::Node parse_node, IdentifierId name_id) -> void;
+  auto ApplyNameQualifier(Parse::Node parse_node, SemIR::NameId name_id)
+      -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(NameContext name_context, SemIR::InstId target_id)
@@ -177,7 +178,7 @@ class DeclarationNameStack {
 
   // Applies a Name from the name stack to given name context.
   auto ApplyNameQualifierTo(NameContext& name_context, Parse::Node parse_node,
-                            IdentifierId name_id) -> void;
+                            SemIR::NameId name_id) -> void;
 
   // Returns true if the context is in a state where it can resolve qualifiers.
   // Updates name_context as needed.

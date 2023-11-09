@@ -29,8 +29,8 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field "n", member0
-// CHECK:STDOUT:   %n: <unbound field of class Class> = bind_name "n", %.loc8_8.2
+// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field n, member0
+// CHECK:STDOUT:   %n: <unbound field of class Class> = bind_name n, %.loc8_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .n = %n
@@ -38,7 +38,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: Class = name_reference "c", %c
-// CHECK:STDOUT:   %something.ref: <error> = name_reference "something", <error>
+// CHECK:STDOUT:   %c.ref: Class = name_reference c, %c
+// CHECK:STDOUT:   %something.ref: <error> = name_reference something, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

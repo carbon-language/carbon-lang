@@ -88,11 +88,11 @@ auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::Node parse_node, IdentifierId name_id)
-    -> void {
+auto Context::DiagnoseNameNotFound(Parse::Node parse_node,
+                                   SemIR::NameId name_id) -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, identifiers().Get(name_id));
+  emitter_->Emit(parse_node, NameNotFound, names().GetFormatted(name_id));
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -112,7 +112,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   }
 }
 
-auto Context::AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
+auto Context::AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,
                               SemIR::InstId target_id) -> void {
   if (current_scope().names.insert(name_id).second) {
     // TODO: Reject if we previously performed a failed lookup for this name in
@@ -129,7 +129,7 @@ auto Context::AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
 }
 
 auto Context::LookupNameInDeclaration(Parse::Node parse_node,
-                                      IdentifierId name_id,
+                                      SemIR::NameId name_id,
                                       SemIR::NameScopeId scope_id)
     -> SemIR::InstId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
@@ -159,7 +159,7 @@ auto Context::LookupNameInDeclaration(Parse::Node parse_node,
     if (auto name_it = name_lookup_.find(name_id);
         name_it != name_lookup_.end()) {
       CARBON_CHECK(!name_it->second.empty())
-          << "Should have been erased: " << identifiers().Get(name_id);
+          << "Should have been erased: " << names().GetFormatted(name_id);
       auto result = name_it->second.back();
       if (result.scope_index == current_scope_index()) {
         return result.node_id;
@@ -175,7 +175,7 @@ auto Context::LookupNameInDeclaration(Parse::Node parse_node,
 }
 
 auto Context::LookupUnqualifiedName(Parse::Node parse_node,
-                                    IdentifierId name_id) -> SemIR::InstId {
+                                    SemIR::NameId name_id) -> SemIR::InstId {
   // TODO: Check for shadowed lookup results.
 
   // Find the results from enclosing lexical scopes. These will be combined with
@@ -185,7 +185,7 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
       name_it != name_lookup_.end()) {
     lexical_results = name_it->second;
     CARBON_CHECK(!lexical_results.empty())
-        << "Should have been erased: " << identifiers().Get(name_id);
+        << "Should have been erased: " << names().GetFormatted(name_id);
   }
 
   // Walk the non-lexical scopes and perform lookups into each of them.
@@ -214,7 +214,7 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupQualifiedName(Parse::Node parse_node, IdentifierId name_id,
+auto Context::LookupQualifiedName(Parse::Node parse_node, SemIR::NameId name_id,
                                   SemIR::NameScopeId scope_id, bool required)
     -> SemIR::InstId {
   CARBON_CHECK(scope_id.is_valid()) << "No scope to perform lookup into";
@@ -252,7 +252,7 @@ auto Context::PopScope() -> void {
   for (const auto& str_id : scope.names) {
     auto it = name_lookup_.find(str_id);
     CARBON_CHECK(it->second.back().scope_index == scope.index)
-        << "Inconsistent scope index for name " << identifiers().Get(str_id);
+        << "Inconsistent scope index for name " << names().GetFormatted(str_id);
     if (it->second.size() == 1) {
       // Erase names that no longer resolve.
       name_lookup_.erase(it);

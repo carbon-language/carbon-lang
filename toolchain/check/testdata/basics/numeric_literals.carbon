@@ -40,8 +40,8 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_19: i32 = int_literal 5
 // CHECK:STDOUT:   %.loc10_20: type = array_type %.loc10_19, i32
-// CHECK:STDOUT:   %ints.var: ref [i32; 5] = var "ints"
-// CHECK:STDOUT:   %ints: ref [i32; 5] = bind_name "ints", %ints.var
+// CHECK:STDOUT:   %ints.var: ref [i32; 5] = var ints
+// CHECK:STDOUT:   %ints: ref [i32; 5] = bind_name ints, %ints.var
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 8
 // CHECK:STDOUT:   %.loc12: i32 = int_literal 9
 // CHECK:STDOUT:   %.loc13: i32 = int_literal 8
@@ -68,8 +68,8 @@ fn F() {
 // CHECK:STDOUT:   assign %ints.var, %.loc16_3.18
 // CHECK:STDOUT:   %.loc17_21: i32 = int_literal 7
 // CHECK:STDOUT:   %.loc17_22: type = array_type %.loc17_21, f64
-// CHECK:STDOUT:   %floats.var: ref [f64; 7] = var "floats"
-// CHECK:STDOUT:   %floats: ref [f64; 7] = bind_name "floats", %floats.var
+// CHECK:STDOUT:   %floats.var: ref [f64; 7] = var floats
+// CHECK:STDOUT:   %floats: ref [f64; 7] = bind_name floats, %floats.var
 // CHECK:STDOUT:   %.loc18: f64 = real_literal 9e-1
 // CHECK:STDOUT:   %.loc19: f64 = real_literal 80e-1
 // CHECK:STDOUT:   %.loc20: f64 = real_literal 800e-1

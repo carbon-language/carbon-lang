@@ -17,8 +17,8 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT: file "fail_out_of_bound.carbon" {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32
-// CHECK:STDOUT:   %a.var: ref [i32; 1] = var "a"
-// CHECK:STDOUT:   %a: ref [i32; 1] = bind_name "a", %a.var
+// CHECK:STDOUT:   %a.var: ref [i32; 1] = var a
+// CHECK:STDOUT:   %a: ref [i32; 1] = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_23: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 3

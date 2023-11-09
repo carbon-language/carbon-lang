@@ -101,7 +101,7 @@ static auto GetStructFieldName(FunctionContext& context,
           .fields_id);
   auto field = context.sem_ir().insts().GetAs<SemIR::StructTypeField>(
       fields[index.index]);
-  return context.sem_ir().identifiers().Get(field.name_id);
+  return context.sem_ir().names().GetIRBaseName(field.name_id);
 }
 
 auto HandleClassFieldAccess(FunctionContext& context, SemIR::InstId inst_id,

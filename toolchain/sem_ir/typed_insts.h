@@ -100,7 +100,7 @@ struct BindName {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
   InstId value_id;
 };
 
@@ -279,7 +279,7 @@ struct Field {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
   MemberIndex index;
 };
 
@@ -317,7 +317,7 @@ struct NameReference {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
   InstId value_id;
 };
 
@@ -341,7 +341,7 @@ struct Parameter {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
 };
 
 struct PointerType {
@@ -445,7 +445,7 @@ struct StructTypeField {
   // This instruction is an implementation detail of `StructType`, and doesn't
   // produce a value, so has no type, even though it declares a field with a
   // type.
-  IdentifierId name_id;
+  NameId name_id;
   TypeId field_type_id;
 };
 
@@ -571,7 +571,7 @@ struct VarStorage {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
 };
 
 // HasParseNode<T> is true if T has a `Parse::Node parse_node` field.

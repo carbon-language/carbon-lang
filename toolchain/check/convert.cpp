@@ -431,7 +431,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   }
 
   // Prepare to look up fields in the source by index.
-  llvm::SmallDenseMap<IdentifierId, int32_t> src_field_indexes;
+  llvm::SmallDenseMap<SemIR::NameId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
       auto [it, added] = src_field_indexes.insert(
@@ -470,19 +470,19 @@ static auto ConvertStructToStructOrClass(Context& context,
               StructInitMissingFieldInLiteral, Error,
               "Missing value for field `{0}` in struct initialization.",
               llvm::StringRef);
-          context.emitter().Emit(value.parse_node(),
-                                 StructInitMissingFieldInLiteral,
-                                 sem_ir.identifiers().Get(dest_field.name_id));
+          context.emitter().Emit(
+              value.parse_node(), StructInitMissingFieldInLiteral,
+              sem_ir.names().GetFormatted(dest_field.name_id));
         } else {
           CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
                             "Cannot convert from struct type `{0}` to `{1}`: "
                             "missing field `{2}` in source type.",
                             std::string, std::string, llvm::StringRef);
-          context.emitter().Emit(value.parse_node(),
-                                 StructInitMissingFieldInConversion,
-                                 sem_ir.StringifyType(value.type_id()),
-                                 sem_ir.StringifyType(target.type_id),
-                                 sem_ir.identifiers().Get(dest_field.name_id));
+          context.emitter().Emit(
+              value.parse_node(), StructInitMissingFieldInConversion,
+              sem_ir.StringifyType(value.type_id()),
+              sem_ir.StringifyType(target.type_id),
+              sem_ir.names().GetFormatted(dest_field.name_id));
         }
         return SemIR::InstId::BuiltinError;
       }

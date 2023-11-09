@@ -18,8 +18,8 @@ var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT: file "fail_array_large_index.carbon" {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
-// CHECK:STDOUT:   %a.var: ref [i32; 1] = var "a"
-// CHECK:STDOUT:   %a: ref [i32; 1] = bind_name "a", %a.var
+// CHECK:STDOUT:   %a.var: ref [i32; 1] = var a
+// CHECK:STDOUT:   %a: ref [i32; 1] = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc7_20: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc7_23.1: (i32,) = tuple_literal (%.loc7_20)
 // CHECK:STDOUT:   %.loc7_23.2: i32 = int_literal 0
@@ -28,9 +28,9 @@ var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc7_23.5: init [i32; 1] = array_init (%.loc7_23.4) to %a.var
 // CHECK:STDOUT:   %.loc7_23.6: init [i32; 1] = converted %.loc7_23.1, %.loc7_23.5
 // CHECK:STDOUT:   assign %a.var, %.loc7_23.6
-// CHECK:STDOUT:   %b.var: ref i32 = var "b"
-// CHECK:STDOUT:   %b: ref i32 = bind_name "b", %b.var
-// CHECK:STDOUT:   %a.ref: ref [i32; 1] = name_reference "a", %a
+// CHECK:STDOUT:   %b.var: ref i32 = var b
+// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %a.ref: ref [i32; 1] = name_reference a, %a
 // CHECK:STDOUT:   %.loc11_16: i32 = int_literal 295147905179352825855
 // CHECK:STDOUT:   %.loc11_35.1: ref i32 = array_index %a.ref, <error>
 // CHECK:STDOUT:   %.loc11_35.2: i32 = bind_value %.loc11_35.1

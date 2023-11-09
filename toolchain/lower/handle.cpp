@@ -295,7 +295,7 @@ auto HandleVarStorage(FunctionContext& context, SemIR::InstId inst_id,
   // TODO: Eventually this name will be optional, and we'll want to provide
   // something like `var` as a default. However, that's not possible right now
   // so cannot be tested.
-  auto name = context.sem_ir().identifiers().Get(inst.name_id);
+  auto name = context.sem_ir().names().GetIRBaseName(inst.name_id);
   auto* alloca = context.builder().CreateAlloca(context.GetType(inst.type_id),
                                                 /*ArraySize=*/nullptr, name);
   context.SetLocal(inst_id, alloca);
