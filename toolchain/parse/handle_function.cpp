@@ -24,10 +24,10 @@ auto HandleFunctionAfterParameters(Context& context) -> void {
   context.PushState(state);
 
   // If there is a return type, parse the expression before adding the return
-  // type nod.e
+  // type node.
   if (context.PositionIs(Lex::TokenKind::MinusGreater)) {
     context.PushState(State::FunctionReturnTypeFinish);
-    ++context.position();
+    context.ConsumeAndDiscard();
     context.PushStateForExpression(PrecedenceGroup::ForType());
   }
 }

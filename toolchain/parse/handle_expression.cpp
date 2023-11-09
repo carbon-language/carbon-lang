@@ -53,7 +53,7 @@ auto HandleExpression(Context& context) -> void {
                                          *operator_precedence);
     }
 
-    ++context.position();
+    context.ConsumeAndDiscard();
     context.PushStateForExpression(*operator_precedence);
   } else {
     context.PushStateForExpressionLoop(State::ExpressionLoop,
