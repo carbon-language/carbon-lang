@@ -54,7 +54,7 @@ static auto BuildClassDeclaration(Context& context)
         {.name_id = name_context.state ==
                             DeclarationNameStack::NameContext::State::Unresolved
                         ? name_context.unresolved_name_id
-                        : IdentifierId::Invalid,
+                        : SemIR::NameId::Invalid,
          // `.self_type_id` depends on `class_id`, so is set below.
          .self_type_id = SemIR::TypeId::Invalid,
          .declaration_id = class_decl_id});
@@ -93,7 +93,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, ClassRedefinition,
-               context.identifiers().Get(class_info.name_id))
+               context.names().GetFormatted(class_info.name_id))
         .Note(context.insts().Get(class_info.definition_id).parse_node(),
               ClassPreviousDefinition)
         .Emit();
@@ -106,13 +106,8 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   context.PushScope(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
-  // TODO: This will shadow a local variable declared with name `r#Self`, but
-  // should not. See #2984 and the corresponding code in
-  // HandleSelfTypeNameExpr.
   context.AddNameToLookup(
-      parse_node,
-      context.identifiers().Add(
-          Lex::TokenKind::SelfTypeIdentifier.fixed_spelling()),
+      parse_node, SemIR::NameId::SelfType,
       context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
 
   context.inst_block_stack().Push();

@@ -17,7 +17,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_reference_irs_size: 1
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: strId0, param_refs: block1, return_type: type3, return_slot: inst+4, body: [block4]}
+// CHECK:STDOUT:     function0:       {name: name0, param_refs: block1, return_type: type3, return_slot: inst+4, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {inst: instIntegerType, value_rep: {kind: copy, type: type0}}
@@ -34,14 +34,14 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       0:               type0
 // CHECK:STDOUT:       1:               type2
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Parameter, arg0: strId1, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: Parameter, arg0: name1, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
 // CHECK:STDOUT:     inst+2:          {kind: TupleLiteral, arg0: block2, type: type1}
 // CHECK:STDOUT:     inst+3:          {kind: TupleType, arg0: typeBlock1, type: typeTypeType}
-// CHECK:STDOUT:     inst+4:          {kind: VarStorage, arg0: strId2, type: type3}
+// CHECK:STDOUT:     inst+4:          {kind: VarStorage, arg0: nameReturnSlot, type: type3}
 // CHECK:STDOUT:     inst+5:          {kind: PointerType, arg0: type3, type: typeTypeType}
 // CHECK:STDOUT:     inst+6:          {kind: FunctionDeclaration, arg0: function0, type: type5}
-// CHECK:STDOUT:     inst+7:          {kind: NameReference, arg0: strId1, arg1: inst+0, type: type0}
+// CHECK:STDOUT:     inst+7:          {kind: NameReference, arg0: name1, arg1: inst+0, type: type0}
 // CHECK:STDOUT:     inst+8:          {kind: IntegerLiteral, arg0: int3, type: type0}
 // CHECK:STDOUT:     inst+9:          {kind: BinaryOperatorAdd, arg0: inst+7, arg1: inst+8, type: type0}
 // CHECK:STDOUT:     inst+10:         {kind: RealLiteral, arg0: real0, type: type2}

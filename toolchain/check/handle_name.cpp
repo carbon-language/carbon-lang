@@ -55,7 +55,7 @@ static auto GetExprValueForLookupResult(Context& context,
 }
 
 auto HandleMemberAccessExpr(Context& context, Parse::Node parse_node) -> bool {
-  IdentifierId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
   auto base_id = context.node_stack().PopExpr();
 
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -194,7 +194,7 @@ auto HandleMemberAccessExpr(Context& context, Parse::Node parse_node) -> bool {
                         llvm::StringRef);
       context.emitter().Emit(parse_node, QualifiedExprNameNotFound,
                              context.sem_ir().StringifyType(base_type_id),
-                             context.identifiers().Get(name_id));
+                             context.names().GetFormatted(name_id));
       break;
     }
     // TODO: `ConstType` should support member access just like the
@@ -223,16 +223,16 @@ auto HandlePointerMemberAccessExpr(Context& context, Parse::Node parse_node)
 }
 
 auto HandleName(Context& context, Parse::Node parse_node) -> bool {
-  auto name_id = context.tokens().GetIdentifier(
-      context.parse_tree().node_token(parse_node));
+  auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
+      context.parse_tree().node_token(parse_node)));
   // The parent is responsible for binding the name.
   context.node_stack().Push(parse_node, name_id);
   return true;
 }
 
 auto HandleNameExpr(Context& context, Parse::Node parse_node) -> bool {
-  auto name_id = context.tokens().GetIdentifier(
-      context.parse_tree().node_token(parse_node));
+  auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
+      context.parse_tree().node_token(parse_node)));
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   value_id = GetExprValueForLookupResult(context, value_id);
   auto value = context.insts().Get(value_id);
@@ -274,12 +274,9 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleSelfTypeNameExpr(Context& context, Parse::Node parse_node) -> bool {
-  // TODO: This will find a local variable declared with name `r#Self`, but
-  // should not. See #2984 and the corresponding code in
-  // HandleClassDefinitionStart.
-  auto name_id = context.identifiers().Add(
-      Lex::TokenKind::SelfTypeIdentifier.fixed_spelling());
+auto HandleSelfTypeNameExpr(Context& context, Parse::Node parse_node)
+    -> bool {
+  auto name_id = SemIR::NameId::SelfType;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(
@@ -293,11 +290,9 @@ auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleSelfValueNameExpr(Context& context, Parse::Node parse_node) -> bool {
-  // TODO: This will find a local variable declared with name `r#self`, but
-  // should not. See #2984 and the corresponding code in
-  // HandleFunctionDefinitionStart.
-  auto name_id = context.identifiers().Add(SemIR::SelfParameter::Name);
+auto HandleSelfValueNameExpr(Context& context, Parse::Node parse_node)
+    -> bool {
+  auto name_id = SemIR::NameId::SelfValue;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(

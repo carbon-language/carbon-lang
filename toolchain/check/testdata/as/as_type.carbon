@@ -13,5 +13,5 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "as_type.carbon" {
 // CHECK:STDOUT:   %.loc7: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %t: type = bind_name "t", constants.%.loc7_26
+// CHECK:STDOUT:   %t: type = bind_name t, constants.%.loc7_26
 // CHECK:STDOUT: }

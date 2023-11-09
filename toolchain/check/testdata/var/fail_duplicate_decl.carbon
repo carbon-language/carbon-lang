@@ -22,12 +22,12 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.var.loc9: ref i32 = var "x"
-// CHECK:STDOUT:   %x.loc9: ref i32 = bind_name "x", %x.var.loc9
+// CHECK:STDOUT:   %x.var.loc9: ref i32 = var x
+// CHECK:STDOUT:   %x.loc9: ref i32 = bind_name x, %x.var.loc9
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x.var.loc9, %.loc9
-// CHECK:STDOUT:   %x.var.loc16: ref i32 = var "x"
-// CHECK:STDOUT:   %x.loc16: ref i32 = bind_name "x", %x.var.loc16
+// CHECK:STDOUT:   %x.var.loc16: ref i32 = var x
+// CHECK:STDOUT:   %x.loc16: ref i32 = bind_name x, %x.var.loc16
 // CHECK:STDOUT:   %.loc16: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x.var.loc16, %.loc16
 // CHECK:STDOUT:   return
