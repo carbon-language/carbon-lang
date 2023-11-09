@@ -36,7 +36,8 @@ class Context {
     // be a `FunctionDeclaration`.
     SemIR::InstId decl_id;
 
-    // The value corresponding to the current `returned var`, if any.
+    // The value corresponding to the current `returned var`, if any. Will be
+    // set and unset as `returned var`s are declared and go out of scope.
     SemIR::InstId returned_var = SemIR::InstId::Invalid;
   };
 
