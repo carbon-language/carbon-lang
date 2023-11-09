@@ -3,30 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
-#include "toolchain/check/convert.h"
 #include "toolchain/check/return.h"
-#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
-
-// TODO: Find a better home for this. We'll likely need it for more than just
-// expression statements.
-static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
-    -> void {
-  // If we discard an initializing expression, convert it to a value or
-  // reference so that it has something to initialize.
-  auto expr = context.insts().Get(expr_id);
-  Convert(context, expr.parse_node(), expr_id,
-          {.kind = ConversionTarget::Discarded, .type_id = expr.type_id()});
-
-  // TODO: This will eventually need to do some "do not discard" analysis.
-}
-
-auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
-    -> bool {
-  HandleDiscardedExpression(context, context.node_stack().PopExpression());
-  return true;
-}
 
 auto HandleReturnStatementStart(Context& context, Parse::Node parse_node)
     -> bool {

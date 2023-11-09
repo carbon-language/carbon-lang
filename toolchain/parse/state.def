@@ -568,6 +568,8 @@ CARBON_PARSE_STATE_VARIANTS2(PatternFinish, Generic, Regular)
 //   1. StatementReturn
 // If `Var`:
 //   1. VarAsDeclaration
+// If `Returned`:
+//   1. VarAsReturned
 // If `While`:
 //   1. StatementWhile
 // Else:
@@ -659,6 +661,8 @@ CARBON_PARSE_STATE(StatementIfElseBlockFinish)
 //
 // If `Semi`:
 //   1. StatementReturnFinish
+// If `Var`:
+//   1. StatementReturnFinish
 // Else:
 //   1. Expression
 //   2. StatementReturnFinish
@@ -725,13 +729,17 @@ CARBON_PARSE_STATE_VARIANTS3(TypeIntroducer, Class, Interface, NamedConstraint)
 CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface,
                               NamedConstraint)
 
-// Handles the start of a `var`.
+// Handles the start of a `var` or `returned var`.
 //
-// Always:
+// On error:
+//   (state done)
+// Else:
 //   1. PatternAsVariable
 //   2. VarAfterPattern
 //   3. VarFinishAs(Declaration|For)
-CARBON_PARSE_STATE_VARIANTS2(Var, Declaration, For)
+//
+// VarAsReturned uses VarFinishAsDeclaration.
+CARBON_PARSE_STATE_VARIANTS3(Var, Declaration, Returned, For)
 
 // Handles `var` after the pattern, either followed by an initializer or the
 // semicolon.

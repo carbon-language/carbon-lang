@@ -7,32 +7,17 @@
 namespace Carbon::Parse {
 
 // Handles VarAs(Declaration|For).
-static auto HandleVar(Context& context, State finish_state) -> void {
-  context.PopAndDiscardState();
+static auto HandleVar(Context& context, State finish_state,
+                      Lex::Token returned_token = Lex::Token::Invalid) -> void {
+  auto start_token = context.PopState().token;
 
   // These will start at the `var` or `returned`.
-  context.PushState(finish_state);
-  context.PushState(State::VarAfterPattern);
-
-  // Consume the `var` or `returned var`.
-  auto returned_token = context.ConsumeIf(Lex::TokenKind::Returned);
-  if (returned_token && !context.PositionIs(Lex::TokenKind::Var)) {
-    CARBON_DIAGNOSTIC(ExpectedVarAfterReturned, Error,
-                      "Expected `var` after `returned`.");
-    context.emitter().Emit(*context.position(), ExpectedVarAfterReturned);
-    context.PopAndDiscardState();
-    context.PopAndDiscardState();
-    auto semi = context.SkipPastLikelyEnd(*returned_token);
-    context.AddLeafNode(NodeKind::EmptyDeclaration,
-                        semi ? *semi : *returned_token,
-                        /*has_error=*/true);
-    return;
-  }
+  context.PushState(finish_state, start_token);
+  context.PushState(State::VarAfterPattern, start_token);
 
   context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
-
-  if (returned_token) {
-    context.AddLeafNode(NodeKind::ReturnedSpecifier, *returned_token);
+  if (returned_token.is_valid()) {
+    context.AddLeafNode(NodeKind::ReturnedSpecifier, returned_token);
   }
 
   // This will start at the pattern.
@@ -41,6 +26,24 @@ static auto HandleVar(Context& context, State finish_state) -> void {
 
 auto HandleVarAsDeclaration(Context& context) -> void {
   HandleVar(context, State::VarFinishAsDeclaration);
+}
+
+auto HandleVarAsReturned(Context& context) -> void {
+  auto returned_token = context.Consume();
+
+  if (!context.PositionIs(Lex::TokenKind::Var)) {
+    CARBON_DIAGNOSTIC(ExpectedVarAfterReturned, Error,
+                      "Expected `var` after `returned`.");
+    context.emitter().Emit(*context.position(), ExpectedVarAfterReturned);
+    auto semi = context.SkipPastLikelyEnd(returned_token);
+    context.AddLeafNode(NodeKind::EmptyDeclaration,
+                        semi ? *semi : returned_token,
+                        /*has_error=*/true);
+    context.PopAndDiscardState();
+    return;
+  }
+
+  HandleVar(context, State::VarFinishAsDeclaration, returned_token);
 }
 
 auto HandleVarAsFor(Context& context) -> void {

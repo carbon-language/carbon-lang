@@ -125,8 +125,9 @@ class Context {
     return insts().Get(current_scope_inst_id).TryAs<InstT>();
   }
 
-  // Sets the given instruction to be the current `returned var`. If there is
-  // already a `returned var`, returns it instead.
+  // If there is no `returned var` in scope, sets the given instruction to be
+  // the current `returned var` and returns an invalid instruction ID. If there
+  // is already a `returned var`, returns it instead.
   auto SetReturnedVarOrGetExisting(SemIR::InstId bind_id) -> SemIR::InstId;
 
   // Follows NameReference instructions to find the value named by a given

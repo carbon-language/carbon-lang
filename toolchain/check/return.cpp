@@ -9,6 +9,7 @@
 
 namespace Carbon::Check {
 
+// Gets the function that lexically encloses the current location.
 static auto GetCurrentFunction(Context& context) -> SemIR::Function& {
   CARBON_CHECK(!context.return_scope_stack().empty())
       << "Handling return but not in a function";
@@ -19,12 +20,15 @@ static auto GetCurrentFunction(Context& context) -> SemIR::Function& {
   return context.functions().Get(function_id);
 }
 
+// Gets the currently in scope `returned var`, if any, that would be returned
+// by a `return var;`.
 static auto GetCurrentReturnedVar(Context& context) -> SemIR::InstId {
   CARBON_CHECK(!context.return_scope_stack().empty())
       << "Handling return but not in a function";
   return context.return_scope_stack().back().returned_var;
 }
 
+// Produces a note that the given function has no explicit return type.
 static auto NoteNoReturnTypeProvided(Context& context,
                                      Context::DiagnosticBuilder& diag,
                                      const SemIR::Function& function) {
@@ -34,6 +38,7 @@ static auto NoteNoReturnTypeProvided(Context& context,
             ReturnTypeOmittedNote);
 }
 
+// Produces a note describing the return type of the given function.
 static auto NoteReturnType(Context& context, Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
   // TODO: This is the location of the `fn` keyword. Find the location of the
@@ -46,6 +51,7 @@ static auto NoteReturnType(Context& context, Context::DiagnosticBuilder& diag,
             context.sem_ir().StringifyType(function.return_type_id, true));
 }
 
+// Produces a note pointing at the currently in scope `returned var`.
 static auto NoteReturnedVar(Context& context, Context::DiagnosticBuilder& diag,
                             SemIR::InstId returned_var_id) {
   CARBON_DIAGNOSTIC(ReturnedVarHere, Note, "`returned var` was declared here.");

@@ -38,7 +38,10 @@ auto HandleStatement(Context& context) -> void {
       context.PushState(State::StatementReturn);
       break;
     }
-    case Lex::TokenKind::Returned:
+    case Lex::TokenKind::Returned: {
+      context.PushState(State::VarAsReturned);
+      break;
+    }
     case Lex::TokenKind::Var: {
       context.PushState(State::VarAsDeclaration);
       break;

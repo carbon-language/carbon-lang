@@ -266,8 +266,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1,
 
 // `return`:
 //   ReturnStatementStart
-//   _optional_ ReturnVarSpecifier
-//   _optional_ _external_: expression
+//   _optional_ ReturnVarSpecifier or _external_: expression
 // ReturnStatement
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnStatementStart, 0,
                                    CARBON_TOKEN(Return))
