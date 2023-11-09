@@ -46,6 +46,9 @@ class FileContext {
     return llvm::ConstantStruct::get(GetTypeType());
   }
 
+  // Returns a global value for the given instruction.
+  auto GetGlobal(SemIR::InstId inst_id) -> llvm::Value*;
+
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
@@ -92,6 +95,9 @@ class FileContext {
 
   // Lowered version of the builtin type `type`.
   llvm::StructType* type_type_ = nullptr;
+
+  // Maps global instructions to their lowered values.
+  llvm::DenseMap<SemIR::InstId, llvm::Value*> globals_;
 };
 
 }  // namespace Carbon::Lower
