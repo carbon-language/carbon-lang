@@ -21,6 +21,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//toolchain/base:index_base",
+        "//toolchain/base:value_store",
         "//toolchain/sem_ir:builtin_kind",
     ],
 )

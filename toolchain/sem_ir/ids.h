@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 
 namespace Carbon::SemIR {
