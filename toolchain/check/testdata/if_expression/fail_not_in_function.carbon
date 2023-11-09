@@ -38,7 +38,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_not_in_function.carbon" {
-// CHECK:STDOUT:   %.loc17: i32 = block_arg <unexpected instblockref 4>
+// CHECK:STDOUT:   %.loc17: i32 = block_arg <unexpected instblockref block4>
 // CHECK:STDOUT:   %x: i32 = bind_name "x", %.loc17
 // CHECK:STDOUT:   class_declaration @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
@@ -49,5 +49,5 @@ class C {
 // CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .n = <unexpected instref 29>
+// CHECK:STDOUT:   .n = <unexpected instref inst+20>
 // CHECK:STDOUT: }
