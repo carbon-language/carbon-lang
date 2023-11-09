@@ -78,7 +78,7 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
     // Use the `:` or `:!` for the root node.
     state.token = context.Consume();
     context.PushState(state);
-    context.PushStateForExpression(PrecedenceGroup::ForType());
+    context.PushStateForExpr(PrecedenceGroup::ForType());
   } else {
     on_error();
     return;

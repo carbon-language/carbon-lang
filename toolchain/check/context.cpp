@@ -424,12 +424,12 @@ auto Context::is_current_position_reachable() -> bool {
 auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
 
 auto Context::ParamOrArgComma() -> void {
-  ParamOrArgSave(node_stack_.PopExpression());
+  ParamOrArgSave(node_stack_.PopExpr());
 }
 
 auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) != start_kind) {
-    ParamOrArgSave(node_stack_.PopExpression());
+    ParamOrArgSave(node_stack_.PopExpr());
   }
 }
 
@@ -799,7 +799,7 @@ class TypeCompleter {
       case SemIR::Parameter::Kind:
       case SemIR::RealLiteral::Kind:
       case SemIR::Return::Kind:
-      case SemIR::ReturnExpression::Kind:
+      case SemIR::ReturnExpr::Kind:
       case SemIR::SelfParameter::Kind:
       case SemIR::SpliceBlock::Kind:
       case SemIR::StringLiteral::Kind:
@@ -1002,7 +1002,7 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
     }
     default: {
       // Right now, this is only expected to occur in calls from
-      // ExpressionAsType. Diagnostics are issued there.
+      // ExprAsType. Diagnostics are issued there.
       return false;
     }
   }

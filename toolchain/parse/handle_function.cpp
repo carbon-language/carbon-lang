@@ -28,7 +28,7 @@ auto HandleFunctionAfterParameters(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::MinusGreater)) {
     context.PushState(State::FunctionReturnTypeFinish);
     ++context.position();
-    context.PushStateForExpression(PrecedenceGroup::ForType());
+    context.PushStateForExpr(PrecedenceGroup::ForType());
   }
 }
 

@@ -18,7 +18,7 @@ interface Foo {
 // CHECK:STDOUT:         {kind: 'Name', text: 'FooFactory'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ParameterList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'SelfTypeNameExpression', text: 'Self'},
+// CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDeclaration', text: ';', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 11},

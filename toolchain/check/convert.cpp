@@ -116,8 +116,8 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
 // an initializing expression.
 static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
-  if (GetExpressionCategory(context.sem_ir(), expr_id) ==
-      SemIR::ExpressionCategory::Initializing) {
+  if (GetExprCategory(context.sem_ir(), expr_id) ==
+      SemIR::ExprCategory::Initializing) {
     return FinalizeTemporary(context, expr_id, /*discarded=*/false);
   }
   return expr_id;
@@ -258,13 +258,13 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
         ArrayInitFromLiteralArgCountMismatch, Error,
         "Cannot initialize array of {0} element(s) from {1} initializer(s).",
         uint64_t, size_t);
-    CARBON_DIAGNOSTIC(ArrayInitFromExpressionArgCountMismatch, Error,
+    CARBON_DIAGNOSTIC(ArrayInitFromExprArgCountMismatch, Error,
                       "Cannot initialize array of {0} element(s) from tuple "
                       "with {1} element(s).",
                       uint64_t, size_t);
     context.emitter().Emit(value.parse_node(),
                            literal_elems.empty()
-                               ? ArrayInitFromExpressionArgCountMismatch
+                               ? ArrayInitFromExprArgCountMismatch
                                : ArrayInitFromLiteralArgCountMismatch,
                            array_bound, tuple_elem_types.size());
     return SemIR::InstId::BuiltinError;
@@ -563,22 +563,22 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
 // Returns whether `category` is a valid expression category to produce as a
 // result of a conversion with kind `target_kind`, or at most needs a temporary
 // to be materialized.
-static bool IsValidExpressionCategoryForConversionTarget(
-    SemIR::ExpressionCategory category, ConversionTarget::Kind target_kind) {
+static bool IsValidExprCategoryForConversionTarget(
+    SemIR::ExprCategory category, ConversionTarget::Kind target_kind) {
   switch (target_kind) {
     case ConversionTarget::Value:
-      return category == SemIR::ExpressionCategory::Value;
+      return category == SemIR::ExprCategory::Value;
     case ConversionTarget::ValueOrReference:
     case ConversionTarget::Discarded:
-      return category == SemIR::ExpressionCategory::Value ||
-             category == SemIR::ExpressionCategory::DurableReference ||
-             category == SemIR::ExpressionCategory::EphemeralReference ||
-             category == SemIR::ExpressionCategory::Initializing;
+      return category == SemIR::ExprCategory::Value ||
+             category == SemIR::ExprCategory::DurableReference ||
+             category == SemIR::ExprCategory::EphemeralReference ||
+             category == SemIR::ExprCategory::Initializing;
     case ConversionTarget::ExplicitAs:
       return true;
     case ConversionTarget::Initializer:
     case ConversionTarget::FullInitializer:
-      return category == SemIR::ExpressionCategory::Initializing;
+      return category == SemIR::ExprCategory::Initializing;
   }
 }
 
@@ -622,16 +622,16 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   // nothing to do. Performing a conversion would decompose and rebuild tuples
   // and structs, so it's important that we bail out early in this case.
   if (value_type_id == target.type_id) {
-    auto value_cat = SemIR::GetExpressionCategory(sem_ir, value_id);
-    if (IsValidExpressionCategoryForConversionTarget(value_cat, target.kind)) {
+    auto value_cat = SemIR::GetExprCategory(sem_ir, value_id);
+    if (IsValidExprCategoryForConversionTarget(value_cat, target.kind)) {
       return value_id;
     }
 
     // If the source is an initializing expression, we may be able to pull a
     // value right out of it.
-    if (value_cat == SemIR::ExpressionCategory::Initializing &&
-        IsValidExpressionCategoryForConversionTarget(
-            SemIR::ExpressionCategory::Value, target.kind) &&
+    if (value_cat == SemIR::ExprCategory::Initializing &&
+        IsValidExprCategoryForConversionTarget(SemIR::ExprCategory::Value,
+                                               target.kind) &&
         SemIR::GetInitializingRepresentation(sem_ir, value_type_id).kind ==
             SemIR::InitializingRepresentation::ByCopy) {
       auto value_rep = SemIR::GetValueRepresentation(sem_ir, value_type_id);
@@ -702,8 +702,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
            sem_ir.inst_blocks().Get(tuple_literal->elements_id)) {
         // TODO: This call recurses back into conversion. Switch to an
         // iterative approach.
-        type_ids.push_back(
-            ExpressionAsType(context, parse_node, tuple_inst_id));
+        type_ids.push_back(ExprAsType(context, parse_node, tuple_inst_id));
       }
       auto tuple_type_id =
           context.CanonicalizeTupleType(parse_node, std::move(type_ids));
@@ -766,15 +765,14 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
     return SemIR::InstId::BuiltinError;
   }
 
-  if (SemIR::GetExpressionCategory(sem_ir, expr_id) ==
-      SemIR::ExpressionCategory::NotExpression) {
+  if (SemIR::GetExprCategory(sem_ir, expr_id) == SemIR::ExprCategory::NotExpr) {
     // TODO: We currently encounter this for use of namespaces and functions.
     // We should provide a better diagnostic for inappropriate use of
     // namespace names, and allow use of functions as values.
-    CARBON_DIAGNOSTIC(UseOfNonExpressionAsValue, Error,
+    CARBON_DIAGNOSTIC(UseOfNonExprAsValue, Error,
                       "Expression cannot be used as a value.");
     context.emitter().Emit(sem_ir.insts().Get(expr_id).parse_node(),
-                           UseOfNonExpressionAsValue);
+                           UseOfNonExprAsValue);
     return SemIR::InstId::BuiltinError;
   }
 
@@ -834,16 +832,16 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
   }
 
   // Now perform any necessary value category conversions.
-  switch (SemIR::GetExpressionCategory(sem_ir, expr_id)) {
-    case SemIR::ExpressionCategory::NotExpression:
-    case SemIR::ExpressionCategory::Mixed:
+  switch (SemIR::GetExprCategory(sem_ir, expr_id)) {
+    case SemIR::ExprCategory::NotExpr:
+    case SemIR::ExprCategory::Mixed:
       CARBON_FATAL() << "Unexpected expression " << expr
                      << " after builtin conversions";
 
-    case SemIR::ExpressionCategory::Error:
+    case SemIR::ExprCategory::Error:
       return SemIR::InstId::BuiltinError;
 
-    case SemIR::ExpressionCategory::Initializing:
+    case SemIR::ExprCategory::Initializing:
       if (target.is_initializer()) {
         if (orig_expr_id == expr_id) {
           // Don't fill in the return slot if we created the expression through
@@ -864,8 +862,8 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
       // We now have an ephemeral reference.
       [[fallthrough]];
 
-    case SemIR::ExpressionCategory::DurableReference:
-    case SemIR::ExpressionCategory::EphemeralReference:
+    case SemIR::ExprCategory::DurableReference:
+    case SemIR::ExprCategory::EphemeralReference:
       // If a reference expression is an acceptable result, we're done.
       if (target.kind == ConversionTarget::ValueOrReference ||
           target.kind == ConversionTarget::Discarded) {
@@ -879,7 +877,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
       // We now have a value expression.
       [[fallthrough]];
 
-    case SemIR::ExpressionCategory::Value:
+    case SemIR::ExprCategory::Value:
       // When initializing from a value, perform a copy.
       if (target.is_initializer()) {
         expr_id = PerformCopy(context, expr_id);
@@ -912,15 +910,14 @@ auto Initialize(Context& context, Parse::Node parse_node,
                   .init_block = &target_block});
 }
 
-auto ConvertToValueExpression(Context& context, SemIR::InstId expr_id)
+auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
   auto expr = context.sem_ir().insts().Get(expr_id);
   return Convert(context, expr.parse_node(), expr_id,
                  {.kind = ConversionTarget::Value, .type_id = expr.type_id()});
 }
 
-auto ConvertToValueOrReferenceExpression(Context& context,
-                                         SemIR::InstId expr_id)
+auto ConvertToValueOrReferenceExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
   auto expr = context.sem_ir().insts().Get(expr_id);
   return Convert(
@@ -981,13 +978,12 @@ static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
   // For `addr self`, take the address of the object argument.
   auto self_or_addr_id = self_id;
   if (self_param.is_addr_self.index) {
-    self_or_addr_id =
-        ConvertToValueOrReferenceExpression(context, self_or_addr_id);
+    self_or_addr_id = ConvertToValueOrReferenceExpr(context, self_or_addr_id);
     auto self = context.insts().Get(self_or_addr_id);
-    switch (SemIR::GetExpressionCategory(context.sem_ir(), self_id)) {
-      case SemIR::ExpressionCategory::Error:
-      case SemIR::ExpressionCategory::DurableReference:
-      case SemIR::ExpressionCategory::EphemeralReference:
+    switch (SemIR::GetExprCategory(context.sem_ir(), self_id)) {
+      case SemIR::ExprCategory::Error:
+      case SemIR::ExprCategory::DurableReference:
+      case SemIR::ExprCategory::EphemeralReference:
         break;
       default:
         CARBON_DIAGNOSTIC(AddrSelfIsNonReference, Error,
@@ -1086,8 +1082,8 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
   return context.inst_blocks().Add(args);
 }
 
-auto ExpressionAsType(Context& context, Parse::Node parse_node,
-                      SemIR::InstId value_id) -> SemIR::TypeId {
+auto ExprAsType(Context& context, Parse::Node parse_node,
+                SemIR::InstId value_id) -> SemIR::TypeId {
   auto type_inst_id = ConvertToValueOfType(context, parse_node, value_id,
                                            SemIR::TypeId::TypeType);
   if (type_inst_id == SemIR::InstId::BuiltinError) {
@@ -1095,9 +1091,9 @@ auto ExpressionAsType(Context& context, Parse::Node parse_node,
   }
   auto type_id = context.CanonicalizeType(type_inst_id);
   if (type_id == SemIR::TypeId::Error) {
-    CARBON_DIAGNOSTIC(TypeExpressionEvaluationFailure, Error,
+    CARBON_DIAGNOSTIC(TypeExprEvaluationFailure, Error,
                       "Cannot evaluate type expression.");
-    context.emitter().Emit(parse_node, TypeExpressionEvaluationFailure);
+    context.emitter().Emit(parse_node, TypeExprEvaluationFailure);
   }
   return type_id;
 }

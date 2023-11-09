@@ -51,7 +51,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     inst+14:         {kind: TupleAccess, arg0: inst+4, arg1: member1, type: type2}
 // CHECK:STDOUT:     inst+15:         {kind: InitializeFrom, arg0: inst+10, arg1: inst+14, type: type2}
 // CHECK:STDOUT:     inst+16:         {kind: TupleInit, arg0: inst+11, arg1: block6, type: type3}
-// CHECK:STDOUT:     inst+17:         {kind: ReturnExpression, arg0: inst+16}
+// CHECK:STDOUT:     inst+17:         {kind: ReturnExpr, arg0: inst+16}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}
 // CHECK:STDOUT:     block1:

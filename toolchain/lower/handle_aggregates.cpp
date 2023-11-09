@@ -30,14 +30,14 @@ static auto GetAggregateElement(FunctionContext& context,
   auto aggr_inst = context.sem_ir().insts().Get(aggr_inst_id);
   auto* aggr_value = context.GetLocal(aggr_inst_id);
 
-  switch (SemIR::GetExpressionCategory(context.sem_ir(), aggr_inst_id)) {
-    case SemIR::ExpressionCategory::Error:
-    case SemIR::ExpressionCategory::NotExpression:
-    case SemIR::ExpressionCategory::Initializing:
-    case SemIR::ExpressionCategory::Mixed:
+  switch (SemIR::GetExprCategory(context.sem_ir(), aggr_inst_id)) {
+    case SemIR::ExprCategory::Error:
+    case SemIR::ExprCategory::NotExpr:
+    case SemIR::ExprCategory::Initializing:
+    case SemIR::ExprCategory::Mixed:
       CARBON_FATAL() << "Unexpected expression category for aggregate access";
 
-    case SemIR::ExpressionCategory::Value: {
+    case SemIR::ExprCategory::Value: {
       auto value_rep =
           SemIR::GetValueRepresentation(context.sem_ir(), aggr_inst.type_id());
       CARBON_CHECK(value_rep.aggregate_kind !=
@@ -80,8 +80,8 @@ static auto GetAggregateElement(FunctionContext& context,
       }
     }
 
-    case SemIR::ExpressionCategory::DurableReference:
-    case SemIR::ExpressionCategory::EphemeralReference: {
+    case SemIR::ExprCategory::DurableReference:
+    case SemIR::ExprCategory::EphemeralReference: {
       // Just locate the aggregate element.
       auto* aggr_type = context.GetType(aggr_inst.type_id());
       return context.builder().CreateStructGEP(aggr_type, aggr_value, idx.index,

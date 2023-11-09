@@ -16,7 +16,7 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
       Parse::NodeKind::PatternBinding;
   if (has_init) {
-    init_id = context.node_stack().PopExpression();
+    init_id = context.node_stack().PopExpr();
     context.node_stack()
         .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
   }

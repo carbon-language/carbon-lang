@@ -6,27 +6,27 @@
 
 namespace Carbon::Parse {
 
-auto HandleParenExpression(Context& context) -> void {
+auto HandleParenExpr(Context& context) -> void {
   auto state = context.PopState();
 
   // Advance past the open paren.
-  context.AddLeafNode(NodeKind::ParenExpressionOrTupleLiteralStart,
+  context.AddLeafNode(NodeKind::ParenExprOrTupleLiteralStart,
                       context.ConsumeChecked(Lex::TokenKind::OpenParen));
 
   if (context.PositionIs(Lex::TokenKind::CloseParen)) {
-    state.state = State::ParenExpressionFinishAsTuple;
+    state.state = State::ParenExprFinishAsTuple;
     context.PushState(state);
   } else {
-    state.state = State::ParenExpressionFinishAsNormal;
+    state.state = State::ParenExprFinishAsNormal;
     context.PushState(state);
-    context.PushState(State::ParenExpressionParameterFinishAsUnknown);
-    context.PushState(State::Expression);
+    context.PushState(State::ParenExprParameterFinishAsUnknown);
+    context.PushState(State::Expr);
   }
 }
 
-// Handles ParenExpressionParameterFinishAs(Unknown|Tuple).
-static auto HandleParenExpressionParameterFinish(Context& context,
-                                                 bool as_tuple) -> void {
+// Handles ParenExprParameterFinishAs(Unknown|Tuple).
+static auto HandleParenExprParameterFinish(Context& context, bool as_tuple)
+    -> void {
   auto state = context.PopState();
 
   auto list_token_kind = context.ConsumeListToken(
@@ -39,38 +39,38 @@ static auto HandleParenExpressionParameterFinish(Context& context,
   // Note this could be `(expr,)` so we may not reuse the current state, but
   // it's still necessary to switch the parent.
   if (!as_tuple) {
-    state.state = State::ParenExpressionParameterFinishAsTuple;
+    state.state = State::ParenExprParameterFinishAsTuple;
 
     auto finish_state = context.PopState();
-    CARBON_CHECK(finish_state.state == State::ParenExpressionFinishAsNormal)
+    CARBON_CHECK(finish_state.state == State::ParenExprFinishAsNormal)
         << "Unexpected parent state, found: " << finish_state.state;
-    finish_state.state = State::ParenExpressionFinishAsTuple;
+    finish_state.state = State::ParenExprFinishAsTuple;
     context.PushState(finish_state);
   }
 
   // On a comma, push another expression handler.
   if (list_token_kind == Context::ListTokenKind::Comma) {
     context.PushState(state);
-    context.PushState(State::Expression);
+    context.PushState(State::Expr);
   }
 }
 
-auto HandleParenExpressionParameterFinishAsUnknown(Context& context) -> void {
-  HandleParenExpressionParameterFinish(context, /*as_tuple=*/false);
+auto HandleParenExprParameterFinishAsUnknown(Context& context) -> void {
+  HandleParenExprParameterFinish(context, /*as_tuple=*/false);
 }
 
-auto HandleParenExpressionParameterFinishAsTuple(Context& context) -> void {
-  HandleParenExpressionParameterFinish(context, /*as_tuple=*/true);
+auto HandleParenExprParameterFinishAsTuple(Context& context) -> void {
+  HandleParenExprParameterFinish(context, /*as_tuple=*/true);
 }
 
-auto HandleParenExpressionFinishAsNormal(Context& context) -> void {
+auto HandleParenExprFinishAsNormal(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::ParenExpression, context.Consume(),
-                  state.subtree_start, state.has_error);
+  context.AddNode(NodeKind::ParenExpr, context.Consume(), state.subtree_start,
+                  state.has_error);
 }
 
-auto HandleParenExpressionFinishAsTuple(Context& context) -> void {
+auto HandleParenExprFinishAsTuple(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNode(NodeKind::TupleLiteral, context.Consume(),

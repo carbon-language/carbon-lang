@@ -40,7 +40,7 @@ auto HandleVarAfterPattern(Context& context) -> void {
 
   if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::VariableInitializer, *equals);
-    context.PushState(State::Expression);
+    context.PushState(State::Expr);
   }
 }
 

@@ -315,7 +315,7 @@ class InstNamer {
       -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(inst.parse_node())) {
-      case Parse::NodeKind::IfExpressionIf:
+      case Parse::NodeKind::IfExprIf:
         switch (inst.kind()) {
           case BranchIf::Kind:
             name = "if.expr.then";
@@ -679,17 +679,17 @@ class Formatter {
       case InstValueKind::Typed:
         FormatInstName(inst_id);
         out_ << ": ";
-        switch (GetExpressionCategory(sem_ir_, inst_id)) {
-          case ExpressionCategory::NotExpression:
-          case ExpressionCategory::Error:
-          case ExpressionCategory::Value:
-          case ExpressionCategory::Mixed:
+        switch (GetExprCategory(sem_ir_, inst_id)) {
+          case ExprCategory::NotExpr:
+          case ExprCategory::Error:
+          case ExprCategory::Value:
+          case ExprCategory::Mixed:
             break;
-          case ExpressionCategory::DurableReference:
-          case ExpressionCategory::EphemeralReference:
+          case ExprCategory::DurableReference:
+          case ExprCategory::EphemeralReference:
             out_ << "ref ";
             break;
-          case ExpressionCategory::Initializing:
+          case ExprCategory::Initializing:
             out_ << "init ";
             break;
         }

@@ -30,9 +30,9 @@ auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
 
 auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
-      context.node_stack().PopExpressionWithParseNode();
+      context.node_stack().PopExprWithParseNode();
   auto type_node_copy = type_node;
-  auto cast_type_id = ExpressionAsType(context, type_node, parsed_type_id);
+  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id);
 
   // A `self` binding doesn't have a name.
   if (auto self_node =

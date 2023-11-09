@@ -360,9 +360,9 @@ struct Return {
   // This is a statement, so has no type.
 };
 
-struct ReturnExpression {
+struct ReturnExpr {
   static constexpr auto Kind =
-      InstKind::ReturnExpression.Define("return", TerminatorKind::Terminator);
+      InstKind::ReturnExpr.Define("return", TerminatorKind::Terminator);
 
   Parse::Node parse_node;
   // This is a statement, so has no type.

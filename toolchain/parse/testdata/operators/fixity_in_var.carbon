@@ -23,7 +23,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'NameExpression', text: 'p'},
+// CHECK:STDOUT:         {kind: 'NameExpr', text: 'p'},
 // CHECK:STDOUT:       {kind: 'VariableDeclaration', text: ';', subtree_size: 8},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'Name', text: 't'},

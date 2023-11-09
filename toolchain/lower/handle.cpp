@@ -247,8 +247,8 @@ auto HandleReturn(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.builder().CreateRetVoid();
 }
 
-auto HandleReturnExpression(FunctionContext& context, SemIR::InstId /*inst_id*/,
-                            SemIR::ReturnExpression inst) -> void {
+auto HandleReturnExpr(FunctionContext& context, SemIR::InstId /*inst_id*/,
+                      SemIR::ReturnExpr inst) -> void {
   switch (SemIR::GetInitializingRepresentation(
               context.sem_ir(),
               context.sem_ir().insts().Get(inst.expr_id).type_id())

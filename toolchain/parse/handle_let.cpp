@@ -31,7 +31,7 @@ auto HandleLetAfterPattern(Context& context) -> void {
 
   if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::LetInitializer, *equals);
-    context.PushState(State::Expression);
+    context.PushState(State::Expr);
   } else if (!state.has_error) {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,

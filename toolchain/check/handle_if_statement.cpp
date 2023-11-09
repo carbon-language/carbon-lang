@@ -15,7 +15,7 @@ auto HandleIfConditionStart(Context& /*context*/, Parse::Node /*parse_node*/)
 
 auto HandleIfCondition(Context& context, Parse::Node parse_node) -> bool {
   // Convert the condition to `bool`.
-  auto cond_value_id = context.node_stack().PopExpression();
+  auto cond_value_id = context.node_stack().PopExpr();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
 
   // Create the then block and the else block, and branch to the right one. If

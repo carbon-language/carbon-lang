@@ -9,7 +9,7 @@
 namespace Carbon::Check {
 
 auto HandleLetDeclaration(Context& context, Parse::Node parse_node) -> bool {
-  auto value_id = context.node_stack().PopExpression();
+  auto value_id = context.node_stack().PopExpr();
   SemIR::InstId pattern_id =
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
   context.node_stack()

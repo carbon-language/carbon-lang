@@ -108,7 +108,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   // Introduce `Self`.
   // TODO: This will shadow a local variable declared with name `r#Self`, but
   // should not. See #2984 and the corresponding code in
-  // HandleSelfTypeNameExpression.
+  // HandleSelfTypeNameExpr.
   context.AddNameToLookup(
       parse_node,
       context.identifiers().Add(

@@ -253,9 +253,8 @@ class File : public Printable<File> {
 
   // Same as `StringifyType`, but starting with an instruction representing a
   // type expression rather than a canonical type.
-  auto StringifyTypeExpression(InstId outer_inst_id,
-                               bool in_type_context = false) const
-      -> std::string;
+  auto StringifyTypeExpr(InstId outer_inst_id,
+                         bool in_type_context = false) const -> std::string;
 
   // Directly expose SharedValueStores members.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
@@ -377,10 +376,10 @@ class File : public Printable<File> {
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md
 // for details.
-enum class ExpressionCategory : int8_t {
+enum class ExprCategory : int8_t {
   // This instruction does not correspond to an expression, and as such has no
   // category.
-  NotExpression,
+  NotExpr,
   // The category of this instruction is not known due to an error.
   Error,
   // This instruction represents a value expression.
@@ -405,8 +404,7 @@ enum class ExpressionCategory : int8_t {
 };
 
 // Returns the expression category for an instruction.
-auto GetExpressionCategory(const File& file, InstId inst_id)
-    -> ExpressionCategory;
+auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 // Returns information about the value representation to use for a type.
 inline auto GetValueRepresentation(const File& file, TypeId type_id)

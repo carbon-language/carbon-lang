@@ -225,30 +225,29 @@ class Context {
 
   // Pushes a new state with the current position for context.
   auto PushState(State state) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
-                              PrecedenceGroup::ForTopLevelExpression(),
-                              *position_, tree_->size()));
+    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpr(),
+                              PrecedenceGroup::ForTopLevelExpr(), *position_,
+                              tree_->size()));
   }
 
   // Pushes a new state with a specific token for context. Used when forming a
   // new subtree with a token that isn't the start of the subtree.
   auto PushState(State state, Lex::Token token) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
-                              PrecedenceGroup::ForTopLevelExpression(), token,
+    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpr(),
+                              PrecedenceGroup::ForTopLevelExpr(), token,
                               tree_->size()));
   }
 
   // Pushes a new expression state with specific precedence.
-  auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
-    PushState(StateStackEntry(State::Expression, ambient_precedence,
-                              PrecedenceGroup::ForTopLevelExpression(),
-                              *position_, tree_->size()));
+  auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
+    PushState(StateStackEntry(State::Expr, ambient_precedence,
+                              PrecedenceGroup::ForTopLevelExpr(), *position_,
+                              tree_->size()));
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
-  auto PushStateForExpressionLoop(State state,
-                                  PrecedenceGroup ambient_precedence,
-                                  PrecedenceGroup lhs_precedence) -> void {
+  auto PushStateForExprLoop(State state, PrecedenceGroup ambient_precedence,
+                            PrecedenceGroup lhs_precedence) -> void {
     PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
                               *position_, tree_->size()));
   }
