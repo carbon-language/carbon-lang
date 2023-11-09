@@ -36,9 +36,15 @@ namespace Carbon::Lex {
 // the different lexing steps that may be used. It directly updates the provided
 // tokenized buffer with the lexed tokens.
 //
-// Because of the internal linkage attribute, this must be in the cpp file where
-// it's used.
-// TODO: Why is this needed?
+// We'd typically put this in an anonymous namespace, but it is `friend`-ed by
+// the `TokenizedBuffer`. One of the important benefits of being in an anonymous
+// namespace is having internal linkage. That allows the optimizer to much more
+// aggressively inline away functions that are called in only one place. We keep
+// that benefit for now by using the `internal_linkage` attribute.
+//
+// TODO: Investigate ways to refactor the code that allow moving this into an
+// anonymous namespace without overly exposing implementation details of the
+// `TokenizedBuffer` or undermining the performance constraints of the lexer.
 class [[clang::internal_linkage]] Lexer {
  public:
   // Symbolic result of a lexing action. This indicates whether we successfully
