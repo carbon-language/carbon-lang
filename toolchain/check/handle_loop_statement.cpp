@@ -82,7 +82,7 @@ auto HandleWhileConditionStart(Context& context, Parse::Node parse_node)
 }
 
 auto HandleWhileCondition(Context& context, Parse::Node parse_node) -> bool {
-  auto cond_value_id = context.node_stack().PopExpression();
+  auto cond_value_id = context.node_stack().PopExpr();
   auto loop_header_id =
       context.node_stack().Peek<Parse::NodeKind::WhileConditionStart>();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);

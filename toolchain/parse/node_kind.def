@@ -68,7 +68,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0,
                                        CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // A name in an expression context.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpression, 0, CARBON_TOKEN(Identifier))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0, CARBON_TOKEN(Identifier))
 
 // ----------------------------------------------------------------------------
 
@@ -170,7 +170,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDeclaration, FunctionIntroducer,
 //   ParameterListComma
 // [Implicit]ParameterList
 //
-// Expressions and ParameterListComma may repeat with ParameterListComma as a
+// Exprs and ParameterListComma may repeat with ParameterListComma as a
 // separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListStart, 0,
                                    CARBON_TOKEN(OpenParen))
@@ -179,21 +179,22 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParameterListStart, 0,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0, CARBON_TOKEN(Comma))
 CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart,
                                CARBON_TOKEN(CloseParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParameterList, ImplicitParameterListStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParameterList,
+                               ImplicitParameterListStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // An array type, such as  `[i32; 3]` or `[i32;]`:
-//     ArrayExpressionStart
+//     ArrayExprStart
 //     _external_: type expression
-//   ArrayExpressionSemi
+//   ArrayExprSemi
 //   _optional_ _external_: expression
-// ArrayExpression
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ArrayExpressionStart, 0,
+// ArrayExpr
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ArrayExprStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(
-    ArrayExpressionSemi, 2,
+    ArrayExprSemi, 2,
     CARBON_TOKEN(Semi) CARBON_IF_ERROR(CARBON_TOKEN(CloseSquareBracket)))
-CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpression, ArrayExpressionSemi,
+CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpr, ArrayExprSemi,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // A pattern binding, such as `name: Type`:
@@ -239,8 +240,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclaration, VariableIntroducer,
 
 // An expression statement:
 //   _external_: expression
-// ExpressionStatement
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExpressionStatement, 1, CARBON_TOKEN(Semi))
+// ExprStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExprStatement, 1, CARBON_TOKEN(Semi))
 
 // `break`:
 //   BreakStatementStart
@@ -324,49 +325,47 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, 2, CARBON_TOKEN(While))
 
 // Index expressions, such as `a[1]`:
 //     _external_: expression
-//   IndexExpressionStart
+//   IndexExprStart
 //   _external_: expression
-// IndexExpression
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IndexExpressionStart, 1,
+// IndexExpr
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IndexExprStart, 1,
                                    CARBON_TOKEN(OpenSquareBracket))
-CARBON_PARSE_NODE_KIND_BRACKET(IndexExpression, IndexExpressionStart,
+CARBON_PARSE_NODE_KIND_BRACKET(IndexExpr, IndexExprStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // Parenthesized expressions, such as `(2)`:
-//   ParenExpressionOrTupleLiteralStart
+//   ParenExprOrTupleLiteralStart
 //   _external_: expression
-// ParenExpression
+// ParenExpr
 //
 // Tuples, such as `(1, 2)`:
-//   ParenExpressionOrTupleLiteralStart
+//   ParenExprOrTupleLiteralStart
 //   _external_: expression
 //   TupleLiteralComma
 // TupleLiteral
 //
-// Expressions and TupleLiteralComma may repeat with TupleLiteralComma as a
+// Exprs and TupleLiteralComma may repeat with TupleLiteralComma as a
 // separator.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExpressionOrTupleLiteralStart, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExprOrTupleLiteralStart, 0,
                                    CARBON_TOKEN(OpenParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ParenExpression,
-                               ParenExpressionOrTupleLiteralStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ParenExpr, ParenExprOrTupleLiteralStart,
                                CARBON_TOKEN(CloseParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralComma, 0, CARBON_TOKEN(Comma))
-CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExpressionOrTupleLiteralStart,
+CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExprOrTupleLiteralStart,
                                CARBON_TOKEN(CloseParen))
 
 // Call expressions, such as `a()`:
 //     _external_: expression
-//   CallExpressionStart
+//   CallExprStart
 //   _external_: expression
-//   CallExpressionComma
-// CallExpression
+//   CallExprComma
+// CallExpr
 //
-// Expressions and CallExpressionComma may repeat with CallExpressionComma as a
+// Exprs and CallExprComma may repeat with CallExprComma as a
 // separator.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionStart, 1,
-                                   CARBON_TOKEN(OpenParen))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionComma, 0, CARBON_TOKEN(Comma))
-CARBON_PARSE_NODE_KIND_BRACKET(CallExpression, CallExpressionStart,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprStart, 1, CARBON_TOKEN(OpenParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprComma, 0, CARBON_TOKEN(Comma))
+CARBON_PARSE_NODE_KIND_BRACKET(CallExpr, CallExprStart,
                                CARBON_TOKEN(CloseParen))
 
 // A qualified declaration, such as `a.b`:
@@ -383,16 +382,15 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedDeclaration, 2,
 // `GetObject().(Interface.member)`:
 //   _external_: lhs expression
 //   _external_: rhs expression
-// QualifiedExpression
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(MemberAccessExpression, 2,
-                                   CARBON_TOKEN(Period))
+// QualifiedExpr
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MemberAccessExpr, 2, CARBON_TOKEN(Period))
 
 // A pointer member access expression, such as `a->b` or
 // `GetObject()->(Interface.member)`:
 //   _external_: lhs expression
 //   _external_: rhs expression
-// QualifiedExpression
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpression, 2,
+// QualifiedExpr
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpr, 2,
                                    CARBON_TOKEN(MinusGreater))
 
 // clang-format off
@@ -477,14 +475,14 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperator, 1, CARBON_TOKEN(Star))
 
 // `if` expression + `then` + `else`:
 //     _external_: expression
-//   IfExpressionIf
+//   IfExprIf
 //     _external_: expression
-//   IfExpressionThen
+//   IfExprThen
 //   _external_: expression
-// IfExpressionElse
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionIf, 1, CARBON_TOKEN(If))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionThen, 1, CARBON_TOKEN(Then))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionElse, 3,
+// IfExprElse
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprIf, 1, CARBON_TOKEN(If))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprThen, 1, CARBON_TOKEN(Then))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3,
                                    CARBON_TOKEN(Else)
                                        CARBON_IF_ERROR(CARBON_TOKEN(If)))
 
@@ -590,14 +588,14 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDeclaration,
 // The `self` value and `Self` type identifier keywords. Typically of the form
 // `self: Self`:
 //   SelfValueName
-//   SelfValueNameExpression
-//   SelfTypeNameExpression
+//   SelfValueNameExpr
+//   SelfTypeNameExpr
 // PatternBinding
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueName, 0,
                                    CARBON_TOKEN(SelfValueIdentifier))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpression, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpr, 0,
                                    CARBON_TOKEN(SelfValueIdentifier))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpression, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpr, 0,
                                    CARBON_TOKEN(SelfTypeIdentifier))
 
 #undef CARBON_PARSE_NODE_KIND

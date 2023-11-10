@@ -144,8 +144,8 @@ auto Context::ConsumeIfPatternKeyword(Lex::TokenKind keyword_token,
     -> void {
   if (auto token = ConsumeIf(keyword_token)) {
     PushState(Context::StateStackEntry(
-        keyword_state, PrecedenceGroup::ForTopLevelExpression(),
-        PrecedenceGroup::ForTopLevelExpression(), *token, subtree_start));
+        keyword_state, PrecedenceGroup::ForTopLevelExpr(),
+        PrecedenceGroup::ForTopLevelExpr(), *token, subtree_start));
   }
 }
 

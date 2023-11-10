@@ -9,16 +9,15 @@
 
 namespace Carbon::Check {
 
-auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
+auto HandleCallExpr(Context& context, Parse::Node parse_node) -> bool {
   // Process the final explicit call argument now, but leave the arguments
   // block on the stack until the end of this function.
-  context.ParamOrArgEndNoPop(Parse::NodeKind::CallExpressionStart);
+  context.ParamOrArgEndNoPop(Parse::NodeKind::CallExprStart);
   auto discard_args_block = llvm::make_scope_exit(
       [&] { context.params_or_args_stack().PopAndDiscard(); });
 
   auto [call_expr_parse_node, callee_id] =
-      context.node_stack()
-          .PopWithParseNode<Parse::NodeKind::CallExpressionStart>();
+      context.node_stack().PopWithParseNode<Parse::NodeKind::CallExprStart>();
 
   auto diagnose_not_callable = [&, call_expr_parse_node = call_expr_parse_node,
                                 callee_id = callee_id] {
@@ -85,15 +84,13 @@ auto HandleCallExpression(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleCallExpressionComma(Context& context, Parse::Node /*parse_node*/)
-    -> bool {
+auto HandleCallExprComma(Context& context, Parse::Node /*parse_node*/) -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleCallExpressionStart(Context& context, Parse::Node parse_node)
-    -> bool {
-  auto name_id = context.node_stack().PopExpression();
+auto HandleCallExprStart(Context& context, Parse::Node parse_node) -> bool {
+  auto name_id = context.node_stack().PopExpr();
   context.node_stack().Push(parse_node, name_id);
   context.ParamOrArgStart();
   return true;

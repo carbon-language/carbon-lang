@@ -21,7 +21,7 @@ fn F() {
 // CHECK:STDOUT:             {kind: 'PostfixOperator', text: '*', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExpressionStatement', text: ';', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
