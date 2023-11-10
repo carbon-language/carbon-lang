@@ -199,14 +199,17 @@ class Context {
   auto ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
                         bool already_has_error) -> ListTokenKind;
 
-  // Gets the kind of the next token to be consumed.
-  auto PositionKind() const -> Lex::TokenKind {
-    return tokens_->GetKind(*position_);
+  // Gets the kind of the next token to be consumed. If `offset` is provided, it
+  // specifies the number of tokens to look ahead past the current token.
+  auto PositionKind(int offset = 0) const -> Lex::TokenKind {
+    return tokens_->GetKind(position_[offset]);
   }
 
-  // Tests whether the next token to be consumed is of the specified kind.
-  auto PositionIs(Lex::TokenKind kind) const -> bool {
-    return PositionKind() == kind;
+  // Tests whether the next token to be consumed is of the specified kind. If
+  // `offset` is provided, it specifies the number of tokens to look ahead past
+  // the current token.
+  auto PositionIs(Lex::TokenKind kind, int offset = 0) const -> bool {
+    return PositionKind(offset) == kind;
   }
 
   // Pops the state and keeps the value for inspection.

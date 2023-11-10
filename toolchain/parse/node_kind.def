@@ -532,6 +532,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 
 // `class`:
 //     ClassIntroducer
+//     _optional_ AbstractSpecifier or BaseSpecifier
 //     _external_: Name or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
@@ -541,6 +542,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 // ClassDefinitionStart and later nodes are removed and replaced by
 // ClassDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassIntroducer, 0, CARBON_TOKEN(Class))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(AbstractSpecifier, 0, CARBON_TOKEN(Abstract))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseSpecifier, 0, CARBON_TOKEN(Base))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer,
                                CARBON_TOKEN(OpenCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,

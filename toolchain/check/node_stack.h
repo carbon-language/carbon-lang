@@ -328,7 +328,9 @@ class NodeStack {
         return IdKind::ClassId;
       case Parse::NodeKind::Name:
         return IdKind::NameId;
+      case Parse::NodeKind::AbstractSpecifier:
       case Parse::NodeKind::ArrayExprSemi:
+      case Parse::NodeKind::BaseSpecifier:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::FunctionIntroducer:

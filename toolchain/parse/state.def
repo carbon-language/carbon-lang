@@ -211,17 +211,17 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // Handles processing of a declaration scope. Things like fn, class, interface,
 // and so on.
 //
-// If `Class`:
-//   1. TypeIntroducerAsClass
+// If `Class`, `Abstract Class`, or `Base Class`:
+//   1. TypeAfterIntroducerAsClass
 //   2. DeclScopeLoop
 // If `Constraint`:
-//   1. TypeIntroducerAsNamedConstraint
+//   1. TypeAfterIntroducerAsNamedConstraint
 //   2. DeclScopeLoop
 // If `Fn`:
 //   1. FunctionIntroducer
 //   2. DeclScopeLoop
 // If `Interface`:
-//   1. TypeIntroducerAsInterface
+//   1. TypeAfterIntroducerAsInterface
 //   2. DeclScopeLoop
 // If `Namespace`:
 //   1. Namespace
@@ -711,12 +711,12 @@ CARBON_PARSE_STATE(StatementWhileBlockFinish)
 CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
                              NamedConstraint)
 
-// Handles processing of a type's introducer.
+// Handles processing of a type after its introducer.
 //
 // Always:
 //   1. DeclNameAndParamsAsOptional
 //   2. TypeAfterParamsAs(Class|Interface|NamedConstraint)
-CARBON_PARSE_STATE_VARIANTS3(TypeIntroducer, Class, Interface, NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface, NamedConstraint)
 
 // Handles processing of a type after its optional parameters.
 //
