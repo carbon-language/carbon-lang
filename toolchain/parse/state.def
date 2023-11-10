@@ -19,7 +19,8 @@
 // state is implementing, by giving an example of each kind of token sequence
 // that this state handles. In this example, `...` indicates a sequence of
 // tokens handled by some other state, and `???` indicates a sequence of invalid
-// tokens.
+// tokens. A trailing `??? ;` indicates an attempt to skip to the end of the
+// declaration, which may or may not actually find a `;` token.
 //
 // The position in the token stream before the state is indicated by the caret
 // `^` on the line below the example, and all tokens consumed by the state are
