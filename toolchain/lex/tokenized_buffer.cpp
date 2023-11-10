@@ -909,7 +909,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
     // TODO: Need to add support for Unicode lexing.
     if (LLVM_LIKELY(position + 2 >= static_cast<ssize_t>(source_text.size()) ||
                     source_text[position + 1] != '#' ||
-                    !IsIdStartByteTable[source_text[position + 2]])) {
+                    !IsIdStartByteTable[static_cast<unsigned char>(
+                        source_text[position + 2])])) {
       // TODO: Should this print a different error when there is `r#`, but it
       // isn't followed by identifier text? Or is it right to put it back so
       // that the `#` could be parsed as part of a raw string literal?
