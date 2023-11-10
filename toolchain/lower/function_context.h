@@ -39,17 +39,18 @@ class FunctionContext {
   auto GetBlockArg(SemIR::InstBlockId block_id, SemIR::TypeId type_id)
       -> llvm::PHINode*;
 
-  // Returns a local (versus global) value for the given instruction.
-  auto GetLocal(SemIR::InstId inst_id) -> llvm::Value* {
+  // Returns a value for the given instruction.
+  auto GetValue(SemIR::InstId inst_id) -> llvm::Value* {
     // All builtins are types, with the same empty lowered value.
     if (inst_id.index < SemIR::BuiltinKind::ValidCount) {
       return GetTypeAsValue();
     }
 
     auto it = locals_.find(inst_id);
-    CARBON_CHECK(it != locals_.end())
-        << "Missing local: " << inst_id << " " << sem_ir().insts().Get(inst_id);
-    return it->second;
+    if (it != locals_.end()) {
+      return it->second;
+    }
+    return file_context_->GetGlobal(inst_id);
   }
 
   // Sets the value for the given instruction.
@@ -58,9 +59,6 @@ class FunctionContext {
     CARBON_CHECK(added) << "Duplicate local insert: " << inst_id << " "
                         << sem_ir().insts().Get(inst_id);
   }
-
-  // Returns a value for the given instruction, which might not be local.
-  auto GetLocalOrGlobal(SemIR::InstId inst_id) -> llvm::Value*;
 
   // Gets a callable's function.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
@@ -128,8 +126,6 @@ class FunctionContext {
   llvm::BasicBlock* synthetic_block_ = nullptr;
 
   // Maps a function's SemIR::File instructions to lowered values.
-  // TODO: Handle nested scopes. Right now this is just cleared at the end of
-  // every block.
   llvm::DenseMap<SemIR::InstId, llvm::Value*> locals_;
 };
 

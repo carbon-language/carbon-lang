@@ -28,8 +28,9 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_26.5: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_26.6: ref i32 = array_index %a.var, %.loc7_26.5
 // CHECK:STDOUT:   %.loc7_26.7: init i32 = initialize_from %.loc7_24 to %.loc7_26.6
-// CHECK:STDOUT:   %.loc7_26.8: init [i32; 2] = array_init %.loc7_26.1, (%.loc7_26.4, %.loc7_26.7) to %a.var
-// CHECK:STDOUT:   assign %a.var, %.loc7_26.8
+// CHECK:STDOUT:   %.loc7_26.8: init [i32; 2] = array_init (%.loc7_26.4, %.loc7_26.7) to %a.var
+// CHECK:STDOUT:   %.loc7_26.9: init [i32; 2] = converted %.loc7_26.1, %.loc7_26.8
+// CHECK:STDOUT:   assign %a.var, %.loc7_26.9
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 1

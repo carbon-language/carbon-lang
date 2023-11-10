@@ -35,8 +35,9 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc10_46.3: init i32 = initialize_from %.loc10_37 to %.loc10_46.2
 // CHECK:STDOUT:   %.loc10_46.4: ref i32 = struct_access %a.var, member1
 // CHECK:STDOUT:   %.loc10_46.5: init i32 = initialize_from %.loc10_45 to %.loc10_46.4
-// CHECK:STDOUT:   %.loc10_46.6: init {.a: i32, .b: i32} = struct_init %.loc10_46.1, (%.loc10_46.3, %.loc10_46.5)
-// CHECK:STDOUT:   assign %a.var, %.loc10_46.6
+// CHECK:STDOUT:   %.loc10_46.6: init {.a: i32, .b: i32} = struct_init (%.loc10_46.3, %.loc10_46.5) to %a.var
+// CHECK:STDOUT:   %.loc10_46.7: init {.a: i32, .b: i32} = converted %.loc10_46.1, %.loc10_46.6
+// CHECK:STDOUT:   assign %a.var, %.loc10_46.7
 // CHECK:STDOUT:   %G.ref: <function> = name_reference G, file.%G
 // CHECK:STDOUT:   %cond.ref: bool = name_reference cond, %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else
@@ -47,8 +48,9 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc11_18.2: i32 = bind_value %.loc11_18.1
 // CHECK:STDOUT:   %.loc11_18.3: ref i32 = struct_access %a.ref.loc11_18, member1
 // CHECK:STDOUT:   %.loc11_18.4: i32 = bind_value %.loc11_18.3
-// CHECK:STDOUT:   %.loc11_18.5: {.a: i32, .b: i32} = struct_value %a.ref.loc11_18, (%.loc11_18.2, %.loc11_18.4)
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_18.5)
+// CHECK:STDOUT:   %.loc11_18.5: {.a: i32, .b: i32} = struct_value (%.loc11_18.2, %.loc11_18.4)
+// CHECK:STDOUT:   %.loc11_18.6: {.a: i32, .b: i32} = converted %a.ref.loc11_18, %.loc11_18.5
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_18.6)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %a.ref.loc11_25: ref {.a: i32, .b: i32} = name_reference a, %a
@@ -56,8 +58,9 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc11_25.2: i32 = bind_value %.loc11_25.1
 // CHECK:STDOUT:   %.loc11_25.3: ref i32 = struct_access %a.ref.loc11_25, member1
 // CHECK:STDOUT:   %.loc11_25.4: i32 = bind_value %.loc11_25.3
-// CHECK:STDOUT:   %.loc11_25.5: {.a: i32, .b: i32} = struct_value %a.ref.loc11_25, (%.loc11_25.2, %.loc11_25.4)
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_25.5)
+// CHECK:STDOUT:   %.loc11_25.5: {.a: i32, .b: i32} = struct_value (%.loc11_25.2, %.loc11_25.4)
+// CHECK:STDOUT:   %.loc11_25.6: {.a: i32, .b: i32} = converted %a.ref.loc11_25, %.loc11_25.5
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_25.6)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_5: {.a: i32, .b: i32} = block_arg !if.expr.result

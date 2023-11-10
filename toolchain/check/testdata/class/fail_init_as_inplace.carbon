@@ -64,9 +64,10 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_33.4: init i32 = initialize_from %.loc21_24 to %.loc21_33.3
 // CHECK:STDOUT:   %.loc21_33.5: ref i32 = class_field_access %.loc21_33.2, member1
 // CHECK:STDOUT:   %.loc21_33.6: init i32 = initialize_from %.loc21_32 to %.loc21_33.5
-// CHECK:STDOUT:   %.loc21_33.7: init Class = class_init %.loc21_33.1, (%.loc21_33.4, %.loc21_33.6)
+// CHECK:STDOUT:   %.loc21_33.7: init Class = class_init (%.loc21_33.4, %.loc21_33.6), %.loc21_33.2
 // CHECK:STDOUT:   %.loc21_33.8: ref Class = temporary %.loc21_33.2, %.loc21_33.7
-// CHECK:STDOUT:   %.loc21_33.9: Class = bind_value %.loc21_33.8
+// CHECK:STDOUT:   %.loc21_33.9: ref Class = converted %.loc21_33.1, %.loc21_33.8
+// CHECK:STDOUT:   %.loc21_33.10: Class = bind_value %.loc21_33.9
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %G.ref: <function> = name_reference G, file.%G
 // CHECK:STDOUT:   %c.ref: ref Class = name_reference c, %c
