@@ -120,6 +120,9 @@ class Context {
   // Returns the current position and moves past it.
   auto Consume() -> Lex::Token { return *(position_++); }
 
+  // Consumes the current token. Does not return it.
+  auto ConsumeAndDiscard() -> void { ++position_; }
+
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
   // there's no open paren. Returns the open paren token if it was found.

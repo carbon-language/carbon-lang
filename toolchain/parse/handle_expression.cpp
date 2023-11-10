@@ -53,7 +53,7 @@ auto HandleExpr(Context& context) -> void {
                                    *operator_precedence);
     }
 
-    ++context.position();
+    context.ConsumeAndDiscard();
     context.PushStateForExpr(*operator_precedence);
   } else {
     context.PushStateForExprLoop(State::ExprLoop, state.ambient_precedence,
