@@ -866,7 +866,8 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
       // TODO: Need to add support for Unicode lexing.
       return LexError(source_text, position);
     }
-    CARBON_CHECK(IsIdStartByteTable[source_text[position]]);
+    CARBON_CHECK(
+        IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
 
     int column = ComputeColumn(position);
 
@@ -1068,14 +1069,17 @@ class [[clang::internal_linkage]] TokenizedBuffer::Lexer {
   CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
   // A custom dispatch functions that pre-select the symbol token to lex.
-#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                           \
-  static auto Dispatch##LexMethod##SymbolToken(                               \
-      Lexer& lexer, llvm::StringRef source_text, ssize_t position)            \
-      ->void {                                                                \
-    LexResult result = lexer.LexMethod##SymbolToken(                          \
-        source_text, OneCharTokenKindTable[source_text[position]], position); \
-    CARBON_CHECK(result) << "Failed to form a token!";                        \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);    \
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                        \
+  static auto Dispatch##LexMethod##SymbolToken(                            \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position)         \
+      ->void {                                                             \
+    LexResult result = lexer.LexMethod##SymbolToken(                       \
+        source_text,                                                       \
+        OneCharTokenKindTable[static_cast<unsigned char>(                  \
+            source_text[position])],                                       \
+        position);                                                         \
+    CARBON_CHECK(result) << "Failed to form a token!";                     \
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position); \
   }
   CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
   CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
