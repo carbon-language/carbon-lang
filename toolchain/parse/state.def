@@ -314,7 +314,7 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //
 //  var ...
 // ^
-//   1. VarAsSemicolon
+//   1. VarAsDecl
 //   2. DeclScopeLoop
 //
 //  let ...
@@ -810,7 +810,11 @@ CARBON_PARSE_STATE_VARIANTS2(PatternFinish, Generic, Regular)
 //
 //  var ...
 // ^
-//   1. VarAsSemicolon
+//   1. VarAsDecl
+//
+//  returned ...
+// ^
+//   1. VarAsReturned
 //
 //  while ...
 // ^
@@ -925,6 +929,10 @@ CARBON_PARSE_STATE(StatementIfElseBlockFinish)
 // ^~~~~~
 //   1. StatementReturnFinish
 //
+// return var ...
+// ^~~~~~~~~~
+//   1. StatementReturnFinish
+//
 // return ...
 // ^~~~~~
 //   1. Expr
@@ -1003,14 +1011,24 @@ CARBON_PARSE_STATE_VARIANTS3(TypeIntroducer, Class, Interface, NamedConstraint)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
 
-// Handles the start of a `var`.
+// Handles the start of a `var` or `returned var`.
 //
-// var ...
+// var ...             (variant is not Returned)
 // ^~~
 //   1. PatternAsVariable
 //   2. VarAfterPattern
-//   3. VarFinishAs(Semicolon|For)
-CARBON_PARSE_STATE_VARIANTS2(Var, Semicolon, For)
+//   3. VarFinishAs(Decl|For)
+//
+// returned var ...    (variant is Returned)
+// ^~~~~~~~~~~~
+//   1. PatternAsVariable
+//   2. VarAfterPattern
+//   3. VarFinishAsDecl
+//
+// returned ??? ;      (variant is Returned)
+// ^~~~~~~~~~~~~~
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS3(Var, Decl, Returned, For)
 
 // Handles `var` after the pattern, either followed by an initializer or the
 // semicolon.
@@ -1039,7 +1057,7 @@ CARBON_PARSE_STATE(VarAfterPattern)
 // var ... :        (variant is For, invalid)
 //         ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(VarFinish, Semicolon, For)
+CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
 
 // Handles the start of a `let`.
 //

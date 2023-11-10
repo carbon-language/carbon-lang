@@ -78,7 +78,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
           break;
         }
         case Lex::TokenKind::Var: {
-          context.PushState(State::VarAsSemicolon);
+          context.PushState(State::VarAsDecl);
           break;
         }
         case Lex::TokenKind::Let: {

@@ -100,6 +100,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
              name_context.state == DeclNameStack::NameContext::State::Unresolved
                  ? name_context.unresolved_name_id
                  : SemIR::NameId::Invalid,
+         .declaration_id = function_decl_id,
          .implicit_param_refs_id = implicit_param_refs_id,
          .param_refs_id = param_refs_id,
          .return_type_id = return_type_id,
@@ -182,7 +183,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   }
 
   // Create the function scope and the entry block.
-  context.return_scope_stack().push_back(decl_id);
+  context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
   context.PushScope(decl_id);
   context.AddCurrentCodeBlockToFunction();

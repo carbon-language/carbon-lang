@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/return.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -17,7 +18,7 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
     context.insts().Set(self_param_id, *self_param);
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParameter, Error,
-                      "`addr` can only be applied to a `self` parameter");
+                      "`addr` can only be applied to a `self` parameter.");
     context.emitter().Emit(parse_node, AddrOnNonSelfParameter);
   }
   return true;
@@ -42,7 +43,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
         Parse::NodeKind::ImplicitParameterListStart) {
       CARBON_DIAGNOSTIC(
           SelfOutsideImplicitParameterList, Error,
-          "`self` can only be declared in an implicit parameter list");
+          "`self` can only be declared in an implicit parameter list.");
       context.emitter().Emit(parse_node, SelfOutsideImplicitParameterList);
     }
     context.AddInstAndPush(
@@ -62,6 +63,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   // error locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
+    case Parse::NodeKind::ReturnedSpecifier:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
@@ -78,7 +80,12 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       }
       SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
-      if (enclosing_class_decl) {
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+        CARBON_CHECK(!enclosing_class_decl) << "`returned var` at class scope";
+        value_id =
+            CheckReturnedVar(context, context.node_stack().PeekParseNode(),
+                             name_node, name_id, type_node, cast_type_id);
+      } else if (enclosing_class_decl) {
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
         auto field_type_inst_id = context.AddInst(SemIR::UnboundFieldType{
@@ -98,9 +105,13 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
         value_id = context.AddInst(
             SemIR::VarStorage{name_node, value_type_id, name_id});
       }
-      context.AddInstAndPush(
-          parse_node,
+      auto bind_id = context.AddInst(
           SemIR::BindName{name_node, value_type_id, name_id, value_id});
+      context.node_stack().Push(parse_node, bind_id);
+
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+        RegisterReturnedVar(context, bind_id);
+      }
       break;
     }
 

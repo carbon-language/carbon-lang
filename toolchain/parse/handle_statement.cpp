@@ -38,8 +38,12 @@ auto HandleStatement(Context& context) -> void {
       context.PushState(State::StatementReturn);
       break;
     }
+    case Lex::TokenKind::Returned: {
+      context.PushState(State::VarAsReturned);
+      break;
+    }
     case Lex::TokenKind::Var: {
-      context.PushState(State::VarAsSemicolon);
+      context.PushState(State::VarAsDecl);
       break;
     }
     case Lex::TokenKind::While: {
@@ -179,8 +183,15 @@ auto HandleStatementReturn(Context& context) -> void {
   context.PushState(state);
 
   context.AddLeafNode(NodeKind::ReturnStatementStart, context.Consume());
-  if (!context.PositionIs(Lex::TokenKind::Semi)) {
+
+  if (auto var_token = context.ConsumeIf(Lex::TokenKind::Var)) {
+    // `return var;`
+    context.AddLeafNode(NodeKind::ReturnVarSpecifier, *var_token);
+  } else if (!context.PositionIs(Lex::TokenKind::Semi)) {
+    // `return <expression>;`
     context.PushState(State::Expr);
+  } else {
+    // `return;`
   }
 }
 

@@ -223,8 +223,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Let)))
 
-// `var`:
+// `var` and `returned var`:
 //   VariableIntroducer
+//   _optional_ ReturnedSpecifier
 //   _external_: PatternBinding
 //   _optional_ VariableInitializer
 //   _optional_ _external_: expression
@@ -232,11 +233,15 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 //
 // The VariableInitializer and following expression are paired: either both will
 // be present, or neither will.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0, CARBON_TOKEN(Var))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0,
+                                   CARBON_TOKEN(Var)
+                                       CARBON_IF_ERROR(CARBON_TOKEN(Returned)))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnedSpecifier, 0, CARBON_TOKEN(Returned))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDecl, VariableIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Var)))
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Var)
+                                                       CARBON_TOKEN(Returned)))
 
 // An expression statement:
 //   _external_: expression
@@ -262,10 +267,11 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1,
 
 // `return`:
 //   ReturnStatementStart
-//   _optional_ _external_: expression
+//   _optional_ ReturnVarSpecifier or _external_: expression
 // ReturnStatement
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnStatementStart, 0,
                                    CARBON_TOKEN(Return))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnVarSpecifier, 0, CARBON_TOKEN(Var))
 CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Return)))
