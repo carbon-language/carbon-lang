@@ -21,13 +21,13 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
     auto& class_info = context.classes().Get(base_as_class->class_id);
     if (!class_info.is_defined()) {
-      CARBON_DIAGNOSTIC(QualifiedExpressionInIncompleteClassScope, Error,
+      CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                         "Member access into incomplete class `{0}`.",
                         std::string);
       auto builder = context.emitter().Build(
           context.insts().Get(base_id).parse_node(),
-          QualifiedExpressionInIncompleteClassScope,
-          context.sem_ir().StringifyTypeExpression(base_id, true));
+          QualifiedExprInIncompleteClassScope,
+          context.sem_ir().StringifyTypeExpr(base_id, true));
       context.NoteIncompleteClass(base_as_class->class_id, builder);
       builder.Emit();
     }
@@ -38,12 +38,12 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
 
 // Given an instruction produced by a name lookup, get the value to use for that
 // result in an expression.
-static auto GetExpressionValueForLookupResult(Context& context,
-                                              SemIR::InstId lookup_result_id)
+static auto GetExprValueForLookupResult(Context& context,
+                                        SemIR::InstId lookup_result_id)
     -> SemIR::InstId {
   // If lookup finds a class declaration, the value is its `Self` type.
   auto lookup_result = context.insts().Get(lookup_result_id);
-  if (auto class_decl = lookup_result.TryAs<SemIR::ClassDeclaration>()) {
+  if (auto class_decl = lookup_result.TryAs<SemIR::ClassDecl>()) {
     return context.sem_ir().GetTypeAllowBuiltinTypes(
         context.classes().Get(class_decl->class_id).self_type_id);
   }
@@ -54,10 +54,9 @@ static auto GetExpressionValueForLookupResult(Context& context,
   return lookup_result_id;
 }
 
-auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
-    -> bool {
-  IdentifierId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
-  auto base_id = context.node_stack().PopExpression();
+auto HandleMemberAccessExpr(Context& context, Parse::Node parse_node) -> bool {
+  SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  auto base_id = context.node_stack().PopExpr();
 
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
@@ -66,7 +65,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
         name_scope_id->is_valid()
             ? context.LookupQualifiedName(parse_node, name_id, *name_scope_id)
             : SemIR::InstId::BuiltinError;
-    inst_id = GetExpressionValueForLookupResult(context, inst_id);
+    inst_id = GetExprValueForLookupResult(context, inst_id);
     auto inst = context.insts().Get(inst_id);
     // TODO: Track that this instruction was named within `base_id`.
     context.AddInstAndPush(
@@ -91,7 +90,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
   }
 
   // Materialize a temporary for the base expression if necessary.
-  base_id = ConvertToValueOrReferenceExpression(context, base_id);
+  base_id = ConvertToValueOrReferenceExpr(context, base_id);
   base_type_id = context.insts().Get(base_id).type_id();
 
   auto base_type = context.insts().Get(
@@ -105,7 +104,7 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
                                 .scope_id;
       auto member_id =
           context.LookupQualifiedName(parse_node, name_id, class_scope_id);
-      member_id = GetExpressionValueForLookupResult(context, member_id);
+      member_id = GetExprValueForLookupResult(context, member_id);
 
       // Perform instance binding if we found an instance member.
       auto member_type_id = context.insts().Get(member_id).type_id();
@@ -128,16 +127,16 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
         auto access_id = context.AddInst(SemIR::ClassFieldAccess{
             parse_node, unbound_field_type->field_type_id, base_id,
             field->index});
-        if (SemIR::GetExpressionCategory(context.sem_ir(), base_id) ==
-                SemIR::ExpressionCategory::Value &&
-            SemIR::GetExpressionCategory(context.sem_ir(), access_id) !=
-                SemIR::ExpressionCategory::Value) {
+        if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
+                SemIR::ExprCategory::Value &&
+            SemIR::GetExprCategory(context.sem_ir(), access_id) !=
+                SemIR::ExprCategory::Value) {
           // Class field access on a value expression produces an ephemeral
           // reference if the class's value representation is a pointer to the
           // object representation. Add a value binding in that case so that the
           // expression category of the result matches the expression category
           // of the base.
-          access_id = ConvertToValueExpression(context, access_id);
+          access_id = ConvertToValueExpr(context, access_id);
         }
         context.node_stack().Push(parse_node, access_id);
         return true;
@@ -149,9 +148,8 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
         CARBON_CHECK(function_name_id.is_valid())
             << "Non-constant value " << context.insts().Get(member_id)
             << " of function type";
-        auto function_decl = context.insts()
-                                 .Get(function_name_id)
-                                 .TryAs<SemIR::FunctionDeclaration>();
+        auto function_decl =
+            context.insts().Get(function_name_id).TryAs<SemIR::FunctionDecl>();
         CARBON_CHECK(function_decl)
             << "Unexpected value " << context.insts().Get(function_name_id)
             << " of function type";
@@ -190,12 +188,12 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
           return true;
         }
       }
-      CARBON_DIAGNOSTIC(QualifiedExpressionNameNotFound, Error,
+      CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
                         "Type `{0}` does not have a member `{1}`.", std::string,
                         llvm::StringRef);
-      context.emitter().Emit(parse_node, QualifiedExpressionNameNotFound,
+      context.emitter().Emit(parse_node, QualifiedExprNameNotFound,
                              context.sem_ir().StringifyType(base_type_id),
-                             context.identifiers().Get(name_id));
+                             context.names().GetFormatted(name_id));
       break;
     }
     // TODO: `ConstType` should support member access just like the
@@ -203,10 +201,10 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
     // type if it creates a reference expression performing field access.
     default: {
       if (base_type_id != SemIR::TypeId::Error) {
-        CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
+        CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                           "Type `{0}` does not support qualified expressions.",
                           std::string);
-        context.emitter().Emit(parse_node, QualifiedExpressionUnsupported,
+        context.emitter().Emit(parse_node, QualifiedExprUnsupported,
                                context.sem_ir().StringifyType(base_type_id));
       }
       break;
@@ -218,24 +216,24 @@ auto HandleMemberAccessExpression(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandlePointerMemberAccessExpression(Context& context,
-                                         Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePointerMemberAccessExpression");
+auto HandlePointerMemberAccessExpr(Context& context, Parse::Node parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandlePointerMemberAccessExpr");
 }
 
 auto HandleName(Context& context, Parse::Node parse_node) -> bool {
-  auto name_id = context.tokens().GetIdentifier(
-      context.parse_tree().node_token(parse_node));
+  auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
+      context.parse_tree().node_token(parse_node)));
   // The parent is responsible for binding the name.
   context.node_stack().Push(parse_node, name_id);
   return true;
 }
 
-auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
-  auto name_id = context.tokens().GetIdentifier(
-      context.parse_tree().node_token(parse_node));
+auto HandleNameExpr(Context& context, Parse::Node parse_node) -> bool {
+  auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
+      context.parse_tree().node_token(parse_node)));
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
-  value_id = GetExpressionValueForLookupResult(context, value_id);
+  value_id = GetExprValueForLookupResult(context, value_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(
       parse_node,
@@ -243,25 +241,24 @@ auto HandleNameExpression(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleQualifiedDecl(Context& context, Parse::Node parse_node) -> bool {
   auto [parse_node2, name_id2] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
   Parse::Node parse_node1 = context.node_stack().PeekParseNode();
   switch (context.parse_tree().node_kind(parse_node1)) {
-    case Parse::NodeKind::QualifiedDeclaration:
-      // This is the second or subsequent QualifiedDeclaration in a chain.
-      // Nothing to do: the first QualifiedDeclaration remains as a
-      // bracketing node for later QualifiedDeclarations.
+    case Parse::NodeKind::QualifiedDecl:
+      // This is the second or subsequent QualifiedDecl in a chain.
+      // Nothing to do: the first QualifiedDecl remains as a
+      // bracketing node for later QualifiedDecls.
       break;
 
     case Parse::NodeKind::Name: {
-      // This is the first QualifiedDeclaration in a chain, and starts with a
+      // This is the first QualifiedDecl in a chain, and starts with a
       // name.
       auto name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
-      context.declaration_name_stack().ApplyNameQualifier(parse_node1, name_id);
-      // Add the QualifiedDeclaration so that it can be used for bracketing.
+      context.decl_name_stack().ApplyNameQualifier(parse_node1, name_id);
+      // Add the QualifiedDecl so that it can be used for bracketing.
       context.node_stack().Push(parse_node);
       break;
     }
@@ -271,17 +268,12 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
                         "declaration name";
   }
 
-  context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
+  context.decl_name_stack().ApplyNameQualifier(parse_node2, name_id2);
   return true;
 }
 
-auto HandleSelfTypeNameExpression(Context& context, Parse::Node parse_node)
-    -> bool {
-  // TODO: This will find a local variable declared with name `r#Self`, but
-  // should not. See #2984 and the corresponding code in
-  // HandleClassDefinitionStart.
-  auto name_id = context.identifiers().Add(
-      Lex::TokenKind::SelfTypeIdentifier.fixed_spelling());
+auto HandleSelfTypeNameExpr(Context& context, Parse::Node parse_node) -> bool {
+  auto name_id = SemIR::NameId::SelfType;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(
@@ -295,12 +287,8 @@ auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleSelfValueNameExpression(Context& context, Parse::Node parse_node)
-    -> bool {
-  // TODO: This will find a local variable declared with name `r#self`, but
-  // should not. See #2984 and the corresponding code in
-  // HandleFunctionDefinitionStart.
-  auto name_id = context.identifiers().Add(SemIR::SelfParameter::Name);
+auto HandleSelfValueNameExpr(Context& context, Parse::Node parse_node) -> bool {
+  auto name_id = SemIR::NameId::SelfValue;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(

@@ -32,7 +32,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
       params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
-      declaration_name_stack_(this) {
+      decl_name_stack_(this) {
   // Inserts the "Error" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
   canonical_types_.insert({SemIR::InstId::BuiltinError, SemIR::TypeId::Error});
@@ -78,21 +78,21 @@ auto Context::AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void {
 
 auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
                                     SemIR::InstId prev_def_id) -> void {
-  CARBON_DIAGNOSTIC(NameDeclarationDuplicate, Error,
+  CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "Duplicate name being declared in the same scope.");
-  CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
+  CARBON_DIAGNOSTIC(NameDeclPrevious, Note,
                     "Name is previously declared here.");
   auto prev_def = insts().Get(prev_def_id);
-  emitter_->Build(parse_node, NameDeclarationDuplicate)
-      .Note(prev_def.parse_node(), NameDeclarationPrevious)
+  emitter_->Build(parse_node, NameDeclDuplicate)
+      .Note(prev_def.parse_node(), NameDeclPrevious)
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::Node parse_node, IdentifierId name_id)
-    -> void {
+auto Context::DiagnoseNameNotFound(Parse::Node parse_node,
+                                   SemIR::NameId name_id) -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, identifiers().Get(name_id));
+  emitter_->Emit(parse_node, NameNotFound, names().GetFormatted(name_id));
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -107,12 +107,12 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
     builder.Note(insts().Get(class_info.definition_id).parse_node(),
                  ClassIncompleteWithinDefinition);
   } else {
-    builder.Note(insts().Get(class_info.declaration_id).parse_node(),
+    builder.Note(insts().Get(class_info.decl_id).parse_node(),
                  ClassForwardDeclaredHere);
   }
 }
 
-auto Context::AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
+auto Context::AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,
                               SemIR::InstId target_id) -> void {
   if (current_scope().names.insert(name_id).second) {
     // TODO: Reject if we previously performed a failed lookup for this name in
@@ -128,10 +128,8 @@ auto Context::AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
   }
 }
 
-auto Context::LookupNameInDeclaration(Parse::Node parse_node,
-                                      IdentifierId name_id,
-                                      SemIR::NameScopeId scope_id)
-    -> SemIR::InstId {
+auto Context::LookupNameInDecl(Parse::Node parse_node, SemIR::NameId name_id,
+                               SemIR::NameScopeId scope_id) -> SemIR::InstId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
     // Look for a name in the current scope only. There are two cases where the
     // name would be in an outer scope:
@@ -159,7 +157,7 @@ auto Context::LookupNameInDeclaration(Parse::Node parse_node,
     if (auto name_it = name_lookup_.find(name_id);
         name_it != name_lookup_.end()) {
       CARBON_CHECK(!name_it->second.empty())
-          << "Should have been erased: " << identifiers().Get(name_id);
+          << "Should have been erased: " << names().GetFormatted(name_id);
       auto result = name_it->second.back();
       if (result.scope_index == current_scope_index()) {
         return result.node_id;
@@ -175,7 +173,7 @@ auto Context::LookupNameInDeclaration(Parse::Node parse_node,
 }
 
 auto Context::LookupUnqualifiedName(Parse::Node parse_node,
-                                    IdentifierId name_id) -> SemIR::InstId {
+                                    SemIR::NameId name_id) -> SemIR::InstId {
   // TODO: Check for shadowed lookup results.
 
   // Find the results from enclosing lexical scopes. These will be combined with
@@ -185,7 +183,7 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
       name_it != name_lookup_.end()) {
     lexical_results = name_it->second;
     CARBON_CHECK(!lexical_results.empty())
-        << "Should have been erased: " << identifiers().Get(name_id);
+        << "Should have been erased: " << names().GetFormatted(name_id);
   }
 
   // Walk the non-lexical scopes and perform lookups into each of them.
@@ -214,7 +212,7 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupQualifiedName(Parse::Node parse_node, IdentifierId name_id,
+auto Context::LookupQualifiedName(Parse::Node parse_node, SemIR::NameId name_id,
                                   SemIR::NameScopeId scope_id, bool required)
     -> SemIR::InstId {
   CARBON_CHECK(scope_id.is_valid()) << "No scope to perform lookup into";
@@ -252,7 +250,7 @@ auto Context::PopScope() -> void {
   for (const auto& str_id : scope.names) {
     auto it = name_lookup_.find(str_id);
     CARBON_CHECK(it->second.back().scope_index == scope.index)
-        << "Inconsistent scope index for name " << identifiers().Get(str_id);
+        << "Inconsistent scope index for name " << names().GetFormatted(str_id);
     if (it->second.size() == 1) {
       // Erase names that no longer resolve.
       name_lookup_.erase(it);
@@ -298,7 +296,7 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
         break;
 
       case SemIR::Field::Kind:
-      case SemIR::FunctionDeclaration::Kind:
+      case SemIR::FunctionDecl::Kind:
         return inst_id;
 
       default:
@@ -398,7 +396,7 @@ auto Context::AddCurrentCodeBlockToFunction(Parse::Node parse_node) -> void {
 
   auto function_id =
       insts()
-          .GetAs<SemIR::FunctionDeclaration>(return_scope_stack().back())
+          .GetAs<SemIR::FunctionDecl>(return_scope_stack().back())
           .function_id;
   functions()
       .Get(function_id)
@@ -424,12 +422,12 @@ auto Context::is_current_position_reachable() -> bool {
 auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
 
 auto Context::ParamOrArgComma() -> void {
-  ParamOrArgSave(node_stack_.PopExpression());
+  ParamOrArgSave(node_stack_.PopExpr());
 }
 
 auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) != start_kind) {
-    ParamOrArgSave(node_stack_.PopExpression());
+    ParamOrArgSave(node_stack_.PopExpr());
   }
 }
 
@@ -785,12 +783,13 @@ class TypeCompleter {
       case SemIR::BranchIf::Kind:
       case SemIR::BranchWithArg::Kind:
       case SemIR::Call::Kind:
-      case SemIR::ClassDeclaration::Kind:
+      case SemIR::ClassDecl::Kind:
       case SemIR::ClassFieldAccess::Kind:
       case SemIR::ClassInit::Kind:
+      case SemIR::Converted::Kind:
       case SemIR::Dereference::Kind:
       case SemIR::Field::Kind:
-      case SemIR::FunctionDeclaration::Kind:
+      case SemIR::FunctionDecl::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::IntegerLiteral::Kind:
       case SemIR::NameReference::Kind:
@@ -799,7 +798,7 @@ class TypeCompleter {
       case SemIR::Parameter::Kind:
       case SemIR::RealLiteral::Kind:
       case SemIR::Return::Kind:
-      case SemIR::ReturnExpression::Kind:
+      case SemIR::ReturnExpr::Kind:
       case SemIR::SelfParameter::Kind:
       case SemIR::SpliceBlock::Kind:
       case SemIR::StringLiteral::Kind:
@@ -1002,7 +1001,7 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
     }
     default: {
       // Right now, this is only expected to occur in calls from
-      // ExpressionAsType. Diagnostics are issued there.
+      // ExprAsType. Diagnostics are issued there.
       return false;
     }
   }
@@ -1019,6 +1018,9 @@ auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
 }
 
 auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
+  while (auto converted = insts().Get(inst_id).TryAs<SemIR::Converted>()) {
+    inst_id = converted->result_id;
+  }
   inst_id = FollowNameReferences(inst_id);
 
   auto it = canonical_types_.find(inst_id);

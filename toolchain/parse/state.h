@@ -18,7 +18,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(State, uint8_t) {
 
 class State : public CARBON_ENUM_BASE(State) {
  public:
-#define CARBON_PARSE_STATE(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_PARSE_STATE(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/parse/state.def"
 };
 

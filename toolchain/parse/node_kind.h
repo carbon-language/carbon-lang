@@ -21,7 +21,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
 // tree.
 class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
  public:
-#define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/parse/node_kind.def"
 
   // Returns true if the node is bracketed; otherwise, child_count is used.

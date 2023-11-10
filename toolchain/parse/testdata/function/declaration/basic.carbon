@@ -13,6 +13,6 @@ fn F();
 // CHECK:STDOUT:       {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

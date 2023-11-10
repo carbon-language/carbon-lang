@@ -52,22 +52,22 @@ class Context {
   auto AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
+  auto AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,
                        SemIR::InstId target_id) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
-  auto LookupNameInDeclaration(Parse::Node parse_node, IdentifierId name_id,
-                               SemIR::NameScopeId scope_id) -> SemIR::InstId;
+  auto LookupNameInDecl(Parse::Node parse_node, SemIR::NameId name_id,
+                        SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
-  auto LookupUnqualifiedName(Parse::Node parse_node, IdentifierId name_id)
+  auto LookupUnqualifiedName(Parse::Node parse_node, SemIR::NameId name_id)
       -> SemIR::InstId;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
-  auto LookupQualifiedName(Parse::Node parse_node, IdentifierId name_id,
+  auto LookupQualifiedName(Parse::Node parse_node, SemIR::NameId name_id,
                            SemIR::NameScopeId scope_id, bool required = true)
       -> SemIR::InstId;
 
@@ -76,7 +76,7 @@ class Context {
       -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::Node parse_node, IdentifierId name_id)
+  auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::NameId name_id)
       -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
@@ -267,9 +267,7 @@ class Context {
     return break_continue_stack_;
   }
 
-  auto declaration_name_stack() -> DeclarationNameStack& {
-    return declaration_name_stack_;
-  }
+  auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   // Directly expose SemIR::File data accessors for brevity in calls.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
@@ -286,6 +284,7 @@ class Context {
   auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
     return sem_ir().classes();
   }
+  auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
   }
@@ -323,8 +322,8 @@ class Context {
 
     // The instruction associated with this entry, if any. This can be one of:
     //
-    // - A `ClassDeclaration`, for a class definition scope.
-    // - A `FunctionDeclaration`, for the outermost scope in a function
+    // - A `ClassDecl`, for a class definition scope.
+    // - A `FunctionDecl`, for the outermost scope in a function
     //   definition.
     // - Invalid, for any other scope.
     SemIR::InstId scope_inst_id;
@@ -334,7 +333,7 @@ class Context {
 
     // Names which are registered with name_lookup_, and will need to be
     // deregistered when the scope ends.
-    llvm::DenseSet<IdentifierId> names;
+    llvm::DenseSet<SemIR::NameId> names;
 
     // TODO: This likely needs to track things which need to be destructed.
   };
@@ -407,7 +406,7 @@ class Context {
   InstBlockStack args_type_info_stack_;
 
   // A stack of return scopes; i.e., targets for `return`. Inside a function,
-  // this will be a FunctionDeclaration.
+  // this will be a FunctionDecl.
   llvm::SmallVector<SemIR::InstId> return_scope_stack_;
 
   // A stack of `break` and `continue` targets.
@@ -425,7 +424,7 @@ class Context {
   ScopeIndex next_scope_index_ = ScopeIndex(0);
 
   // The stack used for qualified declaration name construction.
-  DeclarationNameStack declaration_name_stack_;
+  DeclNameStack decl_name_stack_;
 
   // Maps identifiers to name lookup results. Values are a stack of name lookup
   // results in the ancestor scopes. This offers constant-time lookup of names,
@@ -435,7 +434,7 @@ class Context {
   // non-lexical scopes such as classes.
   //
   // Names which no longer have lookup results are erased.
-  llvm::DenseMap<IdentifierId, llvm::SmallVector<LexicalLookupResult>>
+  llvm::DenseMap<SemIR::NameId, llvm::SmallVector<LexicalLookupResult>>
       name_lookup_;
 
   // Cache of the mapping from instructions to types, to avoid recomputing the

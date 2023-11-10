@@ -54,16 +54,15 @@ struct ArrayIndex {
 };
 
 // Initializes an array from a tuple. `tuple_id` is the source tuple
-// expression. `inits_and_return_slot_id` contains one initializer per array
-// element, plus a final element that is the return slot for the
-// initialization.
+// expression. `inits_id` contains one initializer per array element.
+// `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
   static constexpr auto Kind = InstKind::ArrayInit.Define("array_init");
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId tuple_id;
-  InstBlockId inits_and_return_slot_id;
+  InstBlockId inits_id;
+  InstId dest_id;
 };
 
 struct ArrayType {
@@ -101,7 +100,7 @@ struct BindName {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
   InstId value_id;
 };
 
@@ -193,9 +192,8 @@ struct Call {
   InstBlockId args_id;
 };
 
-struct ClassDeclaration {
-  static constexpr auto Kind =
-      InstKind::ClassDeclaration.Define("class_declaration");
+struct ClassDecl {
+  static constexpr auto Kind = InstKind::ClassDecl.Define("class_decl");
 
   Parse::Node parse_node;
   // No type: a class declaration is not itself a value. The name of a class
@@ -223,8 +221,8 @@ struct ClassInit {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
+  InstId dest_id;
 };
 
 struct ClassType {
@@ -242,6 +240,15 @@ struct ConstType {
   Parse::Node parse_node;
   TypeId type_id;
   TypeId inner_id;
+};
+
+struct Converted {
+  static constexpr auto Kind = InstKind::Converted.Define("converted");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  InstId original_id;
+  InstId result_id;
 };
 
 // A cross-reference between IRs.
@@ -271,12 +278,12 @@ struct Field {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
   MemberIndex index;
 };
 
-struct FunctionDeclaration {
-  static constexpr auto Kind = InstKind::FunctionDeclaration.Define("fn_decl");
+struct FunctionDecl {
+  static constexpr auto Kind = InstKind::FunctionDecl.Define("fn_decl");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -309,7 +316,7 @@ struct NameReference {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
   InstId value_id;
 };
 
@@ -333,7 +340,7 @@ struct Parameter {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
 };
 
 struct PointerType {
@@ -360,9 +367,9 @@ struct Return {
   // This is a statement, so has no type.
 };
 
-struct ReturnExpression {
+struct ReturnExpr {
   static constexpr auto Kind =
-      InstKind::ReturnExpression.Define("return", TerminatorKind::Terminator);
+      InstKind::ReturnExpr.Define("return", TerminatorKind::Terminator);
 
   Parse::Node parse_node;
   // This is a statement, so has no type.
@@ -409,8 +416,8 @@ struct StructInit {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
+  InstId dest_id;
 };
 
 struct StructLiteral {
@@ -437,7 +444,7 @@ struct StructTypeField {
   // This instruction is an implementation detail of `StructType`, and doesn't
   // produce a value, so has no type, even though it declares a field with a
   // type.
-  IdentifierId name_id;
+  NameId name_id;
   TypeId field_type_id;
 };
 
@@ -446,7 +453,6 @@ struct StructValue {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
 };
 
@@ -490,8 +496,8 @@ struct TupleInit {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
+  InstId dest_id;
 };
 
 struct TupleLiteral {
@@ -515,7 +521,6 @@ struct TupleValue {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
 };
 
@@ -565,7 +570,7 @@ struct VarStorage {
 
   Parse::Node parse_node;
   TypeId type_id;
-  IdentifierId name_id;
+  NameId name_id;
 };
 
 // HasParseNode<T> is true if T has a `Parse::Node parse_node` field.

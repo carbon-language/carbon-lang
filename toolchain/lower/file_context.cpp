@@ -41,7 +41,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // Lower function declarations.
   functions_.resize_for_overwrite(sem_ir_->functions().size());
   for (auto i : llvm::seq(sem_ir_->functions().size())) {
-    functions_[i] = BuildFunctionDeclaration(SemIR::FunctionId(i));
+    functions_[i] = BuildFunctionDecl(SemIR::FunctionId(i));
   }
 
   // TODO: Lower global variable declarations.
@@ -56,7 +56,25 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   return std::move(llvm_module_);
 }
 
-auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
+auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
+  // All builtins are types, with the same empty lowered value.
+  if (inst_id.index < SemIR::BuiltinKind::ValidCount) {
+    return GetTypeAsValue();
+  }
+
+  auto target = sem_ir().insts().Get(inst_id);
+  if (auto function_decl = target.TryAs<SemIR::FunctionDecl>()) {
+    return GetFunction(function_decl->function_id);
+  }
+
+  if (target.type_id() == SemIR::TypeId::TypeType) {
+    return GetTypeAsValue();
+  }
+
+  CARBON_FATAL() << "Missing value: " << inst_id << " " << target;
+}
+
+auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
@@ -117,9 +135,13 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
     mangled_name = "main";
-  } else {
+  } else if (auto name =
+                 sem_ir().names().GetAsStringIfIdentifier(function.name_id)) {
     // TODO: Decide on a name mangling scheme.
-    mangled_name = sem_ir().identifiers().Get(function.name_id);
+    mangled_name = *name;
+  } else {
+    CARBON_FATAL() << "Unexpected special name for function: "
+                   << function.name_id;
   }
 
   llvm::FunctionType* function_type =
@@ -132,16 +154,17 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
     auto inst = sem_ir().insts().Get(inst_id);
+    auto name_id = SemIR::NameId::Invalid;
     if (inst_id == function.return_slot_id) {
-      arg.setName("return");
+      name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
     } else if (inst.Is<SemIR::SelfParameter>()) {
-      arg.setName("self");
+      name_id = SemIR::NameId::SelfValue;
     } else {
-      arg.setName(
-          sem_ir().identifiers().Get(inst.As<SemIR::Parameter>().name_id));
+      name_id = inst.As<SemIR::Parameter>().name_id;
     }
+    arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
 
   return llvm_function;
@@ -163,7 +186,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
-  // function parameters that was already computed in BuildFunctionDeclaration.
+  // function parameters that was already computed in BuildFunctionDecl.
   // We should only do that once.
   auto implicit_param_refs =
       sem_ir().inst_blocks().Get(function.implicit_param_refs_id);

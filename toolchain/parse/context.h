@@ -36,8 +36,8 @@ class Context {
     Let
   };
 
-  // Supported return values for GetDeclarationContext.
-  enum class DeclarationContext : int8_t {
+  // Supported return values for GetDeclContext.
+  enum class DeclContext : int8_t {
     File,  // Top-level context.
     Class,
     Interface,
@@ -48,11 +48,11 @@ class Context {
   enum class PackagingState : int8_t {
     StartOfFile,
     InImports,
-    AfterNonPackagingDeclaration,
+    AfterNonPackagingDecl,
     // A warning about `import` placement has been issued so we don't keep
     // issuing more (when `import` is repeated) until more non-`import`
     // declarations come up.
-    InImportsAfterNonPackagingDeclaration,
+    InImportsAfterNonPackagingDecl,
   };
 
   // Used to track state on state_stack_.
@@ -228,30 +228,29 @@ class Context {
 
   // Pushes a new state with the current position for context.
   auto PushState(State state) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
-                              PrecedenceGroup::ForTopLevelExpression(),
-                              *position_, tree_->size()));
+    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpr(),
+                              PrecedenceGroup::ForTopLevelExpr(), *position_,
+                              tree_->size()));
   }
 
   // Pushes a new state with a specific token for context. Used when forming a
   // new subtree with a token that isn't the start of the subtree.
   auto PushState(State state, Lex::Token token) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
-                              PrecedenceGroup::ForTopLevelExpression(), token,
+    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpr(),
+                              PrecedenceGroup::ForTopLevelExpr(), token,
                               tree_->size()));
   }
 
   // Pushes a new expression state with specific precedence.
-  auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
-    PushState(StateStackEntry(State::Expression, ambient_precedence,
-                              PrecedenceGroup::ForTopLevelExpression(),
-                              *position_, tree_->size()));
+  auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
+    PushState(StateStackEntry(State::Expr, ambient_precedence,
+                              PrecedenceGroup::ForTopLevelExpr(), *position_,
+                              tree_->size()));
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
-  auto PushStateForExpressionLoop(State state,
-                                  PrecedenceGroup ambient_precedence,
-                                  PrecedenceGroup lhs_precedence) -> void {
+  auto PushStateForExprLoop(State state, PrecedenceGroup ambient_precedence,
+                            PrecedenceGroup lhs_precedence) -> void {
     PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
                               *position_, tree_->size()));
   }
@@ -270,8 +269,8 @@ class Context {
   // parses should only need to look down a couple steps.
   //
   // This currently assumes it's being called from within the declaration's
-  // DeclarationScopeLoop.
-  auto GetDeclarationContext() -> DeclarationContext;
+  // DeclScopeLoop.
+  auto GetDeclContext() -> DeclContext;
 
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
@@ -281,19 +280,17 @@ class Context {
                                State keyword_state, int subtree_start) -> void;
 
   // Emits a diagnostic for a declaration missing a semi.
-  auto EmitExpectedDeclarationSemi(Lex::TokenKind expected_kind) -> void;
+  auto EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
 
   // Emits a diagnostic for a declaration missing a semi or definition.
-  auto EmitExpectedDeclarationSemiOrDefinition(Lex::TokenKind expected_kind)
-      -> void;
+  auto EmitExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind) -> void;
 
   // Handles error recovery in a declaration, particularly before any possible
   // definition has started (although one could be present). Recover to a
   // semicolon when it makes sense as a possible end, otherwise use the
   // introducer token for the error.
-  auto RecoverFromDeclarationError(StateStackEntry state,
-                                   NodeKind parse_node_kind,
-                                   bool skip_past_likely_end) -> void;
+  auto RecoverFromDeclError(StateStackEntry state, NodeKind parse_node_kind,
+                            bool skip_past_likely_end) -> void;
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;

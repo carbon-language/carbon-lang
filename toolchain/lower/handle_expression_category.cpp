@@ -25,10 +25,10 @@ auto HandleBindValue(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::ValueRepresentation::Copy:
       context.SetLocal(inst_id, context.builder().CreateLoad(
                                     context.GetType(inst.type_id),
-                                    context.GetLocal(inst.value_id)));
+                                    context.GetValue(inst.value_id)));
       break;
     case SemIR::ValueRepresentation::Pointer:
-      context.SetLocal(inst_id, context.GetLocal(inst.value_id));
+      context.SetLocal(inst_id, context.GetValue(inst.value_id));
       break;
     case SemIR::ValueRepresentation::Custom:
       CARBON_FATAL() << "TODO: Add support for BindValue with custom value rep";
@@ -38,7 +38,7 @@ auto HandleBindValue(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleTemporary(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::Temporary inst) -> void {
   context.FinishInitialization(inst.type_id, inst.storage_id, inst.init_id);
-  context.SetLocal(inst_id, context.GetLocal(inst.storage_id));
+  context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
 auto HandleTemporaryStorage(FunctionContext& context, SemIR::InstId inst_id,
@@ -50,25 +50,25 @@ auto HandleTemporaryStorage(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleValueAsReference(FunctionContext& context, SemIR::InstId inst_id,
                             SemIR::ValueAsReference inst) -> void {
-  CARBON_CHECK(SemIR::GetExpressionCategory(context.sem_ir(), inst.value_id) ==
-               SemIR::ExpressionCategory::Value);
+  CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.value_id) ==
+               SemIR::ExprCategory::Value);
   CARBON_CHECK(
       SemIR::GetValueRepresentation(context.sem_ir(), inst.type_id).kind ==
       SemIR::ValueRepresentation::Pointer);
-  context.SetLocal(inst_id, context.GetLocal(inst.value_id));
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
 auto HandleValueOfInitializer(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::ValueOfInitializer inst) -> void {
-  CARBON_CHECK(SemIR::GetExpressionCategory(context.sem_ir(), inst.init_id) ==
-               SemIR::ExpressionCategory::Initializing);
+  CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.init_id) ==
+               SemIR::ExprCategory::Initializing);
   CARBON_CHECK(
       SemIR::GetValueRepresentation(context.sem_ir(), inst.type_id).kind ==
       SemIR::ValueRepresentation::Copy);
   CARBON_CHECK(
       SemIR::GetInitializingRepresentation(context.sem_ir(), inst.type_id)
           .kind == SemIR::InitializingRepresentation::ByCopy);
-  context.SetLocal(inst_id, context.GetLocal(inst.init_id));
+  context.SetLocal(inst_id, context.GetValue(inst.init_id));
 }
 
 }  // namespace Carbon::Lower

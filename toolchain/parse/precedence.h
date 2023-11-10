@@ -39,16 +39,16 @@ class PrecedenceGroup {
 
   // Get the sentinel precedence level for a postfix expression. All operators
   // have lower precedence than this.
-  static auto ForPostfixExpression() -> PrecedenceGroup;
+  static auto ForPostfixExpr() -> PrecedenceGroup;
 
   // Get the precedence level for a top-level or parenthesized expression. All
   // expression operators have higher precedence than this.
-  static auto ForTopLevelExpression() -> PrecedenceGroup;
+  static auto ForTopLevelExpr() -> PrecedenceGroup;
 
   // Get the sentinel precedence level for a statement context. All operators,
   // including statement operators like `=` and `++`, have higher precedence
   // than this.
-  static auto ForExpressionStatement() -> PrecedenceGroup;
+  static auto ForExprStatement() -> PrecedenceGroup;
 
   // Get the precedence level at which to parse a type expression. All type
   // operators have higher precedence than this.

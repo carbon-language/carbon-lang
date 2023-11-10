@@ -6,9 +6,9 @@
 
 namespace Carbon::Check {
 
-auto HandleNamedConstraintDeclaration(Context& context, Parse::Node parse_node)
+auto HandleNamedConstraintDecl(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_node, "HandleNamedConstraintDeclaration");
+  return context.TODO(parse_node, "HandleNamedConstraintDecl");
 }
 
 auto HandleNamedConstraintDefinition(Context& context, Parse::Node parse_node)

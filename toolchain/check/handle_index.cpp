@@ -10,9 +10,9 @@
 
 namespace Carbon::Check {
 
-auto HandleIndexExpressionStart(Context& /*context*/,
-                                Parse::Node /*parse_node*/) -> bool {
-  // Leave the expression on the stack for IndexExpression.
+auto HandleIndexExprStart(Context& /*context*/, Parse::Node /*parse_node*/)
+    -> bool {
+  // Leave the expression on the stack for IndexExpr.
   return true;
 }
 
@@ -37,12 +37,11 @@ static auto ValidateIntegerLiteralBound(Context& context,
   return &index_val;
 }
 
-auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
-  auto index_inst_id = context.node_stack().PopExpression();
+auto HandleIndexExpr(Context& context, Parse::Node parse_node) -> bool {
+  auto index_inst_id = context.node_stack().PopExpr();
   auto index_inst = context.insts().Get(index_inst_id);
-  auto operand_inst_id = context.node_stack().PopExpression();
-  operand_inst_id =
-      ConvertToValueOrReferenceExpression(context, operand_inst_id);
+  auto operand_inst_id = context.node_stack().PopExpr();
+  operand_inst_id = ConvertToValueOrReferenceExpr(context, operand_inst_id);
   auto operand_inst = context.insts().Get(operand_inst_id);
   auto operand_type_id = operand_inst.type_id();
   auto operand_type_inst = context.insts().Get(
@@ -64,8 +63,8 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
           context, index_inst.parse_node(), index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntegerType));
       auto array_cat =
-          SemIR::GetExpressionCategory(context.sem_ir(), operand_inst_id);
-      if (array_cat == SemIR::ExpressionCategory::Value) {
+          SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
+      if (array_cat == SemIR::ExprCategory::Value) {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
         operand_inst_id = context.AddInst(SemIR::ValueAsReference{
@@ -74,12 +73,12 @@ auto HandleIndexExpression(Context& context, Parse::Node parse_node) -> bool {
       auto elem_id = context.AddInst(
           SemIR::ArrayIndex{parse_node, array_type.element_type_id,
                             operand_inst_id, cast_index_id});
-      if (array_cat != SemIR::ExpressionCategory::DurableReference) {
+      if (array_cat != SemIR::ExprCategory::DurableReference) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.
         // TODO: This should be replaced by a choice between using `IndexWith`
         // and `IndirectIndexWith`.
-        elem_id = ConvertToValueExpression(context, elem_id);
+        elem_id = ConvertToValueExpr(context, elem_id);
       }
       context.node_stack().Push(parse_node, elem_id);
       return true;

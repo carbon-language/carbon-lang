@@ -17,10 +17,11 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_assign_nested.carbon" {
-// CHECK:STDOUT:   %.loc10_14: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc10_14.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc10_14.2: type = converted %.loc10_14.1, constants.%.loc10_14.1
 // CHECK:STDOUT:   %.loc10_15: type = struct_type {.a: {}}
-// CHECK:STDOUT:   %x.var: ref {.a: {}} = var "x"
-// CHECK:STDOUT:   %x: ref {.a: {}} = bind_name "x", %x.var
+// CHECK:STDOUT:   %x.var: ref {.a: {}} = var x
+// CHECK:STDOUT:   %x: ref {.a: {}} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_26: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_27: {.b: {}} = struct_literal (%.loc10_26)
 // CHECK:STDOUT:   assign %x.var, <error>

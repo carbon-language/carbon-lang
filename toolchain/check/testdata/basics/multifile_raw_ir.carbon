@@ -19,13 +19,13 @@ fn B() {}
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_reference_irs_size: 1
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: strId0, param_refs: block0, body: [block1]}
+// CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block1]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {inst: instFunctionType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: FunctionDeclaration, arg0: function0, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: FunctionDecl, arg0: function0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: Return}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}
@@ -39,13 +39,13 @@ fn B() {}
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_reference_irs_size: 1
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: strId0, param_refs: block0, body: [block1]}
+// CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block1]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {inst: instFunctionType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: FunctionDeclaration, arg0: function0, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: FunctionDecl, arg0: function0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: Return}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}

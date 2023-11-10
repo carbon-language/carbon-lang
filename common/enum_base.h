@@ -32,7 +32,7 @@ namespace Carbon::Internal {
 //
 //   class MyKind : public CARBON_ENUM_BASE(MyKind) {
 //    public:
-//   #define CARBON_MY_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+//   #define CARBON_MY_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 //   #include ".../my_kind.def"
 //
 //     // OPTIONAL: To support converting to and from the underlying type of
@@ -205,7 +205,7 @@ class EnumBase : public Printable<DerivedT> {
 
 // Use this within the Carbon enum class body to generate named constant
 // declarations for each value.
-#define CARBON_ENUM_CONSTANT_DECLARATION(Name) static const EnumType Name;
+#define CARBON_ENUM_CONSTANT_DECL(Name) static const EnumType Name;
 
 // Use this immediately after the Carbon enum class body to define each named
 // constant.

@@ -10,7 +10,7 @@ namespace Carbon::Check {
 
 // TODO: Find a better home for this. We'll likely need it for more than just
 // expression statements.
-static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
+static auto HandleDiscardedExpr(Context& context, SemIR::InstId expr_id)
     -> void {
   // If we discard an initializing expression, convert it to a value or
   // reference so that it has something to initialize.
@@ -21,15 +21,14 @@ static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
   // TODO: This will eventually need to do some "do not discard" analysis.
 }
 
-auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
-    -> bool {
-  HandleDiscardedExpression(context, context.node_stack().PopExpression());
+auto HandleExprStatement(Context& context, Parse::Node /*parse_node*/) -> bool {
+  HandleDiscardedExpr(context, context.node_stack().PopExpr());
   return true;
 }
 
 auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
-  auto fn_inst = context.insts().GetAs<SemIR::FunctionDeclaration>(
+  auto fn_inst = context.insts().GetAs<SemIR::FunctionDecl>(
       context.return_scope_stack().back());
   const auto& callable = context.functions().Get(fn_inst.function_id);
 
@@ -40,28 +39,28 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
 
     if (callable.return_type_id.is_valid()) {
       // TODO: Add a note pointing at the return type's parse node.
-      CARBON_DIAGNOSTIC(ReturnStatementMissingExpression, Error,
-                        "Must return a {0}.", std::string);
+      CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error, "Must return a {0}.",
+                        std::string);
       context.emitter()
-          .Build(parse_node, ReturnStatementMissingExpression,
+          .Build(parse_node, ReturnStatementMissingExpr,
                  context.sem_ir().StringifyType(callable.return_type_id))
           .Emit();
     }
 
     context.AddInst(SemIR::Return{parse_node});
   } else {
-    auto arg = context.node_stack().PopExpression();
+    auto arg = context.node_stack().PopExpr();
     context.node_stack()
         .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
 
     if (!callable.return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(
-          ReturnStatementDisallowExpression, Error,
+          ReturnStatementDisallowExpr, Error,
           "No return expression should be provided in this context.");
       CARBON_DIAGNOSTIC(ReturnStatementImplicitNote, Note,
                         "There was no return type provided.");
       context.emitter()
-          .Build(parse_node, ReturnStatementDisallowExpression)
+          .Build(parse_node, ReturnStatementDisallowExpr)
           .Note(fn_inst.parse_node, ReturnStatementImplicitNote)
           .Emit();
     } else if (callable.return_slot_id.is_valid()) {
@@ -71,7 +70,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
                                  callable.return_type_id);
     }
 
-    context.AddInst(SemIR::ReturnExpression{parse_node, arg});
+    context.AddInst(SemIR::ReturnExpr{parse_node, arg});
   }
 
   // Switch to a new, unreachable, empty instruction block. This typically won't

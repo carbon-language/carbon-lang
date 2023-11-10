@@ -85,6 +85,9 @@ struct StringId : public IndexBase, public Printable<StringId> {
 constexpr StringId StringId::Invalid(StringId::InvalidIndex);
 
 // Adapts StringId for identifiers.
+//
+// `NameId` relies on the values of this type other than `Invalid` all being
+// non-negative.
 struct IdentifierId : public IndexBase, public Printable<IdentifierId> {
   static const IdentifierId Invalid;
   using IndexBase::IndexBase;

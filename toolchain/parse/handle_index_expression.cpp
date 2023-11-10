@@ -7,21 +7,20 @@
 
 namespace Carbon::Parse {
 
-auto HandleIndexExpression(Context& context) -> void {
+auto HandleIndexExpr(Context& context) -> void {
   auto state = context.PopState();
-  state.state = State::IndexExpressionFinish;
+  state.state = State::IndexExprFinish;
   context.PushState(state);
-  context.AddNode(NodeKind::IndexExpressionStart,
+  context.AddNode(NodeKind::IndexExprStart,
                   context.ConsumeChecked(Lex::TokenKind::OpenSquareBracket),
                   state.subtree_start, state.has_error);
-  context.PushState(State::Expression);
+  context.PushState(State::Expr);
 }
 
-auto HandleIndexExpressionFinish(Context& context) -> void {
+auto HandleIndexExprFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseSymbol(state.token, state,
-                                   NodeKind::IndexExpression);
+  context.ConsumeAndAddCloseSymbol(state.token, state, NodeKind::IndexExpr);
 }
 
 }  // namespace Carbon::Parse

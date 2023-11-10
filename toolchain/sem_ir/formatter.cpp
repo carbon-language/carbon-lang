@@ -61,9 +61,7 @@ class InstNamer {
       // disambiguator.
       auto fn_loc = Parse::Node::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
-          *this, fn_loc,
-          fn.name_id.is_valid() ? sem_ir.identifiers().Get(fn.name_id).str()
-                                : "");
+          *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
       CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
@@ -93,9 +91,7 @@ class InstNamer {
       auto class_loc = Parse::Node::Invalid;
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
-          class_info.name_id.is_valid()
-              ? sem_ir.identifiers().Get(class_info.name_id).str()
-              : "");
+          sem_ir.names().GetIRBaseName(class_info.name_id).str());
       AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
       CollectNamesInBlock(class_scope, class_info.body_block_id);
     }
@@ -145,7 +141,9 @@ class InstNamer {
     auto& [inst_scope, inst_name] = insts[inst_id.index];
     if (!inst_name) {
       // This should not happen in valid IR.
-      return "<unexpected instref " + llvm::itostr(inst_id.index) + ">";
+      std::string str;
+      llvm::raw_string_ostream(str) << "<unexpected instref " << inst_id << ">";
+      return str;
     }
     if (inst_scope == scope_idx) {
       return inst_name.str().str();
@@ -162,7 +160,10 @@ class InstNamer {
     auto& [label_scope, label_name] = labels[block_id.index];
     if (!label_name) {
       // This should not happen in valid IR.
-      return "<unexpected instblockref " + llvm::itostr(block_id.index) + ">";
+      std::string str;
+      llvm::raw_string_ostream(str)
+          << "<unexpected instblockref " << block_id << ">";
+      return str;
     }
     if (label_scope == scope_idx) {
       return label_name.str().str();
@@ -315,7 +316,7 @@ class InstNamer {
       -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(inst.parse_node())) {
-      case Parse::NodeKind::IfExpressionIf:
+      case Parse::NodeKind::IfExprIf:
         switch (inst.kind()) {
           case BranchIf::Kind:
             name = "if.expr.then";
@@ -402,14 +403,9 @@ class InstNamer {
         insts[inst_id.index] = {scope_idx, scope.insts.AllocateName(
                                                *this, inst.parse_node(), name)};
       };
-      auto add_inst_name_id = [&](IdentifierId name_id,
-                                  llvm::StringRef suffix = "") {
-        if (name_id.is_valid()) {
-          add_inst_name(
-              (sem_ir_.identifiers().Get(name_id).str() + suffix).str());
-        } else {
-          add_inst_name(suffix.str());
-        }
+      auto add_inst_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
+        add_inst_name(
+            (sem_ir_.names().GetIRBaseName(name_id).str() + suffix).str());
       };
 
       switch (inst.kind()) {
@@ -433,9 +429,9 @@ class InstNamer {
           add_inst_name_id(inst.As<BindName>().name_id);
           continue;
         }
-        case FunctionDeclaration::Kind: {
+        case FunctionDecl::Kind: {
           add_inst_name_id(sem_ir_.functions()
-                               .Get(inst.As<FunctionDeclaration>().function_id)
+                               .Get(inst.As<FunctionDecl>().function_id)
                                .name_id);
           continue;
         }
@@ -625,7 +621,7 @@ class Formatter {
                        llvm::StringRef prefix) -> void {
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
-    llvm::SmallVector<std::pair<InstId, IdentifierId>> entries;
+    llvm::SmallVector<std::pair<InstId, NameId>> entries;
     for (auto [name_id, inst_id] : sem_ir_.name_scopes().Get(id)) {
       entries.push_back({inst_id, name_id});
     }
@@ -635,7 +631,7 @@ class Formatter {
     llvm::ListSeparator sep(separator);
     for (auto [inst_id, name_id] : entries) {
       out_ << sep << prefix;
-      FormatString(name_id);
+      FormatName(name_id);
       out_ << " = ";
       FormatInstName(inst_id);
     }
@@ -679,17 +675,17 @@ class Formatter {
       case InstValueKind::Typed:
         FormatInstName(inst_id);
         out_ << ": ";
-        switch (GetExpressionCategory(sem_ir_, inst_id)) {
-          case ExpressionCategory::NotExpression:
-          case ExpressionCategory::Error:
-          case ExpressionCategory::Value:
-          case ExpressionCategory::Mixed:
+        switch (GetExprCategory(sem_ir_, inst_id)) {
+          case ExprCategory::NotExpr:
+          case ExprCategory::Error:
+          case ExprCategory::Value:
+          case ExprCategory::Mixed:
             break;
-          case ExpressionCategory::DurableReference:
-          case ExpressionCategory::EphemeralReference:
+          case ExprCategory::DurableReference:
+          case ExprCategory::EphemeralReference:
             out_ << "ref ";
             break;
-          case ExpressionCategory::Initializing:
+          case ExprCategory::Initializing:
             out_ << "init ";
             break;
         }
@@ -753,25 +749,6 @@ class Formatter {
     in_terminator_sequence_ = false;
   }
 
-  auto FormatInstructionRHS(ArrayInit inst) -> void {
-    out_ << " ";
-    FormatArg(inst.tuple_id);
-
-    llvm::ArrayRef<InstId> inits_and_return_slot =
-        sem_ir_.inst_blocks().Get(inst.inits_and_return_slot_id);
-    auto inits = inits_and_return_slot.drop_back(1);
-    auto return_slot_id = inits_and_return_slot.back();
-
-    out_ << ", (";
-    llvm::ListSeparator sep;
-    for (auto inst_id : inits) {
-      out_ << sep;
-      FormatArg(inst_id);
-    }
-    out_ << ')';
-    FormatReturnSlot(return_slot_id);
-  }
-
   auto FormatInstructionRHS(Call inst) -> void {
     out_ << " ";
     FormatArg(inst.callee_id);
@@ -804,9 +781,24 @@ class Formatter {
     }
   }
 
+  auto FormatInstructionRHS(ArrayInit inst) -> void {
+    FormatArgs(inst.inits_id);
+    FormatReturnSlot(inst.dest_id);
+  }
+
   auto FormatInstructionRHS(InitializeFrom inst) -> void {
     FormatArgs(inst.src_id);
     FormatReturnSlot(inst.dest_id);
+  }
+
+  auto FormatInstructionRHS(StructInit init) -> void {
+    FormatArgs(init.elements_id);
+    FormatReturnSlot(init.dest_id);
+  }
+
+  auto FormatInstructionRHS(TupleInit init) -> void {
+    FormatArgs(init.elements_id);
+    FormatReturnSlot(init.dest_id);
   }
 
   auto FormatInstructionRHS(CrossReference inst) -> void {
@@ -838,7 +830,7 @@ class Formatter {
     for (auto field_id : sem_ir_.inst_blocks().Get(inst.fields_id)) {
       out_ << sep << ".";
       auto field = sem_ir_.insts().GetAs<StructTypeField>(field_id);
-      FormatString(field.name_id);
+      FormatName(field.name_id);
       out_ << ": ";
       FormatType(field.field_type_id);
     }
@@ -861,12 +853,6 @@ class Formatter {
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 
   auto FormatArg(ClassId id) -> void { FormatClassName(id); }
-
-  auto FormatArg(IdentifierId id) -> void {
-    out_ << '"';
-    out_.write_escaped(sem_ir_.identifiers().Get(id), /*UseHexEscapes=*/true);
-    out_ << '"';
-  }
 
   auto FormatArg(IntegerId id) -> void {
     sem_ir_.integers().Get(id).print(out_, /*isSigned=*/false);
@@ -906,6 +892,8 @@ class Formatter {
     out_ << '"';
   }
 
+  auto FormatArg(NameId id) -> void { FormatName(id); }
+
   auto FormatArg(TypeId id) -> void { FormatType(id); }
 
   auto FormatArg(TypeBlockId id) -> void {
@@ -923,16 +911,16 @@ class Formatter {
     FormatArg(dest_id);
   }
 
+  auto FormatName(NameId id) -> void {
+    out_ << sem_ir_.names().GetFormatted(id);
+  }
+
   auto FormatInstName(InstId id) -> void {
     out_ << inst_namer_.GetNameFor(scope_, id);
   }
 
   auto FormatLabel(InstBlockId id) -> void {
     out_ << inst_namer_.GetLabelFor(scope_, id);
-  }
-
-  auto FormatString(IdentifierId id) -> void {
-    out_ << sem_ir_.identifiers().Get(id);
   }
 
   auto FormatFunctionName(FunctionId id) -> void {

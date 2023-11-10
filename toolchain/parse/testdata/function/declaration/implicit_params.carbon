@@ -22,6 +22,6 @@ fn foo[a: i32, b: i32]();
 // CHECK:STDOUT:       {kind: 'ImplicitParameterList', text: ']', subtree_size: 9},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 14},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

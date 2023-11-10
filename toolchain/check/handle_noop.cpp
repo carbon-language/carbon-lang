@@ -6,8 +6,7 @@
 
 namespace Carbon::Check {
 
-auto HandleEmptyDeclaration(Context& /*context*/, Parse::Node /*parse_node*/)
-    -> bool {
+auto HandleEmptyDecl(Context& /*context*/, Parse::Node /*parse_node*/) -> bool {
   // Empty declarations have no actions associated.
   return true;
 }

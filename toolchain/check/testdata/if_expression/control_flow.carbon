@@ -31,20 +31,22 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   %b.ref: bool = name_reference b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %A.ref: <function> = name_reference "A", file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_reference A, file.%A
 // CHECK:STDOUT:   %.loc11_21.1: init i32 = call %A.ref()
 // CHECK:STDOUT:   %.loc11_21.2: i32 = value_of_initializer %.loc11_21.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_21.2)
+// CHECK:STDOUT:   %.loc11_21.3: i32 = converted %.loc11_21.1, %.loc11_21.2
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_21.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %B.ref: <function> = name_reference "B", file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_reference B, file.%B
 // CHECK:STDOUT:   %.loc11_30: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc11_24: i32 = value_of_initializer %.loc11_30
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_24)
+// CHECK:STDOUT:   %.loc11_24.1: i32 = value_of_initializer %.loc11_30
+// CHECK:STDOUT:   %.loc11_24.2: i32 = converted %.loc11_30, %.loc11_24.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.result

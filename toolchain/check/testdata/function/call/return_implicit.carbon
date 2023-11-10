@@ -27,10 +27,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11: () = tuple_literal ()
-// CHECK:STDOUT:   %b.var: ref () = var "b"
-// CHECK:STDOUT:   %b: ref () = bind_name "b", %b.var
-// CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: <function> = name_reference "MakeImplicitEmptyTuple", file.%MakeImplicitEmptyTuple
+// CHECK:STDOUT:   %.loc11_11.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_11.2: type = converted %.loc11_11.1, constants.%.loc11
+// CHECK:STDOUT:   %b.var: ref () = var b
+// CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
+// CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: <function> = name_reference MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple
 // CHECK:STDOUT:   %.loc11_37: init () = call %MakeImplicitEmptyTuple.ref()
 // CHECK:STDOUT:   assign %b.var, %.loc11_37
 // CHECK:STDOUT:   return

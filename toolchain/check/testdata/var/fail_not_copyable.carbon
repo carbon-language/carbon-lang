@@ -30,7 +30,7 @@ fn F(x: X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_not_copyable.carbon" {
-// CHECK:STDOUT:   class_declaration @X, ()
+// CHECK:STDOUT:   class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
@@ -42,14 +42,14 @@ fn F(x: X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x: X) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %s.var: ref String = var "s"
-// CHECK:STDOUT:   %s: ref String = bind_name "s", %s.var
+// CHECK:STDOUT:   %s.var: ref String = var s
+// CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   %.loc16: String = string_literal "hello"
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %X.ref: type = name_reference "X", file.%X
-// CHECK:STDOUT:   %y.var: ref X = var "y"
-// CHECK:STDOUT:   %y: ref X = bind_name "y", %y.var
-// CHECK:STDOUT:   %x.ref: X = name_reference "x", %x
+// CHECK:STDOUT:   %X.ref: type = name_reference X, file.%X
+// CHECK:STDOUT:   %y.var: ref X = var y
+// CHECK:STDOUT:   %y: ref X = bind_name y, %y.var
+// CHECK:STDOUT:   %x.ref: X = name_reference x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

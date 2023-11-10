@@ -29,7 +29,7 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   context.AddLeafNode(NodeKind::FileStart,
                       context.ConsumeChecked(Lex::TokenKind::StartOfFile));
 
-  context.PushState(State::DeclarationScopeLoop);
+  context.PushState(State::DeclScopeLoop);
 
   while (!context.state_stack().empty()) {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.

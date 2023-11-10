@@ -26,15 +26,15 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_unbound_field.carbon" {
-// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8_12.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc8_12.2: <unbound field of class Class> = field "field", member0
-// CHECK:STDOUT:   %field: <unbound field of class Class> = bind_name "field", %.loc8_12.2
+// CHECK:STDOUT:   %.loc8_12.2: <unbound field of class Class> = field field, member0
+// CHECK:STDOUT:   %field: <unbound field of class Class> = bind_name field, %.loc8_12.2
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -44,13 +44,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference "field", @Class.%field
+// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference field, @Class.%field
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference "Class", file.%Class
-// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference "field", @Class.%field
+// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference field, @Class.%field
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

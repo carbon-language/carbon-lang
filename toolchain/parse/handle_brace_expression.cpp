@@ -6,31 +6,28 @@
 
 namespace Carbon::Parse {
 
-auto HandleBraceExpression(Context& context) -> void {
+auto HandleBraceExpr(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = State::BraceExpressionFinishAsUnknown;
+  state.state = State::BraceExprFinishAsUnknown;
   context.PushState(state);
 
   CARBON_CHECK(context.ConsumeAndAddLeafNodeIf(
       Lex::TokenKind::OpenCurlyBrace,
       NodeKind::StructLiteralOrStructTypeLiteralStart));
   if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
-    context.PushState(State::BraceExpressionParameterAsUnknown);
+    context.PushState(State::BraceExprParameterAsUnknown);
   }
 }
 
 // Prints a diagnostic for brace expression syntax errors.
-static auto HandleBraceExpressionParameterError(Context& context,
-                                                Context::StateStackEntry state,
-                                                State param_finish_state)
-    -> void {
-  bool is_type =
-      param_finish_state == State::BraceExpressionParameterFinishAsType;
-  bool is_value =
-      param_finish_state == State::BraceExpressionParameterFinishAsValue;
+static auto HandleBraceExprParameterError(Context& context,
+                                          Context::StateStackEntry state,
+                                          State param_finish_state) -> void {
+  bool is_type = param_finish_state == State::BraceExprParameterFinishAsType;
+  bool is_value = param_finish_state == State::BraceExprParameterFinishAsValue;
   bool is_unknown =
-      param_finish_state == State::BraceExpressionParameterFinishAsUnknown;
+      param_finish_state == State::BraceExprParameterFinishAsUnknown;
   CARBON_CHECK(is_type || is_value || is_unknown);
   CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
                     llvm::StringRef, llvm::StringRef, llvm::StringRef);
@@ -44,14 +41,14 @@ static auto HandleBraceExpressionParameterError(Context& context,
   context.PushState(state);
 }
 
-// Handles BraceExpressionParameterAs(Type|Value|Unknown).
-static auto HandleBraceExpressionParameter(Context& context,
-                                           State after_designator_state,
-                                           State param_finish_state) -> void {
+// Handles BraceExprParameterAs(Type|Value|Unknown).
+static auto HandleBraceExprParameter(Context& context,
+                                     State after_designator_state,
+                                     State param_finish_state) -> void {
   auto state = context.PopState();
 
   if (!context.PositionIs(Lex::TokenKind::Period)) {
-    HandleBraceExpressionParameterError(context, state, param_finish_state);
+    HandleBraceExprParameterError(context, state, param_finish_state);
     return;
   }
 
@@ -60,27 +57,28 @@ static auto HandleBraceExpressionParameter(Context& context,
   context.PushState(State::PeriodAsStruct);
 }
 
-auto HandleBraceExpressionParameterAsType(Context& context) -> void {
-  HandleBraceExpressionParameter(
-      context, State::BraceExpressionParameterAfterDesignatorAsType,
-      State::BraceExpressionParameterFinishAsType);
+auto HandleBraceExprParameterAsType(Context& context) -> void {
+  HandleBraceExprParameter(context,
+                           State::BraceExprParameterAfterDesignatorAsType,
+                           State::BraceExprParameterFinishAsType);
 }
 
-auto HandleBraceExpressionParameterAsValue(Context& context) -> void {
-  HandleBraceExpressionParameter(
-      context, State::BraceExpressionParameterAfterDesignatorAsValue,
-      State::BraceExpressionParameterFinishAsValue);
+auto HandleBraceExprParameterAsValue(Context& context) -> void {
+  HandleBraceExprParameter(context,
+                           State::BraceExprParameterAfterDesignatorAsValue,
+                           State::BraceExprParameterFinishAsValue);
 }
 
-auto HandleBraceExpressionParameterAsUnknown(Context& context) -> void {
-  HandleBraceExpressionParameter(
-      context, State::BraceExpressionParameterAfterDesignatorAsUnknown,
-      State::BraceExpressionParameterFinishAsUnknown);
+auto HandleBraceExprParameterAsUnknown(Context& context) -> void {
+  HandleBraceExprParameter(context,
+                           State::BraceExprParameterAfterDesignatorAsUnknown,
+                           State::BraceExprParameterFinishAsUnknown);
 }
 
-// Handles BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown).
-static auto HandleBraceExpressionParameterAfterDesignator(
-    Context& context, State param_finish_state) -> void {
+// Handles BraceExprParameterAfterDesignatorAs(Type|Value|Unknown).
+static auto HandleBraceExprParameterAfterDesignator(Context& context,
+                                                    State param_finish_state)
+    -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -102,29 +100,29 @@ static auto HandleBraceExpressionParameterAfterDesignator(
   } else if (context.PositionIs(Lex::TokenKind::Equal)) {
     is_type = false;
   } else {
-    HandleBraceExpressionParameterError(context, state, param_finish_state);
+    HandleBraceExprParameterError(context, state, param_finish_state);
     return;
   }
 
   // If we're changing from unknown, update the related finish states.
-  if (param_finish_state == State::BraceExpressionParameterFinishAsUnknown) {
+  if (param_finish_state == State::BraceExprParameterFinishAsUnknown) {
     auto finish_state = context.PopState();
-    CARBON_CHECK(finish_state.state == State::BraceExpressionFinishAsUnknown);
+    CARBON_CHECK(finish_state.state == State::BraceExprFinishAsUnknown);
     if (is_type) {
-      finish_state.state = State::BraceExpressionFinishAsType;
-      param_finish_state = State::BraceExpressionParameterFinishAsType;
+      finish_state.state = State::BraceExprFinishAsType;
+      param_finish_state = State::BraceExprParameterFinishAsType;
     } else {
-      finish_state.state = State::BraceExpressionFinishAsValue;
-      param_finish_state = State::BraceExpressionParameterFinishAsValue;
+      finish_state.state = State::BraceExprFinishAsValue;
+      param_finish_state = State::BraceExprParameterFinishAsValue;
     }
     context.PushState(finish_state);
   }
 
-  auto want_param_finish_state =
-      is_type ? State::BraceExpressionParameterFinishAsType
-              : State::BraceExpressionParameterFinishAsValue;
+  auto want_param_finish_state = is_type
+                                     ? State::BraceExprParameterFinishAsType
+                                     : State::BraceExprParameterFinishAsValue;
   if (param_finish_state != want_param_finish_state) {
-    HandleBraceExpressionParameterError(context, state, param_finish_state);
+    HandleBraceExprParameterError(context, state, param_finish_state);
     return;
   }
 
@@ -133,31 +131,28 @@ static auto HandleBraceExpressionParameterAfterDesignator(
   state.state = param_finish_state;
   state.token = context.Consume();
   context.PushState(state);
-  context.PushState(State::Expression);
+  context.PushState(State::Expr);
 }
 
-auto HandleBraceExpressionParameterAfterDesignatorAsType(Context& context)
+auto HandleBraceExprParameterAfterDesignatorAsType(Context& context) -> void {
+  HandleBraceExprParameterAfterDesignator(
+      context, State::BraceExprParameterFinishAsType);
+}
+
+auto HandleBraceExprParameterAfterDesignatorAsValue(Context& context) -> void {
+  HandleBraceExprParameterAfterDesignator(
+      context, State::BraceExprParameterFinishAsValue);
+}
+
+auto HandleBraceExprParameterAfterDesignatorAsUnknown(Context& context)
     -> void {
-  HandleBraceExpressionParameterAfterDesignator(
-      context, State::BraceExpressionParameterFinishAsType);
+  HandleBraceExprParameterAfterDesignator(
+      context, State::BraceExprParameterFinishAsUnknown);
 }
 
-auto HandleBraceExpressionParameterAfterDesignatorAsValue(Context& context)
-    -> void {
-  HandleBraceExpressionParameterAfterDesignator(
-      context, State::BraceExpressionParameterFinishAsValue);
-}
-
-auto HandleBraceExpressionParameterAfterDesignatorAsUnknown(Context& context)
-    -> void {
-  HandleBraceExpressionParameterAfterDesignator(
-      context, State::BraceExpressionParameterFinishAsUnknown);
-}
-
-// Handles BraceExpressionParameterFinishAs(Type|Value|Unknown).
-static auto HandleBraceExpressionParameterFinish(Context& context,
-                                                 NodeKind node_kind,
-                                                 State param_state) -> void {
+// Handles BraceExprParameterFinishAs(Type|Value|Unknown).
+static auto HandleBraceExprParameterFinish(Context& context, NodeKind node_kind,
+                                           State param_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -175,24 +170,23 @@ static auto HandleBraceExpressionParameterFinish(Context& context,
   }
 }
 
-auto HandleBraceExpressionParameterFinishAsType(Context& context) -> void {
-  HandleBraceExpressionParameterFinish(context, NodeKind::StructFieldType,
-                                       State::BraceExpressionParameterAsType);
+auto HandleBraceExprParameterFinishAsType(Context& context) -> void {
+  HandleBraceExprParameterFinish(context, NodeKind::StructFieldType,
+                                 State::BraceExprParameterAsType);
 }
 
-auto HandleBraceExpressionParameterFinishAsValue(Context& context) -> void {
-  HandleBraceExpressionParameterFinish(context, NodeKind::StructFieldValue,
-                                       State::BraceExpressionParameterAsValue);
+auto HandleBraceExprParameterFinishAsValue(Context& context) -> void {
+  HandleBraceExprParameterFinish(context, NodeKind::StructFieldValue,
+                                 State::BraceExprParameterAsValue);
 }
 
-auto HandleBraceExpressionParameterFinishAsUnknown(Context& context) -> void {
-  HandleBraceExpressionParameterFinish(
-      context, NodeKind::StructFieldUnknown,
-      State::BraceExpressionParameterAsUnknown);
+auto HandleBraceExprParameterFinishAsUnknown(Context& context) -> void {
+  HandleBraceExprParameterFinish(context, NodeKind::StructFieldUnknown,
+                                 State::BraceExprParameterAsUnknown);
 }
 
-// Handles BraceExpressionFinishAs(Type|Value|Unknown).
-static auto HandleBraceExpressionFinish(Context& context, NodeKind node_kind)
+// Handles BraceExprFinishAs(Type|Value|Unknown).
+static auto HandleBraceExprFinish(Context& context, NodeKind node_kind)
     -> void {
   auto state = context.PopState();
 
@@ -200,16 +194,16 @@ static auto HandleBraceExpressionFinish(Context& context, NodeKind node_kind)
                   state.has_error);
 }
 
-auto HandleBraceExpressionFinishAsType(Context& context) -> void {
-  HandleBraceExpressionFinish(context, NodeKind::StructTypeLiteral);
+auto HandleBraceExprFinishAsType(Context& context) -> void {
+  HandleBraceExprFinish(context, NodeKind::StructTypeLiteral);
 }
 
-auto HandleBraceExpressionFinishAsValue(Context& context) -> void {
-  HandleBraceExpressionFinish(context, NodeKind::StructLiteral);
+auto HandleBraceExprFinishAsValue(Context& context) -> void {
+  HandleBraceExprFinish(context, NodeKind::StructLiteral);
 }
 
-auto HandleBraceExpressionFinishAsUnknown(Context& context) -> void {
-  HandleBraceExpressionFinish(context, NodeKind::StructLiteral);
+auto HandleBraceExprFinishAsUnknown(Context& context) -> void {
+  HandleBraceExprFinish(context, NodeKind::StructLiteral);
 }
 
 }  // namespace Carbon::Parse
