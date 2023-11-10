@@ -70,8 +70,8 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
           ElementsAre(Pair("kind", "ParameterListStart"), Pair("text", "("))),
       Yaml::Mapping(ElementsAre(Pair("kind", "ParameterList"),
                                 Pair("text", ")"), Pair("subtree_size", "2"))),
-      Yaml::Mapping(ElementsAre(Pair("kind", "FunctionDeclaration"),
-                                Pair("text", ";"), Pair("subtree_size", "5"))),
+      Yaml::Mapping(ElementsAre(Pair("kind", "FunctionDecl"), Pair("text", ";"),
+                                Pair("subtree_size", "5"))),
       Yaml::Mapping(ElementsAre(Pair("kind", "FileEnd"), Pair("text", "")))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
@@ -107,8 +107,8 @@ TEST_F(TreeTest, PrintPreorderAsYAML) {
       Yaml::Mapping(ElementsAre(Pair("node_index", "0"),
                                 Pair("kind", "FileStart"), Pair("text", ""))),
       Yaml::Mapping(ElementsAre(Pair("node_index", "5"),
-                                Pair("kind", "FunctionDeclaration"),
-                                Pair("text", ";"), Pair("subtree_size", "5"),
+                                Pair("kind", "FunctionDecl"), Pair("text", ";"),
+                                Pair("subtree_size", "5"),
                                 Pair("children", function_decl))),
       Yaml::Mapping(ElementsAre(Pair("node_index", "6"),
                                 Pair("kind", "FileEnd"), Pair("text", "")))));

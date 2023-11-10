@@ -26,7 +26,7 @@ static auto HandleParenCondition(Context& context, NodeKind start_kind,
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
   } else {
-    context.PushState(State::Expression);
+    context.PushState(State::Expr);
   }
 }
 

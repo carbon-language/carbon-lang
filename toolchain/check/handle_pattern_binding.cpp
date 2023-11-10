@@ -31,9 +31,9 @@ auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
 
 auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
-      context.node_stack().PopExpressionWithParseNode();
+      context.node_stack().PopExprWithParseNode();
   auto type_node_copy = type_node;
-  auto cast_type_id = ExpressionAsType(context, type_node, parsed_type_id);
+  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id);
 
   // A `self` binding doesn't have a name.
   if (auto self_node =
@@ -66,14 +66,13 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
     case Parse::NodeKind::ReturnedSpecifier:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
-      auto enclosing_class_decl =
-          context.GetCurrentScopeAs<SemIR::ClassDeclaration>();
+      auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       if (!context.TryToCompleteType(cast_type_id, [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInVarDeclaration, Error,
+            CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
                               "{0} has incomplete type `{1}`.", llvm::StringRef,
                               std::string);
             return context.emitter().Build(
-                type_node_copy, IncompleteTypeInVarDeclaration,
+                type_node_copy, IncompleteTypeInVarDecl,
                 enclosing_class_decl ? "Field" : "Variable",
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
@@ -127,11 +126,11 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
     case Parse::NodeKind::LetIntroducer:
       if (!context.TryToCompleteType(cast_type_id, [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInLetDeclaration, Error,
+            CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
                               "`let` binding has incomplete type `{0}`.",
                               std::string);
             return context.emitter().Build(
-                type_node_copy, IncompleteTypeInLetDeclaration,
+                type_node_copy, IncompleteTypeInLetDecl,
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;

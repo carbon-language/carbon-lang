@@ -6,40 +6,40 @@
 
 namespace Carbon::Parse {
 
-auto HandleCallExpression(Context& context) -> void {
+auto HandleCallExpr(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = State::CallExpressionFinish;
+  state.state = State::CallExprFinish;
   context.PushState(state);
 
-  context.AddNode(NodeKind::CallExpressionStart, context.Consume(),
+  context.AddNode(NodeKind::CallExprStart, context.Consume(),
                   state.subtree_start, state.has_error);
   if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
-    context.PushState(State::CallExpressionParameterFinish);
-    context.PushState(State::Expression);
+    context.PushState(State::CallExprParameterFinish);
+    context.PushState(State::Expr);
   }
 }
 
-auto HandleCallExpressionParameterFinish(Context& context) -> void {
+auto HandleCallExprParameterFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
     context.ReturnErrorOnState();
   }
 
-  if (context.ConsumeListToken(NodeKind::CallExpressionComma,
+  if (context.ConsumeListToken(NodeKind::CallExprComma,
                                Lex::TokenKind::CloseParen, state.has_error) ==
       Context::ListTokenKind::Comma) {
-    context.PushState(State::CallExpressionParameterFinish);
-    context.PushState(State::Expression);
+    context.PushState(State::CallExprParameterFinish);
+    context.PushState(State::Expr);
   }
 }
 
-auto HandleCallExpressionFinish(Context& context) -> void {
+auto HandleCallExprFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::CallExpression, context.Consume(),
-                  state.subtree_start, state.has_error);
+  context.AddNode(NodeKind::CallExpr, context.Consume(), state.subtree_start,
+                  state.has_error);
 }
 
 }  // namespace Carbon::Parse

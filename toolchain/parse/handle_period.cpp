@@ -6,7 +6,7 @@
 
 namespace Carbon::Parse {
 
-// Handles PeriodAs variants and ArrowExpression.
+// Handles PeriodAs variants and ArrowExpr.
 // TODO: This currently only supports identifiers on the rhs, but will in the
 // future need to handle things like `object.(Interface.member)` for qualifiers.
 static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
@@ -41,13 +41,13 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   context.AddNode(node_kind, dot, state.subtree_start, state.has_error);
 }
 
-auto HandlePeriodAsDeclaration(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::QualifiedDeclaration,
+auto HandlePeriodAsDecl(Context& context) -> void {
+  HandlePeriodOrArrow(context, NodeKind::QualifiedDecl,
                       /*is_arrow=*/false);
 }
 
-auto HandlePeriodAsExpression(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::MemberAccessExpression,
+auto HandlePeriodAsExpr(Context& context) -> void {
+  HandlePeriodOrArrow(context, NodeKind::MemberAccessExpr,
                       /*is_arrow=*/false);
 }
 
@@ -56,8 +56,8 @@ auto HandlePeriodAsStruct(Context& context) -> void {
                       /*is_arrow=*/false);
 }
 
-auto HandleArrowExpression(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::PointerMemberAccessExpression,
+auto HandleArrowExpr(Context& context) -> void {
+  HandlePeriodOrArrow(context, NodeKind::PointerMemberAccessExpr,
                       /*is_arrow=*/true);
 }
 

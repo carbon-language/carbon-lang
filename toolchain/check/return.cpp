@@ -14,7 +14,7 @@ static auto GetCurrentFunction(Context& context) -> SemIR::Function& {
   CARBON_CHECK(!context.return_scope_stack().empty())
       << "Handling return but not in a function";
   auto function_id = context.insts()
-                         .GetAs<SemIR::FunctionDeclaration>(
+                         .GetAs<SemIR::FunctionDecl>(
                              context.return_scope_stack().back().decl_id)
                          .function_id;
   return context.functions().Get(function_id);
@@ -109,15 +109,14 @@ auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
   }
 }
 
-auto BuildReturnWithNoExpression(Context& context, Parse::Node parse_node)
-    -> void {
+auto BuildReturnWithNoExpr(Context& context, Parse::Node parse_node) -> void {
   const auto& function = GetCurrentFunction(context);
 
   if (function.return_type_id.is_valid()) {
-    CARBON_DIAGNOSTIC(ReturnStatementMissingExpression, Error,
+    CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error,
                       "Missing return value.", std::string);
     auto diag = context.emitter().Build(
-        parse_node, ReturnStatementMissingExpression,
+        parse_node, ReturnStatementMissingExpr,
         context.sem_ir().StringifyType(function.return_type_id));
     NoteReturnType(context, diag, function);
     diag.Emit();
@@ -126,17 +125,17 @@ auto BuildReturnWithNoExpression(Context& context, Parse::Node parse_node)
   context.AddInst(SemIR::Return{parse_node});
 }
 
-auto BuildReturnWithExpression(Context& context, Parse::Node parse_node,
-                               SemIR::InstId expr_id) -> void {
+auto BuildReturnWithExpr(Context& context, Parse::Node parse_node,
+                         SemIR::InstId expr_id) -> void {
   const auto& function = GetCurrentFunction(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
 
   if (!function.return_type_id.is_valid()) {
     CARBON_DIAGNOSTIC(
-        ReturnStatementDisallowExpression, Error,
+        ReturnStatementDisallowExpr, Error,
         "No return expression should be provided in this context.");
     auto diag =
-        context.emitter().Build(parse_node, ReturnStatementDisallowExpression);
+        context.emitter().Build(parse_node, ReturnStatementDisallowExpr);
     NoteNoReturnTypeProvided(context, diag, function);
     diag.Emit();
     expr_id = SemIR::InstId::BuiltinError;
@@ -155,7 +154,7 @@ auto BuildReturnWithExpression(Context& context, Parse::Node parse_node,
                                    function.return_type_id);
   }
 
-  context.AddInst(SemIR::ReturnExpression{parse_node, expr_id});
+  context.AddInst(SemIR::ReturnExpr{parse_node, expr_id});
 }
 
 auto BuildReturnVar(Context& context, Parse::Node parse_node) -> void {
@@ -172,10 +171,10 @@ auto BuildReturnVar(Context& context, Parse::Node parse_node) -> void {
   if (!function.return_slot_id.is_valid()) {
     // If we don't have a return slot, we're returning by value. Convert to a
     // value expression.
-    returned_var_id = ConvertToValueExpression(context, returned_var_id);
+    returned_var_id = ConvertToValueExpr(context, returned_var_id);
   }
 
-  context.AddInst(SemIR::ReturnExpression{parse_node, returned_var_id});
+  context.AddInst(SemIR::ReturnExpr{parse_node, returned_var_id});
 }
 
 }  // namespace Carbon::Check

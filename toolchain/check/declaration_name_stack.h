@@ -74,7 +74,7 @@ class Context;
 // // is forward declared in `MyType`, but is not a scope itself.
 // fn MyNamespace.MyType.DoSomething() { ... }
 // ```
-class DeclarationNameStack {
+class DeclNameStack {
  public:
   // Context for declaration name construction.
   struct NameContext {
@@ -128,7 +128,7 @@ class DeclarationNameStack {
     };
   };
 
-  explicit DeclarationNameStack(Context* context) : context_(context) {}
+  explicit DeclNameStack(Context* context) : context_(context) {}
 
   // Pushes processing of a new declaration name, which will be used
   // contextually, and prepares to enter scopes for that name. To pop this
@@ -193,7 +193,7 @@ class DeclarationNameStack {
   Context* context_;
 
   // Provides nesting for construction.
-  llvm::SmallVector<NameContext> declaration_name_stack_;
+  llvm::SmallVector<NameContext> decl_name_stack_;
 };
 
 }  // namespace Carbon::Check

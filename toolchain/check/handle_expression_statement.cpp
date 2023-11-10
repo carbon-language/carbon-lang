@@ -10,7 +10,7 @@ namespace Carbon::Check {
 
 // TODO: Find a better home for this. We'll likely need it for more than just
 // expression statements.
-static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
+static auto HandleDiscardedExpr(Context& context, SemIR::InstId expr_id)
     -> void {
   // If we discard an initializing expression, convert it to a value or
   // reference so that it has something to initialize.
@@ -21,9 +21,8 @@ static auto HandleDiscardedExpression(Context& context, SemIR::InstId expr_id)
   // TODO: This will eventually need to do some "do not discard" analysis.
 }
 
-auto HandleExpressionStatement(Context& context, Parse::Node /*parse_node*/)
-    -> bool {
-  HandleDiscardedExpression(context, context.node_stack().PopExpression());
+auto HandleExprStatement(Context& context, Parse::Node /*parse_node*/) -> bool {
+  HandleDiscardedExpr(context, context.node_stack().PopExpr());
   return true;
 }
 

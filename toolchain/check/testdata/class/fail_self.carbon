@@ -57,11 +57,11 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_self.carbon" {
-// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   class_declaration @WrongSelf, ()
+// CHECK:STDOUT:   class_decl @WrongSelf, ()
 // CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf
 // CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf
 // CHECK:STDOUT: }

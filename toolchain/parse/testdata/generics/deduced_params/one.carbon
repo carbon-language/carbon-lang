@@ -20,7 +20,7 @@ interface Bar[a: i32]() {}
 // CHECK:STDOUT:       {kind: 'ImplicitParameterList', text: ']', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ClassDeclaration', text: ';', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'Bar'},
 // CHECK:STDOUT:           {kind: 'ImplicitParameterListStart', text: '['},

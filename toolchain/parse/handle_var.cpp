@@ -6,7 +6,7 @@
 
 namespace Carbon::Parse {
 
-// Handles VarAs(Declaration|For).
+// Handles VarAs(Decl|For).
 static auto HandleVar(Context& context, State finish_state,
                       Lex::Token returned_token = Lex::Token::Invalid) -> void {
   auto state = context.PopState();
@@ -25,8 +25,8 @@ static auto HandleVar(Context& context, State finish_state,
   context.PushState(State::PatternAsVariable);
 }
 
-auto HandleVarAsDeclaration(Context& context) -> void {
-  HandleVar(context, State::VarFinishAsDeclaration);
+auto HandleVarAsDecl(Context& context) -> void {
+  HandleVar(context, State::VarFinishAsDecl);
 }
 
 auto HandleVarAsReturned(Context& context) -> void {
@@ -37,14 +37,13 @@ auto HandleVarAsReturned(Context& context) -> void {
                       "Expected `var` after `returned`.");
     context.emitter().Emit(*context.position(), ExpectedVarAfterReturned);
     auto semi = context.SkipPastLikelyEnd(returned_token);
-    context.AddLeafNode(NodeKind::EmptyDeclaration,
-                        semi ? *semi : returned_token,
+    context.AddLeafNode(NodeKind::EmptyDecl, semi ? *semi : returned_token,
                         /*has_error=*/true);
     context.PopAndDiscardState();
     return;
   }
 
-  HandleVar(context, State::VarFinishAsDeclaration, returned_token);
+  HandleVar(context, State::VarFinishAsDecl, returned_token);
 }
 
 auto HandleVarAsFor(Context& context) -> void {
@@ -63,11 +62,11 @@ auto HandleVarAfterPattern(Context& context) -> void {
 
   if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::VariableInitializer, *equals);
-    context.PushState(State::Expression);
+    context.PushState(State::Expr);
   }
 }
 
-auto HandleVarFinishAsDeclaration(Context& context) -> void {
+auto HandleVarFinishAsDecl(Context& context) -> void {
   auto state = context.PopState();
 
   auto end_token = state.token;
@@ -75,13 +74,13 @@ auto HandleVarFinishAsDeclaration(Context& context) -> void {
     end_token = context.Consume();
   } else {
     // TODO: Disambiguate between statement and member declaration.
-    context.EmitExpectedDeclarationSemi(Lex::TokenKind::Var);
+    context.EmitExpectedDeclSemi(Lex::TokenKind::Var);
     state.has_error = true;
     if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
       end_token = *semi_token;
     }
   }
-  context.AddNode(NodeKind::VariableDeclaration, end_token, state.subtree_start,
+  context.AddNode(NodeKind::VariableDecl, end_token, state.subtree_start,
                   state.has_error);
 }
 

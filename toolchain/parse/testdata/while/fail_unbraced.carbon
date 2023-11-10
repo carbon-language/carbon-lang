@@ -22,7 +22,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'WhileConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'NameExpression', text: 'a'},
+// CHECK:STDOUT:           {kind: 'NameExpr', text: 'a'},
 // CHECK:STDOUT:         {kind: 'WhileCondition', text: ')', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: 'break', has_error: yes},
 // CHECK:STDOUT:             {kind: 'BreakStatementStart', text: 'break'},

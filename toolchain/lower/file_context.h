@@ -56,8 +56,7 @@ class FileContext {
  private:
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
-  auto BuildFunctionDeclaration(SemIR::FunctionId function_id)
-      -> llvm::Function*;
+  auto BuildFunctionDecl(SemIR::FunctionId function_id) -> llvm::Function*;
 
   // Builds the definition for the given function. If the function is only a
   // declaration with no definition, does nothing.

@@ -41,7 +41,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // Lower function declarations.
   functions_.resize_for_overwrite(sem_ir_->functions().size());
   for (auto i : llvm::seq(sem_ir_->functions().size())) {
-    functions_[i] = BuildFunctionDeclaration(SemIR::FunctionId(i));
+    functions_[i] = BuildFunctionDecl(SemIR::FunctionId(i));
   }
 
   // TODO: Lower global variable declarations.
@@ -63,7 +63,7 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   }
 
   auto target = sem_ir().insts().Get(inst_id);
-  if (auto function_decl = target.TryAs<SemIR::FunctionDeclaration>()) {
+  if (auto function_decl = target.TryAs<SemIR::FunctionDecl>()) {
     return GetFunction(function_decl->function_id);
   }
 
@@ -74,7 +74,7 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   CARBON_FATAL() << "Missing value: " << inst_id << " " << target;
 }
 
-auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
+auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
   const bool has_return_slot = function.return_slot_id.is_valid();
@@ -186,7 +186,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
-  // function parameters that was already computed in BuildFunctionDeclaration.
+  // function parameters that was already computed in BuildFunctionDecl.
   // We should only do that once.
   auto implicit_param_refs =
       sem_ir().inst_blocks().Get(function.implicit_param_refs_id);

@@ -22,6 +22,6 @@ var x: {,} = {};
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 11},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

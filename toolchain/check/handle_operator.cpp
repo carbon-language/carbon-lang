@@ -8,8 +8,8 @@
 namespace Carbon::Check {
 
 auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
-  auto [rhs_node, rhs_id] = context.node_stack().PopExpressionWithParseNode();
-  auto [lhs_node, lhs_id] = context.node_stack().PopExpressionWithParseNode();
+  auto [rhs_node, rhs_id] = context.node_stack().PopExprWithParseNode();
+  auto [lhs_node, lhs_id] = context.node_stack().PopExprWithParseNode();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -19,7 +19,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       // very trivial check of validity on the operation.
       lhs_id = ConvertToValueOfType(context, parse_node, lhs_id,
                                     context.insts().Get(rhs_id).type_id());
-      rhs_id = ConvertToValueExpression(context, rhs_id);
+      rhs_id = ConvertToValueExpr(context, rhs_id);
 
       context.AddInstAndPush(
           parse_node, SemIR::BinaryOperatorAdd{
@@ -50,7 +50,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
       return true;
     }
     case Lex::TokenKind::As: {
-      auto rhs_type_id = ExpressionAsType(context, rhs_node, rhs_id);
+      auto rhs_type_id = ExprAsType(context, rhs_node, rhs_id);
       context.node_stack().Push(
           parse_node,
           ConvertForExplicitAs(context, parse_node, lhs_id, rhs_type_id));
@@ -58,9 +58,9 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
     }
     case Lex::TokenKind::Equal: {
       // TODO: handle complex assignment expression such as `a += 1`.
-      if (auto lhs_cat = SemIR::GetExpressionCategory(context.sem_ir(), lhs_id);
-          lhs_cat != SemIR::ExpressionCategory::DurableReference &&
-          lhs_cat != SemIR::ExpressionCategory::Error) {
+      if (auto lhs_cat = SemIR::GetExprCategory(context.sem_ir(), lhs_id);
+          lhs_cat != SemIR::ExprCategory::DurableReference &&
+          lhs_cat != SemIR::ExprCategory::Error) {
         CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
                           "Expression is not assignable.");
         context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
@@ -82,13 +82,13 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
 }
 
 auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
-  auto value_id = context.node_stack().PopExpression();
+  auto value_id = context.node_stack().PopExpr();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::Star: {
-      auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
+      auto inner_type_id = ExprAsType(context, parse_node, value_id);
       context.AddInstAndPush(
           parse_node, SemIR::PointerType{parse_node, SemIR::TypeId::TypeType,
                                          inner_type_id});
@@ -101,18 +101,18 @@ auto HandlePostfixOperator(Context& context, Parse::Node parse_node) -> bool {
 }
 
 auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
-  auto value_id = context.node_stack().PopExpression();
+  auto value_id = context.node_stack().PopExpr();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case Lex::TokenKind::Amp: {
       // Only durable reference expressions can have their address taken.
-      switch (SemIR::GetExpressionCategory(context.sem_ir(), value_id)) {
-        case SemIR::ExpressionCategory::DurableReference:
-        case SemIR::ExpressionCategory::Error:
+      switch (SemIR::GetExprCategory(context.sem_ir(), value_id)) {
+        case SemIR::ExprCategory::DurableReference:
+        case SemIR::ExprCategory::Error:
           break;
-        case SemIR::ExpressionCategory::EphemeralReference:
+        case SemIR::ExprCategory::EphemeralReference:
           CARBON_DIAGNOSTIC(AddressOfEphemeralReference, Error,
                             "Cannot take the address of a temporary object.");
           context.emitter().Emit(parse_node, AddressOfEphemeralReference);
@@ -144,7 +144,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
                           "additional effect.");
         context.emitter().Emit(parse_node, RepeatedConst);
       }
-      auto inner_type_id = ExpressionAsType(context, parse_node, value_id);
+      auto inner_type_id = ExprAsType(context, parse_node, value_id);
       context.AddInstAndPush(
           parse_node,
           SemIR::ConstType{parse_node, SemIR::TypeId::TypeType, inner_type_id});
@@ -160,7 +160,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
       return true;
 
     case Lex::TokenKind::Star: {
-      value_id = ConvertToValueExpression(context, value_id);
+      value_id = ConvertToValueExpr(context, value_id);
       auto type_id =
           context.GetUnqualifiedType(context.insts().Get(value_id).type_id());
       auto type_inst = context.insts().Get(
@@ -198,7 +198,7 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
 auto HandleShortCircuitOperand(Context& context, Parse::Node parse_node)
     -> bool {
   // Convert the condition to `bool`.
-  auto cond_value_id = context.node_stack().PopExpression();
+  auto cond_value_id = context.node_stack().PopExpr();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
   auto bool_type_id = context.insts().Get(cond_value_id).type_id();
 

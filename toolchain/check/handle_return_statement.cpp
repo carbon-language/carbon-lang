@@ -28,7 +28,7 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
       // This is a `return;` statement.
       context.node_stack()
           .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
-      BuildReturnWithNoExpression(context, parse_node);
+      BuildReturnWithNoExpr(context, parse_node);
       break;
 
     case Parse::NodeKind::ReturnVarSpecifier:
@@ -42,10 +42,10 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
 
     default:
       // This is a `return <expression>;` statement.
-      auto expr_id = context.node_stack().PopExpression();
+      auto expr_id = context.node_stack().PopExpr();
       context.node_stack()
           .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
-      BuildReturnWithExpression(context, parse_node, expr_id);
+      BuildReturnWithExpr(context, parse_node, expr_id);
       break;
   }
 

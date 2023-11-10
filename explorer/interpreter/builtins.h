@@ -26,7 +26,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(Builtin, int) {
 
 class Builtin : public CARBON_ENUM_BASE(Builtin) {
  public:
-#define CARBON_BUILTIN(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_BUILTIN(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "explorer/interpreter/builtins.def"
 
   static const int NumBuiltins;

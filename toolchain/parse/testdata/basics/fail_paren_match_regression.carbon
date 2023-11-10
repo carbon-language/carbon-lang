@@ -23,9 +23,9 @@ var = (foo {})
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: '=', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'ParenExpressionOrTupleLiteralStart', text: '('},
-// CHECK:STDOUT:         {kind: 'NameExpression', text: 'foo'},
-// CHECK:STDOUT:       {kind: 'ParenExpression', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: 'var', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'ParenExprOrTupleLiteralStart', text: '('},
+// CHECK:STDOUT:         {kind: 'NameExpr', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: 'var', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

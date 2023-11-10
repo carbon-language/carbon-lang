@@ -36,11 +36,11 @@ fn CallGThroughPointer(p: Class*) -> i32 {
 
 fn Make() -> Class;
 
-fn CallFOnInitializingExpression() -> i32 {
+fn CallFOnInitializingExpr() -> i32 {
   return Make().F();
 }
 
-fn CallGOnInitializingExpression() -> i32 {
+fn CallGOnInitializingExpr() -> i32 {
   return Make().G();
 }
 
@@ -50,7 +50,7 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "method.carbon" {
-// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call
@@ -58,8 +58,8 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   %CallFThroughPointer: <function> = fn_decl @CallFThroughPointer
 // CHECK:STDOUT:   %CallGThroughPointer: <function> = fn_decl @CallGThroughPointer
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
-// CHECK:STDOUT:   %CallFOnInitializingExpression: <function> = fn_decl @CallFOnInitializingExpression
-// CHECK:STDOUT:   %CallGOnInitializingExpression: <function> = fn_decl @CallGOnInitializingExpression
+// CHECK:STDOUT:   %CallFOnInitializingExpr: <function> = fn_decl @CallFOnInitializingExpr
+// CHECK:STDOUT:   %CallGOnInitializingExpr: <function> = fn_decl @CallGOnInitializingExpr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -135,7 +135,7 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Class;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFOnInitializingExpression() -> i32 {
+// CHECK:STDOUT: fn @CallFOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_reference Make, file.%Make
 // CHECK:STDOUT:   %.loc40_14.1: ref Class = temporary_storage
@@ -149,7 +149,7 @@ fn CallGOnInitializingExpression() -> i32 {
 // CHECK:STDOUT:   return %.loc40_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallGOnInitializingExpression() -> i32 {
+// CHECK:STDOUT: fn @CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_reference Make, file.%Make
 // CHECK:STDOUT:   %.loc44_14.1: ref Class = temporary_storage

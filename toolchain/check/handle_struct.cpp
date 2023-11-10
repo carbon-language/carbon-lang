@@ -22,8 +22,8 @@ auto HandleStructFieldDesignator(Context& context, Parse::Node /*parse_node*/)
 }
 
 auto HandleStructFieldType(Context& context, Parse::Node parse_node) -> bool {
-  auto [type_node, type_id] = context.node_stack().PopExpressionWithParseNode();
-  SemIR::TypeId cast_type_id = ExpressionAsType(context, type_node, type_id);
+  auto [type_node, type_id] = context.node_stack().PopExprWithParseNode();
+  SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id);
 
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
@@ -40,7 +40,7 @@ auto HandleStructFieldUnknown(Context& context, Parse::Node parse_node)
 
 auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   auto [value_parse_node, value_inst_id] =
-      context.node_stack().PopExpressionWithParseNode();
+      context.node_stack().PopExprWithParseNode();
   SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
 
   // Store the name for the type.

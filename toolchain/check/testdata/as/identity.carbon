@@ -31,7 +31,7 @@ fn Initializing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "identity.carbon" {
-// CHECK:STDOUT:   class_declaration @X, ()
+// CHECK:STDOUT:   class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
 // CHECK:STDOUT:   %Value: <function> = fn_decl @Value
 // CHECK:STDOUT:   %Reference: <function> = fn_decl @Reference

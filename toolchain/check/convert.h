@@ -63,13 +63,12 @@ auto Initialize(Context& context, Parse::Node parse_node,
     -> SemIR::InstId;
 
 // Convert the given expression to a value expression of the same type.
-auto ConvertToValueExpression(Context& context, SemIR::InstId expr_id)
+auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId;
 
 // Convert the given expression to a value or reference expression of the same
 // type.
-auto ConvertToValueOrReferenceExpression(Context& context,
-                                         SemIR::InstId expr_id)
+auto ConvertToValueOrReferenceExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId;
 
 // Converts `value_id` to a value expression of type `type_id`.
@@ -98,8 +97,8 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId;
 
 // Converts an expression for use as a type.
-auto ExpressionAsType(Context& context, Parse::Node parse_node,
-                      SemIR::InstId value_id) -> SemIR::TypeId;
+auto ExprAsType(Context& context, Parse::Node parse_node,
+                SemIR::InstId value_id) -> SemIR::TypeId;
 
 }  // namespace Carbon::Check
 
