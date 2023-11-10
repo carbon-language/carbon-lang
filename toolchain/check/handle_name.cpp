@@ -274,8 +274,7 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleSelfTypeNameExpr(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleSelfTypeNameExpr(Context& context, Parse::Node parse_node) -> bool {
   auto name_id = SemIR::NameId::SelfType;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
@@ -290,8 +289,7 @@ auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleSelfValueNameExpr(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleSelfValueNameExpr(Context& context, Parse::Node parse_node) -> bool {
   auto name_id = SemIR::NameId::SelfValue;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
