@@ -28,6 +28,6 @@ var x: {.a: i32} = {.a = 0 banana};
 // CHECK:STDOUT:           {kind: 'Literal', text: '0'},
 // CHECK:STDOUT:         {kind: 'StructFieldValue', text: '=', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 17},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

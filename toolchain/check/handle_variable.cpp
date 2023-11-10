@@ -8,8 +8,7 @@
 
 namespace Carbon::Check {
 
-auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
   bool has_init =
@@ -26,9 +25,9 @@ auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
   if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.
-    context.declaration_name_stack().AddNameToLookup(
-        context.declaration_name_stack().MakeUnqualifiedName(
-            bind_name->parse_node, bind_name->name_id),
+    context.decl_name_stack().AddNameToLookup(
+        context.decl_name_stack().MakeUnqualifiedName(bind_name->parse_node,
+                                                      bind_name->name_id),
         value_id);
     value_id = bind_name->value_id;
   }

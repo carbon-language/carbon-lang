@@ -14,29 +14,29 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.
-  context.declaration_name_stack().PushScopeAndStartName();
+  context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
-static auto BuildClassDeclaration(Context& context)
+static auto BuildClassDecl(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
-  auto name_context = context.declaration_name_stack().FinishName();
+  auto name_context = context.decl_name_stack().FinishName();
   auto class_keyword =
       context.node_stack()
           .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
-  auto class_decl = SemIR::ClassDeclaration{
-      class_keyword, SemIR::ClassId::Invalid, decl_block_id};
+  auto class_decl =
+      SemIR::ClassDecl{class_keyword, SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddInst(class_decl);
 
   // Check whether this is a redeclaration.
-  auto existing_id = context.declaration_name_stack().LookupOrAddName(
-      name_context, class_decl_id);
+  auto existing_id =
+      context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
   if (existing_id.is_valid()) {
     if (auto existing_class_decl =
-            context.insts().Get(existing_id).TryAs<SemIR::ClassDeclaration>()) {
+            context.insts().Get(existing_id).TryAs<SemIR::ClassDecl>()) {
       // This is a redeclaration of an existing class.
       class_decl.class_id = existing_class_decl->class_id;
     } else {
@@ -51,13 +51,13 @@ static auto BuildClassDeclaration(Context& context)
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
     class_decl.class_id = context.classes().Add(
-        {.name_id = name_context.state ==
-                            DeclarationNameStack::NameContext::State::Unresolved
-                        ? name_context.unresolved_name_id
-                        : SemIR::NameId::Invalid,
+        {.name_id =
+             name_context.state == DeclNameStack::NameContext::State::Unresolved
+                 ? name_context.unresolved_name_id
+                 : SemIR::NameId::Invalid,
          // `.self_type_id` depends on `class_id`, so is set below.
          .self_type_id = SemIR::TypeId::Invalid,
-         .declaration_id = class_decl_id});
+         .decl_id = class_decl_id});
 
     // Build the `Self` type.
     auto& class_info = context.classes().Get(class_decl.class_id);
@@ -67,22 +67,21 @@ static auto BuildClassDeclaration(Context& context)
             class_decl.class_id}));
   }
 
-  // Write the class ID into the ClassDeclaration.
+  // Write the class ID into the ClassDecl.
   context.insts().Set(class_decl_id, class_decl);
 
   return {class_decl.class_id, class_decl_id};
 }
 
-auto HandleClassDeclaration(Context& context, Parse::Node /*parse_node*/)
-    -> bool {
-  BuildClassDeclaration(context);
-  context.declaration_name_stack().PopScope();
+auto HandleClassDecl(Context& context, Parse::Node /*parse_node*/) -> bool {
+  BuildClassDecl(context);
+  context.decl_name_stack().PopScope();
   return true;
 }
 
 auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
     -> bool {
-  auto [class_id, class_decl_id] = BuildClassDeclaration(context);
+  auto [class_id, class_decl_id] = BuildClassDecl(context);
   auto& class_info = context.classes().Get(class_id);
 
   // Track that this declaration is the definition.
@@ -133,7 +132,7 @@ auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.inst_block_stack().Pop();
   context.PopScope();
-  context.declaration_name_stack().PopScope();
+  context.decl_name_stack().PopScope();
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);

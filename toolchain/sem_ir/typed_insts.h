@@ -192,9 +192,8 @@ struct Call {
   InstBlockId args_id;
 };
 
-struct ClassDeclaration {
-  static constexpr auto Kind =
-      InstKind::ClassDeclaration.Define("class_declaration");
+struct ClassDecl {
+  static constexpr auto Kind = InstKind::ClassDecl.Define("class_decl");
 
   Parse::Node parse_node;
   // No type: a class declaration is not itself a value. The name of a class
@@ -283,8 +282,8 @@ struct Field {
   MemberIndex index;
 };
 
-struct FunctionDeclaration {
-  static constexpr auto Kind = InstKind::FunctionDeclaration.Define("fn_decl");
+struct FunctionDecl {
+  static constexpr auto Kind = InstKind::FunctionDecl.Define("fn_decl");
 
   Parse::Node parse_node;
   TypeId type_id;

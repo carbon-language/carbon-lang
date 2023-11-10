@@ -22,6 +22,6 @@ var y: ((), (), ());
 // CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 14},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

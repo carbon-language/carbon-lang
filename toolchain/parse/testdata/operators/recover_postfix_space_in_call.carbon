@@ -22,6 +22,6 @@ var n: i8 = F(i8 *);
 // CHECK:STDOUT:           {kind: 'Literal', text: 'i8'},
 // CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'CallExpr', text: ')', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 11},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -43,9 +43,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_memaccess_category.carbon" {
-// CHECK:STDOUT:   class_declaration @A, ()
+// CHECK:STDOUT:   class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
-// CHECK:STDOUT:   class_declaration @B, ()
+// CHECK:STDOUT:   class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT: }

@@ -179,9 +179,8 @@ auto HandleDereference(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
 }
 
-auto HandleFunctionDeclaration(FunctionContext& /*context*/,
-                               SemIR::InstId /*inst_id*/,
-                               SemIR::FunctionDeclaration inst) -> void {
+auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                        SemIR::FunctionDecl inst) -> void {
   CARBON_FATAL()
       << "Should not be encountered. If that changes, we may want to change "
          "higher-level logic to skip them rather than calling this. "

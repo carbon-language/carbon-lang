@@ -42,6 +42,6 @@ var T: type = if true then i32* else f64*;
 // CHECK:STDOUT:           {kind: 'Literal', text: 'f64'},
 // CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'IfExprElse', text: 'else', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 14},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

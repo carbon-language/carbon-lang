@@ -21,6 +21,6 @@ var n: i8 = n* *p;
 // CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'p'},
 // CHECK:STDOUT:       {kind: 'InfixOperator', text: '*', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -19,7 +19,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(TestKind, uint8_t) {
 
 class TestKind : public CARBON_ENUM_BASE(TestKind) {
  public:
-#define CARBON_ENUM_BASE_TEST_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_ENUM_BASE_TEST_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "common/enum_base_test.def"
 
   using EnumBase::AsInt;

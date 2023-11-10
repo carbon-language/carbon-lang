@@ -106,7 +106,7 @@ void LanguageServer::OnDocumentSymbol(
   for (const auto& node : parsed.postorder()) {
     clang::clangd::SymbolKind symbol_kind;
     switch (parsed.node_kind(node)) {
-      case Parse::NodeKind::FunctionDeclaration:
+      case Parse::NodeKind::FunctionDecl:
       case Parse::NodeKind::FunctionDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Function;
         break;

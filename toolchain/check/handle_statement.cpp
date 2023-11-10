@@ -28,7 +28,7 @@ auto HandleExprStatement(Context& context, Parse::Node /*parse_node*/) -> bool {
 
 auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
-  auto fn_inst = context.insts().GetAs<SemIR::FunctionDeclaration>(
+  auto fn_inst = context.insts().GetAs<SemIR::FunctionDecl>(
       context.return_scope_stack().back());
   const auto& callable = context.functions().Get(fn_inst.function_id);
 

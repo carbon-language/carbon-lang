@@ -17,6 +17,6 @@ var n: i8 = n*n;
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'n'},
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'n'},
 // CHECK:STDOUT:       {kind: 'InfixOperator', text: '*', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

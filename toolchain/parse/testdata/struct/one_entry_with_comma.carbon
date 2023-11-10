@@ -27,6 +27,6 @@ var z: {.n: i32,} = {.n = 4,};
 // CHECK:STDOUT:         {kind: 'StructFieldValue', text: '=', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 19},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 19},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

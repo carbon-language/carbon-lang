@@ -173,13 +173,13 @@ CARBON_PARSE_STATE(CodeBlockFinish)
 // - Required: `Foo(...)` or `Foo[...](...)`.
 //
 // If `Identifier` followed by `Period`:
-//   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
+//   1. DeclNameAndParamsAfterNameAs(None|Optional|Required)
 // If `Identifier`:
-//   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
-//   2. PeriodAsDeclaration
+//   1. DeclNameAndParamsAfterNameAs(None|Optional|Required)
+//   2. PeriodAsDecl
 // Else:
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(DeclarationNameAndParams, None, Optional, Required)
+CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParams, None, Optional, Required)
 
 // Handles a declaration name between the main name and implicit parameters.
 //
@@ -187,16 +187,16 @@ CARBON_PARSE_STATE_VARIANTS3(DeclarationNameAndParams, None, Optional, Required)
 // used.
 //
 // If `Period`:
-//   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
-//   2. PeriodAsDeclaration
+//   1. DeclNameAndParamsAfterNameAs(None|Optional|Required)
+//   2. PeriodAsDecl
 // If `OpenSquareBracket`:
 //   1. ParameterListAsImplicit
-//   2. DeclarationNameAndParamsAfterImplicit
+//   2. DeclNameAndParamsAfterImplicit
 // If `OpenParen`:
 //   1. ParameterListAsRegular
 // Else:
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(DeclarationNameAndParamsAfterName, None, Optional,
+CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParamsAfterName, None, Optional,
                              Required)
 
 // Handles regular parameters such as `(...)` for the general declaration case.
@@ -206,37 +206,37 @@ CARBON_PARSE_STATE_VARIANTS3(DeclarationNameAndParamsAfterName, None, Optional,
 //   1. ParameterListAsRegular
 // Else:
 //   (state done)
-CARBON_PARSE_STATE(DeclarationNameAndParamsAfterImplicit)
+CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 
 // Handles processing of a declaration scope. Things like fn, class, interface,
 // and so on.
 //
 // If `Class`:
 //   1. TypeIntroducerAsClass
-//   2. DeclarationScopeLoop
+//   2. DeclScopeLoop
 // If `Constraint`:
 //   1. TypeIntroducerAsNamedConstraint
-//   2. DeclarationScopeLoop
+//   2. DeclScopeLoop
 // If `Fn`:
 //   1. FunctionIntroducer
-//   2. DeclarationScopeLoop
+//   2. DeclScopeLoop
 // If `Interface`:
 //   1. TypeIntroducerAsInterface
-//   2. DeclarationScopeLoop
+//   2. DeclScopeLoop
 // If `Namespace`:
 //   1. Namespace
-//   2. DeclarationScopeLoop
+//   2. DeclScopeLoop
 // If `Semi`:
-//   1. DeclarationScopeLoop
+//   1. DeclScopeLoop
 // If `Var`:
 //   1. VarAsSemicolon
-//   2. DeclarationScopeLoop
+//   2. DeclScopeLoop
 // If `Let`:
 //   1. Let
-//   2. DeclarationScopeLoop
+//   2. DeclScopeLoop
 // Else:
 //   (state done)
-CARBON_PARSE_STATE(DeclarationScopeLoop)
+CARBON_PARSE_STATE(DeclScopeLoop)
 
 // Handles periods. Only does one `.<expression>` segment; the source is
 // responsible for handling chaining.
@@ -251,7 +251,7 @@ CARBON_PARSE_STATE(DeclarationScopeLoop)
 //
 // Always:
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(Period, Declaration, Expr, Struct)
+CARBON_PARSE_STATE_VARIANTS3(Period, Decl, Expr, Struct)
 
 // Handles `->name` expressions. Identical to PeriodAsExpr except for the
 // leading token.
@@ -379,7 +379,7 @@ CARBON_PARSE_STATE(ExprStatementFinish)
 // If invalid:
 //   (state done)
 // Else:
-//   1. DeclarationNameAndParamsAsRequired
+//   1. DeclNameAndParamsAsRequired
 //   2. FunctionAfterParameters
 CARBON_PARSE_STATE(FunctionIntroducer)
 
@@ -428,7 +428,7 @@ CARBON_PARSE_STATE(Import)
 // Handles `namespace`.
 //
 // Always:
-//   1. DeclarationNameAndParamsAsNone
+//   1. DeclNameAndParamsAsNone
 //   2. NamespaceFinish
 CARBON_PARSE_STATE(Namespace)
 
@@ -710,7 +710,7 @@ CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
 // Handles processing of a type's introducer.
 //
 // Always:
-//   1. DeclarationNameAndParamsAsOptional
+//   1. DeclNameAndParamsAsOptional
 //   2. TypeAfterParamsAs(Class|Interface|NamedConstraint)
 CARBON_PARSE_STATE_VARIANTS3(TypeIntroducer, Class, Interface, NamedConstraint)
 
@@ -719,7 +719,7 @@ CARBON_PARSE_STATE_VARIANTS3(TypeIntroducer, Class, Interface, NamedConstraint)
 // If `Semi`:
 //   (state done)
 // If `OpenCurlyBrace`:
-//   1. DeclarationScopeLoop
+//   1. DeclScopeLoop
 //   2. TypeDefinitionFinishAs(Class|Interface|NamedConstraint)
 // Else:
 //   (state done)

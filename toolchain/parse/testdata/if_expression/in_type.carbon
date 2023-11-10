@@ -17,7 +17,7 @@ fn F() -> if true then i32 else i32* {
 // CHECK:STDOUT:         {kind: 'Name', text: 'n'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},

@@ -58,7 +58,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0,
                                    CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // An empty declaration, such as `;`.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDeclaration, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDecl, 0,
                                    CARBON_TOKEN(Semi)
                                        CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
@@ -125,7 +125,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
 
 // `namespace`:
 //   NamespaceStart
-//   _external_: Name or QualifiedDeclaration
+//   _external_: Name or QualifiedDecl
 // Namespace
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0, CARBON_TOKEN(Namespace))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2, CARBON_TOKEN(Semi))
@@ -143,7 +143,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 
 // `fn`:
 //     FunctionIntroducer
-//     _external_: Name or QualifiedDeclaration
+//     _external_: Name or QualifiedDecl
 //     _external_: ParameterList
 //       _external_: type expression
 //     ReturnType
@@ -153,14 +153,14 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 //
 // The above is the structure for a definition; for a declaration,
 // FunctionDefinitionStart and later nodes are removed and replaced by
-// FunctionDeclaration.
+// FunctionDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FunctionIntroducer, 0, CARBON_TOKEN(Fn))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnType, 1, CARBON_TOKEN(MinusGreater))
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinitionStart, FunctionIntroducer,
                                CARBON_TOKEN(OpenCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinition, FunctionDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
-CARBON_PARSE_NODE_KIND_BRACKET(FunctionDeclaration, FunctionIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Fn)))
 
@@ -216,10 +216,10 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 //   _external_: PatternBinding
 //   LetInitializer
 //   _external_: expression
-// LetDeclaration
+// LetDecl
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetIntroducer, 0, CARBON_TOKEN(Let))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetInitializer, 0, CARBON_TOKEN(Equal))
-CARBON_PARSE_NODE_KIND_BRACKET(LetDeclaration, LetIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Let)))
 
@@ -228,13 +228,13 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDeclaration, LetIntroducer,
 //   _external_: PatternBinding
 //   _optional_ VariableInitializer
 //   _optional_ _external_: expression
-// VariableDeclaration
+// VariableDecl
 //
 // The VariableInitializer and following expression are paired: either both will
 // be present, or neither will.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0, CARBON_TOKEN(Var))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, CARBON_TOKEN(Equal))
-CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclaration, VariableIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(VariableDecl, VariableIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Var)))
 
@@ -280,7 +280,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart,
 //   _external_: CodeBlock
 // ForStatement
 //
-// Versus a normal `var`, ForIn replaces VariableDeclaration.
+// Versus a normal `var`, ForIn replaces VariableDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForHeaderStart, 0,
                                    CARBON_TOKEN(OpenParen)
                                        CARBON_IF_ERROR(CARBON_TOKEN(For)))
@@ -369,14 +369,13 @@ CARBON_PARSE_NODE_KIND_BRACKET(CallExpr, CallExprStart,
                                CARBON_TOKEN(CloseParen))
 
 // A qualified declaration, such as `a.b`:
-//   _external_: Name or QualifiedDeclaration
+//   _external_: Name or QualifiedDecl
 //   _external_: Name
-// QualifiedDeclaration
+// QualifiedDecl
 //
 // TODO: This will eventually more general expressions, for example with
 // `GenericType(type_args).ChildType(child_type_args).Name`.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedDeclaration, 2,
-                                   CARBON_TOKEN(Period))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedDecl, 2, CARBON_TOKEN(Period))
 
 // A member access expression, such as `a.b` or
 // `GetObject().(Interface.member)`:
@@ -527,53 +526,53 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 
 // `class`:
 //     ClassIntroducer
-//     _external_: Name or QualifiedDeclaration
+//     _external_: Name or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
 // ClassDefinition
 //
 // The above is the structure for a definition; for a declaration,
 // ClassDefinitionStart and later nodes are removed and replaced by
-// ClassDeclaration.
+// ClassDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassIntroducer, 0, CARBON_TOKEN(Class))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer,
                                CARBON_TOKEN(OpenCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
-CARBON_PARSE_NODE_KIND_BRACKET(ClassDeclaration, ClassIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Class)))
 
 // `interface`:
 //     InterfaceIntroducer
-//     _external_: Name or QualifiedDeclaration
+//     _external_: Name or QualifiedDecl
 //   InterfaceDefinitionStart
 //   _external_: declarations
 // InterfaceDefinition
 //
 // The above is the structure for a definition; for a declaration,
 // InterfaceDefinitionStart and later nodes are removed and replaced by
-// InterfaceDeclaration.
+// InterfaceDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InterfaceIntroducer, 0,
                                    CARBON_TOKEN(Interface))
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinitionStart, InterfaceIntroducer,
                                CARBON_TOKEN(OpenCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, InterfaceDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
-CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDeclaration, InterfaceIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Interface)))
 
 // `constraint`:
 //     NamedConstraintIntroducer
-//     _external_: Name or QualifiedDeclaration
+//     _external_: Name or QualifiedDecl
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
 // NamedConstraintDefinition
 //
 // The above is the structure for a definition; for a declaration,
 // NamedConstraintDefinitionStart and later nodes are removed and replaced by
-// NamedConstraintDeclaration.
+// NamedConstraintDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamedConstraintIntroducer, 0,
                                    CARBON_TOKEN(Constraint))
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinitionStart,
@@ -582,8 +581,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinitionStart,
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinition,
                                NamedConstraintDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
-CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDeclaration,
-                               NamedConstraintIntroducer, CARBON_TOKEN(Semi))
+CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDecl, NamedConstraintIntroducer,
+                               CARBON_TOKEN(Semi))
 
 // The `self` value and `Self` type identifier keywords. Typically of the form
 // `self: Self`:

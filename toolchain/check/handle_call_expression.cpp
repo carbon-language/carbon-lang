@@ -48,7 +48,7 @@ auto HandleCallExpr(Context& context, Parse::Node parse_node) -> bool {
     return diagnose_not_callable();
   }
   auto function_decl =
-      context.insts().Get(function_decl_id).TryAs<SemIR::FunctionDeclaration>();
+      context.insts().Get(function_decl_id).TryAs<SemIR::FunctionDecl>();
   if (!function_decl) {
     return diagnose_not_callable();
   }

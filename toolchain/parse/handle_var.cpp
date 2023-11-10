@@ -52,13 +52,13 @@ auto HandleVarFinishAsSemicolon(Context& context) -> void {
     end_token = context.Consume();
   } else {
     // TODO: Disambiguate between statement and member declaration.
-    context.EmitExpectedDeclarationSemi(Lex::TokenKind::Var);
+    context.EmitExpectedDeclSemi(Lex::TokenKind::Var);
     state.has_error = true;
     if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
       end_token = *semi_token;
     }
   }
-  context.AddNode(NodeKind::VariableDeclaration, end_token, state.subtree_start,
+  context.AddNode(NodeKind::VariableDecl, end_token, state.subtree_start,
                   state.has_error);
 }
 

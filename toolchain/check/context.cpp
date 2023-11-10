@@ -32,7 +32,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
       params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
-      declaration_name_stack_(this) {
+      decl_name_stack_(this) {
   // Inserts the "Error" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
   canonical_types_.insert({SemIR::InstId::BuiltinError, SemIR::TypeId::Error});
@@ -78,13 +78,13 @@ auto Context::AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void {
 
 auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
                                     SemIR::InstId prev_def_id) -> void {
-  CARBON_DIAGNOSTIC(NameDeclarationDuplicate, Error,
+  CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "Duplicate name being declared in the same scope.");
-  CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
+  CARBON_DIAGNOSTIC(NameDeclPrevious, Note,
                     "Name is previously declared here.");
   auto prev_def = insts().Get(prev_def_id);
-  emitter_->Build(parse_node, NameDeclarationDuplicate)
-      .Note(prev_def.parse_node(), NameDeclarationPrevious)
+  emitter_->Build(parse_node, NameDeclDuplicate)
+      .Note(prev_def.parse_node(), NameDeclPrevious)
       .Emit();
 }
 
@@ -107,7 +107,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
     builder.Note(insts().Get(class_info.definition_id).parse_node(),
                  ClassIncompleteWithinDefinition);
   } else {
-    builder.Note(insts().Get(class_info.declaration_id).parse_node(),
+    builder.Note(insts().Get(class_info.decl_id).parse_node(),
                  ClassForwardDeclaredHere);
   }
 }
@@ -128,10 +128,8 @@ auto Context::AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,
   }
 }
 
-auto Context::LookupNameInDeclaration(Parse::Node parse_node,
-                                      SemIR::NameId name_id,
-                                      SemIR::NameScopeId scope_id)
-    -> SemIR::InstId {
+auto Context::LookupNameInDecl(Parse::Node parse_node, SemIR::NameId name_id,
+                               SemIR::NameScopeId scope_id) -> SemIR::InstId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
     // Look for a name in the current scope only. There are two cases where the
     // name would be in an outer scope:
@@ -298,7 +296,7 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
         break;
 
       case SemIR::Field::Kind:
-      case SemIR::FunctionDeclaration::Kind:
+      case SemIR::FunctionDecl::Kind:
         return inst_id;
 
       default:
@@ -398,7 +396,7 @@ auto Context::AddCurrentCodeBlockToFunction(Parse::Node parse_node) -> void {
 
   auto function_id =
       insts()
-          .GetAs<SemIR::FunctionDeclaration>(return_scope_stack().back())
+          .GetAs<SemIR::FunctionDecl>(return_scope_stack().back())
           .function_id;
   functions()
       .Get(function_id)
@@ -785,13 +783,13 @@ class TypeCompleter {
       case SemIR::BranchIf::Kind:
       case SemIR::BranchWithArg::Kind:
       case SemIR::Call::Kind:
-      case SemIR::ClassDeclaration::Kind:
+      case SemIR::ClassDecl::Kind:
       case SemIR::ClassFieldAccess::Kind:
       case SemIR::ClassInit::Kind:
       case SemIR::Converted::Kind:
       case SemIR::Dereference::Kind:
       case SemIR::Field::Kind:
-      case SemIR::FunctionDeclaration::Kind:
+      case SemIR::FunctionDecl::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::IntegerLiteral::Kind:
       case SemIR::NameReference::Kind:
