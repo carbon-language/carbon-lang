@@ -87,7 +87,8 @@ auto HandleDeclScopeLoop(Context& context) -> void {
     }
     case Lex::TokenKind::Constraint: {
       context.PushState(State::TypeAfterIntroducerAsNamedConstraint);
-      context.AddLeafNode(NodeKind::NamedConstraintIntroducer, context.Consume());
+      context.AddLeafNode(NodeKind::NamedConstraintIntroducer,
+                          context.Consume());
       return;
     }
     case Lex::TokenKind::Fn: {

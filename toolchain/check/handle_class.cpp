@@ -68,9 +68,8 @@ static auto BuildClassDecl(Context& context)
         CARBON_DIAGNOSTIC(
             ClassRedeclarationDifferentIntroducer, Error,
             "Class redeclared with a different inheritance kind.");
-        CARBON_DIAGNOSTIC(
-            ClassRedeclarationDifferentIntroducerPrevious, Note,
-            "Previously declared here.");
+        CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
+                          "Previously declared here.");
         context.emitter()
             .Build(introducer, ClassRedeclarationDifferentIntroducer)
             .Note(existing_class_decl->parse_node,
