@@ -6,14 +6,14 @@
 
 // --- main.carbon
 
-// CHECK:STDERR: main.carbon:[[@LINE+3]]:1: ERROR: Omit the `package` directive to define the `Main` package.
+// CHECK:STDERR: main.carbon:[[@LINE+3]]:1: ERROR: Omit `package` directive for `Main` package.
 // CHECK:STDERR: package Main api;
 // CHECK:STDERR: ^
 package Main api;
 
 // --- main_impl.carbon
 
-// CHECK:STDERR: main_impl.carbon:[[@LINE+3]]:1: ERROR: Omit the `package` directive to define the `Main` package.
+// CHECK:STDERR: main_impl.carbon:[[@LINE+3]]:1: ERROR: Omit `package` directive for `Main` package.
 // CHECK:STDERR: package Main impl;
 // CHECK:STDERR: ^
 package Main impl;
@@ -21,14 +21,14 @@ package Main impl;
 // --- raw_main.carbon
 
 // `Main` isn't a keyword, so this fails the same way.
-// CHECK:STDERR: raw_main.carbon:[[@LINE+3]]:1: ERROR: Omit the `package` directive to define the `Main` package.
+// CHECK:STDERR: raw_main.carbon:[[@LINE+3]]:1: ERROR: Omit `package` directive for `Main` package.
 // CHECK:STDERR: package r#Main api;
 // CHECK:STDERR: ^
 package r#Main api;
 
 // --- main_lib.carbon
 
-// CHECK:STDERR: main_lib.carbon:[[@LINE+3]]:1: ERROR: Use the `library` directive to define libraries in the `Main` package.
+// CHECK:STDERR: main_lib.carbon:[[@LINE+3]]:1: ERROR: Use `library` directive in `Main` package libraries.
 // CHECK:STDERR: package Main library "lib" api;
 // CHECK:STDERR: ^
 package Main library "lib" api;

@@ -125,9 +125,8 @@ static auto TrackImport(
   if (package_key.first == ExplicitMainName) {
     // Implicit imports will have already warned.
     if (explicit_import_map) {
-      CARBON_DIAGNOSTIC(
-          ImportMainPackage, Error,
-          "Cannot import the `Main` package from another package.");
+      CARBON_DIAGNOSTIC(ImportMainPackage, Error,
+                        "Cannot import `Main` from other packages.");
       unit_info.emitter.Emit(import.node, ImportMainPackage);
     }
     return;
@@ -139,8 +138,8 @@ static auto TrackImport(
             explicit_import_map->insert({package_key, import.node});
         !success) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
-                        "Library is imported more than once.");
-      CARBON_DIAGNOSTIC(FirstImported, Note, "First imported here.");
+                        "Library imported more than once.");
+      CARBON_DIAGNOSTIC(FirstImported, Note, "First import here.");
       unit_info.emitter.Build(import.node, RepeatedImport)
           .Note(insert_it->second, FirstImported)
           .Emit();
@@ -153,9 +152,8 @@ static auto TrackImport(
         import.package_id == package_directive->package.package_id &&
         import.library_id == package_directive->package.library_id) {
       CARBON_DIAGNOSTIC(ExplicitImportApi, Error,
-                        "The `impl` for a library implicitly imports the `api` "
-                        "and must not do so explicitly.");
-      CARBON_DIAGNOSTIC(ImportSelf, Error, "A file must not import itself.");
+                        "Omit import of library `api`.");
+      CARBON_DIAGNOSTIC(ImportSelf, Error, "Library cannot import itself.");
       unit_info.emitter.Emit(import.node, package_directive->api_or_impl ==
                                                   Parse::Tree::ApiOrImpl::Impl
                                               ? ExplicitImportApi
@@ -200,14 +198,13 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
       // APIs.
       if (package_key.first == ExplicitMainName) {
         if (package_key.second.empty()) {
-          CARBON_DIAGNOSTIC(
-              ExplicitMainPackage, Error,
-              "Omit the `package` directive to define the `Main` package.");
+          CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
+                            "Omit `package` directive for `Main` package.");
           unit_info.emitter.Emit(package->package.node, ExplicitMainPackage);
         } else {
-          CARBON_DIAGNOSTIC(ExplicitMainLibrary, Error,
-                            "Use the `library` directive to define libraries "
-                            "in the `Main` package.");
+          CARBON_DIAGNOSTIC(
+              ExplicitMainLibrary, Error,
+              "Use `library` directive in `Main` package libraries.");
           unit_info.emitter.Emit(package->package.node, ExplicitMainLibrary);
         }
         continue;
@@ -221,7 +218,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
       if (!success) {
         // TODO: Cross-reference the source, deal with library, etc.
         CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
-                          "Multiple files declare the same library's API.");
+                          "Library's API declared in more than one file.");
         unit_info.emitter.Emit(package->package.node, DuplicateLibraryApi);
       }
     }
@@ -278,9 +275,9 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
           if (*import_unit->sem_ir) {
             ++import_it;
           } else {
-            CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
-                              "Import is part of a cycle. The cycle must be "
-                              "fixed before the import can be used.");
+            CARBON_DIAGNOSTIC(
+                ImportCycleDetected, Error,
+                "Import is in cycle. Cycle must be fixed to import.");
             unit_info.emitter.Emit(import_it->first, ImportCycleDetected);
             import_it = unit_info.imports.erase(import_it);
           }
