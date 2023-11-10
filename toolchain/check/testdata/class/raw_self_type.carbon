@@ -1,0 +1,44 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+class Class {
+  fn F() {
+    var r#Self: Self*;
+    var p: Self* = r#Self;
+  }
+}
+
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc12: type = struct_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file "raw_self_type.carbon" {
+// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Self.ref.loc9: type = name_reference Self, file.%Class
+// CHECK:STDOUT:   %.loc9: type = ptr_type Class
+// CHECK:STDOUT:   %Self.var: ref Class* = var r#Self
+// CHECK:STDOUT:   %Self: ref Class* = bind_name r#Self, %Self.var
+// CHECK:STDOUT:   %Self.ref.loc10_12: type = name_reference Self, file.%Class
+// CHECK:STDOUT:   %.loc10_16: type = ptr_type Class
+// CHECK:STDOUT:   %p.var: ref Class* = var p
+// CHECK:STDOUT:   %p: ref Class* = bind_name p, %p.var
+// CHECK:STDOUT:   %Self.ref.loc10_20: ref Class* = name_reference r#Self, %Self
+// CHECK:STDOUT:   %.loc10_20: Class* = bind_value %Self.ref.loc10_20
+// CHECK:STDOUT:   assign %p.var, %.loc10_20
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
