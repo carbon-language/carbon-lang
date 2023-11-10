@@ -31,29 +31,11 @@ namespace {
   static_assert(Name::Kind == InstKind::Name);
 #include "toolchain/sem_ir/inst_kind.def"
 
-template <typename Ignored, typename... Types>
-using TypesExceptFirst = ::testing::Types<Types...>;
-
-// Form a list of all typed instruction types. Use `TypesExceptFirst` and a
-// leading `void` to handle the problem that we only want N-1 commas in this
-// list.
-using TypedInstTypes = TypesExceptFirst<void
-#define CARBON_SEM_IR_INST_KIND(Name) , Name
-#include "toolchain/sem_ir/inst_kind.def"
-                                        >;
-
-// Set up the test fixture.
 template <typename TypedInst>
-class TypedInstTest : public testing::Test {};
-
-TYPED_TEST_SUITE(TypedInstTest, TypedInstTypes);
-
-TYPED_TEST(TypedInstTest, CommonFieldOrder) {
-  using TypedInst = TypeParam;
-
-  Inst inst = InstTestHelper::MakeInst(TypeParam::Kind, Parse::Node(1),
+auto CommonFieldOrder() -> void {
+  Inst inst = InstTestHelper::MakeInst(TypedInst::Kind, Parse::Node(1),
                                        TypeId(2), 3, 4);
-  EXPECT_EQ(inst.kind(), TypeParam::Kind);
+  EXPECT_EQ(inst.kind(), TypedInst::Kind);
   EXPECT_EQ(inst.parse_node(), Parse::Node(1));
   EXPECT_EQ(inst.type_id(), TypeId(2));
 
@@ -66,12 +48,20 @@ TYPED_TEST(TypedInstTest, CommonFieldOrder) {
   }
 }
 
-TYPED_TEST(TypedInstTest, RoundTrip) {
-  using TypedInst = TypeParam;
+TEST(TypedInstTest, CommonFieldOrder) {
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  {                                   \
+    SCOPED_TRACE(#Name);              \
+    CommonFieldOrder<Name>();         \
+  }
+#include "toolchain/sem_ir/inst_kind.def"
+}
 
-  Inst inst1 = InstTestHelper::MakeInst(TypeParam::Kind, Parse::Node(1),
+template <typename TypedInst>
+auto RoundTrip() -> void {
+  Inst inst1 = InstTestHelper::MakeInst(TypedInst::Kind, Parse::Node(1),
                                         TypeId(2), 3, 4);
-  EXPECT_EQ(inst1.kind(), TypeParam::Kind);
+  EXPECT_EQ(inst1.kind(), TypedInst::Kind);
   EXPECT_EQ(inst1.parse_node(), Parse::Node(1));
   EXPECT_EQ(inst1.type_id(), TypeId(2));
 
@@ -102,11 +92,19 @@ TYPED_TEST(TypedInstTest, RoundTrip) {
   }
 }
 
-TYPED_TEST(TypedInstTest, StructLayout) {
-  using TypedInst = TypeParam;
+TEST(TypedInstTest, RoundTrip) {
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  {                                   \
+    SCOPED_TRACE(#Name);              \
+    RoundTrip<Name>();                \
+  }
+#include "toolchain/sem_ir/inst_kind.def"
+}
 
+template <typename TypedInst>
+auto StructLayout() -> void {
   TypedInst typed =
-      InstTestHelper::MakeInst(TypeParam::Kind, Parse::Node(1), TypeId(2), 3, 4)
+      InstTestHelper::MakeInst(TypedInst::Kind, Parse::Node(1), TypeId(2), 3, 4)
           .template As<TypedInst>();
 
   // Check that the memory representation of the typed instruction is what we
@@ -131,9 +129,17 @@ TYPED_TEST(TypedInstTest, StructLayout) {
   }
 }
 
-TYPED_TEST(TypedInstTest, InstKindMatches) {
-  using TypedInst = TypeParam;
+TEST(TypedInstTest, StructLayout) {
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  {                                   \
+    SCOPED_TRACE(#Name);              \
+    StructLayout<Name>();             \
+  }
+#include "toolchain/sem_ir/inst_kind.def"
+}
 
+template <typename TypedInst>
+auto InstKindMatches() {
   // TypedInst::Kind is an InstKind::Definition that extends InstKind, but
   // has different definitions of the `ir_name()` and `terminator_kind()`
   // methods. Here we test that values returned by the two different versions
@@ -141,6 +147,15 @@ TYPED_TEST(TypedInstTest, InstKindMatches) {
   InstKind as_kind = TypedInst::Kind;
   EXPECT_EQ(TypedInst::Kind.ir_name(), as_kind.ir_name());
   EXPECT_EQ(TypedInst::Kind.terminator_kind(), as_kind.terminator_kind());
+}
+
+TEST(TypedInstTest, InstKindMatches) {
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  {                                   \
+    SCOPED_TRACE(#Name);              \
+    InstKindMatches<Name>();          \
+  }
+#include "toolchain/sem_ir/inst_kind.def"
 }
 
 }  // namespace
