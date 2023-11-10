@@ -26,7 +26,7 @@ fn Procedure() {
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_20: () = tuple_literal ()
-// CHECK:STDOUT:   %v: () = bind_name "v", <error>
+// CHECK:STDOUT:   %v: () = bind_name v, <error>
 // CHECK:STDOUT:   %.loc14_25: () = tuple_literal ()
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return

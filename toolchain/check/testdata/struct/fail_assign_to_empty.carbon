@@ -17,8 +17,8 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_assign_to_empty.carbon" {
 // CHECK:STDOUT:   %.loc10_9: {} = struct_literal ()
-// CHECK:STDOUT:   %x.var: ref {} = var "x"
-// CHECK:STDOUT:   %x: ref {} = bind_name "x", %x.var
+// CHECK:STDOUT:   %x.var: ref {} = var x
+// CHECK:STDOUT:   %x: ref {} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_19: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_20: {.a: i32} = struct_literal (%.loc10_19)
 // CHECK:STDOUT:   assign %x.var, <error>

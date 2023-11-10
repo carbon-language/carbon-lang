@@ -19,8 +19,8 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT: file "nested_tuple.carbon" {
 // CHECK:STDOUT:   %.loc7_18: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_24: ((type, type), type) = tuple_literal (%.loc7_18, i32)
-// CHECK:STDOUT:   %x.var: ref ((i32, i32), i32) = var "x"
-// CHECK:STDOUT:   %x: ref ((i32, i32), i32) = bind_name "x", %x.var
+// CHECK:STDOUT:   %x.var: ref ((i32, i32), i32) = var x
+// CHECK:STDOUT:   %x: ref ((i32, i32), i32) = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7_30: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc7_34: i32 = int_literal 76
 // CHECK:STDOUT:   %.loc7_36.1: (i32, i32) = tuple_literal (%.loc7_30, %.loc7_34)

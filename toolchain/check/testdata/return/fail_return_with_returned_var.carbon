@@ -41,11 +41,11 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc18_16.1: type = unbound_field_type C, i32
-// CHECK:STDOUT:   %.loc18_16.2: <unbound field of class C> = field "a", member0
-// CHECK:STDOUT:   %a: <unbound field of class C> = bind_name "a", %.loc18_16.2
+// CHECK:STDOUT:   %.loc18_16.2: <unbound field of class C> = field a, member0
+// CHECK:STDOUT:   %a: <unbound field of class C> = bind_name a, %.loc18_16.2
 // CHECK:STDOUT:   %.loc18_28.1: type = unbound_field_type C, i32
-// CHECK:STDOUT:   %.loc18_28.2: <unbound field of class C> = field "b", member1
-// CHECK:STDOUT:   %b: <unbound field of class C> = bind_name "b", %.loc18_28.2
+// CHECK:STDOUT:   %.loc18_28.2: <unbound field of class C> = field b, member1
+// CHECK:STDOUT:   %b: <unbound field of class C> = bind_name b, %.loc18_28.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -54,8 +54,8 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.var: ref i32 = var "v"
-// CHECK:STDOUT:   %v: ref i32 = bind_name "v", %v.var
+// CHECK:STDOUT:   %v.var: ref i32 = var v
+// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0
 // CHECK:STDOUT:   assign %v.var, %.loc8
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 1
@@ -64,8 +64,8 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_reference "C", file.%C
-// CHECK:STDOUT:   %c: ref C = bind_name "c", %return
+// CHECK:STDOUT:   %C.ref: type = name_reference C, file.%C
+// CHECK:STDOUT:   %c: ref C = bind_name c, %return
 // CHECK:STDOUT:   %.loc20_29: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc20_38.1: {.a: i32, .b: i32} = struct_literal (%.loc20_29, %.loc20_37)
@@ -75,6 +75,6 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc20_38.5: init i32 = initialize_from %.loc20_37 to %.loc20_38.4
 // CHECK:STDOUT:   %.loc20_38.6: init C = class_init %.loc20_38.1, (%.loc20_38.3, %.loc20_38.5)
 // CHECK:STDOUT:   assign %return, %.loc20_38.6
-// CHECK:STDOUT:   %c.ref: ref C = name_reference "c", %c
+// CHECK:STDOUT:   %c.ref: ref C = name_reference c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

@@ -428,7 +428,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   }
 
   // Prepare to look up fields in the source by index.
-  llvm::SmallDenseMap<IdentifierId, int32_t> src_field_indexes;
+  llvm::SmallDenseMap<SemIR::NameId, int32_t> src_field_indexes;
   if (src_type.fields_id != dest_type.fields_id) {
     for (auto [i, field_id] : llvm::enumerate(src_elem_fields)) {
       auto [it, added] = src_field_indexes.insert(
@@ -467,19 +467,19 @@ static auto ConvertStructToStructOrClass(Context& context,
               StructInitMissingFieldInLiteral, Error,
               "Missing value for field `{0}` in struct initialization.",
               llvm::StringRef);
-          context.emitter().Emit(value.parse_node(),
-                                 StructInitMissingFieldInLiteral,
-                                 sem_ir.identifiers().Get(dest_field.name_id));
+          context.emitter().Emit(
+              value.parse_node(), StructInitMissingFieldInLiteral,
+              sem_ir.names().GetFormatted(dest_field.name_id));
         } else {
           CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
                             "Cannot convert from struct type `{0}` to `{1}`: "
                             "missing field `{2}` in source type.",
                             std::string, std::string, llvm::StringRef);
-          context.emitter().Emit(value.parse_node(),
-                                 StructInitMissingFieldInConversion,
-                                 sem_ir.StringifyType(value.type_id()),
-                                 sem_ir.StringifyType(target.type_id),
-                                 sem_ir.identifiers().Get(dest_field.name_id));
+          context.emitter().Emit(
+              value.parse_node(), StructInitMissingFieldInConversion,
+              sem_ir.StringifyType(value.type_id()),
+              sem_ir.StringifyType(target.type_id),
+              sem_ir.names().GetFormatted(dest_field.name_id));
         }
         return SemIR::InstId::BuiltinError;
       }
@@ -1088,8 +1088,18 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
 
 auto ExpressionAsType(Context& context, Parse::Node parse_node,
                       SemIR::InstId value_id) -> SemIR::TypeId {
-  return context.CanonicalizeType(ConvertToValueOfType(
-      context, parse_node, value_id, SemIR::TypeId::TypeType));
+  auto type_inst_id = ConvertToValueOfType(context, parse_node, value_id,
+                                           SemIR::TypeId::TypeType);
+  if (type_inst_id == SemIR::InstId::BuiltinError) {
+    return SemIR::TypeId::Error;
+  }
+  auto type_id = context.CanonicalizeType(type_inst_id);
+  if (type_id == SemIR::TypeId::Error) {
+    CARBON_DIAGNOSTIC(TypeExpressionEvaluationFailure, Error,
+                      "Cannot evaluate type expression.");
+    context.emitter().Emit(parse_node, TypeExpressionEvaluationFailure);
+  }
+  return type_id;
 }
 
 }  // namespace Carbon::Check

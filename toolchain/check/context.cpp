@@ -88,11 +88,11 @@ auto Context::DiagnoseDuplicateName(Parse::Node parse_node,
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::Node parse_node, IdentifierId name_id)
-    -> void {
+auto Context::DiagnoseNameNotFound(Parse::Node parse_node,
+                                   SemIR::NameId name_id) -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, identifiers().Get(name_id));
+  emitter_->Emit(parse_node, NameNotFound, names().GetFormatted(name_id));
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -112,7 +112,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   }
 }
 
-auto Context::AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
+auto Context::AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,
                               SemIR::InstId target_id) -> void {
   if (current_scope().names.insert(name_id).second) {
     // TODO: Reject if we previously performed a failed lookup for this name in
@@ -129,7 +129,7 @@ auto Context::AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
 }
 
 auto Context::LookupNameInDeclaration(Parse::Node parse_node,
-                                      IdentifierId name_id,
+                                      SemIR::NameId name_id,
                                       SemIR::NameScopeId scope_id)
     -> SemIR::InstId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
@@ -159,7 +159,7 @@ auto Context::LookupNameInDeclaration(Parse::Node parse_node,
     if (auto name_it = name_lookup_.find(name_id);
         name_it != name_lookup_.end()) {
       CARBON_CHECK(!name_it->second.empty())
-          << "Should have been erased: " << identifiers().Get(name_id);
+          << "Should have been erased: " << names().GetFormatted(name_id);
       auto result = name_it->second.back();
       if (result.scope_index == current_scope_index()) {
         return result.node_id;
@@ -175,7 +175,7 @@ auto Context::LookupNameInDeclaration(Parse::Node parse_node,
 }
 
 auto Context::LookupUnqualifiedName(Parse::Node parse_node,
-                                    IdentifierId name_id) -> SemIR::InstId {
+                                    SemIR::NameId name_id) -> SemIR::InstId {
   // TODO: Check for shadowed lookup results.
 
   // Find the results from enclosing lexical scopes. These will be combined with
@@ -185,7 +185,7 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
       name_it != name_lookup_.end()) {
     lexical_results = name_it->second;
     CARBON_CHECK(!lexical_results.empty())
-        << "Should have been erased: " << identifiers().Get(name_id);
+        << "Should have been erased: " << names().GetFormatted(name_id);
   }
 
   // Walk the non-lexical scopes and perform lookups into each of them.
@@ -214,7 +214,7 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupQualifiedName(Parse::Node parse_node, IdentifierId name_id,
+auto Context::LookupQualifiedName(Parse::Node parse_node, SemIR::NameId name_id,
                                   SemIR::NameScopeId scope_id, bool required)
     -> SemIR::InstId {
   CARBON_CHECK(scope_id.is_valid()) << "No scope to perform lookup into";
@@ -252,7 +252,7 @@ auto Context::PopScope() -> void {
   for (const auto& str_id : scope.names) {
     auto it = name_lookup_.find(str_id);
     CARBON_CHECK(it->second.back().scope_index == scope.index)
-        << "Inconsistent scope index for name " << identifiers().Get(str_id);
+        << "Inconsistent scope index for name " << names().GetFormatted(str_id);
     if (it->second.size() == 1) {
       // Erase names that no longer resolve.
       name_lookup_.erase(it);
@@ -402,9 +402,17 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 }
 
 // Add the current code block to the enclosing function.
-auto Context::AddCurrentCodeBlockToFunction() -> void {
+auto Context::AddCurrentCodeBlockToFunction(Parse::Node parse_node) -> void {
   CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
-  CARBON_CHECK(!return_scope_stack().empty()) << "no current function";
+
+  if (return_scope_stack().empty()) {
+    CARBON_CHECK(parse_node.is_valid())
+        << "No current function, but parse_node not provided";
+    TODO(parse_node,
+         "Control flow expressions are currently only supported inside "
+         "functions.");
+    return;
+  }
 
   if (!inst_block_stack().is_current_block_reachable()) {
     // Don't include unreachable blocks in the function.
@@ -912,11 +920,13 @@ auto Context::TryToCompleteType(
 
 auto Context::CanonicalizeTypeImpl(
     SemIR::InstKind kind,
-    llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)> profile_type,
+    llvm::function_ref<bool(llvm::FoldingSetNodeID& canonical_id)> profile_type,
     llvm::function_ref<SemIR::InstId()> make_inst) -> SemIR::TypeId {
   llvm::FoldingSetNodeID canonical_id;
   kind.Profile(canonical_id);
-  profile_type(canonical_id);
+  if (!profile_type(canonical_id)) {
+    return SemIR::TypeId::Error;
+  }
 
   void* insert_pos;
   auto* node =
@@ -952,9 +962,14 @@ static auto ProfileTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids,
   }
 }
 
-// Compute a fingerprint for a type, for use as a key in a folding set.
+// Compute a fingerprint for a type, for use as a key in a folding set. Returns
+// false if not supported, which is presently the case for compile-time
+// expressions.
+// TODO: Once support is more complete, in particular ensuring that various
+// valid compile-time expressions are supported, it may be desirable to switch
+// the default to a CARBON_FATAL error.
 static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
-                        llvm::FoldingSetNodeID& canonical_id) -> void {
+                        llvm::FoldingSetNodeID& canonical_id) -> bool {
   switch (inst.kind()) {
     case SemIR::ArrayType::Kind: {
       auto array_type = inst.As<SemIR::ArrayType>();
@@ -1008,15 +1023,19 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
       canonical_id.AddInteger(unbound_field_type.field_type_id.index);
       break;
     }
-    default:
-      CARBON_FATAL() << "Unexpected type inst " << inst;
+    default: {
+      // Right now, this is only expected to occur in calls from
+      // ExpressionAsType. Diagnostics are issued there.
+      return false;
+    }
   }
+  return true;
 }
 
 auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
     -> SemIR::TypeId {
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
-    ProfileType(*this, inst, canonical_id);
+    return ProfileType(*this, inst, canonical_id);
   };
   auto make_inst = [&] { return AddConstantInst(inst); };
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
@@ -1032,7 +1051,7 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
 
   auto inst = insts().Get(inst_id);
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
-    ProfileType(*this, inst, canonical_id);
+    return ProfileType(*this, inst, canonical_id);
   };
   auto make_inst = [&] { return inst_id; };
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
@@ -1051,6 +1070,7 @@ auto Context::CanonicalizeTupleType(Parse::Node parse_node,
   // Defer allocating a SemIR::TypeBlockId until we know this is a new type.
   auto profile_tuple = [&](llvm::FoldingSetNodeID& canonical_id) {
     ProfileTupleType(type_ids, canonical_id);
+    return true;
   };
   auto make_tuple_inst = [&] {
     return AddConstantInst(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,

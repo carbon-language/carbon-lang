@@ -63,22 +63,22 @@ class Context {
   auto AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Parse::Node name_node, IdentifierId name_id,
+  auto AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,
                        SemIR::InstId target_id) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
-  auto LookupNameInDeclaration(Parse::Node parse_node, IdentifierId name_id,
+  auto LookupNameInDeclaration(Parse::Node parse_node, SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
-  auto LookupUnqualifiedName(Parse::Node parse_node, IdentifierId name_id)
+  auto LookupUnqualifiedName(Parse::Node parse_node, SemIR::NameId name_id)
       -> SemIR::InstId;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
-  auto LookupQualifiedName(Parse::Node parse_node, IdentifierId name_id,
+  auto LookupQualifiedName(Parse::Node parse_node, SemIR::NameId name_id,
                            SemIR::NameScopeId scope_id, bool required = true)
       -> SemIR::InstId;
 
@@ -87,7 +87,7 @@ class Context {
       -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::Node parse_node, IdentifierId name_id)
+  auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::NameId name_id)
       -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
@@ -174,7 +174,11 @@ class Context {
       std::initializer_list<SemIR::InstId> blocks_and_args) -> SemIR::InstId;
 
   // Add the current code block to the enclosing function.
-  auto AddCurrentCodeBlockToFunction() -> void;
+  // TODO: The parse_node is taken for expressions, which can occur in
+  // non-function contexts. This should be refactored to support non-function
+  // contexts, and parse_node removed.
+  auto AddCurrentCodeBlockToFunction(
+      Parse::Node parse_node = Parse::Node::Invalid) -> void;
 
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
@@ -298,6 +302,7 @@ class Context {
   auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
     return sem_ir().classes();
   }
+  auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
   }
@@ -346,7 +351,7 @@ class Context {
 
     // Names which are registered with name_lookup_, and will need to be
     // unregistered when the scope ends.
-    llvm::DenseSet<IdentifierId> names;
+    llvm::DenseSet<SemIR::NameId> names;
 
     // Whether a `returned var` was introduced in this scope, and needs to be
     // unregistered when the scope ends.
@@ -376,7 +381,7 @@ class Context {
   // directly or indirectly canonicalize any types.
   auto CanonicalizeTypeImpl(
       SemIR::InstKind kind,
-      llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)>
+      llvm::function_ref<bool(llvm::FoldingSetNodeID& canonical_id)>
           profile_type,
       llvm::function_ref<SemIR::InstId()> make_inst) -> SemIR::TypeId;
 
@@ -450,7 +455,7 @@ class Context {
   // non-lexical scopes such as classes.
   //
   // Names which no longer have lookup results are erased.
-  llvm::DenseMap<IdentifierId, llvm::SmallVector<LexicalLookupResult>>
+  llvm::DenseMap<SemIR::NameId, llvm::SmallVector<LexicalLookupResult>>
       name_lookup_;
 
   // Cache of the mapping from instructions to types, to avoid recomputing the

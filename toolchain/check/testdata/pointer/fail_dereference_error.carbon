@@ -10,7 +10,7 @@
 let n: i32 = *undeclared;
 
 // CHECK:STDOUT: file "fail_dereference_error.carbon" {
-// CHECK:STDOUT:   %undeclared.ref: <error> = name_reference "undeclared", <error>
+// CHECK:STDOUT:   %undeclared.ref: <error> = name_reference undeclared, <error>
 // CHECK:STDOUT:   %.loc10: ref <error> = dereference <error>
-// CHECK:STDOUT:   %n: i32 = bind_name "n", <error>
+// CHECK:STDOUT:   %n: i32 = bind_name n, <error>
 // CHECK:STDOUT: }

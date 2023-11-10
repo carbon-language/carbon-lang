@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 
 namespace Carbon::SemIR {
@@ -111,6 +112,54 @@ struct BoolValue : public IndexBase, public Printable<BoolValue> {
 
 constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
+
+// The ID of a name. A name is either a string or a special name such as
+// `self`, or eventually `Self` or `base`.
+struct NameId : public IndexBase, public Printable<NameId> {
+  // An explicitly invalid ID.
+  static const NameId Invalid;
+  // The name of `self`.
+  static const NameId SelfValue;
+  // The name of `Self`.
+  static const NameId SelfType;
+  // The name of the return slot in a function.
+  static const NameId ReturnSlot;
+
+  // Returns the NameId corresponding to a particular IdentifierId.
+  static auto ForIdentifier(IdentifierId id) -> NameId {
+    static_assert(NameId::InvalidIndex == IdentifierId::InvalidIndex);
+    CARBON_CHECK(id.index >= 0 || id.index == InvalidIndex)
+        << "Unexpected identifier ID";
+    return NameId(id.index);
+  }
+
+  using IndexBase::IndexBase;
+
+  // Returns the IdentifierId corresponding to this NameId, or an invalid
+  // IdentifierId if this is a special name.
+  auto AsIdentifierId() -> IdentifierId {
+    return index >= 0 ? IdentifierId(index) : IdentifierId::Invalid;
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "name";
+    if (*this == SelfValue) {
+      out << "SelfValue";
+    } else if (*this == SelfType) {
+      out << "SelfType";
+    } else if (*this == ReturnSlot) {
+      out << "ReturnSlot";
+    } else {
+      CARBON_CHECK(index >= 0) << "Unknown index";
+      IndexBase::Print(out);
+    }
+  }
+};
+
+constexpr NameId NameId::Invalid = NameId(NameId::InvalidIndex);
+constexpr NameId NameId::SelfValue = NameId(NameId::InvalidIndex - 1);
+constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
+constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
 
 // The ID of a name scope.
 struct NameScopeId : public IndexBase, public Printable<NameScopeId> {

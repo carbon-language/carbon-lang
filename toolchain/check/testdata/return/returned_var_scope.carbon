@@ -34,8 +34,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   if %.loc8 br !if.then.loc8 else br !if.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc8:
-// CHECK:STDOUT:   %v.var: ref i32 = var "v"
-// CHECK:STDOUT:   %v: ref i32 = bind_name "v", %v.var
+// CHECK:STDOUT:   %v.var: ref i32 = var v
+// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 0
 // CHECK:STDOUT:   assign %v.var, %.loc9
 // CHECK:STDOUT:   br !if.else.loc8
@@ -45,8 +45,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   if %.loc11 br !if.then.loc11 else br !if.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11:
-// CHECK:STDOUT:   %w.var: ref i32 = var "w"
-// CHECK:STDOUT:   %w: ref i32 = bind_name "w", %w.var
+// CHECK:STDOUT:   %w.var: ref i32 = var w
+// CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %.loc12: i32 = int_literal 1
 // CHECK:STDOUT:   assign %w.var, %.loc12
 // CHECK:STDOUT:   br !if.else.loc11
@@ -58,20 +58,20 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @EnclosingButAfter(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   %b.ref: bool = name_reference b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %v.var: ref i32 = var "v"
-// CHECK:STDOUT:   %v: ref i32 = bind_name "v", %v.var
+// CHECK:STDOUT:   %v.var: ref i32 = var v
+// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc19_27: i32 = int_literal 0
 // CHECK:STDOUT:   assign %v.var, %.loc19_27
 // CHECK:STDOUT:   %.loc19_18: i32 = bind_value %v
 // CHECK:STDOUT:   return %.loc19_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %w.var: ref i32 = var "w"
-// CHECK:STDOUT:   %w: ref i32 = bind_name "w", %w.var
+// CHECK:STDOUT:   %w.var: ref i32 = var w
+// CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1
 // CHECK:STDOUT:   assign %w.var, %.loc22_25
 // CHECK:STDOUT:   %.loc22_16: i32 = bind_value %w

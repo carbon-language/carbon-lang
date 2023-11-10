@@ -45,12 +45,12 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   if %.loc8 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %v.var: ref i32 = var "v"
-// CHECK:STDOUT:   %v: ref i32 = bind_name "v", %v.var
+// CHECK:STDOUT:   %v.var: ref i32 = var v
+// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 0
 // CHECK:STDOUT:   assign %v.var, %.loc9
-// CHECK:STDOUT:   %w.var: ref i32 = var "w"
-// CHECK:STDOUT:   %w: ref i32 = bind_name "w", %w.var
+// CHECK:STDOUT:   %w.var: ref i32 = var w
+// CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %.loc16: i32 = int_literal 1
 // CHECK:STDOUT:   assign %w.var, %.loc16
 // CHECK:STDOUT:   br !if.else
@@ -66,16 +66,16 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   if %.loc22 br !if.then.loc22 else br !if.else.loc22
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc22:
-// CHECK:STDOUT:   %v.var: ref i32 = var "v"
-// CHECK:STDOUT:   %v: ref i32 = bind_name "v", %v.var
+// CHECK:STDOUT:   %v.var: ref i32 = var v
+// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc23: i32 = int_literal 0
 // CHECK:STDOUT:   assign %v.var, %.loc23
 // CHECK:STDOUT:   %.loc24: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc24 br !if.then.loc24 else br !if.else.loc24
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc24:
-// CHECK:STDOUT:   %w.var: ref i32 = var "w"
-// CHECK:STDOUT:   %w: ref i32 = bind_name "w", %w.var
+// CHECK:STDOUT:   %w.var: ref i32 = var w
+// CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %.loc31: i32 = int_literal 1
 // CHECK:STDOUT:   assign %w.var, %.loc31
 // CHECK:STDOUT:   br !if.else.loc24

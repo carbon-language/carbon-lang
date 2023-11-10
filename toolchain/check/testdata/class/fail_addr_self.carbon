@@ -65,18 +65,18 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c: Class, %p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref.loc19: Class = name_reference "c", %c
+// CHECK:STDOUT:   %c.ref.loc19: Class = name_reference c, %c
 // CHECK:STDOUT:   %.loc19_4: <bound method> = bound_method %c.ref.loc19, @Class.%F
 // CHECK:STDOUT:   %.loc19_6: init () = call %.loc19_4(<invalid>)
-// CHECK:STDOUT:   %c.ref.loc27: Class = name_reference "c", %c
+// CHECK:STDOUT:   %c.ref.loc27: Class = name_reference c, %c
 // CHECK:STDOUT:   %.loc27_4: <bound method> = bound_method %c.ref.loc27, @Class.%G
 // CHECK:STDOUT:   %.loc27_6: init () = call %.loc27_4(<invalid>)
-// CHECK:STDOUT:   %p.ref.loc30: Class* = name_reference "p", %p
+// CHECK:STDOUT:   %p.ref.loc30: Class* = name_reference p, %p
 // CHECK:STDOUT:   %.loc30_4.1: ref Class = dereference %p.ref.loc30
 // CHECK:STDOUT:   %.loc30_7: <bound method> = bound_method %.loc30_4.1, @Class.%F
 // CHECK:STDOUT:   %.loc30_4.2: Class* = address_of %.loc30_4.1
 // CHECK:STDOUT:   %.loc30_9: init () = call %.loc30_7(%.loc30_4.2)
-// CHECK:STDOUT:   %p.ref.loc38: Class* = name_reference "p", %p
+// CHECK:STDOUT:   %p.ref.loc38: Class* = name_reference p, %p
 // CHECK:STDOUT:   %.loc38_4.1: ref Class = dereference %p.ref.loc38
 // CHECK:STDOUT:   %.loc38_7: <bound method> = bound_method %.loc38_4.1, @Class.%G
 // CHECK:STDOUT:   %.loc38_4.2: Class* = address_of %.loc38_4.1

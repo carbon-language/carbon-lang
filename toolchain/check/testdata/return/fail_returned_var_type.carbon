@@ -21,7 +21,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v: f64 = bind_name "v", <error>
+// CHECK:STDOUT:   %v: f64 = bind_name v, <error>
 // CHECK:STDOUT:   %.loc14: f64 = real_literal 0e-1
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>

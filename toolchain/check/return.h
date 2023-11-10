@@ -14,7 +14,7 @@ namespace Carbon::Check {
 // Checks a `returned var` binding and returns the location of the return
 // value storage that the name should bind to.
 auto CheckReturnedVar(Context& context, Parse::Node returned_node,
-                      Parse::Node name_node, IdentifierId name_id,
+                      Parse::Node name_node, SemIR::NameId name_id,
                       Parse::Node type_node, SemIR::TypeId type_id)
     -> SemIR::InstId;
 

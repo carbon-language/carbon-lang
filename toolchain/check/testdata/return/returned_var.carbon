@@ -33,11 +33,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type C, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class C> = field "a", member0
-// CHECK:STDOUT:   %a: <unbound field of class C> = bind_name "a", %.loc8_8.2
+// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class C> = field a, member0
+// CHECK:STDOUT:   %a: <unbound field of class C> = bind_name a, %.loc8_8.2
 // CHECK:STDOUT:   %.loc9_8.1: type = unbound_field_type C, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class C> = field "b", member1
-// CHECK:STDOUT:   %b: <unbound field of class C> = bind_name "b", %.loc9_8.2
+// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class C> = field b, member1
+// CHECK:STDOUT:   %b: <unbound field of class C> = bind_name b, %.loc9_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -46,8 +46,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_reference "C", file.%C
-// CHECK:STDOUT:   %result: ref C = bind_name "result", %return
+// CHECK:STDOUT:   %C.ref: type = name_reference C, file.%C
+// CHECK:STDOUT:   %result: ref C = bind_name result, %return
 // CHECK:STDOUT:   %.loc13_34: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc13_42: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc13_43.1: {.a: i32, .b: i32} = struct_literal (%.loc13_34, %.loc13_42)
@@ -62,8 +62,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %result.var: ref i32 = var "result"
-// CHECK:STDOUT:   %result: ref i32 = bind_name "result", %result.var
+// CHECK:STDOUT:   %result.var: ref i32 = var result
+// CHECK:STDOUT:   %result: ref i32 = bind_name result, %result.var
 // CHECK:STDOUT:   %.loc18_30: i32 = int_literal 0
 // CHECK:STDOUT:   assign %result.var, %.loc18_30
 // CHECK:STDOUT:   %.loc18_16: i32 = bind_value %result
