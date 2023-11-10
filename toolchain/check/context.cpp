@@ -263,6 +263,12 @@ auto Context::PopScope() -> void {
     CARBON_CHECK(non_lexical_scope_stack_.back().first == scope.index);
     non_lexical_scope_stack_.pop_back();
   }
+
+  if (scope.has_returned_var) {
+    CARBON_CHECK(!return_scope_stack_.empty());
+    CARBON_CHECK(return_scope_stack_.back().returned_var.is_valid());
+    return_scope_stack_.back().returned_var = SemIR::InstId::Invalid;
+  }
 }
 
 auto Context::PopToScope(ScopeIndex index) -> void {
@@ -272,6 +278,23 @@ auto Context::PopToScope(ScopeIndex index) -> void {
   CARBON_CHECK(current_scope_index() == index)
       << "Scope index " << index << " does not enclose the current scope "
       << current_scope_index();
+}
+
+auto Context::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  CARBON_CHECK(!return_scope_stack_.empty()) << "`returned var` in no function";
+  auto& returned_var = return_scope_stack_.back().returned_var;
+  if (returned_var.is_valid()) {
+    return returned_var;
+  }
+
+  returned_var = inst_id;
+  CARBON_CHECK(!current_scope().has_returned_var)
+      << "Scope has returned var but none is set";
+  if (inst_id.is_valid()) {
+    current_scope().has_returned_var = true;
+  }
+  return SemIR::InstId::Invalid;
 }
 
 auto Context::FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId {
@@ -396,7 +419,7 @@ auto Context::AddCurrentCodeBlockToFunction(Parse::Node parse_node) -> void {
 
   auto function_id =
       insts()
-          .GetAs<SemIR::FunctionDecl>(return_scope_stack().back())
+          .GetAs<SemIR::FunctionDecl>(return_scope_stack().back().decl_id)
           .function_id;
   functions()
       .Get(function_id)
