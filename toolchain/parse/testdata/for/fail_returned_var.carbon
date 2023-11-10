@@ -25,7 +25,7 @@ fn foo() -> i32 {
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
 // CHECK:STDOUT:           {kind: 'ForHeaderStart', text: '('},
-// CHECK:STDOUT:           {kind: 'NameExpression', text: 'y'},
+// CHECK:STDOUT:           {kind: 'NameExpr', text: 'y'},
 // CHECK:STDOUT:         {kind: 'ForHeader', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'ReturnStatementStart', text: 'return'},

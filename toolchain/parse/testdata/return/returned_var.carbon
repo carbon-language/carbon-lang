@@ -26,7 +26,7 @@ fn F() -> String {
 // CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'Literal', text: '"hello"'},
-// CHECK:STDOUT:       {kind: 'VariableDeclaration', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
 // CHECK:STDOUT:         {kind: 'ReturnVarSpecifier', text: 'var'},
 // CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},

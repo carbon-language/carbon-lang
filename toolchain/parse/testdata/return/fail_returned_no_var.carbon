@@ -21,7 +21,7 @@ fn F() -> String {
 // CHECK:STDOUT:           {kind: 'Literal', text: 'String'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'EmptyDeclaration', text: ';', has_error: yes},
+// CHECK:STDOUT:       {kind: 'EmptyDecl', text: ';', has_error: yes},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

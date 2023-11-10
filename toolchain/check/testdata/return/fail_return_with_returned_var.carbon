@@ -34,7 +34,7 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_return_with_returned_var.carbon" {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   class_declaration @C, ()
+// CHECK:STDOUT:   class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
