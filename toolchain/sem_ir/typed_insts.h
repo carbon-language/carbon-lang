@@ -54,16 +54,15 @@ struct ArrayIndex {
 };
 
 // Initializes an array from a tuple. `tuple_id` is the source tuple
-// expression. `inits_and_return_slot_id` contains one initializer per array
-// element, plus a final element that is the return slot for the
-// initialization.
+// expression. `inits_id` contains one initializer per array element.
+// `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
   static constexpr auto Kind = InstKind::ArrayInit.Define("array_init");
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId tuple_id;
-  InstBlockId inits_and_return_slot_id;
+  InstBlockId inits_id;
+  InstId dest_id;
 };
 
 struct ArrayType {
@@ -223,8 +222,8 @@ struct ClassInit {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
+  InstId dest_id;
 };
 
 struct ClassType {
@@ -242,6 +241,15 @@ struct ConstType {
   Parse::Node parse_node;
   TypeId type_id;
   TypeId inner_id;
+};
+
+struct Converted {
+  static constexpr auto Kind = InstKind::Converted.Define("converted");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  InstId original_id;
+  InstId result_id;
 };
 
 // A cross-reference between IRs.
@@ -409,8 +417,8 @@ struct StructInit {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
+  InstId dest_id;
 };
 
 struct StructLiteral {
@@ -446,7 +454,6 @@ struct StructValue {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
 };
 
@@ -490,8 +497,8 @@ struct TupleInit {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
+  InstId dest_id;
 };
 
 struct TupleLiteral {
@@ -515,7 +522,6 @@ struct TupleValue {
 
   Parse::Node parse_node;
   TypeId type_id;
-  InstId src_id;
   InstBlockId elements_id;
 };
 

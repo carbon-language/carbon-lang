@@ -24,17 +24,17 @@ auto HandleCrossReference(FunctionContext& /*context*/,
 
 auto HandleAddressOf(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::AddressOf inst) -> void {
-  context.SetLocal(inst_id, context.GetLocal(inst.lvalue_id));
+  context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
 }
 
 auto HandleArrayIndex(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::ArrayIndex inst) -> void {
-  auto* array_value = context.GetLocal(inst.array_id);
+  auto* array_value = context.GetValue(inst.array_id);
   auto* llvm_type =
       context.GetType(context.sem_ir().insts().Get(inst.array_id).type_id());
   llvm::Value* indexes[2] = {
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(context.llvm_context()), 0),
-      context.GetLocal(inst.index_id)};
+      context.GetValue(inst.index_id)};
   context.SetLocal(inst_id,
                    context.builder().CreateInBoundsGEP(llvm_type, array_value,
                                                        indexes, "array.index"));
@@ -43,11 +43,7 @@ auto HandleArrayIndex(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleArrayInit(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::ArrayInit inst) -> void {
   // The result of initialization is the return slot of the initializer.
-  context.SetLocal(inst_id,
-                   context.GetLocal(context.sem_ir()
-                                        .inst_blocks()
-                                        .Get(inst.inits_and_return_slot_id)
-                                        .back()));
+  context.SetLocal(inst_id, context.GetValue(inst.dest_id));
 }
 
 auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
@@ -64,7 +60,7 @@ auto HandleBinaryOperatorAdd(FunctionContext& /*context*/,
 
 auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
                     SemIR::BindName inst) -> void {
-  context.SetLocal(inst_id, context.GetLocal(inst.value_id));
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
 auto HandleBlockArg(FunctionContext& context, SemIR::InstId inst_id,
@@ -83,7 +79,7 @@ auto HandleBoundMethod(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::BoundMethod inst) -> void {
   // Propagate just the function; the object is separately provided to the
   // enclosing call as an implicit argument.
-  context.SetLocal(inst_id, context.GetLocalOrGlobal(inst.function_id));
+  context.SetLocal(inst_id, context.GetValue(inst.function_id));
 }
 
 auto HandleBranch(FunctionContext& context, SemIR::InstId /*inst_id*/,
@@ -102,7 +98,7 @@ auto HandleBranch(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleBranchIf(FunctionContext& context, SemIR::InstId /*inst_id*/,
                     SemIR::BranchIf inst) -> void {
-  llvm::Value* cond = context.GetLocal(inst.cond_id);
+  llvm::Value* cond = context.GetValue(inst.cond_id);
   llvm::BasicBlock* then_block = context.GetBlock(inst.target_id);
   llvm::BasicBlock* else_block = context.CreateSyntheticBlock();
   context.builder().CreateCondBr(cond, then_block, else_block);
@@ -111,7 +107,7 @@ auto HandleBranchIf(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleBranchWithArg(FunctionContext& context, SemIR::InstId /*inst_id*/,
                          SemIR::BranchWithArg inst) -> void {
-  llvm::Value* arg = context.GetLocal(inst.arg_id);
+  llvm::Value* arg = context.GetValue(inst.arg_id);
   SemIR::TypeId arg_type_id =
       context.sem_ir().insts().Get(inst.arg_id).type_id();
 
@@ -143,7 +139,7 @@ auto HandleBuiltin(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Call inst) -> void {
-  auto* callee = llvm::cast<llvm::Function>(context.GetLocal(inst.callee_id));
+  auto* callee = llvm::cast<llvm::Function>(context.GetValue(inst.callee_id));
 
   std::vector<llvm::Value*> args;
   llvm::ArrayRef<SemIR::InstId> arg_ids =
@@ -151,7 +147,7 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
 
   if (SemIR::GetInitializingRepresentation(context.sem_ir(), inst.type_id)
           .has_return_slot()) {
-    args.push_back(context.GetLocal(arg_ids.back()));
+    args.push_back(context.GetValue(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
   }
 
@@ -159,7 +155,7 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
     auto arg_type_id = context.sem_ir().insts().Get(arg_id).type_id();
     if (SemIR::GetValueRepresentation(context.sem_ir(), arg_type_id).kind !=
         SemIR::ValueRepresentation::None) {
-      args.push_back(context.GetLocal(arg_id));
+      args.push_back(context.GetValue(arg_id));
     }
   }
 
@@ -173,9 +169,14 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
   }
 }
 
+auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
+                     SemIR::Converted inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.result_id));
+}
+
 auto HandleDereference(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::Dereference inst) -> void {
-  context.SetLocal(inst_id, context.GetLocal(inst.pointer_id));
+  context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
 }
 
 auto HandleFunctionDeclaration(FunctionContext& /*context*/,
@@ -209,7 +210,7 @@ auto HandleNameReference(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  context.SetLocal(inst_id, context.GetLocalOrGlobal(inst.value_id));
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
 auto HandleNamespace(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -260,7 +261,7 @@ auto HandleReturnExpr(FunctionContext& context, SemIR::InstId /*inst_id*/,
       return;
     case SemIR::InitializingRepresentation::ByCopy:
       // The expression produces the value representation for the type.
-      context.builder().CreateRet(context.GetLocal(inst.expr_id));
+      context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
   }
 }
@@ -274,7 +275,7 @@ auto HandleSelfParameter(FunctionContext& /*context*/,
 auto HandleSpliceBlock(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::SpliceBlock inst) -> void {
   context.LowerBlock(inst.block_id);
-  context.SetLocal(inst_id, context.GetLocal(inst.result_id));
+  context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
 auto HandleStringLiteral(FunctionContext& /*context*/,
@@ -286,7 +287,7 @@ auto HandleStringLiteral(FunctionContext& /*context*/,
 auto HandleUnaryOperatorNot(FunctionContext& context, SemIR::InstId inst_id,
                             SemIR::UnaryOperatorNot inst) -> void {
   context.SetLocal(
-      inst_id, context.builder().CreateNot(context.GetLocal(inst.operand_id)));
+      inst_id, context.builder().CreateNot(context.GetValue(inst.operand_id)));
 }
 
 auto HandleVarStorage(FunctionContext& context, SemIR::InstId inst_id,

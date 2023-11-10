@@ -61,7 +61,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %pi: <unbound field of class Outer> = bind_name pi, %.loc16_9.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Inner = <unexpected instref 11>
+// CHECK:STDOUT:   .Inner = <unexpected instref inst+2>
 // CHECK:STDOUT:   .po = %po
 // CHECK:STDOUT:   .qo = %qo
 // CHECK:STDOUT:   .pi = %pi

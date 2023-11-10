@@ -28,7 +28,7 @@ static auto GetAggregateElement(FunctionContext& context,
                                 SemIR::TypeId result_type_id, llvm::Twine name)
     -> llvm::Value* {
   auto aggr_inst = context.sem_ir().insts().Get(aggr_inst_id);
-  auto* aggr_value = context.GetLocal(aggr_inst_id);
+  auto* aggr_value = context.GetValue(aggr_inst_id);
 
   switch (SemIR::GetExprCategory(context.sem_ir(), aggr_inst_id)) {
     case SemIR::ExprCategory::Error:
@@ -146,7 +146,7 @@ static auto EmitAggregateInitializer(FunctionContext& context,
       // TODO: Remove the LLVM StructType wrapper in this case, so we don't
       // need this `insert_value` wrapping.
       return context.builder().CreateInsertValue(
-          llvm::PoisonValue::get(llvm_type), context.GetLocal(refs[0]), {0},
+          llvm::PoisonValue::get(llvm_type), context.GetValue(refs[0]), {0},
           name);
     }
   }
@@ -203,7 +203,7 @@ auto EmitAggregateValueRepresentation(FunctionContext& context,
       // need this `insert_value` wrapping.
       return context.builder().CreateInsertValue(
           llvm::PoisonValue::get(context.GetType(value_rep.type_id)),
-          context.GetLocal(refs[0]), {0});
+          context.GetValue(refs[0]), {0});
     }
 
     case SemIR::ValueRepresentation::Pointer: {
@@ -218,7 +218,7 @@ auto EmitAggregateValueRepresentation(FunctionContext& context,
       for (auto [i, ref] :
            llvm::enumerate(context.sem_ir().inst_blocks().Get(refs_id))) {
         context.builder().CreateStore(
-            context.GetLocal(ref),
+            context.GetValue(ref),
             context.builder().CreateStructGEP(llvm_value_rep_type, alloca, i));
       }
       return alloca;

@@ -24,36 +24,39 @@ namespace Carbon::Check {
 static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
                                          SemIR::InstId init_id)
     -> SemIR::InstId {
-  SemIR::Inst init = sem_ir.insts().Get(init_id);
-  switch (init.kind()) {
-    default:
-      CARBON_FATAL() << "Initialization from unexpected inst " << init;
+  while (true) {
+    SemIR::Inst init = sem_ir.insts().Get(init_id);
+    switch (init.kind()) {
+      default:
+        CARBON_FATAL() << "Initialization from unexpected inst " << init;
 
-    case SemIR::ClassInit::Kind:
-    case SemIR::StructInit::Kind:
-    case SemIR::TupleInit::Kind:
-      // TODO: Track a return slot for these initializers.
-      CARBON_FATAL() << init
-                     << " should be created with its return slot already "
-                        "filled in properly";
+      case SemIR::Converted::Kind:
+        init_id = init.As<SemIR::Converted>().result_id;
+        continue;
 
-    case SemIR::InitializeFrom::Kind: {
-      return init.As<SemIR::InitializeFrom>().dest_id;
-    }
+      case SemIR::ArrayInit::Kind:
+        return init.As<SemIR::ArrayInit>().dest_id;
 
-    case SemIR::Call::Kind: {
-      auto call = init.As<SemIR::Call>();
-      if (!SemIR::GetInitializingRepresentation(sem_ir, call.type_id)
-               .has_return_slot()) {
-        return SemIR::InstId::Invalid;
+      case SemIR::ClassInit::Kind:
+        return init.As<SemIR::ClassInit>().dest_id;
+
+      case SemIR::StructInit::Kind:
+        return init.As<SemIR::StructInit>().dest_id;
+
+      case SemIR::TupleInit::Kind:
+        return init.As<SemIR::TupleInit>().dest_id;
+
+      case SemIR::InitializeFrom::Kind:
+        return init.As<SemIR::InitializeFrom>().dest_id;
+
+      case SemIR::Call::Kind: {
+        auto call = init.As<SemIR::Call>();
+        if (!SemIR::GetInitializingRepresentation(sem_ir, call.type_id)
+                 .has_return_slot()) {
+          return SemIR::InstId::Invalid;
+        }
+        return sem_ir.inst_blocks().Get(call.args_id).back();
       }
-      return sem_ir.inst_blocks().Get(call.args_id).back();
-    }
-
-    case SemIR::ArrayInit::Kind: {
-      return sem_ir.inst_blocks()
-          .Get(init.As<SemIR::ArrayInit>().inits_and_return_slot_id)
-          .back();
     }
   }
 }
@@ -302,14 +305,12 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
     inits.push_back(init_id);
   }
 
-  // The last element of the refs block contains the return slot for the array
-  // initialization. Flush the temporary here if we didn't insert it earlier.
+  // Flush the temporary here if we didn't insert it earlier, so we can add a
+  // reference to the return slot.
   target_block->InsertHere();
-  inits.push_back(return_slot_id);
-
   return context.AddInst(SemIR::ArrayInit{value.parse_node(), target.type_id,
-                                          value_id,
-                                          sem_ir.inst_blocks().Add(inits)});
+                                          sem_ir.inst_blocks().Add(inits),
+                                          return_slot_id});
 }
 
 // Performs a conversion from a tuple to a tuple type. This function only
@@ -378,12 +379,14 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     new_block.Set(i, init_id);
   }
 
-  return is_init ? context.AddInst(SemIR::TupleInit{value.parse_node(),
-                                                    target.type_id, value_id,
-                                                    new_block.id()})
-                 : context.AddInst(SemIR::TupleValue{value.parse_node(),
-                                                     target.type_id, value_id,
-                                                     new_block.id()});
+  if (is_init) {
+    target.init_block->InsertHere();
+    return context.AddInst(SemIR::TupleInit{value.parse_node(), target.type_id,
+                                            new_block.id(), target.init_id});
+  } else {
+    return context.AddInst(
+        SemIR::TupleValue{value.parse_node(), target.type_id, new_block.id()});
+  }
 }
 
 // Common implementation for ConvertStructToStruct and ConvertStructToClass.
@@ -502,16 +505,18 @@ static auto ConvertStructToStructOrClass(Context& context,
   }
 
   if (is_class) {
+    target.init_block->InsertHere();
     CARBON_CHECK(is_init)
         << "Converting directly to a class value is not supported";
     return context.AddInst(SemIR::ClassInit{value.parse_node(), target.type_id,
-                                            value_id, new_block.id()});
+                                            new_block.id(), target.init_id});
   } else if (is_init) {
+    target.init_block->InsertHere();
     return context.AddInst(SemIR::StructInit{value.parse_node(), target.type_id,
-                                             value_id, new_block.id()});
+                                             new_block.id(), target.init_id});
   } else {
-    return context.AddInst(SemIR::StructValue{
-        value.parse_node(), target.type_id, value_id, new_block.id()});
+    return context.AddInst(
+        SemIR::StructValue{value.parse_node(), target.type_id, new_block.id()});
   }
 }
 
@@ -823,6 +828,12 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
                sem_ir.StringifyType(target.type_id))
         .Emit();
     return SemIR::InstId::BuiltinError;
+  }
+
+  // Track that we performed a type conversion, if we did so.
+  if (orig_expr_id != expr_id) {
+    expr_id = context.AddInst(SemIR::Converted{
+        expr.parse_node(), target.type_id, orig_expr_id, expr_id});
   }
 
   // For `as`, don't perform any value category conversions. In particular, an

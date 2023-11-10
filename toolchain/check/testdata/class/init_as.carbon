@@ -48,9 +48,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_26.4: init i32 = initialize_from %.loc13_17 to %.loc13_26.3
 // CHECK:STDOUT:   %.loc13_26.5: ref i32 = class_field_access %.loc13_26.2, member1
 // CHECK:STDOUT:   %.loc13_26.6: init i32 = initialize_from %.loc13_25 to %.loc13_26.5
-// CHECK:STDOUT:   %.loc13_26.7: init Class = class_init %.loc13_26.1, (%.loc13_26.4, %.loc13_26.6)
+// CHECK:STDOUT:   %.loc13_26.7: init Class = class_init (%.loc13_26.4, %.loc13_26.6), %.loc13_26.2
 // CHECK:STDOUT:   %.loc13_26.8: ref Class = temporary %.loc13_26.2, %.loc13_26.7
-// CHECK:STDOUT:   %.loc13_37.1: ref i32 = class_field_access %.loc13_26.8, member0
+// CHECK:STDOUT:   %.loc13_26.9: ref Class = converted %.loc13_26.1, %.loc13_26.8
+// CHECK:STDOUT:   %.loc13_37.1: ref i32 = class_field_access %.loc13_26.9, member0
 // CHECK:STDOUT:   %.loc13_37.2: i32 = bind_value %.loc13_37.1
 // CHECK:STDOUT:   return %.loc13_37.2
 // CHECK:STDOUT: }

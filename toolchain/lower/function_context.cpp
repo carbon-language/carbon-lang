@@ -78,18 +78,6 @@ auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
   return synthetic_block_;
 }
 
-auto FunctionContext::GetLocalOrGlobal(SemIR::InstId inst_id) -> llvm::Value* {
-  auto target = sem_ir().insts().Get(inst_id);
-  if (auto function_decl = target.TryAs<SemIR::FunctionDeclaration>()) {
-    return GetFunction(function_decl->function_id);
-  }
-  if (auto class_type = target.TryAs<SemIR::ClassType>()) {
-    return GetTypeAsValue();
-  }
-  // TODO: Handle other kinds of name references to globals.
-  return GetLocal(inst_id);
-}
-
 auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
                                            SemIR::InstId dest_id,
                                            SemIR::InstId source_id) -> void {
@@ -112,7 +100,7 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
     case SemIR::ValueRepresentation::None:
       break;
     case SemIR::ValueRepresentation::Copy:
-      builder().CreateStore(GetLocal(source_id), GetLocal(dest_id));
+      builder().CreateStore(GetValue(source_id), GetValue(dest_id));
       break;
     case SemIR::ValueRepresentation::Pointer: {
       const auto& layout = llvm_module().getDataLayout();
@@ -123,7 +111,7 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
 
       // TODO: Attach !tbaa.struct metadata indicating which portions of the
       // type we actually need to copy and which are padding.
-      builder().CreateMemCpy(GetLocal(dest_id), align, GetLocal(source_id),
+      builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id),
                              align, layout.getTypeAllocSize(type));
       break;
     }

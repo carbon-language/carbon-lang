@@ -42,7 +42,8 @@ fn Main() {
 // CHECK:STDOUT:   %a.ref.loc9: ref i32 = name_reference a, %a
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 9
 // CHECK:STDOUT:   assign %a.ref.loc9, %.loc9
-// CHECK:STDOUT:   %.loc11_19: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc11_19.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%.loc11_19.2
 // CHECK:STDOUT:   %b.var: ref (i32, i32) = var b
 // CHECK:STDOUT:   %b: ref (i32, i32) = bind_name b, %b.var
 // CHECK:STDOUT:   %.loc11_24: i32 = int_literal 1
@@ -52,8 +53,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_28.3: init i32 = initialize_from %.loc11_24 to %.loc11_28.2
 // CHECK:STDOUT:   %.loc11_28.4: ref i32 = tuple_access %b.var, member1
 // CHECK:STDOUT:   %.loc11_28.5: init i32 = initialize_from %.loc11_27 to %.loc11_28.4
-// CHECK:STDOUT:   %.loc11_28.6: init (i32, i32) = tuple_init %.loc11_28.1, (%.loc11_28.3, %.loc11_28.5)
-// CHECK:STDOUT:   assign %b.var, %.loc11_28.6
+// CHECK:STDOUT:   %.loc11_28.6: init (i32, i32) = tuple_init (%.loc11_28.3, %.loc11_28.5) to %b.var
+// CHECK:STDOUT:   %.loc11_28.7: init (i32, i32) = converted %.loc11_28.1, %.loc11_28.6
+// CHECK:STDOUT:   assign %b.var, %.loc11_28.7
 // CHECK:STDOUT:   %b.ref.loc12: ref (i32, i32) = name_reference b, %b
 // CHECK:STDOUT:   %.loc12_5: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc12_6: ref i32 = tuple_index %b.ref.loc12, %.loc12_5
@@ -74,8 +76,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_46.3: init i32 = initialize_from %.loc15_37 to %.loc15_46.2
 // CHECK:STDOUT:   %.loc15_46.4: ref i32 = struct_access %c.var, member1
 // CHECK:STDOUT:   %.loc15_46.5: init i32 = initialize_from %.loc15_45 to %.loc15_46.4
-// CHECK:STDOUT:   %.loc15_46.6: init {.a: i32, .b: i32} = struct_init %.loc15_46.1, (%.loc15_46.3, %.loc15_46.5)
-// CHECK:STDOUT:   assign %c.var, %.loc15_46.6
+// CHECK:STDOUT:   %.loc15_46.6: init {.a: i32, .b: i32} = struct_init (%.loc15_46.3, %.loc15_46.5) to %c.var
+// CHECK:STDOUT:   %.loc15_46.7: init {.a: i32, .b: i32} = converted %.loc15_46.1, %.loc15_46.6
+// CHECK:STDOUT:   assign %c.var, %.loc15_46.7
 // CHECK:STDOUT:   %c.ref.loc16: ref {.a: i32, .b: i32} = name_reference c, %c
 // CHECK:STDOUT:   %.loc16_4: ref i32 = struct_access %c.ref.loc16, member0
 // CHECK:STDOUT:   %.loc16_9: i32 = int_literal 3
