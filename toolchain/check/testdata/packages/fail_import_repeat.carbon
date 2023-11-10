@@ -15,18 +15,18 @@ package Api library "lib" api;
 // --- import_api.carbon
 
 import Api;
-// CHECK:STDERR: import_api.carbon:[[@LINE+6]]:1: ERROR: Import matches an earlier import
+// CHECK:STDERR: import_api.carbon:[[@LINE+6]]:1: ERROR: Library is imported more than once.
 // CHECK:STDERR: import Api;
 // CHECK:STDERR: ^
-// CHECK:STDERR: import_api.carbon:[[@LINE-4]]:1: First imported here
+// CHECK:STDERR: import_api.carbon:[[@LINE-4]]:1: First imported here.
 // CHECK:STDERR: import Api;
 // CHECK:STDERR: ^
 import Api;
 import Api library "lib";
-// CHECK:STDERR: import_api.carbon:[[@LINE+6]]:1: ERROR: Import matches an earlier import
+// CHECK:STDERR: import_api.carbon:[[@LINE+6]]:1: ERROR: Library is imported more than once.
 // CHECK:STDERR: import Api library "lib";
 // CHECK:STDERR: ^
-// CHECK:STDERR: import_api.carbon:[[@LINE-4]]:1: First imported here
+// CHECK:STDERR: import_api.carbon:[[@LINE-4]]:1: First imported here.
 // CHECK:STDERR: import Api library "lib";
 // CHECK:STDERR: ^
 import Api library "lib";

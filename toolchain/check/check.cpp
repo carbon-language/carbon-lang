@@ -95,9 +95,12 @@ static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
 #endif
 }
 
+// The package and library names, used as map keys
+using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
+
 // Returns a key form of the package object.
-static auto PackageKey(UnitInfo& unit_info, Parse::Tree::Package package)
-    -> std::pair<llvm::StringRef, llvm::StringRef> {
+static auto GetImportKey(UnitInfo& unit_info, Parse::Tree::Package package)
+    -> ImportKey {
   auto* stores = unit_info.unit->value_stores;
   return {package.package_id.is_valid()
               ? stores->identifiers().Get(package.package_id)
@@ -109,24 +112,22 @@ static auto PackageKey(UnitInfo& unit_info, Parse::Tree::Package package)
 
 static constexpr llvm::StringLiteral ExplicitMainName = "Main";
 
-// Marks an import as required on both the source and target file. seen_imports
-// is optional, and will be omitted for implicit imports (which are disallowed
-// when explicit).
+// Marks an import as required on both the source and target file.
+// TODO: When importing without a package name is supported, check that it's
+// used correctly.
 static auto TrackImport(
-    llvm::DenseMap<std::pair<llvm::StringRef, llvm::StringRef>, UnitInfo*>&
-        api_map,
-    llvm::DenseMap<std::pair<llvm::StringRef, llvm::StringRef>, Parse::Node>*
-        explicit_import_map,
+    llvm::DenseMap<ImportKey, UnitInfo*>& api_map,
+    llvm::DenseMap<ImportKey, Parse::Node>* explicit_import_map,
     UnitInfo& unit_info, Parse::Tree::Package import) -> void {
-  auto package_key = PackageKey(unit_info, import);
+  auto package_key = GetImportKey(unit_info, import);
 
   // Specialize the error for imports from `Main`.
   if (package_key.first == ExplicitMainName) {
     // Implicit imports will have already warned.
     if (explicit_import_map) {
-      CARBON_DIAGNOSTIC(ImportMainPackage, Error,
-                        "The `Main` package cannot be mentioned explicitly on "
-                        "imports; it can only be imported implicitly");
+      CARBON_DIAGNOSTIC(
+          ImportMainPackage, Error,
+          "Cannot import the `Main` package from another package.");
       unit_info.emitter.Emit(import.node, ImportMainPackage);
     }
     return;
@@ -138,8 +139,8 @@ static auto TrackImport(
             explicit_import_map->insert({package_key, import.node});
         !success) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
-                        "Import matches an earlier import");
-      CARBON_DIAGNOSTIC(FirstImported, Note, "First imported here");
+                        "Library is imported more than once.");
+      CARBON_DIAGNOSTIC(FirstImported, Note, "First imported here.");
       unit_info.emitter.Build(import.node, RepeatedImport)
           .Note(insert_it->second, FirstImported)
           .Emit();
@@ -153,8 +154,8 @@ static auto TrackImport(
         import.library_id == package_directive->package.library_id) {
       CARBON_DIAGNOSTIC(ExplicitImportApi, Error,
                         "The `impl` for a library implicitly imports the `api` "
-                        "and must not do so explicitly");
-      CARBON_DIAGNOSTIC(ImportSelf, Error, "A file must not import itself");
+                        "and must not do so explicitly.");
+      CARBON_DIAGNOSTIC(ImportSelf, Error, "A file must not import itself.");
       unit_info.emitter.Emit(import.node, package_directive->api_or_impl ==
                                                   Parse::Tree::ApiOrImpl::Impl
                                               ? ExplicitImportApi
@@ -168,8 +169,9 @@ static auto TrackImport(
     ++unit_info.imports_remaining;
     api->second->incoming_imports.push_back(&unit_info);
   } else {
-    CARBON_DIAGNOSTIC(LibraryApiNotFound, Error, "Corresponding API not found");
-    CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API not found");
+    CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
+                      "Corresponding API not found.");
+    CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API not found.");
     unit_info.emitter.Emit(
         import.node, explicit_import_map ? ImportNotFound : LibraryApiNotFound);
   }
@@ -189,27 +191,24 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
   }
 
   // Create a map of APIs which might be imported.
-  llvm::DenseMap<std::pair<llvm::StringRef, llvm::StringRef>, UnitInfo*>
-      api_map;
+  llvm::DenseMap<ImportKey, UnitInfo*> api_map;
   for (auto& unit_info : unit_infos) {
     const auto& package = unit_info.unit->parse_tree->package();
     if (package) {
-      auto package_key = PackageKey(unit_info, package->package);
+      auto package_key = GetImportKey(unit_info, package->package);
       // Catch explicit `Main` errors before they become marked as possible
       // APIs.
       if (package_key.first == ExplicitMainName) {
         if (package_key.second.empty()) {
-          CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
-                            "The `Main` package is implicit and not allowed in "
-                            "the `package` directive");
+          CARBON_DIAGNOSTIC(
+              ExplicitMainPackage, Error,
+              "Omit the `package` directive to define the `Main` package.");
           unit_info.emitter.Emit(package->package.node, ExplicitMainPackage);
         } else {
           CARBON_DIAGNOSTIC(ExplicitMainLibrary, Error,
-                            "The `Main` package is implicit; libraries should "
-                            "omit `package Main`",
-                            std::string);
-          unit_info.emitter.Emit(package->package.node, ExplicitMainLibrary,
-                                 package_key.second.str());
+                            "Use the `library` directive to define libraries "
+                            "in the `Main` package.");
+          unit_info.emitter.Emit(package->package.node, ExplicitMainLibrary);
         }
         continue;
       }
@@ -222,7 +221,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
       if (!success) {
         // TODO: Cross-reference the source, deal with library, etc.
         CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
-                          "Multiple files declare the same library's API");
+                          "Multiple files declare the same library's API.");
         unit_info.emitter.Emit(package->package.node, DuplicateLibraryApi);
       }
     }
@@ -239,12 +238,12 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
       TrackImport(api_map, nullptr, unit_info, package->package);
     }
 
-    llvm::DenseMap<std::pair<llvm::StringRef, llvm::StringRef>, Parse::Node>
-        explicit_import_map;
+    llvm::DenseMap<ImportKey, Parse::Node> explicit_import_map;
     for (const auto& import : unit_info.unit->parse_tree->imports()) {
       TrackImport(api_map, &explicit_import_map, unit_info, import);
     }
 
+    // If there were no imports, mark the file as ready to check for below.
     if (unit_info.imports_remaining == 0) {
       ready_to_check.push_back(&unit_info);
     }
@@ -279,9 +278,9 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
           if (*import_unit->sem_ir) {
             ++import_it;
           } else {
-            CARBON_DIAGNOSTIC(
-                ImportCycleDetected, Error,
-                "Import is part of a cycle which could not be resolved");
+            CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
+                              "Import is part of a cycle. The cycle must be "
+                              "fixed before the import can be used.");
             unit_info.emitter.Emit(import_it->first, ImportCycleDetected);
             import_it = unit_info.imports.erase(import_it);
           }

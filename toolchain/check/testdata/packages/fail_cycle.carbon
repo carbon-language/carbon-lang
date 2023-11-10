@@ -8,7 +8,7 @@
 
 package A api;
 
-// CHECK:STDERR: a.carbon:[[@LINE+3]]:1: ERROR: Import is part of a cycle which could not be resolved
+// CHECK:STDERR: a.carbon:[[@LINE+3]]:1: ERROR: Import is part of a cycle. The cycle must be fixed before the import can be used.
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^
 import B;
@@ -17,7 +17,7 @@ import B;
 
 package B api;
 
-// CHECK:STDERR: b.carbon:[[@LINE+3]]:1: ERROR: Import is part of a cycle which could not be resolved
+// CHECK:STDERR: b.carbon:[[@LINE+3]]:1: ERROR: Import is part of a cycle. The cycle must be fixed before the import can be used.
 // CHECK:STDERR: import C;
 // CHECK:STDERR: ^
 import C;
@@ -26,16 +26,23 @@ import C;
 
 package C api;
 
-// CHECK:STDERR: c.carbon:[[@LINE+3]]:1: ERROR: Import is part of a cycle which could not be resolved
+// CHECK:STDERR: c.carbon:[[@LINE+3]]:1: ERROR: Import is part of a cycle. The cycle must be fixed before the import can be used.
 // CHECK:STDERR: import A;
 // CHECK:STDERR: ^
 import A;
+
+// --- c_impl.carbon
+
+// CHECK:STDERR: c_impl.carbon:[[@LINE+3]]:1: ERROR: Import is part of a cycle. The cycle must be fixed before the import can be used.
+// CHECK:STDERR: package C impl;
+// CHECK:STDERR: ^
+package C impl;
 
 // --- cycle_child.carbon
 
 package CycleChild api;
 
-// CHECK:STDERR: cycle_child.carbon:[[@LINE+3]]:1: ERROR: Import is part of a cycle which could not be resolved
+// CHECK:STDERR: cycle_child.carbon:[[@LINE+3]]:1: ERROR: Import is part of a cycle. The cycle must be fixed before the import can be used.
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^
 import B;
@@ -45,6 +52,8 @@ import B;
 // CHECK:STDOUT: file "b.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "c.carbon" {
+// CHECK:STDOUT: }
+// CHECK:STDOUT: file "c_impl.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "cycle_child.carbon" {
 // CHECK:STDOUT: }
