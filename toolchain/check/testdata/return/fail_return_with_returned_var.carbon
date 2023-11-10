@@ -73,8 +73,9 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc20_38.3: init i32 = initialize_from %.loc20_29 to %.loc20_38.2
 // CHECK:STDOUT:   %.loc20_38.4: ref i32 = class_field_access %return, member1
 // CHECK:STDOUT:   %.loc20_38.5: init i32 = initialize_from %.loc20_37 to %.loc20_38.4
-// CHECK:STDOUT:   %.loc20_38.6: init C = class_init %.loc20_38.1, (%.loc20_38.3, %.loc20_38.5)
-// CHECK:STDOUT:   assign %return, %.loc20_38.6
+// CHECK:STDOUT:   %.loc20_38.6: init C = class_init (%.loc20_38.3, %.loc20_38.5), %return
+// CHECK:STDOUT:   %.loc20_38.7: init C = converted %.loc20_38.1, %.loc20_38.6
+// CHECK:STDOUT:   assign %return, %.loc20_38.7
 // CHECK:STDOUT:   %c.ref: ref C = name_reference c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
