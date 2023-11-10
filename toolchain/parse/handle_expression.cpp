@@ -6,11 +6,11 @@
 
 namespace Carbon::Parse {
 
-static auto DiagnoseStatementOperatorAsSubexpr(Context& context) -> void {
-  CARBON_DIAGNOSTIC(StatementOperatorAsSubexpr, Error,
+static auto DiagnoseStatementOperatorAsSubExpr(Context& context) -> void {
+  CARBON_DIAGNOSTIC(StatementOperatorAsSubExpr, Error,
                     "Operator `{0}` can only be used as a complete statement.",
                     Lex::TokenKind);
-  context.emitter().Emit(*context.position(), StatementOperatorAsSubexpr,
+  context.emitter().Emit(*context.position(), StatementOperatorAsSubExpr,
                          context.PositionKind());
 }
 
@@ -37,7 +37,7 @@ auto HandleExpr(Context& context) -> void {
                                context.PositionKind());
       } else {
         // This operator wouldn't be allowed even if parenthesized.
-        DiagnoseStatementOperatorAsSubexpr(context);
+        DiagnoseStatementOperatorAsSubExpr(context);
       }
     } else {
       // Check that this operator follows the proper whitespace rules.
@@ -210,7 +210,7 @@ auto HandleExprLoop(Context& context) -> void {
       context.emitter().Emit(*context.position(), OperatorRequiresParentheses);
     } else {
       // This operator wouldn't be allowed even if parenthesized.
-      DiagnoseStatementOperatorAsSubexpr(context);
+      DiagnoseStatementOperatorAsSubExpr(context);
     }
     state.has_error = true;
   } else {
