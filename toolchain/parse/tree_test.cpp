@@ -13,6 +13,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
+#include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
@@ -36,8 +37,8 @@ class TreeTest : public ::testing::Test {
   }
 
   auto GetTokenizedBuffer(llvm::StringRef t) -> Lex::TokenizedBuffer& {
-    token_storage_.push_front(Lex::TokenizedBuffer::Lex(
-        value_stores_, GetSourceBuffer(t), consumer_));
+    token_storage_.push_front(
+        Lex::Lex(value_stores_, GetSourceBuffer(t), consumer_));
     return token_storage_.front();
   }
 

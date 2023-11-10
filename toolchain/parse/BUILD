@@ -74,6 +74,7 @@ cc_test(
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
+        "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/testing:yaml_test_helpers",
         "@com_google_googletest//:gtest",
@@ -92,7 +93,7 @@ cc_fuzz_test(
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
-        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/lex",
         "@llvm-project//llvm:Support",
     ],
 )

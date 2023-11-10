@@ -14,6 +14,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
+#include "toolchain/lex/lex.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
@@ -375,14 +376,14 @@ class LexerBenchHelper {
 
   auto Lex() -> TokenizedBuffer {
     DiagnosticConsumer& consumer = NullDiagnosticConsumer();
-    return TokenizedBuffer::Lex(value_stores_, source_, consumer);
+    return Lex::Lex(value_stores_, source_, consumer);
   }
 
   auto DiagnoseErrors() -> std::string {
     std::string result;
     llvm::raw_string_ostream out(result);
     StreamDiagnosticConsumer consumer(out);
-    auto buffer = TokenizedBuffer::Lex(value_stores_, source_, consumer);
+    auto buffer = Lex::Lex(value_stores_, source_, consumer);
     consumer.Flush();
     CARBON_CHECK(buffer.has_errors())
         << "Asked to diagnose errors but none found!";
