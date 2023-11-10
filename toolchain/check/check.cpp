@@ -224,7 +224,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     }
   }
 
-  // TODO: Detect self import, explicit import of api
+  // TODO: Detect self import.
   // Mark down imports for all files.
   llvm::SmallVector<UnitInfo*> ready_to_check;
   ready_to_check.reserve(units.size());
