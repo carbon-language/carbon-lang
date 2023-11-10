@@ -5,12 +5,12 @@
 // AUTOUPDATE
 
 class Class {
-  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: ERROR: `addr` can only be applied to a `self` parameter
+  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: ERROR: `addr` can only be applied to a `self` parameter.
   // CHECK:STDERR:   fn F[addr a: Class*]();
   // CHECK:STDERR:        ^
   fn F[addr a: Class*]();
 
-  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: ERROR: `addr` can only be applied to a `self` parameter
+  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: ERROR: `addr` can only be applied to a `self` parameter.
   // CHECK:STDERR:   fn G(addr b: Class*);
   // CHECK:STDERR:        ^
   fn G(addr b: Class*);
