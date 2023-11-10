@@ -13,9 +13,8 @@
 
 namespace Carbon::Lower {
 
-auto HandleClassDeclaration(FunctionContext& /*context*/,
-                            SemIR::InstId /*inst_id*/,
-                            SemIR::ClassDeclaration /*inst*/) -> void {
+auto HandleClassDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                     SemIR::ClassDecl /*inst*/) -> void {
   // No action to perform.
 }
 

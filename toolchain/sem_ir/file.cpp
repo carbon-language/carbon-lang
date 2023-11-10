@@ -196,13 +196,13 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case BranchIf::Kind:
     case BranchWithArg::Kind:
     case Call::Kind:
-    case ClassDeclaration::Kind:
+    case ClassDecl::Kind:
     case ClassFieldAccess::Kind:
     case ClassInit::Kind:
     case Converted::Kind:
     case Dereference::Kind:
     case Field::Kind:
-    case FunctionDeclaration::Kind:
+    case FunctionDecl::Kind:
     case InitializeFrom::Kind:
     case IntegerLiteral::Kind:
     case Namespace::Kind:
@@ -398,14 +398,14 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case BranchWithArg::Kind:
       case Builtin::Kind:
       case Call::Kind:
-      case ClassDeclaration::Kind:
+      case ClassDecl::Kind:
       case ClassFieldAccess::Kind:
       case ClassInit::Kind:
       case Converted::Kind:
       case CrossReference::Kind:
       case Dereference::Kind:
       case Field::Kind:
-      case FunctionDeclaration::Kind:
+      case FunctionDecl::Kind:
       case InitializeFrom::Kind:
       case IntegerLiteral::Kind:
       case Namespace::Kind:
@@ -470,9 +470,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
-      case ClassDeclaration::Kind:
+      case ClassDecl::Kind:
       case Field::Kind:
-      case FunctionDeclaration::Kind:
+      case FunctionDecl::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
       case Return::Kind:

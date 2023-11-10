@@ -31,7 +31,7 @@ interface Foo {
 // CHECK:STDOUT:         {kind: 'ParameterList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDeclaration', text: ';', subtree_size: 17},
+// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 17},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'Sub'},
 // CHECK:STDOUT:           {kind: 'ImplicitParameterListStart', text: '['},
@@ -48,7 +48,7 @@ interface Foo {
 // CHECK:STDOUT:         {kind: 'ParameterList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDeclaration', text: ';', subtree_size: 17},
+// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 38},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

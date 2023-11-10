@@ -21,6 +21,6 @@ var n: i8 = n* n;
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'n'},
 // CHECK:STDOUT:       {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', has_error: yes, subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

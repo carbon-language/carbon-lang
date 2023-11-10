@@ -26,6 +26,6 @@ var = (foo {})
 // CHECK:STDOUT:         {kind: 'ParenExprOrTupleLiteralStart', text: '('},
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'foo'},
 // CHECK:STDOUT:       {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: 'var', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: 'var', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

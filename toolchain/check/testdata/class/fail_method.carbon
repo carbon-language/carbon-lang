@@ -37,7 +37,7 @@ fn F(c: Class) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_method.carbon" {
-// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }

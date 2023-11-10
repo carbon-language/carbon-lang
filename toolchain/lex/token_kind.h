@@ -22,7 +22,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(TokenKind, uint8_t) {
 
 class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
  public:
-#define CARBON_TOKEN(TokenName) CARBON_ENUM_CONSTANT_DECLARATION(TokenName)
+#define CARBON_TOKEN(TokenName) CARBON_ENUM_CONSTANT_DECL(TokenName)
 #include "toolchain/lex/token_kind.def"
 
   // An array of all the keyword tokens.

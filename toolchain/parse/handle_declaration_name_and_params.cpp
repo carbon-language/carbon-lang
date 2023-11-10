@@ -6,8 +6,8 @@
 
 namespace Carbon::Parse {
 
-// Handles DeclarationNameAndParamsAs(Optional|Required).
-static auto HandleDeclarationNameAndParams(Context& context, State after_name)
+// Handles DeclNameAndParamsAs(Optional|Required).
+static auto HandleDeclNameAndParams(Context& context, State after_name)
     -> void {
   auto state = context.PopState();
 
@@ -18,16 +18,16 @@ static auto HandleDeclarationNameAndParams(Context& context, State after_name)
 
     if (context.PositionIs(Lex::TokenKind::Period)) {
       context.AddLeafNode(NodeKind::Name, *identifier);
-      state.state = State::PeriodAsDeclaration;
+      state.state = State::PeriodAsDecl;
       context.PushState(state);
     } else {
       context.AddLeafNode(NodeKind::Name, *identifier);
     }
   } else {
-    CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
+    CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
                       "`{0}` introducer should be followed by a name.",
                       Lex::TokenKind);
-    context.emitter().Emit(*context.position(), ExpectedDeclarationName,
+    context.emitter().Emit(*context.position(), ExpectedDeclName,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
@@ -35,19 +35,16 @@ static auto HandleDeclarationNameAndParams(Context& context, State after_name)
   }
 }
 
-auto HandleDeclarationNameAndParamsAsNone(Context& context) -> void {
-  HandleDeclarationNameAndParams(
-      context, State::DeclarationNameAndParamsAfterNameAsNone);
+auto HandleDeclNameAndParamsAsNone(Context& context) -> void {
+  HandleDeclNameAndParams(context, State::DeclNameAndParamsAfterNameAsNone);
 }
 
-auto HandleDeclarationNameAndParamsAsOptional(Context& context) -> void {
-  HandleDeclarationNameAndParams(
-      context, State::DeclarationNameAndParamsAfterNameAsOptional);
+auto HandleDeclNameAndParamsAsOptional(Context& context) -> void {
+  HandleDeclNameAndParams(context, State::DeclNameAndParamsAfterNameAsOptional);
 }
 
-auto HandleDeclarationNameAndParamsAsRequired(Context& context) -> void {
-  HandleDeclarationNameAndParams(
-      context, State::DeclarationNameAndParamsAfterNameAsRequired);
+auto HandleDeclNameAndParamsAsRequired(Context& context) -> void {
+  HandleDeclNameAndParams(context, State::DeclNameAndParamsAfterNameAsRequired);
 }
 
 enum class Params : int8_t {
@@ -56,14 +53,14 @@ enum class Params : int8_t {
   Required,
 };
 
-static auto HandleDeclarationNameAndParamsAfterName(Context& context,
-                                                    Params params) -> void {
+static auto HandleDeclNameAndParamsAfterName(Context& context, Params params)
+    -> void {
   auto state = context.PopState();
 
   if (context.PositionIs(Lex::TokenKind::Period)) {
     // Continue designator processing.
     context.PushState(state);
-    state.state = State::PeriodAsDeclaration;
+    state.state = State::PeriodAsDecl;
     context.PushState(state);
     return;
   }
@@ -73,7 +70,7 @@ static auto HandleDeclarationNameAndParamsAfterName(Context& context,
   //
   //   fn Class(T:! type).AnotherClass(U:! type).Function(v: T) {}
   //
-  // We should retain a `DeclarationNameAndParams...` state on the stack in all
+  // We should retain a `DeclNameAndParams...` state on the stack in all
   // cases below to check for a period after a parameter list, which indicates
   // that we've not finished parsing the declaration name.
 
@@ -82,7 +79,7 @@ static auto HandleDeclarationNameAndParamsAfterName(Context& context,
   }
 
   if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
-    context.PushState(State::DeclarationNameAndParamsAfterImplicit);
+    context.PushState(State::DeclNameAndParamsAfterImplicit);
     context.PushState(State::ParameterListAsImplicit);
   } else if (context.PositionIs(Lex::TokenKind::OpenParen)) {
     context.PushState(State::ParameterListAsRegular);
@@ -95,21 +92,19 @@ static auto HandleDeclarationNameAndParamsAfterName(Context& context,
   }
 }
 
-auto HandleDeclarationNameAndParamsAfterNameAsNone(Context& context) -> void {
-  HandleDeclarationNameAndParamsAfterName(context, Params::None);
+auto HandleDeclNameAndParamsAfterNameAsNone(Context& context) -> void {
+  HandleDeclNameAndParamsAfterName(context, Params::None);
 }
 
-auto HandleDeclarationNameAndParamsAfterNameAsOptional(Context& context)
-    -> void {
-  HandleDeclarationNameAndParamsAfterName(context, Params::Optional);
+auto HandleDeclNameAndParamsAfterNameAsOptional(Context& context) -> void {
+  HandleDeclNameAndParamsAfterName(context, Params::Optional);
 }
 
-auto HandleDeclarationNameAndParamsAfterNameAsRequired(Context& context)
-    -> void {
-  HandleDeclarationNameAndParamsAfterName(context, Params::Required);
+auto HandleDeclNameAndParamsAfterNameAsRequired(Context& context) -> void {
+  HandleDeclNameAndParamsAfterName(context, Params::Required);
 }
 
-auto HandleDeclarationNameAndParamsAfterImplicit(Context& context) -> void {
+auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   context.PopAndDiscardState();
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {

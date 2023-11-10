@@ -38,7 +38,7 @@ struct Function : public Printable<Function> {
   // The function name.
   NameId name_id;
   // The definition, if the function has been defined or is currently being
-  // defined. This is a FunctionDeclaration.
+  // defined. This is a FunctionDecl.
   InstId definition_id = InstId::Invalid;
   // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
@@ -76,12 +76,12 @@ struct Class : public Printable<Class> {
   NameId name_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
-  // The first declaration of the class. This is a ClassDeclaration.
-  InstId declaration_id = InstId::Invalid;
+  // The first declaration of the class. This is a ClassDecl.
+  InstId decl_id = InstId::Invalid;
 
   // The following members are set at the `{` of the class definition.
 
-  // The definition of the class. This is a ClassDeclaration.
+  // The definition of the class. This is a ClassDecl.
   InstId definition_id = InstId::Invalid;
   // The class scope.
   NameScopeId scope_id = NameScopeId::Invalid;

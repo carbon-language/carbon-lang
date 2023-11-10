@@ -429,9 +429,9 @@ class InstNamer {
           add_inst_name_id(inst.As<BindName>().name_id);
           continue;
         }
-        case FunctionDeclaration::Kind: {
+        case FunctionDecl::Kind: {
           add_inst_name_id(sem_ir_.functions()
-                               .Get(inst.As<FunctionDeclaration>().function_id)
+                               .Get(inst.As<FunctionDecl>().function_id)
                                .name_id);
           continue;
         }

@@ -326,7 +326,7 @@ class NodeStack {
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::ParameterListStart:
       case Parse::NodeKind::ParenExprOrTupleLiteralStart:
-      case Parse::NodeKind::QualifiedDeclaration:
+      case Parse::NodeKind::QualifiedDecl:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::SelfValueName:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:

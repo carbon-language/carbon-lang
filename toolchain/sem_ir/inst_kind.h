@@ -45,7 +45,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(InstKind, uint8_t) {
 
 class InstKind : public CARBON_ENUM_BASE(InstKind) {
  public:
-#define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 
   using EnumBase::Create;

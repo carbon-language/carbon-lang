@@ -21,6 +21,6 @@ var v: i32 = t[];
 // CHECK:STDOUT:         {kind: 'IndexExprStart', text: '[', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: ']', has_error: yes},
 // CHECK:STDOUT:       {kind: 'IndexExpr', text: ']', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

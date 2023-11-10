@@ -24,7 +24,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_nested_incomplete.carbon" {
-// CHECK:STDOUT:   class_declaration @Incomplete, ()
+// CHECK:STDOUT:   class_decl @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_reference Incomplete, %Incomplete
 // CHECK:STDOUT:   %.loc15: type = struct_type {.a: Incomplete}

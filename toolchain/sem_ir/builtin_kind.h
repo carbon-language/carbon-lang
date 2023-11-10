@@ -18,8 +18,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(BuiltinKind, uint8_t) {
 
 class BuiltinKind : public CARBON_ENUM_BASE(BuiltinKind) {
  public:
-#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
-  CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/builtin_kind.def"
 
   auto label() -> llvm::StringRef;

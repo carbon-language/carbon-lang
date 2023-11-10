@@ -17,6 +17,6 @@ fn foo(template a:! i32);
 // CHECK:STDOUT:           {kind: 'GenericPatternBinding', text: ':!', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'Template', text: 'template', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

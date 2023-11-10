@@ -41,7 +41,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariableDeclaration', text: ';', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'Literal', text: '1'},
 // CHECK:STDOUT:             {kind: 'ParenExprOrTupleLiteralStart', text: '('},
 // CHECK:STDOUT:             {kind: 'NameExpr', text: 'a'},

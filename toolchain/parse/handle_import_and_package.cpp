@@ -84,7 +84,7 @@ static auto HandleImportAndPackage(Context& context,
   }
 
   if (!context.PositionIs(Lex::TokenKind::Semi)) {
-    context.EmitExpectedDeclarationSemi(context.tokens().GetKind(state.token));
+    context.EmitExpectedDeclSemi(context.tokens().GetKind(state.token));
     ExitOnParseError(context, state, directive);
     return;
   }
@@ -110,22 +110,22 @@ auto HandleImport(Context& context) -> void {
                              /*expect_api_or_impl=*/false);
       break;
 
-    case Context::PackagingState::AfterNonPackagingDeclaration: {
+    case Context::PackagingState::AfterNonPackagingDecl: {
       context.set_packaging_state(
-          Context::PackagingState::InImportsAfterNonPackagingDeclaration);
+          Context::PackagingState::InImportsAfterNonPackagingDecl);
       CARBON_DIAGNOSTIC(
           ImportTooLate, Error,
           "`import` directives must come after the `package` directive (if "
           "present) and before any other entities in the file.");
-      CARBON_DIAGNOSTIC(FirstDeclaration, Note, "First declaration is here.");
+      CARBON_DIAGNOSTIC(FirstDecl, Note, "First declaration is here.");
       context.emitter()
           .Build(intro_token, ImportTooLate)
-          .Note(context.first_non_packaging_token(), FirstDeclaration)
+          .Note(context.first_non_packaging_token(), FirstDecl)
           .Emit();
       ExitOnParseError(context, state, NodeKind::ImportDirective);
       break;
     }
-    case Context::PackagingState::InImportsAfterNonPackagingDeclaration:
+    case Context::PackagingState::InImportsAfterNonPackagingDecl:
       // There is a sequential block of misplaced `import` statements, which can
       // occur if a declaration is added above `import`s. Avoid duplicate
       // warnings.

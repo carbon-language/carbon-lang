@@ -64,14 +64,13 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
-      auto enclosing_class_decl =
-          context.GetCurrentScopeAs<SemIR::ClassDeclaration>();
+      auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       if (!context.TryToCompleteType(cast_type_id, [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInVarDeclaration, Error,
+            CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
                               "{0} has incomplete type `{1}`.", llvm::StringRef,
                               std::string);
             return context.emitter().Build(
-                type_node_copy, IncompleteTypeInVarDeclaration,
+                type_node_copy, IncompleteTypeInVarDecl,
                 enclosing_class_decl ? "Field" : "Variable",
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
@@ -116,11 +115,11 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
     case Parse::NodeKind::LetIntroducer:
       if (!context.TryToCompleteType(cast_type_id, [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInLetDeclaration, Error,
+            CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
                               "`let` binding has incomplete type `{0}`.",
                               std::string);
             return context.emitter().Build(
-                type_node_copy, IncompleteTypeInLetDeclaration,
+                type_node_copy, IncompleteTypeInLetDecl,
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;

@@ -24,6 +24,6 @@ var n: i8 = F(i8 *, 0);
 // CHECK:STDOUT:         {kind: 'CallExprComma', text: ','},
 // CHECK:STDOUT:         {kind: 'Literal', text: '0'},
 // CHECK:STDOUT:       {kind: 'CallExpr', text: ')', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 13},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

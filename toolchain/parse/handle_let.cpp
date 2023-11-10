@@ -48,13 +48,13 @@ auto HandleLetFinish(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::Semi)) {
     end_token = context.Consume();
   } else {
-    context.EmitExpectedDeclarationSemi(Lex::TokenKind::Let);
+    context.EmitExpectedDeclSemi(Lex::TokenKind::Let);
     state.has_error = true;
     if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
       end_token = *semi_token;
     }
   }
-  context.AddNode(NodeKind::LetDeclaration, end_token, state.subtree_start,
+  context.AddNode(NodeKind::LetDecl, end_token, state.subtree_start,
                   state.has_error);
 }
 

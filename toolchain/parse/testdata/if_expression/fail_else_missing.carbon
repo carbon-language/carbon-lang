@@ -30,7 +30,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'IfExprThen', text: 'then', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:         {kind: 'IfExprElse', text: 'if', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'VariableDeclaration', text: ';', subtree_size: 12},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 12},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

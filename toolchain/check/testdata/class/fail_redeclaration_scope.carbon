@@ -26,17 +26,17 @@ class Y {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_redeclaration_scope.carbon" {
-// CHECK:STDOUT:   class_declaration @A.1, ()
+// CHECK:STDOUT:   class_decl @A.1, ()
 // CHECK:STDOUT:   %A: type = class_type @A.1
-// CHECK:STDOUT:   class_declaration @X, ()
+// CHECK:STDOUT:   class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
-// CHECK:STDOUT:   class_declaration @A.1, ()
-// CHECK:STDOUT:   class_declaration @Y, ()
+// CHECK:STDOUT:   class_decl @A.1, ()
+// CHECK:STDOUT:   class_decl @Y, ()
 // CHECK:STDOUT:   %Y: type = class_type @Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
-// CHECK:STDOUT:   class_declaration @B.2, ()
+// CHECK:STDOUT:   class_decl @B.2, ()
 // CHECK:STDOUT:   %B: type = class_type @B.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -44,16 +44,16 @@ class Y {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   class_declaration @A.2, ()
+// CHECK:STDOUT:   class_decl @A.2, ()
 // CHECK:STDOUT:   %A: type = class_type @A.2
-// CHECK:STDOUT:   class_declaration @B.1, ()
+// CHECK:STDOUT:   class_decl @B.1, ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = <unexpected instref inst+4>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
-// CHECK:STDOUT:   class_declaration @B.1, ()
+// CHECK:STDOUT:   class_decl @B.1, ()
 // CHECK:STDOUT:   %B: type = class_type @B.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -68,7 +68,7 @@ class Y {
 // CHECK:STDOUT: class @B.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
-// CHECK:STDOUT:   class_declaration @.1, ()
+// CHECK:STDOUT:   class_decl @.1, ()
 // CHECK:STDOUT:   %.loc21: type = class_type @.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

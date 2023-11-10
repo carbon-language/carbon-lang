@@ -43,7 +43,7 @@ static auto GetExprValueForLookupResult(Context& context,
     -> SemIR::InstId {
   // If lookup finds a class declaration, the value is its `Self` type.
   auto lookup_result = context.insts().Get(lookup_result_id);
-  if (auto class_decl = lookup_result.TryAs<SemIR::ClassDeclaration>()) {
+  if (auto class_decl = lookup_result.TryAs<SemIR::ClassDecl>()) {
     return context.sem_ir().GetTypeAllowBuiltinTypes(
         context.classes().Get(class_decl->class_id).self_type_id);
   }
@@ -148,9 +148,8 @@ auto HandleMemberAccessExpr(Context& context, Parse::Node parse_node) -> bool {
         CARBON_CHECK(function_name_id.is_valid())
             << "Non-constant value " << context.insts().Get(member_id)
             << " of function type";
-        auto function_decl = context.insts()
-                                 .Get(function_name_id)
-                                 .TryAs<SemIR::FunctionDeclaration>();
+        auto function_decl =
+            context.insts().Get(function_name_id).TryAs<SemIR::FunctionDecl>();
         CARBON_CHECK(function_decl)
             << "Unexpected value " << context.insts().Get(function_name_id)
             << " of function type";
@@ -242,25 +241,24 @@ auto HandleNameExpr(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleQualifiedDecl(Context& context, Parse::Node parse_node) -> bool {
   auto [parse_node2, name_id2] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
   Parse::Node parse_node1 = context.node_stack().PeekParseNode();
   switch (context.parse_tree().node_kind(parse_node1)) {
-    case Parse::NodeKind::QualifiedDeclaration:
-      // This is the second or subsequent QualifiedDeclaration in a chain.
-      // Nothing to do: the first QualifiedDeclaration remains as a
-      // bracketing node for later QualifiedDeclarations.
+    case Parse::NodeKind::QualifiedDecl:
+      // This is the second or subsequent QualifiedDecl in a chain.
+      // Nothing to do: the first QualifiedDecl remains as a
+      // bracketing node for later QualifiedDecls.
       break;
 
     case Parse::NodeKind::Name: {
-      // This is the first QualifiedDeclaration in a chain, and starts with a
+      // This is the first QualifiedDecl in a chain, and starts with a
       // name.
       auto name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
-      context.declaration_name_stack().ApplyNameQualifier(parse_node1, name_id);
-      // Add the QualifiedDeclaration so that it can be used for bracketing.
+      context.decl_name_stack().ApplyNameQualifier(parse_node1, name_id);
+      // Add the QualifiedDecl so that it can be used for bracketing.
       context.node_stack().Push(parse_node);
       break;
     }
@@ -270,7 +268,7 @@ auto HandleQualifiedDeclaration(Context& context, Parse::Node parse_node)
                         "declaration name";
   }
 
-  context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
+  context.decl_name_stack().ApplyNameQualifier(parse_node2, name_id2);
   return true;
 }
 

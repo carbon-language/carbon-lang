@@ -98,9 +98,9 @@ auto HandleStatementForHeader(Context& context) -> void {
     context.PushState(state);
     context.PushState(State::VarAsFor);
   } else {
-    CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
+    CARBON_DIAGNOSTIC(ExpectedVariableDecl, Error,
                       "Expected `var` declaration.");
-    context.emitter().Emit(*context.position(), ExpectedVariableDeclaration);
+    context.emitter().Emit(*context.position(), ExpectedVariableDecl);
 
     if (auto next_in = context.FindNextOf({Lex::TokenKind::In})) {
       context.SkipTo(*next_in);

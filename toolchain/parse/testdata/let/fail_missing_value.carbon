@@ -23,7 +23,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'LetDeclaration', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},
@@ -33,7 +33,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'Name', text: 'b'},
 // CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'LetDeclaration', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

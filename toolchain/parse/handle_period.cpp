@@ -41,8 +41,8 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   context.AddNode(node_kind, dot, state.subtree_start, state.has_error);
 }
 
-auto HandlePeriodAsDeclaration(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::QualifiedDeclaration,
+auto HandlePeriodAsDecl(Context& context) -> void {
+  HandlePeriodOrArrow(context, NodeKind::QualifiedDecl,
                       /*is_arrow=*/false);
 }
 

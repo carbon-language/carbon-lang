@@ -21,7 +21,7 @@ package B api;
 // CHECK:STDOUT:       {kind: 'Name', text: 'A'},
 // CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

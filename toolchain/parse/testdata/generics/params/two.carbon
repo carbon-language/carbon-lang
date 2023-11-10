@@ -22,7 +22,7 @@ interface Bar(a: i32, b: i32) {}
 // CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'ClassDeclaration', text: ';', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 12},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'Bar'},
 // CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},
