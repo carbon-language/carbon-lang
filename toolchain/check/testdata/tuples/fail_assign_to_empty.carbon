@@ -9,10 +9,15 @@
 // CHECK:STDERR:                 ^
 var x: () = (66);
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_assign_to_empty.carbon" {
-// CHECK:STDOUT:   %.loc10_9.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_9.2: () = tuple_literal ()
-// CHECK:STDOUT:   %x: ref () = var "x"
+// CHECK:STDOUT:   %.loc10_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.loc10
+// CHECK:STDOUT:   %x.var: ref () = var x
+// CHECK:STDOUT:   %x: ref () = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }

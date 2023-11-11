@@ -82,37 +82,61 @@ BENCHMARK(BM_IncompleteWithEscapes_Multiline);
 BENCHMARK(BM_IncompleteWithEscapes_MultilineDoubleQuote);
 BENCHMARK(BM_IncompleteWithEscapes_Raw);
 
-static void BM_SimpleStringValue(benchmark::State& state,
-                                 std::string_view introducer,
+static void BM_SimpleStringValue(benchmark::State& state, int size,
+                                 std::string_view introducer, bool add_escape,
                                  std::string_view terminator) {
+  llvm::BumpPtrAllocator allocator;
   std::string x(introducer);
-  x.append(100000, 'a');
+  x.append(size, 'a');
+  if (add_escape) {
+    // Adds a basic escape that forces ComputeValue to generate a new string.
+    x.append("\\\\");
+  }
   x.append(terminator);
   for (auto _ : state) {
-    StringLiteral::Lex(x)->ComputeValue(NullDiagnosticEmitter<const char*>());
+    StringLiteral::Lex(x)->ComputeValue(allocator,
+                                        NullDiagnosticEmitter<const char*>());
   }
 }
 
-static void BM_SimpleStringValue_Simple(benchmark::State& state) {
-  BM_SimpleStringValue(state, "\"", "\"");
+static void BM_ComputeValue_NoGenerate_Short(benchmark::State& state) {
+  BM_SimpleStringValue(state, 10, "\"", /*add_escape=*/false, "\"");
 }
 
-static void BM_SimpleStringValue_Multiline(benchmark::State& state) {
-  BM_SimpleStringValue(state, "'''\n", "\n'''");
+static void BM_ComputeValue_NoGenerate_Long(benchmark::State& state) {
+  BM_SimpleStringValue(state, 10000, "\"", /*add_escape=*/false, "\"");
 }
 
-static void BM_SimpleStringValue_MultilineDoubleQuote(benchmark::State& state) {
-  BM_SimpleStringValue(state, "\"\"\"\n", "\n\"\"\"");
+static void BM_ComputeValue_WillGenerate_Short(benchmark::State& state) {
+  BM_SimpleStringValue(state, 10, "\"", /*add_escape=*/true, "\"");
 }
 
-static void BM_SimpleStringValue_Raw(benchmark::State& state) {
-  BM_SimpleStringValue(state, "#\"", "\"#");
+static void BM_ComputeValue_WillGenerate_Long(benchmark::State& state) {
+  BM_SimpleStringValue(state, 10000, "\"", /*add_escape=*/true, "\"");
 }
 
-BENCHMARK(BM_SimpleStringValue_Simple);
-BENCHMARK(BM_SimpleStringValue_Multiline);
-BENCHMARK(BM_SimpleStringValue_MultilineDoubleQuote);
-BENCHMARK(BM_SimpleStringValue_Raw);
+static void BM_ComputeValue_WillGenerate_Multiline(benchmark::State& state) {
+  BM_SimpleStringValue(state, 10000, "'''\n", /*add_escape=*/true, "\n'''");
+}
+
+static void BM_ComputeValue_WillGenerate_MultilineDoubleQuote(
+    benchmark::State& state) {
+  BM_SimpleStringValue(state, 10000, "\"\"\"\n", /*add_escape=*/true,
+                       "\n\"\"\"");
+}
+
+static void BM_ComputeValue_WillGenerate_Raw(benchmark::State& state) {
+  BM_SimpleStringValue(state, 10000, "#\"", /*add_escape=*/true, "\"#");
+}
+
+BENCHMARK(BM_ComputeValue_NoGenerate_Short);
+BENCHMARK(BM_ComputeValue_NoGenerate_Long);
+
+BENCHMARK(BM_ComputeValue_WillGenerate_Short);
+BENCHMARK(BM_ComputeValue_WillGenerate_Long);
+BENCHMARK(BM_ComputeValue_WillGenerate_Multiline);
+BENCHMARK(BM_ComputeValue_WillGenerate_MultilineDoubleQuote);
+BENCHMARK(BM_ComputeValue_WillGenerate_Raw);
 
 }  // namespace
 }  // namespace Carbon::Lex

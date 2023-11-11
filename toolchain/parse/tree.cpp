@@ -29,13 +29,7 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   context.AddLeafNode(NodeKind::FileStart,
                       context.ConsumeChecked(Lex::TokenKind::StartOfFile));
 
-  context.PushState(State::DeclarationScopeLoop);
-
-  // The package should always be the first token, if it's present. Any other
-  // use is invalid.
-  if (context.PositionIs(Lex::TokenKind::Package)) {
-    context.PushState(State::Package);
-  }
+  context.PushState(State::DeclScopeLoop);
 
   while (!context.state_stack().empty()) {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.

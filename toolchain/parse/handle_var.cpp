@@ -6,22 +6,44 @@
 
 namespace Carbon::Parse {
 
-// Handles VarAs(Semicolon|For).
-static auto HandleVar(Context& context, State finish_state) -> void {
-  context.PopAndDiscardState();
+// Handles VarAs(Decl|For).
+static auto HandleVar(Context& context, State finish_state,
+                      Lex::Token returned_token = Lex::Token::Invalid) -> void {
+  auto state = context.PopState();
 
-  // These will start at the `var`.
-  context.PushState(finish_state);
+  // The finished variable declaration will start at the `var` or `returned`.
+  state.state = finish_state;
+  context.PushState(state);
+
   context.PushState(State::VarAfterPattern);
 
   context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
+  if (returned_token.is_valid()) {
+    context.AddLeafNode(NodeKind::ReturnedSpecifier, returned_token);
+  }
 
-  // This will start at the pattern.
   context.PushState(State::PatternAsVariable);
 }
 
-auto HandleVarAsSemicolon(Context& context) -> void {
-  HandleVar(context, State::VarFinishAsSemicolon);
+auto HandleVarAsDecl(Context& context) -> void {
+  HandleVar(context, State::VarFinishAsDecl);
+}
+
+auto HandleVarAsReturned(Context& context) -> void {
+  auto returned_token = context.Consume();
+
+  if (!context.PositionIs(Lex::TokenKind::Var)) {
+    CARBON_DIAGNOSTIC(ExpectedVarAfterReturned, Error,
+                      "Expected `var` after `returned`.");
+    context.emitter().Emit(*context.position(), ExpectedVarAfterReturned);
+    auto semi = context.SkipPastLikelyEnd(returned_token);
+    context.AddLeafNode(NodeKind::EmptyDecl, semi ? *semi : returned_token,
+                        /*has_error=*/true);
+    context.PopAndDiscardState();
+    return;
+  }
+
+  HandleVar(context, State::VarFinishAsDecl, returned_token);
 }
 
 auto HandleVarAsFor(Context& context) -> void {
@@ -40,11 +62,11 @@ auto HandleVarAfterPattern(Context& context) -> void {
 
   if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::VariableInitializer, *equals);
-    context.PushState(State::Expression);
+    context.PushState(State::Expr);
   }
 }
 
-auto HandleVarFinishAsSemicolon(Context& context) -> void {
+auto HandleVarFinishAsDecl(Context& context) -> void {
   auto state = context.PopState();
 
   auto end_token = state.token;
@@ -52,13 +74,13 @@ auto HandleVarFinishAsSemicolon(Context& context) -> void {
     end_token = context.Consume();
   } else {
     // TODO: Disambiguate between statement and member declaration.
-    context.EmitExpectedDeclarationSemi(Lex::TokenKind::Var);
+    context.EmitExpectedDeclSemi(Lex::TokenKind::Var);
     state.has_error = true;
     if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
       end_token = *semi_token;
     }
   }
-  context.AddNode(NodeKind::VariableDeclaration, end_token, state.subtree_start,
+  context.AddNode(NodeKind::VariableDecl, end_token, state.subtree_start,
                   state.has_error);
 }
 

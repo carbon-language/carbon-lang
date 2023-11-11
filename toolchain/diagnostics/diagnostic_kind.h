@@ -29,7 +29,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(DiagnosticKind, uint16_t) {
 // to the consuming code.
 class DiagnosticKind : public CARBON_ENUM_BASE(DiagnosticKind) {
  public:
-#define CARBON_DIAGNOSTIC_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_DIAGNOSTIC_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/diagnostics/diagnostic_kind.def"
 };
 

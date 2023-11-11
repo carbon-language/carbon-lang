@@ -6,9 +6,8 @@
 
 namespace Carbon::Check {
 
-auto HandleInterfaceDeclaration(Context& context, Parse::Node parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleInterfaceDeclaration");
+auto HandleInterfaceDecl(Context& context, Parse::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleInterfaceDecl");
 }
 
 auto HandleInterfaceDefinition(Context& context, Parse::Node parse_node)

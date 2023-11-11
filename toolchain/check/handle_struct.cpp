@@ -22,13 +22,13 @@ auto HandleStructFieldDesignator(Context& context, Parse::Node /*parse_node*/)
 }
 
 auto HandleStructFieldType(Context& context, Parse::Node parse_node) -> bool {
-  auto [type_node, type_id] = context.node_stack().PopExpressionWithParseNode();
-  SemIR::TypeId cast_type_id = ExpressionAsType(context, type_node, type_id);
+  auto [type_node, type_id] = context.node_stack().PopExprWithParseNode();
+  SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id);
 
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
-  context.AddNodeAndPush(
+  context.AddInstAndPush(
       parse_node, SemIR::StructTypeField{name_node, name_id, cast_type_id});
   return true;
 }
@@ -39,17 +39,16 @@ auto HandleStructFieldUnknown(Context& context, Parse::Node parse_node)
 }
 
 auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
-  auto [value_parse_node, value_node_id] =
-      context.node_stack().PopExpressionWithParseNode();
-  StringId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  auto [value_parse_node, value_inst_id] =
+      context.node_stack().PopExprWithParseNode();
+  SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
 
   // Store the name for the type.
-  context.args_type_info_stack().AddNode(SemIR::StructTypeField{
-      parse_node, name_id,
-      context.semantics_ir().GetNode(value_node_id).type_id()});
+  context.args_type_info_stack().AddInst(SemIR::StructTypeField{
+      parse_node, name_id, context.insts().Get(value_inst_id).type_id()});
 
   // Push the value back on the stack as an argument.
-  context.node_stack().Push(parse_node, value_node_id);
+  context.node_stack().Push(parse_node, value_inst_id);
   return true;
 }
 
@@ -66,7 +65,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
   auto value_id =
-      context.AddNode(SemIR::StructLiteral{parse_node, type_id, refs_id});
+      context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
   context.node_stack().Push(parse_node, value_id);
   return true;
 }
@@ -95,10 +94,10 @@ auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   // This is only used for value literals.
   context.args_type_info_stack().Pop();
 
-  CARBON_CHECK(refs_id != SemIR::NodeBlockId::Empty)
+  CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
-  context.AddNodeAndPush(
+  context.AddInstAndPush(
       parse_node,
       SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
   return true;

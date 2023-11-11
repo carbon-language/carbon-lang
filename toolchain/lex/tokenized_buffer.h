@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_store.h"
@@ -39,8 +40,14 @@ class TokenizedBuffer;
 //
 // All other APIs to query a `Token` are on the `TokenizedBuffer`.
 struct Token : public ComparableIndexBase {
+  static const Token Invalid;
+  // Comments aren't tokenized, so this is the first token after StartOfFile.
+  static const Token FirstNonCommentToken;
   using ComparableIndexBase::ComparableIndexBase;
 };
+
+constexpr Token Token::Invalid(Token::InvalidIndex);
+constexpr Token Token::FirstNonCommentToken(1);
 
 // A lightweight handle to a lexed line in a `TokenizedBuffer`.
 //
@@ -54,9 +61,8 @@ struct Token : public ComparableIndexBase {
 //
 // All other APIs to query a `Line` are on the `TokenizedBuffer`.
 struct Line : public ComparableIndexBase {
-  using ComparableIndexBase::ComparableIndexBase;
-
   static const Line Invalid;
+  using ComparableIndexBase::ComparableIndexBase;
 };
 
 constexpr Line Line::Invalid(Line::InvalidIndex);
@@ -127,13 +133,6 @@ class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
 // `HasError` returning true.
 class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
-  // Lexes a buffer of source code into a tokenized buffer.
-  //
-  // The provided source buffer must outlive any returned `TokenizedBuffer`
-  // which will refer into the source.
-  static auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
-                  DiagnosticConsumer& consumer) -> TokenizedBuffer;
-
   [[nodiscard]] auto GetKind(Token token) const -> TokenKind;
   [[nodiscard]] auto GetLine(Token token) const -> Line;
 
@@ -148,7 +147,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Returns the identifier associated with this token. The token kind must be
   // an `Identifier`.
-  [[nodiscard]] auto GetIdentifier(Token token) const -> StringId;
+  [[nodiscard]] auto GetIdentifier(Token token) const -> IdentifierId;
 
   // Returns the value of an `IntegerLiteral()` token.
   [[nodiscard]] auto GetIntegerLiteral(Token token) const -> IntegerId;
@@ -157,7 +156,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   [[nodiscard]] auto GetRealLiteral(Token token) const -> RealId;
 
   // Returns the value of a `StringLiteral()` token.
-  [[nodiscard]] auto GetStringLiteral(Token token) const -> StringId;
+  [[nodiscard]] auto GetStringLiteral(Token token) const -> StringLiteralId;
 
   // Returns the size specified in a `*TypeLiteral()` token.
   [[nodiscard]] auto GetTypeLiteralSize(Token token) const
@@ -237,10 +236,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto filename() const -> llvm::StringRef { return source_->filename(); }
 
  private:
-  // Implementation detail struct implementing the actual lexer logic.
-  class Lexer;
-  friend Lexer;
-
+  friend class Lexer;
   friend class TokenLocationTranslator;
 
   // A diagnostic location translator that maps token locations into source
@@ -294,7 +290,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
           sizeof(Token) <= sizeof(int32_t),
           "Unable to pack token and identifier index into the same space!");
 
-      StringId string_id = StringId::Invalid;
+      IdentifierId ident_id = IdentifierId::Invalid;
+      StringLiteralId string_literal_id;
       IntegerId integer_id;
       RealId real_id;
       Token closing_token;
@@ -328,9 +325,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   };
 
   // The constructor is merely responsible for trivial initialization of
-  // members. A working object of this type is built with the `lex` function
-  // above so that its return can indicate if an error was encountered while
-  // lexing.
+  // members. A working object of this type is built with `Lex::Lex` so that its
+  // return can indicate if an error was encountered while lexing.
   explicit TokenizedBuffer(SharedValueStores& value_stores,
                            SourceBuffer& source)
       : value_stores_(&value_stores), source_(&source) {}
@@ -344,6 +340,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   [[nodiscard]] auto GetTokenPrintWidths(Token token) const -> PrintWidths;
   auto PrintToken(llvm::raw_ostream& output_stream, Token token,
                   PrintWidths widths) const -> void;
+
+  // Used to allocate computed string literals.
+  llvm::BumpPtrAllocator allocator_;
 
   SharedValueStores* value_stores_;
   SourceBuffer* source_;

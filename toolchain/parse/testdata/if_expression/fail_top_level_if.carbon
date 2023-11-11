@@ -30,7 +30,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'IfCondition', text: 'if', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: 'then', has_error: yes},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: 'then', has_error: yes},
-// CHECK:STDOUT:           {kind: 'ExpressionStatement', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'CodeBlock', text: 'then', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},

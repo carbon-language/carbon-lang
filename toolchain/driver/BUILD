@@ -21,11 +21,12 @@ cc_library(
     deps = [
         "//common:command_line",
         "//common:vlog",
+        "//toolchain/base:value_store",
         "//toolchain/check",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:sorting_diagnostic_consumer",
-        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/lex",
         "//toolchain/lower",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",

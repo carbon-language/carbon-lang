@@ -4,7 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -15,7 +15,7 @@ auto HandleIfConditionStart(Context& /*context*/, Parse::Node /*parse_node*/)
 
 auto HandleIfCondition(Context& context, Parse::Node parse_node) -> bool {
   // Convert the condition to `bool`.
-  auto cond_value_id = context.node_stack().PopExpression();
+  auto cond_value_id = context.node_stack().PopExpr();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
 
   // Create the then block and the else block, and branch to the right one. If
@@ -26,8 +26,8 @@ auto HandleIfCondition(Context& context, Parse::Node parse_node) -> bool {
   auto else_block_id = context.AddDominatedBlockAndBranch(parse_node);
 
   // Start emitting the `then` block.
-  context.node_block_stack().Pop();
-  context.node_block_stack().Push(then_block_id);
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().Push(then_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   context.node_stack().Push(parse_node, else_block_id);
@@ -38,7 +38,7 @@ auto HandleIfStatementElse(Context& context, Parse::Node parse_node) -> bool {
   auto else_block_id = context.node_stack().Pop<Parse::NodeKind::IfCondition>();
 
   // Switch to emitting the `else` block.
-  context.node_block_stack().Push(else_block_id);
+  context.inst_block_stack().Push(else_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   context.node_stack().Push(parse_node);
@@ -53,9 +53,9 @@ auto HandleIfStatement(Context& context, Parse::Node parse_node) -> bool {
       // block.
       auto else_block_id =
           context.node_stack().Pop<Parse::NodeKind::IfCondition>();
-      context.AddNode(SemIR::Branch{parse_node, else_block_id});
-      context.node_block_stack().Pop();
-      context.node_block_stack().Push(else_block_id);
+      context.AddInst(SemIR::Branch{parse_node, else_block_id});
+      context.inst_block_stack().Pop();
+      context.inst_block_stack().Push(else_block_id);
       break;
     }
 

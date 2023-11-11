@@ -10,6 +10,10 @@ fn Main() {
   Foo();
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "params_zero.carbon" {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
@@ -22,8 +26,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref: <function> = name_reference "Foo", package.%Foo
-// CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_6.2: init () = call %Foo.ref()
+// CHECK:STDOUT:   %Foo.ref: <function> = name_reference Foo, file.%Foo
+// CHECK:STDOUT:   %.loc10: init () = call %Foo.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

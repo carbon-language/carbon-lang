@@ -4,54 +4,18 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
-auto HandleVariableDeclaration(Context& context, Parse::Node parse_node)
+auto HandleVariableIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
-  // Handle the optional initializer.
-  auto init_id = SemIR::NodeId::Invalid;
-  bool has_init =
-      context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-      Parse::NodeKind::PatternBinding;
-  if (has_init) {
-    init_id = context.node_stack().PopExpression();
-    context.node_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
-  }
-
-  // Extract the name binding.
-  SemIR::NodeId var_id =
-      context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
-  auto var = context.semantics_ir().GetNodeAs<SemIR::VarStorage>(var_id);
-
-  // Form a corresponding name in the current context, and bind the name to the
-  // variable.
-  context.declaration_name_stack().AddNameToLookup(
-      context.declaration_name_stack().MakeUnqualifiedName(var.parse_node,
-                                                           var.name_id),
-      var_id);
-
-  // If there was an initializer, assign it to the storage.
-  //
-  // TODO: In a class scope, we should instead save the initializer somewhere
-  // so that we can use it as a default.
-  if (has_init) {
-    init_id = Initialize(context, parse_node, var_id, init_id);
-    // TODO: Consider using different node kinds for assignment versus
-    // initialization.
-    context.AddNode(SemIR::Assign{parse_node, var_id, init_id});
-  }
-
-  context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
-
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleVariableIntroducer(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleReturnedSpecifier(Context& context, Parse::Node parse_node) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
@@ -61,6 +25,54 @@ auto HandleVariableInitializer(Context& context, Parse::Node parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
+  // Handle the optional initializer.
+  auto init_id = SemIR::InstId::Invalid;
+  bool has_init =
+      context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
+      Parse::NodeKind::PatternBinding;
+  if (has_init) {
+    init_id = context.node_stack().PopExpr();
+    context.node_stack()
+        .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
+  }
+
+  // Extract the name binding.
+  auto value_id = context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
+  if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
+    // Form a corresponding name in the current context, and bind the name to
+    // the variable.
+    context.decl_name_stack().AddNameToLookup(
+        context.decl_name_stack().MakeUnqualifiedName(bind_name->parse_node,
+                                                      bind_name->name_id),
+        value_id);
+    value_id = bind_name->value_id;
+  }
+
+  // Pop the `returned` specifier if present.
+  context.node_stack()
+      .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ReturnedSpecifier>();
+
+  // If there was an initializer, assign it to the storage.
+  if (has_init) {
+    if (context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
+      // TODO: In a class scope, we should instead save the initializer
+      // somewhere so that we can use it as a default.
+      context.TODO(parse_node, "Field initializer");
+    } else {
+      init_id = Initialize(context, parse_node, value_id, init_id);
+      // TODO: Consider using different instruction kinds for assignment versus
+      // initialization.
+      context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
+    }
+  }
+
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
+
   return true;
 }
 

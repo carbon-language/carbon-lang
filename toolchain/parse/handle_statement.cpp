@@ -23,7 +23,7 @@ auto HandleStatement(Context& context) -> void {
     case Lex::TokenKind::For: {
       context.PushState(State::StatementForFinish);
       context.PushState(State::StatementForHeader);
-      ++context.position();
+      context.ConsumeAndDiscard();
       break;
     }
     case Lex::TokenKind::If: {
@@ -38,8 +38,12 @@ auto HandleStatement(Context& context) -> void {
       context.PushState(State::StatementReturn);
       break;
     }
+    case Lex::TokenKind::Returned: {
+      context.PushState(State::VarAsReturned);
+      break;
+    }
     case Lex::TokenKind::Var: {
-      context.PushState(State::VarAsSemicolon);
+      context.PushState(State::VarAsDecl);
       break;
     }
     case Lex::TokenKind::While: {
@@ -47,8 +51,8 @@ auto HandleStatement(Context& context) -> void {
       break;
     }
     default: {
-      context.PushState(State::ExpressionStatementFinish);
-      context.PushStateForExpression(PrecedenceGroup::ForExpressionStatement());
+      context.PushState(State::ExprStatementFinish);
+      context.PushStateForExpr(PrecedenceGroup::ForExprStatement());
       break;
     }
   }
@@ -98,13 +102,13 @@ auto HandleStatementForHeader(Context& context) -> void {
     context.PushState(state);
     context.PushState(State::VarAsFor);
   } else {
-    CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
+    CARBON_DIAGNOSTIC(ExpectedVariableDecl, Error,
                       "Expected `var` declaration.");
-    context.emitter().Emit(*context.position(), ExpectedVariableDeclaration);
+    context.emitter().Emit(*context.position(), ExpectedVariableDecl);
 
     if (auto next_in = context.FindNextOf({Lex::TokenKind::In})) {
       context.SkipTo(*next_in);
-      ++context.position();
+      context.ConsumeAndDiscard();
     }
     state.has_error = true;
     context.PushState(state);
@@ -116,7 +120,7 @@ auto HandleStatementForHeaderIn(Context& context) -> void {
 
   state.state = State::StatementForHeaderFinish;
   context.PushState(state);
-  context.PushState(State::Expression);
+  context.PushState(State::Expr);
 }
 
 auto HandleStatementForHeaderFinish(Context& context) -> void {
@@ -139,7 +143,7 @@ auto HandleStatementIf(Context& context) -> void {
 
   context.PushState(State::StatementIfConditionFinish);
   context.PushState(State::ParenConditionAsIf);
-  ++context.position();
+  context.ConsumeAndDiscard();
 }
 
 auto HandleStatementIfConditionFinish(Context& context) -> void {
@@ -179,8 +183,15 @@ auto HandleStatementReturn(Context& context) -> void {
   context.PushState(state);
 
   context.AddLeafNode(NodeKind::ReturnStatementStart, context.Consume());
-  if (!context.PositionIs(Lex::TokenKind::Semi)) {
-    context.PushState(State::Expression);
+
+  if (auto var_token = context.ConsumeIf(Lex::TokenKind::Var)) {
+    // `return var;`
+    context.AddLeafNode(NodeKind::ReturnVarSpecifier, *var_token);
+  } else if (!context.PositionIs(Lex::TokenKind::Semi)) {
+    // `return <expression>;`
+    context.PushState(State::Expr);
+  } else {
+    // `return;`
   }
 }
 
@@ -207,7 +218,7 @@ auto HandleStatementWhile(Context& context) -> void {
 
   context.PushState(State::StatementWhileConditionFinish);
   context.PushState(State::ParenConditionAsWhile);
-  ++context.position();
+  context.ConsumeAndDiscard();
 }
 
 auto HandleStatementWhileConditionFinish(Context& context) -> void {

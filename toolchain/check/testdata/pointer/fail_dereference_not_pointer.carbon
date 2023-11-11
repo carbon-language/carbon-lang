@@ -19,21 +19,26 @@ fn Deref(n: i32) {
   *{};
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc15: type = tuple_type ()
+// CHECK:STDOUT:   %.loc19: type = struct_type {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_dereference_not_pointer.carbon" {
 // CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference "n", %n
+// CHECK:STDOUT:   %n.ref: i32 = name_reference n, %n
 // CHECK:STDOUT:   %.loc11: ref <error> = dereference %n.ref
-// CHECK:STDOUT:   %.loc15_5.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc15_5.2: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_5.3: () = tuple_value %.loc15_5.2, ()
+// CHECK:STDOUT:   %.loc15_5.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value ()
+// CHECK:STDOUT:   %.loc15_5.3: () = converted %.loc15_5.1, %.loc15_5.2
 // CHECK:STDOUT:   %.loc15_3: ref <error> = dereference %.loc15_5.3
-// CHECK:STDOUT:   %.loc19_5.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc19_5.2: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc19_5.3: {} = struct_value %.loc19_5.2, ()
+// CHECK:STDOUT:   %.loc19_5.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value ()
+// CHECK:STDOUT:   %.loc19_5.3: {} = converted %.loc19_5.1, %.loc19_5.2
 // CHECK:STDOUT:   %.loc19_3: ref <error> = dereference %.loc19_5.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

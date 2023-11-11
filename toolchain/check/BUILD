@@ -23,7 +23,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:node",
+        "//toolchain/sem_ir:inst",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -34,8 +34,10 @@ cc_library(
         "check.cpp",
         "context.cpp",
         "convert.cpp",
-        "declaration_name_stack.cpp",
-        "node_block_stack.cpp",
+        "decl_name_stack.cpp",
+        "inst_block_stack.cpp",
+        "return.cpp",
+        "return.h",
     ] +
     # Glob handler files to avoid missing any.
     glob([
@@ -45,8 +47,8 @@ cc_library(
         "check.h",
         "context.h",
         "convert.h",
-        "declaration_name_stack.h",
-        "node_block_stack.h",
+        "decl_name_stack.h",
+        "inst_block_stack.h",
         "pending_block.h",
     ],
     deps = [
@@ -58,6 +60,7 @@ cc_library(
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:diagnostic_kind",
+        "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
@@ -65,8 +68,8 @@ cc_library(
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:node",
-        "//toolchain/sem_ir:node_kind",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
         "@llvm-project//llvm:Support",
     ],
 )

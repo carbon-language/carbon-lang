@@ -12,6 +12,10 @@ fn Main() {
   Echo(());
 }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "empty_tuple.carbon" {
 // CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
@@ -19,15 +23,16 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: () = name_reference "a", %a
+// CHECK:STDOUT:   %a.ref: () = name_reference a, %a
 // CHECK:STDOUT:   return %a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Echo.ref: <function> = name_reference "Echo", package.%Echo
+// CHECK:STDOUT:   %Echo.ref: <function> = name_reference Echo, file.%Echo
 // CHECK:STDOUT:   %.loc12_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: () = tuple_value %.loc12_9.1, ()
-// CHECK:STDOUT:   %.loc12_7: init () = call %Echo.ref(%.loc12_9.2)
+// CHECK:STDOUT:   %.loc12_9.2: () = tuple_value ()
+// CHECK:STDOUT:   %.loc12_9.3: () = converted %.loc12_9.1, %.loc12_9.2
+// CHECK:STDOUT:   %.loc12_7: init () = call %Echo.ref(%.loc12_9.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

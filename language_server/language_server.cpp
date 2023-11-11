@@ -7,7 +7,7 @@
 #include "clang-tools-extra/clangd/Protocol.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
-#include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/lex/lex.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/source/source_buffer.h"
@@ -82,7 +82,7 @@ static auto GetName(const SharedValueStores& value_stores,
                     Parse::Node node) -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
     if (p.node_kind(ch) == Parse::NodeKind::Name) {
-      return value_stores.strings().Get(
+      return value_stores.identifiers().Get(
           tokens.GetIdentifier(p.node_token(node)));
     }
   }
@@ -99,14 +99,13 @@ void LanguageServer::OnDocumentSymbol(
               llvm::MemoryBuffer::getMemBufferCopy(files_.at(file)));
 
   auto buf = SourceBuffer::CreateFromFile(vfs, file, NullDiagnosticConsumer());
-  auto lexed =
-      Lex::TokenizedBuffer::Lex(value_stores, *buf, NullDiagnosticConsumer());
+  auto lexed = Lex::Lex(value_stores, *buf, NullDiagnosticConsumer());
   auto parsed = Parse::Tree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;
   for (const auto& node : parsed.postorder()) {
     clang::clangd::SymbolKind symbol_kind;
     switch (parsed.node_kind(node)) {
-      case Parse::NodeKind::FunctionDeclaration:
+      case Parse::NodeKind::FunctionDecl:
       case Parse::NodeKind::FunctionDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Function;
         break;

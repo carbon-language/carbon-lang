@@ -6,19 +6,8 @@
 
 namespace Carbon::Check {
 
-auto HandleEmptyDeclaration(Context& /*context*/, Parse::Node /*parse_node*/)
-    -> bool {
+auto HandleEmptyDecl(Context& /*context*/, Parse::Node /*parse_node*/) -> bool {
   // Empty declarations have no actions associated.
-  return true;
-}
-
-auto HandleFileStart(Context& /*context*/, Parse::Node /*parse_node*/) -> bool {
-  // Do nothing, no need to balance this node.
-  return true;
-}
-
-auto HandleFileEnd(Context& /*context*/, Parse::Node /*parse_node*/) -> bool {
-  // Do nothing, no need to balance this node.
   return true;
 }
 

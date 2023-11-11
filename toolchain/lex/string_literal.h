@@ -6,9 +6,9 @@
 #define CARBON_TOOLCHAIN_LEX_STRING_LITERAL_H_
 
 #include <optional>
-#include <string>
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Lex {
@@ -24,8 +24,13 @@ class StringLiteral {
 
   // Expand any escape sequences in the given string literal and compute the
   // resulting value. This handles error recovery internally and cannot fail.
-  auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const
-      -> std::string;
+  //
+  // When content_needs_validation_ is false and the string has no indent to
+  // deal with, this can return the content directly. Otherwise, the allocator
+  // will be used for the StringRef.
+  auto ComputeValue(llvm::BumpPtrAllocator& allocator,
+                    DiagnosticEmitter<const char*>& emitter) const
+      -> llvm::StringRef;
 
   // Get the text corresponding to this literal.
   [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
@@ -46,10 +51,11 @@ class StringLiteral {
   struct Introducer;
 
   explicit StringLiteral(llvm::StringRef text, llvm::StringRef content,
-                         int hash_level, MultiLineKind multi_line,
-                         bool is_terminated)
+                         bool content_needs_validation, int hash_level,
+                         MultiLineKind multi_line, bool is_terminated)
       : text_(text),
         content_(content),
+        content_needs_validation_(content_needs_validation),
         hash_level_(hash_level),
         multi_line_(multi_line),
         is_terminated_(is_terminated) {}
@@ -61,6 +67,9 @@ class StringLiteral {
   // at the start of the closing `"""`. Leading whitespace is not removed from
   // either end.
   llvm::StringRef content_;
+  // Whether content needs validation, in particular due to either an escape
+  // (which needs modifications) or a tab character (which may cause a warning).
+  bool content_needs_validation_;
   // The number of `#`s preceding the opening `"` or `"""`.
   int hash_level_;
   // Whether this was a multi-line string literal.

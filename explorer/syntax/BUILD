@@ -15,6 +15,7 @@ cc_library(
 
 cc_test(
     name = "parse_test",
+    size = "small",
     srcs = ["parse_test.cpp"],
     deps = [
         ":syntax",
@@ -140,12 +141,14 @@ py_library(
 
 py_test(
     name = "format_grammar_test",
+    size = "small",
     srcs = ["format_grammar_test.py"],
     deps = ["format_grammar_lib"],
 )
 
 cc_test(
     name = "unimplemented_example_test",
+    size = "small",
     srcs = ["unimplemented_example_test.cpp"],
     deps = [
         ":parse_test_matchers",

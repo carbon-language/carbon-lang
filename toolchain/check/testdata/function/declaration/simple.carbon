@@ -8,6 +8,10 @@ fn F();
 
 fn G() { F(); }
 
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc9: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file "simple.carbon" {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
@@ -17,8 +21,7 @@ fn G() { F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference "F", package.%F
-// CHECK:STDOUT:   %.loc9_11.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc9_11.2: init () = call %F.ref()
+// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %.loc9: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

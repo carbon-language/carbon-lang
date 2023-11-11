@@ -17,7 +17,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:         {kind: 'NameExpression', text: 'x'},
+// CHECK:STDOUT:         {kind: 'NameExpr', text: 'x'},
 // CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

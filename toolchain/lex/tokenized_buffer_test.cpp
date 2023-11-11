@@ -15,6 +15,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
+#include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer_test_helpers.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
@@ -46,7 +47,7 @@ class LexerTest : public ::testing::Test {
   auto Lex(llvm::StringRef text,
            DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer())
       -> TokenizedBuffer {
-    return TokenizedBuffer::Lex(value_stores_, GetSourceBuffer(text), consumer);
+    return Lex::Lex(value_stores_, GetSourceBuffer(text), consumer);
   }
 
   SharedValueStores value_stores_;
@@ -453,7 +454,8 @@ TEST_F(LexerTest, MatchingGroups) {
     auto open_paren_token = *it++;
     auto open_curly_token = *it++;
 
-    ASSERT_EQ("x", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("x",
+              value_stores_.identifiers().Get(buffer.GetIdentifier(*it++)));
     auto close_curly_token = *it++;
     auto close_paren_token = *it++;
     EXPECT_EQ(close_paren_token,
@@ -467,7 +469,8 @@ TEST_F(LexerTest, MatchingGroups) {
 
     open_curly_token = *it++;
     open_paren_token = *it++;
-    ASSERT_EQ("y", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("y",
+              value_stores_.identifiers().Get(buffer.GetIdentifier(*it++)));
     close_paren_token = *it++;
     close_curly_token = *it++;
     EXPECT_EQ(close_curly_token,
@@ -483,7 +486,8 @@ TEST_F(LexerTest, MatchingGroups) {
     auto inner_open_curly_token = *it++;
     open_paren_token = *it++;
     auto inner_open_paren_token = *it++;
-    ASSERT_EQ("z", value_stores_.strings().Get(buffer.GetIdentifier(*it++)));
+    ASSERT_EQ("z",
+              value_stores_.identifiers().Get(buffer.GetIdentifier(*it++)));
     auto inner_close_paren_token = *it++;
     close_paren_token = *it++;
     auto inner_close_curly_token = *it++;
@@ -1057,7 +1061,7 @@ TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Lex("\b", consumer);
 }
 
-TEST_F(LexerTest, PrintingAsYaml) {
+TEST_F(LexerTest, PrintingOutputYaml) {
   // Test that we can parse this into YAML and verify line and indent data.
   auto buffer = Lex("\n ;\n\n\n; ;\n\n\n\n\n\n\n\n\n\n\n");
   ASSERT_FALSE(buffer.has_errors());
