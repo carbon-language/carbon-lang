@@ -29,7 +29,7 @@ fn foo() -> i32 {
 // CHECK:STDOUT:         {kind: 'ForHeader', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:             {kind: 'ReturnVarSpecifier', text: 'var'},
+// CHECK:STDOUT:             {kind: 'ReturnVarModifier', text: 'var'},
 // CHECK:STDOUT:           {kind: 'ReturnStatement', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ForStatement', text: 'for', subtree_size: 9},

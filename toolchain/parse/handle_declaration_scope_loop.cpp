@@ -58,24 +58,17 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   // result in a `set_packaging_state` call. Note, this may not always be
   // necessary but is probably cheaper than validating.
   switch (position_kind) {
-    case Lex::TokenKind::Abstract: {
-      if (context.PositionIs(Lex::TokenKind::Class, 1)) {
-        context.PushState(State::TypeAfterIntroducerAsClass);
-        auto abstract_token = context.Consume();
-        auto class_token = context.Consume();
-        context.AddLeafNode(NodeKind::ClassIntroducer, class_token);
-        context.AddLeafNode(NodeKind::AbstractSpecifier, abstract_token);
-        return;
-      }
-      break;
-    }
+    case Lex::TokenKind::Abstract:
     case Lex::TokenKind::Base: {
       if (context.PositionIs(Lex::TokenKind::Class, 1)) {
         context.PushState(State::TypeAfterIntroducerAsClass);
-        auto base_token = context.Consume();
+        auto modifier_token = context.Consume();
         auto class_token = context.Consume();
         context.AddLeafNode(NodeKind::ClassIntroducer, class_token);
-        context.AddLeafNode(NodeKind::BaseSpecifier, base_token);
+        context.AddLeafNode(position_kind == Lex::TokenKind::Abstract
+                                ? NodeKind::AbstractModifier
+                                : NodeKind::BaseModifier,
+                            modifier_token);
         return;
       }
       break;

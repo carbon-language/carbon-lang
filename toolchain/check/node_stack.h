@@ -328,9 +328,9 @@ class NodeStack {
         return IdKind::ClassId;
       case Parse::NodeKind::Name:
         return IdKind::NameId;
-      case Parse::NodeKind::AbstractSpecifier:
+      case Parse::NodeKind::AbstractModifier:
       case Parse::NodeKind::ArrayExprSemi:
-      case Parse::NodeKind::BaseSpecifier:
+      case Parse::NodeKind::BaseModifier:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::FunctionIntroducer:
@@ -340,9 +340,9 @@ class NodeStack {
       case Parse::NodeKind::ParameterListStart:
       case Parse::NodeKind::ParenExprOrTupleLiteralStart:
       case Parse::NodeKind::QualifiedDecl:
-      case Parse::NodeKind::ReturnedSpecifier:
+      case Parse::NodeKind::ReturnedModifier:
       case Parse::NodeKind::ReturnStatementStart:
-      case Parse::NodeKind::ReturnVarSpecifier:
+      case Parse::NodeKind::ReturnVarModifier:
       case Parse::NodeKind::SelfValueName:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
       case Parse::NodeKind::VariableInitializer:

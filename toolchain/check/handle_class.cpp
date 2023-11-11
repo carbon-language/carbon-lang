@@ -18,12 +18,12 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleAbstractSpecifier(Context& context, Parse::Node parse_node) -> bool {
+auto HandleAbstractModifier(Context& context, Parse::Node parse_node) -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleBaseSpecifier(Context& context, Parse::Node parse_node) -> bool {
+auto HandleBaseModifier(Context& context, Parse::Node parse_node) -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }
@@ -34,10 +34,10 @@ static auto BuildClassDecl(Context& context)
   auto introducer = context.node_stack().PeekParseNode();
   bool abstract =
       context.node_stack()
-          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::AbstractSpecifier>();
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::AbstractModifier>();
   bool base =
       context.node_stack()
-          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::BaseSpecifier>();
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::BaseModifier>();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
   auto decl_block_id = context.inst_block_stack().Pop();
@@ -65,9 +65,8 @@ static auto BuildClassDecl(Context& context)
       // The introducer kind must match the previous declaration.
       // TODO: The rule here is not yet decided. See #3384.
       if (class_info.inheritance_kind != inheritance_kind) {
-        CARBON_DIAGNOSTIC(
-            ClassRedeclarationDifferentIntroducer, Error,
-            "Class redeclared with different inheritance kind.");
+        CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducer, Error,
+                          "Class redeclared with different inheritance kind.");
         CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
                           "Previously declared here.");
         context.emitter()

@@ -542,8 +542,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   auto& class_info = context.classes().Get(dest_type.class_id);
   if (class_info.inheritance_kind == SemIR::Class::Abstract) {
     CARBON_DIAGNOSTIC(ConstructionOfAbstractClass, Error,
-                      "Cannot construct instance of abstract class `{0}`. "
-                      "Consider using `partial` class type instead.",
+                      "Cannot construct instance of abstract class. "
+                      "Consider using `partial {0}` instead.",
                       std::string);
     context.emitter().Emit(context.insts().Get(value_id).parse_node(),
                            ConstructionOfAbstractClass,

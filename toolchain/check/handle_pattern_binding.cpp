@@ -63,7 +63,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   // error locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
-    case Parse::NodeKind::ReturnedSpecifier:
+    case Parse::NodeKind::ReturnedModifier:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
@@ -80,7 +80,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       }
       SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
-      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
         CARBON_CHECK(!enclosing_class_decl) << "`returned var` at class scope";
         value_id =
             CheckReturnedVar(context, context.node_stack().PeekParseNode(),
@@ -109,7 +109,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
           SemIR::BindName{name_node, value_type_id, name_id, value_id});
       context.node_stack().Push(parse_node, bind_id);
 
-      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
         RegisterReturnedVar(context, bind_id);
       }
       break;
