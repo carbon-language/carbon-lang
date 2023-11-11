@@ -23,7 +23,7 @@ auto HandleStatement(Context& context) -> void {
     case Lex::TokenKind::For: {
       context.PushState(State::StatementForFinish);
       context.PushState(State::StatementForHeader);
-      ++context.position();
+      context.ConsumeAndDiscard();
       break;
     }
     case Lex::TokenKind::If: {
@@ -108,7 +108,7 @@ auto HandleStatementForHeader(Context& context) -> void {
 
     if (auto next_in = context.FindNextOf({Lex::TokenKind::In})) {
       context.SkipTo(*next_in);
-      ++context.position();
+      context.ConsumeAndDiscard();
     }
     state.has_error = true;
     context.PushState(state);
@@ -143,7 +143,7 @@ auto HandleStatementIf(Context& context) -> void {
 
   context.PushState(State::StatementIfConditionFinish);
   context.PushState(State::ParenConditionAsIf);
-  ++context.position();
+  context.ConsumeAndDiscard();
 }
 
 auto HandleStatementIfConditionFinish(Context& context) -> void {
@@ -218,7 +218,7 @@ auto HandleStatementWhile(Context& context) -> void {
 
   context.PushState(State::StatementWhileConditionFinish);
   context.PushState(State::ParenConditionAsWhile);
-  ++context.position();
+  context.ConsumeAndDiscard();
 }
 
 auto HandleStatementWhileConditionFinish(Context& context) -> void {

@@ -21,7 +21,7 @@
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
-#include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/formatter.h"
@@ -420,9 +420,8 @@ class Driver::CompilationUnit {
     CARBON_VLOG() << "*** SourceBuffer ***\n```\n"
                   << source_->text() << "\n```\n";
 
-    LogCall("Lex::TokenizedBuffer::Lex", [&] {
-      tokens_ = Lex::TokenizedBuffer::Lex(value_stores_, *source_, *consumer_);
-    });
+    LogCall("Lex::Lex",
+            [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
     if (options_.dump_tokens) {
       consumer_->Flush();
       driver_->output_stream_ << tokens_;

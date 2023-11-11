@@ -18,7 +18,7 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
     context.insts().Set(self_param_id, *self_param);
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParameter, Error,
-                      "`addr` can only be applied to a `self` parameter");
+                      "`addr` can only be applied to a `self` parameter.");
     context.emitter().Emit(parse_node, AddrOnNonSelfParameter);
   }
   return true;
@@ -43,7 +43,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
         Parse::NodeKind::ImplicitParameterListStart) {
       CARBON_DIAGNOSTIC(
           SelfOutsideImplicitParameterList, Error,
-          "`self` can only be declared in an implicit parameter list");
+          "`self` can only be declared in an implicit parameter list.");
       context.emitter().Emit(parse_node, SelfOutsideImplicitParameterList);
     }
     context.AddInstAndPush(

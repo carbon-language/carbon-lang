@@ -15,6 +15,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
+#include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer_test_helpers.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
@@ -46,7 +47,7 @@ class LexerTest : public ::testing::Test {
   auto Lex(llvm::StringRef text,
            DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer())
       -> TokenizedBuffer {
-    return TokenizedBuffer::Lex(value_stores_, GetSourceBuffer(text), consumer);
+    return Lex::Lex(value_stores_, GetSourceBuffer(text), consumer);
   }
 
   SharedValueStores value_stores_;
