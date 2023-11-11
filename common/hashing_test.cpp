@@ -290,6 +290,32 @@ TEST(HashingTest, BasicStrings) {
   }
 }
 
+struct HashableType {
+  int x;
+  int y;
+
+  int ignored = 0;
+
+  friend auto CarbonHashValue(const HashableType& value, uint64_t seed)
+      -> HashCode {
+    Hasher hasher(seed);
+    hasher.Hash(value.x, value.y);
+    return static_cast<HashCode>(hasher);
+  }
+};
+
+TEST(HashingTest, CustomType) {
+  HashableType a = {.x = 1, .y = 2};
+  HashableType b = {.x = 3, .y = 4};
+
+  EXPECT_THAT(HashValue(a), Eq(HashValue(a)));
+  EXPECT_THAT(HashValue(a), Ne(HashValue(b)));
+
+  // Differences in an ignored field have no impact.
+  HashableType c = {.x = 3, .y = 4, .ignored = 42};
+  EXPECT_THAT(HashValue(c), Eq(HashValue(b)));
+}
+
 // The only significantly bad seed is zero, so pick a non-zero seed with a tiny
 // amount of entropy to make sure that none of the testing relies on the entropy
 // from this.

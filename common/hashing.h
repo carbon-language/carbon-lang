@@ -145,11 +145,11 @@ class HashCode : public Printable<HashCode> {
 // lookups.
 //
 // To add support for your type, you need to implement a customization point --
-// a free function that can be found by ADL for your type -- called `CarbonHash`
+// a free function that can be found by ADL for your type -- called `CarbonHashValue`
 // with the following signature:
 //
 // ```cpp
-// auto CarbonHash(const YourType& value, uint64_t seed) -> HashCode;
+// auto CarbonHashValue(const YourType& value, uint64_t seed) -> HashCode;
 // ```
 //
 // `HashCode` values should typically be produced using the `Hasher` helper type
@@ -172,7 +172,7 @@ inline auto HashValue(const T& value) -> HashCode;
 // Object and APIs that eventually produce a hash code.
 //
 // This type is primarily used by types to implement a customization point
-// `CarbonHash` that will in turn be used by the `HashValue` function. See the
+// `CarbonHashValue` that will in turn be used by the `HashValue` function. See the
 // `HashValue` function for details of that extension point.
 //
 // The methods on this type can be used to incorporate data from your
@@ -183,7 +183,7 @@ inline auto HashValue(const T& value) -> HashCode;
 //
 // Example usage:
 // ```cpp
-// auto CarbonHash(const MyType& value, uint64_t seed) -> HashCode {
+// auto CarbonHashValue(const MyType& value, uint64_t seed) -> HashCode {
 //   Hasher hasher(seed);
 //   hasher.HashTwo(value.x, value.y);
 //   return static_cast<HashCode>(hasher);
@@ -227,7 +227,7 @@ inline auto HashValue(const T& value) -> HashCode;
 // unnecessarily.
 //
 // The type also provides a number of static helper functions and static data
-// members that may be used by authors of `CarbonHash` implementations to
+// members that may be used by authors of `CarbonHashValue` implementations to
 // efficiently compute the inputs to the core `Hasher` methods, or even to
 // manually do some amounts of hashing in performance-tuned ways outside of the
 // methods provided.
@@ -413,12 +413,12 @@ class Hasher {
   uint64_t buffer;
 };
 
-// A dedicated namespace for `CarbonHash` overloads that are not found by ADL
+// A dedicated namespace for `CarbonHashValue` overloads that are not found by ADL
 // with their associated types. For example, primitive type overloads or
 // overloads for types in LLVM's libraries.
 namespace HashDispatch {
 
-inline auto CarbonHash(llvm::ArrayRef<std::byte> bytes, uint64_t seed)
+inline auto CarbonHashValue(llvm::ArrayRef<std::byte> bytes, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   hasher.HashSizedBytes(bytes);
@@ -427,25 +427,25 @@ inline auto CarbonHash(llvm::ArrayRef<std::byte> bytes, uint64_t seed)
 
 // Hashing implementation for `llvm::StringRef`. We forward all the other
 // string-like types that support heterogeneous lookup to this one.
-inline auto CarbonHash(llvm::StringRef value, uint64_t seed) -> HashCode {
-  return CarbonHash(
+inline auto CarbonHashValue(llvm::StringRef value, uint64_t seed) -> HashCode {
+  return CarbonHashValue(
       llvm::ArrayRef(reinterpret_cast<const std::byte*>(value.data()),
                      value.size()),
       seed);
 }
 
-inline auto CarbonHash(std::string_view value, uint64_t seed) -> HashCode {
-  return CarbonHash(llvm::StringRef(value.data(), value.size()), seed);
+inline auto CarbonHashValue(std::string_view value, uint64_t seed) -> HashCode {
+  return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
 }
 
-inline auto CarbonHash(const std::string& value, uint64_t seed) -> HashCode {
-  return CarbonHash(llvm::StringRef(value.data(), value.size()), seed);
+inline auto CarbonHashValue(const std::string& value, uint64_t seed) -> HashCode {
+  return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
 }
 
 template <unsigned Length>
-inline auto CarbonHash(const llvm::SmallString<Length>& value, uint64_t seed)
+inline auto CarbonHashValue(const llvm::SmallString<Length>& value, uint64_t seed)
     -> HashCode {
-  return CarbonHash(llvm::StringRef(value.data(), value.size()), seed);
+  return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
 }
 
 // C++ guarantees this is true for the unsigned variants, but we require it for
@@ -484,7 +484,7 @@ constexpr bool NullPtrOrHasUniqueObjectRepresentations =
 
 template <typename T, typename = std::enable_if_t<
                           NullPtrOrHasUniqueObjectRepresentations<T>>>
-inline auto CarbonHash(const T& value, uint64_t seed) -> HashCode {
+inline auto CarbonHashValue(const T& value, uint64_t seed) -> HashCode {
   Hasher hasher(seed);
   hasher.Hash(MapNullPtrToVoidPtr(value));
   return static_cast<HashCode>(hasher);
@@ -493,7 +493,7 @@ inline auto CarbonHash(const T& value, uint64_t seed) -> HashCode {
 template <typename... Ts,
           typename = std::enable_if_t<
               (... && NullPtrOrHasUniqueObjectRepresentations<Ts>)>>
-inline auto CarbonHash(const std::tuple<Ts...>& value, uint64_t seed)
+inline auto CarbonHashValue(const std::tuple<Ts...>& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   std::apply(
@@ -507,15 +507,15 @@ template <typename T, typename U,
               NullPtrOrHasUniqueObjectRepresentations<T> &&
               NullPtrOrHasUniqueObjectRepresentations<U> &&
               sizeof(T) <= sizeof(uint64_t) && sizeof(U) <= sizeof(uint64_t)>>
-inline auto CarbonHash(const std::pair<T, U>& value, uint64_t seed)
+inline auto CarbonHashValue(const std::pair<T, U>& value, uint64_t seed)
     -> HashCode {
-  return CarbonHash(std::tuple(value.first, value.second), seed);
+  return CarbonHashValue(std::tuple(value.first, value.second), seed);
 }
 
 template <typename T, typename = std::enable_if_t<
                           std::has_unique_object_representations_v<T>>>
-inline auto CarbonHash(llvm::ArrayRef<T> objs, uint64_t seed) -> HashCode {
-  return CarbonHash(
+inline auto CarbonHashValue(llvm::ArrayRef<T> objs, uint64_t seed) -> HashCode {
+  return CarbonHashValue(
       llvm::ArrayRef(reinterpret_cast<const std::byte*>(objs.data()),
                      objs.size() * sizeof(T)),
       seed);
@@ -525,7 +525,7 @@ template <typename T>
 inline auto DispatchImpl(const T& value, uint64_t seed) -> HashCode {
   // This unqualified call will find both the overloads in this namespace and
   // ADL-found functions in an associated namespace of `T`.
-  return CarbonHash(value, seed);
+  return CarbonHashValue(value, seed);
 }
 
 }  // namespace HashDispatch
