@@ -34,7 +34,7 @@ static auto NoteNoReturnTypeProvided(Context& context,
                                      const SemIR::Function& function) {
   CARBON_DIAGNOSTIC(ReturnTypeOmittedNote, Note,
                     "There was no return type provided.");
-  diag.Note(context.insts().Get(function.declaration_id).parse_node(),
+  diag.Note(context.insts().Get(function.decl_id).parse_node(),
             ReturnTypeOmittedNote);
 }
 
@@ -43,8 +43,7 @@ static auto NoteReturnType(Context& context, Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
   // TODO: This is the location of the `fn` keyword. Find the location of the
   // return type.
-  auto type_parse_node =
-      context.insts().Get(function.declaration_id).parse_node();
+  auto type_parse_node = context.insts().Get(function.decl_id).parse_node();
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note,
                     "Return type of function is `{0}`.", std::string);
   diag.Note(type_parse_node, ReturnTypeHereNote,
