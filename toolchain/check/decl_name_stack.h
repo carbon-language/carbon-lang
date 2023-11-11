@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_DECLARATION_NAME_STACK_H_
-#define CARBON_TOOLCHAIN_CHECK_DECLARATION_NAME_STACK_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_DECL_NAME_STACK_H_
+#define CARBON_TOOLCHAIN_CHECK_DECL_NAME_STACK_H_
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parse/tree.h"
@@ -198,4 +198,4 @@ class DeclNameStack {
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_DECLARATION_NAME_STACK_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_DECL_NAME_STACK_H_
