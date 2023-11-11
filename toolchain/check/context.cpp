@@ -10,7 +10,7 @@
 #include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/Sequence.h"
-#include "toolchain/check/declaration_name_stack.h"
+#include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
