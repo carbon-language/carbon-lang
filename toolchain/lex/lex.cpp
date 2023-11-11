@@ -503,14 +503,17 @@ CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
 // A custom dispatch functions that pre-select the symbol token to lex.
-#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                           \
-  static auto Dispatch##LexMethod##SymbolToken(                               \
-      Lexer& lexer, llvm::StringRef source_text, ssize_t position)            \
-      ->void {                                                                \
-    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                   \
-        source_text, OneCharTokenKindTable[source_text[position]], position); \
-    CARBON_CHECK(result) << "Failed to form a token!";                        \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);    \
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                        \
+  static auto Dispatch##LexMethod##SymbolToken(                            \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position)         \
+      ->void {                                                             \
+    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                \
+        source_text,                                                       \
+        OneCharTokenKindTable[static_cast<unsigned char>(                  \
+            source_text[position])],                                       \
+        position);                                                         \
+    CARBON_CHECK(result) << "Failed to form a token!";                     \
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position); \
   }
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
@@ -1151,7 +1154,8 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
     // TODO: Need to add support for Unicode lexing.
     return LexError(source_text, position);
   }
-  CARBON_CHECK(IsIdStartByteTable[source_text[position]]);
+  CARBON_CHECK(
+      IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
 
   int column = ComputeColumn(position);
 
@@ -1192,7 +1196,8 @@ auto Lexer::LexKeywordOrIdentifierMaybeRaw(llvm::StringRef source_text,
   // TODO: Need to add support for Unicode lexing.
   if (LLVM_LIKELY(position + 2 >= static_cast<ssize_t>(source_text.size()) ||
                   source_text[position + 1] != '#' ||
-                  !IsIdStartByteTable[source_text[position + 2]])) {
+                  !IsIdStartByteTable[static_cast<unsigned char>(
+                      source_text[position + 2])])) {
     // TODO: Should this print a different error when there is `r#`, but it
     // isn't followed by identifier text? Or is it right to put it back so
     // that the `#` could be parsed as part of a raw string literal?
