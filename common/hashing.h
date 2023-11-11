@@ -26,11 +26,11 @@ namespace Carbon {
 
 // A 64-bit hash code produced by `Carbon::HashValue`.
 //
-// This provides methods for extracting bits from the hash code that work to be
-// fast but extract the highest quality bits.
+// This provides methods for extracting high-quality bits from the hash code
+// quickly.
 //
-// This class can itself also be incorporated into a hash to support recursive
-// hashing of more complex data structures.
+// This class can also be a hashing input when recursively hashing more complex
+// data structures.
 class HashCode : public Printable<HashCode> {
  public:
   HashCode() = default;
@@ -46,9 +46,9 @@ class HashCode : public Printable<HashCode> {
 
   // Extracts an index from the hash code that is in the range [0, size). The
   // size and returned index are `ssize_t` for performance reasons. This is
-  // useful when using the hash code to index a hash table. It works to
-  // prioritize computing the index from the bits in the hash code with the
-  // highest entropy.
+  // useful when using the hash code to index a hash table. It prioritizes
+  // computing the index from the bits in the hash code with the highest
+  // entropy.
   constexpr auto ExtractIndex(ssize_t size) -> ssize_t;
 
   // Extracts an index and a fixed `N`-bit tag from the hash code.
@@ -95,11 +95,12 @@ class HashCode : public Printable<HashCode> {
 //
 // The algorithm used is most heavily based on [Abseil's hashing algorithm][1],
 // with some additional ideas and inspiration from the fallback hashing
-// algorithm in [Rust's AHash][2] and the FxHash function. However, there are
+// algorithm in [Rust's AHash][2] and the [FxHash][3] function. However, there are
 // also *significant* changes introduced here.
 //
 // [1]: https://github.com/abseil/abseil-cpp/tree/master/absl/hash/internal
 // [2]: https://github.com/tkaitchuck/aHash/wiki/AHash-fallback-algorithm
+// [3]: https://docs.rs/fxhash/latest/fxhash/
 //
 // This hash algorithm does *not* defend against hash flooding. While it can be
 // viewed as "keyed" on the seed, it is expected to be possible to craft inputs
@@ -134,8 +135,11 @@ class HashCode : public Printable<HashCode> {
 // - `llvm::SmallString`
 //
 // This function supports heterogeneous lookup between all of the string-like
-// types. However, this is the only heterogeneous lookup support including for
-// the builtin in, standard, and LLVM types. Notably, each different size and
+// types. It also supports heterogeneous lookup between pointer types regardless
+// of pointee type and `nullptr`.
+//
+// However, these are the only heterogeneous lookup support including for the
+// builtin in, standard, and LLVM types. Notably, each different size and
 // signedness integer type may hash differently for efficiency reasons. Hash
 // tables should pick a single integer type in which to manage keys and do
 // lookups.
@@ -147,12 +151,6 @@ class HashCode : public Printable<HashCode> {
 // ```cpp
 // auto CarbonHash(const YourType& value, uint64_t seed) -> HashCode;
 // ```
-//
-// This function needs to ensure that values that compare equal (including any
-// comparisons with different types that might be used with a hash table of
-// `YourType` keys) produce the same `HashCode` values. Input values that
-// compare unequal should work to produce `HashCode` values with as many
-// different bits as possible.
 //
 // `HashCode` values should typically be produced using the `Hasher` helper type
 // below. See its documentation for more details about implementing these
@@ -192,6 +190,23 @@ inline auto HashValue(const T& value) -> HashCode;
 // }
 // ```
 //
+// The extension point needs to ensure that values that compare equal (including
+// any comparisons with different types that might be used with a hash table of
+// `YourType` keys) produce the same `HashCode` values.
+//
+// For any two input values that compare unequal, the extension point should
+// maximize the probability of each bit of their resulting `HashCode`s
+// differing. More formally, `HashCode`s should exhibit an [avalanche
+// effect][4]. However, while this is desirable, it should be **secondary** to
+// low latency. The intended use case of these functions is not cryptography but
+// in-memory hashtables where the latency and overhead of computing the
+// `HashCode` is *significantly* more important than achieving a particularly
+// high quality. The goal is to have "just enough" avalanche effect, but there
+// is not a fixed criteria for how much is enough. That should be determined
+// through practical experimentation with a hashtable and distribution of keys.
+//
+// [4]: https://en.wikipedia.org/wiki/Avalanche_effect
+//
 // Another important note is that types only need to include the data that would
 // lead to an object comparing equal or not-equal to some other object,
 // including objects of other types if you intend to support heterogeneous
@@ -205,10 +220,7 @@ inline auto HashValue(const T& value) -> HashCode;
 // should typically be included in the hash.
 //
 // This type's API also reflects the reality that high-performance hash tables
-// rely on keys that are generally small and cheap to hash. The result is
-// prioritizing hashing a small number of integers (1 or 2 ideally), or some
-// contiguous byte buffer. We prioritize hash tables whose key types work to fit
-// into this model.
+// are used with keys that are generally small and cheap to hash.
 //
 // To ensure this type's code is optimized effectively, it should typically be
 // used as a local variable and not passed across function boundaries
@@ -216,8 +228,9 @@ inline auto HashValue(const T& value) -> HashCode;
 //
 // The type also provides a number of static helper functions and static data
 // members that may be used by authors of `CarbonHash` implementations to
-// efficiently compute the inputs to the methods, or even to manually do some
-// amounts of hashing performance-tuned ways.
+// efficiently compute the inputs to the core `Hasher` methods, or even to
+// manually do some amounts of hashing in performance-tuned ways outside of the
+// methods provided.
 class Hasher {
  public:
   Hasher() = default;
@@ -265,8 +278,8 @@ class Hasher {
   // These may be slightly less efficient than the `Hash` method above for a
   // typical application code `uint64_t`, but are designed to work well even
   // when relevant data has been packed into the `uint64_t` parameters densely.
-  auto HashOne(uint64_t data) -> void;
-  auto HashTwo(uint64_t data0, uint64_t data1) -> void;
+  auto HashDense(uint64_t data) -> void;
+  auto HashDense(uint64_t data0, uint64_t data1) -> void;
 
   // A heavily optimized routine for incorporating a dynamically sized sequence
   // of bytes into the hasher's state.
@@ -282,8 +295,8 @@ class Hasher {
   // The size is always incorporated into the state.
   auto HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void;
 
-  // Utility functions to read data of various sizes efficiently into one or two
-  // 64-bit values. These pointers need-not be aligned, and can alias other
+  // Utility functions to read data of various sizes efficiently into one a
+  // 64-bit value. These pointers need-not be aligned, and can alias other
   // objects. The representation of the read data in the `uint64_t` returned is
   // not stable or guaranteed.
   static auto Read1(const std::byte* data) -> uint64_t;
@@ -390,7 +403,10 @@ class Hasher {
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
   };
 
-  // The multiplicative hash constant from Knuth, derived from 2^64 / Phi.
+  // The multiplicative hash constant from Knuth, derived from 2^64 / Phi. For
+  // details on its selection, see:
+  // https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
+  // https://book.huihoo.com/data-structures-and-algorithms-with-object-oriented-design-patterns-in-c++/html/page214.html
   static constexpr uint64_t MulConstant = 0x9e37'79b9'7f4a'7c15U;
 
  private:
@@ -629,14 +645,14 @@ inline auto Hasher::WeakMix(uint64_t value) -> uint64_t {
   return value;
 }
 
-inline auto Hasher::HashOne(uint64_t data) -> void {
+inline auto Hasher::HashDense(uint64_t data) -> void {
   // When hashing exactly one 64-bit entity use the Phi-derived constant as this
   // is just multiplicative hashing. The initial buffer is mixed on input to
   // pipeline with materializing the constant.
   buffer = Mix(data ^ buffer, MulConstant);
 }
 
-inline auto Hasher::HashTwo(uint64_t data0, uint64_t data1) -> void {
+inline auto Hasher::HashDense(uint64_t data0, uint64_t data1) -> void {
   // When hashing two chunks of data at the same time, we XOR it with random
   // data to avoid common inputs from having especially bad multiplicative
   // effects. We also XOR in the starting buffer as seed or to chain. Note that
@@ -698,7 +714,7 @@ inline auto Hasher::Hash(const T& value) -> void {
   if constexpr (8 < sizeof(T) && sizeof(T) <= 16) {
     CARBON_MCA_BEGIN("fixed-16b");
     auto values = Read8To16(data_ptr, sizeof(T));
-    HashTwo(values.first, values.second);
+    HashDense(values.first, values.second);
     CARBON_MCA_END("fixed-16b");
     return;
   }
@@ -735,7 +751,7 @@ inline auto Hasher::Hash(const Ts&... value) -> void {
   }
   if constexpr ((... && (sizeof(Ts) <= 8))) {
     if constexpr (sizeof...(Ts) == 2) {
-      HashTwo(ReadSmall(value)...);
+      HashDense(ReadSmall(value)...);
       return;
     }
 

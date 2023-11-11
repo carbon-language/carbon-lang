@@ -48,9 +48,11 @@ constexpr int NumSizes = 1 << 10;
 template <size_t MaxSize>
 static const std::array<size_t, NumSizes> rand_sizes = []() {
   std::array<size_t, NumSizes> sizes;
-  // Build an array with a completely deterministic set of sizes in the
-  // range [0, MaxSize). We scale the steps in sizes to cover the range at least
-  // 128 times, even if it means not covering all the sizes within that range.
+  // Build an array with a deterministic set of sizes in the
+  // range [0, MaxSize), using the golden ratio to select well distributed
+  // points in that range. See https://www.youtube.com/watch?v=lOIP_Z_-0Hs for
+  // an example of why this is an effective strategy for selecting sizes in the
+  // range.
   static_assert(NumSizes > 128);
   constexpr double Phi = 1.61803398875;
   constexpr size_t Scale = std::max<size_t>(1, MaxSize / Phi);
@@ -249,6 +251,12 @@ LATENCY_STRING_BENCHMARKS(/*MaxSize=*/8192);
 // half-way points between powers of two. Because these benchmarks are looking
 // for size-related cliffs, all the runs for particular hash function are kept
 // together.
+//
+// Note: because these use a fixed size, their specific timing isn't terribly
+// informative. The branch predictor behavior on a modern CPU will be
+// significantly different in this benchmarks from any other and may distort all
+// manner of the timings. The results should really only be compared between
+// sizes for cliffs, and not directly compared with other numbers.
 #define LATENCY_STRING_SIZE_BENCHMARKS(Hash)                             \
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 0>, Hash>);   \
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 1>, Hash>);   \
@@ -282,6 +290,10 @@ LATENCY_STRING_BENCHMARKS(/*MaxSize=*/8192);
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 128>, Hash>); \
   BENCHMARK(BM_LatencyHash<RandStrings</*RandSize=*/false, 129>, Hash>)
 
+// Because these just look for size-related cliffs in performance, we only do a
+// minimal number of benchmarks. There are a lot of sizes so this avoids wasted
+// time in benchmark runs and there isn't much value from greater comparative
+// coverage here.
 LATENCY_STRING_SIZE_BENCHMARKS(CarbonHashBench);
 LATENCY_STRING_SIZE_BENCHMARKS(AbseilHashBench);
 

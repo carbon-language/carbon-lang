@@ -73,7 +73,7 @@ auto Hasher::HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void {
   }
 
   buffer = buffer0 ^ buffer1;
-  HashOne(size);
+  HashDense(size);
 }
 
 }  // namespace Carbon

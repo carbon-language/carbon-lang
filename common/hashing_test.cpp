@@ -33,6 +33,8 @@ TEST(HashingTest, HashCodeAPI) {
   ASSERT_THAT(empty, Ne(b));
   ASSERT_THAT(a, Ne(b));
 
+  // Exercise the methods in basic ways across a few sizes. This doesn't check
+  // much beyond stability across re-computed values, crashing, or hitting UB.
   EXPECT_THAT(HashValue("a").ExtractIndex(2), Eq(a.ExtractIndex(2)));
   EXPECT_THAT(HashValue("a").ExtractIndex(4), Eq(a.ExtractIndex(4)));
   EXPECT_THAT(HashValue("a").ExtractIndex(8), Eq(a.ExtractIndex(8)));
@@ -196,7 +198,7 @@ TEST(HashingTest, PairsAndTuples) {
   EXPECT_THAT(HashValue(std::tuple(1, 0)), Eq(hash_10));
   EXPECT_THAT(HashValue(std::tuple(1, 1)), Eq(hash_11));
 
-  // Integers in tuples should work the same as outside of tuples.
+  // Integers in tuples should also work.
   for (int i : {0, 1, 2, 3, 42, -1, -2, -3, -13}) {
     SCOPED_TRACE(llvm::formatv("Hashing: ({0}, {0}, {0})", i).str());
     auto test_int_tuple_hash = [](auto i) {
@@ -388,26 +390,40 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
 
   // First, we extract the bit subsequence we want to examine from each hash and
   // store it with an index back into the hashed values (or the collision map).
-  llvm::SmallVector<std::pair<uint32_t, int>> bits_and_indices;
+  //
+  // The result is that, `bits_and_indices[i].bits` has the hash bits of
+  // interest from `hashes[bits_and_indices[i].index]`.
+  //
+  // And because `collision_map` above uses the same indices as `hashes`,
+  // `collision_counts[collision_map[bits_and_indices[i].index]]` is the number
+  // of collisions for `bits_and_indices[i].bits`.
+  struct BitSequenceAndHashIndex {
+    // The bit subsequence of a hash input, adjusted into the low bits.
+    uint32_t bits;
+    // The index of the hash input corresponding to this bit sequence.
+    int index;
+  };
+  llvm::SmallVector<BitSequenceAndHashIndex> bits_and_indices;
   bits_and_indices.reserve(hashes.size());
   for (const auto& [hash, v] : hashes) {
     CARBON_DCHECK(v == hashes[bits_and_indices.size()].v);
     auto hash_bits = (static_cast<uint64_t>(hash) & BitMask) >> BitShift;
     bits_and_indices.push_back(
-        {static_cast<uint32_t>(hash_bits), bits_and_indices.size()});
+        {.bits = static_cast<uint32_t>(hash_bits),
+         .index = static_cast<int>(bits_and_indices.size())});
   }
 
   // Now we sort by the extracted bit sequence so we can efficiently scan for
   // colliding bit patterns.
   std::sort(
       bits_and_indices.begin(), bits_and_indices.end(),
-      [](const auto& lhs, const auto& rhs) { return lhs.first < rhs.first; });
+      [](const auto& lhs, const auto& rhs) { return lhs.bits < rhs.bits; });
 
   // Scan the sorted bit sequences we've extracted looking for collisions. We
   // count the total collisions, but we also track the number of individual
   // inputs that collide with each specific bit pattern.
-  uint32_t prev_hash_bits = bits_and_indices[0].first;
-  int prev_index = bits_and_indices[0].second;
+  uint32_t prev_hash_bits = bits_and_indices[0].bits;
+  int prev_index = bits_and_indices[0].index;
   bool in_collision = false;
   int total = 0;
   for (const auto& [hash_bits, hash_index] :
@@ -444,16 +460,16 @@ auto FindBitRangeCollisions(llvm::ArrayRef<HashedValue<T>> hashes)
   // Sort by collision count for each hash.
   std::sort(bits_and_indices.begin(), bits_and_indices.end(),
             [&](const auto& lhs, const auto& rhs) {
-              return collision_counts[collision_map[lhs.second]] <
-                     collision_counts[collision_map[rhs.second]];
+              return collision_counts[collision_map[lhs.index]] <
+                     collision_counts[collision_map[rhs.index]];
             });
 
   // And compute the median and max.
   int median = collision_counts
-      [collision_map[bits_and_indices[bits_and_indices.size() / 2].second]];
+      [collision_map[bits_and_indices[bits_and_indices.size() / 2].index]];
   int max = *std::max_element(collision_counts.begin(), collision_counts.end());
   CARBON_CHECK(max ==
-               collision_counts[collision_map[bits_and_indices.back().second]]);
+               collision_counts[collision_map[bits_and_indices.back().index]]);
   return {.total = total, .median = median, .max = max};
 }
 
