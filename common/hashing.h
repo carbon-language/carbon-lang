@@ -95,8 +95,8 @@ class HashCode : public Printable<HashCode> {
 //
 // The algorithm used is most heavily based on [Abseil's hashing algorithm][1],
 // with some additional ideas and inspiration from the fallback hashing
-// algorithm in [Rust's AHash][2] and the [FxHash][3] function. However, there are
-// also *significant* changes introduced here.
+// algorithm in [Rust's AHash][2] and the [FxHash][3] function. However, there
+// are also *significant* changes introduced here.
 //
 // [1]: https://github.com/abseil/abseil-cpp/tree/master/absl/hash/internal
 // [2]: https://github.com/tkaitchuck/aHash/wiki/AHash-fallback-algorithm
@@ -145,8 +145,8 @@ class HashCode : public Printable<HashCode> {
 // lookups.
 //
 // To add support for your type, you need to implement a customization point --
-// a free function that can be found by ADL for your type -- called `CarbonHashValue`
-// with the following signature:
+// a free function that can be found by ADL for your type -- called
+// `CarbonHashValue` with the following signature:
 //
 // ```cpp
 // auto CarbonHashValue(const YourType& value, uint64_t seed) -> HashCode;
@@ -172,8 +172,8 @@ inline auto HashValue(const T& value) -> HashCode;
 // Object and APIs that eventually produce a hash code.
 //
 // This type is primarily used by types to implement a customization point
-// `CarbonHashValue` that will in turn be used by the `HashValue` function. See the
-// `HashValue` function for details of that extension point.
+// `CarbonHashValue` that will in turn be used by the `HashValue` function. See
+// the `HashValue` function for details of that extension point.
 //
 // The methods on this type can be used to incorporate data from your
 // user-defined type into its internal state which can be converted to a
@@ -413,8 +413,8 @@ class Hasher {
   uint64_t buffer;
 };
 
-// A dedicated namespace for `CarbonHashValue` overloads that are not found by ADL
-// with their associated types. For example, primitive type overloads or
+// A dedicated namespace for `CarbonHashValue` overloads that are not found by
+// ADL with their associated types. For example, primitive type overloads or
 // overloads for types in LLVM's libraries.
 namespace HashDispatch {
 
@@ -438,13 +438,14 @@ inline auto CarbonHashValue(std::string_view value, uint64_t seed) -> HashCode {
   return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
 }
 
-inline auto CarbonHashValue(const std::string& value, uint64_t seed) -> HashCode {
+inline auto CarbonHashValue(const std::string& value, uint64_t seed)
+    -> HashCode {
   return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
 }
 
 template <unsigned Length>
-inline auto CarbonHashValue(const llvm::SmallString<Length>& value, uint64_t seed)
-    -> HashCode {
+inline auto CarbonHashValue(const llvm::SmallString<Length>& value,
+                            uint64_t seed) -> HashCode {
   return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
 }
 
