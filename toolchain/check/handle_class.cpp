@@ -67,7 +67,7 @@ static auto BuildClassDecl(Context& context)
       if (class_info.inheritance_kind != inheritance_kind) {
         CARBON_DIAGNOSTIC(
             ClassRedeclarationDifferentIntroducer, Error,
-            "Class redeclared with a different inheritance kind.");
+            "Class redeclared with different inheritance kind.");
         CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
                           "Previously declared here.");
         context.emitter()
