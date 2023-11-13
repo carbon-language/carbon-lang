@@ -336,7 +336,7 @@ struct NoOp {
 };
 
 struct Param {
-  static constexpr auto Kind = InstKind::Param.Define("parameter");
+  static constexpr auto Kind = InstKind::Param.Define("param");
 
   Parse::Node parse_node;
   TypeId type_id;
