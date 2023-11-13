@@ -8,7 +8,7 @@
 
 package A api;
 
-// CHECK:STDERR: a.carbon:[[@LINE+3]]:1: ERROR: Import is in cycle. Cycle must be fixed to import.
+// CHECK:STDERR: a.carbon:[[@LINE+3]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^
 import B;
@@ -17,7 +17,7 @@ import B;
 
 package B api;
 
-// CHECK:STDERR: b.carbon:[[@LINE+3]]:1: ERROR: Import is in cycle. Cycle must be fixed to import.
+// CHECK:STDERR: b.carbon:[[@LINE+3]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
 // CHECK:STDERR: import C;
 // CHECK:STDERR: ^
 import C;
@@ -26,14 +26,14 @@ import C;
 
 package C api;
 
-// CHECK:STDERR: c.carbon:[[@LINE+3]]:1: ERROR: Import is in cycle. Cycle must be fixed to import.
+// CHECK:STDERR: c.carbon:[[@LINE+3]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
 // CHECK:STDERR: import A;
 // CHECK:STDERR: ^
 import A;
 
 // --- c_impl.carbon
 
-// CHECK:STDERR: c_impl.carbon:[[@LINE+3]]:1: ERROR: Import is in cycle. Cycle must be fixed to import.
+// CHECK:STDERR: c_impl.carbon:[[@LINE+3]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
 // CHECK:STDERR: package C impl;
 // CHECK:STDERR: ^
 package C impl;
@@ -42,7 +42,7 @@ package C impl;
 
 package CycleChild api;
 
-// CHECK:STDERR: cycle_child.carbon:[[@LINE+3]]:1: ERROR: Import is in cycle. Cycle must be fixed to import.
+// CHECK:STDERR: cycle_child.carbon:[[@LINE+3]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^
 import B;

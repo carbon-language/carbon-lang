@@ -23,7 +23,7 @@ static auto HandleImportAndPackage(Context& context,
                                    Context::StateStackEntry state,
                                    NodeKind directive, bool is_package)
     -> void {
-  Tree::Package package{.node = Node(state.subtree_start)};
+  Tree::PackagingNames package{.node = Node(state.subtree_start)};
   if (auto package_name_token = context.ConsumeIf(Lex::TokenKind::Identifier)) {
     package.package_id = context.tokens().GetIdentifier(*package_name_token);
     context.AddLeafNode(NodeKind::Name, *package_name_token);

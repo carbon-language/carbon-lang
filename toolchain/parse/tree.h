@@ -10,7 +10,6 @@
 #include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -70,15 +69,15 @@ class Tree : public Printable<Tree> {
 
   // Used for both `package` and `import`. Links back to the node for
   // diagnostics.
-  struct Package {
+  struct PackagingNames {
     Node node;
     IdentifierId package_id = IdentifierId::Invalid;
     StringLiteralId library_id = StringLiteralId::Invalid;
   };
 
   // `package` information.
-  struct PackageDirective {
-    Package package;
+  struct PackagingDirective {
+    PackagingNames package;
     ApiOrImpl api_or_impl;
   };
 
@@ -127,10 +126,10 @@ class Tree : public Printable<Tree> {
 
   [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
 
-  auto package() const -> const std::optional<PackageDirective>& {
+  auto package() const -> const std::optional<PackagingDirective>& {
     return package_;
   }
-  auto imports() const -> llvm::ArrayRef<Package> { return imports_; }
+  auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
 
   // See the other Print comments.
   auto Print(llvm::raw_ostream& output) const -> void;
@@ -267,8 +266,8 @@ class Tree : public Printable<Tree> {
   // nodes as some tokens may have been skipped.
   bool has_errors_ = false;
 
-  std::optional<PackageDirective> package_;
-  llvm::SmallVector<Package> imports_;
+  std::optional<PackagingDirective> package_;
+  llvm::SmallVector<PackagingNames> imports_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes

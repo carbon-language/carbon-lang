@@ -40,6 +40,8 @@ struct UnitInfo {
 };
 
 // Produces and checks the IR for the provided Parse::Tree.
+// TODO: Both valid and invalid imports should be recorded on the SemIR. Invalid
+// imports should suppress errors where it makes sense.
 static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
                            llvm::raw_ostream* vlog_stream) -> void {
   unit_info.unit->sem_ir->emplace(*unit_info.unit->value_stores,
@@ -99,8 +101,8 @@ static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
 using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 
 // Returns a key form of the package object.
-static auto GetImportKey(UnitInfo& unit_info, Parse::Tree::Package package)
-    -> ImportKey {
+static auto GetImportKey(UnitInfo& unit_info,
+                         Parse::Tree::PackagingNames package) -> ImportKey {
   auto* stores = unit_info.unit->value_stores;
   return {package.package_id.is_valid()
               ? stores->identifiers().Get(package.package_id)
@@ -118,11 +120,11 @@ static constexpr llvm::StringLiteral ExplicitMainName = "Main";
 static auto TrackImport(
     llvm::DenseMap<ImportKey, UnitInfo*>& api_map,
     llvm::DenseMap<ImportKey, Parse::Node>* explicit_import_map,
-    UnitInfo& unit_info, Parse::Tree::Package import) -> void {
-  auto package_key = GetImportKey(unit_info, import);
+    UnitInfo& unit_info, Parse::Tree::PackagingNames import) -> void {
+  auto import_key = GetImportKey(unit_info, import);
 
   // Specialize the error for imports from `Main`.
-  if (package_key.first == ExplicitMainName) {
+  if (import_key.first == ExplicitMainName) {
     // Implicit imports will have already warned.
     if (explicit_import_map) {
       CARBON_DIAGNOSTIC(ImportMainPackage, Error,
@@ -135,7 +137,7 @@ static auto TrackImport(
   if (explicit_import_map) {
     // Check for redundant imports.
     if (auto [insert_it, success] =
-            explicit_import_map->insert({package_key, import.node});
+            explicit_import_map->insert({import_key, import.node});
         !success) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
                         "Library imported more than once.");
@@ -146,14 +148,16 @@ static auto TrackImport(
       return;
     }
 
-    // Check for explicit imports of the same library.
+    // Check for explicit imports of the same library. The ID comparison is okay
+    // in this case because both come from the same file.
     auto package_directive = unit_info.unit->parse_tree->package();
     if (package_directive &&
         import.package_id == package_directive->package.package_id &&
         import.library_id == package_directive->package.library_id) {
       CARBON_DIAGNOSTIC(ExplicitImportApi, Error,
-                        "Omit import of library `api`.");
-      CARBON_DIAGNOSTIC(ImportSelf, Error, "Library cannot import itself.");
+                        "Explicit import `api` of `impl` file is redundant "
+                        "with implicit import.");
+      CARBON_DIAGNOSTIC(ImportSelf, Error, "File cannot import itself.");
       unit_info.emitter.Emit(import.node, package_directive->api_or_impl ==
                                                   Parse::Tree::ApiOrImpl::Impl
                                               ? ExplicitImportApi
@@ -162,7 +166,7 @@ static auto TrackImport(
     }
   }
 
-  if (auto api = api_map.find(package_key); api != api_map.end()) {
+  if (auto api = api_map.find(import_key); api != api_map.end()) {
     unit_info.imports.push_back({import.node, api->second});
     ++unit_info.imports_remaining;
     api->second->incoming_imports.push_back(&unit_info);
@@ -193,20 +197,19 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
   for (auto& unit_info : unit_infos) {
     const auto& package = unit_info.unit->parse_tree->package();
     if (package) {
-      auto package_key = GetImportKey(unit_info, package->package);
+      auto import_key = GetImportKey(unit_info, package->package);
       // Catch explicit `Main` errors before they become marked as possible
       // APIs.
-      if (package_key.first == ExplicitMainName) {
-        if (package_key.second.empty()) {
-          CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
-                            "Omit `package` directive for `Main` package.");
-          unit_info.emitter.Emit(package->package.node, ExplicitMainPackage);
-        } else {
-          CARBON_DIAGNOSTIC(
-              ExplicitMainLibrary, Error,
-              "Use `library` directive in `Main` package libraries.");
-          unit_info.emitter.Emit(package->package.node, ExplicitMainLibrary);
-        }
+      if (import_key.first == ExplicitMainName) {
+        CARBON_DIAGNOSTIC(
+            ExplicitMainPackage, Error,
+            "Default `Main` library must omit `package` directive.");
+        CARBON_DIAGNOSTIC(
+            ExplicitMainLibrary, Error,
+            "Use `library` directive in `Main` package libraries.");
+        unit_info.emitter.Emit(package->package.node,
+                               import_key.second.empty() ? ExplicitMainPackage
+                                                         : ExplicitMainLibrary);
         continue;
       }
 
@@ -214,7 +217,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
         continue;
       }
 
-      auto [entry, success] = api_map.insert({package_key, &unit_info});
+      auto [entry, success] = api_map.insert({import_key, &unit_info});
       if (!success) {
         // TODO: Cross-reference the source, deal with library, etc.
         CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
@@ -224,7 +227,6 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     }
   }
 
-  // TODO: Detect self import.
   // Mark down imports for all files.
   llvm::SmallVector<UnitInfo*> ready_to_check;
   ready_to_check.reserve(units.size());
@@ -275,9 +277,9 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
           if (*import_unit->sem_ir) {
             ++import_it;
           } else {
-            CARBON_DIAGNOSTIC(
-                ImportCycleDetected, Error,
-                "Import is in cycle. Cycle must be fixed to import.");
+            CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
+                              "Import cannot be used due to a cycle. Cycle "
+                              "must be fixed to import.");
             unit_info.emitter.Emit(import_it->first, ImportCycleDetected);
             import_it = unit_info.imports.erase(import_it);
           }
