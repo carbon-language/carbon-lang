@@ -818,11 +818,11 @@ class TypeCompleter {
       case SemIR::NameReference::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::NoOp::Kind:
-      case SemIR::Parameter::Kind:
+      case SemIR::Param::Kind:
       case SemIR::RealLiteral::Kind:
       case SemIR::Return::Kind:
       case SemIR::ReturnExpr::Kind:
-      case SemIR::SelfParameter::Kind:
+      case SemIR::SelfParam::Kind:
       case SemIR::SpliceBlock::Kind:
       case SemIR::StringLiteral::Kind:
       case SemIR::StructAccess::Kind:

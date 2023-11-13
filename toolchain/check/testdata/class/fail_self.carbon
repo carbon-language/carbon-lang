@@ -90,7 +90,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
-// CHECK:STDOUT:   %self: Class = self_parameter false
+// CHECK:STDOUT:   %self: Class = self_param false
 // CHECK:STDOUT:   %self.ref: <error> = name_reference self, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

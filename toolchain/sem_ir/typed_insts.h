@@ -335,8 +335,8 @@ struct NoOp {
   // This instruction doesn't produce a value, so has no type.
 };
 
-struct Parameter {
-  static constexpr auto Kind = InstKind::Parameter.Define("parameter");
+struct Param {
+  static constexpr auto Kind = InstKind::Param.Define("parameter");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -376,8 +376,8 @@ struct ReturnExpr {
   InstId expr_id;
 };
 
-struct SelfParameter {
-  static constexpr auto Kind = InstKind::SelfParameter.Define("self_parameter");
+struct SelfParam {
+  static constexpr auto Kind = InstKind::SelfParam.Define("self_param");
   static constexpr llvm::StringLiteral Name = "self";
 
   Parse::Node parse_node;

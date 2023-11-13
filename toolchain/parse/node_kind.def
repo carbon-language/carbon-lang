@@ -144,7 +144,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 // `fn`:
 //     FunctionIntroducer
 //     _external_: Name or QualifiedDecl
-//     _external_: ParameterList
+//     _external_: ParamList
 //       _external_: type expression
 //     ReturnType
 //   FunctionDefinitionStart
@@ -167,20 +167,20 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
 // A parameter list, possibly implicit:
 //   [Implicit]ParamertListStart
 //   _external_: [Generic]PatternBinding
-//   ParameterListComma
-// [Implicit]ParameterList
+//   ParamListComma
+// [Implicit]ParamList
 //
-// Exprs and ParameterListComma may repeat with ParameterListComma as a
+// Exprs and ParamListComma may repeat with ParamListComma as a
 // separator.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListStart, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0,
                                    CARBON_TOKEN(OpenParen))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParameterListStart, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0, CARBON_TOKEN(Comma))
-CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListComma, 0, CARBON_TOKEN(Comma))
+CARBON_PARSE_NODE_KIND_BRACKET(ParamList, ParamListStart,
                                CARBON_TOKEN(CloseParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParameterList,
-                               ImplicitParameterListStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParamList,
+                               ImplicitParamListStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // An array type, such as  `[i32; 3]` or `[i32;]`:

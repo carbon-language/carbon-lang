@@ -80,13 +80,13 @@ static auto HandleDeclNameAndParamsAfterName(Context& context, Params params)
 
   if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
     context.PushState(State::DeclNameAndParamsAfterImplicit);
-    context.PushState(State::ParameterListAsImplicit);
+    context.PushState(State::ParamListAsImplicit);
   } else if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::ParameterListAsRegular);
+    context.PushState(State::ParamListAsRegular);
   } else if (params == Params::Required) {
-    CARBON_DIAGNOSTIC(ParametersRequiredByIntroducer, Error,
+    CARBON_DIAGNOSTIC(ParamsRequiredByIntroducer, Error,
                       "`{0}` requires a `(` for parameters.", Lex::TokenKind);
-    context.emitter().Emit(*context.position(), ParametersRequiredByIntroducer,
+    context.emitter().Emit(*context.position(), ParamsRequiredByIntroducer,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
   }
@@ -108,13 +108,12 @@ auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   context.PopAndDiscardState();
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::ParameterListAsRegular);
+    context.PushState(State::ParamListAsRegular);
   } else {
     CARBON_DIAGNOSTIC(
-        ParametersRequiredAfterImplicit, Error,
+        ParamsRequiredAfterImplicit, Error,
         "A `(` for parameters is required after implicit parameters.");
-    context.emitter().Emit(*context.position(),
-                           ParametersRequiredAfterImplicit);
+    context.emitter().Emit(*context.position(), ParamsRequiredAfterImplicit);
     context.ReturnErrorOnState();
   }
 }

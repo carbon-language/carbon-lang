@@ -6,56 +6,54 @@
 
 namespace Carbon::Parse {
 
-// Handles ParameterAs(Implicit|Regular).
-static auto HandleParameter(Context& context, State pattern_state,
-                            State finish_state) -> void {
+// Handles ParamAs(Implicit|Regular).
+static auto HandleParam(Context& context, State pattern_state,
+                        State finish_state) -> void {
   context.PopAndDiscardState();
 
   context.PushState(finish_state);
   context.PushState(pattern_state);
 }
 
-auto HandleParameterAsImplicit(Context& context) -> void {
-  HandleParameter(context, State::PatternAsImplicitParameter,
-                  State::ParameterFinishAsImplicit);
+auto HandleParamAsImplicit(Context& context) -> void {
+  HandleParam(context, State::PatternAsImplicitParam,
+              State::ParamFinishAsImplicit);
 }
 
-auto HandleParameterAsRegular(Context& context) -> void {
-  HandleParameter(context, State::PatternAsParameter,
-                  State::ParameterFinishAsRegular);
+auto HandleParamAsRegular(Context& context) -> void {
+  HandleParam(context, State::PatternAsParam, State::ParamFinishAsRegular);
 }
 
-// Handles ParameterFinishAs(Implicit|Regular).
-static auto HandleParameterFinish(Context& context, Lex::TokenKind close_token,
-                                  State param_state) -> void {
+// Handles ParamFinishAs(Implicit|Regular).
+static auto HandleParamFinish(Context& context, Lex::TokenKind close_token,
+                              State param_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
     context.ReturnErrorOnState();
   }
 
-  if (context.ConsumeListToken(NodeKind::ParameterListComma, close_token,
+  if (context.ConsumeListToken(NodeKind::ParamListComma, close_token,
                                state.has_error) ==
       Context::ListTokenKind::Comma) {
     context.PushState(param_state);
   }
 }
 
-auto HandleParameterFinishAsImplicit(Context& context) -> void {
-  HandleParameterFinish(context, Lex::TokenKind::CloseSquareBracket,
-                        State::ParameterAsImplicit);
+auto HandleParamFinishAsImplicit(Context& context) -> void {
+  HandleParamFinish(context, Lex::TokenKind::CloseSquareBracket,
+                    State::ParamAsImplicit);
 }
 
-auto HandleParameterFinishAsRegular(Context& context) -> void {
-  HandleParameterFinish(context, Lex::TokenKind::CloseParen,
-                        State::ParameterAsRegular);
+auto HandleParamFinishAsRegular(Context& context) -> void {
+  HandleParamFinish(context, Lex::TokenKind::CloseParen, State::ParamAsRegular);
 }
 
-// Handles ParameterListAs(Implicit|Regular).
-static auto HandleParameterList(Context& context, NodeKind parse_node_kind,
-                                Lex::TokenKind open_token_kind,
-                                Lex::TokenKind close_token_kind,
-                                State param_state, State finish_state) -> void {
+// Handles ParamListAs(Implicit|Regular).
+static auto HandleParamList(Context& context, NodeKind parse_node_kind,
+                            Lex::TokenKind open_token_kind,
+                            Lex::TokenKind close_token_kind, State param_state,
+                            State finish_state) -> void {
   context.PopAndDiscardState();
 
   context.PushState(finish_state);
@@ -66,38 +64,36 @@ static auto HandleParameterList(Context& context, NodeKind parse_node_kind,
   }
 }
 
-auto HandleParameterListAsImplicit(Context& context) -> void {
-  HandleParameterList(
-      context, NodeKind::ImplicitParameterListStart,
-      Lex::TokenKind::OpenSquareBracket, Lex::TokenKind::CloseSquareBracket,
-      State::ParameterAsImplicit, State::ParameterListFinishAsImplicit);
+auto HandleParamListAsImplicit(Context& context) -> void {
+  HandleParamList(context, NodeKind::ImplicitParamListStart,
+                  Lex::TokenKind::OpenSquareBracket,
+                  Lex::TokenKind::CloseSquareBracket, State::ParamAsImplicit,
+                  State::ParamListFinishAsImplicit);
 }
 
-auto HandleParameterListAsRegular(Context& context) -> void {
-  HandleParameterList(context, NodeKind::ParameterListStart,
-                      Lex::TokenKind::OpenParen, Lex::TokenKind::CloseParen,
-                      State::ParameterAsRegular,
-                      State::ParameterListFinishAsRegular);
+auto HandleParamListAsRegular(Context& context) -> void {
+  HandleParamList(context, NodeKind::ParamListStart, Lex::TokenKind::OpenParen,
+                  Lex::TokenKind::CloseParen, State::ParamAsRegular,
+                  State::ParamListFinishAsRegular);
 }
 
-// Handles ParameterListFinishAs(Implicit|Regular).
-static auto HandleParameterListFinish(Context& context,
-                                      NodeKind parse_node_kind,
-                                      Lex::TokenKind token_kind) -> void {
+// Handles ParamListFinishAs(Implicit|Regular).
+static auto HandleParamListFinish(Context& context, NodeKind parse_node_kind,
+                                  Lex::TokenKind token_kind) -> void {
   auto state = context.PopState();
 
   context.AddNode(parse_node_kind, context.ConsumeChecked(token_kind),
                   state.subtree_start, state.has_error);
 }
 
-auto HandleParameterListFinishAsImplicit(Context& context) -> void {
-  HandleParameterListFinish(context, NodeKind::ImplicitParameterList,
-                            Lex::TokenKind::CloseSquareBracket);
+auto HandleParamListFinishAsImplicit(Context& context) -> void {
+  HandleParamListFinish(context, NodeKind::ImplicitParamList,
+                        Lex::TokenKind::CloseSquareBracket);
 }
 
-auto HandleParameterListFinishAsRegular(Context& context) -> void {
-  HandleParameterListFinish(context, NodeKind::ParameterList,
-                            Lex::TokenKind::CloseParen);
+auto HandleParamListFinishAsRegular(Context& context) -> void {
+  HandleParamListFinish(context, NodeKind::ParamList,
+                        Lex::TokenKind::CloseParen);
 }
 
 }  // namespace Carbon::Parse
