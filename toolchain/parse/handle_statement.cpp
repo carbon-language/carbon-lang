@@ -186,7 +186,7 @@ auto HandleStatementReturn(Context& context) -> void {
 
   if (auto var_token = context.ConsumeIf(Lex::TokenKind::Var)) {
     // `return var;`
-    context.AddLeafNode(NodeKind::ReturnVarSpecifier, *var_token);
+    context.AddLeafNode(NodeKind::ReturnVarModifier, *var_token);
   } else if (!context.PositionIs(Lex::TokenKind::Semi)) {
     // `return <expression>;`
     context.PushState(State::Expr);

@@ -20,7 +20,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:         {kind: 'ReturnVarSpecifier', text: 'var'},
+// CHECK:STDOUT:         {kind: 'ReturnVarModifier', text: 'var'},
 // CHECK:STDOUT:       {kind: 'ReturnStatement', text: 'return', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

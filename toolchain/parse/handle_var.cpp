@@ -19,7 +19,7 @@ static auto HandleVar(Context& context, State finish_state,
 
   context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
   if (returned_token.is_valid()) {
-    context.AddLeafNode(NodeKind::ReturnedSpecifier, returned_token);
+    context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
 
   context.PushState(State::PatternAsVariable);

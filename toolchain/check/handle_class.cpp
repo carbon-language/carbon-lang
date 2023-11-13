@@ -18,17 +18,38 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
+auto HandleAbstractModifier(Context& context, Parse::Node parse_node) -> bool {
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleBaseModifier(Context& context, Parse::Node parse_node) -> bool {
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
 static auto BuildClassDecl(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
-  auto class_keyword =
+  auto introducer = context.node_stack().PeekParseNode();
+  bool abstract =
       context.node_stack()
-          .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::AbstractModifier>();
+  bool base =
+      context.node_stack()
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::BaseModifier>();
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
   auto decl_block_id = context.inst_block_stack().Pop();
+
+  CARBON_CHECK(!(abstract && base)) << "Cannot be both `abstract` and `base`";
+  auto inheritance_kind = abstract ? SemIR::Class::Abstract
+                          : base   ? SemIR::Class::Base
+                                   : SemIR::Class::Final;
 
   // Add the class declaration.
   auto class_decl =
-      SemIR::ClassDecl{class_keyword, SemIR::ClassId::Invalid, decl_block_id};
+      SemIR::ClassDecl{introducer, SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddInst(class_decl);
 
   // Check whether this is a redeclaration.
@@ -39,6 +60,24 @@ static auto BuildClassDecl(Context& context)
             context.insts().Get(existing_id).TryAs<SemIR::ClassDecl>()) {
       // This is a redeclaration of an existing class.
       class_decl.class_id = existing_class_decl->class_id;
+      auto& class_info = context.classes().Get(class_decl.class_id);
+
+      // The introducer kind must match the previous declaration.
+      // TODO: The rule here is not yet decided. See #3384.
+      if (class_info.inheritance_kind != inheritance_kind) {
+        CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducer, Error,
+                          "Class redeclared with different inheritance kind.");
+        CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
+                          "Previously declared here.");
+        context.emitter()
+            .Build(introducer, ClassRedeclarationDifferentIntroducer)
+            .Note(existing_class_decl->parse_node,
+                  ClassRedeclarationDifferentIntroducerPrevious)
+            .Emit();
+      }
+
+      // TODO: Check that the generic parameter list agrees with the prior
+      // declaration.
     } else {
       // This is a redeclaration of something other than a class.
       context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
@@ -57,13 +96,14 @@ static auto BuildClassDecl(Context& context)
                  : SemIR::NameId::Invalid,
          // `.self_type_id` depends on `class_id`, so is set below.
          .self_type_id = SemIR::TypeId::Invalid,
-         .decl_id = class_decl_id});
+         .decl_id = class_decl_id,
+         .inheritance_kind = inheritance_kind});
 
     // Build the `Self` type.
     auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id =
         context.CanonicalizeType(context.AddInst(SemIR::ClassType{
-            class_keyword, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+            introducer, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_decl.class_id}));
   }
 

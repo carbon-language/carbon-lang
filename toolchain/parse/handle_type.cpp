@@ -6,31 +6,25 @@
 
 namespace Carbon::Parse {
 
-// Handles processing of a type's introducer.
-static auto HandleTypeIntroducer(Context& context, NodeKind introducer_kind,
-                                 State after_params_state) -> void {
+// Handles processing of a type declaration or definition after its introducer.
+static auto HandleTypeAfterIntroducer(Context& context,
+                                      State after_params_state) -> void {
   auto state = context.PopState();
-
-  context.AddLeafNode(introducer_kind, context.Consume());
-
   state.state = after_params_state;
   context.PushState(state);
   context.PushState(State::DeclNameAndParamsAsOptional, state.token);
 }
 
-auto HandleTypeIntroducerAsClass(Context& context) -> void {
-  HandleTypeIntroducer(context, NodeKind::ClassIntroducer,
-                       State::TypeAfterParamsAsClass);
+auto HandleTypeAfterIntroducerAsClass(Context& context) -> void {
+  HandleTypeAfterIntroducer(context, State::TypeAfterParamsAsClass);
 }
 
-auto HandleTypeIntroducerAsInterface(Context& context) -> void {
-  HandleTypeIntroducer(context, NodeKind::InterfaceIntroducer,
-                       State::TypeAfterParamsAsInterface);
+auto HandleTypeAfterIntroducerAsInterface(Context& context) -> void {
+  HandleTypeAfterIntroducer(context, State::TypeAfterParamsAsInterface);
 }
 
-auto HandleTypeIntroducerAsNamedConstraint(Context& context) -> void {
-  HandleTypeIntroducer(context, NodeKind::NamedConstraintIntroducer,
-                       State::TypeAfterParamsAsNamedConstraint);
+auto HandleTypeAfterIntroducerAsNamedConstraint(Context& context) -> void {
+  HandleTypeAfterIntroducer(context, State::TypeAfterParamsAsNamedConstraint);
 }
 
 // Handles processing after params, deciding whether it's a declaration or
