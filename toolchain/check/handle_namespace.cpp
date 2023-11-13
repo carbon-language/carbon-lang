@@ -9,17 +9,17 @@ namespace Carbon::Check {
 
 auto HandleNamespaceStart(Context& context, Parse::Node /*parse_node*/)
     -> bool {
-  context.declaration_name_stack().PushScopeAndStartName();
+  context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
 auto HandleNamespace(Context& context, Parse::Node parse_node) -> bool {
-  auto name_context = context.declaration_name_stack().FinishName();
+  auto name_context = context.decl_name_stack().FinishName();
   auto namespace_id = context.AddInst(SemIR::Namespace{
       parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
       context.name_scopes().Add()});
-  context.declaration_name_stack().AddNameToLookup(name_context, namespace_id);
-  context.declaration_name_stack().PopScope();
+  context.decl_name_stack().AddNameToLookup(name_context, namespace_id);
+  context.decl_name_stack().PopScope();
   return true;
 }
 

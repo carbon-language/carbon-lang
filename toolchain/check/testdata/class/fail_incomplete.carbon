@@ -121,7 +121,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_incomplete.carbon" {
-// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1
 // CHECK:STDOUT:   %CallClassFunction: <function> = fn_decl @CallClassFunction

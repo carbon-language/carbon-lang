@@ -7,19 +7,19 @@
 namespace Carbon::Parse {
 
 // Handles an unrecognized declaration, adding an error node.
-static auto HandleUnrecognizedDeclaration(Context& context) -> void {
-  CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
+static auto HandleUnrecognizedDecl(Context& context) -> void {
+  CARBON_DIAGNOSTIC(UnrecognizedDecl, Error,
                     "Unrecognized declaration introducer.");
-  context.emitter().Emit(*context.position(), UnrecognizedDeclaration);
+  context.emitter().Emit(*context.position(), UnrecognizedDecl);
   auto cursor = *context.position();
   auto semi = context.SkipPastLikelyEnd(cursor);
-  // Locate the EmptyDeclaration at the semi when found, but use the
+  // Locate the EmptyDecl at the semi when found, but use the
   // original cursor location for an error when not.
-  context.AddLeafNode(NodeKind::EmptyDeclaration, semi ? *semi : cursor,
+  context.AddLeafNode(NodeKind::EmptyDecl, semi ? *semi : cursor,
                       /*has_error=*/true);
 }
 
-auto HandleDeclarationScopeLoop(Context& context) -> void {
+auto HandleDeclScopeLoop(Context& context) -> void {
   // This maintains the current state unless we're at the end of the scope.
 
   switch (auto position_kind = context.PositionKind()) {
@@ -42,12 +42,12 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
       // Because a non-packaging keyword was encountered, packaging is complete.
       // Misplaced packaging keywords may lead to this being re-triggered.
       if (context.packaging_state() !=
-          Context::PackagingState::AfterNonPackagingDeclaration) {
+          Context::PackagingState::AfterNonPackagingDecl) {
         if (!context.first_non_packaging_token().is_valid()) {
           context.set_first_non_packaging_token(*context.position());
         }
         context.set_packaging_state(
-            Context::PackagingState::AfterNonPackagingDeclaration);
+            Context::PackagingState::AfterNonPackagingDecl);
       }
       switch (position_kind) {
         // Remaining keywords are only valid after imports are complete, and
@@ -74,11 +74,11 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
           break;
         }
         case Lex::TokenKind::Semi: {
-          context.AddLeafNode(NodeKind::EmptyDeclaration, context.Consume());
+          context.AddLeafNode(NodeKind::EmptyDecl, context.Consume());
           break;
         }
         case Lex::TokenKind::Var: {
-          context.PushState(State::VarAsSemicolon);
+          context.PushState(State::VarAsDecl);
           break;
         }
         case Lex::TokenKind::Let: {
@@ -86,7 +86,7 @@ auto HandleDeclarationScopeLoop(Context& context) -> void {
           break;
         }
         default: {
-          HandleUnrecognizedDeclaration(context);
+          HandleUnrecognizedDecl(context);
           break;
         }
       }

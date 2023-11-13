@@ -34,8 +34,10 @@ cc_library(
         "check.cpp",
         "context.cpp",
         "convert.cpp",
-        "declaration_name_stack.cpp",
+        "decl_name_stack.cpp",
         "inst_block_stack.cpp",
+        "return.cpp",
+        "return.h",
     ] +
     # Glob handler files to avoid missing any.
     glob([
@@ -45,7 +47,7 @@ cc_library(
         "check.h",
         "context.h",
         "convert.h",
-        "declaration_name_stack.h",
+        "decl_name_stack.h",
         "inst_block_stack.h",
         "pending_block.h",
     ],

@@ -31,7 +31,7 @@ fn Var() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "tuple.carbon" {
-// CHECK:STDOUT:   class_declaration @X, ()
+// CHECK:STDOUT:   class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %Let: <function> = fn_decl @Let

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/return.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -12,13 +13,13 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
   if (auto self_param =
-          context.insts().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
+          context.insts().Get(self_param_id).TryAs<SemIR::SelfParam>()) {
     self_param->is_addr_self = SemIR::BoolValue::True;
     context.insts().Set(self_param_id, *self_param);
   } else {
-    CARBON_DIAGNOSTIC(AddrOnNonSelfParameter, Error,
-                      "`addr` can only be applied to a `self` parameter");
-    context.emitter().Emit(parse_node, AddrOnNonSelfParameter);
+    CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
+                      "`addr` can only be applied to a `self` parameter.");
+    context.emitter().Emit(parse_node, AddrOnNonSelfParam);
   }
   return true;
 }
@@ -30,25 +31,24 @@ auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
 
 auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
-      context.node_stack().PopExpressionWithParseNode();
+      context.node_stack().PopExprWithParseNode();
   auto type_node_copy = type_node;
-  auto cast_type_id = ExpressionAsType(context, type_node, parsed_type_id);
+  auto cast_type_id = ExprAsType(context, type_node, parsed_type_id);
 
   // A `self` binding doesn't have a name.
   if (auto self_node =
           context.node_stack()
               .PopForSoloParseNodeIf<Parse::NodeKind::SelfValueName>()) {
     if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-        Parse::NodeKind::ImplicitParameterListStart) {
+        Parse::NodeKind::ImplicitParamListStart) {
       CARBON_DIAGNOSTIC(
-          SelfOutsideImplicitParameterList, Error,
-          "`self` can only be declared in an implicit parameter list");
-      context.emitter().Emit(parse_node, SelfOutsideImplicitParameterList);
+          SelfOutsideImplicitParamList, Error,
+          "`self` can only be declared in an implicit parameter list.");
+      context.emitter().Emit(parse_node, SelfOutsideImplicitParamList);
     }
     context.AddInstAndPush(
-        parse_node,
-        SemIR::SelfParameter{*self_node, cast_type_id,
-                             /*is_addr_self=*/SemIR::BoolValue::False});
+        parse_node, SemIR::SelfParam{*self_node, cast_type_id,
+                                     /*is_addr_self=*/SemIR::BoolValue::False});
     return true;
   }
 
@@ -62,16 +62,16 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   // error locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
+    case Parse::NodeKind::ReturnedSpecifier:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
-      auto enclosing_class_decl =
-          context.GetCurrentScopeAs<SemIR::ClassDeclaration>();
+      auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       if (!context.TryToCompleteType(cast_type_id, [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInVarDeclaration, Error,
+            CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
                               "{0} has incomplete type `{1}`.", llvm::StringRef,
                               std::string);
             return context.emitter().Build(
-                type_node_copy, IncompleteTypeInVarDeclaration,
+                type_node_copy, IncompleteTypeInVarDecl,
                 enclosing_class_decl ? "Field" : "Variable",
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
@@ -79,7 +79,12 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       }
       SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
-      if (enclosing_class_decl) {
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+        CARBON_CHECK(!enclosing_class_decl) << "`returned var` at class scope";
+        value_id =
+            CheckReturnedVar(context, context.node_stack().PeekParseNode(),
+                             name_node, name_id, type_node, cast_type_id);
+      } else if (enclosing_class_decl) {
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
         auto field_type_inst_id = context.AddInst(SemIR::UnboundFieldType{
@@ -99,28 +104,32 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
         value_id = context.AddInst(
             SemIR::VarStorage{name_node, value_type_id, name_id});
       }
-      context.AddInstAndPush(
-          parse_node,
+      auto bind_id = context.AddInst(
           SemIR::BindName{name_node, value_type_id, name_id, value_id});
+      context.node_stack().Push(parse_node, bind_id);
+
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+        RegisterReturnedVar(context, bind_id);
+      }
       break;
     }
 
-    case Parse::NodeKind::ImplicitParameterListStart:
-    case Parse::NodeKind::ParameterListStart:
+    case Parse::NodeKind::ImplicitParamListStart:
+    case Parse::NodeKind::ParamListStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
-      context.AddInstAndPush(
-          parse_node, SemIR::Parameter{name_node, cast_type_id, name_id});
+      context.AddInstAndPush(parse_node,
+                             SemIR::Param{name_node, cast_type_id, name_id});
       // TODO: Create a `BindName` instruction.
       break;
 
     case Parse::NodeKind::LetIntroducer:
       if (!context.TryToCompleteType(cast_type_id, [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInLetDeclaration, Error,
+            CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
                               "`let` binding has incomplete type `{0}`.",
                               std::string);
             return context.emitter().Build(
-                type_node_copy, IncompleteTypeInLetDeclaration,
+                type_node_copy, IncompleteTypeInLetDecl,
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;

@@ -11,10 +11,10 @@ fn foo() -> u32;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'foo'},
-// CHECK:STDOUT:         {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ParameterList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'ParamListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'ParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'u32'},
 // CHECK:STDOUT:       {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDeclaration', text: ';', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

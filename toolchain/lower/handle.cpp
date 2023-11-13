@@ -179,9 +179,8 @@ auto HandleDereference(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
 }
 
-auto HandleFunctionDeclaration(FunctionContext& /*context*/,
-                               SemIR::InstId /*inst_id*/,
-                               SemIR::FunctionDeclaration inst) -> void {
+auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                        SemIR::FunctionDecl inst) -> void {
   CARBON_FATAL()
       << "Should not be encountered. If that changes, we may want to change "
          "higher-level logic to skip them rather than calling this. "
@@ -226,8 +225,8 @@ auto HandleNoOp(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   // No action to take.
 }
 
-auto HandleParameter(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                     SemIR::Parameter /*inst*/) -> void {
+auto HandleParam(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                 SemIR::Param /*inst*/) -> void {
   CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
 }
 
@@ -248,8 +247,8 @@ auto HandleReturn(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.builder().CreateRetVoid();
 }
 
-auto HandleReturnExpression(FunctionContext& context, SemIR::InstId /*inst_id*/,
-                            SemIR::ReturnExpression inst) -> void {
+auto HandleReturnExpr(FunctionContext& context, SemIR::InstId /*inst_id*/,
+                      SemIR::ReturnExpr inst) -> void {
   switch (SemIR::GetInitializingRepresentation(
               context.sem_ir(),
               context.sem_ir().insts().Get(inst.expr_id).type_id())
@@ -266,9 +265,8 @@ auto HandleReturnExpression(FunctionContext& context, SemIR::InstId /*inst_id*/,
   }
 }
 
-auto HandleSelfParameter(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/,
-                         SemIR::SelfParameter /*inst*/) -> void {
+auto HandleSelfParam(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                     SemIR::SelfParam /*inst*/) -> void {
   CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
 }
 

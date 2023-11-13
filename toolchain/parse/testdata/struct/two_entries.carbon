@@ -35,6 +35,6 @@ var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 // CHECK:STDOUT:           {kind: 'Literal', text: '2'},
 // CHECK:STDOUT:         {kind: 'StructFieldValue', text: '=', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 27},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 27},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

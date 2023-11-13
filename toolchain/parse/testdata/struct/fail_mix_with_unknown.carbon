@@ -42,7 +42,7 @@ var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDOUT:         {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'StructFieldUnknown', text: '.', has_error: yes},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 20},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 20},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'x'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
@@ -62,6 +62,6 @@ var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDOUT:         {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'StructFieldUnknown', text: '.', has_error: yes},
 // CHECK:STDOUT:       {kind: 'StructTypeLiteral', text: '}', subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'VariableDeclaration', text: ';', subtree_size: 20},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 20},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

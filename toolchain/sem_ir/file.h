@@ -37,8 +37,10 @@ struct Function : public Printable<Function> {
 
   // The function name.
   NameId name_id;
+  // The first declaration of the function. This is a FunctionDecl.
+  InstId decl_id = InstId::Invalid;
   // The definition, if the function has been defined or is currently being
-  // defined. This is a FunctionDeclaration.
+  // defined. This is a FunctionDecl.
   InstId definition_id = InstId::Invalid;
   // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
@@ -76,12 +78,12 @@ struct Class : public Printable<Class> {
   NameId name_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
-  // The first declaration of the class. This is a ClassDeclaration.
-  InstId declaration_id = InstId::Invalid;
+  // The first declaration of the class. This is a ClassDecl.
+  InstId decl_id = InstId::Invalid;
 
   // The following members are set at the `{` of the class definition.
 
-  // The definition of the class. This is a ClassDeclaration.
+  // The definition of the class. This is a ClassDecl.
   InstId definition_id = InstId::Invalid;
   // The class scope.
   NameScopeId scope_id = NameScopeId::Invalid;
@@ -253,9 +255,8 @@ class File : public Printable<File> {
 
   // Same as `StringifyType`, but starting with an instruction representing a
   // type expression rather than a canonical type.
-  auto StringifyTypeExpression(InstId outer_inst_id,
-                               bool in_type_context = false) const
-      -> std::string;
+  auto StringifyTypeExpr(InstId outer_inst_id,
+                         bool in_type_context = false) const -> std::string;
 
   // Directly expose SharedValueStores members.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
@@ -380,10 +381,10 @@ class File : public Printable<File> {
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md
 // for details.
-enum class ExpressionCategory : int8_t {
+enum class ExprCategory : int8_t {
   // This instruction does not correspond to an expression, and as such has no
   // category.
-  NotExpression,
+  NotExpr,
   // The category of this instruction is not known due to an error.
   Error,
   // This instruction represents a value expression.
@@ -408,8 +409,7 @@ enum class ExpressionCategory : int8_t {
 };
 
 // Returns the expression category for an instruction.
-auto GetExpressionCategory(const File& file, InstId inst_id)
-    -> ExpressionCategory;
+auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 // Returns information about the value representation to use for a type.
 inline auto GetValueRepresentation(const File& file, TypeId type_id)

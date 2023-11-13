@@ -15,7 +15,7 @@ static auto HandleTypeIntroducer(Context& context, NodeKind introducer_kind,
 
   state.state = after_params_state;
   context.PushState(state);
-  context.PushState(State::DeclarationNameAndParamsAsOptional, state.token);
+  context.PushState(State::DeclNameAndParamsAsOptional, state.token);
 }
 
 auto HandleTypeIntroducerAsClass(Context& context) -> void {
@@ -35,52 +35,51 @@ auto HandleTypeIntroducerAsNamedConstraint(Context& context) -> void {
 
 // Handles processing after params, deciding whether it's a declaration or
 // definition.
-static auto HandleTypeAfterParams(Context& context, NodeKind declaration_kind,
+static auto HandleTypeAfterParams(Context& context, NodeKind decl_kind,
                                   NodeKind definition_start_kind,
                                   State definition_finish_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
-    context.RecoverFromDeclarationError(state, declaration_kind,
-                                        /*skip_past_likely_end=*/true);
+    context.RecoverFromDeclError(state, decl_kind,
+                                 /*skip_past_likely_end=*/true);
     return;
   }
 
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    context.AddNode(declaration_kind, *semi, state.subtree_start,
-                    state.has_error);
+    context.AddNode(decl_kind, *semi, state.subtree_start, state.has_error);
     return;
   }
 
   if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
-    context.EmitExpectedDeclarationSemiOrDefinition(
+    context.EmitExpectedDeclSemiOrDefinition(
         context.tokens().GetKind(state.token));
-    context.RecoverFromDeclarationError(state, declaration_kind,
-                                        /*skip_past_likely_end=*/true);
+    context.RecoverFromDeclError(state, decl_kind,
+                                 /*skip_past_likely_end=*/true);
     return;
   }
 
   state.state = definition_finish_state;
   context.PushState(state);
-  context.PushState(State::DeclarationScopeLoop);
+  context.PushState(State::DeclScopeLoop);
   context.AddNode(definition_start_kind, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 
 auto HandleTypeAfterParamsAsClass(Context& context) -> void {
-  HandleTypeAfterParams(context, NodeKind::ClassDeclaration,
+  HandleTypeAfterParams(context, NodeKind::ClassDecl,
                         NodeKind::ClassDefinitionStart,
                         State::TypeDefinitionFinishAsClass);
 }
 
 auto HandleTypeAfterParamsAsInterface(Context& context) -> void {
-  HandleTypeAfterParams(context, NodeKind::InterfaceDeclaration,
+  HandleTypeAfterParams(context, NodeKind::InterfaceDecl,
                         NodeKind::InterfaceDefinitionStart,
                         State::TypeDefinitionFinishAsInterface);
 }
 
 auto HandleTypeAfterParamsAsNamedConstraint(Context& context) -> void {
-  HandleTypeAfterParams(context, NodeKind::NamedConstraintDeclaration,
+  HandleTypeAfterParams(context, NodeKind::NamedConstraintDecl,
                         NodeKind::NamedConstraintDefinitionStart,
                         State::TypeDefinitionFinishAsNamedConstraint);
 }

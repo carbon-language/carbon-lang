@@ -10,30 +10,29 @@
 
 namespace Carbon::Check {
 
-auto HandleArrayExpressionStart(Context& /*context*/,
-                                Parse::Node /*parse_node*/) -> bool {
+auto HandleArrayExprStart(Context& /*context*/, Parse::Node /*parse_node*/)
+    -> bool {
   return true;
 }
 
-auto HandleArrayExpressionSemi(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleArrayExprSemi(Context& context, Parse::Node parse_node) -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
+auto HandleArrayExpr(Context& context, Parse::Node parse_node) -> bool {
   // TODO: Handle array type with undefined bound.
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      Parse::NodeKind::ArrayExpressionSemi) {
+      Parse::NodeKind::ArrayExprSemi) {
     context.node_stack().PopAndIgnore();
     context.node_stack().PopAndIgnore();
-    return context.TODO(parse_node, "HandleArrayExpressionWithoutBounds");
+    return context.TODO(parse_node, "HandleArrayExprWithoutBounds");
   }
 
-  auto bound_inst_id = context.node_stack().PopExpression();
+  auto bound_inst_id = context.node_stack().PopExpr();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExpressionSemi>();
-  auto element_type_inst_id = context.node_stack().PopExpression();
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExprSemi>();
+  auto element_type_inst_id = context.node_stack().PopExpr();
   auto bound_inst = context.insts().Get(bound_inst_id);
   if (auto literal = bound_inst.TryAs<SemIR::IntegerLiteral>()) {
     const auto& bound_value = context.integers().Get(literal->integer_id);
@@ -43,12 +42,12 @@ auto HandleArrayExpression(Context& context, Parse::Node parse_node) -> bool {
           parse_node,
           SemIR::ArrayType{
               parse_node, SemIR::TypeId::TypeType, bound_inst_id,
-              ExpressionAsType(context, parse_node, element_type_inst_id)});
+              ExprAsType(context, parse_node, element_type_inst_id)});
       return true;
     }
   }
-  CARBON_DIAGNOSTIC(InvalidArrayExpression, Error, "Invalid array expression.");
-  context.emitter().Emit(parse_node, InvalidArrayExpression);
+  CARBON_DIAGNOSTIC(InvalidArrayExpr, Error, "Invalid array expression.");
+  context.emitter().Emit(parse_node, InvalidArrayExpr);
   context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
   return true;
 }

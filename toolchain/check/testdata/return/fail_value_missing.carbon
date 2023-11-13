@@ -5,9 +5,12 @@
 // AUTOUPDATE
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+3]]:9: ERROR: Must return a i32.
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+6]]:9: ERROR: Missing return value.
   // CHECK:STDERR:   return;
   // CHECK:STDERR:         ^
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:1: Return type of function is `i32`.
+  // CHECK:STDERR: fn Main() -> i32 {
+  // CHECK:STDERR: ^
   return;
 }
 

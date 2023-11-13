@@ -40,7 +40,7 @@ class C {
 // CHECK:STDOUT: file "fail_not_in_function.carbon" {
 // CHECK:STDOUT:   %.loc17: i32 = block_arg <unexpected instblockref block4>
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc17
-// CHECK:STDOUT:   class_declaration @C, ()
+// CHECK:STDOUT:   class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

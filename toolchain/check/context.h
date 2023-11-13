@@ -9,7 +9,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "toolchain/check/declaration_name_stack.h"
+#include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/tree.h"
@@ -28,6 +28,17 @@ class Context {
   struct BreakContinueScope {
     SemIR::InstBlockId break_target;
     SemIR::InstBlockId continue_target;
+  };
+
+  // A scope in which `return` can be used.
+  struct ReturnScope {
+    // The declaration from which we can return. Inside a function, this will
+    // be a `FunctionDecl`.
+    SemIR::InstId decl_id;
+
+    // The value corresponding to the current `returned var`, if any. Will be
+    // set and unset as `returned var`s are declared and go out of scope.
+    SemIR::InstId returned_var = SemIR::InstId::Invalid;
   };
 
   // Stores references for work.
@@ -58,8 +69,8 @@ class Context {
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
-  auto LookupNameInDeclaration(Parse::Node parse_node, SemIR::NameId name_id,
-                               SemIR::NameScopeId scope_id) -> SemIR::InstId;
+  auto LookupNameInDecl(Parse::Node parse_node, SemIR::NameId name_id,
+                        SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
   auto LookupUnqualifiedName(Parse::Node parse_node, SemIR::NameId name_id)
@@ -114,6 +125,11 @@ class Context {
     }
     return insts().Get(current_scope_inst_id).TryAs<InstT>();
   }
+
+  // If there is no `returned var` in scope, sets the given instruction to be
+  // the current `returned var` and returns an invalid instruction ID. If there
+  // is already a `returned var`, returns it instead.
+  auto SetReturnedVarOrGetExisting(SemIR::InstId bind_id) -> SemIR::InstId;
 
   // Follows NameReference instructions to find the value named by a given
   // instruction.
@@ -259,7 +275,7 @@ class Context {
     return args_type_info_stack_;
   }
 
-  auto return_scope_stack() -> llvm::SmallVector<SemIR::InstId>& {
+  auto return_scope_stack() -> llvm::SmallVector<ReturnScope>& {
     return return_scope_stack_;
   }
 
@@ -267,9 +283,7 @@ class Context {
     return break_continue_stack_;
   }
 
-  auto declaration_name_stack() -> DeclarationNameStack& {
-    return declaration_name_stack_;
-  }
+  auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   // Directly expose SemIR::File data accessors for brevity in calls.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
@@ -324,8 +338,8 @@ class Context {
 
     // The instruction associated with this entry, if any. This can be one of:
     //
-    // - A `ClassDeclaration`, for a class definition scope.
-    // - A `FunctionDeclaration`, for the outermost scope in a function
+    // - A `ClassDecl`, for a class definition scope.
+    // - A `FunctionDecl`, for the outermost scope in a function
     //   definition.
     // - Invalid, for any other scope.
     SemIR::InstId scope_inst_id;
@@ -334,8 +348,12 @@ class Context {
     SemIR::NameScopeId scope_id;
 
     // Names which are registered with name_lookup_, and will need to be
-    // deregistered when the scope ends.
+    // unregistered when the scope ends.
     llvm::DenseSet<SemIR::NameId> names;
+
+    // Whether a `returned var` was introduced in this scope, and needs to be
+    // unregistered when the scope ends.
+    bool has_returned_var = false;
 
     // TODO: This likely needs to track things which need to be destructed.
   };
@@ -407,9 +425,8 @@ class Context {
   // for a type separate from the literal arguments.
   InstBlockStack args_type_info_stack_;
 
-  // A stack of return scopes; i.e., targets for `return`. Inside a function,
-  // this will be a FunctionDeclaration.
-  llvm::SmallVector<SemIR::InstId> return_scope_stack_;
+  // A stack of scopes from which we can `return`.
+  llvm::SmallVector<ReturnScope> return_scope_stack_;
 
   // A stack of `break` and `continue` targets.
   llvm::SmallVector<BreakContinueScope> break_continue_stack_;
@@ -426,7 +443,7 @@ class Context {
   ScopeIndex next_scope_index_ = ScopeIndex(0);
 
   // The stack used for qualified declaration name construction.
-  DeclarationNameStack declaration_name_stack_;
+  DeclNameStack decl_name_stack_;
 
   // Maps identifiers to name lookup results. Values are a stack of name lookup
   // results in the ancestor scopes. This offers constant-time lookup of names,

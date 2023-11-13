@@ -100,9 +100,20 @@ class NodeStack {
     PopForSoloParseNode<RequiredParseKind>();
   }
 
+  // Pops the top of the stack if it is the given kind. Returns `true` if a node
+  // was popped.
+  template <Parse::NodeKind::RawEnumType RequiredParseKind>
+  auto PopAndDiscardSoloParseNodeIf() -> bool {
+    if (!PeekIs<RequiredParseKind>()) {
+      return false;
+    }
+    PopForSoloParseNode<RequiredParseKind>();
+    return true;
+  }
+
   // Pops an expression from the top of the stack and returns the parse_node and
   // the ID.
-  auto PopExpressionWithParseNode() -> std::pair<Parse::Node, SemIR::InstId> {
+  auto PopExprWithParseNode() -> std::pair<Parse::Node, SemIR::InstId> {
     return PopWithParseNode<SemIR::InstId>();
   }
 
@@ -148,9 +159,7 @@ class NodeStack {
 
   // Pops an expression from the top of the stack and returns the ID.
   // Expressions map multiple Parse::NodeKinds to SemIR::InstId always.
-  auto PopExpression() -> SemIR::InstId {
-    return PopExpressionWithParseNode().second;
-  }
+  auto PopExpr() -> SemIR::InstId { return PopExprWithParseNode().second; }
 
   // Pops the top of the stack and returns the ID.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
@@ -282,23 +291,23 @@ class NodeStack {
   // Translate a parse node kind to the enum ID kind it should always provide.
   static constexpr auto ParseNodeKindToIdKind(Parse::NodeKind kind) -> IdKind {
     switch (kind) {
-      case Parse::NodeKind::ArrayExpression:
-      case Parse::NodeKind::CallExpression:
-      case Parse::NodeKind::CallExpressionStart:
-      case Parse::NodeKind::IfExpressionThen:
-      case Parse::NodeKind::IfExpressionElse:
-      case Parse::NodeKind::IndexExpression:
+      case Parse::NodeKind::ArrayExpr:
+      case Parse::NodeKind::CallExpr:
+      case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::IfExprThen:
+      case Parse::NodeKind::IfExprElse:
+      case Parse::NodeKind::IndexExpr:
       case Parse::NodeKind::InfixOperator:
       case Parse::NodeKind::Literal:
-      case Parse::NodeKind::MemberAccessExpression:
-      case Parse::NodeKind::NameExpression:
-      case Parse::NodeKind::ParenExpression:
+      case Parse::NodeKind::MemberAccessExpr:
+      case Parse::NodeKind::NameExpr:
+      case Parse::NodeKind::ParenExpr:
       case Parse::NodeKind::PatternBinding:
       case Parse::NodeKind::PostfixOperator:
       case Parse::NodeKind::PrefixOperator:
       case Parse::NodeKind::ReturnType:
-      case Parse::NodeKind::SelfTypeNameExpression:
-      case Parse::NodeKind::SelfValueNameExpression:
+      case Parse::NodeKind::SelfTypeNameExpr:
+      case Parse::NodeKind::SelfValueNameExpr:
       case Parse::NodeKind::ShortCircuitOperand:
       case Parse::NodeKind::StructFieldValue:
       case Parse::NodeKind::StructLiteral:
@@ -307,9 +316,9 @@ class NodeStack {
       case Parse::NodeKind::TupleLiteral:
         return IdKind::InstId;
       case Parse::NodeKind::IfCondition:
-      case Parse::NodeKind::IfExpressionIf:
-      case Parse::NodeKind::ImplicitParameterList:
-      case Parse::NodeKind::ParameterList:
+      case Parse::NodeKind::IfExprIf:
+      case Parse::NodeKind::ImplicitParamList:
+      case Parse::NodeKind::ParamList:
       case Parse::NodeKind::WhileCondition:
       case Parse::NodeKind::WhileConditionStart:
         return IdKind::InstBlockId;
@@ -319,17 +328,19 @@ class NodeStack {
         return IdKind::ClassId;
       case Parse::NodeKind::Name:
         return IdKind::NameId;
-      case Parse::NodeKind::ArrayExpressionSemi:
+      case Parse::NodeKind::ArrayExprSemi:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
-      case Parse::NodeKind::ImplicitParameterListStart:
+      case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::LetIntroducer:
-      case Parse::NodeKind::ParameterListStart:
-      case Parse::NodeKind::ParenExpressionOrTupleLiteralStart:
-      case Parse::NodeKind::QualifiedDeclaration:
+      case Parse::NodeKind::ParamListStart:
+      case Parse::NodeKind::ParenExprOrTupleLiteralStart:
+      case Parse::NodeKind::QualifiedDecl:
+      case Parse::NodeKind::ReturnedSpecifier:
       case Parse::NodeKind::ReturnStatementStart:
+      case Parse::NodeKind::ReturnVarSpecifier:
       case Parse::NodeKind::SelfValueName:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
       case Parse::NodeKind::VariableInitializer:

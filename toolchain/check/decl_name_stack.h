@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_DECLARATION_NAME_STACK_H_
-#define CARBON_TOOLCHAIN_CHECK_DECLARATION_NAME_STACK_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_DECL_NAME_STACK_H_
+#define CARBON_TOOLCHAIN_CHECK_DECL_NAME_STACK_H_
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parse/tree.h"
@@ -74,7 +74,7 @@ class Context;
 // // is forward declared in `MyType`, but is not a scope itself.
 // fn MyNamespace.MyType.DoSomething() { ... }
 // ```
-class DeclarationNameStack {
+class DeclNameStack {
  public:
   // Context for declaration name construction.
   struct NameContext {
@@ -128,7 +128,7 @@ class DeclarationNameStack {
     };
   };
 
-  explicit DeclarationNameStack(Context* context) : context_(context) {}
+  explicit DeclNameStack(Context* context) : context_(context) {}
 
   // Pushes processing of a new declaration name, which will be used
   // contextually, and prepares to enter scopes for that name. To pop this
@@ -193,9 +193,9 @@ class DeclarationNameStack {
   Context* context_;
 
   // Provides nesting for construction.
-  llvm::SmallVector<NameContext> declaration_name_stack_;
+  llvm::SmallVector<NameContext> decl_name_stack_;
 };
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_DECLARATION_NAME_STACK_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_DECL_NAME_STACK_H_

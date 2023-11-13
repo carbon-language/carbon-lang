@@ -75,7 +75,7 @@ fn AddressOfTupleElementValue() {
   &((1, 2)[0]);
 }
 
-fn AddressOfParameter(param: i32) {
+fn AddressOfParam(param: i32) {
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:26: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   var param_addr: i32* = &param;
   // CHECK:STDERR:                          ^
@@ -101,7 +101,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   %AddressOfCall: <function> = fn_decl @AddressOfCall
 // CHECK:STDOUT:   %AddressOfType: <function> = fn_decl @AddressOfType
 // CHECK:STDOUT:   %AddressOfTupleElementValue: <function> = fn_decl @AddressOfTupleElementValue
-// CHECK:STDOUT:   %AddressOfParameter: <function> = fn_decl @AddressOfParameter
+// CHECK:STDOUT:   %AddressOfParam: <function> = fn_decl @AddressOfParam
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;
@@ -176,7 +176,7 @@ fn AddressOfParameter(param: i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AddressOfParameter(%param: i32) {
+// CHECK:STDOUT: fn @AddressOfParam(%param: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc82_22: type = ptr_type i32
 // CHECK:STDOUT:   %param_addr.var: ref i32* = var param_addr

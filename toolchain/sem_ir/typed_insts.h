@@ -192,9 +192,8 @@ struct Call {
   InstBlockId args_id;
 };
 
-struct ClassDeclaration {
-  static constexpr auto Kind =
-      InstKind::ClassDeclaration.Define("class_declaration");
+struct ClassDecl {
+  static constexpr auto Kind = InstKind::ClassDecl.Define("class_decl");
 
   Parse::Node parse_node;
   // No type: a class declaration is not itself a value. The name of a class
@@ -283,8 +282,8 @@ struct Field {
   MemberIndex index;
 };
 
-struct FunctionDeclaration {
-  static constexpr auto Kind = InstKind::FunctionDeclaration.Define("fn_decl");
+struct FunctionDecl {
+  static constexpr auto Kind = InstKind::FunctionDecl.Define("fn_decl");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -336,8 +335,8 @@ struct NoOp {
   // This instruction doesn't produce a value, so has no type.
 };
 
-struct Parameter {
-  static constexpr auto Kind = InstKind::Parameter.Define("parameter");
+struct Param {
+  static constexpr auto Kind = InstKind::Param.Define("param");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -368,17 +367,17 @@ struct Return {
   // This is a statement, so has no type.
 };
 
-struct ReturnExpression {
+struct ReturnExpr {
   static constexpr auto Kind =
-      InstKind::ReturnExpression.Define("return", TerminatorKind::Terminator);
+      InstKind::ReturnExpr.Define("return", TerminatorKind::Terminator);
 
   Parse::Node parse_node;
   // This is a statement, so has no type.
   InstId expr_id;
 };
 
-struct SelfParameter {
-  static constexpr auto Kind = InstKind::SelfParameter.Define("self_parameter");
+struct SelfParam {
+  static constexpr auto Kind = InstKind::SelfParam.Define("self_param");
   static constexpr llvm::StringLiteral Name = "self";
 
   Parse::Node parse_node;

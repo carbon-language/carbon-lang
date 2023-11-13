@@ -316,7 +316,7 @@ class InstNamer {
       -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(inst.parse_node())) {
-      case Parse::NodeKind::IfExpressionIf:
+      case Parse::NodeKind::IfExprIf:
         switch (inst.kind()) {
           case BranchIf::Kind:
             name = "if.expr.then";
@@ -429,9 +429,9 @@ class InstNamer {
           add_inst_name_id(inst.As<BindName>().name_id);
           continue;
         }
-        case FunctionDeclaration::Kind: {
+        case FunctionDecl::Kind: {
           add_inst_name_id(sem_ir_.functions()
-                               .Get(inst.As<FunctionDeclaration>().function_id)
+                               .Get(inst.As<FunctionDecl>().function_id)
                                .name_id);
           continue;
         }
@@ -444,14 +444,13 @@ class InstNamer {
           add_inst_name_id(inst.As<NameReference>().name_id, ".ref");
           continue;
         }
-        case Parameter::Kind: {
-          add_inst_name_id(inst.As<Parameter>().name_id);
+        case Param::Kind: {
+          add_inst_name_id(inst.As<Param>().name_id);
           continue;
         }
-        case SelfParameter::Kind: {
-          add_inst_name(inst.As<SelfParameter>().is_addr_self.index
-                            ? "self.addr"
-                            : "self");
+        case SelfParam::Kind: {
+          add_inst_name(inst.As<SelfParam>().is_addr_self.index ? "self.addr"
+                                                                : "self");
           continue;
         }
         case VarStorage::Kind: {
@@ -556,12 +555,12 @@ class Formatter {
 
     if (fn.implicit_param_refs_id != InstBlockId::Empty) {
       out_ << "[";
-      FormatParameterList(fn.implicit_param_refs_id);
+      FormatParamList(fn.implicit_param_refs_id);
       out_ << "]";
     }
 
     out_ << "(";
-    FormatParameterList(fn.param_refs_id);
+    FormatParamList(fn.param_refs_id);
     out_ << ")";
 
     if (fn.return_type_id.is_valid()) {
@@ -591,7 +590,7 @@ class Formatter {
     }
   }
 
-  auto FormatParameterList(InstBlockId param_refs_id) -> void {
+  auto FormatParamList(InstBlockId param_refs_id) -> void {
     llvm::ListSeparator sep;
     for (const InstId param_id : sem_ir_.inst_blocks().Get(param_refs_id)) {
       out_ << sep;
@@ -675,17 +674,17 @@ class Formatter {
       case InstValueKind::Typed:
         FormatInstName(inst_id);
         out_ << ": ";
-        switch (GetExpressionCategory(sem_ir_, inst_id)) {
-          case ExpressionCategory::NotExpression:
-          case ExpressionCategory::Error:
-          case ExpressionCategory::Value:
-          case ExpressionCategory::Mixed:
+        switch (GetExprCategory(sem_ir_, inst_id)) {
+          case ExprCategory::NotExpr:
+          case ExprCategory::Error:
+          case ExprCategory::Value:
+          case ExprCategory::Mixed:
             break;
-          case ExpressionCategory::DurableReference:
-          case ExpressionCategory::EphemeralReference:
+          case ExprCategory::DurableReference:
+          case ExprCategory::EphemeralReference:
             out_ << "ref ";
             break;
-          case ExpressionCategory::Initializing:
+          case ExprCategory::Initializing:
             out_ << "init ";
             break;
         }

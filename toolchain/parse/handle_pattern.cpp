@@ -6,7 +6,7 @@
 
 namespace Carbon::Parse {
 
-// Handles PatternAs(ImplicitParameter|FunctionParameter|Variable|Let).
+// Handles PatternAs(ImplicitParam|FunctionParam|Variable|Let).
 static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
     -> void {
   auto state = context.PopState();
@@ -23,11 +23,11 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
   // Handle an invalid pattern introducer for parameters and variables.
   auto on_error = [&]() {
     switch (pattern_kind) {
-      case Context::PatternKind::ImplicitParameter:
-      case Context::PatternKind::Parameter: {
-        CARBON_DIAGNOSTIC(ExpectedParameterName, Error,
+      case Context::PatternKind::ImplicitParam:
+      case Context::PatternKind::Param: {
+        CARBON_DIAGNOSTIC(ExpectedParamName, Error,
                           "Expected parameter declaration.");
-        context.emitter().Emit(*context.position(), ExpectedParameterName);
+        context.emitter().Emit(*context.position(), ExpectedParamName);
         break;
       }
       case Context::PatternKind::Variable: {
@@ -78,19 +78,19 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
     // Use the `:` or `:!` for the root node.
     state.token = context.Consume();
     context.PushState(state);
-    context.PushStateForExpression(PrecedenceGroup::ForType());
+    context.PushStateForExpr(PrecedenceGroup::ForType());
   } else {
     on_error();
     return;
   }
 }
 
-auto HandlePatternAsImplicitParameter(Context& context) -> void {
-  HandlePattern(context, Context::PatternKind::ImplicitParameter);
+auto HandlePatternAsImplicitParam(Context& context) -> void {
+  HandlePattern(context, Context::PatternKind::ImplicitParam);
 }
 
-auto HandlePatternAsParameter(Context& context) -> void {
-  HandlePattern(context, Context::PatternKind::Parameter);
+auto HandlePatternAsParam(Context& context) -> void {
+  HandlePattern(context, Context::PatternKind::Param);
 }
 
 auto HandlePatternAsVariable(Context& context) -> void {

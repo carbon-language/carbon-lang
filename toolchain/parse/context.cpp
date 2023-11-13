@@ -144,8 +144,8 @@ auto Context::ConsumeIfPatternKeyword(Lex::TokenKind keyword_token,
     -> void {
   if (auto token = ConsumeIf(keyword_token)) {
     PushState(Context::StateStackEntry(
-        keyword_state, PrecedenceGroup::ForTopLevelExpression(),
-        PrecedenceGroup::ForTopLevelExpression(), *token, subtree_start));
+        keyword_state, PrecedenceGroup::ForTopLevelExpr(),
+        PrecedenceGroup::ForTopLevelExpr(), *token, subtree_start));
   }
 }
 
@@ -391,33 +391,33 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
   }
 }
 
-auto Context::GetDeclarationContext() -> DeclarationContext {
-  // i == 0 is the file-level DeclarationScopeLoop. Additionally, i == 1 can be
-  // skipped because it will never be a DeclarationScopeLoop.
+auto Context::GetDeclContext() -> DeclContext {
+  // i == 0 is the file-level DeclScopeLoop. Additionally, i == 1 can be
+  // skipped because it will never be a DeclScopeLoop.
   for (int i = state_stack_.size() - 1; i > 1; --i) {
     // The declaration context is always the state _above_ a
-    // DeclarationScopeLoop.
-    if (state_stack_[i].state == State::DeclarationScopeLoop) {
+    // DeclScopeLoop.
+    if (state_stack_[i].state == State::DeclScopeLoop) {
       switch (state_stack_[i - 1].state) {
         case State::TypeDefinitionFinishAsClass:
-          return DeclarationContext::Class;
+          return DeclContext::Class;
         case State::TypeDefinitionFinishAsInterface:
-          return DeclarationContext::Interface;
+          return DeclContext::Interface;
         case State::TypeDefinitionFinishAsNamedConstraint:
-          return DeclarationContext::NamedConstraint;
+          return DeclContext::NamedConstraint;
         default:
           llvm_unreachable("Missing handling for a declaration scope");
       }
     }
   }
   CARBON_CHECK(!state_stack_.empty() &&
-               state_stack_[0].state == State::DeclarationScopeLoop);
-  return DeclarationContext::File;
+               state_stack_[0].state == State::DeclScopeLoop);
+  return DeclContext::File;
 }
 
-auto Context::RecoverFromDeclarationError(StateStackEntry state,
-                                          NodeKind parse_node_kind,
-                                          bool skip_past_likely_end) -> void {
+auto Context::RecoverFromDeclError(StateStackEntry state,
+                                   NodeKind parse_node_kind,
+                                   bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {
     if (auto semi = SkipPastLikelyEnd(token)) {
@@ -428,21 +428,19 @@ auto Context::RecoverFromDeclarationError(StateStackEntry state,
           /*has_error=*/true);
 }
 
-auto Context::EmitExpectedDeclarationSemi(Lex::TokenKind expected_kind)
-    -> void {
-  CARBON_DIAGNOSTIC(ExpectedDeclarationSemi, Error,
+auto Context::EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
+  CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error,
                     "`{0}` declarations must end with a `;`.", Lex::TokenKind);
-  emitter().Emit(*position(), ExpectedDeclarationSemi, expected_kind);
+  emitter().Emit(*position(), ExpectedDeclSemi, expected_kind);
 }
 
-auto Context::EmitExpectedDeclarationSemiOrDefinition(
-    Lex::TokenKind expected_kind) -> void {
-  CARBON_DIAGNOSTIC(ExpectedDeclarationSemiOrDefinition, Error,
+auto Context::EmitExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
+    -> void {
+  CARBON_DIAGNOSTIC(ExpectedDeclSemiOrDefinition, Error,
                     "`{0}` declarations must either end with a `;` or "
                     "have a `{{ ... }` block for a definition.",
                     Lex::TokenKind);
-  emitter().Emit(*position(), ExpectedDeclarationSemiOrDefinition,
-                 expected_kind);
+  emitter().Emit(*position(), ExpectedDeclSemiOrDefinition, expected_kind);
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {

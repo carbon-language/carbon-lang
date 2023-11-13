@@ -196,22 +196,22 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case BranchIf::Kind:
     case BranchWithArg::Kind:
     case Call::Kind:
-    case ClassDeclaration::Kind:
+    case ClassDecl::Kind:
     case ClassFieldAccess::Kind:
     case ClassInit::Kind:
     case Converted::Kind:
     case Dereference::Kind:
     case Field::Kind:
-    case FunctionDeclaration::Kind:
+    case FunctionDecl::Kind:
     case InitializeFrom::Kind:
     case IntegerLiteral::Kind:
     case Namespace::Kind:
     case NoOp::Kind:
-    case Parameter::Kind:
+    case Param::Kind:
     case RealLiteral::Kind:
     case Return::Kind:
-    case ReturnExpression::Kind:
-    case SelfParameter::Kind:
+    case ReturnExpr::Kind:
+    case SelfParam::Kind:
     case SpliceBlock::Kind:
     case StringLiteral::Kind:
     case StructAccess::Kind:
@@ -236,12 +236,11 @@ static auto GetTypePrecedence(InstKind kind) -> int {
 
 auto File::StringifyType(TypeId type_id, bool in_type_context) const
     -> std::string {
-  return StringifyTypeExpression(GetTypeAllowBuiltinTypes(type_id),
-                                 in_type_context);
+  return StringifyTypeExpr(GetTypeAllowBuiltinTypes(type_id), in_type_context);
 }
 
-auto File::StringifyTypeExpression(InstId outer_inst_id,
-                                   bool in_type_context) const -> std::string {
+auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
+    -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -399,23 +398,23 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
       case BranchWithArg::Kind:
       case Builtin::Kind:
       case Call::Kind:
-      case ClassDeclaration::Kind:
+      case ClassDecl::Kind:
       case ClassFieldAccess::Kind:
       case ClassInit::Kind:
       case Converted::Kind:
       case CrossReference::Kind:
       case Dereference::Kind:
       case Field::Kind:
-      case FunctionDeclaration::Kind:
+      case FunctionDecl::Kind:
       case InitializeFrom::Kind:
       case IntegerLiteral::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
-      case Parameter::Kind:
+      case Param::Kind:
       case RealLiteral::Kind:
       case Return::Kind:
-      case ReturnExpression::Kind:
-      case SelfParameter::Kind:
+      case ReturnExpr::Kind:
+      case SelfParam::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:
@@ -455,13 +454,12 @@ auto File::StringifyTypeExpression(InstId outer_inst_id,
   return str;
 }
 
-auto GetExpressionCategory(const File& file, InstId inst_id)
-    -> ExpressionCategory {
+auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   const File* ir = &file;
 
   // The overall expression category if the current instruction is a value
   // expression.
-  ExpressionCategory value_category = ExpressionCategory::Value;
+  ExprCategory value_category = ExprCategory::Value;
 
   while (true) {
     auto inst = ir->insts().Get(inst_id);
@@ -472,15 +470,15 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
-      case ClassDeclaration::Kind:
+      case ClassDecl::Kind:
       case Field::Kind:
-      case FunctionDeclaration::Kind:
+      case FunctionDecl::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
       case Return::Kind:
-      case ReturnExpression::Kind:
+      case ReturnExpr::Kind:
       case StructTypeField::Kind:
-        return ExpressionCategory::NotExpression;
+        return ExprCategory::NotExpr;
 
       case CrossReference::Kind: {
         auto xref = inst.As<CrossReference>();
@@ -509,10 +507,10 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
       case ClassType::Kind:
       case ConstType::Kind:
       case IntegerLiteral::Kind:
-      case Parameter::Kind:
+      case Param::Kind:
       case PointerType::Kind:
       case RealLiteral::Kind:
-      case SelfParameter::Kind:
+      case SelfParam::Kind:
       case StringLiteral::Kind:
       case StructValue::Kind:
       case StructType::Kind:
@@ -525,7 +523,7 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
 
       case Builtin::Kind: {
         if (inst.As<Builtin>().builtin_kind == BuiltinKind::Error) {
-          return ExpressionCategory::Error;
+          return ExprCategory::Error;
         }
         return value_category;
       }
@@ -545,7 +543,7 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
         // A value of class type is a pointer to an object representation.
         // Therefore, if the base is a value, the result is an ephemeral
         // reference.
-        value_category = ExpressionCategory::EphemeralReference;
+        value_category = ExprCategory::EphemeralReference;
         continue;
       }
 
@@ -571,7 +569,7 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
 
       case StructLiteral::Kind:
       case TupleLiteral::Kind:
-        return ExpressionCategory::Mixed;
+        return ExprCategory::Mixed;
 
       case ArrayInit::Kind:
       case Call::Kind:
@@ -579,16 +577,16 @@ auto GetExpressionCategory(const File& file, InstId inst_id)
       case ClassInit::Kind:
       case StructInit::Kind:
       case TupleInit::Kind:
-        return ExpressionCategory::Initializing;
+        return ExprCategory::Initializing;
 
       case Dereference::Kind:
       case VarStorage::Kind:
-        return ExpressionCategory::DurableReference;
+        return ExprCategory::DurableReference;
 
       case Temporary::Kind:
       case TemporaryStorage::Kind:
       case ValueAsReference::Kind:
-        return ExpressionCategory::EphemeralReference;
+        return ExprCategory::EphemeralReference;
     }
   }
 }
