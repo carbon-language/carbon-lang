@@ -60,7 +60,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   switch (position_kind) {
     case Lex::TokenKind::Abstract:
     case Lex::TokenKind::Base: {
-      if (context.PositionIs(Lex::TokenKind::Class, 1)) {
+      if (context.PositionIs(Lex::TokenKind::Class, Lookahead::NextToken)) {
         context.PushState(State::TypeAfterIntroducerAsClass);
         auto modifier_token = context.Consume();
         auto class_token = context.Consume();
