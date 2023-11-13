@@ -82,6 +82,32 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "typed_nodes",
+    hdrs = ["typed_nodes.h"],
+    deps = [
+        ":tree",
+        "//common:struct_reflection",
+        "//toolchain/lex:tokenized_buffer",
+    ],
+)
+
+cc_test(
+    name = "typed_nodes_test",
+    size = "small",
+    srcs = ["typed_nodes_test.cpp"],
+    deps = [
+        ":tree",
+        ":typed_nodes",
+        "//testing/base:gtest_main",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:mocks",
+        "//toolchain/lex",
+        "//toolchain/lex:tokenized_buffer",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 cc_fuzz_test(
     name = "parse_fuzzer",
     size = "small",
