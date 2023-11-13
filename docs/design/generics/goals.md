@@ -316,12 +316,15 @@ Some of this is likely unavoidable or too costly to avoid, as most existing
 checked generics systems
 [have undecidable aspects to their type system](https://3fx.ch/typing-is-hard.html),
 including [Rust](https://sdleffler.github.io/RustTypeSystemTuringComplete/) and
-[Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024). We
-fully expect there to be metaprogramming facilities in Carbon that will be able
-to execute arbitrary Turing machines, with infinite loops and undecidable
-stopping criteria. We don't see this as a problem though, just like we don't
-worry about trying to make the compiler reliably prevent you from writing
-programs that don't terminate.
+Swift ([1](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024),
+[2](https://forums.swift.org/t/termination-checking-for-type-substitution/64504),
+[3](https://forums.swift.org/t/two-more-undecidable-problems-in-the-swift-type-system/64814),
+[4](https://forums.swift.org/t/brainf-in-the-swift-type-system/68301)). We fully
+expect there to be metaprogramming facilities in Carbon that will be able to
+execute arbitrary Turing machines, with infinite loops and undecidable stopping
+criteria. We don't see this as a problem though, just like we don't worry about
+trying to make the compiler reliably prevent you from writing programs that
+don't terminate.
 
 We _would_ like to distinguish "the executed steps are present in the program's
 source" from "the compiler has to search for a proof that the code is legal." In
