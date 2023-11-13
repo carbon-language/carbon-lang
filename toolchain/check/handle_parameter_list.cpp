@@ -6,20 +6,17 @@
 
 namespace Carbon::Check {
 
-auto HandleImplicitParameterList(Context& context, Parse::Node parse_node)
-    -> bool {
-  auto refs_id =
-      context.ParamOrArgEnd(Parse::NodeKind::ImplicitParameterListStart);
+auto HandleImplicitParamList(Context& context, Parse::Node parse_node) -> bool {
+  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ImplicitParamListStart);
   context.node_stack()
-      .PopAndDiscardSoloParseNode<
-          Parse::NodeKind::ImplicitParameterListStart>();
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::ImplicitParamListStart>();
   context.node_stack().Push(parse_node, refs_id);
   // The implicit parameter list's scope extends to the end of the following
   // parameter list.
   return true;
 }
 
-auto HandleImplicitParameterListStart(Context& context, Parse::Node parse_node)
+auto HandleImplicitParamListStart(Context& context, Parse::Node parse_node)
     -> bool {
   context.PushScope();
   context.node_stack().Push(parse_node);
@@ -27,23 +24,22 @@ auto HandleImplicitParameterListStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleParameterList(Context& context, Parse::Node parse_node) -> bool {
-  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ParameterListStart);
+auto HandleParamList(Context& context, Parse::Node parse_node) -> bool {
+  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ParamListStart);
   context.PopScope();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ParameterListStart>();
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::ParamListStart>();
   context.node_stack().Push(parse_node, refs_id);
   return true;
 }
 
-auto HandleParameterListComma(Context& context, Parse::Node /*parse_node*/)
+auto HandleParamListComma(Context& context, Parse::Node /*parse_node*/)
     -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleParameterListStart(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleParamListStart(Context& context, Parse::Node parse_node) -> bool {
   // A parameter list following an implicit parameter list shares the same
   // scope.
   //
@@ -53,7 +49,7 @@ auto HandleParameterListStart(Context& context, Parse::Node parse_node)
   //
   // ... all the earlier parameter should be in scope in the later parameter
   // lists too.
-  if (!context.node_stack().PeekIs<Parse::NodeKind::ImplicitParameterList>()) {
+  if (!context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamList>()) {
     context.PushScope();
   }
   context.node_stack().Push(parse_node);

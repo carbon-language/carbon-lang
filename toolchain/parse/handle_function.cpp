@@ -11,12 +11,12 @@ auto HandleFunctionIntroducer(Context& context) -> void {
 
   context.AddLeafNode(NodeKind::FunctionIntroducer, context.Consume());
 
-  state.state = State::FunctionAfterParameters;
+  state.state = State::FunctionAfterParams;
   context.PushState(state);
   context.PushState(State::DeclNameAndParamsAsRequired, state.token);
 }
 
-auto HandleFunctionAfterParameters(Context& context) -> void {
+auto HandleFunctionAfterParams(Context& context) -> void {
   auto state = context.PopState();
 
   // Regardless of whether there's a return type, we'll finish the signature.

@@ -105,7 +105,7 @@ CARBON_PARSE_STATE(ArrayExprFinish)
 //
 // { ... }
 // ^
-//   1. BraceExprParameterAsUnknown
+//   1. BraceExprParamAsUnknown
 //   2. BraceExprFinishAsUnknown
 CARBON_PARSE_STATE(BraceExpr)
 
@@ -116,12 +116,12 @@ CARBON_PARSE_STATE(BraceExpr)
 // { .foo ... }
 //  ^
 //   1. PeriodAsStruct
-//   2. BraceExprParameterAfterDesignatorAs(Type|Value|Unknown)
+//   2. BraceExprParamAfterDesignatorAs(Type|Value|Unknown)
 //
 // { ???
 //  ^
-//   1. BraceExprParameterFinishAs(Type|Value|Unknown)
-CARBON_PARSE_STATE_VARIANTS3(BraceExprParameter, Type, Value, Unknown)
+//   1. BraceExprParamFinishAs(Type|Value|Unknown)
+CARBON_PARSE_STATE_VARIANTS3(BraceExprParam, Type, Value, Unknown)
 
 // Handles a brace expression parameter after the initial designator. This
 // should be at a `:` or `=`, depending on whether it's a type or value literal.
@@ -129,17 +129,17 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParameter, Type, Value, Unknown)
 // { .foo = bar ... }
 //        ^
 //   1. Expr
-//   2. BraceExprParameterFinishAsValue
+//   2. BraceExprParamFinishAsValue
 //
 // { .foo: bar ... }
 //       ^
 //   1. Expr
-//   2. BraceExprParameterFinishAsType
+//   2. BraceExprParamFinishAsType
 //
 // { .foo ???
 //       ^
-//   1. BraceExprParameterFinishAs(Type|Value|Unknown)
-CARBON_PARSE_STATE_VARIANTS3(BraceExprParameterAfterDesignator, Type, Value,
+//   1. BraceExprParamFinishAs(Type|Value|Unknown)
+CARBON_PARSE_STATE_VARIANTS3(BraceExprParamAfterDesignator, Type, Value,
                              Unknown)
 
 // Handles the end of a brace expression parameter.
@@ -150,16 +150,16 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParameterAfterDesignator, Type, Value,
 //
 // { .foo = bar, ... }
 //             ^
-//   1. BraceExprParameterAsValue
+//   1. BraceExprParamAsValue
 //
 // { .foo: bar, ... }
 //            ^
-//   1. BraceExprParameterAsType
+//   1. BraceExprParamAsType
 //
 // { ??? , ... }
 //       ^
-//   1. BraceExprParameterAsUnknown
-CARBON_PARSE_STATE_VARIANTS3(BraceExprParameterFinish, Type, Value, Unknown)
+//   1. BraceExprParamAsUnknown
+CARBON_PARSE_STATE_VARIANTS3(BraceExprParamFinish, Type, Value, Unknown)
 
 // Handles the `}` of a brace expression.
 //
@@ -177,7 +177,7 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprFinish, Type, Value, Unknown)
 // F( ...
 //  ^
 //   1. Expr
-//   2. CallExprParameterFinish
+//   2. CallExprParamFinish
 //   3. CallExprFinish
 CARBON_PARSE_STATE(CallExpr)
 
@@ -186,12 +186,12 @@ CARBON_PARSE_STATE(CallExpr)
 // F(a, ...)
 //    ^
 //   1. Expr
-//   2. CallExprParameterFinish
+//   2. CallExprParamFinish
 //
 // F(a )
 //    ^
 //   (state done)
-CARBON_PARSE_STATE(CallExprParameterFinish)
+CARBON_PARSE_STATE(CallExprParamFinish)
 
 // Handles finishing the call expression.
 //
@@ -251,12 +251,12 @@ CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParams, None, Optional, Required)
 //
 // name [ ... ]    (variant is not None)
 //     ^
-//   1. ParameterListAsImplicit
+//   1. ParamListAsImplicit
 //   2. DeclNameAndParamsAfterImplicit
 //
 // name ( ... )    (variant is not None)
 //     ^
-//   1. ParameterListAsRegular
+//   1. ParamListAsRegular
 //
 // name ...        (variant is not Required)
 //     ^
@@ -273,7 +273,7 @@ CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParamsAfterName, None, Optional,
 //
 // name [ ... ] ( ... )
 //             ^
-//   1. ParameterListAsRegular
+//   1. ParamListAsRegular
 //
 // name [ ... ] ???
 //             ^
@@ -527,7 +527,7 @@ CARBON_PARSE_STATE(ExprStatementFinish)
 // fn ...
 // ^~
 //   1. DeclNameAndParamsAsRequired
-//   2. FunctionAfterParameters
+//   2. FunctionAfterParams
 CARBON_PARSE_STATE(FunctionIntroducer)
 
 // Handles processing of a function's syntax after `)`, primarily the
@@ -543,7 +543,7 @@ CARBON_PARSE_STATE(FunctionIntroducer)
 // fn F(...) ...
 //          ^
 //   1. FunctionSignatureFinish
-CARBON_PARSE_STATE(FunctionAfterParameters)
+CARBON_PARSE_STATE(FunctionAfterParams)
 
 // Finishes a function return type.
 //
@@ -617,9 +617,9 @@ CARBON_PARSE_STATE(Package)
 //
 //  ...
 // ^
-//   1. PatternAs(ImplicitParameter|Parameter)
-//   2. ParameterFinishAs(Implicit|Regular)
-CARBON_PARSE_STATE_VARIANTS2(Parameter, Implicit, Regular)
+//   1. PatternAs(ImplicitParam|Param)
+//   2. ParamFinishAs(Implicit|Regular)
+CARBON_PARSE_STATE_VARIANTS2(Param, Implicit, Regular)
 
 // Finishes parsing a parameter, including the optional trailing `,`. If there
 // are more parameters, enqueues another parameter parsing state.
@@ -630,12 +630,12 @@ CARBON_PARSE_STATE_VARIANTS2(Parameter, Implicit, Regular)
 //
 // ... , ...
 //     ^
-//   1. ParameterAs(Implicit|Regular)
+//   1. ParamAs(Implicit|Regular)
 //
 // ...
 //    ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParameterFinish, Implicit, Regular)
+CARBON_PARSE_STATE_VARIANTS2(ParamFinish, Implicit, Regular)
 
 // Handles processing of a parameter list `[` or `(`.
 //
@@ -643,15 +643,15 @@ CARBON_PARSE_STATE_VARIANTS2(ParameterFinish, Implicit, Regular)
 // ^
 // [ ]        (variant is Implicit)
 // ^
-//   1. ParameterListFinishAs(Regular|Implicit)
+//   1. ParamListFinishAs(Regular|Implicit)
 //
 // ( ... )    (variant is Regular)
 // ^
 // [ ... ]    (variant is Implicit)
 // ^
-//   1. ParameterAs(Regular|Implicit)
-//   2. ParameterListFinishAs(Regular|Implicit)
-CARBON_PARSE_STATE_VARIANTS2(ParameterList, Implicit, Regular)
+//   1. ParamAs(Regular|Implicit)
+//   2. ParamListFinishAs(Regular|Implicit)
+CARBON_PARSE_STATE_VARIANTS2(ParamList, Implicit, Regular)
 
 // Handles processing of a parameter list `]` or `)`.
 //
@@ -660,7 +660,7 @@ CARBON_PARSE_STATE_VARIANTS2(ParameterList, Implicit, Regular)
 // [ ... ]    (variant is Implicit)
 //       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParameterListFinish, Implicit, Regular)
+CARBON_PARSE_STATE_VARIANTS2(ParamListFinish, Implicit, Regular)
 
 // Handles the processing of a `(condition)` up through the expression.
 //
@@ -696,7 +696,7 @@ CARBON_PARSE_STATE_VARIANTS2(ParenConditionFinish, If, While)
 // ( ... )
 // ^
 //   1. Expr
-//   2. ParenExprParameterFinishAsUnknown
+//   2. ParenExprParamFinishAsUnknown
 //   3. ParenExprFinishAsNormal    (SPECIAL: may be replaced)
 CARBON_PARSE_STATE(ParenExpr)
 
@@ -712,13 +712,13 @@ CARBON_PARSE_STATE(ParenExpr)
 // ( ... , ... )
 //       ^
 //   1. Expression
-//   2. ParenExpressionParameterFinishAsTuple
+//   2. ParenExpressionParamFinishAsTuple
 //   SPECIAL (variant is Unknown): parent becomes ParenExprFinishAsTuple
 //
 //  ...
 // ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprParameterFinish, Unknown, Tuple)
+CARBON_PARSE_STATE_VARIANTS2(ParenExprParamFinish, Unknown, Tuple)
 
 // Handles the `)` of a parenthesized expression.
 //
@@ -759,7 +759,7 @@ CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Normal, Tuple)
 //  ???
 // ^
 //   1. PatternFinishAsRegular
-CARBON_PARSE_STATE_VARIANTS4(Pattern, ImplicitParameter, Parameter, Variable,
+CARBON_PARSE_STATE_VARIANTS4(Pattern, ImplicitParam, Param, Variable,
                              Let)
 
 // Handles `addr` in a pattern.

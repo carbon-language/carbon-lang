@@ -444,14 +444,13 @@ class InstNamer {
           add_inst_name_id(inst.As<NameReference>().name_id, ".ref");
           continue;
         }
-        case Parameter::Kind: {
-          add_inst_name_id(inst.As<Parameter>().name_id);
+        case Param::Kind: {
+          add_inst_name_id(inst.As<Param>().name_id);
           continue;
         }
-        case SelfParameter::Kind: {
-          add_inst_name(inst.As<SelfParameter>().is_addr_self.index
-                            ? "self.addr"
-                            : "self");
+        case SelfParam::Kind: {
+          add_inst_name(inst.As<SelfParam>().is_addr_self.index ? "self.addr"
+                                                                : "self");
           continue;
         }
         case VarStorage::Kind: {
@@ -556,12 +555,12 @@ class Formatter {
 
     if (fn.implicit_param_refs_id != InstBlockId::Empty) {
       out_ << "[";
-      FormatParameterList(fn.implicit_param_refs_id);
+      FormatParamList(fn.implicit_param_refs_id);
       out_ << "]";
     }
 
     out_ << "(";
-    FormatParameterList(fn.param_refs_id);
+    FormatParamList(fn.param_refs_id);
     out_ << ")";
 
     if (fn.return_type_id.is_valid()) {
@@ -591,7 +590,7 @@ class Formatter {
     }
   }
 
-  auto FormatParameterList(InstBlockId param_refs_id) -> void {
+  auto FormatParamList(InstBlockId param_refs_id) -> void {
     llvm::ListSeparator sep;
     for (const InstId param_id : sem_ir_.inst_blocks().Get(param_refs_id)) {
       out_ << sep;

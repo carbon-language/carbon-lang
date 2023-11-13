@@ -34,7 +34,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       0:               type0
 // CHECK:STDOUT:       1:               type2
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Parameter, arg0: name1, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: Param, arg0: name1, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
 // CHECK:STDOUT:     inst+2:          {kind: TupleLiteral, arg0: block2, type: type1}
 // CHECK:STDOUT:     inst+3:          {kind: TupleType, arg0: typeBlock1, type: typeTypeType}

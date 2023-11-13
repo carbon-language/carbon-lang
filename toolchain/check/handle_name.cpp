@@ -156,7 +156,7 @@ auto HandleMemberAccessExpr(Context& context, Parse::Node parse_node) -> bool {
         auto& function = context.functions().Get(function_decl->function_id);
         for (auto param_id :
              context.inst_blocks().Get(function.implicit_param_refs_id)) {
-          if (context.insts().Get(param_id).Is<SemIR::SelfParameter>()) {
+          if (context.insts().Get(param_id).Is<SemIR::SelfParam>()) {
             context.AddInstAndPush(
                 parse_node,
                 SemIR::BoundMethod{
