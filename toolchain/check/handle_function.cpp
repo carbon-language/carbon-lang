@@ -50,11 +50,10 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   }
 
   SemIR::InstBlockId param_refs_id =
-      context.node_stack().Pop<Parse::NodeKind::ParameterList>();
+      context.node_stack().Pop<Parse::NodeKind::ParamList>();
   SemIR::InstBlockId implicit_param_refs_id =
-      context.node_stack()
-          .PopIf<Parse::NodeKind::ImplicitParameterList>()
-          .value_or(SemIR::InstBlockId::Empty);
+      context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>().value_or(
+          SemIR::InstBlockId::Empty);
   auto name_context = context.decl_name_stack().FinishName();
   auto fn_node =
       context.node_stack()
@@ -100,7 +99,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
              name_context.state == DeclNameStack::NameContext::State::Unresolved
                  ? name_context.unresolved_name_id
                  : SemIR::NameId::Invalid,
-         .declaration_id = function_decl_id,
+         .decl_id = function_decl_id,
          .implicit_param_refs_id = implicit_param_refs_id,
          .param_refs_id = param_refs_id,
          .return_type_id = return_type_id,
@@ -205,10 +204,10 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
           context.sem_ir().StringifyType(param.type_id(), true));
     });
 
-    if (auto fn_param = param.TryAs<SemIR::Parameter>()) {
+    if (auto fn_param = param.TryAs<SemIR::Param>()) {
       context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
                               param_id);
-    } else if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
+    } else if (auto self_param = param.TryAs<SemIR::SelfParam>()) {
       context.AddNameToLookup(self_param->parse_node, SemIR::NameId::SelfValue,
                               param_id);
     } else {

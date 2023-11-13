@@ -159,10 +159,10 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
-    } else if (inst.Is<SemIR::SelfParameter>()) {
+    } else if (inst.Is<SemIR::SelfParam>()) {
       name_id = SemIR::NameId::SelfValue;
     } else {
-      name_id = inst.As<SemIR::Parameter>().name_id;
+      name_id = inst.As<SemIR::Param>().name_id;
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }

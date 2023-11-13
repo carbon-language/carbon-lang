@@ -973,7 +973,7 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
                         Parse::Node callee_parse_node,
-                        SemIR::SelfParameter self_param, SemIR::InstId self_id)
+                        SemIR::SelfParam self_param, SemIR::InstId self_id)
     -> SemIR::InstId {
   if (!self_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
@@ -1056,7 +1056,7 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_refs) {
     auto param = context.insts().Get(implicit_param_id);
-    if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
+    if (auto self_param = param.TryAs<SemIR::SelfParam>()) {
       auto converted_self_id = ConvertSelf(
           context, call_parse_node, callee_parse_node, *self_param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {

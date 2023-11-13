@@ -225,8 +225,8 @@ auto HandleNoOp(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   // No action to take.
 }
 
-auto HandleParameter(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                     SemIR::Parameter /*inst*/) -> void {
+auto HandleParam(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                 SemIR::Param /*inst*/) -> void {
   CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
 }
 
@@ -265,9 +265,8 @@ auto HandleReturnExpr(FunctionContext& context, SemIR::InstId /*inst_id*/,
   }
 }
 
-auto HandleSelfParameter(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/,
-                         SemIR::SelfParameter /*inst*/) -> void {
+auto HandleSelfParam(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                     SemIR::SelfParam /*inst*/) -> void {
   CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
 }
 

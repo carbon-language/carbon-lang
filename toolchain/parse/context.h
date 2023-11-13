@@ -29,12 +29,7 @@ class Context {
   enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
   // Supported kinds for HandlePattern.
-  enum class PatternKind : int8_t {
-    ImplicitParameter,
-    Parameter,
-    Variable,
-    Let
-  };
+  enum class PatternKind : int8_t { ImplicitParam, Param, Variable, Let };
 
   // Supported return values for GetDeclContext.
   enum class DeclContext : int8_t {
