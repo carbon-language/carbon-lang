@@ -295,7 +295,7 @@ class Hasher {
   // The size is always incorporated into the state.
   auto HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void;
 
-  // Utility functions to read data of various sizes efficiently into one a
+  // Utility functions to read data of various sizes efficiently into a
   // 64-bit value. These pointers need-not be aligned, and can alias other
   // objects. The representation of the read data in the `uint64_t` returned is
   // not stable or guaranteed.
