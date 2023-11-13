@@ -27,7 +27,7 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "raw_self.carbon" {
-// CHECK:STDOUT:   class_declaration @Class, ()
+// CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
