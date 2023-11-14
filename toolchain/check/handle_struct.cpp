@@ -60,27 +60,30 @@ static auto CheckForDuplicateNames(Context& context,
   auto& insts = sem_ir.insts();
   for (SemIR::InstId field_inst_id : fields) {
     auto field_inst = insts.GetAs<SemIR::StructTypeField>(field_inst_id);
-    auto name_id = field_inst.name_id;
-    auto parse_node = field_inst.parse_node;
-    auto [it, added] = names.insert({name_id, parse_node});
+    auto [it, added] =
+        names.insert({field_inst.name_id, field_inst.parse_node});
     if (!added) {
+      // FIXME: should we have different diagnostics for the type literal case?
+      // Or make it a `MemberNameDuplicate` diagnostic with "struct literal" as
+      // a parameter?
       CARBON_DIAGNOSTIC(
           StructNameDuplicate, Error,
           "Member of struct literal with a duplicated name `{0}`.",
           llvm::StringRef);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Member with the same name here.");
-      // llvm::errs() << "Duplicate: " << sem_ir.names().GetFormatted(name_id)
-      // << " " << parse_node << " " << it->second << "\n";
+      // FIXME: gets the wrong parse node in the struct literal case;
+      // selects the `=` in `{.a = 1, .a = 2}`, need to pick the relevant
+      // child. Will be easier after zygoloid's change.
       context.emitter()
-          .Build(parse_node, StructNameDuplicate,
-                 sem_ir.names().GetFormatted(name_id))
+          .Build(field_inst.parse_node, StructNameDuplicate,
+                 sem_ir.names().GetFormatted(field_inst.name_id))
           .Note(it->second, StructNamePrevious)
           .Emit();
-      // return true;
+      // FIXME: prevent caller from producing an invalid value.
+      return;
     }
   }
-  // return false;
 }
 
 auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {

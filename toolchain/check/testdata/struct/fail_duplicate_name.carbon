@@ -63,12 +63,12 @@ var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDOUT:   %.loc32_29.3: {.a: i32, .a: i32} = converted %.loc32_29.1, %.loc32_29.2
 // CHECK:STDOUT:   %.loc32_30: i32 = struct_access %.loc32_29.3, member0
 // CHECK:STDOUT:   %w: i32 = bind_name w, %.loc32_30
-// CHECK:STDOUT:   %.loc34_16: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %.loc43_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc34_26: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc34_34: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc34_35: {.a: i32, .a: i32} = struct_literal (%.loc34_26, %.loc34_34)
+// CHECK:STDOUT:   %.loc43_26: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc43_34: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc43_35: {.a: i32, .a: i32} = struct_literal (%.loc43_26, %.loc43_34)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
