@@ -66,17 +66,23 @@ static auto HasDuplicateNamesError(Context& context,
       // FIXME: should we have different diagnostics for the type literal case?
       // Or make it a `MemberNameDuplicate` diagnostic with "struct literal" as
       // a parameter?
-      CARBON_DIAGNOSTIC(
-          StructNameDuplicate, Error,
-          "Member of struct literal with a duplicated name `{0}`.",
-          llvm::StringRef);
+      CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
+                        "Member of {0} with a duplicated name `{1}`.",
+                        llvm::StringRef, llvm::StringRef);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Member with the same name here.");
+      llvm::StringRef container;
       // FIXME: gets the wrong parse node in the struct literal case;
       // selects the `=` in `{.a = 1, .a = 2}`, need to pick the relevant
       // child. Will be easier after zygoloid's change.
+      if (context.parse_tree().node_kind(field_inst.parse_node) ==
+          Parse::NodeKind::StructFieldValue) {
+        container = "struct literal";
+      } else {
+        container = "struct type literal";
+      }
       context.emitter()
-          .Build(field_inst.parse_node, StructNameDuplicate,
+          .Build(field_inst.parse_node, StructNameDuplicate, container,
                  sem_ir.names().GetFormatted(field_inst.name_id))
           .Note(it->second, StructNamePrevious)
           .Emit();
@@ -97,13 +103,13 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto type_block_id = context.args_type_info_stack().Pop();
   if (HasDuplicateNamesError(context, type_block_id)) {
     // FIXME: produce an error instead of an invalid value
-  } else {
-    auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
-
-    auto value_id =
-        context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
-    context.node_stack().Push(parse_node, value_id);
+    // return
   }
+  auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
+
+  auto value_id =
+      context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
+  context.node_stack().Push(parse_node, value_id);
   return true;
 }
 
@@ -136,11 +142,11 @@ auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
 
   if (HasDuplicateNamesError(context, refs_id)) {
     // FIXME: produce an error instead of an invalid value
-  } else {
-    context.AddInstAndPush(
-        parse_node,
-        SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
+    // return
   }
+  context.AddInstAndPush(
+      parse_node,
+      SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
   return true;
 }
 
