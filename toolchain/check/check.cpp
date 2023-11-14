@@ -150,18 +150,17 @@ static auto TrackImport(
 
     // Check for explicit imports of the same library. The ID comparison is okay
     // in this case because both come from the same file.
-    auto package_directive = unit_info.unit->parse_tree->package();
-    if (package_directive &&
-        import.package_id == package_directive->package.package_id &&
-        import.library_id == package_directive->package.library_id) {
+    auto packaging = unit_info.unit->parse_tree->packaging_directive();
+    if (packaging && import.package_id == packaging->names.package_id &&
+        import.library_id == packaging->names.library_id) {
       CARBON_DIAGNOSTIC(ExplicitImportApi, Error,
                         "Explicit import `api` of `impl` file is redundant "
                         "with implicit import.");
       CARBON_DIAGNOSTIC(ImportSelf, Error, "File cannot import itself.");
-      unit_info.emitter.Emit(import.node, package_directive->api_or_impl ==
-                                                  Parse::Tree::ApiOrImpl::Impl
-                                              ? ExplicitImportApi
-                                              : ImportSelf);
+      unit_info.emitter.Emit(
+          import.node, packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl
+                           ? ExplicitImportApi
+                           : ImportSelf);
       return;
     }
   }
@@ -195,9 +194,9 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
   // Create a map of APIs which might be imported.
   llvm::DenseMap<ImportKey, UnitInfo*> api_map;
   for (auto& unit_info : unit_infos) {
-    const auto& package = unit_info.unit->parse_tree->package();
-    if (package) {
-      auto import_key = GetImportKey(unit_info, package->package);
+    const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
+    if (packaging) {
+      auto import_key = GetImportKey(unit_info, packaging->names);
       // Catch explicit `Main` errors before they become marked as possible
       // APIs.
       if (import_key.first == ExplicitMainName) {
@@ -207,13 +206,13 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
         CARBON_DIAGNOSTIC(
             ExplicitMainLibrary, Error,
             "Use `library` directive in `Main` package libraries.");
-        unit_info.emitter.Emit(package->package.node,
+        unit_info.emitter.Emit(packaging->names.node,
                                import_key.second.empty() ? ExplicitMainPackage
                                                          : ExplicitMainLibrary);
         continue;
       }
 
-      if (package->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
+      if (packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
         continue;
       }
 
@@ -222,7 +221,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
         // TODO: Cross-reference the source, deal with library, etc.
         CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
                           "Library's API declared in more than one file.");
-        unit_info.emitter.Emit(package->package.node, DuplicateLibraryApi);
+        unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi);
       }
     }
   }
@@ -231,10 +230,10 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
   llvm::SmallVector<UnitInfo*> ready_to_check;
   ready_to_check.reserve(units.size());
   for (auto& unit_info : unit_infos) {
-    const auto& package = unit_info.unit->parse_tree->package();
-    if (package && package->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
+    const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
+    if (packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
       // An `impl` has an implicit import of its `api`.
-      TrackImport(api_map, nullptr, unit_info, package->package);
+      TrackImport(api_map, nullptr, unit_info, packaging->names);
     }
 
     llvm::DenseMap<ImportKey, Parse::Node> explicit_import_map;

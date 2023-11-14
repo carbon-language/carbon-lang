@@ -77,7 +77,7 @@ class Tree : public Printable<Tree> {
 
   // `package` information.
   struct PackagingDirective {
-    PackagingNames package;
+    PackagingNames names;
     ApiOrImpl api_or_impl;
   };
 
@@ -126,8 +126,8 @@ class Tree : public Printable<Tree> {
 
   [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
 
-  auto package() const -> const std::optional<PackagingDirective>& {
-    return package_;
+  auto packaging_directive() const -> const std::optional<PackagingDirective>& {
+    return packaging_directive_;
   }
   auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
 
@@ -266,7 +266,7 @@ class Tree : public Printable<Tree> {
   // nodes as some tokens may have been skipped.
   bool has_errors_ = false;
 
-  std::optional<PackagingDirective> package_;
+  std::optional<PackagingDirective> packaging_directive_;
   llvm::SmallVector<PackagingNames> imports_;
 };
 

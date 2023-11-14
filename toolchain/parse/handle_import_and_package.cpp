@@ -23,9 +23,9 @@ static auto HandleImportAndPackage(Context& context,
                                    Context::StateStackEntry state,
                                    NodeKind directive, bool is_package)
     -> void {
-  Tree::PackagingNames package{.node = Node(state.subtree_start)};
+  Tree::PackagingNames names{.node = Node(state.subtree_start)};
   if (auto package_name_token = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-    package.package_id = context.tokens().GetIdentifier(*package_name_token);
+    names.package_id = context.tokens().GetIdentifier(*package_name_token);
     context.AddLeafNode(NodeKind::Name, *package_name_token);
   } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterKeyword, Error,
@@ -41,7 +41,7 @@ static auto HandleImportAndPackage(Context& context,
 
     if (auto library_name_token =
             context.ConsumeIf(Lex::TokenKind::StringLiteral)) {
-      package.library_id =
+      names.library_id =
           context.tokens().GetStringLiteral(*library_name_token);
       context.AddLeafNode(NodeKind::Literal, *library_name_token);
     } else {
@@ -58,7 +58,7 @@ static auto HandleImportAndPackage(Context& context,
   }
 
   auto next_kind = context.PositionKind();
-  if (!package.library_id.is_valid() &&
+  if (!names.library_id.is_valid() &&
       next_kind == Lex::TokenKind::StringLiteral) {
     // If we come acroess a string literal and we didn't parse `library
     // "..."` yet, then most probably the user forgot to add `library`
@@ -100,9 +100,9 @@ static auto HandleImportAndPackage(Context& context,
   }
 
   if (is_package) {
-    context.SetPackage(package, api_or_impl);
+    context.set_packaging_directive(names, api_or_impl);
   } else {
-    context.AddImport(package);
+    context.AddImport(names);
   }
 
   context.AddNode(directive, context.Consume(), state.subtree_start,
