@@ -97,7 +97,7 @@ static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
 #endif
 }
 
-// The package and library names, used as map keys
+// The package and library names, used as map keys.
 using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 
 // Returns a key form of the package object.
