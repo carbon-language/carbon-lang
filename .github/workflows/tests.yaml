@@ -261,8 +261,20 @@ jobs:
           # build, so simply inject an explicit no-op test target.
           echo "//scripts:no_op_test" >> $TARGETS_FILE
 
+          set +e
           bazelisk test -c ${{ matrix.build_mode }} \
             --target_pattern_file=$TARGETS_FILE
+          r=$?
+          echo "Exit code: $r"
+          # Sometimes have failures due infrastructure overload
+          if test $r -eq 36 ; then
+            # Retry with a smaller number of --jobs
+            bazelisk test -c ${{ matrix.build_mode }} --jobs=8 \
+              --target_pattern_file=$TARGETS_FILE
+            r=$?
+          fi
+          set -e
+          exit $r
 
       # See "Disk space before build".
       - name: Disk space after build
