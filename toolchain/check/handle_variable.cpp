@@ -15,7 +15,7 @@ auto HandleVariableIntroducer(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleReturnedSpecifier(Context& context, Parse::Node parse_node) -> bool {
+auto HandleReturnedModifier(Context& context, Parse::Node parse_node) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
@@ -54,7 +54,7 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
 
   // Pop the `returned` specifier if present.
   context.node_stack()
-      .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ReturnedSpecifier>();
+      .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ReturnedModifier>();
 
   // If there was an initializer, assign it to the storage.
   if (has_init) {

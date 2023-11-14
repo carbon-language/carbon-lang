@@ -37,8 +37,8 @@ struct Function : public Printable<Function> {
 
   // The function name.
   NameId name_id;
-  // The first declaration of the function. This is a FunctionDeclaration.
-  InstId declaration_id = InstId::Invalid;
+  // The first declaration of the function. This is a FunctionDecl.
+  InstId decl_id = InstId::Invalid;
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDecl.
   InstId definition_id = InstId::Invalid;
@@ -62,6 +62,15 @@ struct Function : public Printable<Function> {
 
 // A class.
 struct Class : public Printable<Class> {
+  enum InheritanceKind {
+    // `abstract class`
+    Abstract,
+    // `base class`
+    Base,
+    // `class`
+    Final,
+  };
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id;
     out << "}";
@@ -80,6 +89,9 @@ struct Class : public Printable<Class> {
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDecl.
   InstId decl_id = InstId::Invalid;
+  // The kind of inheritance that this class supports.
+  // TODO: The rules here are not yet decided. See #3384.
+  InheritanceKind inheritance_kind;
 
   // The following members are set at the `{` of the class definition.
 

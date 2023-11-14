@@ -18,6 +18,15 @@
 
 namespace Carbon::Parse {
 
+// An amount by which to look ahead of the current token. Lookahead should be
+// used sparingly, and unbounded lookahead should be avoided.
+//
+// TODO: Decide whether we want to avoid lookahead altogether.
+enum class Lookahead : int32_t {
+  CurrentToken = 0,
+  NextToken = 1,
+};
+
 // Context and shared functionality for parser handlers. See state.def for state
 // documentation.
 class Context {
@@ -29,12 +38,7 @@ class Context {
   enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
   // Supported kinds for HandlePattern.
-  enum class PatternKind : int8_t {
-    ImplicitParameter,
-    Parameter,
-    Variable,
-    Let
-  };
+  enum class PatternKind : int8_t { ImplicitParam, Param, Variable, Let };
 
   // Supported return values for GetDeclContext.
   enum class DeclContext : int8_t {
@@ -202,14 +206,18 @@ class Context {
   auto ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
                         bool already_has_error) -> ListTokenKind;
 
-  // Gets the kind of the next token to be consumed.
-  auto PositionKind() const -> Lex::TokenKind {
-    return tokens_->GetKind(*position_);
+  // Gets the kind of the next token to be consumed. If `lookahead` is
+  // provided, it specifies which token to inspect.
+  auto PositionKind(Lookahead lookahead = Lookahead::CurrentToken) const
+      -> Lex::TokenKind {
+    return tokens_->GetKind(position_[static_cast<int32_t>(lookahead)]);
   }
 
-  // Tests whether the next token to be consumed is of the specified kind.
-  auto PositionIs(Lex::TokenKind kind) const -> bool {
-    return PositionKind() == kind;
+  // Tests whether the next token to be consumed is of the specified kind. If
+  // `lookahead` is provided, it specifies which token to inspect.
+  auto PositionIs(Lex::TokenKind kind,
+                  Lookahead lookahead = Lookahead::CurrentToken) const -> bool {
+    return PositionKind(lookahead) == kind;
   }
 
   // Pops the state and keeps the value for inspection.

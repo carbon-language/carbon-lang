@@ -144,7 +144,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 // `fn`:
 //     FunctionIntroducer
 //     _external_: Name or QualifiedDecl
-//     _external_: ParameterList
+//     _external_: ParamList
 //       _external_: type expression
 //     ReturnType
 //   FunctionDefinitionStart
@@ -167,20 +167,20 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
 // A parameter list, possibly implicit:
 //   [Implicit]ParamertListStart
 //   _external_: [Generic]PatternBinding
-//   ParameterListComma
-// [Implicit]ParameterList
+//   ParamListComma
+// [Implicit]ParamList
 //
-// Exprs and ParameterListComma may repeat with ParameterListComma as a
+// Exprs and ParamListComma may repeat with ParamListComma as a
 // separator.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListStart, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0,
                                    CARBON_TOKEN(OpenParen))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParameterListStart, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0, CARBON_TOKEN(Comma))
-CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListComma, 0, CARBON_TOKEN(Comma))
+CARBON_PARSE_NODE_KIND_BRACKET(ParamList, ParamListStart,
                                CARBON_TOKEN(CloseParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParameterList,
-                               ImplicitParameterListStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParamList,
+                               ImplicitParamListStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // An array type, such as  `[i32; 3]` or `[i32;]`:
@@ -225,7 +225,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 
 // `var` and `returned var`:
 //   VariableIntroducer
-//   _optional_ ReturnedSpecifier
+//   _optional_ ReturnedModifier
 //   _external_: PatternBinding
 //   _optional_ VariableInitializer
 //   _optional_ _external_: expression
@@ -236,7 +236,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0,
                                    CARBON_TOKEN(Var)
                                        CARBON_IF_ERROR(CARBON_TOKEN(Returned)))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnedSpecifier, 0, CARBON_TOKEN(Returned))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnedModifier, 0, CARBON_TOKEN(Returned))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDecl, VariableIntroducer,
                                CARBON_TOKEN(Semi)
@@ -267,11 +267,11 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1,
 
 // `return`:
 //   ReturnStatementStart
-//   _optional_ ReturnVarSpecifier or _external_: expression
+//   _optional_ ReturnVarModifier or _external_: expression
 // ReturnStatement
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnStatementStart, 0,
                                    CARBON_TOKEN(Return))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnVarSpecifier, 0, CARBON_TOKEN(Var))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnVarModifier, 0, CARBON_TOKEN(Var))
 CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Return)))
@@ -532,6 +532,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 
 // `class`:
 //     ClassIntroducer
+//     _optional_ AbstractModifier or BaseModifier
 //     _external_: Name or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
@@ -541,6 +542,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 // ClassDefinitionStart and later nodes are removed and replaced by
 // ClassDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassIntroducer, 0, CARBON_TOKEN(Class))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(AbstractModifier, 0, CARBON_TOKEN(Abstract))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseModifier, 0, CARBON_TOKEN(Base))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer,
                                CARBON_TOKEN(OpenCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,

@@ -14,8 +14,7 @@ auto HandleReturnStatementStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleReturnVarSpecifier(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleReturnVarModifier(Context& context, Parse::Node parse_node) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
@@ -31,10 +30,10 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
       BuildReturnWithNoExpr(context, parse_node);
       break;
 
-    case Parse::NodeKind::ReturnVarSpecifier:
+    case Parse::NodeKind::ReturnVarModifier:
       // This is a `return var;` statement.
       context.node_stack()
-          .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnVarSpecifier>();
+          .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnVarModifier>();
       context.node_stack()
           .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
       BuildReturnVar(context, parse_node);

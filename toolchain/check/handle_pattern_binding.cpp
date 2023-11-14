@@ -13,13 +13,13 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
   if (auto self_param =
-          context.insts().Get(self_param_id).TryAs<SemIR::SelfParameter>()) {
+          context.insts().Get(self_param_id).TryAs<SemIR::SelfParam>()) {
     self_param->is_addr_self = SemIR::BoolValue::True;
     context.insts().Set(self_param_id, *self_param);
   } else {
-    CARBON_DIAGNOSTIC(AddrOnNonSelfParameter, Error,
+    CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter.");
-    context.emitter().Emit(parse_node, AddrOnNonSelfParameter);
+    context.emitter().Emit(parse_node, AddrOnNonSelfParam);
   }
   return true;
 }
@@ -40,16 +40,15 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
           context.node_stack()
               .PopForSoloParseNodeIf<Parse::NodeKind::SelfValueName>()) {
     if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-        Parse::NodeKind::ImplicitParameterListStart) {
+        Parse::NodeKind::ImplicitParamListStart) {
       CARBON_DIAGNOSTIC(
-          SelfOutsideImplicitParameterList, Error,
+          SelfOutsideImplicitParamList, Error,
           "`self` can only be declared in an implicit parameter list.");
-      context.emitter().Emit(parse_node, SelfOutsideImplicitParameterList);
+      context.emitter().Emit(parse_node, SelfOutsideImplicitParamList);
     }
     context.AddInstAndPush(
-        parse_node,
-        SemIR::SelfParameter{*self_node, cast_type_id,
-                             /*is_addr_self=*/SemIR::BoolValue::False});
+        parse_node, SemIR::SelfParam{*self_node, cast_type_id,
+                                     /*is_addr_self=*/SemIR::BoolValue::False});
     return true;
   }
 
@@ -63,7 +62,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   // error locations.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
-    case Parse::NodeKind::ReturnedSpecifier:
+    case Parse::NodeKind::ReturnedModifier:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
@@ -80,7 +79,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       }
       SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
-      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
         CARBON_CHECK(!enclosing_class_decl) << "`returned var` at class scope";
         value_id =
             CheckReturnedVar(context, context.node_stack().PeekParseNode(),
@@ -109,18 +108,18 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
           SemIR::BindName{name_node, value_type_id, name_id, value_id});
       context.node_stack().Push(parse_node, bind_id);
 
-      if (context_parse_node_kind == Parse::NodeKind::ReturnedSpecifier) {
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
         RegisterReturnedVar(context, bind_id);
       }
       break;
     }
 
-    case Parse::NodeKind::ImplicitParameterListStart:
-    case Parse::NodeKind::ParameterListStart:
+    case Parse::NodeKind::ImplicitParamListStart:
+    case Parse::NodeKind::ParamListStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
-      context.AddInstAndPush(
-          parse_node, SemIR::Parameter{name_node, cast_type_id, name_id});
+      context.AddInstAndPush(parse_node,
+                             SemIR::Param{name_node, cast_type_id, name_id});
       // TODO: Create a `BindName` instruction.
       break;
 

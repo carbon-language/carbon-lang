@@ -19,13 +19,13 @@ auto HandleParenExpr(Context& context) -> void {
   } else {
     state.state = State::ParenExprFinishAsNormal;
     context.PushState(state);
-    context.PushState(State::ParenExprParameterFinishAsUnknown);
+    context.PushState(State::ParenExprParamFinishAsUnknown);
     context.PushState(State::Expr);
   }
 }
 
-// Handles ParenExprParameterFinishAs(Unknown|Tuple).
-static auto HandleParenExprParameterFinish(Context& context, bool as_tuple)
+// Handles ParenExprParamFinishAs(Unknown|Tuple).
+static auto HandleParenExprParamFinish(Context& context, bool as_tuple)
     -> void {
   auto state = context.PopState();
 
@@ -39,7 +39,7 @@ static auto HandleParenExprParameterFinish(Context& context, bool as_tuple)
   // Note this could be `(expr,)` so we may not reuse the current state, but
   // it's still necessary to switch the parent.
   if (!as_tuple) {
-    state.state = State::ParenExprParameterFinishAsTuple;
+    state.state = State::ParenExprParamFinishAsTuple;
 
     auto finish_state = context.PopState();
     CARBON_CHECK(finish_state.state == State::ParenExprFinishAsNormal)
@@ -55,12 +55,12 @@ static auto HandleParenExprParameterFinish(Context& context, bool as_tuple)
   }
 }
 
-auto HandleParenExprParameterFinishAsUnknown(Context& context) -> void {
-  HandleParenExprParameterFinish(context, /*as_tuple=*/false);
+auto HandleParenExprParamFinishAsUnknown(Context& context) -> void {
+  HandleParenExprParamFinish(context, /*as_tuple=*/false);
 }
 
-auto HandleParenExprParameterFinishAsTuple(Context& context) -> void {
-  HandleParenExprParameterFinish(context, /*as_tuple=*/true);
+auto HandleParenExprParamFinishAsTuple(Context& context) -> void {
+  HandleParenExprParamFinish(context, /*as_tuple=*/true);
 }
 
 auto HandleParenExprFinishAsNormal(Context& context) -> void {

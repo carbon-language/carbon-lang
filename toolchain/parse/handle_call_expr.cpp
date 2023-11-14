@@ -15,12 +15,12 @@ auto HandleCallExpr(Context& context) -> void {
   context.AddNode(NodeKind::CallExprStart, context.Consume(),
                   state.subtree_start, state.has_error);
   if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
-    context.PushState(State::CallExprParameterFinish);
+    context.PushState(State::CallExprParamFinish);
     context.PushState(State::Expr);
   }
 }
 
-auto HandleCallExprParameterFinish(Context& context) -> void {
+auto HandleCallExprParamFinish(Context& context) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -30,7 +30,7 @@ auto HandleCallExprParameterFinish(Context& context) -> void {
   if (context.ConsumeListToken(NodeKind::CallExprComma,
                                Lex::TokenKind::CloseParen, state.has_error) ==
       Context::ListTokenKind::Comma) {
-    context.PushState(State::CallExprParameterFinish);
+    context.PushState(State::CallExprParamFinish);
     context.PushState(State::Expr);
   }
 }

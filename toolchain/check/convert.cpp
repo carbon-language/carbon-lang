@@ -539,9 +539,20 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  SemIR::InstId value_id,
                                  ConversionTarget target) -> SemIR::InstId {
   PendingBlock target_block(context);
+  auto& class_info = context.classes().Get(dest_type.class_id);
+  if (class_info.inheritance_kind == SemIR::Class::Abstract) {
+    CARBON_DIAGNOSTIC(ConstructionOfAbstractClass, Error,
+                      "Cannot construct instance of abstract class. "
+                      "Consider using `partial {0}` instead.",
+                      std::string);
+    context.emitter().Emit(context.insts().Get(value_id).parse_node(),
+                           ConstructionOfAbstractClass,
+                           context.sem_ir().StringifyType(target.type_id));
+    return SemIR::InstId::BuiltinError;
+  }
   auto dest_struct_type = context.insts().GetAs<SemIR::StructType>(
       context.sem_ir().GetTypeAllowBuiltinTypes(
-          context.classes().Get(dest_type.class_id).object_representation_id));
+          class_info.object_representation_id));
 
   // If we're trying to create a class value, form a temporary for the value to
   // point to.
@@ -962,7 +973,7 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
                         Parse::Node callee_parse_node,
-                        SemIR::SelfParameter self_param, SemIR::InstId self_id)
+                        SemIR::SelfParam self_param, SemIR::InstId self_id)
     -> SemIR::InstId {
   if (!self_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
@@ -1045,7 +1056,7 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_refs) {
     auto param = context.insts().Get(implicit_param_id);
-    if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
+    if (auto self_param = param.TryAs<SemIR::SelfParam>()) {
       auto converted_self_id = ConvertSelf(
           context, call_parse_node, callee_parse_node, *self_param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
