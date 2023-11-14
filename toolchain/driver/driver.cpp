@@ -432,10 +432,6 @@ class Driver::CompilationUnit {
 
   // Parses tokens. Returns true on success.
   auto RunParse() -> bool {
-    // Can be called when the file fails to load, so ensure there's source.
-    if (!source_) {
-      return false;
-    }
     CARBON_CHECK(tokens_);
 
     LogCall("Parse::Tree::Parse", [&] {
@@ -449,18 +445,19 @@ class Driver::CompilationUnit {
     return !parse_tree_->has_errors();
   }
 
-  // Check the parse tree and produce SemIR. Returns true on success.
-  auto RunCheck(const SemIR::File& builtins) -> bool {
-    // Can be called when the file fails to load, so ensure there's source.
-    if (!source_) {
-      return false;
-    }
+  // Returns information needed to check this unit.
+  auto GetCheckUnit() -> Check::Unit {
     CARBON_CHECK(parse_tree_);
+    return {.value_stores = &value_stores_,
+            .tokens = &*tokens_,
+            .parse_tree = &*parse_tree_,
+            .consumer = consumer_,
+            .sem_ir = &sem_ir_};
+  }
 
-    LogCall("Check::CheckParseTree", [&] {
-      sem_ir_ = Check::CheckParseTree(value_stores_, builtins, *tokens_,
-                                      *parse_tree_, *consumer_, vlog_stream_);
-    });
+  // Runs post-check logic. Returns true if checking succeeded for the IR.
+  auto PostCheck() -> bool {
+    CARBON_CHECK(sem_ir_);
 
     // We've finished all steps that can produce diagnostics. Emit the
     // diagnostics now, so that the developer sees them sooner and doesn't need
@@ -575,6 +572,8 @@ class Driver::CompilationUnit {
                 value_stores_.OutputYaml(input_file_name_));
   }
 
+  auto has_source() -> bool { return source_.has_value(); }
+
  private:
   // Wraps a call with log statements to indicate start and end.
   auto LogCall(llvm::StringLiteral label, llvm::function_ref<void()> fn)
@@ -641,10 +640,15 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   if (options.phase == CompileOptions::Phase::Lex) {
     return success_before_lower;
   }
+  // Parse and check phases examine `has_source` because they want to proceed if
+  // lex failed, but not if source doesn't exist. Later steps are skipped if
+  // anything failed, so don't need this.
 
   // Parse.
   for (auto& unit : units) {
-    success_before_lower &= unit->RunParse();
+    if (unit->has_source()) {
+      success_before_lower &= unit->RunParse();
+    }
   }
   if (options.phase == CompileOptions::Phase::Parse) {
     return success_before_lower;
@@ -653,9 +657,20 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   // Check.
   SharedValueStores builtin_value_stores;
   auto builtins = Check::MakeBuiltins(builtin_value_stores);
-  // TODO: Organize units to compile in dependency order.
+  llvm::SmallVector<Check::Unit> check_units;
   for (auto& unit : units) {
-    success_before_lower &= unit->RunCheck(builtins);
+    if (unit->has_source()) {
+      check_units.push_back(unit->GetCheckUnit());
+    }
+  }
+  CARBON_VLOG() << "*** Check::CheckParseTrees ***\n";
+  Check::CheckParseTrees(builtins, llvm::MutableArrayRef(check_units),
+                         vlog_stream_);
+  CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
+  for (auto& unit : units) {
+    if (unit->has_source()) {
+      success_before_lower &= unit->PostCheck();
+    }
   }
   if (options.phase == CompileOptions::Phase::Check) {
     return success_before_lower;

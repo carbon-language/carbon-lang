@@ -10,7 +10,6 @@
 #include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -62,6 +61,26 @@ class Tree : public Printable<Tree> {
   class PostorderIterator;
   class SiblingIterator;
 
+  // For PackagingDirective.
+  enum class ApiOrImpl : uint8_t {
+    Api,
+    Impl,
+  };
+
+  // Names in packaging, whether the file's packaging or an import. Links back
+  // to the node for diagnostics.
+  struct PackagingNames {
+    Node node;
+    IdentifierId package_id = IdentifierId::Invalid;
+    StringLiteralId library_id = StringLiteralId::Invalid;
+  };
+
+  // The file's packaging.
+  struct PackagingDirective {
+    PackagingNames names;
+    ApiOrImpl api_or_impl;
+  };
+
   // Parses the token buffer into a `Tree`.
   //
   // This is the factory function which is used to build parse trees.
@@ -106,6 +125,11 @@ class Tree : public Printable<Tree> {
   [[nodiscard]] auto node_token(Node n) const -> Lex::Token;
 
   [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
+
+  auto packaging_directive() const -> const std::optional<PackagingDirective>& {
+    return packaging_directive_;
+  }
+  auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
 
   // See the other Print comments.
   auto Print(llvm::raw_ostream& output) const -> void;
@@ -241,6 +265,9 @@ class Tree : public Printable<Tree> {
   // is true we do *not* have the expected 1:1 mapping between tokens and parsed
   // nodes as some tokens may have been skipped.
   bool has_errors_ = false;
+
+  std::optional<PackagingDirective> packaging_directive_;
+  llvm::SmallVector<PackagingNames> imports_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes

@@ -20,13 +20,21 @@ inline auto MakeBuiltins(SharedValueStores& value_stores) -> SemIR::File {
   return SemIR::File(value_stores);
 }
 
-// Produces and checks the IR for the provided Parse::Tree.
-extern auto CheckParseTree(SharedValueStores& value_stores,
-                           const SemIR::File& builtin_ir,
-                           const Lex::TokenizedBuffer& tokens,
-                           const Parse::Tree& parse_tree,
-                           DiagnosticConsumer& consumer,
-                           llvm::raw_ostream* vlog_stream) -> SemIR::File;
+// Checking information that's tracked per file.
+struct Unit {
+  SharedValueStores* value_stores;
+  const Lex::TokenizedBuffer* tokens;
+  const Parse::Tree* parse_tree;
+  DiagnosticConsumer* consumer;
+  // The generated IR. Unset on input, set on output.
+  std::optional<SemIR::File>* sem_ir;
+};
+
+// Checks a group of parse trees. This will use imports to decide the order of
+// checking.
+auto CheckParseTrees(const SemIR::File& builtin_ir,
+                     llvm::MutableArrayRef<Unit> units,
+                     llvm::raw_ostream* vlog_stream) -> void;
 
 }  // namespace Carbon::Check
 

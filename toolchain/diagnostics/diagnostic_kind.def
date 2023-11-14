@@ -114,6 +114,19 @@ CARBON_DIAGNOSTIC_KIND(ParamsRequiredByIntroducer)
 
 CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
+// Package/import checking diagnostics.
+CARBON_DIAGNOSTIC_KIND(DuplicateLibraryApi)
+CARBON_DIAGNOSTIC_KIND(LibraryApiNotFound)
+CARBON_DIAGNOSTIC_KIND(ImportNotFound)
+CARBON_DIAGNOSTIC_KIND(ImportCycleDetected)
+CARBON_DIAGNOSTIC_KIND(ExplicitMainPackage)
+CARBON_DIAGNOSTIC_KIND(ExplicitMainLibrary)
+CARBON_DIAGNOSTIC_KIND(ImportMainPackage)
+CARBON_DIAGNOSTIC_KIND(ImportSelf)
+CARBON_DIAGNOSTIC_KIND(ExplicitImportApi)
+CARBON_DIAGNOSTIC_KIND(RepeatedImport)
+CARBON_DIAGNOSTIC_KIND(FirstImported)
+
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonReference)
 CARBON_DIAGNOSTIC_KIND(CallArgCountMismatch)

@@ -300,6 +300,19 @@ class Context {
   auto RecoverFromDeclError(StateStackEntry state, NodeKind parse_node_kind,
                             bool skip_past_likely_end) -> void;
 
+  // Sets the package directive information. Called at most once.
+  auto set_packaging_directive(Tree::PackagingNames packaging_names,
+                               Tree::ApiOrImpl api_or_impl) -> void {
+    CARBON_CHECK(!tree_->packaging_directive_);
+    tree_->packaging_directive_ = {.names = packaging_names,
+                                   .api_or_impl = api_or_impl};
+  }
+
+  // Adds an import.
+  auto AddImport(Tree::PackagingNames package) -> void {
+    tree_->imports_.push_back(package);
+  }
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
