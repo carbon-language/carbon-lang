@@ -17,18 +17,6 @@ fn F() -> i32 {
 
 class C { var a: i32; var b: i32; }
 fn G() -> C {
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+12]]:27: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   returned var c: C = {.a = 1, .b = 2};
-  // CHECK:STDERR:                           ^
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+9]]:27: Member with the same name here.
-  // CHECK:STDERR:   returned var c: C = {.a = 1, .b = 2};
-  // CHECK:STDERR:                           ^
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+6]]:35: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   returned var c: C = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                   ^
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+3]]:35: Member with the same name here.
-  // CHECK:STDERR:   returned var c: C = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                   ^
   returned var c: C = {.a = 1, .b = 2};
   // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+6]]:11: ERROR: Can only `return var;` in the scope of a `returned var`.
   // CHECK:STDERR:   return c;

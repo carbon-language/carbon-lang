@@ -4,25 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: one_entry.carbon:[[@LINE+12]]:10: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR:          ^
-// CHECK:STDERR: one_entry.carbon:[[@LINE+9]]:10: Member with the same name here.
-// CHECK:STDERR: var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR:          ^
-// CHECK:STDERR: one_entry.carbon:[[@LINE+6]]:24: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR:                        ^
-// CHECK:STDERR: one_entry.carbon:[[@LINE+3]]:24: Member with the same name here.
-// CHECK:STDERR: var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR:                        ^
 var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR: one_entry.carbon:[[@LINE+6]]:10: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var y: {.a: i32} = x;
-// CHECK:STDERR:          ^
-// CHECK:STDERR: one_entry.carbon:[[@LINE+3]]:10: Member with the same name here.
-// CHECK:STDERR: var y: {.a: i32} = x;
-// CHECK:STDERR:          ^
 var y: {.a: i32} = x;
 
 // CHECK:STDOUT: file "one_entry.carbon" {

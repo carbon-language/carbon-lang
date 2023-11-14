@@ -4,45 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: struct.carbon:[[@LINE+12]]:11: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: fn G(s: {.a: i32, .b: i32});
-// CHECK:STDERR:           ^
-// CHECK:STDERR: struct.carbon:[[@LINE+9]]:11: Member with the same name here.
-// CHECK:STDERR: fn G(s: {.a: i32, .b: i32});
-// CHECK:STDERR:           ^
-// CHECK:STDERR: struct.carbon:[[@LINE+6]]:20: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: fn G(s: {.a: i32, .b: i32});
-// CHECK:STDERR:                    ^
-// CHECK:STDERR: struct.carbon:[[@LINE+3]]:20: Member with the same name here.
-// CHECK:STDERR: fn G(s: {.a: i32, .b: i32});
-// CHECK:STDERR:                    ^
 fn G(s: {.a: i32, .b: i32});
 
 fn F(cond: bool) {
-  // CHECK:STDERR: struct.carbon:[[@LINE+24]]:12: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   var a: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: struct.carbon:[[@LINE+21]]:12: Member with the same name here.
-  // CHECK:STDERR:   var a: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: struct.carbon:[[@LINE+18]]:21: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   var a: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                     ^
-  // CHECK:STDERR: struct.carbon:[[@LINE+15]]:21: Member with the same name here.
-  // CHECK:STDERR:   var a: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                     ^
-  // CHECK:STDERR: struct.carbon:[[@LINE+12]]:35: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   var a: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                   ^
-  // CHECK:STDERR: struct.carbon:[[@LINE+9]]:35: Member with the same name here.
-  // CHECK:STDERR:   var a: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                   ^
-  // CHECK:STDERR: struct.carbon:[[@LINE+6]]:43: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   var a: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                           ^
-  // CHECK:STDERR: struct.carbon:[[@LINE+3]]:43: Member with the same name here.
-  // CHECK:STDERR:   var a: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                           ^
   var a: {.a: i32, .b: i32} = {.a = 1, .b = 2};
   G(if cond then a else a);
 }

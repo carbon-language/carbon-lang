@@ -17,18 +17,6 @@ class Outer {
 }
 
 fn MakeOuter() -> Outer {
-  // CHECK:STDERR: init_nested.carbon:[[@LINE+12]]:14: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.c = MakeInner(), .d = MakeInner()};
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: init_nested.carbon:[[@LINE+9]]:14: Member with the same name here.
-  // CHECK:STDERR:   return {.c = MakeInner(), .d = MakeInner()};
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: init_nested.carbon:[[@LINE+6]]:32: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.c = MakeInner(), .d = MakeInner()};
-  // CHECK:STDERR:                                ^
-  // CHECK:STDERR: init_nested.carbon:[[@LINE+3]]:32: Member with the same name here.
-  // CHECK:STDERR:   return {.c = MakeInner(), .d = MakeInner()};
-  // CHECK:STDERR:                                ^
   return {.c = MakeInner(), .d = MakeInner()};
 }
 

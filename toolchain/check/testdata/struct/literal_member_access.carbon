@@ -4,45 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: literal_member_access.carbon:[[@LINE+18]]:13: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: fn G() -> {.x: i32, .y: i32, .z: i32};
-// CHECK:STDERR:             ^
-// CHECK:STDERR: literal_member_access.carbon:[[@LINE+15]]:13: Member with the same name here.
-// CHECK:STDERR: fn G() -> {.x: i32, .y: i32, .z: i32};
-// CHECK:STDERR:             ^
-// CHECK:STDERR: literal_member_access.carbon:[[@LINE+12]]:22: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: fn G() -> {.x: i32, .y: i32, .z: i32};
-// CHECK:STDERR:                      ^
-// CHECK:STDERR: literal_member_access.carbon:[[@LINE+9]]:22: Member with the same name here.
-// CHECK:STDERR: fn G() -> {.x: i32, .y: i32, .z: i32};
-// CHECK:STDERR:                      ^
-// CHECK:STDERR: literal_member_access.carbon:[[@LINE+6]]:31: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: fn G() -> {.x: i32, .y: i32, .z: i32};
-// CHECK:STDERR:                               ^
-// CHECK:STDERR: literal_member_access.carbon:[[@LINE+3]]:31: Member with the same name here.
-// CHECK:STDERR: fn G() -> {.x: i32, .y: i32, .z: i32};
-// CHECK:STDERR:                               ^
 fn G() -> {.x: i32, .y: i32, .z: i32};
 
 fn F() -> i32 {
-  // CHECK:STDERR: literal_member_access.carbon:[[@LINE+18]]:14: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.a = 1, .b = G(), .c = 3}.b.y;
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: literal_member_access.carbon:[[@LINE+15]]:14: Member with the same name here.
-  // CHECK:STDERR:   return {.a = 1, .b = G(), .c = 3}.b.y;
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: literal_member_access.carbon:[[@LINE+12]]:22: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.a = 1, .b = G(), .c = 3}.b.y;
-  // CHECK:STDERR:                      ^
-  // CHECK:STDERR: literal_member_access.carbon:[[@LINE+9]]:22: Member with the same name here.
-  // CHECK:STDERR:   return {.a = 1, .b = G(), .c = 3}.b.y;
-  // CHECK:STDERR:                      ^
-  // CHECK:STDERR: literal_member_access.carbon:[[@LINE+6]]:32: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.a = 1, .b = G(), .c = 3}.b.y;
-  // CHECK:STDERR:                                ^
-  // CHECK:STDERR: literal_member_access.carbon:[[@LINE+3]]:32: Member with the same name here.
-  // CHECK:STDERR:   return {.a = 1, .b = G(), .c = 3}.b.y;
-  // CHECK:STDERR:                                ^
   return {.a = 1, .b = G(), .c = 3}.b.y;
 }
 

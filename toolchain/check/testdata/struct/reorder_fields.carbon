@@ -7,56 +7,8 @@
 fn MakeI32() -> i32;
 fn MakeF64() -> f64;
 
-// CHECK:STDERR: reorder_fields.carbon:[[@LINE+12]]:13: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: fn F() -> {.a: i32, .b: f64} {
-// CHECK:STDERR:             ^
-// CHECK:STDERR: reorder_fields.carbon:[[@LINE+9]]:13: Member with the same name here.
-// CHECK:STDERR: fn F() -> {.a: i32, .b: f64} {
-// CHECK:STDERR:             ^
-// CHECK:STDERR: reorder_fields.carbon:[[@LINE+6]]:22: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: fn F() -> {.a: i32, .b: f64} {
-// CHECK:STDERR:                      ^
-// CHECK:STDERR: reorder_fields.carbon:[[@LINE+3]]:22: Member with the same name here.
-// CHECK:STDERR: fn F() -> {.a: i32, .b: f64} {
-// CHECK:STDERR:                      ^
 fn F() -> {.a: i32, .b: f64} {
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+24]]:12: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   let x: {.a: i32, .b: f64} = {.b = MakeF64(), .a = MakeI32()};
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+21]]:12: Member with the same name here.
-  // CHECK:STDERR:   let x: {.a: i32, .b: f64} = {.b = MakeF64(), .a = MakeI32()};
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+18]]:21: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   let x: {.a: i32, .b: f64} = {.b = MakeF64(), .a = MakeI32()};
-  // CHECK:STDERR:                     ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+15]]:21: Member with the same name here.
-  // CHECK:STDERR:   let x: {.a: i32, .b: f64} = {.b = MakeF64(), .a = MakeI32()};
-  // CHECK:STDERR:                     ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+12]]:35: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   let x: {.a: i32, .b: f64} = {.b = MakeF64(), .a = MakeI32()};
-  // CHECK:STDERR:                                   ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+9]]:35: Member with the same name here.
-  // CHECK:STDERR:   let x: {.a: i32, .b: f64} = {.b = MakeF64(), .a = MakeI32()};
-  // CHECK:STDERR:                                   ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+6]]:51: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   let x: {.a: i32, .b: f64} = {.b = MakeF64(), .a = MakeI32()};
-  // CHECK:STDERR:                                                   ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+3]]:51: Member with the same name here.
-  // CHECK:STDERR:   let x: {.a: i32, .b: f64} = {.b = MakeF64(), .a = MakeI32()};
-  // CHECK:STDERR:                                                   ^
   let x: {.a: i32, .b: f64} = {.b = MakeF64(), .a = MakeI32()};
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+12]]:12: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   let y: {.b: f64, .a: i32} = x;
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+9]]:12: Member with the same name here.
-  // CHECK:STDERR:   let y: {.b: f64, .a: i32} = x;
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+6]]:21: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   let y: {.b: f64, .a: i32} = x;
-  // CHECK:STDERR:                     ^
-  // CHECK:STDERR: reorder_fields.carbon:[[@LINE+3]]:21: Member with the same name here.
-  // CHECK:STDERR:   let y: {.b: f64, .a: i32} = x;
-  // CHECK:STDERR:                     ^
   let y: {.b: f64, .a: i32} = x;
   return y;
 }

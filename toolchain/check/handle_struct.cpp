@@ -63,15 +63,18 @@ static auto CheckForDuplicateNames(Context& context,
     auto name_id = field_inst.name_id;
     auto parse_node = field_inst.parse_node;
     auto [it, added] = names.insert({name_id, parse_node});
-    if (added) {
-      CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
-                        "Member of struct literal with a duplicated name.");
+    if (!added) {
+      CARBON_DIAGNOSTIC(
+          StructNameDuplicate, Error,
+          "Member of struct literal with a duplicated name `{0}`.",
+          llvm::StringRef);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Member with the same name here.");
       // llvm::errs() << "Duplicate: " << sem_ir.names().GetFormatted(name_id)
       // << " " << parse_node << " " << it->second << "\n";
       context.emitter()
-          .Build(parse_node, StructNameDuplicate)
+          .Build(parse_node, StructNameDuplicate,
+                 sem_ir.names().GetFormatted(name_id))
           .Note(it->second, StructNamePrevious)
           .Emit();
       // return true;

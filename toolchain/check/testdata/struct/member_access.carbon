@@ -4,30 +4,6 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: member_access.carbon:[[@LINE+24]]:10: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-// CHECK:STDERR:          ^
-// CHECK:STDERR: member_access.carbon:[[@LINE+21]]:10: Member with the same name here.
-// CHECK:STDERR: var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-// CHECK:STDERR:          ^
-// CHECK:STDERR: member_access.carbon:[[@LINE+18]]:19: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-// CHECK:STDERR:                   ^
-// CHECK:STDERR: member_access.carbon:[[@LINE+15]]:19: Member with the same name here.
-// CHECK:STDERR: var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-// CHECK:STDERR:                   ^
-// CHECK:STDERR: member_access.carbon:[[@LINE+12]]:33: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-// CHECK:STDERR:                                 ^
-// CHECK:STDERR: member_access.carbon:[[@LINE+9]]:33: Member with the same name here.
-// CHECK:STDERR: var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-// CHECK:STDERR:                                 ^
-// CHECK:STDERR: member_access.carbon:[[@LINE+6]]:43: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-// CHECK:STDERR:                                           ^
-// CHECK:STDERR: member_access.carbon:[[@LINE+3]]:43: Member with the same name here.
-// CHECK:STDERR: var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-// CHECK:STDERR:                                           ^
 var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
 var y: i32 = x.b;
 var z: i32 = y;

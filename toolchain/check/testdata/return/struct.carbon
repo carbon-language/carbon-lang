@@ -4,19 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: struct.carbon:[[@LINE+6]]:16: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: fn Main() -> {.a: i32} {
-// CHECK:STDERR:                ^
-// CHECK:STDERR: struct.carbon:[[@LINE+3]]:16: Member with the same name here.
-// CHECK:STDERR: fn Main() -> {.a: i32} {
-// CHECK:STDERR:                ^
 fn Main() -> {.a: i32} {
-  // CHECK:STDERR: struct.carbon:[[@LINE+6]]:14: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.a = 3};
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: struct.carbon:[[@LINE+3]]:14: Member with the same name here.
-  // CHECK:STDERR:   return {.a = 3};
-  // CHECK:STDERR:              ^
   return {.a = 3};
 }
 

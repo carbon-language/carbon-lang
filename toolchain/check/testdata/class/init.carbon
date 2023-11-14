@@ -10,34 +10,10 @@ class Class {
 }
 
 fn Make(n: i32, next: Class*) -> Class {
-  // CHECK:STDERR: init.carbon:[[@LINE+12]]:14: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.n = n, .next = next};
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: init.carbon:[[@LINE+9]]:14: Member with the same name here.
-  // CHECK:STDERR:   return {.n = n, .next = next};
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: init.carbon:[[@LINE+6]]:25: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.n = n, .next = next};
-  // CHECK:STDERR:                         ^
-  // CHECK:STDERR: init.carbon:[[@LINE+3]]:25: Member with the same name here.
-  // CHECK:STDERR:   return {.n = n, .next = next};
-  // CHECK:STDERR:                         ^
   return {.n = n, .next = next};
 }
 
 fn MakeReorder(n: i32, next: Class*) -> Class {
-  // CHECK:STDERR: init.carbon:[[@LINE+12]]:17: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.next = next, .n = n};
-  // CHECK:STDERR:                 ^
-  // CHECK:STDERR: init.carbon:[[@LINE+9]]:17: Member with the same name here.
-  // CHECK:STDERR:   return {.next = next, .n = n};
-  // CHECK:STDERR:                 ^
-  // CHECK:STDERR: init.carbon:[[@LINE+6]]:28: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   return {.next = next, .n = n};
-  // CHECK:STDERR:                            ^
-  // CHECK:STDERR: init.carbon:[[@LINE+3]]:28: Member with the same name here.
-  // CHECK:STDERR:   return {.next = next, .n = n};
-  // CHECK:STDERR:                            ^
   return {.next = next, .n = n};
 }
 

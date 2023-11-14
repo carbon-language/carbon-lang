@@ -11,18 +11,17 @@ class C {
 
 fn Make() -> C {
   returned var c: C;
-  // CHECK:STDERR: return_var.carbon:[[@LINE+12]]:14: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   c = {.data = 42, .next = &c};
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: return_var.carbon:[[@LINE+9]]:14: Member with the same name here.
-  // CHECK:STDERR:   c = {.data = 42, .next = &c};
-  // CHECK:STDERR:              ^
-  // CHECK:STDERR: return_var.carbon:[[@LINE+6]]:26: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   c = {.data = 42, .next = &c};
-  // CHECK:STDERR:                          ^
-  // CHECK:STDERR: return_var.carbon:[[@LINE+3]]:26: Member with the same name here.
-  // CHECK:STDERR:   c = {.data = 42, .next = &c};
-  // CHECK:STDERR:                          ^
   c = {.data = 42, .next = &c};
   return var;
 }
+
+// CHECK:STDOUT: ; ModuleID = 'return_var.carbon'
+// CHECK:STDOUT: source_filename = "return_var.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @Make(ptr sret({ i32, ptr }) %return) {
+// CHECK:STDOUT:   %data = getelementptr inbounds { i32, ptr }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   store i32 42, ptr %data, align 4
+// CHECK:STDOUT:   %next = getelementptr inbounds { i32, ptr }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   store ptr %return, ptr %next, align 8
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }

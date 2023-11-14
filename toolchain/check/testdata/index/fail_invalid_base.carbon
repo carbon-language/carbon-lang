@@ -20,35 +20,11 @@ fn F();
 // CHECK:STDERR:              ^
 var b: i32 = F[1];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+15]]:18: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
-// CHECK:STDERR:                  ^
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+12]]:18: Member with the same name here.
-// CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
-// CHECK:STDERR:                  ^
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+9]]:26: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
-// CHECK:STDERR:                          ^
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+6]]:26: Member with the same name here.
-// CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
-// CHECK:STDERR:                          ^
 // CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:32: ERROR: `{.a: i32, .b: i32}` does not support indexing.
 // CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
 // CHECK:STDERR:                                ^
 var c: i32 = {.a = 1, .b = 2}[0];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+15]]:16: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
-// CHECK:STDERR:                ^
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+12]]:16: Member with the same name here.
-// CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
-// CHECK:STDERR:                ^
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+9]]:25: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
-// CHECK:STDERR:                         ^
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+6]]:25: Member with the same name here.
-// CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
-// CHECK:STDERR:                         ^
 // CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:34: ERROR: `type` does not support indexing.
 // CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDERR:                                  ^

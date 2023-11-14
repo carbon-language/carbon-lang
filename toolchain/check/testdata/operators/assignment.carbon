@@ -12,30 +12,6 @@ fn Main() {
   b[0] = 3;
   b[1] = 4;
 
-  // CHECK:STDERR: assignment.carbon:[[@LINE+24]]:12: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: assignment.carbon:[[@LINE+21]]:12: Member with the same name here.
-  // CHECK:STDERR:   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:            ^
-  // CHECK:STDERR: assignment.carbon:[[@LINE+18]]:21: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                     ^
-  // CHECK:STDERR: assignment.carbon:[[@LINE+15]]:21: Member with the same name here.
-  // CHECK:STDERR:   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                     ^
-  // CHECK:STDERR: assignment.carbon:[[@LINE+12]]:35: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                   ^
-  // CHECK:STDERR: assignment.carbon:[[@LINE+9]]:35: Member with the same name here.
-  // CHECK:STDERR:   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                   ^
-  // CHECK:STDERR: assignment.carbon:[[@LINE+6]]:43: ERROR: Member of struct literal with a duplicated name.
-  // CHECK:STDERR:   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                           ^
-  // CHECK:STDERR: assignment.carbon:[[@LINE+3]]:43: Member with the same name here.
-  // CHECK:STDERR:   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // CHECK:STDERR:                                           ^
   var c: {.a: i32, .b: i32} = {.a = 1, .b = 2};
   c.a = 3;
   c.b = 4;

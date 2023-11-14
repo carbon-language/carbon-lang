@@ -4,43 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: two_entries.carbon:[[@LINE+24]]:10: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-// CHECK:STDERR:          ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+21]]:10: Member with the same name here.
-// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-// CHECK:STDERR:          ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+18]]:19: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-// CHECK:STDERR:                   ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+15]]:19: Member with the same name here.
-// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-// CHECK:STDERR:                   ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+12]]:33: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-// CHECK:STDERR:                                 ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+9]]:33: Member with the same name here.
-// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-// CHECK:STDERR:                                 ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+6]]:41: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-// CHECK:STDERR:                                         ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+3]]:41: Member with the same name here.
-// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-// CHECK:STDERR:                                         ^
 var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-// CHECK:STDERR: two_entries.carbon:[[@LINE+12]]:10: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var y: {.a: i32, .b: i32} = x;
-// CHECK:STDERR:          ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+9]]:10: Member with the same name here.
-// CHECK:STDERR: var y: {.a: i32, .b: i32} = x;
-// CHECK:STDERR:          ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+6]]:19: ERROR: Member of struct literal with a duplicated name.
-// CHECK:STDERR: var y: {.a: i32, .b: i32} = x;
-// CHECK:STDERR:                   ^
-// CHECK:STDERR: two_entries.carbon:[[@LINE+3]]:19: Member with the same name here.
-// CHECK:STDERR: var y: {.a: i32, .b: i32} = x;
-// CHECK:STDERR:                   ^
 var y: {.a: i32, .b: i32} = x;
 
 // CHECK:STDOUT: constants {
