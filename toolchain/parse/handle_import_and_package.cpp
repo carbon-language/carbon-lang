@@ -41,8 +41,7 @@ static auto HandleImportAndPackage(Context& context,
 
     if (auto library_name_token =
             context.ConsumeIf(Lex::TokenKind::StringLiteral)) {
-      names.library_id =
-          context.tokens().GetStringLiteral(*library_name_token);
+      names.library_id = context.tokens().GetStringLiteral(*library_name_token);
       context.AddLeafNode(NodeKind::Literal, *library_name_token);
     } else {
       CARBON_DIAGNOSTIC(

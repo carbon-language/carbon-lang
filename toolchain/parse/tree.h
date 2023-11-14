@@ -61,21 +61,21 @@ class Tree : public Printable<Tree> {
   class PostorderIterator;
   class SiblingIterator;
 
-  // For `package`.
+  // For PackagingDirective.
   enum class ApiOrImpl : uint8_t {
     Api,
     Impl,
   };
 
-  // Used for both `package` and `import`. Links back to the node for
-  // diagnostics.
+  // Names in packaging, whether the file's packaging or an import. Links back
+  // to the node for diagnostics.
   struct PackagingNames {
     Node node;
     IdentifierId package_id = IdentifierId::Invalid;
     StringLiteralId library_id = StringLiteralId::Invalid;
   };
 
-  // `package` information.
+  // The file's packaging.
   struct PackagingDirective {
     PackagingNames names;
     ApiOrImpl api_or_impl;
