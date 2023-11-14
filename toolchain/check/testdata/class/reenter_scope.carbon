@@ -13,6 +13,7 @@ fn Class.F() -> i32 {
   return G();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT: }
@@ -42,3 +43,4 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;
+// CHECK:STDOUT: ...

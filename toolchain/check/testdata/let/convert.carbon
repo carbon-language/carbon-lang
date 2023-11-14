@@ -11,6 +11,7 @@ fn F() -> i32 {
   return w[1];
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc8_24.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc8_24.2: type = tuple_type (i32, i32, i32)
@@ -57,3 +58,4 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc11_13: i32 = tuple_index %w.ref, %.loc11_12
 // CHECK:STDOUT:   return %.loc11_13
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

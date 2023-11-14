@@ -12,6 +12,7 @@
 // CHECK:STDERR:        ^
 fn Bar(a: i32, a: i32) {}
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_param_name_conflict.carbon" {
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar
 // CHECK:STDOUT: }
@@ -20,3 +21,4 @@ fn Bar(a: i32, a: i32) {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

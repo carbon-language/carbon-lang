@@ -8,6 +8,7 @@ fn Foo() {}
 fn Bar() {}
 fn Baz() {}
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "order.carbon" {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar
@@ -28,3 +29,4 @@ fn Baz() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

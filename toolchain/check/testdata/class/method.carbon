@@ -44,6 +44,7 @@ fn CallGOnInitializingExpr() -> i32 {
   return Make().G();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32}
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
@@ -162,3 +163,4 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc44_20.2: i32 = converted %.loc44_18, %.loc44_20.1
 // CHECK:STDOUT:   return %.loc44_20.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

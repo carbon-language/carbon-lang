@@ -12,6 +12,7 @@ fn Main() {
   var b: i32 = Echo(1);
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "i32.carbon" {
 // CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
@@ -33,3 +34,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %b.var, %.loc12_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

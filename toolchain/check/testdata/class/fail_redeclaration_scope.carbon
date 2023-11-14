@@ -21,6 +21,7 @@ class Y {
   class A.B {}
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT: }
@@ -78,3 +79,4 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -491,6 +491,8 @@ class Formatter {
         inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
 
   auto Format() -> void {
+    out_ << "---\n";
+
     FormatConstants();
 
     out_ << "file \"" << sem_ir_.filename() << "\" {\n";
@@ -512,6 +514,8 @@ class Formatter {
     for (int i : llvm::seq(sem_ir_.functions().size())) {
       FormatFunction(FunctionId(i));
     }
+
+    out_ << "...\n";
   }
 
   auto FormatConstants() -> void {

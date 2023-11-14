@@ -6,6 +6,7 @@
 
 var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 9]
 // CHECK:STDOUT:   %.loc7_45: type = tuple_type (i32, i32, i32, i32, i32, i32, i32, i32, i32)
@@ -57,3 +58,4 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %.loc7_45.30: init [i32; 9] = converted %.loc7_45.1, %.loc7_45.29
 // CHECK:STDOUT:   assign %a.var, %.loc7_45.30
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

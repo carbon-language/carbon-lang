@@ -27,6 +27,7 @@ fn While() {
   break;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_break_continue.carbon" {
 // CHECK:STDOUT:   %While: <function> = fn_decl @While
 // CHECK:STDOUT: }
@@ -34,3 +35,4 @@ fn While() {
 // CHECK:STDOUT: fn @While() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

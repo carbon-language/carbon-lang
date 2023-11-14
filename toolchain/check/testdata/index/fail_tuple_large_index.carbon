@@ -11,6 +11,7 @@ var b: (i32,) = a;
 // CHECK:STDERR:                                   ^
 var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc7_13.2: type = tuple_type (i32)
@@ -43,3 +44,4 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc12_35: ref <error> = tuple_index %b.ref, <error>
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

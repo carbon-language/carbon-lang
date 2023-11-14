@@ -82,6 +82,7 @@ fn AddressOfParam(param: i32) {
   var param_addr: i32* = &param;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = ptr_type i32
 // CHECK:STDOUT:   %.loc19: type = ptr_type bool
@@ -186,3 +187,4 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   assign %param_addr.var, %.loc82_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -9,6 +9,7 @@
 // CHECK:STDERR:                         ^
 var x: (i32, i32) = (2, );
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_17.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc10_17.2: type = tuple_type (i32, i32)
@@ -25,3 +26,4 @@ var x: (i32, i32) = (2, );
 // CHECK:STDOUT:   %.loc10_25: (i32,) = tuple_literal (%.loc10_22)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

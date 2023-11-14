@@ -19,6 +19,7 @@ var a: [Incomplete; 1];
 // CHECK:STDERR:                           ^
 var p: Incomplete* = &a[0];
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc20: type = ptr_type <error>
 // CHECK:STDOUT: }
@@ -42,3 +43,4 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
+// CHECK:STDOUT: ...

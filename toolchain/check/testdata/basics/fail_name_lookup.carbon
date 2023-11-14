@@ -11,6 +11,7 @@ fn Main() {
   x;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_name_lookup.carbon" {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -20,3 +21,4 @@ fn Main() {
 // CHECK:STDOUT:   %x.ref: <error> = name_reference x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -9,6 +9,7 @@
 // CHECK:STDERR:             ^
 var a: [1; 1];
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = ptr_type [<error>; 1]
 // CHECK:STDOUT: }
@@ -20,3 +21,4 @@ var a: [1; 1];
 // CHECK:STDOUT:   %a.var: ref [<error>; 1] = var a
 // CHECK:STDOUT:   %a: ref [<error>; 1] = bind_name a, %a.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

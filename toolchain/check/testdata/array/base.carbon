@@ -8,6 +8,7 @@ var a: [i32; 1] = (1,);
 var b: [f64; 2] = (11.1, 2.2,);
 var c: [(); 5] = ((), (), (), (), (),);
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 1]
 // CHECK:STDOUT:   %.loc7_22: type = tuple_type (i32)
@@ -83,3 +84,4 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc9_38.13: init [(); 5] = converted %.loc9_38.1, %.loc9_38.12
 // CHECK:STDOUT:   assign %c.var, %.loc9_38.13
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

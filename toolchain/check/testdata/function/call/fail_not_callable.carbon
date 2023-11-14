@@ -11,6 +11,7 @@ fn Run() {
   var x: i32 = "hello"();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
@@ -27,3 +28,4 @@ fn Run() {
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

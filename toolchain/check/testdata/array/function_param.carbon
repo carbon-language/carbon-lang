@@ -12,6 +12,7 @@ fn G() -> i32 {
   return F((1, 2, 3), 1);
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %.loc12: type = tuple_type (i32, i32, i32)
@@ -59,3 +60,4 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc12_25.2: i32 = converted %.loc12_11, %.loc12_25.1
 // CHECK:STDOUT:   return %.loc12_25.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

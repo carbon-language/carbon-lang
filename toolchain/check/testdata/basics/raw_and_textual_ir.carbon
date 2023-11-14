@@ -89,6 +89,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       0:               inst+7
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11_28.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc11_28.2: type = tuple_type (i32, f64)
@@ -114,3 +115,4 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   %.loc12_21.7: init (i32, f64) = converted %.loc12_21.1, %.loc12_21.6
 // CHECK:STDOUT:   return %.loc12_21.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

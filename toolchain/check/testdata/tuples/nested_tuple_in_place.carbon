@@ -14,6 +14,7 @@ fn H() {
   var v: (i32, (i32, i32, i32), i32) = (1, F(), 2);
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
@@ -82,3 +83,4 @@ fn H() {
 // CHECK:STDOUT:   assign %v.var, %.loc14_50.8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

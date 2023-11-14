@@ -14,6 +14,7 @@ var x: {.a: i32} = {.b = 1};
 // CHECK:STDERR:                    ^
 var y: {.b: i32} = x;
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.b: i32}
 // CHECK:STDOUT: }
@@ -31,3 +32,4 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_reference x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

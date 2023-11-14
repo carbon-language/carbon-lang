@@ -15,6 +15,7 @@ fn Main() {
   *also_undeclared = 42;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_assignment_to_error.carbon" {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -30,3 +31,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc15_3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

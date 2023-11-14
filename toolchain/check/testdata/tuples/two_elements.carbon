@@ -7,6 +7,7 @@
 var x: (i32, i32) = (4, 102);
 var y: (i32, i32) = x;
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc7_17.2: type = tuple_type (i32, i32)
@@ -45,3 +46,4 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc8_21.10: init (i32, i32) = converted %x.ref, %.loc8_21.9
 // CHECK:STDOUT:   assign %y.var, %.loc8_21.10
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

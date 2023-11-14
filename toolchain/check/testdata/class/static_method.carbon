@@ -13,6 +13,7 @@ fn Run() -> i32 {
   return c.F();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
@@ -46,3 +47,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc13_15.2: i32 = converted %.loc13_13, %.loc13_15.1
 // CHECK:STDOUT:   return %.loc13_15.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -24,6 +24,7 @@ fn Class.F() {}
 fn Class.G() {}
 fn Class.H() {}
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT: }
@@ -61,3 +62,4 @@ fn Class.H() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

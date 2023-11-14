@@ -13,6 +13,7 @@ fn F() {
   *A;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_dereference_namespace.carbon" {
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -24,3 +25,4 @@ fn F() {
 // CHECK:STDOUT:   %.loc13: ref <error> = dereference <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -17,6 +17,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
   return {.next = next, .n = n};
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.n: i32, .next: Class*}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.n: i32, .next: Class*}
@@ -72,3 +73,4 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc17_31.7: init Class = converted %.loc17_31.1, %.loc17_31.6
 // CHECK:STDOUT:   return %.loc17_31.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -13,6 +13,7 @@ fn Main() {
 // CHECK:STDERR:              ^
 var y: i32 = x;
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_lookup_outside_scope.carbon" {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT:   %y.var: ref i32 = var y
@@ -27,3 +28,4 @@ var y: i32 = x;
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -25,6 +25,7 @@ class Class {
   }
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc26: type = struct_type {}
 // CHECK:STDOUT: }
@@ -55,3 +56,4 @@ class Class {
 // CHECK:STDOUT:   %.loc24: i32 = int_literal 1
 // CHECK:STDOUT:   return %.loc24
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

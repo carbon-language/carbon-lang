@@ -45,6 +45,7 @@ fn Main() {
   (if true then a else a) = 10;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc21_8.1: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc21_8.2: type = ptr_type (i32, i32)
@@ -157,3 +158,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc45_4, %.loc45_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

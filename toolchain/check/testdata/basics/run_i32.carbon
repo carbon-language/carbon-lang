@@ -6,6 +6,7 @@
 
 fn Run() -> i32 { return 0; }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "run_i32.carbon" {
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -15,3 +16,4 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -19,6 +19,7 @@ fn Deref(n: i32) {
   *{};
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = tuple_type ()
 // CHECK:STDOUT:   %.loc19: type = struct_type {}
@@ -42,3 +43,4 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %.loc19_3: ref <error> = dereference %.loc19_5.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

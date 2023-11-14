@@ -13,6 +13,7 @@ fn Run() {
   var x: i32 = Foo();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_return_type_mismatch.carbon" {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
@@ -33,3 +34,4 @@ fn Run() {
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

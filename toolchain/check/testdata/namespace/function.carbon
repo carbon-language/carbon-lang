@@ -17,6 +17,7 @@ fn Bar() {
   Foo.Baz();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc17: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -45,3 +46,4 @@ fn Bar() {
 // CHECK:STDOUT:   %.loc17: init () = call %Baz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -24,6 +24,7 @@ fn F() {
   {.a = 1, .b = 2, .c = 3} as Class;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc16: type = struct_type {.a: i32}
@@ -78,3 +79,4 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_26.4: ref Class = converted %.loc24_26.1, %.loc24_26.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

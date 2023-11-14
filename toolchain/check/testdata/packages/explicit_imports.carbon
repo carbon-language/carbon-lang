@@ -17,8 +17,11 @@ package Api library "lib" api;
 import Api;
 import Api library "lib";
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "api.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
@@ -26,6 +29,8 @@ import Api library "lib";
 // CHECK:STDOUT: file "api_lib.carbon" {
 // CHECK:STDOUT:   %.loc2: String = string_literal "lib"
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
@@ -33,3 +38,4 @@ import Api library "lib";
 // CHECK:STDOUT: file "import_api.carbon" {
 // CHECK:STDOUT:   %.loc3: String = string_literal "lib"
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

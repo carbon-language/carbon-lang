@@ -16,6 +16,7 @@ fn H() -> i32 {
   return G()[0];
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_20.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc7_20.2: type = tuple_type (i32, i32)
@@ -62,3 +63,4 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %.loc16_15.2: i32 = bind_value %.loc16_15.1
 // CHECK:STDOUT:   return %.loc16_15.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

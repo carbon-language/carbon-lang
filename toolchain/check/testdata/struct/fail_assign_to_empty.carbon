@@ -9,6 +9,7 @@
 // CHECK:STDERR:                    ^
 var x: {} = {.a = 1};
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_9.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_9.2: type = tuple_type ()
@@ -24,3 +25,4 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:   %.loc10_20: {.a: i32} = struct_literal (%.loc10_19)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

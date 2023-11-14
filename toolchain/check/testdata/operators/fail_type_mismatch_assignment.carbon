@@ -12,6 +12,7 @@ fn Main() {
   a = 5.6;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_type_mismatch_assignment.carbon" {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -27,3 +28,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

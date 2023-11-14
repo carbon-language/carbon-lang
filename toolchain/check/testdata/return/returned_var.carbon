@@ -19,6 +19,7 @@ fn G() -> i32 {
   return var;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
@@ -70,3 +71,4 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc18_16: i32 = bind_value %result
 // CHECK:STDOUT:   return %.loc18_16
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

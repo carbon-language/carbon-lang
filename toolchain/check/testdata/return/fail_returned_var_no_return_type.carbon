@@ -15,6 +15,7 @@ fn Procedure() {
   return;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -32,3 +33,4 @@ fn Procedure() {
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -26,6 +26,7 @@ var t2: (i32, i32);
 // CHECK:STDERR:                   ^
 var d: [i32; 3] = t2;
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_15: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %.1: type = ptr_type String
@@ -86,3 +87,4 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %t2.ref: ref (i32, i32) = name_reference t2, %t2
 // CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

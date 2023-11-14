@@ -29,6 +29,7 @@ fn G(b: [i32; 3]) {
   F()[0] = 4;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
 // CHECK:STDOUT: }
@@ -82,3 +83,4 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   assign %.loc29_8.2, %.loc29_12
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

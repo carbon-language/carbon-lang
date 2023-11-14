@@ -22,6 +22,7 @@ fn F() {
   G(&c);
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
@@ -75,3 +76,4 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_4: init () = call %G.ref(%.loc22_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

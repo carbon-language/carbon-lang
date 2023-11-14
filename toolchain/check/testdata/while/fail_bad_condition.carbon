@@ -11,6 +11,7 @@ fn While() {
   while ("Hello") {}
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
@@ -33,3 +34,4 @@ fn While() {
 // CHECK:STDOUT: !while.done:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

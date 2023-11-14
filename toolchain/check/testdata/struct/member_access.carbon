@@ -8,6 +8,7 @@ var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
 var y: i32 = x.b;
 var z: i32 = y;
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.a: f64, .b: i32}
 // CHECK:STDOUT: }
@@ -38,3 +39,4 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc9: i32 = bind_value %y.ref
 // CHECK:STDOUT:   assign %z.var, %.loc9
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

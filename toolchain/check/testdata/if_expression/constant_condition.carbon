@@ -15,6 +15,7 @@ fn G() -> i32 {
   return if false then A() else B();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "constant_condition.carbon" {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
@@ -81,3 +82,4 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc15_10: i32 = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc15_10
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

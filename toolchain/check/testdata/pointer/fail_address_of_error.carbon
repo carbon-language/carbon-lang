@@ -18,6 +18,7 @@ fn Test() {
   &(&undeclared);
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = ptr_type <error>
 // CHECK:STDOUT:   %.loc18: type = ptr_type <error>*
@@ -36,3 +37,4 @@ fn Test() {
 // CHECK:STDOUT:   %.loc18_3: <error>** = address_of %.loc18_5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

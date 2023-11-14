@@ -34,6 +34,7 @@ fn DifferentScopes() -> i32 {
   return 0;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_returned_var_shadow.carbon" {
 // CHECK:STDOUT:   %SameScope: <function> = fn_decl @SameScope
 // CHECK:STDOUT:   %DifferentScopes: <function> = fn_decl @DifferentScopes
@@ -87,3 +88,4 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %.loc34: i32 = int_literal 0
 // CHECK:STDOUT:   return %.loc34
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -8,6 +8,7 @@ fn Main() {
   var x: i32;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "decl.carbon" {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -18,3 +19,4 @@ fn Main() {
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -15,6 +15,7 @@ fn Mismatch() -> i32 {
   return var;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_returned_var_type.carbon" {
 // CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch
 // CHECK:STDOUT: }
@@ -26,3 +27,4 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

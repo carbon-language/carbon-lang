@@ -115,6 +115,7 @@ fn CallReturnIncomplete() {
   ReturnIncomplete();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc41: type = struct_type {}
 // CHECK:STDOUT:   %.loc100: type = tuple_type ()
@@ -203,3 +204,4 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %.loc115: init <error> = call %ReturnIncomplete.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -16,6 +16,7 @@ fn Class.F[self: Class]() -> i32 {
   return (*self.p).F();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.p: Class*}
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.p: Class*}
@@ -53,3 +54,4 @@ fn Class.F[self: Class]() -> i32 {
 // CHECK:STDOUT:   %.loc16_23.2: i32 = converted %.loc16_21, %.loc16_23.1
 // CHECK:STDOUT:   return %.loc16_23.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

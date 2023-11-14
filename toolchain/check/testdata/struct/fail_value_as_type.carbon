@@ -9,6 +9,7 @@
 // CHECK:STDERR:               ^
 var x: {.a = 1};
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.a: i32}
 // CHECK:STDOUT: }
@@ -19,3 +20,4 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

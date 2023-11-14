@@ -8,6 +8,7 @@ fn Main() -> {.a: i32} {
   return {.a = 3};
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "struct.carbon" {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -20,3 +21,4 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %.loc8_17.3: {.a: i32} = converted %.loc8_17.1, %.loc8_17.2
 // CHECK:STDOUT:   return %.loc8_17.3
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

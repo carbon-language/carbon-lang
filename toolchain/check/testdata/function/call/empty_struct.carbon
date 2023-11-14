@@ -12,6 +12,7 @@ fn Main() {
   Echo({});
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_13.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc7_13.2: type = tuple_type ()
@@ -37,3 +38,4 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_7: init {} = call %Echo.ref(%.loc12_9.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

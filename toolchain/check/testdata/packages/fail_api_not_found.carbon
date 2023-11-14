@@ -18,8 +18,11 @@ package Foo impl;
 // CHECK:STDERR: ^
 package Foo library "Bar" impl;
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "no_api.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
@@ -27,3 +30,4 @@ package Foo library "Bar" impl;
 // CHECK:STDOUT: file "no_api_lib.carbon" {
 // CHECK:STDOUT:   %.loc5: String = string_literal "Bar"
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

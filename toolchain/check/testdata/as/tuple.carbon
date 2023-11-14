@@ -20,6 +20,7 @@ fn Var() {
   var b: (X, X) = (Make(), Make()) as (X, X);
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
@@ -96,3 +97,4 @@ fn Var() {
 // CHECK:STDOUT:   assign %b.var, %.loc20_34.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

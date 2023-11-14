@@ -16,6 +16,7 @@ fn Run() -> i32 {
   return c.j + c.k;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.j: i32, .k: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.j: i32, .k: i32}
@@ -62,3 +63,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc16_14: i32 = add %.loc16_11.2, %.loc16_17.2
 // CHECK:STDOUT:   return %.loc16_14
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

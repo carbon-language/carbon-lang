@@ -16,6 +16,7 @@ fn G(c: Class) -> i32 {
   return c.something;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = struct_type {.n: i32}
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
@@ -42,3 +43,4 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:   %something.ref: <error> = name_reference something, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

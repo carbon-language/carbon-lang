@@ -16,6 +16,7 @@ fn F() {
   G(1.0);
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc16: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -37,3 +38,4 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_4: init () = call %G.ref(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

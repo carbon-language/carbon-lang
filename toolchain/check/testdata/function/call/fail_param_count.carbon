@@ -55,6 +55,7 @@ fn Main() {
   Run2(0);
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc18: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -103,3 +104,4 @@ fn Main() {
 // CHECK:STDOUT:   %.loc55_7: init () = call %Run2.ref.loc55(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

@@ -22,6 +22,7 @@ fn Run() -> i32 {
   return Class.F(4);
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = struct_type {.k: i32}
 // CHECK:STDOUT: }
@@ -68,3 +69,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc22_20.2: i32 = converted %.loc22_17, %.loc22_20.1
 // CHECK:STDOUT:   return %.loc22_20.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

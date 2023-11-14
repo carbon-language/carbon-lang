@@ -47,13 +47,23 @@ package CycleChild api;
 // CHECK:STDERR: ^
 import B;
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "a.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "b.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "c.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "c_impl.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "cycle_child.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

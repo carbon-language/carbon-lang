@@ -10,6 +10,7 @@ fn F() -> i32 {
   return {.a = 1, .b = G(), .c = 3}.b.y;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.x: i32, .y: i32, .z: i32}
 // CHECK:STDOUT:   %.loc10_35.1: type = struct_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32}
@@ -47,3 +48,4 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_38: i32 = struct_access %.loc10_36, member1
 // CHECK:STDOUT:   return %.loc10_38
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

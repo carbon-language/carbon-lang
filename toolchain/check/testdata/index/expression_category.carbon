@@ -24,6 +24,7 @@ fn ValueBinding(b: [i32; 3]) {
   F()[0];
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %.loc10: type = tuple_type (i32, i32, i32)
@@ -114,3 +115,4 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc24_8.2: i32 = bind_value %.loc24_8.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

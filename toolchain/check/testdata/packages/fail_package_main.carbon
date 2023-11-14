@@ -33,12 +33,19 @@ package r#Main api;
 // CHECK:STDERR: ^
 package Main library "lib" api;
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "main.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "main_impl.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "raw_main.carbon" {
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
@@ -46,3 +53,4 @@ package Main library "lib" api;
 // CHECK:STDOUT: file "main_lib.carbon" {
 // CHECK:STDOUT:   %.loc5: String = string_literal "lib"
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

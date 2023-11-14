@@ -13,6 +13,7 @@ fn Run() {
   F()[0];
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc13: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -37,3 +38,4 @@ fn Run() {
 // CHECK:STDOUT:   %.loc13_8: ref <error> = tuple_index %.loc13_4.3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

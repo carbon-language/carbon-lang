@@ -10,6 +10,7 @@ fn Main() {
   Foo();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -30,3 +31,4 @@ fn Main() {
 // CHECK:STDOUT:   %.loc10: init () = call %Foo.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

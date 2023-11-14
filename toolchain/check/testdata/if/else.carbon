@@ -17,6 +17,7 @@ fn If(b: bool) {
   H();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc13: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -63,3 +64,4 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %.loc17: init () = call %H.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

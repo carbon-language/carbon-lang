@@ -21,6 +21,7 @@ let T: type = Class;
 // CHECK:STDERR:    ^
 fn T.F() {}
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = struct_type {}
 // CHECK:STDOUT: }
@@ -46,3 +47,4 @@ fn T.F() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

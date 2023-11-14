@@ -14,6 +14,7 @@ fn Main() {
   return 0;
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "fail_value_disallowed.carbon" {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -23,3 +24,4 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14: i32 = int_literal 0
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

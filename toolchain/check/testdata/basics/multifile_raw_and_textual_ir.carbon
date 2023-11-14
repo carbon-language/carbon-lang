@@ -35,6 +35,7 @@ fn B() {}
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "a.carbon" {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
@@ -43,6 +44,7 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        b.carbon
 // CHECK:STDOUT: sem_ir:
@@ -64,6 +66,7 @@ fn B() {}
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "b.carbon" {
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
 // CHECK:STDOUT: }
@@ -72,3 +75,4 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...

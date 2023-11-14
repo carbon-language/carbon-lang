@@ -11,6 +11,7 @@ fn F(b: bool) -> i32 {
   return if b then A() else B();
 }
 
+// CHECK:STDOUT: ---
 // CHECK:STDOUT: file "control_flow.carbon" {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
@@ -52,3 +53,4 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc11_10
 // CHECK:STDOUT: }
+// CHECK:STDOUT: ...
