@@ -49,7 +49,7 @@ auto HandleArrayInit(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
                   SemIR::Assign inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.lhs_id).type_id();
-  context.FinishInitialization(storage_type_id, inst.lhs_id, inst.rhs_id);
+  context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
 }
 
 auto HandleBinaryOperatorAdd(FunctionContext& /*context*/,
@@ -190,7 +190,7 @@ auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
                           SemIR::InitializeFrom inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.dest_id).type_id();
-  context.FinishInitialization(storage_type_id, inst.dest_id, inst.src_id);
+  context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
 }
 
 auto HandleIntegerLiteral(FunctionContext& context, SemIR::InstId inst_id,

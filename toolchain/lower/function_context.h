@@ -90,8 +90,8 @@ class FunctionContext {
   // initialization of `dest_id` from that initializer. This is a no-op if the
   // initialization was performed in-place, and otherwise performs a store or a
   // copy.
-  auto FinishInitialization(SemIR::TypeId type_id, SemIR::InstId dest_id,
-                            SemIR::InstId init_id) -> void;
+  auto FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
+                  SemIR::InstId init_id) -> void;
 
   auto llvm_context() -> llvm::LLVMContext& {
     return file_context_->llvm_context();

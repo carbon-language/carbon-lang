@@ -37,7 +37,7 @@ auto HandleBindValue(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleTemporary(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::Temporary inst) -> void {
-  context.FinishInitialization(inst.type_id, inst.storage_id, inst.init_id);
+  context.FinishInit(inst.type_id, inst.storage_id, inst.init_id);
   context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
