@@ -123,6 +123,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   }
+
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
   auto value_id =
