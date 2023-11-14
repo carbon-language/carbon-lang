@@ -86,6 +86,7 @@ static auto CheckForDuplicateNames(Context& context,
 auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
+
   context.PopScope();
   context.node_stack()
       .PopAndDiscardSoloParseNode<
@@ -94,6 +95,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   CheckForDuplicateNames(context, type_block_id);
 
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
+
   auto value_id =
       context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
   context.node_stack().Push(parse_node, value_id);
