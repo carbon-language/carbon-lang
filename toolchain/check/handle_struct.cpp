@@ -120,8 +120,8 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
   if (HasDuplicateNamesError(context, type_block_id)) {
-    // FIXME: produce an error instead of an invalid value
-    // return
+    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    return true;
   }
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
@@ -159,8 +159,8 @@ auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
       << "{} is handled by StructLiteral.";
 
   if (HasDuplicateNamesError(context, refs_id)) {
-    // FIXME: produce an error instead of an invalid value
-    // return
+    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    return true;
   }
   context.AddInstAndPush(
       parse_node,
