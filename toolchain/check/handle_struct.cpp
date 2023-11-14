@@ -52,6 +52,21 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
+static auto StructFieldValueToName(Context& context,
+                                   Parse::Node field_value_node)
+    -> Parse::Node {
+  // TODO: Will be easier after #3393.
+  CARBON_CHECK(context.parse_tree().node_kind(field_value_node) ==
+               Parse::NodeKind::StructFieldValue);
+  auto children = context.parse_tree().children(field_value_node);
+  auto struct_field_designator_iter = children.begin();
+  ++struct_field_designator_iter;
+  CARBON_CHECK(context.parse_tree().node_kind(*struct_field_designator_iter) ==
+               Parse::NodeKind::StructFieldDesignator);
+  children = context.parse_tree().children(*struct_field_designator_iter);
+  return *children.begin();
+}
+
 static auto HasDuplicateNamesError(Context& context,
                                    SemIR::InstBlockId type_block_id) -> bool {
   auto& sem_ir = context.sem_ir();
@@ -74,17 +89,21 @@ static auto HasDuplicateNamesError(Context& context,
       llvm::StringRef container;
       // FIXME: gets the wrong parse node in the struct literal case;
       // selects the `=` in `{.a = 1, .a = 2}`, need to pick the relevant
-      // child. Will be easier after zygoloid's change.
+      // child.
+      Parse::Node prev_node = it->second;
       if (context.parse_tree().node_kind(field_inst.parse_node) ==
           Parse::NodeKind::StructFieldValue) {
         container = "struct literal";
+        prev_node = StructFieldValueToName(context, prev_node);
+        field_inst.parse_node =
+            StructFieldValueToName(context, field_inst.parse_node);
       } else {
         container = "struct type literal";
       }
       context.emitter()
           .Build(field_inst.parse_node, StructNameDuplicate, container,
                  sem_ir.names().GetFormatted(field_inst.name_id))
-          .Note(it->second, StructNamePrevious)
+          .Note(prev_node, StructNamePrevious)
           .Emit();
       return true;
     }
