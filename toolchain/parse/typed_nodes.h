@@ -14,80 +14,17 @@
 
 namespace Carbon::Parse {
 
-// Extract a node of struct type `T` from a sibling range. This is expected to
-// consume the complete sibling range.
-template <typename T>
-auto ExtractNodeFromChildren(
-    Tree* tree, llvm::iterator_range<Tree::SiblingIterator> children) -> T;
-
-// A simple wrapper around a node and its tree, providing convenience forwarding
-// wrappers to access information about the node.
-class NodeHandle {
- public:
-  explicit NodeHandle(Tree* tree, Node node) : tree_(tree), node_(node) {}
-
-  auto node() const -> Node { return node_; }
-  auto has_error() const -> bool { return tree_->node_has_error(node_); }
-  auto kind() const -> NodeKind { return tree_->node_kind(node_); }
-  auto token() const -> Lex::Token { return tree_->node_token(node_); }
-
-  auto subtree_size() const -> int32_t {
-    return tree_->node_subtree_size(node_);
-  }
-  auto postorder() const -> llvm::iterator_range<Tree::PostorderIterator> {
-    return tree_->postorder(node_);
-  }
-  auto children() const -> llvm::iterator_range<Tree::SiblingIterator> {
-    return tree_->children(node_);
-  }
-
-  // Returns whether this node is a valid node of the specified type.
-  template <typename T>
-  auto Is() const -> bool {
-    return kind() == T::Kind && !has_error();
-  }
-
-  // Converts this node to a typed node of a specified type, if it is a valid
-  // node of that kind.
-  template <typename T>
-  auto As() const -> std::optional<T> {
-    if (!Is<T>()) {
-      return std::nullopt;
-    }
-
-    return ExtractNodeFromChildren<T>(tree_, children());
-  }
-
- private:
-  Tree* tree_;
-  Node node_;
-};
-
-// A trait type that should be specialized by types that can be used as
-// elements of a parse node. A specialization should provide the following API:
-//
-// ```
-// // Extract a value of this type from the sequence of nodes starting at `it`,
-// // and increment `it` past this type.
-// static auto Extract(Tree* tree, Tree::SiblingIterator& it) -> T;
-// ```
-//
-// Note that `SiblingIterator`s iterate in reverse order through the children
-// of a node.
-template <typename T>
-struct ChildTraits;
-
 // A child that can be any parse node.
-class AnyNode : public NodeHandle {
+class AnyNode : public Node {
  public:
-  using NodeHandle::NodeHandle;
+  explicit AnyNode(Node node) : Node(node) {}
 };
 
 // Extract an `AnyNode` as a single child.
 template <>
-struct ChildTraits<AnyNode> {
-  static auto Extract(Tree* tree, Tree::SiblingIterator& it) -> AnyNode {
-    return AnyNode(tree, *it++);
+struct Tree::Extractable<AnyNode> {
+  static auto Extract(const Tree* /*tree*/, SiblingIterator& it) -> AnyNode {
+    return AnyNode(*it++);
   }
 };
 
@@ -101,23 +38,26 @@ using AnyPattern = AnyNode;
 
 // A child that is expected to be of the specified kind `T`.
 template <typename T>
-class Required : public NodeHandle {
+class Required : public Node {
  public:
-  using NodeHandle::NodeHandle;
+  explicit Required(Node node) : Node(node) {}
 
   // Get the representation of this child node. Returns `nullopt` if the node is
   // invalid, or valid but of the wrong kind.
   //
   // TODO: Can we CHECK that the latter doesn't happen?
-  auto Get() const -> std::optional<T> { return As<T>(); }
+  auto Extract(const Tree* tree) const -> std::optional<T> {
+    return ExtractAs<T>(tree);
+  }
 };
 
 // Extract a `Required<T>` as a single child.
 template <typename T>
-struct ChildTraits<Required<T>> {
-  static auto Extract(Tree* tree, Tree::SiblingIterator& it) -> Required<T> {
+struct Tree::Extractable<Required<T>> {
+  static auto Extract(const Tree* /*tree*/, SiblingIterator& it)
+      -> Required<T> {
     // TODO: Can we CHECK that this node is of the right kind?
-    return Required<T>(tree, *it++);
+    return Required<T>(*it++);
   }
 };
 
@@ -125,36 +65,34 @@ struct ChildTraits<Required<T>> {
 template <typename T>
 class Optional {
  public:
-  explicit Optional(Tree* tree, Node node) : tree_(tree), node_(node) {}
-  explicit Optional(Tree* tree, std::nullopt_t)
-      : tree_(tree), node_(Node::Invalid) {}
+  explicit Optional(Node node) : node_(node) {}
+  explicit Optional(std::nullopt_t) : node_(Node::Invalid) {}
 
   // Returns whether this element was present.
   auto is_present() -> bool { return node_ != Node::Invalid; }
 
-  // Gets the `NodeHandle`, if this element was present.
-  auto GetNode() const -> std::optional<NodeHandle> {
-    return is_present() ? NodeHandle(tree_, node_) : std::nullopt;
+  // Gets the `Node`, if this element was present.
+  auto GetNode() const -> std::optional<Node> {
+    return is_present() ? node_ : std::nullopt;
   }
 
   // Gets the typed node, if it is present and valid. Note that this returns
   // `std::nullopt` if this element was present but malformed. Use `is_present`
   // to determine if the element was present at all.
-  auto Get() const -> std::optional<T> {
-    return is_present() ? NodeHandle(tree_, node_).As<T>() : std::nullopt;
+  auto Extract(const Tree* tree) const -> std::optional<T> {
+    return is_present() ? node_.ExtractAs<T>(tree) : std::nullopt;
   }
 
  private:
-  Tree* tree_;
   Node node_;
 };
 
 // Extract an `Optional<T>` as either zero or one child.
 template <typename T>
-struct ChildTraits<Optional<T>> {
-  static auto Extract(Tree* tree, Tree::SiblingIterator& it) -> Optional<T> {
-    return tree->node_kind(*it) == T::Kind ? Optional<T>(tree, *it++)
-                                           : Optional<T>(tree, std::nullopt);
+struct Tree::Extractable<Optional<T>> {
+  static auto Extract(const Tree* tree, SiblingIterator& it) -> Optional<T> {
+    return (*it).kind(tree) == T::Kind ? Optional<T>(*it++)
+                                       : Optional<T>(std::nullopt);
   }
 };
 
@@ -165,12 +103,12 @@ class BracketedList : public std::vector<T> {};
 
 // Extract a `BracketedList` by extracting `T`s until we reach `Bracket`.
 template <typename T, typename Bracket>
-struct ChildTraits<BracketedList<T, Bracket>> {
-  static auto Extract(Tree* tree, Tree::SiblingIterator& it)
+struct Tree::Extractable<BracketedList<T, Bracket>> {
+  static auto Extract(const Tree* tree, SiblingIterator& it)
       -> BracketedList<T, Bracket> {
     BracketedList<T, Bracket> result;
-    while (tree->node_kind(*it) != Bracket::Kind) {
-      result.push_back(ChildTraits<T>::Extract(tree, it));
+    while ((*it).kind(tree) != Bracket::Kind) {
+      result.push_back(Extractable<T>::Extract(tree, it));
     }
     std::reverse(result.begin(), result.end());
     return result;
@@ -195,22 +133,22 @@ union ManualConstruction {
 // Extract a `tuple<T...>` from a list of child nodes by extracting each `T` in
 // reverse order.
 template <typename... T>
-struct ChildTraits<std::tuple<T...>> {
+struct Tree::Extractable<std::tuple<T...>> {
   template <std::size_t... Index>
-  static auto ExtractImpl(Tree* tree, Tree::SiblingIterator& it,
+  static auto ExtractImpl(const Tree* tree, SiblingIterator& it,
                           std::index_sequence<Index...>) -> std::tuple<T...> {
     std::tuple<Internal::ManualConstruction<T>...> fields;
 
     // Use a fold over the `=` operator to parse fields from right to left.
     [[maybe_unused]] int unused;
     static_cast<void>(
-        ((std::get<Index>(fields).Construct(ChildTraits<T>::Extract(tree, it)),
+        ((std::get<Index>(fields).Construct(Extractable<T>::Extract(tree, it)),
           unused) = ... = 0));
 
     return {std::move(std::get<Index>(fields).value)...};
   }
 
-  static auto Extract(Tree* tree, Tree::SiblingIterator& it)
+  static auto Extract(const Tree* tree, SiblingIterator& it)
       -> std::tuple<T...> {
     return ExtractImpl(tree, it, std::make_index_sequence<sizeof...(T)>());
   }
@@ -218,13 +156,13 @@ struct ChildTraits<std::tuple<T...>> {
 
 // Extract the fields of a simple aggregate type.
 template <typename T>
-struct ChildTraits {
+struct Tree::Extractable {
   static_assert(std::is_aggregate_v<T>, "Unsupported child type");
 
-  static auto Extract(Tree* tree, Tree::SiblingIterator& it) -> T {
+  static auto Extract(const Tree* tree, SiblingIterator& it) -> T {
     // Extract the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
-    auto tuple = ChildTraits<TupleType>::Extract(tree, it);
+    auto tuple = Extractable<TupleType>::Extract(tree, it);
 
     // Convert the tuple to the struct type.
     return std::apply(
@@ -234,15 +172,6 @@ struct ChildTraits {
         tuple);
   }
 };
-
-template <typename T>
-auto ExtractNodeFromChildren(
-    Tree* tree, llvm::iterator_range<Tree::SiblingIterator> children) -> T {
-  auto it = children.begin();
-  auto result = ChildTraits<T>::Extract(tree, it);
-  CARBON_CHECK(it == children.end()) << "Malformed parse node";
-  return result;
-}
 
 //------------------------------------------------------------------------------
 
@@ -276,8 +205,8 @@ struct File {
   BracketedList<AnyDeclaration, FileStart> decls;
   Required<FileEnd> end;
 
-  static auto Make(Tree* tree) -> File {
-    return ExtractNodeFromChildren<File>(tree, tree->roots());
+  static auto Make(const Tree* tree) -> File {
+    return tree->ExtractNodeFromChildren<File>(tree->roots());
   }
 };
 

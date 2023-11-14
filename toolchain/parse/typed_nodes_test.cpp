@@ -38,8 +38,6 @@ class TypedNodeTest : public ::testing::Test {
     return tree_storage_.front();
   }
 
-  auto GetFile(llvm::StringRef t) -> File { return File::Make(&GetTree(t)); }
-
   SharedValueStores value_stores_;
   llvm::vfs::InMemoryFileSystem fs_;
   std::forward_list<SourceBuffer> source_storage_;
@@ -49,60 +47,65 @@ class TypedNodeTest : public ::testing::Test {
 };
 
 TEST_F(TypedNodeTest, Empty) {
-  auto file = GetFile("");
+  auto* tree = &GetTree("");
+  auto file = File::Make(tree);
 
-  EXPECT_TRUE(file.start.As<FileStart>().has_value());
-  EXPECT_TRUE(file.end.As<FileEnd>().has_value());
+  EXPECT_TRUE(file.start.IsValid<FileStart>(tree));
+  EXPECT_TRUE(file.start.ExtractAs<FileStart>(tree).has_value());
+  EXPECT_TRUE(file.start.Extract(tree).has_value());
 
-  EXPECT_TRUE(file.start.Get().has_value());
-  EXPECT_TRUE(file.end.Get().has_value());
+  EXPECT_TRUE(file.end.IsValid<FileEnd>(tree));
+  EXPECT_TRUE(file.end.ExtractAs<FileEnd>(tree).has_value());
+  EXPECT_TRUE(file.end.Extract(tree).has_value());
 
-  EXPECT_FALSE(file.start.As<FileEnd>().has_value());
+  EXPECT_FALSE(file.start.IsValid<FileEnd>(tree));
+  EXPECT_FALSE(file.start.ExtractAs<FileEnd>(tree).has_value());
 }
 
 TEST_F(TypedNodeTest, Function) {
-  auto file = GetFile(R"carbon(
+  auto* tree = &GetTree(R"carbon(
     fn F() {}
     fn G() -> i32;
   )carbon");
+  auto file = File::Make(tree);
 
   ASSERT_EQ(file.decls.size(), 2);
 
-  auto f_fn = file.decls[0].As<FunctionDefinition>();
+  auto f_fn = file.decls[0].ExtractAs<FunctionDefinition>(tree);
   ASSERT_TRUE(f_fn.has_value());
-  auto f_sig = f_fn->signature.Get();
+  auto f_sig = f_fn->signature.Extract(tree);
   ASSERT_TRUE(f_sig.has_value());
   EXPECT_FALSE(f_sig->return_type.is_present());
 
-  auto g_fn = file.decls[1].As<FunctionDecl>();
+  auto g_fn = file.decls[1].ExtractAs<FunctionDecl>(tree);
   ASSERT_TRUE(g_fn.has_value());
   EXPECT_TRUE(g_fn->return_type.is_present());
 }
 
 TEST_F(TypedNodeTest, For) {
-  auto file = GetFile(R"carbon(
+  auto* tree = &GetTree(R"carbon(
     fn F(arr: [i32; 5]) {
       for (var v: i32 in arr) {
         Print(v);
       }
     }
   )carbon");
+  auto file = File::Make(tree);
 
   ASSERT_EQ(file.decls.size(), 1);
-  auto fn = file.decls[0].As<FunctionDefinition>();
+  auto fn = file.decls[0].ExtractAs<FunctionDefinition>(tree);
   ASSERT_TRUE(fn.has_value());
   ASSERT_EQ(fn->body.size(), 1);
-  auto for_stmt = fn->body[0].As<ForStatement>();
+  auto for_stmt = fn->body[0].ExtractAs<ForStatement>(tree);
   ASSERT_TRUE(for_stmt.has_value());
-  auto for_header = for_stmt->header.Get();
+  auto for_header = for_stmt->header.Extract(tree);
   ASSERT_TRUE(for_header.has_value());
-  auto for_var = for_header->var.Get();
+  auto for_var = for_header->var.Extract(tree);
   ASSERT_TRUE(for_var.has_value());
-  auto for_var_binding = for_var->pattern.As<PatternBinding>();
+  auto for_var_binding = for_var->pattern.ExtractAs<PatternBinding>(tree);
   ASSERT_TRUE(for_var_binding.has_value());
-  auto for_var_name = for_var_binding->name.As<Name>();
+  auto for_var_name = for_var_binding->name.ExtractAs<Name>(tree);
   ASSERT_TRUE(for_var_name.has_value());
-  // TODO: Should we expose the spelling of the node on `NodeHandle`?
 }
 
 }  // namespace

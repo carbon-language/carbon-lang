@@ -19,23 +19,6 @@
 
 namespace Carbon::Parse {
 
-// A lightweight handle representing a node in the tree.
-//
-// Objects of this type are small and cheap to copy and store. They don't
-// contain any of the information about the node, and serve as a handle that
-// can be used with the underlying tree to query for detailed information.
-//
-// That said, nodes can be compared and are part of a depth-first pre-order
-// sequence across all nodes in the parse tree.
-struct Node : public ComparableIndexBase {
-  // An explicitly invalid instance.
-  static const Node Invalid;
-
-  using ComparableIndexBase::ComparableIndexBase;
-};
-
-constexpr Node Node::Invalid = Node(Node::InvalidIndex);
-
 // A tree of parsed tokens based on the language grammar.
 //
 // This is a purely syntactic parse tree without any semantics yet attached. It
@@ -61,6 +44,69 @@ class Tree : public Printable<Tree> {
  public:
   class PostorderIterator;
   class SiblingIterator;
+
+  // A lightweight handle representing a node in the tree.
+  //
+  // Objects of this type are small and cheap to copy and store. They don't
+  // contain any of the information about the node, and serve as a handle that
+  // can be used with the underlying tree to query for detailed information.
+  //
+  // That said, nodes can be compared and are part of a depth-first pre-order
+  // sequence across all nodes in the parse tree.
+  //
+  // This class should be named as `Parse::Node`, not as `Parse::Tree::Node`,
+  // and is defined here only to resolve cyclic references.
+  struct Node : public ComparableIndexBase {
+    // An explicitly invalid instance.
+    static const Node Invalid;
+
+    using ComparableIndexBase::ComparableIndexBase;
+
+    auto has_error(const Tree* tree) const -> bool {
+      return tree->node_has_error(*this);
+    }
+    auto kind(const Tree* tree) const -> NodeKind {
+      return tree->node_kind(*this);
+    }
+    auto token(const Tree* tree) const -> Lex::Token {
+      return tree->node_token(*this);
+    }
+
+    auto subtree_size(const Tree* tree) const -> int32_t {
+      return tree->node_subtree_size(*this);
+    }
+    auto postorder(const Tree* tree) const
+        -> llvm::iterator_range<Tree::PostorderIterator>;
+    auto children(const Tree* tree) const
+        -> llvm::iterator_range<Tree::SiblingIterator>;
+
+    // Returns whether this node is a valid node of the specified type.
+    template <typename T>
+    auto IsValid(const Tree* tree) const -> bool {
+      return kind(tree) == T::Kind && !has_error(tree);
+    }
+
+    // Converts this node to a typed node of a specified type, if it is a valid
+    // node of that kind.
+    template <typename T>
+    auto ExtractAs(const Tree* tree) const -> std::optional<T>;
+  };
+
+  // A trait type that should be specialized by types that can be extracted
+  // from a parse tree. A specialization should provide the following API:
+  //
+  // ```
+  // interface Extractable {
+  //   // Extract a value of this type from the sequence of nodes starting at
+  //   // `it`, and increment `it` past this type.
+  //   static auto Extract(Tree* tree, Tree::SiblingIterator& it) -> Self;
+  // }
+  // ```
+  //
+  // Note that `SiblingIterator`s iterate in reverse order through the children
+  // of a node.
+  template <typename T>
+  struct Extractable;
 
   // Parses the token buffer into a `Tree`.
   //
@@ -106,6 +152,12 @@ class Tree : public Printable<Tree> {
   [[nodiscard]] auto node_token(Node n) const -> Lex::Token;
 
   [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
+
+  // Extract a node of type `T` from a sibling range. This is expected to
+  // consume the complete sibling range.
+  template <typename T>
+  auto ExtractNodeFromChildren(
+      llvm::iterator_range<Tree::SiblingIterator> children) const -> T;
 
   // See the other Print comments.
   auto Print(llvm::raw_ostream& output) const -> void;
@@ -243,6 +295,10 @@ class Tree : public Printable<Tree> {
   bool has_errors_ = false;
 };
 
+using Node = Tree::Node;
+
+constexpr Node Node::Invalid = Node(Node::InvalidIndex);
+
 // A random-access iterator to the depth-first postorder sequence of parse nodes
 // in the parse tree. It produces `Tree::Node` objects which are opaque
 // handles and must be used in conjunction with the `Tree` itself.
@@ -286,6 +342,11 @@ class Tree::PostorderIterator
 
   Node node_;
 };
+
+inline auto Tree::Node::postorder(const Tree* tree) const
+    -> llvm::iterator_range<PostorderIterator> {
+  return tree->postorder(*this);
+}
 
 // A forward iterator across the siblings at a particular level in the parse
 // tree. It produces `Tree::Node` objects which are opaque handles and must
@@ -335,6 +396,29 @@ class Tree::SiblingIterator
 
   Node node_;
 };
+
+inline auto Tree::Node::children(const Tree* tree) const
+    -> llvm::iterator_range<SiblingIterator> {
+  return tree->children(*this);
+}
+
+template <typename T>
+auto Tree::ExtractNodeFromChildren(
+    llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
+  auto it = children.begin();
+  auto result = Extractable<T>::Extract(this, it);
+  CARBON_CHECK(it == children.end()) << "Malformed parse node";
+  return result;
+}
+
+template <typename T>
+auto Tree::Node::ExtractAs(const Tree* tree) const -> std::optional<T> {
+  if (!IsValid<T>(tree)) {
+    return std::nullopt;
+  }
+
+  return tree->ExtractNodeFromChildren<T>(children(tree));
+}
 
 }  // namespace Carbon::Parse
 
