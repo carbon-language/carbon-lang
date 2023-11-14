@@ -52,8 +52,8 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-static auto CheckForDuplicateNames(Context& context,
-                                   SemIR::InstBlockId type_block_id) -> void {
+static auto HasDuplicateNamesError(Context& context,
+                                   SemIR::InstBlockId type_block_id) -> bool {
   auto& sem_ir = context.sem_ir();
   auto fields = sem_ir.inst_blocks().Get(type_block_id);
   llvm::DenseMap<SemIR::NameId, Parse::Node> names;
@@ -80,10 +80,10 @@ static auto CheckForDuplicateNames(Context& context,
                  sem_ir.names().GetFormatted(field_inst.name_id))
           .Note(it->second, StructNamePrevious)
           .Emit();
-      // FIXME: prevent caller from producing an invalid value.
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
@@ -95,13 +95,15 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
-  CheckForDuplicateNames(context, type_block_id);
+  if (HasDuplicateNamesError(context, type_block_id)) {
+    // FIXME: produce an error instead of an invalid value
+  } else {
+    auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
-  auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
-
-  auto value_id =
-      context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
-  context.node_stack().Push(parse_node, value_id);
+    auto value_id =
+        context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
+    context.node_stack().Push(parse_node, value_id);
+  }
   return true;
 }
 
@@ -121,7 +123,6 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
 auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
-  CheckForDuplicateNames(context, refs_id);
 
   context.PopScope();
   context.node_stack()
@@ -133,9 +134,13 @@ auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
-  context.AddInstAndPush(
-      parse_node,
-      SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
+  if (HasDuplicateNamesError(context, refs_id)) {
+    // FIXME: produce an error instead of an invalid value
+  } else {
+    context.AddInstAndPush(
+        parse_node,
+        SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
+  }
   return true;
 }
 
