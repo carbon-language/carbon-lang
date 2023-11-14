@@ -4,13 +4,13 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:24: ERROR: Member of struct type literal with a duplicated name `abc`.
-// CHECK:STDERR: fn F() -> {.abc: i32, .abc: i32};
-// CHECK:STDERR:                        ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:13: Member with the same name here.
-// CHECK:STDERR: fn F() -> {.abc: i32, .abc: i32};
-// CHECK:STDERR:             ^
-fn F() -> {.abc: i32, .abc: i32};
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:42: ERROR: Member of struct type literal with a duplicated name `abc`.
+// CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
+// CHECK:STDERR:                                          ^
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:22: Member with the same name here.
+// CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
+// CHECK:STDERR:                      ^
+fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:19: ERROR: Member of struct type literal with a duplicated name `a`.
 // CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
