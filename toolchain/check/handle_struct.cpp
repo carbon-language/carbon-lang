@@ -52,6 +52,8 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
+// Goes from the StructFieldValue node pointing to the `=` in a struct literal
+// like `{.a = 1}`, to the name node `a` in its children.
 static auto StructFieldValueToName(Context& context,
                                    Parse::Node field_value_node)
     -> Parse::Node {
@@ -78,22 +80,19 @@ static auto HasDuplicateNamesError(Context& context,
     auto [it, added] =
         names.insert({field_inst.name_id, field_inst.parse_node});
     if (!added) {
-      // FIXME: should we have different diagnostics for the type literal case?
-      // Or make it a `MemberNameDuplicate` diagnostic with "struct literal" as
-      // a parameter?
+      // FIXME: Should this be renamed `MemberNameDuplicate`, and possibly
+      // made more widely available?
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "Member of {0} with a duplicated name `{1}`.",
                         llvm::StringRef, llvm::StringRef);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Member with the same name here.");
       llvm::StringRef container;
-      // FIXME: gets the wrong parse node in the struct literal case;
-      // selects the `=` in `{.a = 1, .a = 2}`, need to pick the relevant
-      // child.
       Parse::Node prev_node = it->second;
       if (context.parse_tree().node_kind(field_inst.parse_node) ==
           Parse::NodeKind::StructFieldValue) {
         container = "struct literal";
+        // This avoids using the wrong parse node in the struct literal case.
         prev_node = StructFieldValueToName(context, prev_node);
         field_inst.parse_node =
             StructFieldValueToName(context, field_inst.parse_node);
