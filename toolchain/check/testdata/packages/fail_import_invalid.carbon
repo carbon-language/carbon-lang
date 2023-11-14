@@ -44,7 +44,7 @@ package Implicit api;
 
 package Implicit impl;
 
-// CHECK:STDERR: implicit_impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import `api` of `impl` file is redundant with implicit import.
+// CHECK:STDERR: implicit_impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit;
 // CHECK:STDERR: ^
 import Implicit;
@@ -57,7 +57,7 @@ package Implicit library "lib" api;
 
 package Implicit library "lib" impl;
 
-// CHECK:STDERR: implicit_lib_impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import `api` of `impl` file is redundant with implicit import.
+// CHECK:STDERR: implicit_lib_impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit library "lib";
 // CHECK:STDERR: ^
 import Implicit library "lib";
