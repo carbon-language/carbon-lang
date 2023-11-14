@@ -6,10 +6,16 @@
 
 class Incomplete;
 
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+12]]:10: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var s: {.a: Incomplete};
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+9]]:10: Member with the same name here.
+// CHECK:STDERR: var s: {.a: Incomplete};
+// CHECK:STDERR:          ^
 // CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+6]]:23: ERROR: Variable has incomplete type `{.a: Incomplete}`.
 // CHECK:STDERR: var s: {.a: Incomplete};
 // CHECK:STDERR:                       ^
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: Class was forward declared here.
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-11]]:1: Class was forward declared here.
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^
 var s: {.a: Incomplete};

@@ -5,8 +5,44 @@
 // AUTOUPDATE
 
 fn F() {
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+24]]:12: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+21]]:12: Member with the same name here.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+18]]:21: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+15]]:21: Member with the same name here.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+12]]:35: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+9]]:35: Member with the same name here.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+6]]:43: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                           ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+3]]:43: Member with the same name here.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                           ^
   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+12]]:12: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var p: {.a: i32, .b: i32}* = &s;
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+9]]:12: Member with the same name here.
+  // CHECK:STDERR:   var p: {.a: i32, .b: i32}* = &s;
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+6]]:21: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var p: {.a: i32, .b: i32}* = &s;
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: address_of_lvalue.carbon:[[@LINE+3]]:21: Member with the same name here.
+  // CHECK:STDERR:   var p: {.a: i32, .b: i32}* = &s;
+  // CHECK:STDERR:                     ^
   var p: {.a: i32, .b: i32}* = &s;
   var q: i32* = &s.a;
   var r: i32* = &s.b;

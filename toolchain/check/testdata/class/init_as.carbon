@@ -10,6 +10,18 @@ class Class {
 }
 
 fn F() -> i32 {
+  // CHECK:STDERR: init_as.carbon:[[@LINE+12]]:15: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   return ({.a = 1, .b = 2} as Class).a;
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR: init_as.carbon:[[@LINE+9]]:15: Member with the same name here.
+  // CHECK:STDERR:   return ({.a = 1, .b = 2} as Class).a;
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR: init_as.carbon:[[@LINE+6]]:23: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   return ({.a = 1, .b = 2} as Class).a;
+  // CHECK:STDERR:                       ^
+  // CHECK:STDERR: init_as.carbon:[[@LINE+3]]:23: Member with the same name here.
+  // CHECK:STDERR:   return ({.a = 1, .b = 2} as Class).a;
+  // CHECK:STDERR:                       ^
   return ({.a = 1, .b = 2} as Class).a;
 }
 

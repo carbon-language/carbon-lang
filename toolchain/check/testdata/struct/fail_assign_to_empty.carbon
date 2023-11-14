@@ -4,6 +4,12 @@
 //
 // AUTOUPDATE
 
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+9]]:17: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {} = {.a = 1};
+// CHECK:STDERR:                 ^
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+6]]:17: Member with the same name here.
+// CHECK:STDERR: var x: {} = {.a = 1};
+// CHECK:STDERR:                 ^
 // CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:20: ERROR: Cannot initialize struct with 0 field(s) from struct with 1 field(s).
 // CHECK:STDERR: var x: {} = {.a = 1};
 // CHECK:STDERR:                    ^

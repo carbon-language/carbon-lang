@@ -12,12 +12,18 @@ class B {
   var a: A;
 }
 
+// CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:11: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: fn F(s: {.a: A}, b: B) {
+// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+3]]:11: Member with the same name here.
+// CHECK:STDERR: fn F(s: {.a: A}, b: B) {
+// CHECK:STDERR:           ^
 fn F(s: {.a: A}, b: B) {
   // `s` has only a value representation, so this must be invalid.
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   s.a.F();
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-18]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:             ^
   s.a.F();
@@ -27,7 +33,7 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   b.a.F();
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-22]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-28]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:             ^
   b.a.F();

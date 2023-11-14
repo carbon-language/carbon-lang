@@ -5,28 +5,43 @@
 // AUTOUPDATE
 
 fn Run() -> i32 {
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+24]]:12: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+21]]:12: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+18]]:21: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+15]]:21: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+12]]:35: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+9]]:35: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+6]]:43: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                           ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+3]]:43: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                           ^
   var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+12]]:12: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var y: {.a: i32, .b: i32} = x;
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+9]]:12: Member with the same name here.
+  // CHECK:STDERR:   var y: {.a: i32, .b: i32} = x;
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+6]]:21: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var y: {.a: i32, .b: i32} = x;
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: two_entries.carbon:[[@LINE+3]]:21: Member with the same name here.
+  // CHECK:STDERR:   var y: {.a: i32, .b: i32} = x;
+  // CHECK:STDERR:                     ^
   var y: {.a: i32, .b: i32} = x;
   return 0;
 }
-
-// CHECK:STDOUT: ; ModuleID = 'two_entries.carbon'
-// CHECK:STDOUT: source_filename = "two_entries.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() {
-// CHECK:STDOUT:   %x = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4
-// CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4
-// CHECK:STDOUT:   %y = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %a1 = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %a1, align 4
-// CHECK:STDOUT:   %a2 = getelementptr inbounds { i32, i32 }, ptr %y, i32 0, i32 0
-// CHECK:STDOUT:   store i32 %1, ptr %a2, align 4
-// CHECK:STDOUT:   %b3 = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   %2 = load i32, ptr %b3, align 4
-// CHECK:STDOUT:   %b4 = getelementptr inbounds { i32, i32 }, ptr %y, i32 0, i32 1
-// CHECK:STDOUT:   store i32 %2, ptr %b4, align 4
-// CHECK:STDOUT:   ret i32 0
-// CHECK:STDOUT: }

@@ -10,6 +10,18 @@ class C {
 }
 
 fn F() -> C {
+  // CHECK:STDERR: returned_var.carbon:[[@LINE+12]]:32: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   returned var result: C = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                ^
+  // CHECK:STDERR: returned_var.carbon:[[@LINE+9]]:32: Member with the same name here.
+  // CHECK:STDERR:   returned var result: C = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                ^
+  // CHECK:STDERR: returned_var.carbon:[[@LINE+6]]:40: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   returned var result: C = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                        ^
+  // CHECK:STDERR: returned_var.carbon:[[@LINE+3]]:40: Member with the same name here.
+  // CHECK:STDERR:   returned var result: C = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                        ^
   returned var result: C = {.a = 1, .b = 2};
   return var;
 }

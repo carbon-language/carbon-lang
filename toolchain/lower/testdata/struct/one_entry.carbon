@@ -5,21 +5,25 @@
 // AUTOUPDATE
 
 fn Run() -> i32 {
+  // CHECK:STDERR: one_entry.carbon:[[@LINE+12]]:12: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: i32} = {.a = 4};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: one_entry.carbon:[[@LINE+9]]:12: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: i32} = {.a = 4};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: one_entry.carbon:[[@LINE+6]]:26: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: i32} = {.a = 4};
+  // CHECK:STDERR:                          ^
+  // CHECK:STDERR: one_entry.carbon:[[@LINE+3]]:26: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: i32} = {.a = 4};
+  // CHECK:STDERR:                          ^
   var x: {.a: i32} = {.a = 4};
+  // CHECK:STDERR: one_entry.carbon:[[@LINE+6]]:12: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var y: {.a: i32} = x;
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: one_entry.carbon:[[@LINE+3]]:12: Member with the same name here.
+  // CHECK:STDERR:   var y: {.a: i32} = x;
+  // CHECK:STDERR:            ^
   var y: {.a: i32} = x;
   return 0;
 }
-
-// CHECK:STDOUT: ; ModuleID = 'one_entry.carbon'
-// CHECK:STDOUT: source_filename = "one_entry.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() {
-// CHECK:STDOUT:   %x = alloca { i32 }, align 8
-// CHECK:STDOUT:   store { i32 } { i32 4 }, ptr %x, align 4
-// CHECK:STDOUT:   %y = alloca { i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { i32 }, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %a, align 4
-// CHECK:STDOUT:   %struct.init = insertvalue { i32 } poison, i32 %1, 0
-// CHECK:STDOUT:   store { i32 } %struct.init, ptr %y, align 4
-// CHECK:STDOUT:   ret i32 0
-// CHECK:STDOUT: }

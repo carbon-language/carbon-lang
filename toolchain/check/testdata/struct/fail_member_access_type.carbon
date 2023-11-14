@@ -4,6 +4,18 @@
 //
 // AUTOUPDATE
 
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+12]]:10: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: f64} = {.a = 4.0};
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+9]]:10: Member with the same name here.
+// CHECK:STDERR: var x: {.a: f64} = {.a = 4.0};
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+6]]:24: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: f64} = {.a = 4.0};
+// CHECK:STDERR:                        ^
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:24: Member with the same name here.
+// CHECK:STDERR: var x: {.a: f64} = {.a = 4.0};
+// CHECK:STDERR:                        ^
 var x: {.a: f64} = {.a = 4.0};
 // CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:15: ERROR: Type `{.a: f64}` does not have a member `b`.
 // CHECK:STDERR: var y: i32 = x.b;

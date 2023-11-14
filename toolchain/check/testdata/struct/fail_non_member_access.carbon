@@ -4,6 +4,18 @@
 //
 // AUTOUPDATE
 
+// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+12]]:10: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: i32} = {.a = 4};
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+9]]:10: Member with the same name here.
+// CHECK:STDERR: var x: {.a: i32} = {.a = 4};
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+6]]:24: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: i32} = {.a = 4};
+// CHECK:STDERR:                        ^
+// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+3]]:24: Member with the same name here.
+// CHECK:STDERR: var x: {.a: i32} = {.a = 4};
+// CHECK:STDERR:                        ^
 var x: {.a: i32} = {.a = 4};
 // CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+3]]:15: ERROR: Type `{.a: i32}` does not have a member `b`.
 // CHECK:STDERR: var y: i32 = x.b;

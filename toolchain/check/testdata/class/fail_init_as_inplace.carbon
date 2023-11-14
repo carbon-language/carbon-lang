@@ -15,6 +15,18 @@ fn F() {
   // TODO: This case should presumably work: `{...} as Class` should be an
   // initializing expression, not a value expression.
   //
+  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+15]]:22: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
+  // CHECK:STDERR:                      ^
+  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+12]]:22: Member with the same name here.
+  // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
+  // CHECK:STDERR:                      ^
+  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+9]]:30: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
+  // CHECK:STDERR:                              ^
+  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+6]]:30: Member with the same name here.
+  // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
+  // CHECK:STDERR:                              ^
   // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+3]]:33: ERROR: Cannot copy value of type `Class`.
   // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
   // CHECK:STDERR:                                 ^

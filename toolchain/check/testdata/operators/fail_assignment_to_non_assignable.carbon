@@ -28,9 +28,33 @@ fn Main() {
   // CHECK:STDERR:   i32 = i32*;
   // CHECK:STDERR:   ^
   i32 = i32*;
-  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+3]]:18: ERROR: Expression is not assignable.
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+27]]:7: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+24]]:7: Member with the same name here.
+  // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+21]]:15: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+18]]:15: Member with the same name here.
+  // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+15]]:18: ERROR: Expression is not assignable.
   // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
   // CHECK:STDERR:                  ^
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+12]]:26: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
+  // CHECK:STDERR:                          ^
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+9]]:26: Member with the same name here.
+  // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
+  // CHECK:STDERR:                          ^
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+6]]:34: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
+  // CHECK:STDERR:                                  ^
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+3]]:34: Member with the same name here.
+  // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};
+  // CHECK:STDERR:                                  ^
   {.x = 1, .y = 2} = {.x = 3, .y = 4};
   // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+3]]:25: ERROR: Expression is not assignable.
   // CHECK:STDERR:   (if true then 1 else 2) = 3;

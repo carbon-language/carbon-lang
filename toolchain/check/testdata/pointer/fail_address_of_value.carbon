@@ -6,6 +6,12 @@
 
 fn G() -> i32;
 
+// CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+6]]:13: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: fn H() -> {.a: i32};
+// CHECK:STDERR:             ^
+// CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:13: Member with the same name here.
+// CHECK:STDERR: fn H() -> {.a: i32};
+// CHECK:STDERR:             ^
 fn H() -> {.a: i32};
 
 fn AddressOfLiteral() {
@@ -29,9 +35,15 @@ fn AddressOfLiteral() {
   // CHECK:STDERR:   &(1, 2);
   // CHECK:STDERR:   ^
   &(1, 2);
-  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
+  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+9]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &{.a = 5};
   // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+6]]:8: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   &{.a = 5};
+  // CHECK:STDERR:        ^
+  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:8: Member with the same name here.
+  // CHECK:STDERR:   &{.a = 5};
+  // CHECK:STDERR:        ^
   &{.a = 5};
 }
 

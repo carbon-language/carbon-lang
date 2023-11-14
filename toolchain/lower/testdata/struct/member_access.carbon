@@ -5,27 +5,32 @@
 // AUTOUPDATE
 
 fn Run() -> i32 {
+  // CHECK:STDERR: member_access.carbon:[[@LINE+24]]:12: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: member_access.carbon:[[@LINE+21]]:12: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: member_access.carbon:[[@LINE+18]]:21: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: member_access.carbon:[[@LINE+15]]:21: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: member_access.carbon:[[@LINE+12]]:35: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR: member_access.carbon:[[@LINE+9]]:35: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR: member_access.carbon:[[@LINE+6]]:45: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+  // CHECK:STDERR:                                             ^
+  // CHECK:STDERR: member_access.carbon:[[@LINE+3]]:45: Member with the same name here.
+  // CHECK:STDERR:   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+  // CHECK:STDERR:                                             ^
   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
   var y: i32 = x.b;
   var z: i32 = y;
   return 0;
 }
-
-// CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
-// CHECK:STDOUT: source_filename = "member_access.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() {
-// CHECK:STDOUT:   %x = alloca { double, i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   store double 0.000000e+00, ptr %a, align 8
-// CHECK:STDOUT:   %b = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   store i32 1, ptr %b, align 4
-// CHECK:STDOUT:   %y = alloca i32, align 4
-// CHECK:STDOUT:   %b1 = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   %1 = load i32, ptr %b1, align 4
-// CHECK:STDOUT:   store i32 %1, ptr %y, align 4
-// CHECK:STDOUT:   %z = alloca i32, align 4
-// CHECK:STDOUT:   %2 = load i32, ptr %y, align 4
-// CHECK:STDOUT:   store i32 %2, ptr %z, align 4
-// CHECK:STDOUT:   ret i32 0
-// CHECK:STDOUT: }

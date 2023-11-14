@@ -52,18 +52,45 @@ auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
+static auto CheckForDuplicateNames(Context& context,
+                                   SemIR::InstBlockId type_block_id) -> void {
+  auto& sem_ir = context.sem_ir();
+  auto fields = sem_ir.inst_blocks().Get(type_block_id);
+  llvm::DenseMap<SemIR::NameId, Parse::Node> names;
+  auto& insts = sem_ir.insts();
+  for (SemIR::InstId field_inst_id : fields) {
+    auto field_inst = insts.GetAs<SemIR::StructTypeField>(field_inst_id);
+    auto name_id = field_inst.name_id;
+    auto parse_node = field_inst.parse_node;
+    auto [it, added] = names.insert({name_id, parse_node});
+    if (added) {
+      CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
+                        "Member of struct literal with a duplicated name.");
+      CARBON_DIAGNOSTIC(StructNamePrevious, Note,
+                        "Member with the same name here.");
+      // llvm::errs() << "Duplicate: " << sem_ir.names().GetFormatted(name_id)
+      // << " " << parse_node << " " << it->second << "\n";
+      context.emitter()
+          .Build(parse_node, StructNameDuplicate)
+          .Note(it->second, StructNamePrevious)
+          .Emit();
+      // return true;
+    }
+  }
+  // return false;
+}
+
 auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
-
   context.PopScope();
   context.node_stack()
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
+  CheckForDuplicateNames(context, type_block_id);
 
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
-
   auto value_id =
       context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
   context.node_stack().Push(parse_node, value_id);
@@ -86,6 +113,7 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
 auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
+  CheckForDuplicateNames(context, refs_id);
 
   context.PopScope();
   context.node_stack()

@@ -10,14 +10,50 @@ class Class {
 }
 
 fn F() {
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+9]]:7: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.a = 1} as Class;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+6]]:7: Member with the same name here.
+  // CHECK:STDERR:   {.a = 1} as Class;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_init.carbon:[[@LINE+3]]:10: ERROR: Cannot initialize class with 2 field(s) from struct with 1 field(s).
   // CHECK:STDERR:   {.a = 1} as Class;
   // CHECK:STDERR:          ^
   {.a = 1} as Class;
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+15]]:7: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.a = 1, .c = 2} as Class;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+12]]:7: Member with the same name here.
+  // CHECK:STDERR:   {.a = 1, .c = 2} as Class;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+9]]:15: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.a = 1, .c = 2} as Class;
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+6]]:15: Member with the same name here.
+  // CHECK:STDERR:   {.a = 1, .c = 2} as Class;
+  // CHECK:STDERR:               ^
   // CHECK:STDERR: fail_init.carbon:[[@LINE+3]]:18: ERROR: Missing value for field `b` in struct initialization.
   // CHECK:STDERR:   {.a = 1, .c = 2} as Class;
   // CHECK:STDERR:                  ^
   {.a = 1, .c = 2} as Class;
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+21]]:7: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+18]]:7: Member with the same name here.
+  // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+15]]:15: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+12]]:15: Member with the same name here.
+  // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+9]]:23: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
+  // CHECK:STDERR:                       ^
+  // CHECK:STDERR: fail_init.carbon:[[@LINE+6]]:23: Member with the same name here.
+  // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
+  // CHECK:STDERR:                       ^
   // CHECK:STDERR: fail_init.carbon:[[@LINE+3]]:26: ERROR: Cannot initialize class with 2 field(s) from struct with 3 field(s).
   // CHECK:STDERR:   {.a = 1, .b = 2, .c = 3} as Class;
   // CHECK:STDERR:                          ^

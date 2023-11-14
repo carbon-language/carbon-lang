@@ -7,22 +7,30 @@
 fn G(p: i32*);
 
 fn F() {
+  // CHECK:STDERR: address_of_field.carbon:[[@LINE+24]]:12: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: address_of_field.carbon:[[@LINE+21]]:12: Member with the same name here.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:            ^
+  // CHECK:STDERR: address_of_field.carbon:[[@LINE+18]]:21: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: address_of_field.carbon:[[@LINE+15]]:21: Member with the same name here.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: address_of_field.carbon:[[@LINE+12]]:35: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR: address_of_field.carbon:[[@LINE+9]]:35: Member with the same name here.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR: address_of_field.carbon:[[@LINE+6]]:43: ERROR: Member of struct literal with a duplicated name.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                           ^
+  // CHECK:STDERR: address_of_field.carbon:[[@LINE+3]]:43: Member with the same name here.
+  // CHECK:STDERR:   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // CHECK:STDERR:                                           ^
   var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
   G(&s.b);
 }
-
-// CHECK:STDOUT: ; ModuleID = 'address_of_field.carbon'
-// CHECK:STDOUT: source_filename = "address_of_field.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @G(ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: define void @F() {
-// CHECK:STDOUT:   %s = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4
-// CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4
-// CHECK:STDOUT:   %b1 = getelementptr inbounds { i32, i32 }, ptr %s, i32 0, i32 1
-// CHECK:STDOUT:   call void @G(ptr %b1)
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }

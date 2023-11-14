@@ -4,6 +4,24 @@
 //
 // AUTOUPDATE
 
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+21]]:10: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+18]]:10: Member with the same name here.
+// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
+// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+15]]:19: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
+// CHECK:STDERR:                   ^
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+12]]:19: Member with the same name here.
+// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
+// CHECK:STDERR:                   ^
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+9]]:33: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
+// CHECK:STDERR:                                 ^
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+6]]:33: Member with the same name here.
+// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
+// CHECK:STDERR:                                 ^
 // CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:36: ERROR: Cannot initialize struct with 2 field(s) from struct with 1 field(s).
 // CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDERR:                                    ^

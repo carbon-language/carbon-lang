@@ -4,7 +4,43 @@
 //
 // AUTOUPDATE
 
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+24]]:10: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
+// CHECK:STDERR:          ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+21]]:10: Member with the same name here.
+// CHECK:STDERR: var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
+// CHECK:STDERR:          ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+18]]:19: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
+// CHECK:STDERR:                   ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+15]]:19: Member with the same name here.
+// CHECK:STDERR: var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
+// CHECK:STDERR:                   ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+12]]:36: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
+// CHECK:STDERR:                                    ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+9]]:36: Member with the same name here.
+// CHECK:STDERR: var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
+// CHECK:STDERR:                                    ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+6]]:44: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
+// CHECK:STDERR:                                            ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+3]]:44: Member with the same name here.
+// CHECK:STDERR: var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
+// CHECK:STDERR:                                            ^
 var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+12]]:10: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var y: {.a: i32, .b: (i32,)} = x;
+// CHECK:STDERR:          ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+9]]:10: Member with the same name here.
+// CHECK:STDERR: var y: {.a: i32, .b: (i32,)} = x;
+// CHECK:STDERR:          ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+6]]:19: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var y: {.a: i32, .b: (i32,)} = x;
+// CHECK:STDERR:                   ^
+// CHECK:STDERR: tuple_as_element.carbon:[[@LINE+3]]:19: Member with the same name here.
+// CHECK:STDERR: var y: {.a: i32, .b: (i32,)} = x;
+// CHECK:STDERR:                   ^
 var y: {.a: i32, .b: (i32,)} = x;
 
 // CHECK:STDOUT: constants {

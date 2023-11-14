@@ -4,6 +4,12 @@
 //
 // AUTOUPDATE
 
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+9]]:12: ERROR: Member of struct literal with a duplicated name.
+// CHECK:STDERR: var x: {.a = 1};
+// CHECK:STDERR:            ^
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+6]]:12: Member with the same name here.
+// CHECK:STDERR: var x: {.a = 1};
+// CHECK:STDERR:            ^
 // CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:15: ERROR: Cannot implicitly convert from `{.a: i32}` to `type`.
 // CHECK:STDERR: var x: {.a = 1};
 // CHECK:STDERR:               ^
