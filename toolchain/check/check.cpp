@@ -154,8 +154,8 @@ static auto TrackImport(
     if (packaging && import.package_id == packaging->names.package_id &&
         import.library_id == packaging->names.library_id) {
       CARBON_DIAGNOSTIC(ExplicitImportApi, Error,
-                        "Explicit import of `api` from `impl` file is redundant "
-                        "with implicit import.");
+                        "Explicit import of `api` from `impl` file is "
+                        "redundant with implicit import.");
       CARBON_DIAGNOSTIC(ImportSelf, Error, "File cannot import itself.");
       unit_info.emitter.Emit(
           import.node, packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl
