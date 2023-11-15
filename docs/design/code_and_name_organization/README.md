@@ -18,8 +18,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [Source file introduction](#source-file-introduction)
     -   [Name paths](#name-paths)
-        -   [`package` directives](#package-directives)
     -   [Packages](#packages-1)
+        -   [`package` directives](#package-directives)
+        -   [`library` directives](#library-directives)
+        -   [`Main//default`](#maindefault)
+        -   [Files and libraries](#files-and-libraries)
         -   [Shorthand notation for libraries in packages](#shorthand-notation-for-libraries-in-packages)
         -   [Package name conflicts](#package-name-conflicts)
     -   [Libraries](#libraries)
@@ -220,8 +223,9 @@ by using:
 import library default;
 ```
 
-This is not permitted within the `Main` package, because the default library of
-the `Main` package has no `api` file.
+The `Main` package can only be imported from other parts of the `Main` package,
+never other packages. Importing `Main//default` is invalid, regardless of which
+package is used.
 
 As code becomes more complex, and users pull in more code, it may also be
 helpful to add
@@ -297,9 +301,9 @@ IDENTIFIER(\.IDENTIFIER)*
 
 Name conflicts are addressed by [name lookup](/docs/design/name_lookup.md).
 
-#### `package` directives
-
 ### Packages
+
+#### `package` directives
 
 The `package` directive's syntax may be loosely expressed as a regular
 expression:
@@ -324,12 +328,19 @@ Breaking this apart:
         words, if the file declares `struct Line`, that may be used from within
         the file as both `Line` directly and `Geometry.TwoDimensional.Line`
         using the `Geometry` package entity created by the `package` keyword.
+    -   `Main` is invalid for use as the package name. `Main` libraries must be
+        defined by either the [`library` directive](#library-directives) or the
+        [`Main//default`](#maindefault) rule.
 -   When the optional `library` keyword is specified, sets the name of the
     library within the package. In this example, the
     `Geometry//Objects/FourSides` library will be used.
+    -   If the `library` portion is omitted, the file is implicitly part of the
+        default library, which does not have a string name.
 -   The use of the `api` keyword indicates this is an API files as described
     under [libraries](#libraries). If it instead had `impl`, this would be an
     implementation file.
+
+#### `library` directives
 
 The syntax for `library` directives is the same, without the `package` portion:
 
@@ -343,15 +354,18 @@ For example:
 library "PrimeGenerator" impl;
 ```
 
-If the `package` portion is omitted, the file is implicitly part of the `Main`
-package, whose name cannot be written explicitly. If the `library` portion is
-omitted, the file is implicitly part of the default library, which does not have
-an identifier name. If neither a `package` directive nor a `library` directive
-is provided, the file is an `impl` file for the default library in the `Main`
-package. That library implicitly has an empty `api` file.
+If the `library` directive is used, the file is implicitly part of the `Main`
+package, whose name cannot be written explicitly.
 
-As a consequence, every file is in exactly one library, which is always part of
-a package.
+#### `Main//default`
+
+If neither a `package` directive nor a `library` directive is provided, the file
+is an `api` file for `Main//default`. An `impl` cannot be provided for
+`Main//default`.
+
+#### Files and libraries
+
+Every file is in exactly one library, which is always part of a package.
 
 Because every file is within a package, and packages act as top-level
 namespaces, every entity in Carbon will be in a namespace, even if its namespace
@@ -538,9 +552,13 @@ import library default;
 
 An import with a package name `IDENTIFIER` declares a package entity named after
 the imported package, and makes API entities from the imported library available
-through it. The full name path is a concatenation of the names of the package
-entity, any namespace entities applied, and the final entity addressed. Child
-namespaces or entities may be [aliased](/docs/design/aliases.md) if desired.
+through it. `Main` cannot be imported from other packages; in other words, only
+`import library NAME_PATH` syntax can be used to import from `Main`. Imports of
+`Main//default` are invalid.
+
+The full name path is a concatenation of the names of the package entity, any
+namespace entities applied, and the final entity addressed. Child namespaces or
+entities may be [aliased](/docs/design/aliases.md) if desired.
 
 For example, given a library:
 
@@ -578,8 +596,7 @@ automatically import the `api`, so a self-import should never be required.
 #### Imports from the current package
 
 An import without a package name imports the public names from the given library
-of the same package. It is not valid to import the default library of the `Main`
-package, because that library always has an empty `api`.
+of the same package.
 
 Entities defined in the API of the current library and in imported libraries in
 the current package may be used without mentioning the package prefix. However,
@@ -922,6 +939,7 @@ should be part of a larger testing plan.
     -   [Use a different name for the main package](/proposals/p2550.md#use-a-different-name-for-the-main-package)
     -   [Use a different name for the entry point](/proposals/p2550.md#use-a-different-name-for-the-entry-point)
     -   [Distinguish file scope from package scope](/proposals/p2550.md#distinguish-file-scope-from-package-scope)
+    -   [Default to `Main//default impl` instead of `Main//default api`](/proposals/p3403.md#default-to-maindefault-impl-instead-of-maindefault-api)
 -   Libraries
     -   [Allow exporting namespaces](/proposals/p0107.md#allow-exporting-namespaces)
     -   [Allow importing implementation files from within the same library](/proposals/p0107.md#allow-importing-implementation-files-from-within-the-same-library)
@@ -958,3 +976,5 @@ should be part of a larger testing plan.
     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
 -   Proposal
     [#2550: Simplified package declaration for the main package](https://github.com/carbon-language/carbon-lang/pull/2550)
+-   Proposal
+    [#3403: Change Main//default to an api file](https://github.com/carbon-language/carbon-lang/pull/3403)
