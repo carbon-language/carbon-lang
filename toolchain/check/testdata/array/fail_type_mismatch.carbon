@@ -12,7 +12,7 @@ var a: [i32; 3] = (1, "Hello", "World");
 var t1: (i32, String, String);
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:19: ERROR: Cannot implicitly convert from `String` to `i32`.
 // CHECK:STDERR: var b: [i32; 3] = t1;
-// CHECK:STDERR:                   ^
+// CHECK:STDERR:                   ~~
 var b: [i32; 3] = t1;
 
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:24: ERROR: Cannot initialize array of 3 element(s) from 2 initializer(s).
@@ -23,7 +23,7 @@ var c: [i32; 3] = (1, 2);
 var t2: (i32, i32);
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:19: ERROR: Cannot initialize array of 3 element(s) from tuple with 2 element(s).
 // CHECK:STDERR: var d: [i32; 3] = t2;
-// CHECK:STDERR:                   ^
+// CHECK:STDERR:                   ~~
 var d: [i32; 3] = t2;
 
 // CHECK:STDOUT: constants {

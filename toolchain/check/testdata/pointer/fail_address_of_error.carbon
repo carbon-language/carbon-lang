@@ -7,14 +7,14 @@
 fn Test() {
   // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+3]]:4: ERROR: Name `undeclared` not found.
   // CHECK:STDERR:   &undeclared;
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR:    ~~~~~~~~~~
   &undeclared;
   // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+6]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &(&undeclared);
   // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+3]]:6: ERROR: Name `undeclared` not found.
   // CHECK:STDERR:   &(&undeclared);
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:      ~~~~~~~~~~
   &(&undeclared);
 }
 

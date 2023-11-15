@@ -58,6 +58,8 @@ struct DiagnosticLocation {
   int32_t line_number = -1;
   // 1-based column number.
   int32_t column_number = -1;
+  // A location can represent a range of text if set to >1 value.
+  int32_t length = 1;
 };
 
 // A message composing a diagnostic. This may be the main message, but can also
@@ -345,7 +347,7 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
       : stream_(&stream) {}
 
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
-    std::string prefix = "";
+    std::string prefix;
     if (diagnostic.level == DiagnosticLevel::Error) {
       prefix = "ERROR: ";
     }
@@ -367,7 +369,14 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
     if (message.location.column_number > 0) {
       *stream_ << message.location.line << "\n";
       stream_->indent(message.location.column_number - 1);
-      *stream_ << "^\n";
+      if (message.location.length == 1) {
+        *stream_ << "^";
+      } else {
+        for (int i = 0; i < message.location.length; ++i) {
+          *stream_ << "~";
+        }
+      }
+      *stream_ << "\n";
     }
   }
 

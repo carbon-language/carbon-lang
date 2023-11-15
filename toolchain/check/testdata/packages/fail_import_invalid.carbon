@@ -8,14 +8,14 @@
 
 // CHECK:STDERR: main.carbon:[[@LINE+3]]:1: ERROR: Cannot import `Main` from other packages.
 // CHECK:STDERR: import Main;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import Main;
 
 // --- main_lib.carbon
 
 // CHECK:STDERR: main_lib.carbon:[[@LINE+3]]:1: ERROR: Cannot import `Main` from other packages.
 // CHECK:STDERR: import Main library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import Main library "lib";
 
 // --- this.carbon
@@ -24,7 +24,7 @@ package This api;
 
 // CHECK:STDERR: this.carbon:[[@LINE+3]]:1: ERROR: File cannot import itself.
 // CHECK:STDERR: import This;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import This;
 
 // --- this_lib.carbon
@@ -33,7 +33,7 @@ package This library "lib" api;
 
 // CHECK:STDERR: this_lib.carbon:[[@LINE+3]]:1: ERROR: File cannot import itself.
 // CHECK:STDERR: import This library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import This library "lib";
 
 // --- implicit_api.carbon
@@ -46,7 +46,7 @@ package Implicit impl;
 
 // CHECK:STDERR: implicit_impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import Implicit;
 
 // --- implicit_lib_api.carbon
@@ -59,14 +59,14 @@ package Implicit library "lib" impl;
 
 // CHECK:STDERR: implicit_lib_impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import Implicit library "lib";
 
 // --- unknown.carbon
 
 // CHECK:STDERR: unknown.carbon:[[@LINE+3]]:1: ERROR: Imported API not found.
 // CHECK:STDERR: import Unknown;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import Unknown;
 
 // CHECK:STDOUT: file "main.carbon" {

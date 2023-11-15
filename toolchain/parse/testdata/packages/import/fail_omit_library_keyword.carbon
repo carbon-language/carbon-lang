@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_omit_library_keyword.carbon:[[@LINE+3]]:17: ERROR: Missing `library` keyword.
 // CHECK:STDERR: import Geometry "Shapes";
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:                 ~~~~~~~~
 import Geometry "Shapes";
 
 // CHECK:STDOUT: - filename: fail_omit_library_keyword.carbon

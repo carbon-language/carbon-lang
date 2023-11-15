@@ -12,10 +12,10 @@ class Class {
 
   // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:10: ERROR: Function returns incomplete type `Class`.
   // CHECK:STDERR:   fn G() -> Class;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:          ~~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-9]]:1: Class is incomplete within its definition.
   // CHECK:STDERR: class Class {
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ~~~~~
   fn G() -> Class;
 }
 
@@ -32,7 +32,7 @@ fn Class.G() -> Class {
   var self: Class;
   // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:10: ERROR: Name `self` not found.
   // CHECK:STDERR:   return self;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:          ~~~~
   return self;
 }
 
@@ -46,7 +46,7 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Class]();
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:        ~~~~
   ws.F();
 }
 

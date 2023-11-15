@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_library_skips_name.carbon:[[@LINE+3]]:8: ERROR: Expected identifier after `import`.
 // CHECK:STDERR: import library "Shapes";
-// CHECK:STDERR:        ^
+// CHECK:STDERR:        ~~~~~~~
 import library "Shapes";
 
 // CHECK:STDOUT: - filename: fail_library_skips_name.carbon

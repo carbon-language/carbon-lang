@@ -17,18 +17,18 @@ package Api library "lib" api;
 import Api;
 // CHECK:STDERR: import_api.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import Api;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 // CHECK:STDERR: import_api.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import Api;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import Api;
 import Api library "lib";
 // CHECK:STDERR: import_api.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import Api library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 // CHECK:STDERR: import_api.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import Api library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import Api library "lib";
 
 // CHECK:STDOUT: file "api.carbon" {
