@@ -69,19 +69,17 @@ static auto StructFieldValueToName(Context& context,
   return *children.begin();
 }
 
-static auto HasDuplicateNamesError(Context& context,
+static auto DiagnoseDuplicateNames(Context& context,
                                    SemIR::InstBlockId type_block_id) -> bool {
   auto& sem_ir = context.sem_ir();
   auto fields = sem_ir.inst_blocks().Get(type_block_id);
-  llvm::DenseMap<SemIR::NameId, Parse::Node> names;
+  llvm::SmallDenseMap<SemIR::NameId, Parse::Node> names;
   auto& insts = sem_ir.insts();
   for (SemIR::InstId field_inst_id : fields) {
     auto field_inst = insts.GetAs<SemIR::StructTypeField>(field_inst_id);
     auto [it, added] =
         names.insert({field_inst.name_id, field_inst.parse_node});
     if (!added) {
-      // FIXME: Should this be renamed `MemberNameDuplicate`, and possibly
-      // made more widely available?
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "Member of {0} with a duplicated name `{1}`.",
                         llvm::StringRef, llvm::StringRef);
@@ -119,7 +117,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
-  if (HasDuplicateNamesError(context, type_block_id)) {
+  if (DiagnoseDuplicateNames(context, type_block_id)) {
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   }
@@ -159,7 +157,7 @@ auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
-  if (HasDuplicateNamesError(context, refs_id)) {
+  if (DiagnoseDuplicateNames(context, refs_id)) {
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   }
