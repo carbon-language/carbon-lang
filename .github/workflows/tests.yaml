@@ -215,7 +215,7 @@ jobs:
       # Build and run all targets on branch pushes to ensure we always have a
       # clean tree. We don't expect this to be an interactive path and so don't
       # optimize the latency of this step.
-      - name: Compute impacted pull request targets
+      - name: Compute impacted pull request targets (for push)
         if:
           steps.filter.outputs.ignore == 'false' && github.event_name == 'push'
         env:
