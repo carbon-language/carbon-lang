@@ -78,9 +78,8 @@ auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
   return synthetic_block_;
 }
 
-auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
-                                           SemIR::InstId dest_id,
-                                           SemIR::InstId source_id) -> void {
+auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
+                                 SemIR::InstId source_id) -> void {
   switch (SemIR::GetInitializingRepresentation(sem_ir(), type_id).kind) {
     case SemIR::InitializingRepresentation::None:
     case SemIR::InitializingRepresentation::InPlace:

@@ -794,7 +794,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
 
   // We can only perform initialization for complete types.
   if (!context.TryToCompleteType(target.type_id, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInInitialization, Error,
+        CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
                           "Initialization of incomplete type `{0}`.",
                           std::string);
         CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
@@ -804,7 +804,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
                           "Invalid use of incomplete type `{0}`.", std::string);
         return context.emitter().Build(
             parse_node,
-            target.is_initializer() ? IncompleteTypeInInitialization
+            target.is_initializer() ? IncompleteTypeInInit
             : target.kind == ConversionTarget::Value
                 ? IncompleteTypeInValueConversion
                 : IncompleteTypeInConversion,
