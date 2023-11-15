@@ -39,17 +39,45 @@ auto HandleStructFieldUnknown(Context& context, Parse::Node parse_node)
 }
 
 auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
-  auto [value_parse_node, value_inst_id] =
-      context.node_stack().PopExprWithParseNode();
-  SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  auto value_inst_id = context.node_stack().PopExpr();
+  auto [name_node, name_id] =
+      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
   // Store the name for the type.
   context.args_type_info_stack().AddInst(SemIR::StructTypeField{
-      parse_node, name_id, context.insts().Get(value_inst_id).type_id()});
+      name_node, name_id, context.insts().Get(value_inst_id).type_id()});
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(parse_node, value_inst_id);
   return true;
+}
+
+static auto DiagnoseDuplicateNames(Context& context,
+                                   SemIR::InstBlockId type_block_id,
+                                   llvm::StringRef construct) -> bool {
+  auto& sem_ir = context.sem_ir();
+  auto fields = sem_ir.inst_blocks().Get(type_block_id);
+  llvm::SmallDenseMap<SemIR::NameId, Parse::Node> names;
+  auto& insts = sem_ir.insts();
+  for (SemIR::InstId field_inst_id : fields) {
+    auto field_inst = insts.GetAs<SemIR::StructTypeField>(field_inst_id);
+    auto [it, added] =
+        names.insert({field_inst.name_id, field_inst.parse_node});
+    if (!added) {
+      CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
+                        "Duplicated field name `{1}` in {0}.", llvm::StringRef,
+                        llvm::StringRef);
+      CARBON_DIAGNOSTIC(StructNamePrevious, Note,
+                        "Field with the same name here.");
+      context.emitter()
+          .Build(field_inst.parse_node, StructNameDuplicate, construct,
+                 sem_ir.names().GetFormatted(field_inst.name_id))
+          .Note(it->second, StructNamePrevious)
+          .Emit();
+      return true;
+    }
+  }
+  return false;
 }
 
 auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
@@ -61,6 +89,10 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
+  if (DiagnoseDuplicateNames(context, type_block_id, "struct literal")) {
+    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    return true;
+  }
 
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
@@ -97,6 +129,10 @@ auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
+  if (DiagnoseDuplicateNames(context, refs_id, "struct type literal")) {
+    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    return true;
+  }
   context.AddInstAndPush(
       parse_node,
       SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
