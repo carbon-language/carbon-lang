@@ -81,10 +81,10 @@ static auto DiagnoseDuplicateNames(Context& context,
         names.insert({field_inst.name_id, field_inst.parse_node});
     if (!added) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
-                        "Duplicated field name `{1}` in {0}.",
-                        llvm::StringRef, llvm::StringRef);
+                        "Duplicated field name `{1}` in {0}.", llvm::StringRef,
+                        llvm::StringRef);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
-                        "Member with the same name here.");
+                        "Field with the same name here.");
       llvm::StringRef container;
       Parse::Node prev_node = it->second;
       if (context.parse_tree().node_kind(field_inst.parse_node) ==
