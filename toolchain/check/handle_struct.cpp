@@ -39,38 +39,22 @@ auto HandleStructFieldUnknown(Context& context, Parse::Node parse_node)
 }
 
 auto HandleStructFieldValue(Context& context, Parse::Node parse_node) -> bool {
-  auto [value_parse_node, value_inst_id] =
-      context.node_stack().PopExprWithParseNode();
-  SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  auto value_inst_id = context.node_stack().PopExpr();
+  auto [name_node, name_id] =
+      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
   // Store the name for the type.
   context.args_type_info_stack().AddInst(SemIR::StructTypeField{
-      parse_node, name_id, context.insts().Get(value_inst_id).type_id()});
+      name_node, name_id, context.insts().Get(value_inst_id).type_id()});
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(parse_node, value_inst_id);
   return true;
 }
 
-// Goes from the StructFieldValue node pointing to the `=` in a struct literal
-// like `{.a = 1}`, to the name node `a` in its children.
-static auto StructFieldValueToName(Context& context,
-                                   Parse::Node field_value_node)
-    -> Parse::Node {
-  // TODO: Will be easier after #3393.
-  CARBON_CHECK(context.parse_tree().node_kind(field_value_node) ==
-               Parse::NodeKind::StructFieldValue);
-  auto children = context.parse_tree().children(field_value_node);
-  auto struct_field_designator_iter = children.begin();
-  ++struct_field_designator_iter;
-  CARBON_CHECK(context.parse_tree().node_kind(*struct_field_designator_iter) ==
-               Parse::NodeKind::StructFieldDesignator);
-  children = context.parse_tree().children(*struct_field_designator_iter);
-  return *children.begin();
-}
-
 static auto DiagnoseDuplicateNames(Context& context,
-                                   SemIR::InstBlockId type_block_id) -> bool {
+                                   SemIR::InstBlockId type_block_id,
+                                   llvm::StringRef construct) -> bool {
   auto& sem_ir = context.sem_ir();
   auto fields = sem_ir.inst_blocks().Get(type_block_id);
   llvm::SmallDenseMap<SemIR::NameId, Parse::Node> names;
@@ -85,22 +69,10 @@ static auto DiagnoseDuplicateNames(Context& context,
                         llvm::StringRef);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Field with the same name here.");
-      llvm::StringRef container;
-      Parse::Node prev_node = it->second;
-      if (context.parse_tree().node_kind(field_inst.parse_node) ==
-          Parse::NodeKind::StructFieldValue) {
-        container = "struct literal";
-        // This avoids using the wrong parse node in the struct literal case.
-        prev_node = StructFieldValueToName(context, prev_node);
-        field_inst.parse_node =
-            StructFieldValueToName(context, field_inst.parse_node);
-      } else {
-        container = "struct type literal";
-      }
       context.emitter()
-          .Build(field_inst.parse_node, StructNameDuplicate, container,
+          .Build(field_inst.parse_node, StructNameDuplicate, construct,
                  sem_ir.names().GetFormatted(field_inst.name_id))
-          .Note(prev_node, StructNamePrevious)
+          .Note(it->second, StructNamePrevious)
           .Emit();
       return true;
     }
@@ -117,7 +89,7 @@ auto HandleStructLiteral(Context& context, Parse::Node parse_node) -> bool {
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
-  if (DiagnoseDuplicateNames(context, type_block_id)) {
+  if (DiagnoseDuplicateNames(context, type_block_id, "struct literal")) {
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   }
@@ -157,7 +129,7 @@ auto HandleStructTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
   CARBON_CHECK(refs_id != SemIR::InstBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
-  if (DiagnoseDuplicateNames(context, refs_id)) {
+  if (DiagnoseDuplicateNames(context, refs_id, "struct type literal")) {
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   }
