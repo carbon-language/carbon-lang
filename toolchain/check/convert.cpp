@@ -128,10 +128,10 @@ static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
 
 // Creates and adds an instruction to perform element access into an aggregate.
 template <typename AccessInstT, typename InstBlockT>
-static auto MakeElemAccessInst(Context& context, Parse::Node parse_node,
-                               SemIR::InstId aggregate_id,
-                               SemIR::TypeId elem_type_id, InstBlockT& block,
-                               std::size_t i) {
+static auto MakeElementAccessInst(Context& context, Parse::Node parse_node,
+                                  SemIR::InstId aggregate_id,
+                                  SemIR::TypeId elem_type_id, InstBlockT& block,
+                                  std::size_t i) {
   if constexpr (std::is_same_v<AccessInstT, SemIR::ArrayIndex>) {
     // TODO: Add a new instruction kind for indexing an array at a constant
     // index so that we don't need an integer literal instruction here, and
@@ -173,8 +173,8 @@ static auto ConvertAggregateElement(
   auto src_elem_id =
       !src_literal_elems.empty()
           ? src_literal_elems[i]
-          : MakeElemAccessInst<SourceAccessInstT>(context, parse_node, src_id,
-                                                  src_elem_type, context, i);
+          : MakeElementAccessInst<SourceAccessInstT>(
+                context, parse_node, src_id, src_elem_type, context, i);
 
   // If we're performing a conversion rather than an initialization, we won't
   // have or need a target.
@@ -186,7 +186,7 @@ static auto ConvertAggregateElement(
   // Compute the location of the target element and initialize it.
   PendingBlock::DiscardUnusedInstsScope scope(target_block);
   target.init_block = target_block;
-  target.init_id = MakeElemAccessInst<TargetAccessInstT>(
+  target.init_id = MakeElementAccessInst<TargetAccessInstT>(
       context, parse_node, target_id, target_elem_type, *target_block, i);
   return Convert(context, parse_node, src_elem_id, target);
 }
