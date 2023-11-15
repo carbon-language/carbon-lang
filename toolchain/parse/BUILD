@@ -44,7 +44,10 @@ cc_library(
     glob([
         "handle_*.cpp",
     ]),
-    hdrs = ["tree.h"],
+    hdrs = [
+        "extract.h",
+        "tree.h",
+    ],
     deps = [
         ":node_kind",
         ":precedence",
@@ -52,6 +55,7 @@ cc_library(
         "//common:check",
         "//common:error",
         "//common:ostream",
+        "//common:struct_reflection",
         "//common:vlog",
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/diagnostics:diagnostic_emitter",

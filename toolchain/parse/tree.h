@@ -105,6 +105,8 @@ class Tree : public Printable<Tree> {
   //
   // Note that `SiblingIterator`s iterate in reverse order through the children
   // of a node.
+  //
+  // Specializations of this class are defined in extract.h.
   template <typename T>
   struct Extractable;
 
