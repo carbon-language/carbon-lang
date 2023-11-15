@@ -258,7 +258,14 @@ jobs:
           # build, so simply inject an explicit no-op test target.
           echo "//scripts:no_op_test" >> $TARGETS_FILE
 
-          for i in {1..10}; do
+          for i in {1..5}; do
+            if (( $i == 4 )); then
+              # Decrease the jobs sharply if we see repeated failures to try to
+              # work around transient network errors even if it makes things
+              # slower.
+              echo "build --jobs=4" >>user.bazelrc
+            fi
+
             bazel_exit=0
             bazelisk test -c ${{ matrix.build_mode }} \
               --target_pattern_file=$TARGETS_FILE || bazel_exit=$?
@@ -275,8 +282,10 @@ jobs:
             #         on execution timeout.
             # `4`  -- No tests found, which should be impossible here.
             # `8`  -- Explicitly interrupted build.
-            # `36` -- A suspected permanent error in the local execution
-            #         environment.
+            #
+            # Note that `36` is documented as "likely permanent", but we retry
+            # it as most of our transient failures actually produce that error
+            # code.
             if (( $bazel_exit == 1 || $bazel_exit == 2 || $bazel_exit == 3 || \
                   $bazel_exit == 4 || $bazel_exit == 8 || $bazel_exit == 8 ))
             then
