@@ -17,12 +17,12 @@ fn Bar() {
   Foo.Baz();
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc17: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "function.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Baz = %Baz.loc13}
 // CHECK:STDOUT:   %Baz.loc10: <function> = fn_decl @Baz.1
 // CHECK:STDOUT:   %Baz.loc13: <function> = fn_decl @Baz.2
@@ -46,4 +46,3 @@ fn Bar() {
 // CHECK:STDOUT:   %.loc17: init () = call %Baz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

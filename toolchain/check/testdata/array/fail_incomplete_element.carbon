@@ -19,12 +19,12 @@ var a: [Incomplete; 1];
 // CHECK:STDERR:                           ^
 var p: Incomplete* = &a[0];
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_incomplete_element.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc20: type = ptr_type <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_incomplete_element.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_reference Incomplete, %Incomplete
@@ -43,4 +43,3 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
-// CHECK:STDOUT: ...

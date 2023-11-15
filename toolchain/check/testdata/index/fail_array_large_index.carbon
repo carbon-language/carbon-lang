@@ -10,13 +10,13 @@ var a: [i32; 1] = (12,);
 // CHECK:STDERR:                                   ^
 var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_array_large_index.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 1]
 // CHECK:STDOUT:   %.loc7_23: type = tuple_type (i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_array_large_index.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
 // CHECK:STDOUT:   %a.var: ref [i32; 1] = var a
@@ -37,4 +37,3 @@ var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc11_35.2: i32 = bind_value %.loc11_35.1
 // CHECK:STDOUT:   assign %b.var, %.loc11_35.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

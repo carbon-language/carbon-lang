@@ -14,12 +14,12 @@ fn Foo.Bar.Baz() {
   Foo.Bar.Wiz();
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "nested.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Bar = %.loc8}
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace {.Wiz = %Wiz, .Baz = %Baz}
 // CHECK:STDOUT:   %Wiz: <function> = fn_decl @Wiz
@@ -39,4 +39,3 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:   %.loc14: init () = call %Wiz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

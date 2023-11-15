@@ -30,14 +30,14 @@ fn F(c: Class) {
   Class.WithSelf(c);
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_method.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_1.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_method.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -76,4 +76,3 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %.loc30: init () = call %WithSelf.ref.loc30(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

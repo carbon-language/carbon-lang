@@ -11,8 +11,8 @@ fn Main() {
   var x: i32 = x;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "fail_init_with_self.carbon" {
+// CHECK:STDOUT: --- fail_init_with_self.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -24,4 +24,3 @@ fn Main() {
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

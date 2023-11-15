@@ -11,12 +11,12 @@ fn While() {
   while ("Hello") {}
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_bad_condition.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_bad_condition.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %While: <function> = fn_decl @While
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -34,4 +34,3 @@ fn While() {
 // CHECK:STDOUT: !while.done:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

@@ -12,11 +12,12 @@ class A {}
 base class B {}
 abstract class C {}
 
+// CHECK:STDOUT: --- redeclaration_introducer.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "redeclaration_introducer.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
 // CHECK:STDOUT:   class_decl @B, ()

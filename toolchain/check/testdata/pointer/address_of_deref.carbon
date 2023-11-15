@@ -9,12 +9,12 @@ fn F() -> i32 {
   return *&*&n;
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- address_of_deref.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = ptr_type i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "address_of_deref.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -32,4 +32,3 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc9_10.2: i32 = bind_value %.loc9_10.1
 // CHECK:STDOUT:   return %.loc9_10.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

@@ -16,12 +16,12 @@ fn F() {
   G(1.0);
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_param_type.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc16: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_param_type.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
@@ -38,4 +38,3 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_4: init () = call %G.ref(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

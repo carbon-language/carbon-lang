@@ -16,8 +16,8 @@ fn Main() {
   var x: i32 = 0;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "fail_duplicate_decl.carbon" {
+// CHECK:STDOUT: --- fail_duplicate_decl.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -33,4 +33,3 @@ fn Main() {
 // CHECK:STDOUT:   assign %x.var.loc16, %.loc16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

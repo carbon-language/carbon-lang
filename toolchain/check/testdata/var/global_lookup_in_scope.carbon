@@ -10,8 +10,8 @@ fn Main() {
   var y: i32 = x;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "global_lookup_in_scope.carbon" {
+// CHECK:STDOUT: --- global_lookup_in_scope.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0
@@ -28,4 +28,3 @@ fn Main() {
 // CHECK:STDOUT:   assign %y.var, %.loc10
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

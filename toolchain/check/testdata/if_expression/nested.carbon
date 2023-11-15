@@ -8,8 +8,8 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
   return if a then if b then 1 else 2 else if c then 3 else 4;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "nested.carbon" {
+// CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -54,4 +54,3 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %.loc8_10: i32 = block_arg !if.expr.result.loc8_10
 // CHECK:STDOUT:   return %.loc8_10
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

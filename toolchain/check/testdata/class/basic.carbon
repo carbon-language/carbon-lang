@@ -22,12 +22,12 @@ fn Run() -> i32 {
   return Class.F(4);
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = struct_type {.k: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "basic.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
@@ -69,4 +69,3 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc22_20.2: i32 = converted %.loc22_17, %.loc22_20.1
 // CHECK:STDOUT:   return %.loc22_20.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

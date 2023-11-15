@@ -33,46 +33,39 @@ package WithImpl library "lib" api;
 
 package WithImpl library "lib" impl;
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "api_only.carbon" {
+// CHECK:STDOUT: --- api_only.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- api_only_lib.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "api_only_lib.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc2: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "with_impl_api.carbon" {
+// CHECK:STDOUT: --- with_impl_api.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "with_impl_impl.carbon" {
+// CHECK:STDOUT: --- with_impl_impl.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "with_impl_impl_extra.carbon" {
+// CHECK:STDOUT: --- with_impl_impl_extra.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- with_impl_lib_api.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "with_impl_lib_api.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc2: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- with_impl_lib_impl.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "with_impl_lib_impl.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc2: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

@@ -18,6 +18,7 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
   return (self.n, r#self);
 }
 
+// CHECK:STDOUT: --- raw_self.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9_46.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc9_46.2: type = tuple_type (i32, i32)
@@ -26,7 +27,7 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "raw_self.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F

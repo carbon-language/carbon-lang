@@ -11,8 +11,8 @@ fn F() {
   let a: i32 = a;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "fail_use_in_init.carbon" {
+// CHECK:STDOUT: --- fail_use_in_init.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -22,4 +22,3 @@ fn F() {
 // CHECK:STDOUT:   %a: i32 = bind_name a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

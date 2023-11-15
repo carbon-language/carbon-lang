@@ -9,8 +9,8 @@ fn Main() {
   var n: i32 = 1 + 1;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "code_after_return.carbon" {
+// CHECK:STDOUT: --- code_after_return.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -18,4 +18,3 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

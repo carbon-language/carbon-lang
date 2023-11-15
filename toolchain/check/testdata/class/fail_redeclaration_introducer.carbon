@@ -74,11 +74,12 @@ abstract class G;
 // CHECK:STDERR: ^
 base class G;
 
+// CHECK:STDOUT: --- fail_redeclaration_introducer.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_redeclaration_introducer.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
 // CHECK:STDOUT:   class_decl @A, ()

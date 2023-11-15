@@ -11,11 +11,12 @@ class Class {
   }
 }
 
+// CHECK:STDOUT: --- raw_self_type.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc12: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "raw_self_type.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT: }

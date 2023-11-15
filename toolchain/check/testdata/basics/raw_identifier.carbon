@@ -20,8 +20,8 @@ fn C(r#if: i32) -> i32 {
   return r#if;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "raw_identifier.carbon" {
+// CHECK:STDOUT: --- raw_identifier.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
 // CHECK:STDOUT:   %C: <function> = fn_decl @C
@@ -44,4 +44,3 @@ fn C(r#if: i32) -> i32 {
 // CHECK:STDOUT:   %if.ref: i32 = name_reference r#if, %if
 // CHECK:STDOUT:   return %if.ref
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

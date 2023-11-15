@@ -14,8 +14,8 @@ fn F(a: i32) {
   let a: i32 = 1;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "fail_duplicate_decl.carbon" {
+// CHECK:STDOUT: --- fail_duplicate_decl.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -25,4 +25,3 @@ fn F(a: i32) {
 // CHECK:STDOUT:   %a.loc14: i32 = bind_name a, %.loc14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

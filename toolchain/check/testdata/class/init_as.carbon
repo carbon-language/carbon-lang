@@ -13,13 +13,13 @@ fn F() -> i32 {
   return ({.a = 1, .b = 2} as Class).a;
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- init_as.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "init_as.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -56,4 +56,3 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_37.2: i32 = bind_value %.loc13_37.1
 // CHECK:STDOUT:   return %.loc13_37.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

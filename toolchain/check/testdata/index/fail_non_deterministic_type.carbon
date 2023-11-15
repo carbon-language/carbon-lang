@@ -11,14 +11,14 @@ var b: i32 = 0;
 // CHECK:STDERR:                 ^
 var c: i32 = a[b];
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_non_deterministic_type.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc7_17.2: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc7_17.3: type = ptr_type (i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_non_deterministic_type.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_17.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.loc7_17.2
 // CHECK:STDOUT:   %a.var: ref (i32, i32) = var a
@@ -44,4 +44,3 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   %.loc12: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

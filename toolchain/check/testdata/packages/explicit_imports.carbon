@@ -17,25 +17,22 @@ package Api library "lib" api;
 import Api;
 import Api library "lib";
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "api.carbon" {
+// CHECK:STDOUT: --- api.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- api_lib.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "api_lib.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc2: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- import_api.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "import_api.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc3: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

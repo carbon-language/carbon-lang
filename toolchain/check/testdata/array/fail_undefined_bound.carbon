@@ -9,7 +9,6 @@
 // CHECK:STDERR:              ^
 var a: [i32; ];
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "fail_undefined_bound.carbon" {
+// CHECK:STDOUT: --- fail_undefined_bound.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

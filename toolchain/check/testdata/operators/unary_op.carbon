@@ -8,8 +8,8 @@ fn Not(b: bool) -> bool {
   return not b;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "unary_op.carbon" {
+// CHECK:STDOUT: --- unary_op.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Not: <function> = fn_decl @Not
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -19,4 +19,3 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:   %.loc8: bool = not %b.ref
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

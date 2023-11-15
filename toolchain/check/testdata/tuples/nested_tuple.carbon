@@ -6,7 +6,7 @@
 
 var x: ((i32, i32), i32) = ((12, 76), 6);
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- nested_tuple.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_18: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc7_24.1: type = tuple_type ((type, type), type)
@@ -17,7 +17,7 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   %.loc7_24.6: type = ptr_type ((i32, i32)*, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "nested_tuple.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_18: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_24.1: ((type, type), type) = tuple_literal (%.loc7_18, i32)
 // CHECK:STDOUT:   %.loc7_24.2: type = converted %.loc7_18, constants.%.loc7_24.2
@@ -42,4 +42,3 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   %.loc7_40.6: init ((i32, i32), i32) = converted %.loc7_40.1, %.loc7_40.5
 // CHECK:STDOUT:   assign %x.var, %.loc7_40.6
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

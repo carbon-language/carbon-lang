@@ -6,8 +6,8 @@
 
 fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "duplicate_name_same_line.carbon" {
+// CHECK:STDOUT: --- duplicate_name_same_line.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -37,4 +37,3 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT: !if.else.loc7_48:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

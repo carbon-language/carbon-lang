@@ -55,12 +55,12 @@ fn Main() {
   Run2(0);
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_param_count.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc18: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_param_count.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Run0: <function> = fn_decl @Run0
 // CHECK:STDOUT:   %Run1: <function> = fn_decl @Run1
 // CHECK:STDOUT:   %Run2: <function> = fn_decl @Run2
@@ -104,4 +104,3 @@ fn Main() {
 // CHECK:STDOUT:   %.loc55_7: init () = call %Run2.ref.loc55(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

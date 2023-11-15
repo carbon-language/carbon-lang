@@ -69,61 +69,52 @@ import Implicit library "lib";
 // CHECK:STDERR: ^
 import Unknown;
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "main.carbon" {
+// CHECK:STDOUT: --- main.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- main_lib.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "main_lib.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc5: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "this.carbon" {
+// CHECK:STDOUT: --- this.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- this_lib.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "this_lib.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc2: String = string_literal "lib"
 // CHECK:STDOUT:   %.loc7: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "implicit_api.carbon" {
+// CHECK:STDOUT: --- implicit_api.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "implicit_impl.carbon" {
+// CHECK:STDOUT: --- implicit_impl.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- implicit_lib_api.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "implicit_lib_api.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc2: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- implicit_lib_impl.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "implicit_lib_impl.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc2: String = string_literal "lib"
 // CHECK:STDOUT:   %.loc7: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "unknown.carbon" {
+// CHECK:STDOUT: --- unknown.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

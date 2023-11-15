@@ -24,13 +24,13 @@ fn ValueBinding(b: [i32; 3]) {
   F()[0];
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- expression_category.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %.loc10: type = tuple_type (i32, i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "expression_category.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %ValueBinding: <function> = fn_decl @ValueBinding
@@ -115,4 +115,3 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc24_8.2: i32 = bind_value %.loc24_8.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

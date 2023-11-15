@@ -25,12 +25,12 @@ class Class {
   }
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_reorder.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc26: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_reorder.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT: }
@@ -56,4 +56,3 @@ class Class {
 // CHECK:STDOUT:   %.loc24: i32 = int_literal 1
 // CHECK:STDOUT:   return %.loc24
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

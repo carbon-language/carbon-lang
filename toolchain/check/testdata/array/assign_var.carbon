@@ -7,7 +7,7 @@
 var a: (i32, i32, i32) = (1, 2, 3);
 var b: [i32; 3] = a;
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- assign_var.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_22.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc7_22.2: type = tuple_type (i32, i32, i32)
@@ -15,7 +15,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc8: type = ptr_type [i32; 3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "assign_var.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_22.1: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc7_22.2: type = converted %.loc7_22.1, constants.%.loc7_22.2
 // CHECK:STDOUT:   %a.var: ref (i32, i32, i32) = var a
@@ -57,4 +57,3 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc8_19.17: init [i32; 3] = converted %a.ref, %.loc8_19.16
 // CHECK:STDOUT:   assign %b.var, %.loc8_19.17
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

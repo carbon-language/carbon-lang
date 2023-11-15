@@ -10,7 +10,7 @@ fn G() {
   var v: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = {.a = F(), .b = F()};
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- nested_struct_in_place.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
@@ -19,7 +19,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_51.2: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "nested_struct_in_place.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
@@ -47,4 +47,3 @@ fn G() {
 // CHECK:STDOUT:   assign %v.var, %.loc10_74.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

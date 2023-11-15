@@ -11,8 +11,8 @@ fn F() -> i32 {
   return *p;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "basic.carbon" {
+// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -34,4 +34,3 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc11_10.2: i32 = bind_value %.loc11_10.1
 // CHECK:STDOUT:   return %.loc11_10.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

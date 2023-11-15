@@ -6,7 +6,6 @@
 
 ;
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "empty_decl.carbon" {
+// CHECK:STDOUT: --- empty_decl.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

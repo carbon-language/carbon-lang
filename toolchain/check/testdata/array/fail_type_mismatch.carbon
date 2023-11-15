@@ -26,7 +26,7 @@ var t2: (i32, i32);
 // CHECK:STDERR:                   ^
 var d: [i32; 3] = t2;
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_type_mismatch.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_15: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %.1: type = ptr_type String
@@ -39,7 +39,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc21_24.2: type = ptr_type (i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_type_mismatch.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32
 // CHECK:STDOUT:   %a.var: ref [i32; 3] = var a
@@ -87,4 +87,3 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %t2.ref: ref (i32, i32) = name_reference t2, %t2
 // CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

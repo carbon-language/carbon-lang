@@ -14,12 +14,12 @@ fn If(b: bool) {
   G();
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- no_else.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc12: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "no_else.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %If: <function> = fn_decl @If
@@ -50,4 +50,3 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %.loc14: init () = call %G.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

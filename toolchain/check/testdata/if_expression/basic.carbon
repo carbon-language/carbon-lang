@@ -8,8 +8,8 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
   return if b then n + m else m + n;
 }
 
-// CHECK:STDOUT: ---
-// CHECK:STDOUT: file "basic.carbon" {
+// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -34,4 +34,3 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %.loc8_10: i32 = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc8_10
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

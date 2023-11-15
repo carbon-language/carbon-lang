@@ -13,12 +13,12 @@ fn Run() {
   F()[0];
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- fail_empty_tuple_access.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc13: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_empty_tuple_access.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -38,4 +38,3 @@ fn Run() {
 // CHECK:STDOUT:   %.loc13_8: ref <error> = tuple_index %.loc13_4.3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

@@ -11,12 +11,12 @@ fn Main() {
   Foo(1 + 2 + 3, 4 + 5, 6);
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- more_param_ir.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "more_param_ir.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -41,4 +41,3 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_6: init () = call %Foo.ref(%.loc11_13, %.loc11_20, %.loc11_25)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...

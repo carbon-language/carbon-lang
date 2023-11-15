@@ -16,14 +16,14 @@ fn H() -> i32 {
   return G()[0];
 }
 
-// CHECK:STDOUT: ---
+// CHECK:STDOUT: --- in_place_tuple_init.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_20.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc7_20.2: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc7_20.3: type = ptr_type (i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "in_place_tuple_init.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
@@ -63,4 +63,3 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %.loc16_15.2: i32 = bind_value %.loc16_15.1
 // CHECK:STDOUT:   return %.loc16_15.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ...
