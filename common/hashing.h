@@ -194,16 +194,17 @@ inline auto HashValue(const T& value) -> HashCode;
 // any comparisons with different types that might be used with a hash table of
 // `YourType` keys) produce the same `HashCode` values.
 //
-// For any two input values that compare unequal, the extension point should
-// maximize the probability of each bit of their resulting `HashCode`s
-// differing. More formally, `HashCode`s should exhibit an [avalanche
-// effect][4]. However, while this is desirable, it should be **secondary** to
-// low latency. The intended use case of these functions is not cryptography but
-// in-memory hashtables where the latency and overhead of computing the
-// `HashCode` is *significantly* more important than achieving a particularly
-// high quality. The goal is to have "just enough" avalanche effect, but there
-// is not a fixed criteria for how much is enough. That should be determined
-// through practical experimentation with a hashtable and distribution of keys.
+// For any two input values that compare unequal, even slightly, the extension
+// point should maximize the probability of each bit of their resulting
+// `HashCode`s differing. More formally, `HashCode`s should exhibit an
+// [avalanche effect][4]. However, while this is desirable, it should be
+// **secondary** to low latency. The intended use case of these functions is not
+// cryptography but in-memory hashtables where the latency and overhead of
+// computing the `HashCode` is *significantly* more important than achieving a
+// particularly high quality. The goal is to have "just enough" avalanche
+// effect, but there is not a fixed criteria for how much is enough. That should
+// be determined through practical experimentation with a hashtable and
+// distribution of keys.
 //
 // [4]: https://en.wikipedia.org/wiki/Avalanche_effect
 //
