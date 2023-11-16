@@ -8,6 +8,7 @@
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/context.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
 
@@ -100,42 +101,48 @@ static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
 // The package and library names, used as map keys.
 using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 
-// Returns a key form of the package object.
-static auto GetImportKey(UnitInfo& unit_info,
-                         Parse::Tree::PackagingNames package) -> ImportKey {
+// Returns a key form of the package object. file_package_id is only used for
+// imports, not the main package directive; as a consequence, it will be invalid
+// for the main package directive.
+static auto GetImportKey(UnitInfo& unit_info, IdentifierId file_package_id,
+                         Parse::Tree::PackagingNames names) -> ImportKey {
   auto* stores = unit_info.unit->value_stores;
-  return {package.package_id.is_valid()
-              ? stores->identifiers().Get(package.package_id)
-              : "",
-          package.library_id.is_valid()
-              ? stores->string_literals().Get(package.library_id)
-              : ""};
+  llvm::StringRef package_name =
+      names.package_id.is_valid()  ? stores->identifiers().Get(names.package_id)
+      : file_package_id.is_valid() ? stores->identifiers().Get(file_package_id)
+                                   : "";
+  llvm::StringRef library_name =
+      names.library_id.is_valid()
+          ? stores->string_literals().Get(names.library_id)
+          : "";
+  return {package_name, library_name};
 }
 
 static constexpr llvm::StringLiteral ExplicitMainName = "Main";
 
 // Marks an import as required on both the source and target file.
-// TODO: When importing without a package name is supported, check that it's
-// used correctly.
+//
+// The ID comparisons between the import and unit are okay because they both
+// come from the same file.
 static auto TrackImport(
     llvm::DenseMap<ImportKey, UnitInfo*>& api_map,
     llvm::DenseMap<ImportKey, Parse::Node>* explicit_import_map,
     UnitInfo& unit_info, Parse::Tree::PackagingNames import) -> void {
-  auto import_key = GetImportKey(unit_info, import);
+  const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
 
-  // Specialize the error for imports from `Main`.
-  if (import_key.first == ExplicitMainName) {
-    // Implicit imports will have already warned.
-    if (explicit_import_map) {
-      CARBON_DIAGNOSTIC(ImportMainPackage, Error,
-                        "Cannot import `Main` from other packages.");
-      unit_info.emitter.Emit(import.node, ImportMainPackage);
-    }
-    return;
-  }
+  IdentifierId file_package_id =
+      packaging ? packaging->names.package_id : IdentifierId::Invalid;
+  auto import_key = GetImportKey(unit_info, file_package_id, import);
 
+  // True if the import has `Main` as the package name, even if it comes from
+  // the file's packaging (diagnostics may differentiate).
+  bool is_explicit_main = import_key.first == ExplicitMainName;
+
+  // Explicit imports need more validation than implicit ones. We try to do
+  // these in an order of imports that should be removed, followed by imports
+  // that might be valid with syntax fixes.
   if (explicit_import_map) {
-    // Check for redundant imports.
+    // Diagnose redundant imports.
     if (auto [insert_it, success] =
             explicit_import_map->insert({import_key, import.node});
         !success) {
@@ -148,21 +155,74 @@ static auto TrackImport(
       return;
     }
 
-    // Check for explicit imports of the same library. The ID comparison is okay
-    // in this case because both come from the same file.
-    auto packaging = unit_info.unit->parse_tree->packaging_directive();
-    if (packaging && import.package_id == packaging->names.package_id &&
-        import.library_id == packaging->names.library_id) {
+    // True if the file's package is implicitly `Main` (by omitting an explicit
+    // package name).
+    bool is_file_implicit_main =
+        !packaging || !packaging->names.package_id.is_valid();
+    // True if the import is using implicit "current package" syntax (by
+    // omitting an explicit package name).
+    bool is_import_implicit_current_package = !import.package_id.is_valid();
+    // True if the import is using `default` library syntax.
+    bool is_import_default_library = !import.library_id.is_valid();
+    // True if the import and file point at the same package, even by
+    // incorrectly specifying the current package name to `import`.
+    bool is_same_package = is_import_implicit_current_package ||
+                           import.package_id == file_package_id;
+    // True if the import points at the same library as the file's library.
+    bool is_same_library =
+        is_same_package &&
+        (packaging ? import.library_id == packaging->names.library_id
+                   : is_import_default_library);
+
+    // Diagnose explicit imports of the same library, whether from `api` or
+    // `impl`.
+    if (is_same_library) {
       CARBON_DIAGNOSTIC(ExplicitImportApi, Error,
                         "Explicit import of `api` from `impl` file is "
                         "redundant with implicit import.");
       CARBON_DIAGNOSTIC(ImportSelf, Error, "File cannot import itself.");
-      unit_info.emitter.Emit(
-          import.node, packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl
-                           ? ExplicitImportApi
-                           : ImportSelf);
+      bool is_impl =
+          !packaging || packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl;
+      unit_info.emitter.Emit(import.node,
+                             is_impl ? ExplicitImportApi : ImportSelf);
       return;
     }
+
+    // Diagnose explicit imports of `Main//default`. There is no `api` for it.
+    // This lets other diagnostics handle explicit `Main` package naming.
+    if (is_file_implicit_main && is_import_implicit_current_package &&
+        is_import_default_library) {
+      CARBON_DIAGNOSTIC(ImportMainDefaultLibrary, Error,
+                        "Cannot import `Main//default`.");
+      unit_info.emitter.Emit(import.node, ImportMainDefaultLibrary);
+
+      return;
+    }
+
+    if (!is_import_implicit_current_package) {
+      // Diagnose explicit imports of the same package that use the package
+      // name.
+      if (is_same_package || (is_file_implicit_main && is_explicit_main)) {
+        CARBON_DIAGNOSTIC(
+            ImportCurrentPackageByName, Error,
+            "Imports from the current package must omit the package name.");
+        unit_info.emitter.Emit(import.node, ImportCurrentPackageByName);
+        return;
+      }
+
+      // Diagnose explicit imports from `Main`.
+      if (is_explicit_main) {
+        CARBON_DIAGNOSTIC(ImportMainPackage, Error,
+                          "Cannot import `Main` from other packages.");
+        unit_info.emitter.Emit(import.node, ImportMainPackage);
+        return;
+      }
+    }
+  } else if (is_explicit_main) {
+    // An implicit import with an explicit `Main` occurs when a `package` rule
+    // has bad syntax, which will have been diagnosed when building the API map.
+    // As a consequence, we return silently.
+    return;
   }
 
   if (auto api = api_map.find(import_key); api != api_map.end()) {
@@ -194,15 +254,18 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
   // Create a map of APIs which might be imported.
   llvm::DenseMap<ImportKey, UnitInfo*> api_map;
   for (auto& unit_info : unit_infos) {
+    // TODO: It may be good to validate filenames here, but that would have use
+    // put .impl.carbon on almost all tests (which are in `Main//default`). We
+    // should probably get leads direction on filenames before enforcing.
     const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
     if (packaging) {
-      auto import_key = GetImportKey(unit_info, packaging->names);
-      // Catch explicit `Main` errors before they become marked as possible
+      auto import_key =
+          GetImportKey(unit_info, IdentifierId::Invalid, packaging->names);
+      // Diagnose explicit `Main` uses before they become marked as possible
       // APIs.
       if (import_key.first == ExplicitMainName) {
-        CARBON_DIAGNOSTIC(
-            ExplicitMainPackage, Error,
-            "Default `Main` library must omit `package` directive.");
+        CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
+                          "`Main//default` must omit `package` directive.");
         CARBON_DIAGNOSTIC(
             ExplicitMainLibrary, Error,
             "Use `library` directive in `Main` package libraries.");
@@ -230,10 +293,12 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
   llvm::SmallVector<UnitInfo*> ready_to_check;
   ready_to_check.reserve(units.size());
   for (auto& unit_info : unit_infos) {
-    const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
-    if (packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
-      // An `impl` has an implicit import of its `api`.
-      TrackImport(api_map, nullptr, unit_info, packaging->names);
+    if (const auto& packaging =
+            unit_info.unit->parse_tree->packaging_directive()) {
+      if (packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
+        // An `impl` has an implicit import of its `api`.
+        TrackImport(api_map, nullptr, unit_info, packaging->names);
+      }
     }
 
     llvm::DenseMap<ImportKey, Parse::Node> explicit_import_map;

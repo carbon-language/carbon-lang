@@ -591,6 +591,12 @@ CARBON_PARSE_STATE(FunctionDefinitionFinish)
 //   (state done)
 CARBON_PARSE_STATE(Import)
 
+// Handles `library` in directive form.
+//
+// Always:
+//   (state done)
+CARBON_PARSE_STATE(Library)
+
 // Handles `namespace`.
 //
 // namespace ...

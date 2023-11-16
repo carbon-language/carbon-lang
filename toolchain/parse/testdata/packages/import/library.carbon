@@ -10,9 +10,9 @@ import Geometry library "Shapes";
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
-// CHECK:STDOUT:         {kind: 'Literal', text: '"Shapes"'},
-// CHECK:STDOUT:       {kind: 'Library', text: 'library', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
+// CHECK:STDOUT:         {kind: 'LibraryName', text: '"Shapes"'},
+// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

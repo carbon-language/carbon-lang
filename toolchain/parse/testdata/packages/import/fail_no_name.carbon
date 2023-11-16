@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_no_name.carbon:[[@LINE+3]]:7: ERROR: Expected identifier after `import`.
+// CHECK:STDERR: fail_no_name.carbon:[[@LINE+3]]:7: ERROR: Expected identifier or `library` after `import`.
 // CHECK:STDERR: import;
 // CHECK:STDERR:       ^
 import;
