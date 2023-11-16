@@ -1032,6 +1032,7 @@ should be part of a larger testing plan.
     -   [Scoped namespaces](/proposals/p0107.md#scoped-namespaces)
     -   [Allow prefixing a tuple binding pattern with a namespace](/proposals/p3407.md#allow-prefixing-a-tuple-binding-pattern-with-a-namespace)
     -   [Allow mixing namespaces within a binding pattern](/proposals/p3407.md#allow-mixing-namespaces-within-a-binding-pattern)
+    -   [Disallow declaring namespaces other than the file scope](/proposals/p3407.md#disallow-declaring-namespaces-other-than-the-file-scope)
 
 ## References
 
