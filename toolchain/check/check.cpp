@@ -155,17 +155,19 @@ static auto TrackImport(
       return;
     }
 
-    // True if the file's package is implicitly `Main` (by omission).
+    // True if the file's package is implicitly `Main` (by omitting an explicit
+    // package name).
     bool is_file_implicit_main =
         !packaging || !packaging->names.package_id.is_valid();
-    // True if the import is using "current package" syntax (by omission).
-    bool is_import_current_package = !import.package_id.is_valid();
+    // True if the import is using implicit "current package" syntax (by
+    // omitting an explicit package name).
+    bool is_import_implicit_current_package = !import.package_id.is_valid();
     // True if the import is using `default` library syntax.
     bool is_import_default_library = !import.library_id.is_valid();
     // True if the import and file point at the same package, even by
     // incorrectly specifying the current package name to `import`.
-    bool is_same_package =
-        is_import_current_package || import.package_id == file_package_id;
+    bool is_same_package = is_import_implicit_current_package ||
+                           import.package_id == file_package_id;
     // True if the import points at the same library as the file's library.
     bool is_same_library =
         is_same_package &&
@@ -188,7 +190,7 @@ static auto TrackImport(
 
     // Diagnose explicit imports of `Main//default`. There is no `api` for it.
     // This lets other diagnostics handle explicit `Main` package naming.
-    if (is_file_implicit_main && is_import_current_package &&
+    if (is_file_implicit_main && is_import_implicit_current_package &&
         is_import_default_library) {
       CARBON_DIAGNOSTIC(ImportMainDefaultLibrary, Error,
                         "Cannot import `Main//default`.");
@@ -197,7 +199,7 @@ static auto TrackImport(
       return;
     }
 
-    if (!is_import_current_package) {
+    if (!is_import_implicit_current_package) {
       // Diagnose explicit imports of the same package that use the package
       // name.
       if (is_same_package || (is_file_implicit_main && is_explicit_main)) {

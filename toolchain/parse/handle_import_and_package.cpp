@@ -121,19 +121,16 @@ static auto HandleDirectiveContent(Context& context,
       context.AddNode(NodeKind::LibrarySpecifier, library_token,
                       library_subtree_start,
                       /*has_error=*/false);
-    } else {
-      auto next_kind = context.PositionKind();
-      if (next_kind == Lex::TokenKind::StringLiteral ||
-          (accept_default && next_kind == Lex::TokenKind::Default)) {
-        // If we come across a string literal and we didn't parse `library
-        // "..."` yet, then most probably the user forgot to add `library`
-        // before the library name.
-        CARBON_DIAGNOSTIC(MissingLibraryKeyword, Error,
-                          "Missing `library` keyword.");
-        context.emitter().Emit(*context.position(), MissingLibraryKeyword);
-        on_parse_error();
-        return;
-      }
+    } else if (next_kind == Lex::TokenKind::StringLiteral ||
+               (accept_default && next_kind == Lex::TokenKind::Default)) {
+      // If we come across a string literal and we didn't parse `library
+      // "..."` yet, then most probably the user forgot to add `library`
+      // before the library name.
+      CARBON_DIAGNOSTIC(MissingLibraryKeyword, Error,
+                        "Missing `library` keyword.");
+      context.emitter().Emit(*context.position(), MissingLibraryKeyword);
+      on_parse_error();
+      return;
     }
   }
 
