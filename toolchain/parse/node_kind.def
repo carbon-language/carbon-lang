@@ -128,7 +128,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
 //   _external_: Name or QualifiedDecl
 // Namespace
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0, CARBON_TOKEN(Namespace))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2, CARBON_TOKEN(Semi))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2,
+                                   CARBON_TOKEN(Semi)
+                                       CARBON_IF_ERROR(CARBON_TOKEN(Namespace)))
 
 // A code block:
 //   CodeBlockStart
