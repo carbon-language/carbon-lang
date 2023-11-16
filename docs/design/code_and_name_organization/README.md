@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Imports from the current package](#imports-from-the-current-package)
     -   [Namespaces](#namespaces)
         -   [Re-declaring imported namespaces](#re-declaring-imported-namespaces)
+        -   [Declaring namespace members](#declaring-namespace-members)
         -   [Aliasing](#aliasing)
 -   [Caveats](#caveats)
     -   [Package and library name conflicts](#package-and-library-name-conflicts)
@@ -671,6 +672,66 @@ namespace Shapes;
 struct Shapes.Square { ... };
 ```
 
+#### Declaring namespace members
+
+Namespace members may only be declared in the same name scope which was used to
+declare the namespace. For example:
+
+```carbon
+namespace NS;
+
+// ✅ Allowed: declaration is in file scope, which also declared `NS`.
+class NS.ClassT {
+  // ❌ Error: A class body has its own name scope.
+  var NS.a: i32 = 0;
+}
+
+fn Function() {
+  // ❌ Error: A function body has its own name scope.
+  var NS.b: i32 = 1;
+
+  namespace FunctionNS;
+  // ✅ Allowed: Both `FunctionNS` and `FunctionNS.c` are defined in the same
+  // name scope.
+  var FunctionNS.c: i32 = 2;
+
+  if (true) {
+    // ❌ Error: This is a separate name scope from `FunctionNS`.
+    var FunctionNS.d: i32 = 3;
+  }
+}
+
+// ✅ Allowed: declaration is in file scope, which also declared `NS`.
+namespace NS.MemberNS;
+
+// ✅ Allowed: declaration is in file scope, which also declared `NS.MemberNS`.
+class NS.MemberNS.MemberClassT {}
+```
+
+When there are multiple declared names in binding patterns, particularly `var`
+and `let`, all names must be in the same namespace. For example:
+
+```carbon
+namespace NS;
+
+// ✅ Allowed: `a` and `b` use the default namespace.
+var (a: i32, b: i32) = (1, 2);
+
+// ✅ Allowed: `c` and `d` are in the same namespace.
+var (NS.c: i32, NS.d: i32) = (3, 4);
+
+// ❌ Error: `e` and `f` are not in the same namespace.
+var (e: i32, NS.f: i32) = (5, 6);
+```
+
+This restriction only applies to binding patterns, not more general uses of
+patterns.
+
+```
+// ✅ Allowed: not a binding pattern.
+(NS.namespace_var, local_var) = (0, 1);
+```
+
 #### Aliasing
 
 Carbon's [alias keyword](/docs/design/aliases.md) will support aliasing
@@ -969,6 +1030,8 @@ should be part of a larger testing plan.
 -   Namespaces
     -   [File-level namespaces](/proposals/p0107.md#file-level-namespaces)
     -   [Scoped namespaces](/proposals/p0107.md#scoped-namespaces)
+    -   [Allow prefixing a tuple binding pattern with a namespace](/proposals/p3407.md#allow-prefixing-a-tuple-binding-pattern-with-a-namespace)
+    -   [Allow mixing namespaces within a binding pattern](/proposals/p3407.md#allow-mixing-namespaces-within-a-binding-pattern)
 
 ## References
 
@@ -978,3 +1041,5 @@ should be part of a larger testing plan.
     [#2550: Simplified package declaration for the main package](https://github.com/carbon-language/carbon-lang/pull/2550)
 -   Proposal
     [#3403: Change Main//default to an api file](https://github.com/carbon-language/carbon-lang/pull/3403)
+-   Proposal
+    [#3453: Clarify name bindings in namespaces.](https://github.com/carbon-language/carbon-lang/pull/3407)
