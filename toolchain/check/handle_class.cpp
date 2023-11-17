@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/handle_modifier.h"
 #include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Check {
@@ -18,59 +19,24 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
-    -> bool {
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
 static auto BuildClassDecl(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
   auto introducer = context.node_stack().PeekParseNode();
-  // FIXME: switch to new modifier handling
-  bool abstract = false;
-  bool base = false;
-  while (
-      auto modifier_node =
-          context.node_stack()
-              .PopForSoloParseNodeIf<Parse::NodeKind::DeclModifierKeyword>()) {
-    auto modifier_token = context.parse_tree().node_token(*modifier_node);
-    switch (context.tokens().GetKind(modifier_token)) {
-      case Lex::TokenKind::Abstract: {
-        if (abstract) {
-          // FIXME
-          CARBON_CHECK(false) << "abstract abstract class";
-        }
-        abstract = true;
-        break;
-      }
-      case Lex::TokenKind::Base: {
-        if (base) {
-          // FIXME
-          CARBON_CHECK(false) << "base base class";
-        }
-        base = true;
-        break;
-      }
-      default: {
-        // FIXME: diagnostic: can't use this modifier with `class`
-        CARBON_CHECK(false) << "default/final/override/virtual class";
-        break;
-      }
-    }
-  }
-  // FIXME
-  CARBON_CHECK(!(abstract && base))
+  // TODO: also allow `private` and `protected`
+  DeclModifierKeywords allowed_modifiers = {.abstract_ = true, .base_ = true};
+  DeclModifierKeywords modifiers =
+      ValidateModifiers(context, allowed_modifiers);
+  CARBON_CHECK(!(modifiers.abstract_ && modifiers.base_))
       << "Class cannot be both `abstract` and `base`";
 
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
   auto decl_block_id = context.inst_block_stack().Pop();
 
-  auto inheritance_kind = abstract ? SemIR::Class::Abstract
-                          : base   ? SemIR::Class::Base
-                                   : SemIR::Class::Final;
+  auto inheritance_kind = modifiers.abstract_ ? SemIR::Class::Abstract
+                          : modifiers.base_   ? SemIR::Class::Base
+                                              : SemIR::Class::Final;
 
   // Add the class declaration.
   auto class_decl =

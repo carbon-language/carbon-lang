@@ -169,6 +169,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 
 // `fn`:
 //     FunctionIntroducer
+//     _repeated_ _external_: DeclModifierKeyword
 //     _external_: Name or QualifiedDecl
 //     _external_: ParamList
 //       _external_: type expression
@@ -239,6 +240,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 
 // `let`:
 //   LetIntroducer
+//   _repeated_ _external_: DeclModifierKeyword  // when a declaration
 //   _external_: PatternBinding
 //   LetInitializer
 //   _external_: expression
@@ -251,7 +253,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 
 // `var` and `returned var`:
 //   VariableIntroducer
-//   _optional_ ReturnedModifier
+//   _repeated_ _external_: DeclModifierKeyword  // when a declaration
+//   _optional_ ReturnedModifier                 // when a statement
 //   _external_: PatternBinding
 //   _optional_ VariableInitializer
 //   _optional_ _external_: expression
@@ -573,7 +576,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclModifierKeyword, 0,
 
 // `class`:
 //     ClassIntroducer
-//     _external_: declaration modifier keywords
+//     _repeated_ _external_: DeclModifierKeyword
 //     _external_: Name or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
@@ -593,6 +596,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
 
 // `interface`:
 //     InterfaceIntroducer
+//     _repeated_ _external_: DeclModifierKeyword
 //     _external_: Name or QualifiedDecl
 //   InterfaceDefinitionStart
 //   _external_: declarations
@@ -613,6 +617,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
 
 // `constraint`:
 //     NamedConstraintIntroducer
+//     _repeated_ _external_: DeclModifierKeyword
 //     _external_: Name or QualifiedDecl
 //   NamedConstraintDefinitionStart
 //   _external_: declarations

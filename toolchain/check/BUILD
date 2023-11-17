@@ -48,6 +48,7 @@ cc_library(
         "context.h",
         "convert.h",
         "decl_name_stack.h",
+        "handle_modifier.h",
         "inst_block_stack.h",
         "pending_block.h",
     ],
