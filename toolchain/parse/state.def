@@ -283,22 +283,8 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // Handles processing of a declaration scope. Things like fn, class, interface,
 // and so on.
 //
-// abstract class ...
-// ^~~~~~~~
-// base class ...
-// ^~~~
-// default fn ...
-// ^~~~~~~
-// final fn ...
-// ^~~~~
-// override fn ...
-// ^~~~~~~~
-// private fn ...
-// ^~~~~~~
-// protected fn ...
-// ^~~~~~~~~
-// virtual fn ...
-// ^~~~~~~
+//  abstract/base/default/final/override/private/protected/virtual
+// ^
 //   1. DeclModifier
 //   2. DeclScopeLoop
 //
@@ -345,6 +331,55 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(DeclScopeLoop)
+
+// Handles processing of a modifier before a declaration introducer.
+//
+// abstract ...
+// ^~~~~~~~
+// base ...
+// ^~~~
+// default ...
+// ^~~~~~~
+// final ...
+// ^~~~~
+// override ...
+// ^~~~~~~~
+// private ...
+// ^~~~~~~
+// protected ...
+// ^~~~~~~~~
+// virtual ...
+// ^~~~~~~
+//   1. DeclModifier
+//
+// ... class ...
+//     ^~~~~
+//   1. TypeAfterIntroducerAsClass
+//
+// ... constraint ...
+//     ^~~~~~~~~~
+//   1. TypeAfterIntroducerAsNamedConstraint
+//
+// ... fn ...
+//     ^~
+//   1. FunctionIntroducer
+//
+// ... interface ...
+//     ^~~~~~~~~
+//   1. TypeAfterIntroducerAsInterface
+//
+// ... var ...
+//     ^~~
+//   1. VarAsDecl
+//
+// ... let ...
+//     ^~~
+//   1. Let
+//
+// ... ??? ;
+//     ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(DeclModifier)
 
 // Handles periods. Only does one `.<expression>` segment; the source is
 // responsible for handling chaining.
@@ -1013,13 +1048,6 @@ CARBON_PARSE_STATE(StatementWhileBlockFinish)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
                              NamedConstraint)
-
-// Handles processing of a declaration introducer after a modifier.
-//
-// abstract/base class ...
-//               ^~~~~
-//   1. TypeAfterIntroducerAsClass
-CARBON_PARSE_STATE(DeclModifier)
 
 // Handles processing of a type after its introducer.
 //

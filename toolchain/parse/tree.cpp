@@ -46,6 +46,9 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   context.AddLeafNode(NodeKind::FileEnd, *context.position());
 
   if (auto verify = tree.Verify(); !verify.ok()) {
+    // FIXME
+    tree.Print(llvm::errs());
+    // FIXME
     if (vlog_stream) {
       tree.Print(*vlog_stream);
     }

@@ -78,7 +78,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
 #include "toolchain/lex/token_kind.def"
     {
       context.PushState(State::DeclModifier);
-      context.AddLeafNode(NodeKind::InvalidParse, *context.position());
+      context.AddLeafNode(NodeKind::Placeholder, *context.position());
       return;
     }
     case Lex::TokenKind::Class: {
@@ -132,7 +132,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
 auto HandleDeclModifier(Context& context) -> void {
   auto state = context.PopState();
   CARBON_CHECK(context.GetNodeKind(state.subtree_start) ==
-               NodeKind::InvalidParse);
+               NodeKind::Placeholder);
 
   auto introducer = [&](NodeKind node_kind, State next_state) {
     context.ReplaceLeafNode(state.subtree_start, node_kind, context.Consume());
@@ -156,6 +156,9 @@ auto HandleDeclModifier(Context& context) -> void {
 
     // If we see a declaration introducer keyword token, replace the placeholder
     // node and switch to a state to parse the rest of the declaration.
+    // We don't allow namespace or empty declarations here since they
+    // can't have modifiers and don't use bracketing parse nodes that would
+    // allow a variable number of modifier nodes.
     case Lex::TokenKind::Class: {
       introducer(NodeKind::ClassIntroducer, State::TypeAfterIntroducerAsClass);
       return;
@@ -172,10 +175,6 @@ auto HandleDeclModifier(Context& context) -> void {
     case Lex::TokenKind::Interface: {
       introducer(NodeKind::InterfaceIntroducer,
                  State::TypeAfterIntroducerAsInterface);
-      return;
-    }
-    case Lex::TokenKind::Namespace: {
-      introducer(NodeKind::NamespaceStart, State::Namespace);
       return;
     }
     case Lex::TokenKind::Var: {

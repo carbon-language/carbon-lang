@@ -63,6 +63,9 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParseStart, 0,
 CARBON_PARSE_NODE_KIND_BRACKET(InvalidParseSubtree, InvalidParseStart,
                                CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
+// A placeholder node to be replaced.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Placeholder, 0, CARBON_ANY_TOKEN)
+
 // An empty declaration, such as `;`.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDecl, 0,
                                    CARBON_TOKEN(Semi)
@@ -91,10 +94,12 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0, CARBON_TOKEN(Identifier))
 // tree.h for more information.
 //
 // A parse node kind may be preceded by:
-// -  `_external_:` if this node is the child of multiple kinds of nodes and
-//    is documented separately.
 // -  `_optional_` if this node may be present or omitted in valid parses,
 //    depending on which tokens are in the source code.
+// -  `_repeated_` if this node may be repeated or omitted in valid parses,
+//    depending on which tokens are in the source code.
+// -  `_external_:` if this node is the child of multiple kinds of nodes and
+//    is documented separately.
 //
 // There is generally a close correspondence between handling of tokens and the
 // creation of non-external nodes in a given block.
@@ -153,7 +158,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2,
 
 // A code block:
 //   CodeBlockStart
-//   _external_: statements
+//   _repeated_ _external_: statement
 // CodeBlock
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CodeBlockStart, 0,
                                    CARBON_TOKEN(OpenCurlyBrace)
@@ -169,7 +174,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 //       _external_: type expression
 //     ReturnType
 //   FunctionDefinitionStart
-//   _external_: statements
+//   _repeated_ _external_: statement
 // FunctionDefinition
 //
 // The above is the structure for a definition; for a declaration,

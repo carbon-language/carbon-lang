@@ -12,7 +12,7 @@ auto HandleLet(Context& context) -> void {
   // These will start at the `let`.
   state.state = State::LetFinish;
   context.PushState(state);
-  state.state = State::LetFinish;
+  state.state = State::LetAfterPattern;
   context.PushState(state);
 
   // This will start at the pattern.

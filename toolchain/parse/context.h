@@ -124,14 +124,14 @@ class Context {
   // In cases where a placeholder leaf parse node was added, using code like:
   //   ```
   //   context.PushState(State::WillFillInPlaceholder);
-  //   context.AddLeafNode(NodeKind::InvalidParse, *context.position());
+  //   context.AddLeafNode(NodeKind::Placeholder, *context.position());
   //   ```
   // it may be replaced with the intended leaf parse node with code like:
   //   ```
   //   auto HandleWillFillInPlaceholder(Context& context) -> void {
   //     auto state = context.PopState();
   //     CARBON_CHECK(context.GetNodeKind(state.subtree_start) ==
-  //                  NodeKind::InvalidParse);
+  //                  NodeKind::Placeholder);
   //     context.ReplaceLeafNode(state.subtree_start, /* replacement */);
   //   }
   //   ```
