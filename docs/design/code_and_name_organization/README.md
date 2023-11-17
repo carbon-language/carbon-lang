@@ -729,7 +729,7 @@ patterns.
 
 ```
 // ✅ Allowed: not a binding pattern.
-(NS.namespace_var, local_var) = (0, 1);
+case (NS.namespace_var, local_var) => ...;
 ```
 
 #### Aliasing
