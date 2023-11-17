@@ -195,10 +195,12 @@ auto HandleDeclModifier(Context& context) -> void {
   context.ReplacePlaceholderNode(state.subtree_start,
                                  NodeKind::InvalidParseStart, cursor,
                                  /*has_error=*/true);
-  auto semi = context.SkipPastLikelyEnd(cursor);
-  // Mark everything up to the semi as invalid, if found.
-  context.AddNode(NodeKind::InvalidParseSubtree, semi ? *semi : cursor,
-                  state.subtree_start, /*has_error=*/true);
+  context.SkipPastLikelyEnd(cursor);
+  auto iter = context.position();
+  --iter;
+  // Mark everything up to the last token consumed as invalid.
+  context.AddNode(NodeKind::InvalidParseSubtree, *iter, state.subtree_start,
+                  /*has_error=*/true);
 }
 
 }  // namespace Carbon::Parse
