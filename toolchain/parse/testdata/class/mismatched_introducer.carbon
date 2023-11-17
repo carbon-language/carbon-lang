@@ -5,11 +5,8 @@
 // AUTOUPDATE
 
 // Note: invalid modifiers are diagnosed in check not parse.
-
 abstract interface I;
-
 base fn F();
-
 abstract base class C;
 
 // CHECK:STDOUT: - filename: mismatched_introducer.carbon

@@ -131,11 +131,10 @@ auto HandleDeclScopeLoop(Context& context) -> void {
 
 auto HandleDeclModifier(Context& context) -> void {
   auto state = context.PopState();
-  CARBON_CHECK(context.GetNodeKind(state.subtree_start) ==
-               NodeKind::Placeholder);
 
   auto introducer = [&](NodeKind node_kind, State next_state) {
-    context.ReplaceLeafNode(state.subtree_start, node_kind, context.Consume());
+    context.ReplacePlaceholderNode(state.subtree_start, node_kind,
+                                   context.Consume());
     // Reuse state here to retain its `subtree_start`
     state.state = next_state;
     context.PushState(state);
@@ -193,11 +192,11 @@ auto HandleDeclModifier(Context& context) -> void {
   // For anything else, report an error and output an invalid parse subtree.
   ReportUnrecognizedDecl(context);
   auto cursor = *context.position();
-  context.ReplaceLeafNode(state.subtree_start, NodeKind::InvalidParseStart,
-                          cursor, /*has_error=*/true);
+  context.ReplacePlaceholderNode(state.subtree_start,
+                                 NodeKind::InvalidParseStart, cursor,
+                                 /*has_error=*/true);
   auto semi = context.SkipPastLikelyEnd(cursor);
-  // If we find a semi, create a invalid tree from the cursor to the semi,
-  // otherwise just make an invalid node at the cursor.
+  // Mark everything up to the semi as invalid, if found.
   context.AddNode(NodeKind::InvalidParseSubtree, semi ? *semi : cursor,
                   state.subtree_start, /*has_error=*/true);
 }
