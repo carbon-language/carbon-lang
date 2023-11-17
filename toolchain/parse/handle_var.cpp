@@ -15,9 +15,9 @@ static auto HandleVar(Context& context, State finish_state,
   state.state = finish_state;
   context.PushState(state);
 
-  context.PushState(State::VarAfterPattern);
+  state.state = State::VarAfterPattern;
+  context.PushState(state);
 
-  context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
   if (returned_token.is_valid()) {
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
@@ -43,6 +43,7 @@ auto HandleVarAsReturned(Context& context) -> void {
     return;
   }
 
+  context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
   HandleVar(context, State::VarFinishAsDecl, returned_token);
 }
 

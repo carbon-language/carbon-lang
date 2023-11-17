@@ -121,6 +121,28 @@ class Context {
   auto AddNode(NodeKind kind, Lex::Token token, int subtree_start,
                bool has_error) -> void;
 
+  // In cases where a placeholder leaf parse node was added, using code like:
+  //   ```
+  //   context.PushState(State::WillFillInPlaceholder);
+  //   context.AddLeafNode(NodeKind::InvalidParse, *context.position());
+  //   ```
+  // it may be replaced with the intended leaf parse node with code like:
+  //   ```
+  //   auto HandleWillFillInPlaceholder(Context& context) -> void {
+  //     auto state = context.PopState();
+  //     CARBON_CHECK(context.GetNodeKind(state.subtree_start) ==
+  //                  NodeKind::InvalidParse);
+  //     context.ReplaceLeafNode(state.subtree_start, /* replacement */);
+  //   }
+  //   ```
+
+  // Returns the kind of a node at the indicated position.
+  auto GetNodeKind(int32_t position) -> NodeKind;
+
+  // Replaces the leaf node at the indicated position.
+  auto ReplaceLeafNode(int32_t position, NodeKind kind, Lex::Token token,
+                       bool has_error = false) -> void;
+
   // Returns the current position and moves past it.
   auto Consume() -> Lex::Token { return *(position_++); }
 

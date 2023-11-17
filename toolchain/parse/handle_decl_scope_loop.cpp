@@ -6,17 +6,28 @@
 
 namespace Carbon::Parse {
 
-// Handles an unrecognized declaration, adding an error node.
-static auto HandleUnrecognizedDecl(Context& context) -> void {
+static auto ReportUnrecognizedDecl(Context& context) -> void {
   CARBON_DIAGNOSTIC(UnrecognizedDecl, Error,
                     "Unrecognized declaration introducer.");
   context.emitter().Emit(*context.position(), UnrecognizedDecl);
+}
+
+// Handles an unrecognized declaration, adding an error node.
+static auto HandleUnrecognizedDecl(Context& context) -> void {
+  ReportUnrecognizedDecl(context);
   auto cursor = *context.position();
   auto semi = context.SkipPastLikelyEnd(cursor);
-  // Locate the EmptyDecl at the semi when found, but use the
-  // original cursor location for an error when not.
-  context.AddLeafNode(NodeKind::EmptyDecl, semi ? *semi : cursor,
-                      /*has_error=*/true);
+  // If we find a semi, create a invalid tree from the cursor to the semi,
+  // otherwise just make an invalid node at the cursor.
+  if (semi) {
+    auto subtree_start = context.tree().size();
+    context.AddLeafNode(NodeKind::InvalidParseStart, cursor,
+                        /*has_error=*/true);
+    context.AddNode(NodeKind::InvalidParseSubtree, *semi, subtree_start,
+                    /*has_error=*/true);
+  } else {
+    context.AddLeafNode(NodeKind::InvalidParse, cursor, /*has_error=*/true);
+  }
 }
 
 auto HandleDeclScopeLoop(Context& context) -> void {
@@ -62,20 +73,13 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   // result in a `set_packaging_state` call. Note, this may not always be
   // necessary but is probably cheaper than validating.
   switch (position_kind) {
-    case Lex::TokenKind::Abstract:
-    case Lex::TokenKind::Base: {
-      if (context.PositionIs(Lex::TokenKind::Class, Lookahead::NextToken)) {
-        context.PushState(State::TypeAfterIntroducerAsClass);
-        auto modifier_token = context.Consume();
-        auto class_token = context.Consume();
-        context.AddLeafNode(NodeKind::ClassIntroducer, class_token);
-        context.AddLeafNode(position_kind == Lex::TokenKind::Abstract
-                                ? NodeKind::AbstractModifier
-                                : NodeKind::BaseModifier,
-                            modifier_token);
-        return;
-      }
-      break;
+#define CARBON_DECL_MODIFIER_KEYWORD_TOKEN(Name, Spelling) \
+  case Lex::TokenKind::Name:
+#include "toolchain/lex/token_kind.def"
+    {
+      context.PushState(State::DeclModifier);
+      context.AddLeafNode(NodeKind::InvalidParse, *context.position());
+      return;
     }
     case Lex::TokenKind::Class: {
       context.PushState(State::TypeAfterIntroducerAsClass);
@@ -90,6 +94,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
     }
     case Lex::TokenKind::Fn: {
       context.PushState(State::FunctionIntroducer);
+      context.AddLeafNode(NodeKind::FunctionIntroducer, context.Consume());
       return;
     }
     case Lex::TokenKind::Interface: {
@@ -99,6 +104,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
     }
     case Lex::TokenKind::Namespace: {
       context.PushState(State::Namespace);
+      context.AddLeafNode(NodeKind::NamespaceStart, context.Consume());
       return;
     }
     case Lex::TokenKind::Semi: {
@@ -107,10 +113,12 @@ auto HandleDeclScopeLoop(Context& context) -> void {
     }
     case Lex::TokenKind::Var: {
       context.PushState(State::VarAsDecl);
+      context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
       return;
     }
     case Lex::TokenKind::Let: {
       context.PushState(State::Let);
+      context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
       return;
     }
     default: {
@@ -119,6 +127,80 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   }
 
   HandleUnrecognizedDecl(context);
+}
+
+auto HandleDeclModifier(Context& context) -> void {
+  auto state = context.PopState();
+  CARBON_CHECK(context.GetNodeKind(state.subtree_start) ==
+               NodeKind::InvalidParse);
+
+  auto introducer = [&](NodeKind node_kind, State next_state) {
+    context.ReplaceLeafNode(state.subtree_start, node_kind, context.Consume());
+    // Reuse state here to retain its `subtree_start`
+    state.state = next_state;
+    context.PushState(state);
+  };
+
+  switch (context.PositionKind()) {
+    // If we see a declaration modifier keyword token, add it as a leaf node
+    // and repeat this state.
+#define CARBON_DECL_MODIFIER_KEYWORD_TOKEN(Name, Spelling) \
+  case Lex::TokenKind::Name:
+#include "toolchain/lex/token_kind.def"
+    {
+      auto modifier_token = context.Consume();
+      context.AddLeafNode(NodeKind::DeclModifierKeyword, modifier_token);
+      context.PushState(state);
+      return;
+    }
+
+    // If we see a declaration introducer keyword token, replace the placeholder
+    // node and switch to a state to parse the rest of the declaration.
+    case Lex::TokenKind::Class: {
+      introducer(NodeKind::ClassIntroducer, State::TypeAfterIntroducerAsClass);
+      return;
+    }
+    case Lex::TokenKind::Constraint: {
+      introducer(NodeKind::NamedConstraintIntroducer,
+                 State::TypeAfterIntroducerAsNamedConstraint);
+      return;
+    }
+    case Lex::TokenKind::Fn: {
+      introducer(NodeKind::FunctionIntroducer, State::FunctionIntroducer);
+      return;
+    }
+    case Lex::TokenKind::Interface: {
+      introducer(NodeKind::InterfaceIntroducer,
+                 State::TypeAfterIntroducerAsInterface);
+      return;
+    }
+    case Lex::TokenKind::Namespace: {
+      introducer(NodeKind::NamespaceStart, State::Namespace);
+      return;
+    }
+    case Lex::TokenKind::Var: {
+      introducer(NodeKind::VariableIntroducer, State::VarAsDecl);
+      return;
+    }
+    case Lex::TokenKind::Let: {
+      introducer(NodeKind::LetIntroducer, State::Let);
+      return;
+    }
+
+    default: {
+      break;
+    }
+  }
+  // For anything else, report an error and output an invalid parse subtree.
+  ReportUnrecognizedDecl(context);
+  auto cursor = *context.position();
+  context.ReplaceLeafNode(state.subtree_start, NodeKind::InvalidParseStart,
+                          cursor, /*has_error=*/true);
+  auto semi = context.SkipPastLikelyEnd(cursor);
+  // If we find a semi, create a invalid tree from the cursor to the semi,
+  // otherwise just make an invalid node at the cursor.
+  context.AddNode(NodeKind::InvalidParseSubtree, semi ? *semi : cursor,
+                  state.subtree_start, /*has_error=*/true);
 }
 
 }  // namespace Carbon::Parse

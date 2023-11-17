@@ -15,4 +15,13 @@ auto HandleInvalidParse(Context& context, Parse::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleInvalidParse");
 }
 
+auto HandleInvalidParseStart(Context& context, Parse::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleInvalidParseStart");
+}
+
+auto HandleInvalidParseSubtree(Context& context, Parse::Node parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleInvalidParseSubtree");
+}
+
 }  // namespace Carbon::Check

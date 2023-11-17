@@ -57,6 +57,12 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, CARBON_TOKEN(EndOfFile))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0,
                                    CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
+// An invalid subtree. Always has an error.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParseStart, 0,
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+CARBON_PARSE_NODE_KIND_BRACKET(InvalidParseSubtree, InvalidParseStart,
+                               CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+
 // An empty declaration, such as `;`.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDecl, 0,
                                    CARBON_TOKEN(Semi)
@@ -545,9 +551,24 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 
+// Declaration modifier keywords such as `abstract` or `virtual`:
+// DeclModifierKeyword
+//
+// The kind of keyword is determined by looking at the token kind.
+// These may be repeated, including possibly zero times.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclModifierKeyword, 0,
+                                   CARBON_TOKEN(Abstract)
+				   CARBON_TOKEN(Base)
+				   CARBON_TOKEN(Default)
+				   CARBON_TOKEN(Final)
+				   CARBON_TOKEN(Override)
+				   CARBON_TOKEN(Private)
+				   CARBON_TOKEN(Protected)
+				   CARBON_TOKEN(Virtual))
+
 // `class`:
 //     ClassIntroducer
-//     _optional_ AbstractModifier or BaseModifier
+//     _external_: declaration modifier keywords
 //     _external_: Name or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
@@ -557,8 +578,6 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 // ClassDefinitionStart and later nodes are removed and replaced by
 // ClassDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassIntroducer, 0, CARBON_TOKEN(Class))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(AbstractModifier, 0, CARBON_TOKEN(Abstract))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseModifier, 0, CARBON_TOKEN(Base))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer,
                                CARBON_TOKEN(OpenCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,

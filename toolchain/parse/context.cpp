@@ -77,6 +77,22 @@ auto Context::AddNode(NodeKind kind, Lex::Token token, int subtree_start,
   }
 }
 
+auto Context::GetNodeKind(int32_t position) -> NodeKind {
+  CARBON_CHECK(position >= 0 && position < tree_->size())
+      << "position: " << position << " size: " << tree_->size();
+  return tree_->node_impls_[position].kind;
+}
+
+auto Context::ReplaceLeafNode(int32_t position, NodeKind kind, Lex::Token token,
+                              bool has_error) -> void {
+  CARBON_CHECK(position >= 0 && position < tree_->size())
+      << "position: " << position << " size: " << tree_->size();
+  CARBON_CHECK(tree_->node_impls_[position].subtree_size == 1);
+  tree_->node_impls_[position].kind = kind;
+  tree_->node_impls_[position].has_error = has_error;
+  tree_->node_impls_[position].token = token;
+}
+
 auto Context::ConsumeAndAddOpenParen(Lex::Token default_token,
                                      NodeKind start_kind)
     -> std::optional<Lex::Token> {
