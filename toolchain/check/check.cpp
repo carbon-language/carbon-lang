@@ -8,6 +8,7 @@
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/context.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
@@ -17,7 +18,7 @@ namespace Carbon::Check {
 struct UnitInfo {
   explicit UnitInfo(Unit& unit)
       : unit(&unit),
-        translator(unit.tokens, unit.parse_tree),
+        translator(unit.tokens, unit.tokens->filename(), unit.parse_tree),
         err_tracker(*unit.consumer),
         emitter(translator, err_tracker) {}
 
@@ -278,22 +279,26 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
       continue;
     }
 
-    if (packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
+    if (packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
       continue;
     }
 
     auto [entry, success] = api_map.insert({import_key, &unit_info});
     if (!success) {
+      llvm::StringRef prev_filename = entry->second->unit->tokens->filename();
       if (packaging) {
         CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
-                          "Library's API declared in more than one file.");
-        unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi);
+                          "Library's API previously provided by `{0}`.",
+                          llvm::StringRef);
+        unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi,
+                               prev_filename);
       } else {
-        // TODO: This diagnostic's location could be improved. It's not really
-        // associated with the line, it just needs some location.
         CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
-                          "Main//default provided by more than one file.");
-        unit_info.emitter.Emit(Parse::Node::FileStart, DuplicateMainApi);
+                          "Main//default previously provided by `{0}`.",
+                          llvm::StringRef);
+        // Use the invalid node because there's no node to associate with.
+        unit_info.emitter.Emit(Parse::Node::Invalid, DuplicateMainApi,
+                               prev_filename);
       }
     }
   }

@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDERR: main2.carbon: ERROR: Main//default previously provided by `main1.carbon`.
 
 // --- main1.carbon
 
 // --- main2.carbon
-// CHECK:STDERR: main2.carbon:[[@LINE+3]]:1: ERROR: Main//default provided by more than one file.
-// CHECK:STDERR:
-// CHECK:STDERR: ^
 
 // --- main_lib1.carbon
 
@@ -17,7 +15,7 @@ library "lib" api;
 
 // --- main_lib2.carbon
 
-// CHECK:STDERR: main_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API declared in more than one file.
+// CHECK:STDERR: main_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `main_lib1.carbon`.
 // CHECK:STDERR: library "lib" api;
 // CHECK:STDERR: ^
 library "lib" api;
@@ -28,7 +26,7 @@ package Package api;
 
 // --- package2.carbon
 
-// CHECK:STDERR: package2.carbon:[[@LINE+3]]:1: ERROR: Library's API declared in more than one file.
+// CHECK:STDERR: package2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package1.carbon`.
 // CHECK:STDERR: package Package api;
 // CHECK:STDERR: ^
 package Package api;
@@ -39,7 +37,7 @@ package Package library "lib" api;
 
 // --- package_lib2.carbon
 
-// CHECK:STDERR: package_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API declared in more than one file.
+// CHECK:STDERR: package_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package_lib1.carbon`.
 // CHECK:STDERR: package Package library "lib" api;
 // CHECK:STDERR: ^
 package Package library "lib" api;
