@@ -31,9 +31,9 @@ package C api;
 // CHECK:STDERR: ^
 import A;
 
-// --- c_impl.carbon
+// --- c.impl.carbon
 
-// CHECK:STDERR: c_impl.carbon:[[@LINE+3]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
+// CHECK:STDERR: c.impl.carbon:[[@LINE+3]]:1: ERROR: Import cannot be used due to a cycle. Cycle must be fixed to import.
 // CHECK:STDERR: package C impl;
 // CHECK:STDERR: ^
 package C impl;
@@ -53,7 +53,7 @@ import B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "c.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "c_impl.carbon" {
+// CHECK:STDOUT: file "c.impl.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "cycle_child.carbon" {
 // CHECK:STDOUT: }
