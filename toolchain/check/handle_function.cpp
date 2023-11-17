@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/handle_modifier.h"
 #include "toolchain/sem_ir/entry_point.h"
 
 namespace Carbon::Check {
@@ -55,9 +56,34 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
       context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>().value_or(
           SemIR::InstBlockId::Empty);
   auto name_context = context.decl_name_stack().FinishName();
-  auto fn_node =
-      context.node_stack()
-          .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
+
+  // Process modifiers and introducer.
+  auto [modifiers, fn_node] = ValidateModifiers(
+      context,
+      {.private_ = true,
+       .protected_ = true,
+       .abstract_ = true,
+       .override_ = true,
+       .virtual_ = true},
+      [&]() {
+        return context.node_stack()
+            .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
+      });
+  if (modifiers.private_) {
+    context.TODO(fn_node, "private");
+  }
+  if (modifiers.protected_) {
+    context.TODO(fn_node, "protected");
+  }
+  if (modifiers.abstract_) {
+    context.TODO(fn_node, "abstract");
+  }
+  if (modifiers.override_) {
+    context.TODO(fn_node, "override");
+  }
+  if (modifiers.virtual_) {
+    context.TODO(fn_node, "virtual");
+  }
 
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{

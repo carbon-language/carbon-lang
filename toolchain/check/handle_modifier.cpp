@@ -69,15 +69,15 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
           .Build(modifier_node, ModifierDuplicated)              \
           .Note(*saw_access, ModifierDuplicatedPrevious)         \
           .Emit();                                               \
-    } else if (saw_other) {                                      \
-      context.emitter()                                          \
-          .Build(modifier_node, ModifierInWrongOrderSecond)      \
-          .Note(*saw_other, ModifierInWrongOrderFirst)           \
-          .Emit();                                               \
     } else if (saw_access) {                                     \
       context.emitter()                                          \
           .Build(modifier_node, ModifierNotAllowedWith)          \
           .Note(*saw_access, ModifierNotAllowedWithPrevious)     \
+          .Emit();                                               \
+    } else if (saw_other) {                                      \
+      context.emitter()                                          \
+          .Build(modifier_node, ModifierInWrongOrderSecond)      \
+          .Note(*saw_other, ModifierInWrongOrderFirst)           \
           .Emit();                                               \
     } else {                                                     \
       found.name = true;                                         \

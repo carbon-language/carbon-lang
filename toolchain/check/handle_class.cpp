@@ -22,17 +22,26 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
 static auto BuildClassDecl(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
-  // TODO: support `private` and `protected`
-  auto [modifiers, introducer] =
-      ValidateModifiers(context, {.abstract_ = true, .base_ = true}, [&]() {
+
+  // Process modifiers and introducer.
+  auto [modifiers, introducer] = ValidateModifiers(
+      context,
+      {.private_ = true, .protected_ = true, .abstract_ = true, .base_ = true},
+      [&]() {
         return context.node_stack()
             .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
       });
-  auto decl_block_id = context.inst_block_stack().Pop();
-
+  if (modifiers.private_) {
+    context.TODO(introducer, "private");
+  }
+  if (modifiers.protected_) {
+    context.TODO(introducer, "protected");
+  }
   auto inheritance_kind = modifiers.abstract_ ? SemIR::Class::Abstract
                           : modifiers.base_   ? SemIR::Class::Base
                                               : SemIR::Class::Final;
+
+  auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
   auto class_decl =
