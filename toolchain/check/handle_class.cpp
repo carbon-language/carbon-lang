@@ -50,7 +50,7 @@ static auto BuildClassDecl(Context& context)
           // FIXME
           CARBON_CHECK(false) << "base base class";
         }
-        abstract = true;
+        base = true;
         break;
       }
       default: {
