@@ -21,7 +21,7 @@ fn F(n: i32) {
 // CHECK:STDOUT:           {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'Name', text: 'n'},
 // CHECK:STDOUT:             {kind: 'Literal', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 8},
 // CHECK:STDOUT:             {kind: 'NameExpr', text: 'n'},

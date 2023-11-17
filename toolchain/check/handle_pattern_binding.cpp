@@ -11,7 +11,7 @@ namespace Carbon::Check {
 
 auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   auto self_param_id =
-      context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
+      context.node_stack().Peek<Parse::NodeKind::BindingPattern>();
   if (auto self_param =
           context.insts().Get(self_param_id).TryAs<SemIR::SelfParam>()) {
     self_param->is_addr_self = SemIR::BoolValue::True;
@@ -24,12 +24,12 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
+auto HandleGenericBindingPattern(Context& context, Parse::Node parse_node)
     -> bool {
-  return context.TODO(parse_node, "GenericPatternBinding");
+  return context.TODO(parse_node, "GenericBindingPattern");
 }
 
-auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
+auto HandleBindingPattern(Context& context, Parse::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExprWithParseNode();
   auto type_node_copy = type_node;

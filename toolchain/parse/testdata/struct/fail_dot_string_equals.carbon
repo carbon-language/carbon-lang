@@ -25,7 +25,7 @@ var x: {."hello" = 0, .y = 4} = {};
 // CHECK:STDOUT:             {kind: 'Literal', text: '4'},
 // CHECK:STDOUT:           {kind: 'StructFieldValue', text: '=', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 13},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 13},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},

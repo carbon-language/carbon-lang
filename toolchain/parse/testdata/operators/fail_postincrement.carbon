@@ -28,7 +28,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'Name', text: 'n'},
 // CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'Literal', text: '0'},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},

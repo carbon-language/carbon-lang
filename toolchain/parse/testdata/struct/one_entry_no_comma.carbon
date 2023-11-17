@@ -17,7 +17,7 @@ var z: {.n: i32} = {.n = 4};
 // CHECK:STDOUT:             {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'StructFieldType', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'Name', text: 'n'},

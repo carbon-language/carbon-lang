@@ -139,9 +139,9 @@ auto Context::ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::Token> {
   return Consume();
 }
 
-auto Context::ConsumeIfPatternKeyword(Lex::TokenKind keyword_token,
-                                      State keyword_state, int subtree_start)
-    -> void {
+auto Context::ConsumeIfBindingPatternKeyword(Lex::TokenKind keyword_token,
+                                             State keyword_state,
+                                             int subtree_start) -> void {
   if (auto token = ConsumeIf(keyword_token)) {
     PushState(Context::StateStackEntry(
         keyword_state, PrecedenceGroup::ForTopLevelExpr(),

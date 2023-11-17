@@ -17,7 +17,7 @@ auto HandleParenExpr(Context& context) -> void {
     state.state = State::ParenExprFinishAsTuple;
     context.PushState(state);
   } else {
-    state.state = State::ParenExprFinishAsNormal;
+    state.state = State::ParenExprFinishAsGrouping;
     context.PushState(state);
     context.PushState(State::ParenExprParamFinishAsUnknown);
     context.PushState(State::Expr);
@@ -42,7 +42,7 @@ static auto HandleParenExprParamFinish(Context& context, bool as_tuple)
     state.state = State::ParenExprParamFinishAsTuple;
 
     auto finish_state = context.PopState();
-    CARBON_CHECK(finish_state.state == State::ParenExprFinishAsNormal)
+    CARBON_CHECK(finish_state.state == State::ParenExprFinishAsGrouping)
         << "Unexpected parent state, found: " << finish_state.state;
     finish_state.state = State::ParenExprFinishAsTuple;
     context.PushState(finish_state);
@@ -63,7 +63,7 @@ auto HandleParenExprParamFinishAsTuple(Context& context) -> void {
   HandleParenExprParamFinish(context, /*as_tuple=*/true);
 }
 
-auto HandleParenExprFinishAsNormal(Context& context) -> void {
+auto HandleParenExprFinishAsGrouping(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNode(NodeKind::ParenExpr, context.Consume(), state.subtree_start,

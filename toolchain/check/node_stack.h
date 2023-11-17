@@ -302,7 +302,7 @@ class NodeStack {
       case Parse::NodeKind::MemberAccessExpr:
       case Parse::NodeKind::NameExpr:
       case Parse::NodeKind::ParenExpr:
-      case Parse::NodeKind::PatternBinding:
+      case Parse::NodeKind::BindingPattern:
       case Parse::NodeKind::PostfixOperator:
       case Parse::NodeKind::PrefixOperator:
       case Parse::NodeKind::ReturnType:

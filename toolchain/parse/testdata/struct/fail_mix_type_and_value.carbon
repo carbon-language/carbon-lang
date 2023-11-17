@@ -24,7 +24,7 @@ var x: {.a: i32, .b = 0} = {};
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: '.', has_error: yes},
 // CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 12},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 12},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},

@@ -627,7 +627,7 @@ CARBON_PARSE_STATE(Package)
 //
 //  ...
 // ^
-//   1. PatternAs(ImplicitParam|Param)
+//   1. BindingPatternAs(ImplicitParam|Param)
 //   2. ParamFinishAs(Implicit|Regular)
 CARBON_PARSE_STATE_VARIANTS2(Param, Implicit, Regular)
 
@@ -707,7 +707,7 @@ CARBON_PARSE_STATE_VARIANTS2(ParenConditionFinish, If, While)
 // ^
 //   1. Expr
 //   2. ParenExprParamFinishAsUnknown
-//   3. ParenExprFinishAsNormal    (SPECIAL: may be replaced)
+//   3. ParenExprFinishAsGrouping    (SPECIAL: may be replaced)
 CARBON_PARSE_STATE(ParenExpr)
 
 // Handles the end of a parenthesized expression's parameter. This will start as
@@ -735,20 +735,20 @@ CARBON_PARSE_STATE_VARIANTS2(ParenExprParamFinish, Unknown, Tuple)
 // ( ... )
 //       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Normal, Tuple)
+CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Grouping, Tuple)
 
-// Handles pattern parsing for a pattern, enqueuing type expression processing.
-// This covers parameter, `let`, and `var` support.
+// Handles the initial part of a binding pattern, enqueuing type expression
+// processing.
 //
 // template    (variant is not Variable)
 // ^~~~~~~~
-//   4. PatternTemplate
+//   4. BindingPatternTemplate
 //
 // THEN
 //
 // addr        (variant is not Variable)
 // ^~~~
-//   3. PatternAddress
+//   3. BindingPatternAddress
 //
 // THEN
 //
@@ -757,41 +757,41 @@ CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Normal, Tuple)
 // self: ...
 // ^~~~~
 //   1. Expr
-//   2. PatternFinishAsRegular
+//   2. BindingPatternFinishAsRegular
 //
 // name:! ...
 // ^~~~~~
 // self:! ...
 // ^~~~~~
 //   1. Expr
-//   2. PatternFinishAsGeneric
+//   2. BindingPatternFinishAsGeneric
 //
 //  ???
 // ^
-//   1. PatternFinishAsRegular
-CARBON_PARSE_STATE_VARIANTS4(Pattern, ImplicitParam, Param, Variable,
+//   1. BindingPatternFinishAsRegular
+CARBON_PARSE_STATE_VARIANTS4(BindingPattern, ImplicitParam, Param, Variable,
                              Let)
 
-// Handles `addr` in a pattern.
+// Handles `addr` in a binding pattern.
 //
 // addr name: type
 //                ^
 //   (state done)
-CARBON_PARSE_STATE(PatternAddress)
+CARBON_PARSE_STATE(BindingPatternAddress)
 
-// Handles `template` in a pattern.
+// Handles `template` in a binding pattern.
 //
 // template name:! type
 //                     ^
 //   (state done)
-CARBON_PARSE_STATE(PatternTemplate)
+CARBON_PARSE_STATE(BindingPatternTemplate)
 
-// Finishes pattern processing.
+// Finishes binding pattern processing.
 //
 // name: type
 //           ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(PatternFinish, Generic, Regular)
+CARBON_PARSE_STATE_VARIANTS2(BindingPatternFinish, Generic, Regular)
 
 // Handles a single statement. While typically within a statement block, this
 // can also be used for error recovery where we expect a statement block and
@@ -850,7 +850,7 @@ CARBON_PARSE_STATE(StatementBreakFinish)
 //   (state done)
 CARBON_PARSE_STATE(StatementContinueFinish)
 
-// Handles `for` processing of `(var`, proceeding to a pattern before
+// Handles `for` processing of `(var`, proceeding to a binding pattern before
 // continuing.
 //
 // for ( var ... )
