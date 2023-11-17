@@ -11,9 +11,7 @@
 // CHECK:STDERR: ^
 import Main;
 
-// --- main_lib.carbon
-
-// CHECK:STDERR: main_lib.carbon:[[@LINE+3]]:1: ERROR: Imports from the current package must omit the package name.
+// CHECK:STDERR: main.carbon:[[@LINE+3]]:1: ERROR: Imports from the current package must omit the package name.
 // CHECK:STDERR: import Main library "lib";
 // CHECK:STDERR: ^
 import Main library "lib";
@@ -77,15 +75,14 @@ package Implicit library "lib" impl;
 import Implicit library "lib";
 
 // --- not_found.carbon
+package NotFound api;
 
 // CHECK:STDERR: not_found.carbon:[[@LINE+3]]:1: ERROR: Imported API not found.
-// CHECK:STDERR: import NotFound;
+// CHECK:STDERR: import ImportNotFound;
 // CHECK:STDERR: ^
-import NotFound;
+import ImportNotFound;
 
 // CHECK:STDOUT: file "main.carbon" {
-// CHECK:STDOUT: }
-// CHECK:STDOUT: file "main_lib.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "not_main.carbon" {
 // CHECK:STDOUT: }

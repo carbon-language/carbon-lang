@@ -8,6 +8,7 @@
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/context.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
@@ -17,7 +18,7 @@ namespace Carbon::Check {
 struct UnitInfo {
   explicit UnitInfo(Unit& unit)
       : unit(&unit),
-        translator(unit.tokens, unit.parse_tree),
+        translator(unit.tokens, unit.tokens->filename(), unit.parse_tree),
         err_tracker(*unit.consumer),
         emitter(translator, err_tracker) {}
 
@@ -258,33 +259,46 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     // put .impl.carbon on almost all tests (which are in `Main//default`). We
     // should probably get leads direction on filenames before enforcing.
     const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
-    if (packaging) {
-      auto import_key =
-          GetImportKey(unit_info, IdentifierId::Invalid, packaging->names);
-      // Diagnose explicit `Main` uses before they become marked as possible
-      // APIs.
-      if (import_key.first == ExplicitMainName) {
-        CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
-                          "`Main//default` must omit `package` directive.");
-        CARBON_DIAGNOSTIC(
-            ExplicitMainLibrary, Error,
-            "Use `library` directive in `Main` package libraries.");
-        unit_info.emitter.Emit(packaging->names.node,
-                               import_key.second.empty() ? ExplicitMainPackage
-                                                         : ExplicitMainLibrary);
-        continue;
-      }
+    // An import key formed from the `package` or `library` directive. Or, for
+    // Main//default, a placeholder key.
+    auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::Invalid,
+                                               packaging->names)
+                                // Construct a boring key for Main//default.
+                                : ImportKey{"", ""};
 
-      if (packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
-        continue;
-      }
+    // Diagnose explicit `Main` uses before they become marked as possible
+    // APIs.
+    if (import_key.first == ExplicitMainName) {
+      CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
+                        "`Main//default` must omit `package` directive.");
+      CARBON_DIAGNOSTIC(ExplicitMainLibrary, Error,
+                        "Use `library` directive in `Main` package libraries.");
+      unit_info.emitter.Emit(packaging->names.node, import_key.second.empty()
+                                                        ? ExplicitMainPackage
+                                                        : ExplicitMainLibrary);
+      continue;
+    }
 
-      auto [entry, success] = api_map.insert({import_key, &unit_info});
-      if (!success) {
-        // TODO: Cross-reference the source, deal with library, etc.
+    if (packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
+      continue;
+    }
+
+    auto [entry, success] = api_map.insert({import_key, &unit_info});
+    if (!success) {
+      llvm::StringRef prev_filename = entry->second->unit->tokens->filename();
+      if (packaging) {
         CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
-                          "Library's API declared in more than one file.");
-        unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi);
+                          "Library's API previously provided by `{0}`.",
+                          llvm::StringRef);
+        unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi,
+                               prev_filename);
+      } else {
+        CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
+                          "Main//default previously provided by `{0}`.",
+                          llvm::StringRef);
+        // Use the invalid node because there's no node to associate with.
+        unit_info.emitter.Emit(Parse::Node::Invalid, DuplicateMainApi,
+                               prev_filename);
       }
     }
   }

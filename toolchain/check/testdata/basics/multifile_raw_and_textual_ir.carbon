@@ -9,9 +9,13 @@
 // AUTOUPDATE
 
 // --- a.carbon
+package A api;
+
 fn A() {}
 
 // --- b.carbon
+package B api;
+
 fn B() {}
 
 // CHECK:STDOUT: ---
