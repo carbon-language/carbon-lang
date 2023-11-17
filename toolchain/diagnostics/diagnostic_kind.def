@@ -206,6 +206,17 @@ CARBON_DIAGNOSTIC_KIND(QualifiedExprUnsupported)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprNameNotFound)
 CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
 
+// Modifier checking
+CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOnDeclaration)
+CARBON_DIAGNOSTIC_KIND(ModifierDeclarationNote)
+CARBON_DIAGNOSTIC_KIND(ModifierDuplicated)
+CARBON_DIAGNOSTIC_KIND(ModifierDuplicatedPrevious)
+CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedWith)
+CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedWithPrevious)
+CARBON_DIAGNOSTIC_KIND(ModifierInWrongOrderSecond)
+CARBON_DIAGNOSTIC_KIND(ModifierInWrongOrderFirst)
+
+
 // ============================================================================
 // Other diagnostics
 // ============================================================================

@@ -10,7 +10,7 @@
 namespace Carbon::Check {
 
 struct DeclModifierKeywords {
-  // At most one of these, and if present they must be first:
+  // At most one of these, and if present it must be first:
   bool private_ = false;
   bool protected_ = false;
 
@@ -23,12 +23,14 @@ struct DeclModifierKeywords {
   bool virtual_ = false;
 };
 
-// Pops the DeclModifierKeyword parse nodes from context. Reports a diagnostic
-// if they contain repeated modifiers, modifiers in the incorrect order, or
-// modifiers not in `allowed`. Returns modifiers that were both found and
-// allowed.
-auto ValidateModifiers(Context& context, DeclModifierKeywords allowed)
-    -> DeclModifierKeywords;
+// Pops any DeclModifierKeyword parse nodes from `context` and then the
+// introducer node (using `pop_introducer`). Reports a diagnostic if they
+// contain repeated modifiers, modifiers in the incorrect order, or modifiers
+// not in `allowed`. Returns modifiers that were both found and allowed, and the
+// parse node corresponding to the first token of the declaration.
+auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
+                       std::function<Parse::Node()> pop_introducer)
+    -> std::pair<DeclModifierKeywords, Parse::Node>;
 
 }  // namespace Carbon::Check
 

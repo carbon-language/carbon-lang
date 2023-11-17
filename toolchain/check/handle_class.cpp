@@ -14,7 +14,7 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
-  // A name should always follow.
+  // Optional modifiers and the name should always follow.
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -22,16 +22,12 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
 static auto BuildClassDecl(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
-  auto introducer = context.node_stack().PeekParseNode();
-  // TODO: also allow `private` and `protected`
-  DeclModifierKeywords allowed_modifiers = {.abstract_ = true, .base_ = true};
-  DeclModifierKeywords modifiers =
-      ValidateModifiers(context, allowed_modifiers);
-  CARBON_CHECK(!(modifiers.abstract_ && modifiers.base_))
-      << "Class cannot be both `abstract` and `base`";
-
-  context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
+  // TODO: support `private` and `protected`
+  auto [modifiers, introducer] =
+      ValidateModifiers(context, {.abstract_ = true, .base_ = true}, [&]() {
+        return context.node_stack()
+            .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
+      });
   auto decl_block_id = context.inst_block_stack().Pop();
 
   auto inheritance_kind = modifiers.abstract_ ? SemIR::Class::Abstract

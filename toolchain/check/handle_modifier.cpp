@@ -15,32 +15,75 @@ auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto ValidateModifiers(Context& context, DeclModifierKeywords allowed)
-    -> DeclModifierKeywords {
+auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
+                       std::function<Parse::Node()> pop_introducer)
+    -> std::pair<DeclModifierKeywords, Parse::Node> {
   DeclModifierKeywords found;
   std::optional<Parse::Node> saw_access;
   std::optional<Parse::Node> saw_other;
-
+  llvm::SmallVector<Parse::Node> modifier_nodes;
+  // Note that since we are reading the modifier keywords off of a stack,
+  // we get them in reverse order compared to how they appeared in the source.
   while (
       auto modifier_node =
           context.node_stack()
               .PopForSoloParseNodeIf<Parse::NodeKind::DeclModifierKeyword>()) {
-    auto modifier_token = context.parse_tree().node_token(*modifier_node);
+    modifier_nodes.push_back(*modifier_node);
+  }
+  // FIXME: maybe pop this and return it?
+  Parse::Node introducer_node = pop_introducer();
+  Parse::Node returned_node =
+      modifier_nodes.empty() ? introducer_node : modifier_nodes.back();
+
+  // Reverse the order of processing the modifier nodes back to source order.
+  while (!modifier_nodes.empty()) {
+    auto modifier_node = modifier_nodes.back();
+    modifier_nodes.pop_back();
+    auto modifier_token = context.parse_tree().node_token(modifier_node);
+
+    CARBON_DIAGNOSTIC(ModifierNotAllowedOnDeclaration, Error,
+                      "Modifier not allowed.");
+    CARBON_DIAGNOSTIC(ModifierDeclarationNote, Note, "On this declaration.");
+    CARBON_DIAGNOSTIC(ModifierDuplicated, Error,
+                      "Modifier repeated on the same declaration.");
+    CARBON_DIAGNOSTIC(ModifierDuplicatedPrevious, Note,
+                      "Previously appeared here.");
+    CARBON_DIAGNOSTIC(ModifierNotAllowedWith, Error,
+                      "Modifier not allowed on the same declaration.");
+    CARBON_DIAGNOSTIC(ModifierNotAllowedWithPrevious, Note,
+                      "With this modifier.");
+    CARBON_DIAGNOSTIC(ModifierInWrongOrderSecond, Error,
+                      "Modifier must appear earlier.");
+    CARBON_DIAGNOSTIC(ModifierInWrongOrderFirst, Note, "Before this modifier.");
+
     switch (context.tokens().GetKind(modifier_token)) {
-#define ACCESS(name)             \
-  {                              \
-    if (!allowed.name) {         \
-      CARBON_FATAL() << "FIXME"; \
-    } else if (found.name) {     \
-      CARBON_FATAL() << "FIXME"; \
-    } else if (saw_other) {      \
-      CARBON_FATAL() << "FIXME"; \
-    } else if (saw_access) {     \
-      CARBON_FATAL() << "FIXME"; \
-    }                            \
-    found.name = true;           \
-    saw_access = modifier_node;  \
-    break;                       \
+#define ACCESS(name)                                             \
+  {                                                              \
+    if (!allowed.name) {                                         \
+      context.emitter()                                          \
+          .Build(modifier_node, ModifierNotAllowedOnDeclaration) \
+          .Note(introducer_node, ModifierDeclarationNote)        \
+          .Emit();                                               \
+    } else if (found.name) {                                     \
+      context.emitter()                                          \
+          .Build(modifier_node, ModifierDuplicated)              \
+          .Note(*saw_access, ModifierDuplicatedPrevious)         \
+          .Emit();                                               \
+    } else if (saw_other) {                                      \
+      context.emitter()                                          \
+          .Build(modifier_node, ModifierInWrongOrderSecond)      \
+          .Note(*saw_other, ModifierInWrongOrderFirst)           \
+          .Emit();                                               \
+    } else if (saw_access) {                                     \
+      context.emitter()                                          \
+          .Build(modifier_node, ModifierNotAllowedWith)          \
+          .Note(*saw_access, ModifierNotAllowedWithPrevious)     \
+          .Emit();                                               \
+    } else {                                                     \
+      found.name = true;                                         \
+      saw_access = modifier_node;                                \
+    }                                                            \
+    break;                                                       \
   }
 
       case Lex::TokenKind::Private:
@@ -49,18 +92,28 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed)
         ACCESS(protected_)
 
 #undef ACCESS
-#define OTHER(name)              \
-  {                              \
-    if (!allowed.name) {         \
-      CARBON_FATAL() << "FIXME"; \
-    } else if (found.name) {     \
-      CARBON_FATAL() << "FIXME"; \
-    } else if (saw_other) {      \
-      CARBON_FATAL() << "FIXME"; \
-    }                            \
-    found.name = true;           \
-    saw_other = modifier_node;   \
-    break;                       \
+#define OTHER(name)                                              \
+  {                                                              \
+    if (!allowed.name) {                                         \
+      context.emitter()                                          \
+          .Build(modifier_node, ModifierNotAllowedOnDeclaration) \
+          .Note(introducer_node, ModifierDeclarationNote)        \
+          .Emit();                                               \
+    } else if (found.name) {                                     \
+      context.emitter()                                          \
+          .Build(modifier_node, ModifierDuplicated)              \
+          .Note(*saw_other, ModifierDuplicatedPrevious)          \
+          .Emit();                                               \
+    } else if (saw_other) {                                      \
+      context.emitter()                                          \
+          .Build(modifier_node, ModifierNotAllowedWith)          \
+          .Note(*saw_other, ModifierNotAllowedWithPrevious)      \
+          .Emit();                                               \
+    } else {                                                     \
+      found.name = true;                                         \
+      saw_other = modifier_node;                                 \
+    }                                                            \
+    break;                                                       \
   }
 
       case Lex::TokenKind::Abstract:
@@ -84,7 +137,7 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed)
       }
     }
   }
-  return found;
+  return {found, returned_node};
 }
 
 }  // namespace Carbon::Check
