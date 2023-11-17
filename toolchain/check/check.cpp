@@ -258,33 +258,42 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     // put .impl.carbon on almost all tests (which are in `Main//default`). We
     // should probably get leads direction on filenames before enforcing.
     const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
-    if (packaging) {
-      auto import_key =
-          GetImportKey(unit_info, IdentifierId::Invalid, packaging->names);
-      // Diagnose explicit `Main` uses before they become marked as possible
-      // APIs.
-      if (import_key.first == ExplicitMainName) {
-        CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
-                          "`Main//default` must omit `package` directive.");
-        CARBON_DIAGNOSTIC(
-            ExplicitMainLibrary, Error,
-            "Use `library` directive in `Main` package libraries.");
-        unit_info.emitter.Emit(packaging->names.node,
-                               import_key.second.empty() ? ExplicitMainPackage
-                                                         : ExplicitMainLibrary);
-        continue;
-      }
+    // An import key formed from the `package` or `library` directive. Or, for
+    // Main//default, a placeholder key.
+    auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::Invalid,
+                                               packaging->names)
+                                // Construct a boring key for Main//default.
+                                : ImportKey{"", ""};
 
-      if (packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
-        continue;
-      }
+    // Diagnose explicit `Main` uses before they become marked as possible
+    // APIs.
+    if (import_key.first == ExplicitMainName) {
+      CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
+                        "`Main//default` must omit `package` directive.");
+      CARBON_DIAGNOSTIC(ExplicitMainLibrary, Error,
+                        "Use `library` directive in `Main` package libraries.");
+      unit_info.emitter.Emit(packaging->names.node, import_key.second.empty()
+                                                        ? ExplicitMainPackage
+                                                        : ExplicitMainLibrary);
+      continue;
+    }
 
-      auto [entry, success] = api_map.insert({import_key, &unit_info});
-      if (!success) {
-        // TODO: Cross-reference the source, deal with library, etc.
+    if (packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
+      continue;
+    }
+
+    auto [entry, success] = api_map.insert({import_key, &unit_info});
+    if (!success) {
+      if (packaging) {
         CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
                           "Library's API declared in more than one file.");
         unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi);
+      } else {
+        // TODO: This diagnostic's location could be improved. It's not really
+        // associated with the line, it just needs some location.
+        CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
+                          "Main//default provided by more than one file.");
+        unit_info.emitter.Emit(Parse::Node::FileStart, DuplicateMainApi);
       }
     }
   }

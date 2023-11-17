@@ -29,11 +29,14 @@ namespace Carbon::Parse {
 struct Node : public ComparableIndexBase {
   // An explicitly invalid instance.
   static const Node Invalid;
+  // The file start node; it's always first.
+  static const Node FileStart;
 
   using ComparableIndexBase::ComparableIndexBase;
 };
 
 constexpr Node Node::Invalid = Node(Node::InvalidIndex);
+constexpr Node Node::FileStart = Node(0);
 
 // A tree of parsed tokens based on the language grammar.
 //
