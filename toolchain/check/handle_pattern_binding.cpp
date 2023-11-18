@@ -63,6 +63,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::ReturnedModifier:
+    case Parse::NodeKind::DeclModifierKeyword:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
