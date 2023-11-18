@@ -19,8 +19,8 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
                        std::function<Parse::Node()> pop_introducer)
     -> std::pair<DeclModifierKeywords, Parse::Node> {
   DeclModifierKeywords found;
-  std::optional<Parse::Node> saw_access;
-  std::optional<Parse::Node> saw_other;
+  Parse::Node saw_access = Parse::Node::Invalid;
+  Parse::Node saw_other = Parse::Node::Invalid;
   llvm::SmallVector<Parse::Node> modifier_nodes;
   // Note that since we are reading the modifier keywords off of a stack,
   // we get them in reverse order compared to how they appeared in the source.
@@ -67,17 +67,17 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
     } else if (found.name) {                                     \
       context.emitter()                                          \
           .Build(modifier_node, ModifierDuplicated)              \
-          .Note(*saw_access, ModifierDuplicatedPrevious)         \
+          .Note(saw_access, ModifierDuplicatedPrevious)          \
           .Emit();                                               \
-    } else if (saw_access) {                                     \
+    } else if (saw_access != Parse::Node::Invalid) {             \
       context.emitter()                                          \
           .Build(modifier_node, ModifierNotAllowedWith)          \
-          .Note(*saw_access, ModifierNotAllowedWithPrevious)     \
+          .Note(saw_access, ModifierNotAllowedWithPrevious)      \
           .Emit();                                               \
-    } else if (saw_other) {                                      \
+    } else if (saw_other != Parse::Node::Invalid) {              \
       context.emitter()                                          \
           .Build(modifier_node, ModifierInWrongOrderSecond)      \
-          .Note(*saw_other, ModifierInWrongOrderFirst)           \
+          .Note(saw_other, ModifierInWrongOrderFirst)            \
           .Emit();                                               \
     } else {                                                     \
       found.name = true;                                         \
@@ -102,12 +102,12 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
     } else if (found.name) {                                     \
       context.emitter()                                          \
           .Build(modifier_node, ModifierDuplicated)              \
-          .Note(*saw_other, ModifierDuplicatedPrevious)          \
+          .Note(saw_other, ModifierDuplicatedPrevious)           \
           .Emit();                                               \
-    } else if (saw_other) {                                      \
+    } else if (saw_other != Parse::Node::Invalid) {              \
       context.emitter()                                          \
           .Build(modifier_node, ModifierNotAllowedWith)          \
-          .Note(*saw_other, ModifierNotAllowedWithPrevious)      \
+          .Note(saw_other, ModifierNotAllowedWithPrevious)       \
           .Emit();                                               \
     } else {                                                     \
       found.name = true;                                         \
