@@ -60,7 +60,6 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
-  // FIXME: could exclude ReturnedModifier here
   auto context_parse_node = context.node_stack().FindParseNodeKindOf(
       {Parse::NodeKind::ReturnedModifier, Parse::NodeKind::VariableIntroducer,
        Parse::NodeKind::ImplicitParamListStart, Parse::NodeKind::ParamListStart,
@@ -151,7 +150,8 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
     default:
       CARBON_FATAL() << "Found a pattern binding in unexpected context "
-                     << context_parse_node_kind;
+                     << context.parse_tree().node_kind(
+                            context.node_stack().PeekParseNode());
   }
   return true;
 }
