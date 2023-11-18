@@ -63,6 +63,8 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
       {.private_ = true,
        .protected_ = true,
        .abstract_ = true,
+       .default_ = true,
+       .final_ = true,
        .override_ = true,
        .virtual_ = true},
       [&]() {
@@ -77,6 +79,12 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   }
   if (modifiers.abstract_) {
     context.TODO(fn_node, "abstract");
+  }
+  if (modifiers.default_) {
+    context.TODO(fn_node, "default");
+  }
+  if (modifiers.final_) {
+    context.TODO(fn_node, "final");
   }
   if (modifiers.override_) {
     context.TODO(fn_node, "override");
