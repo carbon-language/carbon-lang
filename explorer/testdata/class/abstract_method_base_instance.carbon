@@ -6,6 +6,8 @@
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
 // CHECK:STDOUT: B::Foo called!
+// CHECK:STDOUT: C::Foo called!
+// CHECK:STDOUT: E::Foo called!
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
@@ -21,8 +23,31 @@ base class B {
     }
 }
 
+class C {
+    extend base: A;
+    impl fn Foo[self: Self]() {
+      Print("C::Foo called!");
+    }
+}
+
+abstract class D {
+    extend base: A;
+}
+
+class E {
+    extend base: D;
+    impl fn Foo[self: Self]() {
+      Print("E::Foo called!");
+    }
+}
+
+
 fn Main() -> i32 {
   var b: B = { .base = {} };
   b.Foo();
+  var c: C = { .base = {} };
+  c.Foo();
+  var e: E = { .base = { .base = {} } };
+  e.Foo();
   return 0;
 }
