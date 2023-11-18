@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/handle_modifier.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -12,8 +13,26 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   SemIR::InstId pattern_id =
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
-  context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
+  // Process declaration modifiers and introducer.
+  auto [modifiers, introducer] = ValidateModifiers(
+      context,
+      {.private_ = true, .protected_ = true, .default_ = true, .final_ = true},
+      [&]() {
+        return context.node_stack()
+            .PopForSoloParseNode<Parse::NodeKind::LetIntroducer>();
+      });
+  if (modifiers.private_) {
+    context.TODO(introducer, "private");
+  }
+  if (modifiers.protected_) {
+    context.TODO(introducer, "protected");
+  }
+  if (modifiers.default_) {
+    context.TODO(introducer, "default");
+  }
+  if (modifiers.final_) {
+    context.TODO(introducer, "final");
+  }
 
   // Convert the value to match the type of the pattern.
   auto pattern = context.insts().Get(pattern_id);
