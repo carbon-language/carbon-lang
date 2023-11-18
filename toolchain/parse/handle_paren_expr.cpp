@@ -10,7 +10,7 @@ auto HandleParenExpr(Context& context) -> void {
   auto state = context.PopState();
 
   // Advance past the open paren.
-  context.AddLeafNode(NodeKind::ParenExprOrTupleLiteralStart,
+  context.AddLeafNode(NodeKind::ParenExprStart,
                       context.ConsumeChecked(Lex::TokenKind::OpenParen));
 
   if (context.PositionIs(Lex::TokenKind::CloseParen)) {
@@ -66,8 +66,8 @@ auto HandleParenExprParamFinishAsTuple(Context& context) -> void {
 auto HandleParenExprFinishAsGrouping(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::ParenExpr, context.Consume(), state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::GroupingExpr, context.Consume(),
+                  state.subtree_start, state.has_error);
 }
 
 auto HandleParenExprFinishAsTuple(Context& context) -> void {
