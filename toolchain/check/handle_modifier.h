@@ -14,7 +14,7 @@ struct DeclModifierKeywords {
   bool private_ = false;
   bool protected_ = false;
 
-  // Only one of these allowed:
+  // At most one of these allowed for a given declaration:
   bool abstract_ = false;
   bool base_ = false;
   bool default_ = false;
