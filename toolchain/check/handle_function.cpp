@@ -71,24 +71,31 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
         return context.node_stack()
             .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
       });
+  // For members of classes or free functions
   if (modifiers.private_) {
     context.TODO(fn_node, "private");
   }
+  // Only for members of classes
   if (modifiers.protected_) {
     context.TODO(fn_node, "protected");
   }
+  // Only for members of abstract classes
   if (modifiers.abstract_) {
     context.TODO(fn_node, "abstract");
   }
+  // Only for members of interfaces
   if (modifiers.default_) {
     context.TODO(fn_node, "default");
   }
+  // Only for members of interfaces
   if (modifiers.final_) {
     context.TODO(fn_node, "final");
   }
+  // Only for members of derived classes
   if (modifiers.override_) {
     context.TODO(fn_node, "override");
   }
+  // Only for members of base classes
   if (modifiers.virtual_) {
     context.TODO(fn_node, "virtual");
   }

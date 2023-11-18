@@ -21,15 +21,19 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
         return context.node_stack()
             .PopForSoloParseNode<Parse::NodeKind::LetIntroducer>();
       });
+  // For globals and members of classes.
   if (modifiers.private_) {
     context.TODO(introducer, "private");
   }
+  // For members of classes.
   if (modifiers.protected_) {
     context.TODO(introducer, "protected");
   }
+  // For members of interfaces.
   if (modifiers.default_) {
     context.TODO(introducer, "default");
   }
+  // For members of interfaces.
   if (modifiers.final_) {
     context.TODO(introducer, "final");
   }

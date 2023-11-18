@@ -77,9 +77,11 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
         return context.node_stack()
             .PopForSoloParseNode<Parse::NodeKind::VariableIntroducer>();
       });
+  // For fields (members of classes) and globals.
   if (modifiers.private_) {
     context.TODO(introducer, "private");
   }
+  // For fields (members of classes).
   if (modifiers.protected_) {
     context.TODO(introducer, "protected");
   }

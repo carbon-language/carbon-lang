@@ -34,6 +34,7 @@ static auto BuildClassDecl(Context& context)
   if (modifiers.private_) {
     context.TODO(introducer, "private");
   }
+  // Only relevant for classes that are members of other classes.
   if (modifiers.protected_) {
     context.TODO(introducer, "protected");
   }
