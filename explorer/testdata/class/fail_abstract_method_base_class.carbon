@@ -12,7 +12,8 @@ abstract class A {
     abstract fn Foo[self: Self]();
 }
 
-base class B extends A {
+base class B {
+  extend base: A;
   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_base_class.carbon:[[@LINE+1]]: Error declaring `B`: non abstract class should implement abstract method `Foo`.
 }
 
