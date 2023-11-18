@@ -30,7 +30,6 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
               .PopForSoloParseNodeIf<Parse::NodeKind::DeclModifierKeyword>()) {
     modifier_nodes.push_back(*modifier_node);
   }
-  // FIXME: maybe pop this and return it?
   Parse::Node introducer_node = pop_introducer();
   Parse::Node returned_node =
       modifier_nodes.empty() ? introducer_node : modifier_nodes.back();
