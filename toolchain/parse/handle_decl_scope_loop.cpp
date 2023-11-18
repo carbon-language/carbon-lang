@@ -69,6 +69,14 @@ auto HandleDeclScopeLoop(Context& context) -> void {
     context.set_packaging_state(Context::PackagingState::AfterNonPackagingDecl);
   }
 
+  // FIXME: Should we change from:
+  //   `AddLeafNode` here and `ReplacePlaceholderNode` in `HandleDeclModifier`
+  //   below
+  // to:
+  //   always adding a placeholder here, and `ReplacePlaceholderNode` in
+  //   the handlers for the different kinds of declarations
+  // ?
+
   // Remaining keywords are only valid after imports are complete, and so all
   // result in a `set_packaging_state` call. Note, this may not always be
   // necessary but is probably cheaper than validating.
