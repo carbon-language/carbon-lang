@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/handle_modifier.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -70,8 +71,18 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
     }
   }
 
-  context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
+  // Process declaration modifiers and introducer.
+  auto [modifiers, introducer] =
+      ValidateModifiers(context, {.private_ = true, .protected_ = true}, [&]() {
+        return context.node_stack()
+            .PopForSoloParseNode<Parse::NodeKind::VariableIntroducer>();
+      });
+  if (modifiers.private_) {
+    context.TODO(introducer, "private");
+  }
+  if (modifiers.protected_) {
+    context.TODO(introducer, "protected");
+  }
 
   return true;
 }
