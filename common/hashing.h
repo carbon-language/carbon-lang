@@ -208,36 +208,6 @@ inline auto HashValue(const T& value) -> HashCode;
 // }
 // ```
 //
-// The extension point needs to ensure that values that compare equal (including
-// any comparisons with different types that might be used with a hash table of
-// `YourType` keys) produce the same `HashCode` values.
-//
-// For any two input values that compare unequal, even slightly, the extension
-// point should maximize the probability of each bit of their resulting
-// `HashCode`s differing. More formally, `HashCode`s should exhibit an
-// [avalanche effect][4]. However, while this is desirable, it should be
-// **secondary** to low latency. The intended use case of these functions is not
-// cryptography but in-memory hashtables where the latency and overhead of
-// computing the `HashCode` is *significantly* more important than achieving a
-// particularly high quality. The goal is to have "just enough" avalanche
-// effect, but there is not a fixed criteria for how much is enough. That should
-// be determined through practical experimentation with a hashtable and
-// distribution of keys.
-//
-// [4]: https://en.wikipedia.org/wiki/Avalanche_effect
-//
-// Another important note is that types only need to include the data that would
-// lead to an object comparing equal or not-equal to some other object,
-// including objects of other types if you intend to support heterogeneous
-// hash table lookups between those types.
-//
-// To illustrate this -- if a type has some fixed amount of data, maybe 32
-// 4-byte integers, and equality comparison only operates on the *values* of
-// those integers, then the size (32 integers, or 128 bytes) doesn't need to be
-// included in the hash. But if a type has a *dynamic* amount of data, and the
-// sizes are compared as part of equality comparison, then that dynamic size
-// should typically be included in the hash.
-//
 // This type's API also reflects the reality that high-performance hash tables
 // are used with keys that are generally small and cheap to hash.
 //
