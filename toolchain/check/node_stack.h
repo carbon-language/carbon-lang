@@ -180,6 +180,19 @@ class NodeStack {
   // Peeks at the parse node of the top of the name stack.
   auto PeekParseNode() const -> Parse::Node { return stack_.back().parse_node; }
 
+  // Finds the first parse node scanning from the top of the stack with one of
+  // the supplied kinds. Returns `Parse::Node::Invalid` if none found.
+  auto FindParseNodeKindOf(std::initializer_list<Parse::NodeKind> desired_kinds)
+      const -> Parse::Node {
+    for (const auto& entry : llvm::reverse(stack_)) {
+      auto parse_node_kind = parse_tree_->node_kind(entry.parse_node);
+      if (parse_node_kind.IsOneOf(desired_kinds)) {
+        return entry.parse_node;
+      }
+    }
+    return Parse::Node::Invalid;
+  }
+
   // Peeks at the ID associated with the top of the name stack.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
   auto Peek() const -> auto {
