@@ -13,7 +13,7 @@ import Main;
 
 // CHECK:STDERR: main.carbon:[[@LINE+3]]:1: ERROR: Imports from the current package must omit the package name.
 // CHECK:STDERR: import Main library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ~~~~~~
 import Main library "lib";
 
 // --- not_main.carbon
