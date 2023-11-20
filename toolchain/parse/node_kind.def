@@ -95,15 +95,14 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0, CARBON_TOKEN(Identifier))
 
 // ----------------------------------------------------------------------------
 
-// `library`:
-//   _external_: Literal
-// Library
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Library, 1, CARBON_TOKEN(Library))
+// The name of a package or library for `package`, `import`, and `library`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageName, 0, CARBON_TOKEN(Identifier))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryName, 0, CARBON_TOKEN(StringLiteral))
 
 // `package`:
 //   PackageIntroducer
-//   _external_: Name
-//   _optional_ _external_: Library
+//   _optional_ _external_: PackageName
+//   _optional_ _external_: LibrarySpecifier
 //   PackageApi or PackageImpl
 // PackageDirective
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageIntroducer, 0, CARBON_TOKEN(Package))
@@ -115,20 +114,36 @@ CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer,
 
 // `import`:
 //   ImportIntroducer
-//   _external_: Name
-//   _optional_ _external_: Library
+//   _optional_ _external_: PackageName
+//   _optional_ _external_: LibrarySpecifier
 // ImportDirective
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImportIntroducer, 0, CARBON_TOKEN(Import))
 CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Import)))
+// `library` as directive:
+//   LibraryIntroducer
+//   DefaultLibrary or _external_: LibraryName
+// LibraryDirective
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultLibrary, 0, CARBON_TOKEN(Default))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryIntroducer, 0, CARBON_TOKEN(Library))
+CARBON_PARSE_NODE_KIND_BRACKET(LibraryDirective, LibraryIntroducer,
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Library)))
+
+// `library` in `package` or `import`:
+//   _external_: LibraryName
+// LibrarySpecifier
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, CARBON_TOKEN(Library))
 
 // `namespace`:
 //   NamespaceStart
 //   _external_: Name or QualifiedDecl
 // Namespace
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0, CARBON_TOKEN(Namespace))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2, CARBON_TOKEN(Semi))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2,
+                                   CARBON_TOKEN(Semi)
+                                       CARBON_IF_ERROR(CARBON_TOKEN(Namespace)))
 
 // A code block:
 //   CodeBlockStart

@@ -18,12 +18,16 @@ package Foo impl;
 // CHECK:STDERR: ~~~~~~~
 package Foo library "Bar" impl;
 
+// --- no_api_main_lib.carbon
+
+// CHECK:STDERR: no_api_main_lib.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
+// CHECK:STDERR: library "Bar" impl;
+// CHECK:STDERR: ^
+library "Bar" impl;
+
 // CHECK:STDOUT: file "no_api.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file "no_api_lib.carbon" {
-// CHECK:STDOUT:   %.loc5: String = string_literal "Bar"
+// CHECK:STDOUT: }
+// CHECK:STDOUT: file "no_api_main_lib.carbon" {
 // CHECK:STDOUT: }

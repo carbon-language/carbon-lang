@@ -6,14 +6,14 @@
 
 // --- main.carbon
 
-// CHECK:STDERR: main.carbon:[[@LINE+3]]:1: ERROR: Default `Main` library must omit `package` directive.
+// CHECK:STDERR: main.carbon:[[@LINE+3]]:1: ERROR: `Main//default` must omit `package` directive.
 // CHECK:STDERR: package Main api;
 // CHECK:STDERR: ~~~~~~~
 package Main api;
 
 // --- main_impl.carbon
 
-// CHECK:STDERR: main_impl.carbon:[[@LINE+3]]:1: ERROR: Default `Main` library must omit `package` directive.
+// CHECK:STDERR: main_impl.carbon:[[@LINE+3]]:1: ERROR: `Main//default` must omit `package` directive.
 // CHECK:STDERR: package Main impl;
 // CHECK:STDERR: ~~~~~~~
 package Main impl;
@@ -21,7 +21,7 @@ package Main impl;
 // --- raw_main.carbon
 
 // `Main` isn't a keyword, so this fails the same way.
-// CHECK:STDERR: raw_main.carbon:[[@LINE+3]]:1: ERROR: Default `Main` library must omit `package` directive.
+// CHECK:STDERR: raw_main.carbon:[[@LINE+3]]:1: ERROR: `Main//default` must omit `package` directive.
 // CHECK:STDERR: package r#Main api;
 // CHECK:STDERR: ~~~~~~~
 package r#Main api;
@@ -39,10 +39,5 @@ package Main library "lib" api;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "raw_main.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file "main_lib.carbon" {
-// CHECK:STDOUT:   %.loc5: String = string_literal "lib"
 // CHECK:STDOUT: }

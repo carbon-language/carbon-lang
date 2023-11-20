@@ -12,24 +12,37 @@ package Api api;
 
 package Api library "lib" api;
 
-// --- import_api.carbon
+// --- same_package.carbon
+
+package Api library "other" api;
+
+import library default;
+import library "lib";
+
+// --- different_package.carbon
+
+package ApiOther api;
 
 import Api;
 import Api library "lib";
 
+// --- main_lib_api.carbon
+
+library "lib" api;
+
+// --- main_import.carbon
+
+import library "lib";
+
 // CHECK:STDOUT: file "api.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file "api_lib.carbon" {
-// CHECK:STDOUT:   %.loc2: String = string_literal "lib"
 // CHECK:STDOUT: }
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String
+// CHECK:STDOUT: file "same_package.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file "import_api.carbon" {
-// CHECK:STDOUT:   %.loc3: String = string_literal "lib"
+// CHECK:STDOUT: file "different_package.carbon" {
+// CHECK:STDOUT: }
+// CHECK:STDOUT: file "main_lib_api.carbon" {
+// CHECK:STDOUT: }
+// CHECK:STDOUT: file "main_import.carbon" {
 // CHECK:STDOUT: }

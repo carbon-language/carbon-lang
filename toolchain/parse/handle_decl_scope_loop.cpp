@@ -30,9 +30,13 @@ auto HandleDeclScopeLoop(Context& context) -> void {
       context.PopAndDiscardState();
       return;
     }
-    // `import` and `package` manage their packaging state.
+    // `import`, `library`, and `package` manage their packaging state.
     case Lex::TokenKind::Import: {
       context.PushState(State::Import);
+      return;
+    }
+    case Lex::TokenKind::Library: {
+      context.PushState(State::Library);
       return;
     }
     case Lex::TokenKind::Package: {
