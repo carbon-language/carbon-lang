@@ -10,6 +10,7 @@
 namespace Carbon {
 
 class Value;
+class Arena;
 
 // Returns whether `value` is a concrete type, which would be valid as the
 // static type of an expression. This is currently any type other than `auto`.
@@ -30,6 +31,11 @@ auto GetSize(Nonnull<const Value*> from) -> size_t;
 // Returns whether the value is a type whose values are themselves known to be
 // types.
 auto IsTypeOfType(Nonnull<const Value*> value) -> bool;
+
+// Deduces concrete type for 'type' based on 'expected'
+auto DeducePatternType(Nonnull<const Value*> type,
+                       Nonnull<const Value*> expected, Nonnull<Arena*> arena)
+    -> Nonnull<const Value*>;
 }  // namespace Carbon
 
 #endif  // CARBON_EXPLORER_INTERPRETER_TYPE_UTILS_H_

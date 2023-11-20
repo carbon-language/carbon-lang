@@ -4114,8 +4114,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
       auto& array_literal = cast<ArrayTypeLiteral>(*e);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> element_type,
-          TypeCheckTypeExp(&array_literal.element_type_expression(),
-                           impl_scope));
+          TypeCheckTypeExp(&array_literal.element_type_expression(), impl_scope,
+                           false));
       std::optional<size_t> array_size;
       if (array_literal.has_size_expression()) {
         CARBON_RETURN_IF_ERROR(
@@ -4331,7 +4331,7 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         // TODO: Per proposal #2188, we should be performing conversions at
         // this level rather than on the overall initializer.
-        if (!IsNonDeduceableType(type)) {
+        if (TypeIsDeduceable(type)) {
           BindingMap generic_args;
           if (!PatternMatch(type, ExpressionResult::Value(*expected),
                             binding.type().source_loc(), std::nullopt,
@@ -4341,15 +4341,9 @@ auto TypeChecker::TypeCheckPattern(
                    << "' does not match actual type '" << **expected << "'";
           }
 
-          if (type->kind() == Value::Kind::StaticArrayType) {
-            const auto& arr = cast<StaticArrayType>(*type);
-            CARBON_CHECK(!arr.has_size());
-            const size_t size = GetSize(*expected);
-            type = arena_->New<StaticArrayType>(&arr.element_type(), size);
-          } else {
-            type = *expected;
-          }
+          type = DeducePatternType(type, *expected, arena_);
         }
+
       } else {
         CARBON_RETURN_IF_ERROR(ExpectResolvedBindingType(binding, type));
       }
