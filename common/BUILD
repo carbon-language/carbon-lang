@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -109,6 +109,43 @@ cc_test(
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "hashing",
+    srcs = ["hashing.cpp"],
+    hdrs = ["hashing.h"],
+    deps = [
+        ":check",
+        ":ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "hashing_test",
+    srcs = ["hashing_test.cpp"],
+    deps = [
+        ":hashing",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "hashing_benchmark",
+    testonly = 1,
+    srcs = ["hashing_benchmark.cpp"],
+    deps = [
+        ":check",
+        ":hashing",
+        "@com_github_google_benchmark//:benchmark_main",
+        "@com_google_absl//absl/hash",
+        "@com_google_absl//absl/random",
+        "@llvm-project//llvm:Support",
     ],
 )
 
