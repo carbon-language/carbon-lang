@@ -184,7 +184,8 @@ class NodeStack {
   // the supplied kinds. Returns `Parse::Node::Invalid` if none found.
   // FIXME: possibly return Parse::NodeKind instead, matches what the current
   // only caller wants. However, Parse::NodeKind doesn't have an "invalid"
-  // value, would maybe have to return an "optional".
+  // value, would maybe have to return an "optional" or CARBON_FATAL on not
+  // found.
   auto FindParseNodeKindOf(std::initializer_list<Parse::NodeKind> desired_kinds)
       const -> Parse::Node {
     for (const auto& entry : llvm::reverse(stack_)) {
