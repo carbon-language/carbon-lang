@@ -5,10 +5,6 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: B::Foo called!
-// CHECK:STDOUT: C::Foo called!
-// CHECK:STDOUT: E::Foo called!
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -51,3 +47,8 @@ fn Main() -> i32 {
   e.Foo();
   return 0;
 }
+
+// CHECK:STDOUT: B::Foo called!
+// CHECK:STDOUT: C::Foo called!
+// CHECK:STDOUT: E::Foo called!
+// CHECK:STDOUT: result: 0

@@ -14,7 +14,7 @@ abstract class A {
 
 base class B {
   extend base: A;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_base_class.carbon:[[@LINE+1]]: Error declaring `B`: non abstract class should implement abstract method `Foo`.
+// CHECK:STDERR: COMPILATION ERROR: fail_abstract_method_base_class.carbon:[[@LINE+1]]: Error declaring `B`: non abstract class should implement abstract method `Foo`.
 }
 
 fn Main() -> i32 {

@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 abstract class A {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_body.carbon:[[@LINE+1]]: Error declaring `Foo`: abstract method cannot have a body.
+    // CHECK:STDERR: COMPILATION ERROR: fail_abstract_method_body.carbon:[[@LINE+1]]: Error declaring `Foo`: abstract method cannot have a body.
     abstract fn Foo[self: Self]() {}
 }
 

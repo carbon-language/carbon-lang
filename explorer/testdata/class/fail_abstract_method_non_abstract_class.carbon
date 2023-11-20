@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 class A {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_non_abstract_class.carbon:[[@LINE+1]]: Error declaring `Foo`: `abstract` methods are allowed only in abstract classes.
+    // CHECK:STDERR: COMPILATION ERROR: fail_abstract_method_non_abstract_class.carbon:[[@LINE+1]]: Error declaring `Foo`: `abstract` methods are allowed only in abstract classes.
     abstract fn Foo[self: Self]();
 }
 
