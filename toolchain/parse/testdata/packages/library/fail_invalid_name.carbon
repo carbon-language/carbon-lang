@@ -38,7 +38,7 @@ library "NoSemi" api
 
 // CHECK:STDERR: no_semi.carbon:[[@LINE+39]]:21: ERROR: `library` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
-// CHECK:STDERR:{{                     }}
+// CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: identifier.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

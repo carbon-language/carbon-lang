@@ -15,7 +15,7 @@ fn Div[();
 
 // CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+15]]:21: ERROR: A `(` for parameters is required after implicit parameters.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
-// CHECK:STDERR:{{                     }}
+// CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_missing_implicit_close.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

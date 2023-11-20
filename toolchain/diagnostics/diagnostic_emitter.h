@@ -369,7 +369,7 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
     if (message.location.column_number > 0) {
       *stream_ << message.location.line << "\n";
       stream_->indent(message.location.column_number - 1);
-      if (message.location.length == 1) {
+      if (message.location.length <= 1) {
         *stream_ << "^";
       } else {
         for (int i = 0; i < message.location.length; ++i) {
