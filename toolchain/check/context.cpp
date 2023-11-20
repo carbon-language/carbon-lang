@@ -15,8 +15,10 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -109,6 +111,41 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   } else {
     builder.Note(insts().Get(class_info.decl_id).parse_node(),
                  ClassForwardDeclaredHere);
+  }
+}
+
+auto Context::AddPackageImports(Parse::Node import_node,
+                                IdentifierId package_id,
+                                llvm::ArrayRef<const SemIR::File*> sem_irs,
+                                bool has_failure) -> void {
+  CARBON_CHECK(has_failure || !sem_irs.empty())
+      << "There should be either a failed import or at least one IR.";
+
+  auto name_id = SemIR::NameId::ForIdentifier(package_id);
+
+  SemIR::CrossRefIRId first_id(cross_ref_irs().size());
+  for (const auto* sem_ir : sem_irs) {
+    cross_ref_irs().Add(sem_ir);
+  }
+  if (has_failure) {
+    cross_ref_irs().Add(nullptr);
+  }
+  SemIR::CrossRefIRId last_id(cross_ref_irs().size() - 1);
+
+  auto inst_id = AddInst(SemIR::Import{.parse_node = import_node,
+                                       .first_cross_ref_ir_id = first_id,
+                                       .last_cross_ref_ir_id = last_id});
+  if (name_id.is_valid()) {
+    // Add the import to lookup. Should always succeed because imports will be
+    // uniquely named.
+    AddNameToLookup(import_node, name_id, inst_id);
+    // This binding is added primarily to show the name in formatted output.
+    AddInst(SemIR::BindName{.parse_node = import_node,
+                            .type_id = SemIR::TypeId::Error,
+                            .name_id = name_id,
+                            .value_id = inst_id});
+  } else {
+    // TODO: All names from the current package should be added.
   }
 }
 
@@ -811,6 +848,7 @@ class TypeCompleter {
       case SemIR::Deref::Kind:
       case SemIR::Field::Kind:
       case SemIR::FunctionDecl::Kind:
+      case SemIR::Import::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::IntegerLiteral::Kind:
       case SemIR::NameRef::Kind:

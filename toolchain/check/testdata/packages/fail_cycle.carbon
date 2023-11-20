@@ -48,12 +48,22 @@ package CycleChild api;
 import B;
 
 // CHECK:STDOUT: file "a.carbon" {
+// CHECK:STDOUT:   import ir1, ir1
+// CHECK:STDOUT:   %B: <error> = bind_name B, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "b.carbon" {
+// CHECK:STDOUT:   import ir1, ir1
+// CHECK:STDOUT:   %C: <error> = bind_name C, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "c.carbon" {
+// CHECK:STDOUT:   import ir1, ir1
+// CHECK:STDOUT:   %A: <error> = bind_name A, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "c.impl.carbon" {
+// CHECK:STDOUT:   import ir1, ir1
+// CHECK:STDOUT:   %C: <error> = bind_name C, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "cycle_child.carbon" {
+// CHECK:STDOUT:   import ir1, ir1
+// CHECK:STDOUT:   %B: <error> = bind_name B, %import
 // CHECK:STDOUT: }

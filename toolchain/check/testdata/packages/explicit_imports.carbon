@@ -39,10 +39,14 @@ import library "lib";
 // CHECK:STDOUT: file "api_lib.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "same_package.carbon" {
+// CHECK:STDOUT:   import ir1, ir2
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "different_package.carbon" {
+// CHECK:STDOUT:   import ir1, ir2
+// CHECK:STDOUT:   %Api: <error> = bind_name Api, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main_lib_api.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main_import.carbon" {
+// CHECK:STDOUT:   import ir1, ir1
 // CHECK:STDOUT: }

@@ -41,6 +41,8 @@ import library default;
 // CHECK:STDOUT: file "default_api.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "default.impl.carbon" {
+// CHECK:STDOUT:   import ir1, ir1
+// CHECK:STDOUT:   %A: <error> = bind_name A, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main_import_default.carbon" {
 // CHECK:STDOUT: }

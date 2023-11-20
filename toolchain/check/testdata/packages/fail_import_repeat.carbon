@@ -65,6 +65,10 @@ import library default;
 // CHECK:STDOUT: file "main_lib.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "import.carbon" {
+// CHECK:STDOUT:   import ir1, ir2
+// CHECK:STDOUT:   %Api: <error> = bind_name Api, %import.loc2
+// CHECK:STDOUT:   import ir3, ir3
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "default_import.carbon" {
+// CHECK:STDOUT:   import ir1, ir1
 // CHECK:STDOUT: }

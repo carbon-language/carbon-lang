@@ -14,6 +14,7 @@
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -61,6 +62,12 @@ class Context {
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
   auto AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void;
+
+  // Adds a package's imports to name lookup, with all libraries together.
+  // sem_irs will all be non-null; has_failure must be used for any errors.
+  auto AddPackageImports(Parse::Node import_node, IdentifierId package_id,
+                         llvm::ArrayRef<const SemIR::File*> sem_irs,
+                         bool has_failure) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,

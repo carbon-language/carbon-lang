@@ -11,6 +11,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/value_stores.h"
 
