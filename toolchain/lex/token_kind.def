@@ -21,9 +21,6 @@
 //   - CARBON_KEYWORD_TOKEN(Name, Spelling)
 //     Defines a keyword which has the provided spelling, such as `if`.
 //     Spellings must be unique.
-//     - CARBON_DECL_MODIFIER_KEYWORD_TOKEN(Name, Spelling)
-//       For keywords that may be used as modifiers before a declaration
-//       introducer keyword.
 //   - CARBON_TOKEN_WITH_VIRTUAL_NODE(Token)
 //     Wrapped around one of the abokve _TOKEN macros, indicates that this
 //     token has one additional virtual node in the parse tree.
@@ -206,7 +203,6 @@ CARBON_KEYWORD_TOKEN(Var,                 "var")
 CARBON_KEYWORD_TOKEN(Virtual,             "virtual")
 CARBON_KEYWORD_TOKEN(Where,               "where")
 CARBON_KEYWORD_TOKEN(While,               "while")
-
 // clang-format on
 #undef CARBON_KEYWORD_TOKEN
 
