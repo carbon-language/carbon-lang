@@ -619,10 +619,11 @@ fn GetArea(c: Circle) { ... }
 
 ### Namespaces
 
-Namespaces offer named paths for entities. Namespaces may be nested. Multiple
-libraries may contribute to the same namespace. In practice, packages may have
-namespaces such as `Testing` containing entities that benefit from an isolated
-space but are present in many libraries.
+Namespaces offer named paths for entities. Namespaces must be declared at file
+scope, and may be nested. Multiple libraries may contribute to the same
+namespace. In practice, packages may have namespaces such as `Testing`
+containing entities that benefit from an isolated space but are present in many
+libraries.
 
 The `namespace` keyword's syntax may loosely be expressed as a regular
 expression:
@@ -689,16 +690,6 @@ class NS.ClassT {
 fn Function() {
   // ❌ Error: A function body has its own name scope.
   var NS.b: i32 = 1;
-
-  namespace FunctionNS;
-  // ✅ Allowed: Both `FunctionNS` and `FunctionNS.c` are defined in the same
-  // name scope.
-  var FunctionNS.c: i32 = 2;
-
-  if (true) {
-    // ❌ Error: This is a separate name scope from `FunctionNS`.
-    var FunctionNS.d: i32 = 3;
-  }
 }
 
 // ✅ Allowed: declaration is in file scope, which also declared `NS`.
@@ -724,13 +715,7 @@ var (NS.c: i32, NS.d: i32) = (3, 4);
 var (e: i32, NS.f: i32) = (5, 6);
 ```
 
-This restriction only applies to binding patterns, not more general uses of
-patterns.
-
-```
-// ✅ Allowed: not a binding pattern.
-case (NS.namespace_var, local_var) => ...;
-```
+This restriction only applies to binding patterns, not other patterns.
 
 #### Aliasing
 
@@ -1033,7 +1018,7 @@ should be part of a larger testing plan.
     -   [Allow prefixing a tuple binding pattern with a namespace](/proposals/p3407.md#allow-prefixing-a-tuple-binding-pattern-with-a-namespace)
     -   [Allow binding patterns to declare names in multiple namespaces](/proposals/p3407.md#allow-binding-patterns-to-declare-names-in-multiple-namespaces)
     -   [Allow declaring names in namespaces not owned by the current scope](/proposals/p3407.md#allow-declaring-names-in-namespaces-not-owned-by-the-current-scope)
-    -   [Disallow declaring namespaces other than the file scope](/proposals/p3407.md#disallow-declaring-namespaces-other-than-the-file-scope)
+    -   [Allow declaring namespaces in scopes other than the file scope](/proposals/p3407.md#allow-declaring-namespaces-in-scopes-other-than-the-file-scope)
 
 ## References
 
