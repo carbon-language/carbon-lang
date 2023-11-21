@@ -300,6 +300,10 @@ class Context {
   auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
     return sem_ir().classes();
   }
+  auto cross_reference_irs()
+      -> ValueStore<SemIR::CrossReferenceIRId, const SemIR::File*>& {
+    return sem_ir().cross_reference_irs();
+  }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
