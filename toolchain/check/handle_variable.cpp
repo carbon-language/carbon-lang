@@ -72,17 +72,17 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
   }
 
   // Process declaration modifiers and introducer.
-  auto [modifiers, introducer] =
-      ValidateModifiers(context, {.private_ = true, .protected_ = true}, [&]() {
+  auto [modifiers, introducer] = ValidateModifiers(
+      context, DeclModifierKeywords().SetPrivate().SetProtected(), [&]() {
         return context.node_stack()
             .PopForSoloParseNode<Parse::NodeKind::VariableIntroducer>();
       });
   // For fields (members of classes) and globals.
-  if (modifiers.private_) {
+  if (modifiers.HasPrivate()) {
     context.TODO(introducer, "private");
   }
   // For fields (members of classes).
-  if (modifiers.protected_) {
+  if (modifiers.HasProtected()) {
     context.TODO(introducer, "protected");
   }
 

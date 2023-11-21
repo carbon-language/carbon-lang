@@ -16,25 +16,29 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
   // Process declaration modifiers and introducer.
   auto [modifiers, introducer] = ValidateModifiers(
       context,
-      {.private_ = true, .protected_ = true, .default_ = true, .final_ = true},
+      DeclModifierKeywords()
+          .SetPrivate()
+          .SetProtected()
+          .SetDefault()
+          .SetFinal(),
       [&]() {
         return context.node_stack()
             .PopForSoloParseNode<Parse::NodeKind::LetIntroducer>();
       });
   // For globals and members of classes.
-  if (modifiers.private_) {
+  if (modifiers.HasPrivate()) {
     context.TODO(introducer, "private");
   }
   // For members of classes.
-  if (modifiers.protected_) {
+  if (modifiers.HasProtected()) {
     context.TODO(introducer, "protected");
   }
   // For members of interfaces.
-  if (modifiers.default_) {
+  if (modifiers.HasDefault()) {
     context.TODO(introducer, "default");
   }
   // For members of interfaces.
-  if (modifiers.final_) {
+  if (modifiers.HasFinal()) {
     context.TODO(introducer, "final");
   }
 

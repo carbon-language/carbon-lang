@@ -9,18 +9,48 @@
 
 namespace Carbon::Check {
 
-struct DeclModifierKeywords {
-  // At most one of these, and if present it must be first:
-  bool private_ = false;
-  bool protected_ = false;
+class DeclModifierKeywords {
+ public:
+  enum DeclModifierKeywordsRaw {
+    // At most one of these, and if present it must be first:
+    Private = 1 << 0,
+    Protected = 1 << 1,
+    // At most one of these allowed for a given declaration:
+    Abstract = 1 << 2,
+    Base = 1 << 3,
+    Default = 1 << 4,
+    Final = 1 << 5,
+    Override = 1 << 6,
+    Virtual = 1 << 7
+  };
 
-  // At most one of these allowed for a given declaration:
-  bool abstract_ = false;
-  bool base_ = false;
-  bool default_ = false;
-  bool final_ = false;
-  bool override_ = false;
-  bool virtual_ = false;
+  DeclModifierKeywords() : keywords(static_cast<DeclModifierKeywordsRaw>(0)) {}
+  auto Set(DeclModifierKeywordsRaw to_set) const -> DeclModifierKeywords {
+    DeclModifierKeywords ret;
+    ret.keywords = static_cast<DeclModifierKeywordsRaw>(keywords | to_set);
+    return ret;
+  }
+  auto SetPrivate() const -> DeclModifierKeywords { return Set(Private); }
+  auto SetProtected() const -> DeclModifierKeywords { return Set(Protected); }
+  auto SetAbstract() const -> DeclModifierKeywords { return Set(Abstract); }
+  auto SetBase() const -> DeclModifierKeywords { return Set(Base); }
+  auto SetDefault() const -> DeclModifierKeywords { return Set(Default); }
+  auto SetFinal() const -> DeclModifierKeywords { return Set(Final); }
+  auto SetOverride() const -> DeclModifierKeywords { return Set(Override); }
+  auto SetVirtual() const -> DeclModifierKeywords { return Set(Virtual); }
+
+  auto Has(unsigned to_Has) const -> bool { return keywords & to_Has; }
+  auto HasPrivate() const -> bool { return Has(Private); }
+  auto HasProtected() const -> bool { return Has(Protected); }
+  auto HasAbstract() const -> bool { return Has(Abstract); }
+  auto HasBase() const -> bool { return Has(Base); }
+  auto HasDefault() const -> bool { return Has(Default); }
+  auto HasFinal() const -> bool { return Has(Final); }
+  auto HasOverride() const -> bool { return Has(Override); }
+  auto HasVirtual() const -> bool { return Has(Virtual); }
+
+ private:
+  DeclModifierKeywordsRaw keywords;
 };
 
 // Pops any DeclModifierKeyword parse nodes from `context` and then the

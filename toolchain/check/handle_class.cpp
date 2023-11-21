@@ -26,21 +26,25 @@ static auto BuildClassDecl(Context& context)
   // Process modifiers and introducer.
   auto [modifiers, introducer] = ValidateModifiers(
       context,
-      {.private_ = true, .protected_ = true, .abstract_ = true, .base_ = true},
+      DeclModifierKeywords()
+          .SetPrivate()
+          .SetProtected()
+          .SetAbstract()
+          .SetBase(),
       [&]() {
         return context.node_stack()
             .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
       });
-  if (modifiers.private_) {
+  if (modifiers.HasPrivate()) {
     context.TODO(introducer, "private");
   }
   // Only relevant for classes that are members of other classes.
-  if (modifiers.protected_) {
+  if (modifiers.HasProtected()) {
     context.TODO(introducer, "protected");
   }
-  auto inheritance_kind = modifiers.abstract_ ? SemIR::Class::Abstract
-                          : modifiers.base_   ? SemIR::Class::Base
-                                              : SemIR::Class::Final;
+  auto inheritance_kind = modifiers.HasAbstract() ? SemIR::Class::Abstract
+                          : modifiers.HasBase()   ? SemIR::Class::Base
+                                                  : SemIR::Class::Final;
 
   auto decl_block_id = context.inst_block_stack().Pop();
 

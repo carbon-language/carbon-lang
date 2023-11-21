@@ -55,80 +55,80 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
                       "Modifier must appear earlier.");
     CARBON_DIAGNOSTIC(ModifierInWrongOrderFirst, Note, "Before this modifier.");
 
+    auto access = [&](auto keyword) {
+      if (!allowed.Has(keyword)) {
+        context.emitter()
+            .Build(modifier_node, ModifierNotAllowedOnDeclaration)
+            .Note(introducer_node, ModifierDeclarationNote)
+            .Emit();
+      } else if (found.Has(keyword)) {
+        context.emitter()
+            .Build(modifier_node, ModifierDuplicated)
+            .Note(saw_access, ModifierDuplicatedPrevious)
+            .Emit();
+      } else if (saw_access != Parse::Node::Invalid) {
+        context.emitter()
+            .Build(modifier_node, ModifierNotAllowedWith)
+            .Note(saw_access, ModifierNotAllowedWithPrevious)
+            .Emit();
+      } else if (saw_other != Parse::Node::Invalid) {
+        context.emitter()
+            .Build(modifier_node, ModifierInWrongOrderSecond)
+            .Note(saw_other, ModifierInWrongOrderFirst)
+            .Emit();
+      } else {
+        found = found.Set(keyword);
+        saw_access = modifier_node;
+      }
+    };
+    auto other = [&](auto keyword) {
+      if (!allowed.Has(keyword)) {
+        context.emitter()
+            .Build(modifier_node, ModifierNotAllowedOnDeclaration)
+            .Note(introducer_node, ModifierDeclarationNote)
+            .Emit();
+      } else if (found.Has(keyword)) {
+        context.emitter()
+            .Build(modifier_node, ModifierDuplicated)
+            .Note(saw_other, ModifierDuplicatedPrevious)
+            .Emit();
+      } else if (saw_other != Parse::Node::Invalid) {
+        context.emitter()
+            .Build(modifier_node, ModifierNotAllowedWith)
+            .Note(saw_other, ModifierNotAllowedWithPrevious)
+            .Emit();
+      } else {
+        found = found.Set(keyword);
+        saw_other = modifier_node;
+      }
+    };
+
     switch (context.tokens().GetKind(modifier_token)) {
-#define ACCESS(name)                                             \
-  {                                                              \
-    if (!allowed.name) {                                         \
-      context.emitter()                                          \
-          .Build(modifier_node, ModifierNotAllowedOnDeclaration) \
-          .Note(introducer_node, ModifierDeclarationNote)        \
-          .Emit();                                               \
-    } else if (found.name) {                                     \
-      context.emitter()                                          \
-          .Build(modifier_node, ModifierDuplicated)              \
-          .Note(saw_access, ModifierDuplicatedPrevious)          \
-          .Emit();                                               \
-    } else if (saw_access != Parse::Node::Invalid) {             \
-      context.emitter()                                          \
-          .Build(modifier_node, ModifierNotAllowedWith)          \
-          .Note(saw_access, ModifierNotAllowedWithPrevious)      \
-          .Emit();                                               \
-    } else if (saw_other != Parse::Node::Invalid) {              \
-      context.emitter()                                          \
-          .Build(modifier_node, ModifierInWrongOrderSecond)      \
-          .Note(saw_other, ModifierInWrongOrderFirst)            \
-          .Emit();                                               \
-    } else {                                                     \
-      found.name = true;                                         \
-      saw_access = modifier_node;                                \
-    }                                                            \
-    break;                                                       \
-  }
-
       case Lex::TokenKind::Private:
-        ACCESS(private_)
+        access(DeclModifierKeywords::Private);
+        break;
       case Lex::TokenKind::Protected:
-        ACCESS(protected_)
-
-#undef ACCESS
-#define OTHER(name)                                              \
-  {                                                              \
-    if (!allowed.name) {                                         \
-      context.emitter()                                          \
-          .Build(modifier_node, ModifierNotAllowedOnDeclaration) \
-          .Note(introducer_node, ModifierDeclarationNote)        \
-          .Emit();                                               \
-    } else if (found.name) {                                     \
-      context.emitter()                                          \
-          .Build(modifier_node, ModifierDuplicated)              \
-          .Note(saw_other, ModifierDuplicatedPrevious)           \
-          .Emit();                                               \
-    } else if (saw_other != Parse::Node::Invalid) {              \
-      context.emitter()                                          \
-          .Build(modifier_node, ModifierNotAllowedWith)          \
-          .Note(saw_other, ModifierNotAllowedWithPrevious)       \
-          .Emit();                                               \
-    } else {                                                     \
-      found.name = true;                                         \
-      saw_other = modifier_node;                                 \
-    }                                                            \
-    break;                                                       \
-  }
+        access(DeclModifierKeywords::Protected);
+        break;
 
       case Lex::TokenKind::Abstract:
-        OTHER(abstract_)
+        other(DeclModifierKeywords::Abstract);
+        break;
       case Lex::TokenKind::Base:
-        OTHER(base_)
+        other(DeclModifierKeywords::Base);
+        break;
       case Lex::TokenKind::Default:
-        OTHER(default_)
+        other(DeclModifierKeywords::Default);
+        break;
       case Lex::TokenKind::Final:
-        OTHER(final_)
+        other(DeclModifierKeywords::Final);
+        break;
       case Lex::TokenKind::Override:
-        OTHER(override_)
+        other(DeclModifierKeywords::Override);
+        break;
       case Lex::TokenKind::Virtual:
-        OTHER(virtual_)
-
-#undef OTHER
+        other(DeclModifierKeywords::Virtual);
+        break;
 
       default: {
         CARBON_FATAL() << "Unhandled declaration modifier keyword";

@@ -60,43 +60,44 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   // Process modifiers and introducer.
   auto [modifiers, fn_node] = ValidateModifiers(
       context,
-      {.private_ = true,
-       .protected_ = true,
-       .abstract_ = true,
-       .default_ = true,
-       .final_ = true,
-       .override_ = true,
-       .virtual_ = true},
+      DeclModifierKeywords()
+          .SetPrivate()
+          .SetProtected()
+          .SetAbstract()
+          .SetDefault()
+          .SetFinal()
+          .SetOverride()
+          .SetVirtual(),
       [&]() {
         return context.node_stack()
             .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
       });
   // For members of classes or free functions
-  if (modifiers.private_) {
+  if (modifiers.HasPrivate()) {
     context.TODO(fn_node, "private");
   }
   // Only for members of classes
-  if (modifiers.protected_) {
+  if (modifiers.HasProtected()) {
     context.TODO(fn_node, "protected");
   }
   // Only for members of abstract classes
-  if (modifiers.abstract_) {
+  if (modifiers.HasAbstract()) {
     context.TODO(fn_node, "abstract");
   }
   // Only for members of interfaces
-  if (modifiers.default_) {
+  if (modifiers.HasDefault()) {
     context.TODO(fn_node, "default");
   }
   // Only for members of interfaces
-  if (modifiers.final_) {
+  if (modifiers.HasFinal()) {
     context.TODO(fn_node, "final");
   }
   // Only for members of derived classes
-  if (modifiers.override_) {
+  if (modifiers.HasOverride()) {
     context.TODO(fn_node, "override");
   }
   // Only for members of base classes
-  if (modifiers.virtual_) {
+  if (modifiers.HasVirtual()) {
     context.TODO(fn_node, "virtual");
   }
 
