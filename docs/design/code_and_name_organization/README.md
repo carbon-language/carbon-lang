@@ -715,7 +715,8 @@ var (NS.c: i32, NS.d: i32) = (3, 4);
 var (e: i32, NS.f: i32) = (5, 6);
 ```
 
-This restriction only applies to binding patterns, not other patterns.
+This restriction only applies when declaring names in binding patterns, not
+other name uses in patterns.
 
 #### Aliasing
 
