@@ -234,6 +234,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   }
 
   auto filename() const -> llvm::StringRef { return source_->filename(); }
+  auto is_regular_file() const -> bool { return source_->is_regular_file(); }
 
  private:
   friend class Lexer;

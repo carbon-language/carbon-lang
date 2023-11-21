@@ -298,13 +298,16 @@ static auto BuildApiMapAndDiagnosePackaging(
     }
 
     // Validate file extensions. Note imports rely the packaging directive, not
-    // the extension.
+    // the extension. If the input is not a regular file, for example because it
+    // is stdin, no filename checking is performed.
     auto filename = unit_info.unit->tokens->filename();
     static constexpr llvm::StringLiteral ApiExt = ".carbon";
     static constexpr llvm::StringLiteral ImplExt = ".impl.carbon";
     bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);
     auto want_ext = is_impl ? ImplExt : ApiExt;
-    if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
+    if ((is_api_with_impl_ext || !filename.ends_with(want_ext)) &&
+        unit_info.unit->tokens->is_regular_file() &&
+        !unit_info.unit->tokens->filename().empty()) {
       CARBON_DIAGNOSTIC(IncorrectExtension, Error,
                         "File extension of `{0}` required for `{1}`.",
                         llvm::StringLiteral, Lex::TokenKind);

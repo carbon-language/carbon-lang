@@ -41,7 +41,7 @@ def main() -> None:
                 f"Args do not seem to be test files; for example, {sys.argv[1]}"
             )
         argv.append("--file_tests=" + ",".join(file_tests))
-    subprocess.run(argv, check=True)
+    subprocess.run(argv, check=True, stdin=subprocess.DEVNULL)
 
 
 if __name__ == "__main__":

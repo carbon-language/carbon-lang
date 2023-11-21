@@ -34,6 +34,11 @@ namespace Carbon {
 // some implementation complexity in the future if needed.
 class SourceBuffer {
  public:
+  // Opens and reads the contents of stdin. Returns a SourceBuffer on success.
+  // Prints an error and returns nullopt on failure.
+  static auto CreateFromStdin(DiagnosticConsumer& consumer)
+      -> std::optional<SourceBuffer>;
+
   // Opens the requested file. Returns a SourceBuffer on success. Prints an
   // error and returns nullopt on failure.
   static auto CreateFromFile(llvm::vfs::FileSystem& fs,
@@ -50,13 +55,24 @@ class SourceBuffer {
     return text_->getBuffer();
   }
 
+  [[nodiscard]] auto is_regular_file() const -> bool {
+    return is_regular_file_;
+  }
+
  private:
   explicit SourceBuffer(std::string filename,
-                        std::unique_ptr<llvm::MemoryBuffer> text)
-      : filename_(std::move(filename)), text_(std::move(text)) {}
+                        std::unique_ptr<llvm::MemoryBuffer> text,
+                        bool is_regular_file)
+      : filename_(std::move(filename)),
+        text_(std::move(text)),
+        is_regular_file_(is_regular_file) {}
 
   std::string filename_;
   std::unique_ptr<llvm::MemoryBuffer> text_;
+
+  // Whether this buffer is a regular file, rather than stdin or a named pipe or
+  // similar.
+  bool is_regular_file_;
 };
 
 }  // namespace Carbon
