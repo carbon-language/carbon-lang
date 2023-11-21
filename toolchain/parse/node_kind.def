@@ -180,7 +180,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
                                    CARBON_IF_ERROR(CARBON_TOKEN(Fn)))
 
 // A parameter list, possibly implicit:
-//   [Implicit]ParamertListStart
+//   [Implicit]ParamListStart
 //   _external_: [Generic]BindingPattern
 //   ParamListComma
 // [Implicit]ParamList

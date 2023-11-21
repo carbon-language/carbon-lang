@@ -1025,13 +1025,13 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
 //
 // var ...             (variant is not Returned)
 // ^~~
-//   1. PatternAsVariable
+//   1. BindingPatternAsVariable
 //   2. VarAfterPattern
 //   3. VarFinishAs(Decl|For)
 //
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
-//   1. PatternAsVariable
+//   1. BindingPatternAsVariable
 //   2. VarAfterPattern
 //   3. VarFinishAsDecl
 //
@@ -1073,7 +1073,7 @@ CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
 //
 // let ...
 // ^~~
-//   1. PatternAsLet
+//   1. BindingPatternAsLet
 //   2. LetAfterPattern
 //   3. LetFinish
 CARBON_PARSE_STATE(Let)
