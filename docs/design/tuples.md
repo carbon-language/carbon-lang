@@ -129,12 +129,12 @@ answer here:
 
 This remains an area of active investigation. There are serious problems with
 all approaches here. Without the collapse of one-tuples to scalars we need to
-distinguish between a parenthesized expression (`(42)`) and a one tuple (in
-Python or Rust, `(42,)`), and if we distinguish them then we cannot model a
+distinguish between a parenthesized single expression (`(42)`) and a one-tuple
+(in Python or Rust, `(42,)`), and if we distinguish them then we cannot model a
 function call as simply a function name followed by a tuple of arguments; one of
 `f(0)` and `f(0,)` becomes a special case. With the collapse, we either break
 genericity by forbidding `(42)[0]` from working, or it isn't clear what it means
-to access a nested tuple's first element from a parenthesized expression:
+to access a nested tuple's first element from a parenthesized single expression:
 `((1, 2))[0]`.
 
 ### Function pattern match
