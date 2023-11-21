@@ -7,10 +7,10 @@
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `default`.
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: Modifier must appear earlier.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `protected` must appear before `default`.
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: Before this modifier.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `default` previously appeared here.
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR: ^
 default protected fn WrongOrder();
@@ -18,10 +18,10 @@ default protected fn WrongOrder();
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `virtual`.
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: Modifier repeated on the same declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `virtual` repeated on declaration.
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: Previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `virtual` previously appeared here.
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: ^
 virtual virtual fn DuplicateVirtual() {}
@@ -29,10 +29,10 @@ virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `private`.
 // CHECK:STDERR: private protected fn TwoAccess();
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: Modifier not allowed on the same declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `protected` not allowed on declaration with `private`.
 // CHECK:STDERR: private protected fn TwoAccess();
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: With this modifier.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `private` previously appeared here.
 // CHECK:STDERR: private protected fn TwoAccess();
 // CHECK:STDERR: ^
 private protected fn TwoAccess();
@@ -40,35 +40,32 @@ private protected fn TwoAccess();
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `abstract`.
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: ERROR: Modifier not allowed on the same declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: ERROR: `virtual` not allowed on declaration with `abstract`.
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR:          ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: With this modifier.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `abstract` previously appeared here.
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR: ^
 abstract virtual fn ModifiersConflict() {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:1: ERROR: Modifier not allowed.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `base` not allowed on `fn` declaration.
 // CHECK:STDERR: base fn InvalidModifier();
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:6: On this declaration.
-// CHECK:STDERR: base fn InvalidModifier();
-// CHECK:STDERR:      ^
 base fn InvalidModifier();
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: ERROR: Semantics TODO: `default`.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+12]]:9: ERROR: Modifier not allowed on the same declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+12]]:9: ERROR: `final` not allowed on declaration with `default`.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: With this modifier.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: `default` previously appeared here.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:15: ERROR: Modifier not allowed on the same declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:15: ERROR: `virtual` not allowed on declaration with `default`.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR:               ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: With this modifier.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `default` previously appeared here.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^
 default final virtual fn ModifiersConflict2() {}

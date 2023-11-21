@@ -41,40 +41,46 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
     auto modifier_token = context.parse_tree().node_token(modifier_node);
 
     CARBON_DIAGNOSTIC(ModifierNotAllowedOnDeclaration, Error,
-                      "Modifier not allowed.");
-    CARBON_DIAGNOSTIC(ModifierDeclarationNote, Note, "On this declaration.");
-    CARBON_DIAGNOSTIC(ModifierDuplicated, Error,
-                      "Modifier repeated on the same declaration.");
-    CARBON_DIAGNOSTIC(ModifierDuplicatedPrevious, Note,
-                      "Previously appeared here.");
+                      "`{0}` not allowed on `{1}` declaration.",
+                      llvm::StringRef, llvm::StringRef);
+    CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration.",
+                      llvm::StringRef);
     CARBON_DIAGNOSTIC(ModifierNotAllowedWith, Error,
-                      "Modifier not allowed on the same declaration.");
-    CARBON_DIAGNOSTIC(ModifierNotAllowedWithPrevious, Note,
-                      "With this modifier.");
-    CARBON_DIAGNOSTIC(ModifierInWrongOrderSecond, Error,
-                      "Modifier must appear earlier.");
-    CARBON_DIAGNOSTIC(ModifierInWrongOrderFirst, Note, "Before this modifier.");
+                      "`{0}` not allowed on declaration with `{1}`.",
+                      llvm::StringRef, llvm::StringRef);
+    CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
+                      "`{0}` must appear before `{1}`.", llvm::StringRef,
+                      llvm::StringRef);
+    CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here.",
+                      llvm::StringRef);
+
+    auto text_for_node = [&](auto parse_node) {
+      return context.tokens().GetTokenText(
+          context.parse_tree().node_token(parse_node));
+    };
 
     auto access = [&](auto keyword) {
       if (!allowed.Has(keyword)) {
-        context.emitter()
-            .Build(modifier_node, ModifierNotAllowedOnDeclaration)
-            .Note(introducer_node, ModifierDeclarationNote)
-            .Emit();
+        context.emitter().Emit(modifier_node, ModifierNotAllowedOnDeclaration,
+                               text_for_node(modifier_node),
+                               text_for_node(introducer_node));
       } else if (found.Has(keyword)) {
         context.emitter()
-            .Build(modifier_node, ModifierDuplicated)
-            .Note(saw_access, ModifierDuplicatedPrevious)
+            .Build(modifier_node, ModifierRepeated,
+                   text_for_node(modifier_node))
+            .Note(saw_access, ModifierPrevious, text_for_node(saw_access))
             .Emit();
       } else if (saw_access != Parse::Node::Invalid) {
         context.emitter()
-            .Build(modifier_node, ModifierNotAllowedWith)
-            .Note(saw_access, ModifierNotAllowedWithPrevious)
+            .Build(modifier_node, ModifierNotAllowedWith,
+                   text_for_node(modifier_node), text_for_node(saw_access))
+            .Note(saw_access, ModifierPrevious, text_for_node(saw_access))
             .Emit();
       } else if (saw_other != Parse::Node::Invalid) {
         context.emitter()
-            .Build(modifier_node, ModifierInWrongOrderSecond)
-            .Note(saw_other, ModifierInWrongOrderFirst)
+            .Build(modifier_node, ModifierMustAppearBefore,
+                   text_for_node(modifier_node), text_for_node(saw_other))
+            .Note(saw_other, ModifierPrevious, text_for_node(saw_other))
             .Emit();
       } else {
         found = found.Set(keyword);
@@ -83,19 +89,20 @@ auto ValidateModifiers(Context& context, DeclModifierKeywords allowed,
     };
     auto other = [&](auto keyword) {
       if (!allowed.Has(keyword)) {
-        context.emitter()
-            .Build(modifier_node, ModifierNotAllowedOnDeclaration)
-            .Note(introducer_node, ModifierDeclarationNote)
-            .Emit();
+        context.emitter().Emit(modifier_node, ModifierNotAllowedOnDeclaration,
+                               text_for_node(modifier_node),
+                               text_for_node(introducer_node));
       } else if (found.Has(keyword)) {
         context.emitter()
-            .Build(modifier_node, ModifierDuplicated)
-            .Note(saw_other, ModifierDuplicatedPrevious)
+            .Build(modifier_node, ModifierRepeated,
+                   text_for_node(modifier_node))
+            .Note(saw_other, ModifierPrevious, text_for_node(saw_other))
             .Emit();
       } else if (saw_other != Parse::Node::Invalid) {
         context.emitter()
-            .Build(modifier_node, ModifierNotAllowedWith)
-            .Note(saw_other, ModifierNotAllowedWithPrevious)
+            .Build(modifier_node, ModifierNotAllowedWith,
+                   text_for_node(modifier_node), text_for_node(saw_other))
+            .Note(saw_other, ModifierPrevious, text_for_node(saw_other))
             .Emit();
       } else {
         found = found.Set(keyword);

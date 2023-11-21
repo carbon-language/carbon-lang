@@ -17,10 +17,10 @@ protected var b: i32;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `private`.
 // CHECK:STDERR: private protected var c: i32;
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: Modifier not allowed on the same declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `protected` not allowed on declaration with `private`.
 // CHECK:STDERR: private protected var c: i32;
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: With this modifier.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `private` previously appeared here.
 // CHECK:STDERR: private protected var c: i32;
 // CHECK:STDERR: ^
 private protected var c: i32;
@@ -28,20 +28,17 @@ private protected var c: i32;
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `protected`.
 // CHECK:STDERR: protected protected var d: i32;
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: ERROR: Modifier repeated on the same declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: ERROR: `protected` repeated on declaration.
 // CHECK:STDERR: protected protected var d: i32;
 // CHECK:STDERR:           ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: Previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `protected` previously appeared here.
 // CHECK:STDERR: protected protected var d: i32;
 // CHECK:STDERR: ^
 protected protected var d: i32;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:1: ERROR: Modifier not allowed.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `abstract` not allowed on `var` declaration.
 // CHECK:STDERR: abstract var e: i32;
 // CHECK:STDERR: ^
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:10: On this declaration.
-// CHECK:STDERR: abstract var e: i32;
-// CHECK:STDERR:          ^
 abstract var e: i32;
 
 // CHECK:STDOUT: file "fail_modifiers.carbon" {
