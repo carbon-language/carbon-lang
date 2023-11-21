@@ -18,46 +18,10 @@ struct FilenameTranslator : DiagnosticLocationTranslator<llvm::StringRef> {
 };
 }  // namespace
 
-// Checks that a memory buffer is suitable for use as a source buffer. Returns
-// true if so; diagnoses and returns false if not.
-static auto CheckBuffer(
-    const llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>& buffer,
-    llvm::StringRef filename, DiagnosticEmitter<llvm::StringRef>& emitter)
-    -> bool {
-  if (buffer.getError()) {
-    CARBON_DIAGNOSTIC(ErrorReadingFile, Error, "Error reading file: {0}",
-                      std::string);
-    emitter.Emit(filename, ErrorReadingFile, buffer.getError().message());
-    return false;
-  }
-
-  if (buffer.get()->getBufferSize() >= std::numeric_limits<int32_t>::max()) {
-    CARBON_DIAGNOSTIC(FileTooLarge, Error,
-                      "File is over the 2GiB input limit; size is {0} bytes.",
-                      int64_t);
-    emitter.Emit(filename, FileTooLarge, buffer.get()->getBufferSize());
-    return false;
-  }
-
-  return true;
-}
-
 auto SourceBuffer::CreateFromStdin(DiagnosticConsumer& consumer)
     -> std::optional<SourceBuffer> {
-  FilenameTranslator translator;
-  DiagnosticEmitter<llvm::StringRef> emitter(translator, consumer);
-
-  static const llvm::StringLiteral StdinName = "<stdin>";
-
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
-      llvm::MemoryBuffer::getSTDIN();
-
-  if (!CheckBuffer(buffer, StdinName, emitter)) {
-    return std::nullopt;
-  }
-
-  return SourceBuffer(StdinName.str(), std::move(buffer.get()),
-                      /*is_regular_file=*/false);
+  return CreateFromMemoryBuffer(llvm::MemoryBuffer::getSTDIN(), "<stdin>",
+                                /*is_regular_file=*/false, consumer);
 }
 
 auto SourceBuffer::CreateFromFile(llvm::vfs::FileSystem& fs,
@@ -90,10 +54,30 @@ auto SourceBuffer::CreateFromFile(llvm::vfs::FileSystem& fs,
   bool is_regular_file = status->isRegularFile();
   int64_t size = is_regular_file ? status->getSize() : -1;
 
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
-      (*file)->getBuffer(filename, size, /*RequiresNullTerminator=*/false);
+  return CreateFromMemoryBuffer(
+      (*file)->getBuffer(filename, size, /*RequiresNullTerminator=*/false),
+      filename, is_regular_file, consumer);
+}
 
-  if (!CheckBuffer(buffer, "<stdin>", emitter)) {
+auto SourceBuffer::CreateFromMemoryBuffer(
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
+    llvm::StringRef filename, bool is_regular_file,
+    DiagnosticConsumer& consumer) -> std::optional<SourceBuffer> {
+  FilenameTranslator translator;
+  DiagnosticEmitter<llvm::StringRef> emitter(translator, consumer);
+
+  if (buffer.getError()) {
+    CARBON_DIAGNOSTIC(ErrorReadingFile, Error, "Error reading file: {0}",
+                      std::string);
+    emitter.Emit(filename, ErrorReadingFile, buffer.getError().message());
+    return std::nullopt;
+  }
+
+  if (buffer.get()->getBufferSize() >= std::numeric_limits<int32_t>::max()) {
+    CARBON_DIAGNOSTIC(FileTooLarge, Error,
+                      "File is over the 2GiB input limit; size is {0} bytes.",
+                      int64_t);
+    emitter.Emit(filename, FileTooLarge, buffer.get()->getBufferSize());
     return std::nullopt;
   }
 

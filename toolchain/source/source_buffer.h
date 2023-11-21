@@ -60,6 +60,13 @@ class SourceBuffer {
   }
 
  private:
+  // Creates a `SourceBuffer` from the given `llvm::MemoryBuffer`. Prints an
+  // error and returns nullopt on failure.
+  static auto CreateFromMemoryBuffer(
+      llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
+      llvm::StringRef filename, bool is_regular_file,
+      DiagnosticConsumer& consumer) -> std::optional<SourceBuffer>;
+
   explicit SourceBuffer(std::string filename,
                         std::unique_ptr<llvm::MemoryBuffer> text,
                         bool is_regular_file)
