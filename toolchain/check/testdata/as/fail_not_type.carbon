@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:19: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: let n: i32 = 1 as 2;
-// CHECK:STDERR:                   ^
+// CHECK:STDERR:                   ^~
 let n: i32 = 1 as 2;
 
 // CHECK:STDOUT: file "fail_not_type.carbon" {

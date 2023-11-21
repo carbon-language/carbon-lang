@@ -7,11 +7,11 @@
 fn Main() {
   // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+3]]:3: ERROR: Name `undeclared` not found.
   // CHECK:STDERR:   undeclared = 42;
-  // CHECK:STDERR:   ~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~
   undeclared = 42;
   // CHECK:STDERR: fail_assignment_to_error.carbon:[[@LINE+3]]:4: ERROR: Name `also_undeclared` not found.
   // CHECK:STDERR:   *also_undeclared = 42;
-  // CHECK:STDERR:    ~~~~~~~~~~~~~~~
+  // CHECK:STDERR:    ^~~~~~~~~~~~~~~
   *also_undeclared = 42;
 }
 

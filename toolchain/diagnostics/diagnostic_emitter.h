@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 
+#include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <type_traits>
@@ -369,12 +371,15 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
     if (message.location.column_number > 0) {
       *stream_ << message.location.line << "\n";
       stream_->indent(message.location.column_number - 1);
-      if (message.location.length <= 1) {
-        *stream_ << "^";
-      } else {
-        for (int i = 0; i < message.location.length; ++i) {
-          *stream_ << "~";
-        }
+      *stream_ << "^";
+      // We want to confirm the underlined portion is atleast 1 '~' long but it
+      // does not go past the end of the line in the case of a multiline token.
+      int underline_length = std::max(1, message.location.length - 1);
+      underline_length = std::min(
+          underline_length, static_cast<int32_t>(message.location.line.size()) -
+                                message.location.column_number);
+      for (int i = 0; i < underline_length; ++i) {
+        *stream_ << "~";
       }
       *stream_ << "\n";
     }

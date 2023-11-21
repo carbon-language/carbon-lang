@@ -7,7 +7,7 @@
 fn Main() {
   // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+3]]:16: ERROR: Name `x` not found.
   // CHECK:STDERR:   var x: i32 = x;
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:                ^~
   var x: i32 = x;
 }
 

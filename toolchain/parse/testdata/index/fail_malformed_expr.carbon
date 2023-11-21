@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_malformed_expr.carbon:[[@LINE+3]]:17: ERROR: Unexpected tokens before `]`.
 // CHECK:STDERR: var v: i32 = t[0,];
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:                 ^~
 var v: i32 = t[0,];
 
 // CHECK:STDOUT: - filename: fail_malformed_expr.carbon

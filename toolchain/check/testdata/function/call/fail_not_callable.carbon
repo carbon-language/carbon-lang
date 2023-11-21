@@ -7,7 +7,7 @@
 fn Run() {
   // CHECK:STDERR: fail_not_callable.carbon:[[@LINE+3]]:23: ERROR: Value of type `String` is not callable.
   // CHECK:STDERR:   var x: i32 = "hello"();
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR:                       ^~
   var x: i32 = "hello"();
 }
 

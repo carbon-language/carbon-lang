@@ -12,18 +12,18 @@ class Class {
 fn F(c: Class, p: Class*) {
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:6: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   c.F();
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:      ^~
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-8]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: Class*]();
-  // CHECK:STDERR:             ~~~~
+  // CHECK:STDERR:             ^~~~
   c.F();
 
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:6: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   c.G();
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:      ^~
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-15]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
-  // CHECK:STDERR:             ~~~~
+  // CHECK:STDERR:             ^~~~
   c.G();
 
   // This call is OK.
@@ -31,10 +31,10 @@ fn F(c: Class, p: Class*) {
 
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:9: ERROR: Cannot implicitly convert from `Class*` to `Class`.
   // CHECK:STDERR:   (*p).G();
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:         ^~
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-26]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
-  // CHECK:STDERR:             ~~~~
+  // CHECK:STDERR:             ^~~~
   (*p).G();
 }
 

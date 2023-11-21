@@ -17,7 +17,7 @@ fn F() {
   //
   // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+3]]:33: ERROR: Cannot copy value of type `Class`.
   // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
-  // CHECK:STDERR:                                 ^
+  // CHECK:STDERR:                                 ^~
   var c: Class = {.a = 1, .b = 2} as Class;
   G(&c);
 }

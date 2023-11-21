@@ -7,7 +7,7 @@
 var a: (i32, i32) = (12, 6);
 // CHECK:STDERR: fail_tuple_out_of_bound_access.carbon:[[@LINE+3]]:17: ERROR: Index `2` is past the end of `(i32, i32) as type`.
 // CHECK:STDERR: var b: i32 = a[2];
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:                 ^~
 var b: i32 = a[2];
 
 // CHECK:STDOUT: constants {

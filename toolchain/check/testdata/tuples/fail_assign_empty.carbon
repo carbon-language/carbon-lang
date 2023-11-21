@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:18: ERROR: Cannot initialize tuple of 1 element(s) from tuple with 0 element(s).
 // CHECK:STDERR: var x: (i32,) = ();
-// CHECK:STDERR:                  ^
+// CHECK:STDERR:                  ^~
 var x: (i32,) = ();
 
 // CHECK:STDOUT: constants {

@@ -11,74 +11,74 @@ fn H() -> {.a: i32};
 fn AddressOfLiteral() {
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &0;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &0;
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &true;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &true;
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &1.0;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &1.0;
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &"Hello";
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &"Hello";
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &(1, 2);
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &(1, 2);
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &{.a = 5};
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &{.a = 5};
 }
 
 fn AddressOfOperator() {
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &(1 + 1);
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &(1 + 1);
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of a temporary object.
   // CHECK:STDERR:   &H().a;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &H().a;
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &(not true);
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &(not true);
 }
 
 fn AddressOfCall() {
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &G();
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &G();
 }
 
 fn AddressOfType() {
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &i32;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &i32;
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &(const i32*);
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &(const i32*);
 }
 
 fn AddressOfTupleElementValue() {
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &((1, 2)[0]);
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   &((1, 2)[0]);
 }
 
 fn AddressOfParam(param: i32) {
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:26: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   var param_addr: i32* = &param;
-  // CHECK:STDERR:                          ^
+  // CHECK:STDERR:                          ^~
   var param_addr: i32* = &param;
 }
 

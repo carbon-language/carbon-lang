@@ -18,7 +18,7 @@ r#
 // Not a valid identifier.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+3]]:2: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: r#3
-// CHECK:STDERR:  ^
+// CHECK:STDERR:  ^~
 r#3
 // CHECK:STDOUT:     { index: 3, kind:     'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0 },
 // CHECK:STDOUT:     { index: 4, kind:          'Error', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#' },
@@ -27,7 +27,7 @@ r#3
 // Non ascii start to identifier.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+3]]:2: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: r#á
-// CHECK:STDERR:  ^
+// CHECK:STDERR:  ^~
 r#á
 // CHECK:STDOUT:     { index: 6, kind:     'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0 },
 // CHECK:STDOUT:     { index: 7, kind:          'Error', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#á', has_trailing_space: true },

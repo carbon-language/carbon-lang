@@ -8,10 +8,10 @@ class Incomplete;
 
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+6]]:22: ERROR: Variable has incomplete type `[Incomplete; 1]`.
 // CHECK:STDERR: var a: [Incomplete; 1];
-// CHECK:STDERR:                      ^
+// CHECK:STDERR:                      ^~
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: Class was forward declared here.
 // CHECK:STDERR: class Incomplete;
-// CHECK:STDERR: ~~~~~
+// CHECK:STDERR: ^~~~~
 var a: [Incomplete; 1];
 
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+3]]:27: ERROR: Cannot implicitly convert from `<error>*` to `Incomplete*`.

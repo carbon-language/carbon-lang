@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:29: ERROR: Missing value for field `a` in struct initialization.
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1.0};
-// CHECK:STDERR:                             ^
+// CHECK:STDERR:                             ^~
 var x: {.a: i32} = {.b = 1.0};
 
 // CHECK:STDOUT: constants {

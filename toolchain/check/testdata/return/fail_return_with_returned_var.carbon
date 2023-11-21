@@ -11,7 +11,7 @@ fn F() -> i32 {
   // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: `returned var` was declared here.
   // CHECK:STDERR:   returned var v: i32 = 0;
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:                ^~
   return 1;
 }
 
@@ -23,7 +23,7 @@ fn G() -> C {
   // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: `returned var` was declared here.
   // CHECK:STDERR:   returned var c: C = {.a = 1, .b = 2};
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:                ^~
   return c;
 }
 

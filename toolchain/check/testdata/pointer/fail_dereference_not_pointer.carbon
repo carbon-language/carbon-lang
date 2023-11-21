@@ -7,15 +7,15 @@
 fn Deref(n: i32) {
   // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `i32`.
   // CHECK:STDERR:   *n;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   *n;
   // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `() as type`.
   // CHECK:STDERR:   *();
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   *();
   // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `{} as type`.
   // CHECK:STDERR:   *{};
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   *{};
 }
 

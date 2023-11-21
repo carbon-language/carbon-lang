@@ -7,5 +7,5 @@
 
 // CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+3]]:1: ERROR: Unrecognized declaration introducer.
 // CHECK:STDERR: a;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~
 a;

@@ -6,6 +6,11 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "testdata",
+    data = glob(["testdata/**/*.carbon"]),
+)
+
 cc_library(
     name = "diagnostic_emitter",
     hdrs = ["diagnostic_emitter.h"],

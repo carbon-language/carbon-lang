@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_with_identifier_as_param.carbon:[[@LINE+3]]:11: ERROR: Expected parameter declaration.
 // CHECK:STDERR: fn foo(bar);
-// CHECK:STDERR:           ^
+// CHECK:STDERR:           ^~
 fn foo(bar);
 
 // CHECK:STDOUT: - filename: fail_with_identifier_as_param.carbon

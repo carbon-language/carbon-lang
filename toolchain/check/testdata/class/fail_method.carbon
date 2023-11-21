@@ -16,17 +16,17 @@ fn F(c: Class) {
   Class.NoSelf();
   // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:17: ERROR: Missing object argument in method call.
   // CHECK:STDERR:   Class.WithSelf();
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:                 ^~
   // CHECK:STDERR: fail_method.carbon:[[@LINE-11]]:3: Calling function declared here.
   // CHECK:STDERR:   fn WithSelf[self: Class]();
-  // CHECK:STDERR:   ~~
+  // CHECK:STDERR:   ^~
   Class.WithSelf();
   // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:17: ERROR: 1 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   Class.WithSelf(c);
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:                 ^~
   // CHECK:STDERR: fail_method.carbon:[[@LINE-18]]:3: Calling function declared here.
   // CHECK:STDERR:   fn WithSelf[self: Class]();
-  // CHECK:STDERR:   ~~
+  // CHECK:STDERR:   ^~
   Class.WithSelf(c);
 }
 

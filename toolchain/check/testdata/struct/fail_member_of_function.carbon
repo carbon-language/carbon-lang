@@ -7,7 +7,7 @@
 fn A() {
   // CHECK:STDERR: fail_member_of_function.carbon:[[@LINE+3]]:3: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   A.y;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~
   A.y;
 }
 

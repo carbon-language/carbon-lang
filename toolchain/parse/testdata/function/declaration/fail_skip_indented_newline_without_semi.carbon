@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_skip_indented_newline_without_semi.carbon:[[@LINE+3]]:4: ERROR: `fn` introducer should be followed by a name.
 // CHECK:STDERR: fn (x,
-// CHECK:STDERR:    ^
+// CHECK:STDERR:    ^~
 fn (x,
     y,
     z)

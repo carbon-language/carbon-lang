@@ -7,29 +7,29 @@
 // TODO: Should work with compile-time evaluation.
 // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+9]]:14: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
-// CHECK:STDERR:              ~~
+// CHECK:STDERR:              ^~
 // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+6]]:22: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
-// CHECK:STDERR:                      ~~~~
+// CHECK:STDERR:                      ^~~~
 // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+3]]:29: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
-// CHECK:STDERR:                             ~~~~
+// CHECK:STDERR:                             ^~~~
 let x: i32 = if true then 1 else 0;
 
 class C {
   // TODO: Should work with compile-time evaluation.
   // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:10: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
   // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:          ~~
+  // CHECK:STDERR:          ^~
   // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+9]]:18: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
   // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:                  ~~~~
+  // CHECK:STDERR:                  ^~~~
   // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+6]]:27: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
   // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:                           ~~~~
+  // CHECK:STDERR:                           ^~~~
   // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+3]]:27: ERROR: Cannot evaluate type expression.
   // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:                           ~~~~
+  // CHECK:STDERR:                           ^~~~
   var n: if true then i32 else f64;
 }
 

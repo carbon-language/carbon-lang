@@ -8,14 +8,14 @@
 
 // CHECK:STDERR: identifier.carbon:[[@LINE+3]]:9: ERROR: Expected `default` or a string literal to specify the library name.
 // CHECK:STDERR: library Shapes api;
-// CHECK:STDERR:         ~~~~~~
+// CHECK:STDERR:         ^~~~~~
 library Shapes api;
 
 // --- raw_identifier.carbon
 
 // CHECK:STDERR: raw_identifier.carbon:[[@LINE+3]]:9: ERROR: Expected `default` or a string literal to specify the library name.
 // CHECK:STDERR: library r#default api;
-// CHECK:STDERR:         ~~~~~~~
+// CHECK:STDERR:         ^~~~~~~
 library r#default api;
 
 // --- missing.carbon
@@ -29,7 +29,7 @@ library;
 
 // CHECK:STDERR: missing_with_api.carbon:[[@LINE+3]]:9: ERROR: Expected `default` or a string literal to specify the library name.
 // CHECK:STDERR: library api;
-// CHECK:STDERR:         ~~~
+// CHECK:STDERR:         ^~~
 library api;
 
 // --- no_semi.carbon

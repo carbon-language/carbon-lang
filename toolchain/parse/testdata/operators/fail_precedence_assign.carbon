@@ -10,22 +10,22 @@ fn F() {
   // TODO: Produce the "can only be used as a complete statement" diagnostic in each of these cases.
   // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:10: ERROR: Expected `,` or `)`.
   // CHECK:STDERR:   1 + (a = 1);
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:          ^~
   1 + (a = 1);
   // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+6]]:19: ERROR: Expected `else` after `if ... then ...`.
   // CHECK:STDERR:   (if true then a += 1 else a /= 2);
-  // CHECK:STDERR:                   ~~
+  // CHECK:STDERR:                   ^~
   // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:19: ERROR: Expected `,` or `)`.
   // CHECK:STDERR:   (if true then a += 1 else a /= 2);
-  // CHECK:STDERR:                   ~~
+  // CHECK:STDERR:                   ^~
   (if true then a += 1 else a /= 2);
   // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:7: ERROR: Operator `++` can only be used as a complete statement.
   // CHECK:STDERR:   a + ++a;
-  // CHECK:STDERR:       ~~
+  // CHECK:STDERR:       ^~
   a + ++a;
   // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:5: ERROR: Parentheses are required around this unary `if` operator.
   // CHECK:STDERR:   ++if c then a else b;
-  // CHECK:STDERR:     ~~
+  // CHECK:STDERR:     ^~
   ++if c then a else b;
 }
 

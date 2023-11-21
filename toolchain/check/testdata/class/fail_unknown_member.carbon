@@ -12,7 +12,7 @@ fn G(c: Class) -> i32 {
   // TODO: Mention the scope in which we looked for the name.
   // CHECK:STDERR: fail_unknown_member.carbon:[[@LINE+3]]:11: ERROR: Name `something` not found.
   // CHECK:STDERR:   return c.something;
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR:           ^~
   return c.something;
 }
 

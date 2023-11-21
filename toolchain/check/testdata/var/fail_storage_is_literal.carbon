@@ -7,7 +7,7 @@
 fn Main() {
   // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: ERROR: Cannot implicitly convert from `i32` to `type`.
   // CHECK:STDERR:   var x: 1 = 1;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:          ^~
   var x: 1 = 1;
 }
 

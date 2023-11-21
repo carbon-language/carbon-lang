@@ -10,7 +10,7 @@ fn Main() {
   // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-4]]:1: There was no return type provided.
   // CHECK:STDERR: fn Main() {
-  // CHECK:STDERR: ~~
+  // CHECK:STDERR: ^~
   return 0;
 }
 

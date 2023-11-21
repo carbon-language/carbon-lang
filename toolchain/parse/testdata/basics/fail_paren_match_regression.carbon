@@ -6,10 +6,10 @@
 
 // CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+6]]:5: ERROR: Expected pattern in `var` declaration.
 // CHECK:STDERR: var = (foo {})
-// CHECK:STDERR:     ^
+// CHECK:STDERR:     ^~
 // CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+3]]:12: ERROR: Expected `,` or `)`.
 // CHECK:STDERR: var = (foo {})
-// CHECK:STDERR:            ^
+// CHECK:STDERR:            ^~
 var = (foo {})
 
 // CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+16]]:21: ERROR: `var` declarations must end with a `;`.

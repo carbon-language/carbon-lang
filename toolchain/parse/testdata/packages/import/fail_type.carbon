@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_type.carbon:[[@LINE+3]]:17: ERROR: `import` declarations must end with a `;`.
 // CHECK:STDERR: import Geometry api;
-// CHECK:STDERR:                 ~~~
+// CHECK:STDERR:                 ^~~
 import Geometry api;
 
 // CHECK:STDOUT: - filename: fail_type.carbon

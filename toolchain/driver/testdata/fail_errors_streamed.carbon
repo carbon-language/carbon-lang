@@ -11,7 +11,7 @@ fn run(String program) {
 
 // CHECK:STDERR: fail_errors_streamed.carbon:[[@LINE+6]]:10: ERROR: Invalid digit 'a' in decimal numeric literal.
 // CHECK:STDERR: var x = 3a;
-// CHECK:STDERR:          ^
+// CHECK:STDERR:          ^~
 // CHECK:STDERR: fail_errors_streamed.carbon:[[@LINE-6]]:24: ERROR: Closing symbol does not match most recent opening symbol.
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^

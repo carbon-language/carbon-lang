@@ -10,7 +10,7 @@
 // whitespace around the first `*`.
 // CHECK:STDERR: fail_star_star_no_space.carbon:[[@LINE+3]]:16: ERROR: `var` declarations must end with a `;`.
 // CHECK:STDERR: var n: i8 = n**p;
-// CHECK:STDERR:                ^
+// CHECK:STDERR:                ^~
 var n: i8 = n**p;
 
 // CHECK:STDOUT: - filename: fail_star_star_no_space.carbon

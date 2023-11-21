@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_comma_only.carbon:[[@LINE+3]]:9: ERROR: Expected `.field: field_type` or `.field = value`.
 // CHECK:STDERR: var x: {,} = {};
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~
 var x: {,} = {};
 
 // CHECK:STDOUT: - filename: fail_comma_only.carbon

@@ -10,7 +10,7 @@ fn Main() {
 
 // CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+3]]:14: ERROR: Name `x` not found.
 // CHECK:STDERR: var y: i32 = x;
-// CHECK:STDERR:              ^
+// CHECK:STDERR:              ^~
 var y: i32 = x;
 
 // CHECK:STDOUT: file "fail_lookup_outside_scope.carbon" {

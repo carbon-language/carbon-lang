@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_precedence_star_star.carbon:[[@LINE+3]]:16: ERROR: Parentheses are required to disambiguate operator precedence.
 // CHECK:STDERR: var n: i8 = n* *p;
-// CHECK:STDERR:                ^
+// CHECK:STDERR:                ^~
 var n: i8 = n* *p;
 
 // CHECK:STDOUT: - filename: fail_precedence_star_star.carbon

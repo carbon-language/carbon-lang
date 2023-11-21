@@ -10,7 +10,7 @@ fn Main() -> i32 {
   // CHECK:STDERR:         ^
   // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:1: Return type of function is `i32`.
   // CHECK:STDERR: fn Main() -> i32 {
-  // CHECK:STDERR: ~~
+  // CHECK:STDERR: ^~
   return;
 }
 

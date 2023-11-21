@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_dot_string_equals.carbon:[[@LINE+3]]:10: ERROR: Expected identifier after `.`.
 // CHECK:STDERR: var x: {."hello" = 0, .y = 4} = {};
-// CHECK:STDERR:          ~~~~~~~
+// CHECK:STDERR:          ^~~~~~~
 var x: {."hello" = 0, .y = 4} = {};
 
 // CHECK:STDOUT: - filename: fail_dot_string_equals.carbon

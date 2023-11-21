@@ -12,13 +12,13 @@ fn F(x: X) {
   // represent them.
   // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+3]]:19: ERROR: Cannot copy value of type `String`.
   // CHECK:STDERR:   var s: String = "hello";
-  // CHECK:STDERR:                   ~~~~~~~
+  // CHECK:STDERR:                   ^~~~~~~
   var s: String = "hello";
 
   // TODO: Decide on rules for when classes are copyable.
   // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+3]]:14: ERROR: Cannot copy value of type `X`.
   // CHECK:STDERR:   var y: X = x;
-  // CHECK:STDERR:              ^
+  // CHECK:STDERR:              ^~
   var y: X = x;
 }
 

@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_comma_repeat_in_value.carbon:[[@LINE+3]]:16: ERROR: Expected `.field = value`.
 // CHECK:STDERR: var x: {.a = 0,,} = {};
-// CHECK:STDERR:                ^
+// CHECK:STDERR:                ^~
 var x: {.a = 0,,} = {};
 
 // CHECK:STDOUT: - filename: fail_comma_repeat_in_value.carbon

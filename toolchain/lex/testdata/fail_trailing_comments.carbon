@@ -14,13 +14,13 @@ var c: i32 = 0.4; // still more trailing comment
 // AUTOUPDATE
 // CHECK:STDERR: fail_trailing_comments.carbon:[[@LINE-7]]:19: ERROR: Trailing comments are not permitted.
 // CHECK:STDERR: var a: i32 = 1;   // trailing comment
-// CHECK:STDERR:                   ^
+// CHECK:STDERR:                   ^~
 // CHECK:STDERR: fail_trailing_comments.carbon:[[@LINE-9]]:19: ERROR: Trailing comments are not permitted.
 // CHECK:STDERR: var b: 32 = 13;   // more trailing comment
-// CHECK:STDERR:                   ^
+// CHECK:STDERR:                   ^~
 // CHECK:STDERR: fail_trailing_comments.carbon:[[@LINE-11]]:19: ERROR: Trailing comments are not permitted.
 // CHECK:STDERR: var c: i32 = 0.4; // still more trailing comment
-// CHECK:STDERR:                   ^
+// CHECK:STDERR:                   ^~
 // CHECK:STDOUT: - filename: fail_trailing_comments.carbon
 // CHECK:STDOUT:   tokens: [
 // CHECK:STDOUT:     { index:  0, kind:        'StartOfFile', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },

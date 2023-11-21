@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_identifier_only.carbon:[[@LINE+3]]:9: ERROR: Expected `.field: field_type` or `.field = value`.
 // CHECK:STDERR: var x: {a} = {};
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~
 var x: {a} = {};
 
 // CHECK:STDOUT: - filename: fail_identifier_only.carbon

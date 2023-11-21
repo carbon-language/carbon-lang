@@ -9,7 +9,7 @@ namespace A;
 fn F() {
   // CHECK:STDERR: fail_dereference_namespace.carbon:[[@LINE+3]]:4: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   *A;
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR:    ^~
   *A;
 }
 

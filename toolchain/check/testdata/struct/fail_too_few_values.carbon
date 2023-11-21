@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:36: ERROR: Cannot initialize struct with 2 field(s) from struct with 1 field(s).
 // CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
-// CHECK:STDERR:                                    ^
+// CHECK:STDERR:                                    ^~
 var x: {.a: i32, .b: i32} = {.a = 1};
 
 // CHECK:STDOUT: constants {

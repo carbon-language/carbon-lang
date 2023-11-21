@@ -16,12 +16,12 @@ class Foo[a: i32];
 
 // CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:17: ERROR: A `(` for parameters is required after implicit parameters.
 // CHECK:STDERR: interface Bar[] {}
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:                 ^~
 interface Bar[] {}
 
 // CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:23: ERROR: A `(` for parameters is required after implicit parameters.
 // CHECK:STDERR: interface Bar[a: i32] {}
-// CHECK:STDERR:                       ^
+// CHECK:STDERR:                       ^~
 interface Bar[a: i32] {}
 
 // CHECK:STDOUT: - filename: fail_no_parens.carbon

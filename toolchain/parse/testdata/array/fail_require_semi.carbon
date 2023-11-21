@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_require_semi.carbon:[[@LINE+3]]:12: ERROR: Expected `;` in array type.
 // CHECK:STDERR: var x: [i32];
-// CHECK:STDERR:            ^
+// CHECK:STDERR:            ^~
 var x: [i32];
 
 // CHECK:STDOUT: - filename: fail_require_semi.carbon

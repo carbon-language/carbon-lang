@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_dot_only.carbon:[[@LINE+3]]:10: ERROR: Expected identifier after `.`.
 // CHECK:STDERR: var x: {.} = {};
-// CHECK:STDERR:          ^
+// CHECK:STDERR:          ^~
 var x: {.} = {};
 
 // CHECK:STDOUT: - filename: fail_dot_only.carbon

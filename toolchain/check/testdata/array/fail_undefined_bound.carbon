@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_undefined_bound.carbon:[[@LINE+3]]:14: ERROR: Semantics TODO: `HandleArrayExprWithoutBounds`.
 // CHECK:STDERR: var a: [i32; ];
-// CHECK:STDERR:              ^
+// CHECK:STDERR:              ^~
 var a: [i32; ];
 
 // CHECK:STDOUT: file "fail_undefined_bound.carbon" {
