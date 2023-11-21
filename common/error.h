@@ -20,7 +20,7 @@ namespace Carbon {
 struct Success {};
 
 // Tracks an error message.
-class [[nodiscard]] Error : public Printable<Error> {
+class Error : public Printable<Error> {
  public:
   // Represents an error state.
   explicit Error(llvm::Twine location, llvm::Twine message)
@@ -67,7 +67,7 @@ class [[nodiscard]] Error : public Printable<Error> {
 // Holds a value of type `T`, or an Error explaining why the value is
 // unavailable.
 template <typename T>
-class [[nodiscard]] ErrorOr {
+class ErrorOr {
  public:
   // Constructs with an error; the error must not be Error::Success().
   // Implicit for easy construction on returns.
@@ -137,7 +137,7 @@ class ErrorBuilder {
   // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
   // the builder must be converted to an `Error` or `ErrorOr`.
   template <typename T>
-  [[nodiscard]] auto operator<<(const T& message) && -> ErrorBuilder&& {
+  auto operator<<(const T& message) && -> ErrorBuilder&& {
     *out_ << message;
     return std::move(*this);
   }

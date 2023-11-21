@@ -49,7 +49,7 @@ class NumericLiteral {
   auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const -> Value;
 
   // Get the text corresponding to this literal.
-  [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
+  auto text() const -> llvm::StringRef { return text_; }
 
  private:
   class Parser;
