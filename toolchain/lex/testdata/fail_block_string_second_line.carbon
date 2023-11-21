@@ -9,7 +9,7 @@
 
 // CHECK:STDERR: fail_block_string_second_line.carbon:[[@LINE+4]]:3: ERROR: Only whitespace is permitted before the closing `'''` of a multi-line string.
 // CHECK:STDERR:   error here: '''
-// CHECK:STDERR:   ^
+// CHECK:STDERR:   ^~
 var s: String = '''
   error here: '''
 // CHECK:STDOUT:     { index: 0, kind:       'StartOfFile', line:  1, column:  1, indent: 1, spelling: '', has_trailing_space: true },
