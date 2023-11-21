@@ -26,11 +26,12 @@ class Arena;
 // PatternMatch call and then merged into an existing scope on success.
 // The matches for generic variables in the pattern are output in
 // `generic_args`.
-auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
-                  SourceLocation source_loc,
-                  std::optional<Nonnull<RuntimeScope*>> bindings,
-                  BindingMap& generic_args, Nonnull<TraceStream*> trace_stream,
-                  Nonnull<Arena*> arena) -> bool;
+[[nodiscard]] auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
+                                SourceLocation source_loc,
+                                std::optional<Nonnull<RuntimeScope*>> bindings,
+                                BindingMap& generic_args,
+                                Nonnull<TraceStream*> trace_stream,
+                                Nonnull<Arena*> arena) -> bool;
 }  // namespace Carbon
 
 #endif  // CARBON_EXPLORER_INTERPRETER_PATTERN_MATCH_H_

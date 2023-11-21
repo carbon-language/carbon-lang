@@ -20,7 +20,9 @@ namespace Carbon {
 struct Success {};
 
 // Tracks an error message.
-class Error : public Printable<Error> {
+//
+// This is nodiscard to enforce error handling prior to destruction.
+class [[nodiscard]] Error : public Printable<Error> {
  public:
   // Represents an error state.
   explicit Error(llvm::Twine location, llvm::Twine message)
@@ -66,8 +68,10 @@ class Error : public Printable<Error> {
 
 // Holds a value of type `T`, or an Error explaining why the value is
 // unavailable.
+//
+// This is nodiscard to enforce error handling prior to destruction.
 template <typename T>
-class ErrorOr {
+class [[nodiscard]] ErrorOr {
  public:
   // Constructs with an error; the error must not be Error::Success().
   // Implicit for easy construction on returns.

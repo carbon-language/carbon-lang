@@ -78,7 +78,9 @@ class Bindings : public Printable<Bindings> {
   auto witnesses() const -> const ImplWitnessMap& { return witnesses_; }
 
   // Determine whether this is an empty set of bindings.
-  auto empty() const -> bool { return args_.empty() && witnesses_.empty(); }
+  [[nodiscard]] auto empty() const -> bool {
+    return args_.empty() && witnesses_.empty();
+  }
 
  private:
   BindingMap args_;
