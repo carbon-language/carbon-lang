@@ -6,35 +6,34 @@
 
 namespace Carbon::Parse {
 
-static auto ReportUnrecognizedDecl(Context& context) -> void {
+// Handles an unrecognized declaration, adding an error node.
+static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
+    -> void {
   CARBON_DIAGNOSTIC(UnrecognizedDecl, Error,
                     "Unrecognized declaration introducer.");
   context.emitter().Emit(*context.position(), UnrecognizedDecl);
-}
-
-// Handles an unrecognized declaration, adding an error node.
-static auto HandleUnrecognizedDecl(Context& context) -> void {
-  ReportUnrecognizedDecl(context);
   auto cursor = *context.position();
-  auto semi = context.SkipPastLikelyEnd(cursor);
-  // If we find a semi, create a invalid tree from the cursor to the semi,
-  // otherwise just make an invalid node at the cursor.
-  if (semi) {
-    auto subtree_start = context.tree().size();
-    context.AddLeafNode(NodeKind::InvalidParseStart, cursor,
-                        /*has_error=*/true);
-    context.AddNode(NodeKind::InvalidParseSubtree, *semi, subtree_start,
-                    /*has_error=*/true);
+  context.SkipPastLikelyEnd(cursor);
+  auto iter = context.position();
+  --iter;
+  // Output a single invalid parse node if consumed a single token in this
+  // error, otherwise output an invalid parse subtree.
+  if (*iter == context.tree().node_token(Node(subtree_start))) {
+    context.ReplacePlaceholderNode(subtree_start, NodeKind::InvalidParse,
+                                   cursor, /*has_error=*/true);
   } else {
-    context.AddLeafNode(NodeKind::InvalidParse, cursor, /*has_error=*/true);
+    context.ReplacePlaceholderNode(subtree_start, NodeKind::InvalidParseStart,
+                                   cursor, /*has_error=*/true);
+    // Mark everything up to the last token consumed as invalid.
+    context.AddNode(NodeKind::InvalidParseSubtree, *iter, subtree_start,
+                    /*has_error=*/true);
   }
 }
 
 auto HandleDeclScopeLoop(Context& context) -> void {
   // This maintains the current state unless we're at the end of the scope.
 
-  auto position_kind = context.PositionKind();
-  switch (position_kind) {
+  switch (context.PositionKind()) {
     case Lex::TokenKind::CloseCurlyBrace:
     case Lex::TokenKind::EndOfFile: {
       // This is the end of the scope, so the loop state ends.
@@ -69,76 +68,25 @@ auto HandleDeclScopeLoop(Context& context) -> void {
     context.set_packaging_state(Context::PackagingState::AfterNonPackagingDecl);
   }
 
-  // FIXME: Should we change from:
-  //   `AddLeafNode` here and `ReplacePlaceholderNode` in `HandleDeclModifier`
-  //   below
-  // to:
-  //   always adding a placeholder here, and `ReplacePlaceholderNode` in
-  //   the handlers for the different kinds of declarations
-  // ?
-
   // Remaining keywords are only valid after imports are complete, and so all
   // result in a `set_packaging_state` call. Note, this may not always be
   // necessary but is probably cheaper than validating.
-  switch (position_kind) {
-#define CARBON_DECL_MODIFIER_KEYWORD_TOKEN(Name, Spelling) \
-  case Lex::TokenKind::Name:
-#include "toolchain/lex/token_kind.def"
-    {
-      context.PushState(State::DeclModifier);
-      context.AddLeafNode(NodeKind::Placeholder, *context.position());
-      return;
-    }
-    case Lex::TokenKind::Class: {
-      context.PushState(State::TypeAfterIntroducerAsClass);
-      context.AddLeafNode(NodeKind::ClassIntroducer, context.Consume());
-      return;
-    }
-    case Lex::TokenKind::Constraint: {
-      context.PushState(State::TypeAfterIntroducerAsNamedConstraint);
-      context.AddLeafNode(NodeKind::NamedConstraintIntroducer,
-                          context.Consume());
-      return;
-    }
-    case Lex::TokenKind::Fn: {
-      context.PushState(State::FunctionIntroducer);
-      context.AddLeafNode(NodeKind::FunctionIntroducer, context.Consume());
-      return;
-    }
-    case Lex::TokenKind::Interface: {
-      context.PushState(State::TypeAfterIntroducerAsInterface);
-      context.AddLeafNode(NodeKind::InterfaceIntroducer, context.Consume());
-      return;
-    }
-    case Lex::TokenKind::Namespace: {
-      context.PushState(State::Namespace);
-      context.AddLeafNode(NodeKind::NamespaceStart, context.Consume());
-      return;
-    }
-    case Lex::TokenKind::Semi: {
-      context.AddLeafNode(NodeKind::EmptyDecl, context.Consume());
-      return;
-    }
-    case Lex::TokenKind::Var: {
-      context.PushState(State::VarAsDecl);
-      context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
-      return;
-    }
-    case Lex::TokenKind::Let: {
-      context.PushState(State::Let);
-      context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
-      return;
-    }
-    default: {
-      break;
-    }
-  }
 
-  HandleUnrecognizedDecl(context);
-}
+  // FIXME: Should we change from:
+  //   `ReplacePlaceholderNode` in this function
+  // to:
+  //   `ReplacePlaceholderNode` in the handlers for the different kinds of
+  //   declarations
+  // ?
 
-auto HandleDeclModifier(Context& context) -> void {
+  // Create a state with the correct starting position, with a dummy kind until
+  // we see the declaration's introducer.
+  context.PushState(State::DeclScopeLoop);
   auto state = context.PopState();
+
+  // Add a placeholder node, to be replaced by the declaration introducer once
+  // it is found.
+  context.AddLeafNode(NodeKind::Placeholder, *context.position());
 
   auto introducer = [&](NodeKind node_kind, State next_state) {
     context.ReplacePlaceholderNode(state.subtree_start, node_kind,
@@ -148,67 +96,84 @@ auto HandleDeclModifier(Context& context) -> void {
     context.PushState(state);
   };
 
-  switch (context.PositionKind()) {
-    // If we see a declaration modifier keyword token, add it as a leaf node
-    // and repeat this state.
+  bool saw_modifier = false;
+  while (true) {
+    switch (context.PositionKind()) {
+      // If we see a declaration modifier keyword token, add it as a leaf node
+      // and repeat with the next token.
 #define CARBON_DECL_MODIFIER_KEYWORD_TOKEN(Name, Spelling) \
   case Lex::TokenKind::Name:
 #include "toolchain/lex/token_kind.def"
-    {
-      auto modifier_token = context.Consume();
-      context.AddLeafNode(NodeKind::DeclModifierKeyword, modifier_token);
-      context.PushState(state);
-      return;
-    }
+      {
+        auto modifier_token = context.Consume();
+        context.AddLeafNode(NodeKind::DeclModifierKeyword, modifier_token);
+        saw_modifier = true;
+        break;
+      }
 
-    // If we see a declaration introducer keyword token, replace the placeholder
-    // node and switch to a state to parse the rest of the declaration.
-    // We don't allow namespace or empty declarations here since they
-    // can't have modifiers and don't use bracketing parse nodes that would
-    // allow a variable number of modifier nodes.
-    case Lex::TokenKind::Class: {
-      introducer(NodeKind::ClassIntroducer, State::TypeAfterIntroducerAsClass);
-      return;
-    }
-    case Lex::TokenKind::Constraint: {
-      introducer(NodeKind::NamedConstraintIntroducer,
-                 State::TypeAfterIntroducerAsNamedConstraint);
-      return;
-    }
-    case Lex::TokenKind::Fn: {
-      introducer(NodeKind::FunctionIntroducer, State::FunctionIntroducer);
-      return;
-    }
-    case Lex::TokenKind::Interface: {
-      introducer(NodeKind::InterfaceIntroducer,
-                 State::TypeAfterIntroducerAsInterface);
-      return;
-    }
-    case Lex::TokenKind::Var: {
-      introducer(NodeKind::VariableIntroducer, State::VarAsDecl);
-      return;
-    }
-    case Lex::TokenKind::Let: {
-      introducer(NodeKind::LetIntroducer, State::Let);
-      return;
-    }
+      // If we see a declaration introducer keyword token, replace the
+      // placeholder node and switch to a state to parse the rest of the
+      // declaration. We don't allow namespace or empty declarations here since
+      // they can't have modifiers and don't use bracketing parse nodes that
+      // would allow a variable number of modifier nodes.
+      case Lex::TokenKind::Class: {
+        introducer(NodeKind::ClassIntroducer,
+                   State::TypeAfterIntroducerAsClass);
+        return;
+      }
+      case Lex::TokenKind::Constraint: {
+        introducer(NodeKind::NamedConstraintIntroducer,
+                   State::TypeAfterIntroducerAsNamedConstraint);
+        return;
+      }
+      case Lex::TokenKind::Fn: {
+        introducer(NodeKind::FunctionIntroducer, State::FunctionIntroducer);
+        return;
+      }
+      case Lex::TokenKind::Interface: {
+        introducer(NodeKind::InterfaceIntroducer,
+                   State::TypeAfterIntroducerAsInterface);
+        return;
+      }
+      case Lex::TokenKind::Var: {
+        introducer(NodeKind::VariableIntroducer, State::VarAsDecl);
+        return;
+      }
+      case Lex::TokenKind::Let: {
+        introducer(NodeKind::LetIntroducer, State::Let);
+        return;
+      }
 
-    default: {
-      break;
+        // We don't allow namespace or empty declarations after a modifier since
+        // they can't have modifiers and don't use bracketing parse nodes that
+        // would allow a variable number of modifier nodes.
+
+      case Lex::TokenKind::Namespace: {
+        if (saw_modifier) {
+          HandleUnrecognizedDecl(context, state.subtree_start);
+        } else {
+          introducer(NodeKind::NamespaceStart, State::Namespace);
+        }
+        return;
+      }
+      case Lex::TokenKind::Semi: {
+        if (saw_modifier) {
+          HandleUnrecognizedDecl(context, state.subtree_start);
+        } else {
+          context.ReplacePlaceholderNode(
+              state.subtree_start, NodeKind::EmptyDecl, context.Consume());
+        }
+        return;
+      }
+
+      default: {
+        // For anything else, report an error and output an invalid parse node
+        // or subtree.
+        HandleUnrecognizedDecl(context, state.subtree_start);
+        return;
+      }
     }
   }
-  // For anything else, report an error and output an invalid parse subtree.
-  ReportUnrecognizedDecl(context);
-  auto cursor = *context.position();
-  context.ReplacePlaceholderNode(state.subtree_start,
-                                 NodeKind::InvalidParseStart, cursor,
-                                 /*has_error=*/true);
-  context.SkipPastLikelyEnd(cursor);
-  auto iter = context.position();
-  --iter;
-  // Mark everything up to the last token consumed as invalid.
-  context.AddNode(NodeKind::InvalidParseSubtree, *iter, state.subtree_start,
-                  /*has_error=*/true);
 }
 
 }  // namespace Carbon::Parse

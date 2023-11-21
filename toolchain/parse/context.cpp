@@ -87,6 +87,9 @@ auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
   node_impl->kind = kind;
   node_impl->has_error = has_error;
   node_impl->token = token;
+  if (has_error) {
+    tree_->has_errors_ = true;
+  }
 }
 
 auto Context::ConsumeAndAddOpenParen(Lex::Token default_token,

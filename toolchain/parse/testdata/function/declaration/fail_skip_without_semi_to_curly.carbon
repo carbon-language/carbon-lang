@@ -13,7 +13,8 @@ fn F();
 // CHECK:STDOUT: - filename: fail_skip_without_semi_to_curly.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:     {kind: 'InvalidParse', text: 'struct', has_error: yes},
+// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'struct', has_error: yes},
+// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: '}', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ParamListStart', text: '('},
