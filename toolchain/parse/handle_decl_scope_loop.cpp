@@ -101,10 +101,14 @@ auto HandleDeclScopeLoop(Context& context) -> void {
     switch (context.PositionKind()) {
       // If we see a declaration modifier keyword token, add it as a leaf node
       // and repeat with the next token.
-#define CARBON_DECL_MODIFIER_KEYWORD_TOKEN(Name, Spelling) \
-  case Lex::TokenKind::Name:
-#include "toolchain/lex/token_kind.def"
-      {
+      case Lex::TokenKind::Abstract:
+      case Lex::TokenKind::Base:
+      case Lex::TokenKind::Default:
+      case Lex::TokenKind::Final:
+      case Lex::TokenKind::Override:
+      case Lex::TokenKind::Private:
+      case Lex::TokenKind::Protected:
+      case Lex::TokenKind::Virtual: {
         auto modifier_token = context.Consume();
         context.AddLeafNode(NodeKind::DeclModifierKeyword, modifier_token);
         saw_modifier = true;
