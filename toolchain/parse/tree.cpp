@@ -221,6 +221,11 @@ auto Tree::Verify() const -> ErrorOr<Success> {
           n.index));
     }
 
+    if (n_impl.kind == NodeKind::Placeholder) {
+      return Error(llvm::formatv(
+          "Node #{0} is a placeholder node that wasn't replaced.", n.index));
+    }
+
     int subtree_size = 1;
     if (n_impl.kind.has_bracket()) {
       while (true) {
