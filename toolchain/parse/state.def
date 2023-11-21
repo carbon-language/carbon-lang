@@ -697,45 +697,45 @@ CARBON_PARSE_STATE_VARIANTS2(ParenCondition, If, While)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(ParenConditionFinish, If, While)
 
-// Handles the `(` of a parenthesized expression.
+// Handles the `(` of a parenthesized expression or tuple literal
 //
 // ( )
 // ^
-//   1. ParenExprFinishAsTuple
+//   1. ParenExprOrTupleLiteralFinishAsTuple
 //
 // ( ... )
 // ^
 //   1. Expr
-//   2. ParenExprParamFinishAsUnknown
-//   3. ParenExprFinishAsGrouping    (SPECIAL: may be replaced)
-CARBON_PARSE_STATE(ParenExpr)
+//   2. ParenExprOrTupleLiteralParamFinishAsUnknown
+//   3. ParenExprOrTupleLiteralFinishAsParenExpr    (SPECIAL: may be replaced)
+CARBON_PARSE_STATE(ParenExprOrTupleLiteral)
 
-// Handles the end of a parenthesized expression's parameter. This will start as
-// AsUnknown on the first parameter; if there are more, it switches to AsTuple
-// processing.
+// Handles the end of a parenthesized expression or tuple literal's parameter.
+// This will start as AsUnknown on the first parameter; if there are more, it
+// switches to AsTuple processing.
 //
 // ( ... , )
 //       ^
 //   (state done)
-//   SPECIAL (variant is Unknown): parent becomes ParenExprFinishAsTuple
+//   SPECIAL (variant is Unknown): parent becomes ParenExprOrTupleLiteralFinishAsTuple
 //
 // ( ... , ... )
 //       ^
 //   1. Expression
-//   2. ParenExpressionParamFinishAsTuple
-//   SPECIAL (variant is Unknown): parent becomes ParenExprFinishAsTuple
+//   2. ParenExprOrTupleLiteralParamFinishAsTuple
+//   SPECIAL (variant is Unknown): parent becomes ParenExprOrTupleLiteralFinishAsTuple
 //
 //  ...
 // ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprParamFinish, Unknown, Tuple)
+CARBON_PARSE_STATE_VARIANTS2(ParenExprOrTupleLiteralParamFinish, Unknown, Tuple)
 
 // Handles the `)` of a parenthesized expression.
 //
 // ( ... )
 //       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Grouping, Tuple)
+CARBON_PARSE_STATE_VARIANTS2(ParenExprOrTupleLiteralFinish, ParenExpr, Tuple)
 
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.
