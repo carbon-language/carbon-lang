@@ -41,6 +41,8 @@ def main() -> None:
                 f"Args do not seem to be test files; for example, {sys.argv[1]}"
             )
         argv.append("--file_tests=" + ",".join(file_tests))
+    # Provide an empty stdin so that the driver tests that read from stdin
+    # don't block waiting for input. This matches the behavior of `bazel test`.
     subprocess.run(argv, check=True, stdin=subprocess.DEVNULL)
 
 

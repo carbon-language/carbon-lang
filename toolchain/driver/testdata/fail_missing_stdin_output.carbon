@@ -5,4 +5,4 @@
 // ARGS: compile -
 //
 // AUTOUPDATE
-// CHECK:STDERR: ERROR: Output file name must be specified for input - that is not a regular file.
+// CHECK:STDERR: ERROR: Output file name must be specified for input '-' that is not a regular file.
