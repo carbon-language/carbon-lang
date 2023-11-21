@@ -8,7 +8,7 @@ fn Main() {
   var a: i32 = 3;
   // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:5: ERROR: Cannot implicitly convert from `f64` to `i32`.
   // CHECK:STDERR:   a = 5.6;
-  // CHECK:STDERR:     ^~
+  // CHECK:STDERR:     ^
   a = 5.6;
 }
 

@@ -7,7 +7,7 @@
 var a: (i32, i32) = (12, 6);
 // CHECK:STDERR: fail_tuple_non_int_indexing.carbon:[[@LINE+3]]:19: ERROR: Tuples indices must be integer literals.
 // CHECK:STDERR: var b: i32 = a[2.6];
-// CHECK:STDERR:                   ^~
+// CHECK:STDERR:                   ^
 var b: i32 = a[2.6];
 
 // CHECK:STDOUT: constants {

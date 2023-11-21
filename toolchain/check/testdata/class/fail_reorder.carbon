@@ -16,7 +16,7 @@ class Class {
     // CHECK:STDERR: ^~~~~
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE+3]]:17: ERROR: Name `F` not found.
     // CHECK:STDERR:     return Class.F();
-    // CHECK:STDERR:                 ^~
+    // CHECK:STDERR:                 ^
     return Class.F();
   }
 

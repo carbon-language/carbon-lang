@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:12: ERROR: Expected expression.
 // CHECK:STDERR: var x: {.a=} = {};
-// CHECK:STDERR:            ^~
+// CHECK:STDERR:            ^
 var x: {.a=} = {};
 
 // CHECK:STDOUT: - filename: fail_missing_value.carbon

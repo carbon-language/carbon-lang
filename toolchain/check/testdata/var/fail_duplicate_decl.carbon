@@ -9,10 +9,10 @@ fn Main() {
   var x: i32 = 0;
   // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+6]]:7: ERROR: Duplicate name being declared in the same scope.
   // CHECK:STDERR:   var x: i32 = 0;
-  // CHECK:STDERR:       ^~
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:7: Name is previously declared here.
   // CHECK:STDERR:   var x: i32 = 0;
-  // CHECK:STDERR:       ^~
+  // CHECK:STDERR:       ^
   var x: i32 = 0;
 }
 

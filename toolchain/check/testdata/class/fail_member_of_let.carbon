@@ -15,10 +15,10 @@ let T: type = Class;
 // declaration. An expression that evaluates to the class name is not accepted.
 // CHECK:STDERR: fail_member_of_let.carbon:[[@LINE+6]]:6: ERROR: Declaration qualifiers are only allowed for entities that provide a scope.
 // CHECK:STDERR: fn T.F() {}
-// CHECK:STDERR:      ^~
+// CHECK:STDERR:      ^
 // CHECK:STDERR: fail_member_of_let.carbon:[[@LINE+3]]:4: Non-scope entity referenced here.
 // CHECK:STDERR: fn T.F() {}
-// CHECK:STDERR:    ^~
+// CHECK:STDERR:    ^
 fn T.F() {}
 
 // CHECK:STDOUT: constants {

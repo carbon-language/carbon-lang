@@ -7,7 +7,7 @@
 class Class {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:12: ERROR: `self` can only be declared in an implicit parameter list.
   // CHECK:STDERR:   fn F(self: Class);
-  // CHECK:STDERR:            ^~
+  // CHECK:STDERR:            ^
   fn F(self: Class);
 
   // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:10: ERROR: Function returns incomplete type `Class`.
@@ -21,14 +21,14 @@ class Class {
 
 // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:16: ERROR: `self` can only be declared in an implicit parameter list.
 // CHECK:STDERR: fn Class.F(self: Class) {
-// CHECK:STDERR:                ^~
+// CHECK:STDERR:                ^
 fn Class.F(self: Class) {
 }
 
 fn Class.G() -> Class {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:11: ERROR: `self` can only be declared in an implicit parameter list.
   // CHECK:STDERR:   var self: Class;
-  // CHECK:STDERR:           ^~
+  // CHECK:STDERR:           ^
   var self: Class;
   // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:10: ERROR: Name `self` not found.
   // CHECK:STDERR:   return self;
@@ -43,7 +43,7 @@ class WrongSelf {
 fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:7: ERROR: Cannot implicitly convert from `WrongSelf` to `Class`.
   // CHECK:STDERR:   ws.F();
-  // CHECK:STDERR:       ^~
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Class]();
   // CHECK:STDERR:        ^~~~

@@ -7,15 +7,15 @@
 fn F() {
   // CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:6: ERROR: Expected `(` after `if`.
   // CHECK:STDERR:   if a {}
-  // CHECK:STDERR:      ^~
+  // CHECK:STDERR:      ^
   if a {}
   // CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:7: ERROR: Expected expression.
   // CHECK:STDERR:   if () {}
-  // CHECK:STDERR:       ^~
+  // CHECK:STDERR:       ^
   if () {}
   // CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:9: ERROR: Unexpected tokens before `)`.
   // CHECK:STDERR:   if (b c) {}
-  // CHECK:STDERR:         ^~
+  // CHECK:STDERR:         ^
   if (b c) {}
   if (d)
 // CHECK:STDERR: fail_errors.carbon:[[@LINE+6]]:1: ERROR: Expected braced code block.

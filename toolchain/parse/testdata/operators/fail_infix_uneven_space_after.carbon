@@ -8,7 +8,7 @@
 // with one-token lookahead.
 // CHECK:STDERR: fail_infix_uneven_space_after.carbon:[[@LINE+3]]:16: ERROR: `var` declarations must end with a `;`.
 // CHECK:STDERR: var n: i8 = n* n;
-// CHECK:STDERR:                ^~
+// CHECK:STDERR:                ^
 var n: i8 = n* n;
 
 // CHECK:STDOUT: - filename: fail_infix_uneven_space_after.carbon

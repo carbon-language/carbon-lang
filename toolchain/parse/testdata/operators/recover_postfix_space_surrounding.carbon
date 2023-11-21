@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: recover_postfix_space_surrounding.carbon:[[@LINE+3]]:18: ERROR: Whitespace is not allowed before this unary operator.
 // CHECK:STDERR: var v: type = i8 * ;
-// CHECK:STDERR:                  ^~
+// CHECK:STDERR:                  ^
 var v: type = i8 * ;
 
 // CHECK:STDOUT: - filename: recover_postfix_space_surrounding.carbon

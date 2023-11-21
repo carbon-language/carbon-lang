@@ -14,10 +14,10 @@ fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:19: ERROR: Duplicated field name `a` in struct type literal.
 // CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
-// CHECK:STDERR:                   ^~
+// CHECK:STDERR:                   ^
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:10: Field with the same name here.
 // CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
-// CHECK:STDERR:          ^~
+// CHECK:STDERR:          ^
 let v: {.a: i32, .a: i32} = {.a = 1};
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:26: ERROR: Duplicated field name `def` in struct literal.
@@ -30,18 +30,18 @@ let w: i32 = {.def = 1, .def = 2}.def;
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:30: ERROR: Duplicated field name `a` in struct literal.
 // CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
-// CHECK:STDERR:                              ^~
+// CHECK:STDERR:                              ^
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:22: Field with the same name here.
 // CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
-// CHECK:STDERR:                      ^~
+// CHECK:STDERR:                      ^
 var x: {.a: i32} = {.a = 1, .a = 2};
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:39: ERROR: Duplicated field name `b` in struct literal.
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
-// CHECK:STDERR:                                       ^~
+// CHECK:STDERR:                                       ^
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:31: Field with the same name here.
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
-// CHECK:STDERR:                               ^~
+// CHECK:STDERR:                               ^
 var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 
 // CHECK:STDOUT: constants {

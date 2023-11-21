@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: recover_prefix_space.carbon:[[@LINE+3]]:13: ERROR: Whitespace is not allowed after this unary operator.
 // CHECK:STDERR: var n: i8 = - n;
-// CHECK:STDERR:             ^~
+// CHECK:STDERR:             ^
 var n: i8 = - n;
 
 // CHECK:STDOUT: - filename: recover_prefix_space.carbon

@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_missing_name.carbon:[[@LINE+3]]:4: ERROR: `fn` introducer should be followed by a name.
 // CHECK:STDERR: fn ();
-// CHECK:STDERR:    ^~
+// CHECK:STDERR:    ^
 fn ();
 
 // CHECK:STDOUT: - filename: fail_missing_name.carbon

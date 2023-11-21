@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_bad_name.carbon:[[@LINE+3]]:5: ERROR: Expected pattern in `var` declaration.
 // CHECK:STDERR: var *;
-// CHECK:STDERR:     ^~
+// CHECK:STDERR:     ^
 var *;
 
 // CHECK:STDOUT: - filename: fail_bad_name.carbon

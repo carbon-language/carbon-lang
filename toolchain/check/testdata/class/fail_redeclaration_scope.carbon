@@ -17,7 +17,7 @@ class A { class B; }
 class Y {
   // CHECK:STDERR: fail_redeclaration_scope.carbon:[[@LINE+3]]:9: ERROR: Name `A` not found.
   // CHECK:STDERR:   class A.B {}
-  // CHECK:STDERR:         ^~
+  // CHECK:STDERR:         ^
   class A.B {}
 }
 

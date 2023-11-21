@@ -7,7 +7,7 @@
 fn foo() {
   // CHECK:STDERR: fail_colon_instead_of_in.carbon:[[@LINE+3]]:19: ERROR: `:` should be replaced by `in`.
   // CHECK:STDERR:   for (var x: i32 : y) {
-  // CHECK:STDERR:                   ^~
+  // CHECK:STDERR:                   ^
   for (var x: i32 : y) {
     Print(x);
   }

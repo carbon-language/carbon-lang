@@ -48,7 +48,7 @@ fn ConvertFromStruct() -> Class { return {}; }
 fn MemberAccess(p: Class*) -> i32 {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:11: ERROR: Member access into object of incomplete type `Class`.
   // CHECK:STDERR:   return (*p).n;
-  // CHECK:STDERR:           ^~
+  // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-45]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~
@@ -90,7 +90,7 @@ fn ReturnIncomplete() -> Class;
 fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:17: ERROR: Forming value of incomplete type `Class`.
   // CHECK:STDERR:   TakeIncomplete(*p);
-  // CHECK:STDERR:                 ^~
+  // CHECK:STDERR:                 ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-87]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~
@@ -101,7 +101,7 @@ fn CallTakeIncomplete(p: Class*) {
 
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:17: ERROR: Forming value of incomplete type `Class`.
   // CHECK:STDERR:   TakeIncomplete({});
-  // CHECK:STDERR:                 ^~
+  // CHECK:STDERR:                 ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-98]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~

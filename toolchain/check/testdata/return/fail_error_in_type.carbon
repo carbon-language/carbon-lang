@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_error_in_type.carbon:[[@LINE+3]]:13: ERROR: Name `x` not found.
 // CHECK:STDERR: fn Six() -> x;
-// CHECK:STDERR:             ^~
+// CHECK:STDERR:             ^
 fn Six() -> x;
 
 // CHECK:STDOUT: file "fail_error_in_type.carbon" {

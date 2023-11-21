@@ -7,7 +7,7 @@
 fn Main() {
   // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+3]]:3: ERROR: Name `x` not found.
   // CHECK:STDERR:   x;
-  // CHECK:STDERR:   ^~
+  // CHECK:STDERR:   ^
   x;
 }
 

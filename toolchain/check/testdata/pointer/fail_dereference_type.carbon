@@ -6,10 +6,10 @@
 
 // CHECK:STDERR: fail_dereference_type.carbon:[[@LINE+6]]:8: ERROR: Cannot dereference operand of non-pointer type `type`.
 // CHECK:STDERR: var p: *i32;
-// CHECK:STDERR:        ^~
+// CHECK:STDERR:        ^
 // CHECK:STDERR: fail_dereference_type.carbon:[[@LINE+3]]:8: To form a pointer type, write the `*` after the pointee type.
 // CHECK:STDERR: var p: *i32;
-// CHECK:STDERR:        ^~
+// CHECK:STDERR:        ^
 var p: *i32;
 
 // CHECK:STDOUT: file "fail_dereference_type.carbon" {

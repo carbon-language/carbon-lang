@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: recover_postfix_space_before_comma.carbon:[[@LINE+3]]:18: ERROR: Whitespace is not allowed before this unary operator.
 // CHECK:STDERR: var n: i8 = F(i8 *, 0);
-// CHECK:STDERR:                  ^~
+// CHECK:STDERR:                  ^
 var n: i8 = F(i8 *, 0);
 
 // CHECK:STDOUT: - filename: recover_postfix_space_before_comma.carbon

@@ -11,23 +11,23 @@
 namespace N;
 // CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Expression cannot be used as a value.
 // CHECK:STDERR: var a: i32 = N[0];
-// CHECK:STDERR:              ^~
+// CHECK:STDERR:              ^
 var a: i32 = N[0];
 
 fn F();
 // CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Expression cannot be used as a value.
 // CHECK:STDERR: var b: i32 = F[1];
-// CHECK:STDERR:              ^~
+// CHECK:STDERR:              ^
 var b: i32 = F[1];
 
 // CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:32: ERROR: `{.a: i32, .b: i32}` does not support indexing.
 // CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
-// CHECK:STDERR:                                ^~
+// CHECK:STDERR:                                ^
 var c: i32 = {.a = 1, .b = 2}[0];
 
 // CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:34: ERROR: `type` does not support indexing.
 // CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
-// CHECK:STDERR:                                  ^~
+// CHECK:STDERR:                                  ^
 var d: i32 = {.a: i32, .b: i32}[0];
 
 // CHECK:STDOUT: constants {

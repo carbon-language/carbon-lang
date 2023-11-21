@@ -7,7 +7,7 @@
 fn F() {
   // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+3]]:16: ERROR: Name `a` not found.
   // CHECK:STDERR:   let a: i32 = a;
-  // CHECK:STDERR:                ^~
+  // CHECK:STDERR:                ^
   let a: i32 = a;
 }
 

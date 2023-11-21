@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_missing_type.carbon:[[@LINE+3]]:7: ERROR: Expected pattern in `let` declaration.
 // CHECK:STDERR: let a = 4;
-// CHECK:STDERR:       ^~
+// CHECK:STDERR:       ^
 let a = 4;
 
 // CHECK:STDOUT: - filename: fail_missing_type.carbon

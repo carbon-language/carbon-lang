@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:21: ERROR: Cannot initialize struct with 1 field(s) from struct with 0 field(s).
 // CHECK:STDERR: var x: {.a: i32} = {};
-// CHECK:STDERR:                     ^~
+// CHECK:STDERR:                     ^
 var x: {.a: i32} = {};
 
 // CHECK:STDOUT: constants {

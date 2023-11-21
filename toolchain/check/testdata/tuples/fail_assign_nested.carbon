@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:44: ERROR: Cannot initialize tuple of 2 element(s) from tuple with 3 element(s).
 // CHECK:STDERR: var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
-// CHECK:STDERR:                                            ^~
+// CHECK:STDERR:                                            ^
 var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 
 // CHECK:STDOUT: constants {

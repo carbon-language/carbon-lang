@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:32: ERROR: Invalid array expression.
 // CHECK:STDERR: var a: [1; 39999999999999999993];
-// CHECK:STDERR:                                ^~
+// CHECK:STDERR:                                ^
 var a: [1; 39999999999999999993];
 
 // CHECK:STDOUT: file "fail_bound_overflow.carbon" {

@@ -372,9 +372,11 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
       *stream_ << message.location.line << "\n";
       stream_->indent(message.location.column_number - 1);
       *stream_ << "^";
-      // We want to confirm the underlined portion is atleast 1 '~' long but it
-      // does not go past the end of the line in the case of a multiline token.
-      int underline_length = std::max(1, message.location.length - 1);
+      int underline_length = std::max(0, message.location.length - 1);
+      // We want to ensure that we don't underline past the end of the line in
+      // case of a multiline token.
+      // TODO: revisit this once we can reference multiple ranges on multiple
+      // lines in a single diagnostic message.
       underline_length = std::min(
           underline_length, static_cast<int32_t>(message.location.line.size()) -
                                 message.location.column_number);

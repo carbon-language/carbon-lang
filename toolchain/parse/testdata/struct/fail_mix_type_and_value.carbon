@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_mix_type_and_value.carbon:[[@LINE+3]]:21: ERROR: Expected `.field: field_type`.
 // CHECK:STDERR: var x: {.a: i32, .b = 0} = {};
-// CHECK:STDERR:                     ^~
+// CHECK:STDERR:                     ^
 var x: {.a: i32, .b = 0} = {};
 
 // CHECK:STDOUT: - filename: fail_mix_type_and_value.carbon
