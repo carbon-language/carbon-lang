@@ -542,8 +542,8 @@ class Driver::CompilationUnit {
         if (!source_->is_regular_file()) {
           // Don't invent file names like `-.o` or `/dev/stdin.o`.
           driver_->error_stream_
-              << "ERROR: Output file name must be specified for input "
-              << input_file_name_ << " that is not a regular file.\n";
+              << "ERROR: Output file name must be specified for input '"
+              << input_file_name_ << "' that is not a regular file.\n";
           return false;
         }
         output_file_name = input_file_name_;
