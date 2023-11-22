@@ -107,9 +107,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0, CARBON_TOKEN(Identifier))
 // tree.h for more information.
 //
 // A parse node kind may be preceded by:
-// -  `_optional_` if this node may be present or omitted in valid parses,
-//    depending on which tokens are in the source code.
-
+// -  `_optional_` if this node (or nodes) may be present or omitted in valid
+//    parses, depending on which tokens are in the source code.
 // -  `_repeated_` if this node (or nodes) may be repeated or omitted in valid
 //    parses, depending on which tokens are in the source code.
 // -  `_external_:` if this node is the child of multiple kinds of nodes and
@@ -269,8 +268,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 //   _repeated_ _external_: DeclModifierKeyword  // when a declaration
 //   _optional_ ReturnedModifier                 // when a statement
 //   _external_: PatternBinding
-//   _optional_ VariableInitializer
-//   _optional_ _external_: expression
+//   _optional_:
+//   VariableInitializer
+//   _external_: expression
 // VariableDecl
 //
 // The VariableInitializer and following expression are paired: either both will
