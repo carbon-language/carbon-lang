@@ -83,12 +83,16 @@ constexpr ClassId ClassId::Invalid = ClassId(ClassId::InvalidIndex);
 // The ID of a cross-referenced IR.
 struct CrossReferenceIRId : public IndexBase,
                             public Printable<CrossReferenceIRId> {
+  static const CrossReferenceIRId Builtins;
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "ir";
     IndexBase::Print(out);
   }
 };
+
+constexpr CrossReferenceIRId CrossReferenceIRId::Builtins =
+    CrossReferenceIRId(0);
 
 // A boolean value.
 struct BoolValue : public IndexBase, public Printable<BoolValue> {
