@@ -411,8 +411,12 @@ class Driver::CompilationUnit {
   // Loads source and lexes it. Returns true on success.
   auto RunLex() -> bool {
     LogCall("SourceBuffer::CreateFromFile", [&] {
-      source_ = SourceBuffer::CreateFromFile(driver_->fs_, input_file_name_,
-                                             *consumer_);
+      if (input_file_name_ == "-") {
+        source_ = SourceBuffer::CreateFromStdin(*consumer_);
+      } else {
+        source_ = SourceBuffer::CreateFromFile(driver_->fs_, input_file_name_,
+                                               *consumer_);
+      }
     });
     if (!source_) {
       return false;
@@ -535,9 +539,22 @@ class Driver::CompilationUnit {
     } else {
       llvm::SmallString<256> output_file_name = options_.output_file_name;
       if (output_file_name.empty()) {
+        if (!source_->is_regular_file()) {
+          // Don't invent file names like `-.o` or `/dev/stdin.o`.
+          driver_->error_stream_
+              << "ERROR: Output file name must be specified for input '"
+              << input_file_name_ << "' that is not a regular file.\n";
+          return false;
+        }
         output_file_name = input_file_name_;
         llvm::sys::path::replace_extension(output_file_name,
                                            options_.asm_output ? ".s" : ".o");
+      } else {
+        // TODO: Handle the case where multiple input files were specified
+        // along with an output file name. That should either be an error or
+        // should produce a single LLVM IR module containing all inputs.
+        // Currently each unit overwrites the output from the previous one in
+        // this case.
       }
       CARBON_VLOG() << "Writing output to: " << output_file_name << "\n";
 

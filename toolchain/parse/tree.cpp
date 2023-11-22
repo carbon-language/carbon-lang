@@ -131,7 +131,7 @@ auto Tree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
 }
 
 auto Tree::Print(llvm::raw_ostream& output) const -> void {
-  output << "- filename: " << tokens_->filename() << "\n"
+  output << "- filename: " << tokens_->source().filename() << "\n"
          << "  parse_tree: [\n";
 
   // Walk the tree just to calculate depths for each node.
@@ -166,7 +166,7 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
     return;
   }
 
-  output << "- filename: " << tokens_->filename() << "\n"
+  output << "- filename: " << tokens_->source().filename() << "\n"
          << "  parse_tree: [\n";
 
   // The parse tree is stored in postorder. The preorder can be constructed

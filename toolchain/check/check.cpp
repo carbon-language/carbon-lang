@@ -19,7 +19,8 @@ namespace Carbon::Check {
 struct UnitInfo {
   explicit UnitInfo(Unit& unit)
       : unit(&unit),
-        translator(unit.tokens, unit.tokens->filename(), unit.parse_tree),
+        translator(unit.tokens, unit.tokens->source().filename(),
+                   unit.parse_tree),
         err_tracker(*unit.consumer),
         emitter(translator, err_tracker) {}
 
@@ -47,9 +48,9 @@ struct UnitInfo {
 // imports should suppress errors where it makes sense.
 static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
                            llvm::raw_ostream* vlog_stream) -> void {
-  unit_info.unit->sem_ir->emplace(*unit_info.unit->value_stores,
-                                  unit_info.unit->tokens->filename().str(),
-                                  &builtin_ir);
+  unit_info.unit->sem_ir->emplace(
+      *unit_info.unit->value_stores,
+      unit_info.unit->tokens->source().filename().str(), &builtin_ir);
 
   // For ease-of-access.
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
@@ -279,7 +280,8 @@ static auto BuildApiMapAndDiagnosePackaging(
     if (!is_impl) {
       auto [entry, success] = api_map.insert({import_key, &unit_info});
       if (!success) {
-        llvm::StringRef prev_filename = entry->second->unit->tokens->filename();
+        llvm::StringRef prev_filename =
+            entry->second->unit->tokens->source().filename();
         if (packaging) {
           CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
                             "Library's API previously provided by `{0}`.",
@@ -298,28 +300,31 @@ static auto BuildApiMapAndDiagnosePackaging(
     }
 
     // Validate file extensions. Note imports rely the packaging directive, not
-    // the extension.
-    auto filename = unit_info.unit->tokens->filename();
-    static constexpr llvm::StringLiteral ApiExt = ".carbon";
-    static constexpr llvm::StringLiteral ImplExt = ".impl.carbon";
-    bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);
-    auto want_ext = is_impl ? ImplExt : ApiExt;
-    if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
-      CARBON_DIAGNOSTIC(IncorrectExtension, Error,
-                        "File extension of `{0}` required for `{1}`.",
-                        llvm::StringLiteral, Lex::TokenKind);
-      auto diag = unit_info.emitter.Build(
-          packaging ? packaging->names.node : Parse::Node::Invalid,
-          IncorrectExtension, want_ext,
-          is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
-      if (is_api_with_impl_ext) {
-        CARBON_DIAGNOSTIC(IncorrectExtensionImplNote, Note,
-                          "File extension of `{0}` only allowed for `{1}`.",
+    // the extension. If the input is not a regular file, for example because it
+    // is stdin, no filename checking is performed.
+    if (unit_info.unit->tokens->source().is_regular_file()) {
+      auto filename = unit_info.unit->tokens->source().filename();
+      static constexpr llvm::StringLiteral ApiExt = ".carbon";
+      static constexpr llvm::StringLiteral ImplExt = ".impl.carbon";
+      bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);
+      auto want_ext = is_impl ? ImplExt : ApiExt;
+      if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
+        CARBON_DIAGNOSTIC(IncorrectExtension, Error,
+                          "File extension of `{0}` required for `{1}`.",
                           llvm::StringLiteral, Lex::TokenKind);
-        diag.Note(Parse::Node::Invalid, IncorrectExtensionImplNote, ImplExt,
-                  Lex::TokenKind::Impl);
+        auto diag = unit_info.emitter.Build(
+            packaging ? packaging->names.node : Parse::Node::Invalid,
+            IncorrectExtension, want_ext,
+            is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
+        if (is_api_with_impl_ext) {
+          CARBON_DIAGNOSTIC(IncorrectExtensionImplNote, Note,
+                            "File extension of `{0}` only allowed for `{1}`.",
+                            llvm::StringLiteral, Lex::TokenKind);
+          diag.Note(Parse::Node::Invalid, IncorrectExtensionImplNote, ImplExt,
+                    Lex::TokenKind::Impl);
+        }
+        diag.Emit();
       }
-      diag.Emit();
     }
   }
   return api_map;

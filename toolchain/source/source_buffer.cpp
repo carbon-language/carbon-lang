@@ -18,6 +18,12 @@ struct FilenameTranslator : DiagnosticLocationTranslator<llvm::StringRef> {
 };
 }  // namespace
 
+auto SourceBuffer::CreateFromStdin(DiagnosticConsumer& consumer)
+    -> std::optional<SourceBuffer> {
+  return CreateFromMemoryBuffer(llvm::MemoryBuffer::getSTDIN(), "<stdin>",
+                                /*is_regular_file=*/false, consumer);
+}
+
 auto SourceBuffer::CreateFromFile(llvm::vfs::FileSystem& fs,
                                   llvm::StringRef filename,
                                   DiagnosticConsumer& consumer)
@@ -41,25 +47,41 @@ auto SourceBuffer::CreateFromFile(llvm::vfs::FileSystem& fs,
     emitter.Emit(filename, ErrorStattingFile, file.getError().message());
     return std::nullopt;
   }
-  int64_t size = status->getSize();
-  if (size >= std::numeric_limits<int32_t>::max()) {
-    CARBON_DIAGNOSTIC(FileTooLarge, Error,
-                      "File is over the 2GiB input limit; size is {0} bytes.",
-                      int64_t);
-    emitter.Emit(filename, FileTooLarge, size);
-    return std::nullopt;
-  }
 
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
-      (*file)->getBuffer(filename, size, /*RequiresNullTerminator=*/false);
+  // `stat` on a file without a known size gives a size of 0, which causes
+  // `llvm::vfs::File::getBuffer` to produce an empty buffer. Use a size of -1
+  // in this case so we get the complete file contents.
+  bool is_regular_file = status->isRegularFile();
+  int64_t size = is_regular_file ? status->getSize() : -1;
+
+  return CreateFromMemoryBuffer(
+      (*file)->getBuffer(filename, size, /*RequiresNullTerminator=*/false),
+      filename, is_regular_file, consumer);
+}
+
+auto SourceBuffer::CreateFromMemoryBuffer(
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
+    llvm::StringRef filename, bool is_regular_file,
+    DiagnosticConsumer& consumer) -> std::optional<SourceBuffer> {
+  FilenameTranslator translator;
+  DiagnosticEmitter<llvm::StringRef> emitter(translator, consumer);
+
   if (buffer.getError()) {
     CARBON_DIAGNOSTIC(ErrorReadingFile, Error, "Error reading file: {0}",
                       std::string);
-    emitter.Emit(filename, ErrorReadingFile, file.getError().message());
+    emitter.Emit(filename, ErrorReadingFile, buffer.getError().message());
     return std::nullopt;
   }
 
-  return SourceBuffer(filename.str(), std::move(buffer.get()));
+  if (buffer.get()->getBufferSize() >= std::numeric_limits<int32_t>::max()) {
+    CARBON_DIAGNOSTIC(FileTooLarge, Error,
+                      "File is over the 2GiB input limit; size is {0} bytes.",
+                      int64_t);
+    emitter.Emit(filename, FileTooLarge, buffer.get()->getBufferSize());
+    return std::nullopt;
+  }
+
+  return SourceBuffer(filename.str(), std::move(buffer.get()), is_regular_file);
 }
 
 }  // namespace Carbon
