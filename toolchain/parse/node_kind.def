@@ -96,8 +96,9 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0, CARBON_TOKEN(Identifier))
 // A parse node kind may be preceded by:
 // -  `_optional_` if this node may be present or omitted in valid parses,
 //    depending on which tokens are in the source code.
-// -  `_repeated_` if this node may be repeated or omitted in valid parses,
-//    depending on which tokens are in the source code.
+
+// -  `_repeated_` if this node (or nodes) may be repeated or omitted in valid
+//    parses, depending on which tokens are in the source code.
 // -  `_external_:` if this node is the child of multiple kinds of nodes and
 //    is documented separately.
 //
@@ -193,12 +194,13 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
 
 // A parameter list, possibly implicit:
 //   [Implicit]ParamertListStart
+//   _repeated_:
 //   _external_: [Generic]PatternBinding
 //   ParamListComma
 // [Implicit]ParamList
 //
-// Exprs and ParamListComma may repeat with ParamListComma as a
-// separator.
+// [Generic]PatternBinding and ParamListComma may repeat with ParamListComma
+// as a separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0,
                                    CARBON_TOKEN(OpenParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0,
@@ -375,11 +377,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(IndexExpr, IndexExprStart,
 //
 // Tuples, such as `(1, 2)`:
 //   ParenExprOrTupleLiteralStart
+//   _repeated_:
 //   _external_: expression
 //   TupleLiteralComma
 // TupleLiteral
 //
-// Exprs and TupleLiteralComma may repeat with TupleLiteralComma as a
+// Expressions and TupleLiteralComma may repeat with TupleLiteralComma as a
 // separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExprOrTupleLiteralStart, 0,
                                    CARBON_TOKEN(OpenParen))
@@ -392,12 +395,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExprOrTupleLiteralStart,
 // Call expressions, such as `a()`:
 //     _external_: expression
 //   CallExprStart
+//   _repeated_:
 //   _external_: expression
 //   CallExprComma
 // CallExpr
 //
-// Exprs and CallExprComma may repeat with CallExprComma as a
-// separator.
+// Exprs and CallExprComma may repeat with CallExprComma as a separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprStart, 1, CARBON_TOKEN(OpenParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprComma, 0, CARBON_TOKEN(Comma))
 CARBON_PARSE_NODE_KIND_BRACKET(CallExpr, CallExprStart,
@@ -522,6 +525,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3,
 
 // Struct literals, such as `{.a = 0}`:
 //   StructLiteralOrStructTypeLiteralStart
+//   _repeated_:
 //       _external_: Name
 //     StructFieldDesignator
 //     _external_: expression
@@ -530,6 +534,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3,
 // StructLiteral
 //
 // Struct type literals, such as `{.a: i32}`:
+//   _repeated_:
 //       _external_: Name
 //     StructFieldDesignator
 //     _external_: type expression
