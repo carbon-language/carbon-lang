@@ -699,8 +699,8 @@ namespace NS.MemberNS;
 class NS.MemberNS.MemberClassT {}
 ```
 
-When there are multiple declared names in binding patterns in the same pattern,
-all names must be in the same namespace. Because namespace members can only be
+When multiple names are declared by binding patterns in the same pattern, all
+names must be in the same namespace. Because namespace members can only be
 declared in the same scope as the namespace, a namespace-qualified pattern
 binding can only be used in the pattern of a `var` or `let` declaration. For
 example:
