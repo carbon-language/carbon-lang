@@ -699,7 +699,7 @@ namespace NS.MemberNS;
 class NS.MemberNS.MemberClassT {}
 ```
 
-When there are multiple declared names in binding patterns, particularly `var`
+When there are multiple declared names in binding patterns in the same pattern, particularly `var`
 and `let`, all names must be in the same namespace. For example:
 
 ```carbon
