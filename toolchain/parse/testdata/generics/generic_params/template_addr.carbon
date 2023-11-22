@@ -13,7 +13,7 @@ fn foo(template addr a:! i32);
 // CHECK:STDOUT:       {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:               {kind: 'Name', text: 'a'},
-// CHECK:STDOUT:               {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:               {kind: 'IntegerTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'GenericPatternBinding', text: ':!', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'Address', text: 'addr', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'Template', text: 'template', subtree_size: 5},
