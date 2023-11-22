@@ -44,10 +44,12 @@ auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
 File::File(SharedValueStores& value_stores)
     : value_stores_(&value_stores),
       filename_("<builtins>"),
-      // Builtins are always the first IR, even when self-referential.
-      cross_reference_irs_({this}),
       type_blocks_(allocator_),
       inst_blocks_(allocator_) {
+  auto builtins_id = cross_reference_irs_.Add(this);
+  CARBON_CHECK(builtins_id == CrossReferenceIRId::Builtins)
+      << "Builtins must be the first IR, even if self-referential";
+
   // Default entry for InstBlockId::Empty.
   inst_blocks_.AddDefaultValue();
 
@@ -72,13 +74,12 @@ File::File(SharedValueStores& value_stores, std::string filename,
            const File* builtins)
     : value_stores_(&value_stores),
       filename_(std::move(filename)),
-      // Builtins are always the first IR.
-      cross_reference_irs_({builtins}),
       type_blocks_(allocator_),
       inst_blocks_(allocator_) {
   CARBON_CHECK(builtins != nullptr);
-  CARBON_CHECK(builtins->cross_reference_irs_[0] == builtins)
-      << "Not called with builtins!";
+  auto builtins_id = cross_reference_irs_.Add(builtins);
+  CARBON_CHECK(builtins_id == CrossReferenceIRId::Builtins)
+      << "Builtins must be the first IR";
 
   // Default entry for InstBlockId::Empty.
   inst_blocks_.AddDefaultValue();
@@ -482,7 +483,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
       case CrossReference::Kind: {
         auto xref = inst.As<CrossReference>();
-        ir = &ir->GetCrossReferenceIR(xref.ir_id);
+        ir = ir->cross_reference_irs().Get(xref.ir_id);
         inst_id = xref.inst_id;
         continue;
       }

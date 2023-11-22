@@ -25,7 +25,7 @@ var x: [i32;;
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'x'},
 // CHECK:STDOUT:             {kind: 'ArrayExprStart', text: '['},
-// CHECK:STDOUT:             {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'IntegerTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: ';', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 5},

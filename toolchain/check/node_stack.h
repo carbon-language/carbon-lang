@@ -315,7 +315,6 @@ class NodeStack {
       case Parse::NodeKind::IfExprElse:
       case Parse::NodeKind::IndexExpr:
       case Parse::NodeKind::InfixOperator:
-      case Parse::NodeKind::Literal:
       case Parse::NodeKind::MemberAccessExpr:
       case Parse::NodeKind::NameExpr:
       case Parse::NodeKind::ParenExpr:
@@ -331,6 +330,11 @@ class NodeStack {
       case Parse::NodeKind::StructFieldType:
       case Parse::NodeKind::StructTypeLiteral:
       case Parse::NodeKind::TupleLiteral:
+// Use x-macros to handle literal cases.
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) \
+  case Parse::NodeKind::Name:
+#include "toolchain/parse/node_kind.def"
         return IdKind::InstId;
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:

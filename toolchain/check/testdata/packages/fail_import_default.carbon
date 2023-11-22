@@ -13,11 +13,11 @@ package A api;
 // CHECK:STDERR: ^
 import library default;
 
-// --- default_impl.carbon
+// --- default.impl.carbon
 
 package A impl;
 
-// CHECK:STDERR: default_impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: default.impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import library default;
 // CHECK:STDERR: ^
 import library default;
@@ -40,7 +40,7 @@ import library default;
 
 // CHECK:STDOUT: file "default_api.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "default_impl.carbon" {
+// CHECK:STDOUT: file "default.impl.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main_import_default.carbon" {
 // CHECK:STDOUT: }

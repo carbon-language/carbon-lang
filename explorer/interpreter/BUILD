@@ -306,6 +306,7 @@ cc_library(
     ],
     deps = [
         ":action",
+        ":type_utils",
         "//explorer/ast",
         "//explorer/base:arena",
         "//explorer/base:nonnull",

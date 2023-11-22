@@ -14,7 +14,7 @@ var n: i8 =- n;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'n'},
-// CHECK:STDOUT:         {kind: 'Literal', text: 'i8'},
+// CHECK:STDOUT:         {kind: 'IntegerTypeLiteral', text: 'i8'},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'n'},

@@ -17,7 +17,7 @@ var x: {.a: i32,,} = {};
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:               {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'IntegerTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'StructFieldType', text: ':', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: ',', has_error: yes},

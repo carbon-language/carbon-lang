@@ -26,7 +26,6 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
                Nonnull<TraceStream*> trace_stream,
                Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<Nonnull<const Value*>>;
-
 }  // namespace Carbon
 
 #endif  // CARBON_EXPLORER_INTERPRETER_INTERPRETER_H_

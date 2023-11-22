@@ -16,7 +16,7 @@ class Foo {
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'Name', text: 'x'},
-// CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'IntegerTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 9},

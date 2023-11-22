@@ -18,7 +18,7 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:             {kind: 'NameExpr', text: 'G'},
 // CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'IntegerTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'CallExprComma', text: ','},
 // CHECK:STDOUT:             {kind: 'NameExpr', text: 'n'},

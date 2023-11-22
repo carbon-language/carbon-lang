@@ -13,7 +13,7 @@ fn foo() -> u32;
 // CHECK:STDOUT:       {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'Literal', text: 'u32'},
+// CHECK:STDOUT:         {kind: 'UnsignedIntegerTypeLiteral', text: 'u32'},
 // CHECK:STDOUT:       {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
