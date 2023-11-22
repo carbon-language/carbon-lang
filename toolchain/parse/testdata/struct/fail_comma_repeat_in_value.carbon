@@ -17,7 +17,7 @@ var x: {.a = 0,,} = {};
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:               {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'Literal', text: '0'},
+// CHECK:STDOUT:             {kind: 'IntegerLiteral', text: '0'},
 // CHECK:STDOUT:           {kind: 'StructFieldValue', text: '=', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: ',', has_error: yes},

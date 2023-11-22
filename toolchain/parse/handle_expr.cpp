@@ -77,18 +77,60 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
-    case Lex::TokenKind::False:
-    case Lex::TokenKind::True:
-    case Lex::TokenKind::IntegerLiteral:
-    case Lex::TokenKind::RealLiteral:
-    case Lex::TokenKind::StringLiteral:
-    case Lex::TokenKind::Bool:
-    case Lex::TokenKind::IntegerTypeLiteral:
-    case Lex::TokenKind::UnsignedIntegerTypeLiteral:
-    case Lex::TokenKind::FloatingPointTypeLiteral:
-    case Lex::TokenKind::StringTypeLiteral:
+    case Lex::TokenKind::False: {
+      context.AddLeafNode(NodeKind::BoolLiteralFalse, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::True: {
+      context.AddLeafNode(NodeKind::BoolLiteralTrue, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::IntegerLiteral: {
+      context.AddLeafNode(NodeKind::IntegerLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::RealLiteral: {
+      context.AddLeafNode(NodeKind::FloatingPointLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::StringLiteral: {
+      context.AddLeafNode(NodeKind::StringLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::Bool: {
+      context.AddLeafNode(NodeKind::BoolTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::IntegerTypeLiteral: {
+      context.AddLeafNode(NodeKind::IntegerTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::UnsignedIntegerTypeLiteral: {
+      context.AddLeafNode(NodeKind::UnsignedIntegerTypeLiteral,
+                          context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::FloatingPointTypeLiteral: {
+      context.AddLeafNode(NodeKind::FloatingPointTypeLiteral,
+                          context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::StringTypeLiteral: {
+      context.AddLeafNode(NodeKind::StringTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
     case Lex::TokenKind::Type: {
-      context.AddLeafNode(NodeKind::Literal, context.Consume());
+      context.AddLeafNode(NodeKind::TypeTypeLiteral, context.Consume());
       context.PushState(state);
       break;
     }
