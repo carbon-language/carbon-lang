@@ -9,6 +9,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/context.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
@@ -18,7 +19,8 @@ namespace Carbon::Check {
 struct UnitInfo {
   explicit UnitInfo(Unit& unit)
       : unit(&unit),
-        translator(unit.tokens, unit.tokens->filename(), unit.parse_tree),
+        translator(unit.tokens, unit.tokens->source().filename(),
+                   unit.parse_tree),
         err_tracker(*unit.consumer),
         emitter(translator, err_tracker) {}
 
@@ -46,9 +48,9 @@ struct UnitInfo {
 // imports should suppress errors where it makes sense.
 static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
                            llvm::raw_ostream* vlog_stream) -> void {
-  unit_info.unit->sem_ir->emplace(*unit_info.unit->value_stores,
-                                  unit_info.unit->tokens->filename().str(),
-                                  &builtin_ir);
+  unit_info.unit->sem_ir->emplace(
+      *unit_info.unit->value_stores,
+      unit_info.unit->tokens->source().filename().str(), &builtin_ir);
 
   // For ease-of-access.
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
@@ -239,25 +241,14 @@ static auto TrackImport(
   }
 }
 
-auto CheckParseTrees(const SemIR::File& builtin_ir,
-                     llvm::MutableArrayRef<Unit> units,
-                     llvm::raw_ostream* vlog_stream) -> void {
-  // Prepare diagnostic emitters in case we run into issues during package
-  // checking.
-  //
-  // UnitInfo is big due to its SmallVectors, so we default to 0 on the stack.
-  llvm::SmallVector<UnitInfo, 0> unit_infos;
-  unit_infos.reserve(units.size());
-  for (auto& unit : units) {
-    unit_infos.emplace_back(unit);
-  }
-
-  // Create a map of APIs which might be imported.
+// Builds a map of `api` files which might be imported. Also diagnoses issues
+// related to the packaging because the strings are loaded as part of getting
+// the ImportKey (which we then do for `impl` files too).
+static auto BuildApiMapAndDiagnosePackaging(
+    llvm::SmallVector<UnitInfo, 0>& unit_infos)
+    -> llvm::DenseMap<ImportKey, UnitInfo*> {
   llvm::DenseMap<ImportKey, UnitInfo*> api_map;
   for (auto& unit_info : unit_infos) {
-    // TODO: It may be good to validate filenames here, but that would have use
-    // put .impl.carbon on almost all tests (which are in `Main//default`). We
-    // should probably get leads direction on filenames before enforcing.
     const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
     // An import key formed from the `package` or `library` directive. Or, for
     // Main//default, a placeholder key.
@@ -279,29 +270,81 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
       continue;
     }
 
-    if (packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
-      continue;
+    bool is_impl =
+        packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl;
+
+    // Add to the `api` map and diagnose duplicates. This occurs before the
+    // file extension check because we might emit both diagnostics in situation
+    // where the user forgets (or has syntax errors with) a package line
+    // multiple times.
+    if (!is_impl) {
+      auto [entry, success] = api_map.insert({import_key, &unit_info});
+      if (!success) {
+        llvm::StringRef prev_filename =
+            entry->second->unit->tokens->source().filename();
+        if (packaging) {
+          CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
+                            "Library's API previously provided by `{0}`.",
+                            llvm::StringRef);
+          unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi,
+                                 prev_filename);
+        } else {
+          CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
+                            "Main//default previously provided by `{0}`.",
+                            llvm::StringRef);
+          // Use the invalid node because there's no node to associate with.
+          unit_info.emitter.Emit(Parse::Node::Invalid, DuplicateMainApi,
+                                 prev_filename);
+        }
+      }
     }
 
-    auto [entry, success] = api_map.insert({import_key, &unit_info});
-    if (!success) {
-      llvm::StringRef prev_filename = entry->second->unit->tokens->filename();
-      if (packaging) {
-        CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
-                          "Library's API previously provided by `{0}`.",
-                          llvm::StringRef);
-        unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi,
-                               prev_filename);
-      } else {
-        CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
-                          "Main//default previously provided by `{0}`.",
-                          llvm::StringRef);
-        // Use the invalid node because there's no node to associate with.
-        unit_info.emitter.Emit(Parse::Node::Invalid, DuplicateMainApi,
-                               prev_filename);
+    // Validate file extensions. Note imports rely the packaging directive, not
+    // the extension. If the input is not a regular file, for example because it
+    // is stdin, no filename checking is performed.
+    if (unit_info.unit->tokens->source().is_regular_file()) {
+      auto filename = unit_info.unit->tokens->source().filename();
+      static constexpr llvm::StringLiteral ApiExt = ".carbon";
+      static constexpr llvm::StringLiteral ImplExt = ".impl.carbon";
+      bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);
+      auto want_ext = is_impl ? ImplExt : ApiExt;
+      if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
+        CARBON_DIAGNOSTIC(IncorrectExtension, Error,
+                          "File extension of `{0}` required for `{1}`.",
+                          llvm::StringLiteral, Lex::TokenKind);
+        auto diag = unit_info.emitter.Build(
+            packaging ? packaging->names.node : Parse::Node::Invalid,
+            IncorrectExtension, want_ext,
+            is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
+        if (is_api_with_impl_ext) {
+          CARBON_DIAGNOSTIC(IncorrectExtensionImplNote, Note,
+                            "File extension of `{0}` only allowed for `{1}`.",
+                            llvm::StringLiteral, Lex::TokenKind);
+          diag.Note(Parse::Node::Invalid, IncorrectExtensionImplNote, ImplExt,
+                    Lex::TokenKind::Impl);
+        }
+        diag.Emit();
       }
     }
   }
+  return api_map;
+}
+
+auto CheckParseTrees(const SemIR::File& builtin_ir,
+                     llvm::MutableArrayRef<Unit> units,
+                     llvm::raw_ostream* vlog_stream) -> void {
+  // Prepare diagnostic emitters in case we run into issues during package
+  // checking.
+  //
+  // UnitInfo is big due to its SmallVectors, so we default to 0 on the stack.
+  llvm::SmallVector<UnitInfo, 0> unit_infos;
+  unit_infos.reserve(units.size());
+  for (auto& unit : units) {
+    unit_infos.emplace_back(unit);
+  }
+
+  llvm::DenseMap<ImportKey, UnitInfo*> api_map =
+      BuildApiMapAndDiagnosePackaging(unit_infos);
 
   // Mark down imports for all files.
   llvm::SmallVector<UnitInfo*> ready_to_check;

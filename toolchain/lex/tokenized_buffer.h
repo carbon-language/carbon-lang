@@ -233,7 +233,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     return expected_parse_tree_size_;
   }
 
-  auto filename() const -> llvm::StringRef { return source_->filename(); }
+  auto source() const -> const SourceBuffer& { return *source_; }
 
  private:
   friend class Lexer;

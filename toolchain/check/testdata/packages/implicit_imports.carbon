@@ -12,24 +12,24 @@ package ApiOnly api;
 
 package ApiOnly library "lib" api;
 
-// --- with_impl_api.carbon
+// --- with_impl.carbon
 
 package WithImpl api;
 
-// --- with_impl_impl.carbon
+// --- with_impl.impl.carbon
 
 package WithImpl impl;
 
-// --- with_impl_impl_extra.carbon
+// --- with_impl_extra.impl.carbon
 
 // Multiple impls are allowed.
 package WithImpl impl;
 
-// --- with_impl_lib_api.carbon
+// --- with_impl_lib.carbon
 
 package WithImpl library "lib" api;
 
-// --- with_impl_lib_impl.carbon
+// --- with_impl_lib.impl.carbon
 
 package WithImpl library "lib" impl;
 
@@ -39,7 +39,7 @@ package WithImpl library "lib" impl;
 
 library "lib" api;
 
-// --- main_lib_impl.carbon
+// --- main_lib.impl.carbon
 
 library "lib" impl;
 
@@ -47,19 +47,19 @@ library "lib" impl;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "api_only_lib.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "with_impl_api.carbon" {
+// CHECK:STDOUT: file "with_impl.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "with_impl_impl.carbon" {
+// CHECK:STDOUT: file "with_impl.impl.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "with_impl_impl_extra.carbon" {
+// CHECK:STDOUT: file "with_impl_extra.impl.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "with_impl_lib_api.carbon" {
+// CHECK:STDOUT: file "with_impl_lib.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "with_impl_lib_impl.carbon" {
+// CHECK:STDOUT: file "with_impl_lib.impl.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main_lib.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "main_lib_impl.carbon" {
+// CHECK:STDOUT: file "main_lib.impl.carbon" {
 // CHECK:STDOUT: }

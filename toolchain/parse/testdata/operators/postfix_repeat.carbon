@@ -16,7 +16,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:                 {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:                 {kind: 'IntegerTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:               {kind: 'PostfixOperator', text: '*', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'PostfixOperator', text: '*', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 4},

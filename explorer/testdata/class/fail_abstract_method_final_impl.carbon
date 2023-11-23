@@ -6,18 +6,15 @@
 
 package ExplorerTest api;
 
-base class C {
+abstract class A {
+    abstract fn Foo[self: Self]();
 }
 
-class D {
-  extend base: C;
-  abstract fn Foo[self:Self]() -> i32 {
-    return 1;
-  // CHECK:STDERR: COMPILATION ERROR: fail_abstract_method_not_supported.carbon:[[@LINE+1]]: Error declaring `Foo`: `abstract` methods are not yet supported.
-  }
+class B {
+  extend base: A;
+// CHECK:STDERR: COMPILATION ERROR: fail_abstract_method_final_impl.carbon:[[@LINE+1]]: Error declaring `B`: non abstract class should implement abstract method `Foo`.
 }
 
 fn Main() -> i32 {
-  let d: D = {};
   return 0;
 }

@@ -52,11 +52,11 @@ import library "lib";
 
 package Implicit api;
 
-// --- implicit_impl.carbon
+// --- implicit.impl.carbon
 
 package Implicit impl;
 
-// CHECK:STDERR: implicit_impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: implicit.impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit;
 // CHECK:STDERR: ^~~~~~
 import Implicit;
@@ -65,11 +65,11 @@ import Implicit;
 
 package Implicit library "lib" api;
 
-// --- implicit_lib_impl.carbon
+// --- implicit_lib.impl.carbon
 
 package Implicit library "lib" impl;
 
-// CHECK:STDERR: implicit_lib_impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: implicit_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit library "lib";
 // CHECK:STDERR: ^~~~~~
 import Implicit library "lib";
@@ -92,11 +92,11 @@ import ImportNotFound;
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "implicit_api.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "implicit_impl.carbon" {
+// CHECK:STDOUT: file "implicit.impl.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "implicit_lib_api.carbon" {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "implicit_lib_impl.carbon" {
+// CHECK:STDOUT: file "implicit_lib.impl.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "not_found.carbon" {
 // CHECK:STDOUT: }

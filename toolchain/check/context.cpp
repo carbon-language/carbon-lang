@@ -658,9 +658,9 @@ class TypeCompleter {
   auto BuildCrossReferenceValueRepresentation(SemIR::TypeId type_id,
                                               SemIR::CrossReference xref) const
       -> SemIR::ValueRepresentation {
-    auto xref_inst = context_.sem_ir()
-                         .GetCrossReferenceIR(xref.ir_id)
-                         .insts()
+    auto xref_inst = context_.cross_reference_irs()
+                         .Get(xref.ir_id)
+                         ->insts()
                          .Get(xref.inst_id);
 
     // The canonical description of a type should only have cross-references
