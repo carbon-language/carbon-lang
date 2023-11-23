@@ -99,7 +99,7 @@ auto HandleExprInPostfix(Context& context) -> void {
     }
     case Lex::TokenKind::OpenParen: {
       context.PushState(state);
-      context.PushState(State::ParenExprOrTupleLiteral);
+      context.PushState(State::ParenExpr);
       break;
     }
     case Lex::TokenKind::OpenSquareBracket: {

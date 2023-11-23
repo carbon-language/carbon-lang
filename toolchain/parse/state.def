@@ -697,45 +697,45 @@ CARBON_PARSE_STATE_VARIANTS2(ParenCondition, If, While)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(ParenConditionFinish, If, While)
 
-// Handles the `(` of a parenthesized expression or tuple literal
+// Handles the `(` of a parenthesis expression or tuple literal
 //
 // ( )
 // ^
-//   1. ParenExprOrTupleLiteralFinishAsTuple
+//   1. ParenExprFinishAsTuple
 //
 // ( ... )
 // ^
 //   1. Expr
-//   2. ParenExprOrTupleLiteralParamFinishAsUnknown
-//   3. ParenExprOrTupleLiteralFinishAsParenExpr    (SPECIAL: may be replaced)
-CARBON_PARSE_STATE(ParenExprOrTupleLiteral)
+//   2. ParenExprParamFinishAsUnknown
+//   3. ParenExprFinishAsSingle    (SPECIAL: may be replaced)
+CARBON_PARSE_STATE(ParenExpr)
 
-// Handles the end of a parenthesized expression or tuple literal's parameter.
+// Handles the end of a parenthesis expression or tuple literal's parameter.
 // This will start as AsUnknown on the first parameter; if there are more, it
 // switches to AsTuple processing.
 //
 // ( ... , )
 //       ^
 //   (state done)
-//   SPECIAL (variant is Unknown): parent becomes ParenExprOrTupleLiteralFinishAsTuple
+//   SPECIAL (variant is Unknown): parent becomes ParenExprFinishAsTuple
 //
 // ( ... , ... )
 //       ^
 //   1. Expression
-//   2. ParenExprOrTupleLiteralParamFinishAsTuple
-//   SPECIAL (variant is Unknown): parent becomes ParenExprOrTupleLiteralFinishAsTuple
+//   2. ParenExprParamFinishAsTuple
+//   SPECIAL (variant is Unknown): parent becomes ParenExprFinishAsTuple
 //
 //  ...
 // ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprOrTupleLiteralParamFinish, Unknown, Tuple)
+CARBON_PARSE_STATE_VARIANTS2(ParenExprParamFinish, Unknown, Tuple)
 
-// Handles the `)` of a parenthesized expression.
+// Handles the `)` of a parenthesis expression.
 //
 // ( ... )
 //       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprOrTupleLiteralFinish, ParenExpr, Tuple)
+CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Single, Tuple)
 
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.
