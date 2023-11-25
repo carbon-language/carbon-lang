@@ -260,11 +260,11 @@ class Context {
   }
   // Access the most recently entered declaration.
   auto innermost_decl() -> DeclState& { return decl_state_stack_.back(); }
-  // Get the kind of the declaration containing the innermost declaration.
+  // Get the state for the declaration containing the innermost declaration.
   // Requires that the innermost declaration is not `FileScope`.
-  auto containing_decl_kind() -> DeclState::DeclKind {
+  auto containing_decl() const -> const DeclState& {
     CARBON_CHECK(decl_state_stack_.size() >= 2);
-    return decl_state_stack_[decl_state_stack_.size() - 2].kind;
+    return decl_state_stack_[decl_state_stack_.size() - 2];
   }
   // Leave a declaration of kind `k`.
   auto PopDeclState(DeclState::DeclKind k) {
