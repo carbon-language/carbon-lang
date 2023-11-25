@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
-#include "toolchain/check/handle_modifier.h"
+#include "toolchain/check/validate_modifiers.h"
 #include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Check {
@@ -14,7 +14,8 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
-  // Optional modifiers and the name should always follow.
+  // Optional modifiers and the name follow.
+  context.PushDeclState(DeclState::Class, parse_node);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -22,19 +23,15 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
 static auto BuildClassDecl(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
 
   // Process modifiers and introducer.
-  auto [modifiers, introducer] = ValidateModifiers(
+  auto [modifiers, introducer] = ModifiersAllowedOnDecl(
       context,
-      DeclModifierKeywords()
-          .SetPrivate()
-          .SetProtected()
-          .SetAbstract()
-          .SetBase(),
-      [&]() {
-        return context.node_stack()
-            .PopForSoloParseNode<Parse::NodeKind::ClassIntroducer>();
-      });
+      KeywordModifierSet().SetPrivate().SetProtected().SetAbstract().SetBase(),
+      "`class` declaration");
+  // FIXME: switch
   if (modifiers.HasPrivate()) {
     context.TODO(introducer, "private");
   }
@@ -117,6 +114,7 @@ static auto BuildClassDecl(Context& context)
 auto HandleClassDecl(Context& context, Parse::Node /*parse_node*/) -> bool {
   BuildClassDecl(context);
   context.decl_name_stack().PopScope();
+  context.PopDeclState(DeclState::Class);
   return true;
 }
 
@@ -174,6 +172,7 @@ auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
   context.inst_block_stack().Pop();
   context.PopScope();
   context.decl_name_stack().PopScope();
+  context.PopDeclState(DeclState::Class);
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);

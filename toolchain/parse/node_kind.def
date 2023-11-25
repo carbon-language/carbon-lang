@@ -182,7 +182,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 
 // `fn`:
 //     FunctionIntroducer
-//     _repeated_ _external_: DeclModifierKeyword
+//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
 //     _external_: Name or QualifiedDecl
 //     _external_: ParamList
 //       _external_: type expression
@@ -252,11 +252,13 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 
 // `let`:
 //   LetIntroducer
-//   _repeated_ _external_: DeclModifierKeyword  // when a declaration
+//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
 //   _external_: PatternBinding
 //   LetInitializer
 //   _external_: expression
 // LetDecl
+//
+// Modifier keywords only appear for `let` declarations, not `let` statements.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetIntroducer, 0, CARBON_TOKEN(Let))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
@@ -265,14 +267,16 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 
 // `var` and `returned var`:
 //   VariableIntroducer
-//   _repeated_ _external_: DeclModifierKeyword  // when a declaration
-//   _optional_ ReturnedModifier                 // when a statement
+//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   _optional_ ReturnedModifier
 //   _external_: PatternBinding
 //   _optional_:
 //   VariableInitializer
 //   _external_: expression
 // VariableDecl
 //
+// Access and declaration modifier keywords only appear for `var` declarations,
+// whereas the returned modifier only appears on `var` statements.
 // The VariableInitializer and following expression are paired: either both will
 // be present, or neither will.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0,
@@ -581,6 +585,15 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 
+// Access modifier keywords `private` or `protected`:
+// AccessModifierKeyword
+//
+// The kind of keyword is determined by looking at the token kind.
+// These may be repeated, including possibly zero times.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(AccessModifierKeyword, 0,
+                                   CARBON_TOKEN(Private)
+                                   CARBON_TOKEN(Protected))
+
 // Declaration modifier keywords such as `abstract` or `virtual`:
 // DeclModifierKeyword
 //
@@ -588,17 +601,15 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 // These may be repeated, including possibly zero times.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclModifierKeyword, 0,
                                    CARBON_TOKEN(Abstract)
-				   CARBON_TOKEN(Base)
-				   CARBON_TOKEN(Default)
-				   CARBON_TOKEN(Final)
-				   CARBON_TOKEN(Override)
-				   CARBON_TOKEN(Private)
-				   CARBON_TOKEN(Protected)
-				   CARBON_TOKEN(Virtual))
+                                   CARBON_TOKEN(Base)
+                                   CARBON_TOKEN(Default)
+                                   CARBON_TOKEN(Final)
+                                   CARBON_TOKEN(Override)
+                                   CARBON_TOKEN(Virtual))
 
 // `class`:
 //     ClassIntroducer
-//     _repeated_ _external_: DeclModifierKeyword
+//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
 //     _external_: Name or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
@@ -618,7 +629,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
 
 // `interface`:
 //     InterfaceIntroducer
-//     _repeated_ _external_: DeclModifierKeyword
+//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
 //     _external_: Name or QualifiedDecl
 //   InterfaceDefinitionStart
 //   _external_: declarations
@@ -639,7 +650,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
 
 // `constraint`:
 //     NamedConstraintIntroducer
-//     _repeated_ _external_: DeclModifierKeyword
+//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
 //     _external_: Name or QualifiedDecl
 //   NamedConstraintDefinitionStart
 //   _external_: declarations

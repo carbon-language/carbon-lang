@@ -13,7 +13,7 @@ protected virtual;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'InvalidParseStart', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'DeclModifierKeyword', text: 'protected'},
+// CHECK:STDOUT:       {kind: 'AccessModifierKeyword', text: 'protected'},
 // CHECK:STDOUT:       {kind: 'DeclModifierKeyword', text: 'virtual'},
 // CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

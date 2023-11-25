@@ -4,7 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/handle_modifier.h"
+#include "toolchain/check/validate_modifiers.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -13,6 +13,7 @@ auto HandleVariableIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
+  context.PushDeclState(DeclState::Var, parse_node);
   return true;
 }
 
@@ -70,13 +71,14 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
       context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
     }
   }
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
 
   // Process declaration modifiers and introducer.
-  auto [modifiers, introducer] = ValidateModifiers(
-      context, DeclModifierKeywords().SetPrivate().SetProtected(), [&]() {
-        return context.node_stack()
-            .PopForSoloParseNode<Parse::NodeKind::VariableIntroducer>();
-      });
+  auto [modifiers, introducer] = ModifiersAllowedOnDecl(
+      context, KeywordModifierSet().SetPrivate().SetProtected(),
+      "`var` declaration");
+  // FIXME: switch
   // For fields (members of classes) and globals.
   if (modifiers.HasPrivate()) {
     context.TODO(introducer, "private");
@@ -85,6 +87,7 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
   if (modifiers.HasProtected()) {
     context.TODO(introducer, "protected");
   }
+  context.PopDeclState(DeclState::Var);
 
   return true;
 }

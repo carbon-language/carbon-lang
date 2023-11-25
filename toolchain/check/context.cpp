@@ -38,6 +38,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
   canonical_types_.insert({SemIR::InstId::BuiltinError, SemIR::TypeId::Error});
   canonical_types_.insert(
       {SemIR::InstId::BuiltinTypeType, SemIR::TypeId::TypeType});
+  decl_state_stack_.push_back(DeclState());
 }
 
 auto Context::TODO(Parse::Node parse_node, std::string label) -> bool {

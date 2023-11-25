@@ -10,6 +10,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/decl_state.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/tree.h"
@@ -252,6 +253,26 @@ class Context {
     params_or_args_stack_.AddInstId(inst_id);
   }
 
+  // Enter a declaration of kind `k`, with `f` parse node for the introducer
+  // token.
+  auto PushDeclState(DeclState::DeclKind k, Parse::Node parse_node) {
+    decl_state_stack_.push_back(DeclState(k, parse_node));
+  }
+  // Access the most recently entered declaration.
+  auto innermost_decl() -> DeclState& { return decl_state_stack_.back(); }
+  // Get the kind of the declaration containing the innermost declaration.
+  // Requires that the innermost declaration is not `FileScope`.
+  auto containing_decl_kind() -> DeclState::DeclKind {
+    CARBON_CHECK(decl_state_stack_.size() >= 2);
+    return decl_state_stack_[decl_state_stack_.size() - 2].kind;
+  }
+  // Leave a declaration of kind `k`.
+  auto PopDeclState(DeclState::DeclKind k) {
+    CARBON_CHECK(decl_state_stack_.back().kind == k);
+    decl_state_stack_.pop_back();
+    CARBON_CHECK(!decl_state_stack_.empty());
+  }
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -448,6 +469,10 @@ class Context {
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
+
+  // The stack of declarations that could have modifiers. Bottom of the stack
+  // always has a "DeclState::FileScope" entry.
+  llvm::SmallVector<DeclState> decl_state_stack_;
 
   // Maps identifiers to name lookup results. Values are a stack of name lookup
   // results in the ancestor scopes. This offers constant-time lookup of names,

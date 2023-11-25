@@ -4,7 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/handle_modifier.h"
+#include "toolchain/check/validate_modifiers.h"
 #include "toolchain/sem_ir/entry_point.h"
 
 namespace Carbon::Check {
@@ -56,22 +56,21 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
       context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>().value_or(
           SemIR::InstBlockId::Empty);
   auto name_context = context.decl_name_stack().FinishName();
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers and introducer.
-  auto [modifiers, fn_node] = ValidateModifiers(
-      context,
-      DeclModifierKeywords()
-          .SetPrivate()
-          .SetProtected()
-          .SetAbstract()
-          .SetDefault()
-          .SetFinal()
-          .SetOverride()
-          .SetVirtual(),
-      [&]() {
-        return context.node_stack()
-            .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
-      });
+  auto [modifiers, fn_node] = ModifiersAllowedOnDecl(context,
+                                                     KeywordModifierSet()
+                                                         .SetPrivate()
+                                                         .SetProtected()
+                                                         .SetAbstract()
+                                                         .SetDefault()
+                                                         .SetFinal()
+                                                         .SetOverride()
+                                                         .SetVirtual(),
+                                                     "`fn` declaration");
+  // FIXME: switch
   // For members of classes or free functions
   if (modifiers.HasPrivate()) {
     context.TODO(fn_node, "private");
@@ -172,6 +171,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
 auto HandleFunctionDecl(Context& context, Parse::Node /*parse_node*/) -> bool {
   BuildFunctionDecl(context, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
+  context.PopDeclState(DeclState::Fn);
   return true;
 }
 
@@ -197,6 +197,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();
+  context.PopDeclState(DeclState::Fn);
   return true;
 }
 
@@ -269,7 +270,8 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
   context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
-  // A name should always follow.
+  // Optional modifiers and the name follow.
+  context.PushDeclState(DeclState::Fn, parse_node);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }

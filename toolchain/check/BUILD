@@ -38,6 +38,7 @@ cc_library(
         "inst_block_stack.cpp",
         "return.cpp",
         "return.h",
+        "validate_modifiers.cpp",
     ] +
     # Glob handler files to avoid missing any.
     glob([
@@ -48,9 +49,10 @@ cc_library(
         "context.h",
         "convert.h",
         "decl_name_stack.h",
-        "handle_modifier.h",
+        "decl_state.h",
         "inst_block_stack.h",
         "pending_block.h",
+        "validate_modifiers.h",
     ],
     deps = [
         ":node_stack",

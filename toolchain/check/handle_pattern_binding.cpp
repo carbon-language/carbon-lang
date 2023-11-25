@@ -60,12 +60,10 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
-  auto context_parse_node = context.node_stack().FindParseNodeKindOf(
-      {Parse::NodeKind::ReturnedModifier, Parse::NodeKind::VariableIntroducer,
-       Parse::NodeKind::ImplicitParamListStart, Parse::NodeKind::ParamListStart,
-       Parse::NodeKind::LetIntroducer});
-  switch (auto context_parse_node_kind =
-              context.parse_tree().node_kind(context_parse_node)) {
+  // TODO: The node stack is a fragile way of getting context information.
+  // Get this information from somewhere else.
+  switch (auto context_parse_node_kind = context.parse_tree().node_kind(
+              context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::ReturnedModifier:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
@@ -150,8 +148,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
 
     default:
       CARBON_FATAL() << "Found a pattern binding in unexpected context "
-                     << context.parse_tree().node_kind(
-                            context.node_stack().PeekParseNode());
+                     << context_parse_node_kind;
   }
   return true;
 }

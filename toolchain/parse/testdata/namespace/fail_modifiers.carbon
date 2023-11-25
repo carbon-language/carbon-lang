@@ -13,7 +13,7 @@ private abstract base default final namespace Foo;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'namespace', has_error: yes},
-// CHECK:STDOUT:       {kind: 'DeclModifierKeyword', text: 'private'},
+// CHECK:STDOUT:       {kind: 'AccessModifierKeyword', text: 'private'},
 // CHECK:STDOUT:       {kind: 'DeclModifierKeyword', text: 'abstract'},
 // CHECK:STDOUT:       {kind: 'DeclModifierKeyword', text: 'base'},
 // CHECK:STDOUT:       {kind: 'DeclModifierKeyword', text: 'default'},

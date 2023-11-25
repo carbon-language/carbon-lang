@@ -99,6 +99,16 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   bool saw_modifier = false;
   while (true) {
     switch (context.PositionKind()) {
+      // If we see a access modifier keyword token, add it as a leaf node
+      // and repeat with the next token.
+      case Lex::TokenKind::Private:
+      case Lex::TokenKind::Protected: {
+        auto modifier_token = context.Consume();
+        context.AddLeafNode(NodeKind::AccessModifierKeyword, modifier_token);
+        saw_modifier = true;
+        break;
+      }
+
       // If we see a declaration modifier keyword token, add it as a leaf node
       // and repeat with the next token.
       case Lex::TokenKind::Abstract:
@@ -106,8 +116,6 @@ auto HandleDeclScopeLoop(Context& context) -> void {
       case Lex::TokenKind::Default:
       case Lex::TokenKind::Final:
       case Lex::TokenKind::Override:
-      case Lex::TokenKind::Private:
-      case Lex::TokenKind::Protected:
       case Lex::TokenKind::Virtual: {
         auto modifier_token = context.Consume();
         context.AddLeafNode(NodeKind::DeclModifierKeyword, modifier_token);

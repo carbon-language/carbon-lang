@@ -4,7 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/handle_modifier.h"
+#include "toolchain/check/validate_modifiers.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -13,18 +13,16 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   SemIR::InstId pattern_id =
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers and introducer.
-  auto [modifiers, introducer] = ValidateModifiers(
+  auto [modifiers, introducer] = ModifiersAllowedOnDecl(
       context,
-      DeclModifierKeywords()
-          .SetPrivate()
-          .SetProtected()
-          .SetDefault()
-          .SetFinal(),
-      [&]() {
-        return context.node_stack()
-            .PopForSoloParseNode<Parse::NodeKind::LetIntroducer>();
-      });
+      KeywordModifierSet().SetPrivate().SetProtected().SetDefault().SetFinal(),
+      "`let` declaration");
+
+  // FIXME: switch (context.containing_decl_kind())
+
   // For globals and members of classes.
   if (modifiers.HasPrivate()) {
     context.TODO(introducer, "private");
@@ -41,6 +39,7 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
   if (modifiers.HasFinal()) {
     context.TODO(introducer, "final");
   }
+  context.PopDeclState(DeclState::Let);
 
   // Convert the value to match the type of the pattern.
   auto pattern = context.insts().Get(pattern_id);
@@ -63,6 +62,7 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
 }
 
 auto HandleLetIntroducer(Context& context, Parse::Node parse_node) -> bool {
+  context.PushDeclState(DeclState::Let, parse_node);
   // Push a bracketing node to establish the pattern context.
   context.node_stack().Push(parse_node);
   return true;
