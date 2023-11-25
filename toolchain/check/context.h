@@ -276,6 +276,11 @@ class Context {
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
+  // Get the text for the token of a node for diagnostics.
+  auto TextForNode(Parse::Node parse_node) -> llvm::StringRef {
+    return tokens().GetTokenText(parse_tree().node_token(parse_node));
+  }
+
   auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
 
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
