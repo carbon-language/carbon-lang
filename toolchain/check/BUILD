@@ -36,9 +36,9 @@ cc_library(
         "convert.cpp",
         "decl_name_stack.cpp",
         "inst_block_stack.cpp",
+        "modifiers_allowed.cpp",
         "return.cpp",
         "return.h",
-        "validate_modifiers.cpp",
     ] +
     # Glob handler files to avoid missing any.
     glob([
@@ -51,8 +51,8 @@ cc_library(
         "decl_name_stack.h",
         "decl_state.h",
         "inst_block_stack.h",
+        "modifiers_allowed.h",
         "pending_block.h",
-        "validate_modifiers.h",
     ],
     deps = [
         ":node_stack",

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/validate_modifiers.h"
+#include "toolchain/check/modifiers_allowed.h"
 
 #include "toolchain/check/context.h"
 #include "toolchain/lex/token_kind.h"
