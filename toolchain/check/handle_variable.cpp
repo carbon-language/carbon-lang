@@ -74,19 +74,35 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
 
-  // Process declaration modifiers and introducer.
-  auto first_node = context.innermost_decl().first_node;
+  // Process declaration modifiers.
   auto modifiers = ModifiersAllowedOnDecl(
       context, KeywordModifierSet().SetPrivate().SetProtected(),
       "`var` declaration");
-  // FIXME: switch
-  // For fields (members of classes) and globals.
-  if (modifiers.HasPrivate()) {
-    context.TODO(first_node, "private");
+  switch (context.containing_decl().kind) {
+    case DeclState::FileScope:
+      modifiers =
+          ModifiersAllowedOnDecl(context, KeywordModifierSet().SetPrivate(),
+                                 "`var` declaration at file scope");
+      break;
+
+    case DeclState::Class:
+      modifiers = ModifiersAllowedOnDecl(
+          context, KeywordModifierSet().SetPrivate().SetProtected(),
+          "`var` declaration in a `class` definition",
+          context.containing_decl().first_node);
+      break;
+
+    default:
+      modifiers = ModifiersAllowedOnDecl(context, KeywordModifierSet(),
+                                         "`var` declaration in this context",
+                                         context.containing_decl().first_node);
+      break;
   }
-  // For fields (members of classes).
+  if (modifiers.HasPrivate()) {
+    context.TODO(context.innermost_decl().saw_access_mod, "private");
+  }
   if (modifiers.HasProtected()) {
-    context.TODO(first_node, "protected");
+    context.TODO(context.innermost_decl().saw_access_mod, "protected");
   }
   context.PopDeclState(DeclState::Var);
 

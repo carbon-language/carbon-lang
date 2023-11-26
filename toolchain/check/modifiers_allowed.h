@@ -10,9 +10,10 @@
 namespace Carbon::Check {
 
 // Reports a diagnostic (using `decl_name`) if modifiers on this declaration are
-// not in `allowed`. Returns modifiers that were both found and allowed, and the
-// parse node corresponding to the first token of the declaration.
-// FIXME: add optional Parse::Node context which adds a note.
+// not in `allowed`. Returns modifiers that were both found and allowed, and
+// updates the declaration state in `context`. Specify optional Parse::Node
+// `context_node` to add a note to the diagnostic about the containing
+// definition.
 auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
                             llvm::StringRef decl_name,
                             Parse::Node context_node = Parse::Node::Invalid)

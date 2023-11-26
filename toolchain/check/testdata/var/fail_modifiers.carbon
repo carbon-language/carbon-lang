@@ -9,7 +9,7 @@
 // CHECK:STDERR: ^
 private var a: i32;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `protected`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `protected` not allowed on `var` declaration at file scope.
 // CHECK:STDERR: protected var b: i32;
 // CHECK:STDERR: ^
 protected var b: i32;
@@ -25,7 +25,7 @@ protected var b: i32;
 // CHECK:STDERR: ^
 private protected var c: i32;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `protected`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `protected` not allowed on `var` declaration at file scope.
 // CHECK:STDERR: protected protected var d: i32;
 // CHECK:STDERR: ^
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: ERROR: `protected` repeated on declaration.

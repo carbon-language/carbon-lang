@@ -15,30 +15,49 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
-  // Process declaration modifiers and introducer.
-  auto first_node = context.innermost_decl().first_node;
+  // Process declaration modifiers.
   auto modifiers = ModifiersAllowedOnDecl(
       context,
       KeywordModifierSet().SetPrivate().SetProtected().SetDefault().SetFinal(),
       "`let` declaration");
+  switch (context.containing_decl().kind) {
+    case DeclState::FileScope:
+      modifiers =
+          ModifiersAllowedOnDecl(context, KeywordModifierSet().SetPrivate(),
+                                 "`let` declaration at file scope");
+      break;
 
-  // FIXME: switch (context.containing_decl_kind())
+    case DeclState::Class:
+      modifiers = ModifiersAllowedOnDecl(
+          context, KeywordModifierSet().SetPrivate().SetProtected(),
+          "`let` declaration in a `class` definition",
+          context.containing_decl().first_node);
+      break;
 
-  // For globals and members of classes.
+    case DeclState::Interface:
+      modifiers = ModifiersAllowedOnDecl(
+          context, KeywordModifierSet().SetDefault().SetFinal(),
+          "`let` declaration in an `interface` definition",
+          context.containing_decl().first_node);
+      break;
+
+    default:
+      modifiers = ModifiersAllowedOnDecl(context, KeywordModifierSet(),
+                                         "`let` declaration in this context",
+                                         context.containing_decl().first_node);
+      break;
+  }
   if (modifiers.HasPrivate()) {
-    context.TODO(first_node, "private");
+    context.TODO(context.innermost_decl().saw_access_mod, "private");
   }
-  // For members of classes.
   if (modifiers.HasProtected()) {
-    context.TODO(first_node, "protected");
+    context.TODO(context.innermost_decl().saw_access_mod, "protected");
   }
-  // For members of interfaces.
   if (modifiers.HasDefault()) {
-    context.TODO(first_node, "default");
+    context.TODO(context.innermost_decl().saw_decl_mod, "default");
   }
-  // For members of interfaces.
   if (modifiers.HasFinal()) {
-    context.TODO(first_node, "final");
+    context.TODO(context.innermost_decl().saw_decl_mod, "final");
   }
   context.PopDeclState(DeclState::Let);
 
