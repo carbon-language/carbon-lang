@@ -7,8 +7,7 @@
 namespace Carbon::Check {
 
 auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
-                            llvm::StringRef decl_name)
-    -> std::pair<KeywordModifierSet, Parse::Node> {
+                            llvm::StringRef decl_name) -> KeywordModifierSet {
   auto& s = context.innermost_decl();
   auto not_allowed = s.found.GetRaw() & ~allowed.GetRaw();
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error, "`{0}` not allowed on {1}.",
@@ -26,7 +25,7 @@ auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
   }
   s.found = KeywordModifierSet::RawEnum(s.found.GetRaw() & allowed.GetRaw());
 
-  return {s.found, s.first_node};
+  return s.found;
 }
 
 }  // namespace Carbon::Check

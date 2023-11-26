@@ -16,7 +16,8 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers and introducer.
-  auto [modifiers, introducer] = ModifiersAllowedOnDecl(
+  auto first_node = context.innermost_decl().first_node;
+  auto modifiers = ModifiersAllowedOnDecl(
       context,
       KeywordModifierSet().SetPrivate().SetProtected().SetDefault().SetFinal(),
       "`let` declaration");
@@ -25,19 +26,19 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
 
   // For globals and members of classes.
   if (modifiers.HasPrivate()) {
-    context.TODO(introducer, "private");
+    context.TODO(first_node, "private");
   }
   // For members of classes.
   if (modifiers.HasProtected()) {
-    context.TODO(introducer, "protected");
+    context.TODO(first_node, "protected");
   }
   // For members of interfaces.
   if (modifiers.HasDefault()) {
-    context.TODO(introducer, "default");
+    context.TODO(first_node, "default");
   }
   // For members of interfaces.
   if (modifiers.HasFinal()) {
-    context.TODO(introducer, "final");
+    context.TODO(first_node, "final");
   }
   context.PopDeclState(DeclState::Let);
 

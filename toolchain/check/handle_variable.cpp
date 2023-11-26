@@ -75,17 +75,18 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
       .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
 
   // Process declaration modifiers and introducer.
-  auto [modifiers, introducer] = ModifiersAllowedOnDecl(
+  auto first_node = context.innermost_decl().first_node;
+  auto modifiers = ModifiersAllowedOnDecl(
       context, KeywordModifierSet().SetPrivate().SetProtected(),
       "`var` declaration");
   // FIXME: switch
   // For fields (members of classes) and globals.
   if (modifiers.HasPrivate()) {
-    context.TODO(introducer, "private");
+    context.TODO(first_node, "private");
   }
   // For fields (members of classes).
   if (modifiers.HasProtected()) {
-    context.TODO(introducer, "protected");
+    context.TODO(first_node, "protected");
   }
   context.PopDeclState(DeclState::Var);
 

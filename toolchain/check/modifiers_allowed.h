@@ -12,11 +12,9 @@ namespace Carbon::Check {
 // Reports a diagnostic (using `decl_name`) if modifiers on this declaration are
 // not in `allowed`. Returns modifiers that were both found and allowed, and the
 // parse node corresponding to the first token of the declaration.
-// FIXME: remove Parse::Node return
 // FIXME: add optional Parse::Node context which adds a note.
 auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
-                            llvm::StringRef decl_name)
-    -> std::pair<KeywordModifierSet, Parse::Node>;
+                            llvm::StringRef decl_name) -> KeywordModifierSet;
 
 }  // namespace Carbon::Check
 

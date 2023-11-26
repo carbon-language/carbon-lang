@@ -60,49 +60,50 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
       .PopAndDiscardSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers and introducer.
-  auto [modifiers, fn_node] = ModifiersAllowedOnDecl(context,
-                                                     KeywordModifierSet()
-                                                         .SetPrivate()
-                                                         .SetProtected()
-                                                         .SetAbstract()
-                                                         .SetDefault()
-                                                         .SetFinal()
-                                                         .SetOverride()
-                                                         .SetVirtual(),
-                                                     "`fn` declaration");
+  auto first_node = context.innermost_decl().first_node;
+  auto modifiers = ModifiersAllowedOnDecl(context,
+                                          KeywordModifierSet()
+                                              .SetPrivate()
+                                              .SetProtected()
+                                              .SetAbstract()
+                                              .SetDefault()
+                                              .SetFinal()
+                                              .SetOverride()
+                                              .SetVirtual(),
+                                          "`fn` declaration");
   // FIXME: switch
   // For members of classes or free functions
   if (modifiers.HasPrivate()) {
-    context.TODO(fn_node, "private");
+    context.TODO(first_node, "private");
   }
   // Only for members of classes
   if (modifiers.HasProtected()) {
-    context.TODO(fn_node, "protected");
+    context.TODO(first_node, "protected");
   }
   // Only for members of abstract classes
   if (modifiers.HasAbstract()) {
-    context.TODO(fn_node, "abstract");
+    context.TODO(first_node, "abstract");
   }
   // Only for members of interfaces
   if (modifiers.HasDefault()) {
-    context.TODO(fn_node, "default");
+    context.TODO(first_node, "default");
   }
   // Only for members of interfaces
   if (modifiers.HasFinal()) {
-    context.TODO(fn_node, "final");
+    context.TODO(first_node, "final");
   }
   // Only for members of derived classes
   if (modifiers.HasOverride()) {
-    context.TODO(fn_node, "override");
+    context.TODO(first_node, "override");
   }
   // Only for members of base classes
   if (modifiers.HasVirtual()) {
-    context.TODO(fn_node, "virtual");
+    context.TODO(first_node, "virtual");
   }
 
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
-      fn_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
+      first_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
       SemIR::FunctionId::Invalid};
   auto function_decl_id = context.AddInst(function_decl);
 
@@ -157,11 +158,11 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
         (return_slot_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
-         return_type_id != context.CanonicalizeTupleType(fn_node, {}))) {
+         return_type_id != context.CanonicalizeTupleType(first_node, {}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
                         "`fn ()` or `fn () -> i32`.");
-      context.emitter().Emit(fn_node, InvalidMainRunSignature);
+      context.emitter().Emit(first_node, InvalidMainRunSignature);
     }
   }
 

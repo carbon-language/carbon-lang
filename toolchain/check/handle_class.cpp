@@ -27,17 +27,29 @@ static auto BuildClassDecl(Context& context)
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
 
   // Process modifiers and introducer.
-  auto [modifiers, introducer] = ModifiersAllowedOnDecl(
-      context,
-      KeywordModifierSet().SetPrivate().SetProtected().SetAbstract().SetBase(),
+  auto first_node = context.innermost_decl().first_node;
+  auto base_modifiers = KeywordModifierSet().SetAbstract().SetBase();
+  auto modifiers = ModifiersAllowedOnDecl(
+      context, base_modifiers.SetPrivate().SetProtected(),
       "`class` declaration");
-  // FIXME: switch
+  switch (context.containing_decl().kind) {
+    case DeclState::FileScope:
+      modifiers = ModifiersAllowedOnDecl(context, base_modifiers.SetPrivate(),
+                                         "`class` declaration at file scope");
+      break;
+    case DeclState::Class:
+      break;
+    default:
+      modifiers = ModifiersAllowedOnDecl(
+          context, base_modifiers,
+          "`class` declaration inside another definition");
+  }
   if (modifiers.HasPrivate()) {
-    context.TODO(introducer, "private");
+    context.TODO(first_node, "private");
   }
   // Only relevant for classes that are members of other classes.
   if (modifiers.HasProtected()) {
-    context.TODO(introducer, "protected");
+    context.TODO(first_node, "protected");
   }
   auto inheritance_kind = modifiers.HasAbstract() ? SemIR::Class::Abstract
                           : modifiers.HasBase()   ? SemIR::Class::Base
@@ -47,7 +59,7 @@ static auto BuildClassDecl(Context& context)
 
   // Add the class declaration.
   auto class_decl =
-      SemIR::ClassDecl{introducer, SemIR::ClassId::Invalid, decl_block_id};
+      SemIR::ClassDecl{first_node, SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddInst(class_decl);
 
   // Check whether this is a redeclaration.
@@ -68,7 +80,7 @@ static auto BuildClassDecl(Context& context)
         CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
                           "Previously declared here.");
         context.emitter()
-            .Build(introducer, ClassRedeclarationDifferentIntroducer)
+            .Build(first_node, ClassRedeclarationDifferentIntroducer)
             .Note(existing_class_decl->parse_node,
                   ClassRedeclarationDifferentIntroducerPrevious)
             .Emit();
@@ -101,7 +113,7 @@ static auto BuildClassDecl(Context& context)
     auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id =
         context.CanonicalizeType(context.AddInst(SemIR::ClassType{
-            introducer, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+            first_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_decl.class_id}));
   }
 

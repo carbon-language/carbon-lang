@@ -34,7 +34,7 @@ private base protected class TwoAccess {}
 // CHECK:STDERR: ^
 abstract abstract class TwoAbstract;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+12]]:1: ERROR: Semantics TODO: `protected`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+12]]:1: ERROR: `protected` not allowed on `class` declaration at file scope.
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR: ^
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:11: ERROR: `virtual` not allowed on `class` declaration.
