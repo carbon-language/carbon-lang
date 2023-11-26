@@ -6,21 +6,29 @@
 
 namespace Carbon::Check {
 
-auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
-                            llvm::StringRef decl_name) -> KeywordModifierSet {
-  auto& s = context.innermost_decl();
-  auto not_allowed = s.found.GetRaw() & ~allowed.GetRaw();
+static auto ReportNotAllowed(Context& context, Parse::Node modifier_node,
+                             llvm::StringRef decl_name,
+                             Parse::Node /* context_node */) {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error, "`{0}` not allowed on {1}.",
                     llvm::StringRef, llvm::StringRef);
+  // CARBON_DIAGNOSTIC(ModifierNotInContext, Node, "Containing definition
+  // here.");
+  context.emitter().Emit(modifier_node, ModifierNotAllowedOn,
+                         context.TextForNode(modifier_node), decl_name);
+}
+
+auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
+                            llvm::StringRef decl_name, Parse::Node context_node)
+    -> KeywordModifierSet {
+  auto& s = context.innermost_decl();
+  auto not_allowed = s.found.GetRaw() & ~allowed.GetRaw();
   if (not_allowed & KeywordModifierSet::Access) {
-    context.emitter().Emit(s.saw_access_mod, ModifierNotAllowedOn,
-                           context.TextForNode(s.saw_access_mod), decl_name);
+    ReportNotAllowed(context, s.saw_access_mod, decl_name, context_node);
     not_allowed &= ~KeywordModifierSet::Access;
     s.saw_access_mod = Parse::Node::Invalid;
   }
   if (not_allowed) {
-    context.emitter().Emit(s.saw_decl_mod, ModifierNotAllowedOn,
-                           context.TextForNode(s.saw_decl_mod), decl_name);
+    ReportNotAllowed(context, s.saw_decl_mod, decl_name, context_node);
     s.saw_decl_mod = Parse::Node::Invalid;
   }
   s.found = KeywordModifierSet::RawEnum(s.found.GetRaw() & allowed.GetRaw());

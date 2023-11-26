@@ -14,7 +14,9 @@ namespace Carbon::Check {
 // parse node corresponding to the first token of the declaration.
 // FIXME: add optional Parse::Node context which adds a note.
 auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
-                            llvm::StringRef decl_name) -> KeywordModifierSet;
+                            llvm::StringRef decl_name,
+                            Parse::Node context_node = Parse::Node::Invalid)
+    -> KeywordModifierSet;
 
 }  // namespace Carbon::Check
 
