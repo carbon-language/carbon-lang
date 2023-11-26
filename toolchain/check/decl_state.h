@@ -60,6 +60,7 @@ class KeywordModifierSet {
 };
 
 struct DeclState {
+  // FIXME: `Fn` or `Function`?
   enum DeclKind { FileScope, Class, NamedConstraint, Fn, Interface, Let, Var };
 
   DeclState(DeclKind k, Parse::Node f) : first_node(f), kind(k) {}

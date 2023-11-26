@@ -25,9 +25,9 @@ static auto BuildClassDecl(Context& context)
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
-
-  // Process modifiers and introducer.
   auto first_node = context.innermost_decl().first_node;
+
+  // Process modifiers.
   auto base_modifiers = KeywordModifierSet().SetAbstract().SetBase();
   auto modifiers = ModifiersAllowedOnDecl(
       context, base_modifiers.SetPrivate().SetProtected(),
@@ -48,7 +48,6 @@ static auto BuildClassDecl(Context& context)
   if (modifiers.HasPrivate()) {
     context.TODO(first_node, "private");
   }
-  // Only relevant for classes that are members of other classes.
   if (modifiers.HasProtected()) {
     context.TODO(first_node, "protected");
   }

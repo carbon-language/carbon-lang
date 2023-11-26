@@ -69,6 +69,18 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_modifiers.carbon" {
+// CHECK:STDOUT:   class_decl @DuplicatePrivate, ()
+// CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate
+// CHECK:STDOUT:   class_decl @TwoAccess, ()
+// CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess
+// CHECK:STDOUT:   class_decl @TwoAbstract, ()
+// CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract
+// CHECK:STDOUT:   class_decl @Virtual, ()
+// CHECK:STDOUT:   %Virtual: type = class_type @Virtual
+// CHECK:STDOUT:   class_decl @WrongOrder, ()
+// CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder
+// CHECK:STDOUT:   class_decl @AbstractAndBase, ()
+// CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;
@@ -90,8 +102,4 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: class @AbstractAndBase {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }

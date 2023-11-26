@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `default`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `default` not allowed on `fn` declaration at file scope.
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR: ^
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `protected` must appear before `default`.
@@ -15,7 +15,7 @@
 // CHECK:STDERR: ^
 default protected fn WrongOrder();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `virtual`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `virtual` not allowed on `fn` declaration at file scope.
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: ^
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `virtual` repeated on declaration.
@@ -37,7 +37,7 @@ virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: ^
 private protected fn TwoAccess();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `abstract`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `abstract` not allowed on `fn` declaration at file scope.
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR: ^
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: ERROR: `virtual` not allowed on declaration with `abstract`.
@@ -53,7 +53,7 @@ abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR: ^
 base fn InvalidModifier();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: ERROR: Semantics TODO: `default`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: ERROR: `default` not allowed on `fn` declaration at file scope.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+12]]:9: ERROR: `final` not allowed on declaration with `default`.

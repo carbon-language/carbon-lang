@@ -71,24 +71,81 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
                                               .SetOverride()
                                               .SetVirtual(),
                                           "`fn` declaration");
-  // FIXME: switch
-  // For members of classes or free functions
+  switch (context.containing_decl().kind) {
+    case DeclState::FileScope:
+      modifiers =
+          ModifiersAllowedOnDecl(context, KeywordModifierSet().SetPrivate(),
+                                 "`fn` declaration at file scope");
+      break;
+
+    case DeclState::Class: {
+      auto access_modifiers = KeywordModifierSet().SetPrivate().SetProtected();
+      modifiers = ModifiersAllowedOnDecl(
+          context, access_modifiers.SetAbstract().SetOverride().SetVirtual(),
+          "`fn` declaration in a `class` definition",
+          context.containing_decl().first_node);
+      if (!context.containing_decl().found.HasAbstract()) {
+        modifiers = ModifiersAllowedOnDecl(
+            context, access_modifiers.SetOverride().SetVirtual(),
+            "`fn` declaration in a non-abstract `class` definition",
+            context.containing_decl().first_node);
+        if (!context.containing_decl().found.HasBase()) {
+          modifiers = ModifiersAllowedOnDecl(
+              context, access_modifiers.SetOverride().SetVirtual(),
+              "`fn` declaration in a non-abstract non-base `class` definition",
+              context.containing_decl().first_node);
+        }
+      }
+      break;
+    }
+
+    case DeclState::NamedConstraint:
+      modifiers =
+          ModifiersAllowedOnDecl(context, KeywordModifierSet(),
+                                 "`fn` declaration in a `namespace` definition",
+                                 context.containing_decl().first_node);
+      break;
+
+    case DeclState::Fn:
+      modifiers =
+          ModifiersAllowedOnDecl(context, KeywordModifierSet(),
+                                 "`fn` declaration in a `fn` definition",
+                                 context.containing_decl().first_node);
+      break;
+
+    case DeclState::Interface:
+      modifiers = ModifiersAllowedOnDecl(
+          context, KeywordModifierSet().SetDefault().SetFinal(),
+          "`fn` declaration in an `interface` definition",
+          context.containing_decl().first_node);
+      break;
+
+    case DeclState::Let:
+      modifiers =
+          ModifiersAllowedOnDecl(context, KeywordModifierSet(),
+                                 "`fn` declaration in a `let` definition",
+                                 context.containing_decl().first_node);
+      break;
+
+    case DeclState::Var:
+      modifiers =
+          ModifiersAllowedOnDecl(context, KeywordModifierSet(),
+                                 "`fn` declaration in a `var` definition",
+                                 context.containing_decl().first_node);
+      break;
+  }
   if (modifiers.HasPrivate()) {
     context.TODO(first_node, "private");
   }
-  // Only for members of classes
   if (modifiers.HasProtected()) {
     context.TODO(first_node, "protected");
   }
-  // Only for members of abstract classes
   if (modifiers.HasAbstract()) {
     context.TODO(first_node, "abstract");
   }
-  // Only for members of interfaces
   if (modifiers.HasDefault()) {
     context.TODO(first_node, "default");
   }
-  // Only for members of interfaces
   if (modifiers.HasFinal()) {
     context.TODO(first_node, "final");
   }
@@ -96,7 +153,6 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   if (modifiers.HasOverride()) {
     context.TODO(first_node, "override");
   }
-  // Only for members of base classes
   if (modifiers.HasVirtual()) {
     context.TODO(first_node, "virtual");
   }
