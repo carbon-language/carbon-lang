@@ -8,13 +8,21 @@ namespace Carbon::Check {
 
 static auto ReportNotAllowed(Context& context, Parse::Node modifier_node,
                              llvm::StringRef decl_name,
-                             Parse::Node /* context_node */) {
+                             Parse::Node context_node) {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error, "`{0}` not allowed on {1}.",
                     llvm::StringRef, llvm::StringRef);
-  // CARBON_DIAGNOSTIC(ModifierNotInContext, Node, "Containing definition
-  // here.");
-  context.emitter().Emit(modifier_node, ModifierNotAllowedOn,
-                         context.TextForNode(modifier_node), decl_name);
+  if (context_node == Parse::Node::Invalid) {
+    context.emitter().Emit(modifier_node, ModifierNotAllowedOn,
+                           context.TextForNode(modifier_node), decl_name);
+  } else {
+    CARBON_DIAGNOSTIC(ModifierNotInContext, Note,
+                      "Containing definition here.");
+    context.emitter()
+        .Build(modifier_node, ModifierNotAllowedOn,
+               context.TextForNode(modifier_node), decl_name)
+        .Note(context_node, ModifierNotInContext)
+        .Emit();
+  }
 }
 
 auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,

@@ -211,6 +211,7 @@ CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
 
 // Modifier checking
 CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOn)
+CARBON_DIAGNOSTIC_KIND(ModifierNotInContext)
 CARBON_DIAGNOSTIC_KIND(ModifierRepeated)
 CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedWith)
 CARBON_DIAGNOSTIC_KIND(ModifierMustAppearBefore)

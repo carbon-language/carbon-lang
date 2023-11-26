@@ -42,7 +42,8 @@ static auto BuildClassDecl(Context& context)
     default:
       modifiers = ModifiersAllowedOnDecl(
           context, base_modifiers,
-          "`class` declaration inside another definition");
+          "`class` declaration inside another definition",
+          context.containing_decl().first_node);
   }
   if (modifiers.HasPrivate()) {
     context.TODO(first_node, "private");
