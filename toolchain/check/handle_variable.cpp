@@ -71,6 +71,7 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
       context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
     }
   }
+
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
 
