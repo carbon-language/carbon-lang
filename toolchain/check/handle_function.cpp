@@ -91,7 +91,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
             context.containing_decl().first_node);
         if (!context.containing_decl().found.HasBase()) {
           modifiers = ModifiersAllowedOnDecl(
-              context, access_modifiers.SetOverride().SetVirtual(),
+              context, access_modifiers.SetOverride(),
               "`fn` declaration in a non-abstract non-base `class` definition",
               context.containing_decl().first_node);
         }
@@ -135,26 +135,26 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
       break;
   }
   if (modifiers.HasPrivate()) {
-    context.TODO(first_node, "private");
+    context.TODO(context.innermost_decl().saw_access_mod, "private");
   }
   if (modifiers.HasProtected()) {
-    context.TODO(first_node, "protected");
+    context.TODO(context.innermost_decl().saw_access_mod, "protected");
   }
   if (modifiers.HasAbstract()) {
-    context.TODO(first_node, "abstract");
+    context.TODO(context.innermost_decl().saw_decl_mod, "abstract");
   }
   if (modifiers.HasDefault()) {
-    context.TODO(first_node, "default");
+    context.TODO(context.innermost_decl().saw_decl_mod, "default");
   }
   if (modifiers.HasFinal()) {
-    context.TODO(first_node, "final");
+    context.TODO(context.innermost_decl().saw_decl_mod, "final");
   }
   // Only for members of derived classes
   if (modifiers.HasOverride()) {
-    context.TODO(first_node, "override");
+    context.TODO(context.innermost_decl().saw_decl_mod, "override");
   }
   if (modifiers.HasVirtual()) {
-    context.TODO(first_node, "virtual");
+    context.TODO(context.innermost_decl().saw_decl_mod, "virtual");
   }
 
   // Add the function declaration.

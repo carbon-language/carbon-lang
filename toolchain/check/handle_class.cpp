@@ -37,19 +37,22 @@ static auto BuildClassDecl(Context& context)
       modifiers = ModifiersAllowedOnDecl(context, base_modifiers.SetPrivate(),
                                          "`class` declaration at file scope");
       break;
+
     case DeclState::Class:
       break;
+
     default:
       modifiers = ModifiersAllowedOnDecl(
           context, base_modifiers,
           "`class` declaration inside another definition",
           context.containing_decl().first_node);
+      break;
   }
   if (modifiers.HasPrivate()) {
-    context.TODO(first_node, "private");
+    context.TODO(context.innermost_decl().saw_access_mod, "private");
   }
   if (modifiers.HasProtected()) {
-    context.TODO(first_node, "protected");
+    context.TODO(context.innermost_decl().saw_access_mod, "protected");
   }
   auto inheritance_kind = modifiers.HasAbstract() ? SemIR::Class::Abstract
                           : modifiers.HasBase()   ? SemIR::Class::Base
