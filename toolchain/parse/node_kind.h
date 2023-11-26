@@ -35,17 +35,6 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   // that has_bracket is false.
   auto child_count() const -> int32_t;
 
-  // Test whether this token kind is in the provided list.
-  [[nodiscard]] auto IsOneOf(std::initializer_list<NodeKind> kinds) const
-      -> bool {
-    for (NodeKind kind : kinds) {
-      if (*this == kind) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   using EnumBase::Create;
 };
 
