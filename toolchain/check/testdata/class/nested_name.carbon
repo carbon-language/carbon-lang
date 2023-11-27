@@ -52,7 +52,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%oi: Inner) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %oi.ref: Inner = name_reference oi, %oi
+// CHECK:STDOUT:   %oi.ref: Inner = name_ref oi, %oi
 // CHECK:STDOUT:   %.loc14_12.1: ref i32 = class_field_access %oi.ref, member0
 // CHECK:STDOUT:   %.loc14_12.2: i32 = bind_value %.loc14_12.1
 // CHECK:STDOUT:   return %.loc14_12.2
@@ -60,8 +60,8 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%o: Outer) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %o.ref: Outer = name_reference o, %o
-// CHECK:STDOUT:   %Inner.ref: type = name_reference Inner, @Outer.%Inner
+// CHECK:STDOUT:   %o.ref: Outer = name_ref o, %o
+// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner
 // CHECK:STDOUT:   %i.var: ref Inner = var i
 // CHECK:STDOUT:   %i: ref Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return

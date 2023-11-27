@@ -44,13 +44,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference field, @Class.%field
+// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_ref field, @Class.%field
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
-// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference field, @Class.%field
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_ref field, @Class.%field
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

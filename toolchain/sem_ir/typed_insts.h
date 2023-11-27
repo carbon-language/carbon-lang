@@ -252,19 +252,19 @@ struct Converted {
 };
 
 // A cross-reference between IRs.
-struct CrossReference {
-  static constexpr auto Kind = InstKind::CrossReference.Define("xref");
+struct CrossRef {
+  static constexpr auto Kind = InstKind::CrossRef.Define("xref");
 
   // No parse node: an instruction's parse tree node must refer to a node in the
   // current parse tree. This cannot use the cross-referenced instruction's
   // parse tree node because it will be in a different parse tree.
   TypeId type_id;
-  CrossReferenceIRId ir_id;
+  CrossRefIRId ir_id;
   InstId inst_id;
 };
 
-struct Dereference {
-  static constexpr auto Kind = InstKind::Dereference.Define("dereference");
+struct Deref {
+  static constexpr auto Kind = InstKind::Deref.Define("deref");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -311,8 +311,8 @@ struct IntegerLiteral {
   IntegerId integer_id;
 };
 
-struct NameReference {
-  static constexpr auto Kind = InstKind::NameReference.Define("name_reference");
+struct NameRef {
+  static constexpr auto Kind = InstKind::NameRef.Define("name_ref");
 
   Parse::Node parse_node;
   TypeId type_id;
@@ -547,9 +547,8 @@ struct UnboundFieldType {
   TypeId field_type_id;
 };
 
-struct ValueAsReference {
-  static constexpr auto Kind =
-      InstKind::ValueAsReference.Define("value_as_reference");
+struct ValueAsRef {
+  static constexpr auto Kind = InstKind::ValueAsRef.Define("value_as_ref");
 
   Parse::Node parse_node;
   TypeId type_id;

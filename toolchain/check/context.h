@@ -131,9 +131,9 @@ class Context {
   // is already a `returned var`, returns it instead.
   auto SetReturnedVarOrGetExisting(SemIR::InstId bind_id) -> SemIR::InstId;
 
-  // Follows NameReference instructions to find the value named by a given
+  // Follows NameRef instructions to find the value named by a given
   // instruction.
-  auto FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId;
+  auto FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId;
 
   // Gets the constant value of the given instruction, if it has one.
   auto GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId;
@@ -300,9 +300,8 @@ class Context {
   auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
     return sem_ir().classes();
   }
-  auto cross_reference_irs()
-      -> ValueStore<SemIR::CrossReferenceIRId, const SemIR::File*>& {
-    return sem_ir().cross_reference_irs();
+  auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId, const SemIR::File*>& {
+    return sem_ir().cross_ref_irs();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {

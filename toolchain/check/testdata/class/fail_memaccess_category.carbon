@@ -58,7 +58,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_reference A, file.%A
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc12_8.1: type = unbound_field_type B, A
 // CHECK:STDOUT:   %.loc12_8.2: <unbound field of class B> = field a, member0
 // CHECK:STDOUT:   %a: <unbound field of class B> = bind_name a, %.loc12_8.2
@@ -71,11 +71,11 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: {.a: A}, %b: B) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %s.ref: {.a: A} = name_reference s, %s
+// CHECK:STDOUT:   %s.ref: {.a: A} = name_ref s, %s
 // CHECK:STDOUT:   %.loc23_4: A = struct_access %s.ref, member0
 // CHECK:STDOUT:   %.loc23_6: <bound method> = bound_method %.loc23_4, @A.%F
 // CHECK:STDOUT:   %.loc23_8: init () = call %.loc23_6(<invalid>)
-// CHECK:STDOUT:   %b.ref: B = name_reference b, %b
+// CHECK:STDOUT:   %b.ref: B = name_ref b, %b
 // CHECK:STDOUT:   %.loc33_4.1: ref A = class_field_access %b.ref, member0
 // CHECK:STDOUT:   %.loc33_4.2: A = bind_value %.loc33_4.1
 // CHECK:STDOUT:   %.loc33_6: <bound method> = bound_method %.loc33_4.2, @A.%F

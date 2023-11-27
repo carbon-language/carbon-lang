@@ -59,7 +59,7 @@ auto HandleInfixOperator(Context& context, Parse::Node parse_node) -> bool {
     case Lex::TokenKind::Equal: {
       // TODO: handle complex assignment expression such as `a += 1`.
       if (auto lhs_cat = SemIR::GetExprCategory(context.sem_ir(), lhs_id);
-          lhs_cat != SemIR::ExprCategory::DurableReference &&
+          lhs_cat != SemIR::ExprCategory::DurableRef &&
           lhs_cat != SemIR::ExprCategory::Error) {
         CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
                           "Expression is not assignable.");
@@ -109,19 +109,19 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
     case Lex::TokenKind::Amp: {
       // Only durable reference expressions can have their address taken.
       switch (SemIR::GetExprCategory(context.sem_ir(), value_id)) {
-        case SemIR::ExprCategory::DurableReference:
+        case SemIR::ExprCategory::DurableRef:
         case SemIR::ExprCategory::Error:
           break;
-        case SemIR::ExprCategory::EphemeralReference:
-          CARBON_DIAGNOSTIC(AddressOfEphemeralReference, Error,
+        case SemIR::ExprCategory::EphemeralRef:
+          CARBON_DIAGNOSTIC(AddressOfEphemeralRef, Error,
                             "Cannot take the address of a temporary object.");
-          context.emitter().Emit(parse_node, AddressOfEphemeralReference);
+          context.emitter().Emit(parse_node, AddressOfEphemeralRef);
           break;
         default:
           CARBON_DIAGNOSTIC(
-              AddressOfNonReference, Error,
+              AddressOfNonRef, Error,
               "Cannot take the address of non-reference expression.");
-          context.emitter().Emit(parse_node, AddressOfNonReference);
+          context.emitter().Emit(parse_node, AddressOfNonRef);
           break;
       }
       context.AddInstAndPush(
@@ -170,23 +170,23 @@ auto HandlePrefixOperator(Context& context, Parse::Node parse_node) -> bool {
         result_type_id = pointer_type->pointee_id;
       } else if (type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(
-            DereferenceOfNonPointer, Error,
+            DerefOfNonPointer, Error,
             "Cannot dereference operand of non-pointer type `{0}`.",
             std::string);
         auto builder =
-            context.emitter().Build(parse_node, DereferenceOfNonPointer,
+            context.emitter().Build(parse_node, DerefOfNonPointer,
                                     context.sem_ir().StringifyType(type_id));
         // TODO: Check for any facet here, rather than only a type.
         if (type_id == SemIR::TypeId::TypeType) {
           CARBON_DIAGNOSTIC(
-              DereferenceOfType, Note,
+              DerefOfType, Note,
               "To form a pointer type, write the `*` after the pointee type.");
-          builder.Note(parse_node, DereferenceOfType);
+          builder.Note(parse_node, DerefOfType);
         }
         builder.Emit();
       }
       context.AddInstAndPush(
-          parse_node, SemIR::Dereference{parse_node, result_type_id, value_id});
+          parse_node, SemIR::Deref{parse_node, result_type_id, value_id});
       return true;
     }
 

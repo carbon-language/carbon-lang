@@ -30,7 +30,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   assign %a.var, %.loc7_23.6
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %a.ref: ref [i32; 1] = name_reference a, %a
+// CHECK:STDOUT:   %a.ref: ref [i32; 1] = name_ref a, %a
 // CHECK:STDOUT:   %.loc11_16: f64 = real_literal 26e-1
 // CHECK:STDOUT:   %.loc11_19.1: ref i32 = array_index %a.ref, <error>
 // CHECK:STDOUT:   %.loc11_19.2: i32 = bind_value %.loc11_19.1

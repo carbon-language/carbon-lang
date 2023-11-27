@@ -77,7 +77,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self: Class]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: Class = name_reference self, %self
+// CHECK:STDOUT:   %self.ref: Class = name_ref self, %self
 // CHECK:STDOUT:   %.loc15_14.1: ref i32 = class_field_access %self.ref, member0
 // CHECK:STDOUT:   %.loc15_14.2: i32 = bind_value %.loc15_14.1
 // CHECK:STDOUT:   return %.loc15_14.2
@@ -87,7 +87,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: Class = name_reference c, %c
+// CHECK:STDOUT:   %c.ref: Class = name_ref c, %c
 // CHECK:STDOUT:   %.loc21_11: <bound method> = bound_method %c.ref, @Class.%F
 // CHECK:STDOUT:   %.loc21_13: init i32 = call %.loc21_11(%c.ref)
 // CHECK:STDOUT:   %.loc21_15.1: i32 = value_of_initializer %.loc21_13
@@ -97,10 +97,10 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWithAddr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
-// CHECK:STDOUT:   %c.ref: ref Class = name_reference c, %c
+// CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c
 // CHECK:STDOUT:   %.loc26_11: <bound method> = bound_method %c.ref, @Class.%G
 // CHECK:STDOUT:   %.loc26_10: Class* = address_of %c.ref
 // CHECK:STDOUT:   %.loc26_13: init i32 = call %.loc26_11(%.loc26_10)
@@ -111,8 +111,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFThroughPointer(%p: Class*) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: Class* = name_reference p, %p
-// CHECK:STDOUT:   %.loc30_11.1: ref Class = dereference %p.ref
+// CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
+// CHECK:STDOUT:   %.loc30_11.1: ref Class = deref %p.ref
 // CHECK:STDOUT:   %.loc30_14: <bound method> = bound_method %.loc30_11.1, @Class.%F
 // CHECK:STDOUT:   %.loc30_11.2: Class = bind_value %.loc30_11.1
 // CHECK:STDOUT:   %.loc30_16: init i32 = call %.loc30_14(%.loc30_11.2)
@@ -123,8 +123,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGThroughPointer(%p: Class*) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: Class* = name_reference p, %p
-// CHECK:STDOUT:   %.loc34_11.1: ref Class = dereference %p.ref
+// CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
+// CHECK:STDOUT:   %.loc34_11.1: ref Class = deref %p.ref
 // CHECK:STDOUT:   %.loc34_14: <bound method> = bound_method %.loc34_11.1, @Class.%G
 // CHECK:STDOUT:   %.loc34_11.2: Class* = address_of %.loc34_11.1
 // CHECK:STDOUT:   %.loc34_16: init i32 = call %.loc34_14(%.loc34_11.2)
@@ -137,7 +137,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Make.ref: <function> = name_reference Make, file.%Make
+// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make
 // CHECK:STDOUT:   %.loc40_14.1: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc40_14.2: init Class = call %Make.ref() to %.loc40_14.1
 // CHECK:STDOUT:   %.loc40_14.3: ref Class = temporary %.loc40_14.1, %.loc40_14.2
@@ -151,7 +151,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Make.ref: <function> = name_reference Make, file.%Make
+// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make
 // CHECK:STDOUT:   %.loc44_14.1: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc44_14.2: init Class = call %Make.ref() to %.loc44_14.1
 // CHECK:STDOUT:   %.loc44_14.3: ref Class = temporary %.loc44_14.1, %.loc44_14.2

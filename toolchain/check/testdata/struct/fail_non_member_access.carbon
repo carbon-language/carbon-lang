@@ -21,6 +21,6 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   assign %x.var, %.loc7_27.3
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_reference x, %x
+// CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT: }

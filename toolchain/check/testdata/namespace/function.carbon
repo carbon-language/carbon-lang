@@ -40,8 +40,8 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref: <namespace> = name_reference Foo, file.%.loc7
-// CHECK:STDOUT:   %Baz.ref: <function> = name_reference Baz, file.%Baz.loc13
+// CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%.loc7
+// CHECK:STDOUT:   %Baz.ref: <function> = name_ref Baz, file.%Baz.loc13
 // CHECK:STDOUT:   %.loc17: init () = call %Baz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

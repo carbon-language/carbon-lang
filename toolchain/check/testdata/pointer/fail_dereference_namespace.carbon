@@ -20,7 +20,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <namespace> = name_reference A, file.%.loc7
-// CHECK:STDOUT:   %.loc13: ref <error> = dereference <error>
+// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%.loc7
+// CHECK:STDOUT:   %.loc13: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

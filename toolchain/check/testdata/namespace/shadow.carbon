@@ -41,7 +41,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc16: <function> = name_reference A, file.%A.loc10
+// CHECK:STDOUT:   %A.ref.loc16: <function> = name_ref A, file.%A.loc10
 // CHECK:STDOUT:   %.loc16: init () = call %A.ref.loc16()
 // CHECK:STDOUT:   %.loc17: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc17 br !if.then else br !if.else
@@ -51,7 +51,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %A: ref i32 = bind_name A, %A.var
 // CHECK:STDOUT:   %.loc18: i32 = int_literal 0
 // CHECK:STDOUT:   assign %A.var, %.loc18
-// CHECK:STDOUT:   %A.ref.loc21: ref i32 = name_reference A, %A
+// CHECK:STDOUT:   %A.ref.loc21: ref i32 = name_ref A, %A
 // CHECK:STDOUT:   %.loc21: i32 = bind_value %A.ref.loc21
 // CHECK:STDOUT:   return %.loc21
 // CHECK:STDOUT:

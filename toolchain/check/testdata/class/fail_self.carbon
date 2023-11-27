@@ -89,9 +89,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %self: Class = self_param false
-// CHECK:STDOUT:   %self.ref: <error> = name_reference self, <error>
+// CHECK:STDOUT:   %self.ref: <error> = name_ref self, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,7 +99,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWrongSelf(%ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ws.ref: WrongSelf = name_reference ws, %ws
+// CHECK:STDOUT:   %ws.ref: WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %.loc50_5: <bound method> = bound_method %ws.ref, @WrongSelf.%F
 // CHECK:STDOUT:   %.loc50_7: init () = call %.loc50_5(<invalid>)
 // CHECK:STDOUT:   return

@@ -29,9 +29,9 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc11: <error> = name_reference undeclared, <error>
+// CHECK:STDOUT:   %undeclared.ref.loc11: <error> = name_ref undeclared, <error>
 // CHECK:STDOUT:   %.loc11: <error>* = address_of %undeclared.ref.loc11
-// CHECK:STDOUT:   %undeclared.ref.loc18: <error> = name_reference undeclared, <error>
+// CHECK:STDOUT:   %undeclared.ref.loc18: <error> = name_ref undeclared, <error>
 // CHECK:STDOUT:   %.loc18_5: <error>* = address_of %undeclared.ref.loc18
 // CHECK:STDOUT:   %.loc18_3: <error>** = address_of %.loc18_5
 // CHECK:STDOUT:   return

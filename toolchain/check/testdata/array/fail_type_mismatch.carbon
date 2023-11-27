@@ -59,7 +59,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc16_15: type = array_type %.loc16_14, i32
 // CHECK:STDOUT:   %b.var: ref [i32; 3] = var b
 // CHECK:STDOUT:   %b: ref [i32; 3] = bind_name b, %b.var
-// CHECK:STDOUT:   %t1.ref: ref (i32, String, String) = name_reference t1, %t1
+// CHECK:STDOUT:   %t1.ref: ref (i32, String, String) = name_ref t1, %t1
 // CHECK:STDOUT:   %.loc16_19.1: ref i32 = tuple_access %t1.ref, member0
 // CHECK:STDOUT:   %.loc16_19.2: i32 = bind_value %.loc16_19.1
 // CHECK:STDOUT:   %.loc16_19.3: i32 = int_literal 0
@@ -83,6 +83,6 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc27_15: type = array_type %.loc27_14, i32
 // CHECK:STDOUT:   %d.var: ref [i32; 3] = var d
 // CHECK:STDOUT:   %d: ref [i32; 3] = bind_name d, %d.var
-// CHECK:STDOUT:   %t2.ref: ref (i32, i32) = name_reference t2, %t2
+// CHECK:STDOUT:   %t2.ref: ref (i32, i32) = name_ref t2, %t2
 // CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT: }

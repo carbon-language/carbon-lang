@@ -31,7 +31,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc10_11.1: init (i32,) = call %F.ref()
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc10_11.2: ref (i32,) = temporary_storage

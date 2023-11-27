@@ -19,7 +19,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: i32 = name_reference a, %a
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   return %a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -27,7 +27,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %Echo.ref: <function> = name_reference Echo, file.%Echo
+// CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo
 // CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_20: init i32 = call %Echo.ref(%.loc12_21)
 // CHECK:STDOUT:   assign %b.var, %.loc12_20

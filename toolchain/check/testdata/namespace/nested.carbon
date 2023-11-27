@@ -32,9 +32,9 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref: <namespace> = name_reference Foo, file.%.loc7
-// CHECK:STDOUT:   %Bar.ref: <namespace> = name_reference Bar, file.%.loc8
-// CHECK:STDOUT:   %Wiz.ref: <function> = name_reference Wiz, file.%Wiz
+// CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%.loc7
+// CHECK:STDOUT:   %Bar.ref: <namespace> = name_ref Bar, file.%.loc8
+// CHECK:STDOUT:   %Wiz.ref: <function> = name_ref Wiz, file.%Wiz
 // CHECK:STDOUT:   %.loc14: init () = call %Wiz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

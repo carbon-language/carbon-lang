@@ -17,7 +17,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: <error> = name_reference a, <error>
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error>
 // CHECK:STDOUT:   %a: i32 = bind_name a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

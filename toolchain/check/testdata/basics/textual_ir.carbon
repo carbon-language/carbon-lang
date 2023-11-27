@@ -24,7 +24,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, f64) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference n, %n
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc12_15: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc12_13: i32 = add %n.ref, %.loc12_15
 // CHECK:STDOUT:   %.loc12_18: f64 = real_literal 34e-1

@@ -14,11 +14,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: bool = name_reference a, %a
+// CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
 // CHECK:STDOUT:   if %a.ref br !if.expr.then.loc8_10 else br !if.expr.else.loc8_10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_10:
-// CHECK:STDOUT:   %b.ref: bool = name_reference b, %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then.loc8_20 else br !if.expr.else.loc8_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_20:
@@ -34,7 +34,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   br !if.expr.result.loc8_10(%.loc8_20)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc8_10:
-// CHECK:STDOUT:   %c.ref: bool = name_reference c, %c
+// CHECK:STDOUT:   %c.ref: bool = name_ref c, %c
 // CHECK:STDOUT:   if %c.ref br !if.expr.then.loc8_44 else br !if.expr.else.loc8_44
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_44:
