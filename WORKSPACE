@@ -32,15 +32,22 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/{0}.tar.gz".format(rules_python_version),
 )
 
-load("@rules_python//python:repositories.bzl", "py_repositories")
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
 
 py_repositories()
 
+python_register_toolchains(
+    name = "python311",
+    python_version = "3.11",
+)
+
+load("@python311//:defs.bzl", "interpreter")
 load("@rules_python//python:pip.bzl", "pip_parse")
 
 # Create a central repo that knows about the pip dependencies.
 pip_parse(
     name = "py_deps",
+    python_interpreter_target = interpreter,
     requirements_lock = "//github_tools:requirements.txt",
 )
 
