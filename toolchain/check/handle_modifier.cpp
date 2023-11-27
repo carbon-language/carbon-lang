@@ -75,8 +75,8 @@ static auto DeclModifierEnum(Lex::TokenKind token_kind) -> auto {
       return KeywordModifierSet::Default;
     case Lex::TokenKind::Final:
       return KeywordModifierSet::Final;
-    case Lex::TokenKind::Override:
-      return KeywordModifierSet::Override;
+    case Lex::TokenKind::Impl:
+      return KeywordModifierSet::Impl;
     case Lex::TokenKind::Virtual:
       return KeywordModifierSet::Virtual;
     default:

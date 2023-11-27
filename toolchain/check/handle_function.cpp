@@ -68,7 +68,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
                                               .SetAbstract()
                                               .SetDefault()
                                               .SetFinal()
-                                              .SetOverride()
+                                              .SetImpl()
                                               .SetVirtual(),
                                           "`fn` declaration");
   switch (context.containing_decl().kind) {
@@ -81,17 +81,17 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
     case DeclState::Class: {
       auto access_modifiers = KeywordModifierSet().SetPrivate().SetProtected();
       modifiers = ModifiersAllowedOnDecl(
-          context, access_modifiers.SetAbstract().SetOverride().SetVirtual(),
+          context, access_modifiers.SetAbstract().SetImpl().SetVirtual(),
           "`fn` declaration in a `class` definition",
           context.containing_decl().first_node);
       if (!context.containing_decl().found.HasAbstract()) {
         modifiers = ModifiersAllowedOnDecl(
-            context, access_modifiers.SetOverride().SetVirtual(),
+            context, access_modifiers.SetImpl().SetVirtual(),
             "`fn` declaration in a non-abstract `class` definition",
             context.containing_decl().first_node);
         if (!context.containing_decl().found.HasBase()) {
           modifiers = ModifiersAllowedOnDecl(
-              context, access_modifiers.SetOverride(),
+              context, access_modifiers.SetImpl(),
               "`fn` declaration in a non-abstract non-base `class` definition",
               context.containing_decl().first_node);
         }
@@ -150,8 +150,8 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
     context.TODO(context.innermost_decl().saw_decl_mod, "final");
   }
   // Only for members of derived classes
-  if (modifiers.HasOverride()) {
-    context.TODO(context.innermost_decl().saw_decl_mod, "override");
+  if (modifiers.HasImpl()) {
+    context.TODO(context.innermost_decl().saw_decl_mod, "impl");
   }
   if (modifiers.HasVirtual()) {
     context.TODO(context.innermost_decl().saw_decl_mod, "virtual");

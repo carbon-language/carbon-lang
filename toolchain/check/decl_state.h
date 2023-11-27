@@ -21,7 +21,7 @@ class KeywordModifierSet {
     Base = 1 << 3,
     Default = 1 << 4,
     Final = 1 << 5,
-    Override = 1 << 6,
+    Impl = 1 << 6,
     Virtual = 1 << 7,
 
     // Sets of modifiers:
@@ -41,7 +41,7 @@ class KeywordModifierSet {
   auto SetBase() const -> KeywordModifierSet { return Set(Base); }
   auto SetDefault() const -> KeywordModifierSet { return Set(Default); }
   auto SetFinal() const -> KeywordModifierSet { return Set(Final); }
-  auto SetOverride() const -> KeywordModifierSet { return Set(Override); }
+  auto SetImpl() const -> KeywordModifierSet { return Set(Impl); }
   auto SetVirtual() const -> KeywordModifierSet { return Set(Virtual); }
 
   auto Has(unsigned to_Has) const -> bool { return keywords & to_Has; }
@@ -51,7 +51,7 @@ class KeywordModifierSet {
   auto HasBase() const -> bool { return Has(Base); }
   auto HasDefault() const -> bool { return Has(Default); }
   auto HasFinal() const -> bool { return Has(Final); }
-  auto HasOverride() const -> bool { return Has(Override); }
+  auto HasImpl() const -> bool { return Has(Impl); }
   auto HasVirtual() const -> bool { return Has(Virtual); }
   auto GetRaw() const -> RawEnum { return keywords; }
 

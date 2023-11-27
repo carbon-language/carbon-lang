@@ -89,49 +89,47 @@ observe
 // CHECK:STDOUT:     { index: 40, kind:             'Observe', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'observe', has_trailing_space: true },
 or
 // CHECK:STDOUT:     { index: 41, kind:                  'Or', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'or', has_trailing_space: true },
-override
-// CHECK:STDOUT:     { index: 42, kind:            'Override', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'override', has_trailing_space: true },
 package
-// CHECK:STDOUT:     { index: 43, kind:             'Package', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'package', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 42, kind:             'Package', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'package', has_trailing_space: true },
 partial
-// CHECK:STDOUT:     { index: 44, kind:             'Partial', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'partial', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 43, kind:             'Partial', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'partial', has_trailing_space: true },
 private
-// CHECK:STDOUT:     { index: 45, kind:             'Private', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'private', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 44, kind:             'Private', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'private', has_trailing_space: true },
 protected
-// CHECK:STDOUT:     { index: 46, kind:           'Protected', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'protected', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 45, kind:           'Protected', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'protected', has_trailing_space: true },
 require
-// CHECK:STDOUT:     { index: 47, kind:             'Require', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'require', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 46, kind:             'Require', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'require', has_trailing_space: true },
 return
-// CHECK:STDOUT:     { index: 48, kind:              'Return', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'return', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 47, kind:              'Return', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'return', has_trailing_space: true },
 returned
-// CHECK:STDOUT:     { index: 49, kind:            'Returned', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'returned', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 48, kind:            'Returned', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'returned', has_trailing_space: true },
 Self
-// CHECK:STDOUT:     { index: 50, kind:  'SelfTypeIdentifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'Self', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 49, kind:  'SelfTypeIdentifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'Self', has_trailing_space: true },
 self
-// CHECK:STDOUT:     { index: 51, kind: 'SelfValueIdentifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'self', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 50, kind: 'SelfValueIdentifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'self', has_trailing_space: true },
 String
-// CHECK:STDOUT:     { index: 52, kind:   'StringTypeLiteral', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'String', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 51, kind:   'StringTypeLiteral', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'String', has_trailing_space: true },
 template
-// CHECK:STDOUT:     { index: 53, kind:            'Template', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'template', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 52, kind:            'Template', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'template', has_trailing_space: true },
 then
-// CHECK:STDOUT:     { index: 54, kind:                'Then', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'then', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 53, kind:                'Then', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'then', has_trailing_space: true },
 true
-// CHECK:STDOUT:     { index: 55, kind:                'True', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'true', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 54, kind:                'True', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'true', has_trailing_space: true },
 type
-// CHECK:STDOUT:     { index: 56, kind:                'Type', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'type', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 55, kind:                'Type', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'type', has_trailing_space: true },
 _
-// CHECK:STDOUT:     { index: 57, kind:          'Underscore', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '_', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 56, kind:          'Underscore', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '_', has_trailing_space: true },
 var
-// CHECK:STDOUT:     { index: 58, kind:                 'Var', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'var', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 57, kind:                 'Var', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'var', has_trailing_space: true },
 virtual
-// CHECK:STDOUT:     { index: 59, kind:             'Virtual', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'virtual', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 58, kind:             'Virtual', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'virtual', has_trailing_space: true },
 where
-// CHECK:STDOUT:     { index: 60, kind:               'Where', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'where', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 59, kind:               'Where', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'where', has_trailing_space: true },
 while
-// CHECK:STDOUT:     { index: 61, kind:               'While', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'while', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 60, kind:               'While', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'while', has_trailing_space: true },
 
 notakeyword
-// CHECK:STDOUT:     { index: 62, kind:          'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'notakeyword', identifier: 0, has_trailing_space: true },
+// CHECK:STDOUT:     { index: 61, kind:          'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'notakeyword', identifier: 0, has_trailing_space: true },
 
-// CHECK:STDOUT:     { index: 63, kind:           'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 62, kind:           'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]

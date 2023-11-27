@@ -604,7 +604,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclModifierKeyword, 0,
                                    CARBON_TOKEN(Base)
                                    CARBON_TOKEN(Default)
                                    CARBON_TOKEN(Final)
-                                   CARBON_TOKEN(Override)
+                                   CARBON_TOKEN(Impl)
                                    CARBON_TOKEN(Virtual))
 
 // `class`:

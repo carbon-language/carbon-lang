@@ -115,11 +115,43 @@ auto HandleDeclScopeLoop(Context& context) -> void {
       case Lex::TokenKind::Base:
       case Lex::TokenKind::Default:
       case Lex::TokenKind::Final:
-      case Lex::TokenKind::Override:
       case Lex::TokenKind::Virtual: {
         auto modifier_token = context.Consume();
         context.AddLeafNode(NodeKind::DeclModifierKeyword, modifier_token);
         saw_modifier = true;
+        break;
+      }
+
+      case Lex::TokenKind::Impl: {
+        auto next_token_kind = context.PositionKind(Lookahead::NextToken);
+        // `impl` is considered a declaration modifier if it is followed by
+        // another modifier or an introducer.
+        switch (next_token_kind) {
+          case Lex::TokenKind::Abstract:
+          case Lex::TokenKind::Base:
+          case Lex::TokenKind::Class:
+          case Lex::TokenKind::Constraint:
+          case Lex::TokenKind::Default:
+          case Lex::TokenKind::Final:
+          case Lex::TokenKind::Fn:
+          case Lex::TokenKind::Impl:
+          case Lex::TokenKind::Interface:
+          case Lex::TokenKind::Let:
+          case Lex::TokenKind::Private:
+          case Lex::TokenKind::Protected:
+          case Lex::TokenKind::Var:
+          case Lex::TokenKind::Virtual: {
+            context.AddLeafNode(NodeKind::DeclModifierKeyword,
+                                context.Consume());
+            saw_modifier = true;
+            break;
+          }
+          default: {
+            // TODO: Treat this `impl` token as a declaration introducer
+            HandleUnrecognizedDecl(context, state.subtree_start);
+            return;
+          }
+        }
         break;
       }
 
