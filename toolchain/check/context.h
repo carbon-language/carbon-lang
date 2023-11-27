@@ -64,10 +64,10 @@ class Context {
   auto AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void;
 
   // Adds a package's imports to name lookup, with all libraries together.
-  // sem_irs will all be non-null; has_failure must be used for any errors.
+  // sem_irs will all be non-null; has_load_error must be used for any errors.
   auto AddPackageImports(Parse::Node import_node, IdentifierId package_id,
                          llvm::ArrayRef<const SemIR::File*> sem_irs,
-                         bool has_failure) -> void;
+                         bool has_load_error) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,

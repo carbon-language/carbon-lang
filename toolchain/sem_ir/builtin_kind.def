@@ -70,7 +70,7 @@ CARBON_SEM_IR_BUILTIN_KIND(FunctionType, "<function>")
 // The type of bound method values.
 CARBON_SEM_IR_BUILTIN_KIND(BoundMethodType, "<bound method>")
 
-// The type of namespace names.
+// The type of namespace and imported package names.
 CARBON_SEM_IR_BUILTIN_KIND(NamespaceType, "<namespace>")
 
 // Keep invalid last, so that we can use values as array indices without needing

@@ -77,23 +77,23 @@ package SwappedExt impl;
 // CHECK:STDOUT: file "main_lib.incorrect" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main_lib_impl.incorrect" {
-// CHECK:STDOUT:   import ir1, ir1
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "package.incorrect" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "package_impl.incorrect" {
-// CHECK:STDOUT:   import ir1, ir1
-// CHECK:STDOUT:   %Package: <error> = bind_name Package, %import
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %Package: <namespace> = bind_name Package, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "package_lib.incorrect" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "package_lib_impl.incorrect" {
-// CHECK:STDOUT:   import ir1, ir1
-// CHECK:STDOUT:   %Package: <error> = bind_name Package, %import
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %Package: <namespace> = bind_name Package, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "swapped_ext.impl.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "swapped_ext.carbon" {
-// CHECK:STDOUT:   import ir1, ir1
-// CHECK:STDOUT:   %SwappedExt: <error> = bind_name SwappedExt, %import
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %SwappedExt: <namespace> = bind_name SwappedExt, %import
 // CHECK:STDOUT: }

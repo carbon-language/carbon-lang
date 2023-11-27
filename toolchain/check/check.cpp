@@ -22,11 +22,18 @@ struct UnitInfo {
     Parse::Tree::PackagingNames names;
     UnitInfo* unit_info;
   };
-  // All imports corresponding to a single package, for the map.
+  // A file's imports corresponding to a single package, for the map.
   struct PackageImports {
+    // Use the constructor so that the SmallVector is only constructed
+    // as-needed.
+    explicit PackageImports(Parse::Node node) : node(node) {}
+
+    // The first `import` directive in the file, which declared the package's
+    // identifier (even if the import failed). Used for associating diagnostics
+    // not specific to a single import.
     Parse::Node node;
-    // Whether there's a broken import.
-    bool has_failure = false;
+    // Whether there's an import that failed to load.
+    bool has_load_error = false;
     // The list of valid imports.
     llvm::SmallVector<Import> imports;
   };
@@ -68,7 +75,7 @@ static auto AddImports(Context& context, UnitInfo& unit_info) -> void {
       sem_irs.push_back(&**import.unit_info->unit->sem_ir);
     }
     context.AddPackageImports(package_imports.node, package_id, sem_irs,
-                              package_imports.has_failure);
+                              package_imports.has_load_error);
   }
 }
 
@@ -267,23 +274,19 @@ static auto TrackImport(
     return;
   }
 
-  // Get the package imports. Avoid creating unused values for insert conflicts
-  // because there's a SmallVector.
+  // Get the package imports.
   auto package_imports_it =
-      unit_info.package_imports_map.find(import.package_id);
-  if (package_imports_it == unit_info.package_imports_map.end()) {
-    package_imports_it = unit_info.package_imports_map
-                             .insert({import.package_id, {.node = import.node}})
-                             .first;
-  }
+      unit_info.package_imports_map.try_emplace(import.package_id, import.node)
+          .first;
 
   if (auto api = api_map.find(import_key); api != api_map.end()) {
+    // Add references between the file and imported api.
     package_imports_it->second.imports.push_back({import, api->second});
     ++unit_info.imports_remaining;
     api->second->incoming_imports.push_back(&unit_info);
   } else {
-    // Note the missing import, for name lookup.
-    package_imports_it->second.has_failure = true;
+    // The imported api is missing.
+    package_imports_it->second.has_load_error = true;
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
                       "Corresponding API not found.");
     CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API not found.");
@@ -458,7 +461,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
               unit_info.emitter.Emit(import_it->names.node,
                                      ImportCycleDetected);
               // Make this look the same as an import which wasn't found.
-              package_imports.has_failure = true;
+              package_imports.has_load_error = true;
               import_it = package_imports.imports.erase(import_it);
             }
           }

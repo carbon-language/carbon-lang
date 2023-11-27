@@ -298,6 +298,7 @@ struct Import {
   static constexpr auto Kind = InstKind::Import.Define("import");
 
   Parse::Node parse_node;
+  TypeId type_id;
   CrossRefIRId first_cross_ref_ir_id;
   CrossRefIRId last_cross_ref_ir_id;
 };
