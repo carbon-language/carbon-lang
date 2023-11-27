@@ -13,16 +13,16 @@ var x: [i32];
 
 // --- invalid_char.carbon
 
-// CHECK:STDERR: colon.carbon:[[@LINE+12]]:12: ERROR: Expected expression.
+// CHECK:STDERR: invalid_char.carbon:[[@LINE+12]]:12: ERROR: Expected expression.
 // CHECK:STDERR: fn X() -> [:];
 // CHECK:STDERR:            ^
-// CHECK:STDERR: colon.carbon:[[@LINE+9]]:12: ERROR: Expected `;` in array type.
+// CHECK:STDERR: invalid_char.carbon:[[@LINE+9]]:12: ERROR: Expected `;` in array type.
 // CHECK:STDERR: fn X() -> [:];
 // CHECK:STDERR:            ^
-// CHECK:STDERR: colon.carbon:[[@LINE+6]]:12: ERROR: Expected expression.
+// CHECK:STDERR: invalid_char.carbon:[[@LINE+6]]:12: ERROR: Expected expression.
 // CHECK:STDERR: fn X() -> [:];
 // CHECK:STDERR:            ^
-// CHECK:STDERR: colon.carbon:[[@LINE+3]]:12: ERROR: Unexpected tokens before `]`.
+// CHECK:STDERR: invalid_char.carbon:[[@LINE+3]]:12: ERROR: Unexpected tokens before `]`.
 // CHECK:STDERR: fn X() -> [:];
 // CHECK:STDERR:            ^
 fn X() -> [:];
@@ -82,7 +82,7 @@ var x: [i32];
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: colon.carbon
+// CHECK:STDOUT: - filename: invalid_char.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
