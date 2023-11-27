@@ -8,17 +8,17 @@
 // used on an `interface`.
 // CHECK:STDERR: fail_introducer.carbon:[[@LINE+3]]:1: ERROR: Unrecognized declaration introducer.
 // CHECK:STDERR: abstract interface I;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~
 abstract interface I;
 
 // CHECK:STDERR: fail_introducer.carbon:[[@LINE+3]]:1: ERROR: Unrecognized declaration introducer.
 // CHECK:STDERR: base fn F();
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~
 base fn F();
 
 // CHECK:STDERR: fail_introducer.carbon:[[@LINE+3]]:1: ERROR: Unrecognized declaration introducer.
 // CHECK:STDERR: abstract base class C;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~
 abstract base class C;
 
 // CHECK:STDOUT: - filename: fail_introducer.carbon

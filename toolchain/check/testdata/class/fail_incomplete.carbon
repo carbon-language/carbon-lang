@@ -8,36 +8,36 @@ class Class;
 
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:4: ERROR: Cannot declare a member of incomplete class `Class`.
 // CHECK:STDERR: fn Class.Function() {}
-// CHECK:STDERR:    ^
+// CHECK:STDERR:    ^~~~~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-5]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 fn Class.Function() {}
 
 fn CallClassFunction() {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:3: ERROR: Member access into incomplete class `Class`.
   // CHECK:STDERR:   Class.Function();
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-14]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~~~~
   Class.Function();
 }
 
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:17: ERROR: Variable has incomplete type `Class`.
 // CHECK:STDERR: var global_var: Class;
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:                 ^~~~~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-23]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 var global_var: Class;
 
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:24: ERROR: Function returns incomplete type `Class`.
 // CHECK:STDERR: fn ConvertFromStruct() -> Class { return {}; }
-// CHECK:STDERR:                        ^
+// CHECK:STDERR:                        ^~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-31]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 fn ConvertFromStruct() -> Class { return {}; }
 
 // TODO: Once the `->` operator is supported:
@@ -51,16 +51,16 @@ fn MemberAccess(p: Class*) -> i32 {
   // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-45]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~~~~
   return (*p).n;
 }
 
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:20: ERROR: Function returns incomplete type `Class`.
 // CHECK:STDERR: fn Copy(p: Class*) -> Class {
-// CHECK:STDERR:                    ^
+// CHECK:STDERR:                    ^~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-54]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 fn Copy(p: Class*) -> Class {
   return *p;
 }
@@ -68,10 +68,10 @@ fn Copy(p: Class*) -> Class {
 fn Let(p: Class*) {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:10: ERROR: `let` binding has incomplete type `Class`.
   // CHECK:STDERR:   let c: Class = *p;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-65]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~~~~
   let c: Class = *p;
 }
 
@@ -81,10 +81,10 @@ fn TakeIncomplete(c: Class);
 //
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:23: ERROR: Function returns incomplete type `Class`.
 // CHECK:STDERR: fn ReturnIncomplete() -> Class;
-// CHECK:STDERR:                       ^
+// CHECK:STDERR:                       ^~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-78]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 fn ReturnIncomplete() -> Class;
 
 fn CallTakeIncomplete(p: Class*) {
@@ -93,10 +93,10 @@ fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR:                 ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-87]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~~~~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-19]]:1: Initializing parameter 1 of function declared here.
   // CHECK:STDERR: fn TakeIncomplete(c: Class);
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~
   TakeIncomplete(*p);
 
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:17: ERROR: Forming value of incomplete type `Class`.
@@ -104,10 +104,10 @@ fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR:                 ^
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-98]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~~~~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-30]]:1: Initializing parameter 1 of function declared here.
   // CHECK:STDERR: fn TakeIncomplete(c: Class);
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~
   TakeIncomplete({});
 }
 

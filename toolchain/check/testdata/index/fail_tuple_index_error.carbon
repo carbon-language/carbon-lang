@@ -7,7 +7,7 @@
 var a: (i32, i32) = (12, 6);
 // CHECK:STDERR: fail_tuple_index_error.carbon:[[@LINE+3]]:16: ERROR: Name `oops` not found.
 // CHECK:STDERR: var b: i32 = a[oops];
-// CHECK:STDERR:                ^
+// CHECK:STDERR:                ^~~~
 var b: i32 = a[oops];
 
 // CHECK:STDOUT: constants {

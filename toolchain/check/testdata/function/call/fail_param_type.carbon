@@ -12,7 +12,7 @@ fn F() {
   // CHECK:STDERR:    ^
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE-6]]:1: Initializing parameter 1 of function declared here.
   // CHECK:STDERR: fn G(a: i32) {}
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~
   G(1.0);
 }
 

@@ -8,10 +8,10 @@ fn A();
 
 // CHECK:STDERR: fail_after_decl.carbon:[[@LINE+6]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
 // CHECK:STDERR: import B;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_after_decl.carbon:[[@LINE-5]]:1: First declaration is here.
 // CHECK:STDERR: fn A();
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~
 import B;
 
 // CHECK:STDOUT: - filename: fail_after_decl.carbon

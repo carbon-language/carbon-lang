@@ -14,6 +14,7 @@ file_test(
     tests = [
         "//toolchain/check:testdata",
         "//toolchain/codegen:testdata",
+        "//toolchain/diagnostics:testdata",
         "//toolchain/driver:testdata",
         "//toolchain/lex:testdata",
         "//toolchain/lower:testdata",

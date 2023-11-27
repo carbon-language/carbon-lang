@@ -26,7 +26,7 @@ fn Main() {
   (n, n) = (1, 2);
   // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+3]]:3: ERROR: Expression is not assignable.
   // CHECK:STDERR:   i32 = i32*;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~
   i32 = i32*;
   // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+3]]:18: ERROR: Expression is not assignable.
   // CHECK:STDERR:   {.x = 1, .y = 2} = {.x = 3, .y = 4};

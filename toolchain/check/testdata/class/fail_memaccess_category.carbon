@@ -19,7 +19,7 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~
   s.a.F();
 
   // `b` has an object representation for `A`, but this is still invalid for
@@ -29,7 +29,7 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-22]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~
   b.a.F();
 }
 

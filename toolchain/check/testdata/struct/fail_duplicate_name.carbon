@@ -6,10 +6,10 @@
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:42: ERROR: Duplicated field name `abc` in struct type literal.
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
-// CHECK:STDERR:                                          ^
+// CHECK:STDERR:                                          ^~~
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:22: Field with the same name here.
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
-// CHECK:STDERR:                      ^
+// CHECK:STDERR:                      ^~~
 fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:19: ERROR: Duplicated field name `a` in struct type literal.
@@ -22,10 +22,10 @@ let v: {.a: i32, .a: i32} = {.a = 1};
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:26: ERROR: Duplicated field name `def` in struct literal.
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
-// CHECK:STDERR:                          ^
+// CHECK:STDERR:                          ^~~
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:16: Field with the same name here.
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
-// CHECK:STDERR:                ^
+// CHECK:STDERR:                ^~~
 let w: i32 = {.def = 1, .def = 2}.def;
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:30: ERROR: Duplicated field name `a` in struct literal.

@@ -7,11 +7,11 @@
 fn While() {
   // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+3]]:3: ERROR: `continue` can only be used in a loop.
   // CHECK:STDERR:   continue;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~~~~
   continue;
   // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+3]]:3: ERROR: `break` can only be used in a loop.
   // CHECK:STDERR:   break;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~
   break;
   while (false) {
     continue;
@@ -19,11 +19,11 @@ fn While() {
   }
   // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+3]]:3: ERROR: `continue` can only be used in a loop.
   // CHECK:STDERR:   continue;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~~~~
   continue;
   // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+3]]:3: ERROR: `break` can only be used in a loop.
   // CHECK:STDERR:   break;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~
   break;
 }
 
