@@ -6,71 +6,71 @@
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `private`.
 // CHECK:STDERR: private let a: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 private let a: i32 = 1;
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `protected` not allowed on `let` declaration at file scope.
 // CHECK:STDERR: protected let b: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~~
 protected let b: i32 = 1;
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `default` not allowed on `let` declaration at file scope.
 // CHECK:STDERR: default let c: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 default let c: i32 = 1;
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `final` not allowed on `let` declaration at file scope.
 // CHECK:STDERR: final let d: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 final let d: i32 = 1;
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `virtual` not allowed on `let` declaration.
 // CHECK:STDERR: virtual let e: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 virtual let e: i32 = 1;
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `default` not allowed on `let` declaration at file scope.
 // CHECK:STDERR: default final let f: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `final` not allowed on declaration with `default`.
 // CHECK:STDERR: default final let f: i32 = 1;
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `default` previously appeared here.
 // CHECK:STDERR: default final let f: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 default final let f: i32 = 1;
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `default` not allowed on `let` declaration at file scope.
 // CHECK:STDERR: default default let g: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `default` repeated on declaration.
 // CHECK:STDERR: default default let g: i32 = 1;
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `default` previously appeared here.
 // CHECK:STDERR: default default let g: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 default default let g: i32 = 1;
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `protected` not allowed on `let` declaration at file scope.
 // CHECK:STDERR: protected private let h: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: ERROR: `private` not allowed on declaration with `protected`.
 // CHECK:STDERR: protected private let h: i32 = 1;
-// CHECK:STDERR:           ^
+// CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `protected` previously appeared here.
 // CHECK:STDERR: protected private let h: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~~
 protected private let h: i32 = 1;
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `protected` not allowed on `let` declaration at file scope.
 // CHECK:STDERR: protected protected let i: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: ERROR: `protected` repeated on declaration.
 // CHECK:STDERR: protected protected let i: i32 = 1;
-// CHECK:STDERR:           ^
+// CHECK:STDERR:           ^~~~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `protected` previously appeared here.
 // CHECK:STDERR: protected protected let i: i32 = 1;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~~
 protected protected let i: i32 = 1;
 
 // CHECK:STDOUT: file "fail_modifiers.carbon" {

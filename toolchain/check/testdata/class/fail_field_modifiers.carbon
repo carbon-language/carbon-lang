@@ -7,37 +7,37 @@
 class Class {
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `protected`.
   // CHECK:STDERR:   protected default var j: i32;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:13: ERROR: `default` not allowed on `var` declaration.
   // CHECK:STDERR:   protected default var j: i32;
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~~~
   protected default var j: i32;
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `private`.
   // CHECK:STDERR:   private final var k: i32;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:11: ERROR: `final` not allowed on `var` declaration.
   // CHECK:STDERR:   private final var k: i32;
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR:           ^~~~~
   private final var k: i32;
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+9]]:3: ERROR: Semantics TODO: `private`.
   // CHECK:STDERR:   private default let l: i32 = 0;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+6]]:11: ERROR: `default` not allowed on `let` declaration in a `class` definition.
   // CHECK:STDERR:   private default let l: i32 = 0;
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR:           ^~~~~~~
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE-21]]:1: Containing definition here.
   // CHECK:STDERR: class Class {
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~~~~
   private default let l: i32 = 0;
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+9]]:3: ERROR: Semantics TODO: `protected`.
   // CHECK:STDERR:   protected final let m: i32 = 1;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+6]]:13: ERROR: `final` not allowed on `let` declaration in a `class` definition.
   // CHECK:STDERR:   protected final let m: i32 = 1;
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:             ^~~~~
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE-31]]:1: Containing definition here.
   // CHECK:STDERR: class Class {
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~~~~
   protected final let m: i32 = 1;
 }
 

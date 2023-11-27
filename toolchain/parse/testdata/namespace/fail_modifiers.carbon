@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:37: ERROR: Unrecognized declaration introducer.
 // CHECK:STDERR: private abstract base default final namespace Foo;
-// CHECK:STDERR:                                     ^
+// CHECK:STDERR:                                     ^~~~~~~~~
 private abstract base default final namespace Foo;
 
 // CHECK:STDOUT: - filename: fail_modifiers.carbon

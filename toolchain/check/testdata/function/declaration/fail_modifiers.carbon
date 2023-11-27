@@ -6,68 +6,68 @@
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `default` not allowed on `fn` declaration at file scope.
 // CHECK:STDERR: default protected fn WrongOrder();
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `protected` must appear before `default`.
 // CHECK:STDERR: default protected fn WrongOrder();
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `default` previously appeared here.
 // CHECK:STDERR: default protected fn WrongOrder();
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 default protected fn WrongOrder();
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `virtual` not allowed on `fn` declaration at file scope.
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `virtual` repeated on declaration.
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `virtual` previously appeared here.
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 virtual virtual fn DuplicateVirtual() {}
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `private`.
 // CHECK:STDERR: private protected fn TwoAccess();
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `protected` not allowed on declaration with `private`.
 // CHECK:STDERR: private protected fn TwoAccess();
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `private` previously appeared here.
 // CHECK:STDERR: private protected fn TwoAccess();
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 private protected fn TwoAccess();
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `abstract` not allowed on `fn` declaration at file scope.
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:10: ERROR: `virtual` not allowed on declaration with `abstract`.
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
-// CHECK:STDERR:          ^
+// CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `abstract` previously appeared here.
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~
 abstract virtual fn ModifiersConflict() {}
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `base` not allowed on `fn` declaration.
 // CHECK:STDERR: base fn InvalidModifier();
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~
 base fn InvalidModifier();
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: ERROR: `default` not allowed on `fn` declaration at file scope.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+12]]:9: ERROR: `final` not allowed on declaration with `default`.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: `default` previously appeared here.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:15: ERROR: `virtual` not allowed on declaration with `default`.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
-// CHECK:STDERR:               ^
+// CHECK:STDERR:               ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `default` previously appeared here.
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 default final virtual fn ModifiersConflict2() {}
 
 // CHECK:STDOUT: file "fail_modifiers.carbon" {
