@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_repeated_fn_and_semi.carbon:[[@LINE+3]]:4: ERROR: `fn` introducer should be followed by a name.
 // CHECK:STDERR: fn fn;
-// CHECK:STDERR:    ^
+// CHECK:STDERR:    ^~
 fn fn;
 
 // CHECK:STDOUT: - filename: fail_repeated_fn_and_semi.carbon

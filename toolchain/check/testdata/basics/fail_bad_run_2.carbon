@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_bad_run_2.carbon:[[@LINE+3]]:1: ERROR: Invalid signature for `Main.Run` function. Expected `fn ()` or `fn () -> i32`.
 // CHECK:STDERR: fn Run(n: i32) {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~
 fn Run(n: i32) {}
 
 // CHECK:STDOUT: file "fail_bad_run_2.carbon" {

@@ -17,7 +17,7 @@ library "lib" api;
 
 // CHECK:STDERR: main_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `main_lib1.carbon`.
 // CHECK:STDERR: library "lib" api;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 library "lib" api;
 
 // --- package1.carbon
@@ -28,7 +28,7 @@ package Package api;
 
 // CHECK:STDERR: package2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package1.carbon`.
 // CHECK:STDERR: package Package api;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 package Package api;
 
 // --- package_lib1.carbon
@@ -39,7 +39,7 @@ package Package library "lib" api;
 
 // CHECK:STDERR: package_lib2.carbon:[[@LINE+3]]:1: ERROR: Library's API previously provided by `package_lib1.carbon`.
 // CHECK:STDERR: package Package library "lib" api;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 package Package library "lib" api;
 
 // CHECK:STDOUT: file "main1.carbon" {

@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+3]]:8: ERROR: `fn` requires a `(` for parameters.
 // CHECK:STDERR: fn foo bar;
-// CHECK:STDERR:        ^
+// CHECK:STDERR:        ^~~
 fn foo bar;
 
 // CHECK:STDOUT: - filename: fail_identifier_instead_of_sig.carbon

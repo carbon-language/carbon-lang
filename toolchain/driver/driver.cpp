@@ -122,9 +122,9 @@ When this is a file name, either textual assembly or a binary object will be
 written to it based on the flag `--asm-output`. The default is to write a binary
 object file.
 
-Passing `--output=-` will write the output to stdout. In that
-case, the flag `--asm-output` is ignored and the output defaults to textual
-assembly. Binary object output can be forced by enabling `--force-obj-output`.
+Passing `--output=-` will write the output to stdout. In that case, the flag
+`--asm-output` is ignored and the output defaults to textual assembly. Binary
+object output can be forced by enabling `--force-obj-output`.
 )""",
         },
         [&](auto& arg_b) { arg_b.Set(&output_file_name); });
@@ -281,15 +281,15 @@ Dump the generated assembly to stdout after codegen.
 struct Driver::Options {
   static constexpr CommandLine::CommandInfo Info = {
       .name = "carbon",
-      // TODO: Setup more detailed version information and use that here.
+      // TODO: Set up more detailed version information and use that here.
       .version = R"""(
 Carbon Language toolchain -- version 0.0.0
 )""",
       .help = R"""(
-This is the unified Carbon Language toolchain driver. It's subcommands provide
+This is the unified Carbon Language toolchain driver. Its subcommands provide
 all of the core behavior of the toolchain, including compilation, linking, and
 developer tools. Each of these has its own subcommand, and you can pass a
-specific subcommand to the `help` subcommand to get details about is usage.
+specific subcommand to the `help` subcommand to get details about its usage.
 )""",
       .help_epilogue = R"""(
 For questions, issues, or bug reports, please use our GitHub project:
@@ -362,7 +362,7 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
       if (options.dump_parse_tree) {
         error_stream_ << "ERROR: Requested dumping the parse tree but compile "
                          "phase is limited to '"
-                      << options.phase << "'\n";
+                      << options.phase << "'.\n";
         return false;
       }
       [[clang::fallthrough]];
@@ -370,7 +370,7 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
       if (options.dump_sem_ir) {
         error_stream_ << "ERROR: Requested dumping the SemIR but compile phase "
                          "is limited to '"
-                      << options.phase << "'\n";
+                      << options.phase << "'.\n";
         return false;
       }
       [[clang::fallthrough]];
@@ -378,7 +378,7 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
       if (options.dump_llvm_ir) {
         error_stream_ << "ERROR: Requested dumping the LLVM IR but compile "
                          "phase is limited to '"
-                      << options.phase << "'\n";
+                      << options.phase << "'.\n";
         return false;
       }
       [[clang::fallthrough]];

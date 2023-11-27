@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_type_no_designator.carbon:[[@LINE+3]]:9: ERROR: Expected `.field: field_type` or `.field = value`.
 // CHECK:STDERR: var x: {i32} = {};
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~~
 var x: {i32} = {};
 
 // CHECK:STDOUT: - filename: fail_type_no_designator.carbon

@@ -17,6 +17,7 @@ load(
     "variable_with_value",
     "with_feature_set",
 )
+load("@rules_cc//cc:defs.bzl", "cc_toolchain", "cc_toolchain_suite")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
@@ -886,7 +887,7 @@ def _impl(ctx):
 
     # Next, add the features based on the target platform. Here too the
     # features are order sensitive. We also setup the sysroot here.
-    if ctx.attr.target_cpu == "k8":
+    if ctx.attr.target_cpu in ["aarch64", "k8"]:
         features.append(sanitizer_static_lib_flags)
         features.append(linux_flags_feature)
         sysroot = None
@@ -906,8 +907,7 @@ def _impl(ctx):
     else:
         fail("Unsupported target platform!")
 
-    # TODO: Need to support non-macOS ARM platforms here.
-    if ctx.attr.target_cpu == "darwin_arm64":
+    if ctx.attr.target_cpu in ["aarch64", "darwin_arm64"]:
         features.append(aarch64_cpu_flags)
     else:
         features.append(x86_64_cpu_flags)
@@ -954,3 +954,44 @@ cc_toolchain_config = rule(
     },
     provides = [CcToolchainConfigInfo],
 )
+
+def cc_local_toolchain_suite(name, cpus):
+    """Create a toolchain suite that uses the local Clang/LLVM install.
+
+    Args:
+        name: The name of the toolchain suite to produce.
+        cpus: An array of CPU strings to support in the toolchain.
+    """
+
+    # An empty filegroup to use when stubbing out the toolchains.
+    native.filegroup(
+        name = name + "_empty",
+        srcs = [],
+    )
+
+    # Create the individual local toolchains for each CPU.
+    for cpu in cpus:
+        cc_toolchain_config(
+            name = name + "_local_config_" + cpu,
+            target_cpu = cpu,
+        )
+        cc_toolchain(
+            name = name + "_local_" + cpu,
+            all_files = ":" + name + "_empty",
+            ar_files = ":" + name + "_empty",
+            as_files = ":" + name + "_empty",
+            compiler_files = ":" + name + "_empty",
+            dwp_files = ":" + name + "_empty",
+            linker_files = ":" + name + "_empty",
+            objcopy_files = ":" + name + "_empty",
+            strip_files = ":" + name + "_empty",
+            supports_param_files = 1,
+            toolchain_config = ":" + name + "_local_config_" + cpu,
+            toolchain_identifier = name + "_local_" + cpu,
+        )
+
+    # Now build the suite, associating each CPU with its toolchain.
+    cc_toolchain_suite(
+        name = name,
+        toolchains = {cpu: ":" + name + "_local_" + cpu for cpu in cpus},
+    )

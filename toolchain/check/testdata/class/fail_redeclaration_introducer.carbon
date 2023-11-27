@@ -7,71 +7,71 @@
 class A;
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
 // CHECK:STDERR: base class A {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: class A;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 base class A {}
 
 class B;
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
 // CHECK:STDERR: abstract class B {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: class B;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 abstract class B {}
 
 base class C;
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
 // CHECK:STDERR: class C {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: base class C;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~
 class C {}
 
 base class D;
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
 // CHECK:STDERR: abstract class D {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: base class D;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~
 abstract class D {}
 
 abstract class E;
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
 // CHECK:STDERR: class E {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: abstract class E;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~
 class E {}
 
 abstract class F;
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
 // CHECK:STDERR: base class F {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: abstract class F;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~
 base class F {}
 
 class G {}
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
 // CHECK:STDERR: abstract class G;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: class G {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 abstract class G;
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.
 // CHECK:STDERR: base class G;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~
 // CHECK:STDERR: fail_redeclaration_introducer.carbon:[[@LINE-11]]:1: Previously declared here.
 // CHECK:STDERR: class G {}
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 base class G;
 
 // CHECK:STDOUT: constants {

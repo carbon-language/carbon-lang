@@ -14,7 +14,7 @@ class Class {
 // CHECK:STDERR:             ^
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-8]]:1: Previous definition was here.
 // CHECK:STDERR: class Class {
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 class Class {
   fn G();
   fn H();

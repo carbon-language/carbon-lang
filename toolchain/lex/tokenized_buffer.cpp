@@ -12,6 +12,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
@@ -377,8 +378,11 @@ auto TokenLocationTranslator::GetLocation(Token token) -> DiagnosticLocation {
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  return TokenizedBuffer::SourceBufferLocationTranslator(buffer_).GetLocation(
-      token_start);
+  DiagnosticLocation loc =
+      TokenizedBuffer::SourceBufferLocationTranslator(buffer_).GetLocation(
+          token_start);
+  loc.length = buffer_->GetTokenText(token).size();
+  return loc;
 }
 
 }  // namespace Carbon::Lex

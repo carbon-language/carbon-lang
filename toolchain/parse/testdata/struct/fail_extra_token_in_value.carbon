@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_extra_token_in_value.carbon:[[@LINE+3]]:28: ERROR: Expected `,` or `}`.
 // CHECK:STDERR: var x: {.a: i32} = {.a = 0 banana};
-// CHECK:STDERR:                            ^
+// CHECK:STDERR:                            ^~~~~~
 var x: {.a: i32} = {.a = 0 banana};
 
 // CHECK:STDOUT: - filename: fail_extra_token_in_value.carbon
