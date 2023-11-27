@@ -4,11 +4,18 @@
 
 load("@py_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
 
 py_library(
     name = "github_helpers",
     srcs = ["github_helpers.py"],
     deps = [requirement("gql")],
+)
+
+compile_pip_requirements(
+    name = "requirements",
+    src = "requirements.in",
+    requirements_txt = "requirements.txt",
 )
 
 py_test(
