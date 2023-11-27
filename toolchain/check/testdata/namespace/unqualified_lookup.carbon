@@ -49,27 +49,27 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallA() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_reference A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc15: init () = call %A.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallAB() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_reference A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc19: init () = call %A.ref()
-// CHECK:STDOUT:   %B.ref: <function> = name_reference B, file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc20: init () = call %B.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallABC() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_reference A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc24: init () = call %A.ref()
-// CHECK:STDOUT:   %B.ref: <function> = name_reference B, file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc25: init () = call %B.ref()
-// CHECK:STDOUT:   %C.ref: <function> = name_reference C, file.%C
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C
 // CHECK:STDOUT:   %.loc26: init () = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

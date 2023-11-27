@@ -16,6 +16,6 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference n, file.%n
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, file.%n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }

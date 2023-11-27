@@ -32,7 +32,7 @@ fn Main() {
 // CHECK:STDOUT:   %x.loc10: ref i32 = bind_name x, %x.var.loc10
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x.var.loc10, %.loc10
-// CHECK:STDOUT:   %x.ref: ref i32 = name_reference x, %x.loc10
+// CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, %x.loc10
 // CHECK:STDOUT:   %.loc13: i32 = int_literal 1
 // CHECK:STDOUT:   assign %x.ref, %.loc13
 // CHECK:STDOUT:   br !if.else

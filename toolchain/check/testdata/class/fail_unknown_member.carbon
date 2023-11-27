@@ -38,7 +38,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: Class = name_reference c, %c
-// CHECK:STDOUT:   %something.ref: <error> = name_reference something, <error>
+// CHECK:STDOUT:   %c.ref: Class = name_ref c, %c
+// CHECK:STDOUT:   %something.ref: <error> = name_ref something, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

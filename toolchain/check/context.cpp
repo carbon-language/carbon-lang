@@ -297,8 +297,8 @@ auto Context::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
   return SemIR::InstId::Invalid;
 }
 
-auto Context::FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId {
-  while (auto name_ref = insts().Get(inst_id).TryAs<SemIR::NameReference>()) {
+auto Context::FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId {
+  while (auto name_ref = insts().Get(inst_id).TryAs<SemIR::NameRef>()) {
     inst_id = name_ref->value_id;
   }
   return inst_id;
@@ -310,8 +310,8 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
   while (true) {
     auto inst = insts().Get(inst_id);
     switch (inst.kind()) {
-      case SemIR::NameReference::Kind:
-        inst_id = inst.As<SemIR::NameReference>().value_id;
+      case SemIR::NameRef::Kind:
+        inst_id = inst.As<SemIR::NameRef>().value_id;
         break;
 
       case SemIR::BindName::Kind:
@@ -655,13 +655,11 @@ class TypeCompleter {
     return value_rep;
   };
 
-  auto BuildCrossReferenceValueRepresentation(SemIR::TypeId type_id,
-                                              SemIR::CrossReference xref) const
+  auto BuildCrossRefValueRepresentation(SemIR::TypeId type_id,
+                                        SemIR::CrossRef xref) const
       -> SemIR::ValueRepresentation {
-    auto xref_inst = context_.cross_reference_irs()
-                         .Get(xref.ir_id)
-                         ->insts()
-                         .Get(xref.inst_id);
+    auto xref_inst =
+        context_.cross_ref_irs().Get(xref.ir_id)->insts().Get(xref.inst_id);
 
     // The canonical description of a type should only have cross-references
     // for entities owned by another File, such as builtins, which are owned
@@ -810,12 +808,12 @@ class TypeCompleter {
       case SemIR::ClassFieldAccess::Kind:
       case SemIR::ClassInit::Kind:
       case SemIR::Converted::Kind:
-      case SemIR::Dereference::Kind:
+      case SemIR::Deref::Kind:
       case SemIR::Field::Kind:
       case SemIR::FunctionDecl::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::IntegerLiteral::Kind:
-      case SemIR::NameReference::Kind:
+      case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::NoOp::Kind:
       case SemIR::Param::Kind:
@@ -838,14 +836,14 @@ class TypeCompleter {
       case SemIR::TupleInit::Kind:
       case SemIR::TupleValue::Kind:
       case SemIR::UnaryOperatorNot::Kind:
-      case SemIR::ValueAsReference::Kind:
+      case SemIR::ValueAsRef::Kind:
       case SemIR::ValueOfInitializer::Kind:
       case SemIR::VarStorage::Kind:
         CARBON_FATAL() << "Type refers to non-type inst " << inst;
 
-      case SemIR::CrossReference::Kind:
-        return BuildCrossReferenceValueRepresentation(
-            type_id, inst.As<SemIR::CrossReference>());
+      case SemIR::CrossRef::Kind:
+        return BuildCrossRefValueRepresentation(type_id,
+                                                inst.As<SemIR::CrossRef>());
 
       case SemIR::ArrayType::Kind: {
         // For arrays, it's convenient to always use a pointer representation,
@@ -983,10 +981,10 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
     case SemIR::ClassType::Kind:
       canonical_id.AddInteger(inst.As<SemIR::ClassType>().class_id.index);
       break;
-    case SemIR::CrossReference::Kind: {
+    case SemIR::CrossRef::Kind: {
       // TODO: Cross-references should be canonicalized by looking at their
       // target rather than treating them as new unique types.
-      auto xref = inst.As<SemIR::CrossReference>();
+      auto xref = inst.As<SemIR::CrossRef>();
       canonical_id.AddInteger(xref.ir_id.index);
       canonical_id.AddInteger(xref.inst_id.index);
       break;
@@ -1044,7 +1042,7 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
   while (auto converted = insts().Get(inst_id).TryAs<SemIR::Converted>()) {
     inst_id = converted->result_id;
   }
-  inst_id = FollowNameReferences(inst_id);
+  inst_id = FollowNameRefs(inst_id);
 
   auto it = canonical_types_.find(inst_id);
   if (it != canonical_types_.end()) {

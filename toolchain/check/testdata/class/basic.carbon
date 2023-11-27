@@ -48,20 +48,20 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference n, %n
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%n: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference n, %n
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
-// CHECK:STDOUT:   %F.ref: <function> = name_reference F, @Class.%F
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F
 // CHECK:STDOUT:   %.loc22_18: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc22_17: init i32 = call %F.ref(%.loc22_18)
 // CHECK:STDOUT:   %.loc22_20.1: i32 = value_of_initializer %.loc22_17

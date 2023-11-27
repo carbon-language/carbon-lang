@@ -79,8 +79,8 @@ static auto GetAggregateElement(FunctionContext& context,
       }
     }
 
-    case SemIR::ExprCategory::DurableReference:
-    case SemIR::ExprCategory::EphemeralReference: {
+    case SemIR::ExprCategory::DurableRef:
+    case SemIR::ExprCategory::EphemeralRef: {
       // Just locate the aggregate element.
       auto* aggr_type = context.GetType(aggr_inst.type_id());
       return context.builder().CreateStructGEP(aggr_type, aggr_value, idx.index,

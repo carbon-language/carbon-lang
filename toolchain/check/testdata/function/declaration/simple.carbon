@@ -21,7 +21,7 @@ fn G() { F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc9: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

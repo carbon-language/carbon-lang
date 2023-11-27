@@ -29,15 +29,15 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Self.ref.loc9: type = name_reference Self, file.%Class
+// CHECK:STDOUT:   %Self.ref.loc9: type = name_ref Self, file.%Class
 // CHECK:STDOUT:   %.loc9: type = ptr_type Class
 // CHECK:STDOUT:   %Self.var: ref Class* = var r#Self
 // CHECK:STDOUT:   %Self: ref Class* = bind_name r#Self, %Self.var
-// CHECK:STDOUT:   %Self.ref.loc10_12: type = name_reference Self, file.%Class
+// CHECK:STDOUT:   %Self.ref.loc10_12: type = name_ref Self, file.%Class
 // CHECK:STDOUT:   %.loc10_16: type = ptr_type Class
 // CHECK:STDOUT:   %p.var: ref Class* = var p
 // CHECK:STDOUT:   %p: ref Class* = bind_name p, %p.var
-// CHECK:STDOUT:   %Self.ref.loc10_20: ref Class* = name_reference r#Self, %Self
+// CHECK:STDOUT:   %Self.ref.loc10_20: ref Class* = name_ref r#Self, %Self
 // CHECK:STDOUT:   %.loc10_20: Class* = bind_value %Self.ref.loc10_20
 // CHECK:STDOUT:   assign %p.var, %.loc10_20
 // CHECK:STDOUT:   return

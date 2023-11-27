@@ -27,7 +27,7 @@ var c: i32 = b[0];
 // CHECK:STDOUT:   %.loc7_13.3: type = converted %.loc8_13, constants.%.loc7_13.2
 // CHECK:STDOUT:   %b.var: ref (i32,) = var b
 // CHECK:STDOUT:   %b: ref (i32,) = bind_name b, %b.var
-// CHECK:STDOUT:   %a.ref: ref (i32,) = name_reference a, %a
+// CHECK:STDOUT:   %a.ref: ref (i32,) = name_ref a, %a
 // CHECK:STDOUT:   %.loc8_17.1: ref i32 = tuple_access %a.ref, member0
 // CHECK:STDOUT:   %.loc8_17.2: i32 = bind_value %.loc8_17.1
 // CHECK:STDOUT:   %.loc8_17.3: init (i32,) = tuple_init (%.loc8_17.2) to %b.var
@@ -35,7 +35,7 @@ var c: i32 = b[0];
 // CHECK:STDOUT:   assign %b.var, %.loc8_17.4
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %b.ref: ref (i32,) = name_reference b, %b
+// CHECK:STDOUT:   %b.ref: ref (i32,) = name_ref b, %b
 // CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc9_17.1: ref i32 = tuple_index %b.ref, %.loc9_16
 // CHECK:STDOUT:   %.loc9_17.2: i32 = bind_value %.loc9_17.1

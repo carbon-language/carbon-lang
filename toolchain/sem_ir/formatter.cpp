@@ -440,8 +440,8 @@ class InstNamer {
               sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
           continue;
         }
-        case NameReference::Kind: {
-          add_inst_name_id(inst.As<NameReference>().name_id, ".ref");
+        case NameRef::Kind: {
+          add_inst_name_id(inst.As<NameRef>().name_id, ".ref");
           continue;
         }
         case Param::Kind: {
@@ -680,8 +680,8 @@ class Formatter {
           case ExprCategory::Value:
           case ExprCategory::Mixed:
             break;
-          case ExprCategory::DurableReference:
-          case ExprCategory::EphemeralReference:
+          case ExprCategory::DurableRef:
+          case ExprCategory::EphemeralRef:
             out_ << "ref ";
             break;
           case ExprCategory::Initializing:
@@ -800,7 +800,7 @@ class Formatter {
     FormatReturnSlot(init.dest_id);
   }
 
-  auto FormatInstructionRHS(CrossReference inst) -> void {
+  auto FormatInstructionRHS(CrossRef inst) -> void {
     // TODO: Figure out a way to make this meaningful. We'll need some way to
     // name cross-reference IRs, perhaps by the instruction ID of the import?
     out_ << " " << inst.ir_id << "." << inst.inst_id;

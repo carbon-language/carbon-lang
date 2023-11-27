@@ -36,11 +36,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
-// CHECK:STDOUT:   %c.ref: ref Class = name_reference c, %c
-// CHECK:STDOUT:   %F.ref: <function> = name_reference F, @Class.%F
+// CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F
 // CHECK:STDOUT:   %.loc13_13: init i32 = call %F.ref()
 // CHECK:STDOUT:   %.loc13_15.1: i32 = value_of_initializer %.loc13_13
 // CHECK:STDOUT:   %.loc13_15.2: i32 = converted %.loc13_13, %.loc13_15.1

@@ -41,7 +41,7 @@ auto HandleIndexExpr(Context& context, Parse::Node parse_node) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto index_inst = context.insts().Get(index_inst_id);
   auto operand_inst_id = context.node_stack().PopExpr();
-  operand_inst_id = ConvertToValueOrReferenceExpr(context, operand_inst_id);
+  operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
   auto operand_inst = context.insts().Get(operand_inst_id);
   auto operand_type_id = operand_inst.type_id();
   auto operand_type_inst = context.insts().Get(
@@ -67,13 +67,13 @@ auto HandleIndexExpr(Context& context, Parse::Node parse_node) -> bool {
       if (array_cat == SemIR::ExprCategory::Value) {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
-        operand_inst_id = context.AddInst(SemIR::ValueAsReference{
-            parse_node, operand_type_id, operand_inst_id});
+        operand_inst_id = context.AddInst(
+            SemIR::ValueAsRef{parse_node, operand_type_id, operand_inst_id});
       }
       auto elem_id = context.AddInst(
           SemIR::ArrayIndex{parse_node, array_type.element_type_id,
                             operand_inst_id, cast_index_id});
-      if (array_cat != SemIR::ExprCategory::DurableReference) {
+      if (array_cat != SemIR::ExprCategory::DurableRef) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.
         // TODO: This should be replaced by a choice between using `IndexWith`

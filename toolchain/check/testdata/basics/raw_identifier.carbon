@@ -28,18 +28,18 @@ fn C(r#if: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%n: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference n, %n
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%n: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference n, %n
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%if: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %if.ref: i32 = name_reference r#if, %if
+// CHECK:STDOUT:   %if.ref: i32 = name_ref r#if, %if
 // CHECK:STDOUT:   return %if.ref
 // CHECK:STDOUT: }

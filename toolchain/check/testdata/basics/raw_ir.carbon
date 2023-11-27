@@ -15,7 +15,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        raw_ir.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   cross_reference_irs_size: 1
+// CHECK:STDOUT:   cross_ref_irs_size: 1
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, param_refs: block1, return_type: type3, return_slot: inst+5, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
@@ -42,7 +42,7 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     inst+5:          {kind: VarStorage, arg0: nameReturnSlot, type: type3}
 // CHECK:STDOUT:     inst+6:          {kind: PointerType, arg0: type3, type: typeTypeType}
 // CHECK:STDOUT:     inst+7:          {kind: FunctionDecl, arg0: function0, type: type5}
-// CHECK:STDOUT:     inst+8:          {kind: NameReference, arg0: name1, arg1: inst+0, type: type0}
+// CHECK:STDOUT:     inst+8:          {kind: NameRef, arg0: name1, arg1: inst+0, type: type0}
 // CHECK:STDOUT:     inst+9:          {kind: IntegerLiteral, arg0: int3, type: type0}
 // CHECK:STDOUT:     inst+10:         {kind: BinaryOperatorAdd, arg0: inst+8, arg1: inst+9, type: type0}
 // CHECK:STDOUT:     inst+11:         {kind: RealLiteral, arg0: real0, type: type2}

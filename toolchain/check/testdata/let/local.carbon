@@ -15,8 +15,8 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: i32 = name_reference a, %a
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b: i32 = bind_name b, %a.ref
-// CHECK:STDOUT:   %b.ref: i32 = name_reference b, %b
+// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   return %b.ref
 // CHECK:STDOUT: }

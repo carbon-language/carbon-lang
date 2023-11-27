@@ -34,7 +34,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type Class, i32
 // CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field n, member0
 // CHECK:STDOUT:   %n: <unbound field of class Class> = bind_name n, %.loc8_8.2
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %.loc9_18: type = ptr_type Class
 // CHECK:STDOUT:   %.loc9_11.1: type = unbound_field_type Class, Class*
 // CHECK:STDOUT:   %.loc9_11.2: <unbound field of class Class> = field next, member1
@@ -47,8 +47,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n: i32, %next: Class*) -> %return: Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference n, %n
-// CHECK:STDOUT:   %next.ref: Class* = name_reference next, %next
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
+// CHECK:STDOUT:   %next.ref: Class* = name_ref next, %next
 // CHECK:STDOUT:   %.loc13_31.1: {.n: i32, .next: Class*} = struct_literal (%n.ref, %next.ref)
 // CHECK:STDOUT:   %.loc13_31.2: ref i32 = class_field_access %return, member0
 // CHECK:STDOUT:   %.loc13_31.3: init i32 = initialize_from %n.ref to %.loc13_31.2
@@ -61,8 +61,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeReorder(%n: i32, %next: Class*) -> %return: Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %next.ref: Class* = name_reference next, %next
-// CHECK:STDOUT:   %n.ref: i32 = name_reference n, %n
+// CHECK:STDOUT:   %next.ref: Class* = name_ref next, %next
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc17_31.1: {.next: Class*, .n: i32} = struct_literal (%next.ref, %n.ref)
 // CHECK:STDOUT:   %.loc17_31.2: ref i32 = class_field_access %return, member1
 // CHECK:STDOUT:   %.loc17_31.3: init i32 = initialize_from %n.ref to %.loc17_31.2

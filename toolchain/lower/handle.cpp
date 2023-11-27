@@ -16,9 +16,8 @@
 
 namespace Carbon::Lower {
 
-auto HandleCrossReference(FunctionContext& /*context*/,
-                          SemIR::InstId /*inst_id*/, SemIR::CrossReference inst)
-    -> void {
+auto HandleCrossRef(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                    SemIR::CrossRef inst) -> void {
   CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
@@ -174,8 +173,8 @@ auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleDereference(FunctionContext& context, SemIR::InstId inst_id,
-                       SemIR::Dereference inst) -> void {
+auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
+                 SemIR::Deref inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
 }
 
@@ -202,8 +201,8 @@ auto HandleIntegerLiteral(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, v);
 }
 
-auto HandleNameReference(FunctionContext& context, SemIR::InstId inst_id,
-                         SemIR::NameReference inst) -> void {
+auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,
+                   SemIR::NameRef inst) -> void {
   auto type_inst_id = context.sem_ir().GetTypeAllowBuiltinTypes(inst.type_id);
   if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
     return;

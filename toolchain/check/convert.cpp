@@ -584,11 +584,11 @@ static bool IsValidExprCategoryForConversionTarget(
   switch (target_kind) {
     case ConversionTarget::Value:
       return category == SemIR::ExprCategory::Value;
-    case ConversionTarget::ValueOrReference:
+    case ConversionTarget::ValueOrRef:
     case ConversionTarget::Discarded:
       return category == SemIR::ExprCategory::Value ||
-             category == SemIR::ExprCategory::DurableReference ||
-             category == SemIR::ExprCategory::EphemeralReference ||
+             category == SemIR::ExprCategory::DurableRef ||
+             category == SemIR::ExprCategory::EphemeralRef ||
              category == SemIR::ExprCategory::Initializing;
     case ConversionTarget::ExplicitAs:
       return true;
@@ -884,10 +884,10 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
       // We now have an ephemeral reference.
       [[fallthrough]];
 
-    case SemIR::ExprCategory::DurableReference:
-    case SemIR::ExprCategory::EphemeralReference:
+    case SemIR::ExprCategory::DurableRef:
+    case SemIR::ExprCategory::EphemeralRef:
       // If a reference expression is an acceptable result, we're done.
-      if (target.kind == ConversionTarget::ValueOrReference ||
+      if (target.kind == ConversionTarget::ValueOrRef ||
           target.kind == ConversionTarget::Discarded) {
         break;
       }
@@ -939,12 +939,12 @@ auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
                  {.kind = ConversionTarget::Value, .type_id = expr.type_id()});
 }
 
-auto ConvertToValueOrReferenceExpr(Context& context, SemIR::InstId expr_id)
+auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
   auto expr = context.sem_ir().insts().Get(expr_id);
   return Convert(
       context, expr.parse_node(), expr_id,
-      {.kind = ConversionTarget::ValueOrReference, .type_id = expr.type_id()});
+      {.kind = ConversionTarget::ValueOrRef, .type_id = expr.type_id()});
 }
 
 auto ConvertToValueOfType(Context& context, Parse::Node parse_node,
@@ -1000,17 +1000,17 @@ static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
   // For `addr self`, take the address of the object argument.
   auto self_or_addr_id = self_id;
   if (self_param.is_addr_self.index) {
-    self_or_addr_id = ConvertToValueOrReferenceExpr(context, self_or_addr_id);
+    self_or_addr_id = ConvertToValueOrRefExpr(context, self_or_addr_id);
     auto self = context.insts().Get(self_or_addr_id);
     switch (SemIR::GetExprCategory(context.sem_ir(), self_id)) {
       case SemIR::ExprCategory::Error:
-      case SemIR::ExprCategory::DurableReference:
-      case SemIR::ExprCategory::EphemeralReference:
+      case SemIR::ExprCategory::DurableRef:
+      case SemIR::ExprCategory::EphemeralRef:
         break;
       default:
-        CARBON_DIAGNOSTIC(AddrSelfIsNonReference, Error,
+        CARBON_DIAGNOSTIC(AddrSelfIsNonRef, Error,
                           "`addr self` method cannot be invoked on a value.");
-        context.emitter().Emit(call_parse_node, AddrSelfIsNonReference);
+        context.emitter().Emit(call_parse_node, AddrSelfIsNonRef);
         return SemIR::InstId::BuiltinError;
     }
     self_or_addr_id = context.AddInst(SemIR::AddressOf{

@@ -46,10 +46,10 @@ fn F(x: X) {
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   %.loc16: String = string_literal "hello"
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %X.ref: type = name_reference X, file.%X
+// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X
 // CHECK:STDOUT:   %y.var: ref X = var y
 // CHECK:STDOUT:   %y: ref X = bind_name y, %y.var
-// CHECK:STDOUT:   %x.ref: X = name_reference x, %x
+// CHECK:STDOUT:   %x.ref: X = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

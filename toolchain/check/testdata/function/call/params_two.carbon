@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref: <function> = name_reference Foo, file.%Foo
+// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo
 // CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_10: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_6: init () = call %Foo.ref(%.loc10_7, %.loc10_10)

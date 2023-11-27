@@ -33,7 +33,7 @@ var b: i32 = a[2];
 // CHECK:STDOUT:   assign %a.var, %.loc7_27.7
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_reference a, %a
+// CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, %a
 // CHECK:STDOUT:   %.loc11_16: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc11_17: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign %b.var, <error>

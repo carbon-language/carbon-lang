@@ -38,8 +38,8 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   assign %b.var, %.loc8
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_reference a, %a
-// CHECK:STDOUT:   %b.ref: ref i32 = name_reference b, %b
+// CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: ref i32 = name_ref b, %b
 // CHECK:STDOUT:   %.loc12: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT: }

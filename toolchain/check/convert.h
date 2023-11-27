@@ -18,7 +18,7 @@ struct ConversionTarget {
     // Convert to a value of type `type`.
     Value,
     // Convert to either a value or a reference of type `type`.
-    ValueOrReference,
+    ValueOrRef,
     // Convert for an explicit `as` cast. This allows any expression category
     // as the result, and uses the `As` interface instead of the `ImplicitAs`
     // interface.
@@ -68,7 +68,7 @@ auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
 
 // Convert the given expression to a value or reference expression of the same
 // type.
-auto ConvertToValueOrReferenceExpr(Context& context, SemIR::InstId expr_id)
+auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId;
 
 // Converts `value_id` to a value expression of type `type_id`.

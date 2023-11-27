@@ -18,6 +18,6 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: Class*) -> Class* {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: Class* = name_reference p, %p
+// CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }

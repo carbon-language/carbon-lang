@@ -48,20 +48,20 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.addr: Class*](%self: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref.loc14_5: Class* = name_reference self, %self.addr
-// CHECK:STDOUT:   %.loc14_4: ref Class = dereference %self.ref.loc14_5
+// CHECK:STDOUT:   %self.ref.loc14_5: Class* = name_ref self, %self.addr
+// CHECK:STDOUT:   %.loc14_4: ref Class = deref %self.ref.loc14_5
 // CHECK:STDOUT:   %.loc14_10: ref i32 = class_field_access %.loc14_4, member0
-// CHECK:STDOUT:   %self.ref.loc14_15: i32 = name_reference r#self, %self
+// CHECK:STDOUT:   %self.ref.loc14_15: i32 = name_ref r#self, %self
 // CHECK:STDOUT:   assign %.loc14_10, %self.ref.loc14_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[%self.loc17_12: Class](%self.loc17_25: i32) -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref.loc18_11: Class = name_reference self, %self.loc17_12
+// CHECK:STDOUT:   %self.ref.loc18_11: Class = name_ref self, %self.loc17_12
 // CHECK:STDOUT:   %.loc18_15.1: ref i32 = class_field_access %self.ref.loc18_11, member0
 // CHECK:STDOUT:   %.loc18_15.2: i32 = bind_value %.loc18_15.1
-// CHECK:STDOUT:   %self.ref.loc18_19: i32 = name_reference r#self, %self.loc17_25
+// CHECK:STDOUT:   %self.ref.loc18_19: i32 = name_ref r#self, %self.loc17_25
 // CHECK:STDOUT:   %.loc18_25.1: (i32, i32) = tuple_literal (%.loc18_15.2, %self.ref.loc18_19)
 // CHECK:STDOUT:   %.loc18_25.2: ref i32 = tuple_access %return, member0
 // CHECK:STDOUT:   %.loc18_25.3: init i32 = initialize_from %.loc18_15.2 to %.loc18_25.2

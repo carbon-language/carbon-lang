@@ -36,16 +36,16 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %.loc7: type = converted %.loc10_19, constants.%.loc7_20.2
 // CHECK:STDOUT:   %v.var: ref (i32, i32) = var v
 // CHECK:STDOUT:   %v: ref (i32, i32) = bind_name v, %v.var
-// CHECK:STDOUT:   %F.ref.loc10: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref.loc10: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc10_7: ref (i32, i32) = splice_block %v.var {}
 // CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call %F.ref.loc10() to %.loc10_7
 // CHECK:STDOUT:   assign %v.var, %.loc10_24
-// CHECK:STDOUT:   %v.ref: ref (i32, i32) = name_reference v, %v
-// CHECK:STDOUT:   %F.ref.loc11: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %v.ref: ref (i32, i32) = name_ref v, %v
+// CHECK:STDOUT:   %F.ref.loc11: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc11_3: ref (i32, i32) = splice_block %v.ref {}
 // CHECK:STDOUT:   %.loc11_8: init (i32, i32) = call %F.ref.loc11() to %.loc11_3
 // CHECK:STDOUT:   assign %v.ref, %.loc11_8
-// CHECK:STDOUT:   %F.ref.loc12: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref.loc12: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc9: ref (i32, i32) = splice_block %return {}
 // CHECK:STDOUT:   %.loc12: init (i32, i32) = call %F.ref.loc12() to %.loc9
 // CHECK:STDOUT:   return %.loc12
@@ -53,7 +53,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: <function> = name_reference G, file.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
 // CHECK:STDOUT:   %.loc16_11.1: ref (i32, i32) = temporary_storage
 // CHECK:STDOUT:   %.loc16_11.2: init (i32, i32) = call %G.ref() to %.loc16_11.1
 // CHECK:STDOUT:   %.loc16_14: i32 = int_literal 0
