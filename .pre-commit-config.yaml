@@ -207,6 +207,7 @@ repos:
               .bazelversion|
               .github/pull_request_template.md|
               compile_flags.txt|
+              github_tools/requirements.txt|
               third_party/.*|
               .*\.def|
               .*\.svg|

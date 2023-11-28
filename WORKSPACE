@@ -22,23 +22,38 @@ http_archive(
 # Python rules
 ###############################################################################
 
-rules_python_version = "0.8.1"
+rules_python_version = "0.27.0"
 
 # Add Bazel's python rules and set up pip.
 http_archive(
     name = "rules_python",
-    sha256 = "cdf6b84084aad8f10bf20b46b77cb48d83c319ebe6458a18e9d2cebf57807cdd",
+    sha256 = "9acc0944c94adb23fba1c9988b48768b1bacc6583b52a2586895c5b7491e2e31",
     strip_prefix = "rules_python-{0}".format(rules_python_version),
     url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/{0}.tar.gz".format(rules_python_version),
 )
 
-load("@rules_python//python:pip.bzl", "pip_install")
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
+
+py_repositories()
+
+python_register_toolchains(
+    name = "python311",
+    python_version = "3.11",
+)
+
+load("@python311//:defs.bzl", "interpreter")
+load("@rules_python//python:pip.bzl", "pip_parse")
 
 # Create a central repo that knows about the pip dependencies.
-pip_install(
+pip_parse(
     name = "py_deps",
-    requirements = "//github_tools:requirements.txt",
+    python_interpreter_target = interpreter,
+    requirements_lock = "//github_tools:requirements.txt",
 )
+
+load("@py_deps//:requirements.bzl", "install_deps")
+
+install_deps()
 
 ###############################################################################
 # C++ rules
