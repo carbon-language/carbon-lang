@@ -7,6 +7,7 @@
 
 namespace Carbon::Check {
 
+// Represents a set of keyword modifiers, uses a separate bit per modifier.
 class KeywordModifierSet {
  public:
   enum RawEnum {
@@ -28,11 +29,11 @@ class KeywordModifierSet {
     Access = Private | Protected,
   };
 
-  KeywordModifierSet() : keywords(static_cast<RawEnum>(0)) {}
-  KeywordModifierSet(RawEnum k) : keywords(k) {}
+  KeywordModifierSet() : keywords_(static_cast<RawEnum>(0)) {}
+  KeywordModifierSet(RawEnum k) : keywords_(k) {}
   auto Set(RawEnum to_set) const -> KeywordModifierSet {
     KeywordModifierSet ret;
-    ret.keywords = static_cast<RawEnum>(keywords | to_set);
+    ret.keywords_ = static_cast<RawEnum>(keywords_ | to_set);
     return ret;
   }
   auto SetPrivate() const -> KeywordModifierSet { return Set(Private); }
@@ -44,7 +45,7 @@ class KeywordModifierSet {
   auto SetImpl() const -> KeywordModifierSet { return Set(Impl); }
   auto SetVirtual() const -> KeywordModifierSet { return Set(Virtual); }
 
-  auto Has(unsigned to_Has) const -> bool { return keywords & to_Has; }
+  auto Has(RawEnum to_check) const -> bool { return keywords_ & to_check; }
   auto HasPrivate() const -> bool { return Has(Private); }
   auto HasProtected() const -> bool { return Has(Protected); }
   auto HasAbstract() const -> bool { return Has(Abstract); }
@@ -53,17 +54,18 @@ class KeywordModifierSet {
   auto HasFinal() const -> bool { return Has(Final); }
   auto HasImpl() const -> bool { return Has(Impl); }
   auto HasVirtual() const -> bool { return Has(Virtual); }
-  auto GetRaw() const -> RawEnum { return keywords; }
+  auto GetRaw() const -> RawEnum { return keywords_; }
 
  private:
-  RawEnum keywords;
+  RawEnum keywords_;
 };
 
 struct DeclState {
   // FIXME: `Fn` or `Function`?
   enum DeclKind { FileScope, Class, NamedConstraint, Fn, Interface, Let, Var };
 
-  DeclState(DeclKind k, Parse::Node f) : first_node(f), kind(k) {}
+  DeclState(DeclKind decl_kind, Parse::Node parse_node)
+      : first_node(parse_node), kind(decl_kind) {}
   DeclState() : DeclState(FileScope, Parse::Node::Invalid) {}
 
   Parse::Node saw_access_mod = Parse::Node::Invalid;
