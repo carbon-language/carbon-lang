@@ -4,12 +4,12 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_dereference_error.carbon:[[@LINE+3]]:15: ERROR: Name `undeclared` not found.
+// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+3]]:15: ERROR: Name `undeclared` not found.
 // CHECK:STDERR: let n: i32 = *undeclared;
 // CHECK:STDERR:               ^~~~~~~~~~
 let n: i32 = *undeclared;
 
-// CHECK:STDOUT: file "fail_dereference_error.carbon" {
+// CHECK:STDOUT: file "fail_deref_error.carbon" {
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error>
 // CHECK:STDOUT:   %.loc10: ref <error> = deref <error>
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>

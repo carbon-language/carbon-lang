@@ -5,15 +5,15 @@
 // AUTOUPDATE
 
 fn Deref(n: i32) {
-  // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `i32`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `i32`.
   // CHECK:STDERR:   *n;
   // CHECK:STDERR:   ^
   *n;
-  // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `() as type`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `() as type`.
   // CHECK:STDERR:   *();
   // CHECK:STDERR:   ^
   *();
-  // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `{} as type`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `{} as type`.
   // CHECK:STDERR:   *{};
   // CHECK:STDERR:   ^
   *{};
@@ -24,7 +24,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %.loc19: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_dereference_not_pointer.carbon" {
+// CHECK:STDOUT: file "fail_deref_not_pointer.carbon" {
 // CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
