@@ -39,7 +39,7 @@ using AnyDecl = AnyNode;
 using AnyStatement = AnyNode;
 using AnyPattern = AnyNode;
 
-// A child that is expected to be of the specified kind `T`.
+// A child that is known to be of the specified kind `T`.
 template <typename T>
 class Required : public Node {
  public:
