@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:27: ERROR: Missing value for field `a` in struct initialization.
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:19: ERROR: Missing value for field `a` in struct initialization.
 // CHECK:STDERR: var x: {.a: {}} = {.b = {}};
-// CHECK:STDERR:                           ^
+// CHECK:STDERR:                   ^~~~~~~~~
 var x: {.a: {}} = {.b = {}};
 
 // CHECK:STDOUT: constants {

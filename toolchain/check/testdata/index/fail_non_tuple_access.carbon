@@ -5,9 +5,9 @@
 // AUTOUPDATE
 
 fn Main() {
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+3]]:6: ERROR: `i32` does not support indexing.
+  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+3]]:3: ERROR: `i32` does not support indexing.
   // CHECK:STDERR:   0[1];
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:   ^~~~
   0[1];
 }
 

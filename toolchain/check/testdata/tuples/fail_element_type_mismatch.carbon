@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:30: ERROR: Cannot implicitly convert from `f64` to `i32`.
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:21: ERROR: Cannot implicitly convert from `f64` to `i32`.
 // CHECK:STDERR: var x: (i32, i32) = (2, 65.89);
-// CHECK:STDERR:                              ^
+// CHECK:STDERR:                     ^~~~~~~~~~
 var x: (i32, i32) = (2, 65.89);
 
 // CHECK:STDOUT: constants {

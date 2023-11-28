@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_out_of_bound.carbon:[[@LINE+3]]:27: ERROR: Cannot initialize array of 1 element(s) from 3 initializer(s).
+// CHECK:STDERR: fail_out_of_bound.carbon:[[@LINE+3]]:19: ERROR: Cannot initialize array of 1 element(s) from 3 initializer(s).
 // CHECK:STDERR: var a: [i32; 1] = (1, 2, 3);
-// CHECK:STDERR:                           ^
+// CHECK:STDERR:                   ^~~~~~~~~
 var a: [i32; 1] = (1, 2, 3);
 
 // CHECK:STDOUT: constants {

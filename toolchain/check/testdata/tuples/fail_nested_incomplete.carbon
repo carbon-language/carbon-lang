@@ -6,17 +6,17 @@
 
 class Incomplete;
 
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+6]]:24: ERROR: Variable has incomplete type `(i32, Incomplete)`.
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+6]]:8: ERROR: Variable has incomplete type `(i32, Incomplete)`.
 // CHECK:STDERR: var t: (i32, Incomplete);
-// CHECK:STDERR:                        ^
+// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: Class was forward declared here.
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~
 var t: (i32, Incomplete);
 
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+3]]:27: ERROR: Cannot implicitly convert from `<error>*` to `Incomplete*`.
+// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `<error>*` to `Incomplete*`.
 // CHECK:STDERR: var p: Incomplete* = &t[1];
-// CHECK:STDERR:                           ^
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 var p: Incomplete* = &t[1];
 
 // CHECK:STDOUT: constants {

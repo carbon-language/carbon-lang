@@ -4,10 +4,10 @@
 //
 // AUTOUPDATE
 
-fn F() -> () {
 // CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+3]]:1: ERROR: Missing `return` at end of function with declared return type.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR: fn F() -> () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+fn F() -> () {
 }
 
 // CHECK:STDOUT: constants {

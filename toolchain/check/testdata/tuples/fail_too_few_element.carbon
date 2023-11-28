@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_too_few_element.carbon:[[@LINE+3]]:25: ERROR: Cannot initialize tuple of 2 element(s) from tuple with 1 element(s).
+// CHECK:STDERR: fail_too_few_element.carbon:[[@LINE+3]]:21: ERROR: Cannot initialize tuple of 2 element(s) from tuple with 1 element(s).
 // CHECK:STDERR: var x: (i32, i32) = (2, );
-// CHECK:STDERR:                         ^
+// CHECK:STDERR:                     ^~~~~
 var x: (i32, i32) = (2, );
 
 // CHECK:STDOUT: constants {

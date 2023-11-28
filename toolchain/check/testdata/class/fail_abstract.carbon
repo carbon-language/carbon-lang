@@ -9,9 +9,9 @@ abstract class Class {
 }
 
 fn Make() -> Class {
-  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:17: ERROR: Cannot construct instance of abstract class. Consider using `partial Class` instead.
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:10: ERROR: Cannot construct instance of abstract class. Consider using `partial Class` instead.
   // CHECK:STDERR:   return {.k = 1};
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:          ^~~~~~~~
   return {.k = 1};
 }
 

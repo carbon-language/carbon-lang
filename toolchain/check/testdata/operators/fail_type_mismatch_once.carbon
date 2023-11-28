@@ -7,9 +7,9 @@
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:13: ERROR: Cannot implicitly convert from `i32` to `f64`.
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:10: ERROR: Cannot implicitly convert from `i32` to `f64`.
   // CHECK:STDERR:   return 12 + 3.4 + 12;
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:          ^~~~~~
   return 12 + 3.4 + 12;
 }
 

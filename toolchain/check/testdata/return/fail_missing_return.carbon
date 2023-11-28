@@ -4,10 +4,10 @@
 //
 // AUTOUPDATE
 
-fn Main() -> i32 {
 // CHECK:STDERR: fail_missing_return.carbon:[[@LINE+3]]:1: ERROR: Missing `return` at end of function with declared return type.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR: fn Main() -> i32 {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+fn Main() -> i32 {
 }
 
 // CHECK:STDOUT: file "fail_missing_return.carbon" {

@@ -5,9 +5,9 @@
 // AUTOUPDATE
 
 var a: [i32; 1] = (12,);
-// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+3]]:35: ERROR: Index `295147905179352825855` is past the end of `[i32; 1]`.
+// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+3]]:14: ERROR: Index `295147905179352825855` is past the end of `[i32; 1]`.
 // CHECK:STDERR: var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
-// CHECK:STDERR:                                   ^
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
 var b: i32 = a[0xFFFFFFFFFFFFFFFFF];
 
 // CHECK:STDOUT: constants {
