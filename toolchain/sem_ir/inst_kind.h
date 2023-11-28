@@ -51,17 +51,17 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   using EnumBase::Create;
 
   // Returns the name to use for this instruction kind in Semantics IR.
-  [[nodiscard]] auto ir_name() const -> llvm::StringLiteral;
+  auto ir_name() const -> llvm::StringLiteral;
 
   // Returns whether this kind of instruction is expected to produce a value.
-  [[nodiscard]] auto value_kind() const -> InstValueKind;
+  auto value_kind() const -> InstValueKind;
 
   // Returns whether this instruction kind is a code block terminator, such as
   // an unconditional branch instruction, or part of the termination sequence,
   // such as a conditional branch instruction. The termination sequence of a
   // code block appears after all other instructions, and ends with a
   // terminator instruction.
-  [[nodiscard]] auto terminator_kind() const -> TerminatorKind;
+  auto terminator_kind() const -> TerminatorKind;
 
   // Compute a fingerprint for this instruction kind, allowing its use as part
   // of the key in a `FoldingSet`.
@@ -77,7 +77,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 
  private:
   // Looks up the definition for this instruction kind.
-  [[nodiscard]] auto definition() const -> const Definition&;
+  auto definition() const -> const Definition&;
 };
 
 #define CARBON_SEM_IR_INST_KIND(Name) \
@@ -95,13 +95,11 @@ static_assert(sizeof(InstKind) == 1, "Kind objects include padding!");
 class InstKind::Definition : public InstKind {
  public:
   // Returns the name to use for this instruction kind in Semantics IR.
-  [[nodiscard]] constexpr auto ir_name() const -> llvm::StringLiteral {
-    return ir_name_;
-  }
+  constexpr auto ir_name() const -> llvm::StringLiteral { return ir_name_; }
 
   // Returns whether this instruction kind is a code block terminator. See
   // InstKind::terminator_kind().
-  [[nodiscard]] constexpr auto terminator_kind() const -> TerminatorKind {
+  constexpr auto terminator_kind() const -> TerminatorKind {
     return terminator_kind_;
   }
 

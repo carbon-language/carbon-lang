@@ -78,7 +78,7 @@ class PrecedenceGroup {
       -> OperatorPriority;
 
   // Get the associativity of this precedence group.
-  [[nodiscard]] auto GetAssociativity() const -> Associativity {
+  auto GetAssociativity() const -> Associativity {
     return static_cast<Associativity>(GetPriority(*this, *this));
   }
 

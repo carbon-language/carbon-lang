@@ -133,66 +133,65 @@ class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
 // `HasError` returning true.
 class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
-  [[nodiscard]] auto GetKind(Token token) const -> TokenKind;
-  [[nodiscard]] auto GetLine(Token token) const -> Line;
+  auto GetKind(Token token) const -> TokenKind;
+  auto GetLine(Token token) const -> Line;
 
   // Returns the 1-based line number.
-  [[nodiscard]] auto GetLineNumber(Token token) const -> int;
+  auto GetLineNumber(Token token) const -> int;
 
   // Returns the 1-based column number.
-  [[nodiscard]] auto GetColumnNumber(Token token) const -> int;
+  auto GetColumnNumber(Token token) const -> int;
 
   // Returns the source text lexed into this token.
-  [[nodiscard]] auto GetTokenText(Token token) const -> llvm::StringRef;
+  auto GetTokenText(Token token) const -> llvm::StringRef;
 
   // Returns the identifier associated with this token. The token kind must be
   // an `Identifier`.
-  [[nodiscard]] auto GetIdentifier(Token token) const -> IdentifierId;
+  auto GetIdentifier(Token token) const -> IdentifierId;
 
   // Returns the value of an `IntegerLiteral()` token.
-  [[nodiscard]] auto GetIntegerLiteral(Token token) const -> IntegerId;
+  auto GetIntegerLiteral(Token token) const -> IntegerId;
 
   // Returns the value of an `RealLiteral()` token.
-  [[nodiscard]] auto GetRealLiteral(Token token) const -> RealId;
+  auto GetRealLiteral(Token token) const -> RealId;
 
   // Returns the value of a `StringLiteral()` token.
-  [[nodiscard]] auto GetStringLiteral(Token token) const -> StringLiteralId;
+  auto GetStringLiteral(Token token) const -> StringLiteralId;
 
   // Returns the size specified in a `*TypeLiteral()` token.
-  [[nodiscard]] auto GetTypeLiteralSize(Token token) const
-      -> const llvm::APInt&;
+  auto GetTypeLiteralSize(Token token) const -> const llvm::APInt&;
 
   // Returns the closing token matched with the given opening token.
   //
   // The given token must be an opening token kind.
-  [[nodiscard]] auto GetMatchedClosingToken(Token opening_token) const -> Token;
+  auto GetMatchedClosingToken(Token opening_token) const -> Token;
 
   // Returns the opening token matched with the given closing token.
   //
   // The given token must be a closing token kind.
-  [[nodiscard]] auto GetMatchedOpeningToken(Token closing_token) const -> Token;
+  auto GetMatchedOpeningToken(Token closing_token) const -> Token;
 
   // Returns whether the given token has leading whitespace.
-  [[nodiscard]] auto HasLeadingWhitespace(Token token) const -> bool;
+  auto HasLeadingWhitespace(Token token) const -> bool;
   // Returns whether the given token has trailing whitespace.
-  [[nodiscard]] auto HasTrailingWhitespace(Token token) const -> bool;
+  auto HasTrailingWhitespace(Token token) const -> bool;
 
   // Returns whether the token was created as part of an error recovery effort.
   //
   // For example, a closing paren inserted to match an unmatched paren.
-  [[nodiscard]] auto IsRecoveryToken(Token token) const -> bool;
+  auto IsRecoveryToken(Token token) const -> bool;
 
   // Returns the 1-based line number.
-  [[nodiscard]] auto GetLineNumber(Line line) const -> int;
+  auto GetLineNumber(Line line) const -> int;
 
   // Returns the 1-based indentation column number.
-  [[nodiscard]] auto GetIndentColumnNumber(Line line) const -> int;
+  auto GetIndentColumnNumber(Line line) const -> int;
 
   // Returns the next line handle.
-  [[nodiscard]] auto GetNextLine(Line line) const -> Line;
+  auto GetNextLine(Line line) const -> Line;
 
   // Returns the previous line handle.
-  [[nodiscard]] auto GetPrevLine(Line line) const -> Line;
+  auto GetPrevLine(Line line) const -> Line;
 
   // Prints a description of the tokenized stream to the provided `raw_ostream`.
   //
@@ -220,16 +219,16 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
 
   // Returns true if the buffer has errors that were detected at lexing time.
-  [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
+  auto has_errors() const -> bool { return has_errors_; }
 
-  [[nodiscard]] auto tokens() const -> llvm::iterator_range<TokenIterator> {
+  auto tokens() const -> llvm::iterator_range<TokenIterator> {
     return llvm::make_range(TokenIterator(Token(0)),
                             TokenIterator(Token(token_infos_.size())));
   }
 
-  [[nodiscard]] auto size() const -> int { return token_infos_.size(); }
+  auto size() const -> int { return token_infos_.size(); }
 
-  [[nodiscard]] auto expected_parse_tree_size() const -> int {
+  auto expected_parse_tree_size() const -> int {
     return expected_parse_tree_size_;
   }
 
@@ -332,12 +331,12 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
       : value_stores_(&value_stores), source_(&source) {}
 
   auto GetLineInfo(Line line) -> LineInfo&;
-  [[nodiscard]] auto GetLineInfo(Line line) const -> const LineInfo&;
+  auto GetLineInfo(Line line) const -> const LineInfo&;
   auto AddLine(LineInfo info) -> Line;
   auto GetTokenInfo(Token token) -> TokenInfo&;
-  [[nodiscard]] auto GetTokenInfo(Token token) const -> const TokenInfo&;
+  auto GetTokenInfo(Token token) const -> const TokenInfo&;
   auto AddToken(TokenInfo info) -> Token;
-  [[nodiscard]] auto GetTokenPrintWidths(Token token) const -> PrintWidths;
+  auto GetTokenPrintWidths(Token token) const -> PrintWidths;
   auto PrintToken(llvm::raw_ostream& output_stream, Token token,
                   PrintWidths widths) const -> void;
 

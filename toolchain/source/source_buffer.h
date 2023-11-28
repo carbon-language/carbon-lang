@@ -49,11 +49,9 @@ class SourceBuffer {
   // Use one of the factory functions above to create a source buffer.
   SourceBuffer() = delete;
 
-  [[nodiscard]] auto filename() const -> llvm::StringRef { return filename_; }
+  auto filename() const -> llvm::StringRef { return filename_; }
 
-  [[nodiscard]] auto text() const -> llvm::StringRef {
-    return text_->getBuffer();
-  }
+  auto text() const -> llvm::StringRef { return text_->getBuffer(); }
 
   [[nodiscard]] auto is_regular_file() const -> bool {
     return is_regular_file_;

@@ -88,43 +88,40 @@ class Tree : public Printable<Tree> {
                     llvm::raw_ostream* vlog_stream) -> Tree;
 
   // Tests whether there are any errors in the parse tree.
-  [[nodiscard]] auto has_errors() const -> bool { return has_errors_; }
+  auto has_errors() const -> bool { return has_errors_; }
 
   // Returns the number of nodes in this parse tree.
-  [[nodiscard]] auto size() const -> int { return node_impls_.size(); }
+  auto size() const -> int { return node_impls_.size(); }
 
   // Returns an iterable range over the parse tree nodes in depth-first
   // postorder.
-  [[nodiscard]] auto postorder() const
-      -> llvm::iterator_range<PostorderIterator>;
+  auto postorder() const -> llvm::iterator_range<PostorderIterator>;
 
   // Returns an iterable range over the parse tree node and all of its
   // descendants in depth-first postorder.
-  [[nodiscard]] auto postorder(Node n) const
-      -> llvm::iterator_range<PostorderIterator>;
+  auto postorder(Node n) const -> llvm::iterator_range<PostorderIterator>;
 
   // Returns an iterable range over the direct children of a node in the parse
   // tree. This is a forward range, but is constant time to increment. The order
   // of children is the same as would be found in a reverse postorder traversal.
-  [[nodiscard]] auto children(Node n) const
-      -> llvm::iterator_range<SiblingIterator>;
+  auto children(Node n) const -> llvm::iterator_range<SiblingIterator>;
 
   // Returns an iterable range over the roots of the parse tree. This is a
   // forward range, but is constant time to increment. The order of roots is the
   // same as would be found in a reverse postorder traversal.
-  [[nodiscard]] auto roots() const -> llvm::iterator_range<SiblingIterator>;
+  auto roots() const -> llvm::iterator_range<SiblingIterator>;
 
   // Tests whether a particular node contains an error and may not match the
   // full expected structure of the grammar.
-  [[nodiscard]] auto node_has_error(Node n) const -> bool;
+  auto node_has_error(Node n) const -> bool;
 
   // Returns the kind of the given parse tree node.
-  [[nodiscard]] auto node_kind(Node n) const -> NodeKind;
+  auto node_kind(Node n) const -> NodeKind;
 
   // Returns the token the given parse tree node models.
-  [[nodiscard]] auto node_token(Node n) const -> Lex::Token;
+  auto node_token(Node n) const -> Lex::Token;
 
-  [[nodiscard]] auto node_subtree_size(Node n) const -> int32_t;
+  auto node_subtree_size(Node n) const -> int32_t;
 
   auto packaging_directive() const -> const std::optional<PackagingDirective>& {
     return packaging_directive_;
@@ -180,7 +177,7 @@ class Tree : public Printable<Tree> {
   // This is primarily intended to be used as a
   // debugging aid. This routine doesn't directly CHECK so that it can be used
   // within a debugger.
-  [[nodiscard]] auto Verify() const -> ErrorOr<Success>;
+  auto Verify() const -> ErrorOr<Success>;
 
  private:
   friend class Context;

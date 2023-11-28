@@ -147,8 +147,7 @@ class DiagnosticLocationTranslator {
  public:
   virtual ~DiagnosticLocationTranslator() = default;
 
-  [[nodiscard]] virtual auto GetLocation(LocationT loc)
-      -> DiagnosticLocation = 0;
+  virtual auto GetLocation(LocationT loc) -> DiagnosticLocation = 0;
 };
 
 namespace Internal {
