@@ -7,13 +7,13 @@
 namespace A;
 
 fn F() {
-  // CHECK:STDERR: fail_dereference_namespace.carbon:[[@LINE+3]]:4: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+3]]:4: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
   *A;
 }
 
-// CHECK:STDOUT: file "fail_dereference_namespace.carbon" {
+// CHECK:STDOUT: file "fail_deref_namespace.carbon" {
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
