@@ -149,7 +149,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   if (modifiers.HasFinal()) {
     context.TODO(context.innermost_decl().saw_decl_mod, "final");
   }
-  // Only for members of derived classes
+  // Only for members of derived classes.
   if (modifiers.HasImpl()) {
     context.TODO(context.innermost_decl().saw_decl_mod, "impl");
   }
