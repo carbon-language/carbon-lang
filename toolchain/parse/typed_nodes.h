@@ -186,6 +186,7 @@ struct LetDecl {
 };
 
 using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
+using ReturnedSpecifier = LeafNode<NodeKind::ReturnedSpecifier>;
 using VariableInitializer = LeafNode<NodeKind::VariableInitializer>;
 
 // A `var` declaration: `var a: i32;` or `var a: i32 = 5;`.
@@ -194,8 +195,12 @@ struct VariableDecl {
   Required<VariableIntroducer> introducer;
   Optional<ReturnedSpecifier> returned;
   AnyPattern pattern;
-  Optional<VariableInitializer> equals;
-  IfPreviousNodeIs<VariableInitializer> initializer;
+
+  struct Initializer {
+    Required<VariableInitializer> equals;
+    AnyExpr value;
+  };
+  std::optional<Initializer> initializer;
 };
 
 // An expression statement: `F(x);`.
@@ -268,11 +273,16 @@ using IfStatementElse = LeafNode<NodeKind::IfStatementElse>;
 
 // An `if` statement: `if (expr) { ... } else { ... }`.
 struct IfStatement {
+  static constexpr auto Kind = NodeKind::IfStatement;
   Required<IfCondition> head;
   Required<CodeBlock> then;
-  Optional<IfStatementElse> else_token;
-  // Either a CodeBlock or an IfStatement.
-  IfPreviousNodeIs<IfStatementElse> else_statement;
+
+  struct Else {
+    Required<IfStatementElse> else_token;
+    // Either a CodeBlock or an IfStatement.
+    AnyStatement statement;
+  };
+  std::optional<Else> else_clause;
 };
 
 using WhileConditionStart = LeafNode<NodeKind::WhileConditionStart>;

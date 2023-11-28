@@ -22,7 +22,11 @@ class AnyNode : public Node {
 // Extract an `AnyNode` as a single child.
 template <>
 struct Tree::Extractable<AnyNode> {
-  static auto Extract(const Tree* /*tree*/, SiblingIterator& it) -> AnyNode {
+  static auto Extract(const Tree* /*tree*/, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<AnyNode> {
+    if (it == end) {
+      return std::nullopt;
+    }
     return AnyNode(*it++);
   }
 };
@@ -42,10 +46,9 @@ class Required : public Node {
   explicit Required(Node node) : Node(node) {}
 
   // Get the representation of this child node. Returns `nullopt` if the node is
-  // invalid, or valid but of the wrong kind.
-  //
-  // TODO: Can we CHECK that the latter doesn't happen?
+  // invalid.
   auto Extract(const Tree* tree) const -> std::optional<T> {
+    CARBON_CHECK(kind(tree) == T::Kind);
     return ExtractAs<T>(tree);
   }
 };
@@ -53,9 +56,11 @@ class Required : public Node {
 // Extract a `Required<T>` as a single child.
 template <typename T>
 struct Tree::Extractable<Required<T>> {
-  static auto Extract(const Tree* /*tree*/, SiblingIterator& it)
-      -> Required<T> {
-    // TODO: Can we CHECK that this node is of the right kind?
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<Required<T>> {
+    if (it == end || it->kind(tree) != T::Kind) {
+      return std::nullopt;
+    }
     return Required<T>(*it++);
   }
 };
@@ -89,18 +94,21 @@ class Optional {
 // Extract an `Optional<T>` as either zero or one child.
 template <typename T>
 struct Tree::Extractable<Optional<T>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it) -> Optional<T> {
-    return (*it).kind(tree) == T::Kind ? Optional<T>(*it++)
-                                       : Optional<T>(std::nullopt);
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<Optional<T>> {
+    if (it == end || it->kind(tree) != T::Kind) {
+      return Optional<T>(std::nullopt);
+    }
+    return Optional<T>(*it++);
   }
 };
 
-// An optional child that is present if the previous child is a `T`.
+// An optional child. If this child is present, it will not be of kind `T`.
 template <typename T>
-class IfPreviousNodeIs {
+class OptionalNot {
  public:
-  explicit IfPreviousNodeIs(Node node) : node_(node) {}
-  explicit IfPreviousNodeIs(std::nullopt_t) : node_(Node::Invalid) {}
+  explicit OptionalNot(Node node) : node_(node) {}
+  explicit OptionalNot(std::nullopt_t) : node_(Node::Invalid) {}
 
   // Returns whether this element was present.
   auto is_present() -> bool { return node_ != Node::Invalid; }
@@ -110,30 +118,19 @@ class IfPreviousNodeIs {
     return is_present() ? node_ : std::nullopt;
   }
 
-  // Returns whether this child is present and is a valid node of type `U`.
-  template <typename U>
-  auto IsValid(const Tree* tree) -> bool {
-    return is_present() && node_.IsValid<U>(tree);
-  }
-
-  // Extracts the node, if it's present, valid, and of type `U`.
-  template <typename U>
-  auto ExtractAs(const Tree* tree) const -> std::optional<T> {
-    return is_present() ? node_.ExtractAs<T>(tree) : std::nullopt;
-  }
-
  private:
   Node node_;
 };
 
-// Extract an `IfPreviousNodeIs<T>` as either zero or one child.
+// Extract an `OptionalNot<T>` as either zero or one child.
 template <typename T>
-struct Tree::Extractable<IfPreviousNodeIs<T>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it)
-      -> IfPreviousNodeIs<T> {
-    return (*std::next(it)).kind(tree) == T::Kind
-               ? IfPreviousNodeIs<T>(*it++)
-               : IfPreviousNodeIs<T>(std::nullopt);
+struct Tree::Extractable<OptionalNot<T>> {
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<OptionalNot<T>> {
+    if (it == end || it->kind(tree) == T::Kind) {
+      return OptionalNot<T>(std::nullopt);
+    }
+    return OptionalNot<T>(*it++);
   }
 };
 
@@ -145,31 +142,39 @@ class BracketedList : public std::vector<T> {};
 // Extract a `BracketedList` by extracting `T`s until we reach `Bracket`.
 template <typename T, typename Bracket>
 struct Tree::Extractable<BracketedList<T, Bracket>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it)
-      -> BracketedList<T, Bracket> {
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end)
+      -> std::optional<BracketedList<T, Bracket>> {
     BracketedList<T, Bracket> result;
-    while ((*it).kind(tree) != Bracket::Kind) {
-      result.push_back(Extractable<T>::Extract(tree, it));
+    while (it != end && (*it).kind(tree) != Bracket::Kind) {
+      auto item = Extractable<T>::Extract(tree, it, end);
+      if (!item.has_value()) {
+        return std::nullopt;
+      }
+      result.push_back(*item);
+    }
+    if (it == end) {
+      return std::nullopt;
     }
     std::reverse(result.begin(), result.end());
     return result;
   }
 };
 
-// TODO: Move to common/?
-namespace Internal {
-// A wrapper around a type `T` that might not be default-constructible, that
-// defers constructing the wrapped `T` until some time later. The wrapped value
-// must be constructed before the wrapper is destroyed.
+// Extract an `optional<T>` from a list of child nodes by attempting to extract
+// a `T`, and extracting nothing if that fails.
 template <typename T>
-union ManualConstruction {
-  T value;
-
-  ManualConstruction() {}
-  auto Construct(T t) { new (&value) T(std::move(t)); }
-  ~ManualConstruction() { value.~T(); }
+struct Tree::Extractable<std::optional<T>> {
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<std::optional<T>> {
+    auto old_it = it;
+    if (std::optional<T> value = Extractable<T>::Extract(tree, it, end)) {
+      return value;
+    }
+    it = old_it;
+    return std::nullopt;
+  }
 };
-}  // namespace Internal
 
 // Extract a `tuple<T...>` from a list of child nodes by extracting each `T` in
 // reverse order.
@@ -177,21 +182,26 @@ template <typename... T>
 struct Tree::Extractable<std::tuple<T...>> {
   template <std::size_t... Index>
   static auto ExtractImpl(const Tree* tree, SiblingIterator& it,
-                          std::index_sequence<Index...>) -> std::tuple<T...> {
-    std::tuple<Internal::ManualConstruction<T>...> fields;
+                          SiblingIterator end, std::index_sequence<Index...>)
+      -> std::optional<std::tuple<T...>> {
+    std::tuple<std::optional<T>...> fields;
 
     // Use a fold over the `=` operator to parse fields from right to left.
     [[maybe_unused]] int unused;
     static_cast<void>(
-        ((std::get<Index>(fields).Construct(Extractable<T>::Extract(tree, it)),
+        ((std::get<Index>(fields) = Extractable<T>::Extract(tree, it, end),
           unused) = ... = 0));
 
-    return {std::move(std::get<Index>(fields).value)...};
+    if (!(std::get<Index>(fields).has_value() && ...)) {
+      return std::nullopt;
+    }
+
+    return std::tuple<T...>{std::move(std::get<Index>(fields).value())...};
   }
 
-  static auto Extract(const Tree* tree, SiblingIterator& it)
-      -> std::tuple<T...> {
-    return ExtractImpl(tree, it, std::make_index_sequence<sizeof...(T)>());
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<std::tuple<T...>> {
+    return ExtractImpl(tree, it, end, std::make_index_sequence<sizeof...(T)>());
   }
 };
 
@@ -200,17 +210,21 @@ template <typename T>
 struct Tree::Extractable {
   static_assert(std::is_aggregate_v<T>, "Unsupported child type");
 
-  static auto Extract(const Tree* tree, SiblingIterator& it) -> T {
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<T> {
     // Extract the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
-    auto tuple = Extractable<TupleType>::Extract(tree, it);
+    auto tuple = Extractable<TupleType>::Extract(tree, it, end);
+    if (!tuple.has_value()) {
+      return std::nullopt;
+    }
 
     // Convert the tuple to the struct type.
     return std::apply(
         [](auto&&... value) {
           return T{std::forward<decltype(value)>(value)...};
         },
-        tuple);
+        *tuple);
   }
 };
 

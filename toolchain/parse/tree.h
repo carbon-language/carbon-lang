@@ -98,8 +98,10 @@ class Tree : public Printable<Tree> {
   // ```
   // interface Extractable {
   //   // Extract a value of this type from the sequence of nodes starting at
-  //   // `it`, and increment `it` past this type.
-  //   static auto Extract(Tree* tree, Tree::SiblingIterator& it) -> Self;
+  //   // `it`, and increment `it` past this type. Returns `std::nullopt` if
+  //   // the tree is malformed.
+  //   static auto Extract(Tree* tree, Tree::SiblingIterator& it,
+  //                       Tree::SiblingIterator end) -> std::optional<Self>;
   // }
   // ```
   //
@@ -307,7 +309,7 @@ constexpr Node Node::Invalid = Node(Node::InvalidIndex);
 class Tree::PostorderIterator
     : public llvm::iterator_facade_base<PostorderIterator,
                                         std::random_access_iterator_tag, Node,
-                                        int, Node*, Node>,
+                                        int, const Node*, Node>,
       public Printable<Tree::PostorderIterator> {
  public:
   PostorderIterator() = delete;
@@ -362,8 +364,9 @@ inline auto Tree::Node::postorder(const Tree* tree) const
 // (which is made constant time through cached distance information), and so the
 // relative order of siblings matches their RPO order.
 class Tree::SiblingIterator
-    : public llvm::iterator_facade_base<
-          SiblingIterator, std::forward_iterator_tag, Node, int, Node*, Node>,
+    : public llvm::iterator_facade_base<SiblingIterator,
+                                        std::forward_iterator_tag, Node, int,
+                                        const Node*, Node>,
       public Printable<Tree::SiblingIterator> {
  public:
   explicit SiblingIterator() = delete;
@@ -408,9 +411,10 @@ template <typename T>
 auto Tree::ExtractNodeFromChildren(
     llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
   auto it = children.begin();
-  auto result = Extractable<T>::Extract(this, it);
+  auto result = Extractable<T>::Extract(this, it, children.end());
+  CARBON_CHECK(result.has_value()) << "Malformed parse node";
   CARBON_CHECK(it == children.end()) << "Malformed parse node";
-  return result;
+  return *result;
 }
 
 template <typename T>
