@@ -24,6 +24,7 @@ enum class RelativeLocation : int8_t {
 };
 
 // Adapts RelativeLocation for use with formatv.
+// TODO: Investigate for approaches that clangd is happier with.
 static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
     -> llvm::raw_ostream& {
   switch (loc) {

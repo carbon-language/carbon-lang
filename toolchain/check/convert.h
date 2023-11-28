@@ -8,13 +8,12 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/pending_block.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
 // Description of the target of a conversion.
 struct ConversionTarget {
-  enum Kind {
+  enum Kind : int8_t {
     // Convert to a value of type `type`.
     Value,
     // Convert to either a value or a reference of type `type`.
@@ -46,13 +45,13 @@ struct ConversionTarget {
   PendingBlock* init_block = nullptr;
 
   // Are we converting this value into an initializer for an object?
-  bool is_initializer() const {
+  auto is_initializer() const -> bool {
     return kind == Initializer || kind == FullInitializer;
   }
 };
 
 // Convert a value to another type and expression category.
-auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId value_id,
+auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId;
 
 // Performs initialization of `target_id` from `value_id`. Returns the

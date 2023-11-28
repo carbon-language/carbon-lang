@@ -12,7 +12,6 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::SemIR {
@@ -63,7 +62,7 @@ struct Function : public Printable<Function> {
 
 // A class.
 struct Class : public Printable<Class> {
-  enum InheritanceKind {
+  enum InheritanceKind : int8_t {
     // `abstract class`
     Abstract,
     // `base class`
@@ -79,7 +78,9 @@ struct Class : public Printable<Class> {
 
   // Determines whether this class has been fully defined. This is false until
   // we reach the `}` of the class definition.
-  bool is_defined() const { return object_representation_id.is_valid(); }
+  auto is_defined() const -> bool {
+    return object_representation_id.is_valid();
+  }
 
   // The following members always have values, and do not change throughout the
   // lifetime of the class.

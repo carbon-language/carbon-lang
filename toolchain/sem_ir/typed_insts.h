@@ -587,15 +587,15 @@ struct VarStorage {
 
 // HasParseNode<T> is true if T has a `Parse::NodeId parse_node` field.
 template <typename T, typename ParseNodeType = Parse::NodeId T::*>
-constexpr bool HasParseNode = false;
+static constexpr bool HasParseNode = false;
 template <typename T>
-constexpr bool HasParseNode<T, decltype(&T::parse_node)> = true;
+static constexpr bool HasParseNode<T, decltype(&T::parse_node)> = true;
 
 // HasTypeId<T> is true if T has a `TypeId type_id` field.
 template <typename T, typename TypeIdType = TypeId T::*>
-constexpr bool HasTypeId = false;
+static constexpr bool HasTypeId = false;
 template <typename T>
-constexpr bool HasTypeId<T, decltype(&T::type_id)> = true;
+static constexpr bool HasTypeId<T, decltype(&T::type_id)> = true;
 
 }  // namespace Carbon::SemIR
 

@@ -47,6 +47,7 @@ auto NodeKind::child_count() const -> int32_t {
   return child_count;
 }
 
+// NOLINTNEXTLINE(readability-function-size): It's hard to extract macros.
 void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
                                 bool has_error) {
   switch (node_kind) {
@@ -69,9 +70,9 @@ void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
     MatchActions                      \
   }
 
-#define CARBON_CASE(Name, MatchActions) \
-  case NodeKind::Name:                  \
-    MatchActions;                       \
+#define CARBON_CASE(Name, MatchActions)                    \
+  case NodeKind::Name:                                     \
+    MatchActions; /* NOLINT(bugprone-macro-parentheses) */ \
     break;
 
 #define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, MatchActions) \
