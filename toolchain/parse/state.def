@@ -697,7 +697,8 @@ CARBON_PARSE_STATE_VARIANTS2(ParenCondition, If, While)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(ParenConditionFinish, If, While)
 
-// Handles the `(` of a parenthesis expression or tuple literal
+// Handles the `(` of a parenthesis expression (a parenthesized single
+// expression or tuple literal)
 //
 // ( )
 // ^
@@ -710,7 +711,7 @@ CARBON_PARSE_STATE_VARIANTS2(ParenConditionFinish, If, While)
 //   3. ParenExprFinishAsSingle    (SPECIAL: may be replaced)
 CARBON_PARSE_STATE(ParenExpr)
 
-// Handles the end of a parenthesis expression or tuple literal's parameter.
+// Handles the end of a parenthesis expression's parameter.
 // This will start as AsUnknown on the first parameter; if there are more, it
 // switches to AsTuple processing.
 //
