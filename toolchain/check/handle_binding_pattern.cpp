@@ -10,6 +10,7 @@
 namespace Carbon::Check {
 
 auto HandleAddress(Context& context, Parse::NodeId parse_node) -> bool {
+  // TODO: diagnose if this occurs outside an implicit parameter list
   auto self_param_id =
       context.node_stack().Peek<Parse::NodeKind::BindingPattern>();
   if (auto self_param =
@@ -153,6 +154,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
 }
 
 auto HandleTemplate(Context& context, Parse::NodeId parse_node) -> bool {
+  // TODO: diagnose if this occurs in a `var` context.
   return context.TODO(parse_node, "HandleTemplate");
 }
 

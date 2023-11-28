@@ -5,12 +5,12 @@
 // AUTOUPDATE
 
 interface Foo {
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:13: ERROR: Expected parameter declaration.
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:13: ERROR: Expected binding pattern.
   // CHECK:STDERR:   fn Sub[me Self](b: Self) -> Self;
   // CHECK:STDERR:             ^~~~
   fn Sub[me Self](b: Self) -> Self;
 
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: ERROR: Expected parameter declaration.
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: ERROR: Expected binding pattern.
   // CHECK:STDERR:   fn Mul[Self](b: Self) -> Self;
   // CHECK:STDERR:          ^~~~
   fn Mul[Self](b: Self) -> Self;

@@ -627,7 +627,7 @@ CARBON_PARSE_STATE(Package)
 //
 //  ...
 // ^
-//   1. BindingPatternAs(ImplicitParam|Param)
+//   1. BindingPattern
 //   2. ParamFinishAs(Implicit|Regular)
 CARBON_PARSE_STATE_VARIANTS2(Param, Implicit, Regular)
 
@@ -769,8 +769,7 @@ CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Normal, Tuple)
 //  ???
 // ^
 //   1. BindingPatternFinishAsRegular
-CARBON_PARSE_STATE_VARIANTS4(BindingPattern, ImplicitParam, Param, Variable,
-                             Let)
+CARBON_PARSE_STATE(BindingPattern)
 
 // Handles `addr` in a binding pattern.
 //
@@ -1025,13 +1024,13 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
 //
 // var ...             (variant is not Returned)
 // ^~~
-//   1. BindingPatternAsVariable
+//   1. BindingPattern
 //   2. VarAfterPattern
 //   3. VarFinishAs(Decl|For)
 //
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
-//   1. BindingPatternAsVariable
+//   1. BindingPattern
 //   2. VarAfterPattern
 //   3. VarFinishAsDecl
 //
@@ -1073,7 +1072,7 @@ CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
 //
 // let ...
 // ^~~
-//   1. BindingPatternAsLet
+//   1. BindingPattern
 //   2. LetAfterPattern
 //   3. LetFinish
 CARBON_PARSE_STATE(Let)

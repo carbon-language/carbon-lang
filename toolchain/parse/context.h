@@ -39,14 +39,6 @@ class Context {
   // Possible return values for FindListToken.
   enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
-  // Supported kinds for HandleBindingPattern.
-  enum class BindingPatternKind : int8_t {
-    ImplicitParam,
-    Param,
-    Variable,
-    Let
-  };
-
   // Supported return values for GetDeclContext.
   enum class DeclContext : int8_t {
     File,  // Top-level context.

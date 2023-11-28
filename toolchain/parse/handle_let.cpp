@@ -16,7 +16,7 @@ auto HandleLet(Context& context) -> void {
   context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
 
   // This will start at the pattern.
-  context.PushState(State::BindingPatternAsLet);
+  context.PushState(State::BindingPattern);
 }
 
 auto HandleLetAfterPattern(Context& context) -> void {

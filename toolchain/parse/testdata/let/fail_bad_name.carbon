@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+3]]:5: ERROR: Expected pattern in `let` declaration.
+// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+3]]:5: ERROR: Expected binding pattern.
 // CHECK:STDERR: let ? = 4;
 // CHECK:STDERR:     ^
 let ? = 4;

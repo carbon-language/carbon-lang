@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_with_identifier_as_param.carbon:[[@LINE+3]]:11: ERROR: Expected parameter declaration.
+// CHECK:STDERR: fail_with_identifier_as_param.carbon:[[@LINE+3]]:11: ERROR: Expected binding pattern.
 // CHECK:STDERR: fn foo(bar);
 // CHECK:STDERR:           ^
 fn foo(bar);
