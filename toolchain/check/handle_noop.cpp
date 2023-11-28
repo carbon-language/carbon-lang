@@ -24,7 +24,8 @@ auto HandleInvalidParseSubtree(Context& context, Parse::Node parse_node)
   return context.TODO(parse_node, "HandleInvalidParseSubtree");
 }
 
-auto HandlePlaceholder(Context& context, Parse::Node parse_node) -> bool {
+auto HandlePlaceholder(Context& /*context*/, Parse::Node /*parse_node*/)
+    -> bool {
   CARBON_FATAL()
       << "Placeholder node should always be replaced before parse completes";
 }
