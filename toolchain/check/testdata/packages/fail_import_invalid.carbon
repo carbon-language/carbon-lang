@@ -93,10 +93,16 @@ import ImportNotFound;
 // CHECK:STDOUT: file "implicit_api.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "implicit.impl.carbon" {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %Implicit: <namespace> = bind_name Implicit, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "implicit_lib_api.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "implicit_lib.impl.carbon" {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %Implicit: <namespace> = bind_name Implicit, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "not_found.carbon" {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %ImportNotFound: <namespace> = bind_name ImportNotFound, %import
 // CHECK:STDOUT: }

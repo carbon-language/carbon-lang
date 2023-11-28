@@ -50,16 +50,23 @@ library "lib" impl;
 // CHECK:STDOUT: file "with_impl.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "with_impl.impl.carbon" {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %WithImpl: <namespace> = bind_name WithImpl, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "with_impl_extra.impl.carbon" {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %WithImpl: <namespace> = bind_name WithImpl, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "with_impl_lib.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "with_impl_lib.impl.carbon" {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %WithImpl: <namespace> = bind_name WithImpl, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main_lib.carbon" {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: file "main_lib.impl.carbon" {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }

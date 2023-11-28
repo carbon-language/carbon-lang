@@ -186,6 +186,14 @@ auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
       << inst;
 }
 
+auto HandleImport(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                  SemIR::Import inst) -> void {
+  CARBON_FATAL()
+      << "Should not be encountered. If that changes, we may want to change "
+         "higher-level logic to skip them rather than calling this. "
+      << inst;
+}
+
 auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
                           SemIR::InitializeFrom inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.dest_id).type_id();

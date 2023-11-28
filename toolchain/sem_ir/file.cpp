@@ -10,6 +10,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
@@ -203,6 +204,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Deref::Kind:
     case Field::Kind:
     case FunctionDecl::Kind:
+    case Import::Kind:
     case InitializeFrom::Kind:
     case IntegerLiteral::Kind:
     case Namespace::Kind:
@@ -406,6 +408,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case Deref::Kind:
       case Field::Kind:
       case FunctionDecl::Kind:
+      case Import::Kind:
       case InitializeFrom::Kind:
       case IntegerLiteral::Kind:
       case Namespace::Kind:
@@ -473,6 +476,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassDecl::Kind:
       case Field::Kind:
       case FunctionDecl::Kind:
+      case Import::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
       case Return::Kind:

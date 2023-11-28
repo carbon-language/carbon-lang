@@ -11,6 +11,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
@@ -440,6 +441,10 @@ class InstNamer {
               sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
           continue;
         }
+        case Import::Kind: {
+          add_inst_name("import");
+          continue;
+        }
         case NameRef::Kind: {
           add_inst_name_id(inst.As<NameRef>().name_id, ".ref");
           continue;
@@ -494,8 +499,6 @@ class Formatter {
     FormatConstants();
 
     out_ << "file \"" << sem_ir_.filename() << "\" {\n";
-    // TODO: Include information from the `package` declaration, once we
-    // fully support it.
     // TODO: Handle the case where there are multiple top-level instruction
     // blocks. For example, there may be branching in the initializer of a
     // global or a type expression.
@@ -852,6 +855,8 @@ class Formatter {
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 
   auto FormatArg(ClassId id) -> void { FormatClassName(id); }
+
+  auto FormatArg(CrossRefIRId id) -> void { out_ << id; }
 
   auto FormatArg(IntegerId id) -> void {
     sem_ir_.integers().Get(id).print(out_, /*isSigned=*/false);

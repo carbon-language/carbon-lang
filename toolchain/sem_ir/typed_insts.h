@@ -290,6 +290,19 @@ struct FunctionDecl {
   FunctionId function_id;
 };
 
+// An import corresponds to some number of IRs. The range of imported IRs is
+// inclusive of last_cross_ref_ir_id, and will always be non-empty. If
+// there was an import error, first_cross_ref_ir_id will reference a
+// nullptr IR; there should only ever be one nullptr in the range.
+struct Import {
+  static constexpr auto Kind = InstKind::Import.Define("import");
+
+  Parse::Node parse_node;
+  TypeId type_id;
+  CrossRefIRId first_cross_ref_ir_id;
+  CrossRefIRId last_cross_ref_ir_id;
+};
+
 // Finalizes the initialization of `dest_id` from the initializer expression
 // `src_id`, by performing a final copy from source to destination, for types
 // whose initialization is not in-place.
