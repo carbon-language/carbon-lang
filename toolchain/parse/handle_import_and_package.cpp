@@ -167,7 +167,7 @@ auto HandleImport(Context& context) -> void {
   context.AddLeafNode(NodeKind::ImportIntroducer, intro_token);
 
   switch (context.packaging_state()) {
-    case Context::PackagingState::StartOfFile:
+    case Context::PackagingState::FileStart:
       // `package` is no longer allowed, but `import` may repeat.
       context.set_packaging_state(Context::PackagingState::InImports);
       [[clang::fallthrough]];

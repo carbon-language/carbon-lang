@@ -51,8 +51,8 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
       end_(tokens_->tokens().end()) {
   CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
   --end_;
-  CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::EndOfFile)
-      << "TokenizedBuffer should end with EndOfFile, ended with "
+  CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::FileEnd)
+      << "TokenizedBuffer should end with FileEnd, ended with "
       << tokens_->GetKind(*end_);
 }
 
@@ -160,7 +160,7 @@ auto Context::FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
     }
 
     // Step to the next token at the current bracketing level.
-    if (kind.is_closing_symbol() || kind == Lex::TokenKind::EndOfFile) {
+    if (kind.is_closing_symbol() || kind == Lex::TokenKind::FileEnd) {
       // There are no more tokens at this level.
       return std::nullopt;
     } else if (kind.is_opening_symbol()) {

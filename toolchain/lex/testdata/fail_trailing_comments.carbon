@@ -23,7 +23,7 @@ var c: i32 = 0.4; // still more trailing comment
 // CHECK:STDERR:                   ^
 // CHECK:STDOUT: - filename: fail_trailing_comments.carbon
 // CHECK:STDOUT:   tokens: [
-// CHECK:STDOUT:     { index:  0, kind:        'StartOfFile', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
+// CHECK:STDOUT:     { index:  0, kind:          'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 // CHECK:STDOUT:     { index:  1, kind:                'Var', line: {{ *}}[[@LINE-19]], column:  1, indent: 1, spelling: 'var', has_trailing_space: true },
 // CHECK:STDOUT:     { index:  2, kind:         'Identifier', line: {{ *}}[[@LINE-20]], column:  5, indent: 1, spelling: 'a', identifier: 0 },
 // CHECK:STDOUT:     { index:  3, kind:              'Colon', line: {{ *}}[[@LINE-21]], column:  6, indent: 1, spelling: ':', has_trailing_space: true },
@@ -46,5 +46,5 @@ var c: i32 = 0.4; // still more trailing comment
 // CHECK:STDOUT:     { index: 20, kind:        'RealLiteral', line: {{ *}}[[@LINE-36]], column: 14, indent: 1, spelling: '0.4', value: `4*10^-1` },
 // CHECK:STDOUT:     { index: 21, kind:               'Semi', line: {{ *}}[[@LINE-37]], column: 17, indent: 1, spelling: ';', has_trailing_space: true },
 
-// CHECK:STDOUT:     { index: 22, kind:          'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 22, kind:            'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]
