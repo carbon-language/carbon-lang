@@ -45,7 +45,8 @@ class KeywordModifierSet {
   auto SetImpl() const -> KeywordModifierSet { return Set(Impl); }
   auto SetVirtual() const -> KeywordModifierSet { return Set(Virtual); }
 
-  auto Has(RawEnum to_check) const -> bool { return keywords_ & to_check; }
+  // Returns true if any modifier from `to_check` is in the set.
+  auto Has(unsigned to_check) const -> bool { return keywords_ & to_check; }
   auto HasPrivate() const -> bool { return Has(Private); }
   auto HasProtected() const -> bool { return Has(Protected); }
   auto HasAbstract() const -> bool { return Has(Abstract); }
@@ -54,7 +55,13 @@ class KeywordModifierSet {
   auto HasFinal() const -> bool { return Has(Final); }
   auto HasImpl() const -> bool { return Has(Impl); }
   auto HasVirtual() const -> bool { return Has(Virtual); }
+
   auto GetRaw() const -> RawEnum { return keywords_; }
+  auto Clear(unsigned to_clear) const -> KeywordModifierSet {
+    KeywordModifierSet ret;
+    ret.keywords_ = static_cast<RawEnum>(keywords_ & ~to_clear);
+    return ret;
+  }
 
  private:
   RawEnum keywords_;
