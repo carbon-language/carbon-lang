@@ -254,8 +254,8 @@ auto Context::LookupUnqualifiedName(Parse::Node parse_node,
 }
 
 auto Context::LookupQualifiedName(Parse::Node parse_node, SemIR::NameId name_id,
-                                  SemIR::NameScopeId scope_id,
-                                  bool required) -> SemIR::InstId {
+                                  SemIR::NameScopeId scope_id, bool required)
+    -> SemIR::InstId {
   CARBON_CHECK(scope_id.is_valid()) << "No scope to perform lookup into";
   const auto& scope = name_scopes().Get(scope_id);
   auto it = scope.find(name_id);
@@ -372,8 +372,8 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
 
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
-                                           Parse::Node parse_node,
-                                           Args... args) -> SemIR::InstBlockId {
+                                           Parse::Node parse_node, Args... args)
+    -> SemIR::InstBlockId {
   if (!context.inst_block_stack().is_current_block_reachable()) {
     return SemIR::InstBlockId::Unreachable;
   }
@@ -387,20 +387,22 @@ auto Context::AddDominatedBlockAndBranch(Parse::Node parse_node)
   return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, parse_node);
 }
 
-auto Context::AddDominatedBlockAndBranchWithArg(
-    Parse::Node parse_node, SemIR::InstId arg_id) -> SemIR::InstBlockId {
+auto Context::AddDominatedBlockAndBranchWithArg(Parse::Node parse_node,
+                                                SemIR::InstId arg_id)
+    -> SemIR::InstBlockId {
   return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, parse_node,
                                                               arg_id);
 }
 
-auto Context::AddDominatedBlockAndBranchIf(
-    Parse::Node parse_node, SemIR::InstId cond_id) -> SemIR::InstBlockId {
+auto Context::AddDominatedBlockAndBranchIf(Parse::Node parse_node,
+                                           SemIR::InstId cond_id)
+    -> SemIR::InstBlockId {
   return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, parse_node,
                                                          cond_id);
 }
 
-auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node,
-                                         int num_blocks) -> void {
+auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
+    -> void {
   CARBON_CHECK(num_blocks >= 2) << "no convergence";
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
@@ -417,8 +419,8 @@ auto Context::AddConvergenceBlockAndPush(Parse::Node parse_node,
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
-    Parse::Node parse_node,
-    std::initializer_list<SemIR::InstId> block_args) -> SemIR::InstId {
+    Parse::Node parse_node, std::initializer_list<SemIR::InstId> block_args)
+    -> SemIR::InstId {
   CARBON_CHECK(block_args.size() >= 2) << "no convergence";
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
@@ -730,10 +732,11 @@ class TypeCompleter {
     llvm_unreachable("All builtin kinds were handled above");
   }
 
-  auto BuildStructOrTupleValueRepresentation(
-      Parse::Node parse_node, std::size_t num_elements,
-      SemIR::TypeId elementwise_rep,
-      bool same_as_object_rep) const -> SemIR::ValueRepresentation {
+  auto BuildStructOrTupleValueRepresentation(Parse::Node parse_node,
+                                             std::size_t num_elements,
+                                             SemIR::TypeId elementwise_rep,
+                                             bool same_as_object_rep) const
+      -> SemIR::ValueRepresentation {
     SemIR::ValueRepresentation::AggregateKind aggregate_kind =
         same_as_object_rep ? SemIR::ValueRepresentation::ValueAndObjectAggregate
                            : SemIR::ValueRepresentation::ValueAggregate;
@@ -1096,8 +1099,9 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
 
-auto Context::CanonicalizeStructType(
-    Parse::Node parse_node, SemIR::InstBlockId refs_id) -> SemIR::TypeId {
+auto Context::CanonicalizeStructType(Parse::Node parse_node,
+                                     SemIR::InstBlockId refs_id)
+    -> SemIR::TypeId {
   return CanonicalizeTypeAndAddInstIfNew(
       SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
 }
