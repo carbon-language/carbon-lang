@@ -8,7 +8,7 @@ namespace Carbon::Parse {
 
 // Handles VarAs(Decl|For).
 static auto HandleVar(Context& context, State finish_state,
-                      Lex::Token returned_token = Lex::Token::Invalid) -> void {
+                      Lex::TokenIndex returned_token = Lex::TokenIndex::Invalid) -> void {
   auto state = context.PopState();
 
   // The finished variable declaration will start at the `var` or `returned`.

@@ -212,7 +212,7 @@ static auto HandlePackageAndLibraryDirectives(Context& context,
   auto intro_token = context.ConsumeChecked(intro_token_kind);
   context.AddLeafNode(intro, intro_token);
 
-  if (intro_token != Lex::Token::FirstNonCommentToken) {
+  if (intro_token != Lex::TokenIndex::FirstNonCommentToken) {
     CARBON_DIAGNOSTIC(PackageTooLate, Error,
                       "The `{0}` directive must be the first non-comment line.",
                       Lex::TokenKind);
@@ -220,7 +220,7 @@ static auto HandlePackageAndLibraryDirectives(Context& context,
                       "First non-comment line is here.");
     context.emitter()
         .Build(intro_token, PackageTooLate, intro_token_kind)
-        .Note(Lex::Token::FirstNonCommentToken, FirstNonCommentLine)
+        .Note(Lex::TokenIndex::FirstNonCommentToken, FirstNonCommentLine)
         .Emit();
     on_parse_error();
     return;
