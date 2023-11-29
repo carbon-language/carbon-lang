@@ -89,7 +89,7 @@ class [[clang::internal_linkage]] Lexer {
   // But because it can, the compiler will flatten this otherwise.
   [[gnu::noinline]] auto CreateLines(llvm::StringRef source_text) -> void;
 
-  auto current_line() -> Line { return Line(line_index_); }
+  auto current_line() -> LineIndex { return LineIndex(line_index_); }
 
   auto current_line_info() -> TokenizedBuffer::LineInfo* {
     return &buffer_.line_infos_[line_index_];
@@ -937,7 +937,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
     return LexError(source_text, position);
   }
 
-  Line string_line = current_line();
+  LineIndex string_line = current_line();
   int string_column = ComputeColumn(position);
   ssize_t literal_size = literal->text().size();
   position += literal_size;

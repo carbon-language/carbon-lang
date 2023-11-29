@@ -51,21 +51,21 @@ constexpr TokenIndex TokenIndex::FirstNonCommentToken(1);
 
 // A lightweight handle to a lexed line in a `TokenizedBuffer`.
 //
-// `Line` objects are designed to be passed by value, not reference or
+// `LineIndex` objects are designed to be passed by value, not reference or
 // pointer. They are also designed to be small and efficient to store in data
 // structures.
 //
-// Each `Line` object refers to a specific line in the source code that was
+// Each `LineIndex` object refers to a specific line in the source code that was
 // lexed. They can be compared directly to establish that they refer to the
 // same line or the relative position of different lines within the source.
 //
-// All other APIs to query a `Line` are on the `TokenizedBuffer`.
-struct Line : public ComparableIndexBase {
-  static const Line Invalid;
+// All other APIs to query a `LineIndex` are on the `TokenizedBuffer`.
+struct LineIndex : public ComparableIndexBase {
+  static const LineIndex Invalid;
   using ComparableIndexBase::ComparableIndexBase;
 };
 
-constexpr Line Line::Invalid(Line::InvalidIndex);
+constexpr LineIndex LineIndex::Invalid(LineIndex::InvalidIndex);
 
 // Random-access iterator over tokens within the buffer.
 class TokenIterator
@@ -134,7 +134,7 @@ class TokenLocationTranslator : public DiagnosticLocationTranslator<TokenIndex> 
 class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
   auto GetKind(TokenIndex token) const -> TokenKind;
-  auto GetLine(TokenIndex token) const -> Line;
+  auto GetLine(TokenIndex token) const -> LineIndex;
 
   // Returns the 1-based line number.
   auto GetLineNumber(TokenIndex token) const -> int;
@@ -182,16 +182,16 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto IsRecoveryToken(TokenIndex token) const -> bool;
 
   // Returns the 1-based line number.
-  auto GetLineNumber(Line line) const -> int;
+  auto GetLineNumber(LineIndex line) const -> int;
 
   // Returns the 1-based indentation column number.
-  auto GetIndentColumnNumber(Line line) const -> int;
+  auto GetIndentColumnNumber(LineIndex line) const -> int;
 
   // Returns the next line handle.
-  auto GetNextLine(Line line) const -> Line;
+  auto GetNextLine(LineIndex line) const -> LineIndex;
 
   // Returns the previous line handle.
-  auto GetPrevLine(Line line) const -> Line;
+  auto GetPrevLine(LineIndex line) const -> LineIndex;
 
   // Prints a description of the tokenized stream to the provided `raw_ostream`.
   //
@@ -277,8 +277,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // Whether the token was injected artificially during error recovery.
     bool is_recovery = false;
 
-    // Line on which the TokenIndex starts.
-    Line token_line;
+    // LineIndex on which the TokenIndex starts.
+    LineIndex token_line;
 
     // Zero-based byte offset of the token within its line.
     int32_t column;
@@ -330,9 +330,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
                            SourceBuffer& source)
       : value_stores_(&value_stores), source_(&source) {}
 
-  auto GetLineInfo(Line line) -> LineInfo&;
-  auto GetLineInfo(Line line) const -> const LineInfo&;
-  auto AddLine(LineInfo info) -> Line;
+  auto GetLineInfo(LineIndex line) -> LineInfo&;
+  auto GetLineInfo(LineIndex line) const -> const LineInfo&;
+  auto AddLine(LineInfo info) -> LineIndex;
   auto GetTokenInfo(TokenIndex token) -> TokenInfo&;
   auto GetTokenInfo(TokenIndex token) const -> const TokenInfo&;
   auto AddToken(TokenInfo info) -> TokenIndex;

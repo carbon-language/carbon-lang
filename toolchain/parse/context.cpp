@@ -189,13 +189,13 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root)
     return std::nullopt;
   }
 
-  Lex::Line root_line = tokens().GetLine(skip_root);
+  Lex::LineIndex root_line = tokens().GetLine(skip_root);
   int root_line_indent = tokens().GetIndentColumnNumber(root_line);
 
   // We will keep scanning through tokens on the same line as the root or
   // lines with greater indentation than root's line.
   auto is_same_line_or_indent_greater_than_root = [&](Lex::TokenIndex t) {
-    Lex::Line l = tokens().GetLine(t);
+    Lex::LineIndex l = tokens().GetLine(t);
     if (l == root_line) {
       return true;
     }

@@ -23,7 +23,7 @@ auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
   return GetTokenInfo(token).kind;
 }
 
-auto TokenizedBuffer::GetLine(TokenIndex token) const -> Line {
+auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
   return GetTokenInfo(token).token_line;
 }
 
@@ -150,22 +150,22 @@ auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
   return GetTokenInfo(token).is_recovery;
 }
 
-auto TokenizedBuffer::GetLineNumber(Line line) const -> int {
+auto TokenizedBuffer::GetLineNumber(LineIndex line) const -> int {
   return line.index + 1;
 }
 
-auto TokenizedBuffer::GetNextLine(Line line) const -> Line {
-  Line next(line.index + 1);
+auto TokenizedBuffer::GetNextLine(LineIndex line) const -> LineIndex {
+  LineIndex next(line.index + 1);
   CARBON_DCHECK(static_cast<size_t>(next.index) < line_infos_.size());
   return next;
 }
 
-auto TokenizedBuffer::GetPrevLine(Line line) const -> Line {
+auto TokenizedBuffer::GetPrevLine(LineIndex line) const -> LineIndex {
   CARBON_CHECK(line.index > 0);
-  return Line(line.index - 1);
+  return LineIndex(line.index - 1);
 }
 
-auto TokenizedBuffer::GetIndentColumnNumber(Line line) const -> int {
+auto TokenizedBuffer::GetIndentColumnNumber(LineIndex line) const -> int {
   return GetLineInfo(line).indent + 1;
 }
 
@@ -292,17 +292,17 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, TokenIndex to
   output_stream << " },";
 }
 
-auto TokenizedBuffer::GetLineInfo(Line line) -> LineInfo& {
+auto TokenizedBuffer::GetLineInfo(LineIndex line) -> LineInfo& {
   return line_infos_[line.index];
 }
 
-auto TokenizedBuffer::GetLineInfo(Line line) const -> const LineInfo& {
+auto TokenizedBuffer::GetLineInfo(LineIndex line) const -> const LineInfo& {
   return line_infos_[line.index];
 }
 
-auto TokenizedBuffer::AddLine(LineInfo info) -> Line {
+auto TokenizedBuffer::AddLine(LineInfo info) -> LineIndex {
   line_infos_.push_back(info);
-  return Line(static_cast<int>(line_infos_.size()) - 1);
+  return LineIndex(static_cast<int>(line_infos_.size()) - 1);
 }
 
 auto TokenizedBuffer::GetTokenInfo(TokenIndex token) -> TokenInfo& {
