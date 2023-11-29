@@ -8,27 +8,28 @@
 
 namespace Carbon::Check {
 
-auto HandleVariableIntroducer(Context& context, Parse::Node parse_node)
+auto HandleVariableIntroducer(Context& context, Parse::NodeId parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleReturnedModifier(Context& context, Parse::Node parse_node) -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
-auto HandleVariableInitializer(Context& context, Parse::Node parse_node)
+auto HandleReturnedModifier(Context& context, Parse::NodeId parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
+auto HandleVariableInitializer(Context& context, Parse::NodeId parse_node)
+    -> bool {
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
   bool has_init =
