@@ -243,11 +243,11 @@ struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
 };
 
 // An index for member access, for structs and tuples.
-struct MemberIndex : public IdBase, public Printable<MemberIndex> {
-  using IdBase::IdBase;
+struct MemberIndex : public IndexBase, public Printable<MemberIndex> {
+  using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "member";
-    IdBase::Print(out);
+    IndexBase::Print(out);
   }
 };
 
