@@ -128,7 +128,7 @@ static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
 
 // Creates and adds an instruction to perform element access into an aggregate.
 template <typename AccessInstT, typename InstBlockT>
-static auto MakeElementAccessInst(Context& context, Parse::Node parse_node,
+static auto MakeElementAccessInst(Context& context, Parse::NodeId parse_node,
                                   SemIR::InstId aggregate_id,
                                   SemIR::TypeId elem_type_id, InstBlockT& block,
                                   std::size_t i) {
@@ -162,7 +162,7 @@ static auto MakeElementAccessInst(Context& context, Parse::Node parse_node,
 // instruction used to access the destination element.
 template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
-    Context& context, Parse::Node parse_node, SemIR::InstId src_id,
+    Context& context, Parse::NodeId parse_node, SemIR::InstId src_id,
     SemIR::TypeId src_elem_type,
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
@@ -598,7 +598,7 @@ static bool IsValidExprCategoryForConversionTarget(
   }
 }
 
-static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
+static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
                                      SemIR::InstId value_id,
                                      ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
@@ -769,7 +769,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   return SemIR::InstId::BuiltinError;
 }
 
-auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
+auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto orig_expr_id = expr_id;
@@ -921,7 +921,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
   return expr_id;
 }
 
-auto Initialize(Context& context, Parse::Node parse_node,
+auto Initialize(Context& context, Parse::NodeId parse_node,
                 SemIR::InstId target_id, SemIR::InstId value_id)
     -> SemIR::InstId {
   PendingBlock target_block(context);
@@ -947,21 +947,21 @@ auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
       {.kind = ConversionTarget::ValueOrRef, .type_id = expr.type_id()});
 }
 
-auto ConvertToValueOfType(Context& context, Parse::Node parse_node,
+auto ConvertToValueOfType(Context& context, Parse::NodeId parse_node,
                           SemIR::InstId value_id, SemIR::TypeId type_id)
     -> SemIR::InstId {
   return Convert(context, parse_node, value_id,
                  {.kind = ConversionTarget::Value, .type_id = type_id});
 }
 
-auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
+auto ConvertToBoolValue(Context& context, Parse::NodeId parse_node,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
       context, parse_node, value_id,
       context.GetBuiltinType(SemIR::BuiltinKind::BoolType));
 }
 
-auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
+auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
                           SemIR::InstId value_id, SemIR::TypeId type_id)
     -> SemIR::InstId {
   return Convert(context, as_node, value_id,
@@ -971,8 +971,8 @@ auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
 CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 
 // Convert the object argument in a method call to match the `self` parameter.
-static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
-                        Parse::Node callee_parse_node,
+static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
+                        Parse::NodeId callee_parse_node,
                         SemIR::SelfParam self_param, SemIR::InstId self_id)
     -> SemIR::InstId {
   if (!self_id.is_valid()) {
@@ -1023,11 +1023,11 @@ static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
                               self_param.type_id);
 }
 
-auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
+auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_storage_id,
-                     Parse::Node callee_parse_node,
+                     Parse::NodeId callee_parse_node,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
   auto implicit_param_refs =
@@ -1104,7 +1104,7 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
   return context.inst_blocks().Add(args);
 }
 
-auto ExprAsType(Context& context, Parse::Node parse_node,
+auto ExprAsType(Context& context, Parse::NodeId parse_node,
                 SemIR::InstId value_id) -> SemIR::TypeId {
   auto type_inst_id = ConvertToValueOfType(context, parse_node, value_id,
                                            SemIR::TypeId::TypeType);

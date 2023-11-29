@@ -26,14 +26,14 @@ namespace Carbon::Parse {
 //
 // That said, nodes can be compared and are part of a depth-first pre-order
 // sequence across all nodes in the parse tree.
-struct Node : public ComparableIndexBase {
+struct NodeId : public ComparableIndexBase {
   // An explicitly invalid instance.
-  static const Node Invalid;
+  static const NodeId Invalid;
 
   using ComparableIndexBase::ComparableIndexBase;
 };
 
-constexpr Node Node::Invalid = Node(Node::InvalidIndex);
+constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
 
 // A tree of parsed tokens based on the language grammar.
 //
@@ -70,7 +70,7 @@ class Tree : public Printable<Tree> {
   // Names in packaging, whether the file's packaging or an import. Links back
   // to the node for diagnostics.
   struct PackagingNames {
-    Node node;
+    NodeId node;
     IdentifierId package_id = IdentifierId::Invalid;
     StringLiteralId library_id = StringLiteralId::Invalid;
   };
@@ -99,12 +99,12 @@ class Tree : public Printable<Tree> {
 
   // Returns an iterable range over the parse tree node and all of its
   // descendants in depth-first postorder.
-  auto postorder(Node n) const -> llvm::iterator_range<PostorderIterator>;
+  auto postorder(NodeId n) const -> llvm::iterator_range<PostorderIterator>;
 
   // Returns an iterable range over the direct children of a node in the parse
   // tree. This is a forward range, but is constant time to increment. The order
   // of children is the same as would be found in a reverse postorder traversal.
-  auto children(Node n) const -> llvm::iterator_range<SiblingIterator>;
+  auto children(NodeId n) const -> llvm::iterator_range<SiblingIterator>;
 
   // Returns an iterable range over the roots of the parse tree. This is a
   // forward range, but is constant time to increment. The order of roots is the
@@ -113,15 +113,15 @@ class Tree : public Printable<Tree> {
 
   // Tests whether a particular node contains an error and may not match the
   // full expected structure of the grammar.
-  auto node_has_error(Node n) const -> bool;
+  auto node_has_error(NodeId n) const -> bool;
 
   // Returns the kind of the given parse tree node.
-  auto node_kind(Node n) const -> NodeKind;
+  auto node_kind(NodeId n) const -> NodeKind;
 
   // Returns the token the given parse tree node models.
-  auto node_token(Node n) const -> Lex::Token;
+  auto node_token(NodeId n) const -> Lex::Token;
 
-  auto node_subtree_size(Node n) const -> int32_t;
+  auto node_subtree_size(NodeId n) const -> int32_t;
 
   auto packaging_directive() const -> const std::optional<PackagingDirective>& {
     return packaging_directive_;
@@ -245,7 +245,7 @@ class Tree : public Printable<Tree> {
 
   // Prints a single node for Print(). Returns true when preorder and there are
   // children.
-  auto PrintNode(llvm::raw_ostream& output, Node n, int depth,
+  auto PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
                  bool preorder) const -> bool;
 
   // Depth-first postorder sequence of node implementation data.
@@ -268,12 +268,12 @@ class Tree : public Printable<Tree> {
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes
-// in the parse tree. It produces `Tree::Node` objects which are opaque
+// in the parse tree. It produces `Tree::NodeId` objects which are opaque
 // handles and must be used in conjunction with the `Tree` itself.
 class Tree::PostorderIterator
     : public llvm::iterator_facade_base<PostorderIterator,
-                                        std::random_access_iterator_tag, Node,
-                                        int, Node*, Node>,
+                                        std::random_access_iterator_tag, NodeId,
+                                        int, NodeId*, NodeId>,
       public Printable<Tree::PostorderIterator> {
  public:
   PostorderIterator() = delete;
@@ -285,7 +285,7 @@ class Tree::PostorderIterator
     return node_ < rhs.node_;
   }
 
-  auto operator*() const -> Node { return node_; }
+  auto operator*() const -> NodeId { return node_; }
 
   auto operator-(const PostorderIterator& rhs) const -> int {
     return node_.index - rhs.node_.index;
@@ -306,13 +306,13 @@ class Tree::PostorderIterator
  private:
   friend class Tree;
 
-  explicit PostorderIterator(Node n) : node_(n) {}
+  explicit PostorderIterator(NodeId n) : node_(n) {}
 
-  Node node_;
+  NodeId node_;
 };
 
 // A forward iterator across the siblings at a particular level in the parse
-// tree. It produces `Tree::Node` objects which are opaque handles and must
+// tree. It produces `Tree::NodeId` objects which are opaque handles and must
 // be used in conjunction with the `Tree` itself.
 //
 // While this is a forward iterator and may not have good locality within the
@@ -323,8 +323,9 @@ class Tree::PostorderIterator
 // (which is made constant time through cached distance information), and so the
 // relative order of siblings matches their RPO order.
 class Tree::SiblingIterator
-    : public llvm::iterator_facade_base<
-          SiblingIterator, std::forward_iterator_tag, Node, int, Node*, Node>,
+    : public llvm::iterator_facade_base<SiblingIterator,
+                                        std::forward_iterator_tag, NodeId, int,
+                                        NodeId*, NodeId>,
       public Printable<Tree::SiblingIterator> {
  public:
   explicit SiblingIterator() = delete;
@@ -338,7 +339,7 @@ class Tree::SiblingIterator
     return node_ > rhs.node_;
   }
 
-  auto operator*() const -> Node { return node_; }
+  auto operator*() const -> NodeId { return node_; }
 
   using iterator_facade_base::operator++;
   auto operator++() -> SiblingIterator& {
@@ -352,12 +353,12 @@ class Tree::SiblingIterator
  private:
   friend class Tree;
 
-  explicit SiblingIterator(const Tree& tree_arg, Node n)
+  explicit SiblingIterator(const Tree& tree_arg, NodeId n)
       : tree_(&tree_arg), node_(n) {}
 
   const Tree* tree_;
 
-  Node node_;
+  NodeId node_;
 };
 
 }  // namespace Carbon::Parse

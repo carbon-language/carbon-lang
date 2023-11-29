@@ -26,12 +26,12 @@ struct UnitInfo {
   struct PackageImports {
     // Use the constructor so that the SmallVector is only constructed
     // as-needed.
-    explicit PackageImports(Parse::Node node) : node(node) {}
+    explicit PackageImports(Parse::NodeId node) : node(node) {}
 
     // The first `import` directive in the file, which declared the package's
     // identifier (even if the import failed). Used for associating diagnostics
     // not specific to a single import.
-    Parse::Node node;
+    Parse::NodeId node;
     // Whether there's an import that failed to load.
     bool has_load_error = false;
     // The list of valid imports.
@@ -50,7 +50,7 @@ struct UnitInfo {
   // Emitter information.
   Parse::NodeLocationTranslator translator;
   ErrorTrackingDiagnosticConsumer err_tracker;
-  DiagnosticEmitter<Parse::Node> emitter;
+  DiagnosticEmitter<Parse::NodeId> emitter;
 
   // A map of package names to outgoing imports. If the
   // import's target isn't available, the unit will be nullptr to assist with
@@ -175,7 +175,7 @@ static constexpr llvm::StringLiteral ExplicitMainName = "Main";
 // come from the same file.
 static auto TrackImport(
     llvm::DenseMap<ImportKey, UnitInfo*>& api_map,
-    llvm::DenseMap<ImportKey, Parse::Node>* explicit_import_map,
+    llvm::DenseMap<ImportKey, Parse::NodeId>* explicit_import_map,
     UnitInfo& unit_info, Parse::Tree::PackagingNames import) -> void {
   const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
 
@@ -347,7 +347,7 @@ static auto BuildApiMapAndDiagnosePackaging(
                             "Main//default previously provided by `{0}`.",
                             std::string);
           // Use the invalid node because there's no node to associate with.
-          unit_info.emitter.Emit(Parse::Node::Invalid, DuplicateMainApi,
+          unit_info.emitter.Emit(Parse::NodeId::Invalid, DuplicateMainApi,
                                  prev_filename.str());
         }
       }
@@ -367,14 +367,14 @@ static auto BuildApiMapAndDiagnosePackaging(
                           "File extension of `{0}` required for `{1}`.",
                           llvm::StringLiteral, Lex::TokenKind);
         auto diag = unit_info.emitter.Build(
-            packaging ? packaging->names.node : Parse::Node::Invalid,
+            packaging ? packaging->names.node : Parse::NodeId::Invalid,
             IncorrectExtension, want_ext,
             is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
         if (is_api_with_impl_ext) {
           CARBON_DIAGNOSTIC(IncorrectExtensionImplNote, Note,
                             "File extension of `{0}` only allowed for `{1}`.",
                             llvm::StringLiteral, Lex::TokenKind);
-          diag.Note(Parse::Node::Invalid, IncorrectExtensionImplNote, ImplExt,
+          diag.Note(Parse::NodeId::Invalid, IncorrectExtensionImplNote, ImplExt,
                     Lex::TokenKind::Impl);
         }
         diag.Emit();
@@ -412,7 +412,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
       }
     }
 
-    llvm::DenseMap<ImportKey, Parse::Node> explicit_import_map;
+    llvm::DenseMap<ImportKey, Parse::NodeId> explicit_import_map;
     for (const auto& import : unit_info.unit->parse_tree->imports()) {
       TrackImport(api_map, &explicit_import_map, unit_info, import);
     }

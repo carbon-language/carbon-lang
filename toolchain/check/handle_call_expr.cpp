@@ -9,7 +9,7 @@
 
 namespace Carbon::Check {
 
-auto HandleCallExpr(Context& context, Parse::Node parse_node) -> bool {
+auto HandleCallExpr(Context& context, Parse::NodeId parse_node) -> bool {
   // Process the final explicit call argument now, but leave the arguments
   // block on the stack until the end of this function.
   context.ParamOrArgEndNoPop(Parse::NodeKind::CallExprStart);
@@ -84,12 +84,13 @@ auto HandleCallExpr(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleCallExprComma(Context& context, Parse::Node /*parse_node*/) -> bool {
+auto HandleCallExprComma(Context& context, Parse::NodeId /*parse_node*/)
+    -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleCallExprStart(Context& context, Parse::Node parse_node) -> bool {
+auto HandleCallExprStart(Context& context, Parse::NodeId parse_node) -> bool {
   auto name_id = context.node_stack().PopExpr();
   context.node_stack().Push(parse_node, name_id);
   context.ParamOrArgStart();

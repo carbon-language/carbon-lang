@@ -68,7 +68,7 @@ class Inst : public Printable<Inst> {
   template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
   // NOLINTNEXTLINE(google-explicit-constructor)
   Inst(TypedInst typed_inst)
-      : parse_node_(Parse::Node::Invalid),
+      : parse_node_(Parse::NodeId::Invalid),
         kind_(TypedInst::Kind),
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
@@ -138,7 +138,7 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  auto parse_node() const -> Parse::Node { return parse_node_; }
+  auto parse_node() const -> Parse::NodeId { return parse_node_; }
   auto kind() const -> InstKind { return kind_; }
 
   // Gets the type of the value produced by evaluating this instruction.
@@ -150,7 +150,7 @@ class Inst : public Printable<Inst> {
   friend class InstTestHelper;
 
   // Raw constructor, used for testing.
-  explicit Inst(InstKind kind, Parse::Node parse_node, TypeId type_id,
+  explicit Inst(InstKind kind, Parse::NodeId parse_node, TypeId type_id,
                 int32_t arg0, int32_t arg1)
       : parse_node_(parse_node),
         kind_(kind),
@@ -174,7 +174,7 @@ class Inst : public Printable<Inst> {
     return BuiltinKind::FromInt(raw);
   }
 
-  Parse::Node parse_node_;
+  Parse::NodeId parse_node_;
   InstKind kind_;
   TypeId type_id_;
 

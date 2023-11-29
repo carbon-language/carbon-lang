@@ -127,13 +127,14 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   return {function_decl.function_id, function_decl_id};
 }
 
-auto HandleFunctionDecl(Context& context, Parse::Node /*parse_node*/) -> bool {
+auto HandleFunctionDecl(Context& context, Parse::NodeId /*parse_node*/)
+    -> bool {
   BuildFunctionDecl(context, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;
 }
 
-auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
+auto HandleFunctionDefinition(Context& context, Parse::NodeId parse_node)
     -> bool {
   SemIR::FunctionId function_id =
       context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
@@ -158,7 +159,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
+auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -220,7 +221,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
+auto HandleFunctionIntroducer(Context& context, Parse::NodeId parse_node)
     -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
@@ -232,7 +233,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
+auto HandleReturnType(Context& context, Parse::NodeId parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_inst_id] =
       context.node_stack().PopExprWithParseNode();

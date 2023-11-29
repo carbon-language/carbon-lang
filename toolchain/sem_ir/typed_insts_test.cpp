@@ -14,7 +14,7 @@ namespace Carbon::SemIR {
 // A friend of `SemIR::Inst` that is used to pierce the abstraction.
 class InstTestHelper {
  public:
-  static auto MakeInst(InstKind inst_kind, Parse::Node parse_node,
+  static auto MakeInst(InstKind inst_kind, Parse::NodeId parse_node,
                        TypeId type_id, int32_t arg0, int32_t arg1) -> Inst {
     return Inst(inst_kind, parse_node, type_id, arg0, arg1);
   }
@@ -32,9 +32,9 @@ namespace {
 #include "toolchain/sem_ir/inst_kind.def"
 
 auto MakeInstWithNumberedFields(InstKind kind) -> Inst {
-  Inst inst = InstTestHelper::MakeInst(kind, Parse::Node(1), TypeId(2), 3, 4);
+  Inst inst = InstTestHelper::MakeInst(kind, Parse::NodeId(1), TypeId(2), 3, 4);
   EXPECT_EQ(inst.kind(), kind);
-  EXPECT_EQ(inst.parse_node(), Parse::Node(1));
+  EXPECT_EQ(inst.parse_node(), Parse::NodeId(1));
   EXPECT_EQ(inst.type_id(), TypeId(2));
   return inst;
 }
@@ -44,7 +44,7 @@ auto CommonFieldOrder() -> void {
   Inst inst = MakeInstWithNumberedFields(TypedInst::Kind);
   TypedInst typed = inst.As<TypedInst>();
   if constexpr (HasParseNode<TypedInst>) {
-    EXPECT_EQ(typed.parse_node, Parse::Node(1));
+    EXPECT_EQ(typed.parse_node, Parse::NodeId(1));
   }
   if constexpr (HasTypeId<TypedInst>) {
     EXPECT_EQ(typed.type_id, TypeId(2));

@@ -60,7 +60,7 @@ class InstNamer {
       auto fn_scope = GetScopeFor(fn_id);
       // TODO: Provide a location for the function for use as a
       // disambiguator.
-      auto fn_loc = Parse::Node::Invalid;
+      auto fn_loc = Parse::NodeId::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
       CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
@@ -89,7 +89,7 @@ class InstNamer {
       auto class_scope = GetScopeFor(class_id);
       // TODO: Provide a location for the class for use as a
       // disambiguator.
-      auto class_loc = Parse::Node::Invalid;
+      auto class_loc = Parse::NodeId::Invalid;
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
           sem_ir.names().GetIRBaseName(class_info.name_id).str());
@@ -218,7 +218,7 @@ class InstNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const InstNamer& namer, Parse::Node node,
+    auto AllocateName(const InstNamer& namer, Parse::NodeId node,
                       std::string name = "") -> Name {
       // The best (shortest) name for this instruction so far, and the current
       // name for it.
@@ -294,12 +294,13 @@ class InstNamer {
 
   auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
                      std::string name = "",
-                     Parse::Node parse_node = Parse::Node::Invalid) -> void {
+                     Parse::NodeId parse_node = Parse::NodeId::Invalid)
+      -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
 
-    if (parse_node == Parse::Node::Invalid) {
+    if (parse_node == Parse::NodeId::Invalid) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
         parse_node = sem_ir_.insts().Get(block.front()).parse_node();
