@@ -27,7 +27,7 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
   context.AddLeafNode(NodeKind::FileStart,
-                      context.ConsumeChecked(Lex::TokenKind::StartOfFile));
+                      context.ConsumeChecked(Lex::TokenKind::FileStart));
 
   context.PushState(State::DeclScopeLoop);
 

@@ -191,10 +191,10 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
                         "Type `{0}` does not have a member `{1}`.", std::string,
-                        llvm::StringRef);
+                        std::string);
       context.emitter().Emit(parse_node, QualifiedExprNameNotFound,
                              context.sem_ir().StringifyType(base_type_id),
-                             context.names().GetFormatted(name_id));
+                             context.names().GetFormatted(name_id).str());
       break;
     }
     // TODO: `ConstType` should support member access just like the

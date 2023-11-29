@@ -23,7 +23,7 @@ var test_str: String = "Test";
 // CHECK:STDOUT:         {kind: 'FloatingPointTypeLiteral', text: 'f64'},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'FloatingPointLiteral', text: '0.1'},
+// CHECK:STDOUT:       {kind: 'RealLiteral', text: '0.1'},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'test_str'},

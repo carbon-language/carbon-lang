@@ -93,9 +93,8 @@ auto Context::DiagnoseDuplicateName(Parse::NodeId parse_node,
 
 auto Context::DiagnoseNameNotFound(Parse::NodeId parse_node,
                                    SemIR::NameId name_id) -> void {
-  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
-                    llvm::StringRef);
-  emitter_->Emit(parse_node, NameNotFound, names().GetFormatted(name_id));
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.", std::string);
+  emitter_->Emit(parse_node, NameNotFound, names().GetFormatted(name_id).str());
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,

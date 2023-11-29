@@ -128,12 +128,12 @@ auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
   // Track that this declaration is the definition.
   if (class_info.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(ClassRedefinition, Error, "Redefinition of class {0}.",
-                      llvm::StringRef);
+                      std::string);
     CARBON_DIAGNOSTIC(ClassPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, ClassRedefinition,
-               context.names().GetFormatted(class_info.name_id))
+               context.names().GetFormatted(class_info.name_id).str())
         .Note(context.insts().Get(class_info.definition_id).parse_node(),
               ClassPreviousDefinition)
         .Emit();

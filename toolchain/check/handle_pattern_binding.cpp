@@ -68,11 +68,12 @@ auto HandlePatternBinding(Context& context, Parse::NodeId parse_node) -> bool {
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       if (!context.TryToCompleteType(cast_type_id, [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                              "{0} has incomplete type `{1}`.", llvm::StringRef,
-                              std::string);
+                              "{0} has incomplete type `{1}`.",
+                              llvm::StringLiteral, std::string);
             return context.emitter().Build(
                 type_node_copy, IncompleteTypeInVarDecl,
-                enclosing_class_decl ? "Field" : "Variable",
+                enclosing_class_decl ? llvm::StringLiteral("Field")
+                                     : llvm::StringLiteral("Variable"),
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;

@@ -213,8 +213,8 @@ CARBON_TOKEN(StringLiteral)
 CARBON_TOKEN(IntegerTypeLiteral)
 CARBON_TOKEN(UnsignedIntegerTypeLiteral)
 CARBON_TOKEN(FloatingPointTypeLiteral)
-CARBON_TOKEN(StartOfFile)
-CARBON_TOKEN(EndOfFile)
+CARBON_TOKEN(FileStart)
+CARBON_TOKEN(FileEnd)
 
 #undef CARBON_TOKEN
 #undef CARBON_TOKEN_WITH_VIRTUAL_NODE

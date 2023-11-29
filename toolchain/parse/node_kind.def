@@ -61,10 +61,10 @@
 #endif
 
 // The start of the file.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0, CARBON_TOKEN(StartOfFile))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0, CARBON_TOKEN(FileStart))
 
 // The end of the file.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, CARBON_TOKEN(EndOfFile))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, CARBON_TOKEN(FileEnd))
 
 // An invalid parse. Used to balance the parse tree. Always has an error.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0,
@@ -429,8 +429,7 @@ CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralFalse, CARBON_TOKEN(False))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralTrue, CARBON_TOKEN(True))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntegerLiteral,
                                      CARBON_TOKEN(IntegerLiteral))
-CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(FloatingPointLiteral,
-                                     CARBON_TOKEN(RealLiteral))
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(RealLiteral, CARBON_TOKEN(RealLiteral))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringLiteral, CARBON_TOKEN(StringLiteral))
 
 // A type literal.

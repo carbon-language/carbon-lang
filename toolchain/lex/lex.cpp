@@ -157,9 +157,9 @@ class [[clang::internal_linkage]] Lexer {
 
   auto LexError(llvm::StringRef source_text, ssize_t& position) -> LexResult;
 
-  auto LexStartOfFile(llvm::StringRef source_text, ssize_t& position) -> void;
+  auto LexFileStart(llvm::StringRef source_text, ssize_t& position) -> void;
 
-  auto LexEndOfFile(llvm::StringRef source_text, ssize_t position) -> void;
+  auto LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void;
 
   // The main entry point for dispatching through the lexer's table. This method
   // should always fully consume the source text.
@@ -647,7 +647,7 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
   // When we finish the source text, stop recursing. We also hint this so that
   // the tail-dispatch is optimized as that's essentially the loop back-edge
   // and this is the loop exit.
-  lexer.LexEndOfFile(source_text, position);
+  lexer.LexFileEnd(source_text, position);
 }
 
 auto Lexer::Lex() && -> TokenizedBuffer {
@@ -657,7 +657,7 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   CreateLines(source_text);
 
   ssize_t position = 0;
-  LexStartOfFile(source_text, position);
+  LexFileStart(source_text, position);
 
   // Manually enter the dispatch loop. This call will tail-recurse through the
   // dispatch table until everything from source_text is consumed.
@@ -1263,12 +1263,12 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
   return token;
 }
 
-auto Lexer::LexStartOfFile(llvm::StringRef source_text, ssize_t& position)
+auto Lexer::LexFileStart(llvm::StringRef source_text, ssize_t& position)
     -> void {
   // Before lexing any source text, add the start-of-file token so that code
   // can assume a non-empty token buffer for the rest of lexing. Note that the
   // start-of-file always has trailing space because it *is* whitespace.
-  buffer_.AddToken({.kind = TokenKind::StartOfFile,
+  buffer_.AddToken({.kind = TokenKind::FileStart,
                     .has_trailing_space = true,
                     .token_line = current_line(),
                     .column = 0});
@@ -1281,8 +1281,7 @@ auto Lexer::LexStartOfFile(llvm::StringRef source_text, ssize_t& position)
   line_info->indent = position;
 }
 
-auto Lexer::LexEndOfFile(llvm::StringRef source_text, ssize_t position)
-    -> void {
+auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
   CARBON_CHECK(position == static_cast<ssize_t>(source_text.size()));
   // Check if the last line is empty and not the first line (and only). If so,
   // re-pin the last line to be the prior one so that diagnostics and editors
@@ -1307,7 +1306,7 @@ auto Lexer::LexEndOfFile(llvm::StringRef source_text, ssize_t position)
     CloseInvalidOpenGroups(TokenKind::Error, position);
   }
 
-  buffer_.AddToken({.kind = TokenKind::EndOfFile,
+  buffer_.AddToken({.kind = TokenKind::FileEnd,
                     .token_line = current_line(),
                     .column = ComputeColumn(position)});
 }
