@@ -23,14 +23,11 @@ namespace Carbon::Parse {
 // Objects of this type are small and cheap to copy and store. They don't
 // contain any of the information about the node, and serve as a handle that
 // can be used with the underlying tree to query for detailed information.
-//
-// That said, nodes can be compared and are part of a depth-first pre-order
-// sequence across all nodes in the parse tree.
-struct NodeId : public ComparableIndexBase {
+struct NodeId : public IndexBase {
   // An explicitly invalid instance.
   static const NodeId Invalid;
 
-  using ComparableIndexBase::ComparableIndexBase;
+  using IndexBase::IndexBase;
 };
 
 constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
@@ -282,7 +279,7 @@ class Tree::PostorderIterator
     return node_ == rhs.node_;
   }
   auto operator<(const PostorderIterator& rhs) const -> bool {
-    return node_ < rhs.node_;
+    return node_.index < rhs.node_.index;
   }
 
   auto operator*() const -> NodeId { return node_; }
@@ -332,11 +329,6 @@ class Tree::SiblingIterator
 
   auto operator==(const SiblingIterator& rhs) const -> bool {
     return node_ == rhs.node_;
-  }
-  auto operator<(const SiblingIterator& rhs) const -> bool {
-    // Note that child iterators walk in reverse compared to the postorder
-    // index.
-    return node_ > rhs.node_;
   }
 
   auto operator*() const -> NodeId { return node_; }
