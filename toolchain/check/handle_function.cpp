@@ -168,12 +168,12 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   // Track that this declaration is the definition.
   if (function.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
-                      "Redefinition of function {0}.", llvm::StringRef);
+                      "Redefinition of function {0}.", std::string);
     CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
-               context.names().GetFormatted(function.name_id))
+               context.names().GetFormatted(function.name_id).str())
         .Note(context.insts().Get(function.definition_id).parse_node(),
               FunctionPreviousDefinition)
         .Emit();

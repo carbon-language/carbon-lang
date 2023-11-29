@@ -339,16 +339,16 @@ static auto BuildApiMapAndDiagnosePackaging(
         if (packaging) {
           CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
                             "Library's API previously provided by `{0}`.",
-                            llvm::StringRef);
+                            std::string);
           unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi,
-                                 prev_filename);
+                                 prev_filename.str());
         } else {
           CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
                             "Main//default previously provided by `{0}`.",
-                            llvm::StringRef);
+                            std::string);
           // Use the invalid node because there's no node to associate with.
           unit_info.emitter.Emit(Parse::Node::Invalid, DuplicateMainApi,
-                                 prev_filename);
+                                 prev_filename.str());
         }
       }
     }

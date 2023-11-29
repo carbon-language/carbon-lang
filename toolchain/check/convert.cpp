@@ -469,20 +469,20 @@ static auto ConvertStructToStructOrClass(Context& context,
           CARBON_DIAGNOSTIC(
               StructInitMissingFieldInLiteral, Error,
               "Missing value for field `{0}` in struct initialization.",
-              llvm::StringRef);
+              std::string);
           context.emitter().Emit(
               value.parse_node(), StructInitMissingFieldInLiteral,
-              sem_ir.names().GetFormatted(dest_field.name_id));
+              sem_ir.names().GetFormatted(dest_field.name_id).str());
         } else {
           CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
                             "Cannot convert from struct type `{0}` to `{1}`: "
                             "missing field `{2}` in source type.",
-                            std::string, std::string, llvm::StringRef);
+                            std::string, std::string, std::string);
           context.emitter().Emit(
               value.parse_node(), StructInitMissingFieldInConversion,
               sem_ir.StringifyType(value.type_id()),
               sem_ir.StringifyType(target.type_id),
-              sem_ir.names().GetFormatted(dest_field.name_id));
+              sem_ir.names().GetFormatted(dest_field.name_id).str());
         }
         return SemIR::InstId::BuiltinError;
       }
