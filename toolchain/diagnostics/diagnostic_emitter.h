@@ -158,7 +158,11 @@ template <typename... Args>
 struct DiagnosticBase {
   explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
                                     llvm::StringLiteral format)
-      : Kind(kind), Level(level), Format(format) {}
+      : Kind(kind), Level(level), Format(format) {
+    static_assert((... && !std::is_same_v<Args, llvm::StringRef>),
+                  "Use std::string or llvm::StringLiteral for diagnostics to "
+                  "avoid lifetime issues.");
+  }
 
   // Calls formatv with the diagnostic's arguments.
   auto FormatFn(const DiagnosticMessage& message) const -> std::string {

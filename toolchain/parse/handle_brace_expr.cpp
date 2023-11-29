@@ -29,11 +29,15 @@ static auto HandleBraceExprParamError(Context& context,
   bool is_unknown = param_finish_state == State::BraceExprParamFinishAsUnknown;
   CARBON_CHECK(is_type || is_value || is_unknown);
   CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
-                    llvm::StringRef, llvm::StringRef, llvm::StringRef);
-  context.emitter().Emit(*context.position(), ExpectedStructLiteralField,
-                         (is_type || is_unknown) ? "`.field: field_type`" : "",
-                         is_unknown ? " or " : "",
-                         (is_value || is_unknown) ? "`.field = value`" : "");
+                    llvm::StringLiteral, llvm::StringLiteral,
+                    llvm::StringLiteral);
+  context.emitter().Emit(
+      *context.position(), ExpectedStructLiteralField,
+      (is_type || is_unknown) ? llvm::StringLiteral("`.field: field_type`")
+                              : llvm::StringLiteral(""),
+      is_unknown ? llvm::StringLiteral(" or ") : llvm::StringLiteral(""),
+      (is_value || is_unknown) ? llvm::StringLiteral("`.field = value`")
+                               : llvm::StringLiteral(""));
 
   state.state = param_finish_state;
   state.has_error = true;

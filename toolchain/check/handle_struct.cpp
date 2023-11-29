@@ -65,13 +65,13 @@ static auto DiagnoseDuplicateNames(Context& context,
         names.insert({field_inst.name_id, field_inst.parse_node});
     if (!added) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
-                        "Duplicated field name `{1}` in {0}.", llvm::StringRef,
-                        llvm::StringRef);
+                        "Duplicated field name `{1}` in {0}.", std::string,
+                        std::string);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Field with the same name here.");
       context.emitter()
-          .Build(field_inst.parse_node, StructNameDuplicate, construct,
-                 sem_ir.names().GetFormatted(field_inst.name_id))
+          .Build(field_inst.parse_node, StructNameDuplicate, construct.str(),
+                 sem_ir.names().GetFormatted(field_inst.name_id).str())
           .Note(it->second, StructNamePrevious)
           .Emit();
       return true;

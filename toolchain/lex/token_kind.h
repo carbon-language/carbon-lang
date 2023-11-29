@@ -82,7 +82,7 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 
   // If this token kind has a fixed spelling when in source code, returns it.
   // Otherwise returns an empty string.
-  auto fixed_spelling() const -> llvm::StringRef {
+  auto fixed_spelling() const -> llvm::StringLiteral {
     return FixedSpelling[AsInt()];
   };
 
