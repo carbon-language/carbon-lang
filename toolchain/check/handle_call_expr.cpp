@@ -84,7 +84,8 @@ auto HandleCallExpr(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleCallExprComma(Context& context, Parse::NodeId /*parse_node*/) -> bool {
+auto HandleCallExprComma(Context& context, Parse::NodeId /*parse_node*/)
+    -> bool {
   context.ParamOrArgComma();
   return true;
 }

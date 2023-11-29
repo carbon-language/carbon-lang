@@ -18,7 +18,8 @@ auto HandleClassIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleAbstractModifier(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleAbstractModifier(Context& context, Parse::NodeId parse_node)
+    -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }

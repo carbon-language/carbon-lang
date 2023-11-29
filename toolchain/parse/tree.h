@@ -323,8 +323,9 @@ class Tree::PostorderIterator
 // (which is made constant time through cached distance information), and so the
 // relative order of siblings matches their RPO order.
 class Tree::SiblingIterator
-    : public llvm::iterator_facade_base<
-          SiblingIterator, std::forward_iterator_tag, NodeId, int, NodeId*, NodeId>,
+    : public llvm::iterator_facade_base<SiblingIterator,
+                                        std::forward_iterator_tag, NodeId, int,
+                                        NodeId*, NodeId>,
       public Printable<Tree::SiblingIterator> {
  public:
   explicit SiblingIterator() = delete;

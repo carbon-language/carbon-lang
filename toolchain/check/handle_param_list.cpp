@@ -6,7 +6,8 @@
 
 namespace Carbon::Check {
 
-auto HandleImplicitParamList(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleImplicitParamList(Context& context, Parse::NodeId parse_node)
+    -> bool {
   auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ImplicitParamListStart);
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ImplicitParamListStart>();

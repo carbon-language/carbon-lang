@@ -38,7 +38,8 @@ auto HandleStructFieldUnknown(Context& context, Parse::NodeId parse_node)
   return context.TODO(parse_node, "HandleStructFieldUnknown");
 }
 
-auto HandleStructFieldValue(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleStructFieldValue(Context& context, Parse::NodeId parse_node)
+    -> bool {
   auto value_inst_id = context.node_stack().PopExpr();
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
@@ -115,7 +116,8 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
   return true;
 }
 
-auto HandleStructTypeLiteral(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleStructTypeLiteral(Context& context, Parse::NodeId parse_node)
+    -> bool {
   auto refs_id = context.ParamOrArgEnd(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 

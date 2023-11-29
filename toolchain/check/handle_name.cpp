@@ -54,7 +54,8 @@ static auto GetExprValueForLookupResult(Context& context,
   return lookup_result_id;
 }
 
-auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
+    -> bool {
   SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
   auto base_id = context.node_stack().PopExpr();
 
@@ -271,7 +272,8 @@ auto HandleQualifiedDecl(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleSelfTypeNameExpr(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleSelfTypeNameExpr(Context& context, Parse::NodeId parse_node)
+    -> bool {
   auto name_id = SemIR::NameId::SelfType;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
@@ -285,7 +287,8 @@ auto HandleSelfValueName(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleSelfValueNameExpr(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleSelfValueNameExpr(Context& context, Parse::NodeId parse_node)
+    -> bool {
   auto name_id = SemIR::NameId::SelfValue;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);

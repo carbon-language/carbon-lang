@@ -6,7 +6,8 @@
 
 namespace Carbon::Check {
 
-auto HandleBoolLiteralFalse(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleBoolLiteralFalse(Context& context, Parse::NodeId parse_node)
+    -> bool {
   context.AddInstAndPush(
       parse_node,
       SemIR::BoolLiteral{parse_node,
@@ -72,8 +73,8 @@ auto HandleIntegerTypeLiteral(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleUnsignedIntegerTypeLiteral(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleUnsignedIntegerTypeLiteral(Context& context,
+                                      Parse::NodeId parse_node) -> bool {
   return context.TODO(parse_node, "Need to support unsigned type literals");
 }
 
@@ -89,7 +90,8 @@ auto HandleFloatingPointTypeLiteral(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleStringTypeLiteral(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleStringTypeLiteral(Context& context, Parse::NodeId parse_node)
+    -> bool {
   context.node_stack().Push(parse_node, SemIR::InstId::BuiltinStringType);
   return true;
 }

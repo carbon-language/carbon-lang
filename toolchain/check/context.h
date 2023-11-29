@@ -90,8 +90,8 @@ class Context {
       -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(Parse::NodeId parse_node, SemIR::InstId prev_def_id)
-      -> void;
+  auto DiagnoseDuplicateName(Parse::NodeId parse_node,
+                             SemIR::InstId prev_def_id) -> void;
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(Parse::NodeId parse_node, SemIR::NameId name_id)
@@ -148,7 +148,8 @@ class Context {
   // Adds a `Branch` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block, though not necessarily through this branch.
-  auto AddDominatedBlockAndBranch(Parse::NodeId parse_node) -> SemIR::InstBlockId;
+  auto AddDominatedBlockAndBranch(Parse::NodeId parse_node)
+      -> SemIR::InstBlockId;
 
   // Adds a `Branch` instruction branching to a new instruction block with a
   // value, and returns the ID of the new block. All paths to the branch target

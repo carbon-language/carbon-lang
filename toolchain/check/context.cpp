@@ -73,7 +73,8 @@ auto Context::AddConstantInst(SemIR::Inst inst) -> SemIR::InstId {
   return inst_id;
 }
 
-auto Context::AddInstAndPush(Parse::NodeId parse_node, SemIR::Inst inst) -> void {
+auto Context::AddInstAndPush(Parse::NodeId parse_node, SemIR::Inst inst)
+    -> void {
   auto inst_id = AddInst(inst);
   node_stack_.Push(parse_node, inst_id);
 }
@@ -253,7 +254,8 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupQualifiedName(Parse::NodeId parse_node, SemIR::NameId name_id,
+auto Context::LookupQualifiedName(Parse::NodeId parse_node,
+                                  SemIR::NameId name_id,
                                   SemIR::NameScopeId scope_id, bool required)
     -> SemIR::InstId {
   CARBON_CHECK(scope_id.is_valid()) << "No scope to perform lookup into";
@@ -372,8 +374,8 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
 
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
-                                           Parse::NodeId parse_node, Args... args)
-    -> SemIR::InstBlockId {
+                                           Parse::NodeId parse_node,
+                                           Args... args) -> SemIR::InstBlockId {
   if (!context.inst_block_stack().is_current_block_reachable()) {
     return SemIR::InstBlockId::Unreachable;
   }
@@ -401,8 +403,8 @@ auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId parse_node,
                                                          cond_id);
 }
 
-auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node, int num_blocks)
-    -> void {
+auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
+                                         int num_blocks) -> void {
   CARBON_CHECK(num_blocks >= 2) << "no convergence";
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;

@@ -294,7 +294,8 @@ class InstNamer {
 
   auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
                      std::string name = "",
-                     Parse::NodeId parse_node = Parse::NodeId::Invalid) -> void {
+                     Parse::NodeId parse_node = Parse::NodeId::Invalid)
+      -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }

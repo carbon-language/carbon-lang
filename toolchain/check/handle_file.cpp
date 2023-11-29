@@ -6,7 +6,8 @@
 
 namespace Carbon::Check {
 
-auto HandleFileStart(Context& /*context*/, Parse::NodeId /*parse_node*/) -> bool {
+auto HandleFileStart(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
   // No action to perform.
   // TODO: We may want to push `FileStart` as a sentinel so that `Peek`s can't
   // fail.

@@ -14,7 +14,8 @@ auto HandleReturnStatementStart(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleReturnVarModifier(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleReturnVarModifier(Context& context, Parse::NodeId parse_node)
+    -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;

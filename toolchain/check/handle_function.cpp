@@ -127,7 +127,8 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   return {function_decl.function_id, function_decl_id};
 }
 
-auto HandleFunctionDecl(Context& context, Parse::NodeId /*parse_node*/) -> bool {
+auto HandleFunctionDecl(Context& context, Parse::NodeId /*parse_node*/)
+    -> bool {
   BuildFunctionDecl(context, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;

@@ -59,7 +59,8 @@ auto Tree::postorder() const -> llvm::iterator_range<PostorderIterator> {
           PostorderIterator(NodeId(node_impls_.size()))};
 }
 
-auto Tree::postorder(NodeId n) const -> llvm::iterator_range<PostorderIterator> {
+auto Tree::postorder(NodeId n) const
+    -> llvm::iterator_range<PostorderIterator> {
   CARBON_CHECK(n.is_valid());
   // The postorder ends after this node, the root, and begins at the start of
   // its subtree.
@@ -250,8 +251,8 @@ auto Tree::Verify() const -> ErrorOr<Success> {
     }
     if (n_impl.subtree_size != subtree_size) {
       return Error(llvm::formatv(
-          "NodeId #{0} is a {1} with subtree_size of {2}, but calculated {3}.", n,
-          n_impl.kind, n_impl.subtree_size, subtree_size));
+          "NodeId #{0} is a {1} with subtree_size of {2}, but calculated {3}.",
+          n, n_impl.kind, n_impl.subtree_size, subtree_size));
     }
     nodes.push_back(n);
   }
