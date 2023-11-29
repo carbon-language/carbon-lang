@@ -985,8 +985,8 @@ auto Lexer::LexOneCharSymbolToken(llvm::StringRef source_text, TokenKind kind,
       << "' of the incoming token kind '" << kind << "'";
 
   TokenIndex token = buffer_.AddToken({.kind = kind,
-                                  .token_line = current_line(),
-                                  .column = ComputeColumn(position)});
+                                       .token_line = current_line(),
+                                       .column = ComputeColumn(position)});
   ++position;
   return token;
 }
@@ -1005,9 +1005,9 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
                       "Closing symbol without a corresponding opening symbol.");
     emitter_.Emit(source_text.begin() + position, UnmatchedClosing);
     TokenIndex token = buffer_.AddToken({.kind = TokenKind::Error,
-                                    .token_line = current_line(),
-                                    .column = ComputeColumn(position),
-                                    .error_length = 1});
+                                         .token_line = current_line(),
+                                         .column = ComputeColumn(position),
+                                         .error_length = 1});
     ++position;
     return token;
   };
@@ -1060,8 +1060,8 @@ auto Lexer::LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
   }
 
   TokenIndex token = buffer_.AddToken({.kind = kind,
-                                  .token_line = current_line(),
-                                  .column = ComputeColumn(position)});
+                                       .token_line = current_line(),
+                                       .column = ComputeColumn(position)});
   position += kind.fixed_spelling().size();
   return token;
 }

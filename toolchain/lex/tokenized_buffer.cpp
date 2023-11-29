@@ -108,7 +108,8 @@ auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
   return token_info.real_id;
 }
 
-auto TokenizedBuffer::GetStringLiteral(TokenIndex token) const -> StringLiteralId {
+auto TokenizedBuffer::GetStringLiteral(TokenIndex token) const
+    -> StringLiteralId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
   return token_info.string_literal_id;
@@ -191,7 +192,8 @@ static auto ComputeDecimalPrintedWidth(int number) -> int {
   return static_cast<int>(std::log10(number)) + 1;
 }
 
-auto TokenizedBuffer::GetTokenPrintWidths(TokenIndex token) const -> PrintWidths {
+auto TokenizedBuffer::GetTokenPrintWidths(TokenIndex token) const
+    -> PrintWidths {
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth(token_infos_.size());
   widths.kind = GetKind(token).name().size();
@@ -228,8 +230,9 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
   PrintToken(output_stream, token, {});
 }
 
-auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, TokenIndex token,
-                                 PrintWidths widths) const -> void {
+auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
+                                 TokenIndex token, PrintWidths widths) const
+    -> void {
   widths.Widen(GetTokenPrintWidths(token));
   int token_index = token.index;
   const auto& token_info = GetTokenInfo(token);
@@ -368,7 +371,8 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
           .column_number = column_number + 1};
 }
 
-auto TokenLocationTranslator::GetLocation(TokenIndex token) -> DiagnosticLocation {
+auto TokenLocationTranslator::GetLocation(TokenIndex token)
+    -> DiagnosticLocation {
   // Map the token location into a position within the source buffer.
   const auto& token_info = buffer_->GetTokenInfo(token);
   const auto& line_info = buffer_->GetLineInfo(token_info.token_line);

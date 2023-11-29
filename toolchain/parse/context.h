@@ -62,8 +62,8 @@ class Context {
   // Used to track state on state_stack_.
   struct StateStackEntry : public Printable<StateStackEntry> {
     explicit StateStackEntry(State state, PrecedenceGroup ambient_precedence,
-                             PrecedenceGroup lhs_precedence, Lex::TokenIndex token,
-                             int32_t subtree_start)
+                             PrecedenceGroup lhs_precedence,
+                             Lex::TokenIndex token, int32_t subtree_start)
         : state(state),
           ambient_precedence(ambient_precedence),
           lhs_precedence(lhs_precedence),
@@ -130,7 +130,8 @@ class Context {
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
   // there's no open paren. Returns the open paren token if it was found.
-  auto ConsumeAndAddOpenParen(Lex::TokenIndex default_token, NodeKind start_kind)
+  auto ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
+                              NodeKind start_kind)
       -> std::optional<Lex::TokenIndex>;
 
   // Parses a closing symbol corresponding to the opening symbol
@@ -138,8 +139,9 @@ class Context {
   // Creates a parse node of the specified close kind. If `expected_open` is not
   // an opening symbol, the parse node will be associated with `state.token`,
   // no input will be consumed, and no diagnostic will be emitted.
-  auto ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open, StateStackEntry state,
-                                NodeKind close_kind) -> void;
+  auto ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
+                                StateStackEntry state, NodeKind close_kind)
+      -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
@@ -179,7 +181,8 @@ class Context {
   //   declarations or statements across multiple lines should be indented.
   //
   // Returns a semicolon token if one is the likely end.
-  auto SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> std::optional<Lex::TokenIndex>;
+  auto SkipPastLikelyEnd(Lex::TokenIndex skip_root)
+      -> std::optional<Lex::TokenIndex>;
 
   // Skip forward to the given token. Verifies that it is actually forward.
   auto SkipTo(Lex::TokenIndex t) -> void;
@@ -347,8 +350,8 @@ class Context {
 
  private:
   // Prints a single token for a stack dump. Used by PrintForStackDump.
-  auto PrintTokenForStackDump(llvm::raw_ostream& output, Lex::TokenIndex token) const
-      -> void;
+  auto PrintTokenForStackDump(llvm::raw_ostream& output,
+                              Lex::TokenIndex token) const -> void;
 
   Tree* tree_;
   Lex::TokenizedBuffer* tokens_;

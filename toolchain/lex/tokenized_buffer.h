@@ -32,8 +32,8 @@ class TokenizedBuffer;
 // pointer. They are also designed to be small and efficient to store in data
 // structures.
 //
-// `TokenIndex` objects from the same `TokenizedBuffer` can be compared with each
-// other, both for being the same token within the buffer, and to establish
+// `TokenIndex` objects from the same `TokenizedBuffer` can be compared with
+// each other, both for being the same token within the buffer, and to establish
 // relative position within the token stream that has been lexed out of the
 // buffer. `TokenIndex` objects from different `TokenizedBuffer`s cannot be
 // meaningfully compared.
@@ -69,8 +69,9 @@ constexpr LineIndex LineIndex::Invalid(LineIndex::InvalidIndex);
 
 // Random-access iterator over tokens within the buffer.
 class TokenIterator
-    : public llvm::iterator_facade_base<
-          TokenIterator, std::random_access_iterator_tag, const TokenIndex, int>,
+    : public llvm::iterator_facade_base<TokenIterator,
+                                        std::random_access_iterator_tag,
+                                        const TokenIndex, int>,
       public Printable<TokenIterator> {
  public:
   TokenIterator() = delete;
@@ -111,7 +112,8 @@ class TokenIterator
 
 // A diagnostic location translator that maps token locations into source
 // buffer locations.
-class TokenLocationTranslator : public DiagnosticLocationTranslator<TokenIndex> {
+class TokenLocationTranslator
+    : public DiagnosticLocationTranslator<TokenIndex> {
  public:
   explicit TokenLocationTranslator(const TokenizedBuffer* buffer)
       : buffer_(buffer) {}
@@ -216,7 +218,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Prints a description of a single token.  See `Print` for details on the
   // format.
-  auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token) const -> void;
+  auto PrintToken(llvm::raw_ostream& output_stream, TokenIndex token) const
+      -> void;
 
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
