@@ -58,7 +58,7 @@ class [[clang::internal_linkage]] Lexer {
     // Consumes (and discard) a valid token to construct a result
     // indicating a token has been produced. Relies on implicit conversions.
     // NOLINTNEXTLINE(google-explicit-constructor)
-    LexResult(Token /*discarded_token*/) : LexResult(true) {}
+    LexResult(TokenIndex /*discarded_token*/) : LexResult(true) {}
 
     // Returns a result indicating no token was produced.
     static auto NoMatch() -> LexResult { return LexResult(false); }
@@ -89,7 +89,7 @@ class [[clang::internal_linkage]] Lexer {
   // But because it can, the compiler will flatten this otherwise.
   [[gnu::noinline]] auto CreateLines(llvm::StringRef source_text) -> void;
 
-  auto current_line() -> Line { return Line(line_index_); }
+  auto current_line() -> LineIndex { return LineIndex(line_index_); }
 
   auto current_line_info() -> TokenizedBuffer::LineInfo* {
     return &buffer_.line_infos_[line_index_];
@@ -125,7 +125,7 @@ class [[clang::internal_linkage]] Lexer {
       -> LexResult;
 
   auto LexOneCharSymbolToken(llvm::StringRef source_text, TokenKind kind,
-                             ssize_t& position) -> Token;
+                             ssize_t& position) -> TokenIndex;
 
   auto LexOpeningSymbolToken(llvm::StringRef source_text, TokenKind kind,
                              ssize_t& position) -> LexResult;
@@ -170,7 +170,7 @@ class [[clang::internal_linkage]] Lexer {
 
   ssize_t line_index_;
 
-  llvm::SmallVector<Token> open_groups_;
+  llvm::SmallVector<TokenIndex> open_groups_;
 
   ErrorTrackingDiagnosticConsumer consumer_;
 
@@ -937,7 +937,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
     return LexError(source_text, position);
   }
 
-  Line string_line = current_line();
+  LineIndex string_line = current_line();
   int string_column = ComputeColumn(position);
   ssize_t literal_size = literal->text().size();
   position += literal_size;
@@ -975,7 +975,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
 }
 
 auto Lexer::LexOneCharSymbolToken(llvm::StringRef source_text, TokenKind kind,
-                                  ssize_t& position) -> Token {
+                                  ssize_t& position) -> TokenIndex {
   // Verify in a debug build that the incoming token kind is correct.
   CARBON_DCHECK(kind != TokenKind::Error);
   CARBON_DCHECK(kind.fixed_spelling().size() == 1);
@@ -984,16 +984,16 @@ auto Lexer::LexOneCharSymbolToken(llvm::StringRef source_text, TokenKind kind,
       << "' instead of the spelling '" << kind.fixed_spelling()
       << "' of the incoming token kind '" << kind << "'";
 
-  Token token = buffer_.AddToken({.kind = kind,
-                                  .token_line = current_line(),
-                                  .column = ComputeColumn(position)});
+  TokenIndex token = buffer_.AddToken({.kind = kind,
+                                       .token_line = current_line(),
+                                       .column = ComputeColumn(position)});
   ++position;
   return token;
 }
 
 auto Lexer::LexOpeningSymbolToken(llvm::StringRef source_text, TokenKind kind,
                                   ssize_t& position) -> LexResult {
-  Token token = LexOneCharSymbolToken(source_text, kind, position);
+  TokenIndex token = LexOneCharSymbolToken(source_text, kind, position);
   open_groups_.push_back(token);
   return token;
 }
@@ -1004,10 +1004,10 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
     CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
                       "Closing symbol without a corresponding opening symbol.");
     emitter_.Emit(source_text.begin() + position, UnmatchedClosing);
-    Token token = buffer_.AddToken({.kind = TokenKind::Error,
-                                    .token_line = current_line(),
-                                    .column = ComputeColumn(position),
-                                    .error_length = 1});
+    TokenIndex token = buffer_.AddToken({.kind = TokenKind::Error,
+                                         .token_line = current_line(),
+                                         .column = ComputeColumn(position),
+                                         .error_length = 1});
     ++position;
     return token;
   };
@@ -1017,7 +1017,7 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
     return unmatched_error();
   }
 
-  Token opening_token = open_groups_.back();
+  TokenIndex opening_token = open_groups_.back();
   // Close any invalid open groups first.
   if (LLVM_UNLIKELY(buffer_.GetTokenInfo(opening_token).kind !=
                     kind.opening_symbol())) {
@@ -1033,7 +1033,7 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   open_groups_.pop_back();
 
   // Now that the groups are all matched up, lex the actual token.
-  Token token = LexOneCharSymbolToken(source_text, kind, position);
+  TokenIndex token = LexOneCharSymbolToken(source_text, kind, position);
 
   // Note that it is important to get fresh token infos here as lexing the
   // open token would invalidate any pointers.
@@ -1059,9 +1059,9 @@ auto Lexer::LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
     return LexError(source_text, position);
   }
 
-  Token token = buffer_.AddToken({.kind = kind,
-                                  .token_line = current_line(),
-                                  .column = ComputeColumn(position)});
+  TokenIndex token = buffer_.AddToken({.kind = kind,
+                                       .token_line = current_line(),
+                                       .column = ComputeColumn(position)});
   position += kind.fixed_spelling().size();
   return token;
 }
@@ -1119,7 +1119,7 @@ auto Lexer::CloseInvalidOpenGroups(TokenKind kind, ssize_t position) -> void {
   int column = ComputeColumn(position);
 
   do {
-    Token opening_token = open_groups_.back();
+    TokenIndex opening_token = open_groups_.back();
     TokenKind opening_kind = buffer_.GetTokenInfo(opening_token).kind;
     if (kind == opening_kind.closing_symbol()) {
       return;
@@ -1133,11 +1133,11 @@ auto Lexer::CloseInvalidOpenGroups(TokenKind kind, ssize_t position) -> void {
 
     CARBON_CHECK(!buffer_.tokens().empty())
         << "Must have a prior opening token!";
-    Token prev_token = buffer_.tokens().end()[-1];
+    TokenIndex prev_token = buffer_.tokens().end()[-1];
 
     // TODO: do a smarter backwards scan for where to put the closing
     // token.
-    Token closing_token = buffer_.AddToken(
+    TokenIndex closing_token = buffer_.AddToken(
         {.kind = opening_kind.closing_symbol(),
          .has_trailing_space = buffer_.HasTrailingWhitespace(prev_token),
          .is_recovery = true,

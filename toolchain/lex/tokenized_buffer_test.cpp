@@ -588,7 +588,7 @@ TEST_F(LexerTest, Whitespace) {
                   // EOF
                   false};
   int pos = 0;
-  for (Token token : buffer.tokens()) {
+  for (TokenIndex token : buffer.tokens()) {
     SCOPED_TRACE(
         llvm::formatv("Token #{0}: '{1}'", token, buffer.GetTokenText(token)));
 
@@ -856,7 +856,7 @@ TEST_F(LexerTest, InvalidStringLiterals) {
 
     // We should have formed at least one error token.
     bool found_error = false;
-    for (Token token : buffer.tokens()) {
+    for (TokenIndex token : buffer.tokens()) {
       if (buffer.GetKind(token) == TokenKind::Error) {
         found_error = true;
         break;

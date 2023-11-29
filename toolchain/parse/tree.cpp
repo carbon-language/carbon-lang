@@ -93,7 +93,7 @@ auto Tree::node_kind(NodeId n) const -> NodeKind {
   return node_impls_[n.index].kind;
 }
 
-auto Tree::node_token(NodeId n) const -> Lex::Token {
+auto Tree::node_token(NodeId n) const -> Lex::TokenIndex {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].token;
 }

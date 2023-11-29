@@ -17,7 +17,7 @@
 //   - CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount, LexTokenKinds)
 //     Defines a parse node with a set number of children, often 0. This count
 //     must be correct even when the node contains errors.
-//   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, Token)
+//   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, TokenIndex)
 //     Defines a parse node that corresponds to a token that is a single-token
 //     literal. The token is wrapped for LexTokenKinds.
 //

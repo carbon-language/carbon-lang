@@ -21,7 +21,7 @@
 //   - CARBON_KEYWORD_TOKEN(Name, Spelling)
 //     Defines a keyword which has the provided spelling, such as `if`.
 //     Spellings must be unique.
-//   - CARBON_TOKEN_WITH_VIRTUAL_NODE(Token)
+//   - CARBON_TOKEN_WITH_VIRTUAL_NODE(TokenIndex)
 //     Wrapped around one of the abokve _TOKEN macros, indicates that this
 //     token has one additional virtual node in the parse tree.
 //
