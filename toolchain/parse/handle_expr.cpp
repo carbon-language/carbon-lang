@@ -93,7 +93,7 @@ auto HandleExprInPostfix(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::RealLiteral: {
-      context.AddLeafNode(NodeKind::FloatingPointLiteral, context.Consume());
+      context.AddLeafNode(NodeKind::RealLiteral, context.Consume());
       context.PushState(state);
       break;
     }
