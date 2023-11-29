@@ -48,8 +48,8 @@ auto NodeKind::child_count() const -> int32_t {
 }
 
 // NOLINTNEXTLINE(readability-function-size): It's hard to extract macros.
-void CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
-                                bool has_error) {
+auto CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
+                                bool has_error) -> void {
   switch (node_kind) {
     // Use `CARBON_LOG CARBON_ANY_TOKEN` to discover which combinations happen
     // in practice.
