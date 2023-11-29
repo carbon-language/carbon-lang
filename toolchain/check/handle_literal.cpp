@@ -75,7 +75,7 @@ auto HandleUnsignedIntTypeLiteral(Context& context, Parse::NodeId parse_node)
   return context.TODO(parse_node, "Need to support unsigned type literals");
 }
 
-auto HandleFloatingPointTypeLiteral(Context& context, Parse::NodeId parse_node)
+auto HandleFloatTypeLiteral(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto text = context.tokens().GetTokenText(
       context.parse_tree().node_token(parse_node));
