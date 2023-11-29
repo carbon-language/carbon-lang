@@ -61,10 +61,10 @@
 #endif
 
 // The start of the file.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0, CARBON_TOKEN(StartOfFile))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0, CARBON_TOKEN(FileStart))
 
 // The end of the file.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, CARBON_TOKEN(EndOfFile))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, CARBON_TOKEN(FileEnd))
 
 // An invalid parse. Used to balance the parse tree. Always has an error.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0,

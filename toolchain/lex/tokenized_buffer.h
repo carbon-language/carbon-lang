@@ -41,7 +41,7 @@ class TokenizedBuffer;
 // All other APIs to query a `Token` are on the `TokenizedBuffer`.
 struct Token : public ComparableIndexBase {
   static const Token Invalid;
-  // Comments aren't tokenized, so this is the first token after StartOfFile.
+  // Comments aren't tokenized, so this is the first token after FileStart.
   static const Token FirstNonCommentToken;
   using ComparableIndexBase::ComparableIndexBase;
 };

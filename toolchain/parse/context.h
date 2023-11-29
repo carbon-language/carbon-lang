@@ -50,7 +50,7 @@ class Context {
 
   // Used for restricting ordering of `package` and `import` directives.
   enum class PackagingState : int8_t {
-    StartOfFile,
+    FileStart,
     InImports,
     AfterNonPackagingDecl,
     // A warning about `import` placement has been issued so we don't keep
@@ -359,13 +359,13 @@ class Context {
 
   // The current position within the token buffer.
   Lex::TokenIterator position_;
-  // The EndOfFile token.
+  // The FileEnd token.
   Lex::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
 
   // The current packaging state, whether `import`/`package` are allowed.
-  PackagingState packaging_state_ = PackagingState::StartOfFile;
+  PackagingState packaging_state_ = PackagingState::FileStart;
   // The first non-packaging token, starting as invalid. Used for packaging
   // state warnings.
   Lex::Token first_non_packaging_token_ = Lex::Token::Invalid;

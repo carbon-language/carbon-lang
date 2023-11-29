@@ -81,8 +81,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
   }
 
-  if (token_info.kind == TokenKind::StartOfFile ||
-      token_info.kind == TokenKind::EndOfFile) {
+  if (token_info.kind == TokenKind::FileStart ||
+      token_info.kind == TokenKind::FileEnd) {
     return llvm::StringRef();
   }
 

@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: - filename: numeric_literals.carbon
 // CHECK:STDOUT:   tokens: [
-// CHECK:STDOUT:     { index:  0, kind:              'StartOfFile', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
+// CHECK:STDOUT:     { index:  0, kind:                'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 
 fn F() {
 // CHECK:STDOUT:     { index:  1, kind:                       'Fn', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'fn', has_trailing_space: true },
@@ -82,5 +82,5 @@ fn F() {
 }
 // CHECK:STDOUT:     { index: 54, kind:          'CloseCurlyBrace', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '}', opening_token: 5, has_trailing_space: true },
 
-// CHECK:STDOUT:     { index: 55, kind:                'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 55, kind:                  'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]

@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: - filename: raw_identifier.carbon
 // CHECK:STDOUT:   tokens: [
-// CHECK:STDOUT:     { index: 0, kind:         'StartOfFile', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 0, kind:           'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 
 // A non-keyword identifier.
 r#foo
@@ -31,5 +31,5 @@ r#i32
 i32
 // CHECK:STDOUT:     { index: 6, kind:  'IntegerTypeLiteral', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'i32', has_trailing_space: true },
 
-// CHECK:STDOUT:     { index: 7, kind:           'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 7, kind:             'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]

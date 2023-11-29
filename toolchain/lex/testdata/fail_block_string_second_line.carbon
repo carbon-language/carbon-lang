@@ -12,7 +12,7 @@
 // CHECK:STDERR:   ^
 var s: String = '''
   error here: '''
-// CHECK:STDOUT:     { index: 0, kind:       'StartOfFile', line:  1, column:  1, indent: 1, spelling: '', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 0, kind:         'FileStart', line:  1, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 // CHECK:STDOUT:     { index: 1, kind:               'Var', line: {{ *}}[[@LINE-3]], column:  1, indent: 1, spelling: 'var', has_trailing_space: true },
 // CHECK:STDOUT:     { index: 2, kind:        'Identifier', line: {{ *}}[[@LINE-4]], column:  5, indent: 1, spelling: 's', identifier: 0 },
 // CHECK:STDOUT:     { index: 3, kind:             'Colon', line: {{ *}}[[@LINE-5]], column:  6, indent: 1, spelling: ':', has_trailing_space: true },
@@ -21,5 +21,5 @@ var s: String = '''
 // CHECK:STDOUT:     { index: 6, kind:     'StringLiteral', line: {{ *}}[[@LINE-8]], column: 17, indent: 1, spelling: ''''
 // CHECK:STDOUT:   error here: '''', value: `error here: `, has_trailing_space: true },
 
-// CHECK:STDOUT:     { index: 7, kind:         'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 7, kind:           'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]
