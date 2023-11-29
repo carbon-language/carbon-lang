@@ -20,7 +20,7 @@ class NumericLiteral {
   enum class Radix : int8_t { Binary = 2, Decimal = 10, Hexadecimal = 16 };
 
   // Value of an integer literal.
-  struct IntegerValue {
+  struct IntValue {
     // An unsigned literal value.
     llvm::APInt value;
   };
@@ -37,7 +37,7 @@ class NumericLiteral {
 
   struct UnrecoverableError {};
 
-  using Value = std::variant<IntegerValue, RealValue, UnrecoverableError>;
+  using Value = std::variant<IntValue, RealValue, UnrecoverableError>;
 
   // Extract a numeric literal from the given text, if it has a suitable form.
   //

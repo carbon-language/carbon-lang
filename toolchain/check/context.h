@@ -297,7 +297,7 @@ class Context {
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
     return sem_ir().identifiers();
   }
-  auto integers() -> ValueStore<IntegerId>& { return sem_ir().integers(); }
+  auto ints() -> ValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
   auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
     return sem_ir().string_literals();

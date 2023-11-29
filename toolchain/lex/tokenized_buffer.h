@@ -151,8 +151,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // an `Identifier`.
   auto GetIdentifier(TokenIndex token) const -> IdentifierId;
 
-  // Returns the value of an `IntegerLiteral()` token.
-  auto GetIntegerLiteral(TokenIndex token) const -> IntegerId;
+  // Returns the value of an `IntLiteral()` token.
+  auto GetIntLiteral(TokenIndex token) const -> IntId;
 
   // Returns the value of an `RealLiteral()` token.
   auto GetRealLiteral(TokenIndex token) const -> RealId;
@@ -294,7 +294,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
       IdentifierId ident_id = IdentifierId::Invalid;
       StringLiteralId string_literal_id;
-      IntegerId integer_id;
+      IntId int_id;
       RealId real_id;
       TokenIndex closing_token;
       TokenIndex opening_token;

@@ -136,9 +136,9 @@ static auto MakeElementAccessInst(Context& context, Parse::NodeId parse_node,
     // TODO: Add a new instruction kind for indexing an array at a constant
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
-    auto index_id = block.AddInst(SemIR::IntegerLiteral{
-        parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
-        context.sem_ir().integers().Add(llvm::APInt(32, i))});
+    auto index_id = block.AddInst(SemIR::IntLiteral{
+        parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntType),
+        context.sem_ir().ints().Add(llvm::APInt(32, i))});
     return block.AddInst(
         AccessInstT{parse_node, elem_type_id, aggregate_id, index_id});
   } else {
