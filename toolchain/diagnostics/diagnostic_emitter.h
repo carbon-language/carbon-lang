@@ -161,7 +161,7 @@ struct DiagnosticBase {
       : Kind(kind), Level(level), Format(format) {
     static_assert(
         (... && !std::is_same_v<Args, llvm::StringRef>),
-        "Use std::string or llvm::StringLiteral for diagnostic lifetimes.");
+        "Use std::string or llvm::StringLiteral for diagnostics to avoid lifetime issues.");
   }
 
   // Calls formatv with the diagnostic's arguments.
