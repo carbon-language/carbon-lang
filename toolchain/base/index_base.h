@@ -15,15 +15,20 @@ namespace Carbon {
 template <typename DataType>
 class DataIterator;
 
-// A lightweight handle to an item in a vector.
+// A lightweight handle to an item identified by an opaque ID.
 //
-// DataIndex is designed to be passed by value, not reference or pointer. They
-// are also designed to be small and efficient to store in data structures.
-struct IndexBase : public Printable<IndexBase> {
+// This class is intended to be derived from by classes representing a specific
+// kind of ID, whose meaning as an integer is an implementation detail of the
+// type that vends the IDs. Typically this will be a vector index.
+//
+// Classes derived from IdBase are designed to be passed by value, not
+// reference or pointer. They are also designed to be small and efficient to
+// store in data structures.
+struct IdBase : public Printable<IdBase> {
   static constexpr int32_t InvalidIndex = -1;
 
-  IndexBase() = delete;
-  constexpr explicit IndexBase(int index) : index(index) {}
+  IdBase() = delete;
+  constexpr explicit IdBase(int index) : index(index) {}
 
   auto Print(llvm::raw_ostream& output) const -> void {
     if (is_valid()) {
@@ -38,48 +43,52 @@ struct IndexBase : public Printable<IndexBase> {
   int32_t index;
 };
 
-// Like IndexBase, but also provides < and > comparison operators.
-struct ComparableIndexBase : public IndexBase {
-  using IndexBase::IndexBase;
+// A lightweight handle to an item that behaves like an index.
+//
+// Unlike IdBase, classes derived from IndexBase are not completely opaque, and
+// provide at least an ordering between indexes that has meaning to an API
+// user. Additional semantics may be specified by the derived class.
+struct IndexBase : public IdBase {
+  using IdBase::IdBase;
 };
 
-// Equality comparison for both IndexBase and ComparableIndexBase.
+// Equality comparison for both IdBase and IndexBase.
 template <typename IndexType,
-          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
+          typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* =
               nullptr>
 auto operator==(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index == rhs.index;
 }
 template <typename IndexType,
-          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
+          typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* =
               nullptr>
 auto operator!=(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index != rhs.index;
 }
 
-// The < and > comparisons for only ComparableIndexBase.
+// The < and > comparisons for only IndexBase.
 template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
-                                  ComparableIndexBase, IndexType>>* = nullptr>
+                                  IndexBase, IndexType>>* = nullptr>
 auto operator<(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index < rhs.index;
 }
 template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
-                                  ComparableIndexBase, IndexType>>* = nullptr>
+                                  IndexBase, IndexType>>* = nullptr>
 auto operator<=(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index <= rhs.index;
 }
 template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
-                                  ComparableIndexBase, IndexType>>* = nullptr>
+                                  IndexBase, IndexType>>* = nullptr>
 auto operator>(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index > rhs.index;
 }
 template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
-                                  ComparableIndexBase, IndexType>>* = nullptr>
+                                  IndexBase, IndexType>>* = nullptr>
 auto operator>=(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index >= rhs.index;
 }
 
-// Provides base support for use of IndexBase types as DenseMap/DenseSet keys.
+// Provides base support for use of IdBase types as DenseMap/DenseSet keys.
 //
 // Usage (in global namespace):
 //   template <>

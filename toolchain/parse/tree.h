@@ -23,11 +23,11 @@ namespace Carbon::Parse {
 // Objects of this type are small and cheap to copy and store. They don't
 // contain any of the information about the node, and serve as a handle that
 // can be used with the underlying tree to query for detailed information.
-struct NodeId : public IndexBase {
+struct NodeId : public IdBase {
   // An explicitly invalid instance.
   static const NodeId Invalid;
 
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
 };
 
 constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
