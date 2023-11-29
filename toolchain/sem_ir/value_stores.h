@@ -42,7 +42,7 @@ class InstStore {
   auto size() const -> int { return values_.size(); }
 
  private:
-  ValueStore<InstId, Inst> values_;
+  ValueStore<InstId> values_;
 };
 
 // Provides storage for instructions representing global constants.
@@ -109,8 +109,8 @@ class NameScopeStore {
 
   // Adds an entry to a name scope. Returns true on success, false on
   // duplicates.
-  auto AddEntry(NameScopeId scope_id, NameId name_id, InstId target_id)
-      -> bool {
+  auto AddEntry(NameScopeId scope_id, NameId name_id,
+                InstId target_id) -> bool {
     return values_.Get(scope_id).insert({name_id, target_id}).second;
   }
 
@@ -121,7 +121,7 @@ class NameScopeStore {
   }
 
  private:
-  ValueStore<NameScopeId, llvm::DenseMap<NameId, InstId>> values_;
+  ValueStore<NameScopeId> values_;
 };
 
 // Provides a block-based ValueStore, which uses slab allocation of added
@@ -130,22 +130,31 @@ class NameScopeStore {
 //
 // BlockValueStore is used as-is, but there are also children that expose the
 // protected members for type-specific functionality.
-template <typename IdT, typename ValueT>
-class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
+//
+// On IdT, this requires:
+//   - IdT::ValueType to represent the underlying type in the block.
+//   - IdT::IndexedType to be llvm::MutableArrayRef<IdT::ValueType> for
+//     compatibility with ValueStore.
+template <typename IdT>
+class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
  public:
   explicit BlockValueStore(llvm::BumpPtrAllocator& allocator)
       : allocator_(&allocator) {}
 
   // Adds a block with the given content, returning an ID to reference it.
-  auto Add(llvm::ArrayRef<ValueT> content) -> IdT {
+  auto Add(llvm::ArrayRef<typename IdT::ValueType> content) -> IdT {
     return values_.Add(AllocateCopy(content));
   }
 
   // Returns the requested block.
-  auto Get(IdT id) const -> llvm::ArrayRef<ValueT> { return values_.Get(id); }
+  auto Get(IdT id) const -> llvm::ArrayRef<typename IdT::ValueType> {
+    return values_.Get(id);
+  }
 
   // Returns the requested block.
-  auto Get(IdT id) -> llvm::MutableArrayRef<ValueT> { return values_.Get(id); }
+  auto Get(IdT id) -> llvm::MutableArrayRef<typename IdT::ValueType> {
+    return values_.Get(id);
+  }
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
@@ -183,32 +192,32 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
 
  private:
   // Allocates an uninitialized array using our slab allocator.
-  auto AllocateUninitialized(std::size_t size)
-      -> llvm::MutableArrayRef<ValueT> {
+  auto AllocateUninitialized(std::size_t size) -> typename IdT::IndexedType {
     // We're not going to run a destructor, so ensure that's OK.
-    static_assert(std::is_trivially_destructible_v<ValueT>);
+    static_assert(std::is_trivially_destructible_v<typename IdT::ValueType>);
 
-    auto storage = static_cast<ValueT*>(
-        allocator_->Allocate(size * sizeof(ValueT), alignof(ValueT)));
-    return llvm::MutableArrayRef<ValueT>(storage, size);
+    auto storage = static_cast<typename IdT::ValueType*>(
+        allocator_->Allocate(size * sizeof(typename IdT::ValueType),
+                             alignof(typename IdT::ValueType)));
+    return typename IdT::IndexedType(storage, size);
   }
 
   // Allocates a copy of the given data using our slab allocator.
-  auto AllocateCopy(llvm::ArrayRef<ValueT> data)
-      -> llvm::MutableArrayRef<ValueT> {
+  auto AllocateCopy(llvm::ArrayRef<typename IdT::ValueType> data) ->
+      typename IdT::IndexedType {
     auto result = AllocateUninitialized(data.size());
     std::uninitialized_copy(data.begin(), data.end(), result.begin());
     return result;
   }
 
   llvm::BumpPtrAllocator* allocator_;
-  ValueStore<IdT, llvm::MutableArrayRef<ValueT>> values_;
+  ValueStore<IdT> values_;
 };
 
 // Adapts BlockValueStore for instruction blocks.
-class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
+class InstBlockStore : public BlockValueStore<InstBlockId> {
  public:
-  using BaseType = BlockValueStore<InstBlockId, InstId>;
+  using BaseType = BlockValueStore<InstBlockId>;
 
   using BaseType::AddDefaultValue;
   using BaseType::AddUninitialized;
@@ -216,7 +225,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
     CARBON_CHECK(block_id != InstBlockId::Unreachable);
-    BlockValueStore<InstBlockId, InstId>::Set(block_id, content);
+    BlockValueStore<InstBlockId>::Set(block_id, content);
   }
 };
 

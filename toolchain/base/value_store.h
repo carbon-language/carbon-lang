@@ -117,14 +117,17 @@ class ValueStoreNotPrintable {};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
-template <typename IdT, typename ValueT = typename IdT::IndexedType>
+//
+// IdT::IndexedType must represent the type being indexed.
+template <typename IdT>
 class ValueStore
-    : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
-                              Yaml::Printable<ValueStore<IdT, ValueT>>,
-                              Internal::ValueStoreNotPrintable> {
+    : public std::conditional<
+          std::is_base_of_v<Printable<typename IdT::IndexedType>,
+                            typename IdT::IndexedType>,
+          Yaml::Printable<ValueStore<IdT>>, Internal::ValueStoreNotPrintable> {
  public:
   // Stores the value and returns an ID to reference it.
-  auto Add(ValueT value) -> IdT {
+  auto Add(typename IdT::IndexedType value) -> IdT {
     IdT id = IdT(values_.size());
     CARBON_CHECK(id.index >= 0) << "Id overflow";
     values_.push_back(std::move(value));
@@ -139,13 +142,13 @@ class ValueStore
   }
 
   // Returns a mutable value for an ID.
-  auto Get(IdT id) -> ValueT& {
+  auto Get(IdT id) -> typename IdT::IndexedType& {
     CARBON_CHECK(id.index >= 0) << id.index;
     return values_[id.index];
   }
 
   // Returns the value for an ID.
-  auto Get(IdT id) const -> const ValueT& {
+  auto Get(IdT id) const -> const typename IdT::IndexedType& {
     CARBON_CHECK(id.index >= 0) << id.index;
     return values_[id.index];
   }
@@ -163,11 +166,13 @@ class ValueStore
     });
   }
 
-  auto array_ref() const -> llvm::ArrayRef<ValueT> { return values_; }
+  auto array_ref() const -> llvm::ArrayRef<typename IdT::IndexedType> {
+    return values_;
+  }
   auto size() const -> int { return values_.size(); }
 
  private:
-  llvm::SmallVector<std::decay_t<ValueT>> values_;
+  llvm::SmallVector<std::decay_t<typename IdT::IndexedType>> values_;
 };
 
 // Storage for StringRefs. The caller is responsible for ensuring storage is

@@ -289,16 +289,12 @@ class File : public Printable<File> {
     return value_stores_->string_literals();
   }
 
-  auto functions() -> ValueStore<FunctionId, Function>& { return functions_; }
-  auto functions() const -> const ValueStore<FunctionId, Function>& {
-    return functions_;
-  }
-  auto classes() -> ValueStore<ClassId, Class>& { return classes_; }
-  auto classes() const -> const ValueStore<ClassId, Class>& { return classes_; }
-  auto cross_ref_irs() -> ValueStore<CrossRefIRId, const File*>& {
-    return cross_ref_irs_;
-  }
-  auto cross_ref_irs() const -> const ValueStore<CrossRefIRId, const File*>& {
+  auto functions() -> ValueStore<FunctionId>& { return functions_; }
+  auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
+  auto classes() -> ValueStore<ClassId>& { return classes_; }
+  auto classes() const -> const ValueStore<ClassId>& { return classes_; }
+  auto cross_ref_irs() -> ValueStore<CrossRefIRId>& { return cross_ref_irs_; }
+  auto cross_ref_irs() const -> const ValueStore<CrossRefIRId>& {
     return cross_ref_irs_;
   }
   auto names() const -> NameStoreWrapper {
@@ -306,12 +302,10 @@ class File : public Printable<File> {
   }
   auto name_scopes() -> NameScopeStore& { return name_scopes_; }
   auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }
-  auto types() -> ValueStore<TypeId, TypeInfo>& { return types_; }
-  auto types() const -> const ValueStore<TypeId, TypeInfo>& { return types_; }
-  auto type_blocks() -> BlockValueStore<TypeBlockId, TypeId>& {
-    return type_blocks_;
-  }
-  auto type_blocks() const -> const BlockValueStore<TypeBlockId, TypeId>& {
+  auto types() -> ValueStore<TypeId>& { return types_; }
+  auto types() const -> const ValueStore<TypeId>& { return types_; }
+  auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
+  auto type_blocks() const -> const BlockValueStore<TypeBlockId>& {
     return type_blocks_;
   }
   auto insts() -> InstStore& { return insts_; }
@@ -353,28 +347,28 @@ class File : public Printable<File> {
   std::string filename_;
 
   // Storage for callable objects.
-  ValueStore<FunctionId, Function> functions_;
+  ValueStore<FunctionId> functions_;
 
   // Storage for classes.
-  ValueStore<ClassId, Class> classes_;
+  ValueStore<ClassId> classes_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
   // crossing instruction blocks).
-  ValueStore<CrossRefIRId, const File*> cross_ref_irs_;
+  ValueStore<CrossRefIRId> cross_ref_irs_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_;
 
   // Descriptions of types used in this file.
-  ValueStore<TypeId, TypeInfo> types_;
+  ValueStore<TypeId> types_;
 
   // Types that were completed in this file.
   llvm::SmallVector<TypeId> complete_types_;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.
-  BlockValueStore<TypeBlockId, TypeId> type_blocks_;
+  BlockValueStore<TypeBlockId> type_blocks_;
 
   // All instructions. The first entries will always be cross-references to
   // builtins, at indices matching BuiltinKind ordering.
