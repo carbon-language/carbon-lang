@@ -94,6 +94,10 @@ static_assert(sizeof(InstKind) == 1, "Kind objects include padding!");
 // thin wrapper around an instruction kind index.
 class InstKind::Definition : public InstKind {
  public:
+  // Not copyable.
+  Definition(const Definition&) = delete;
+  auto operator=(const Definition&) -> Definition& = delete;
+
   // Returns the name to use for this instruction kind in Semantics IR.
   constexpr auto ir_name() const -> llvm::StringLiteral { return ir_name_; }
 
@@ -109,10 +113,6 @@ class InstKind::Definition : public InstKind {
   constexpr Definition(InstKind kind, llvm::StringLiteral ir_name,
                        TerminatorKind terminator_kind)
       : InstKind(kind), ir_name_(ir_name), terminator_kind_(terminator_kind) {}
-
-  // Not copyable.
-  Definition(const Definition&) = delete;
-  Definition& operator=(const Definition&) = delete;
 
   llvm::StringLiteral ir_name_;
   TerminatorKind terminator_kind_;

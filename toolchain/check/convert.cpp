@@ -10,11 +10,8 @@
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/check/context.h"
-#include "toolchain/diagnostics/diagnostic_kind.h"
-#include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -213,7 +210,7 @@ class CopyOnWriteBlock {
     }
   }
 
-  auto id() -> SemIR::InstBlockId const { return id_; }
+  auto id() const -> SemIR::InstBlockId { return id_; }
 
   auto Set(int i, SemIR::InstId value) -> void {
     if (source_id_.is_valid() && file_.inst_blocks().Get(id_)[i] == value) {
@@ -579,8 +576,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
 // Returns whether `category` is a valid expression category to produce as a
 // result of a conversion with kind `target_kind`, or at most needs a temporary
 // to be materialized.
-static bool IsValidExprCategoryForConversionTarget(
-    SemIR::ExprCategory category, ConversionTarget::Kind target_kind) {
+static auto IsValidExprCategoryForConversionTarget(
+    SemIR::ExprCategory category, ConversionTarget::Kind target_kind) -> bool {
   switch (target_kind) {
     case ConversionTarget::Value:
       return category == SemIR::ExprCategory::Value;
@@ -720,8 +717,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
         // iterative approach.
         type_ids.push_back(ExprAsType(context, parse_node, tuple_inst_id));
       }
-      auto tuple_type_id =
-          context.CanonicalizeTupleType(parse_node, std::move(type_ids));
+      auto tuple_type_id = context.CanonicalizeTupleType(parse_node, type_ids);
       return sem_ir.GetTypeAllowBuiltinTypes(tuple_type_id);
     }
 

@@ -45,7 +45,7 @@ class Context {
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
-                   SemIR::File& semantics, llvm::raw_ostream* vlog_stream);
+                   SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(Parse::NodeId parse_node, std::string label) -> bool;
@@ -136,7 +136,7 @@ class Context {
   // If there is no `returned var` in scope, sets the given instruction to be
   // the current `returned var` and returns an invalid instruction ID. If there
   // is already a `returned var`, returns it instead.
-  auto SetReturnedVarOrGetExisting(SemIR::InstId bind_id) -> SemIR::InstId;
+  auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
   // Follows NameRef instructions to find the value named by a given
   // instruction.
@@ -178,8 +178,8 @@ class Context {
   // corresponding result values are the elements of `block_args`. Returns an
   // instruction referring to the result value.
   auto AddConvergenceBlockWithArgAndPush(
-      Parse::NodeId parse_node,
-      std::initializer_list<SemIR::InstId> blocks_and_args) -> SemIR::InstId;
+      Parse::NodeId parse_node, std::initializer_list<SemIR::InstId> block_args)
+      -> SemIR::InstId;
 
   // Add the current code block to the enclosing function.
   // TODO: The parse_node is taken for expressions, which can occur in

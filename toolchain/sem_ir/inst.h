@@ -191,7 +191,8 @@ static_assert(sizeof(Inst) == 20, "Unexpected Inst size");
 
 // Typed instructions can be printed by converting them to instructions.
 template <typename TypedInst, typename = TypedInstArgsInfo<TypedInst>>
-inline llvm::raw_ostream& operator<<(llvm::raw_ostream& out, TypedInst inst) {
+inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
+    -> llvm::raw_ostream& {
   Inst(inst).Print(out);
   return out;
 }

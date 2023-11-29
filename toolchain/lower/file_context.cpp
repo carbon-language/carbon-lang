@@ -11,7 +11,6 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Lower {
 

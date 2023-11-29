@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
-#include <cstdint>
-
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
@@ -129,6 +127,7 @@ struct NameId : public IndexBase, public Printable<NameId> {
 
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
+    // NOLINTNEXTLINE(misc-redundant-expression): Asserting to be sure.
     static_assert(NameId::InvalidIndex == IdentifierId::InvalidIndex);
     CARBON_CHECK(id.index >= 0 || id.index == InvalidIndex)
         << "Unexpected identifier ID";
