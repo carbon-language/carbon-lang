@@ -11,8 +11,8 @@ namespace Carbon::Lex {
 
 // Should guard calls to getAsInteger due to performance issues with large
 // integers. Emits an error if the text cannot be lexed.
-auto CanLexInteger(DiagnosticEmitter<const char*>& emitter,
-                   llvm::StringRef text) -> bool;
+auto CanLexInt(DiagnosticEmitter<const char*>& emitter, llvm::StringRef text)
+    -> bool;
 
 }  // namespace Carbon::Lex
 

@@ -33,8 +33,8 @@ auto HandleArrayExpr(Context& context, Parse::NodeId parse_node) -> bool {
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExprSemi>();
   auto element_type_inst_id = context.node_stack().PopExpr();
   auto bound_inst = context.insts().Get(bound_inst_id);
-  if (auto literal = bound_inst.TryAs<SemIR::IntegerLiteral>()) {
-    const auto& bound_value = context.integers().Get(literal->integer_id);
+  if (auto literal = bound_inst.TryAs<SemIR::IntLiteral>()) {
+    const auto& bound_value = context.ints().Get(literal->int_id);
     // TODO: Produce an error if the array type is too large.
     if (bound_value.getActiveBits() <= 64) {
       context.AddInstAndPush(

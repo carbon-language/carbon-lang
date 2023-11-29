@@ -200,9 +200,9 @@ auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
 }
 
-auto HandleIntegerLiteral(FunctionContext& context, SemIR::InstId inst_id,
-                          SemIR::IntegerLiteral inst) -> void {
-  const llvm::APInt& i = context.sem_ir().integers().Get(inst.integer_id);
+auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
+                      SemIR::IntLiteral inst) -> void {
+  const llvm::APInt& i = context.sem_ir().ints().Get(inst.int_id);
   // TODO: This won't offer correct semantics, but seems close enough for now.
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());

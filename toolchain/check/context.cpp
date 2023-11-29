@@ -717,8 +717,8 @@ class TypeCompleter {
       case SemIR::BuiltinKind::Error:
       case SemIR::BuiltinKind::Invalid:
       case SemIR::BuiltinKind::BoolType:
-      case SemIR::BuiltinKind::IntegerType:
-      case SemIR::BuiltinKind::FloatingPointType:
+      case SemIR::BuiltinKind::IntType:
+      case SemIR::BuiltinKind::FloatType:
       case SemIR::BuiltinKind::NamespaceType:
       case SemIR::BuiltinKind::FunctionType:
       case SemIR::BuiltinKind::BoundMethodType:
@@ -855,7 +855,7 @@ class TypeCompleter {
       case SemIR::FunctionDecl::Kind:
       case SemIR::Import::Kind:
       case SemIR::InitializeFrom::Kind:
-      case SemIR::IntegerLiteral::Kind:
+      case SemIR::IntLiteral::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::NoOp::Kind:

@@ -859,8 +859,8 @@ class Formatter {
 
   auto FormatArg(CrossRefIRId id) -> void { out_ << id; }
 
-  auto FormatArg(IntegerId id) -> void {
-    sem_ir_.integers().Get(id).print(out_, /*isSigned=*/false);
+  auto FormatArg(IntId id) -> void {
+    sem_ir_.ints().Get(id).print(out_, /*isSigned=*/false);
   }
 
   auto FormatArg(MemberIndex index) -> void { out_ << index; }

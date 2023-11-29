@@ -106,7 +106,7 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
   ASSERT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
                   {.kind = TokenKind::FileStart, .line = 1, .column = 1},
-                  {.kind = TokenKind::IntegerLiteral,
+                  {.kind = TokenKind::IntLiteral,
                    .line = 1,
                    .column = 1,
                    .indent_column = 1,
@@ -115,32 +115,32 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
                    .line = 1,
                    .column = 3,
                    .indent_column = 1},
-                  {.kind = TokenKind::IntegerLiteral,
+                  {.kind = TokenKind::IntLiteral,
                    .line = 1,
                    .column = 4,
                    .indent_column = 1,
                    .text = "578"},
-                  {.kind = TokenKind::IntegerLiteral,
+                  {.kind = TokenKind::IntLiteral,
                    .line = 2,
                    .column = 3,
                    .indent_column = 3,
                    .text = "1"},
-                  {.kind = TokenKind::IntegerLiteral,
+                  {.kind = TokenKind::IntLiteral,
                    .line = 2,
                    .column = 6,
                    .indent_column = 3,
                    .text = "2"},
-                  {.kind = TokenKind::IntegerLiteral,
+                  {.kind = TokenKind::IntLiteral,
                    .line = 3,
                    .column = 1,
                    .indent_column = 1,
                    .text = "0x12_3ABC"},
-                  {.kind = TokenKind::IntegerLiteral,
+                  {.kind = TokenKind::IntLiteral,
                    .line = 4,
                    .column = 1,
                    .indent_column = 1,
                    .text = "0b10_10_11"},
-                  {.kind = TokenKind::IntegerLiteral,
+                  {.kind = TokenKind::IntLiteral,
                    .line = 5,
                    .column = 1,
                    .indent_column = 1,
@@ -154,29 +154,22 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
               }));
   auto token_start = buffer.tokens().begin();
   auto token_12 = token_start + 1;
-  EXPECT_EQ(value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_12)),
-            12);
+  EXPECT_EQ(value_stores_.ints().Get(buffer.GetIntLiteral(*token_12)), 12);
   auto token_578 = token_12 + 2;
-  EXPECT_EQ(value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_578)),
-            578);
+  EXPECT_EQ(value_stores_.ints().Get(buffer.GetIntLiteral(*token_578)), 578);
   auto token_1 = token_578 + 1;
-  EXPECT_EQ(value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_1)),
-            1);
+  EXPECT_EQ(value_stores_.ints().Get(buffer.GetIntLiteral(*token_1)), 1);
   auto token_2 = token_1 + 1;
-  EXPECT_EQ(value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_2)),
-            2);
+  EXPECT_EQ(value_stores_.ints().Get(buffer.GetIntLiteral(*token_2)), 2);
   auto token_0x12_3abc = token_2 + 1;
-  EXPECT_EQ(
-      value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_0x12_3abc)),
-      0x12'3abc);
+  EXPECT_EQ(value_stores_.ints().Get(buffer.GetIntLiteral(*token_0x12_3abc)),
+            0x12'3abc);
   auto token_0b10_10_11 = token_0x12_3abc + 1;
-  EXPECT_EQ(
-      value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_0b10_10_11)),
-      0b10'10'11);
+  EXPECT_EQ(value_stores_.ints().Get(buffer.GetIntLiteral(*token_0b10_10_11)),
+            0b10'10'11);
   auto token_1_234_567 = token_0b10_10_11 + 1;
-  EXPECT_EQ(
-      value_stores_.integers().Get(buffer.GetIntegerLiteral(*token_1_234_567)),
-      1'234'567);
+  EXPECT_EQ(value_stores_.ints().Get(buffer.GetIntLiteral(*token_1_234_567)),
+            1'234'567);
   auto token_1_5e9 = token_1_234_567 + 1;
   auto value_1_5e9 =
       value_stores_.reals().Get(buffer.GetRealLiteral(*token_1_5e9));
@@ -196,7 +189,7 @@ TEST_F(LexerTest, HandlesInvalidNumericLiterals) {
                    .column = 1,
                    .indent_column = 1,
                    .text = "14x"},
-                  {.kind = TokenKind::IntegerLiteral,
+                  {.kind = TokenKind::IntLiteral,
                    .line = 1,
                    .column = 5,
                    .indent_column = 1,
@@ -240,13 +233,13 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
   EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {.kind = TokenKind::FileStart},
-                          {.kind = TokenKind::IntegerLiteral, .text = "1"},
+                          {.kind = TokenKind::IntLiteral, .text = "1"},
                           {.kind = TokenKind::Period},
                           // newline
                           {.kind = TokenKind::Period},
-                          {.kind = TokenKind::IntegerLiteral, .text = "2"},
+                          {.kind = TokenKind::IntLiteral, .text = "2"},
                           // newline
-                          {.kind = TokenKind::IntegerLiteral, .text = "3"},
+                          {.kind = TokenKind::IntLiteral, .text = "3"},
                           {.kind = TokenKind::Period},
                           {.kind = TokenKind::Plus},
                           {.kind = TokenKind::Identifier, .text = "foo"},
@@ -257,18 +250,18 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
                           // newline
                           {.kind = TokenKind::RealLiteral, .text = "5.0e+123"},
                           {.kind = TokenKind::Plus},
-                          {.kind = TokenKind::IntegerLiteral, .text = "456"},
+                          {.kind = TokenKind::IntLiteral, .text = "456"},
                           // newline
                           {.kind = TokenKind::Error, .text = "6.0e+1e"},
                           {.kind = TokenKind::Plus},
-                          {.kind = TokenKind::IntegerLiteral, .text = "2"},
+                          {.kind = TokenKind::IntLiteral, .text = "2"},
                           // newline
                           {.kind = TokenKind::Error, .text = "1e7"},
                           // newline
-                          {.kind = TokenKind::IntegerLiteral, .text = "8"},
+                          {.kind = TokenKind::IntLiteral, .text = "8"},
                           {.kind = TokenKind::Period},
                           {.kind = TokenKind::Period},
-                          {.kind = TokenKind::IntegerLiteral, .text = "10"},
+                          {.kind = TokenKind::IntLiteral, .text = "10"},
                           // newline
                           {.kind = TokenKind::RealLiteral, .text = "9.0"},
                           {.kind = TokenKind::Period},
@@ -282,9 +275,9 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
                           // newline
                           {.kind = TokenKind::Error, .text = "12e"},
                           {.kind = TokenKind::Plus},
-                          {.kind = TokenKind::IntegerLiteral, .text = "1"},
+                          {.kind = TokenKind::IntLiteral, .text = "1"},
                           // newline
-                          {.kind = TokenKind::IntegerLiteral, .text = "13"},
+                          {.kind = TokenKind::IntLiteral, .text = "13"},
                           {.kind = TokenKind::Period},
                           {.kind = TokenKind::Underscore},
                           // newline
@@ -312,10 +305,7 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
            .line = 2,
            .column = 1,
            .text = llvm::StringRef("$\0$", 3)},
-          {.kind = TokenKind::IntegerLiteral,
-           .line = 2,
-           .column = 4,
-           .text = "12"},
+          {.kind = TokenKind::IntLiteral, .line = 2, .column = 4, .text = "12"},
           {.kind = TokenKind::Error, .line = 2, .column = 6, .text = "$"},
           // newline
           {.kind = TokenKind::Backslash, .line = 3, .column = 1, .text = "\\"},
@@ -885,17 +875,17 @@ TEST_F(LexerTest, TypeLiterals) {
                    .column = 5,
                    .indent_column = 5,
                    .text = {"i0"}},
-                  {.kind = TokenKind::IntegerTypeLiteral,
+                  {.kind = TokenKind::IntTypeLiteral,
                    .line = 2,
                    .column = 8,
                    .indent_column = 5,
                    .text = {"i1"}},
-                  {.kind = TokenKind::IntegerTypeLiteral,
+                  {.kind = TokenKind::IntTypeLiteral,
                    .line = 2,
                    .column = 11,
                    .indent_column = 5,
                    .text = {"i20"}},
-                  {.kind = TokenKind::IntegerTypeLiteral,
+                  {.kind = TokenKind::IntTypeLiteral,
                    .line = 2,
                    .column = 15,
                    .indent_column = 5,
@@ -911,12 +901,12 @@ TEST_F(LexerTest, TypeLiterals) {
                    .column = 5,
                    .indent_column = 5,
                    .text = {"u0"}},
-                  {.kind = TokenKind::UnsignedIntegerTypeLiteral,
+                  {.kind = TokenKind::UnsignedIntTypeLiteral,
                    .line = 3,
                    .column = 8,
                    .indent_column = 5,
                    .text = {"u1"}},
-                  {.kind = TokenKind::UnsignedIntegerTypeLiteral,
+                  {.kind = TokenKind::UnsignedIntTypeLiteral,
                    .line = 3,
                    .column = 11,
                    .indent_column = 5,
@@ -927,17 +917,17 @@ TEST_F(LexerTest, TypeLiterals) {
                    .indent_column = 5,
                    .text = {"u64b"}},
 
-                  {.kind = TokenKind::FloatingPointTypeLiteral,
+                  {.kind = TokenKind::FloatTypeLiteral,
                    .line = 4,
                    .column = 5,
                    .indent_column = 5,
                    .text = {"f32"}},
-                  {.kind = TokenKind::FloatingPointTypeLiteral,
+                  {.kind = TokenKind::FloatTypeLiteral,
                    .line = 4,
                    .column = 9,
                    .indent_column = 5,
                    .text = {"f80"}},
-                  {.kind = TokenKind::FloatingPointTypeLiteral,
+                  {.kind = TokenKind::FloatTypeLiteral,
                    .line = 4,
                    .column = 13,
                    .indent_column = 5,

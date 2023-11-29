@@ -107,7 +107,7 @@ class NumericLiteral::Parser {
  public:
   Parser(DiagnosticEmitter<const char*>& emitter, NumericLiteral literal);
 
-  auto IsInteger() -> bool {
+  auto IsInt() -> bool {
     return literal_.radix_point_ == static_cast<int>(literal_.text_.size());
   }
 
@@ -200,8 +200,8 @@ auto NumericLiteral::Parser::Check() -> bool {
 // parsing 123.456e7, we want to decompose it into an integer mantissa
 // (123456) and an exponent (7 - 3 = 4), and this routine is given the
 // "123.456" to parse as the mantissa.
-static auto ParseInteger(llvm::StringRef digits, NumericLiteral::Radix radix,
-                         bool needs_cleaning) -> llvm::APInt {
+static auto ParseInt(llvm::StringRef digits, NumericLiteral::Radix radix,
+                     bool needs_cleaning) -> llvm::APInt {
   llvm::SmallString<32> cleaned;
   if (needs_cleaning) {
     cleaned.reserve(digits.size());
@@ -219,9 +219,9 @@ static auto ParseInteger(llvm::StringRef digits, NumericLiteral::Radix radix,
 }
 
 auto NumericLiteral::Parser::GetMantissa() -> llvm::APInt {
-  const char* end = IsInteger() ? int_part_.end() : fract_part_.end();
+  const char* end = IsInt() ? int_part_.end() : fract_part_.end();
   llvm::StringRef digits(int_part_.begin(), end - int_part_.begin());
-  return ParseInteger(digits, radix_, mantissa_needs_cleaning_);
+  return ParseInt(digits, radix_, mantissa_needs_cleaning_);
 }
 
 auto NumericLiteral::Parser::GetExponent() -> llvm::APInt {
@@ -230,7 +230,7 @@ auto NumericLiteral::Parser::GetExponent() -> llvm::APInt {
   llvm::APInt exponent(64, 0);
   if (!exponent_part_.empty()) {
     exponent =
-        ParseInteger(exponent_part_, Radix::Decimal, exponent_needs_cleaning_);
+        ParseInt(exponent_part_, Radix::Decimal, exponent_needs_cleaning_);
 
     // The exponent is a signed integer, and the number we just parsed is
     // non-negative, so ensure we have a wide enough representation to
@@ -327,7 +327,7 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
     CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
   }
 
-  if (!CanLexInteger(emitter_, text)) {
+  if (!CanLexInt(emitter_, text)) {
     return {.ok = false};
   }
 
@@ -401,7 +401,7 @@ auto NumericLiteral::Parser::CheckIntPart() -> bool {
 // Check the fractional part (after the '.' and before the exponent, if any)
 // is valid.
 auto NumericLiteral::Parser::CheckFractionalPart() -> bool {
-  if (IsInteger()) {
+  if (IsInt()) {
     return true;
   }
 
@@ -450,8 +450,8 @@ auto NumericLiteral::ComputeValue(DiagnosticEmitter<const char*>& emitter) const
     return UnrecoverableError();
   }
 
-  if (parser.IsInteger()) {
-    return IntegerValue{.value = parser.GetMantissa()};
+  if (parser.IsInt()) {
+    return IntValue{.value = parser.GetMantissa()};
   }
 
   return RealValue{

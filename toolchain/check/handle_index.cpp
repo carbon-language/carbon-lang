@@ -15,14 +15,13 @@ auto HandleIndexExprStart(Context& /*context*/, Parse::NodeId /*parse_node*/)
   return true;
 }
 
-// Validates that the index (required to be an IntegerLiteral) is valid within
+// Validates that the index (required to be an IntLiteral) is valid within
 // the array or tuple size. Returns the index on success, or nullptr on failure.
-static auto ValidateIntegerLiteralBound(Context& context,
-                                        Parse::NodeId parse_node,
-                                        SemIR::Inst operand_inst,
-                                        SemIR::IntegerLiteral index_inst,
-                                        int size) -> const llvm::APInt* {
-  const auto& index_val = context.integers().Get(index_inst.integer_id);
+static auto ValidateIntLiteralBound(Context& context, Parse::NodeId parse_node,
+                                    SemIR::Inst operand_inst,
+                                    SemIR::IntLiteral index_inst, int size)
+    -> const llvm::APInt* {
+  const auto& index_val = context.ints().Get(index_inst.int_id);
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(IndexOutOfBounds, Error,
                       "Index `{0}` is past the end of `{1}`.", llvm::APSInt,
@@ -51,16 +50,16 @@ auto HandleIndexExpr(Context& context, Parse::NodeId parse_node) -> bool {
       auto array_type = operand_type_inst.As<SemIR::ArrayType>();
       // We can check whether integers are in-bounds, although it doesn't affect
       // the IR for an array.
-      if (auto index_literal = index_inst.TryAs<SemIR::IntegerLiteral>();
+      if (auto index_literal = index_inst.TryAs<SemIR::IntLiteral>();
           index_literal &&
-          !ValidateIntegerLiteralBound(
+          !ValidateIntLiteralBound(
               context, parse_node, operand_inst, *index_literal,
               context.sem_ir().GetArrayBoundValue(array_type.bound_id))) {
         index_inst_id = SemIR::InstId::BuiltinError;
       }
       auto cast_index_id = ConvertToValueOfType(
           context, index_inst.parse_node(), index_inst_id,
-          context.GetBuiltinType(SemIR::BuiltinKind::IntegerType));
+          context.GetBuiltinType(SemIR::BuiltinKind::IntType));
       auto array_cat =
           SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
       if (array_cat == SemIR::ExprCategory::Value) {
@@ -84,20 +83,20 @@ auto HandleIndexExpr(Context& context, Parse::NodeId parse_node) -> bool {
     }
     case SemIR::TupleType::Kind: {
       SemIR::TypeId element_type_id = SemIR::TypeId::Error;
-      if (auto index_literal = index_inst.TryAs<SemIR::IntegerLiteral>()) {
+      if (auto index_literal = index_inst.TryAs<SemIR::IntLiteral>()) {
         auto type_block = context.type_blocks().Get(
             operand_type_inst.As<SemIR::TupleType>().elements_id);
-        if (const auto* index_val = ValidateIntegerLiteralBound(
-                context, parse_node, operand_inst, *index_literal,
-                type_block.size())) {
+        if (const auto* index_val =
+                ValidateIntLiteralBound(context, parse_node, operand_inst,
+                                        *index_literal, type_block.size())) {
           element_type_id = type_block[index_val->getZExtValue()];
         } else {
           index_inst_id = SemIR::InstId::BuiltinError;
         }
       } else if (index_inst.type_id() != SemIR::TypeId::Error) {
-        CARBON_DIAGNOSTIC(TupleIndexIntegerLiteral, Error,
+        CARBON_DIAGNOSTIC(TupleIndexIntLiteral, Error,
                           "Tuples indices must be integer literals.");
-        context.emitter().Emit(parse_node, TupleIndexIntegerLiteral);
+        context.emitter().Emit(parse_node, TupleIndexIntLiteral);
         index_inst_id = SemIR::InstId::BuiltinError;
       }
       context.AddInstAndPush(parse_node,

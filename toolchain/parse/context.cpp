@@ -241,8 +241,7 @@ auto Context::SkipTo(Lex::TokenIndex t) -> void {
 // operand according to the rules for infix operator parsing.
 static auto IsAssumedStartOfOperand(Lex::TokenKind kind) -> bool {
   return kind.IsOneOf({Lex::TokenKind::OpenParen, Lex::TokenKind::Identifier,
-                       Lex::TokenKind::IntegerLiteral,
-                       Lex::TokenKind::RealLiteral,
+                       Lex::TokenKind::IntLiteral, Lex::TokenKind::RealLiteral,
                        Lex::TokenKind::StringLiteral});
 }
 
@@ -252,7 +251,7 @@ static auto IsAssumedEndOfOperand(Lex::TokenKind kind) -> bool {
   return kind.IsOneOf(
       {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseCurlyBrace,
        Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::Identifier,
-       Lex::TokenKind::IntegerLiteral, Lex::TokenKind::RealLiteral,
+       Lex::TokenKind::IntLiteral, Lex::TokenKind::RealLiteral,
        Lex::TokenKind::StringLiteral});
 }
 

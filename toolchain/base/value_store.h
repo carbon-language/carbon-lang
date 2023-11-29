@@ -48,16 +48,16 @@ class Real : public Printable<Real> {
 };
 
 // Corresponds to an integer value represented by an APInt.
-struct IntegerId : public IndexBase, public Printable<IntegerId> {
+struct IntId : public IndexBase, public Printable<IntId> {
   using IndexedType = const llvm::APInt;
-  static const IntegerId Invalid;
+  static const IntId Invalid;
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "int";
     IndexBase::Print(out);
   }
 };
-constexpr IntegerId IntegerId::Invalid(IntegerId::InvalidIndex);
+constexpr IntId IntId::Invalid(IntId::InvalidIndex);
 
 // Corresponds to a Real value.
 struct RealId : public IndexBase, public Printable<RealId> {
@@ -244,8 +244,8 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
     return identifiers_;
   }
-  auto integers() -> ValueStore<IntegerId>& { return integers_; }
-  auto integers() const -> const ValueStore<IntegerId>& { return integers_; }
+  auto ints() -> ValueStore<IntId>& { return ints_; }
+  auto ints() const -> const ValueStore<IntId>& { return ints_; }
   auto reals() -> ValueStore<RealId>& { return reals_; }
   auto reals() const -> const ValueStore<RealId>& { return reals_; }
   auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
@@ -263,7 +263,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
       }
       map.Add("shared_values",
               Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                map.Add("integers", integers_.OutputYaml());
+                map.Add("ints", ints_.OutputYaml());
                 map.Add("reals", reals_.OutputYaml());
                 map.Add("strings", strings_.OutputYaml());
               }));
@@ -271,7 +271,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   }
 
  private:
-  ValueStore<IntegerId> integers_;
+  ValueStore<IntId> ints_;
   ValueStore<RealId> reals_;
 
   ValueStore<StringId> strings_;
