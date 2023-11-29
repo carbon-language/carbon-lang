@@ -23,23 +23,33 @@ enum class RelativeLocation : int8_t {
   Before,
 };
 
+}  // namespace Carbon::Parse
+
+namespace llvm {
+
 // Adapts RelativeLocation for use with formatv.
-// TODO: Investigate for approaches that clangd is happier with.
-static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
-    -> llvm::raw_ostream& {
-  switch (loc) {
-    case RelativeLocation::Around:
-      out << "around";
-      break;
-    case RelativeLocation::After:
-      out << "after";
-      break;
-    case RelativeLocation::Before:
-      out << "before";
-      break;
+template <>
+struct format_provider<Carbon::Parse::RelativeLocation> {
+  using RelativeLocation = Carbon::Parse::RelativeLocation;
+  static void format(const RelativeLocation& loc, raw_ostream& out,
+                     StringRef /*style*/) {
+    switch (loc) {
+      case RelativeLocation::Around:
+        out << "around";
+        break;
+      case RelativeLocation::After:
+        out << "after";
+        break;
+      case RelativeLocation::Before:
+        out << "before";
+        break;
+    }
   }
-  return out;
-}
+};
+
+}  // namespace llvm
+
+namespace Carbon::Parse {
 
 Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
                  Lex::TokenDiagnosticEmitter& emitter,

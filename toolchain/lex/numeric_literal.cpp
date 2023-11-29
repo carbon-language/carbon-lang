@@ -8,30 +8,36 @@
 
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/FormatVariadicDetails.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
 
-namespace Carbon::Lex {
+namespace llvm {
 
-// Adapts Radix for use with formatv.
-// NOTE: clangd may see this as unused, but it will be invoked by diagnostics.
-// We don't do anything to disable the warning because clang compile invocations
-// should warn if it's actually unused.
-static auto operator<<(llvm::raw_ostream& out, NumericLiteral::Radix radix)
-    -> llvm::raw_ostream& {
-  switch (radix) {
-    case NumericLiteral::Radix::Binary:
-      out << "binary";
-      break;
-    case NumericLiteral::Radix::Decimal:
-      out << "decimal";
-      break;
-    case NumericLiteral::Radix::Hexadecimal:
-      out << "hexadecimal";
-      break;
+// We use formatv primarily for diagnostics. In these cases, it's expected that
+// the spelling in source code should be used.
+template <>
+struct format_provider<Carbon::Lex::NumericLiteral::Radix> {
+  using Radix = Carbon::Lex::NumericLiteral::Radix;
+  static void format(const Radix& radix, raw_ostream& out,
+                     StringRef /*style*/) {
+    switch (radix) {
+      case Radix::Binary:
+        out << "binary";
+        break;
+      case Radix::Decimal:
+        out << "decimal";
+        break;
+      case Radix::Hexadecimal:
+        out << "hexadecimal";
+        break;
+    }
   }
-  return out;
-}
+};
+
+}  // namespace llvm
+
+namespace Carbon::Lex {
 
 auto NumericLiteral::Lex(llvm::StringRef source_text)
     -> std::optional<NumericLiteral> {
