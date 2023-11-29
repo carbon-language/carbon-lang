@@ -34,8 +34,7 @@ auto HandleIntegerLiteral(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleFloatingPointLiteral(Context& context, Parse::Node parse_node)
-    -> bool {
+auto HandleRealLiteral(Context& context, Parse::Node parse_node) -> bool {
   context.AddInstAndPush(
       parse_node,
       SemIR::RealLiteral{

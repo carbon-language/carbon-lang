@@ -429,8 +429,7 @@ CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralFalse, CARBON_TOKEN(False))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralTrue, CARBON_TOKEN(True))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntegerLiteral,
                                      CARBON_TOKEN(IntegerLiteral))
-CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(FloatingPointLiteral,
-                                     CARBON_TOKEN(RealLiteral))
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(RealLiteral, CARBON_TOKEN(RealLiteral))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringLiteral, CARBON_TOKEN(StringLiteral))
 
 // A type literal.
