@@ -7,13 +7,13 @@
 
 namespace Carbon::Check {
 
-auto HandleNamespaceStart(Context& context, Parse::Node /*parse_node*/)
+auto HandleNamespaceStart(Context& context, Parse::NodeId /*parse_node*/)
     -> bool {
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
-auto HandleNamespace(Context& context, Parse::Node parse_node) -> bool {
+auto HandleNamespace(Context& context, Parse::NodeId parse_node) -> bool {
   auto name_context = context.decl_name_stack().FinishName();
   auto namespace_id = context.AddInst(SemIR::Namespace{
       parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),

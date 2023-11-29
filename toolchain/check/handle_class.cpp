@@ -7,7 +7,7 @@
 
 namespace Carbon::Check {
 
-auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
+auto HandleClassIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // class signature, such as generic parameters.
   context.inst_block_stack().Push();
@@ -18,12 +18,12 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleAbstractModifier(Context& context, Parse::Node parse_node) -> bool {
+auto HandleAbstractModifier(Context& context, Parse::NodeId parse_node) -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleBaseModifier(Context& context, Parse::Node parse_node) -> bool {
+auto HandleBaseModifier(Context& context, Parse::NodeId parse_node) -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }
@@ -113,13 +113,13 @@ static auto BuildClassDecl(Context& context)
   return {class_decl.class_id, class_decl_id};
 }
 
-auto HandleClassDecl(Context& context, Parse::Node /*parse_node*/) -> bool {
+auto HandleClassDecl(Context& context, Parse::NodeId /*parse_node*/) -> bool {
   BuildClassDecl(context);
   context.decl_name_stack().PopScope();
   return true;
 }
 
-auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
+auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto [class_id, class_decl_id] = BuildClassDecl(context);
   auto& class_info = context.classes().Get(class_id);
@@ -166,7 +166,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
+auto HandleClassDefinition(Context& context, Parse::NodeId parse_node) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();

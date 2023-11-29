@@ -6,7 +6,7 @@
 
 namespace Carbon::Check {
 
-auto HandleBoolLiteralFalse(Context& context, Parse::Node parse_node) -> bool {
+auto HandleBoolLiteralFalse(Context& context, Parse::NodeId parse_node) -> bool {
   context.AddInstAndPush(
       parse_node,
       SemIR::BoolLiteral{parse_node,
@@ -15,7 +15,7 @@ auto HandleBoolLiteralFalse(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleBoolLiteralTrue(Context& context, Parse::Node parse_node) -> bool {
+auto HandleBoolLiteralTrue(Context& context, Parse::NodeId parse_node) -> bool {
   context.AddInstAndPush(
       parse_node,
       SemIR::BoolLiteral{parse_node,
@@ -24,7 +24,7 @@ auto HandleBoolLiteralTrue(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleIntegerLiteral(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIntegerLiteral(Context& context, Parse::NodeId parse_node) -> bool {
   context.AddInstAndPush(
       parse_node,
       SemIR::IntegerLiteral{
@@ -34,7 +34,7 @@ auto HandleIntegerLiteral(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleFloatingPointLiteral(Context& context, Parse::Node parse_node)
+auto HandleFloatingPointLiteral(Context& context, Parse::NodeId parse_node)
     -> bool {
   context.AddInstAndPush(
       parse_node,
@@ -46,7 +46,7 @@ auto HandleFloatingPointLiteral(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleStringLiteral(Context& context, Parse::Node parse_node) -> bool {
+auto HandleStringLiteral(Context& context, Parse::NodeId parse_node) -> bool {
   context.AddInstAndPush(
       parse_node,
       SemIR::StringLiteral{
@@ -56,12 +56,12 @@ auto HandleStringLiteral(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleBoolTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
+auto HandleBoolTypeLiteral(Context& context, Parse::NodeId parse_node) -> bool {
   context.node_stack().Push(parse_node, SemIR::InstId::BuiltinBoolType);
   return true;
 }
 
-auto HandleIntegerTypeLiteral(Context& context, Parse::Node parse_node)
+auto HandleIntegerTypeLiteral(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto text = context.tokens().GetTokenText(
       context.parse_tree().node_token(parse_node));
@@ -72,12 +72,12 @@ auto HandleIntegerTypeLiteral(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleUnsignedIntegerTypeLiteral(Context& context, Parse::Node parse_node)
+auto HandleUnsignedIntegerTypeLiteral(Context& context, Parse::NodeId parse_node)
     -> bool {
   return context.TODO(parse_node, "Need to support unsigned type literals");
 }
 
-auto HandleFloatingPointTypeLiteral(Context& context, Parse::Node parse_node)
+auto HandleFloatingPointTypeLiteral(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto text = context.tokens().GetTokenText(
       context.parse_tree().node_token(parse_node));
@@ -89,12 +89,12 @@ auto HandleFloatingPointTypeLiteral(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleStringTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
+auto HandleStringTypeLiteral(Context& context, Parse::NodeId parse_node) -> bool {
   context.node_stack().Push(parse_node, SemIR::InstId::BuiltinStringType);
   return true;
 }
 
-auto HandleTypeTypeLiteral(Context& context, Parse::Node parse_node) -> bool {
+auto HandleTypeTypeLiteral(Context& context, Parse::NodeId parse_node) -> bool {
   context.node_stack().Push(parse_node, SemIR::InstId::BuiltinTypeType);
   return true;
 }

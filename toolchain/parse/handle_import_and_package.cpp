@@ -77,7 +77,7 @@ static auto HandleDirectiveContent(Context& context,
                                    NodeKind directive,
                                    llvm::function_ref<void()> on_parse_error)
     -> void {
-  Tree::PackagingNames names{.node = Node(state.subtree_start)};
+  Tree::PackagingNames names{.node = NodeId(state.subtree_start)};
   if (directive != NodeKind::LibraryDirective) {
     if (auto package_name_token =
             context.ConsumeIf(Lex::TokenKind::Identifier)) {

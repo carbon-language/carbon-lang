@@ -8,7 +8,7 @@
 
 namespace Carbon::Check {
 
-auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
+auto HandleLetDecl(Context& context, Parse::NodeId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   SemIR::InstId pattern_id =
       context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
@@ -35,13 +35,13 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleLetIntroducer(Context& context, Parse::Node parse_node) -> bool {
+auto HandleLetIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
   // Push a bracketing node to establish the pattern context.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleLetInitializer(Context& /*context*/, Parse::Node /*parse_node*/)
+auto HandleLetInitializer(Context& /*context*/, Parse::NodeId /*parse_node*/)
     -> bool {
   return true;
 }

@@ -10,7 +10,7 @@
 
 namespace Carbon::Check {
 
-auto HandleIndexExprStart(Context& /*context*/, Parse::Node /*parse_node*/)
+auto HandleIndexExprStart(Context& /*context*/, Parse::NodeId /*parse_node*/)
     -> bool {
   // Leave the expression on the stack for IndexExpr.
   return true;
@@ -19,7 +19,7 @@ auto HandleIndexExprStart(Context& /*context*/, Parse::Node /*parse_node*/)
 // Validates that the index (required to be an IntegerLiteral) is valid within
 // the array or tuple size. Returns the index on success, or nullptr on failure.
 static auto ValidateIntegerLiteralBound(Context& context,
-                                        Parse::Node parse_node,
+                                        Parse::NodeId parse_node,
                                         SemIR::Inst operand_inst,
                                         SemIR::IntegerLiteral index_inst,
                                         int size) -> const llvm::APInt* {
@@ -37,7 +37,7 @@ static auto ValidateIntegerLiteralBound(Context& context,
   return &index_val;
 }
 
-auto HandleIndexExpr(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIndexExpr(Context& context, Parse::NodeId parse_node) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto index_inst = context.insts().Get(index_inst_id);
   auto operand_inst_id = context.node_stack().PopExpr();

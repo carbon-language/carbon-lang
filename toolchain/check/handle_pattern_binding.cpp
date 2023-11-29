@@ -9,7 +9,7 @@
 
 namespace Carbon::Check {
 
-auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
+auto HandleAddress(Context& context, Parse::NodeId parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
   if (auto self_param =
@@ -24,12 +24,12 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
+auto HandleGenericPatternBinding(Context& context, Parse::NodeId parse_node)
     -> bool {
   return context.TODO(parse_node, "GenericPatternBinding");
 }
 
-auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
+auto HandlePatternBinding(Context& context, Parse::NodeId parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExprWithParseNode();
   auto type_node_copy = type_node;
@@ -151,7 +151,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleTemplate(Context& context, Parse::Node parse_node) -> bool {
+auto HandleTemplate(Context& context, Parse::NodeId parse_node) -> bool {
   return context.TODO(parse_node, "HandleTemplate");
 }
 

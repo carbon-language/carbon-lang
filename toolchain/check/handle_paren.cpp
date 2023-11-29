@@ -8,7 +8,7 @@
 
 namespace Carbon::Check {
 
-auto HandleParenExpr(Context& context, Parse::Node parse_node) -> bool {
+auto HandleParenExpr(Context& context, Parse::NodeId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   // ParamOrArgStart was called for tuple handling; clean up the ParamOrArg
   // support for non-tuple cases.
@@ -21,19 +21,19 @@ auto HandleParenExpr(Context& context, Parse::Node parse_node) -> bool {
 }
 
 auto HandleParenExprOrTupleLiteralStart(Context& context,
-                                        Parse::Node parse_node) -> bool {
+                                        Parse::NodeId parse_node) -> bool {
   context.node_stack().Push(parse_node);
   context.ParamOrArgStart();
   return true;
 }
 
-auto HandleTupleLiteralComma(Context& context, Parse::Node /*parse_node*/)
+auto HandleTupleLiteralComma(Context& context, Parse::NodeId /*parse_node*/)
     -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleTupleLiteral(Context& context, Parse::Node parse_node) -> bool {
+auto HandleTupleLiteral(Context& context, Parse::NodeId parse_node) -> bool {
   auto refs_id =
       context.ParamOrArgEnd(Parse::NodeKind::ParenExprOrTupleLiteralStart);
 
