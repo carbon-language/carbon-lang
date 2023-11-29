@@ -53,37 +53,41 @@ struct IndexBase : public IdBase {
 };
 
 // Equality comparison for both IdBase and IndexBase.
-template <typename IndexType,
-          typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* =
-              nullptr>
+template <
+    typename IndexType,
+    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr>
 auto operator==(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index == rhs.index;
 }
-template <typename IndexType,
-          typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* =
-              nullptr>
+template <
+    typename IndexType,
+    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr>
 auto operator!=(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index != rhs.index;
 }
 
 // The < and > comparisons for only IndexBase.
-template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
-                                  IndexBase, IndexType>>* = nullptr>
+template <typename IndexType,
+          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
+              nullptr>
 auto operator<(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index < rhs.index;
 }
-template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
-                                  IndexBase, IndexType>>* = nullptr>
+template <typename IndexType,
+          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
+              nullptr>
 auto operator<=(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index <= rhs.index;
 }
-template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
-                                  IndexBase, IndexType>>* = nullptr>
+template <typename IndexType,
+          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
+              nullptr>
 auto operator>(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index > rhs.index;
 }
-template <typename IndexType, typename std::enable_if_t<std::is_base_of_v<
-                                  IndexBase, IndexType>>* = nullptr>
+template <typename IndexType,
+          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
+              nullptr>
 auto operator>=(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index >= rhs.index;
 }
