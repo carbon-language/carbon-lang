@@ -292,9 +292,10 @@ class InstNamer {
     return scopes[static_cast<int>(scope_idx)];
   }
 
-  auto AddBlockLabel(
-      ScopeIndex scope_idx, InstBlockId block_id, std::string name = "",
-      Parse::NodeId parse_node = Parse::NodeId::Invalid) -> void {
+  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
+                     std::string name = "",
+                     Parse::NodeId parse_node = Parse::NodeId::Invalid)
+      -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
@@ -313,8 +314,8 @@ class InstNamer {
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
-                     Inst inst) -> void {
+  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Inst inst)
+      -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(inst.parse_node())) {
       case Parse::NodeKind::IfExprIf:
@@ -389,8 +390,8 @@ class InstNamer {
     }
   }
 
-  auto CollectNamesInBlock(ScopeIndex scope_idx,
-                           llvm::ArrayRef<InstId> block) -> void {
+  auto CollectNamesInBlock(ScopeIndex scope_idx, llvm::ArrayRef<InstId> block)
+      -> void {
     Scope& scope = GetScopeInfo(scope_idx);
 
     // Use bound names where available. Otherwise, assign a backup name.
