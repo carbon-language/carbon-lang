@@ -10,19 +10,16 @@ static auto ReportNotAllowed(Context& context, Parse::Node modifier_node,
                              llvm::StringRef decl_name,
                              Parse::Node context_node) {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error, "`{0}` not allowed on {1}.",
-                    llvm::StringRef, llvm::StringRef);
-  if (context_node == Parse::Node::Invalid) {
-    context.emitter().Emit(modifier_node, ModifierNotAllowedOn,
-                           context.TextForNode(modifier_node), decl_name);
-  } else {
+                    std::string, std::string);
+  auto diag = context.emitter()
+        .Build(modifier_node, ModifierNotAllowedOn,
+               context.TextForNode(modifier_node), decl_name);
+  if (context_node.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note,
                       "Containing definition here.");
-    context.emitter()
-        .Build(modifier_node, ModifierNotAllowedOn,
-               context.TextForNode(modifier_node), decl_name)
-        .Note(context_node, ModifierNotInContext)
-        .Emit();
+    diag.Note(context_node, ModifierNotInContext)
   }
+  diag.Emit();
 }
 
 auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,

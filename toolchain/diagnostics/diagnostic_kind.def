@@ -209,7 +209,7 @@ CARBON_DIAGNOSTIC_KIND(QualifiedExprUnsupported)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprNameNotFound)
 CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
 
-// Modifier checking
+// Modifier checking.
 CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOn)
 CARBON_DIAGNOSTIC_KIND(ModifierNotInContext)
 CARBON_DIAGNOSTIC_KIND(ModifierRepeated)

@@ -15,6 +15,7 @@ class FinalClass {
   // CHECK:STDERR: class FinalClass {
   // CHECK:STDERR: ^~~~~
   private abstract fn Abstract[self: Self]();
+
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+9]]:3: ERROR: Semantics TODO: `protected`.
   // CHECK:STDERR:   protected virtual fn Virtual[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~~
