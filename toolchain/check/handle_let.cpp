@@ -16,37 +16,14 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers.
+  llvm::StringRef decl_name = "`let` declaration";
+  CheckAccessModifiersOnDecl(context, decl_name);
+  RequireDefaultFinalOnlyInInterfaces(context, decl_name);
   auto modifiers = ModifiersAllowedOnDecl(
       context,
       KeywordModifierSet().SetPrivate().SetProtected().SetDefault().SetFinal(),
-      "`let` declaration");
-  switch (context.containing_decl().kind) {
-    case DeclState::FileScope:
-      modifiers =
-          ModifiersAllowedOnDecl(context, KeywordModifierSet().SetPrivate(),
-                                 "`let` declaration at file scope");
-      break;
+      decl_name);
 
-    case DeclState::Class:
-      modifiers = ModifiersAllowedOnDecl(
-          context, KeywordModifierSet().SetPrivate().SetProtected(),
-          "`let` declaration in a `class` definition",
-          context.containing_decl().first_node);
-      break;
-
-    case DeclState::Interface:
-      modifiers = ModifiersAllowedOnDecl(
-          context, KeywordModifierSet().SetDefault().SetFinal(),
-          "`let` declaration in an `interface` definition",
-          context.containing_decl().first_node);
-      break;
-
-    default:
-      modifiers = ModifiersAllowedOnDecl(context, KeywordModifierSet(),
-                                         "`let` declaration in this context",
-                                         context.containing_decl().first_node);
-      break;
-  }
   if (modifiers.HasPrivate()) {
     context.TODO(context.innermost_decl().saw_access_mod, "private");
   }

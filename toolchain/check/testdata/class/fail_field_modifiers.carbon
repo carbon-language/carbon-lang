@@ -25,7 +25,7 @@ class Class {
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+9]]:3: ERROR: Semantics TODO: `private`.
   // CHECK:STDERR:   private default let l: i32 = 0;
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+6]]:11: ERROR: `default` not allowed on `let` declaration in a `class` definition.
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+6]]:11: ERROR: `default` not allowed on `let` declaration outside of an interface.
   // CHECK:STDERR:   private default let l: i32 = 0;
   // CHECK:STDERR:           ^~~~~~~
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE-24]]:1: Containing definition here.
@@ -36,7 +36,7 @@ class Class {
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+9]]:3: ERROR: Semantics TODO: `protected`.
   // CHECK:STDERR:   protected final let m: i32 = 1;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+6]]:13: ERROR: `final` not allowed on `let` declaration in a `class` definition.
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+6]]:13: ERROR: `final` not allowed on `let` declaration outside of an interface.
   // CHECK:STDERR:   protected final let m: i32 = 1;
   // CHECK:STDERR:             ^~~~~
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE-35]]:1: Containing definition here.

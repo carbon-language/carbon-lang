@@ -9,17 +9,17 @@
 // CHECK:STDERR: ^~~~~~~
 private let a: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `protected` not allowed on `let` declaration at file scope.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `protected` not allowed on `let` declaration at file scope, `protected` is only allowed on class members.
 // CHECK:STDERR: protected let b: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 protected let b: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `default` not allowed on `let` declaration at file scope.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `default` not allowed on `let` declaration outside of an interface.
 // CHECK:STDERR: default let c: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 default let c: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `final` not allowed on `let` declaration at file scope.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `final` not allowed on `let` declaration outside of an interface.
 // CHECK:STDERR: final let d: i32 = 1;
 // CHECK:STDERR: ^~~~~
 final let d: i32 = 1;
@@ -29,7 +29,7 @@ final let d: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 virtual let e: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `default` not allowed on `let` declaration at file scope.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `default` not allowed on `let` declaration outside of an interface.
 // CHECK:STDERR: default final let f: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `final` not allowed on declaration with `default`.
@@ -40,7 +40,7 @@ virtual let e: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 default final let f: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `default` not allowed on `let` declaration at file scope.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `default` not allowed on `let` declaration outside of an interface.
 // CHECK:STDERR: default default let g: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `default` repeated on declaration.
@@ -51,7 +51,7 @@ default final let f: i32 = 1;
 // CHECK:STDERR: ^~~~~~~
 default default let g: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `protected` not allowed on `let` declaration at file scope.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `protected` not allowed on `let` declaration at file scope, `protected` is only allowed on class members.
 // CHECK:STDERR: protected private let h: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: ERROR: `private` not allowed on declaration with `protected`.
@@ -62,7 +62,7 @@ default default let g: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 protected private let h: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `protected` not allowed on `let` declaration at file scope.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `protected` not allowed on `let` declaration at file scope, `protected` is only allowed on class members.
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: ERROR: `protected` repeated on declaration.
