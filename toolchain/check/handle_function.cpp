@@ -59,8 +59,10 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
-  // Process modifiers and introducer.
   auto first_node = context.innermost_decl().first_node;
+  // Process modifiers.
+  llvm::StringRef decl_name = "`fn` declaration";
+  CheckAccessModifiersOnDecl(context, decl_name);
   auto modifiers = ModifiersAllowedOnDecl(context,
                                           KeywordModifierSet()
                                               .SetPrivate()
@@ -70,87 +72,29 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
                                               .SetFinal()
                                               .SetImpl()
                                               .SetVirtual(),
-                                          "`fn` declaration");
-  auto containing_kind = context.containing_decl().kind;
-  auto containing_decl_modifiers = context.containing_decl().found;
-
+                                          decl_name);
   // Rules for abstract, virtual, and impl, which are only allowed in classes.
+  auto containing_kind = context.containing_decl().kind;
   if (containing_kind != DeclState::Class) {
-    modifiers = ModifiersAllowedOnDecl(
-        context, modifiers.UnsetAbstract().UnsetVirtual().UnsetImpl(),
-        "`fn` declaration outside of a class",
-        context.containing_decl().first_node);
-  } else if (!containing_decl_modifiers.HasAbstract() &&
-             !containing_decl_modifiers.HasBase()) {
-    modifiers = ModifiersAllowedOnDecl(
-        context, modifiers.UnsetVirtual(),
-        "`fn` declaration in a non-abstract non-base `class` definition",
-        context.containing_decl().first_node);
-  } else if (!containing_decl_modifiers.HasAbstract()) {
-    modifiers = ModifiersAllowedOnDecl(
-        context, modifiers.UnsetAbstract(),
-        "`fn` declaration in a non-abstract `class` definition",
-        context.containing_decl().first_node);
-  }
-  // Default and final are only allowed in interfaces.
-  if (containing_kind != DeclState::Interface) {
-    modifiers =
-        ModifiersAllowedOnDecl(context, modifiers.UnsetDefault().UnsetFinal(),
-                               "`fn` declaration outside of an interface",
-                               context.containing_decl().first_node);
-  }
-
-  switch (containing_kind) {
-    case DeclState::FileScope:
-      modifiers =
-          ModifiersAllowedOnDecl(context, KeywordModifierSet().SetPrivate(),
-                                 "`fn` declaration at file scope");
-      break;
-
-    case DeclState::Class: {
-      auto access_modifiers = KeywordModifierSet().SetPrivate().SetProtected();
-      modifiers = ModifiersAllowedOnDecl(
-          context, access_modifiers.SetAbstract().SetImpl().SetVirtual(),
-          "`fn` declaration in a `class` definition",
-          context.containing_decl().first_node);
-      break;
+    ForbidModifiers(context,
+                    KeywordModifierSet().SetAbstract().SetVirtual().SetImpl(),
+                    decl_name, " outside of a class");
+  } else {
+    auto containing_decl_modifiers = context.containing_decl().found;
+    if (!containing_decl_modifiers.HasAbstract() &&
+        !containing_decl_modifiers.HasBase()) {
+      ForbidModifiers(context, KeywordModifierSet().SetVirtual(), decl_name,
+                      " in a non-abstract non-base `class` definition",
+                      context.containing_decl().first_node);
     }
-
-    case DeclState::NamedConstraint:
-      modifiers = ModifiersAllowedOnDecl(
-          context, KeywordModifierSet(),
-          "`fn` declaration in a `constraint` definition",
-          context.containing_decl().first_node);
-      break;
-
-    case DeclState::Fn:
-      modifiers =
-          ModifiersAllowedOnDecl(context, KeywordModifierSet(),
-                                 "`fn` declaration in a `fn` definition",
-                                 context.containing_decl().first_node);
-      break;
-
-    case DeclState::Interface:
-      modifiers = ModifiersAllowedOnDecl(
-          context, KeywordModifierSet().SetDefault().SetFinal(),
-          "`fn` declaration in an `interface` definition",
-          context.containing_decl().first_node);
-      break;
-
-    case DeclState::Let:
-      modifiers =
-          ModifiersAllowedOnDecl(context, KeywordModifierSet(),
-                                 "`fn` declaration in a `let` definition",
-                                 context.containing_decl().first_node);
-      break;
-
-    case DeclState::Var:
-      modifiers =
-          ModifiersAllowedOnDecl(context, KeywordModifierSet(),
-                                 "`fn` declaration in a `var` definition",
-                                 context.containing_decl().first_node);
-      break;
+    if (!containing_decl_modifiers.HasAbstract()) {
+      ForbidModifiers(context, KeywordModifierSet().SetAbstract(), decl_name,
+                      " in a non-abstract `class` definition",
+                      context.containing_decl().first_node);
+    }
   }
+  modifiers = RequireDefaultFinalOnlyInInterfaces(context, decl_name);
+
   if (modifiers.HasPrivate()) {
     context.TODO(context.innermost_decl().saw_access_mod, "private");
   }

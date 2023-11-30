@@ -9,6 +9,11 @@
 
 namespace Carbon::Check {
 
+// Reports a diagnostic (using `decl_name`) if access control modifiers on this
+// are not allowed, and updates the declaration state in `context`.
+auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
+    -> void;
+
 // Reports a diagnostic (using `decl_name`) if modifiers on this declaration are
 // not in `allowed`. Returns modifiers that were both found and allowed, and
 // updates the declaration state in `context`. Specify optional Parse::Node
@@ -17,6 +22,18 @@ namespace Carbon::Check {
 auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
                             llvm::StringRef decl_name,
                             Parse::Node context_node = Parse::Node::Invalid)
+    -> KeywordModifierSet;
+
+// Like ModifiersAllowedOnDecl, except says which modifiers are forbidden,
+// and a `context_string` specifying the context in which those modifiers are
+// forbidden.
+auto ForbidModifiers(Context& context, KeywordModifierSet forbidden,
+                     llvm::StringRef decl_name, llvm::StringRef context_string,
+                     Parse::Node context_node = Parse::Node::Invalid) -> void;
+
+// Default and final are only allowed in interfaces.
+auto RequireDefaultFinalOnlyInInterfaces(Context& context,
+                                         llvm::StringRef decl_name)
     -> KeywordModifierSet;
 
 }  // namespace Carbon::Check

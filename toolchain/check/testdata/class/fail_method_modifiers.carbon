@@ -6,12 +6,15 @@
 
 class FinalClass {
 
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `private`.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+9]]:3: ERROR: Semantics TODO: `private`.
   // CHECK:STDERR:   private abstract fn Abstract[self: Self]();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+3]]:11: ERROR: Semantics TODO: `abstract`.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:11: ERROR: `abstract` not allowed on `fn` declaration in a non-abstract `class` definition.
   // CHECK:STDERR:   private abstract fn Abstract[self: Self]();
   // CHECK:STDERR:           ^~~~~~~~
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-8]]:1: Containing definition here.
+  // CHECK:STDERR: class FinalClass {
+  // CHECK:STDERR: ^~~~~
   private abstract fn Abstract[self: Self]();
 
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+9]]:3: ERROR: Semantics TODO: `protected`.
@@ -20,7 +23,7 @@ class FinalClass {
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:13: ERROR: `virtual` not allowed on `fn` declaration in a non-abstract non-base `class` definition.
   // CHECK:STDERR:   protected virtual fn Virtual[self: Self]();
   // CHECK:STDERR:             ^~~~~~~
-  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-16]]:1: Containing definition here.
+  // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-19]]:1: Containing definition here.
   // CHECK:STDERR: class FinalClass {
   // CHECK:STDERR: ^~~~~
   protected virtual fn Virtual[self: Self]();
@@ -57,7 +60,7 @@ base class BaseClass {
 }
 
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc27: type = struct_type {}
+// CHECK:STDOUT:   %.loc30: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_method_modifiers.carbon" {

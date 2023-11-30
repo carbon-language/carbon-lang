@@ -47,9 +47,7 @@ class KeywordModifierSet {
 
   // Returns the set difference or relative complement `*this \ to_unset`.
   auto Minus(RawEnum to_unset) const -> KeywordModifierSet {
-    KeywordModifierSet ret;
-    ret.keywords_ = static_cast<RawEnum>(keywords_ & ~to_unset);
-    return ret;
+    return Intersect(static_cast<RawEnum>(~to_unset));
   }
   auto UnsetPrivate() const -> KeywordModifierSet { return Minus(Private); }
   auto UnsetProtected() const -> KeywordModifierSet { return Minus(Protected); }
@@ -71,6 +69,13 @@ class KeywordModifierSet {
   auto HasFinal() const -> bool { return Overlaps(Final); }
   auto HasImpl() const -> bool { return Overlaps(Impl); }
   auto HasVirtual() const -> bool { return Overlaps(Virtual); }
+
+  auto is_empty() const -> bool { return keywords_ == 0; }
+  auto Intersect(RawEnum with) const -> KeywordModifierSet {
+    KeywordModifierSet ret;
+    ret.keywords_ = static_cast<RawEnum>(keywords_ & with);
+    return ret;
+  }
 
   auto GetRaw() const -> RawEnum { return keywords_; }
 
