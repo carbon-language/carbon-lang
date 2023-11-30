@@ -23,9 +23,9 @@ var = (foo {})
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: '=', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'ParenExprStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExprOpenParen', text: '('},
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'foo'},
-// CHECK:STDOUT:       {kind: 'ParenSingleExpr', text: ')', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: 'var', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -402,7 +402,7 @@ CARBON_PARSE_STATE(Expr)
 //
 //  (
 // ^
-//   1. ParenExpr
+//   1. OpenParen
 //   2. ExprInPostfixLoop
 //
 //  [
@@ -697,46 +697,67 @@ CARBON_PARSE_STATE_VARIANTS2(ParenCondition, If, While)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(ParenConditionFinish, If, While)
 
-// Handles the `(` of a parenthesis expression (a parenthesized single
-// expression or tuple literal)
+// Handles the `(` of a parenthesized single expression
 //
 // ( )
 // ^
-//   1. ParenExprFinishAsTuple
+//   1. TupleLiteralFinish
 //
 // ( ... )
 // ^
 //   1. Expr
-//   2. ParenExprParamFinishAsUnknown
-//   3. ParenExprFinishAsSingle    (SPECIAL: may be replaced)
+//   2. ExprAfterOpenParenFinish
+//   3. ParenExprFinish    (SPECIAL: may be replaced)
 CARBON_PARSE_STATE(ParenExpr)
 
-// Handles the end of a parenthesis expression's parameter.
-// This will start as AsUnknown on the first parameter; if there are more, it
-// switches to AsTuple processing.
-//
-// ( ... , )
-//       ^
-//   (state done)
-//   SPECIAL (variant is Unknown): parent becomes ParenExprFinishAsTuple
-//
-// ( ... , ... )
-//       ^
-//   1. Expression
-//   2. ParenExprParamFinishAsTuple
-//   SPECIAL (variant is Unknown): parent becomes ParenExprFinishAsTuple
-//
-//  ...
-// ^
-//   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprParamFinish, Unknown, Tuple)
-
-// Handles the `)` of a parenthesis expression.
+// Handles the `)` of a tuple literal.
 //
 // ( ... )
 //       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Single, Tuple)
+CARBON_PARSE_STATE(TupleLiteralFinish)
+
+// Handles the end of an expression following an open parenthesis.
+//
+// ( ... , )
+//       ^
+//   (state done)
+//   SPECIAL: parent becomes TupleLiteralFinish
+//
+// ( ... , ... )
+//       ^
+//   1. Expression
+//   2. TupleLiteralElementFinish
+//   SPECIAL: parent becomes TupleLiteralFinish
+//
+// ( ... )
+//      ^
+//   (state done)
+CARBON_PARSE_STATE(ExprAfterOpenParenFinish)
+
+// Handles the end of an expression that is known to be an element of a tuple
+// literal expression.
+//
+// ( ... , )
+//       ^
+//   (state done)
+//
+// ( ... , ... )
+//       ^
+//   1. Expression
+//   2. TupleLiteralElementFinish
+//
+// ( ... )
+//      ^
+//   (state done)
+CARBON_PARSE_STATE(TupleLiteralElementFinish)
+
+// Handles the `)` of a parenthesized single expression.
+//
+// ( ... )
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(ParenExprFinish)
 
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.

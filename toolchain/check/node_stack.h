@@ -302,7 +302,7 @@ class NodeStack {
       case Parse::NodeKind::Literal:
       case Parse::NodeKind::MemberAccessExpr:
       case Parse::NodeKind::NameExpr:
-      case Parse::NodeKind::ParenSingleExpr:
+      case Parse::NodeKind::ParenExpr:
       case Parse::NodeKind::PostfixOperator:
       case Parse::NodeKind::PrefixOperator:
       case Parse::NodeKind::ReturnType:
@@ -333,12 +333,12 @@ class NodeStack {
       case Parse::NodeKind::BaseModifier:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
+      case Parse::NodeKind::ExprOpenParen:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::ParamListStart:
-      case Parse::NodeKind::ParenExprStart:
       case Parse::NodeKind::QualifiedDecl:
       case Parse::NodeKind::ReturnedModifier:
       case Parse::NodeKind::ReturnStatementStart:
