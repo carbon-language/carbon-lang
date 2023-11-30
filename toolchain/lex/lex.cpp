@@ -899,12 +899,12 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
 
   return VariantMatch(
       literal->ComputeValue(emitter_),
-      [&](NumericLiteral::IntegerValue&& value) {
-        auto token = buffer_.AddToken({.kind = TokenKind::IntegerLiteral,
+      [&](NumericLiteral::IntValue&& value) {
+        auto token = buffer_.AddToken({.kind = TokenKind::IntLiteral,
                                        .token_line = current_line(),
                                        .column = int_column});
-        buffer_.GetTokenInfo(token).integer_id =
-            buffer_.value_stores_->integers().Add(std::move(value.value));
+        buffer_.GetTokenInfo(token).int_id =
+            buffer_.value_stores_->ints().Add(std::move(value.value));
         return token;
       },
       [&](NumericLiteral::RealValue&& value) {
@@ -1080,20 +1080,20 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int column)
   std::optional<TokenKind> kind;
   switch (word.front()) {
     case 'i':
-      kind = TokenKind::IntegerTypeLiteral;
+      kind = TokenKind::IntTypeLiteral;
       break;
     case 'u':
-      kind = TokenKind::UnsignedIntegerTypeLiteral;
+      kind = TokenKind::UnsignedIntTypeLiteral;
       break;
     case 'f':
-      kind = TokenKind::FloatingPointTypeLiteral;
+      kind = TokenKind::FloatTypeLiteral;
       break;
     default:
       return LexResult::NoMatch();
   };
 
   llvm::StringRef suffix = word.substr(1);
-  if (!CanLexInteger(emitter_, suffix)) {
+  if (!CanLexInt(emitter_, suffix)) {
     return buffer_.AddToken(
         {.kind = TokenKind::Error,
          .token_line = current_line(),
@@ -1107,8 +1107,8 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int column)
 
   auto token = buffer_.AddToken(
       {.kind = *kind, .token_line = current_line(), .column = column});
-  buffer_.GetTokenInfo(token).integer_id =
-      buffer_.value_stores_->integers().Add(std::move(suffix_value));
+  buffer_.GetTokenInfo(token).int_id =
+      buffer_.value_stores_->ints().Add(std::move(suffix_value));
   return token;
 }
 

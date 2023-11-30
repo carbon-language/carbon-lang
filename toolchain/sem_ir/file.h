@@ -201,8 +201,8 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound instruction.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
-    return integers()
-        .Get(insts().GetAs<IntegerLiteral>(bound_id).integer_id)
+    return ints()
+        .Get(insts().GetAs<IntLiteral>(bound_id).int_id)
         .getZExtValue();
   }
 
@@ -274,11 +274,9 @@ class File : public Printable<File> {
   auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
     return value_stores_->identifiers();
   }
-  auto integers() -> ValueStore<IntegerId>& {
-    return value_stores_->integers();
-  }
-  auto integers() const -> const ValueStore<IntegerId>& {
-    return value_stores_->integers();
+  auto ints() -> ValueStore<IntId>& { return value_stores_->ints(); }
+  auto ints() const -> const ValueStore<IntId>& {
+    return value_stores_->ints();
   }
   auto reals() -> ValueStore<RealId>& { return value_stores_->reals(); }
   auto reals() const -> const ValueStore<RealId>& {

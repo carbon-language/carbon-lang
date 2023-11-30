@@ -50,7 +50,7 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
 
   // Refer back to the source text to preserve oddities like radix or digit
   // separators the author included.
-  if (token_info.kind == TokenKind::IntegerLiteral ||
+  if (token_info.kind == TokenKind::IntLiteral ||
       token_info.kind == TokenKind::RealLiteral) {
     const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
@@ -96,10 +96,10 @@ auto TokenizedBuffer::GetIdentifier(TokenIndex token) const -> IdentifierId {
   return token_info.ident_id;
 }
 
-auto TokenizedBuffer::GetIntegerLiteral(TokenIndex token) const -> IntegerId {
+auto TokenizedBuffer::GetIntLiteral(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral) << token_info.kind;
-  return token_info.integer_id;
+  CARBON_CHECK(token_info.kind == TokenKind::IntLiteral) << token_info.kind;
+  return token_info.int_id;
 }
 
 auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
@@ -119,7 +119,7 @@ auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind.is_sized_type_literal()) << token_info.kind;
-  return value_stores_->integers().Get(token_info.integer_id);
+  return value_stores_->ints().Get(token_info.int_id);
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
@@ -257,10 +257,10 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
     case TokenKind::Identifier:
       output_stream << ", identifier: " << GetIdentifier(token).index;
       break;
-    case TokenKind::IntegerLiteral:
+    case TokenKind::IntLiteral:
       output_stream << ", value: `";
-      value_stores_->integers()
-          .Get(GetIntegerLiteral(token))
+      value_stores_->ints()
+          .Get(GetIntLiteral(token))
           .print(output_stream, /*isSigned=*/false);
       output_stream << "`";
       break;

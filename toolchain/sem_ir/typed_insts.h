@@ -316,12 +316,12 @@ struct InitializeFrom {
   InstId dest_id;
 };
 
-struct IntegerLiteral {
-  static constexpr auto Kind = InstKind::IntegerLiteral.Define("int_literal");
+struct IntLiteral {
+  static constexpr auto Kind = InstKind::IntLiteral.Define("int_literal");
 
   Parse::NodeId parse_node;
   TypeId type_id;
-  IntegerId integer_id;
+  IntId int_id;
 };
 
 struct NameRef {

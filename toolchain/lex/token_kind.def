@@ -207,12 +207,12 @@ CARBON_KEYWORD_TOKEN(While,               "while")
 #undef CARBON_KEYWORD_TOKEN
 
 CARBON_TOKEN(Identifier)
-CARBON_TOKEN(IntegerLiteral)
+CARBON_TOKEN(IntLiteral)
 CARBON_TOKEN(RealLiteral)
 CARBON_TOKEN(StringLiteral)
-CARBON_TOKEN(IntegerTypeLiteral)
-CARBON_TOKEN(UnsignedIntegerTypeLiteral)
-CARBON_TOKEN(FloatingPointTypeLiteral)
+CARBON_TOKEN(IntTypeLiteral)
+CARBON_TOKEN(UnsignedIntTypeLiteral)
+CARBON_TOKEN(FloatTypeLiteral)
 CARBON_TOKEN(FileStart)
 CARBON_TOKEN(FileEnd)
 

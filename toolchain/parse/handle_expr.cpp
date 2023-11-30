@@ -87,8 +87,8 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
-    case Lex::TokenKind::IntegerLiteral: {
-      context.AddLeafNode(NodeKind::IntegerLiteral, context.Consume());
+    case Lex::TokenKind::IntLiteral: {
+      context.AddLeafNode(NodeKind::IntLiteral, context.Consume());
       context.PushState(state);
       break;
     }
@@ -107,20 +107,18 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
-    case Lex::TokenKind::IntegerTypeLiteral: {
-      context.AddLeafNode(NodeKind::IntegerTypeLiteral, context.Consume());
+    case Lex::TokenKind::IntTypeLiteral: {
+      context.AddLeafNode(NodeKind::IntTypeLiteral, context.Consume());
       context.PushState(state);
       break;
     }
-    case Lex::TokenKind::UnsignedIntegerTypeLiteral: {
-      context.AddLeafNode(NodeKind::UnsignedIntegerTypeLiteral,
-                          context.Consume());
+    case Lex::TokenKind::UnsignedIntTypeLiteral: {
+      context.AddLeafNode(NodeKind::UnsignedIntTypeLiteral, context.Consume());
       context.PushState(state);
       break;
     }
-    case Lex::TokenKind::FloatingPointTypeLiteral: {
-      context.AddLeafNode(NodeKind::FloatingPointTypeLiteral,
-                          context.Consume());
+    case Lex::TokenKind::FloatTypeLiteral: {
+      context.AddLeafNode(NodeKind::FloatTypeLiteral, context.Consume());
       context.PushState(state);
       break;
     }

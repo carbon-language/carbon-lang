@@ -75,9 +75,9 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 
   // Test whether this kind of token is a sized type literal.
   auto is_sized_type_literal() const -> bool {
-    return *this == TokenKind::IntegerTypeLiteral ||
-           *this == TokenKind::UnsignedIntegerTypeLiteral ||
-           *this == TokenKind::FloatingPointTypeLiteral;
+    return *this == TokenKind::IntTypeLiteral ||
+           *this == TokenKind::UnsignedIntTypeLiteral ||
+           *this == TokenKind::FloatTypeLiteral;
   };
 
   // If this token kind has a fixed spelling when in source code, returns it.

@@ -231,10 +231,10 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
 
 auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
   switch (inst_id.index) {
-    case SemIR::BuiltinKind::FloatingPointType.AsInt():
+    case SemIR::BuiltinKind::FloatType.AsInt():
       // TODO: Handle different sizes.
       return llvm::Type::getDoubleTy(*llvm_context_);
-    case SemIR::BuiltinKind::IntegerType.AsInt():
+    case SemIR::BuiltinKind::IntType.AsInt():
       // TODO: Handle different sizes.
       return llvm::Type::getInt32Ty(*llvm_context_);
     case SemIR::BuiltinKind::BoolType.AsInt():
