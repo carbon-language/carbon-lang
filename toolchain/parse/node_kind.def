@@ -212,7 +212,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(
 CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpr, ArrayExprSemi,
                                CARBON_TOKEN(CloseSquareBracket))
 
-// A pattern binding, such as `name: Type`:
+// A binding pattern, such as `name: Type`:
 //       Name or SelfValueName
 //       _external_: type expression
 //     [Generic]BindingPattern
