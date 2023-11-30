@@ -23,7 +23,11 @@ static auto HandleVar(Context& context, State finish_state,
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
 
-  context.PushState(State::BindingPattern);
+  if (context.PositionKind() == Lex::TokenKind::OpenParen) {
+    context.PushState(State::ParamListAsRegular);
+  } else {
+    context.PushState(State::BindingPattern);
+  }
 }
 
 auto HandleVarAsDecl(Context& context) -> void {

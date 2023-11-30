@@ -239,7 +239,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 
 // `let`:
 //   LetIntroducer
-//   _external_: BindingPattern
+//   _external_: BindingPattern or ParamList
 //   LetInitializer
 //   _external_: expression
 // LetDecl
@@ -252,7 +252,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 // `var` and `returned var`:
 //   VariableIntroducer
 //   _optional_ ReturnedModifier
-//   _external_: BindingPattern
+//   _external_: BindingPattern or ParamList
 //   _optional_ VariableInitializer
 //   _optional_ _external_: expression
 // VariableDecl

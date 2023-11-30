@@ -32,13 +32,21 @@ auto HandleVariableInitializer(Context& context, Parse::NodeId parse_node)
 auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
-  bool has_init =
-      context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-      Parse::NodeKind::BindingPattern;
+  Parse::NodeKind next_kind =
+      context.parse_tree().node_kind(context.node_stack().PeekParseNode());
+  if (next_kind == Parse::NodeKind::ParamList) {
+    return context.TODO(parse_node, "tuple pattern in var");
+  }
+  bool has_init = next_kind != Parse::NodeKind::BindingPattern;
   if (has_init) {
     init_id = context.node_stack().PopExpr();
     context.node_stack()
         .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
+  }
+
+  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
+      Parse::NodeKind::ParamList) {
+    return context.TODO(parse_node, "tuple pattern in var");
   }
 
   // Extract the name binding.

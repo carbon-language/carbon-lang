@@ -10,6 +10,10 @@ namespace Carbon::Check {
 
 auto HandleLetDecl(Context& context, Parse::NodeId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
+  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
+      Parse::NodeKind::ParamList) {
+    return context.TODO(parse_node, "tuple pattern in let");
+  }
   SemIR::InstId pattern_id =
       context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
   context.node_stack()

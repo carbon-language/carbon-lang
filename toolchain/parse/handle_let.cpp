@@ -16,7 +16,11 @@ auto HandleLet(Context& context) -> void {
   context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
 
   // This will start at the pattern.
-  context.PushState(State::BindingPattern);
+  if (context.PositionKind() == Lex::TokenKind::OpenParen) {
+    context.PushState(State::ParamListAsRegular);
+  } else {
+    context.PushState(State::BindingPattern);
+  }
 }
 
 auto HandleLetAfterPattern(Context& context) -> void {
