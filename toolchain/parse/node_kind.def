@@ -77,11 +77,12 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDecl, 0,
 
 // A name in a non-expression context, such as a declaration.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0,
-                                   CARBON_TOKEN(Identifier)
+                                   CARBON_TOKEN(Identifier) CARBON_TOKEN(Base)
                                        CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // A name in an expression context.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0, CARBON_TOKEN(Identifier))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0,
+                                   CARBON_TOKEN(Identifier) CARBON_TOKEN(Base))
 
 // ----------------------------------------------------------------------------
 
@@ -583,6 +584,18 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Class)))
+
+// `base`:
+//   BaseIntroducer
+//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   BaseColon
+//   _external_: expression
+// BaseDecl
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseIntroducer, 0, CARBON_TOKEN(Base))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseColon, 0, CARBON_TOKEN(Colon))
+CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer,
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Base)))
 
 // `interface`:
 //     InterfaceIntroducer

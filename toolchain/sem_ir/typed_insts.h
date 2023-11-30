@@ -86,6 +86,18 @@ struct Assign {
   InstId rhs_id;
 };
 
+// A base in a class, of the form `base: base_type;`. A base class is an
+// element of the derived class, and the type of the `Base` instruction is an
+// `UnboundElementType`.
+struct Base {
+  static constexpr auto Kind = InstKind::Base.Define("base");
+
+  Parse::NodeId parse_node;
+  TypeId type_id;
+  TypeId base_type_id;
+  ElementIndex index;
+};
+
 struct BinaryOperatorAdd {
   static constexpr auto Kind = InstKind::BinaryOperatorAdd.Define("add");
 

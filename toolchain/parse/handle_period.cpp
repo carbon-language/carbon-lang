@@ -13,12 +13,19 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
                                 bool is_arrow) -> void {
   auto state = context.PopState();
 
-  // `.` identifier
+  // We're handling `.something` or `->something`.
   auto dot = context.ConsumeChecked(is_arrow ? Lex::TokenKind::MinusGreater
                                              : Lex::TokenKind::Period);
 
-  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                       NodeKind::Name)) {
+  if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
+                                      NodeKind::Name)) {
+    // OK, `.` identifier.
+  } else if (node_kind != NodeKind::QualifiedDecl &&
+             context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
+                                             NodeKind::Name)) {
+    // OK, `.base`. This is allowed in any name context other than declaring a
+    // new qualified name: `fn Namespace.base() {}`
+  } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
                       "Expected identifier after `{0}`.", llvm::StringLiteral);
     context.emitter().Emit(

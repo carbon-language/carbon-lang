@@ -54,6 +54,19 @@ static auto GetExprValueForLookupResult(Context& context,
   return lookup_result_id;
 }
 
+static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
+    -> SemIR::ElementIndex {
+  auto element_inst = context.insts().Get(element_id);
+  if (auto field = element_inst.TryAs<SemIR::Field>()) {
+    return field->index;
+  }
+  if (auto base = element_inst.TryAs<SemIR::Base>()) {
+    return base->index;
+  }
+  CARBON_FATAL() << "Unexpected value " << element_inst
+                 << " in class element name";
+}
+
 auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
     -> bool {
   SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
@@ -111,32 +124,29 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
       auto member_type_id = context.insts().Get(member_id).type_id();
       auto member_type_inst = context.insts().Get(
           context.sem_ir().GetTypeAllowBuiltinTypes(member_type_id));
-      if (auto unbound_field_type =
+      if (auto unbound_element_type =
               member_type_inst.TryAs<SemIR::UnboundElementType>()) {
-        // TODO: Check that the unbound field type describes a member of this
+        // TODO: Check that the unbound element type describes a member of this
         // class. Perform a conversion of the base if necessary.
 
-        // Find the named field and build a field access expression.
-        auto field_id = context.GetConstantValue(member_id);
-        CARBON_CHECK(field_id.is_valid())
+        // Find the specified element, which could be either a field or a base
+        // class, and build an element access expression.
+        auto element_id = context.GetConstantValue(member_id);
+        CARBON_CHECK(element_id.is_valid())
             << "Non-constant value " << context.insts().Get(member_id)
-            << " of unbound field type";
-        auto field = context.insts().Get(field_id).TryAs<SemIR::Field>();
-        CARBON_CHECK(field)
-            << "Unexpected value " << context.insts().Get(field_id)
-            << " for field name expression";
+            << " of unbound element type";
+        auto index = GetClassElementIndex(context, element_id);
         auto access_id = context.AddInst(SemIR::ClassElementAccess{
-            parse_node, unbound_field_type->element_type_id, base_id,
-            field->index});
+            parse_node, unbound_element_type->element_type_id, base_id, index});
         if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
                 SemIR::ExprCategory::Value &&
             SemIR::GetExprCategory(context.sem_ir(), access_id) !=
                 SemIR::ExprCategory::Value) {
-          // Class field access on a value expression produces an ephemeral
-          // reference if the class's value representation is a pointer to the
-          // object representation. Add a value binding in that case so that the
-          // expression category of the result matches the expression category
-          // of the base.
+          // Class element access on a value expression produces an
+          // ephemeral reference if the class's value representation is a
+          // pointer to the object representation. Add a value binding in
+          // that case so that the expression category of the result
+          // matches the expression category of the base.
           access_id = ConvertToValueExpr(context, access_id);
         }
         context.node_stack().Push(parse_node, access_id);
@@ -222,17 +232,30 @@ auto HandlePointerMemberAccessExpr(Context& context, Parse::NodeId parse_node)
   return context.TODO(parse_node, "HandlePointerMemberAccessExpr");
 }
 
+static auto GetParseNodeAsName(Context& context, Parse::NodeId parse_node)
+    -> SemIR::NameId {
+  auto token = context.parse_tree().node_token(parse_node);
+
+  // The keyword `base` can be used as a name.
+  if (context.tokens().GetKind(token) == Lex::TokenKind::Base) {
+    return SemIR::NameId::Base;
+  }
+
+  // TODO: Should we also handle `Self` and `self` here?
+
+  // All other names should be identifiers.
+  return SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(token));
+}
+
 auto HandleName(Context& context, Parse::NodeId parse_node) -> bool {
-  auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
-      context.parse_tree().node_token(parse_node)));
   // The parent is responsible for binding the name.
-  context.node_stack().Push(parse_node, name_id);
+  context.node_stack().Push(parse_node,
+                            GetParseNodeAsName(context, parse_node));
   return true;
 }
 
 auto HandleNameExpr(Context& context, Parse::NodeId parse_node) -> bool {
-  auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
-      context.parse_tree().node_token(parse_node)));
+  auto name_id = GetParseNodeAsName(context, parse_node);
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   value_id = GetExprValueForLookupResult(context, value_id);
   auto value = context.insts().Get(value_id);

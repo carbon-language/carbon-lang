@@ -62,8 +62,20 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   // result in a `set_packaging_state` call. Note, this may not always be
   // necessary but is probably cheaper than validating.
   switch (position_kind) {
-    case Lex::TokenKind::Abstract:
     case Lex::TokenKind::Base: {
+      if (context.PositionIs(Lex::TokenKind::Colon, Lookahead::NextToken)) {
+        context.PushState(State::BaseDecl);
+        context.PushState(State::Expr);
+        context.AddLeafNode(NodeKind::BaseIntroducer, context.Consume());
+        context.AddLeafNode(NodeKind::BaseColon, context.Consume());
+        return;
+      }
+      // TODO: If the next token isn't a colon or `class`, try to recover based
+      // on whether we're in a class, whether we have an `extend` modifier, and
+      // the following tokens.
+      [[fallthrough]];
+    }
+    case Lex::TokenKind::Abstract: {
       if (context.PositionIs(Lex::TokenKind::Class, Lookahead::NextToken)) {
         context.PushState(State::TypeAfterIntroducerAsClass);
         auto modifier_token = context.Consume();

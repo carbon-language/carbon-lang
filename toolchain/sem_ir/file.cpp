@@ -187,6 +187,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
     case Assign::Kind:
+    case Base::Kind:
     case BinaryOperatorAdd::Kind:
     case BindName::Kind:
     case BindValue::Kind:
@@ -389,6 +390,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
       case Assign::Kind:
+      case Base::Kind:
       case BinaryOperatorAdd::Kind:
       case BindName::Kind:
       case BindValue::Kind:
@@ -470,6 +472,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case Assign::Kind:
+      case Base::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:

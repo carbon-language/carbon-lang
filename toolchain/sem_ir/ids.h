@@ -129,7 +129,7 @@ constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
 // The ID of a name. A name is either a string or a special name such as
-// `self`, or eventually `Self` or `base`.
+// `self`, `Self`, or `base`.
 struct NameId : public IdBase, public Printable<NameId> {
   // An explicitly invalid ID.
   static const NameId Invalid;
@@ -139,6 +139,8 @@ struct NameId : public IdBase, public Printable<NameId> {
   static const NameId SelfType;
   // The name of the return slot in a function.
   static const NameId ReturnSlot;
+  // The name of `base`.
+  static const NameId Base;
 
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
@@ -165,6 +167,8 @@ struct NameId : public IdBase, public Printable<NameId> {
       out << "SelfType";
     } else if (*this == ReturnSlot) {
       out << "ReturnSlot";
+    } else if (*this == Base) {
+      out << "Base";
     } else {
       CARBON_CHECK(index >= 0) << "Unknown index";
       IdBase::Print(out);
@@ -176,6 +180,7 @@ constexpr NameId NameId::Invalid = NameId(NameId::InvalidIndex);
 constexpr NameId NameId::SelfValue = NameId(NameId::InvalidIndex - 1);
 constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
 constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
+constexpr NameId NameId::Base = NameId(NameId::InvalidIndex - 4);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase, public Printable<NameScopeId> {
