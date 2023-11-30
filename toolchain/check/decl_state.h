@@ -45,6 +45,7 @@ class KeywordModifierSet {
   auto SetImpl() const -> KeywordModifierSet { return Set(Impl); }
   auto SetVirtual() const -> KeywordModifierSet { return Set(Virtual); }
 
+  // Returns true if any modifier from `to_check` is in the set.
   auto Has(RawEnum to_check) const -> bool { return keywords_ & to_check; }
   auto HasPrivate() const -> bool { return Has(Private); }
   auto HasProtected() const -> bool { return Has(Protected); }
@@ -61,6 +62,7 @@ class KeywordModifierSet {
 };
 
 struct DeclState {
+  // What kind of declaration
   // FIXME: `Fn` or `Function`?
   enum DeclKind { FileScope, Class, NamedConstraint, Fn, Interface, Let, Var };
 
@@ -68,12 +70,19 @@ struct DeclState {
       : first_node(parse_node), kind(decl_kind) {}
   DeclState() : DeclState(FileScope, Parse::Node::Invalid) {}
 
+  // Nodes of modifiers on this declaration
   Parse::Node saw_access_mod = Parse::Node::Invalid;
   Parse::Node saw_decl_mod = Parse::Node::Invalid;
+
+  // Node corresponding to the first token of the declaration.
   Parse::Node first_node;
+
+  // These fields are last because they are smaller.
+
   // Invariant: members of the set are `saw_access_mod` and `saw_other_mod`
   // if valid.
   KeywordModifierSet found;
+
   DeclKind kind;
 };
 
