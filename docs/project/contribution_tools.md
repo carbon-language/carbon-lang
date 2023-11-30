@@ -68,6 +68,23 @@ bazel test //...:all
 > NOTE: Most LLVM 14+ installs should build Carbon. If you're having issues, see
 > [troubleshooting build issues](#troubleshooting-build-issues).
 
+> NOTE: If you're using a Debian or Ubuntu operating system, you may not be able
+> to install bazel through the apt package manager. If this is the case, you can
+> install bazel through the bazel github repository. The following commands will
+> install bazel through the bazel github repository:
+>
+> ```
+> # Install bazel.
+> chmod +x bazel-<latest_stable_release_version>-installer-linux-x86_64.sh
+> ./bazel-<latest_stable_release_version>-installer-linux-x86_64.sh --user
+> export PATH="$PATH:$HOME/bin"
+> ```
+>
+> Go to [bazel release page](https://github.com/bazelbuild/bazel/releases) and
+> download the binary corresponding to your system. For example, if you are
+> using Linux, download the binary named
+> 'bazel-<latest_stable_release_version>-installer-linux-x86_64.sh'
+
 ### macOS
 
 ```
