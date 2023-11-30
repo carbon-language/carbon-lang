@@ -34,7 +34,7 @@ var global_var: Class;
 
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:24: ERROR: Function returns incomplete type `Class`.
 // CHECK:STDERR: fn ConvertFromStruct() -> Class { return {}; }
-// CHECK:STDERR:                        ^~~~
+// CHECK:STDERR:                        ^~~~~~~~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-31]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~
@@ -57,7 +57,7 @@ fn MemberAccess(p: Class*) -> i32 {
 
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:20: ERROR: Function returns incomplete type `Class`.
 // CHECK:STDERR: fn Copy(p: Class*) -> Class {
-// CHECK:STDERR:                    ^~~~
+// CHECK:STDERR:                    ^~~~~~~~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-54]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~
@@ -81,7 +81,7 @@ fn TakeIncomplete(c: Class);
 //
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:23: ERROR: Function returns incomplete type `Class`.
 // CHECK:STDERR: fn ReturnIncomplete() -> Class;
-// CHECK:STDERR:                       ^~~~
+// CHECK:STDERR:                       ^~~~~~~~
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-78]]:1: Class was forward declared here.
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~

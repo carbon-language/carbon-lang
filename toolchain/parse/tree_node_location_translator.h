@@ -27,7 +27,7 @@ class NodeLocationTranslator : public DiagnosticLocationTranslator<NodeId> {
     }
 
     // Retrieve all tokens that descend from this node (including the root).
-    // This will always represent a contiguous chunk of source b/c XXXX. Then
+    // This will always represent a contiguous chunk of source. Then
     // construct a location that represents this range.
     DiagnosticLocation start_loc =
         token_translator_.GetLocation(parse_tree_->node_token(node));
@@ -55,7 +55,8 @@ class NodeLocationTranslator : public DiagnosticLocationTranslator<NodeId> {
       start_loc.length = start_loc.line.size() - start_loc.column_number + 1;
     } else {
       if (start_loc.column_number != end_loc.column_number) {
-        start_loc.length = end_loc.column_number - start_loc.column_number + 1;
+        start_loc.length =
+            end_loc.column_number + end_loc.length - start_loc.column_number;
       }
     }
     return start_loc;
