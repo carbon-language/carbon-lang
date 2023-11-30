@@ -28,10 +28,26 @@ static auto BuildClassDecl(Context& context)
   auto first_node = context.innermost_decl().first_node;
 
   // Process modifiers.
-  llvm::StringRef decl_name = "`class` declaration";
-  CheckAccessModifiersOnDecl(context, decl_name);
   auto base_modifiers = KeywordModifierSet().SetAbstract().SetBase();
-  auto modifiers = ModifiersAllowedOnDecl(context, base_modifiers, decl_name);
+  auto modifiers = ModifiersAllowedOnDecl(
+      context, base_modifiers.SetPrivate().SetProtected(),
+      "`class` declaration");
+  switch (context.containing_decl().kind) {
+    case DeclState::FileScope:
+      modifiers = ModifiersAllowedOnDecl(context, base_modifiers.SetPrivate(),
+                                         "`class` declaration at file scope");
+      break;
+
+    case DeclState::Class:
+      break;
+
+    default:
+      modifiers = ModifiersAllowedOnDecl(
+          context, base_modifiers,
+          "`class` declaration inside another definition",
+          context.containing_decl().first_node);
+      break;
+  }
   if (modifiers.HasPrivate()) {
     context.TODO(context.innermost_decl().saw_access_mod, "private");
   }

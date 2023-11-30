@@ -9,31 +9,14 @@
 
 namespace Carbon::Check {
 
-// Reports a diagnostic (using `decl_name`) if access control modifiers on this
-// are not allowed, and updates the declaration state in `context`.
-auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
-    -> void;
-
-enum class ShouldReportContext { ExcludeContext, IncludeContext };
-static constexpr auto IncludeContext = ShouldReportContext::IncludeContext;
-
-// Reports a diagnostic (using `decl_name`) if declaration modifiers on this
-// declaration are not in `allowed`. Assumes access modifiers were already
-// handled using `CheckAccessModifiersOnDecl`. Returns modifiers that were both
-// found and allowed (including access modifiers), and updates the declaration
-// state in `context`. Pass `IncludeContext` to the last parameter to include
-// the containing declaration as context in diagnostics.
-auto ModifiersAllowedOnDecl(
-    Context& context, KeywordModifierSet allowed, llvm::StringRef decl_name,
-    ShouldReportContext report_context = ShouldReportContext::ExcludeContext)
-    -> KeywordModifierSet;
-
-// Like `ModifiersAllowedOnDecl` with `IncludeContext` except it uses a custom
-// `context_string` to describe the context.
-auto ModifiersAllowedOnDeclCustomContext(Context& context,
-                                         KeywordModifierSet allowed,
-                                         llvm::StringRef decl_name,
-                                         llvm::StringRef context_string)
+// Reports a diagnostic (using `decl_name`) if modifiers on this declaration are
+// not in `allowed`. Returns modifiers that were both found and allowed, and
+// updates the declaration state in `context`. Specify optional Parse::Node
+// `context_node` to add a note to the diagnostic about the containing
+// definition.
+auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
+                            llvm::StringRef decl_name,
+                            Parse::Node context_node = Parse::Node::Invalid)
     -> KeywordModifierSet;
 
 }  // namespace Carbon::Check

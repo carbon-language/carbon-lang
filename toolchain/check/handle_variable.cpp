@@ -76,10 +76,29 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
       .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
 
   // Process declaration modifiers.
-  llvm::StringRef decl_name = "`var` declaration";
-  CheckAccessModifiersOnDecl(context, decl_name);
-  auto modifiers =
-      ModifiersAllowedOnDecl(context, KeywordModifierSet(), decl_name);
+  auto modifiers = ModifiersAllowedOnDecl(
+      context, KeywordModifierSet().SetPrivate().SetProtected(),
+      "`var` declaration");
+  switch (context.containing_decl().kind) {
+    case DeclState::FileScope:
+      modifiers =
+          ModifiersAllowedOnDecl(context, KeywordModifierSet().SetPrivate(),
+                                 "`var` declaration at file scope");
+      break;
+
+    case DeclState::Class:
+      modifiers = ModifiersAllowedOnDecl(
+          context, KeywordModifierSet().SetPrivate().SetProtected(),
+          "`var` declaration in a `class` definition",
+          context.containing_decl().first_node);
+      break;
+
+    default:
+      modifiers = ModifiersAllowedOnDecl(context, KeywordModifierSet(),
+                                         "`var` declaration in this context",
+                                         context.containing_decl().first_node);
+      break;
+  }
   if (modifiers.HasPrivate()) {
     context.TODO(context.innermost_decl().saw_access_mod, "private");
   }
