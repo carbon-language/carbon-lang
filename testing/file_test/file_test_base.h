@@ -146,11 +146,6 @@ class FileTestBase : public testing::Test {
   // Processes the test input, producing test files and expected output.
   auto ProcessTestFile(TestContext& context) -> ErrorOr<Success>;
 
-  // Transforms an expectation on a given line from `FileCheck` syntax into a
-  // standard regex matcher.
-  static auto TransformExpectation(int line_index, llvm::StringRef in)
-      -> ErrorOr<testing::Matcher<std::string>>;
-
   // Runs the FileTestAutoupdater, returning the result.
   auto RunAutoupdater(const TestContext& context, bool dry_run) -> bool;
 
