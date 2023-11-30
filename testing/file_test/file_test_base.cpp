@@ -320,60 +320,87 @@ static auto TryConsumeConflictMarker(llvm::StringRef line,
 
 // State for file splitting logic: TryConsumeSplit and FinishSplit.
 struct SplitState {
-  // Whether content has been found, only updated before a file split is found
+  auto has_splits() const -> bool { return file_index > 0; }
+
+  auto add_content(llvm::StringRef line) -> void {
+    content.append(line);
+    content.append("\n");
+  }
+
+  // Whether content has been found. Only updated before a file split is found
   // (which may be never).
-  bool found_content_pre_split = false;
+  bool found_code_pre_split = false;
 
   // The current file name, considering splits. Empty for the default file.
-  llvm::StringRef file_name = "";
+  llvm::StringRef filename = "";
 
-  // The current file's start.
-  const char* file_start = nullptr;
+  // The accumulated content for the file being built. This may elide some of
+  // the original content, such as conflict markers.
+  std::string content;
 
   // The current file index.
-  int file_number = 0;
+  int file_index = 0;
 };
 
+// Adds a file. Used for both split and unsplit test files.
+static auto AddTestFile(llvm::StringRef filename, std::string* content,
+                        llvm::SmallVector<FileTestBase::TestFile>* test_files)
+    -> void {
+  test_files->push_back(
+      {.filename = filename.str(), .content = std::move(*content)});
+  content->clear();
+}
+
+// Process file split ("---") lines when found. Returns true if the line is
+// consumed.
 static auto TryConsumeSplit(
-    llvm::StringRef cursor, llvm::StringRef line, llvm::StringRef line_trimmed,
-    bool found_autoupdate, int* line_index, SplitState* split, bool* has_splits,
+    llvm::StringRef line, llvm::StringRef line_trimmed, bool found_autoupdate,
+    int* line_index, SplitState* split,
     llvm::SmallVector<FileTestBase::TestFile>* test_files,
     llvm::SmallVector<FileTestLine>* non_check_lines) -> ErrorOr<bool> {
-  static constexpr llvm::StringLiteral SplitPrefix = "// ---";
-  if (line_trimmed.consume_front(SplitPrefix)) {
-    if (!found_autoupdate) {
-      // If there's a split, all output is appended at the end of each file
-      // before AUTOUPDATE. We may want to change that, but it's not
-      // necessary to handle right now.
-      return ErrorBuilder() << "AUTOUPDATE/NOAUTOUPDATE setting must be in "
-                               "the first file.";
+  if (!line_trimmed.consume_front("// ---")) {
+    if (!split->has_splits() && !line_trimmed.starts_with("//") &&
+        !line_trimmed.empty()) {
+      split->found_code_pre_split = true;
     }
 
-    *has_splits = true;
-    ++split->file_number;
-    non_check_lines->push_back(FileTestLine(split->file_number, 0, line));
-    // On a file split, add the previous file, then start a new one.
-    if (split->file_start) {
-      test_files->push_back(FileTestBase::TestFile(
-          split->file_name.str(),
-          llvm::StringRef(
-              split->file_start,
-              line_trimmed.begin() - split->file_start - SplitPrefix.size())));
-    } else if (split->found_content_pre_split) {
+    // Add the line to the current file's content (which may not be a split
+    // file).
+    split->add_content(line);
+    return false;
+  }
+
+  if (!found_autoupdate) {
+    // If there's a split, all output is appended at the end of each file
+    // before AUTOUPDATE. We may want to change that, but it's not
+    // necessary to handle right now.
+    return ErrorBuilder() << "AUTOUPDATE/NOAUTOUPDATE setting must be in "
+                             "the first file.";
+  }
+
+  // On a file split, add the previous file, then start a new one.
+  if (split->has_splits()) {
+    AddTestFile(split->filename, &split->content, test_files);
+  } else {
+    split->content.clear();
+    if (split->found_code_pre_split) {
       // For the first split, we make sure there was no content prior.
       return ErrorBuilder() << "When using split files, there must be no "
-                               "content before the "
-                               "first split file.";
+                               "content before the first split file.";
     }
-    split->file_name = line_trimmed.trim();
-    split->file_start = cursor.begin();
-    *line_index = 0;
-    return true;
-  } else if (!split->file_start && !line_trimmed.starts_with("//") &&
-             !line_trimmed.empty()) {
-    split->found_content_pre_split = true;
   }
-  return false;
+
+  ++split->file_index;
+  split->filename = line_trimmed.trim();
+  if (split->filename.empty()) {
+    return ErrorBuilder() << "Missing filename for split.";
+  }
+  // The split line is added to non_check_lines for retention in autoupdate, but
+  // is not added to the test file content.
+  *line_index = 0;
+  non_check_lines->push_back(
+      FileTestLine(split->file_index, *line_index, line));
+  return true;
 }
 
 // Transforms an expectation on a given line from `FileCheck` syntax into a
@@ -465,20 +492,16 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
 }
 
 // Once all content is processed, do any remaining split processing.
-static auto FinishSplit(const SplitState& split, llvm::StringRef test_name,
-                        llvm::StringRef file_content,
+static auto FinishSplit(llvm::StringRef test_name, SplitState* split,
                         llvm::SmallVector<FileTestBase::TestFile>* test_files)
     -> void {
-  if (split.file_start) {
-    test_files->push_back(FileTestBase::TestFile(
-        split.file_name.str(),
-        llvm::StringRef(split.file_start,
-                        file_content.end() - split.file_start)));
+  if (split->has_splits()) {
+    AddTestFile(split->filename, &split->content, test_files);
   } else {
     // If no file splitting happened, use the main file as the test file.
     // There will always be a `/` unless tests are in the repo root.
-    test_files->push_back(FileTestBase::TestFile(
-        test_name.drop_front(test_name.rfind("/") + 1).str(), file_content));
+    AddTestFile(test_name.drop_front(test_name.rfind("/") + 1), &split->content,
+                test_files);
   }
 }
 
@@ -600,9 +623,8 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
 
     CARBON_ASSIGN_OR_RETURN(
         is_consumed,
-        TryConsumeSplit(cursor, line, line_trimmed, found_autoupdate,
-                        &line_index, &split, &context.has_splits,
-                        &context.test_files, &context.non_check_lines));
+        TryConsumeSplit(line, line_trimmed, found_autoupdate, &line_index,
+                        &split, &context.test_files, &context.non_check_lines));
     if (is_consumed) {
       continue;
     }
@@ -619,7 +641,7 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
 
     // At this point, lines are retained as non-CHECK lines.
     context.non_check_lines.push_back(
-        FileTestLine(split.file_number, line_index, line));
+        FileTestLine(split.file_index, line_index, line));
 
     CARBON_ASSIGN_OR_RETURN(
         is_consumed, TryConsumeArgs(line, line_trimmed, &context.test_args));
@@ -645,7 +667,8 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
     return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
   }
 
-  FinishSplit(split, test_name_, file_content, &context.test_files);
+  context.has_splits = split.has_splits();
+  FinishSplit(test_name_, &split, &context.test_files);
 
   // Assume there is always a suffix `\n` in output.
   if (!context.expected_stdout.empty()) {

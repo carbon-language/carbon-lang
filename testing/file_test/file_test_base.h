@@ -24,9 +24,6 @@ namespace Carbon::Testing {
 class FileTestBase : public testing::Test {
  public:
   struct TestFile {
-    explicit TestFile(std::string filename, llvm::StringRef content)
-        : filename(std::move(filename)), content(content) {}
-
     friend void PrintTo(const TestFile& f, std::ostream* os) {
       // Print content escaped.
       llvm::raw_os_ostream os_wrap(*os);
@@ -36,7 +33,7 @@ class FileTestBase : public testing::Test {
     }
 
     std::string filename;
-    llvm::StringRef content;
+    std::string content;
   };
 
   // Provided for child class convenience.
