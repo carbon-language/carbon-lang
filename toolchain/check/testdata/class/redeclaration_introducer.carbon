@@ -19,6 +19,7 @@ abstract class C {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl.loc7, .B = %B.decl.loc8, .C = %C.decl.loc9}
 // CHECK:STDOUT:   %A.decl.loc7 = class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
 // CHECK:STDOUT:   %B.decl.loc8 = class_decl @B, ()

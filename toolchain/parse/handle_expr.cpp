@@ -147,6 +147,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(State::ArrayExpr);
       break;
     }
+    case Lex::TokenKind::Package: {
+      context.AddLeafNode(NodeKind::PackageExpr, context.Consume());
+      context.PushState(state);
+      break;
+    }
     case Lex::TokenKind::SelfValueIdentifier: {
       context.AddLeafNode(NodeKind::SelfValueNameExpr, context.Consume());
       context.PushState(state);

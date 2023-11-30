@@ -9,6 +9,7 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT: --- run_i32.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Run = %Run}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

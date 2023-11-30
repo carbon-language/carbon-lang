@@ -16,6 +16,7 @@ var y: i32 = x;
 // CHECK:STDOUT: --- fail_lookup_outside_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main, .y = %y}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
