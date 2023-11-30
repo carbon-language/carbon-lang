@@ -10,7 +10,8 @@ var x: i32;
 // CHECK:STDERR:               ^
 var y: i32 = x.b;
 
-// CHECK:STDOUT: file "fail_qualifier_unsupported.carbon" {
+// CHECK:STDOUT: --- fail_qualifier_unsupported.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %y.var: ref i32 = var y

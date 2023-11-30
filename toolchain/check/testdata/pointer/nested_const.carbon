@@ -9,7 +9,8 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
   return **p;
 }
 
-// CHECK:STDOUT: file "nested_const.carbon" {
+// CHECK:STDOUT: --- nested_const.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

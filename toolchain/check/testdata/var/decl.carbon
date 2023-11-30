@@ -8,7 +8,8 @@ fn Main() {
   var x: i32;
 }
 
-// CHECK:STDOUT: file "decl.carbon" {
+// CHECK:STDOUT: --- decl.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

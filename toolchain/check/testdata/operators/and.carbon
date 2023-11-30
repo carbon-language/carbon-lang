@@ -11,7 +11,8 @@ fn And() -> bool {
   return F() and G();
 }
 
-// CHECK:STDOUT: file "and.carbon" {
+// CHECK:STDOUT: --- and.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %And: <function> = fn_decl @And

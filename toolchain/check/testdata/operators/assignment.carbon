@@ -22,6 +22,7 @@ fn Main() {
   *(if true then p else &a) = 10;
 }
 
+// CHECK:STDOUT: --- assignment.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11_19.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc11_19.2: type = tuple_type (i32, i32)
@@ -29,7 +30,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "assignment.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

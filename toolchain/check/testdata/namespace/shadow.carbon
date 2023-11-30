@@ -23,11 +23,12 @@ fn N.M.B() -> i32 {
   return 0;
 }
 
+// CHECK:STDOUT: --- shadow.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc16: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "shadow.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A.1
 // CHECK:STDOUT:   %.loc9: <namespace> = namespace {.A = %A.loc10, .M = %.loc12}
 // CHECK:STDOUT:   %A.loc10: <function> = fn_decl @A.2

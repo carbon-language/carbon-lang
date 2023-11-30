@@ -13,11 +13,12 @@ fn Run() {
   F()[0];
 }
 
+// CHECK:STDOUT: --- fail_empty_tuple_access.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc13: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_empty_tuple_access.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }

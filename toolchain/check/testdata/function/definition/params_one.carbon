@@ -6,7 +6,8 @@
 
 fn Foo(a: i32) {}
 
-// CHECK:STDOUT: file "params_one.carbon" {
+// CHECK:STDOUT: --- params_one.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

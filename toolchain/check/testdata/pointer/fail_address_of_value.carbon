@@ -82,6 +82,7 @@ fn AddressOfParam(param: i32) {
   var param_addr: i32* = &param;
 }
 
+// CHECK:STDOUT: --- fail_address_of_value.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = ptr_type i32
 // CHECK:STDOUT:   %.loc19: type = ptr_type bool
@@ -93,7 +94,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc64: type = ptr_type type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_address_of_value.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral

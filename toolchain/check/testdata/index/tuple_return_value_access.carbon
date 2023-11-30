@@ -10,12 +10,13 @@ fn Run() -> i32 {
   return F()[0];
 }
 
+// CHECK:STDOUT: --- tuple_return_value_access.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc7_16.2: type = tuple_type (i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "tuple_return_value_access.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }

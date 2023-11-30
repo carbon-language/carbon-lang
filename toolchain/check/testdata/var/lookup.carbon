@@ -9,7 +9,8 @@ fn Main() {
   x;
 }
 
-// CHECK:STDOUT: file "lookup.carbon" {
+// CHECK:STDOUT: --- lookup.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

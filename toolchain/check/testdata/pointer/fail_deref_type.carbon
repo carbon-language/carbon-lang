@@ -12,7 +12,8 @@
 // CHECK:STDERR:        ^
 var p: *i32;
 
-// CHECK:STDOUT: file "fail_deref_type.carbon" {
+// CHECK:STDOUT: --- fail_deref_type.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc13: ref <error> = deref i32
 // CHECK:STDOUT:   %p.var: ref <error> = var p
 // CHECK:STDOUT:   %p: ref <error> = bind_name p, %p.var

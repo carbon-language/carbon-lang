@@ -19,12 +19,13 @@ fn G() -> i32 {
   return var;
 }
 
+// CHECK:STDOUT: --- returned_var.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "returned_var.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:   %F: <function> = fn_decl @F

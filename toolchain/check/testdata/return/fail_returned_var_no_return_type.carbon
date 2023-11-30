@@ -15,11 +15,12 @@ fn Procedure() {
   return;
 }
 
+// CHECK:STDOUT: --- fail_returned_var_no_return_type.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_returned_var_no_return_type.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

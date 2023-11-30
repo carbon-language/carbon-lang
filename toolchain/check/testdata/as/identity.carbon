@@ -24,13 +24,14 @@ fn Initializing() {
   var x: X = (Make() as X);
 }
 
+// CHECK:STDOUT: --- identity.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc11_1.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc9: type = ptr_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "identity.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
 // CHECK:STDOUT:   %Value: <function> = fn_decl @Value

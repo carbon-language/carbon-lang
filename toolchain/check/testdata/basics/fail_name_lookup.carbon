@@ -11,7 +11,8 @@ fn Main() {
   x;
 }
 
-// CHECK:STDOUT: file "fail_name_lookup.carbon" {
+// CHECK:STDOUT: --- fail_name_lookup.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

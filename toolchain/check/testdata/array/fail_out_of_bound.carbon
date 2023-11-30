@@ -9,12 +9,13 @@
 // CHECK:STDERR:                           ^
 var a: [i32; 1] = (1, 2, 3);
 
+// CHECK:STDOUT: --- fail_out_of_bound.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_15: type = ptr_type [i32; 1]
 // CHECK:STDOUT:   %.loc10_27: type = tuple_type (i32, i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_out_of_bound.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32
 // CHECK:STDOUT:   %a.var: ref [i32; 1] = var a

@@ -8,7 +8,8 @@ fn Main() -> {.a: i32} {
   return {.a = 3};
 }
 
-// CHECK:STDOUT: file "struct.carbon" {
+// CHECK:STDOUT: --- struct.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -9,7 +9,8 @@ fn F(a: i32) -> i32 {
   return b;
 }
 
-// CHECK:STDOUT: file "local.carbon" {
+// CHECK:STDOUT: --- local.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

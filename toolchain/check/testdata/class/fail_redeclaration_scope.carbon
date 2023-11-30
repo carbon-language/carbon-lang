@@ -21,11 +21,12 @@ class Y {
   class A.B {}
 }
 
+// CHECK:STDOUT: --- fail_redeclaration_scope.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_redeclaration_scope.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @A.1, ()
 // CHECK:STDOUT:   %A: type = class_type @A.1
 // CHECK:STDOUT:   class_decl @X, ()

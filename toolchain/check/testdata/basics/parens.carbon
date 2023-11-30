@@ -6,7 +6,8 @@
 
 var test_i32: i32 = ((1) + (2));
 
-// CHECK:STDOUT: file "parens.carbon" {
+// CHECK:STDOUT: --- parens.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %test_i32.var: ref i32 = var test_i32
 // CHECK:STDOUT:   %test_i32: ref i32 = bind_name test_i32, %test_i32.var
 // CHECK:STDOUT:   %.loc7_23: i32 = int_literal 1

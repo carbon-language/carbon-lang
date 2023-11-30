@@ -15,7 +15,8 @@ fn Main() {
   *also_undeclared = 42;
 }
 
-// CHECK:STDOUT: file "fail_assignment_to_error.carbon" {
+// CHECK:STDOUT: --- fail_assignment_to_error.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

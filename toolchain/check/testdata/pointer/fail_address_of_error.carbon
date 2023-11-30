@@ -18,12 +18,13 @@ fn Test() {
   &(&undeclared);
 }
 
+// CHECK:STDOUT: --- fail_address_of_error.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = ptr_type <error>
 // CHECK:STDOUT:   %.loc18: type = ptr_type <error>*
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_address_of_error.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Test: <function> = fn_decl @Test
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

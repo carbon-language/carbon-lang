@@ -24,11 +24,12 @@ fn Class.F() {}
 fn Class.G() {}
 fn Class.H() {}
 
+// CHECK:STDOUT: --- fail_redefinition.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_redefinition.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   class_decl @Class, ()

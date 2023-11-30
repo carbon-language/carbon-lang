@@ -39,7 +39,8 @@ fn B() {}
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "a.carbon" {
+// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +69,8 @@ fn B() {}
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "b.carbon" {
+// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

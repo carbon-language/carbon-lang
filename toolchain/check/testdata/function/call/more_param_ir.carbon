@@ -11,11 +11,12 @@ fn Main() {
   Foo(1 + 2 + 3, 4 + 5, 6);
 }
 
+// CHECK:STDOUT: --- more_param_ir.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "more_param_ir.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }

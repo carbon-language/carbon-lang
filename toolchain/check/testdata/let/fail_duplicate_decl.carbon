@@ -14,7 +14,8 @@ fn F(a: i32) {
   let a: i32 = 1;
 }
 
-// CHECK:STDOUT: file "fail_duplicate_decl.carbon" {
+// CHECK:STDOUT: --- fail_duplicate_decl.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

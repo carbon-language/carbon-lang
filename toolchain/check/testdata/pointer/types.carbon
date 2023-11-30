@@ -12,7 +12,8 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
   return p;
 }
 
-// CHECK:STDOUT: file "types.carbon" {
+// CHECK:STDOUT: --- types.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Ptr: <function> = fn_decl @Ptr
 // CHECK:STDOUT:   %ConstPtr: <function> = fn_decl @ConstPtr
 // CHECK:STDOUT: }

@@ -6,7 +6,8 @@
 
 fn Foo() {}
 
-// CHECK:STDOUT: file "params_zero.carbon" {
+// CHECK:STDOUT: --- params_zero.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

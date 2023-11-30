@@ -13,7 +13,8 @@ fn Main() -> i32 {
   return 12 + 3.4 + 12;
 }
 
-// CHECK:STDOUT: file "fail_type_mismatch_once.carbon" {
+// CHECK:STDOUT: --- fail_type_mismatch_once.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

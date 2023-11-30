@@ -25,6 +25,7 @@ fn F() {
   );
 }
 
+// CHECK:STDOUT: --- numeric_literals.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = ptr_type [i32; 5]
 // CHECK:STDOUT:   %.loc16: type = tuple_type (i32, i32, i32, i32, i32)
@@ -32,7 +33,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc25: type = tuple_type (f64, f64, f64, f64, f64, f64, f64)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "numeric_literals.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -12,7 +12,8 @@ fn ReturnType() -> type { return i32; }
 // CHECK:STDERR:                        ^
 fn Six() -> ReturnType() { return 6; }
 
-// CHECK:STDOUT: file "fail_call_in_type.carbon" {
+// CHECK:STDOUT: --- fail_call_in_type.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %ReturnType: <function> = fn_decl @ReturnType
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six
 // CHECK:STDOUT: }

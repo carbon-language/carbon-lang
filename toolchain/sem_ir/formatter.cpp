@@ -292,10 +292,9 @@ class InstNamer {
     return scopes[static_cast<int>(scope_idx)];
   }
 
-  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
-                     std::string name = "",
-                     Parse::NodeId parse_node = Parse::NodeId::Invalid)
-      -> void {
+  auto AddBlockLabel(
+      ScopeIndex scope_idx, InstBlockId block_id, std::string name = "",
+      Parse::NodeId parse_node = Parse::NodeId::Invalid) -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
@@ -314,8 +313,8 @@ class InstNamer {
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Inst inst)
-      -> void {
+  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
+                     Inst inst) -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(inst.parse_node())) {
       case Parse::NodeKind::IfExprIf:
@@ -390,8 +389,8 @@ class InstNamer {
     }
   }
 
-  auto CollectNamesInBlock(ScopeIndex scope_idx, llvm::ArrayRef<InstId> block)
-      -> void {
+  auto CollectNamesInBlock(ScopeIndex scope_idx,
+                           llvm::ArrayRef<InstId> block) -> void {
     Scope& scope = GetScopeInfo(scope_idx);
 
     // Use bound names where available. Otherwise, assign a backup name.
@@ -496,10 +495,17 @@ class Formatter {
         out_(out),
         inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
 
+  // Prints the SemIR.
+  //
+  // Constants are printed first and may be referenced by later sections,
+  // including file-scoped instructions. The file scope may contain entity
+  // declarations which are defined later, such as classes.
   auto Format() -> void {
+    out_ << "--- " << sem_ir_.filename() << "\n";
+
     FormatConstants();
 
-    out_ << "file \"" << sem_ir_.filename() << "\" {\n";
+    out_ << "file {\n";
     // TODO: Handle the case where there are multiple top-level instruction
     // blocks. For example, there may be branching in the initializer of a
     // global or a type expression.

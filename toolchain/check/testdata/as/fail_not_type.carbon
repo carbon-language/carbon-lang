@@ -9,7 +9,8 @@
 // CHECK:STDERR:                   ^
 let n: i32 = 1 as 2;
 
-// CHECK:STDOUT: file "fail_not_type.carbon" {
+// CHECK:STDOUT: --- fail_not_type.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_19: i32 = int_literal 2
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>

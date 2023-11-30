@@ -4,5 +4,6 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDOUT: file "empty.carbon" {
+// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }

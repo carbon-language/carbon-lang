@@ -47,23 +47,28 @@ package CycleChild api;
 // CHECK:STDERR: ^~~~~~
 import B;
 
-// CHECK:STDOUT: file "a.carbon" {
+// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %B: <namespace> = bind_name B, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "b.carbon" {
+// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %C: <namespace> = bind_name C, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "c.carbon" {
+// CHECK:STDOUT: --- c.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %A: <namespace> = bind_name A, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "c.impl.carbon" {
+// CHECK:STDOUT: --- c.impl.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %C: <namespace> = bind_name C, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "cycle_child.carbon" {
+// CHECK:STDOUT: --- cycle_child.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %B: <namespace> = bind_name B, %import
 // CHECK:STDOUT: }

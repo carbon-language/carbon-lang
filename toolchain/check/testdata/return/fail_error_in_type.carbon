@@ -9,7 +9,8 @@
 // CHECK:STDERR:             ^
 fn Six() -> x;
 
-// CHECK:STDOUT: file "fail_error_in_type.carbon" {
+// CHECK:STDOUT: --- fail_error_in_type.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -14,7 +14,8 @@ fn Main() {
   return 0;
 }
 
-// CHECK:STDOUT: file "fail_value_disallowed.carbon" {
+// CHECK:STDOUT: --- fail_value_disallowed.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

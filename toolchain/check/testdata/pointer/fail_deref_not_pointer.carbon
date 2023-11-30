@@ -19,12 +19,13 @@ fn Deref(n: i32) {
   *{};
 }
 
+// CHECK:STDOUT: --- fail_deref_not_pointer.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = tuple_type ()
 // CHECK:STDOUT:   %.loc19: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_deref_not_pointer.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

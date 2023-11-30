@@ -11,7 +11,8 @@ fn Main() {
   var x: i32 = 1.0;
 }
 
-// CHECK:STDOUT: file "fail_init_type_mismatch.carbon" {
+// CHECK:STDOUT: --- fail_init_type_mismatch.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -11,7 +11,8 @@ fn Or() -> bool {
   return F() or G();
 }
 
-// CHECK:STDOUT: file "or.carbon" {
+// CHECK:STDOUT: --- or.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %Or: <function> = fn_decl @Or

@@ -9,12 +9,13 @@
 // CHECK:STDERR:            ^
 var x: (1, );
 
+// CHECK:STDOUT: --- fail_value_as_type.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_12.1: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc10_12.2: type = tuple_type (<error>)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_value_as_type.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_12.1: (i32,) = tuple_literal (%.loc10_9)
 // CHECK:STDOUT:   %.loc10_12.2: type = converted %.loc10_12.1, constants.%.loc10_12.2

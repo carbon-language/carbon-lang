@@ -11,7 +11,8 @@ fn F() -> i32 {
   return *p;
 }
 
-// CHECK:STDOUT: file "basic.carbon" {
+// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

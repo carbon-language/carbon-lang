@@ -58,17 +58,22 @@ import library default;
 // CHECK:STDERR: ^~~~~~
 import library default;
 
-// CHECK:STDOUT: file "api.carbon" {
+// CHECK:STDOUT: --- api.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "api_lib.carbon" {
+// CHECK:STDOUT: --- api_lib.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "main_lib.carbon" {
+// CHECK:STDOUT: --- main_lib.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "import.carbon" {
+// CHECK:STDOUT: --- import.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import.loc2: <namespace> = import ir1, ir2
 // CHECK:STDOUT:   %Api: <namespace> = bind_name Api, %import.loc2
 // CHECK:STDOUT:   %import.loc20: <namespace> = import ir3, ir3
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "default_import.carbon" {
+// CHECK:STDOUT: --- default_import.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }

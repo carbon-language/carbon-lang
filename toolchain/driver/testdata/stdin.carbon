@@ -6,5 +6,6 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDOUT: file "<stdin>" {
+// CHECK:STDOUT: --- <stdin>
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }

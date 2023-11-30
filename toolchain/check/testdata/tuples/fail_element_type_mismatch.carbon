@@ -9,6 +9,7 @@
 // CHECK:STDERR:                              ^
 var x: (i32, i32) = (2, 65.89);
 
+// CHECK:STDOUT: --- fail_element_type_mismatch.carbon
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_17.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc10_17.2: type = tuple_type (i32, i32)
@@ -16,7 +17,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %.loc10_30: type = tuple_type (i32, f64)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_element_type_mismatch.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10_17.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_17.2: type = converted %.loc10_17.1, constants.%.loc10_17.2
 // CHECK:STDOUT:   %x.var: ref (i32, i32) = var x

@@ -23,7 +23,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
   return var;
 }
 
-// CHECK:STDOUT: file "returned_var_scope.carbon" {
+// CHECK:STDOUT: --- returned_var_scope.carbon
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %UnrelatedScopes: <function> = fn_decl @UnrelatedScopes
 // CHECK:STDOUT:   %EnclosingButAfter: <function> = fn_decl @EnclosingButAfter
 // CHECK:STDOUT: }
