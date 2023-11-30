@@ -18,8 +18,8 @@
 // CHECK:STDOUT:     instTypeType:    {kind: CrossRef, arg0: ir0, arg1: instTypeType, type: typeTypeType}
 // CHECK:STDOUT:     instError:       {kind: CrossRef, arg0: ir0, arg1: instError, type: typeError}
 // CHECK:STDOUT:     instBoolType:    {kind: CrossRef, arg0: ir0, arg1: instBoolType, type: typeTypeType}
-// CHECK:STDOUT:     instIntegerType: {kind: CrossRef, arg0: ir0, arg1: instIntegerType, type: typeTypeType}
-// CHECK:STDOUT:     instFloatingPointType: {kind: CrossRef, arg0: ir0, arg1: instFloatingPointType, type: typeTypeType}
+// CHECK:STDOUT:     instIntType:     {kind: CrossRef, arg0: ir0, arg1: instIntType, type: typeTypeType}
+// CHECK:STDOUT:     instFloatType:   {kind: CrossRef, arg0: ir0, arg1: instFloatType, type: typeTypeType}
 // CHECK:STDOUT:     instStringType:  {kind: CrossRef, arg0: ir0, arg1: instStringType, type: typeTypeType}
 // CHECK:STDOUT:     instFunctionType: {kind: CrossRef, arg0: ir0, arg1: instFunctionType, type: typeTypeType}
 // CHECK:STDOUT:     instBoundMethodType: {kind: CrossRef, arg0: ir0, arg1: instBoundMethodType, type: typeTypeType}

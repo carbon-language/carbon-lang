@@ -17,7 +17,7 @@
 //   - CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount, LexTokenKinds)
 //     Defines a parse node with a set number of children, often 0. This count
 //     must be correct even when the node contains errors.
-//   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, Token)
+//   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, TokenIndex)
 //     Defines a parse node that corresponds to a token that is a single-token
 //     literal. The token is wrapped for LexTokenKinds.
 //
@@ -61,10 +61,10 @@
 #endif
 
 // The start of the file.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0, CARBON_TOKEN(StartOfFile))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0, CARBON_TOKEN(FileStart))
 
 // The end of the file.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, CARBON_TOKEN(EndOfFile))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, CARBON_TOKEN(FileEnd))
 
 // An invalid parse. Used to balance the parse tree. Always has an error.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0,
@@ -427,20 +427,19 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpr, 2,
 // A value literal.
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralFalse, CARBON_TOKEN(False))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralTrue, CARBON_TOKEN(True))
-CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntegerLiteral,
-                                     CARBON_TOKEN(IntegerLiteral))
-CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(FloatingPointLiteral,
-                                     CARBON_TOKEN(RealLiteral))
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntLiteral,
+                                     CARBON_TOKEN(IntLiteral))
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(RealLiteral, CARBON_TOKEN(RealLiteral))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringLiteral, CARBON_TOKEN(StringLiteral))
 
 // A type literal.
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolTypeLiteral, CARBON_TOKEN(Bool))
-CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntegerTypeLiteral,
-                                     CARBON_TOKEN(IntegerTypeLiteral))
-CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(UnsignedIntegerTypeLiteral,
-                                     CARBON_TOKEN(UnsignedIntegerTypeLiteral))
-CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(FloatingPointTypeLiteral,
-                                     CARBON_TOKEN(FloatingPointTypeLiteral))
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntTypeLiteral,
+                                     CARBON_TOKEN(IntTypeLiteral))
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(UnsignedIntTypeLiteral,
+                                     CARBON_TOKEN(UnsignedIntTypeLiteral))
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(FloatTypeLiteral,
+                                     CARBON_TOKEN(FloatTypeLiteral))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringTypeLiteral,
                                      CARBON_TOKEN(StringTypeLiteral))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(TypeTypeLiteral, CARBON_TOKEN(Type))

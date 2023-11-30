@@ -19,17 +19,17 @@ using ::testing::IsEmpty;
 using ::testing::Not;
 using ::testing::Pair;
 
-TEST(ValueStore, Integer) {
+TEST(ValueStore, Int) {
   SharedValueStores value_stores;
-  IntegerId id1 = value_stores.integers().Add(llvm::APInt(64, 1));
-  IntegerId id2 = value_stores.integers().Add(llvm::APInt(64, 2));
+  IntId id1 = value_stores.ints().Add(llvm::APInt(64, 1));
+  IntId id2 = value_stores.ints().Add(llvm::APInt(64, 2));
 
   ASSERT_TRUE(id1.is_valid());
   ASSERT_TRUE(id2.is_valid());
   EXPECT_THAT(id1, Not(Eq(id2)));
 
-  EXPECT_THAT(value_stores.integers().Get(id1), Eq(1));
-  EXPECT_THAT(value_stores.integers().Get(id2), Eq(2));
+  EXPECT_THAT(value_stores.ints().Get(id1), Eq(1));
+  EXPECT_THAT(value_stores.ints().Get(id2), Eq(2));
 }
 
 TEST(ValueStore, Real) {
@@ -79,12 +79,12 @@ TEST(ValueStore, String) {
   EXPECT_THAT(value_stores.identifiers().Add(b).index, Eq(b_id.index));
 }
 
-auto MatchSharedValues(testing::Matcher<Yaml::MappingValue> integers,
+auto MatchSharedValues(testing::Matcher<Yaml::MappingValue> ints,
                        testing::Matcher<Yaml::MappingValue> reals,
                        testing::Matcher<Yaml::MappingValue> strings) -> auto {
   return Yaml::IsYaml(Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(Pair(
       "shared_values",
-      Yaml::Mapping(ElementsAre(Pair("integers", Yaml::Mapping(integers)),
+      Yaml::Mapping(ElementsAre(Pair("ints", Yaml::Mapping(ints)),
                                 Pair("reals", Yaml::Mapping(reals)),
                                 Pair("strings", Yaml::Mapping(strings))))))))));
 }
@@ -100,7 +100,7 @@ TEST(ValueStore, PrintEmpty) {
 TEST(ValueStore, PrintVals) {
   SharedValueStores value_stores;
   llvm::APInt apint(64, 8, /*isSigned=*/true);
-  value_stores.integers().Add(apint);
+  value_stores.ints().Add(apint);
   value_stores.reals().Add(
       Real{.mantissa = apint, .exponent = apint, .is_decimal = true});
   value_stores.string_literals().Add("foo'\"baz");

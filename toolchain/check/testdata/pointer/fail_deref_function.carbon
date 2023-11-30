@@ -5,13 +5,13 @@
 // AUTOUPDATE
 
 fn A() {
-  // CHECK:STDERR: fail_dereference_function.carbon:[[@LINE+3]]:4: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+3]]:4: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
   *A;
 }
 
-// CHECK:STDOUT: file "fail_dereference_function.carbon" {
+// CHECK:STDOUT: file "fail_deref_function.carbon" {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

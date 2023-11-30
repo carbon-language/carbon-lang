@@ -20,10 +20,10 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
                                        NodeKind::Name)) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
-                      "Expected identifier after `{0}`.", llvm::StringRef);
-    context.emitter().Emit(*context.position(),
-                           ExpectedIdentifierAfterDotOrArrow,
-                           is_arrow ? "->" : ".");
+                      "Expected identifier after `{0}`.", llvm::StringLiteral);
+    context.emitter().Emit(
+        *context.position(), ExpectedIdentifierAfterDotOrArrow,
+        is_arrow ? llvm::StringLiteral("->") : llvm::StringLiteral("."));
     // If we see a keyword, assume it was intended to be a name.
     // TODO: Should keywords be valid here?
     if (context.PositionKind().is_keyword()) {

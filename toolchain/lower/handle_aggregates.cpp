@@ -9,7 +9,6 @@
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Lower {
 
@@ -113,7 +112,7 @@ auto HandleClassFieldAccess(FunctionContext& context, SemIR::InstId inst_id,
           .GetAs<SemIR::ClassType>(
               context.sem_ir().GetTypeAllowBuiltinTypes(class_type_id))
           .class_id;
-  auto& class_info = context.sem_ir().classes().Get(class_id);
+  const auto& class_info = context.sem_ir().classes().Get(class_id);
 
   // Translate the class field access into a struct access on the object
   // representation.
@@ -259,9 +258,8 @@ auto HandleTupleAccess(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleTupleIndex(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::TupleIndex inst) -> void {
   auto index_inst =
-      context.sem_ir().insts().GetAs<SemIR::IntegerLiteral>(inst.index_id);
-  auto index =
-      context.sem_ir().integers().Get(index_inst.integer_id).getZExtValue();
+      context.sem_ir().insts().GetAs<SemIR::IntLiteral>(inst.index_id);
+  auto index = context.sem_ir().ints().Get(index_inst.int_id).getZExtValue();
   context.SetLocal(inst_id, GetAggregateElement(context, inst.tuple_id,
                                                 SemIR::MemberIndex(index),
                                                 inst.type_id, "tuple.index"));

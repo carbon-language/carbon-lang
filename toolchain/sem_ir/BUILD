@@ -65,6 +65,7 @@ cc_library(
     hdrs = ["file.h"],
     deps = [
         ":builtin_kind",
+        ":ids",
         ":inst",
         ":inst_kind",
         ":value_stores",
@@ -81,6 +82,7 @@ cc_library(
     hdrs = ["formatter.h"],
     deps = [
         ":file",
+        ":ids",
         ":inst_kind",
         "//toolchain/base:value_store",
         "//toolchain/lex:tokenized_buffer",

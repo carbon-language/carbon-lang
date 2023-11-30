@@ -30,7 +30,7 @@
 // CHECK:STDERR:   ^
 // CHECK:STDOUT: - filename: fail_bad_comment_introducers_mid_block_indent_change.carbon
 // CHECK:STDOUT:   tokens: [
-// CHECK:STDOUT:     { index: 0, kind: 'StartOfFile', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 
-// CHECK:STDOUT:     { index: 1, kind:   'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 1, kind:   'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]

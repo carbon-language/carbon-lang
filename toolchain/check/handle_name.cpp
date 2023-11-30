@@ -54,7 +54,8 @@ static auto GetExprValueForLookupResult(Context& context,
   return lookup_result_id;
 }
 
-auto HandleMemberAccessExpr(Context& context, Parse::Node parse_node) -> bool {
+auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
+    -> bool {
   SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
   auto base_id = context.node_stack().PopExpr();
 
@@ -190,10 +191,10 @@ auto HandleMemberAccessExpr(Context& context, Parse::Node parse_node) -> bool {
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
                         "Type `{0}` does not have a member `{1}`.", std::string,
-                        llvm::StringRef);
+                        std::string);
       context.emitter().Emit(parse_node, QualifiedExprNameNotFound,
                              context.sem_ir().StringifyType(base_type_id),
-                             context.names().GetFormatted(name_id));
+                             context.names().GetFormatted(name_id).str());
       break;
     }
     // TODO: `ConstType` should support member access just like the
@@ -216,12 +217,12 @@ auto HandleMemberAccessExpr(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandlePointerMemberAccessExpr(Context& context, Parse::Node parse_node)
+auto HandlePointerMemberAccessExpr(Context& context, Parse::NodeId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandlePointerMemberAccessExpr");
 }
 
-auto HandleName(Context& context, Parse::Node parse_node) -> bool {
+auto HandleName(Context& context, Parse::NodeId parse_node) -> bool {
   auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
       context.parse_tree().node_token(parse_node)));
   // The parent is responsible for binding the name.
@@ -229,7 +230,7 @@ auto HandleName(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleNameExpr(Context& context, Parse::Node parse_node) -> bool {
+auto HandleNameExpr(Context& context, Parse::NodeId parse_node) -> bool {
   auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
       context.parse_tree().node_token(parse_node)));
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
@@ -240,11 +241,11 @@ auto HandleNameExpr(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleQualifiedDecl(Context& context, Parse::Node parse_node) -> bool {
+auto HandleQualifiedDecl(Context& context, Parse::NodeId parse_node) -> bool {
   auto [parse_node2, name_id2] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
 
-  Parse::Node parse_node1 = context.node_stack().PeekParseNode();
+  Parse::NodeId parse_node1 = context.node_stack().PeekParseNode();
   switch (context.parse_tree().node_kind(parse_node1)) {
     case Parse::NodeKind::QualifiedDecl:
       // This is the second or subsequent QualifiedDecl in a chain.
@@ -271,7 +272,8 @@ auto HandleQualifiedDecl(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleSelfTypeNameExpr(Context& context, Parse::Node parse_node) -> bool {
+auto HandleSelfTypeNameExpr(Context& context, Parse::NodeId parse_node)
+    -> bool {
   auto name_id = SemIR::NameId::SelfType;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);
@@ -280,12 +282,13 @@ auto HandleSelfTypeNameExpr(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleSelfValueName(Context& context, Parse::Node parse_node) -> bool {
+auto HandleSelfValueName(Context& context, Parse::NodeId parse_node) -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleSelfValueNameExpr(Context& context, Parse::Node parse_node) -> bool {
+auto HandleSelfValueNameExpr(Context& context, Parse::NodeId parse_node)
+    -> bool {
   auto name_id = SemIR::NameId::SelfValue;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   auto value = context.insts().Get(value_id);

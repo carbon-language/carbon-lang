@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
-#include <cstdint>
-
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
@@ -16,7 +14,7 @@
 namespace Carbon::SemIR {
 
 // The ID of an instruction.
-struct InstId : public IndexBase, public Printable<InstId> {
+struct InstId : public IdBase, public Printable<InstId> {
   // An explicitly invalid instruction ID.
   static const InstId Invalid;
 
@@ -30,11 +28,11 @@ struct InstId : public IndexBase, public Printable<InstId> {
     return InstId(kind.AsInt());
   }
 
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "inst";
     if (!is_valid()) {
-      IndexBase::Print(out);
+      IdBase::Print(out);
     } else if (index < BuiltinKind::ValidCount) {
       out << BuiltinKind::FromInt(index);
     } else {
@@ -53,51 +51,51 @@ constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
 #include "toolchain/sem_ir/builtin_kind.def"
 
 // The ID of a function.
-struct FunctionId : public IndexBase, public Printable<FunctionId> {
+struct FunctionId : public IdBase, public Printable<FunctionId> {
   // An explicitly invalid function ID.
   static const FunctionId Invalid;
 
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "function";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 
 constexpr FunctionId FunctionId::Invalid = FunctionId(FunctionId::InvalidIndex);
 
 // The ID of a class.
-struct ClassId : public IndexBase, public Printable<ClassId> {
+struct ClassId : public IdBase, public Printable<ClassId> {
   // An explicitly invalid class ID.
   static const ClassId Invalid;
 
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "class";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 
 constexpr ClassId ClassId::Invalid = ClassId(ClassId::InvalidIndex);
 
 // The ID of a cross-referenced IR.
-struct CrossRefIRId : public IndexBase, public Printable<CrossRefIRId> {
+struct CrossRefIRId : public IdBase, public Printable<CrossRefIRId> {
   static const CrossRefIRId Builtins;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "ir";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 
 constexpr CrossRefIRId CrossRefIRId::Builtins = CrossRefIRId(0);
 
 // A boolean value.
-struct BoolValue : public IndexBase, public Printable<BoolValue> {
+struct BoolValue : public IdBase, public Printable<BoolValue> {
   static const BoolValue False;
   static const BoolValue True;
 
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     switch (index) {
       case 0:
@@ -117,7 +115,7 @@ constexpr BoolValue BoolValue::True = BoolValue(1);
 
 // The ID of a name. A name is either a string or a special name such as
 // `self`, or eventually `Self` or `base`.
-struct NameId : public IndexBase, public Printable<NameId> {
+struct NameId : public IdBase, public Printable<NameId> {
   // An explicitly invalid ID.
   static const NameId Invalid;
   // The name of `self`.
@@ -129,13 +127,14 @@ struct NameId : public IndexBase, public Printable<NameId> {
 
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
+    // NOLINTNEXTLINE(misc-redundant-expression): Asserting to be sure.
     static_assert(NameId::InvalidIndex == IdentifierId::InvalidIndex);
     CARBON_CHECK(id.index >= 0 || id.index == InvalidIndex)
         << "Unexpected identifier ID";
     return NameId(id.index);
   }
 
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
 
   // Returns the IdentifierId corresponding to this NameId, or an invalid
   // IdentifierId if this is a special name.
@@ -153,7 +152,7 @@ struct NameId : public IndexBase, public Printable<NameId> {
       out << "ReturnSlot";
     } else {
       CARBON_CHECK(index >= 0) << "Unknown index";
-      IndexBase::Print(out);
+      IdBase::Print(out);
     }
   }
 };
@@ -164,14 +163,14 @@ constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
 constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
 
 // The ID of a name scope.
-struct NameScopeId : public IndexBase, public Printable<NameScopeId> {
+struct NameScopeId : public IdBase, public Printable<NameScopeId> {
   // An explicitly invalid ID.
   static const NameScopeId Invalid;
 
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "name_scope";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 
@@ -179,7 +178,7 @@ constexpr NameScopeId NameScopeId::Invalid =
     NameScopeId(NameScopeId::InvalidIndex);
 
 // The ID of an instruction block.
-struct InstBlockId : public IndexBase, public Printable<InstBlockId> {
+struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   // All File instances must provide the 0th instruction block as empty.
   static const InstBlockId Empty;
 
@@ -189,13 +188,13 @@ struct InstBlockId : public IndexBase, public Printable<InstBlockId> {
   // An ID for unreachable code.
   static const InstBlockId Unreachable;
 
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     if (index == Unreachable.index) {
       out << "unreachable";
     } else {
       out << "block";
-      IndexBase::Print(out);
+      IdBase::Print(out);
     }
   }
 };
@@ -207,7 +206,7 @@ constexpr InstBlockId InstBlockId::Unreachable =
     InstBlockId(InstBlockId::InvalidIndex - 1);
 
 // The ID of a type.
-struct TypeId : public IndexBase, public Printable<TypeId> {
+struct TypeId : public IdBase, public Printable<TypeId> {
   // The builtin TypeType.
   static const TypeId TypeType;
 
@@ -217,7 +216,7 @@ struct TypeId : public IndexBase, public Printable<TypeId> {
   // An explicitly invalid ID.
   static const TypeId Invalid;
 
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type";
     if (index == TypeType.index) {
@@ -225,7 +224,7 @@ struct TypeId : public IndexBase, public Printable<TypeId> {
     } else if (index == Error.index) {
       out << "Error";
     } else {
-      IndexBase::Print(out);
+      IdBase::Print(out);
     }
   }
 };
@@ -235,11 +234,11 @@ constexpr TypeId TypeId::Error = TypeId(TypeId::InvalidIndex - 1);
 constexpr TypeId TypeId::Invalid = TypeId(TypeId::InvalidIndex);
 
 // The ID of a type block.
-struct TypeBlockId : public IndexBase, public Printable<TypeBlockId> {
-  using IndexBase::IndexBase;
+struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "typeBlock";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 

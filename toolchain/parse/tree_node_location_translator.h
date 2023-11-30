@@ -9,7 +9,7 @@
 
 namespace Carbon::Parse {
 
-class NodeLocationTranslator : public DiagnosticLocationTranslator<Node> {
+class NodeLocationTranslator : public DiagnosticLocationTranslator<NodeId> {
  public:
   explicit NodeLocationTranslator(const Lex::TokenizedBuffer* tokens,
                                   llvm::StringRef filename,
@@ -19,7 +19,7 @@ class NodeLocationTranslator : public DiagnosticLocationTranslator<Node> {
         parse_tree_(parse_tree) {}
 
   // Map the given token into a diagnostic location.
-  auto GetLocation(Node node) -> DiagnosticLocation override {
+  auto GetLocation(NodeId node) -> DiagnosticLocation override {
     // Support the invalid token as a way to emit only the filename, when there
     // is no line association.
     if (!node.is_valid()) {

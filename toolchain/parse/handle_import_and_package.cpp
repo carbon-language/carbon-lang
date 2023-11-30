@@ -77,7 +77,7 @@ static auto HandleDirectiveContent(Context& context,
                                    NodeKind directive,
                                    llvm::function_ref<void()> on_parse_error)
     -> void {
-  Tree::PackagingNames names{.node = Node(state.subtree_start)};
+  Tree::PackagingNames names{.node = NodeId(state.subtree_start)};
   if (directive != NodeKind::LibraryDirective) {
     if (auto package_name_token =
             context.ConsumeIf(Lex::TokenKind::Identifier)) {
@@ -167,7 +167,7 @@ auto HandleImport(Context& context) -> void {
   context.AddLeafNode(NodeKind::ImportIntroducer, intro_token);
 
   switch (context.packaging_state()) {
-    case Context::PackagingState::StartOfFile:
+    case Context::PackagingState::FileStart:
       // `package` is no longer allowed, but `import` may repeat.
       context.set_packaging_state(Context::PackagingState::InImports);
       [[clang::fallthrough]];
@@ -212,7 +212,7 @@ static auto HandlePackageAndLibraryDirectives(Context& context,
   auto intro_token = context.ConsumeChecked(intro_token_kind);
   context.AddLeafNode(intro, intro_token);
 
-  if (intro_token != Lex::Token::FirstNonCommentToken) {
+  if (intro_token != Lex::TokenIndex::FirstNonCommentToken) {
     CARBON_DIAGNOSTIC(PackageTooLate, Error,
                       "The `{0}` directive must be the first non-comment line.",
                       Lex::TokenKind);
@@ -220,7 +220,7 @@ static auto HandlePackageAndLibraryDirectives(Context& context,
                       "First non-comment line is here.");
     context.emitter()
         .Build(intro_token, PackageTooLate, intro_token_kind)
-        .Note(Lex::Token::FirstNonCommentToken, FirstNonCommentLine)
+        .Note(Lex::TokenIndex::FirstNonCommentToken, FirstNonCommentLine)
         .Emit();
     on_parse_error();
     return;

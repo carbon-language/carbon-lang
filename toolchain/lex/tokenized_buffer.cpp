@@ -19,23 +19,23 @@
 
 namespace Carbon::Lex {
 
-auto TokenizedBuffer::GetKind(Token token) const -> TokenKind {
+auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
   return GetTokenInfo(token).kind;
 }
 
-auto TokenizedBuffer::GetLine(Token token) const -> Line {
+auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
   return GetTokenInfo(token).token_line;
 }
 
-auto TokenizedBuffer::GetLineNumber(Token token) const -> int {
+auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
   return GetLineNumber(GetLine(token));
 }
 
-auto TokenizedBuffer::GetColumnNumber(Token token) const -> int {
+auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
   return GetTokenInfo(token).column + 1;
 }
 
-auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
+auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
   llvm::StringRef fixed_spelling = token_info.kind.fixed_spelling();
   if (!fixed_spelling.empty()) {
@@ -50,7 +50,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
 
   // Refer back to the source text to preserve oddities like radix or digit
   // separators the author included.
-  if (token_info.kind == TokenKind::IntegerLiteral ||
+  if (token_info.kind == TokenKind::IntLiteral ||
       token_info.kind == TokenKind::RealLiteral) {
     const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
@@ -81,8 +81,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
   }
 
-  if (token_info.kind == TokenKind::StartOfFile ||
-      token_info.kind == TokenKind::EndOfFile) {
+  if (token_info.kind == TokenKind::FileStart ||
+      token_info.kind == TokenKind::FileEnd) {
     return llvm::StringRef();
   }
 
@@ -90,82 +90,83 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   return value_stores_->identifiers().Get(token_info.ident_id);
 }
 
-auto TokenizedBuffer::GetIdentifier(Token token) const -> IdentifierId {
+auto TokenizedBuffer::GetIdentifier(TokenIndex token) const -> IdentifierId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
   return token_info.ident_id;
 }
 
-auto TokenizedBuffer::GetIntegerLiteral(Token token) const -> IntegerId {
+auto TokenizedBuffer::GetIntLiteral(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral) << token_info.kind;
-  return token_info.integer_id;
+  CARBON_CHECK(token_info.kind == TokenKind::IntLiteral) << token_info.kind;
+  return token_info.int_id;
 }
 
-auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealId {
+auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::RealLiteral) << token_info.kind;
   return token_info.real_id;
 }
 
-auto TokenizedBuffer::GetStringLiteral(Token token) const -> StringLiteralId {
+auto TokenizedBuffer::GetStringLiteral(TokenIndex token) const
+    -> StringLiteralId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
   return token_info.string_literal_id;
 }
 
-auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
+auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind.is_sized_type_literal()) << token_info.kind;
-  return value_stores_->integers().Get(token_info.integer_id);
+  return value_stores_->ints().Get(token_info.int_id);
 }
 
-auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
-    -> Token {
+auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
+    -> TokenIndex {
   const auto& opening_token_info = GetTokenInfo(opening_token);
   CARBON_CHECK(opening_token_info.kind.is_opening_symbol())
       << opening_token_info.kind;
   return opening_token_info.closing_token;
 }
 
-auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
-    -> Token {
+auto TokenizedBuffer::GetMatchedOpeningToken(TokenIndex closing_token) const
+    -> TokenIndex {
   const auto& closing_token_info = GetTokenInfo(closing_token);
   CARBON_CHECK(closing_token_info.kind.is_closing_symbol())
       << closing_token_info.kind;
   return closing_token_info.opening_token;
 }
 
-auto TokenizedBuffer::HasLeadingWhitespace(Token token) const -> bool {
+auto TokenizedBuffer::HasLeadingWhitespace(TokenIndex token) const -> bool {
   auto it = TokenIterator(token);
   return it == tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
 }
 
-auto TokenizedBuffer::HasTrailingWhitespace(Token token) const -> bool {
+auto TokenizedBuffer::HasTrailingWhitespace(TokenIndex token) const -> bool {
   return GetTokenInfo(token).has_trailing_space;
 }
 
-auto TokenizedBuffer::IsRecoveryToken(Token token) const -> bool {
+auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
   return GetTokenInfo(token).is_recovery;
 }
 
-auto TokenizedBuffer::GetLineNumber(Line line) const -> int {
+auto TokenizedBuffer::GetLineNumber(LineIndex line) const -> int {
   return line.index + 1;
 }
 
-auto TokenizedBuffer::GetNextLine(Line line) const -> Line {
-  Line next(line.index + 1);
+auto TokenizedBuffer::GetNextLine(LineIndex line) const -> LineIndex {
+  LineIndex next(line.index + 1);
   CARBON_DCHECK(static_cast<size_t>(next.index) < line_infos_.size());
   return next;
 }
 
-auto TokenizedBuffer::GetPrevLine(Line line) const -> Line {
+auto TokenizedBuffer::GetPrevLine(LineIndex line) const -> LineIndex {
   CARBON_CHECK(line.index > 0);
-  return Line(line.index - 1);
+  return LineIndex(line.index - 1);
 }
 
-auto TokenizedBuffer::GetIndentColumnNumber(Line line) const -> int {
+auto TokenizedBuffer::GetIndentColumnNumber(LineIndex line) const -> int {
   return GetLineInfo(line).indent + 1;
 }
 
@@ -191,7 +192,8 @@ static auto ComputeDecimalPrintedWidth(int number) -> int {
   return static_cast<int>(std::log10(number)) + 1;
 }
 
-auto TokenizedBuffer::GetTokenPrintWidths(Token token) const -> PrintWidths {
+auto TokenizedBuffer::GetTokenPrintWidths(TokenIndex token) const
+    -> PrintWidths {
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth(token_infos_.size());
   widths.kind = GetKind(token).name().size();
@@ -212,11 +214,11 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
 
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth((token_infos_.size()));
-  for (Token token : tokens()) {
+  for (TokenIndex token : tokens()) {
     widths.Widen(GetTokenPrintWidths(token));
   }
 
-  for (Token token : tokens()) {
+  for (TokenIndex token : tokens()) {
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }
@@ -224,12 +226,13 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
 }
 
 auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
-                                 Token token) const -> void {
+                                 TokenIndex token) const -> void {
   PrintToken(output_stream, token, {});
 }
 
-auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
-                                 PrintWidths widths) const -> void {
+auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
+                                 TokenIndex token, PrintWidths widths) const
+    -> void {
   widths.Widen(GetTokenPrintWidths(token));
   int token_index = token.index;
   const auto& token_info = GetTokenInfo(token);
@@ -254,10 +257,10 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
     case TokenKind::Identifier:
       output_stream << ", identifier: " << GetIdentifier(token).index;
       break;
-    case TokenKind::IntegerLiteral:
+    case TokenKind::IntLiteral:
       output_stream << ", value: `";
-      value_stores_->integers()
-          .Get(GetIntegerLiteral(token))
+      value_stores_->ints()
+          .Get(GetIntLiteral(token))
           .print(output_stream, /*isSigned=*/false);
       output_stream << "`";
       break;
@@ -292,31 +295,31 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
   output_stream << " },";
 }
 
-auto TokenizedBuffer::GetLineInfo(Line line) -> LineInfo& {
+auto TokenizedBuffer::GetLineInfo(LineIndex line) -> LineInfo& {
   return line_infos_[line.index];
 }
 
-auto TokenizedBuffer::GetLineInfo(Line line) const -> const LineInfo& {
+auto TokenizedBuffer::GetLineInfo(LineIndex line) const -> const LineInfo& {
   return line_infos_[line.index];
 }
 
-auto TokenizedBuffer::AddLine(LineInfo info) -> Line {
+auto TokenizedBuffer::AddLine(LineInfo info) -> LineIndex {
   line_infos_.push_back(info);
-  return Line(static_cast<int>(line_infos_.size()) - 1);
+  return LineIndex(static_cast<int>(line_infos_.size()) - 1);
 }
 
-auto TokenizedBuffer::GetTokenInfo(Token token) -> TokenInfo& {
+auto TokenizedBuffer::GetTokenInfo(TokenIndex token) -> TokenInfo& {
   return token_infos_[token.index];
 }
 
-auto TokenizedBuffer::GetTokenInfo(Token token) const -> const TokenInfo& {
+auto TokenizedBuffer::GetTokenInfo(TokenIndex token) const -> const TokenInfo& {
   return token_infos_[token.index];
 }
 
-auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
+auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
   token_infos_.push_back(info);
   expected_parse_tree_size_ += info.kind.expected_parse_tree_size();
-  return Token(static_cast<int>(token_infos_.size()) - 1);
+  return TokenIndex(static_cast<int>(token_infos_.size()) - 1);
 }
 
 auto TokenIterator::Print(llvm::raw_ostream& output) const -> void {
@@ -368,7 +371,8 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
           .column_number = column_number + 1};
 }
 
-auto TokenLocationTranslator::GetLocation(Token token) -> DiagnosticLocation {
+auto TokenLocationTranslator::GetLocation(TokenIndex token)
+    -> DiagnosticLocation {
   // Map the token location into a position within the source buffer.
   const auto& token_info = buffer_->GetTokenInfo(token);
   const auto& line_info = buffer_->GetLineInfo(token_info.token_line);

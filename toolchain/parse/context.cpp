@@ -23,22 +23,33 @@ enum class RelativeLocation : int8_t {
   Before,
 };
 
+}  // namespace Carbon::Parse
+
+namespace llvm {
+
 // Adapts RelativeLocation for use with formatv.
-static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
-    -> llvm::raw_ostream& {
-  switch (loc) {
-    case RelativeLocation::Around:
-      out << "around";
-      break;
-    case RelativeLocation::After:
-      out << "after";
-      break;
-    case RelativeLocation::Before:
-      out << "before";
-      break;
+template <>
+struct format_provider<Carbon::Parse::RelativeLocation> {
+  using RelativeLocation = Carbon::Parse::RelativeLocation;
+  static void format(const RelativeLocation& loc, raw_ostream& out,
+                     StringRef /*style*/) {
+    switch (loc) {
+      case RelativeLocation::Around:
+        out << "around";
+        break;
+      case RelativeLocation::After:
+        out << "after";
+        break;
+      case RelativeLocation::Before:
+        out << "before";
+        break;
+    }
   }
-  return out;
-}
+};
+
+}  // namespace llvm
+
+namespace Carbon::Parse {
 
 Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
                  Lex::TokenDiagnosticEmitter& emitter,
@@ -51,12 +62,12 @@ Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
       end_(tokens_->tokens().end()) {
   CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
   --end_;
-  CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::EndOfFile)
-      << "TokenizedBuffer should end with EndOfFile, ended with "
+  CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::FileEnd)
+      << "TokenizedBuffer should end with FileEnd, ended with "
       << tokens_->GetKind(*end_);
 }
 
-auto Context::AddLeafNode(NodeKind kind, Lex::Token token, bool has_error)
+auto Context::AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error)
     -> void {
   CheckNodeMatchesLexerToken(kind, tokens_->GetKind(token), has_error);
   tree_->node_impls_.push_back(
@@ -66,7 +77,7 @@ auto Context::AddLeafNode(NodeKind kind, Lex::Token token, bool has_error)
   }
 }
 
-auto Context::AddNode(NodeKind kind, Lex::Token token, int subtree_start,
+auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, int subtree_start,
                       bool has_error) -> void {
   CheckNodeMatchesLexerToken(kind, tokens_->GetKind(token), has_error);
   int subtree_size = tree_->size() - subtree_start + 1;
@@ -77,9 +88,9 @@ auto Context::AddNode(NodeKind kind, Lex::Token token, int subtree_start,
   }
 }
 
-auto Context::ConsumeAndAddOpenParen(Lex::Token default_token,
+auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
                                      NodeKind start_kind)
-    -> std::optional<Lex::Token> {
+    -> std::optional<Lex::TokenIndex> {
   if (auto open_paren = ConsumeIf(Lex::TokenKind::OpenParen)) {
     AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
     return open_paren;
@@ -93,7 +104,7 @@ auto Context::ConsumeAndAddOpenParen(Lex::Token default_token,
   }
 }
 
-auto Context::ConsumeAndAddCloseSymbol(Lex::Token expected_open,
+auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
                                        StateStackEntry state,
                                        NodeKind close_kind) -> void {
   Lex::TokenKind open_token_kind = tokens().GetKind(expected_open);
@@ -106,7 +117,7 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::Token expected_open,
     // TODO: Include the location of the matching opening delimiter in the
     // diagnostic.
     CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
-                      "Unexpected tokens before `{0}`.", llvm::StringRef);
+                      "Unexpected tokens before `{0}`.", llvm::StringLiteral);
     emitter_->Emit(*position_, ExpectedCloseSymbol,
                    open_token_kind.closing_symbol().fixed_spelling());
 
@@ -126,13 +137,13 @@ auto Context::ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind,
   return true;
 }
 
-auto Context::ConsumeChecked(Lex::TokenKind kind) -> Lex::Token {
+auto Context::ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenIndex {
   CARBON_CHECK(PositionIs(kind))
       << "Required " << kind << ", found " << PositionKind();
   return Consume();
 }
 
-auto Context::ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::Token> {
+auto Context::ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex> {
   if (!PositionIs(kind)) {
     return std::nullopt;
   }
@@ -150,17 +161,17 @@ auto Context::ConsumeIfPatternKeyword(Lex::TokenKind keyword_token,
 }
 
 auto Context::FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
-    -> std::optional<Lex::Token> {
+    -> std::optional<Lex::TokenIndex> {
   auto new_position = position_;
   while (true) {
-    Lex::Token token = *new_position;
+    Lex::TokenIndex token = *new_position;
     Lex::TokenKind kind = tokens().GetKind(token);
     if (kind.IsOneOf(desired_kinds)) {
       return token;
     }
 
     // Step to the next token at the current bracketing level.
-    if (kind.is_closing_symbol() || kind == Lex::TokenKind::EndOfFile) {
+    if (kind.is_closing_symbol() || kind == Lex::TokenKind::FileEnd) {
       // There are no more tokens at this level.
       return std::nullopt;
     } else if (kind.is_opening_symbol()) {
@@ -183,19 +194,19 @@ auto Context::SkipMatchingGroup() -> bool {
   return true;
 }
 
-auto Context::SkipPastLikelyEnd(Lex::Token skip_root)
-    -> std::optional<Lex::Token> {
+auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root)
+    -> std::optional<Lex::TokenIndex> {
   if (position_ == end_) {
     return std::nullopt;
   }
 
-  Lex::Line root_line = tokens().GetLine(skip_root);
+  Lex::LineIndex root_line = tokens().GetLine(skip_root);
   int root_line_indent = tokens().GetIndentColumnNumber(root_line);
 
   // We will keep scanning through tokens on the same line as the root or
   // lines with greater indentation than root's line.
-  auto is_same_line_or_indent_greater_than_root = [&](Lex::Token t) {
-    Lex::Line l = tokens().GetLine(t);
+  auto is_same_line_or_indent_greater_than_root = [&](Lex::TokenIndex t) {
+    Lex::LineIndex l = tokens().GetLine(t);
     if (l == root_line) {
       return true;
     }
@@ -229,7 +240,7 @@ auto Context::SkipPastLikelyEnd(Lex::Token skip_root)
   return std::nullopt;
 }
 
-auto Context::SkipTo(Lex::Token t) -> void {
+auto Context::SkipTo(Lex::TokenIndex t) -> void {
   CARBON_CHECK(t >= *position_) << "Tried to skip backwards from " << position_
                                 << " to " << Lex::TokenIterator(t);
   position_ = Lex::TokenIterator(t);
@@ -240,8 +251,7 @@ auto Context::SkipTo(Lex::Token t) -> void {
 // operand according to the rules for infix operator parsing.
 static auto IsAssumedStartOfOperand(Lex::TokenKind kind) -> bool {
   return kind.IsOneOf({Lex::TokenKind::OpenParen, Lex::TokenKind::Identifier,
-                       Lex::TokenKind::IntegerLiteral,
-                       Lex::TokenKind::RealLiteral,
+                       Lex::TokenKind::IntLiteral, Lex::TokenKind::RealLiteral,
                        Lex::TokenKind::StringLiteral});
 }
 
@@ -251,7 +261,7 @@ static auto IsAssumedEndOfOperand(Lex::TokenKind kind) -> bool {
   return kind.IsOneOf(
       {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseCurlyBrace,
        Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::Identifier,
-       Lex::TokenKind::IntegerLiteral, Lex::TokenKind::RealLiteral,
+       Lex::TokenKind::IntLiteral, Lex::TokenKind::RealLiteral,
        Lex::TokenKind::StringLiteral});
 }
 
@@ -454,7 +464,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
 }
 
 auto Context::PrintTokenForStackDump(llvm::raw_ostream& output,
-                                     Lex::Token token) const -> void {
+                                     Lex::TokenIndex token) const -> void {
   output << " @ " << tokens_->GetLineNumber(tokens_->GetLine(token)) << ":"
          << tokens_->GetColumnNumber(token) << ": token " << token << " : "
          << tokens_->GetKind(token) << "\n";
