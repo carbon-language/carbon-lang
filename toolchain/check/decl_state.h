@@ -31,30 +31,47 @@ class KeywordModifierSet {
 
   KeywordModifierSet() : keywords_(static_cast<RawEnum>(0)) {}
   KeywordModifierSet(RawEnum k) : keywords_(k) {}
-  auto Set(RawEnum to_set) const -> KeywordModifierSet {
+  auto Union(RawEnum to_set) const -> KeywordModifierSet {
     KeywordModifierSet ret;
     ret.keywords_ = static_cast<RawEnum>(keywords_ | to_set);
     return ret;
   }
-  auto SetPrivate() const -> KeywordModifierSet { return Set(Private); }
-  auto SetProtected() const -> KeywordModifierSet { return Set(Protected); }
-  auto SetAbstract() const -> KeywordModifierSet { return Set(Abstract); }
-  auto SetBase() const -> KeywordModifierSet { return Set(Base); }
-  auto SetDefault() const -> KeywordModifierSet { return Set(Default); }
-  auto SetFinal() const -> KeywordModifierSet { return Set(Final); }
-  auto SetImpl() const -> KeywordModifierSet { return Set(Impl); }
-  auto SetVirtual() const -> KeywordModifierSet { return Set(Virtual); }
+  auto SetPrivate() const -> KeywordModifierSet { return Union(Private); }
+  auto SetProtected() const -> KeywordModifierSet { return Union(Protected); }
+  auto SetAbstract() const -> KeywordModifierSet { return Union(Abstract); }
+  auto SetBase() const -> KeywordModifierSet { return Union(Base); }
+  auto SetDefault() const -> KeywordModifierSet { return Union(Default); }
+  auto SetFinal() const -> KeywordModifierSet { return Union(Final); }
+  auto SetImpl() const -> KeywordModifierSet { return Union(Impl); }
+  auto SetVirtual() const -> KeywordModifierSet { return Union(Virtual); }
+
+  // Returns the set difference or relative complement `*this \ to_unset`.
+  auto Minus(RawEnum to_unset) const -> KeywordModifierSet {
+    KeywordModifierSet ret;
+    ret.keywords_ = static_cast<RawEnum>(keywords_ & ~to_unset);
+    return ret;
+  }
+  auto UnsetPrivate() const -> KeywordModifierSet { return Minus(Private); }
+  auto UnsetProtected() const -> KeywordModifierSet { return Minus(Protected); }
+  auto UnsetAbstract() const -> KeywordModifierSet { return Minus(Abstract); }
+  auto UnsetBase() const -> KeywordModifierSet { return Minus(Base); }
+  auto UnsetDefault() const -> KeywordModifierSet { return Minus(Default); }
+  auto UnsetFinal() const -> KeywordModifierSet { return Minus(Final); }
+  auto UnsetImpl() const -> KeywordModifierSet { return Minus(Impl); }
+  auto UnsetVirtual() const -> KeywordModifierSet { return Minus(Virtual); }
 
   // Returns true if any modifier from `to_check` is in the set.
-  auto Has(RawEnum to_check) const -> bool { return keywords_ & to_check; }
-  auto HasPrivate() const -> bool { return Has(Private); }
-  auto HasProtected() const -> bool { return Has(Protected); }
-  auto HasAbstract() const -> bool { return Has(Abstract); }
-  auto HasBase() const -> bool { return Has(Base); }
-  auto HasDefault() const -> bool { return Has(Default); }
-  auto HasFinal() const -> bool { return Has(Final); }
-  auto HasImpl() const -> bool { return Has(Impl); }
-  auto HasVirtual() const -> bool { return Has(Virtual); }
+  auto Overlaps(RawEnum to_check) const -> bool { return keywords_ & to_check; }
+
+  auto HasPrivate() const -> bool { return Overlaps(Private); }
+  auto HasProtected() const -> bool { return Overlaps(Protected); }
+  auto HasAbstract() const -> bool { return Overlaps(Abstract); }
+  auto HasBase() const -> bool { return Overlaps(Base); }
+  auto HasDefault() const -> bool { return Overlaps(Default); }
+  auto HasFinal() const -> bool { return Overlaps(Final); }
+  auto HasImpl() const -> bool { return Overlaps(Impl); }
+  auto HasVirtual() const -> bool { return Overlaps(Virtual); }
+
   auto GetRaw() const -> RawEnum { return keywords_; }
 
  private:
