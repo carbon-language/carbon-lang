@@ -277,8 +277,8 @@ class Context {
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
   // Get the text for the token of a node for diagnostics.
-  auto TextForNode(Parse::Node parse_node) -> llvm::StringRef {
-    return tokens().GetTokenText(parse_tree().node_token(parse_node));
+  auto TextForNode(Parse::Node parse_node) -> std::string {
+    return tokens().GetTokenText(parse_tree().node_token(parse_node)).str();
   }
 
   auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }

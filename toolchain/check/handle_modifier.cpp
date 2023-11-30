@@ -8,15 +8,14 @@
 namespace Carbon::Check {
 
 CARBON_DIAGNOSTIC(ModifierNotAllowedWith, Error,
-                  "`{0}` not allowed on declaration with `{1}`.",
-                  llvm::StringRef, llvm::StringRef);
+                  "`{0}` not allowed on declaration with `{1}`.", std::string,
+                  std::string);
 CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration.",
-                  llvm::StringRef);
+                  std::string);
 CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
-                  "`{0}` must appear before `{1}`.", llvm::StringRef,
-                  llvm::StringRef);
+                  "`{0}` must appear before `{1}`.", std::string, std::string);
 CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here.",
-                  llvm::StringRef);
+                  std::string);
 
 static auto AccessModifierEnum(Lex::TokenKind token_kind) -> auto {
   switch (token_kind) {
@@ -40,7 +39,7 @@ auto HandleAccessModifierKeyword(Context& context, Parse::Node parse_node)
         .Note(s.saw_access_mod, ModifierPrevious,
               context.TextForNode(s.saw_access_mod))
         .Emit();
-  } else if (s.saw_access_mod != Parse::Node::Invalid) {
+  } else if (s.saw_access_mod.is_valid()) {
     context.emitter()
         .Build(parse_node, ModifierNotAllowedWith,
                context.TextForNode(parse_node),
@@ -48,7 +47,7 @@ auto HandleAccessModifierKeyword(Context& context, Parse::Node parse_node)
         .Note(s.saw_access_mod, ModifierPrevious,
               context.TextForNode(s.saw_access_mod))
         .Emit();
-  } else if (s.saw_decl_mod != Parse::Node::Invalid) {
+  } else if (s.saw_decl_mod.is_valid()) {
     context.emitter()
         .Build(parse_node, ModifierMustAppearBefore,
                context.TextForNode(parse_node),
@@ -95,7 +94,7 @@ auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
         .Note(s.saw_decl_mod, ModifierPrevious,
               context.TextForNode(s.saw_decl_mod))
         .Emit();
-  } else if (s.saw_decl_mod != Parse::Node::Invalid) {
+  } else if (s.saw_decl_mod.is_valid()) {
     context.emitter()
         .Build(parse_node, ModifierNotAllowedWith,
                context.TextForNode(parse_node),
