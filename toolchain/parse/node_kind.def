@@ -206,9 +206,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
 
 // A parameter list, possibly implicit:
 //   [Implicit]ParamertListStart
-//   _repeated_:
-//   _external_: [Generic]PatternBinding
-//   ParamListComma
+//     _external_: [Generic]PatternBinding
+//     ParamListComma
+//   _repeated_
 // [Implicit]ParamList
 //
 // [Generic]PatternBinding and ParamListComma may repeat with ParamListComma
@@ -270,9 +270,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 //   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
 //   _optional_ ReturnedModifier
 //   _external_: PatternBinding
-//   _optional_:
-//   VariableInitializer
-//   _external_: expression
+//     VariableInitializer
+//     _external_: expression
+//   _optional_
 // VariableDecl
 //
 // Access and declaration modifier keywords only appear for `var` declarations,
@@ -392,9 +392,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(IndexExpr, IndexExprStart,
 //
 // Tuples, such as `(1, 2)`:
 //   ParenExprOrTupleLiteralStart
-//   _repeated_:
-//   _external_: expression
-//   TupleLiteralComma
+//     _external_: expression
+//     TupleLiteralComma
+//   _repeated_
 // TupleLiteral
 //
 // Expressions and TupleLiteralComma may repeat with TupleLiteralComma as a
@@ -410,9 +410,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExprOrTupleLiteralStart,
 // Call expressions, such as `a()`:
 //     _external_: expression
 //   CallExprStart
-//   _repeated_:
-//   _external_: expression
-//   CallExprComma
+//     _external_: expression
+//     CallExprComma
+//   _repeated_
 // CallExpr
 //
 // Exprs and CallExprComma may repeat with CallExprComma as a separator.
@@ -546,21 +546,22 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3,
 
 // Struct literals, such as `{.a = 0}`:
 //   StructLiteralOrStructTypeLiteralStart
-//   _repeated_:
-//       _external_: Name
-//     StructFieldDesignator
-//     _external_: expression
-//   StructFieldValue
-//   StructComma
+//         _external_: Name
+//       StructFieldDesignator
+//       _external_: expression
+//     StructFieldValue
+//     StructComma
+//   _repeated_
 // StructLiteral
 //
 // Struct type literals, such as `{.a: i32}`:
-//   _repeated_:
-//       _external_: Name
-//     StructFieldDesignator
-//     _external_: type expression
-//   StructFieldType
-//   StructComma
+//   StructLiteralOrStructTypeLiteralStart
+//         _external_: Name
+//       StructFieldDesignator
+//       _external_: type expression
+//     StructFieldType
+//     StructComma
+//   _repeated_
 // StructTypeLiteral
 //
 // Elements (StructFieldValue and StructFieldType, respectively) and StructComma
