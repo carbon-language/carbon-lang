@@ -11,7 +11,7 @@ fn F() -> () {
 }
 
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file "fail_missing_return_empty_tuple.carbon" {

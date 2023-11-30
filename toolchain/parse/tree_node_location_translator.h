@@ -32,8 +32,8 @@ class NodeLocationTranslator : public DiagnosticLocationTranslator<NodeId> {
     DiagnosticLocation start_loc =
         token_translator_.GetLocation(parse_tree_->node_token(node));
     DiagnosticLocation end_loc = start_loc;
-    for (Node descendant : parse_tree_->postorder(node)) {
-      Lex::Token token = parse_tree_->node_token(descendant);
+    for (NodeId descendant : parse_tree_->postorder(node)) {
+      Lex::TokenIndex token = parse_tree_->node_token(descendant);
       if (!token.is_valid()) {
         continue;
       }
