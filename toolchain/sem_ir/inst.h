@@ -159,7 +159,7 @@ class Inst : public Printable<Inst> {
         arg1_(arg1) {}
 
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
-  static constexpr auto ToRaw(IndexBase base) -> int32_t { return base.index; }
+  static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
   static constexpr auto ToRaw(BuiltinKind kind) -> int32_t {
     return kind.AsInt();
   }

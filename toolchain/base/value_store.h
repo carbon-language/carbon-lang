@@ -48,37 +48,37 @@ class Real : public Printable<Real> {
 };
 
 // Corresponds to an integer value represented by an APInt.
-struct IntId : public IndexBase, public Printable<IntId> {
+struct IntId : public IdBase, public Printable<IntId> {
   using IndexedType = const llvm::APInt;
   static const IntId Invalid;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "int";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 constexpr IntId IntId::Invalid(IntId::InvalidIndex);
 
 // Corresponds to a Real value.
-struct RealId : public IndexBase, public Printable<RealId> {
+struct RealId : public IdBase, public Printable<RealId> {
   using IndexedType = const Real;
   static const RealId Invalid;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "real";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 constexpr RealId RealId::Invalid(RealId::InvalidIndex);
 
 // Corresponds to a StringRef.
-struct StringId : public IndexBase, public Printable<StringId> {
+struct StringId : public IdBase, public Printable<StringId> {
   using IndexedType = const std::string;
   static const StringId Invalid;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "str";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 constexpr StringId StringId::Invalid(StringId::InvalidIndex);
@@ -87,23 +87,23 @@ constexpr StringId StringId::Invalid(StringId::InvalidIndex);
 //
 // `NameId` relies on the values of this type other than `Invalid` all being
 // non-negative.
-struct IdentifierId : public IndexBase, public Printable<IdentifierId> {
+struct IdentifierId : public IdBase, public Printable<IdentifierId> {
   static const IdentifierId Invalid;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "strId";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 constexpr IdentifierId IdentifierId::Invalid(IdentifierId::InvalidIndex);
 
 // Adapts StringId for string literals.
-struct StringLiteralId : public IndexBase, public Printable<StringLiteralId> {
+struct StringLiteralId : public IdBase, public Printable<StringLiteralId> {
   static const StringLiteralId Invalid;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "strLit";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 constexpr StringLiteralId StringLiteralId::Invalid(

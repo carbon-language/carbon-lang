@@ -21,8 +21,8 @@ namespace Carbon::Check {
 //
 // TODO: Move this struct and the name lookup code in context.h to a separate
 // file.
-struct ScopeIndex : public ComparableIndexBase, public Printable<ScopeIndex> {
-  using ComparableIndexBase::ComparableIndexBase;
+struct ScopeIndex : public IndexBase, public Printable<ScopeIndex> {
+  using IndexBase::IndexBase;
 };
 
 class Context;
