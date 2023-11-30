@@ -39,11 +39,11 @@ class TokenizedBuffer;
 // meaningfully compared.
 //
 // All other APIs to query a `TokenIndex` are on the `TokenizedBuffer`.
-struct TokenIndex : public ComparableIndexBase {
+struct TokenIndex : public IndexBase {
   static const TokenIndex Invalid;
   // Comments aren't tokenized, so this is the first token after FileStart.
   static const TokenIndex FirstNonCommentToken;
-  using ComparableIndexBase::ComparableIndexBase;
+  using IndexBase::IndexBase;
 };
 
 constexpr TokenIndex TokenIndex::Invalid(TokenIndex::InvalidIndex);
@@ -60,9 +60,9 @@ constexpr TokenIndex TokenIndex::FirstNonCommentToken(1);
 // same line or the relative position of different lines within the source.
 //
 // All other APIs to query a `LineIndex` are on the `TokenizedBuffer`.
-struct LineIndex : public ComparableIndexBase {
+struct LineIndex : public IndexBase {
   static const LineIndex Invalid;
-  using ComparableIndexBase::ComparableIndexBase;
+  using IndexBase::IndexBase;
 };
 
 constexpr LineIndex LineIndex::Invalid(LineIndex::InvalidIndex);
