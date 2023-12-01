@@ -32,32 +32,32 @@ auto HandleAccessModifierKeyword(Context& context, Parse::Node parse_node)
     -> bool {
   auto keyword = AccessModifierEnum(
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
-  auto& s = context.innermost_decl();
+  auto& s = context.decl_state_stack().innermost();
   if (s.found.Overlaps(keyword)) {
     context.emitter()
         .Build(parse_node, ModifierRepeated, context.TextForNode(parse_node))
-        .Note(s.saw_access_mod, ModifierPrevious,
-              context.TextForNode(s.saw_access_mod))
+        .Note(s.saw_access_modifier, ModifierPrevious,
+              context.TextForNode(s.saw_access_modifier))
         .Emit();
-  } else if (s.saw_access_mod.is_valid()) {
+  } else if (s.saw_access_modifier.is_valid()) {
     context.emitter()
         .Build(parse_node, ModifierNotAllowedWith,
                context.TextForNode(parse_node),
-               context.TextForNode(s.saw_access_mod))
-        .Note(s.saw_access_mod, ModifierPrevious,
-              context.TextForNode(s.saw_access_mod))
+               context.TextForNode(s.saw_access_modifier))
+        .Note(s.saw_access_modifier, ModifierPrevious,
+              context.TextForNode(s.saw_access_modifier))
         .Emit();
-  } else if (s.saw_decl_mod.is_valid()) {
+  } else if (s.saw_decl_modifier.is_valid()) {
     context.emitter()
         .Build(parse_node, ModifierMustAppearBefore,
                context.TextForNode(parse_node),
-               context.TextForNode(s.saw_decl_mod))
-        .Note(s.saw_decl_mod, ModifierPrevious,
-              context.TextForNode(s.saw_decl_mod))
+               context.TextForNode(s.saw_decl_modifier))
+        .Note(s.saw_decl_modifier, ModifierPrevious,
+              context.TextForNode(s.saw_decl_modifier))
         .Emit();
   } else {
     s.found = s.found.Union(keyword);
-    s.saw_access_mod = parse_node;
+    s.saw_access_modifier = parse_node;
     s.first_node = parse_node;
   }
 
@@ -87,25 +87,25 @@ auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
     -> bool {
   auto keyword = DeclModifierEnum(
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
-  auto& s = context.innermost_decl();
+  auto& s = context.decl_state_stack().innermost();
   if (s.found.Overlaps(keyword)) {
     context.emitter()
         .Build(parse_node, ModifierRepeated, context.TextForNode(parse_node))
-        .Note(s.saw_decl_mod, ModifierPrevious,
-              context.TextForNode(s.saw_decl_mod))
+        .Note(s.saw_decl_modifier, ModifierPrevious,
+              context.TextForNode(s.saw_decl_modifier))
         .Emit();
-  } else if (s.saw_decl_mod.is_valid()) {
+  } else if (s.saw_decl_modifier.is_valid()) {
     context.emitter()
         .Build(parse_node, ModifierNotAllowedWith,
                context.TextForNode(parse_node),
-               context.TextForNode(s.saw_decl_mod))
-        .Note(s.saw_decl_mod, ModifierPrevious,
-              context.TextForNode(s.saw_decl_mod))
+               context.TextForNode(s.saw_decl_modifier))
+        .Note(s.saw_decl_modifier, ModifierPrevious,
+              context.TextForNode(s.saw_decl_modifier))
         .Emit();
   } else {
     s.found = s.found.Union(keyword);
-    s.saw_decl_mod = parse_node;
-    if (s.saw_access_mod == Parse::Node::Invalid) {
+    s.saw_decl_modifier = parse_node;
+    if (s.saw_access_modifier == Parse::Node::Invalid) {
       s.first_node = parse_node;
     }
   }

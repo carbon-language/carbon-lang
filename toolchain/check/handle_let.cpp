@@ -25,18 +25,22 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
       decl_name);
 
   if (modifiers.HasPrivate()) {
-    context.TODO(context.innermost_decl().saw_access_mod, "private");
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "private");
   }
   if (modifiers.HasProtected()) {
-    context.TODO(context.innermost_decl().saw_access_mod, "protected");
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "protected");
   }
   if (modifiers.HasDefault()) {
-    context.TODO(context.innermost_decl().saw_decl_mod, "default");
+    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+                 "default");
   }
   if (modifiers.HasFinal()) {
-    context.TODO(context.innermost_decl().saw_decl_mod, "final");
+    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+                 "final");
   }
-  context.PopDeclState(DeclState::Let);
+  context.decl_state_stack().Pop(DeclState::Let);
 
   // Convert the value to match the type of the pattern.
   auto pattern = context.insts().Get(pattern_id);
@@ -59,7 +63,7 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
 }
 
 auto HandleLetIntroducer(Context& context, Parse::Node parse_node) -> bool {
-  context.PushDeclState(DeclState::Let, parse_node);
+  context.decl_state_stack().Push(DeclState::Let, parse_node);
   // Push a bracketing node to establish the pattern context.
   context.node_stack().Push(parse_node);
   return true;

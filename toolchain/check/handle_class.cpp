@@ -15,7 +15,7 @@ auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // Optional modifiers and the name follow.
-  context.PushDeclState(DeclState::Class, parse_node);
+  context.decl_state_stack().Push(DeclState::Class, parse_node);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -25,7 +25,7 @@ static auto BuildClassDecl(Context& context)
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
-  auto first_node = context.innermost_decl().first_node;
+  auto first_node = context.decl_state_stack().innermost().first_node;
 
   // Process modifiers.
   llvm::StringRef decl_name = "`class` declaration";
@@ -35,10 +35,12 @@ static auto BuildClassDecl(Context& context)
       context, base_modifiers.SetPrivate().SetProtected(), decl_name);
 
   if (modifiers.HasPrivate()) {
-    context.TODO(context.innermost_decl().saw_access_mod, "private");
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "private");
   }
   if (modifiers.HasProtected()) {
-    context.TODO(context.innermost_decl().saw_access_mod, "protected");
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "protected");
   }
   auto inheritance_kind = modifiers.HasAbstract() ? SemIR::Class::Abstract
                           : modifiers.HasBase()   ? SemIR::Class::Base
@@ -115,7 +117,7 @@ static auto BuildClassDecl(Context& context)
 auto HandleClassDecl(Context& context, Parse::Node /*parse_node*/) -> bool {
   BuildClassDecl(context);
   context.decl_name_stack().PopScope();
-  context.PopDeclState(DeclState::Class);
+  context.decl_state_stack().Pop(DeclState::Class);
   return true;
 }
 
@@ -173,7 +175,7 @@ auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
   context.inst_block_stack().Pop();
   context.PopScope();
   context.decl_name_stack().PopScope();
-  context.PopDeclState(DeclState::Class);
+  context.decl_state_stack().Pop(DeclState::Class);
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);

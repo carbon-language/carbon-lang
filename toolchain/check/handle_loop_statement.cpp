@@ -58,7 +58,7 @@ auto HandleForHeaderStart(Context& context, Parse::Node parse_node) -> bool {
 }
 
 auto HandleForIn(Context& context, Parse::Node parse_node) -> bool {
-  context.PopDeclState(DeclState::Var);
+  context.decl_state_stack().Pop(DeclState::Var);
   return context.TODO(parse_node, "HandleForIn");
 }
 

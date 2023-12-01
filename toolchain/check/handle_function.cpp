@@ -59,7 +59,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
-  auto first_node = context.innermost_decl().first_node;
+  auto first_node = context.decl_state_stack().innermost().first_node;
   // Process modifiers.
   llvm::StringRef decl_name = "`fn` declaration";
   CheckAccessModifiersOnDecl(context, decl_name);
@@ -74,48 +74,56 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
                                               .SetVirtual(),
                                           decl_name);
   // Rules for abstract, virtual, and impl, which are only allowed in classes.
-  auto containing_kind = context.containing_decl().kind;
+  auto containing_kind = context.decl_state_stack().containing().kind;
   if (containing_kind != DeclState::Class) {
     ForbidModifiers(context,
                     KeywordModifierSet().SetAbstract().SetVirtual().SetImpl(),
                     decl_name, " outside of a class");
   } else {
-    auto containing_decl_modifiers = context.containing_decl().found;
+    auto containing_decl_modifiers =
+        context.decl_state_stack().containing().found;
     if (!containing_decl_modifiers.HasAbstract() &&
         !containing_decl_modifiers.HasBase()) {
       ForbidModifiers(context, KeywordModifierSet().SetVirtual(), decl_name,
                       " in a non-abstract non-base `class` definition",
-                      context.containing_decl().first_node);
+                      context.decl_state_stack().containing().first_node);
     }
     if (!containing_decl_modifiers.HasAbstract()) {
       ForbidModifiers(context, KeywordModifierSet().SetAbstract(), decl_name,
                       " in a non-abstract `class` definition",
-                      context.containing_decl().first_node);
+                      context.decl_state_stack().containing().first_node);
     }
   }
   modifiers = RequireDefaultFinalOnlyInInterfaces(context, decl_name);
 
   if (modifiers.HasPrivate()) {
-    context.TODO(context.innermost_decl().saw_access_mod, "private");
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "private");
   }
   if (modifiers.HasProtected()) {
-    context.TODO(context.innermost_decl().saw_access_mod, "protected");
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "protected");
   }
   if (modifiers.HasAbstract()) {
-    context.TODO(context.innermost_decl().saw_decl_mod, "abstract");
+    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+                 "abstract");
   }
   if (modifiers.HasDefault()) {
-    context.TODO(context.innermost_decl().saw_decl_mod, "default");
+    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+                 "default");
   }
   if (modifiers.HasFinal()) {
-    context.TODO(context.innermost_decl().saw_decl_mod, "final");
+    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+                 "final");
   }
   if (modifiers.HasImpl()) {
     // Only for members of derived classes.
-    context.TODO(context.innermost_decl().saw_decl_mod, "impl");
+    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+                 "impl");
   }
   if (modifiers.HasVirtual()) {
-    context.TODO(context.innermost_decl().saw_decl_mod, "virtual");
+    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+                 "virtual");
   }
 
   // Add the function declaration.
@@ -189,7 +197,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
 auto HandleFunctionDecl(Context& context, Parse::Node /*parse_node*/) -> bool {
   BuildFunctionDecl(context, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
-  context.PopDeclState(DeclState::Fn);
+  context.decl_state_stack().Pop(DeclState::Fn);
   return true;
 }
 
@@ -215,7 +223,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();
-  context.PopDeclState(DeclState::Fn);
+  context.decl_state_stack().Pop(DeclState::Fn);
   return true;
 }
 
@@ -289,7 +297,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // Optional modifiers and the name follow.
-  context.PushDeclState(DeclState::Fn, parse_node);
+  context.decl_state_stack().Push(DeclState::Fn, parse_node);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }

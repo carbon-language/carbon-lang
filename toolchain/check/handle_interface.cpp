@@ -7,13 +7,13 @@
 namespace Carbon::Check {
 
 auto HandleInterfaceDecl(Context& context, Parse::Node parse_node) -> bool {
-  context.PopDeclState(DeclState::Interface);
+  context.decl_state_stack().Pop(DeclState::Interface);
   return context.TODO(parse_node, "HandleInterfaceDecl");
 }
 
 auto HandleInterfaceDefinition(Context& context, Parse::Node parse_node)
     -> bool {
-  context.PopDeclState(DeclState::Interface);
+  context.decl_state_stack().Pop(DeclState::Interface);
   return context.TODO(parse_node, "HandleInterfaceDefinition");
 }
 
@@ -24,7 +24,7 @@ auto HandleInterfaceDefinitionStart(Context& context, Parse::Node parse_node)
 
 auto HandleInterfaceIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
-  context.PushDeclState(DeclState::Interface, parse_node);
+  context.decl_state_stack().Push(DeclState::Interface, parse_node);
   return context.TODO(parse_node, "HandleInterfaceIntroducer");
 }
 

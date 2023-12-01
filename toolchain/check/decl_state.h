@@ -90,22 +90,57 @@ struct DeclState {
 
   DeclState(DeclKind decl_kind, Parse::Node parse_node)
       : first_node(parse_node), kind(decl_kind) {}
-  DeclState() : DeclState(FileScope, Parse::Node::Invalid) {}
 
   // Nodes of modifiers on this declaration
-  Parse::Node saw_access_mod = Parse::Node::Invalid;
-  Parse::Node saw_decl_mod = Parse::Node::Invalid;
+  Parse::Node saw_access_modifier = Parse::Node::Invalid;
+  Parse::Node saw_decl_modifier = Parse::Node::Invalid;
 
   // Node corresponding to the first token of the declaration.
   Parse::Node first_node;
 
   // These fields are last because they are smaller.
 
-  // Invariant: members of the set are `saw_access_mod` and `saw_other_mod`
+  // Invariant: members of the set are `saw_access_modifier` and `saw_other_mod`
   // if valid.
   KeywordModifierSet found;
 
   DeclKind kind;
+};
+
+// Stack of `DeclStat` values, representing all the declarations currently
+// nested within.
+// Invariant: Bottom of the stack always has a "DeclState::FileScope" entry.
+class DeclStateStack {
+ public:
+  DeclStateStack() {
+    s_.emplace_back(DeclState::FileScope, Parse::Node::Invalid);
+  }
+
+  // Enter a declaration of kind `k`, with `parse_node` for the introducer
+  // token.
+  auto Push(DeclState::DeclKind k, Parse::Node parse_node) {
+    s_.push_back(DeclState(k, parse_node));
+  }
+
+  // Access the most recently entered declaration.
+  auto innermost() -> DeclState& { return s_.back(); }
+
+  // Get the state for the declaration containing the innermost declaration.
+  // Requires that the innermost declaration is not `FileScope`.
+  auto containing() const -> const DeclState& {
+    CARBON_CHECK(s_.size() >= 2);
+    return s_[s_.size() - 2];
+  }
+
+  // Leave a declaration of kind `k`.
+  auto Pop(DeclState::DeclKind k) {
+    CARBON_CHECK(s_.back().kind == k);
+    s_.pop_back();
+    CARBON_CHECK(!s_.empty());
+  }
+
+ private:
+  llvm::SmallVector<DeclState> s_;
 };
 
 }  // namespace Carbon::Check

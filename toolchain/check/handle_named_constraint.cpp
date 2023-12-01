@@ -8,13 +8,13 @@ namespace Carbon::Check {
 
 auto HandleNamedConstraintDecl(Context& context, Parse::Node parse_node)
     -> bool {
-  context.PopDeclState(DeclState::NamedConstraint);
+  context.decl_state_stack().Pop(DeclState::NamedConstraint);
   return context.TODO(parse_node, "HandleNamedConstraintDecl");
 }
 
 auto HandleNamedConstraintDefinition(Context& context, Parse::Node parse_node)
     -> bool {
-  context.PopDeclState(DeclState::NamedConstraint);
+  context.decl_state_stack().Pop(DeclState::NamedConstraint);
   return context.TODO(parse_node, "HandleNamedConstraintDefinition");
 }
 
@@ -25,7 +25,7 @@ auto HandleNamedConstraintDefinitionStart(Context& context,
 
 auto HandleNamedConstraintIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
-  context.PushDeclState(DeclState::NamedConstraint, parse_node);
+  context.decl_state_stack().Push(DeclState::NamedConstraint, parse_node);
   return context.TODO(parse_node, "HandleNamedConstraintIntroducer");
 }
 

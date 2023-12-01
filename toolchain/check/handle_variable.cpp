@@ -13,7 +13,7 @@ auto HandleVariableIntroducer(Context& context, Parse::Node parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
-  context.PushDeclState(DeclState::Var, parse_node);
+  context.decl_state_stack().Push(DeclState::Var, parse_node);
   return true;
 }
 
@@ -81,12 +81,14 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
   auto modifiers = ModifiersAllowedOnDecl(
       context, KeywordModifierSet().SetPrivate().SetProtected(), decl_name);
   if (modifiers.HasPrivate()) {
-    context.TODO(context.innermost_decl().saw_access_mod, "private");
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "private");
   }
   if (modifiers.HasProtected()) {
-    context.TODO(context.innermost_decl().saw_access_mod, "protected");
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "protected");
   }
-  context.PopDeclState(DeclState::Var);
+  context.decl_state_stack().Pop(DeclState::Var);
 
   return true;
 }

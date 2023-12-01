@@ -26,16 +26,17 @@ static auto ReportNotAllowed(Context& context, Parse::Node modifier_node,
 auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
                             llvm::StringRef decl_name, Parse::Node context_node)
     -> KeywordModifierSet {
-  auto& s = context.innermost_decl();
+  auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.found.Minus(allowed.GetRaw());
   if (not_allowed.Overlaps(KeywordModifierSet::Access)) {
-    ReportNotAllowed(context, s.saw_access_mod, decl_name, "", context_node);
+    ReportNotAllowed(context, s.saw_access_modifier, decl_name, "",
+                     context_node);
     not_allowed = not_allowed.Minus(KeywordModifierSet::Access);
-    s.saw_access_mod = Parse::Node::Invalid;
+    s.saw_access_modifier = Parse::Node::Invalid;
   }
   if (!not_allowed.is_empty()) {
-    ReportNotAllowed(context, s.saw_decl_mod, decl_name, "", context_node);
-    s.saw_decl_mod = Parse::Node::Invalid;
+    ReportNotAllowed(context, s.saw_decl_modifier, decl_name, "", context_node);
+    s.saw_decl_modifier = Parse::Node::Invalid;
   }
   s.found = s.found.Intersect(allowed.GetRaw());
 
@@ -45,25 +46,25 @@ auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
 auto ForbidModifiers(Context& context, KeywordModifierSet forbidden,
                      llvm::StringRef decl_name, llvm::StringRef context_string,
                      Parse::Node context_node) -> void {
-  auto& s = context.innermost_decl();
+  auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.found.Intersect(forbidden.GetRaw());
   if (not_allowed.Overlaps(KeywordModifierSet::Access)) {
-    ReportNotAllowed(context, s.saw_access_mod, decl_name, context_string,
+    ReportNotAllowed(context, s.saw_access_modifier, decl_name, context_string,
                      context_node);
     not_allowed = not_allowed.Minus(KeywordModifierSet::Access);
-    s.saw_access_mod = Parse::Node::Invalid;
+    s.saw_access_modifier = Parse::Node::Invalid;
   }
   if (!not_allowed.is_empty()) {
-    ReportNotAllowed(context, s.saw_decl_mod, decl_name, context_string,
+    ReportNotAllowed(context, s.saw_decl_modifier, decl_name, context_string,
                      context_node);
-    s.saw_decl_mod = Parse::Node::Invalid;
+    s.saw_decl_modifier = Parse::Node::Invalid;
   }
   s.found = s.found.Minus(forbidden.GetRaw());
 }
 
 auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
     -> void {
-  switch (context.containing_decl().kind) {
+  switch (context.decl_state_stack().containing().kind) {
     case DeclState::FileScope:
       ForbidModifiers(
           context, KeywordModifierSet().SetProtected(), decl_name,
@@ -88,11 +89,11 @@ auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          llvm::StringRef decl_name)
     -> KeywordModifierSet {
-  auto& s = context.innermost_decl();
-  if (context.containing_decl().kind != DeclState::Interface) {
+  auto& s = context.decl_state_stack().innermost();
+  if (context.decl_state_stack().containing().kind != DeclState::Interface) {
     ForbidModifiers(context, KeywordModifierSet().SetDefault().SetFinal(),
                     decl_name, " outside of an interface",
-                    context.containing_decl().first_node);
+                    context.decl_state_stack().containing().first_node);
   }
 
   return s.found;
