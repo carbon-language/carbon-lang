@@ -4,7 +4,11 @@
 
 #include "testing/file_test/file_test_base.h"
 
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <fcntl.h>
+#endif
 
 #include <filesystem>
 #include <fstream>
