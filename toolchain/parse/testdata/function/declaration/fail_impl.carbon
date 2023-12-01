@@ -18,6 +18,7 @@ impl
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'impl', has_error: yes},
 // CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InvalidParse', text: 'impl', has_error: yes},
+// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'impl', has_error: yes},
+// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: 'impl', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
