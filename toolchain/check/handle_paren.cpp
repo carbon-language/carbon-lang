@@ -12,14 +12,16 @@ auto HandleParenExpr(Context& context, Parse::Node parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   // ParamOrArgStart was called for tuple handling; clean up the ParamOrArg
   // support for non-tuple cases.
-  context.ParamOrArgEnd(Parse::NodeKind::ExprOpenParen);
+  context.ParamOrArgEnd(Parse::NodeKind::ParenExprOrTupleLiteralStart);
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ExprOpenParen>();
+      .PopAndDiscardSoloParseNode<
+          Parse::NodeKind::ParenExprOrTupleLiteralStart>();
   context.node_stack().Push(parse_node, value_id);
   return true;
 }
 
-auto HandleExprOpenParen(Context& context, Parse::Node parse_node) -> bool {
+auto HandleParenExprOrTupleLiteralStart(Context& context,
+                                        Parse::Node parse_node) -> bool {
   context.node_stack().Push(parse_node);
   context.ParamOrArgStart();
   return true;
@@ -32,10 +34,12 @@ auto HandleTupleLiteralComma(Context& context, Parse::Node /*parse_node*/)
 }
 
 auto HandleTupleLiteral(Context& context, Parse::Node parse_node) -> bool {
-  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ExprOpenParen);
+  auto refs_id =
+      context.ParamOrArgEnd(Parse::NodeKind::ParenExprOrTupleLiteralStart);
 
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ExprOpenParen>();
+      .PopAndDiscardSoloParseNode<
+          Parse::NodeKind::ParenExprOrTupleLiteralStart>();
   const auto& inst_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::TypeId> type_ids;
   type_ids.reserve(inst_block.size());

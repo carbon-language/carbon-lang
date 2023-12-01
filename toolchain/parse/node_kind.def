@@ -354,25 +354,25 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IndexExprStart, 1,
 CARBON_PARSE_NODE_KIND_BRACKET(IndexExpr, IndexExprStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
-// Parenthesized single expressions, such as `(2)`:
-//   ExprOpenParen
+// Parenthesized expressions, such as `(2)`:
+//   ParenExprOrTupleLiteralStart
 //   _external_: expression
 // ParenExpr
 //
 // Tuples, such as `(1, 2)`:
-//   ExprOpenParen
+//   ParenExprOrTupleLiteralStart
 //   _external_: expression
 //   TupleLiteralComma
 // TupleLiteral
 //
 // Exprs and TupleLiteralComma may repeat with TupleLiteralComma as a
 // separator.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExprOpenParen, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExprOrTupleLiteralStart, 0,
                                    CARBON_TOKEN(OpenParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ParenExpr, ExprOpenParen,
+CARBON_PARSE_NODE_KIND_BRACKET(ParenExpr, ParenExprOrTupleLiteralStart,
                                CARBON_TOKEN(CloseParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralComma, 0, CARBON_TOKEN(Comma))
-CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ExprOpenParen,
+CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExprOrTupleLiteralStart,
                                CARBON_TOKEN(CloseParen))
 
 // Call expressions, such as `a()`:

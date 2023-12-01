@@ -27,7 +27,7 @@ fn F() {
 // CHECK:STDOUT:                   {kind: 'Name', text: 'd'},
 // CHECK:STDOUT:                 {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:                 {kind: 'CallExprComma', text: ','},
-// CHECK:STDOUT:                   {kind: 'ExprOpenParen', text: '('},
+// CHECK:STDOUT:                   {kind: 'ParenExprOrTupleLiteralStart', text: '('},
 // CHECK:STDOUT:                   {kind: 'NameExpr', text: 'e'},
 // CHECK:STDOUT:                 {kind: 'ParenExpr', text: ')', subtree_size: 3},
 // CHECK:STDOUT:               {kind: 'CallExpr', text: ')', subtree_size: 14},

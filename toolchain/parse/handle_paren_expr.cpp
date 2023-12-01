@@ -10,21 +10,23 @@ auto HandleParenExpr(Context& context) -> void {
   auto state = context.PopState();
 
   // Advance past the open paren.
-  context.AddLeafNode(NodeKind::ExprOpenParen,
+  context.AddLeafNode(NodeKind::ParenExprOrTupleLiteralStart,
                       context.ConsumeChecked(Lex::TokenKind::OpenParen));
 
   if (context.PositionIs(Lex::TokenKind::CloseParen)) {
-    state.state = State::TupleLiteralFinish;
+    state.state = State::ParenExprFinishAsTuple;
     context.PushState(state);
   } else {
-    state.state = State::ParenExprFinish;
+    state.state = State::ParenExprFinishAsNormal;
     context.PushState(state);
-    context.PushState(State::ExprAfterOpenParenFinish);
+    context.PushState(State::ParenExprParamFinishAsUnknown);
     context.PushState(State::Expr);
   }
 }
 
-auto HandleExprAfterOpenParenFinish(Context& context) -> void {
+// Handles ParenExprParamFinishAs(Unknown|Tuple).
+static auto HandleParenExprParamFinish(Context& context, bool as_tuple)
+    -> void {
   auto state = context.PopState();
 
   auto list_token_kind = context.ConsumeListToken(
@@ -36,13 +38,15 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
   // If this is the first item and a comma was found, switch to tuple handling.
   // Note this could be `(expr,)` so we may not reuse the current state, but
   // it's still necessary to switch the parent.
-  state.state = State::TupleLiteralElementFinish;
+  if (!as_tuple) {
+    state.state = State::ParenExprParamFinishAsTuple;
 
-  auto finish_state = context.PopState();
-  CARBON_CHECK(finish_state.state == State::ParenExprFinish)
-      << "Unexpected parent state, found: " << finish_state.state;
-  finish_state.state = State::TupleLiteralFinish;
-  context.PushState(finish_state);
+    auto finish_state = context.PopState();
+    CARBON_CHECK(finish_state.state == State::ParenExprFinishAsNormal)
+        << "Unexpected parent state, found: " << finish_state.state;
+    finish_state.state = State::ParenExprFinishAsTuple;
+    context.PushState(finish_state);
+  }
 
   // On a comma, push another expression handler.
   if (list_token_kind == Context::ListTokenKind::Comma) {
@@ -51,25 +55,22 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
   }
 }
 
-auto HandleTupleLiteralElementFinish(Context& context) -> void {
-  auto state = context.PopState();
-
-  if (context.ConsumeListToken(NodeKind::TupleLiteralComma,
-                               Lex::TokenKind::CloseParen, state.has_error) ==
-      Context::ListTokenKind::Comma) {
-    context.PushState(state);
-    context.PushState(State::Expr);
-  }
+auto HandleParenExprParamFinishAsUnknown(Context& context) -> void {
+  HandleParenExprParamFinish(context, /*as_tuple=*/false);
 }
 
-auto HandleParenExprFinish(Context& context) -> void {
+auto HandleParenExprParamFinishAsTuple(Context& context) -> void {
+  HandleParenExprParamFinish(context, /*as_tuple=*/true);
+}
+
+auto HandleParenExprFinishAsNormal(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNode(NodeKind::ParenExpr, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 
-auto HandleTupleLiteralFinish(Context& context) -> void {
+auto HandleParenExprFinishAsTuple(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNode(NodeKind::TupleLiteral, context.Consume(),
