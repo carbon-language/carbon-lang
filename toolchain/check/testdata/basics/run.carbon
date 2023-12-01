@@ -7,6 +7,7 @@
 fn Run() {}
 
 // CHECK:STDOUT: --- run.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -15,3 +16,4 @@ fn Run() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -16,6 +16,7 @@ fn Make() -> Class {
 }
 
 // CHECK:STDOUT: --- fail_abstract.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = struct_type {.k: i32}
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
@@ -42,3 +43,4 @@ fn Make() -> Class {
 // CHECK:STDOUT:   %.loc15_17: {.k: i32} = struct_literal (%.loc15_16)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

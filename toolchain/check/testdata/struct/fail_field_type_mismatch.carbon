@@ -10,6 +10,7 @@
 var x: {.a: i32} = {.b = 1.0};
 
 // CHECK:STDOUT: --- fail_field_type_mismatch.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.b: f64}
 // CHECK:STDOUT: }
@@ -22,3 +23,4 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   %.loc10_29: {.b: f64} = struct_literal (%.loc10_26)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -502,7 +502,7 @@ class Formatter {
   // including file-scoped instructions. The file scope may contain entity
   // declarations which are defined later, such as classes.
   auto Format() -> void {
-    out_ << "--- " << sem_ir_.filename() << "\n";
+    out_ << "--- " << sem_ir_.filename() << "\n\n";
 
     FormatConstants();
 
@@ -523,6 +523,9 @@ class Formatter {
     for (int i : llvm::seq(sem_ir_.functions().size())) {
       FormatFunction(FunctionId(i));
     }
+
+    // End-of-file newline.
+    out_ << "\n";
   }
 
   auto FormatConstants() -> void {

@@ -11,6 +11,7 @@ fn Run() -> i32 {
 }
 
 // CHECK:STDOUT: --- tuple_return_value_access.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc7_16.2: type = tuple_type (i32)
@@ -41,3 +42,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc10_15.2: i32 = bind_value %.loc10_15.1
 // CHECK:STDOUT:   return %.loc10_15.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

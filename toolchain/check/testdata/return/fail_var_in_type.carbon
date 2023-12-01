@@ -11,6 +11,7 @@ var x: type = i32;
 fn Six() -> x { return 6; }
 
 // CHECK:STDOUT: --- fail_var_in_type.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
@@ -23,3 +24,4 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 6
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

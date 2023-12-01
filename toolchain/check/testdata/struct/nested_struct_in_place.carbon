@@ -11,6 +11,7 @@ fn G() {
 }
 
 // CHECK:STDOUT: --- nested_struct_in_place.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
@@ -47,3 +48,4 @@ fn G() {
 // CHECK:STDOUT:   assign %v.var, %.loc10_74.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -14,6 +14,7 @@ fn Main() -> i32 {
 }
 
 // CHECK:STDOUT: --- fail_type_mismatch_once.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -27,3 +28,4 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.loc13_19: <error> = add <error>, %.loc13_21
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -12,6 +12,7 @@ var b: i32 = 0;
 var c: i32 = a[b];
 
 // CHECK:STDOUT: --- fail_non_deterministic_type.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc7_17.2: type = tuple_type (i32, i32)
@@ -44,3 +45,4 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   %.loc12: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

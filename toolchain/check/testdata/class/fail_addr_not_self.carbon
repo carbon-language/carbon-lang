@@ -17,6 +17,7 @@ class Class {
 }
 
 // CHECK:STDOUT: --- fail_addr_not_self.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc17: type = struct_type {}
 // CHECK:STDOUT: }
@@ -38,3 +39,4 @@ class Class {
 // CHECK:STDOUT: fn @F[%a: Class*]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%b: Class*);
+// CHECK:STDOUT:

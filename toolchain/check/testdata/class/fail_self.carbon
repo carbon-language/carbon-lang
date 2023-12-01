@@ -51,6 +51,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 }
 
 // CHECK:STDOUT: --- fail_self.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc20_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc20_1.2: type = tuple_type ()
@@ -105,3 +106,4 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %.loc50_7: init () = call %.loc50_5(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

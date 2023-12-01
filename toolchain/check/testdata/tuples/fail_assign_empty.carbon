@@ -10,6 +10,7 @@
 var x: (i32,) = ();
 
 // CHECK:STDOUT: --- fail_assign_empty.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_13.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc10_13.2: type = tuple_type (i32)
@@ -24,3 +25,4 @@ var x: (i32,) = ();
 // CHECK:STDOUT:   %.loc10_18: () = tuple_literal ()
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

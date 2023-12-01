@@ -13,6 +13,7 @@
 fn Run() -> String {}
 
 // CHECK:STDOUT: --- fail_bad_run.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT:   %.loc13: type = tuple_type ()
@@ -25,3 +26,4 @@ fn Run() -> String {}
 // CHECK:STDOUT: fn @Run() -> %return: String {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -12,6 +12,7 @@ fn F(cond: bool) {
 }
 
 // CHECK:STDOUT: --- struct.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc11: type = tuple_type ()
@@ -68,3 +69,4 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc11_4: init () = call %G.ref(%.loc11_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

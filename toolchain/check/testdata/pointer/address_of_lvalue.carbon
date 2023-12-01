@@ -17,6 +17,7 @@ fn F() {
 }
 
 // CHECK:STDOUT: --- address_of_lvalue.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc8: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc14_19.1: type = tuple_type (type, type)
@@ -96,3 +97,4 @@ fn F() {
 // CHECK:STDOUT:   assign %t1.var, %.loc16_18
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -10,6 +10,7 @@ let test_str: String = "Test";
 var test_type: type = i32;
 
 // CHECK:STDOUT: --- builtin_types.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
@@ -29,3 +30,4 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %test_type: ref type = bind_name test_type, %test_type.var
 // CHECK:STDOUT:   assign %test_type.var, i32
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -11,6 +11,7 @@ var a: [i32; 1] = (12,);
 var b: i32 = a[2];
 
 // CHECK:STDOUT: --- fail_array_out_of_bound_access.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 1]
 // CHECK:STDOUT:   %.loc7_23: type = tuple_type (i32)
@@ -37,3 +38,4 @@ var b: i32 = a[2];
 // CHECK:STDOUT:   %.loc11_17.2: i32 = bind_value %.loc11_17.1
 // CHECK:STDOUT:   assign %b.var, %.loc11_17.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

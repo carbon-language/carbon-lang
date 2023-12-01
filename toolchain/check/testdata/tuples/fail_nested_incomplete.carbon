@@ -20,6 +20,7 @@ var t: (i32, Incomplete);
 var p: Incomplete* = &t[1];
 
 // CHECK:STDOUT: --- fail_nested_incomplete.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15_24.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc15_24.2: type = tuple_type (i32, Incomplete)
@@ -45,3 +46,4 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
+// CHECK:STDOUT:

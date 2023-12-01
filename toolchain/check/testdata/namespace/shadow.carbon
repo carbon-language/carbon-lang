@@ -24,6 +24,7 @@ fn N.M.B() -> i32 {
 }
 
 // CHECK:STDOUT: --- shadow.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc16: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -60,3 +61,4 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %.loc23: i32 = int_literal 0
 // CHECK:STDOUT:   return %.loc23
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

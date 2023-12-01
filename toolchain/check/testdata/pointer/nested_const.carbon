@@ -10,6 +10,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 }
 
 // CHECK:STDOUT: --- nested_const.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
@@ -23,3 +24,4 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %.loc9_10.2: const i32 = bind_value %.loc9_10.1
 // CHECK:STDOUT:   return %.loc9_10.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

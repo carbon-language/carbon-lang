@@ -12,6 +12,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: --- more_param_ir.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -41,3 +42,4 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_6: init () = call %Foo.ref(%.loc11_13, %.loc11_20, %.loc11_25)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

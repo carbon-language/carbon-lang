@@ -18,6 +18,7 @@ fn G() -> i32 {
 }
 
 // CHECK:STDOUT: --- fail_scope.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT: }
@@ -46,3 +47,4 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

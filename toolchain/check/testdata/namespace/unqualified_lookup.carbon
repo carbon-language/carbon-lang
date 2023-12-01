@@ -27,6 +27,7 @@ fn OuterN.InnerN.CallABC() {
 }
 
 // CHECK:STDOUT: --- unqualified_lookup.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -74,3 +75,4 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:   %.loc26: init () = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

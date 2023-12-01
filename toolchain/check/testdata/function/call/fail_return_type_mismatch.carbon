@@ -14,6 +14,7 @@ fn Run() {
 }
 
 // CHECK:STDOUT: --- fail_return_type_mismatch.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
@@ -34,3 +35,4 @@ fn Run() {
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

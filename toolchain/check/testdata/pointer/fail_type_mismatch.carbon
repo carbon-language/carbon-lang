@@ -12,6 +12,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 }
 
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = struct_type {}
 // CHECK:STDOUT: }
@@ -25,3 +26,4 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %p.ref: const {}* = name_ref p, %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

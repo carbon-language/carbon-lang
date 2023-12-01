@@ -19,6 +19,7 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 }
 
 // CHECK:STDOUT: --- raw_self.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9_46.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc9_46.2: type = tuple_type (i32, i32)
@@ -72,3 +73,4 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc18_25.7: init (i32, i32) = converted %.loc18_25.1, %.loc18_25.6
 // CHECK:STDOUT:   return %.loc18_25.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

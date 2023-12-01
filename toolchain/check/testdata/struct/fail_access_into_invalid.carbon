@@ -11,6 +11,7 @@
 fn F() { a.b; }
 
 // CHECK:STDOUT: --- fail_access_into_invalid.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
@@ -20,3 +21,4 @@ fn F() { a.b; }
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

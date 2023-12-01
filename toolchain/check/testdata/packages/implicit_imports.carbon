@@ -44,39 +44,59 @@ library "lib" api;
 library "lib" impl;
 
 // CHECK:STDOUT: --- api_only.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- api_only_lib.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl.impl.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %WithImpl: <namespace> = bind_name WithImpl, %import
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl_extra.impl.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %WithImpl: <namespace> = bind_name WithImpl, %import
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl_lib.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl_lib.impl.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %WithImpl: <namespace> = bind_name WithImpl, %import
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- main.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- main_lib.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- main_lib.impl.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

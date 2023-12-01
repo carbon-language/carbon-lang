@@ -10,6 +10,7 @@
 var x: (1, );
 
 // CHECK:STDOUT: --- fail_value_as_type.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_12.1: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc10_12.2: type = tuple_type (<error>)
@@ -22,3 +23,4 @@ var x: (1, );
 // CHECK:STDOUT:   %x.var: ref (<error>,) = var x
 // CHECK:STDOUT:   %x: ref (<error>,) = bind_name x, %x.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

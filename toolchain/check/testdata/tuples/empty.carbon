@@ -8,6 +8,7 @@ var x: () = ();
 var y: () = x;
 
 // CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -30,3 +31,4 @@ var y: () = x;
 // CHECK:STDOUT:   %.loc8_13.2: init () = converted %x.ref, %.loc8_13.1
 // CHECK:STDOUT:   assign %y.var, %.loc8_13.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -12,6 +12,7 @@ class Class {
 }
 
 // CHECK:STDOUT: --- raw_self_type.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc12: type = struct_type {}
 // CHECK:STDOUT: }
@@ -43,3 +44,4 @@ class Class {
 // CHECK:STDOUT:   assign %p.var, %.loc10_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -15,6 +15,7 @@ var x: {.a: i32} = {.b = 1};
 var y: {.b: i32} = x;
 
 // CHECK:STDOUT: --- fail_field_name_mismatch.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.b: i32}
 // CHECK:STDOUT: }
@@ -32,3 +33,4 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

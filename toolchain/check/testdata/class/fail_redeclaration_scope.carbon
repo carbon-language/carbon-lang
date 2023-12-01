@@ -22,6 +22,7 @@ class Y {
 }
 
 // CHECK:STDOUT: --- fail_redeclaration_scope.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT: }
@@ -79,3 +80,4 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -24,6 +24,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 }
 
 // CHECK:STDOUT: --- returned_var_scope.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %UnrelatedScopes: <function> = fn_decl @UnrelatedScopes
 // CHECK:STDOUT:   %EnclosingButAfter: <function> = fn_decl @EnclosingButAfter
@@ -78,3 +79,4 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc22_16: i32 = bind_value %w
 // CHECK:STDOUT:   return %.loc22_16
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

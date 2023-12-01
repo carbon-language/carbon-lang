@@ -23,6 +23,7 @@ fn F(x: X) {
 }
 
 // CHECK:STDOUT: --- fail_not_copyable.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc8_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc8_1.2: type = tuple_type ()
@@ -54,3 +55,4 @@ fn F(x: X) {
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

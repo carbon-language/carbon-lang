@@ -10,6 +10,7 @@
 var x: {.a: i32} = {};
 
 // CHECK:STDOUT: --- fail_assign_empty.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT: }
@@ -21,3 +22,4 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:   %.loc10_21: {} = struct_literal ()
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

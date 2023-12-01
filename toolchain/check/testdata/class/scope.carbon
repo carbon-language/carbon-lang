@@ -23,6 +23,7 @@ fn Run() -> i32 {
 }
 
 // CHECK:STDOUT: --- scope.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = struct_type {}
 // CHECK:STDOUT: }
@@ -78,3 +79,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc22_14.3: i32 = add %.loc22_14.2, %.loc22_23.3
 // CHECK:STDOUT:   return %.loc22_14.3
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

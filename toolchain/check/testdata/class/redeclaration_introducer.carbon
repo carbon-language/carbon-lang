@@ -13,6 +13,7 @@ base class B {}
 abstract class C {}
 
 // CHECK:STDOUT: --- redeclaration_introducer.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT: }
@@ -43,3 +44,4 @@ abstract class C {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

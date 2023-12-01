@@ -19,6 +19,7 @@ fn G(o: Outer) {
 }
 
 // CHECK:STDOUT: --- nested_name.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.n: i32}
 // CHECK:STDOUT:   %.loc11_1.1: type = struct_type {}
@@ -67,3 +68,4 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %i: ref Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

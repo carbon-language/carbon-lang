@@ -11,6 +11,7 @@ fn Main() -> i32 {
 }
 
 // CHECK:STDOUT: --- fail_missing_return.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -18,3 +19,4 @@ fn Main() -> i32 {
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

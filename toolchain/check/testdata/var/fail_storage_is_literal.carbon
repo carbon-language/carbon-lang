@@ -12,6 +12,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: --- fail_storage_is_literal.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -25,3 +26,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

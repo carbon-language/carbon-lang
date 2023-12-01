@@ -29,6 +29,7 @@ fn F(a: Outer*) {
 }
 
 // CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc12_3.1: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*}
 // CHECK:STDOUT:   %.loc17_1.1: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*}
@@ -143,3 +144,4 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %.loc28_13, %.loc28_23.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

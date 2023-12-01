@@ -8,6 +8,7 @@ var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 var y: {.a: i32, .b: i32} = x;
 
 // CHECK:STDOUT: --- two_entries.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT: }
@@ -42,3 +43,4 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc8_29.10: init {.a: i32, .b: i32} = converted %x.ref, %.loc8_29.9
 // CHECK:STDOUT:   assign %y.var, %.loc8_29.10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

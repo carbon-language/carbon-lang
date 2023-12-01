@@ -13,6 +13,7 @@ class Class {
 fn Class.F() {}
 
 // CHECK:STDOUT: --- redeclaration.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT: }
@@ -35,3 +36,4 @@ fn Class.F() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

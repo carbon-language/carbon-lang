@@ -20,6 +20,7 @@ fn While() {
 }
 
 // CHECK:STDOUT: --- unreachable_end.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -63,3 +64,4 @@ fn While() {
 // CHECK:STDOUT:   %.loc19: init () = call %H.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

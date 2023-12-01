@@ -15,6 +15,7 @@ fn Foo.Bar.Baz() {
 }
 
 // CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -39,3 +40,4 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:   %.loc14: init () = call %Wiz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

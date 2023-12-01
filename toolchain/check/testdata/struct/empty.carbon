@@ -8,6 +8,7 @@ var x: {} = {};
 var y: {} = x;
 
 // CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_9.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc7_9.2: type = tuple_type ()
@@ -31,3 +32,4 @@ var y: {} = x;
 // CHECK:STDOUT:   %.loc8_13.2: init {} = converted %x.ref, %.loc8_13.1
 // CHECK:STDOUT:   assign %y.var, %.loc8_13.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

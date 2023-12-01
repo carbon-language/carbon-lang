@@ -34,6 +34,7 @@ fn If3(b: bool) -> i32 {
 }
 
 // CHECK:STDOUT: --- fail_reachable_fallthrough.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If1: <function> = fn_decl @If1
 // CHECK:STDOUT:   %If2: <function> = fn_decl @If2
@@ -81,3 +82,4 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

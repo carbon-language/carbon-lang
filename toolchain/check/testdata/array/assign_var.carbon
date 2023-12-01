@@ -8,6 +8,7 @@ var a: (i32, i32, i32) = (1, 2, 3);
 var b: [i32; 3] = a;
 
 // CHECK:STDOUT: --- assign_var.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_22.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc7_22.2: type = tuple_type (i32, i32, i32)
@@ -57,3 +58,4 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc8_19.17: init [i32; 3] = converted %a.ref, %.loc8_19.16
 // CHECK:STDOUT:   assign %b.var, %.loc8_19.17
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

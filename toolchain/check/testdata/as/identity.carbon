@@ -25,6 +25,7 @@ fn Initializing() {
 }
 
 // CHECK:STDOUT: --- identity.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc11_1.2: type = tuple_type ()
@@ -80,3 +81,4 @@ fn Initializing() {
 // CHECK:STDOUT:   assign %x.var, %.loc24_19
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -34,14 +34,22 @@ package r#Main api;
 package Main library "lib" api;
 
 // CHECK:STDOUT: --- main.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- main_impl.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- raw_main.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- main_lib.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

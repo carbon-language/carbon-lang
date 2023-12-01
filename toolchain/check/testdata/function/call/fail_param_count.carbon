@@ -56,6 +56,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: --- fail_param_count.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc18: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -104,3 +105,4 @@ fn Main() {
 // CHECK:STDOUT:   %.loc55_7: init () = call %Run2.ref.loc55(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

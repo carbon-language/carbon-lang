@@ -12,6 +12,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: --- return_implicit.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -37,3 +38,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %b.var, %.loc11_37
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

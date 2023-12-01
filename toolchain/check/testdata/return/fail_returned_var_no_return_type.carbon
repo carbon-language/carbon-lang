@@ -16,6 +16,7 @@ fn Procedure() {
 }
 
 // CHECK:STDOUT: --- fail_returned_var_no_return_type.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -33,3 +34,4 @@ fn Procedure() {
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

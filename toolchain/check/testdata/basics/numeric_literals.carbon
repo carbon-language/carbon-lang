@@ -26,6 +26,7 @@ fn F() {
 }
 
 // CHECK:STDOUT: --- numeric_literals.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = ptr_type [i32; 5]
 // CHECK:STDOUT:   %.loc16: type = tuple_type (i32, i32, i32, i32, i32)
@@ -105,3 +106,4 @@ fn F() {
 // CHECK:STDOUT:   assign %floats.var, %.loc25_3.24
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -19,6 +19,7 @@ fn Foo.Baz() {
 }
 
 // CHECK:STDOUT: --- fail_duplicate.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Baz = %Baz.loc9}
 // CHECK:STDOUT:   %Baz.loc9: <function> = fn_decl @Baz
@@ -32,3 +33,4 @@ fn Foo.Baz() {
 // CHECK:STDOUT: !.loc19:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

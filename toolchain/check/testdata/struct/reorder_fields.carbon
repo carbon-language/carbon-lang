@@ -14,6 +14,7 @@ fn F() -> {.a: i32, .b: f64} {
 }
 
 // CHECK:STDOUT: --- reorder_fields.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = ptr_type {.a: i32, .b: f64}
 // CHECK:STDOUT:   %.loc11_62.1: type = struct_type {.b: f64, .a: i32}
@@ -63,3 +64,4 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc13_10.8: init {.a: i32, .b: f64} = converted %y.ref, %.loc13_10.7
 // CHECK:STDOUT:   return %.loc13_10.8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -11,6 +11,7 @@ var x: {.a: f64} = {.a = 4.0};
 var y: i32 = x.b;
 
 // CHECK:STDOUT: --- fail_member_access_type.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: f64}
 // CHECK:STDOUT:   %x.var: ref {.a: f64} = var x
@@ -25,3 +26,4 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %x.ref: ref {.a: f64} = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

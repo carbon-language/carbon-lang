@@ -83,6 +83,7 @@ fn AddressOfParam(param: i32) {
 }
 
 // CHECK:STDOUT: --- fail_address_of_value.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = ptr_type i32
 // CHECK:STDOUT:   %.loc19: type = ptr_type bool
@@ -187,3 +188,4 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   assign %param_addr.var, %.loc82_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

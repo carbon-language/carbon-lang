@@ -17,6 +17,7 @@ fn G(c: Class) -> i32 {
 }
 
 // CHECK:STDOUT: --- fail_unknown_member.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = struct_type {.n: i32}
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
@@ -43,3 +44,4 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:   %something.ref: <error> = name_ref something, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

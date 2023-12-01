@@ -28,6 +28,7 @@ fn G() -> C {
 }
 
 // CHECK:STDOUT: --- fail_return_with_returned_var.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc18_35.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc18_35.2: type = ptr_type {.a: i32, .b: i32}
@@ -80,3 +81,4 @@ fn G() -> C {
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

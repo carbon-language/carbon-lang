@@ -34,6 +34,7 @@ class C {
 }
 
 // CHECK:STDOUT: --- fail_not_in_function.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc34: type = struct_type {.n: <error>}
 // CHECK:STDOUT: }
@@ -52,3 +53,4 @@ class C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .n = <unexpected instref inst+20>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

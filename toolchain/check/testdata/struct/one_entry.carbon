@@ -8,6 +8,7 @@ var x: {.a: i32} = {.a = 4};
 var y: {.a: i32} = x;
 
 // CHECK:STDOUT: --- one_entry.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
@@ -27,3 +28,4 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %.loc8_20.4: init {.a: i32} = converted %x.ref, %.loc8_20.3
 // CHECK:STDOUT:   assign %y.var, %.loc8_20.4
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -75,6 +75,7 @@ abstract class G;
 base class G;
 
 // CHECK:STDOUT: --- fail_redeclaration_introducer.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = struct_type {}
 // CHECK:STDOUT: }
@@ -138,3 +139,4 @@ base class G;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

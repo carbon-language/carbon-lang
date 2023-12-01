@@ -39,16 +39,24 @@ library "lib" api;
 import library default;
 
 // CHECK:STDOUT: --- default_api.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- default.impl.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %A: <namespace> = bind_name A, %import
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- main_import_default.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- main_lib_import_default.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

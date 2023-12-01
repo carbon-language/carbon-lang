@@ -22,6 +22,7 @@ fn G() -> i32 {
 }
 
 // CHECK:STDOUT: --- fail_unbound_field.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = struct_type {.field: i32}
 // CHECK:STDOUT: }
@@ -55,3 +56,4 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_ref field, @Class.%field
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

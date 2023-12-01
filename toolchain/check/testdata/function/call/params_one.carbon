@@ -11,6 +11,7 @@ fn Main() {
 }
 
 // CHECK:STDOUT: --- params_one.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -32,3 +33,4 @@ fn Main() {
 // CHECK:STDOUT:   %.loc10_6: init () = call %Foo.ref(%.loc10_7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

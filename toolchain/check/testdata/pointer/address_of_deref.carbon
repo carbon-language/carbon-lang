@@ -10,6 +10,7 @@ fn F() -> i32 {
 }
 
 // CHECK:STDOUT: --- address_of_deref.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = ptr_type i32
 // CHECK:STDOUT: }
@@ -32,3 +33,4 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc9_10.2: i32 = bind_value %.loc9_10.1
 // CHECK:STDOUT:   return %.loc9_10.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

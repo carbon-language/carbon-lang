@@ -12,6 +12,7 @@ fn And() -> bool {
 }
 
 // CHECK:STDOUT: --- and.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
@@ -50,3 +51,4 @@ fn And() -> bool {
 // CHECK:STDOUT:   %.loc11_14.6: bool = block_arg !and.result
 // CHECK:STDOUT:   return %.loc11_14.6
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

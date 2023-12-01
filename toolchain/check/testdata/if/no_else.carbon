@@ -15,6 +15,7 @@ fn If(b: bool) {
 }
 
 // CHECK:STDOUT: --- no_else.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc12: type = tuple_type ()
 // CHECK:STDOUT: }
@@ -50,3 +51,4 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %.loc14: init () = call %G.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -45,6 +45,7 @@ var x: {.a: i32} = {.a = 1, .a = 2};
 var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 
 // CHECK:STDOUT: --- fail_duplicate_name.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc21: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %.loc45: type = ptr_type {.b: i32, .c: i32}
@@ -73,3 +74,4 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> <error>;
+// CHECK:STDOUT:

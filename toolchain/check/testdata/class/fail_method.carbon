@@ -31,6 +31,7 @@ fn F(c: Class) {
 }
 
 // CHECK:STDOUT: --- fail_method.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_1.2: type = tuple_type ()
@@ -76,3 +77,4 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %.loc30: init () = call %WithSelf.ref.loc30(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

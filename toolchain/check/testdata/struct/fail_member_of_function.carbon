@@ -12,6 +12,7 @@ fn A() {
 }
 
 // CHECK:STDOUT: --- fail_member_of_function.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
@@ -21,3 +22,4 @@ fn A() {
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

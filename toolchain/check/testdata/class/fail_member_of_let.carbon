@@ -22,6 +22,7 @@ let T: type = Class;
 fn T.F() {}
 
 // CHECK:STDOUT: --- fail_member_of_let.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = struct_type {}
 // CHECK:STDOUT: }
@@ -47,3 +48,4 @@ fn T.F() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

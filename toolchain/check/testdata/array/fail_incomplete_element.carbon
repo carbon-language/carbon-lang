@@ -20,6 +20,7 @@ var a: [Incomplete; 1];
 var p: Incomplete* = &a[0];
 
 // CHECK:STDOUT: --- fail_incomplete_element.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc20: type = ptr_type <error>
 // CHECK:STDOUT: }
@@ -43,3 +44,4 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
+// CHECK:STDOUT:

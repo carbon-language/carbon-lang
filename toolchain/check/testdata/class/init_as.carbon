@@ -14,6 +14,7 @@ fn F() -> i32 {
 }
 
 // CHECK:STDOUT: --- init_as.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
@@ -56,3 +57,4 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_37.2: i32 = bind_value %.loc13_37.1
 // CHECK:STDOUT:   return %.loc13_37.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

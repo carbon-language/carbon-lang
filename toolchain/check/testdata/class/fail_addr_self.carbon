@@ -39,6 +39,7 @@ fn F(c: Class, p: Class*) {
 }
 
 // CHECK:STDOUT: --- fail_addr_self.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_1.2: type = tuple_type ()
@@ -84,3 +85,4 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %.loc38_9: init () = call %.loc38_7(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

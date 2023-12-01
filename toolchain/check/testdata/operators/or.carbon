@@ -12,6 +12,7 @@ fn Or() -> bool {
 }
 
 // CHECK:STDOUT: --- or.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
@@ -51,3 +52,4 @@ fn Or() -> bool {
 // CHECK:STDOUT:   %.loc11_14.7: bool = block_arg !or.result
 // CHECK:STDOUT:   return %.loc11_14.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
