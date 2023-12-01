@@ -43,7 +43,7 @@ inline auto operator!(KeywordModifierSet k) -> bool {
 
 struct DeclState {
   // What kind of declaration
-  enum DeclKind { FileScope, Class, NamedConstraint, Fn, Interface, Let, Var };
+  enum DeclKind { FileScope, Class, Constraint, Fn, Interface, Let, Var };
 
   DeclState(DeclKind decl_kind, Parse::Node parse_node)
       : first_node(parse_node), kind(decl_kind) {}
