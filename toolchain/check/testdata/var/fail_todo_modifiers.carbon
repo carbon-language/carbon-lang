@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `private`.
+// CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `access modifier`.
 // CHECK:STDERR: private var a: i32;
 // CHECK:STDERR: ^~~~~~~
 private var a: i32;

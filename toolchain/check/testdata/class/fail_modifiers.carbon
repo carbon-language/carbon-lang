@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `private`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `access modifier`.
 // CHECK:STDERR: private abstract private class DuplicatePrivate;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:18: ERROR: `private` repeated on declaration.
@@ -15,7 +15,7 @@
 // CHECK:STDERR: ^~~~~~~
 private abstract private class DuplicatePrivate;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `private`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `access modifier`.
 // CHECK:STDERR: private base protected class TwoAccess {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:14: ERROR: `protected` not allowed on declaration with `private`.

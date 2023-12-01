@@ -24,21 +24,13 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
       decl_name);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!!(modifiers & KeywordModifierSet::Private)) {
+  if (!!(modifiers & KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
-                 "private");
+                 "access modifier");
   }
-  if (!!(modifiers & KeywordModifierSet::Protected)) {
-    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
-                 "protected");
-  }
-  if (!!(modifiers & KeywordModifierSet::Default)) {
+  if (!!(modifiers & KeywordModifierSet::Interface)) {
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
-                 "default");
-  }
-  if (!!(modifiers & KeywordModifierSet::Final)) {
-    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
-                 "final");
+                 "interface modifier");
   }
   context.decl_state_stack().Pop(DeclState::Let);
 

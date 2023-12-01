@@ -73,35 +73,35 @@ struct DeclState {
 class DeclStateStack {
  public:
   DeclStateStack() {
-    s_.emplace_back(DeclState::FileScope, Parse::Node::Invalid);
+    stack_.emplace_back(DeclState::FileScope, Parse::Node::Invalid);
   }
 
   // Enters a declaration of kind `k`, with `parse_node` for the introducer
   // token.
   auto Push(DeclState::DeclKind k, Parse::Node parse_node) -> void {
-    s_.push_back(DeclState(k, parse_node));
+    stack_.push_back(DeclState(k, parse_node));
   }
 
   // Gets the state of declaration at the top of the stack -- the innermost
   // declaration currently being processed.
-  auto innermost() -> DeclState& { return s_.back(); }
+  auto innermost() -> DeclState& { return stack_.back(); }
 
   // Gets the state for the declaration containing the innermost declaration.
   // Requires that the innermost declaration is not `FileScope`.
   auto containing() const -> const DeclState& {
-    CARBON_CHECK(s_.size() >= 2);
-    return s_[s_.size() - 2];
+    CARBON_CHECK(stack_.size() >= 2);
+    return stack_[stack_.size() - 2];
   }
 
   // Exits a declaration of kind `k`.
   auto Pop(DeclState::DeclKind k) -> void {
-    CARBON_CHECK(s_.back().kind == k);
-    s_.pop_back();
-    CARBON_CHECK(!s_.empty());
+    CARBON_CHECK(stack_.back().kind == k);
+    stack_.pop_back();
+    CARBON_CHECK(!stack_.empty());
   }
 
  private:
-  llvm::SmallVector<DeclState> s_;
+  llvm::SmallVector<DeclState> stack_;
 };
 
 }  // namespace Carbon::Check

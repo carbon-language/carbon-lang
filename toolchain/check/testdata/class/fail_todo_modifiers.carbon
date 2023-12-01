@@ -6,22 +6,22 @@
 
 class Access {
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `private`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `access modifier`.
   // CHECK:STDERR:   private fn F();
   // CHECK:STDERR:   ^~~~~~~
   private fn F();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `protected`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `access modifier`.
   // CHECK:STDERR:   protected fn G();
   // CHECK:STDERR:   ^~~~~~~~~
   protected fn G();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `private`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `access modifier`.
   // CHECK:STDERR:   private var k: i32;
   // CHECK:STDERR:   ^~~~~~~
   private var k: i32;
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `protected`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `access modifier`.
   // CHECK:STDERR:   protected var l: i32;
   // CHECK:STDERR:   ^~~~~~~~~
   protected var l: i32;
@@ -29,12 +29,12 @@ class Access {
 
 base class Base {
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `virtual`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
   // CHECK:STDERR:   virtual fn H();
   // CHECK:STDERR:   ^~~~~~~
   virtual fn H();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `impl`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
   // CHECK:STDERR:   impl fn I();
   // CHECK:STDERR:   ^~~~
   impl fn I();
@@ -42,17 +42,17 @@ base class Base {
 
 abstract class Abstract {
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `abstract`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
   // CHECK:STDERR:   abstract fn J();
   // CHECK:STDERR:   ^~~~~~~~
   abstract fn J();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `virtual`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
   // CHECK:STDERR:   virtual fn K();
   // CHECK:STDERR:   ^~~~~~~
   virtual fn K();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `impl`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
   // CHECK:STDERR:   impl fn L();
   // CHECK:STDERR:   ^~~~
   impl fn L();

@@ -80,14 +80,11 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
   CheckAccessModifiersOnDecl(context, decl_name);
   LimitModifiersOnDecl(context, KeywordModifierSet::Access, decl_name);
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!!(modifiers & KeywordModifierSet::Private)) {
+  if (!!(modifiers & KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
-                 "private");
+                 "access modifier");
   }
-  if (!!(modifiers & KeywordModifierSet::Protected)) {
-    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
-                 "protected");
-  }
+
   context.decl_state_stack().Pop(DeclState::Var);
 
   return true;

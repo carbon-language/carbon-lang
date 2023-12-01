@@ -35,13 +35,9 @@ static auto BuildClassDecl(Context& context)
                        decl_name);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!!(modifiers & KeywordModifierSet::Private)) {
+  if (!!(modifiers & KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
-                 "private");
-  }
-  if (!!(modifiers & KeywordModifierSet::Protected)) {
-    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
-                 "protected");
+                 "access modifier");
   }
   auto inheritance_kind =
       !!(modifiers & KeywordModifierSet::Abstract) ? SemIR::Class::Abstract

@@ -9,6 +9,37 @@
 
 namespace Carbon::Check {
 
+static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
+  llvm::StringRef decl_name = "`fn` declaration";
+  CheckAccessModifiersOnDecl(context, decl_name);
+  LimitModifiersOnDecl(context,
+                       KeywordModifierSet::Access | KeywordModifierSet::Method |
+                           KeywordModifierSet::Interface,
+                       decl_name);
+  // Rules for abstract, virtual, and impl, which are only allowed in classes.
+  auto containing_kind = context.decl_state_stack().containing().kind;
+  if (containing_kind != DeclState::Class) {
+    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_name,
+                          " outside of a class");
+  } else {
+    auto containing_decl_modifiers =
+        context.decl_state_stack().containing().modifier_set;
+    if (!(containing_decl_modifiers & KeywordModifierSet::Class)) {
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_name,
+                            " in a non-abstract non-base `class` definition",
+                            context.decl_state_stack().containing().first_node);
+    }
+    if (!(containing_decl_modifiers & KeywordModifierSet::Abstract)) {
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_name,
+                            " in a non-abstract `class` definition",
+                            context.decl_state_stack().containing().first_node);
+    }
+  }
+  RequireDefaultFinalOnlyInInterfaces(context, decl_name);
+
+  return context.decl_state_stack().innermost().modifier_set;
+}
+
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
@@ -60,63 +91,20 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
       .PopAndDiscardSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
   auto first_node = context.decl_state_stack().innermost().first_node;
-  // Process modifiers.
-  llvm::StringRef decl_name = "`fn` declaration";
-  CheckAccessModifiersOnDecl(context, decl_name);
-  LimitModifiersOnDecl(context,
-                       KeywordModifierSet::Access | KeywordModifierSet::Method |
-                           KeywordModifierSet::Interface,
-                       decl_name);
-  // Rules for abstract, virtual, and impl, which are only allowed in classes.
-  auto containing_kind = context.decl_state_stack().containing().kind;
-  if (containing_kind != DeclState::Class) {
-    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_name,
-                          " outside of a class");
-  } else {
-    auto containing_decl_modifiers =
-        context.decl_state_stack().containing().modifier_set;
-    if (!(containing_decl_modifiers & KeywordModifierSet::Class)) {
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_name,
-                            " in a non-abstract non-base `class` definition",
-                            context.decl_state_stack().containing().first_node);
-    }
-    if (!(containing_decl_modifiers & KeywordModifierSet::Abstract)) {
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_name,
-                            " in a non-abstract `class` definition",
-                            context.decl_state_stack().containing().first_node);
-    }
-  }
-  RequireDefaultFinalOnlyInInterfaces(context, decl_name);
 
-  auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  if (!!(modifiers & KeywordModifierSet::Private)) {
+  // Process modifiers.
+  auto modifiers = DiagnoseModifiers(context);
+  if (!!(modifiers & KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
-                 "private");
+                 "access modifier");
   }
-  if (!!(modifiers & KeywordModifierSet::Protected)) {
-    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
-                 "protected");
-  }
-  if (!!(modifiers & KeywordModifierSet::Abstract)) {
+  if (!!(modifiers & KeywordModifierSet::Method)) {
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
-                 "abstract");
+                 "method modifier");
   }
-  if (!!(modifiers & KeywordModifierSet::Default)) {
+  if (!!(modifiers & KeywordModifierSet::Interface)) {
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
-                 "default");
-  }
-  if (!!(modifiers & KeywordModifierSet::Final)) {
-    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
-                 "final");
-  }
-  if (!!(modifiers & KeywordModifierSet::Impl)) {
-    // Only for members of derived classes.
-    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
-                 "impl");
-  }
-  if (!!(modifiers & KeywordModifierSet::Virtual)) {
-    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
-                 "virtual");
+                 "interface modifier");
   }
 
   // Add the function declaration.
