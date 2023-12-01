@@ -540,8 +540,15 @@ static auto Main(int argc, char** argv) -> int {
   }
 
   // Tests might try to read from stdin. Ensure those reads fail.
-  // TODO: This won't work on Windows.
-  int dev_null = open("/dev/null", O_RDONLY);
+  // TODO: Windows support here is untested.
+  int dev_null = open(
+#ifdef _WIN32
+      "nul"
+#else
+      "/dev/null"
+#endif
+      ,
+      O_RDONLY);
   if (dev_null == -1) {
     llvm::errs() << "Failed to open /dev/null.\n";
     return EXIT_FAILURE;
