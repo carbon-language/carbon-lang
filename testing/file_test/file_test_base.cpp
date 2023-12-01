@@ -6,8 +6,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <future>
-#include <mutex>
 #include <optional>
 #include <string>
 #include <utility>
@@ -23,6 +21,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/ThreadPool.h"
 #include "testing/file_test/autoupdate.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
@@ -33,8 +32,9 @@ ABSL_FLAG(std::string, test_targets_file, "",
 ABSL_FLAG(bool, autoupdate, false,
           "Instead of verifying files match test output, autoupdate files "
           "based on test output.");
-ABSL_FLAG(int, threads, 16,
-          "Number of threads to use when autoupdating tests.");
+ABSL_FLAG(unsigned int, threads, 0,
+          "Number of threads to use when autoupdating tests, or 0 to "
+          "automatically determine a thread count.");
 
 namespace Carbon::Testing {
 
@@ -733,39 +733,24 @@ static auto Main(int argc, char** argv) -> int {
   llvm::SmallVector<std::string> tests = GetTests();
   auto test_factory = GetFileTestFactory();
   if (absl::GetFlag(FLAGS_autoupdate)) {
-    int threads = absl::GetFlag(FLAGS_threads);
-    std::vector<std::future<void>> tasks;
+    llvm::ThreadPool pool({.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
     std::mutex errs_mutex;
 
-    // Round the number of tests per thread upwards.
-    int tests_per_thread = (static_cast<int>(tests.size()) - 1) / threads + 1;
+    for (const auto& test_name : tests) {
+      pool.async([&test_factory, &errs_mutex, test_name] {
+        std::unique_ptr<FileTestBase> test(test_factory.factory_fn(test_name));
+        auto result = test->Autoupdate();
 
-    for (llvm::ArrayRef<std::string> tests_remaining = tests;
-         !tests_remaining.empty();
-         tests_remaining = tests_remaining.drop_front(
-             std::min<size_t>(tests_per_thread, tests_remaining.size()))) {
-      auto thread_tests = tests_remaining.take_front(tests_per_thread);
-
-      tasks.push_back(std::async(
-          std::launch::async, [thread_tests, &test_factory, &errs_mutex] {
-            for (const auto& test_name : thread_tests) {
-              std::unique_ptr<FileTestBase> test(
-                  test_factory.factory_fn(test_name));
-              auto result = test->Autoupdate();
-
-              // Guard access to llvm::errs, which is not thread-safe.
-              std::unique_lock<std::mutex> lock(errs_mutex);
-              if (result.ok()) {
-                llvm::errs() << (*result ? "!" : ".");
-              } else {
-                llvm::errs() << "\n" << result.error().message() << "\n";
-              }
-            }
-          }));
+        // Guard access to llvm::errs, which is not thread-safe.
+        std::unique_lock<std::mutex> lock(errs_mutex);
+        if (result.ok()) {
+          llvm::errs() << (*result ? "!" : ".");
+        } else {
+          llvm::errs() << "\n" << result.error().message() << "\n";
+        }
+      });
     }
-    for (auto& task : tasks) {
-      task.wait();
-    }
+    pool.wait();
     llvm::errs() << "\nDone!\n";
     return EXIT_SUCCESS;
   } else {
