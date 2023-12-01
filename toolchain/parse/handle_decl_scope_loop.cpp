@@ -13,6 +13,8 @@ static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
                     "Unrecognized declaration introducer.");
   context.emitter().Emit(*context.position(), UnrecognizedDecl);
   auto cursor = *context.position();
+  // Consume to the next `;` or end of line. We ignore the return value since
+  // we only care how much was consumed, not whether it ended with a `;`.
   context.SkipPastLikelyEnd(cursor);
   auto iter = context.position();
   --iter;
