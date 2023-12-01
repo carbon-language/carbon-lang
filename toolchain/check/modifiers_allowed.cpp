@@ -24,23 +24,21 @@ static auto ReportNotAllowed(Context& context, Parse::Node modifier_node,
 }
 
 auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
-                          llvm::StringRef decl_name, Parse::Node context_node)
-    -> KeywordModifierSet {
+                          llvm::StringRef decl_name) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & ~allowed;
   if (!!(not_allowed & KeywordModifierSet::Access)) {
     ReportNotAllowed(context, s.saw_access_modifier, decl_name, "",
-                     context_node);
+                     Parse::Node::Invalid);
     not_allowed = not_allowed & ~KeywordModifierSet::Access;
     s.saw_access_modifier = Parse::Node::Invalid;
   }
   if (!!not_allowed) {
-    ReportNotAllowed(context, s.saw_decl_modifier, decl_name, "", context_node);
+    ReportNotAllowed(context, s.saw_decl_modifier, decl_name, "",
+                     Parse::Node::Invalid);
     s.saw_decl_modifier = Parse::Node::Invalid;
   }
   s.modifier_set &= allowed;
-
-  return s.modifier_set;
 }
 
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
@@ -88,15 +86,11 @@ auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
 }
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
-                                         llvm::StringRef decl_name)
-    -> KeywordModifierSet {
-  auto& s = context.decl_state_stack().innermost();
+                                         llvm::StringRef decl_name) -> void {
   if (context.decl_state_stack().containing().kind != DeclState::Interface) {
     ForbidModifiersOnDecl(context, KeywordModifierSet::Interface, decl_name,
                           " outside of an interface");
   }
-
-  return s.modifier_set;
 }
 
 }  // namespace Carbon::Check

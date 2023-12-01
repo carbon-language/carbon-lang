@@ -63,11 +63,10 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   // Process modifiers.
   llvm::StringRef decl_name = "`fn` declaration";
   CheckAccessModifiersOnDecl(context, decl_name);
-  auto modifiers = LimitModifiersOnDecl(context,
-                                        KeywordModifierSet::Access |
-                                            KeywordModifierSet::Method |
-                                            KeywordModifierSet::Interface,
-                                        decl_name);
+  LimitModifiersOnDecl(context,
+                       KeywordModifierSet::Access | KeywordModifierSet::Method |
+                           KeywordModifierSet::Interface,
+                       decl_name);
   // Rules for abstract, virtual, and impl, which are only allowed in classes.
   auto containing_kind = context.decl_state_stack().containing().kind;
   if (containing_kind != DeclState::Class) {
@@ -87,8 +86,9 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
                             context.decl_state_stack().containing().first_node);
     }
   }
-  modifiers = RequireDefaultFinalOnlyInInterfaces(context, decl_name);
+  RequireDefaultFinalOnlyInInterfaces(context, decl_name);
 
+  auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (!!(modifiers & KeywordModifierSet::Private)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "private");

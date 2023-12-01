@@ -30,10 +30,11 @@ static auto BuildClassDecl(Context& context)
   // Process modifiers.
   llvm::StringRef decl_name = "`class` declaration";
   CheckAccessModifiersOnDecl(context, decl_name);
-  auto base_modifiers = KeywordModifierSet::Class;
-  auto modifiers = LimitModifiersOnDecl(
-      context, base_modifiers | KeywordModifierSet::Access, decl_name);
+  LimitModifiersOnDecl(context,
+                       KeywordModifierSet::Class | KeywordModifierSet::Access,
+                       decl_name);
 
+  auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (!!(modifiers & KeywordModifierSet::Private)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "private");
