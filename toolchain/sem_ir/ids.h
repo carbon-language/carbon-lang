@@ -13,8 +13,17 @@
 
 namespace Carbon::SemIR {
 
+// Forward declare indexed types, for integration with ValueStore.
+class File;
+class Inst;
+struct Class;
+struct Function;
+struct TypeInfo;
+
 // The ID of an instruction.
 struct InstId : public IdBase, public Printable<InstId> {
+  using ValueType = Inst;
+
   // An explicitly invalid instruction ID.
   static const InstId Invalid;
 
@@ -52,6 +61,8 @@ constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
+  using ValueType = Function;
+
   // An explicitly invalid function ID.
   static const FunctionId Invalid;
 
@@ -66,6 +77,8 @@ constexpr FunctionId FunctionId::Invalid = FunctionId(FunctionId::InvalidIndex);
 
 // The ID of a class.
 struct ClassId : public IdBase, public Printable<ClassId> {
+  using ValueType = Class;
+
   // An explicitly invalid class ID.
   static const ClassId Invalid;
 
@@ -80,6 +93,8 @@ constexpr ClassId ClassId::Invalid = ClassId(ClassId::InvalidIndex);
 
 // The ID of a cross-referenced IR.
 struct CrossRefIRId : public IdBase, public Printable<CrossRefIRId> {
+  using ValueType = const File*;
+
   static const CrossRefIRId Builtins;
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -164,6 +179,8 @@ constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase, public Printable<NameScopeId> {
+  using ValueType = llvm::DenseMap<NameId, InstId>;
+
   // An explicitly invalid ID.
   static const NameScopeId Invalid;
 
@@ -179,6 +196,9 @@ constexpr NameScopeId NameScopeId::Invalid =
 
 // The ID of an instruction block.
 struct InstBlockId : public IdBase, public Printable<InstBlockId> {
+  using ElementType = InstId;
+  using ValueType = llvm::MutableArrayRef<ElementType>;
+
   // All File instances must provide the 0th instruction block as empty.
   static const InstBlockId Empty;
 
@@ -207,6 +227,8 @@ constexpr InstBlockId InstBlockId::Unreachable =
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
+  using ValueType = TypeInfo;
+
   // The builtin TypeType.
   static const TypeId TypeType;
 
@@ -235,6 +257,9 @@ constexpr TypeId TypeId::Invalid = TypeId(TypeId::InvalidIndex);
 
 // The ID of a type block.
 struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
+  using ElementType = TypeId;
+  using ValueType = llvm::MutableArrayRef<ElementType>;
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "typeBlock";
