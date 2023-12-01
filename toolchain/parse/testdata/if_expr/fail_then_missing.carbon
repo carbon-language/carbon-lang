@@ -22,7 +22,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'Name', text: 'n'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:             {kind: 'BoolLiteralTrue', text: 'true'},
 // CHECK:STDOUT:           {kind: 'IfExprIf', text: 'if', subtree_size: 2},

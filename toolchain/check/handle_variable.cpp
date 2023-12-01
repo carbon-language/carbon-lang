@@ -34,7 +34,7 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   auto init_id = SemIR::InstId::Invalid;
   bool has_init =
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-      Parse::NodeKind::PatternBinding;
+      Parse::NodeKind::BindingPattern;
   if (has_init) {
     init_id = context.node_stack().PopExpr();
     context.node_stack()
@@ -42,7 +42,7 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   }
 
   // Extract the name binding.
-  auto value_id = context.node_stack().Pop<Parse::NodeKind::PatternBinding>();
+  auto value_id = context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
   if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.

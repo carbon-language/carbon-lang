@@ -25,7 +25,7 @@ fn foo() {
 // CHECK:STDOUT:             {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:               {kind: 'Name', text: 'x'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'ForIn', text: 'var', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'NameExpr', text: 'y'},
 // CHECK:STDOUT:         {kind: 'ForHeader', text: ')', subtree_size: 8},

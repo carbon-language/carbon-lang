@@ -78,7 +78,7 @@ var x: [i32];
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: ']', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -108,7 +108,7 @@ var x: [i32];
 // CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: '`', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: '`', has_error: yes},
 // CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -122,7 +122,7 @@ var x: [i32];
 // CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: ';', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: 'var', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
@@ -135,7 +135,7 @@ var x: [i32];
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: ']', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

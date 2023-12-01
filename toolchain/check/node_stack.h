@@ -294,6 +294,7 @@ class NodeStack {
   static constexpr auto ParseNodeKindToIdKind(Parse::NodeKind kind) -> IdKind {
     switch (kind) {
       case Parse::NodeKind::ArrayExpr:
+      case Parse::NodeKind::BindingPattern:
       case Parse::NodeKind::CallExpr:
       case Parse::NodeKind::CallExprStart:
       case Parse::NodeKind::IfExprThen:
@@ -303,7 +304,6 @@ class NodeStack {
       case Parse::NodeKind::MemberAccessExpr:
       case Parse::NodeKind::NameExpr:
       case Parse::NodeKind::ParenExpr:
-      case Parse::NodeKind::PatternBinding:
       case Parse::NodeKind::PostfixOperator:
       case Parse::NodeKind::PrefixOperator:
       case Parse::NodeKind::ReturnType:
