@@ -109,8 +109,8 @@ class NameScopeStore {
 
   // Adds an entry to a name scope. Returns true on success, false on
   // duplicates.
-  auto AddEntry(NameScopeId scope_id, NameId name_id,
-                InstId target_id) -> bool {
+  auto AddEntry(NameScopeId scope_id, NameId name_id, InstId target_id)
+      -> bool {
     return values_.Get(scope_id).insert({name_id, target_id}).second;
   }
 
@@ -132,27 +132,29 @@ class NameScopeStore {
 // protected members for type-specific functionality.
 //
 // On IdT, this requires:
-//   - IdT::ValueType to represent the underlying type in the block.
-//   - IdT::IndexedType to be llvm::MutableArrayRef<IdT::ValueType> for
+//   - IdT::ElementType to represent the underlying type in the block.
+//   - IdT::ValueType to be llvm::MutableArrayRef<IdT::ElementType> for
 //     compatibility with ValueStore.
 template <typename IdT>
 class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
  public:
+  using ElementType = typename IdT::ElementType;
+
   explicit BlockValueStore(llvm::BumpPtrAllocator& allocator)
       : allocator_(&allocator) {}
 
   // Adds a block with the given content, returning an ID to reference it.
-  auto Add(llvm::ArrayRef<typename IdT::ValueType> content) -> IdT {
+  auto Add(llvm::ArrayRef<ElementType> content) -> IdT {
     return values_.Add(AllocateCopy(content));
   }
 
   // Returns the requested block.
-  auto Get(IdT id) const -> llvm::ArrayRef<typename IdT::ValueType> {
+  auto Get(IdT id) const -> llvm::ArrayRef<ElementType> {
     return values_.Get(id);
   }
 
   // Returns the requested block.
-  auto Get(IdT id) -> llvm::MutableArrayRef<typename IdT::ValueType> {
+  auto Get(IdT id) -> llvm::MutableArrayRef<ElementType> {
     return values_.Get(id);
   }
 
@@ -192,19 +194,19 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
 
  private:
   // Allocates an uninitialized array using our slab allocator.
-  auto AllocateUninitialized(std::size_t size) -> typename IdT::IndexedType {
+  auto AllocateUninitialized(std::size_t size)
+      -> llvm::MutableArrayRef<ElementType> {
     // We're not going to run a destructor, so ensure that's OK.
-    static_assert(std::is_trivially_destructible_v<typename IdT::ValueType>);
+    static_assert(std::is_trivially_destructible_v<ElementType>);
 
-    auto storage = static_cast<typename IdT::ValueType*>(
-        allocator_->Allocate(size * sizeof(typename IdT::ValueType),
-                             alignof(typename IdT::ValueType)));
-    return typename IdT::IndexedType(storage, size);
+    auto storage = static_cast<ElementType*>(
+        allocator_->Allocate(size * sizeof(ElementType), alignof(ElementType)));
+    return llvm::MutableArrayRef<ElementType>(storage, size);
   }
 
   // Allocates a copy of the given data using our slab allocator.
-  auto AllocateCopy(llvm::ArrayRef<typename IdT::ValueType> data) ->
-      typename IdT::IndexedType {
+  auto AllocateCopy(llvm::ArrayRef<ElementType> data)
+      -> llvm::MutableArrayRef<ElementType> {
     auto result = AllocateUninitialized(data.size());
     std::uninitialized_copy(data.begin(), data.end(), result.begin());
     return result;
