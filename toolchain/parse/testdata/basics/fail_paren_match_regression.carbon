@@ -23,7 +23,7 @@ var = (foo {})
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: '=', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'ParenExprOrTupleLiteralStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExprOpenParen', text: '('},
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'foo'},
 // CHECK:STDOUT:       {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: 'var', has_error: yes, subtree_size: 9},
