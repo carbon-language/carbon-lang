@@ -67,7 +67,7 @@ struct DeclState {
   DeclKind kind;
 };
 
-// Stack of `DeclStat` values, representing all the declarations we are
+// Stack of `DeclState` values, representing all the declarations we are
 // currently nested within.
 // Invariant: Bottom of the stack always has a "DeclState::FileScope" entry.
 class DeclStateStack {
