@@ -30,21 +30,22 @@ static auto BuildClassDecl(Context& context)
   // Process modifiers.
   llvm::StringRef decl_name = "`class` declaration";
   CheckAccessModifiersOnDecl(context, decl_name);
-  auto base_modifiers = KeywordModifierSet().SetAbstract().SetBase();
+  auto base_modifiers = KeywordModifierSet::Class;
   auto modifiers = ModifiersAllowedOnDecl(
-      context, base_modifiers.SetPrivate().SetProtected(), decl_name);
+      context, base_modifiers | KeywordModifierSet::Access, decl_name);
 
-  if (modifiers.HasPrivate()) {
+  if (!!(modifiers & KeywordModifierSet::Private)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "private");
   }
-  if (modifiers.HasProtected()) {
+  if (!!(modifiers & KeywordModifierSet::Protected)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "protected");
   }
-  auto inheritance_kind = modifiers.HasAbstract() ? SemIR::Class::Abstract
-                          : modifiers.HasBase()   ? SemIR::Class::Base
-                                                  : SemIR::Class::Final;
+  auto inheritance_kind =
+      !!(modifiers & KeywordModifierSet::Abstract) ? SemIR::Class::Abstract
+      : !!(modifiers & KeywordModifierSet::Base)   ? SemIR::Class::Base
+                                                   : SemIR::Class::Final;
 
   auto decl_block_id = context.inst_block_stack().Pop();
 

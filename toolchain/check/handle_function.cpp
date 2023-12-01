@@ -64,64 +64,57 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   llvm::StringRef decl_name = "`fn` declaration";
   CheckAccessModifiersOnDecl(context, decl_name);
   auto modifiers = ModifiersAllowedOnDecl(context,
-                                          KeywordModifierSet()
-                                              .SetPrivate()
-                                              .SetProtected()
-                                              .SetAbstract()
-                                              .SetDefault()
-                                              .SetFinal()
-                                              .SetImpl()
-                                              .SetVirtual(),
+                                          KeywordModifierSet::Access |
+                                              KeywordModifierSet::Method |
+                                              KeywordModifierSet::Interface,
                                           decl_name);
   // Rules for abstract, virtual, and impl, which are only allowed in classes.
   auto containing_kind = context.decl_state_stack().containing().kind;
   if (containing_kind != DeclState::Class) {
-    ForbidModifiers(context,
-                    KeywordModifierSet().SetAbstract().SetVirtual().SetImpl(),
-                    decl_name, " outside of a class");
+    ForbidModifiers(context, KeywordModifierSet::Method, decl_name,
+                    " outside of a class");
   } else {
     auto containing_decl_modifiers =
         context.decl_state_stack().containing().found;
-    if (!containing_decl_modifiers.HasAbstract() &&
-        !containing_decl_modifiers.HasBase()) {
-      ForbidModifiers(context, KeywordModifierSet().SetVirtual(), decl_name,
+    if (!(containing_decl_modifiers & KeywordModifierSet::Class)) {
+      ForbidModifiers(context, KeywordModifierSet::Virtual, decl_name,
                       " in a non-abstract non-base `class` definition",
                       context.decl_state_stack().containing().first_node);
     }
-    if (!containing_decl_modifiers.HasAbstract()) {
-      ForbidModifiers(context, KeywordModifierSet().SetAbstract(), decl_name,
+    if (!(containing_decl_modifiers & KeywordModifierSet::Abstract)) {
+      ForbidModifiers(context, KeywordModifierSet::Abstract, decl_name,
                       " in a non-abstract `class` definition",
                       context.decl_state_stack().containing().first_node);
     }
   }
   modifiers = RequireDefaultFinalOnlyInInterfaces(context, decl_name);
 
-  if (modifiers.HasPrivate()) {
+  if (!!(modifiers & KeywordModifierSet::Private)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "private");
   }
-  if (modifiers.HasProtected()) {
+  if (!!(modifiers & KeywordModifierSet::Protected)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "protected");
   }
-  if (modifiers.HasAbstract()) {
+  if (!!(modifiers & KeywordModifierSet::Abstract)) {
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
                  "abstract");
   }
-  if (modifiers.HasDefault()) {
+  if (!!(modifiers & KeywordModifierSet::Default)) {
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
                  "default");
   }
-  if (modifiers.HasFinal()) {
+  if (!!(modifiers & KeywordModifierSet::Final)) {
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
                  "final");
   }
-  if (modifiers.HasImpl()) {
+  if (!!(modifiers & KeywordModifierSet::Impl)) {
     // Only for members of derived classes.
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
                  "impl");
   }
-  if (modifiers.HasVirtual()) {
+  if (!!(modifiers & KeywordModifierSet::Virtual)) {
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
                  "virtual");
   }

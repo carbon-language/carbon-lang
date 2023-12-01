@@ -27,18 +27,18 @@ auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
                             llvm::StringRef decl_name, Parse::Node context_node)
     -> KeywordModifierSet {
   auto& s = context.decl_state_stack().innermost();
-  auto not_allowed = s.found.Minus(allowed.GetRaw());
-  if (not_allowed.Overlaps(KeywordModifierSet::Access)) {
+  auto not_allowed = s.found & ~allowed;
+  if (!!(not_allowed & KeywordModifierSet::Access)) {
     ReportNotAllowed(context, s.saw_access_modifier, decl_name, "",
                      context_node);
-    not_allowed = not_allowed.Minus(KeywordModifierSet::Access);
+    not_allowed = not_allowed & ~KeywordModifierSet::Access;
     s.saw_access_modifier = Parse::Node::Invalid;
   }
-  if (!not_allowed.is_empty()) {
+  if (!!not_allowed) {
     ReportNotAllowed(context, s.saw_decl_modifier, decl_name, "", context_node);
     s.saw_decl_modifier = Parse::Node::Invalid;
   }
-  s.found = s.found.Intersect(allowed.GetRaw());
+  s.found &= allowed;
 
   return s.found;
 }
@@ -47,19 +47,19 @@ auto ForbidModifiers(Context& context, KeywordModifierSet forbidden,
                      llvm::StringRef decl_name, llvm::StringRef context_string,
                      Parse::Node context_node) -> void {
   auto& s = context.decl_state_stack().innermost();
-  auto not_allowed = s.found.Intersect(forbidden.GetRaw());
-  if (not_allowed.Overlaps(KeywordModifierSet::Access)) {
+  auto not_allowed = s.found & forbidden;
+  if (!!(not_allowed & KeywordModifierSet::Access)) {
     ReportNotAllowed(context, s.saw_access_modifier, decl_name, context_string,
                      context_node);
-    not_allowed = not_allowed.Minus(KeywordModifierSet::Access);
+    not_allowed = not_allowed & ~KeywordModifierSet::Access;
     s.saw_access_modifier = Parse::Node::Invalid;
   }
-  if (!not_allowed.is_empty()) {
+  if (!!not_allowed) {
     ReportNotAllowed(context, s.saw_decl_modifier, decl_name, context_string,
                      context_node);
     s.saw_decl_modifier = Parse::Node::Invalid;
   }
-  s.found = s.found.Minus(forbidden.GetRaw());
+  s.found = s.found & ~forbidden;
 }
 
 auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
@@ -67,7 +67,7 @@ auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
   switch (context.decl_state_stack().containing().kind) {
     case DeclState::FileScope:
       ForbidModifiers(
-          context, KeywordModifierSet().SetProtected(), decl_name,
+          context, KeywordModifierSet::Protected, decl_name,
           " at file scope, `protected` is only allowed on class members");
       break;
 
@@ -77,10 +77,10 @@ auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
 
     default:
       // Otherwise neither `private` nor `protected` allowed.
-      ForbidModifiers(context, KeywordModifierSet().SetProtected(), decl_name,
+      ForbidModifiers(context, KeywordModifierSet::Protected, decl_name,
                       ", `protected` is only allowed on class members");
       ForbidModifiers(
-          context, KeywordModifierSet().SetPrivate(), decl_name,
+          context, KeywordModifierSet::Private, decl_name,
           ", `private` is only allowed on class members and at file scope");
       break;
   }
@@ -91,8 +91,8 @@ auto RequireDefaultFinalOnlyInInterfaces(Context& context,
     -> KeywordModifierSet {
   auto& s = context.decl_state_stack().innermost();
   if (context.decl_state_stack().containing().kind != DeclState::Interface) {
-    ForbidModifiers(context, KeywordModifierSet().SetDefault().SetFinal(),
-                    decl_name, " outside of an interface",
+    ForbidModifiers(context, KeywordModifierSet::Interface, decl_name,
+                    " outside of an interface",
                     context.decl_state_stack().containing().first_node);
   }
 

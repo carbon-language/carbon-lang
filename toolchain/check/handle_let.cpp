@@ -20,23 +20,22 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
   CheckAccessModifiersOnDecl(context, decl_name);
   RequireDefaultFinalOnlyInInterfaces(context, decl_name);
   auto modifiers = ModifiersAllowedOnDecl(
-      context,
-      KeywordModifierSet().SetPrivate().SetProtected().SetDefault().SetFinal(),
+      context, KeywordModifierSet::Access | KeywordModifierSet::Interface,
       decl_name);
 
-  if (modifiers.HasPrivate()) {
+  if (!!(modifiers & KeywordModifierSet::Private)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "private");
   }
-  if (modifiers.HasProtected()) {
+  if (!!(modifiers & KeywordModifierSet::Protected)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "protected");
   }
-  if (modifiers.HasDefault()) {
+  if (!!(modifiers & KeywordModifierSet::Default)) {
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
                  "default");
   }
-  if (modifiers.HasFinal()) {
+  if (!!(modifiers & KeywordModifierSet::Final)) {
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
                  "final");
   }

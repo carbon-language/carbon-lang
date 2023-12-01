@@ -78,13 +78,13 @@ auto HandleVariableDecl(Context& context, Parse::Node parse_node) -> bool {
   // Process declaration modifiers.
   llvm::StringRef decl_name = "`var` declaration";
   CheckAccessModifiersOnDecl(context, decl_name);
-  auto modifiers = ModifiersAllowedOnDecl(
-      context, KeywordModifierSet().SetPrivate().SetProtected(), decl_name);
-  if (modifiers.HasPrivate()) {
+  auto modifiers =
+      ModifiersAllowedOnDecl(context, KeywordModifierSet::Access, decl_name);
+  if (!!(modifiers & KeywordModifierSet::Private)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "private");
   }
-  if (modifiers.HasProtected()) {
+  if (!!(modifiers & KeywordModifierSet::Protected)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "protected");
   }
