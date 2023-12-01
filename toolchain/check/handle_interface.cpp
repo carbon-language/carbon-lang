@@ -6,25 +6,22 @@
 
 namespace Carbon::Check {
 
-auto HandleInterfaceDecl(Context& context, Parse::Node parse_node) -> bool {
-  context.decl_state_stack().Pop(DeclState::Interface);
+auto HandleInterfaceDecl(Context& context, Parse::NodeId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInterfaceDecl");
 }
 
-auto HandleInterfaceDefinition(Context& context, Parse::Node parse_node)
+auto HandleInterfaceDefinition(Context& context, Parse::NodeId parse_node)
     -> bool {
-  context.decl_state_stack().Pop(DeclState::Interface);
   return context.TODO(parse_node, "HandleInterfaceDefinition");
 }
 
-auto HandleInterfaceDefinitionStart(Context& context, Parse::Node parse_node)
+auto HandleInterfaceDefinitionStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInterfaceDefinitionStart");
 }
 
-auto HandleInterfaceIntroducer(Context& context, Parse::Node parse_node)
+auto HandleInterfaceIntroducer(Context& context, Parse::NodeId parse_node)
     -> bool {
-  context.decl_state_stack().Push(DeclState::Interface, parse_node);
   return context.TODO(parse_node, "HandleInterfaceIntroducer");
 }
 
