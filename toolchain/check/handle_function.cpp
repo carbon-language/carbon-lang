@@ -75,7 +75,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
                           " outside of a class");
   } else {
     auto containing_decl_modifiers =
-        context.decl_state_stack().containing().found;
+        context.decl_state_stack().containing().modifier_set;
     if (!(containing_decl_modifiers & KeywordModifierSet::Class)) {
       ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_name,
                             " in a non-abstract non-base `class` definition",

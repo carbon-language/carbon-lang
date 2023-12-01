@@ -34,7 +34,7 @@ auto HandleAccessModifierKeyword(Context& context, Parse::Node parse_node)
   auto keyword = GetAccessModifierEnum(
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
   auto& s = context.decl_state_stack().innermost();
-  if (!!(s.found & keyword)) {
+  if (!!(s.modifier_set & keyword)) {
     context.emitter()
         .Build(parse_node, ModifierRepeated, context.TextForNode(parse_node))
         .Note(s.saw_access_modifier, ModifierPrevious,
@@ -57,7 +57,7 @@ auto HandleAccessModifierKeyword(Context& context, Parse::Node parse_node)
               context.TextForNode(s.saw_decl_modifier))
         .Emit();
   } else {
-    s.found |= keyword;
+    s.modifier_set |= keyword;
     s.saw_access_modifier = parse_node;
     s.first_node = parse_node;
   }
@@ -90,7 +90,7 @@ auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
   auto keyword = GetDeclModifierEnum(
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
   auto& s = context.decl_state_stack().innermost();
-  if (!!(s.found & keyword)) {
+  if (!!(s.modifier_set & keyword)) {
     context.emitter()
         .Build(parse_node, ModifierRepeated, context.TextForNode(parse_node))
         .Note(s.saw_decl_modifier, ModifierPrevious,
@@ -105,7 +105,7 @@ auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
               context.TextForNode(s.saw_decl_modifier))
         .Emit();
   } else {
-    s.found |= keyword;
+    s.modifier_set |= keyword;
     s.saw_decl_modifier = parse_node;
     if (s.saw_access_modifier == Parse::Node::Invalid) {
       s.first_node = parse_node;

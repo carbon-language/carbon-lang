@@ -9,7 +9,7 @@ namespace Carbon::Check {
 static auto ReportNotAllowed(Context& context, Parse::Node modifier_node,
                              llvm::StringRef decl_name,
                              llvm::StringRef context_string,
-                             Parse::Node context_node) {
+                             Parse::Node context_node) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error, "`{0}` not allowed on {1}{2}.",
                     std::string, std::string, std::string);
   auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
@@ -27,7 +27,7 @@ auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
                           llvm::StringRef decl_name, Parse::Node context_node)
     -> KeywordModifierSet {
   auto& s = context.decl_state_stack().innermost();
-  auto not_allowed = s.found & ~allowed;
+  auto not_allowed = s.modifier_set & ~allowed;
   if (!!(not_allowed & KeywordModifierSet::Access)) {
     ReportNotAllowed(context, s.saw_access_modifier, decl_name, "",
                      context_node);
@@ -38,9 +38,9 @@ auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
     ReportNotAllowed(context, s.saw_decl_modifier, decl_name, "", context_node);
     s.saw_decl_modifier = Parse::Node::Invalid;
   }
-  s.found &= allowed;
+  s.modifier_set &= allowed;
 
-  return s.found;
+  return s.modifier_set;
 }
 
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
@@ -48,7 +48,7 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            llvm::StringRef context_string,
                            Parse::Node context_node) -> void {
   auto& s = context.decl_state_stack().innermost();
-  auto not_allowed = s.found & forbidden;
+  auto not_allowed = s.modifier_set & forbidden;
   if (!!(not_allowed & KeywordModifierSet::Access)) {
     ReportNotAllowed(context, s.saw_access_modifier, decl_name, context_string,
                      context_node);
@@ -60,7 +60,7 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                      context_node);
     s.saw_decl_modifier = Parse::Node::Invalid;
   }
-  s.found = s.found & ~forbidden;
+  s.modifier_set = s.modifier_set & ~forbidden;
 }
 
 auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
@@ -96,7 +96,7 @@ auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                           " outside of an interface");
   }
 
-  return s.found;
+  return s.modifier_set;
 }
 
 }  // namespace Carbon::Check
