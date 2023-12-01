@@ -7,15 +7,31 @@
 
 namespace Carbon::Check {
 
-CARBON_DIAGNOSTIC(ModifierNotAllowedWith, Error,
-                  "`{0}` not allowed on declaration with `{1}`.", std::string,
-                  std::string);
-CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration.",
-                  std::string);
-CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
-                  "`{0}` must appear before `{1}`.", std::string, std::string);
 CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here.",
                   std::string);
+
+static auto EmitRepeatedDiagnostic(Context& context, Parse::Node first_node,
+                                   Parse::Node second_node) -> void {
+  CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration.",
+                    std::string);
+  context.emitter()
+      .Build(second_node, ModifierRepeated, context.TextForNode(second_node))
+      .Note(first_node, ModifierPrevious, context.TextForNode(first_node))
+      .Emit();
+}
+
+static auto EmitNotAllowedWithDiagnostic(Context& context,
+                                         Parse::Node first_node,
+                                         Parse::Node second_node) -> void {
+  CARBON_DIAGNOSTIC(ModifierNotAllowedWith, Error,
+                    "`{0}` not allowed on declaration with `{1}`.", std::string,
+                    std::string);
+  context.emitter()
+      .Build(second_node, ModifierNotAllowedWith,
+             context.TextForNode(second_node), context.TextForNode(first_node))
+      .Note(first_node, ModifierPrevious, context.TextForNode(first_node))
+      .Emit();
+}
 
 static auto GetAccessModifierEnum(Lex::TokenKind token_kind)
     -> KeywordModifierSet {
@@ -35,20 +51,13 @@ auto HandleAccessModifierKeyword(Context& context, Parse::Node parse_node)
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
   auto& s = context.decl_state_stack().innermost();
   if (!!(s.modifier_set & keyword)) {
-    context.emitter()
-        .Build(parse_node, ModifierRepeated, context.TextForNode(parse_node))
-        .Note(s.saw_access_modifier, ModifierPrevious,
-              context.TextForNode(s.saw_access_modifier))
-        .Emit();
+    EmitRepeatedDiagnostic(context, s.saw_access_modifier, parse_node);
   } else if (s.saw_access_modifier.is_valid()) {
-    context.emitter()
-        .Build(parse_node, ModifierNotAllowedWith,
-               context.TextForNode(parse_node),
-               context.TextForNode(s.saw_access_modifier))
-        .Note(s.saw_access_modifier, ModifierPrevious,
-              context.TextForNode(s.saw_access_modifier))
-        .Emit();
+    EmitNotAllowedWithDiagnostic(context, s.saw_access_modifier, parse_node);
   } else if (s.saw_decl_modifier.is_valid()) {
+    CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
+                      "`{0}` must appear before `{1}`.", std::string,
+                      std::string);
     context.emitter()
         .Build(parse_node, ModifierMustAppearBefore,
                context.TextForNode(parse_node),
@@ -91,19 +100,9 @@ auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
   auto& s = context.decl_state_stack().innermost();
   if (!!(s.modifier_set & keyword)) {
-    context.emitter()
-        .Build(parse_node, ModifierRepeated, context.TextForNode(parse_node))
-        .Note(s.saw_decl_modifier, ModifierPrevious,
-              context.TextForNode(s.saw_decl_modifier))
-        .Emit();
+    EmitRepeatedDiagnostic(context, s.saw_decl_modifier, parse_node);
   } else if (s.saw_decl_modifier.is_valid()) {
-    context.emitter()
-        .Build(parse_node, ModifierNotAllowedWith,
-               context.TextForNode(parse_node),
-               context.TextForNode(s.saw_decl_modifier))
-        .Note(s.saw_decl_modifier, ModifierPrevious,
-              context.TextForNode(s.saw_decl_modifier))
-        .Emit();
+    EmitNotAllowedWithDiagnostic(context, s.saw_decl_modifier, parse_node);
   } else {
     s.modifier_set |= keyword;
     s.saw_decl_modifier = parse_node;

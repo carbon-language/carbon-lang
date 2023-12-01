@@ -47,7 +47,7 @@ struct DeclState {
   // What kind of declaration
   enum DeclKind { FileScope, Class, Constraint, Fn, Interface, Let, Var };
 
-  DeclState(DeclKind decl_kind, Parse::Node parse_node)
+  explicit DeclState(DeclKind decl_kind, Parse::Node parse_node)
       : first_node(parse_node), kind(decl_kind) {}
 
   // Nodes of modifiers on this declaration. `Invalid` if no modifier of that
