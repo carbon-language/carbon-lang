@@ -18,11 +18,13 @@ fn While() {
   H();
 }
 
+// CHECK:STDOUT: --- while.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "while.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cond: <function> = fn_decl @Cond
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
@@ -61,3 +63,4 @@ fn While() {
 // CHECK:STDOUT:   %.loc18: init () = call %H.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

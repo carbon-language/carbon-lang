@@ -496,10 +496,17 @@ class Formatter {
         out_(out),
         inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
 
+  // Prints the SemIR.
+  //
+  // Constants are printed first and may be referenced by later sections,
+  // including file-scoped instructions. The file scope may contain entity
+  // declarations which are defined later, such as classes.
   auto Format() -> void {
+    out_ << "--- " << sem_ir_.filename() << "\n\n";
+
     FormatConstants();
 
-    out_ << "file \"" << sem_ir_.filename() << "\" {\n";
+    out_ << "file {\n";
     // TODO: Handle the case where there are multiple top-level instruction
     // blocks. For example, there may be branching in the initializer of a
     // global or a type expression.
@@ -516,6 +523,9 @@ class Formatter {
     for (int i : llvm::seq(sem_ir_.functions().size())) {
       FormatFunction(FunctionId(i));
     }
+
+    // End-of-file newline.
+    out_ << "\n";
   }
 
   auto FormatConstants() -> void {

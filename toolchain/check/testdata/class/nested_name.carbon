@@ -18,6 +18,8 @@ fn G(o: Outer) {
   var i: o.Inner;
 }
 
+// CHECK:STDOUT: --- nested_name.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.n: i32}
 // CHECK:STDOUT:   %.loc11_1.1: type = struct_type {}
@@ -26,7 +28,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "nested_name.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -66,3 +68,4 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %i: ref Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

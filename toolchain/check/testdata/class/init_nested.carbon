@@ -20,6 +20,8 @@ fn MakeOuter() -> Outer {
   return {.c = MakeInner(), .d = MakeInner()};
 }
 
+// CHECK:STDOUT: --- init_nested.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
@@ -29,7 +31,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc14: type = ptr_type {.c: Inner, .d: Inner}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "init_nested.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Inner, ()
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
 // CHECK:STDOUT:   %MakeInner: <function> = fn_decl @MakeInner
@@ -81,3 +83,4 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc20_45.5: init Outer = converted %.loc20_45.3, %.loc20_45.4
 // CHECK:STDOUT:   return %.loc20_45.5
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

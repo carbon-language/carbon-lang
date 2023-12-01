@@ -25,14 +25,23 @@ package Foo library "Bar" impl;
 // CHECK:STDERR: ^~~~~~~
 library "Bar" impl;
 
-// CHECK:STDOUT: file "no_api.impl.carbon" {
+// CHECK:STDOUT: --- no_api.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %Foo: <namespace> = bind_name Foo, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "no_api_lib.impl.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- no_api_lib.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %Foo: <namespace> = bind_name Foo, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "no_api_main_lib.impl.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- no_api_main_lib.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

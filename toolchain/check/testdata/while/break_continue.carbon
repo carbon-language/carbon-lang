@@ -26,7 +26,9 @@ fn While() {
   }
 }
 
-// CHECK:STDOUT: file "break_continue.carbon" {
+// CHECK:STDOUT: --- break_continue.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
 // CHECK:STDOUT:   %C: <function> = fn_decl @C
@@ -144,3 +146,4 @@ fn While() {
 // CHECK:STDOUT: !while.done.loc17:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

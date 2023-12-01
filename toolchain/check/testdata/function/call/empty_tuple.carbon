@@ -12,11 +12,13 @@ fn Main() {
   Echo(());
 }
 
+// CHECK:STDOUT: --- empty_tuple.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "empty_tuple.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -36,3 +38,4 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_7: init () = call %Echo.ref(%.loc12_9.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

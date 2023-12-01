@@ -7,13 +7,15 @@
 var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
 var y: {.a: i32, .b: (i32,)} = x;
 
+// CHECK:STDOUT: --- tuple_as_element.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_27.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc7_27.2: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc7_28: type = ptr_type {.a: i32, .b: (i32,)}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "tuple_as_element.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_27.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_27.2: type = converted %.loc7_27.1, constants.%.loc7_27.2
 // CHECK:STDOUT:   %.loc7_28: type = struct_type {.a: i32, .b: (i32,)}
@@ -53,3 +55,4 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.loc8_32.13: init {.a: i32, .b: (i32,)} = converted %x.ref, %.loc8_32.12
 // CHECK:STDOUT:   assign %y.var, %.loc8_32.13
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

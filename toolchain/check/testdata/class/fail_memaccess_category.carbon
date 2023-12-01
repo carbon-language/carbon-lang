@@ -33,6 +33,8 @@ fn F(s: {.a: A}, b: B) {
   b.a.F();
 }
 
+// CHECK:STDOUT: --- fail_memaccess_category.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
@@ -42,7 +44,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %.loc11: type = ptr_type {.a: A}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_memaccess_category.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
 // CHECK:STDOUT:   class_decl @B, ()
@@ -82,3 +84,4 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %.loc33_8: init () = call %.loc33_6(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

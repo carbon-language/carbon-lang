@@ -11,11 +11,13 @@ fn Main() {
   Foo(1, 2,);
 }
 
+// CHECK:STDOUT: --- params_two_comma.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "params_two_comma.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -37,3 +39,4 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_6: init () = call %Foo.ref.loc11(%.loc11_7, %.loc11_10)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
