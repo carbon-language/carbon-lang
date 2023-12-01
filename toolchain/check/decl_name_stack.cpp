@@ -13,7 +13,7 @@ auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
                      .target_scope_id = context_->current_scope_id()};
 }
 
-auto DeclNameStack::MakeUnqualifiedName(Parse::Node parse_node,
+auto DeclNameStack::MakeUnqualifiedName(Parse::NodeId parse_node,
                                         SemIR::NameId name_id) -> NameContext {
   NameContext context = MakeEmptyNameContext();
   ApplyNameQualifierTo(context, parse_node, name_id);
@@ -98,13 +98,13 @@ auto DeclNameStack::AddNameToLookup(NameContext name_context,
   }
 }
 
-auto DeclNameStack::ApplyNameQualifier(Parse::Node parse_node,
+auto DeclNameStack::ApplyNameQualifier(Parse::NodeId parse_node,
                                        SemIR::NameId name_id) -> void {
   ApplyNameQualifierTo(decl_name_stack_.back(), parse_node, name_id);
 }
 
 auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
-                                         Parse::Node parse_node,
+                                         Parse::NodeId parse_node,
                                          SemIR::NameId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
@@ -156,7 +156,7 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
 }
 
 auto DeclNameStack::CanResolveQualifier(NameContext& name_context,
-                                        Parse::Node parse_node) -> bool {
+                                        Parse::NodeId parse_node) -> bool {
   switch (name_context.state) {
     case NameContext::State::Error:
       // Already in an error state, so return without examining.

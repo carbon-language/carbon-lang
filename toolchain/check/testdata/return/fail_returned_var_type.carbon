@@ -7,15 +7,17 @@
 fn Mismatch() -> i32 {
   // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+6]]:19: ERROR: Type `f64` of `returned var` does not match return type of enclosing function.
   // CHECK:STDERR:   returned var v: f64 = 0.0;
-  // CHECK:STDERR:                   ^
+  // CHECK:STDERR:                   ^~~
   // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:1: Return type of function is `i32`.
   // CHECK:STDERR: fn Mismatch() -> i32 {
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~
   returned var v: f64 = 0.0;
   return var;
 }
 
-// CHECK:STDOUT: file "fail_returned_var_type.carbon" {
+// CHECK:STDOUT: --- fail_returned_var_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -26,3 +28,4 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

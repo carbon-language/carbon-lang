@@ -11,7 +11,9 @@ fn Main() {
   var b: i32 = a[0];
 }
 
-// CHECK:STDOUT: file "fail_name_not_found.carbon" {
+// CHECK:STDOUT: --- fail_name_not_found.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -19,8 +21,9 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %a.ref: <error> = name_reference a, <error>
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error>
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 0
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

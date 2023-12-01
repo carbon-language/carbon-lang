@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_extra_token_in_value.carbon:[[@LINE+3]]:28: ERROR: Expected `,` or `}`.
 // CHECK:STDERR: var x: {.a: i32} = {.a = 0 banana};
-// CHECK:STDERR:                            ^
+// CHECK:STDERR:                            ^~~~~~
 var x: {.a: i32} = {.a = 0 banana};
 
 // CHECK:STDOUT: - filename: fail_extra_token_in_value.carbon
@@ -17,7 +17,7 @@ var x: {.a: i32} = {.a = 0 banana};
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:               {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'StructFieldType', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 8},
@@ -25,7 +25,7 @@ var x: {.a: i32} = {.a = 0 banana};
 // CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'Literal', text: '0'},
+// CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:         {kind: 'StructFieldValue', text: '=', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 17},

@@ -42,12 +42,12 @@ class NumericLiteralTest : public ::testing::Test {
 };
 
 // Matcher for signed llvm::APInt.
-auto IsSignedInteger(int64_t value) -> Matcher<llvm::APInt> {
+auto IsSignedInt(int64_t value) -> Matcher<llvm::APInt> {
   return Property(&llvm::APInt::getSExtValue, value);
 }
 
 // Matcher for unsigned llvm::APInt.
-auto IsUnsignedInteger(uint64_t value) -> Matcher<llvm::APInt> {
+auto IsUnsignedInt(uint64_t value) -> Matcher<llvm::APInt> {
   return Property(&llvm::APInt::getZExtValue, value);
 }
 
@@ -55,8 +55,8 @@ auto IsUnsignedInteger(uint64_t value) -> Matcher<llvm::APInt> {
 template <typename ValueMatcher>
 auto HasIntValue(const ValueMatcher& value_matcher)
     -> Matcher<NumericLiteral::Value> {
-  return VariantWith<NumericLiteral::IntegerValue>(
-      Field(&NumericLiteral::IntegerValue::value, value_matcher));
+  return VariantWith<NumericLiteral::IntValue>(
+      Field(&NumericLiteral::IntValue::value, value_matcher));
 }
 
 struct RealMatcher {
@@ -79,7 +79,7 @@ auto HasUnrecoverableError() -> Matcher<NumericLiteral::Value> {
   return VariantWith<NumericLiteral::UnrecoverableError>(_);
 }
 
-TEST_F(NumericLiteralTest, HandlesIntegerLiteral) {
+TEST_F(NumericLiteralTest, HandlesIntLiteral) {
   struct Testcase {
     llvm::StringLiteral token;
     uint64_t value;
@@ -94,7 +94,7 @@ TEST_F(NumericLiteralTest, HandlesIntegerLiteral) {
   for (Testcase testcase : testcases) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(testcase.token),
-                HasIntValue(IsUnsignedInteger(testcase.value)))
+                HasIntValue(IsUnsignedInt(testcase.value)))
         << testcase.token;
     EXPECT_FALSE(error_tracker.seen_error()) << testcase.token;
   }
@@ -134,7 +134,7 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
   }
 }
 
-TEST_F(NumericLiteralTest, ValidatesIntegerDigitSeparators) {
+TEST_F(NumericLiteralTest, ValidatesIntDigitSeparators) {
   llvm::StringLiteral valid[] = {
       // Decimal literals optionally have digit separators every 3 places.
       "1_234",
@@ -234,8 +234,8 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(testcase.token),
                 HasRealValue({.radix = (testcase.radix == 10 ? 10 : 2),
-                              .mantissa = IsUnsignedInteger(testcase.mantissa),
-                              .exponent = IsSignedInteger(testcase.exponent)}))
+                              .mantissa = IsUnsignedInt(testcase.mantissa),
+                              .exponent = IsSignedInt(testcase.exponent)}))
         << testcase.token;
     EXPECT_EQ(error_tracker.seen_error(), testcase.radix == 2)
         << testcase.token;
@@ -248,7 +248,7 @@ TEST_F(NumericLiteralTest, HandlesRealLiteralOverflow) {
   EXPECT_THAT(
       Parse(input),
       HasRealValue({.radix = 2,
-                    .mantissa = IsUnsignedInteger(0x1000001),
+                    .mantissa = IsUnsignedInt(0x1000001),
                     .exponent = Truly([](llvm::APInt exponent) {
                       return (exponent + 9223372036854775800).getSExtValue() ==
                              -24;

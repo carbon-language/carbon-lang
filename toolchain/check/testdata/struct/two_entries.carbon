@@ -7,11 +7,13 @@
 var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 var y: {.a: i32, .b: i32} = x;
 
+// CHECK:STDOUT: --- two_entries.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "two_entries.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: i32} = bind_name x, %x.var
@@ -28,7 +30,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc8_25: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %y.var: ref {.a: i32, .b: i32} = var y
 // CHECK:STDOUT:   %y: ref {.a: i32, .b: i32} = bind_name y, %y.var
-// CHECK:STDOUT:   %x.ref: ref {.a: i32, .b: i32} = name_reference x, %x
+// CHECK:STDOUT:   %x.ref: ref {.a: i32, .b: i32} = name_ref x, %x
 // CHECK:STDOUT:   %.loc8_29.1: ref i32 = struct_access %x.ref, member0
 // CHECK:STDOUT:   %.loc8_29.2: i32 = bind_value %.loc8_29.1
 // CHECK:STDOUT:   %.loc8_29.3: ref i32 = struct_access %y.var, member0
@@ -41,3 +43,4 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc8_29.10: init {.a: i32, .b: i32} = converted %x.ref, %.loc8_29.9
 // CHECK:STDOUT:   assign %y.var, %.loc8_29.10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

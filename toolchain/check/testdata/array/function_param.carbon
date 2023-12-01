@@ -12,21 +12,23 @@ fn G() -> i32 {
   return F((1, 2, 3), 1);
 }
 
+// CHECK:STDOUT: --- function_param.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type [i32; 3]
 // CHECK:STDOUT:   %.loc12: type = tuple_type (i32, i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "function_param.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%arr: [i32; 3], %i: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %arr.ref: [i32; 3] = name_reference arr, %arr
-// CHECK:STDOUT:   %i.ref: i32 = name_reference i, %i
-// CHECK:STDOUT:   %.loc8_15.1: ref [i32; 3] = value_as_reference %arr.ref
+// CHECK:STDOUT:   %arr.ref: [i32; 3] = name_ref arr, %arr
+// CHECK:STDOUT:   %i.ref: i32 = name_ref i, %i
+// CHECK:STDOUT:   %.loc8_15.1: ref [i32; 3] = value_as_ref %arr.ref
 // CHECK:STDOUT:   %.loc8_15.2: ref i32 = array_index %.loc8_15.1, %i.ref
 // CHECK:STDOUT:   %.loc8_15.3: i32 = bind_value %.loc8_15.2
 // CHECK:STDOUT:   return %.loc8_15.3
@@ -34,7 +36,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3
@@ -59,3 +61,4 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc12_25.2: i32 = converted %.loc12_11, %.loc12_25.1
 // CHECK:STDOUT:   return %.loc12_25.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

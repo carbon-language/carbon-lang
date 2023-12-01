@@ -149,6 +149,8 @@ def _get_machine() -> str:
     machine = platform.machine()
     if machine == "x86_64":
         machine = "amd64"
+    elif machine == "aarch64":
+        machine = "arm64"
     return machine
 
 

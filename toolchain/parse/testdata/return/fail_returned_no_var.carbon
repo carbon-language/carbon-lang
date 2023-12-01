@@ -7,7 +7,7 @@
 fn F() -> String {
   // CHECK:STDERR: fail_returned_no_var.carbon:[[@LINE+3]]:12: ERROR: Expected `var` after `returned`.
   // CHECK:STDERR:   returned fn G() -> i32;
-  // CHECK:STDERR:            ^
+  // CHECK:STDERR:            ^~
   returned fn G() -> i32;
 }
 
@@ -18,7 +18,7 @@ fn F() -> String {
 // CHECK:STDOUT:         {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'Literal', text: 'String'},
+// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'String'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'EmptyDecl', text: ';', has_error: yes},

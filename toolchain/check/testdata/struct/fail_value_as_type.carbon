@@ -9,13 +9,16 @@
 // CHECK:STDERR:               ^
 var x: {.a = 1};
 
+// CHECK:STDOUT: --- fail_value_as_type.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.a: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_value_as_type.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_15: {.a: i32} = struct_literal (%.loc10_14)
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

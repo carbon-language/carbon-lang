@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: - filename: fail_bad_comment_introducers.carbon
 // CHECK:STDOUT:   tokens: [
-// CHECK:STDOUT:     { index: 0, kind: 'StartOfFile', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
+// CHECK:STDOUT:     { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 //
 
 // Comments have to have whitespace after `//` currently.
@@ -50,5 +50,5 @@
 
 // An extra un-indented comment line to anchor the end of the file checks.
 
-// CHECK:STDOUT:     { index: 1, kind:   'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 1, kind:   'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]

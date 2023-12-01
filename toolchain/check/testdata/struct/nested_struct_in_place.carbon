@@ -10,6 +10,8 @@ fn G() {
   var v: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = {.a = F(), .b = F()};
 }
 
+// CHECK:STDOUT: --- nested_struct_in_place.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
@@ -18,7 +20,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_51.2: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "nested_struct_in_place.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
@@ -34,10 +36,10 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}
 // CHECK:STDOUT:   %v.var: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var v
 // CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = bind_name v, %v.var
-// CHECK:STDOUT:   %F.ref.loc10_61: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref.loc10_61: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc10_74.1: ref (i32, i32, i32) = struct_access %v.var, member0
 // CHECK:STDOUT:   %.loc10_62: init (i32, i32, i32) = call %F.ref.loc10_61() to %.loc10_74.1
-// CHECK:STDOUT:   %F.ref.loc10_71: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref.loc10_71: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc10_74.2: ref (i32, i32, i32) = struct_access %v.var, member1
 // CHECK:STDOUT:   %.loc10_72: init (i32, i32, i32) = call %F.ref.loc10_71() to %.loc10_74.2
 // CHECK:STDOUT:   %.loc10_74.3: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_literal (%.loc10_62, %.loc10_72)
@@ -46,3 +48,4 @@ fn G() {
 // CHECK:STDOUT:   assign %v.var, %.loc10_74.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

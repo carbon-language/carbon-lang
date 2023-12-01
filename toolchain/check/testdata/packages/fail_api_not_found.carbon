@@ -4,30 +4,44 @@
 //
 // AUTOUPDATE
 
-// --- no_api.carbon
+// --- no_api.impl.carbon
 
-// CHECK:STDERR: no_api.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
+// CHECK:STDERR: no_api.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
 // CHECK:STDERR: package Foo impl;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 package Foo impl;
 
-// --- no_api_lib.carbon
+// --- no_api_lib.impl.carbon
 
-// CHECK:STDERR: no_api_lib.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
+// CHECK:STDERR: no_api_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
 // CHECK:STDERR: package Foo library "Bar" impl;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 package Foo library "Bar" impl;
 
-// --- no_api_main_lib.carbon
+// --- no_api_main_lib.impl.carbon
 
-// CHECK:STDERR: no_api_main_lib.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
+// CHECK:STDERR: no_api_main_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
 // CHECK:STDERR: library "Bar" impl;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~
 library "Bar" impl;
 
-// CHECK:STDOUT: file "no_api.carbon" {
+// CHECK:STDOUT: --- no_api.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %Foo: <namespace> = bind_name Foo, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "no_api_lib.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- no_api_lib.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
+// CHECK:STDOUT:   %Foo: <namespace> = bind_name Foo, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "no_api_main_lib.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- no_api_main_lib.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

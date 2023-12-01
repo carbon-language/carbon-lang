@@ -12,10 +12,10 @@ class Class {
 
   // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:10: ERROR: Function returns incomplete type `Class`.
   // CHECK:STDERR:   fn G() -> Class;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:          ^~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-9]]:1: Class is incomplete within its definition.
   // CHECK:STDERR: class Class {
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~~~~
   fn G() -> Class;
 }
 
@@ -32,7 +32,7 @@ fn Class.G() -> Class {
   var self: Class;
   // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:10: ERROR: Name `self` not found.
   // CHECK:STDERR:   return self;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:          ^~~~
   return self;
 }
 
@@ -46,17 +46,19 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_self.carbon:[[@LINE-7]]:8: Initializing `self` parameter of method declared here.
   // CHECK:STDERR:   fn F[self: Class]();
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:        ^~~~
   ws.F();
 }
 
+// CHECK:STDOUT: --- fail_self.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc20_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc20_1.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_self.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1
@@ -89,9 +91,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %self: Class = self_param false
-// CHECK:STDOUT:   %self.ref: <error> = name_reference self, <error>
+// CHECK:STDOUT:   %self.ref: <error> = name_ref self, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,8 +101,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWrongSelf(%ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ws.ref: WrongSelf = name_reference ws, %ws
+// CHECK:STDOUT:   %ws.ref: WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %.loc50_5: <bound method> = bound_method %ws.ref, @WrongSelf.%F
 // CHECK:STDOUT:   %.loc50_7: init () = call %.loc50_5(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

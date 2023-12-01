@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_omit_library_keyword.carbon:[[@LINE+3]]:18: ERROR: Missing `library` keyword.
 // CHECK:STDERR: package Geometry "Shapes" api;
-// CHECK:STDERR:                  ^
+// CHECK:STDERR:                  ^~~~~~~~
 package Geometry "Shapes" api;
 
 // CHECK:STDOUT: - filename: fail_omit_library_keyword.carbon

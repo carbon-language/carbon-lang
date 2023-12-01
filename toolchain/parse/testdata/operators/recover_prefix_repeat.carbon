@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: recover_prefix_repeat.carbon:[[@LINE+3]]:17: ERROR: Parentheses are required around this unary `const` operator.
 // CHECK:STDERR: fn F() -> const const i32* {
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:                 ^~~~~
 fn F() -> const const i32* {
 }
 
@@ -17,7 +17,7 @@ fn F() -> const const i32* {
 // CHECK:STDOUT:         {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:                 {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:               {kind: 'PrefixOperator', text: 'const', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'PrefixOperator', text: 'const', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 4},

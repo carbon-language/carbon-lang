@@ -15,12 +15,14 @@ fn Make() -> Class {
   return {.k = 1};
 }
 
+// CHECK:STDOUT: --- fail_abstract.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = struct_type {.k: i32}
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_abstract.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
@@ -41,3 +43,4 @@ fn Make() -> Class {
 // CHECK:STDOUT:   %.loc15_17: {.k: i32} = struct_literal (%.loc15_16)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

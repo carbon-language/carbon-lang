@@ -9,7 +9,7 @@ class Class {
   fn F() -> i32 {
     // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+3]]:12: ERROR: Expression cannot be used as a value.
     // CHECK:STDERR:     return field;
-    // CHECK:STDERR:            ^
+    // CHECK:STDERR:            ^~~~~
     return field;
   }
 }
@@ -21,11 +21,13 @@ fn G() -> i32 {
   return Class.field;
 }
 
+// CHECK:STDOUT: --- fail_unbound_field.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = struct_type {.field: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_unbound_field.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
@@ -44,13 +46,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference field, @Class.%field
+// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_ref field, @Class.%field
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
-// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_reference field, @Class.%field
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %field.ref: <unbound field of class Class> = name_ref field, @Class.%field
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

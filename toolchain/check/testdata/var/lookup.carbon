@@ -9,7 +9,9 @@ fn Main() {
   x;
 }
 
-// CHECK:STDOUT: file "lookup.carbon" {
+// CHECK:STDOUT: --- lookup.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -19,6 +21,7 @@ fn Main() {
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x.var, %.loc8
-// CHECK:STDOUT:   %x.ref: ref i32 = name_reference x, %x
+// CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, %x
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

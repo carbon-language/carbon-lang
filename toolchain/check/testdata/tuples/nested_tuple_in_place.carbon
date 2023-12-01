@@ -14,6 +14,8 @@ fn H() {
   var v: (i32, (i32, i32, i32), i32) = (1, F(), 2);
 }
 
+// CHECK:STDOUT: --- nested_tuple_in_place.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
@@ -28,7 +30,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc14_36.4: type = ptr_type (i32, (i32, i32, i32)*, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "nested_tuple_in_place.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
@@ -46,10 +48,10 @@ fn H() {
 // CHECK:STDOUT:   %.loc10_43.2: type = converted %.loc10_43.1, constants.%.loc10_43.2
 // CHECK:STDOUT:   %v.var: ref ((i32, i32, i32), (i32, i32, i32)) = var v
 // CHECK:STDOUT:   %v: ref ((i32, i32, i32), (i32, i32, i32)) = bind_name v, %v.var
-// CHECK:STDOUT:   %F.ref.loc10_48: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref.loc10_48: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc10_56.1: ref (i32, i32, i32) = tuple_access %v.var, member0
 // CHECK:STDOUT:   %.loc10_49: init (i32, i32, i32) = call %F.ref.loc10_48() to %.loc10_56.1
-// CHECK:STDOUT:   %F.ref.loc10_53: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref.loc10_53: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc10_56.2: ref (i32, i32, i32) = tuple_access %v.var, member1
 // CHECK:STDOUT:   %.loc10_54: init (i32, i32, i32) = call %F.ref.loc10_53() to %.loc10_56.2
 // CHECK:STDOUT:   %.loc10_56.3: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_49, %.loc10_54)
@@ -68,7 +70,7 @@ fn H() {
 // CHECK:STDOUT:   %v.var: ref (i32, (i32, i32, i32), i32) = var v
 // CHECK:STDOUT:   %v: ref (i32, (i32, i32, i32), i32) = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc14_41: i32 = int_literal 1
-// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc14_50.1: ref (i32, i32, i32) = tuple_access %v.var, member1
 // CHECK:STDOUT:   %.loc14_45: init (i32, i32, i32) = call %F.ref() to %.loc14_50.1
 // CHECK:STDOUT:   %.loc14_49: i32 = int_literal 2
@@ -82,3 +84,4 @@ fn H() {
 // CHECK:STDOUT:   assign %v.var, %.loc14_50.8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

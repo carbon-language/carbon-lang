@@ -10,11 +10,11 @@
 var a: i32 = n == ;
 // CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:14: ERROR: Expected expression.
 // CHECK:STDERR: var b: i32 = == n;
-// CHECK:STDERR:              ^
+// CHECK:STDERR:              ^~
 var b: i32 = == n;
 // CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+6]]:14: ERROR: Expected expression.
 // CHECK:STDERR: var c: i32 = == ;
-// CHECK:STDERR:              ^
+// CHECK:STDERR:              ^~
 // CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:17: ERROR: Expected expression.
 // CHECK:STDERR: var c: i32 = == ;
 // CHECK:STDERR:                 ^
@@ -25,7 +25,7 @@ var c: i32 = == ;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'a'},
-// CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'n'},
@@ -34,7 +34,7 @@ var c: i32 = == ;
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'b'},
-// CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '==', has_error: yes},
@@ -43,7 +43,7 @@ var c: i32 = == ;
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'c'},
-// CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '==', has_error: yes},

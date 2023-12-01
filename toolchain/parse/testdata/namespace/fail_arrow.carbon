@@ -8,7 +8,7 @@ namespace Foo;
 
 // CHECK:STDERR: fail_arrow.carbon:[[@LINE+3]]:7: ERROR: `fn` requires a `(` for parameters.
 // CHECK:STDERR: fn Foo->Bar() {}
-// CHECK:STDERR:       ^
+// CHECK:STDERR:       ^~
 fn Foo->Bar() {}
 
 // CHECK:STDOUT: - filename: fail_arrow.carbon

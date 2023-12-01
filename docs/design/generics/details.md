@@ -1981,7 +1981,7 @@ checks, like `ValidDate` with the same data layout as `Date`. Or to record the
 units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
 versus `Meters`. We should have some way of restricting the casts between a type
 and an adapter to address this use case. One possibility would be to add the
-keyword `private` before `adpat`, so you might write
+keyword `private` before `adapt`, so you might write
 `extend private adapt Date;`.
 
 ## Associated constants

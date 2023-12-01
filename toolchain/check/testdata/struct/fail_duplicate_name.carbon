@@ -6,10 +6,10 @@
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:42: ERROR: Duplicated field name `abc` in struct type literal.
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
-// CHECK:STDERR:                                          ^
+// CHECK:STDERR:                                          ^~~
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:22: Field with the same name here.
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
-// CHECK:STDERR:                      ^
+// CHECK:STDERR:                      ^~~
 fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:19: ERROR: Duplicated field name `a` in struct type literal.
@@ -22,10 +22,10 @@ let v: {.a: i32, .a: i32} = {.a = 1};
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:26: ERROR: Duplicated field name `def` in struct literal.
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
-// CHECK:STDERR:                          ^
+// CHECK:STDERR:                          ^~~
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:16: Field with the same name here.
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
-// CHECK:STDERR:                ^
+// CHECK:STDERR:                ^~~
 let w: i32 = {.def = 1, .def = 2}.def;
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:30: ERROR: Duplicated field name `a` in struct literal.
@@ -44,12 +44,14 @@ var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDERR:                               ^
 var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 
+// CHECK:STDOUT: --- fail_duplicate_name.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc21: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %.loc45: type = ptr_type {.b: i32, .c: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_duplicate_name.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %.loc21_35: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc21_36: {.a: i32} = struct_literal (%.loc21_35)
@@ -72,3 +74,4 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> <error>;
+// CHECK:STDOUT:

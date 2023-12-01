@@ -13,13 +13,15 @@ fn Run() -> i32 {
   return c.F();
 }
 
+// CHECK:STDOUT: --- static_method.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7: type = ptr_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "static_method.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
@@ -36,13 +38,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
-// CHECK:STDOUT:   %c.ref: ref Class = name_reference c, %c
-// CHECK:STDOUT:   %F.ref: <function> = name_reference F, @Class.%F
+// CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F
 // CHECK:STDOUT:   %.loc13_13: init i32 = call %F.ref()
 // CHECK:STDOUT:   %.loc13_15.1: i32 = value_of_initializer %.loc13_13
 // CHECK:STDOUT:   %.loc13_15.2: i32 = converted %.loc13_13, %.loc13_15.1
 // CHECK:STDOUT:   return %.loc13_15.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -8,7 +8,7 @@ fn foo() -> i32 {
   // TODO: Should we allow this?
   // CHECK:STDERR: fail_returned_var.carbon:[[@LINE+3]]:8: ERROR: Expected `var` declaration.
   // CHECK:STDERR:   for (returned var x: i32 in y) {
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:        ^~~~~~~~
   for (returned var x: i32 in y) {
     return var;
   }
@@ -21,7 +21,7 @@ fn foo() -> i32 {
 // CHECK:STDOUT:         {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:           {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
 // CHECK:STDOUT:           {kind: 'ForHeaderStart', text: '('},

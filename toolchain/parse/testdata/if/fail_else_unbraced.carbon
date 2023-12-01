@@ -8,7 +8,7 @@ fn F() {
   if (a)
     // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+3]]:5: ERROR: Expected braced code block.
     // CHECK:STDERR:     if (b)
-    // CHECK:STDERR:     ^
+    // CHECK:STDERR:     ^~
     if (b)
       // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+3]]:7: ERROR: Expected braced code block.
       // CHECK:STDERR:       c;

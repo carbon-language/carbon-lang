@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_dot_string_colon.carbon:[[@LINE+3]]:10: ERROR: Expected identifier after `.`.
 // CHECK:STDERR: var x: {."hello": i32, .y: i32} = {};
-// CHECK:STDERR:          ^
+// CHECK:STDERR:          ^~~~~~~
 var x: {."hello": i32, .y: i32} = {};
 
 // CHECK:STDOUT: - filename: fail_dot_string_colon.carbon
@@ -17,12 +17,12 @@ var x: {."hello": i32, .y: i32} = {};
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'Name', text: '"hello"', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: ':', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:               {kind: 'Name', text: 'y'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'StructFieldType', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', subtree_size: 11},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 13},

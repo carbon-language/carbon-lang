@@ -9,15 +9,19 @@
 // AUTOUPDATE
 
 // --- a.carbon
+package A api;
+
 fn A() {}
 
 // --- b.carbon
+package B api;
+
 fn B() {}
 
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        a.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   cross_reference_irs_size: 1
+// CHECK:STDOUT:   cross_ref_irs_size: 1
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block1]}
 // CHECK:STDOUT:   classes:         {}
@@ -37,7 +41,7 @@ fn B() {}
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        b.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   cross_reference_irs_size: 1
+// CHECK:STDOUT:   cross_ref_irs_size: 1
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block1]}
 // CHECK:STDOUT:   classes:         {}

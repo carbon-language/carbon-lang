@@ -27,7 +27,7 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
   context.AddLeafNode(NodeKind::FileStart,
-                      context.ConsumeChecked(Lex::TokenKind::StartOfFile));
+                      context.ConsumeChecked(Lex::TokenKind::FileStart));
 
   context.PushState(State::DeclScopeLoop);
 
@@ -55,54 +55,55 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
 }
 
 auto Tree::postorder() const -> llvm::iterator_range<PostorderIterator> {
-  return {PostorderIterator(Node(0)),
-          PostorderIterator(Node(node_impls_.size()))};
+  return {PostorderIterator(NodeId(0)),
+          PostorderIterator(NodeId(node_impls_.size()))};
 }
 
-auto Tree::postorder(Node n) const -> llvm::iterator_range<PostorderIterator> {
+auto Tree::postorder(NodeId n) const
+    -> llvm::iterator_range<PostorderIterator> {
   CARBON_CHECK(n.is_valid());
   // The postorder ends after this node, the root, and begins at the start of
   // its subtree.
   int end_index = n.index + 1;
   int start_index = end_index - node_impls_[n.index].subtree_size;
-  return {PostorderIterator(Node(start_index)),
-          PostorderIterator(Node(end_index))};
+  return {PostorderIterator(NodeId(start_index)),
+          PostorderIterator(NodeId(end_index))};
 }
 
-auto Tree::children(Node n) const -> llvm::iterator_range<SiblingIterator> {
+auto Tree::children(NodeId n) const -> llvm::iterator_range<SiblingIterator> {
   CARBON_CHECK(n.is_valid());
   int end_index = n.index - node_impls_[n.index].subtree_size;
-  return {SiblingIterator(*this, Node(n.index - 1)),
-          SiblingIterator(*this, Node(end_index))};
+  return {SiblingIterator(*this, NodeId(n.index - 1)),
+          SiblingIterator(*this, NodeId(end_index))};
 }
 
 auto Tree::roots() const -> llvm::iterator_range<SiblingIterator> {
   return {
-      SiblingIterator(*this, Node(static_cast<int>(node_impls_.size()) - 1)),
-      SiblingIterator(*this, Node(-1))};
+      SiblingIterator(*this, NodeId(static_cast<int>(node_impls_.size()) - 1)),
+      SiblingIterator(*this, NodeId(-1))};
 }
 
-auto Tree::node_has_error(Node n) const -> bool {
+auto Tree::node_has_error(NodeId n) const -> bool {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].has_error;
 }
 
-auto Tree::node_kind(Node n) const -> NodeKind {
+auto Tree::node_kind(NodeId n) const -> NodeKind {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].kind;
 }
 
-auto Tree::node_token(Node n) const -> Lex::Token {
+auto Tree::node_token(NodeId n) const -> Lex::TokenIndex {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].token;
 }
 
-auto Tree::node_subtree_size(Node n) const -> int32_t {
+auto Tree::node_subtree_size(NodeId n) const -> int32_t {
   CARBON_CHECK(n.is_valid());
   return node_impls_[n.index].subtree_size;
 }
 
-auto Tree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
+auto Tree::PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
                      bool preorder) const -> bool {
   const auto& n_impl = node_impls_[n.index];
   output.indent(2 * (depth + 2));
@@ -131,29 +132,29 @@ auto Tree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
 }
 
 auto Tree::Print(llvm::raw_ostream& output) const -> void {
-  output << "- filename: " << tokens_->filename() << "\n"
+  output << "- filename: " << tokens_->source().filename() << "\n"
          << "  parse_tree: [\n";
 
   // Walk the tree just to calculate depths for each node.
   llvm::SmallVector<int> indents;
   indents.append(size(), 0);
 
-  llvm::SmallVector<std::pair<Node, int>, 16> node_stack;
-  for (Node n : roots()) {
+  llvm::SmallVector<std::pair<NodeId, int>, 16> node_stack;
+  for (NodeId n : roots()) {
     node_stack.push_back({n, 0});
   }
 
   while (!node_stack.empty()) {
-    Node n = Node::Invalid;
+    NodeId n = NodeId::Invalid;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
-    for (Node sibling_n : children(n)) {
+    for (NodeId sibling_n : children(n)) {
       indents[sibling_n.index] = depth + 1;
       node_stack.push_back({sibling_n, depth + 1});
     }
   }
 
-  for (Node n : postorder()) {
+  for (NodeId n : postorder()) {
     PrintNode(output, n, indents[n.index], /*preorder=*/false);
     output << ",\n";
   }
@@ -166,7 +167,7 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
     return;
   }
 
-  output << "- filename: " << tokens_->filename() << "\n"
+  output << "- filename: " << tokens_->source().filename() << "\n"
          << "  parse_tree: [\n";
 
   // The parse tree is stored in postorder. The preorder can be constructed
@@ -176,20 +177,20 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
 
   // The roots, like siblings, are in RPO (so reversed), but we add them in
   // order here because we'll pop off the stack effectively reversing then.
-  llvm::SmallVector<std::pair<Node, int>, 16> node_stack;
-  for (Node n : roots()) {
+  llvm::SmallVector<std::pair<NodeId, int>, 16> node_stack;
+  for (NodeId n : roots()) {
     node_stack.push_back({n, 0});
   }
 
   while (!node_stack.empty()) {
-    Node n = Node::Invalid;
+    NodeId n = NodeId::Invalid;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
 
     if (PrintNode(output, n, depth, /*preorder=*/true)) {
       // Has children, so we descend. We append the children in order here as
       // well because they will get reversed when popped off the stack.
-      for (Node sibling_n : children(n)) {
+      for (NodeId sibling_n : children(n)) {
         node_stack.push_back({sibling_n, depth + 1});
       }
       continue;
@@ -210,14 +211,14 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
 }
 
 auto Tree::Verify() const -> ErrorOr<Success> {
-  llvm::SmallVector<Node> nodes;
+  llvm::SmallVector<NodeId> nodes;
   // Traverse the tree in postorder.
-  for (Node n : postorder()) {
+  for (NodeId n : postorder()) {
     const auto& n_impl = node_impls_[n.index];
 
     if (n_impl.has_error && !has_errors_) {
       return Error(llvm::formatv(
-          "Node #{0} has errors, but the tree is not marked as having any.",
+          "NodeId #{0} has errors, but the tree is not marked as having any.",
           n.index));
     }
 
@@ -226,7 +227,7 @@ auto Tree::Verify() const -> ErrorOr<Success> {
       while (true) {
         if (nodes.empty()) {
           return Error(
-              llvm::formatv("Node #{0} is a {1} with bracket {2}, but didn't "
+              llvm::formatv("NodeId #{0} is a {1} with bracket {2}, but didn't "
                             "find the bracket.",
                             n, n_impl.kind, n_impl.kind.bracket()));
         }
@@ -240,7 +241,7 @@ auto Tree::Verify() const -> ErrorOr<Success> {
       for (int i : llvm::seq(n_impl.kind.child_count())) {
         if (nodes.empty()) {
           return Error(llvm::formatv(
-              "Node #{0} is a {1} with child_count {2}, but only had {3} "
+              "NodeId #{0} is a {1} with child_count {2}, but only had {3} "
               "nodes to consume.",
               n, n_impl.kind, n_impl.kind.child_count(), i));
         }
@@ -250,8 +251,8 @@ auto Tree::Verify() const -> ErrorOr<Success> {
     }
     if (n_impl.subtree_size != subtree_size) {
       return Error(llvm::formatv(
-          "Node #{0} is a {1} with subtree_size of {2}, but calculated {3}.", n,
-          n_impl.kind, n_impl.subtree_size, subtree_size));
+          "NodeId #{0} is a {1} with subtree_size of {2}, but calculated {3}.",
+          n, n_impl.kind, n_impl.subtree_size, subtree_size));
     }
     nodes.push_back(n);
   }
@@ -266,7 +267,7 @@ auto Tree::Verify() const -> ErrorOr<Success> {
 
     if (n.index - n_impl.subtree_size != prev_index) {
       return Error(
-          llvm::formatv("Node #{0} is a root {1} with subtree_size {2}, but "
+          llvm::formatv("NodeId #{0} is a root {1} with subtree_size {2}, but "
                         "previous root was at #{3}.",
                         n, n_impl.kind, n_impl.subtree_size, prev_index));
     }

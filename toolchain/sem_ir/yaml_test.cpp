@@ -40,7 +40,7 @@ TEST(SemIRTest, YAML) {
 
   // Matches the ID of an instruction. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.
-  auto integer_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
+  auto int_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
   auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
@@ -49,7 +49,7 @@ TEST(SemIRTest, YAML) {
                                          Pair("value_rep", Yaml::Mapping(_)))));
 
   auto file = Yaml::Mapping(ElementsAre(
-      Pair("cross_reference_irs_size", "1"),
+      Pair("cross_ref_irs_size", "1"),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
       Pair("classes", Yaml::Mapping(SizeIs(0))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
@@ -63,10 +63,10 @@ TEST(SemIRTest, YAML) {
                Contains(
                    Pair(_, Yaml::Mapping(ElementsAre(Pair("kind", "Return"))))),
                // A 1-arg instruction.
-               Contains(Pair(
-                   _, Yaml::Mapping(ElementsAre(Pair("kind", "IntegerLiteral"),
-                                                Pair("arg0", integer_id),
-                                                Pair("type", type_id))))),
+               Contains(
+                   Pair(_, Yaml::Mapping(ElementsAre(Pair("kind", "IntLiteral"),
+                                                     Pair("arg0", int_id),
+                                                     Pair("type", type_id))))),
                // A 2-arg instruction.
                Contains(Pair(
                    _, Yaml::Mapping(ElementsAre(Pair("kind", "Assign"),

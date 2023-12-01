@@ -9,11 +9,11 @@ fn F() {
   // TODO: It'd be nice to produce a custom diagnostic here.
   // CHECK:STDERR: fail_postincrement.carbon:[[@LINE+3]]:4: ERROR: Expected `;` after expression statement.
   // CHECK:STDERR:   n++;
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR:    ^~
   n++;
   // CHECK:STDERR: fail_postincrement.carbon:[[@LINE+3]]:4: ERROR: Expected `;` after expression statement.
   // CHECK:STDERR:   n--;
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR:    ^~
   n--;
 }
 
@@ -27,10 +27,10 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'Name', text: 'n'},
-// CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'Literal', text: '0'},
+// CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'n'},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},

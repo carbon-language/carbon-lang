@@ -14,7 +14,7 @@ class Class {
 // CHECK:STDERR:             ^
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-8]]:1: Previous definition was here.
 // CHECK:STDERR: class Class {
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 class Class {
   fn G();
   fn H();
@@ -24,11 +24,13 @@ fn Class.F() {}
 fn Class.G() {}
 fn Class.H() {}
 
+// CHECK:STDOUT: --- fail_redefinition.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_redefinition.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   class_decl @Class, ()
@@ -61,3 +63,4 @@ fn Class.H() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

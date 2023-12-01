@@ -15,14 +15,14 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        raw_and_textual_ir.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   cross_reference_irs_size: 1
+// CHECK:STDOUT:   cross_ref_irs_size: 1
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, param_refs: block1, return_type: type3, return_slot: inst+5, body: [block4]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     type0:           {inst: instIntegerType, value_rep: {kind: copy, type: type0}}
+// CHECK:STDOUT:     type0:           {inst: instIntType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:     type1:           {inst: inst+1, value_rep: {kind: unknown, type: type<invalid>}}
-// CHECK:STDOUT:     type2:           {inst: instFloatingPointType, value_rep: {kind: copy, type: type2}}
+// CHECK:STDOUT:     type2:           {inst: instFloatType, value_rep: {kind: copy, type: type2}}
 // CHECK:STDOUT:     type3:           {inst: inst+3, value_rep: {kind: pointer, type: type4}}
 // CHECK:STDOUT:     type4:           {inst: inst+6, value_rep: {kind: copy, type: type4}}
 // CHECK:STDOUT:     type5:           {inst: instFunctionType, value_rep: {kind: copy, type: type5}}
@@ -42,8 +42,8 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     inst+5:          {kind: VarStorage, arg0: nameReturnSlot, type: type3}
 // CHECK:STDOUT:     inst+6:          {kind: PointerType, arg0: type3, type: typeTypeType}
 // CHECK:STDOUT:     inst+7:          {kind: FunctionDecl, arg0: function0, type: type5}
-// CHECK:STDOUT:     inst+8:          {kind: NameReference, arg0: name1, arg1: inst+0, type: type0}
-// CHECK:STDOUT:     inst+9:          {kind: IntegerLiteral, arg0: int3, type: type0}
+// CHECK:STDOUT:     inst+8:          {kind: NameRef, arg0: name1, arg1: inst+0, type: type0}
+// CHECK:STDOUT:     inst+9:          {kind: IntLiteral, arg0: int3, type: type0}
 // CHECK:STDOUT:     inst+10:         {kind: BinaryOperatorAdd, arg0: inst+8, arg1: inst+9, type: type0}
 // CHECK:STDOUT:     inst+11:         {kind: RealLiteral, arg0: real0, type: type2}
 // CHECK:STDOUT:     inst+12:         {kind: TupleLiteral, arg0: block5, type: type3}
@@ -59,8 +59,8 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     block1:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:     block2:
-// CHECK:STDOUT:       0:               instIntegerType
-// CHECK:STDOUT:       1:               instFloatingPointType
+// CHECK:STDOUT:       0:               instIntType
+// CHECK:STDOUT:       1:               instFloatType
 // CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+2
@@ -89,19 +89,21 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       0:               inst+7
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- raw_and_textual_ir.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11_28.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc11_28.2: type = tuple_type (i32, f64)
 // CHECK:STDOUT:   %.loc11_28.3: type = ptr_type (i32, f64)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "raw_and_textual_ir.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, f64) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference n, %n
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc12_15: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc12_13: i32 = add %n.ref, %.loc12_15
 // CHECK:STDOUT:   %.loc12_18: f64 = real_literal 34e-1
@@ -114,3 +116,4 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   %.loc12_21.7: init (i32, f64) = converted %.loc12_21.1, %.loc12_21.6
 // CHECK:STDOUT:   return %.loc12_21.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

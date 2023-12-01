@@ -27,12 +27,14 @@ fn G() -> C {
   return c;
 }
 
+// CHECK:STDOUT: --- fail_return_with_returned_var.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc18_35.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc18_35.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_return_with_returned_var.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
@@ -64,7 +66,7 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_reference C, file.%C
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C
 // CHECK:STDOUT:   %c: ref C = bind_name c, %return
 // CHECK:STDOUT:   %.loc20_29: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2
@@ -76,6 +78,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc20_38.6: init C = class_init (%.loc20_38.3, %.loc20_38.5), %return
 // CHECK:STDOUT:   %.loc20_38.7: init C = converted %.loc20_38.1, %.loc20_38.6
 // CHECK:STDOUT:   assign %return, %.loc20_38.7
-// CHECK:STDOUT:   %c.ref: ref C = name_reference c, %c
+// CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 
+#include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <type_traits>
@@ -15,7 +17,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 
@@ -58,6 +59,8 @@ struct DiagnosticLocation {
   int32_t line_number = -1;
   // 1-based column number.
   int32_t column_number = -1;
+  // A location can represent a range of text if set to >1 value.
+  int32_t length = 1;
 };
 
 // A message composing a diagnostic. This may be the main message, but can also
@@ -143,8 +146,7 @@ class DiagnosticLocationTranslator {
  public:
   virtual ~DiagnosticLocationTranslator() = default;
 
-  [[nodiscard]] virtual auto GetLocation(LocationT loc)
-      -> DiagnosticLocation = 0;
+  virtual auto GetLocation(LocationT loc) -> DiagnosticLocation = 0;
 };
 
 namespace Internal {
@@ -155,7 +157,11 @@ template <typename... Args>
 struct DiagnosticBase {
   explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
                                     llvm::StringLiteral format)
-      : Kind(kind), Level(level), Format(format) {}
+      : Kind(kind), Level(level), Format(format) {
+    static_assert((... && !std::is_same_v<Args, llvm::StringRef>),
+                  "Use std::string or llvm::StringLiteral for diagnostics to "
+                  "avoid lifetime issues.");
+  }
 
   // Calls formatv with the diagnostic's arguments.
   auto FormatFn(const DiagnosticMessage& message) const -> std::string {
@@ -211,8 +217,9 @@ class DiagnosticEmitter {
   class DiagnosticBuilder {
    public:
     // DiagnosticBuilder is move-only and cannot be copied.
-    DiagnosticBuilder(DiagnosticBuilder&&) = default;
-    DiagnosticBuilder& operator=(DiagnosticBuilder&&) = default;
+    DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
+    auto operator=(DiagnosticBuilder&&) noexcept
+        -> DiagnosticBuilder& = default;
 
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
@@ -232,8 +239,8 @@ class DiagnosticEmitter {
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Emit() -> void {
-      for (auto* annotator_ : emitter_->annotators_) {
-        annotator_->Annotate(*this);
+      for (auto* annotator : emitter_->annotators_) {
+        annotator->Annotate(*this);
       }
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
     }
@@ -314,11 +321,11 @@ class DiagnosticEmitter {
 
     DiagnosticAnnotationScopeBase(const DiagnosticAnnotationScopeBase&) =
         delete;
-    DiagnosticAnnotationScopeBase& operator=(
-        const DiagnosticAnnotationScopeBase&) = delete;
+    auto operator=(const DiagnosticAnnotationScopeBase&)
+        -> DiagnosticAnnotationScopeBase& = delete;
 
    protected:
-    DiagnosticAnnotationScopeBase(DiagnosticEmitter* emitter)
+    explicit DiagnosticAnnotationScopeBase(DiagnosticEmitter* emitter)
         : emitter_(emitter) {
       emitter_->annotators_.push_back(this);
     }
@@ -345,7 +352,7 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
       : stream_(&stream) {}
 
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
-    std::string prefix = "";
+    std::string prefix;
     if (diagnostic.level == DiagnosticLevel::Error) {
       prefix = "ERROR: ";
     }
@@ -367,7 +374,19 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
     if (message.location.column_number > 0) {
       *stream_ << message.location.line << "\n";
       stream_->indent(message.location.column_number - 1);
-      *stream_ << "^\n";
+      *stream_ << "^";
+      int underline_length = std::max(0, message.location.length - 1);
+      // We want to ensure that we don't underline past the end of the line in
+      // case of a multiline token.
+      // TODO: revisit this once we can reference multiple ranges on multiple
+      // lines in a single diagnostic message.
+      underline_length = std::min(
+          underline_length, static_cast<int32_t>(message.location.line.size()) -
+                                message.location.column_number);
+      for (int i = 0; i < underline_length; ++i) {
+        *stream_ << "~";
+      }
+      *stream_ << "\n";
     }
   }
 
