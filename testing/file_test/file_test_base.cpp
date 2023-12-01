@@ -575,7 +575,7 @@ static auto Main(int argc, char** argv) -> int {
               auto result = test->Autoupdate();
 
               // Guard access to llvm::errs, which is not thread-safe.
-              std::unique_lock lock(errs_mutex);
+              std::unique_lock<std::mutex> lock(errs_mutex);
               llvm::errs() << (result.ok() ? (*result ? "!" : ".")
                                            : "\n" + result.error().message());
             }
