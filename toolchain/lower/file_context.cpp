@@ -299,7 +299,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
-    case SemIR::UnboundFieldType::Kind: {
+    case SemIR::UnboundElementType::Kind: {
       // Return an empty struct as a placeholder.
       return llvm::StructType::get(*llvm_context_);
     }

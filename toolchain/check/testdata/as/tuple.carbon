@@ -83,10 +83,10 @@ fn Var() {
 // CHECK:STDOUT:   %b.var: ref (X, X) = var b
 // CHECK:STDOUT:   %b: ref (X, X) = bind_name b, %b.var
 // CHECK:STDOUT:   %Make.ref.loc20_20: <function> = name_ref Make, file.%Make
-// CHECK:STDOUT:   %.loc20_34.1: ref X = tuple_access %b.var, member0
+// CHECK:STDOUT:   %.loc20_34.1: ref X = tuple_access %b.var, element0
 // CHECK:STDOUT:   %.loc20_24: init X = call %Make.ref.loc20_20() to %.loc20_34.1
 // CHECK:STDOUT:   %Make.ref.loc20_28: <function> = name_ref Make, file.%Make
-// CHECK:STDOUT:   %.loc20_34.2: ref X = tuple_access %b.var, member1
+// CHECK:STDOUT:   %.loc20_34.2: ref X = tuple_access %b.var, element1
 // CHECK:STDOUT:   %.loc20_32: init X = call %Make.ref.loc20_28() to %.loc20_34.2
 // CHECK:STDOUT:   %.loc20_34.3: (X, X) = tuple_literal (%.loc20_24, %.loc20_32)
 // CHECK:STDOUT:   %X.ref.loc20_40: type = name_ref X, file.%X

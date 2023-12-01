@@ -62,12 +62,12 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %b.var: ref [i32; 3] = var b
 // CHECK:STDOUT:   %b: ref [i32; 3] = bind_name b, %b.var
 // CHECK:STDOUT:   %t1.ref: ref (i32, String, String) = name_ref t1, %t1
-// CHECK:STDOUT:   %.loc16_19.1: ref i32 = tuple_access %t1.ref, member0
+// CHECK:STDOUT:   %.loc16_19.1: ref i32 = tuple_access %t1.ref, element0
 // CHECK:STDOUT:   %.loc16_19.2: i32 = bind_value %.loc16_19.1
 // CHECK:STDOUT:   %.loc16_19.3: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc16_19.4: ref i32 = array_index %b.var, %.loc16_19.3
 // CHECK:STDOUT:   %.loc16_19.5: init i32 = initialize_from %.loc16_19.2 to %.loc16_19.4
-// CHECK:STDOUT:   %.loc16_19.6: ref String = tuple_access %t1.ref, member1
+// CHECK:STDOUT:   %.loc16_19.6: ref String = tuple_access %t1.ref, element1
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %.loc21_14: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc21_15: type = array_type %.loc21_14, i32

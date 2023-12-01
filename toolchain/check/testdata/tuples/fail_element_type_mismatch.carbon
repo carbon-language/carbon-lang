@@ -26,7 +26,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %.loc10_22: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc10_25: f64 = real_literal 6589e-2
 // CHECK:STDOUT:   %.loc10_30.1: (i32, f64) = tuple_literal (%.loc10_22, %.loc10_25)
-// CHECK:STDOUT:   %.loc10_30.2: ref i32 = tuple_access %x.var, member0
+// CHECK:STDOUT:   %.loc10_30.2: ref i32 = tuple_access %x.var, element0
 // CHECK:STDOUT:   %.loc10_30.3: init i32 = initialize_from %.loc10_22 to %.loc10_30.2
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }

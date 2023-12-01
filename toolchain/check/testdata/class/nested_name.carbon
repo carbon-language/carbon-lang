@@ -44,8 +44,8 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc9_10.1: type = unbound_field_type Inner, i32
-// CHECK:STDOUT:   %.loc9_10.2: <unbound field of class Inner> = field n, member0
+// CHECK:STDOUT:   %.loc9_10.1: type = unbound_element_type Inner, i32
+// CHECK:STDOUT:   %.loc9_10.2: <unbound field of class Inner> = field n, element0
 // CHECK:STDOUT:   %n: <unbound field of class Inner> = bind_name n, %.loc9_10.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -55,7 +55,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @F(%oi: Inner) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: Inner = name_ref oi, %oi
-// CHECK:STDOUT:   %.loc14_12.1: ref i32 = class_field_access %oi.ref, member0
+// CHECK:STDOUT:   %.loc14_12.1: ref i32 = class_element_access %oi.ref, element0
 // CHECK:STDOUT:   %.loc14_12.2: i32 = bind_value %.loc14_12.1
 // CHECK:STDOUT:   return %.loc14_12.2
 // CHECK:STDOUT: }

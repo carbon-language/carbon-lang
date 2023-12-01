@@ -29,8 +29,8 @@ fn Make() -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field k, member0
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field k, element0
 // CHECK:STDOUT:   %k: <unbound field of class Class> = bind_name k, %.loc8_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -41,11 +41,11 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type Inner, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Inner> = field a, member0
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Inner, i32
+// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Inner> = field a, element0
 // CHECK:STDOUT:   %a: <unbound field of class Inner> = bind_name a, %.loc8_8.2
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_field_type Inner, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Inner> = field b, member1
+// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Inner, i32
+// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Inner> = field b, element1
 // CHECK:STDOUT:   %b: <unbound field of class Inner> = bind_name b, %.loc9_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -55,12 +55,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, file.%Inner
-// CHECK:STDOUT:   %.loc15_8.1: type = unbound_field_type Outer, Inner
-// CHECK:STDOUT:   %.loc15_8.2: <unbound field of class Outer> = field c, member0
+// CHECK:STDOUT:   %.loc15_8.1: type = unbound_element_type Outer, Inner
+// CHECK:STDOUT:   %.loc15_8.2: <unbound field of class Outer> = field c, element0
 // CHECK:STDOUT:   %c: <unbound field of class Outer> = bind_name c, %.loc15_8.2
 // CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, file.%Inner
-// CHECK:STDOUT:   %.loc16_8.1: type = unbound_field_type Outer, Inner
-// CHECK:STDOUT:   %.loc16_8.2: <unbound field of class Outer> = field d, member1
+// CHECK:STDOUT:   %.loc16_8.1: type = unbound_element_type Outer, Inner
+// CHECK:STDOUT:   %.loc16_8.2: <unbound field of class Outer> = field d, element1
 // CHECK:STDOUT:   %d: <unbound field of class Outer> = bind_name d, %.loc16_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -73,10 +73,10 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: fn @MakeOuter() -> %return: Outer {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeInner.ref.loc20_16: <function> = name_ref MakeInner, file.%MakeInner
-// CHECK:STDOUT:   %.loc20_45.1: ref Inner = class_field_access %return, member0
+// CHECK:STDOUT:   %.loc20_45.1: ref Inner = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc20_25: init Inner = call %MakeInner.ref.loc20_16() to %.loc20_45.1
 // CHECK:STDOUT:   %MakeInner.ref.loc20_34: <function> = name_ref MakeInner, file.%MakeInner
-// CHECK:STDOUT:   %.loc20_45.2: ref Inner = class_field_access %return, member1
+// CHECK:STDOUT:   %.loc20_45.2: ref Inner = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc20_43: init Inner = call %MakeInner.ref.loc20_34() to %.loc20_45.2
 // CHECK:STDOUT:   %.loc20_45.3: {.c: Inner, .d: Inner} = struct_literal (%.loc20_25, %.loc20_43)
 // CHECK:STDOUT:   %.loc20_45.4: init Outer = class_init (%.loc20_25, %.loc20_43), %return

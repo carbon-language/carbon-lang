@@ -112,7 +112,7 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
       auto member_type_inst = context.insts().Get(
           context.sem_ir().GetTypeAllowBuiltinTypes(member_type_id));
       if (auto unbound_field_type =
-              member_type_inst.TryAs<SemIR::UnboundFieldType>()) {
+              member_type_inst.TryAs<SemIR::UnboundElementType>()) {
         // TODO: Check that the unbound field type describes a member of this
         // class. Perform a conversion of the base if necessary.
 
@@ -125,8 +125,8 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
         CARBON_CHECK(field)
             << "Unexpected value " << context.insts().Get(field_id)
             << " for field name expression";
-        auto access_id = context.AddInst(SemIR::ClassFieldAccess{
-            parse_node, unbound_field_type->field_type_id, base_id,
+        auto access_id = context.AddInst(SemIR::ClassElementAccess{
+            parse_node, unbound_field_type->element_type_id, base_id,
             field->index});
         if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
                 SemIR::ExprCategory::Value &&
@@ -185,7 +185,7 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
         if (name_id == field.name_id) {
           context.AddInstAndPush(
               parse_node, SemIR::StructAccess{parse_node, field.field_type_id,
-                                              base_id, SemIR::MemberIndex(i)});
+                                              base_id, SemIR::ElementIndex(i)});
           return true;
         }
       }
