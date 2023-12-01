@@ -200,7 +200,10 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
 //
 // Exprs and ParamListComma may repeat with ParamListComma as a
 // separator.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0, CARBON_TOKEN(OpenParen))
+//
+// TODO: rename ParamList to TuplePattern to reflect wider usage.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0,
+                                   CARBON_TOKEN(OpenParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListComma, 0, CARBON_TOKEN(Comma))

@@ -649,6 +649,8 @@ CARBON_PARSE_STATE_VARIANTS2(ParamFinish, Implicit, Regular)
 
 // Handles processing of a parameter list `[` or `(`.
 //
+// TODO: Rename this to TuplePattern to reflect wider usage.
+//
 // ( )        (variant is Regular)
 // ^
 // [ ]        (variant is Implicit)
