@@ -621,6 +621,7 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
       continue;
     }
 
+    // At this point, remaining lines are part of the test input.
     CARBON_ASSIGN_OR_RETURN(
         is_consumed,
         TryConsumeSplit(line, line_trimmed, found_autoupdate, &line_index,
