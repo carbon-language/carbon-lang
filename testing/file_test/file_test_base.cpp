@@ -15,6 +15,7 @@
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "common/check.h"
+#include "common/error.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -270,151 +271,146 @@ auto FileTestBase::DoArgReplacements(
   return Success();
 }
 
-auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
-  // Original file content, and a cursor for walking through it.
-  llvm::StringRef file_content = context.input_content;
-  llvm::StringRef cursor = file_content;
+// Processes conflict markers, including tracking of whether code is within a
+// conflict marker. Returns true if the line is consumed.
+static auto TryConsumeConflictMarker(llvm::StringRef line,
+                                     llvm::StringRef line_trimmed,
+                                     bool* inside_conflict_marker)
+    -> ErrorOr<bool> {
+  bool is_start = line.starts_with("<<<<<<<");
+  bool is_middle = line.starts_with("=======");
+  bool is_end = line.starts_with(">>>>>>>");
 
-  // Whether content has been found, only updated before a file split is found
+  // When running the test, any conflict marker is an error.
+  if (!absl::GetFlag(FLAGS_autoupdate) && (is_start || is_middle || is_end)) {
+    return ErrorBuilder() << "Conflict marker found:\n" << line;
+  }
+
+  // Autoupdate tracks conflict markers for context, and will discard
+  // conflicting lines when it can autoupdate them.
+  if (*inside_conflict_marker) {
+    if (is_start) {
+      return ErrorBuilder() << "Unexpected conflict marker inside conflict:\n"
+                            << line;
+    }
+    if (is_middle) {
+      return true;
+    }
+    if (is_end) {
+      *inside_conflict_marker = false;
+      return true;
+    }
+
+    // Look for CHECK lines, which can be discarded.
+    if (line_trimmed.starts_with("// CHECK:STDOUT:") ||
+        line_trimmed.starts_with("// CHECK:STDERR:")) {
+      return true;
+    }
+
+    return ErrorBuilder()
+           << "Autoupdate can't discard non-CHECK lines inside conflicts:\n"
+           << line;
+  } else {
+    if (is_start) {
+      *inside_conflict_marker = true;
+      return true;
+    }
+    if (is_middle || is_end) {
+      return ErrorBuilder() << "Unexpected conflict marker outside conflict:\n"
+                            << line;
+    }
+    return false;
+  }
+}
+
+// State for file splitting logic: TryConsumeSplit and FinishSplit.
+struct SplitState {
+  auto has_splits() const -> bool { return file_index > 0; }
+
+  auto add_content(llvm::StringRef line) -> void {
+    content.append(line);
+    content.append("\n");
+  }
+
+  // Whether content has been found. Only updated before a file split is found
   // (which may be never).
-  bool found_content_pre_split = false;
+  bool found_code_pre_split = false;
 
-  // Whether either AUTOUDPATE or NOAUTOUPDATE was found.
-  bool found_autoupdate = false;
+  // The current file name, considering splits. Empty for the default file.
+  llvm::StringRef filename = "";
 
-  // The index in the current test file. Will be reset on splits.
-  int line_index = 0;
+  // The accumulated content for the file being built. This may elide some of
+  // the original content, such as conflict markers.
+  std::string content;
 
-  // The current file name, considering splits. Not set for the default file.
-  llvm::StringRef current_file_name;
+  // The current file index.
+  int file_index = 0;
+};
 
-  // The current file's start.
-  const char* current_file_start = nullptr;
+// Adds a file. Used for both split and unsplit test files.
+static auto AddTestFile(llvm::StringRef filename, std::string* content,
+                        llvm::SmallVector<FileTestBase::TestFile>* test_files)
+    -> void {
+  test_files->push_back(
+      {.filename = filename.str(), .content = std::move(*content)});
+  content->clear();
+}
 
-  int file_number = 0;
-  while (!cursor.empty()) {
-    auto [line, next_cursor] = cursor.split("\n");
-    cursor = next_cursor;
-    auto line_trimmed = line.ltrim();
-
-    static constexpr llvm::StringLiteral SplitPrefix = "// ---";
-    if (line_trimmed.consume_front(SplitPrefix)) {
-      if (!found_autoupdate) {
-        // If there's a split, all output is appended at the end of each file
-        // before AUTOUPDATE. We may want to change that, but it's not necessary
-        // to handle right now.
-        return ErrorBuilder()
-               << "AUTOUPDATE/NOAUTOUPDATE setting must be in the first file.";
-      }
-
-      context.has_splits = true;
-      ++file_number;
-      context.non_check_lines.push_back(FileTestLine(file_number, 0, line));
-      // On a file split, add the previous file, then start a new one.
-      if (current_file_start) {
-        context.test_files.push_back(TestFile(
-            current_file_name.str(),
-            llvm::StringRef(current_file_start, line_trimmed.begin() -
-                                                    current_file_start -
-                                                    SplitPrefix.size())));
-      } else if (found_content_pre_split) {
-        // For the first split, we make sure there was no content prior.
-        return ErrorBuilder()
-               << "When using split files, there must be no content before the "
-                  "first split file.";
-      }
-      current_file_name = line_trimmed.trim();
-      current_file_start = cursor.begin();
-      line_index = 0;
-      continue;
-    } else if (!current_file_start && !line_trimmed.starts_with("//") &&
-               !line_trimmed.empty()) {
-      found_content_pre_split = true;
+// Process file split ("---") lines when found. Returns true if the line is
+// consumed.
+static auto TryConsumeSplit(
+    llvm::StringRef line, llvm::StringRef line_trimmed, bool found_autoupdate,
+    int* line_index, SplitState* split,
+    llvm::SmallVector<FileTestBase::TestFile>* test_files,
+    llvm::SmallVector<FileTestLine>* non_check_lines) -> ErrorOr<bool> {
+  if (!line_trimmed.consume_front("// ---")) {
+    if (!split->has_splits() && !line_trimmed.starts_with("//") &&
+        !line_trimmed.empty()) {
+      split->found_code_pre_split = true;
     }
-    ++line_index;
 
-    // Process expectations when found.
-    if (line_trimmed.consume_front("// CHECK")) {
-      // Don't build expectations when doing an autoupdate. We don't want to
-      // break the autoupdate on an invalid CHECK line.
-      if (!absl::GetFlag(FLAGS_autoupdate)) {
-        llvm::SmallVector<Matcher<std::string>>* expected = nullptr;
-        if (line_trimmed.consume_front(":STDOUT:")) {
-          expected = &context.expected_stdout;
-        } else if (line_trimmed.consume_front(":STDERR:")) {
-          expected = &context.expected_stderr;
-        } else {
-          return ErrorBuilder() << "Unexpected CHECK in input: " << line.str();
-        }
-        CARBON_ASSIGN_OR_RETURN(Matcher<std::string> check_matcher,
-                                TransformExpectation(line_index, line_trimmed));
-        expected->push_back(check_matcher);
-      }
-    } else {
-      context.non_check_lines.push_back(
-          FileTestLine(file_number, line_index, line));
-      if (line_trimmed.consume_front("// ARGS: ")) {
-        if (context.test_args.empty()) {
-          // Split the line into arguments.
-          std::pair<llvm::StringRef, llvm::StringRef> cursor =
-              llvm::getToken(line_trimmed);
-          while (!cursor.first.empty()) {
-            context.test_args.push_back(std::string(cursor.first));
-            cursor = llvm::getToken(cursor.second);
-          }
-        } else {
-          return ErrorBuilder()
-                 << "ARGS was specified multiple times: " << line.str();
-        }
-      } else if (line_trimmed == "// AUTOUPDATE" ||
-                 line_trimmed == "// NOAUTOUPDATE") {
-        if (found_autoupdate) {
-          return ErrorBuilder()
-                 << "Multiple AUTOUPDATE/NOAUTOUPDATE settings found";
-        }
-        found_autoupdate = true;
-        if (line_trimmed == "// AUTOUPDATE") {
-          context.autoupdate_line_number = line_index;
-        }
-      } else if (line_trimmed == "// SET-CHECK-SUBSET") {
-        if (!context.check_subset) {
-          context.check_subset = true;
-        } else {
-          return ErrorBuilder()
-                 << "SET-CHECK-SUBSET was specified multiple times";
-        }
-      }
-    }
+    // Add the line to the current file's content (which may not be a split
+    // file).
+    split->add_content(line);
+    return false;
   }
 
   if (!found_autoupdate) {
-    return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
+    // If there's a split, all output is appended at the end of each file
+    // before AUTOUPDATE. We may want to change that, but it's not
+    // necessary to handle right now.
+    return ErrorBuilder() << "AUTOUPDATE/NOAUTOUPDATE setting must be in "
+                             "the first file.";
   }
 
-  if (current_file_start) {
-    context.test_files.push_back(
-        TestFile(current_file_name.str(),
-                 llvm::StringRef(current_file_start,
-                                 file_content.end() - current_file_start)));
+  // On a file split, add the previous file, then start a new one.
+  if (split->has_splits()) {
+    AddTestFile(split->filename, &split->content, test_files);
   } else {
-    // If no file splitting happened, use the main file as the test file.
-    // There will always be a `/` unless tests are in the repo root.
-    context.test_files.push_back(TestFile(
-        test_name_.drop_front(test_name_.rfind("/") + 1).str(), file_content));
+    split->content.clear();
+    if (split->found_code_pre_split) {
+      // For the first split, we make sure there was no content prior.
+      return ErrorBuilder() << "When using split files, there must be no "
+                               "content before the first split file.";
+    }
   }
 
-  // Assume there is always a suffix `\n` in output.
-  if (!context.expected_stdout.empty()) {
-    context.expected_stdout.push_back(StrEq(""));
+  ++split->file_index;
+  split->filename = line_trimmed.trim();
+  if (split->filename.empty()) {
+    return ErrorBuilder() << "Missing filename for split.";
   }
-  if (!context.expected_stderr.empty()) {
-    context.expected_stderr.push_back(StrEq(""));
-  }
-
-  return Success();
+  // The split line is added to non_check_lines for retention in autoupdate, but
+  // is not added to the test file content.
+  *line_index = 0;
+  non_check_lines->push_back(
+      FileTestLine(split->file_index, *line_index, line));
+  return true;
 }
 
-auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
+// Transforms an expectation on a given line from `FileCheck` syntax into a
+// standard regex matcher.
+static auto TransformExpectation(int line_index, llvm::StringRef in)
     -> ErrorOr<Matcher<std::string>> {
   if (in.empty()) {
     return Matcher<std::string>{StrEq("")};
@@ -500,6 +496,197 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
   return Matcher<std::string>{MatchesRegex(str)};
 }
 
+// Once all content is processed, do any remaining split processing.
+static auto FinishSplit(llvm::StringRef test_name, SplitState* split,
+                        llvm::SmallVector<FileTestBase::TestFile>* test_files)
+    -> void {
+  if (split->has_splits()) {
+    AddTestFile(split->filename, &split->content, test_files);
+  } else {
+    // If no file splitting happened, use the main file as the test file.
+    // There will always be a `/` unless tests are in the repo root.
+    AddTestFile(test_name.drop_front(test_name.rfind("/") + 1), &split->content,
+                test_files);
+  }
+}
+
+// Process CHECK lines when found. Returns true if the line is consumed.
+static auto TryConsumeCheck(
+    int line_index, llvm::StringRef line, llvm::StringRef line_trimmed,
+    llvm::SmallVector<testing::Matcher<std::string>>* expected_stdout,
+    llvm::SmallVector<testing::Matcher<std::string>>* expected_stderr)
+    -> ErrorOr<bool> {
+  if (!line_trimmed.consume_front("// CHECK")) {
+    return false;
+  }
+
+  // Don't build expectations when doing an autoupdate. We don't want to
+  // break the autoupdate on an invalid CHECK line.
+  if (!absl::GetFlag(FLAGS_autoupdate)) {
+    llvm::SmallVector<Matcher<std::string>>* expected;
+    if (line_trimmed.consume_front(":STDOUT:")) {
+      expected = expected_stdout;
+    } else if (line_trimmed.consume_front(":STDERR:")) {
+      expected = expected_stderr;
+    } else {
+      return ErrorBuilder() << "Unexpected CHECK in input: " << line.str();
+    }
+    CARBON_ASSIGN_OR_RETURN(Matcher<std::string> check_matcher,
+                            TransformExpectation(line_index, line_trimmed));
+    expected->push_back(check_matcher);
+  }
+  return true;
+}
+
+// Processes ARGS lines when found. Returns true if the line is consumed.
+static auto TryConsumeArgs(llvm::StringRef line, llvm::StringRef line_trimmed,
+                           llvm::SmallVector<std::string>* args)
+    -> ErrorOr<bool> {
+  if (!line_trimmed.consume_front("// ARGS: ")) {
+    return false;
+  }
+
+  if (!args->empty()) {
+    return ErrorBuilder() << "ARGS was specified multiple times: "
+                          << line.str();
+  }
+
+  // Split the line into arguments.
+  std::pair<llvm::StringRef, llvm::StringRef> cursor =
+      llvm::getToken(line_trimmed);
+  while (!cursor.first.empty()) {
+    args->push_back(std::string(cursor.first));
+    cursor = llvm::getToken(cursor.second);
+  }
+
+  return true;
+}
+
+// Processes AUTOUPDATE lines when found. Returns true if the line is consumed.
+static auto TryConsumeAutoupdate(int line_index, llvm::StringRef line_trimmed,
+                                 bool* found_autoupdate,
+                                 std::optional<int>* autoupdate_line_number)
+    -> ErrorOr<bool> {
+  static constexpr llvm::StringLiteral Autoupdate = "// AUTOUPDATE";
+  static constexpr llvm::StringLiteral NoAutoupdate = "// NOAUTOUPDATE";
+  if (line_trimmed != Autoupdate && line_trimmed != NoAutoupdate) {
+    return false;
+  }
+  if (*found_autoupdate) {
+    return ErrorBuilder() << "Multiple AUTOUPDATE/NOAUTOUPDATE settings found";
+  }
+  *found_autoupdate = true;
+  if (line_trimmed == Autoupdate) {
+    *autoupdate_line_number = line_index;
+  }
+  return true;
+}
+
+// Processes SET-CHECK-SUBSET lines when found. Returns true if the line is
+// consumed.
+static auto TryConsumeSetCheckSubset(llvm::StringRef line_trimmed,
+                                     bool* check_subset) -> ErrorOr<bool> {
+  if (line_trimmed != "// SET-CHECK-SUBSET") {
+    return false;
+  }
+  if (*check_subset) {
+    return ErrorBuilder() << "SET-CHECK-SUBSET was specified multiple times";
+  }
+  *check_subset = true;
+  return true;
+}
+
+auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
+  // Original file content, and a cursor for walking through it.
+  llvm::StringRef file_content = context.input_content;
+  llvm::StringRef cursor = file_content;
+
+  // Whether either AUTOUDPATE or NOAUTOUPDATE was found.
+  bool found_autoupdate = false;
+
+  // The index in the current test file. Will be reset on splits.
+  int line_index = 0;
+
+  SplitState split;
+
+  // When autoupdating, we track whether we're inside conflict markers.
+  // Otherwise conflict markers are errors.
+  bool inside_conflict_marker = false;
+
+  while (!cursor.empty()) {
+    auto [line, next_cursor] = cursor.split("\n");
+    cursor = next_cursor;
+    auto line_trimmed = line.ltrim();
+
+    bool is_consumed = false;
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeConflictMarker(line, line_trimmed, &inside_conflict_marker));
+    if (is_consumed) {
+      continue;
+    }
+
+    // At this point, remaining lines are part of the test input.
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeSplit(line, line_trimmed, found_autoupdate, &line_index,
+                        &split, &context.test_files, &context.non_check_lines));
+    if (is_consumed) {
+      continue;
+    }
+
+    ++line_index;
+
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeCheck(line_index, line, line_trimmed,
+                        &context.expected_stdout, &context.expected_stderr));
+    if (is_consumed) {
+      continue;
+    }
+
+    // At this point, lines are retained as non-CHECK lines.
+    context.non_check_lines.push_back(
+        FileTestLine(split.file_index, line_index, line));
+
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed, TryConsumeArgs(line, line_trimmed, &context.test_args));
+    if (is_consumed) {
+      continue;
+    }
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeAutoupdate(line_index, line_trimmed, &found_autoupdate,
+                             &context.autoupdate_line_number));
+    if (is_consumed) {
+      continue;
+    }
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeSetCheckSubset(line_trimmed, &context.check_subset));
+    if (is_consumed) {
+      continue;
+    }
+  }
+
+  if (!found_autoupdate) {
+    return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
+  }
+
+  context.has_splits = split.has_splits();
+  FinishSplit(test_name_, &split, &context.test_files);
+
+  // Assume there is always a suffix `\n` in output.
+  if (!context.expected_stdout.empty()) {
+    context.expected_stdout.push_back(StrEq(""));
+  }
+  if (!context.expected_stderr.empty()) {
+    context.expected_stderr.push_back(StrEq(""));
+  }
+
+  return Success();
+}
+
 // Returns the tests to run.
 static auto GetTests() -> llvm::SmallVector<std::string> {
   // Prefer a user-specified list if present.
@@ -568,8 +755,11 @@ static auto Main(int argc, char** argv) -> int {
 
               // Guard access to llvm::errs, which is not thread-safe.
               std::unique_lock<std::mutex> lock(errs_mutex);
-              llvm::errs() << (result.ok() ? (*result ? "!" : ".")
-                                           : "\n" + result.error().message());
+              if (result.ok()) {
+                llvm::errs() << (*result ? "!" : ".");
+              } else {
+                llvm::errs() << "\n" << result.error().message() << "\n";
+              }
             }
           }));
     }

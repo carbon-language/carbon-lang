@@ -45,6 +45,8 @@ fn Main() {
   (if true then a else a) = 10;
 }
 
+// CHECK:STDOUT: --- fail_assignment_to_non_assignable.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc21_8.1: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc21_8.2: type = ptr_type (i32, i32)
@@ -52,7 +54,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc34_18.2: type = ptr_type {.x: i32, .y: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_assignment_to_non_assignable.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -157,3 +159,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc45_4, %.loc45_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

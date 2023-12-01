@@ -11,7 +11,9 @@ fn A() {
   *A;
 }
 
-// CHECK:STDOUT: file "fail_deref_function.carbon" {
+// CHECK:STDOUT: --- fail_deref_function.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -21,3 +23,4 @@ fn A() {
 // CHECK:STDOUT:   %.loc11: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

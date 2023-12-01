@@ -11,7 +11,9 @@ fn Main() {
   var b: i32 = a[0];
 }
 
-// CHECK:STDOUT: file "fail_name_not_found.carbon" {
+// CHECK:STDOUT: --- fail_name_not_found.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -24,3 +26,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

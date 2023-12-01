@@ -82,27 +82,54 @@ package NotFound api;
 // CHECK:STDERR: ^~~~~~
 import ImportNotFound;
 
-// CHECK:STDOUT: file "main.carbon" {
+// CHECK:STDOUT: --- main.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "not_main.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- not_main.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "this.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- this.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "this_lib.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- this_lib.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "implicit_api.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- implicit_api.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "implicit.impl.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %Implicit: <namespace> = bind_name Implicit, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "implicit_lib_api.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- implicit_lib_api.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "implicit_lib.impl.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- implicit_lib.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %Implicit: <namespace> = bind_name Implicit, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "not_found.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- not_found.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %ImportNotFound: <namespace> = bind_name ImportNotFound, %import
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -28,6 +28,8 @@ fn F(a: Outer*) {
   (*(*a).pi).qi = (*a).pi;
 }
 
+// CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc12_3.1: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*}
 // CHECK:STDOUT:   %.loc17_1.1: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*}
@@ -35,7 +37,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %.loc12_3.2: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "nested.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -142,3 +144,4 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   assign %.loc28_13, %.loc28_23.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

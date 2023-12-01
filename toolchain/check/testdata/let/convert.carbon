@@ -11,13 +11,15 @@ fn F() -> i32 {
   return w[1];
 }
 
+// CHECK:STDOUT: --- convert.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc8_24.1: type = tuple_type (type, type, type)
 // CHECK:STDOUT:   %.loc8_24.2: type = tuple_type (i32, i32, i32)
 // CHECK:STDOUT:   %.loc8_24.3: type = ptr_type (i32, i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "convert.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -57,3 +59,4 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc11_13: i32 = tuple_index %w.ref, %.loc11_12
 // CHECK:STDOUT:   return %.loc11_13
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

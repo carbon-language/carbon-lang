@@ -13,13 +13,15 @@ fn F() -> {.a: i32, .b: f64} {
   return y;
 }
 
+// CHECK:STDOUT: --- reorder_fields.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = ptr_type {.a: i32, .b: f64}
 // CHECK:STDOUT:   %.loc11_62.1: type = struct_type {.b: f64, .a: i32}
 // CHECK:STDOUT:   %.loc11_62.2: type = ptr_type {.b: f64, .a: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "reorder_fields.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MakeI32: <function> = fn_decl @MakeI32
 // CHECK:STDOUT:   %MakeF64: <function> = fn_decl @MakeF64
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -62,3 +64,4 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc13_10.8: init {.a: i32, .b: f64} = converted %y.ref, %.loc13_10.7
 // CHECK:STDOUT:   return %.loc13_10.8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

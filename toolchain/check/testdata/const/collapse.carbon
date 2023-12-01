@@ -12,7 +12,9 @@ fn F(p: const i32**) -> const (const i32)** {
   return p;
 }
 
-// CHECK:STDOUT: file "collapse.carbon" {
+// CHECK:STDOUT: --- collapse.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -21,3 +23,4 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   %p.ref: const i32** = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

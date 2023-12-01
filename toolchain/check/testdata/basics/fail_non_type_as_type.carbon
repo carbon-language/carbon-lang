@@ -9,9 +9,12 @@
 // CHECK:STDERR:                 ^
 var x: type = 42;
 
-// CHECK:STDOUT: file "fail_non_type_as_type.carbon" {
+// CHECK:STDOUT: --- fail_non_type_as_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 42
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

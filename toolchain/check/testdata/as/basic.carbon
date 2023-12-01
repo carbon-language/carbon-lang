@@ -8,7 +8,9 @@ fn Main() -> i32 {
   return 1 as i32;
 }
 
-// CHECK:STDOUT: file "basic.carbon" {
+// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -17,3 +19,4 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 1
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

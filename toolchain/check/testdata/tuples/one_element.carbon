@@ -7,12 +7,14 @@
 var x: (i32,) = (4,);
 var y: (i32,) = x;
 
+// CHECK:STDOUT: --- one_element.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc7_13.2: type = tuple_type (i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "one_element.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_13.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_13.2: type = converted %.loc7_13.1, constants.%.loc7_13.2
 // CHECK:STDOUT:   %x.var: ref (i32,) = var x
@@ -33,3 +35,4 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   %.loc8_17.4: init (i32,) = converted %x.ref, %.loc8_17.3
 // CHECK:STDOUT:   assign %y.var, %.loc8_17.4
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
