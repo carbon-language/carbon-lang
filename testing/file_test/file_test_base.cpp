@@ -4,12 +4,6 @@
 
 #include "testing/file_test/file_test_base.h"
 
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <fcntl.h>
-#endif
-
 #include <filesystem>
 #include <fstream>
 #include <future>
@@ -27,6 +21,7 @@
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Process.h"
 #include "testing/file_test/autoupdate.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
@@ -543,24 +538,10 @@ static auto Main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
-  // Tests might try to read from stdin. Ensure those reads fail.
-  // TODO: Windows support here is untested.
-  int dev_null = open(
-#ifdef _WIN32
-      "nul"
-#else
-      "/dev/null"
-#endif
-      ,
-      O_RDONLY);
-  if (dev_null == -1) {
-    llvm::errs() << "Failed to open /dev/null.\n";
-    return EXIT_FAILURE;
-  }
-  if (dup2(dev_null, 0) != 0) {
-    llvm::errs() << "Failed to override stdin.\n";
-    return EXIT_FAILURE;
-  }
+  // Tests might try to read from stdin. Ensure those reads fail by closing
+  // stdin and reopening it as /dev/null.
+  llvm::sys::Process::SafelyCloseFileDescriptor(0);
+  llvm::sys::Process::FixupStandardFileDescriptors();
 
   llvm::SmallVector<std::string> tests = GetTests();
   auto test_factory = GetFileTestFactory();
