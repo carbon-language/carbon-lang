@@ -4,11 +4,6 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `private`.
-// CHECK:STDERR: private var a: i32;
-// CHECK:STDERR: ^~~~~~~
-private var a: i32;
-
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members.
 // CHECK:STDERR: protected var b: i32;
 // CHECK:STDERR: ^~~~~~~~~
@@ -42,8 +37,6 @@ protected protected var d: i32;
 abstract var e: i32;
 
 // CHECK:STDOUT: file "fail_modifiers.carbon" {
-// CHECK:STDOUT:   %a.var: ref i32 = var a
-// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %c.var: ref i32 = var c

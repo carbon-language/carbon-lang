@@ -11,7 +11,7 @@ namespace Carbon::Check {
 
 LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 
-// Represents a set of keyword modifiers, uses a separate bit per modifier.
+// Represents a set of keyword modifiers, using a separate bit per modifier.
 enum class KeywordModifierSet {
   // At most one of these access modifiers allowed for a given declaration,
   // and if present it must be first:
@@ -41,6 +41,8 @@ inline auto operator!(KeywordModifierSet k) -> bool {
   return !static_cast<unsigned>(k);
 }
 
+// State stored for each declaration we are currently in: the kind of
+// declaration and the keyword modifiers that apply to that declaration.
 struct DeclState {
   // What kind of declaration
   enum DeclKind { FileScope, Class, Constraint, Fn, Interface, Let, Var };
@@ -48,7 +50,8 @@ struct DeclState {
   DeclState(DeclKind decl_kind, Parse::Node parse_node)
       : first_node(parse_node), kind(decl_kind) {}
 
-  // Nodes of modifiers on this declaration
+  // Nodes of modifiers on this declaration. `Invalid` if no modifier of that
+  // kind is present.
   Parse::Node saw_access_modifier = Parse::Node::Invalid;
   Parse::Node saw_decl_modifier = Parse::Node::Invalid;
 
@@ -57,15 +60,15 @@ struct DeclState {
 
   // These fields are last because they are smaller.
 
-  // Invariant: members of the set are `saw_access_modifier` and `saw_other_mod`
-  // if valid.
+  // Invariant: matches the modifiers represented by `saw_access_modifier` and,
+  // `saw_other_modifier`.
   KeywordModifierSet found = KeywordModifierSet::None;
 
   DeclKind kind;
 };
 
-// Stack of `DeclStat` values, representing all the declarations currently
-// nested within.
+// Stack of `DeclStat` values, representing all the declarations we are
+// currently nested within.
 // Invariant: Bottom of the stack always has a "DeclState::FileScope" entry.
 class DeclStateStack {
  public:

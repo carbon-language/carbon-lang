@@ -19,7 +19,7 @@ auto HandleLetDecl(Context& context, Parse::Node parse_node) -> bool {
   llvm::StringRef decl_name = "`let` declaration";
   CheckAccessModifiersOnDecl(context, decl_name);
   RequireDefaultFinalOnlyInInterfaces(context, decl_name);
-  auto modifiers = ModifiersAllowedOnDecl(
+  auto modifiers = LimitModifiersOnDecl(
       context, KeywordModifierSet::Access | KeywordModifierSet::Interface,
       decl_name);
 

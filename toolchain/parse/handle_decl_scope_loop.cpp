@@ -194,7 +194,20 @@ auto HandleDeclScopeLoop(Context& context) -> void {
 
       case Lex::TokenKind::Namespace: {
         if (saw_modifier) {
-          HandleUnrecognizedDecl(context, state.subtree_start);
+          CARBON_DIAGNOSTIC(NamespaceAfterModifiers, Error,
+                            "`namespace` unexpected after modifiers.");
+          auto cursor = *context.position();
+          context.emitter().Emit(cursor, NamespaceAfterModifiers);
+          context.SkipPastLikelyEnd(cursor);
+          auto iter = context.position();
+          --iter;
+          // output an invalid parse subtree.
+          context.ReplacePlaceholderNode(state.subtree_start,
+                                         NodeKind::InvalidParseStart, cursor,
+                                         /*has_error=*/true);
+          context.AddNode(NodeKind::InvalidParseSubtree, *iter,
+                          state.subtree_start,
+                          /*has_error=*/true);
         } else {
           introducer(NodeKind::NamespaceStart, State::Namespace);
         }

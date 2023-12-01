@@ -19,19 +19,23 @@ auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
 // updates the declaration state in `context`. Specify optional Parse::Node
 // `context_node` to add a note to the diagnostic about the containing
 // definition.
-auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
-                            llvm::StringRef decl_name,
-                            Parse::Node context_node = Parse::Node::Invalid)
+auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
+                          llvm::StringRef decl_name,
+                          Parse::Node context_node = Parse::Node::Invalid)
     -> KeywordModifierSet;
 
-// Like ModifiersAllowedOnDecl, except says which modifiers are forbidden,
+// Like LimitModifiersOnDecl, except says which modifiers are forbidden,
 // and a `context_string` specifying the context in which those modifiers are
 // forbidden.
-auto ForbidModifiers(Context& context, KeywordModifierSet forbidden,
-                     llvm::StringRef decl_name, llvm::StringRef context_string,
-                     Parse::Node context_node = Parse::Node::Invalid) -> void;
+auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
+                           llvm::StringRef decl_name,
+                           llvm::StringRef context_string,
+                           Parse::Node context_node = Parse::Node::Invalid)
+    -> void;
 
-// Default and final are only allowed in interfaces.
+// Report a diagonostic if `default` and `final` modifiers are used on
+// declarations where they are not allowed. Right now they are only allowed
+// inside interfaces.
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          llvm::StringRef decl_name)
     -> KeywordModifierSet;

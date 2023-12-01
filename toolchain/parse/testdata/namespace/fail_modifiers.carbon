@@ -4,10 +4,15 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:37: ERROR: Unrecognized declaration introducer.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:37: ERROR: `namespace` unexpected after modifiers.
 // CHECK:STDERR: private abstract base default final namespace Foo;
 // CHECK:STDERR:                                     ^~~~~~~~~
 private abstract base default final namespace Foo;
+
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: Unrecognized declaration introducer.
+// CHECK:STDERR: impl namespace
+// CHECK:STDERR: ^~~~
+impl namespace
 
 // CHECK:STDOUT: - filename: fail_modifiers.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -19,5 +24,7 @@ private abstract base default final namespace Foo;
 // CHECK:STDOUT:       {kind: 'DeclModifierKeyword', text: 'default'},
 // CHECK:STDOUT:       {kind: 'DeclModifierKeyword', text: 'final'},
 // CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'impl', has_error: yes},
+// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: 'namespace', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

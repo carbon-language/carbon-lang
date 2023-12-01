@@ -63,28 +63,28 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   // Process modifiers.
   llvm::StringRef decl_name = "`fn` declaration";
   CheckAccessModifiersOnDecl(context, decl_name);
-  auto modifiers = ModifiersAllowedOnDecl(context,
-                                          KeywordModifierSet::Access |
-                                              KeywordModifierSet::Method |
-                                              KeywordModifierSet::Interface,
-                                          decl_name);
+  auto modifiers = LimitModifiersOnDecl(context,
+                                        KeywordModifierSet::Access |
+                                            KeywordModifierSet::Method |
+                                            KeywordModifierSet::Interface,
+                                        decl_name);
   // Rules for abstract, virtual, and impl, which are only allowed in classes.
   auto containing_kind = context.decl_state_stack().containing().kind;
   if (containing_kind != DeclState::Class) {
-    ForbidModifiers(context, KeywordModifierSet::Method, decl_name,
-                    " outside of a class");
+    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_name,
+                          " outside of a class");
   } else {
     auto containing_decl_modifiers =
         context.decl_state_stack().containing().found;
     if (!(containing_decl_modifiers & KeywordModifierSet::Class)) {
-      ForbidModifiers(context, KeywordModifierSet::Virtual, decl_name,
-                      " in a non-abstract non-base `class` definition",
-                      context.decl_state_stack().containing().first_node);
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_name,
+                            " in a non-abstract non-base `class` definition",
+                            context.decl_state_stack().containing().first_node);
     }
     if (!(containing_decl_modifiers & KeywordModifierSet::Abstract)) {
-      ForbidModifiers(context, KeywordModifierSet::Abstract, decl_name,
-                      " in a non-abstract `class` definition",
-                      context.decl_state_stack().containing().first_node);
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_name,
+                            " in a non-abstract `class` definition",
+                            context.decl_state_stack().containing().first_node);
     }
   }
   modifiers = RequireDefaultFinalOnlyInInterfaces(context, decl_name);

@@ -1,0 +1,16 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+// CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `private`.
+// CHECK:STDERR: private fn F();
+// CHECK:STDERR: ^~~~~~~
+private fn F();
+
+// CHECK:STDOUT: file "fail_todo_modifiers.carbon" {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F();

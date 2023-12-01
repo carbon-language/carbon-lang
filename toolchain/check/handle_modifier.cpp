@@ -17,7 +17,8 @@ CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
 CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here.",
                   std::string);
 
-static auto AccessModifierEnum(Lex::TokenKind token_kind) -> auto {
+static auto GetAccessModifierEnum(Lex::TokenKind token_kind)
+    -> KeywordModifierSet {
   switch (token_kind) {
     case Lex::TokenKind::Private:
       return KeywordModifierSet::Private;
@@ -30,7 +31,7 @@ static auto AccessModifierEnum(Lex::TokenKind token_kind) -> auto {
 
 auto HandleAccessModifierKeyword(Context& context, Parse::Node parse_node)
     -> bool {
-  auto keyword = AccessModifierEnum(
+  auto keyword = GetAccessModifierEnum(
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
   auto& s = context.decl_state_stack().innermost();
   if (!!(s.found & keyword)) {
@@ -64,7 +65,8 @@ auto HandleAccessModifierKeyword(Context& context, Parse::Node parse_node)
   return true;
 }
 
-static auto DeclModifierEnum(Lex::TokenKind token_kind) -> auto {
+static auto GetDeclModifierEnum(Lex::TokenKind token_kind)
+    -> KeywordModifierSet {
   switch (token_kind) {
     case Lex::TokenKind::Abstract:
       return KeywordModifierSet::Abstract;
@@ -85,7 +87,7 @@ static auto DeclModifierEnum(Lex::TokenKind token_kind) -> auto {
 
 auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
     -> bool {
-  auto keyword = DeclModifierEnum(
+  auto keyword = GetDeclModifierEnum(
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
   auto& s = context.decl_state_stack().innermost();
   if (!!(s.found & keyword)) {

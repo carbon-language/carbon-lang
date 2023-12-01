@@ -23,8 +23,8 @@ static auto ReportNotAllowed(Context& context, Parse::Node modifier_node,
   diag.Emit();
 }
 
-auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
-                            llvm::StringRef decl_name, Parse::Node context_node)
+auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
+                          llvm::StringRef decl_name, Parse::Node context_node)
     -> KeywordModifierSet {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.found & ~allowed;
@@ -43,9 +43,10 @@ auto ModifiersAllowedOnDecl(Context& context, KeywordModifierSet allowed,
   return s.found;
 }
 
-auto ForbidModifiers(Context& context, KeywordModifierSet forbidden,
-                     llvm::StringRef decl_name, llvm::StringRef context_string,
-                     Parse::Node context_node) -> void {
+auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
+                           llvm::StringRef decl_name,
+                           llvm::StringRef context_string,
+                           Parse::Node context_node) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.found & forbidden;
   if (!!(not_allowed & KeywordModifierSet::Access)) {
@@ -66,7 +67,7 @@ auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
     -> void {
   switch (context.decl_state_stack().containing().kind) {
     case DeclState::FileScope:
-      ForbidModifiers(
+      ForbidModifiersOnDecl(
           context, KeywordModifierSet::Protected, decl_name,
           " at file scope, `protected` is only allowed on class members");
       break;
@@ -77,9 +78,9 @@ auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
 
     default:
       // Otherwise neither `private` nor `protected` allowed.
-      ForbidModifiers(context, KeywordModifierSet::Protected, decl_name,
-                      ", `protected` is only allowed on class members");
-      ForbidModifiers(
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Protected, decl_name,
+                            ", `protected` is only allowed on class members");
+      ForbidModifiersOnDecl(
           context, KeywordModifierSet::Private, decl_name,
           ", `private` is only allowed on class members and at file scope");
       break;
@@ -91,9 +92,8 @@ auto RequireDefaultFinalOnlyInInterfaces(Context& context,
     -> KeywordModifierSet {
   auto& s = context.decl_state_stack().innermost();
   if (context.decl_state_stack().containing().kind != DeclState::Interface) {
-    ForbidModifiers(context, KeywordModifierSet::Interface, decl_name,
-                    " outside of an interface",
-                    context.decl_state_stack().containing().first_node);
+    ForbidModifiersOnDecl(context, KeywordModifierSet::Interface, decl_name,
+                          " outside of an interface");
   }
 
   return s.found;

@@ -31,7 +31,7 @@ static auto BuildClassDecl(Context& context)
   llvm::StringRef decl_name = "`class` declaration";
   CheckAccessModifiersOnDecl(context, decl_name);
   auto base_modifiers = KeywordModifierSet::Class;
-  auto modifiers = ModifiersAllowedOnDecl(
+  auto modifiers = LimitModifiersOnDecl(
       context, base_modifiers | KeywordModifierSet::Access, decl_name);
 
   if (!!(modifiers & KeywordModifierSet::Private)) {
