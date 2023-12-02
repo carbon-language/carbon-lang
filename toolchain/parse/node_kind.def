@@ -709,6 +709,26 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinition,
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDecl, NamedConstraintIntroducer,
                                CARBON_IF_VALID(Semi))
 
+// `choice`:
+//     ChoiceIntroducer
+//     _external_: IdentifierName or QualifiedDecl
+//   ChoiceDefinitionStart
+//   _optional_ _external_: ChoiceAlternativeList
+// ChoiceDefinition
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ChoiceIntroducer, 0, Choice)
+CARBON_PARSE_NODE_KIND_BRACKET(ChoiceDefinitionStart, ChoiceIntroducer,
+                               OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(ChoiceDefinition, ChoiceDefinitionStart,
+                               CloseCurlyBrace)
+
+// Choice alternative list:
+//     _external_: Name
+//     _optional_ _external_ : TuplePattern
+//     _optional_: ChoiceAlternativeListComma
+//   _repeated_
+// ChoiceAlternativeList
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ChoiceAlternativeListComma, 0, Comma)
+
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET
 #undef CARBON_PARSE_NODE_KIND_CHILD_COUNT

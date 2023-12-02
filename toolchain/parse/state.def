@@ -357,6 +357,11 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //   1. Let
 //   2. DeclScopeLoop
 //
+//  choice ...
+// ^
+//   1. ChoiceIntroducer
+//   2. DeclScopeLoop
+//
 // ??? ;
 // ^~~~~
 //   (state done)
@@ -1240,5 +1245,63 @@ CARBON_PARSE_STATE(LetAfterPattern)
 //         ^
 //   (state done)
 CARBON_PARSE_STATE(LetFinish)
+
+// Handles a choice's introducer.
+//
+// choice ...
+// ^~~~~~
+//   1. DeclNameAndParamsAsOptional
+//   2. ChoiceAlternativeListStart
+//   3. ChoiceDefinitionFinish
+CARBON_PARSE_STATE(ChoiceIntroducer)
+
+// Handles processing of a choice after its optional parameters.
+//
+// choice name ... {}
+//                 ^
+//   (state done)
+//
+// choice name ... { ... }
+//                 ^
+//   1. ChoiceAlternative
+//
+// choice name ... ???
+//                 ^
+//   (state done)
+CARBON_PARSE_STATE(ChoiceDefinitionStart)
+
+// Starts alternative parsing.
+//
+//  name( ... )
+//  ^~~~
+//   1. ParamListAsRegular
+//   2. ChoiceAlternativeFinish
+//  name ...
+//  ^~~~
+//   1. ChoiceAlternativeFinish
+CARBON_PARSE_STATE(ChoiceAlternative)
+
+// Finishes parsing a choice's alternative, including the optional trailing `,`. If there
+// are more alternatives, enqueues another alternative parsing state.
+//
+// ... , }
+//     ^
+//   (state done)
+//
+// ... , ...
+//     ^
+//   1. ChoiceAlternative
+//
+// ...
+//    ^
+//   (state done)
+CARBON_PARSE_STATE(ChoiceAlternativeFinish)
+
+// Finishes a choice definition.
+//
+// choice ... }
+//            ^
+//   (state done)
+CARBON_PARSE_STATE(ChoiceDefinitionFinish)
 
 #undef CARBON_PARSE_STATE

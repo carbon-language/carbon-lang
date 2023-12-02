@@ -158,6 +158,11 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
                       State::VarAsDecl);
       return true;
     }
+    case Lex::TokenKind::Choice: {
+      ApplyIntroducer(context, state, NodeKind::ChoiceIntroducer,
+                      State::ChoiceIntroducer);
+      return true;
+    }
 
     case Lex::TokenKind::Semi: {
       if (saw_modifier) {
@@ -201,6 +206,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
   case Lex::TokenKind::Name:
 #include "toolchain/parse/node_kind.def"
+
           return false;
 
         default:

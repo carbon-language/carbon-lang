@@ -677,6 +677,37 @@ struct IfExprElse {
   AnyExprId else_result;
 };
 
+// Choice nodes
+// ------------
+
+using ChoiceIntroducer = LeafNode<NodeKind::ChoiceIntroducer>;
+
+struct ChoiceSignature {
+  static constexpr auto Kind =
+      NodeKind::ChoiceDefinitionStart.Define(NodeCategory::None);
+
+  ChoiceIntroducerId introducer;
+  AnyNameComponentId name;
+  std::optional<TuplePatternId> parameters;
+};
+
+using ChoiceDefinitionStart = ChoiceSignature;
+
+using ChoiceAlternativeListComma =
+    LeafNode<NodeKind::ChoiceAlternativeListComma>;
+
+struct ChoiceDefinition {
+  static constexpr auto Kind =
+      NodeKind::ChoiceDefinition.Define(NodeCategory::Decl);
+
+  ChoiceDefinitionStartId signature;
+  struct Alternative {
+    AnyNameComponentId name;
+    std::optional<TuplePatternId> parameters;
+  };
+  CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
+};
+
 // Struct literals and struct type literals
 // ----------------------------------------
 
