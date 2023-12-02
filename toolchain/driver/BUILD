@@ -32,10 +32,9 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/source:source_buffer",
-        "@llvm-project//llvm:AllTargetsAsmParsers",
-        "@llvm-project//llvm:AllTargetsCodeGens",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
     ],
 )
 
@@ -75,6 +74,8 @@ cc_binary(
     deps = [
         ":driver",
         "//common:bazel_working_dir",
+        "@llvm-project//llvm:AllTargetsAsmParsers",
+        "@llvm-project//llvm:AllTargetsCodeGens",
         "@llvm-project//llvm:Support",
     ],
 )
