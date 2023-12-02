@@ -10,32 +10,32 @@
 namespace Carbon::Check {
 
 static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
-  llvm::StringLiteral decl_name = "fn";
-  CheckAccessModifiersOnDecl(context, decl_name);
+  Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
+  CheckAccessModifiersOnDecl(context, decl_kind);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Access | KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
-                       decl_name);
+                       decl_kind);
   // Rules for abstract, virtual, and impl, which are only allowed in classes.
   auto containing_kind = context.decl_state_stack().containing().kind;
   if (containing_kind != DeclState::Class) {
-    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_name,
+    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_kind,
                           " outside of a class");
   } else {
     auto containing_decl_modifiers =
         context.decl_state_stack().containing().modifier_set;
     if (!(containing_decl_modifiers & KeywordModifierSet::Class)) {
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_name,
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
                             " in a non-abstract non-base `class` definition",
                             context.decl_state_stack().containing().first_node);
     }
     if (!(containing_decl_modifiers & KeywordModifierSet::Abstract)) {
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_name,
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
                             " in a non-abstract `class` definition",
                             context.decl_state_stack().containing().first_node);
     }
   }
-  RequireDefaultFinalOnlyInInterfaces(context, decl_name);
+  RequireDefaultFinalOnlyInInterfaces(context, decl_kind);
 
   return context.decl_state_stack().innermost().modifier_set;
 }

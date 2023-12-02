@@ -27,11 +27,10 @@ static auto BuildClassDecl(Context& context)
   auto first_node = context.decl_state_stack().innermost().first_node;
 
   // Process modifiers.
-  llvm::StringLiteral decl_name = "class";
-  CheckAccessModifiersOnDecl(context, decl_name);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Class | KeywordModifierSet::Access,
-                       decl_name);
+                       Lex::TokenKind::Class);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (!!(modifiers & KeywordModifierSet::Access)) {

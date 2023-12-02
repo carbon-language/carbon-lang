@@ -16,12 +16,11 @@ auto HandleLetDecl(Context& context, Parse::NodeId parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers.
-  llvm::StringLiteral decl_name = "let";
-  CheckAccessModifiersOnDecl(context, decl_name);
-  RequireDefaultFinalOnlyInInterfaces(context, decl_name);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Let);
+  RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Let);
   LimitModifiersOnDecl(
       context, KeywordModifierSet::Access | KeywordModifierSet::Interface,
-      decl_name);
+      Lex::TokenKind::Let);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (!!(modifiers & KeywordModifierSet::Access)) {

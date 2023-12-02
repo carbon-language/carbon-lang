@@ -77,9 +77,9 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
       .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
 
   // Process declaration modifiers.
-  llvm::StringLiteral decl_name = "var";
-  CheckAccessModifiersOnDecl(context, decl_name);
-  LimitModifiersOnDecl(context, KeywordModifierSet::Access, decl_name);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Var);
+  LimitModifiersOnDecl(context, KeywordModifierSet::Access,
+                       Lex::TokenKind::Var);
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (!!(modifiers & KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,

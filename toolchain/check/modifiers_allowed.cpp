@@ -7,15 +7,15 @@
 namespace Carbon::Check {
 
 static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
-                             llvm::StringLiteral decl_name,
+                             Lex::TokenKind decl_kind,
                              llvm::StringRef context_string,
                              Parse::NodeId context_node) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
                     "`{0}` not allowed on `{1}` declaration{2}.",
-                    llvm::StringLiteral, llvm::StringLiteral, std::string);
+                    Lex::TokenKind, Lex::TokenKind, std::string);
   auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
-                                      context.node_text(modifier_node),
-                                      decl_name, context_string.str());
+                                      context.token_kind(modifier_node),
+                                      decl_kind, context_string.str());
   if (context_node.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note,
                       "Containing definition here.");
@@ -25,17 +25,17 @@ static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
 }
 
 auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
-                          llvm::StringLiteral decl_name) -> void {
+                          Lex::TokenKind decl_kind) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & ~allowed;
   if (!!(not_allowed & KeywordModifierSet::Access)) {
-    ReportNotAllowed(context, s.saw_access_modifier, decl_name, "",
+    ReportNotAllowed(context, s.saw_access_modifier, decl_kind, "",
                      Parse::NodeId::Invalid);
     not_allowed = not_allowed & ~KeywordModifierSet::Access;
     s.saw_access_modifier = Parse::NodeId::Invalid;
   }
   if (!!not_allowed) {
-    ReportNotAllowed(context, s.saw_decl_modifier, decl_name, "",
+    ReportNotAllowed(context, s.saw_decl_modifier, decl_kind, "",
                      Parse::NodeId::Invalid);
     s.saw_decl_modifier = Parse::NodeId::Invalid;
   }
@@ -43,31 +43,31 @@ auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
 }
 
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
-                           llvm::StringLiteral decl_name,
+                           Lex::TokenKind decl_kind,
                            llvm::StringRef context_string,
                            Parse::NodeId context_node) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & forbidden;
   if (!!(not_allowed & KeywordModifierSet::Access)) {
-    ReportNotAllowed(context, s.saw_access_modifier, decl_name, context_string,
+    ReportNotAllowed(context, s.saw_access_modifier, decl_kind, context_string,
                      context_node);
     not_allowed = not_allowed & ~KeywordModifierSet::Access;
     s.saw_access_modifier = Parse::NodeId::Invalid;
   }
   if (!!not_allowed) {
-    ReportNotAllowed(context, s.saw_decl_modifier, decl_name, context_string,
+    ReportNotAllowed(context, s.saw_decl_modifier, decl_kind, context_string,
                      context_node);
     s.saw_decl_modifier = Parse::NodeId::Invalid;
   }
   s.modifier_set = s.modifier_set & ~forbidden;
 }
 
-auto CheckAccessModifiersOnDecl(Context& context, llvm::StringLiteral decl_name)
+auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind)
     -> void {
   switch (context.decl_state_stack().containing().kind) {
     case DeclState::FileScope:
       ForbidModifiersOnDecl(
-          context, KeywordModifierSet::Protected, decl_name,
+          context, KeywordModifierSet::Protected, decl_kind,
           " at file scope, `protected` is only allowed on class members");
       break;
 
@@ -77,20 +77,19 @@ auto CheckAccessModifiersOnDecl(Context& context, llvm::StringLiteral decl_name)
 
     default:
       // Otherwise neither `private` nor `protected` allowed.
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Protected, decl_name,
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Protected, decl_kind,
                             ", `protected` is only allowed on class members");
       ForbidModifiersOnDecl(
-          context, KeywordModifierSet::Private, decl_name,
+          context, KeywordModifierSet::Private, decl_kind,
           ", `private` is only allowed on class members and at file scope");
       break;
   }
 }
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
-                                         llvm::StringLiteral decl_name)
-    -> void {
+                                         Lex::TokenKind decl_kind) -> void {
   if (context.decl_state_stack().containing().kind != DeclState::Interface) {
-    ForbidModifiersOnDecl(context, KeywordModifierSet::Interface, decl_name,
+    ForbidModifiersOnDecl(context, KeywordModifierSet::Interface, decl_kind,
                           " outside of an interface");
   }
 }

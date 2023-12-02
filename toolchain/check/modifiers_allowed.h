@@ -11,20 +11,20 @@ namespace Carbon::Check {
 
 // Reports a diagnostic (using `decl_name`) if access control modifiers on this
 // are not allowed, and updates the declaration state in `context`.
-auto CheckAccessModifiersOnDecl(Context& context, llvm::StringLiteral decl_name)
+auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind)
     -> void;
 
-// Reports a diagnostic (using `decl_name`) if modifiers on this declaration are
+// Reports a diagnostic (using `decl_kind`) if modifiers on this declaration are
 // not in `allowed`. Updates the declaration state in
 // `context.decl_state_stack()`.
 auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
-                          llvm::StringLiteral decl_name) -> void;
+                          Lex::TokenKind decl_kind) -> void;
 
 // Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
 // `context_string` (and optional `context_node`) specifying the context in
 // which those modifiers are forbidden.
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
-                           llvm::StringLiteral decl_name,
+                           Lex::TokenKind decl_kind,
                            llvm::StringRef context_string,
                            Parse::NodeId context_node = Parse::NodeId::Invalid)
     -> void;
@@ -33,7 +33,7 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
 // declarations where they are not allowed. Right now they are only allowed
 // inside interfaces.
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
-                                         llvm::StringLiteral decl_name) -> void;
+                                         Lex::TokenKind decl_kind) -> void;
 
 }  // namespace Carbon::Check
 
