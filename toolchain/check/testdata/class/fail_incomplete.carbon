@@ -123,7 +123,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1
 // CHECK:STDOUT:   %CallClassFunction: <function> = fn_decl @CallClassFunction

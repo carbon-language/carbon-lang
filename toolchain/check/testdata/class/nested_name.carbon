@@ -29,18 +29,18 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Outer, ()
+// CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   class_decl @Inner, ()
+// CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Inner = <unexpected instref inst+2>
+// CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
