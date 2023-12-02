@@ -9,13 +9,15 @@ fn Main() -> (i32, i32) {
   return (15, 35);
 }
 
+// CHECK:STDOUT: --- tuple.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc8_23.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc8_23.2: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc8_23.3: type = ptr_type (i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "tuple.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -32,3 +34,4 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc9_17.7: init (i32, i32) = converted %.loc9_17.1, %.loc9_17.6
 // CHECK:STDOUT:   return %.loc9_17.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

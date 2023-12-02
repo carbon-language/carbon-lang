@@ -62,7 +62,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
 
   switch (context.PositionKind()) {
     case Lex::TokenKind::CloseCurlyBrace:
-    case Lex::TokenKind::EndOfFile: {
+    case Lex::TokenKind::FileEnd: {
       // This is the end of the scope, so the loop state ends.
       context.PopAndDiscardState();
       return;

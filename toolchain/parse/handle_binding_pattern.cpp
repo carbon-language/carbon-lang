@@ -6,37 +6,40 @@
 
 namespace Carbon::Parse {
 
-// Handles PatternAs(ImplicitParam|FunctionParam|Variable|Let).
-static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
+// Handles BindingPatternAs(ImplicitParam|FunctionParam|Variable|Let).
+static auto HandleBindingPattern(Context& context,
+                                 Context::BindingPatternKind pattern_kind)
     -> void {
   auto state = context.PopState();
 
   // Parameters may have keywords prefixing the pattern. They become the parent
-  // for the full PatternBinding.
-  if (pattern_kind != Context::PatternKind::Variable) {
-    context.ConsumeIfPatternKeyword(
-        Lex::TokenKind::Template, State::PatternTemplate, state.subtree_start);
-    context.ConsumeIfPatternKeyword(Lex::TokenKind::Addr, State::PatternAddress,
-                                    state.subtree_start);
+  // for the full BindingPattern.
+  if (pattern_kind != Context::BindingPatternKind::Variable) {
+    context.ConsumeIfBindingPatternKeyword(Lex::TokenKind::Template,
+                                           State::BindingPatternTemplate,
+                                           state.subtree_start);
+    context.ConsumeIfBindingPatternKeyword(Lex::TokenKind::Addr,
+                                           State::BindingPatternAddress,
+                                           state.subtree_start);
   }
 
   // Handle an invalid pattern introducer for parameters and variables.
   auto on_error = [&]() {
     switch (pattern_kind) {
-      case Context::PatternKind::ImplicitParam:
-      case Context::PatternKind::Param: {
+      case Context::BindingPatternKind::ImplicitParam:
+      case Context::BindingPatternKind::Param: {
         CARBON_DIAGNOSTIC(ExpectedParamName, Error,
                           "Expected parameter declaration.");
         context.emitter().Emit(*context.position(), ExpectedParamName);
         break;
       }
-      case Context::PatternKind::Variable: {
+      case Context::BindingPatternKind::Variable: {
         CARBON_DIAGNOSTIC(ExpectedVariableName, Error,
                           "Expected pattern in `var` declaration.");
         context.emitter().Emit(*context.position(), ExpectedVariableName);
         break;
       }
-      case Context::PatternKind::Let: {
+      case Context::BindingPatternKind::Let: {
         CARBON_DIAGNOSTIC(ExpectedLetBindingName, Error,
                           "Expected pattern in `let` declaration.");
         context.emitter().Emit(*context.position(), ExpectedLetBindingName);
@@ -46,7 +49,7 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
     // Add a placeholder for the type.
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
-    state.state = State::PatternFinishAsRegular;
+    state.state = State::BindingPatternFinishAsRegular;
     state.has_error = true;
     context.PushState(state);
   };
@@ -73,8 +76,9 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
 
   if (auto kind = context.PositionKind();
       kind == Lex::TokenKind::Colon || kind == Lex::TokenKind::ColonExclaim) {
-    state.state = kind == Lex::TokenKind::Colon ? State::PatternFinishAsRegular
-                                                : State::PatternFinishAsGeneric;
+    state.state = kind == Lex::TokenKind::Colon
+                      ? State::BindingPatternFinishAsRegular
+                      : State::BindingPatternFinishAsGeneric;
     // Use the `:` or `:!` for the root node.
     state.token = context.Consume();
     context.PushState(state);
@@ -85,24 +89,25 @@ static auto HandlePattern(Context& context, Context::PatternKind pattern_kind)
   }
 }
 
-auto HandlePatternAsImplicitParam(Context& context) -> void {
-  HandlePattern(context, Context::PatternKind::ImplicitParam);
+auto HandleBindingPatternAsImplicitParam(Context& context) -> void {
+  HandleBindingPattern(context, Context::BindingPatternKind::ImplicitParam);
 }
 
-auto HandlePatternAsParam(Context& context) -> void {
-  HandlePattern(context, Context::PatternKind::Param);
+auto HandleBindingPatternAsParam(Context& context) -> void {
+  HandleBindingPattern(context, Context::BindingPatternKind::Param);
 }
 
-auto HandlePatternAsVariable(Context& context) -> void {
-  HandlePattern(context, Context::PatternKind::Variable);
+auto HandleBindingPatternAsVariable(Context& context) -> void {
+  HandleBindingPattern(context, Context::BindingPatternKind::Variable);
 }
 
-auto HandlePatternAsLet(Context& context) -> void {
-  HandlePattern(context, Context::PatternKind::Let);
+auto HandleBindingPatternAsLet(Context& context) -> void {
+  HandleBindingPattern(context, Context::BindingPatternKind::Let);
 }
 
-// Handles PatternFinishAs(Generic|Regular).
-static auto HandlePatternFinish(Context& context, NodeKind node_kind) -> void {
+// Handles BindingPatternFinishAs(Generic|Regular).
+static auto HandleBindingPatternFinish(Context& context, NodeKind node_kind)
+    -> void {
   auto state = context.PopState();
 
   context.AddNode(node_kind, state.token, state.subtree_start, state.has_error);
@@ -114,15 +119,15 @@ static auto HandlePatternFinish(Context& context, NodeKind node_kind) -> void {
   }
 }
 
-auto HandlePatternFinishAsGeneric(Context& context) -> void {
-  HandlePatternFinish(context, NodeKind::GenericPatternBinding);
+auto HandleBindingPatternFinishAsGeneric(Context& context) -> void {
+  HandleBindingPatternFinish(context, NodeKind::GenericBindingPattern);
 }
 
-auto HandlePatternFinishAsRegular(Context& context) -> void {
-  HandlePatternFinish(context, NodeKind::PatternBinding);
+auto HandleBindingPatternFinishAsRegular(Context& context) -> void {
+  HandleBindingPatternFinish(context, NodeKind::BindingPattern);
 }
 
-auto HandlePatternAddress(Context& context) -> void {
+auto HandleBindingPatternAddress(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNode(NodeKind::Address, state.token, state.subtree_start,
@@ -134,7 +139,7 @@ auto HandlePatternAddress(Context& context) -> void {
   }
 }
 
-auto HandlePatternTemplate(Context& context) -> void {
+auto HandleBindingPatternTemplate(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNode(NodeKind::Template, state.token, state.subtree_start,

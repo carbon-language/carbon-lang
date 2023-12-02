@@ -175,14 +175,15 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   return {function_decl.function_id, function_decl_id};
 }
 
-auto HandleFunctionDecl(Context& context, Parse::Node /*parse_node*/) -> bool {
+auto HandleFunctionDecl(Context& context, Parse::NodeId /*parse_node*/)
+    -> bool {
   BuildFunctionDecl(context, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   context.decl_state_stack().Pop(DeclState::Fn);
   return true;
 }
 
-auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
+auto HandleFunctionDefinition(Context& context, Parse::NodeId parse_node)
     -> bool {
   SemIR::FunctionId function_id =
       context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
@@ -208,7 +209,7 @@ auto HandleFunctionDefinition(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
+auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -218,12 +219,12 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   // Track that this declaration is the definition.
   if (function.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
-                      "Redefinition of function {0}.", llvm::StringRef);
+                      "Redefinition of function {0}.", std::string);
     CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
-               context.names().GetFormatted(function.name_id))
+               context.names().GetFormatted(function.name_id).str())
         .Note(context.insts().Get(function.definition_id).parse_node(),
               FunctionPreviousDefinition)
         .Emit();
@@ -270,7 +271,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
+auto HandleFunctionIntroducer(Context& context, Parse::NodeId parse_node)
     -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
@@ -283,7 +284,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleReturnType(Context& context, Parse::Node parse_node) -> bool {
+auto HandleReturnType(Context& context, Parse::NodeId parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_inst_id] =
       context.node_stack().PopExprWithParseNode();

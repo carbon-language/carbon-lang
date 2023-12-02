@@ -8,11 +8,13 @@ var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
 var y: i32 = x.b;
 var z: i32 = y;
 
+// CHECK:STDOUT: --- member_access.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.a: f64, .b: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "member_access.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: f64, .b: i32}
 // CHECK:STDOUT:   %x.var: ref {.a: f64, .b: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: f64, .b: i32} = bind_name x, %x.var
@@ -28,13 +30,14 @@ var z: i32 = y;
 // CHECK:STDOUT:   assign %x.var, %.loc7_46.7
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %x.ref: ref {.a: f64, .b: i32} = name_reference x, %x
+// CHECK:STDOUT:   %x.ref: ref {.a: f64, .b: i32} = name_ref x, %x
 // CHECK:STDOUT:   %.loc8_15.1: ref i32 = struct_access %x.ref, member1
 // CHECK:STDOUT:   %.loc8_15.2: i32 = bind_value %.loc8_15.1
 // CHECK:STDOUT:   assign %y.var, %.loc8_15.2
 // CHECK:STDOUT:   %z.var: ref i32 = var z
 // CHECK:STDOUT:   %z: ref i32 = bind_name z, %z.var
-// CHECK:STDOUT:   %y.ref: ref i32 = name_reference y, %y
+// CHECK:STDOUT:   %y.ref: ref i32 = name_ref y, %y
 // CHECK:STDOUT:   %.loc9: i32 = bind_value %y.ref
 // CHECK:STDOUT:   assign %z.var, %.loc9
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

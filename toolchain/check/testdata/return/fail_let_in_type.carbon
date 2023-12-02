@@ -11,7 +11,9 @@ let x: type = i32;
 // CHECK:STDERR:             ^
 fn Six() -> x { return 6; }
 
-// CHECK:STDOUT: file "fail_let_in_type.carbon" {
+// CHECK:STDOUT: --- fail_let_in_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %x: type = bind_name x, i32
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six
 // CHECK:STDOUT: }
@@ -21,3 +23,4 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %.loc12: i32 = int_literal 6
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

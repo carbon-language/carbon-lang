@@ -13,11 +13,13 @@ fn Main() {
 // CHECK:STDERR:              ^
 var y: i32 = x;
 
-// CHECK:STDOUT: file "fail_lookup_outside_scope.carbon" {
+// CHECK:STDOUT: --- fail_lookup_outside_scope.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %x.ref: <error> = name_reference x, <error>
+// CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error>
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -27,3 +29,4 @@ var y: i32 = x;
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

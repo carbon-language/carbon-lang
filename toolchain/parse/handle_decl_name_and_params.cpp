@@ -27,8 +27,8 @@ static auto HandleDeclNameAndParams(Context& context, State after_name)
     CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
                       "`{0}` introducer should be followed by a name.",
                       Lex::TokenKind);
-    Lex::Token location = *context.position();
-    if (context.tokens().GetKind(location) == Lex::TokenKind::EndOfFile) {
+    Lex::TokenIndex location = *context.position();
+    if (context.tokens().GetKind(location) == Lex::TokenKind::FileEnd) {
       // The end of file is often an especially unhelpful location. If that's
       // the best we can do here, back up the location to the introducer itself.
       location = state.token;

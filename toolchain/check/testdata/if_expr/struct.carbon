@@ -11,12 +11,14 @@ fn F(cond: bool) {
   G(if cond then a else a);
 }
 
+// CHECK:STDOUT: --- struct.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc11: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "struct.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
@@ -38,12 +40,12 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc10_46.6: init {.a: i32, .b: i32} = struct_init (%.loc10_46.3, %.loc10_46.5) to %a.var
 // CHECK:STDOUT:   %.loc10_46.7: init {.a: i32, .b: i32} = converted %.loc10_46.1, %.loc10_46.6
 // CHECK:STDOUT:   assign %a.var, %.loc10_46.7
-// CHECK:STDOUT:   %G.ref: <function> = name_reference G, file.%G
-// CHECK:STDOUT:   %cond.ref: bool = name_reference cond, %cond
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
+// CHECK:STDOUT:   %cond.ref: bool = name_ref cond, %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %a.ref.loc11_18: ref {.a: i32, .b: i32} = name_reference a, %a
+// CHECK:STDOUT:   %a.ref.loc11_18: ref {.a: i32, .b: i32} = name_ref a, %a
 // CHECK:STDOUT:   %.loc11_18.1: ref i32 = struct_access %a.ref.loc11_18, member0
 // CHECK:STDOUT:   %.loc11_18.2: i32 = bind_value %.loc11_18.1
 // CHECK:STDOUT:   %.loc11_18.3: ref i32 = struct_access %a.ref.loc11_18, member1
@@ -53,7 +55,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_18.6)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %a.ref.loc11_25: ref {.a: i32, .b: i32} = name_reference a, %a
+// CHECK:STDOUT:   %a.ref.loc11_25: ref {.a: i32, .b: i32} = name_ref a, %a
 // CHECK:STDOUT:   %.loc11_25.1: ref i32 = struct_access %a.ref.loc11_25, member0
 // CHECK:STDOUT:   %.loc11_25.2: i32 = bind_value %.loc11_25.1
 // CHECK:STDOUT:   %.loc11_25.3: ref i32 = struct_access %a.ref.loc11_25, member1
@@ -67,3 +69,4 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc11_4: init () = call %G.ref(%.loc11_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

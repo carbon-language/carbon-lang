@@ -33,13 +33,13 @@ class StringLiteral {
       -> llvm::StringRef;
 
   // Get the text corresponding to this literal.
-  [[nodiscard]] auto text() const -> llvm::StringRef { return text_; }
+  auto text() const -> llvm::StringRef { return text_; }
 
   // Determine whether this is a multi-line string literal.
-  [[nodiscard]] auto is_multi_line() const -> bool { return multi_line_; }
+  auto is_multi_line() const -> bool { return multi_line_; }
 
   // Returns true if the string has a valid terminator.
-  [[nodiscard]] auto is_terminated() const -> bool { return is_terminated_; }
+  auto is_terminated() const -> bool { return is_terminated_; }
 
  private:
   enum MultiLineKind : int8_t {

@@ -17,7 +17,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 
@@ -147,8 +146,7 @@ class DiagnosticLocationTranslator {
  public:
   virtual ~DiagnosticLocationTranslator() = default;
 
-  [[nodiscard]] virtual auto GetLocation(LocationT loc)
-      -> DiagnosticLocation = 0;
+  virtual auto GetLocation(LocationT loc) -> DiagnosticLocation = 0;
 };
 
 namespace Internal {
@@ -159,7 +157,11 @@ template <typename... Args>
 struct DiagnosticBase {
   explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
                                     llvm::StringLiteral format)
-      : Kind(kind), Level(level), Format(format) {}
+      : Kind(kind), Level(level), Format(format) {
+    static_assert((... && !std::is_same_v<Args, llvm::StringRef>),
+                  "Use std::string or llvm::StringLiteral for diagnostics to "
+                  "avoid lifetime issues.");
+  }
 
   // Calls formatv with the diagnostic's arguments.
   auto FormatFn(const DiagnosticMessage& message) const -> std::string {
@@ -215,8 +217,9 @@ class DiagnosticEmitter {
   class DiagnosticBuilder {
    public:
     // DiagnosticBuilder is move-only and cannot be copied.
-    DiagnosticBuilder(DiagnosticBuilder&&) = default;
-    DiagnosticBuilder& operator=(DiagnosticBuilder&&) = default;
+    DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
+    auto operator=(DiagnosticBuilder&&) noexcept
+        -> DiagnosticBuilder& = default;
 
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
@@ -236,8 +239,8 @@ class DiagnosticEmitter {
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Emit() -> void {
-      for (auto* annotator_ : emitter_->annotators_) {
-        annotator_->Annotate(*this);
+      for (auto* annotator : emitter_->annotators_) {
+        annotator->Annotate(*this);
       }
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
     }
@@ -318,11 +321,11 @@ class DiagnosticEmitter {
 
     DiagnosticAnnotationScopeBase(const DiagnosticAnnotationScopeBase&) =
         delete;
-    DiagnosticAnnotationScopeBase& operator=(
-        const DiagnosticAnnotationScopeBase&) = delete;
+    auto operator=(const DiagnosticAnnotationScopeBase&)
+        -> DiagnosticAnnotationScopeBase& = delete;
 
    protected:
-    DiagnosticAnnotationScopeBase(DiagnosticEmitter* emitter)
+    explicit DiagnosticAnnotationScopeBase(DiagnosticEmitter* emitter)
         : emitter_(emitter) {
       emitter_->annotators_.push_back(this);
     }

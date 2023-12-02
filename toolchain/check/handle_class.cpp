@@ -4,11 +4,10 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/modifiers_allowed.h"
-#include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Check {
 
-auto HandleClassIntroducer(Context& context, Parse::Node parse_node) -> bool {
+auto HandleClassIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // class signature, such as generic parameters.
   context.inst_block_stack().Push();
@@ -112,14 +111,14 @@ static auto BuildClassDecl(Context& context)
   return {class_decl.class_id, class_decl_id};
 }
 
-auto HandleClassDecl(Context& context, Parse::Node /*parse_node*/) -> bool {
+auto HandleClassDecl(Context& context, Parse::NodeId /*parse_node*/) -> bool {
   BuildClassDecl(context);
   context.decl_name_stack().PopScope();
   context.decl_state_stack().Pop(DeclState::Class);
   return true;
 }
 
-auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
+auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto [class_id, class_decl_id] = BuildClassDecl(context);
   auto& class_info = context.classes().Get(class_id);
@@ -127,12 +126,12 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   // Track that this declaration is the definition.
   if (class_info.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(ClassRedefinition, Error, "Redefinition of class {0}.",
-                      llvm::StringRef);
+                      std::string);
     CARBON_DIAGNOSTIC(ClassPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
         .Build(parse_node, ClassRedefinition,
-               context.names().GetFormatted(class_info.name_id))
+               context.names().GetFormatted(class_info.name_id).str())
         .Note(context.insts().Get(class_info.definition_id).parse_node(),
               ClassPreviousDefinition)
         .Emit();
@@ -166,7 +165,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleClassDefinition(Context& context, Parse::Node parse_node) -> bool {
+auto HandleClassDefinition(Context& context, Parse::NodeId parse_node) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();

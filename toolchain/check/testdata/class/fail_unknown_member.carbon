@@ -16,12 +16,14 @@ fn G(c: Class) -> i32 {
   return c.something;
 }
 
+// CHECK:STDOUT: --- fail_unknown_member.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = struct_type {.n: i32}
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_unknown_member.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
@@ -38,7 +40,8 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: Class = name_reference c, %c
-// CHECK:STDOUT:   %something.ref: <error> = name_reference something, <error>
+// CHECK:STDOUT:   %c.ref: Class = name_ref c, %c
+// CHECK:STDOUT:   %something.ref: <error> = name_ref something, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

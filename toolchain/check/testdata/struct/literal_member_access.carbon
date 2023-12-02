@@ -10,6 +10,8 @@ fn F() -> i32 {
   return {.a = 1, .b = G(), .c = 3}.b.y;
 }
 
+// CHECK:STDOUT: --- literal_member_access.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.x: i32, .y: i32, .z: i32}
 // CHECK:STDOUT:   %.loc10_35.1: type = struct_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32}
@@ -17,7 +19,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_35.3: type = ptr_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}*, .c: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "literal_member_access.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
@@ -27,7 +29,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
-// CHECK:STDOUT:   %G.ref: <function> = name_reference G, file.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
 // CHECK:STDOUT:   %.loc10_25.1: ref {.x: i32, .y: i32, .z: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc10_25.2: init {.x: i32, .y: i32, .z: i32} = call %G.ref() to %.loc10_25.1
 // CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3
@@ -47,3 +49,4 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_38: i32 = struct_access %.loc10_36, member1
 // CHECK:STDOUT:   return %.loc10_38
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

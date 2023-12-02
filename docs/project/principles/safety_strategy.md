@@ -392,7 +392,7 @@ Strong testing is more than good test coverage. It means a combination of:
 These practices are necessary for reliable, large-scale software engineering.
 Maintaining correctness of business logic over time requires continuous and
 thorough testing. Without it, such software systems cannot be changed and
-evolved over time reliably. Carbon will re-use these practices in conjunction
+evolved over time reliably. Carbon will reuse these practices in conjunction
 with checking build modes to mitigate the limitations of Carbon's safety
 guarantees without imposing overhead on production systems.
 

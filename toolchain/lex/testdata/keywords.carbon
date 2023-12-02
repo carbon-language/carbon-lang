@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: - filename: keywords.carbon
 // CHECK:STDOUT:   tokens: [
-// CHECK:STDOUT:     { index:  0, kind:         'StartOfFile', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
+// CHECK:STDOUT:     { index:  0, kind:           'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 
 abstract
 // CHECK:STDOUT:     { index:  1, kind:            'Abstract', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'abstract', has_trailing_space: true },
@@ -131,5 +131,5 @@ while
 notakeyword
 // CHECK:STDOUT:     { index: 61, kind:          'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'notakeyword', identifier: 0, has_trailing_space: true },
 
-// CHECK:STDOUT:     { index: 62, kind:           'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 62, kind:             'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]

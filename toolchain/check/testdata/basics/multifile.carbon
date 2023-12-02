@@ -14,7 +14,9 @@ package B api;
 
 fn B() {}
 
-// CHECK:STDOUT: file "a.carbon" {
+// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -22,7 +24,10 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "b.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -30,3 +35,4 @@ fn B() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

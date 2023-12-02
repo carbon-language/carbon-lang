@@ -13,11 +13,13 @@ fn Class.F() -> i32 {
   return G();
 }
 
+// CHECK:STDOUT: --- reenter_scope.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "reenter_scope.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -34,7 +36,7 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: <function> = name_reference G, @Class.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, @Class.%G
 // CHECK:STDOUT:   %.loc13_11: init i32 = call %G.ref()
 // CHECK:STDOUT:   %.loc13_13.1: i32 = value_of_initializer %.loc13_11
 // CHECK:STDOUT:   %.loc13_13.2: i32 = converted %.loc13_11, %.loc13_13.1
@@ -42,3 +44,4 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;
+// CHECK:STDOUT:

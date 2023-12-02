@@ -9,9 +9,9 @@
 
 namespace Carbon::Check {
 
-auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
+auto HandleAddress(Context& context, Parse::NodeId parse_node) -> bool {
   auto self_param_id =
-      context.node_stack().Peek<Parse::NodeKind::PatternBinding>();
+      context.node_stack().Peek<Parse::NodeKind::BindingPattern>();
   if (auto self_param =
           context.insts().Get(self_param_id).TryAs<SemIR::SelfParam>()) {
     self_param->is_addr_self = SemIR::BoolValue::True;
@@ -24,12 +24,12 @@ auto HandleAddress(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleGenericPatternBinding(Context& context, Parse::Node parse_node)
+auto HandleGenericBindingPattern(Context& context, Parse::NodeId parse_node)
     -> bool {
-  return context.TODO(parse_node, "GenericPatternBinding");
+  return context.TODO(parse_node, "GenericBindingPattern");
 }
 
-auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
+auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExprWithParseNode();
   auto type_node_copy = type_node;
@@ -70,11 +70,12 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       if (!context.TryToCompleteType(cast_type_id, [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                              "{0} has incomplete type `{1}`.", llvm::StringRef,
-                              std::string);
+                              "{0} has incomplete type `{1}`.",
+                              llvm::StringLiteral, std::string);
             return context.emitter().Build(
                 type_node_copy, IncompleteTypeInVarDecl,
-                enclosing_class_decl ? "Field" : "Variable",
+                enclosing_class_decl ? llvm::StringLiteral("Field")
+                                     : llvm::StringLiteral("Variable"),
                 context.sem_ir().StringifyType(cast_type_id, true));
           })) {
         cast_type_id = SemIR::TypeId::Error;
@@ -153,7 +154,7 @@ auto HandlePatternBinding(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleTemplate(Context& context, Parse::Node parse_node) -> bool {
+auto HandleTemplate(Context& context, Parse::NodeId parse_node) -> bool {
   return context.TODO(parse_node, "HandleTemplate");
 }
 

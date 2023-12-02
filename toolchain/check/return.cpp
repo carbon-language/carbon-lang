@@ -57,9 +57,9 @@ static auto NoteReturnedVar(Context& context, Context::DiagnosticBuilder& diag,
   diag.Note(context.insts().Get(returned_var_id).parse_node(), ReturnedVarHere);
 }
 
-auto CheckReturnedVar(Context& context, Parse::Node returned_node,
-                      Parse::Node name_node, SemIR::NameId name_id,
-                      Parse::Node type_node, SemIR::TypeId type_id)
+auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
+                      Parse::NodeId name_node, SemIR::NameId name_id,
+                      Parse::NodeId type_node, SemIR::TypeId type_id)
     -> SemIR::InstId {
   // A `returned var` requires an explicit return type.
   auto& function = GetCurrentFunction(context);
@@ -108,7 +108,7 @@ auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
   }
 }
 
-auto BuildReturnWithNoExpr(Context& context, Parse::Node parse_node) -> void {
+auto BuildReturnWithNoExpr(Context& context, Parse::NodeId parse_node) -> void {
   const auto& function = GetCurrentFunction(context);
 
   if (function.return_type_id.is_valid()) {
@@ -124,7 +124,7 @@ auto BuildReturnWithNoExpr(Context& context, Parse::Node parse_node) -> void {
   context.AddInst(SemIR::Return{parse_node});
 }
 
-auto BuildReturnWithExpr(Context& context, Parse::Node parse_node,
+auto BuildReturnWithExpr(Context& context, Parse::NodeId parse_node,
                          SemIR::InstId expr_id) -> void {
   const auto& function = GetCurrentFunction(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
@@ -156,7 +156,7 @@ auto BuildReturnWithExpr(Context& context, Parse::Node parse_node,
   context.AddInst(SemIR::ReturnExpr{parse_node, expr_id});
 }
 
-auto BuildReturnVar(Context& context, Parse::Node parse_node) -> void {
+auto BuildReturnVar(Context& context, Parse::NodeId parse_node) -> void {
   const auto& function = GetCurrentFunction(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
 

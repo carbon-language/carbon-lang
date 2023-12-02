@@ -42,19 +42,43 @@ package Package library "lib" api;
 // CHECK:STDERR: ^~~~~~~
 package Package library "lib" api;
 
-// CHECK:STDOUT: file "main1.carbon" {
+// CHECK:STDOUT: --- main1.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "main2.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- main2.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "main_lib1.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- main_lib1.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "main_lib2.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- main_lib2.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "package1.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- package1.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "package2.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- package2.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "package_lib1.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- package_lib1.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "package_lib2.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- package_lib2.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -133,7 +133,7 @@ class EnumBase : public Printable<DerivedT> {
   // This method will be automatically defined using the static `names` string
   // table in the base class, which is in turn will be populated for each
   // derived type using the macro helpers in this file.
-  [[nodiscard]] auto name() const -> llvm::StringRef { return Names[AsInt()]; }
+  auto name() const -> llvm::StringRef { return Names[AsInt()]; }
 
   // Prints this value using its name.
   auto Print(llvm::raw_ostream& out) const -> void { out << name(); }

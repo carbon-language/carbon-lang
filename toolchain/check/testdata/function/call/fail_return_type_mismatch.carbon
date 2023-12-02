@@ -13,7 +13,9 @@ fn Run() {
   var x: i32 = Foo();
 }
 
-// CHECK:STDOUT: file "fail_return_type_mismatch.carbon" {
+// CHECK:STDOUT: --- fail_return_type_mismatch.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -28,8 +30,9 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %Foo.ref: <function> = name_reference Foo, file.%Foo
+// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo
 // CHECK:STDOUT:   %.loc13: init f64 = call %Foo.ref()
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -11,7 +11,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
-#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::SemIR {
@@ -62,7 +62,7 @@ struct Function : public Printable<Function> {
 
 // A class.
 struct Class : public Printable<Class> {
-  enum InheritanceKind {
+  enum InheritanceKind : int8_t {
     // `abstract class`
     Abstract,
     // `base class`
@@ -78,7 +78,9 @@ struct Class : public Printable<Class> {
 
   // Determines whether this class has been fully defined. This is false until
   // we reach the `}` of the class definition.
-  bool is_defined() const { return object_representation_id.is_valid(); }
+  auto is_defined() const -> bool {
+    return object_representation_id.is_valid();
+  }
 
   // The following members always have values, and do not change throughout the
   // lifetime of the class.
@@ -199,8 +201,8 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound instruction.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
-    return integers()
-        .Get(insts().GetAs<IntegerLiteral>(bound_id).integer_id)
+    return ints()
+        .Get(insts().GetAs<IntLiteral>(bound_id).int_id)
         .getZExtValue();
   }
 
@@ -272,11 +274,9 @@ class File : public Printable<File> {
   auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
     return value_stores_->identifiers();
   }
-  auto integers() -> ValueStore<IntegerId>& {
-    return value_stores_->integers();
-  }
-  auto integers() const -> const ValueStore<IntegerId>& {
-    return value_stores_->integers();
+  auto ints() -> ValueStore<IntId>& { return value_stores_->ints(); }
+  auto ints() const -> const ValueStore<IntId>& {
+    return value_stores_->ints();
   }
   auto reals() -> ValueStore<RealId>& { return value_stores_->reals(); }
   auto reals() const -> const ValueStore<RealId>& {
@@ -289,30 +289,23 @@ class File : public Printable<File> {
     return value_stores_->string_literals();
   }
 
-  auto functions() -> ValueStore<FunctionId, Function>& { return functions_; }
-  auto functions() const -> const ValueStore<FunctionId, Function>& {
-    return functions_;
-  }
-  auto classes() -> ValueStore<ClassId, Class>& { return classes_; }
-  auto classes() const -> const ValueStore<ClassId, Class>& { return classes_; }
-  auto cross_reference_irs() -> ValueStore<CrossReferenceIRId, const File*>& {
-    return cross_reference_irs_;
-  }
-  auto cross_reference_irs() const
-      -> const ValueStore<CrossReferenceIRId, const File*>& {
-    return cross_reference_irs_;
+  auto functions() -> ValueStore<FunctionId>& { return functions_; }
+  auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
+  auto classes() -> ValueStore<ClassId>& { return classes_; }
+  auto classes() const -> const ValueStore<ClassId>& { return classes_; }
+  auto cross_ref_irs() -> ValueStore<CrossRefIRId>& { return cross_ref_irs_; }
+  auto cross_ref_irs() const -> const ValueStore<CrossRefIRId>& {
+    return cross_ref_irs_;
   }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
   auto name_scopes() -> NameScopeStore& { return name_scopes_; }
   auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }
-  auto types() -> ValueStore<TypeId, TypeInfo>& { return types_; }
-  auto types() const -> const ValueStore<TypeId, TypeInfo>& { return types_; }
-  auto type_blocks() -> BlockValueStore<TypeBlockId, TypeId>& {
-    return type_blocks_;
-  }
-  auto type_blocks() const -> const BlockValueStore<TypeBlockId, TypeId>& {
+  auto types() -> ValueStore<TypeId>& { return types_; }
+  auto types() const -> const ValueStore<TypeId>& { return types_; }
+  auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
+  auto type_blocks() const -> const BlockValueStore<TypeBlockId>& {
     return type_blocks_;
   }
   auto insts() -> InstStore& { return insts_; }
@@ -354,28 +347,28 @@ class File : public Printable<File> {
   std::string filename_;
 
   // Storage for callable objects.
-  ValueStore<FunctionId, Function> functions_;
+  ValueStore<FunctionId> functions_;
 
   // Storage for classes.
-  ValueStore<ClassId, Class> classes_;
+  ValueStore<ClassId> classes_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
   // crossing instruction blocks).
-  ValueStore<CrossReferenceIRId, const File*> cross_reference_irs_;
+  ValueStore<CrossRefIRId> cross_ref_irs_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_;
 
   // Descriptions of types used in this file.
-  ValueStore<TypeId, TypeInfo> types_;
+  ValueStore<TypeId> types_;
 
   // Types that were completed in this file.
   llvm::SmallVector<TypeId> complete_types_;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.
-  BlockValueStore<TypeBlockId, TypeId> type_blocks_;
+  BlockValueStore<TypeBlockId> type_blocks_;
 
   // All instructions. The first entries will always be cross-references to
   // builtins, at indices matching BuiltinKind ordering.
@@ -405,11 +398,11 @@ enum class ExprCategory : int8_t {
   Value,
   // This instruction represents a durable reference expression, that denotes an
   // object that outlives the current full expression context.
-  DurableReference,
+  DurableRef,
   // This instruction represents an ephemeral reference expression, that denotes
   // an
   // object that does not outlive the current full expression context.
-  EphemeralReference,
+  EphemeralRef,
   // This instruction represents an initializing expression, that describes how
   // to
   // initialize an object.

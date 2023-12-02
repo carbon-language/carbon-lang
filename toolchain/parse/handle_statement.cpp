@@ -93,7 +93,7 @@ auto HandleStatementContinueFinish(Context& context) -> void {
 auto HandleStatementForHeader(Context& context) -> void {
   auto state = context.PopState();
 
-  std::optional<Lex::Token> open_paren =
+  std::optional<Lex::TokenIndex> open_paren =
       context.ConsumeAndAddOpenParen(state.token, NodeKind::ForHeaderStart);
   if (open_paren) {
     state.token = *open_paren;

@@ -16,9 +16,9 @@ auto HandleBindValue(FunctionContext& context, SemIR::InstId inst_id,
       CARBON_FATAL()
           << "Value binding for type with incomplete value representation";
     case SemIR::ValueRepresentation::None:
-      // Nothing should use this value, but StubReference needs a value to
+      // Nothing should use this value, but StubRef needs a value to
       // propagate.
-      // TODO: Remove this now the StubReferences are gone.
+      // TODO: Remove this now the StubRefs are gone.
       context.SetLocal(inst_id,
                        llvm::PoisonValue::get(context.GetType(inst.type_id)));
       break;
@@ -48,8 +48,8 @@ auto HandleTemporaryStorage(FunctionContext& context, SemIR::InstId inst_id,
                                                   nullptr, "temp"));
 }
 
-auto HandleValueAsReference(FunctionContext& context, SemIR::InstId inst_id,
-                            SemIR::ValueAsReference inst) -> void {
+auto HandleValueAsRef(FunctionContext& context, SemIR::InstId inst_id,
+                      SemIR::ValueAsRef inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.value_id) ==
                SemIR::ExprCategory::Value);
   CARBON_CHECK(
