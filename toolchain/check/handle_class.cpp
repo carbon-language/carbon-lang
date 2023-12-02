@@ -27,7 +27,7 @@ static auto BuildClassDecl(Context& context)
   auto first_node = context.decl_state_stack().innermost().first_node;
 
   // Process modifiers.
-  llvm::StringRef decl_name = "`class` declaration";
+  llvm::StringLiteral decl_name = "class";
   CheckAccessModifiersOnDecl(context, decl_name);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Class | KeywordModifierSet::Access,

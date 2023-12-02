@@ -10,7 +10,7 @@
 namespace Carbon::Check {
 
 static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
-  llvm::StringRef decl_name = "`fn` declaration";
+  llvm::StringLiteral decl_name = "fn";
   CheckAccessModifiersOnDecl(context, decl_name);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Access | KeywordModifierSet::Method |

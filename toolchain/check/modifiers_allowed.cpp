@@ -7,14 +7,15 @@
 namespace Carbon::Check {
 
 static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
-                             llvm::StringRef decl_name,
+                             llvm::StringLiteral decl_name,
                              llvm::StringRef context_string,
                              Parse::NodeId context_node) -> void {
-  CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error, "`{0}` not allowed on {1}{2}.",
-                    std::string, std::string, std::string);
+  CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
+                    "`{0}` not allowed on `{1}` declaration{2}.", std::string,
+                    llvm::StringLiteral, std::string);
   auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
                                       context.node_text(modifier_node),
-                                      decl_name.str(), context_string.str());
+                                      decl_name, context_string.str());
   if (context_node.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note,
                       "Containing definition here.");
@@ -24,7 +25,7 @@ static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
 }
 
 auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
-                          llvm::StringRef decl_name) -> void {
+                          llvm::StringLiteral decl_name) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & ~allowed;
   if (!!(not_allowed & KeywordModifierSet::Access)) {
@@ -42,7 +43,7 @@ auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
 }
 
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
-                           llvm::StringRef decl_name,
+                           llvm::StringLiteral decl_name,
                            llvm::StringRef context_string,
                            Parse::NodeId context_node) -> void {
   auto& s = context.decl_state_stack().innermost();
@@ -61,7 +62,7 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
   s.modifier_set = s.modifier_set & ~forbidden;
 }
 
-auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
+auto CheckAccessModifiersOnDecl(Context& context, llvm::StringLiteral decl_name)
     -> void {
   switch (context.decl_state_stack().containing().kind) {
     case DeclState::FileScope:
@@ -86,7 +87,8 @@ auto CheckAccessModifiersOnDecl(Context& context, llvm::StringRef decl_name)
 }
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
-                                         llvm::StringRef decl_name) -> void {
+                                         llvm::StringLiteral decl_name)
+    -> void {
   if (context.decl_state_stack().containing().kind != DeclState::Interface) {
     ForbidModifiersOnDecl(context, KeywordModifierSet::Interface, decl_name,
                           " outside of an interface");

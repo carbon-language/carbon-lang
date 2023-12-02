@@ -16,7 +16,7 @@ auto HandleLetDecl(Context& context, Parse::NodeId parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers.
-  llvm::StringRef decl_name = "`let` declaration";
+  llvm::StringLiteral decl_name = "let";
   CheckAccessModifiersOnDecl(context, decl_name);
   RequireDefaultFinalOnlyInInterfaces(context, decl_name);
   LimitModifiersOnDecl(
