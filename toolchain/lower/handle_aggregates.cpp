@@ -22,7 +22,7 @@ auto HandleClassDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 // aggregate input, this will either produce a value or a reference.
 static auto GetAggregateElement(FunctionContext& context,
                                 SemIR::InstId aggr_inst_id,
-                                SemIR::MemberIndex idx,
+                                SemIR::ElementIndex idx,
                                 SemIR::TypeId result_type_id, llvm::Twine name)
     -> llvm::Value* {
   auto aggr_inst = context.sem_ir().insts().Get(aggr_inst_id);
@@ -90,7 +90,7 @@ static auto GetAggregateElement(FunctionContext& context,
 
 static auto GetStructFieldName(FunctionContext& context,
                                SemIR::TypeId struct_type_id,
-                               SemIR::MemberIndex index) -> llvm::StringRef {
+                               SemIR::ElementIndex index) -> llvm::StringRef {
   auto fields = context.sem_ir().inst_blocks().Get(
       context.sem_ir()
           .insts()
@@ -102,8 +102,8 @@ static auto GetStructFieldName(FunctionContext& context,
   return context.sem_ir().names().GetIRBaseName(field.name_id);
 }
 
-auto HandleClassFieldAccess(FunctionContext& context, SemIR::InstId inst_id,
-                            SemIR::ClassFieldAccess inst) -> void {
+auto HandleClassElementAccess(FunctionContext& context, SemIR::InstId inst_id,
+                              SemIR::ClassElementAccess inst) -> void {
   // Find the class that we're performing access into.
   auto class_type_id = context.sem_ir().insts().Get(inst.base_id).type_id();
   auto class_id =
@@ -261,7 +261,7 @@ auto HandleTupleIndex(FunctionContext& context, SemIR::InstId inst_id,
       context.sem_ir().insts().GetAs<SemIR::IntLiteral>(inst.index_id);
   auto index = context.sem_ir().ints().Get(index_inst.int_id).getZExtValue();
   context.SetLocal(inst_id, GetAggregateElement(context, inst.tuple_id,
-                                                SemIR::MemberIndex(index),
+                                                SemIR::ElementIndex(index),
                                                 inst.type_id, "tuple.index"));
 }
 

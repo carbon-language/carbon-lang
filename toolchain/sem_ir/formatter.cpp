@@ -873,7 +873,7 @@ class Formatter {
     sem_ir_.ints().Get(id).print(out_, /*isSigned=*/false);
   }
 
-  auto FormatArg(MemberIndex index) -> void { out_ << index; }
+  auto FormatArg(ElementIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
     out_ << '{';

@@ -206,14 +206,14 @@ struct ClassDecl {
   InstBlockId decl_block_id;
 };
 
-struct ClassFieldAccess {
+struct ClassElementAccess {
   static constexpr auto Kind =
-      InstKind::ClassFieldAccess.Define("class_field_access");
+      InstKind::ClassElementAccess.Define("class_element_access");
 
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId base_id;
-  MemberIndex index;
+  ElementIndex index;
 };
 
 struct ClassInit {
@@ -272,14 +272,14 @@ struct Deref {
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the
-// `Field` instruction is an `UnboundFieldType`.
+// `Field` instruction is an `UnboundElementType`.
 struct Field {
   static constexpr auto Kind = InstKind::Field.Define("field");
 
   Parse::NodeId parse_node;
   TypeId type_id;
   NameId name_id;
-  MemberIndex index;
+  ElementIndex index;
 };
 
 struct FunctionDecl {
@@ -421,7 +421,7 @@ struct StructAccess {
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId struct_id;
-  MemberIndex index;
+  ElementIndex index;
 };
 
 struct StructInit {
@@ -492,7 +492,7 @@ struct TupleAccess {
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId tuple_id;
-  MemberIndex index;
+  ElementIndex index;
 };
 
 struct TupleIndex {
@@ -545,19 +545,19 @@ struct UnaryOperatorNot {
   InstId operand_id;
 };
 
-// The type of an expression naming an unbound field, such as `Class.field`.
-// This can be used as the operand of a compound member access expression,
-// such as `instance.(Class.field)`.
-struct UnboundFieldType {
+// The type of an expression naming an unbound element of a class, such as
+// `Class.field`. This can be used as the operand of a compound member access
+// expression, such as `instance.(Class.field)`.
+struct UnboundElementType {
   static constexpr auto Kind =
-      InstKind::UnboundFieldType.Define("unbound_field_type");
+      InstKind::UnboundElementType.Define("unbound_element_type");
 
   Parse::NodeId parse_node;
   TypeId type_id;
-  // The class of which the field is a member.
+  // The class that a value of this type is an element of.
   TypeId class_type_id;
-  // The type of the field.
-  TypeId field_type_id;
+  // The type of the element.
+  TypeId element_type_id;
 };
 
 struct ValueAsRef {

@@ -88,15 +88,15 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
       } else if (enclosing_class_decl) {
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
-        auto field_type_inst_id = context.AddInst(SemIR::UnboundFieldType{
+        auto field_type_inst_id = context.AddInst(SemIR::UnboundElementType{
             parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_info.self_type_id, cast_type_id});
         value_type_id = context.CanonicalizeType(field_type_inst_id);
         value_id = context.AddInst(
             SemIR::Field{parse_node, value_type_id, name_id,
-                         SemIR::MemberIndex(context.args_type_info_stack()
-                                                .PeekCurrentBlockContents()
-                                                .size())});
+                         SemIR::ElementIndex(context.args_type_info_stack()
+                                                 .PeekCurrentBlockContents()
+                                                 .size())});
 
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddInst(
