@@ -11,8 +11,8 @@ static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
                              llvm::StringRef context_string,
                              Parse::NodeId context_node) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
-                    "`{0}` not allowed on `{1}` declaration{2}.", std::string,
-                    llvm::StringLiteral, std::string);
+                    "`{0}` not allowed on `{1}` declaration{2}.",
+                    llvm::StringLiteral, llvm::StringLiteral, std::string);
   auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
                                       context.node_text(modifier_node),
                                       decl_name, context_string.str());

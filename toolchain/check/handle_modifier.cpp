@@ -8,12 +8,12 @@
 namespace Carbon::Check {
 
 CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here.",
-                  std::string);
+                  llvm::StringLiteral);
 
 static auto EmitRepeatedDiagnostic(Context& context, Parse::NodeId first_node,
                                    Parse::NodeId second_node) -> void {
   CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration.",
-                    std::string);
+                    llvm::StringLiteral);
   context.emitter()
       .Build(second_node, ModifierRepeated, context.node_text(second_node))
       .Note(first_node, ModifierPrevious, context.node_text(first_node))
@@ -24,8 +24,8 @@ static auto EmitNotAllowedWithDiagnostic(Context& context,
                                          Parse::NodeId first_node,
                                          Parse::NodeId second_node) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedWith, Error,
-                    "`{0}` not allowed on declaration with `{1}`.", std::string,
-                    std::string);
+                    "`{0}` not allowed on declaration with `{1}`.",
+                    llvm::StringLiteral, llvm::StringLiteral);
   context.emitter()
       .Build(second_node, ModifierNotAllowedWith,
              context.node_text(second_node), context.node_text(first_node))
@@ -56,8 +56,8 @@ auto HandleAccessModifierKeyword(Context& context, Parse::NodeId parse_node)
     EmitNotAllowedWithDiagnostic(context, s.saw_access_modifier, parse_node);
   } else if (s.saw_decl_modifier.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
-                      "`{0}` must appear before `{1}`.", std::string,
-                      std::string);
+                      "`{0}` must appear before `{1}`.", llvm::StringLiteral,
+                      llvm::StringLiteral);
     context.emitter()
         .Build(parse_node, ModifierMustAppearBefore,
                context.node_text(parse_node),

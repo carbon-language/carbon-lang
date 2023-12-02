@@ -266,11 +266,10 @@ class Context {
 
   // Get the text for the token of a node for diagnostics. Only for tokens
   // with a fixed spelling.
-  auto node_text(Parse::NodeId parse_node) -> std::string {
+  auto node_text(Parse::NodeId parse_node) -> llvm::StringLiteral {
     return tokens()
         .GetKind(parse_tree().node_token(parse_node))
-        .fixed_spelling()
-        .str();
+        .fixed_spelling();
   }
 
   auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
