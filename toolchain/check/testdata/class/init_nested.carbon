@@ -32,10 +32,10 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Inner, ()
+// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner, ()
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
 // CHECK:STDOUT:   %MakeInner: <function> = fn_decl @MakeInner
-// CHECK:STDOUT:   class_decl @Outer, ()
+// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %MakeOuter: <function> = fn_decl @MakeOuter
 // CHECK:STDOUT: }

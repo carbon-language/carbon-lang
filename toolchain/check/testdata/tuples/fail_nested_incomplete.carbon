@@ -28,7 +28,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Incomplete, ()
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete
 // CHECK:STDOUT:   %.loc15_24.1: (type, type) = tuple_literal (i32, %Incomplete.ref.loc15)

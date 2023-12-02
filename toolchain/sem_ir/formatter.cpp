@@ -716,6 +716,12 @@ class Formatter {
     }
   }
 
+  // Print ClassDecl with type-like semantics even though it lacks a type_id.
+  auto FormatInstructionLHS(InstId inst_id, ClassDecl /*inst*/) -> void {
+    FormatInstName(inst_id);
+    out_ << ": type = ";
+  }
+
   template <typename InstT>
   auto FormatInstructionRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.

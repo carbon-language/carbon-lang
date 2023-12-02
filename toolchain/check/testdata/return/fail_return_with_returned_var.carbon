@@ -36,7 +36,7 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   class_decl @C, ()
+// CHECK:STDOUT:   %C.decl: type = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }

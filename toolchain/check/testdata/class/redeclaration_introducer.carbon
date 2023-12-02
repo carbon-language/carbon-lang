@@ -19,15 +19,15 @@ abstract class C {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @A, ()
+// CHECK:STDOUT:   %A.decl.loc7: type = class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
-// CHECK:STDOUT:   class_decl @B, ()
+// CHECK:STDOUT:   %B.decl.loc8: type = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
-// CHECK:STDOUT:   class_decl @C, ()
+// CHECK:STDOUT:   %C.decl.loc9: type = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
-// CHECK:STDOUT:   class_decl @A, ()
-// CHECK:STDOUT:   class_decl @B, ()
-// CHECK:STDOUT:   class_decl @C, ()
+// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A, ()
+// CHECK:STDOUT:   %B.decl.loc12: type = class_decl @B, ()
+// CHECK:STDOUT:   %C.decl.loc13: type = class_decl @C, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
