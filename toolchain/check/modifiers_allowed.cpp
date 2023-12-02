@@ -13,7 +13,7 @@ static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error, "`{0}` not allowed on {1}{2}.",
                     std::string, std::string, std::string);
   auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
-                                      context.TextForNode(modifier_node),
+                                      context.node_text(modifier_node),
                                       decl_name.str(), context_string.str());
   if (context_node.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note,

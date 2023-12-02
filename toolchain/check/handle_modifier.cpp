@@ -15,8 +15,8 @@ static auto EmitRepeatedDiagnostic(Context& context, Parse::NodeId first_node,
   CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration.",
                     std::string);
   context.emitter()
-      .Build(second_node, ModifierRepeated, context.TextForNode(second_node))
-      .Note(first_node, ModifierPrevious, context.TextForNode(first_node))
+      .Build(second_node, ModifierRepeated, context.node_text(second_node))
+      .Note(first_node, ModifierPrevious, context.node_text(first_node))
       .Emit();
 }
 
@@ -28,8 +28,8 @@ static auto EmitNotAllowedWithDiagnostic(Context& context,
                     std::string);
   context.emitter()
       .Build(second_node, ModifierNotAllowedWith,
-             context.TextForNode(second_node), context.TextForNode(first_node))
-      .Note(first_node, ModifierPrevious, context.TextForNode(first_node))
+             context.node_text(second_node), context.node_text(first_node))
+      .Note(first_node, ModifierPrevious, context.node_text(first_node))
       .Emit();
 }
 
@@ -60,10 +60,10 @@ auto HandleAccessModifierKeyword(Context& context, Parse::NodeId parse_node)
                       std::string);
     context.emitter()
         .Build(parse_node, ModifierMustAppearBefore,
-               context.TextForNode(parse_node),
-               context.TextForNode(s.saw_decl_modifier))
+               context.node_text(parse_node),
+               context.node_text(s.saw_decl_modifier))
         .Note(s.saw_decl_modifier, ModifierPrevious,
-              context.TextForNode(s.saw_decl_modifier))
+              context.node_text(s.saw_decl_modifier))
         .Emit();
   } else {
     s.modifier_set |= keyword;
