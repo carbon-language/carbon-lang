@@ -68,7 +68,8 @@ class NodeStack {
   // Returns whether the node on the top of the stack is the specified kind.
   template <Parse::NodeKind::RawEnumType RequiredParseKind>
   auto PeekIs() const -> bool {
-    return parse_tree_->node_kind(PeekParseNode()) == RequiredParseKind;
+    return !stack_.empty() &&
+           parse_tree_->node_kind(PeekParseNode()) == RequiredParseKind;
   }
 
   // Pops the top of the stack without any verification.
