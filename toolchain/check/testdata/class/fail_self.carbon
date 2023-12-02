@@ -60,11 +60,11 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %Class.loc7_1.2: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   class_decl @WrongSelf, ()
-// CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf
+// CHECK:STDOUT:   %WrongSelf.loc39_1.2: type = class_type @WrongSelf
 // CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -91,7 +91,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.loc7_1.2
 // CHECK:STDOUT:   %self: Class = self_param false
 // CHECK:STDOUT:   %self.ref: <error> = name_ref self, <error>
 // CHECK:STDOUT:   return <error>

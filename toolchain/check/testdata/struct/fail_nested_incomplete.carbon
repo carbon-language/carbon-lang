@@ -27,12 +27,12 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Incomplete, ()
-// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
-// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete
+// CHECK:STDOUT:   %Incomplete.loc7_1.2: type = class_type @Incomplete
+// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete.loc7_1.2
 // CHECK:STDOUT:   %.loc15: type = struct_type {.a: Incomplete}
 // CHECK:STDOUT:   %s.var: ref <error> = var s
 // CHECK:STDOUT:   %s: ref <error> = bind_name s, %s.var
-// CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete
+// CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.loc7_1.2
 // CHECK:STDOUT:   %.loc20_18: type = ptr_type Incomplete
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var

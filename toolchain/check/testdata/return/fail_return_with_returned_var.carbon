@@ -37,7 +37,7 @@ fn G() -> C {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %C.loc18_1.2: type = class_type @C
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -66,7 +66,7 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.loc18_1.2
 // CHECK:STDOUT:   %c: ref C = bind_name c, %return
 // CHECK:STDOUT:   %.loc20_29: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2

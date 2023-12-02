@@ -33,10 +33,10 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Inner, ()
-// CHECK:STDOUT:   %Inner: type = class_type @Inner
+// CHECK:STDOUT:   %Inner.loc7_1.2: type = class_type @Inner
 // CHECK:STDOUT:   %MakeInner: <function> = fn_decl @MakeInner
 // CHECK:STDOUT:   class_decl @Outer, ()
-// CHECK:STDOUT:   %Outer: type = class_type @Outer
+// CHECK:STDOUT:   %Outer.loc14_1.2: type = class_type @Outer
 // CHECK:STDOUT:   %MakeOuter: <function> = fn_decl @MakeOuter
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -54,11 +54,11 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, file.%Inner
+// CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, file.%Inner.loc7_1.2
 // CHECK:STDOUT:   %.loc15_8.1: type = unbound_field_type Outer, Inner
 // CHECK:STDOUT:   %.loc15_8.2: <unbound field of class Outer> = field c, member0
 // CHECK:STDOUT:   %c: <unbound field of class Outer> = bind_name c, %.loc15_8.2
-// CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, file.%Inner
+// CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, file.%Inner.loc7_1.2
 // CHECK:STDOUT:   %.loc16_8.1: type = unbound_field_type Outer, Inner
 // CHECK:STDOUT:   %.loc16_8.2: <unbound field of class Outer> = field d, member1
 // CHECK:STDOUT:   %d: <unbound field of class Outer> = bind_name d, %.loc16_8.2

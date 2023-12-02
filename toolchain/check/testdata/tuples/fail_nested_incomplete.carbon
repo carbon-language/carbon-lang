@@ -29,13 +29,13 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Incomplete, ()
-// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
-// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete
+// CHECK:STDOUT:   %Incomplete.loc7_1.2: type = class_type @Incomplete
+// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete.loc7_1.2
 // CHECK:STDOUT:   %.loc15_24.1: (type, type) = tuple_literal (i32, %Incomplete.ref.loc15)
 // CHECK:STDOUT:   %.loc15_24.2: type = converted %.loc15_24.1, constants.%.loc15_24.2
 // CHECK:STDOUT:   %t.var: ref <error> = var t
 // CHECK:STDOUT:   %t: ref <error> = bind_name t, %t.var
-// CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete
+// CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.loc7_1.2
 // CHECK:STDOUT:   %.loc20_18: type = ptr_type Incomplete
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var

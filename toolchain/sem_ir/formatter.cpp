@@ -437,6 +437,11 @@ class InstNamer {
                                .name_id);
           continue;
         }
+        case ClassDecl::Kind: {
+          add_inst_name_id(
+              sem_ir_.classes().Get(inst.As<ClassDecl>().class_id).name_id);
+          continue;
+        }
         case ClassType::Kind: {
           add_inst_name_id(
               sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);

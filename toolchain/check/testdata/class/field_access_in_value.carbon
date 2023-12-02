@@ -26,7 +26,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %Class.loc7_1.2: type = class_type @Class
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -45,7 +45,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref.loc13: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref.loc13: type = name_ref Class, file.%Class.loc7_1.2
 // CHECK:STDOUT:   %cv.var: ref Class = var cv
 // CHECK:STDOUT:   %cv: ref Class = bind_name cv, %cv.var
 // CHECK:STDOUT:   %cv.ref.loc14: ref Class = name_ref cv, %cv
@@ -56,7 +56,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc15_5: ref i32 = class_field_access %cv.ref.loc15, member1
 // CHECK:STDOUT:   %.loc15_10: i32 = int_literal 2
 // CHECK:STDOUT:   assign %.loc15_5, %.loc15_10
-// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, file.%Class.loc7_1.2
 // CHECK:STDOUT:   %cv.ref.loc16: ref Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc16: Class = bind_value %cv.ref.loc16
 // CHECK:STDOUT:   %c: Class = bind_name c, %.loc16

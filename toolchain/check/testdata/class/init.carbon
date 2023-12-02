@@ -27,7 +27,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %Class.loc7_1.2: type = class_type @Class
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder
 // CHECK:STDOUT: }
@@ -36,7 +36,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type Class, i32
 // CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field n, member0
 // CHECK:STDOUT:   %n: <unbound field of class Class> = bind_name n, %.loc8_8.2
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.loc7_1.2
 // CHECK:STDOUT:   %.loc9_18: type = ptr_type Class
 // CHECK:STDOUT:   %.loc9_11.1: type = unbound_field_type Class, Class*
 // CHECK:STDOUT:   %.loc9_11.2: <unbound field of class Class> = field next, member1

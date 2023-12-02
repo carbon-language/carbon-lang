@@ -32,7 +32,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %Class.loc7_1.2: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
@@ -54,13 +54,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref.loc21_10: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref.loc21_10: type = name_ref Class, file.%Class.loc7_1.2
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc21_24: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc21_32: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc21_33.1: {.a: i32, .b: i32} = struct_literal (%.loc21_24, %.loc21_32)
-// CHECK:STDOUT:   %Class.ref.loc21_38: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref.loc21_38: type = name_ref Class, file.%Class.loc7_1.2
 // CHECK:STDOUT:   %.loc21_33.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc21_33.3: ref i32 = class_field_access %.loc21_33.2, member0
 // CHECK:STDOUT:   %.loc21_33.4: init i32 = initialize_from %.loc21_24 to %.loc21_33.3

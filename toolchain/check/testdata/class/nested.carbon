@@ -39,48 +39,48 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Outer, ()
-// CHECK:STDOUT:   %Outer: type = class_type @Outer
+// CHECK:STDOUT:   %Outer.loc7_1.2: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   class_decl @Inner, ()
-// CHECK:STDOUT:   %Inner: type = class_type @Inner
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Outer
+// CHECK:STDOUT:   %Inner.loc8_3.2: type = class_type @Inner
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Outer.loc7_1.2
 // CHECK:STDOUT:   %.loc14_15: type = ptr_type Outer
 // CHECK:STDOUT:   %.loc14_9.1: type = unbound_field_type Outer, Outer*
 // CHECK:STDOUT:   %.loc14_9.2: <unbound field of class Outer> = field po, member0
 // CHECK:STDOUT:   %po: <unbound field of class Outer> = bind_name po, %.loc14_9.2
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer
+// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.loc7_1.2
 // CHECK:STDOUT:   %.loc15_16: type = ptr_type Outer
 // CHECK:STDOUT:   %.loc15_9.1: type = unbound_field_type Outer, Outer*
 // CHECK:STDOUT:   %.loc15_9.2: <unbound field of class Outer> = field qo, member1
 // CHECK:STDOUT:   %qo: <unbound field of class Outer> = bind_name qo, %.loc15_9.2
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner
+// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner.loc8_3.2
 // CHECK:STDOUT:   %.loc16_16: type = ptr_type Inner
 // CHECK:STDOUT:   %.loc16_9.1: type = unbound_field_type Outer, Inner*
 // CHECK:STDOUT:   %.loc16_9.2: <unbound field of class Outer> = field pi, member2
 // CHECK:STDOUT:   %pi: <unbound field of class Outer> = bind_name pi, %.loc16_9.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Inner = <unexpected instref inst+2>
+// CHECK:STDOUT:   .Inner = %Inner.loc8_3.1
 // CHECK:STDOUT:   .po = %po
 // CHECK:STDOUT:   .qo = %qo
 // CHECK:STDOUT:   .pi = %pi
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, @Outer.%Inner
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, @Outer.%Inner.loc8_3.2
 // CHECK:STDOUT:   %.loc9_17: type = ptr_type Inner
 // CHECK:STDOUT:   %.loc9_11.1: type = unbound_field_type Inner, Inner*
 // CHECK:STDOUT:   %.loc9_11.2: <unbound field of class Inner> = field pi, member0
 // CHECK:STDOUT:   %pi: <unbound field of class Inner> = bind_name pi, %.loc9_11.2
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer
+// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.loc7_1.2
 // CHECK:STDOUT:   %.loc10_18: type = ptr_type Outer
 // CHECK:STDOUT:   %.loc10_11.1: type = unbound_field_type Inner, Outer*
 // CHECK:STDOUT:   %.loc10_11.2: <unbound field of class Inner> = field po, member1
 // CHECK:STDOUT:   %po: <unbound field of class Inner> = bind_name po, %.loc10_11.2
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner
+// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.loc8_3.2
 // CHECK:STDOUT:   %.loc11_18: type = ptr_type Inner
 // CHECK:STDOUT:   %.loc11_11.1: type = unbound_field_type Inner, Inner*
 // CHECK:STDOUT:   %.loc11_11.2: <unbound field of class Inner> = field qi, member2
