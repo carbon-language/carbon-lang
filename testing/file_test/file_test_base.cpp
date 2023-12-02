@@ -21,6 +21,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ThreadPool.h"
 #include "testing/file_test/autoupdate.h"
 
@@ -719,6 +720,11 @@ static auto Main(int argc, char** argv) -> int {
       "https://github.com/carbon-language/carbon-lang/issues and include the "
       "crash backtrace.\n");
   llvm::InitLLVM init_llvm(argc, argv);
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargets();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
+  llvm::InitializeAllAsmPrinters();
 
   if (argc > 1) {
     llvm::errs() << "Unexpected arguments starting at: " << argv[1] << "\n";

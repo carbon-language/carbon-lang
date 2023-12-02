@@ -8,6 +8,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/TargetSelect.h"
 #include "toolchain/driver/driver.h"
 
 auto main(int argc, char** argv) -> int {
@@ -22,6 +23,11 @@ auto main(int argc, char** argv) -> int {
       "https://github.com/carbon-language/carbon-lang/issues and include the "
       "crash backtrace.\n");
   llvm::InitLLVM init_llvm(argc, argv);
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargets();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
+  llvm::InitializeAllAsmPrinters();
 
   // Printing to stderr should flush stdout. This is most noticeable when stderr
   // is piped to stdout.
