@@ -14,14 +14,13 @@
 #include "absl/flags/parse.h"
 #include "common/check.h"
 #include "common/error.h"
+#include "common/init_llvm.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
-#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ThreadPool.h"
 #include "testing/file_test/autoupdate.h"
 
@@ -713,21 +712,17 @@ static auto GetTests() -> llvm::SmallVector<std::string> {
 
 // Implements main() within the Carbon::Testing namespace for convenience.
 static auto Main(int argc, char** argv) -> int {
-  absl::ParseCommandLine(argc, argv);
+  Carbon::InitLLVM init_llvm(argc, argv);
   testing::InitGoogleTest(&argc, argv);
-  llvm::setBugReportMsg(
-      "Please report issues to "
-      "https://github.com/carbon-language/carbon-lang/issues and include the "
-      "crash backtrace.\n");
-  llvm::InitLLVM init_llvm(argc, argv);
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargets();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-  llvm::InitializeAllAsmPrinters();
+  auto args = absl::ParseCommandLine(argc, argv);
 
-  if (argc > 1) {
-    llvm::errs() << "Unexpected arguments starting at: " << argv[1] << "\n";
+  if (args.size() > 1) {
+    llvm::errs() << "Unexpected arguments:";
+    for (char* arg : llvm::ArrayRef(args).drop_front()) {
+      llvm::errs() << " ";
+      llvm::errs().write_escaped(arg);
+    }
+    llvm::errs() << "\n";
     return EXIT_FAILURE;
   }
 

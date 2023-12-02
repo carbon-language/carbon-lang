@@ -74,8 +74,7 @@ cc_binary(
     deps = [
         ":driver",
         "//common:bazel_working_dir",
-        "@llvm-project//llvm:AllTargetsAsmParsers",
-        "@llvm-project//llvm:AllTargetsCodeGens",
+        "//common:init_llvm",
         "@llvm-project//llvm:Support",
     ],
 )

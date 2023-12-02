@@ -166,6 +166,17 @@ cc_test(
 )
 
 cc_library(
+    name = "init_llvm",
+    srcs = ["init_llvm.cpp"],
+    hdrs = ["init_llvm.h"],
+    deps = [
+        "@llvm-project//llvm:AllTargetsAsmParsers",
+        "@llvm-project//llvm:AllTargetsCodeGens",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
     deps = [
