@@ -59,11 +59,11 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf, ()
+// CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf, ()
 // CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf
 // CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf
 // CHECK:STDOUT: }

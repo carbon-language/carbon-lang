@@ -32,7 +32,7 @@ fn F(x: X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %X.decl: type = class_decl @X, ()
+// CHECK:STDOUT:   %X.decl = class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }

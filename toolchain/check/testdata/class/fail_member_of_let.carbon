@@ -28,7 +28,7 @@ fn T.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class
 // CHECK:STDOUT:   %T: type = bind_name T, %Class.ref

@@ -42,7 +42,7 @@ class C {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc17: i32 = block_arg <unexpected instblockref block4>
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc17
-// CHECK:STDOUT:   %C.decl: type = class_decl @C, ()
+// CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

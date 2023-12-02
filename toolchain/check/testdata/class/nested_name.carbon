@@ -29,14 +29,14 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer, ()
+// CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner, ()
+// CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

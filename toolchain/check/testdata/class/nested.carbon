@@ -38,13 +38,13 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer, ()
+// CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner, ()
+// CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Outer
 // CHECK:STDOUT:   %.loc14_15: type = ptr_type Outer

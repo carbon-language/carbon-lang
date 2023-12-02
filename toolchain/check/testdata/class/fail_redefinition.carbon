@@ -31,9 +31,9 @@ fn Class.H() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Class.decl.loc7: type = class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %Class.decl.loc18: type = class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl.loc18 = class_decl @Class, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H

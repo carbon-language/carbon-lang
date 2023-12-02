@@ -45,9 +45,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %A.decl: type = class_decl @A, ()
+// CHECK:STDOUT:   %A.decl = class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
-// CHECK:STDOUT:   %B.decl: type = class_decl @B, ()
+// CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT: }

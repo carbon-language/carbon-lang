@@ -81,28 +81,28 @@ base class G;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %A.decl.loc7: type = class_decl @A, ()
+// CHECK:STDOUT:   %A.decl.loc7 = class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
-// CHECK:STDOUT:   %A.decl.loc14: type = class_decl @A, ()
-// CHECK:STDOUT:   %B.decl.loc16: type = class_decl @B, ()
+// CHECK:STDOUT:   %A.decl.loc14 = class_decl @A, ()
+// CHECK:STDOUT:   %B.decl.loc16 = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
-// CHECK:STDOUT:   %B.decl.loc23: type = class_decl @B, ()
-// CHECK:STDOUT:   %C.decl.loc25: type = class_decl @C, ()
+// CHECK:STDOUT:   %B.decl.loc23 = class_decl @B, ()
+// CHECK:STDOUT:   %C.decl.loc25 = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
-// CHECK:STDOUT:   %C.decl.loc32: type = class_decl @C, ()
-// CHECK:STDOUT:   %D.decl.loc34: type = class_decl @D, ()
+// CHECK:STDOUT:   %C.decl.loc32 = class_decl @C, ()
+// CHECK:STDOUT:   %D.decl.loc34 = class_decl @D, ()
 // CHECK:STDOUT:   %D: type = class_type @D
-// CHECK:STDOUT:   %D.decl.loc41: type = class_decl @D, ()
-// CHECK:STDOUT:   %E.decl.loc43: type = class_decl @E, ()
+// CHECK:STDOUT:   %D.decl.loc41 = class_decl @D, ()
+// CHECK:STDOUT:   %E.decl.loc43 = class_decl @E, ()
 // CHECK:STDOUT:   %E: type = class_type @E
-// CHECK:STDOUT:   %E.decl.loc50: type = class_decl @E, ()
-// CHECK:STDOUT:   %F.decl.loc52: type = class_decl @F, ()
+// CHECK:STDOUT:   %E.decl.loc50 = class_decl @E, ()
+// CHECK:STDOUT:   %F.decl.loc52 = class_decl @F, ()
 // CHECK:STDOUT:   %F: type = class_type @F
-// CHECK:STDOUT:   %F.decl.loc59: type = class_decl @F, ()
-// CHECK:STDOUT:   %G.decl.loc61: type = class_decl @G, ()
+// CHECK:STDOUT:   %F.decl.loc59 = class_decl @F, ()
+// CHECK:STDOUT:   %G.decl.loc61 = class_decl @G, ()
 // CHECK:STDOUT:   %G: type = class_type @G
-// CHECK:STDOUT:   %G.decl.loc68: type = class_decl @G, ()
-// CHECK:STDOUT:   %G.decl.loc75: type = class_decl @G, ()
+// CHECK:STDOUT:   %G.decl.loc68 = class_decl @G, ()
+// CHECK:STDOUT:   %G.decl.loc75 = class_decl @G, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
