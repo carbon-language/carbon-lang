@@ -21,6 +21,8 @@ cc_library(
     srcs = ["gtest_main.cpp"],
     deps = [
         "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:AllTargetsAsmParsers",
+        "@llvm-project//llvm:AllTargetsCodeGens",
         "@llvm-project//llvm:Support",
     ],
 )
