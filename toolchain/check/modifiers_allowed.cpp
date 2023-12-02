@@ -6,10 +6,10 @@
 
 namespace Carbon::Check {
 
-static auto ReportNotAllowed(Context& context, Parse::Node modifier_node,
+static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
                              llvm::StringRef decl_name,
                              llvm::StringRef context_string,
-                             Parse::Node context_node) -> void {
+                             Parse::NodeId context_node) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error, "`{0}` not allowed on {1}{2}.",
                     std::string, std::string, std::string);
   auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
@@ -29,14 +29,14 @@ auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
   auto not_allowed = s.modifier_set & ~allowed;
   if (!!(not_allowed & KeywordModifierSet::Access)) {
     ReportNotAllowed(context, s.saw_access_modifier, decl_name, "",
-                     Parse::Node::Invalid);
+                     Parse::NodeId::Invalid);
     not_allowed = not_allowed & ~KeywordModifierSet::Access;
-    s.saw_access_modifier = Parse::Node::Invalid;
+    s.saw_access_modifier = Parse::NodeId::Invalid;
   }
   if (!!not_allowed) {
     ReportNotAllowed(context, s.saw_decl_modifier, decl_name, "",
-                     Parse::Node::Invalid);
-    s.saw_decl_modifier = Parse::Node::Invalid;
+                     Parse::NodeId::Invalid);
+    s.saw_decl_modifier = Parse::NodeId::Invalid;
   }
   s.modifier_set &= allowed;
 }
@@ -44,19 +44,19 @@ auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            llvm::StringRef decl_name,
                            llvm::StringRef context_string,
-                           Parse::Node context_node) -> void {
+                           Parse::NodeId context_node) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & forbidden;
   if (!!(not_allowed & KeywordModifierSet::Access)) {
     ReportNotAllowed(context, s.saw_access_modifier, decl_name, context_string,
                      context_node);
     not_allowed = not_allowed & ~KeywordModifierSet::Access;
-    s.saw_access_modifier = Parse::Node::Invalid;
+    s.saw_access_modifier = Parse::NodeId::Invalid;
   }
   if (!!not_allowed) {
     ReportNotAllowed(context, s.saw_decl_modifier, decl_name, context_string,
                      context_node);
-    s.saw_decl_modifier = Parse::Node::Invalid;
+    s.saw_decl_modifier = Parse::NodeId::Invalid;
   }
   s.modifier_set = s.modifier_set & ~forbidden;
 }

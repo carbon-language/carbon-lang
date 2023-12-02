@@ -47,11 +47,13 @@ base class BaseClass {
   abstract fn Abstract[self: Self]();
 }
 
+// CHECK:STDOUT: --- fail_method_modifiers.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc24: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_method_modifiers.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @FinalClass, ()
 // CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass
 // CHECK:STDOUT:   class_decl @AbstractClass, ()
@@ -94,3 +96,4 @@ base class BaseClass {
 // CHECK:STDOUT: fn @Final[%self: AbstractClass]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Abstract.2[%self: BaseClass]();
+// CHECK:STDOUT:

@@ -70,7 +70,9 @@ base fn InvalidModifier();
 // CHECK:STDERR: ^~~~~~~
 default final virtual fn ModifiersConflict2() {}
 
-// CHECK:STDOUT: file "fail_modifiers.carbon" {
+// CHECK:STDOUT: --- fail_modifiers.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %WrongOrder: <function> = fn_decl @WrongOrder
 // CHECK:STDOUT:   %DuplicateVirtual: <function> = fn_decl @DuplicateVirtual
 // CHECK:STDOUT:   %TwoAccess: <function> = fn_decl @TwoAccess
@@ -99,3 +101,4 @@ default final virtual fn ModifiersConflict2() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

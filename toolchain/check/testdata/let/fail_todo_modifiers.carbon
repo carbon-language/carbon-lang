@@ -9,7 +9,10 @@
 // CHECK:STDERR: ^~~~~~~
 private let a: i32 = 1;
 
-// CHECK:STDOUT: file "fail_todo_modifiers.carbon" {
+// CHECK:STDOUT: --- fail_todo_modifiers.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 1
 // CHECK:STDOUT:   %a: i32 = bind_name a, %.loc10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

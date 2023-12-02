@@ -68,7 +68,9 @@ protected private let h: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 protected protected let i: i32 = 1;
 
-// CHECK:STDOUT: file "fail_modifiers.carbon" {
+// CHECK:STDOUT: --- fail_modifiers.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 1
 // CHECK:STDOUT:   %b: i32 = bind_name b, %.loc10
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 1
@@ -86,3 +88,4 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %.loc69: i32 = int_literal 1
 // CHECK:STDOUT:   %i: i32 = bind_name i, %.loc69
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

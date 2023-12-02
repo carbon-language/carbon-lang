@@ -9,8 +9,11 @@
 // CHECK:STDERR: ^~~~~~~
 private fn F();
 
-// CHECK:STDOUT: file "fail_todo_modifiers.carbon" {
+// CHECK:STDOUT: --- fail_todo_modifiers.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:

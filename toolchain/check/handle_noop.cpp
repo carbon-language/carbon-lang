@@ -16,16 +16,17 @@ auto HandleInvalidParse(Context& context, Parse::NodeId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInvalidParse");
 }
 
-auto HandleInvalidParseStart(Context& context, Parse::Node parse_node) -> bool {
+auto HandleInvalidParseStart(Context& context, Parse::NodeId parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleInvalidParseStart");
 }
 
-auto HandleInvalidParseSubtree(Context& context, Parse::Node parse_node)
+auto HandleInvalidParseSubtree(Context& context, Parse::NodeId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInvalidParseSubtree");
 }
 
-auto HandlePlaceholder(Context& /*context*/, Parse::Node /*parse_node*/)
+auto HandlePlaceholder(Context& /*context*/, Parse::NodeId /*parse_node*/)
     -> bool {
   CARBON_FATAL()
       << "Placeholder node should always be replaced before parse completes";

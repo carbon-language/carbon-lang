@@ -143,8 +143,9 @@ class Context {
   //     context.ReplacePlaceholderNode(state.subtree_start, /* replacement */);
   //   }
   //   ```
-  auto ReplacePlaceholderNode(int32_t position, NodeKind kind, Lex::Token token,
-                              bool has_error = false) -> void;
+  auto ReplacePlaceholderNode(int32_t position, NodeKind kind,
+                              Lex::TokenIndex token, bool has_error = false)
+      -> void;
 
   // Returns the current position and moves past it.
   auto Consume() -> Lex::TokenIndex { return *(position_++); }

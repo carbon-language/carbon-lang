@@ -10,8 +10,8 @@ namespace Carbon::Check {
 CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here.",
                   std::string);
 
-static auto EmitRepeatedDiagnostic(Context& context, Parse::Node first_node,
-                                   Parse::Node second_node) -> void {
+static auto EmitRepeatedDiagnostic(Context& context, Parse::NodeId first_node,
+                                   Parse::NodeId second_node) -> void {
   CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration.",
                     std::string);
   context.emitter()
@@ -21,8 +21,8 @@ static auto EmitRepeatedDiagnostic(Context& context, Parse::Node first_node,
 }
 
 static auto EmitNotAllowedWithDiagnostic(Context& context,
-                                         Parse::Node first_node,
-                                         Parse::Node second_node) -> void {
+                                         Parse::NodeId first_node,
+                                         Parse::NodeId second_node) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedWith, Error,
                     "`{0}` not allowed on declaration with `{1}`.", std::string,
                     std::string);
@@ -45,7 +45,7 @@ static auto GetAccessModifierEnum(Lex::TokenKind token_kind)
   }
 }
 
-auto HandleAccessModifierKeyword(Context& context, Parse::Node parse_node)
+auto HandleAccessModifierKeyword(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto keyword = GetAccessModifierEnum(
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
@@ -94,7 +94,7 @@ static auto GetDeclModifierEnum(Lex::TokenKind token_kind)
   }
 }
 
-auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
+auto HandleDeclModifierKeyword(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto keyword = GetDeclModifierEnum(
       context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
@@ -106,7 +106,7 @@ auto HandleDeclModifierKeyword(Context& context, Parse::Node parse_node)
   } else {
     s.modifier_set |= keyword;
     s.saw_decl_modifier = parse_node;
-    if (s.saw_access_modifier == Parse::Node::Invalid) {
+    if (s.saw_access_modifier == Parse::NodeId::Invalid) {
       s.first_node = parse_node;
     }
   }

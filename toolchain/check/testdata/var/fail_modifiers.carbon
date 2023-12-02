@@ -36,7 +36,9 @@ protected protected var d: i32;
 // CHECK:STDERR: ^~~~~~~~
 abstract var e: i32;
 
-// CHECK:STDOUT: file "fail_modifiers.carbon" {
+// CHECK:STDOUT: --- fail_modifiers.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %c.var: ref i32 = var c
@@ -46,3 +48,4 @@ abstract var e: i32;
 // CHECK:STDOUT:   %e.var: ref i32 = var e
 // CHECK:STDOUT:   %e: ref i32 = bind_name e, %e.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

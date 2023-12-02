@@ -9,7 +9,10 @@
 // CHECK:STDERR: ^~~~~~~
 private var a: i32;
 
-// CHECK:STDOUT: file "fail_todo_modifiers.carbon" {
+// CHECK:STDOUT: --- fail_todo_modifiers.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

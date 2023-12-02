@@ -64,11 +64,13 @@ abstract protected class WrongOrder;
 // CHECK:STDERR: ^~~~~~~~
 abstract base class AbstractAndBase {}
 
+// CHECK:STDOUT: --- fail_modifiers.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc27: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_modifiers.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @DuplicatePrivate, ()
 // CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate
 // CHECK:STDOUT:   class_decl @TwoAccess, ()
@@ -103,3 +105,4 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

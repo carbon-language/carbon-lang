@@ -58,12 +58,14 @@ abstract class Abstract {
   impl fn L();
 }
 
+// CHECK:STDOUT: --- fail_todo_modifiers.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc28: type = struct_type {.k: i32, .l: i32}
 // CHECK:STDOUT:   %.loc41: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_todo_modifiers.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Access, ()
 // CHECK:STDOUT:   %Access: type = class_type @Access
 // CHECK:STDOUT:   class_decl @Base, ()
@@ -122,3 +124,4 @@ abstract class Abstract {
 // CHECK:STDOUT: fn @K();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @L();
+// CHECK:STDOUT:

@@ -27,11 +27,13 @@ class Class {
   final let m: i32 = 1;
 }
 
+// CHECK:STDOUT: --- fail_field_modifiers.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc28: type = struct_type {.j: i32, .k: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_field_modifiers.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT: }
@@ -52,3 +54,4 @@ class Class {
 // CHECK:STDOUT:   .j = %j
 // CHECK:STDOUT:   .k = %k
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

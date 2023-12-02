@@ -26,7 +26,7 @@ auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            llvm::StringRef decl_name,
                            llvm::StringRef context_string,
-                           Parse::Node context_node = Parse::Node::Invalid)
+                           Parse::NodeId context_node = Parse::NodeId::Invalid)
     -> void;
 
 // Report a diagonostic if `default` and `final` modifiers are used on

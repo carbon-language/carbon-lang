@@ -47,16 +47,16 @@ struct DeclState {
   // What kind of declaration
   enum DeclKind { FileScope, Class, Constraint, Fn, Interface, Let, Var };
 
-  explicit DeclState(DeclKind decl_kind, Parse::Node parse_node)
+  explicit DeclState(DeclKind decl_kind, Parse::NodeId parse_node)
       : first_node(parse_node), kind(decl_kind) {}
 
   // Nodes of modifiers on this declaration. `Invalid` if no modifier of that
   // kind is present.
-  Parse::Node saw_access_modifier = Parse::Node::Invalid;
-  Parse::Node saw_decl_modifier = Parse::Node::Invalid;
+  Parse::NodeId saw_access_modifier = Parse::NodeId::Invalid;
+  Parse::NodeId saw_decl_modifier = Parse::NodeId::Invalid;
 
   // Node corresponding to the first token of the declaration.
-  Parse::Node first_node;
+  Parse::NodeId first_node;
 
   // These fields are last because they are smaller.
 
@@ -73,12 +73,12 @@ struct DeclState {
 class DeclStateStack {
  public:
   DeclStateStack() {
-    stack_.emplace_back(DeclState::FileScope, Parse::Node::Invalid);
+    stack_.emplace_back(DeclState::FileScope, Parse::NodeId::Invalid);
   }
 
   // Enters a declaration of kind `k`, with `parse_node` for the introducer
   // token.
-  auto Push(DeclState::DeclKind k, Parse::Node parse_node) -> void {
+  auto Push(DeclState::DeclKind k, Parse::NodeId parse_node) -> void {
     stack_.push_back(DeclState(k, parse_node));
   }
 

@@ -89,7 +89,8 @@ auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, int subtree_start,
 }
 
 auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
-                                     Lex::Token token, bool has_error) -> void {
+                                     Lex::TokenIndex token, bool has_error)
+    -> void {
   CARBON_CHECK(position >= 0 && position < tree_->size())
       << "position: " << position << " size: " << tree_->size();
   auto* node_impl = &tree_->node_impls_[position];
