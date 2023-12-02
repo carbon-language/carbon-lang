@@ -6,12 +6,8 @@
 
 namespace Carbon::Parse {
 
-// Handles an unrecognized declaration, adding an error node.
-static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
+static auto OutputInvalidParseSubtree(Context& context, int32_t subtree_start)
     -> void {
-  CARBON_DIAGNOSTIC(UnrecognizedDecl, Error,
-                    "Unrecognized declaration introducer.");
-  context.emitter().Emit(*context.position(), UnrecognizedDecl);
   auto cursor = *context.position();
   // Consume to the next `;` or end of line. We ignore the return value since
   // we only care how much was consumed, not whether it ended with a `;`.
@@ -27,6 +23,15 @@ static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
                                  cursor, /*has_error=*/true);
   context.AddNode(NodeKind::InvalidParseSubtree, *iter, subtree_start,
                   /*has_error=*/true);
+}
+
+// Handles an unrecognized declaration.
+static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
+    -> void {
+  CARBON_DIAGNOSTIC(UnrecognizedDecl, Error,
+                    "Unrecognized declaration introducer.");
+  context.emitter().Emit(*context.position(), UnrecognizedDecl);
+  OutputInvalidParseSubtree(context, subtree_start);
 }
 
 static auto TokenIsModifierOrIntroducer(Lex::TokenKind token_kind) -> bool {
@@ -199,18 +204,8 @@ auto HandleDeclScopeLoop(Context& context) -> void {
         if (saw_modifier) {
           CARBON_DIAGNOSTIC(NamespaceAfterModifiers, Error,
                             "`namespace` unexpected after modifiers.");
-          auto cursor = *context.position();
-          context.emitter().Emit(cursor, NamespaceAfterModifiers);
-          context.SkipPastLikelyEnd(cursor);
-          auto iter = context.position();
-          --iter;
-          // output an invalid parse subtree.
-          context.ReplacePlaceholderNode(state.subtree_start,
-                                         NodeKind::InvalidParseStart, cursor,
-                                         /*has_error=*/true);
-          context.AddNode(NodeKind::InvalidParseSubtree, *iter,
-                          state.subtree_start,
-                          /*has_error=*/true);
+          context.emitter().Emit(*context.position(), NamespaceAfterModifiers);
+          OutputInvalidParseSubtree(context, state.subtree_start);
         } else {
           introducer(NodeKind::NamespaceStart, State::Namespace);
         }
