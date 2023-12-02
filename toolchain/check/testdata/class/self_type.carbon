@@ -25,13 +25,13 @@ fn Class.F[self: Class]() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
-// CHECK:STDOUT:   %Class.loc7_1.2: type = class_type @Class
+// CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Class.loc7_1.2
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Class
 // CHECK:STDOUT:   %.loc9_14: type = ptr_type Class
 // CHECK:STDOUT:   %.loc9_8.1: type = unbound_field_type Class, Class*
 // CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Class> = field p, member0

@@ -33,7 +33,7 @@ fn F(x: X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @X, ()
-// CHECK:STDOUT:   %X.loc7_1.2: type = class_type @X
+// CHECK:STDOUT:   %X: type = class_type @X
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,7 +48,7 @@ fn F(x: X) {
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   %.loc16: String = string_literal "hello"
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.loc7_1.2
+// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X
 // CHECK:STDOUT:   %y.var: ref X = var y
 // CHECK:STDOUT:   %y: ref X = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: X = name_ref x, %x

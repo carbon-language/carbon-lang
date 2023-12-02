@@ -30,17 +30,17 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Outer, ()
-// CHECK:STDOUT:   %Outer.loc7_1.2: type = class_type @Outer
+// CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   class_decl @Inner, ()
-// CHECK:STDOUT:   %Inner.loc8_3.2: type = class_type @Inner
+// CHECK:STDOUT:   %Inner: type = class_type @Inner
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Inner = %Inner.loc8_3.1
+// CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
@@ -63,7 +63,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @G(%o: Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %o.ref: Outer = name_ref o, %o
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.loc8_3.2
+// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner
 // CHECK:STDOUT:   %i.var: ref Inner = var i
 // CHECK:STDOUT:   %i: ref Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return

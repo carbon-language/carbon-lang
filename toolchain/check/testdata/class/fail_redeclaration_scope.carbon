@@ -29,37 +29,37 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @A.1, ()
-// CHECK:STDOUT:   %A.loc7_1.2: type = class_type @A.1
+// CHECK:STDOUT:   %A: type = class_type @A.1
 // CHECK:STDOUT:   class_decl @X, ()
-// CHECK:STDOUT:   %X.loc9_1.2: type = class_type @X
+// CHECK:STDOUT:   %X: type = class_type @X
 // CHECK:STDOUT:   class_decl @A.1, ()
 // CHECK:STDOUT:   class_decl @Y, ()
-// CHECK:STDOUT:   %Y.loc17_1.2: type = class_type @Y
+// CHECK:STDOUT:   %Y: type = class_type @Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
 // CHECK:STDOUT:   class_decl @B.2, ()
-// CHECK:STDOUT:   %B.loc15_11.2: type = class_type @B.2
+// CHECK:STDOUT:   %B: type = class_type @B.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .B = %B.loc15_11.1
+// CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
 // CHECK:STDOUT:   class_decl @A.2, ()
-// CHECK:STDOUT:   %A.loc11_3.2: type = class_type @A.2
+// CHECK:STDOUT:   %A: type = class_type @A.2
 // CHECK:STDOUT:   class_decl @B.1, ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .A = %A.loc11_3.1
+// CHECK:STDOUT:   .A = %A.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
 // CHECK:STDOUT:   class_decl @B.1, ()
-// CHECK:STDOUT:   %B.loc11_13.2: type = class_type @B.1
+// CHECK:STDOUT:   %B: type = class_type @B.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .B = %B.loc11_13.1
+// CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.1 {
@@ -71,7 +71,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
 // CHECK:STDOUT:   class_decl @.1, ()
-// CHECK:STDOUT:   %.loc21_3.2: type = class_type @.1
+// CHECK:STDOUT:   %.loc21: type = class_type @.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }

@@ -20,11 +20,11 @@ abstract class C {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @A, ()
-// CHECK:STDOUT:   %A.loc7_1.2: type = class_type @A
+// CHECK:STDOUT:   %A: type = class_type @A
 // CHECK:STDOUT:   class_decl @B, ()
-// CHECK:STDOUT:   %B.loc8_1.2: type = class_type @B
+// CHECK:STDOUT:   %B: type = class_type @B
 // CHECK:STDOUT:   class_decl @C, ()
-// CHECK:STDOUT:   %C.loc9_1.2: type = class_type @C
+// CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:   class_decl @A, ()
 // CHECK:STDOUT:   class_decl @B, ()
 // CHECK:STDOUT:   class_decl @C, ()

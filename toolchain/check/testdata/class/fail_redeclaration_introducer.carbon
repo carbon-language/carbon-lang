@@ -82,25 +82,25 @@ base class G;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @A, ()
-// CHECK:STDOUT:   %A.loc7_1.2: type = class_type @A
+// CHECK:STDOUT:   %A: type = class_type @A
 // CHECK:STDOUT:   class_decl @A, ()
 // CHECK:STDOUT:   class_decl @B, ()
-// CHECK:STDOUT:   %B.loc16_1.2: type = class_type @B
+// CHECK:STDOUT:   %B: type = class_type @B
 // CHECK:STDOUT:   class_decl @B, ()
 // CHECK:STDOUT:   class_decl @C, ()
-// CHECK:STDOUT:   %C.loc25_1.2: type = class_type @C
+// CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:   class_decl @C, ()
 // CHECK:STDOUT:   class_decl @D, ()
-// CHECK:STDOUT:   %D.loc34_1.2: type = class_type @D
+// CHECK:STDOUT:   %D: type = class_type @D
 // CHECK:STDOUT:   class_decl @D, ()
 // CHECK:STDOUT:   class_decl @E, ()
-// CHECK:STDOUT:   %E.loc43_1.2: type = class_type @E
+// CHECK:STDOUT:   %E: type = class_type @E
 // CHECK:STDOUT:   class_decl @E, ()
 // CHECK:STDOUT:   class_decl @F, ()
-// CHECK:STDOUT:   %F.loc52_1.2: type = class_type @F
+// CHECK:STDOUT:   %F: type = class_type @F
 // CHECK:STDOUT:   class_decl @F, ()
 // CHECK:STDOUT:   class_decl @G, ()
-// CHECK:STDOUT:   %G.loc61_1.2: type = class_type @G
+// CHECK:STDOUT:   %G: type = class_type @G
 // CHECK:STDOUT:   class_decl @G, ()
 // CHECK:STDOUT:   class_decl @G, ()
 // CHECK:STDOUT: }

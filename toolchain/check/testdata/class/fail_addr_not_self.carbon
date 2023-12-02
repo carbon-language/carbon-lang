@@ -24,7 +24,7 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
-// CHECK:STDOUT:   %Class.loc7_1.2: type = class_type @Class
+// CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

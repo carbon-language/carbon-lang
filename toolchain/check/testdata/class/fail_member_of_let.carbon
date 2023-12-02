@@ -29,8 +29,8 @@ fn T.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
-// CHECK:STDOUT:   %Class.loc7_1.2: type = class_type @Class
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.loc7_1.2
+// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class
 // CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
 // CHECK:STDOUT:   %.loc22: <function> = fn_decl @.1
 // CHECK:STDOUT: }

@@ -30,7 +30,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @Class, ()
-// CHECK:STDOUT:   %Class.loc7_1.2: type = class_type @Class
+// CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -62,7 +62,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.loc7_1.2
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F
 // CHECK:STDOUT:   %.loc22_18: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc22_17: init i32 = call %F.ref(%.loc22_18)

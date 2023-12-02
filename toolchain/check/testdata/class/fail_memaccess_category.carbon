@@ -46,9 +46,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   class_decl @A, ()
-// CHECK:STDOUT:   %A.loc7_1.2: type = class_type @A
+// CHECK:STDOUT:   %A: type = class_type @A
 // CHECK:STDOUT:   class_decl @B, ()
-// CHECK:STDOUT:   %B.loc11_1.2: type = class_type @B
+// CHECK:STDOUT:   %B: type = class_type @B
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,7 +60,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.loc7_1.2
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc12_8.1: type = unbound_field_type B, A
 // CHECK:STDOUT:   %.loc12_8.2: <unbound field of class B> = field a, member0
 // CHECK:STDOUT:   %a: <unbound field of class B> = bind_name a, %.loc12_8.2
