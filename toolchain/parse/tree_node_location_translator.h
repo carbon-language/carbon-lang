@@ -14,20 +14,20 @@ namespace Carbon::Parse {
 class NodeLocation {
  public:
   NodeLocation(NodeId node_id) : NodeLocation(node_id, false) {}
-  auto TokenOnly(NodeId node_id) -> NodeLocation {
-    return NodeLocation(node_id, true);
-  }
+  NodeLocation(NodeId node_id, bool token_only)
+      : node_id_(node_id), token_only_(token_only) {}
 
   auto node_id() const -> NodeId { return node_id_; }
   auto token_only() const -> bool { return token_only_; }
 
  private:
-  NodeLocation(NodeId node_id, bool token_only)
-      : node_id_(node_id), token_only_(token_only) {}
-
   NodeId node_id_;
   bool token_only_;
 };
+
+inline auto TokenOnly(NodeId node_id) -> NodeLocation {
+  return NodeLocation(node_id, true);
+}
 
 class NodeLocationTranslator
     : public DiagnosticLocationTranslator<NodeLocation> {

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/entry_point.h"
 
 namespace Carbon::Check {
@@ -146,7 +147,7 @@ auto HandleFunctionDefinition(Context& context, Parse::NodeId parse_node)
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "Missing `return` at end of function with declared return type.");
-      context.emitter().Emit(parse_node, MissingReturnStatement);
+      context.emitter().Emit(TokenOnly(parse_node), MissingReturnStatement);
     } else {
       context.AddInst(SemIR::Return{parse_node});
     }

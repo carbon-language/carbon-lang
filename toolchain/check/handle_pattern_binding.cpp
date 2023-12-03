@@ -19,7 +19,7 @@ auto HandleAddress(Context& context, Parse::NodeId parse_node) -> bool {
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter.");
-    context.emitter().Emit(parse_node, AddrOnNonSelfParam);
+    context.emitter().Emit(TokenOnly(parse_node), AddrOnNonSelfParam);
   }
   return true;
 }
