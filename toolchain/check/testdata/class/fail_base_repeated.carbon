@@ -9,7 +9,7 @@ base class B2 {}
 
 class C {
   base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:11: ERROR: Repeated `base` declaration. Multiple inheritance is not permitted.
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:11: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
   // CHECK:STDERR:   base: B2;
   // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:11: Previous `base` declaration is here.
@@ -21,7 +21,7 @@ class C {
 class D {
   // TODO: Consider adding a custom diagnostic for this case.
   base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:11: ERROR: Repeated `base` declaration. Multiple inheritance is not permitted.
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:11: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
   // CHECK:STDERR:   base: B1;
   // CHECK:STDERR:           ^
   // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:11: Previous `base` declaration is here.

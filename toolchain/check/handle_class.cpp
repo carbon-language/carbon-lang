@@ -180,20 +180,19 @@ auto HandleBaseColon(Context& /*context*/, Parse::NodeId /*parse_node*/)
 auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
   auto base_type_expr_id = context.node_stack().PopExpr();
 
-  auto class_id =
-      context.node_stack().PeekIf<Parse::NodeKind::ClassDefinitionStart>();
-  if (!class_id) {
+  auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  if (!enclosing_class_decl) {
     CARBON_DIAGNOSTIC(BaseOutsideClass, Error,
                       "`base` declaration can only be used in a class.");
     context.emitter().Emit(parse_node, BaseOutsideClass);
     return true;
   }
 
-  auto& class_info = context.classes().Get(*class_id);
+  auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
   if (class_info.base_id.is_valid()) {
-    CARBON_DIAGNOSTIC(
-        BaseRepeated, Error,
-        "Repeated `base` declaration. Multiple inheritance is not permitted.");
+    CARBON_DIAGNOSTIC(BaseRepeated, Error,
+                      "Multiple `base` declarations in class. Multiple "
+                      "inheritance is not permitted.");
     CARBON_DIAGNOSTIC(BasePrevious, Note,
                       "Previous `base` declaration is here.");
     context.emitter()
@@ -218,6 +217,8 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
   if (base_type_id != SemIR::TypeId::Error) {
     // For now, we treat all types that aren't introduced by a `class`
     // declaration as being final classes.
+    // TODO: Once we have a better idea of which types are considered to be
+    // classes, produce a better diagnostic for deriving from a non-class type.
     auto base_class =
         context.insts()
             .Get(context.sem_ir().GetTypeAllowBuiltinTypes(base_type_id))
@@ -226,8 +227,8 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
         context.classes().Get(base_class->class_id).inheritance_kind ==
             SemIR::Class::Final) {
       CARBON_DIAGNOSTIC(BaseIsFinal, Error,
-                        "Deriving from final type `{0}`. Only abstract and "
-                        "base classes can be derived from.",
+                        "Deriving from final type `{0}`. Base type must be an "
+                        "`abstract` or `base` class.",
                         std::string);
       context.emitter().Emit(
           parse_node, BaseIsFinal,
