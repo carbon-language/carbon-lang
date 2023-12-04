@@ -11,12 +11,14 @@ class Class {
   }
 }
 
+// CHECK:STDOUT: --- raw_self_type.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc12: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "raw_self_type.carbon" {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -42,3 +44,4 @@ class Class {
 // CHECK:STDOUT:   assign %p.var, %.loc10_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

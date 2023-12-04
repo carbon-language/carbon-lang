@@ -14,7 +14,9 @@ fn Main() {
   }
 }
 
-// CHECK:STDOUT: file "shadowing.carbon" {
+// CHECK:STDOUT: --- shadowing.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -40,3 +42,4 @@ fn Main() {
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

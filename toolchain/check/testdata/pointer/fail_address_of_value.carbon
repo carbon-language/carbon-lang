@@ -82,6 +82,8 @@ fn AddressOfParam(param: i32) {
   var param_addr: i32* = &param;
 }
 
+// CHECK:STDOUT: --- fail_address_of_value.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = ptr_type i32
 // CHECK:STDOUT:   %.loc19: type = ptr_type bool
@@ -93,7 +95,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc64: type = ptr_type type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_address_of_value.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral
@@ -138,7 +140,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc46_5.1: init {.a: i32} = call %H.ref()
 // CHECK:STDOUT:   %.loc46_5.2: ref {.a: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc46_5.3: ref {.a: i32} = temporary %.loc46_5.2, %.loc46_5.1
-// CHECK:STDOUT:   %.loc46_7: ref i32 = struct_access %.loc46_5.3, member0
+// CHECK:STDOUT:   %.loc46_7: ref i32 = struct_access %.loc46_5.3, element0
 // CHECK:STDOUT:   %.loc46_3: i32* = address_of %.loc46_7
 // CHECK:STDOUT:   %.loc50_9: bool = bool_literal true
 // CHECK:STDOUT:   %.loc50_5: bool = not %.loc50_9
@@ -186,3 +188,4 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   assign %param_addr.var, %.loc82_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -16,7 +16,7 @@ var x: (i32, i32) = (1, 2);
 // CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'ParenExprOrTupleLiteralStart', text: '('},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '1'},

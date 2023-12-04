@@ -6,9 +6,12 @@
 
 var x: i32 = 0;
 
-// CHECK:STDOUT: file "global_decl_with_init.carbon" {
+// CHECK:STDOUT: --- global_decl_with_init.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x.var, %.loc7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

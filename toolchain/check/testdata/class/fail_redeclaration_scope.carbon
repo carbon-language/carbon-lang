@@ -21,43 +21,45 @@ class Y {
   class A.B {}
 }
 
+// CHECK:STDOUT: --- fail_redeclaration_scope.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_redeclaration_scope.carbon" {
-// CHECK:STDOUT:   class_decl @A.1, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %A.decl.loc7 = class_decl @A.1, ()
 // CHECK:STDOUT:   %A: type = class_type @A.1
-// CHECK:STDOUT:   class_decl @X, ()
+// CHECK:STDOUT:   %X.decl = class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
-// CHECK:STDOUT:   class_decl @A.1, ()
-// CHECK:STDOUT:   class_decl @Y, ()
+// CHECK:STDOUT:   %A.decl.loc15 = class_decl @A.1, ()
+// CHECK:STDOUT:   %Y.decl = class_decl @Y, ()
 // CHECK:STDOUT:   %Y: type = class_type @Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
-// CHECK:STDOUT:   class_decl @B.2, ()
+// CHECK:STDOUT:   %B.decl = class_decl @B.2, ()
 // CHECK:STDOUT:   %B: type = class_type @B.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .B = <unexpected instref inst+11>
+// CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   class_decl @A.2, ()
+// CHECK:STDOUT:   %A.decl = class_decl @A.2, ()
 // CHECK:STDOUT:   %A: type = class_type @A.2
-// CHECK:STDOUT:   class_decl @B.1, ()
+// CHECK:STDOUT:   %B.decl = class_decl @B.1, ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .A = <unexpected instref inst+4>
+// CHECK:STDOUT:   .A = %A.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
-// CHECK:STDOUT:   class_decl @B.1, ()
+// CHECK:STDOUT:   %B.decl = class_decl @B.1, ()
 // CHECK:STDOUT:   %B: type = class_type @B.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .B = <unexpected instref inst+6>
+// CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.1 {
@@ -68,7 +70,7 @@ class Y {
 // CHECK:STDOUT: class @B.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
-// CHECK:STDOUT:   class_decl @.1, ()
+// CHECK:STDOUT:   %.decl = class_decl @.1, ()
 // CHECK:STDOUT:   %.loc21: type = class_type @.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -78,3 +80,4 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

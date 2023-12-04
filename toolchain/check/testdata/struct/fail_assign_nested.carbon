@@ -9,6 +9,8 @@
 // CHECK:STDERR:                   ^~~~~~~~~
 var x: {.a: {}} = {.b = {}};
 
+// CHECK:STDOUT: --- fail_assign_nested.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_14.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_14.2: type = tuple_type ()
@@ -16,7 +18,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   %.loc10_27: type = struct_type {.b: {}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_assign_nested.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10_14.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_14.2: type = converted %.loc10_14.1, constants.%.loc10_14.1
 // CHECK:STDOUT:   %.loc10_15: type = struct_type {.a: {}}
@@ -26,3 +28,4 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   %.loc10_27: {.b: {}} = struct_literal (%.loc10_26)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

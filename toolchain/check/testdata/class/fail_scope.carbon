@@ -17,12 +17,14 @@ fn G() -> i32 {
   return F();
 }
 
+// CHECK:STDOUT: --- fail_scope.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_scope.carbon" {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
@@ -45,3 +47,4 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

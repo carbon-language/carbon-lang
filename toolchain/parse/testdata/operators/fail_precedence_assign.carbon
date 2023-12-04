@@ -40,7 +40,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
 // CHECK:STDOUT:             {kind: 'ParenExprOrTupleLiteralStart', text: '('},

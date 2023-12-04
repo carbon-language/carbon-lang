@@ -20,6 +20,8 @@ fn Var() {
   var b: (X, X) = (Make(), Make()) as (X, X);
 }
 
+// CHECK:STDOUT: --- tuple.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
@@ -30,8 +32,8 @@ fn Var() {
 // CHECK:STDOUT:   %.loc15_15.4: type = ptr_type ({}*, {}*)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "tuple.carbon" {
-// CHECK:STDOUT:   class_decl @X, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %X.decl = class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %Let: <function> = fn_decl @Let
@@ -81,10 +83,10 @@ fn Var() {
 // CHECK:STDOUT:   %b.var: ref (X, X) = var b
 // CHECK:STDOUT:   %b: ref (X, X) = bind_name b, %b.var
 // CHECK:STDOUT:   %Make.ref.loc20_20: <function> = name_ref Make, file.%Make
-// CHECK:STDOUT:   %.loc20_34.1: ref X = tuple_access %b.var, member0
+// CHECK:STDOUT:   %.loc20_34.1: ref X = tuple_access %b.var, element0
 // CHECK:STDOUT:   %.loc20_24: init X = call %Make.ref.loc20_20() to %.loc20_34.1
 // CHECK:STDOUT:   %Make.ref.loc20_28: <function> = name_ref Make, file.%Make
-// CHECK:STDOUT:   %.loc20_34.2: ref X = tuple_access %b.var, member1
+// CHECK:STDOUT:   %.loc20_34.2: ref X = tuple_access %b.var, element1
 // CHECK:STDOUT:   %.loc20_32: init X = call %Make.ref.loc20_28() to %.loc20_34.2
 // CHECK:STDOUT:   %.loc20_34.3: (X, X) = tuple_literal (%.loc20_24, %.loc20_32)
 // CHECK:STDOUT:   %X.ref.loc20_40: type = name_ref X, file.%X
@@ -96,3 +98,4 @@ fn Var() {
 // CHECK:STDOUT:   assign %b.var, %.loc20_34.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -47,9 +47,9 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:     inst+10:         {kind: BinaryOperatorAdd, arg0: inst+8, arg1: inst+9, type: type0}
 // CHECK:STDOUT:     inst+11:         {kind: RealLiteral, arg0: real0, type: type2}
 // CHECK:STDOUT:     inst+12:         {kind: TupleLiteral, arg0: block5, type: type3}
-// CHECK:STDOUT:     inst+13:         {kind: TupleAccess, arg0: inst+5, arg1: member0, type: type0}
+// CHECK:STDOUT:     inst+13:         {kind: TupleAccess, arg0: inst+5, arg1: element0, type: type0}
 // CHECK:STDOUT:     inst+14:         {kind: InitializeFrom, arg0: inst+10, arg1: inst+13, type: type0}
-// CHECK:STDOUT:     inst+15:         {kind: TupleAccess, arg0: inst+5, arg1: member1, type: type2}
+// CHECK:STDOUT:     inst+15:         {kind: TupleAccess, arg0: inst+5, arg1: element1, type: type2}
 // CHECK:STDOUT:     inst+16:         {kind: InitializeFrom, arg0: inst+11, arg1: inst+15, type: type2}
 // CHECK:STDOUT:     inst+17:         {kind: TupleInit, arg0: block6, arg1: inst+5, type: type3}
 // CHECK:STDOUT:     inst+18:         {kind: Converted, arg0: inst+12, arg1: inst+17, type: type3}
@@ -89,13 +89,15 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:       0:               inst+7
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- raw_and_textual_ir.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc11_28.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc11_28.2: type = tuple_type (i32, f64)
 // CHECK:STDOUT:   %.loc11_28.3: type = ptr_type (i32, f64)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "raw_and_textual_ir.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,11 +108,12 @@ fn Foo(n: i32) -> (i32, f64) {
 // CHECK:STDOUT:   %.loc12_13: i32 = add %n.ref, %.loc12_15
 // CHECK:STDOUT:   %.loc12_18: f64 = real_literal 34e-1
 // CHECK:STDOUT:   %.loc12_21.1: (i32, f64) = tuple_literal (%.loc12_13, %.loc12_18)
-// CHECK:STDOUT:   %.loc12_21.2: ref i32 = tuple_access %return, member0
+// CHECK:STDOUT:   %.loc12_21.2: ref i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc12_21.3: init i32 = initialize_from %.loc12_13 to %.loc12_21.2
-// CHECK:STDOUT:   %.loc12_21.4: ref f64 = tuple_access %return, member1
+// CHECK:STDOUT:   %.loc12_21.4: ref f64 = tuple_access %return, element1
 // CHECK:STDOUT:   %.loc12_21.5: init f64 = initialize_from %.loc12_18 to %.loc12_21.4
 // CHECK:STDOUT:   %.loc12_21.6: init (i32, f64) = tuple_init (%.loc12_21.3, %.loc12_21.5) to %return
 // CHECK:STDOUT:   %.loc12_21.7: init (i32, f64) = converted %.loc12_21.1, %.loc12_21.6
 // CHECK:STDOUT:   return %.loc12_21.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

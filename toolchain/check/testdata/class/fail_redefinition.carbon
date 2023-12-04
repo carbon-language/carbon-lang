@@ -24,14 +24,16 @@ fn Class.F() {}
 fn Class.G() {}
 fn Class.H() {}
 
+// CHECK:STDOUT: --- fail_redefinition.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_redefinition.carbon" {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl.loc18 = class_decl @Class, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
@@ -61,3 +63,4 @@ fn Class.H() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

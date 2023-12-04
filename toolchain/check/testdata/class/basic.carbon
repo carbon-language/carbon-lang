@@ -22,12 +22,14 @@ fn Run() -> i32 {
   return Class.F(4);
 }
 
+// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = struct_type {.k: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "basic.carbon" {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
@@ -36,8 +38,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %.loc14_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc14_8.2: <unbound field of class Class> = field k, member0
+// CHECK:STDOUT:   %.loc14_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc14_8.2: <unbound field of class Class> = field k, element0
 // CHECK:STDOUT:   %k: <unbound field of class Class> = bind_name k, %.loc14_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -68,3 +70,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc22_20.2: i32 = converted %.loc22_17, %.loc22_20.1
 // CHECK:STDOUT:   return %.loc22_20.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

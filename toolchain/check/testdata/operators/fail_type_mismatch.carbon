@@ -11,7 +11,9 @@ fn Main() -> i32 {
   return 12 + 3.4;
 }
 
-// CHECK:STDOUT: file "fail_type_mismatch.carbon" {
+// CHECK:STDOUT: --- fail_type_mismatch.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -22,3 +24,4 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.loc11_13: <error> = add <error>, %.loc11_15
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

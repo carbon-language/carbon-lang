@@ -16,6 +16,8 @@ fn F() {
   var t1: i32* = &t[1];
 }
 
+// CHECK:STDOUT: --- address_of_lvalue.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc8: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc14_19.1: type = tuple_type (type, type)
@@ -23,7 +25,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_19.3: type = ptr_type (i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "address_of_lvalue.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -35,9 +37,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_37: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc8_45: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc8_46.1: {.a: i32, .b: i32} = struct_literal (%.loc8_37, %.loc8_45)
-// CHECK:STDOUT:   %.loc8_46.2: ref i32 = struct_access %s.var, member0
+// CHECK:STDOUT:   %.loc8_46.2: ref i32 = struct_access %s.var, element0
 // CHECK:STDOUT:   %.loc8_46.3: init i32 = initialize_from %.loc8_37 to %.loc8_46.2
-// CHECK:STDOUT:   %.loc8_46.4: ref i32 = struct_access %s.var, member1
+// CHECK:STDOUT:   %.loc8_46.4: ref i32 = struct_access %s.var, element1
 // CHECK:STDOUT:   %.loc8_46.5: init i32 = initialize_from %.loc8_45 to %.loc8_46.4
 // CHECK:STDOUT:   %.loc8_46.6: init {.a: i32, .b: i32} = struct_init (%.loc8_46.3, %.loc8_46.5) to %s.var
 // CHECK:STDOUT:   %.loc8_46.7: init {.a: i32, .b: i32} = converted %.loc8_46.1, %.loc8_46.6
@@ -53,14 +55,14 @@ fn F() {
 // CHECK:STDOUT:   %q.var: ref i32* = var q
 // CHECK:STDOUT:   %q: ref i32* = bind_name q, %q.var
 // CHECK:STDOUT:   %s.ref.loc11: ref {.a: i32, .b: i32} = name_ref s, %s
-// CHECK:STDOUT:   %.loc11_19: ref i32 = struct_access %s.ref.loc11, member0
+// CHECK:STDOUT:   %.loc11_19: ref i32 = struct_access %s.ref.loc11, element0
 // CHECK:STDOUT:   %.loc11_17: i32* = address_of %.loc11_19
 // CHECK:STDOUT:   assign %q.var, %.loc11_17
 // CHECK:STDOUT:   %.loc12_13: type = ptr_type i32
 // CHECK:STDOUT:   %r.var: ref i32* = var r
 // CHECK:STDOUT:   %r: ref i32* = bind_name r, %r.var
 // CHECK:STDOUT:   %s.ref.loc12: ref {.a: i32, .b: i32} = name_ref s, %s
-// CHECK:STDOUT:   %.loc12_19: ref i32 = struct_access %s.ref.loc12, member1
+// CHECK:STDOUT:   %.loc12_19: ref i32 = struct_access %s.ref.loc12, element1
 // CHECK:STDOUT:   %.loc12_17: i32* = address_of %.loc12_19
 // CHECK:STDOUT:   assign %r.var, %.loc12_17
 // CHECK:STDOUT:   %.loc14_19.1: (type, type) = tuple_literal (i32, i32)
@@ -70,9 +72,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_24: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc14_27: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc14_28.1: (i32, i32) = tuple_literal (%.loc14_24, %.loc14_27)
-// CHECK:STDOUT:   %.loc14_28.2: ref i32 = tuple_access %t.var, member0
+// CHECK:STDOUT:   %.loc14_28.2: ref i32 = tuple_access %t.var, element0
 // CHECK:STDOUT:   %.loc14_28.3: init i32 = initialize_from %.loc14_24 to %.loc14_28.2
-// CHECK:STDOUT:   %.loc14_28.4: ref i32 = tuple_access %t.var, member1
+// CHECK:STDOUT:   %.loc14_28.4: ref i32 = tuple_access %t.var, element1
 // CHECK:STDOUT:   %.loc14_28.5: init i32 = initialize_from %.loc14_27 to %.loc14_28.4
 // CHECK:STDOUT:   %.loc14_28.6: init (i32, i32) = tuple_init (%.loc14_28.3, %.loc14_28.5) to %t.var
 // CHECK:STDOUT:   %.loc14_28.7: init (i32, i32) = converted %.loc14_28.1, %.loc14_28.6
@@ -95,3 +97,4 @@ fn F() {
 // CHECK:STDOUT:   assign %t1.var, %.loc16_18
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

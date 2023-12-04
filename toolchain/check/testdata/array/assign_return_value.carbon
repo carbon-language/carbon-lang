@@ -10,13 +10,15 @@ fn Run() {
   var t: [i32; 1] = F();
 }
 
+// CHECK:STDOUT: --- assign_return_value.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc7_16.2: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc10: type = ptr_type [i32; 1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "assign_return_value.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -40,7 +42,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_22.1: init (i32,) = call %F.ref()
 // CHECK:STDOUT:   %.loc10_22.2: ref (i32,) = temporary_storage
 // CHECK:STDOUT:   %.loc10_22.3: ref (i32,) = temporary %.loc10_22.2, %.loc10_22.1
-// CHECK:STDOUT:   %.loc10_22.4: ref i32 = tuple_access %.loc10_22.3, member0
+// CHECK:STDOUT:   %.loc10_22.4: ref i32 = tuple_access %.loc10_22.3, element0
 // CHECK:STDOUT:   %.loc10_22.5: i32 = bind_value %.loc10_22.4
 // CHECK:STDOUT:   %.loc10_22.6: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc10_22.7: ref i32 = array_index %t.var, %.loc10_22.6
@@ -50,3 +52,4 @@ fn Run() {
 // CHECK:STDOUT:   assign %t.var, %.loc10_22.10
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -22,25 +22,27 @@ fn F() {
   G(&c);
 }
 
+// CHECK:STDOUT: --- fail_init_as_inplace.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc22: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_init_as_inplace.carbon" {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field a, member0
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field a, element0
 // CHECK:STDOUT:   %a: <unbound field of class Class> = bind_name a, %.loc8_8.2
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Class> = field b, member1
+// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Class> = field b, element1
 // CHECK:STDOUT:   %b: <unbound field of class Class> = bind_name b, %.loc9_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -60,9 +62,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_33.1: {.a: i32, .b: i32} = struct_literal (%.loc21_24, %.loc21_32)
 // CHECK:STDOUT:   %Class.ref.loc21_38: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %.loc21_33.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc21_33.3: ref i32 = class_field_access %.loc21_33.2, member0
+// CHECK:STDOUT:   %.loc21_33.3: ref i32 = class_element_access %.loc21_33.2, element0
 // CHECK:STDOUT:   %.loc21_33.4: init i32 = initialize_from %.loc21_24 to %.loc21_33.3
-// CHECK:STDOUT:   %.loc21_33.5: ref i32 = class_field_access %.loc21_33.2, member1
+// CHECK:STDOUT:   %.loc21_33.5: ref i32 = class_element_access %.loc21_33.2, element1
 // CHECK:STDOUT:   %.loc21_33.6: init i32 = initialize_from %.loc21_32 to %.loc21_33.5
 // CHECK:STDOUT:   %.loc21_33.7: init Class = class_init (%.loc21_33.4, %.loc21_33.6), %.loc21_33.2
 // CHECK:STDOUT:   %.loc21_33.8: ref Class = temporary %.loc21_33.2, %.loc21_33.7
@@ -75,3 +77,4 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_4: init () = call %G.ref(%.loc22_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

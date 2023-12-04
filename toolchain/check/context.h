@@ -303,24 +303,19 @@ class Context {
   auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
     return sem_ir().string_literals();
   }
-  auto functions() -> ValueStore<SemIR::FunctionId, SemIR::Function>& {
+  auto functions() -> ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();
   }
-  auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
-    return sem_ir().classes();
-  }
-  auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId, const SemIR::File*>& {
+  auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
+  auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId>& {
     return sem_ir().cross_ref_irs();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
   }
-  auto types() -> ValueStore<SemIR::TypeId, SemIR::TypeInfo>& {
-    return sem_ir().types();
-  }
-  auto type_blocks()
-      -> SemIR::BlockValueStore<SemIR::TypeBlockId, SemIR::TypeId>& {
+  auto types() -> ValueStore<SemIR::TypeId>& { return sem_ir().types(); }
+  auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }
   auto insts() -> SemIR::InstStore& { return sem_ir().insts(); }

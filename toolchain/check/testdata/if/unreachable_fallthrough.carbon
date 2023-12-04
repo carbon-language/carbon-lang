@@ -13,7 +13,9 @@ fn If(b: bool) -> i32 {
   // Missing return here is OK.
 }
 
-// CHECK:STDOUT: file "unreachable_fallthrough.carbon" {
+// CHECK:STDOUT: --- unreachable_fallthrough.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %If: <function> = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -30,3 +32,4 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 2
 // CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

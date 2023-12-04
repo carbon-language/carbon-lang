@@ -44,13 +44,15 @@ fn CallGOnInitializingExpr() -> i32 {
   return Make().G();
 }
 
+// CHECK:STDOUT: --- method.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32}
 // CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "method.carbon" {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call
@@ -65,8 +67,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %.loc11_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc11_8.2: <unbound field of class Class> = field k, member0
+// CHECK:STDOUT:   %.loc11_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc11_8.2: <unbound field of class Class> = field k, element0
 // CHECK:STDOUT:   %k: <unbound field of class Class> = bind_name k, %.loc11_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -78,7 +80,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: fn @F[%self: Class]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: Class = name_ref self, %self
-// CHECK:STDOUT:   %.loc15_14.1: ref i32 = class_field_access %self.ref, member0
+// CHECK:STDOUT:   %.loc15_14.1: ref i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc15_14.2: i32 = bind_value %.loc15_14.1
 // CHECK:STDOUT:   return %.loc15_14.2
 // CHECK:STDOUT: }
@@ -162,3 +164,4 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc44_20.2: i32 = converted %.loc44_18, %.loc44_20.1
 // CHECK:STDOUT:   return %.loc44_20.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

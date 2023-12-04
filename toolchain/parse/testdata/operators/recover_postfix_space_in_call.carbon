@@ -15,7 +15,7 @@ var n: i8 = F(i8 *);
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'n'},
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i8'},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'NameExpr', text: 'F'},
 // CHECK:STDOUT:         {kind: 'CallExprStart', text: '(', subtree_size: 2},

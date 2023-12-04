@@ -19,24 +19,26 @@ fn G() -> i32 {
   return var;
 }
 
+// CHECK:STDOUT: --- returned_var.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "returned_var.carbon" {
-// CHECK:STDOUT:   class_decl @C, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type C, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class C> = field a, member0
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type C, i32
+// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class C> = field a, element0
 // CHECK:STDOUT:   %a: <unbound field of class C> = bind_name a, %.loc8_8.2
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_field_type C, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class C> = field b, member1
+// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type C, i32
+// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class C> = field b, element1
 // CHECK:STDOUT:   %b: <unbound field of class C> = bind_name b, %.loc9_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -51,9 +53,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc13_34: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc13_42: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc13_43.1: {.a: i32, .b: i32} = struct_literal (%.loc13_34, %.loc13_42)
-// CHECK:STDOUT:   %.loc13_43.2: ref i32 = class_field_access %return, member0
+// CHECK:STDOUT:   %.loc13_43.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc13_43.3: init i32 = initialize_from %.loc13_34 to %.loc13_43.2
-// CHECK:STDOUT:   %.loc13_43.4: ref i32 = class_field_access %return, member1
+// CHECK:STDOUT:   %.loc13_43.4: ref i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc13_43.5: init i32 = initialize_from %.loc13_42 to %.loc13_43.4
 // CHECK:STDOUT:   %.loc13_43.6: init C = class_init (%.loc13_43.3, %.loc13_43.5), %return
 // CHECK:STDOUT:   %.loc13_43.7: init C = converted %.loc13_43.1, %.loc13_43.6
@@ -70,3 +72,4 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc18_16: i32 = bind_value %result
 // CHECK:STDOUT:   return %.loc18_16
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

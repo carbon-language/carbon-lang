@@ -12,15 +12,18 @@
 // CHECK:STDERR:                     ^
 fn Run() -> String {}
 
+// CHECK:STDOUT: --- fail_bad_run.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT:   %.loc13: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_bad_run.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> %return: String {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

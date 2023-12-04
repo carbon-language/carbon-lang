@@ -9,13 +9,15 @@
 // CHECK:STDERR:             ^~~~~~~~
 var x: {} = {.a = 1};
 
+// CHECK:STDOUT: --- fail_assign_to_empty.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_9.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc10_9.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc10_20: type = struct_type {.a: i32}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_assign_to_empty.carbon" {
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc10_9.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.loc10_9.1
 // CHECK:STDOUT:   %x.var: ref {} = var x
@@ -24,3 +26,4 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:   %.loc10_20: {.a: i32} = struct_literal (%.loc10_19)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

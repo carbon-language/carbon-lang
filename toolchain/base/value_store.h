@@ -49,7 +49,7 @@ class Real : public Printable<Real> {
 
 // Corresponds to an integer value represented by an APInt.
 struct IntId : public IdBase, public Printable<IntId> {
-  using IndexedType = const llvm::APInt;
+  using ValueType = const llvm::APInt;
   static const IntId Invalid;
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -61,7 +61,7 @@ constexpr IntId IntId::Invalid(IntId::InvalidIndex);
 
 // Corresponds to a Real value.
 struct RealId : public IdBase, public Printable<RealId> {
-  using IndexedType = const Real;
+  using ValueType = const Real;
   static const RealId Invalid;
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -73,7 +73,7 @@ constexpr RealId RealId::Invalid(RealId::InvalidIndex);
 
 // Corresponds to a StringRef.
 struct StringId : public IdBase, public Printable<StringId> {
-  using IndexedType = const std::string;
+  using ValueType = const std::string;
   static const StringId Invalid;
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -117,14 +117,19 @@ class ValueStoreNotPrintable {};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
-template <typename IdT, typename ValueT = typename IdT::IndexedType>
+//
+// IdT::ValueType must represent the type being indexed.
+template <typename IdT>
 class ValueStore
-    : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
-                              Yaml::Printable<ValueStore<IdT, ValueT>>,
-                              Internal::ValueStoreNotPrintable> {
+    : public std::conditional<
+          std::is_base_of_v<Printable<typename IdT::ValueType>,
+                            typename IdT::ValueType>,
+          Yaml::Printable<ValueStore<IdT>>, Internal::ValueStoreNotPrintable> {
  public:
+  using ValueType = typename IdT::ValueType;
+
   // Stores the value and returns an ID to reference it.
-  auto Add(ValueT value) -> IdT {
+  auto Add(ValueType value) -> IdT {
     IdT id = IdT(values_.size());
     CARBON_CHECK(id.index >= 0) << "Id overflow";
     values_.push_back(std::move(value));
@@ -139,13 +144,13 @@ class ValueStore
   }
 
   // Returns a mutable value for an ID.
-  auto Get(IdT id) -> ValueT& {
+  auto Get(IdT id) -> ValueType& {
     CARBON_CHECK(id.index >= 0) << id.index;
     return values_[id.index];
   }
 
   // Returns the value for an ID.
-  auto Get(IdT id) const -> const ValueT& {
+  auto Get(IdT id) const -> const ValueType& {
     CARBON_CHECK(id.index >= 0) << id.index;
     return values_[id.index];
   }
@@ -163,11 +168,11 @@ class ValueStore
     });
   }
 
-  auto array_ref() const -> llvm::ArrayRef<ValueT> { return values_; }
+  auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }
   auto size() const -> int { return values_.size(); }
 
  private:
-  llvm::SmallVector<std::decay_t<ValueT>> values_;
+  llvm::SmallVector<std::decay_t<ValueType>> values_;
 };
 
 // Storage for StringRefs. The caller is responsible for ensuring storage is

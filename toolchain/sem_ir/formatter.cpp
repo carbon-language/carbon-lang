@@ -437,6 +437,12 @@ class InstNamer {
                                .name_id);
           continue;
         }
+        case ClassDecl::Kind: {
+          add_inst_name_id(
+              sem_ir_.classes().Get(inst.As<ClassDecl>().class_id).name_id,
+              ".decl");
+          continue;
+        }
         case ClassType::Kind: {
           add_inst_name_id(
               sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
@@ -496,10 +502,17 @@ class Formatter {
         out_(out),
         inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
 
+  // Prints the SemIR.
+  //
+  // Constants are printed first and may be referenced by later sections,
+  // including file-scoped instructions. The file scope may contain entity
+  // declarations which are defined later, such as classes.
   auto Format() -> void {
+    out_ << "--- " << sem_ir_.filename() << "\n\n";
+
     FormatConstants();
 
-    out_ << "file \"" << sem_ir_.filename() << "\" {\n";
+    out_ << "file {\n";
     // TODO: Handle the case where there are multiple top-level instruction
     // blocks. For example, there may be branching in the initializer of a
     // global or a type expression.
@@ -516,6 +529,9 @@ class Formatter {
     for (int i : llvm::seq(sem_ir_.functions().size())) {
       FormatFunction(FunctionId(i));
     }
+
+    // End-of-file newline.
+    out_ << "\n";
   }
 
   auto FormatConstants() -> void {
@@ -700,6 +716,12 @@ class Formatter {
     }
   }
 
+  // Print ClassDecl with type-like semantics even though it lacks a type_id.
+  auto FormatInstructionLHS(InstId inst_id, ClassDecl /*inst*/) -> void {
+    FormatInstName(inst_id);
+    out_ << " = ";
+  }
+
   template <typename InstT>
   auto FormatInstructionRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
@@ -863,7 +885,7 @@ class Formatter {
     sem_ir_.ints().Get(id).print(out_, /*isSigned=*/false);
   }
 
-  auto FormatArg(MemberIndex index) -> void { out_ << index; }
+  auto FormatArg(ElementIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
     out_ << '{';

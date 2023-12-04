@@ -15,7 +15,7 @@ fn foo(addr a: i32*);
 // CHECK:STDOUT:             {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'PatternBinding', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'Address', text: 'addr', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ParamList', text: ')', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},

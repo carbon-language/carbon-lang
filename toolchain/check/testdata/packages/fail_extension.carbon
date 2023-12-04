@@ -70,30 +70,60 @@ package SwappedExt api;
 package SwappedExt impl;
 
 
-// CHECK:STDOUT: file "main.incorrect" {
+// CHECK:STDOUT: --- main.incorrect
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "main_redundant_with_swapped_ext.impl.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- main_redundant_with_swapped_ext.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "main_lib.incorrect" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- main_lib.incorrect
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "main_lib_impl.incorrect" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- main_lib_impl.incorrect
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "package.incorrect" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- package.incorrect
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "package_impl.incorrect" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- package_impl.incorrect
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %Package: <namespace> = bind_name Package, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "package_lib.incorrect" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- package_lib.incorrect
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "package_lib_impl.incorrect" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- package_lib_impl.incorrect
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %Package: <namespace> = bind_name Package, %import
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "swapped_ext.impl.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- swapped_ext.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "swapped_ext.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- swapped_ext.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %SwappedExt: <namespace> = bind_name SwappedExt, %import
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

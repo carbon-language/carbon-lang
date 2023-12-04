@@ -15,7 +15,9 @@ fn VarScope(b: bool) -> i32 {
   return n;
 }
 
-// CHECK:STDOUT: file "fail_scope.carbon" {
+// CHECK:STDOUT: --- fail_scope.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
 // CHECK:STDOUT:   %VarScope: <function> = fn_decl @VarScope
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -37,3 +39,4 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %n.ref.loc15: <error> = name_ref n, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

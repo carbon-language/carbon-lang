@@ -22,12 +22,14 @@ fn Run() -> i32 {
   return F() + Class.F();
 }
 
+// CHECK:STDOUT: --- scope.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "scope.carbon" {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
@@ -77,3 +79,4 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc22_14.3: i32 = add %.loc22_14.2, %.loc22_23.3
 // CHECK:STDOUT:   return %.loc22_14.3
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
