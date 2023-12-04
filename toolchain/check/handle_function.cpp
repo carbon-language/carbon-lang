@@ -31,18 +31,16 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
     auto return_node_copy = return_node;
     return_type_id = context.insts().Get(return_storage_id).type_id();
 
-    if (!context.TryToCompleteType(return_type_id, [&] {
-          CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                            "Function returns incomplete type `{0}`.",
-                            std::string);
-          return context.emitter().Build(
-              return_node_copy, IncompleteTypeInFunctionReturnType,
-              context.sem_ir().StringifyType(return_type_id, true));
-        })) {
-      return_type_id = SemIR::TypeId::Error;
-    } else if (!SemIR::GetInitializingRepresentation(context.sem_ir(),
-                                                     return_type_id)
-                    .has_return_slot()) {
+    return_type_id = context.AsCompleteType(return_type_id, [&] {
+      CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
+                        "Function returns incomplete type `{0}`.", std::string);
+      return context.emitter().Build(
+          return_node_copy, IncompleteTypeInFunctionReturnType,
+          context.sem_ir().StringifyType(return_type_id, true));
+    });
+
+    if (!SemIR::GetInitializingRepresentation(context.sem_ir(), return_type_id)
+             .has_return_slot()) {
       // The function only has a return slot if it uses in-place initialization.
     } else {
       return_slot_id = return_storage_id;

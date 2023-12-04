@@ -222,6 +222,17 @@ class Context {
       std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
           std::nullopt) -> bool;
 
+  // Returns the type `type_id` as a complete type, or produces an incomplete
+  // type error and returns an error type. This is a convenience wrapper around
+  // TryToCompleteType.
+  auto AsCompleteType(
+      SemIR::TypeId type_id,
+      std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
+          std::nullopt) -> SemIR::TypeId {
+    return TryToCompleteType(type_id, diagnoser) ? type_id
+                                                 : SemIR::TypeId::Error;
+  }
+
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 

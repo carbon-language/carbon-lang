@@ -204,15 +204,13 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
   }
 
   auto base_type_id = ExprAsType(context, parse_node, base_type_expr_id);
-  if (!context.TryToCompleteType(base_type_id, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                          "Base `{0}` is an incomplete type.", std::string);
-        return context.emitter().Build(
-            parse_node, IncompleteTypeInBaseDecl,
-            context.sem_ir().StringifyType(base_type_id, true));
-      })) {
-    base_type_id = SemIR::TypeId::Error;
-  }
+  base_type_id = context.AsCompleteType(base_type_id, [&] {
+    CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
+                      "Base `{0}` is an incomplete type.", std::string);
+    return context.emitter().Build(
+        parse_node, IncompleteTypeInBaseDecl,
+        context.sem_ir().StringifyType(base_type_id, true));
+  });
 
   if (base_type_id != SemIR::TypeId::Error) {
     // For now, we treat all types that aren't introduced by a `class`
