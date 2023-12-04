@@ -233,29 +233,35 @@ auto HandlePointerMemberAccessExpr(Context& context, Parse::NodeId parse_node)
 }
 
 static auto GetIdentifierAsName(Context& context, Parse::NodeId parse_node)
-    -> SemIR::NameId {
+    -> std::optional<SemIR::NameId> {
   auto token = context.parse_tree().node_token(parse_node);
   if (context.tokens().GetKind(token) != Lex::TokenKind::Identifier) {
     CARBON_CHECK(context.parse_tree().node_has_error(parse_node));
-    return SemIR::NameId::Invalid;
+    return std::nullopt;
   }
   return SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(token));
 }
 
 auto HandleName(Context& context, Parse::NodeId parse_node) -> bool {
   // The parent is responsible for binding the name.
-  context.node_stack().Push(parse_node,
-                            GetIdentifierAsName(context, parse_node));
+  auto name_id = GetIdentifierAsName(context, parse_node);
+  if (!name_id) {
+    return context.TODO(parse_node, "Error recovery from keyword name.");
+  }
+  context.node_stack().Push(parse_node, *name_id);
   return true;
 }
 
 auto HandleNameExpr(Context& context, Parse::NodeId parse_node) -> bool {
   auto name_id = GetIdentifierAsName(context, parse_node);
-  auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
+  if (!name_id) {
+    return context.TODO(parse_node, "Error recovery from keyword name.");
+  }
+  auto value_id = context.LookupUnqualifiedName(parse_node, *name_id);
   value_id = GetExprValueForLookupResult(context, value_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(parse_node, SemIR::NameRef{parse_node, value.type_id(),
-                                                    name_id, value_id});
+                                                    *name_id, value_id});
   return true;
 }
 
