@@ -139,6 +139,10 @@ class InstNamer {
       return BuiltinKind::FromInt(inst_id.index).label().str();
     }
 
+    if (inst_id == InstId::PackageNamespace) {
+      return "package";
+    }
+
     auto& [inst_scope, inst_name] = insts[inst_id.index];
     if (!inst_name) {
       // This should not happen in valid IR.

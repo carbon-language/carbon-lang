@@ -11,6 +11,7 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: --- unary_op.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Not = %Not}
 // CHECK:STDOUT:   %Not: <function> = fn_decl @Not
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

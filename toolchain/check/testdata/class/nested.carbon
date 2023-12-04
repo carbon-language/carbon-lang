@@ -38,6 +38,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Outer = %Outer.decl, .F = %F}
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F

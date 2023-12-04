@@ -17,6 +17,7 @@ fn F(a: i32) {
 // CHECK:STDOUT: --- fail_duplicate_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

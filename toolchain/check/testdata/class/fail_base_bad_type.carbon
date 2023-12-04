@@ -74,6 +74,7 @@ class DeriveFromFinal {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Final = %Final.decl, .DeriveFromNonType = %DeriveFromNonType.decl, .DeriveFromi32 = %DeriveFromi32.decl, .DeriveFromTuple = %DeriveFromTuple.decl, .DeriveFromStruct = %DeriveFromStruct.decl, .Incomplete = %Incomplete.decl, .DeriveFromIncomplete = %DeriveFromIncomplete.decl, .DeriveFromFinal = %DeriveFromFinal.decl}
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
 // CHECK:STDOUT:   %Base: type = class_type @Base
 // CHECK:STDOUT:   %Final.decl = class_decl @Final, ()

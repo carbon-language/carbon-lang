@@ -11,6 +11,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
