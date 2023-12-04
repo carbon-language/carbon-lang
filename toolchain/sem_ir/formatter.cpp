@@ -146,9 +146,6 @@ class InstNamer {
     auto& [inst_scope, inst_name] = insts[inst_id.index];
     if (!inst_name) {
       // This should not happen in valid IR.
-      // TODO: This is encountered for names in namespaces: the namespace is
-      // declared before the name, and then the formatter prints the name scope
-      // for the name before it's been added.
       std::string str;
       llvm::raw_string_ostream(str) << "<unexpected instref " << inst_id << ">";
       return str;
