@@ -586,6 +586,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 
+// TODO: Is there a benefit to having different parse node kinds for every
+// different modifier token?
+
 // Access modifier keywords `private` or `protected`:
 // AccessModifierKeyword
 //

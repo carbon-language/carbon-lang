@@ -67,6 +67,8 @@ struct DeclState {
   DeclKind kind;
 };
 
+static_assert(sizeof(DeclState) == 16, "Unexpected size of `DeclState`!");
+
 // Stack of `DeclState` values, representing all the declarations we are
 // currently nested within.
 // Invariant: Bottom of the stack always has a "DeclState::FileScope" entry.
