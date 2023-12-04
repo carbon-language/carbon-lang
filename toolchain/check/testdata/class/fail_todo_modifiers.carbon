@@ -66,22 +66,23 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Access, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.Access = %Access.decl, .Base = %Base.decl, .Abstract = %Abstract.decl}
+// CHECK:STDOUT:   %Access.decl = class_decl @Access, ()
 // CHECK:STDOUT:   %Access: type = class_type @Access
-// CHECK:STDOUT:   class_decl @Base, ()
+// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
 // CHECK:STDOUT:   %Base: type = class_type @Base
-// CHECK:STDOUT:   class_decl @Abstract, ()
+// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, ()
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Access {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %.loc22_16.1: type = unbound_field_type Access, i32
-// CHECK:STDOUT:   %.loc22_16.2: <unbound field of class Access> = field k, member0
+// CHECK:STDOUT:   %.loc22_16.1: type = unbound_element_type Access, i32
+// CHECK:STDOUT:   %.loc22_16.2: <unbound field of class Access> = field k, element0
 // CHECK:STDOUT:   %k: <unbound field of class Access> = bind_name k, %.loc22_16.2
-// CHECK:STDOUT:   %.loc27_18.1: type = unbound_field_type Access, i32
-// CHECK:STDOUT:   %.loc27_18.2: <unbound field of class Access> = field l, member1
+// CHECK:STDOUT:   %.loc27_18.1: type = unbound_element_type Access, i32
+// CHECK:STDOUT:   %.loc27_18.2: <unbound field of class Access> = field l, element1
 // CHECK:STDOUT:   %l: <unbound field of class Access> = bind_name l, %.loc27_18.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

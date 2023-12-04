@@ -71,17 +71,18 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @DuplicatePrivate, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.DuplicatePrivate = %DuplicatePrivate.decl, .TwoAccess = %TwoAccess.decl, .TwoAbstract = %TwoAbstract.decl, .Virtual = %Virtual.decl, .WrongOrder = %WrongOrder.decl, .AbstractAndBase = %AbstractAndBase.decl}
+// CHECK:STDOUT:   %DuplicatePrivate.decl = class_decl @DuplicatePrivate, ()
 // CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate
-// CHECK:STDOUT:   class_decl @TwoAccess, ()
+// CHECK:STDOUT:   %TwoAccess.decl = class_decl @TwoAccess, ()
 // CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess
-// CHECK:STDOUT:   class_decl @TwoAbstract, ()
+// CHECK:STDOUT:   %TwoAbstract.decl = class_decl @TwoAbstract, ()
 // CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract
-// CHECK:STDOUT:   class_decl @Virtual, ()
+// CHECK:STDOUT:   %Virtual.decl = class_decl @Virtual, ()
 // CHECK:STDOUT:   %Virtual: type = class_type @Virtual
-// CHECK:STDOUT:   class_decl @WrongOrder, ()
+// CHECK:STDOUT:   %WrongOrder.decl = class_decl @WrongOrder, ()
 // CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder
-// CHECK:STDOUT:   class_decl @AbstractAndBase, ()
+// CHECK:STDOUT:   %AbstractAndBase.decl = class_decl @AbstractAndBase, ()
 // CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

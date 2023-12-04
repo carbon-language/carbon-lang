@@ -34,16 +34,17 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl}
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12_16.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc12_16.2: <unbound field of class Class> = field j, member0
+// CHECK:STDOUT:   %.loc12_16.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc12_16.2: <unbound field of class Class> = field j, element0
 // CHECK:STDOUT:   %j: <unbound field of class Class> = bind_name j, %.loc12_16.2
-// CHECK:STDOUT:   %.loc17_14.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc17_14.2: <unbound field of class Class> = field k, member1
+// CHECK:STDOUT:   %.loc17_14.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc17_14.2: <unbound field of class Class> = field k, element1
 // CHECK:STDOUT:   %k: <unbound field of class Class> = bind_name k, %.loc17_14.2
 // CHECK:STDOUT:   %.loc22: i32 = int_literal 0
 // CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22

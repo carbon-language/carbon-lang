@@ -15,7 +15,7 @@ class D {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'BaseModifier', text: 'base'},
+// CHECK:STDOUT:         {kind: 'DeclModifierKeyword', text: 'base'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'B'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},
@@ -27,7 +27,7 @@ class D {
 // CHECK:STDOUT:         {kind: 'NameExpr', text: 'B'},
 // CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'BaseModifier', text: 'base'},
+// CHECK:STDOUT:         {kind: 'DeclModifierKeyword', text: 'base'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'Nested'},
 // CHECK:STDOUT:       {kind: 'ClassDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 12},

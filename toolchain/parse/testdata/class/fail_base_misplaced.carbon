@@ -17,7 +17,7 @@ fn F() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'BaseModifier', text: 'base'},
+// CHECK:STDOUT:         {kind: 'DeclModifierKeyword', text: 'base'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'B'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},

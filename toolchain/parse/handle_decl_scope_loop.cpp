@@ -99,13 +99,6 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   // result in a `set_packaging_state` call. Note, this may not always be
   // necessary but is probably cheaper than validating.
 
-  // FIXME: Should we change from:
-  //   `ReplacePlaceholderNode` in this function
-  // to:
-  //   `ReplacePlaceholderNode` in the handlers for the different kinds of
-  //   declarations
-  // ?
-
   // Create a state with the correct starting position, with a dummy kind until
   // we see the declaration's introducer.
   context.PushState(State::DeclScopeLoop);
@@ -139,9 +132,10 @@ auto HandleDeclScopeLoop(Context& context) -> void {
       case Lex::TokenKind::Base:
         // `base` may be followed by:
         // - a colon
-        //   => assume it is an introducer, as in `extend base: BaseType;`
+        //   => assume it is an introducer, as in `extend base: BaseType;`.
         // - a modifier or an introducer
-        //   => assume it is a modifier, as in `base class`
+        //   => assume it is a modifier, as in `base class`; which is handled
+        //      by falling through to the next case.
         // Anything else is an error.
         if (context.PositionIs(Lex::TokenKind::Colon, Lookahead::NextToken)) {
           context.ReplacePlaceholderNode(
@@ -157,7 +151,12 @@ auto HandleDeclScopeLoop(Context& context) -> void {
           // TODO: If the next token isn't a colon or `class`, try to recover
           // based on whether we're in a class, whether we have an `extend`
           // modifier, and the following tokens.
-          HandleUnrecognizedDecl(context, state.subtree_start);
+          context.AddLeafNode(NodeKind::InvalidParse, context.Consume(),
+                              /*has_error=*/true);
+          CARBON_DIAGNOSTIC(ExpectedAfterBase, Error,
+                            "`class` or `:` expected after `base`.");
+          context.emitter().Emit(*context.position(), ExpectedAfterBase);
+          OutputInvalidParseSubtree(context, state.subtree_start);
           return;
         }
         [[fallthrough]];

@@ -48,26 +48,22 @@ struct DeclState {
   enum DeclKind { FileScope, Class, Constraint, Fn, Interface, Let, Var };
 
   explicit DeclState(DeclKind decl_kind, Parse::NodeId parse_node)
-      : first_node(parse_node), kind(decl_kind) {}
+      : kind(decl_kind), first_node(parse_node) {}
+
+  DeclKind kind;
 
   // Nodes of modifiers on this declaration. `Invalid` if no modifier of that
   // kind is present.
   Parse::NodeId saw_access_modifier = Parse::NodeId::Invalid;
   Parse::NodeId saw_decl_modifier = Parse::NodeId::Invalid;
 
-  // Node corresponding to the first token of the declaration.
-  Parse::NodeId first_node;
-
-  // These fields are last because they are smaller.
-
   // Invariant: contains just the modifiers represented by `saw_access_modifier`
   // and `saw_other_modifier`.
   KeywordModifierSet modifier_set = KeywordModifierSet::None;
 
-  DeclKind kind;
+  // Node corresponding to the first token of the declaration.
+  Parse::NodeId first_node;
 };
-
-static_assert(sizeof(DeclState) == 16, "Unexpected size of `DeclState`!");
 
 // Stack of `DeclState` values, representing all the declarations we are
 // currently nested within.
