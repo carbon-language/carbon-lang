@@ -206,7 +206,7 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
   auto base_type_id = ExprAsType(context, parse_node, base_type_expr_id);
   if (!context.TryToCompleteType(base_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                          "Deriving from incomplete type `{0}`.", std::string);
+                          "Base `{0}` is an incomplete type.", std::string);
         return context.emitter().Build(
             parse_node, IncompleteTypeInBaseDecl,
             context.sem_ir().StringifyType(base_type_id, true));

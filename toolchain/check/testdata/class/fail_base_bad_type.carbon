@@ -40,7 +40,7 @@ class DeriveFromStruct {
 base class Incomplete;
 
 class DeriveFromIncomplete {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+6]]:19: ERROR: Deriving from incomplete type `Incomplete`.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+6]]:19: ERROR: Base `Incomplete` is an incomplete type.
   // CHECK:STDERR:   base: Incomplete;
   // CHECK:STDERR:                   ^
   // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE-6]]:1: Class was forward declared here.
