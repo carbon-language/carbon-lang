@@ -27,7 +27,7 @@ class A {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'A'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'A'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'EmptyDecl', text: ';', has_error: yes},
 // CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
@@ -36,7 +36,7 @@ class A {
 // CHECK:STDOUT:       {kind: 'BaseDecl', text: 'base', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'EmptyDecl', text: ':', has_error: yes},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'Name', text: 'n'},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'n'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 5},

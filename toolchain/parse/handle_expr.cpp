@@ -73,7 +73,7 @@ auto HandleExprInPostfix(Context& context) -> void {
   // expression.
   switch (context.PositionKind()) {
     case Lex::TokenKind::Identifier: {
-      context.AddLeafNode(NodeKind::NameExpr, context.Consume());
+      context.AddLeafNode(NodeKind::IdentifierNameExpr, context.Consume());
       context.PushState(state);
       break;
     }

@@ -10,9 +10,9 @@ fn foo(addr a: i32*);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'Name', text: 'a'},
+// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'a'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'PostfixOperator', text: '*', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 4},
