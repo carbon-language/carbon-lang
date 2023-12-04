@@ -31,6 +31,9 @@ struct InstId : public IdBase, public Printable<InstId> {
 #define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) static const InstId Builtin##Name;
 #include "toolchain/sem_ir/builtin_kind.def"
 
+  // The namespace for a `package` expression.
+  static const InstId PackageNamespace;
+
   // Returns the cross-reference instruction ID for a builtin. This relies on
   // File guarantees for builtin cross-reference placement.
   static constexpr auto ForBuiltin(BuiltinKind kind) -> InstId {
@@ -58,6 +61,9 @@ constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
   constexpr InstId InstId::Builtin##Name =    \
       InstId::ForBuiltin(BuiltinKind::Name);
 #include "toolchain/sem_ir/builtin_kind.def"
+
+// The package namespace will be the instruction after builtins.
+constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -139,6 +145,8 @@ struct NameId : public IdBase, public Printable<NameId> {
   static const NameId SelfType;
   // The name of the return slot in a function.
   static const NameId ReturnSlot;
+  // The name of `package`.
+  static const NameId PackageNamespace;
 
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
@@ -165,6 +173,8 @@ struct NameId : public IdBase, public Printable<NameId> {
       out << "SelfType";
     } else if (*this == ReturnSlot) {
       out << "ReturnSlot";
+    } else if (*this == PackageNamespace) {
+      out << "PackageNamespace";
     } else {
       CARBON_CHECK(index >= 0) << "Unknown index";
       IdBase::Print(out);
@@ -176,6 +186,7 @@ constexpr NameId NameId::Invalid = NameId(NameId::InvalidIndex);
 constexpr NameId NameId::SelfValue = NameId(NameId::InvalidIndex - 1);
 constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
 constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
+constexpr NameId NameId::PackageNamespace = NameId(NameId::InvalidIndex - 4);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase, public Printable<NameScopeId> {

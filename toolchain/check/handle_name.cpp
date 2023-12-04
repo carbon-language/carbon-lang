@@ -7,6 +7,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -269,6 +270,15 @@ auto HandleQualifiedDecl(Context& context, Parse::NodeId parse_node) -> bool {
   }
 
   context.decl_name_stack().ApplyNameQualifier(parse_node2, name_id2);
+  return true;
+}
+
+auto HandlePackageExpr(Context& context, Parse::NodeId parse_node) -> bool {
+  context.AddInstAndPush(
+      parse_node,
+      SemIR::NameRef{
+          parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+          SemIR::NameId::PackageNamespace, SemIR::InstId::PackageNamespace});
   return true;
 }
 

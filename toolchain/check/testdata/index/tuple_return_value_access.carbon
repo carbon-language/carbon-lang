@@ -18,6 +18,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .Run = %Run}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }

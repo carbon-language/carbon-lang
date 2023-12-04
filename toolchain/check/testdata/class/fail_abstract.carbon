@@ -23,6 +23,7 @@ fn Make() -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Make = %Make}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make

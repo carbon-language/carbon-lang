@@ -9,6 +9,7 @@ fn Foo(a: i32,) {}
 // CHECK:STDOUT: --- params_one_comma.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo}
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

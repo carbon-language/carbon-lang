@@ -16,6 +16,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_deref_namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.loc7, .F = %F}
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }

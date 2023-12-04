@@ -36,6 +36,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT: --- fail_reachable_fallthrough.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.If1 = %If1, .If2 = %If2, .If3 = %If3}
 // CHECK:STDOUT:   %If1: <function> = fn_decl @If1
 // CHECK:STDOUT:   %If2: <function> = fn_decl @If2
 // CHECK:STDOUT:   %If3: <function> = fn_decl @If3

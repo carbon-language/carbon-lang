@@ -13,6 +13,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -120,9 +121,18 @@ static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
-  // Add a block for the Parse::Tree.
+  // Add a block for the file.
   context.inst_block_stack().Push();
-  context.PushScope();
+
+  // Define the package scope, with an instruction for `package` expressions to
+  // reference.
+  auto package_scope = context.name_scopes().Add();
+  auto package_inst = context.AddInst(SemIR::Namespace{
+      Parse::NodeId::Invalid,
+      context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+      package_scope});
+  CARBON_CHECK(package_inst == SemIR::InstId::PackageNamespace);
+  context.PushScope(SemIR::InstId::Invalid, package_scope);
 
   AddImports(context, unit_info);
 

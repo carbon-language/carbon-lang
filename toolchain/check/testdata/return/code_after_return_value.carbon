@@ -19,6 +19,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: --- code_after_return_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
