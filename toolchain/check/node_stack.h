@@ -226,16 +226,6 @@ class NodeStack {
                    << "; see value in ParseNodeKindToIdKind";
   }
 
-  // Peeks at the ID associated with the top of the name stack, if it's of the
-  // specified kind.
-  template <Parse::NodeKind::RawEnumType RequiredParseKind>
-  auto PeekIf() const -> std::optional<decltype(Peek<RequiredParseKind>())> {
-    if (PeekIs<RequiredParseKind>()) {
-      return Peek<RequiredParseKind>();
-    }
-    return std::nullopt;
-  }
-
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
