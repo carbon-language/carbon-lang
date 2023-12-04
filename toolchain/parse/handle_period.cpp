@@ -22,7 +22,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     // OK, `.` identifier.
   } else if (node_kind != NodeKind::QualifiedDecl &&
              context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
-                                             NodeKind::Name)) {
+                                             NodeKind::BaseName)) {
     // OK, `.base`. This is allowed in any name context other than declaring a
     // new qualified name: `fn Namespace.base() {}`
   } else {
