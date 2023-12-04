@@ -1006,7 +1006,7 @@ static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
       default:
         CARBON_DIAGNOSTIC(AddrSelfIsNonRef, Error,
                           "`addr self` method cannot be invoked on a value.");
-        context.emitter().Emit(call_parse_node, AddrSelfIsNonRef);
+        context.emitter().Emit(TokenOnly(call_parse_node), AddrSelfIsNonRef);
         return SemIR::InstId::BuiltinError;
     }
     self_or_addr_id = context.AddInst(SemIR::AddressOf{

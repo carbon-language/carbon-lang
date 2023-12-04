@@ -14,9 +14,9 @@ class B {
 
 fn F(s: {.a: A}, b: B) {
   // `s` has only a value representation, so this must be invalid.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:3: ERROR: `addr self` method cannot be invoked on a value.
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   s.a.F();
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:             ^~~~
@@ -24,9 +24,9 @@ fn F(s: {.a: A}, b: B) {
 
   // `b` has an object representation for `A`, but this is still invalid for
   // consistency.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:3: ERROR: `addr self` method cannot be invoked on a value.
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   b.a.F();
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-22]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:             ^~~~
