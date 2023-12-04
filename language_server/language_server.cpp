@@ -76,12 +76,12 @@ auto LanguageServer::onReply(llvm::json::Value /*id*/,
   return true;
 }
 
-// Returns the text of first child of kind Parse::NodeKind::Name.
+// Returns the text of first child of kind Parse::NodeKind::IdentifierName.
 static auto GetName(const SharedValueStores& value_stores,
                     const Lex::TokenizedBuffer& tokens, const Parse::Tree& p,
                     Parse::NodeId node) -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
-    if (p.node_kind(ch) == Parse::NodeKind::Name) {
+    if (p.node_kind(ch) == Parse::NodeKind::IdentifierName) {
       return value_stores.identifiers().Get(
           tokens.GetIdentifier(p.node_token(node)));
     }
