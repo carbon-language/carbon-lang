@@ -35,7 +35,7 @@ enum class DiagnosticLevel : int8_t {
 // Provides a definition of a diagnostic. For example:
 //   CARBON_DIAGNOSTIC(MyDiagnostic, Error, "Invalid code!");
 //   CARBON_DIAGNOSTIC(MyDiagnostic, Warning, "Found {0}, expected {1}.",
-//              llvm::StringRef, llvm::StringRef);
+//                     std::string, std::string);
 //
 // Arguments are passed to llvm::formatv; see:
 // https://llvm.org/doxygen/FormatVariadic_8h_source.html
