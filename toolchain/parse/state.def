@@ -292,6 +292,12 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //   1. TypeAfterIntroducerAsClass
 //   2. DeclScopeLoop
 //
+// base : ...
+// ^~~~~~
+//   1. Expr
+//   2. BaseDecl
+//   3. DeclScopeLoop
+//
 // constraint ...
 // ^~~~~~~~~~
 //   1. TypeAfterIntroducerAsNamedConstraint
@@ -1020,6 +1026,15 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface, NamedConstra
 //                                        ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
+
+// Handles processing of a completed `base: B` declaration.
+//
+// base: B ;
+//         ^
+// base: B ??? ;
+//         ^
+//   (state done)
+CARBON_PARSE_STATE(BaseDecl)
 
 // Handles the start of a `var` or `returned var`.
 //

@@ -36,8 +36,7 @@ auto DeclNameStack::FinishName() -> NameContext {
         .PopAndDiscardSoloParseNode<Parse::NodeKind::QualifiedDecl>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
-    auto [parse_node, name_id] =
-        context_->node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+    auto [parse_node, name_id] = context_->node_stack().PopNameWithParseNode();
     ApplyNameQualifier(parse_node, name_id);
   }
 

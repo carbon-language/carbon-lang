@@ -55,8 +55,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
   // TODO: Handle `_` bindings.
 
   // Every other kind of pattern binding has a name.
-  auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+  auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
