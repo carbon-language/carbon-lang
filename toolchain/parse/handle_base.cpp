@@ -6,9 +6,6 @@
 
 namespace Carbon::Parse {
 
-// Processing of the `class` declaration and definition themselves is shared
-// with interfaces and constraints, and is located in handle_type.cpp.
-
 // Handles processing of a complete `base: B` declaration.
 auto HandleBaseDecl(Context& context) -> void {
   auto state = context.PopState();
