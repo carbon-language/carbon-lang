@@ -170,7 +170,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case NameRef::Kind:
     case StructType::Kind:
     case TupleType::Kind:
-    case UnboundFieldType::Kind:
+    case UnboundElementType::Kind:
       return 0;
     case ConstType::Kind:
       return -1;
@@ -187,6 +187,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
     case Assign::Kind:
+    case Base::Kind:
     case BinaryOperatorAdd::Kind:
     case BindName::Kind:
     case BindValue::Kind:
@@ -198,7 +199,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case BranchWithArg::Kind:
     case Call::Kind:
     case ClassDecl::Kind:
-    case ClassFieldAccess::Kind:
+    case ClassElementAccess::Kind:
     case ClassInit::Kind:
     case Converted::Kind:
     case Deref::Kind:
@@ -374,12 +375,12 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
             {.inst_id = GetTypeAllowBuiltinTypes(refs[step.index])});
         break;
       }
-      case UnboundFieldType::Kind: {
+      case UnboundElementType::Kind: {
         if (step.index == 0) {
           out << "<unbound field of class ";
           steps.push_back(step.Next());
           steps.push_back({.inst_id = GetTypeAllowBuiltinTypes(
-                               inst.As<UnboundFieldType>().class_type_id)});
+                               inst.As<UnboundElementType>().class_type_id)});
         } else {
           out << ">";
         }
@@ -389,6 +390,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
       case Assign::Kind:
+      case Base::Kind:
       case BinaryOperatorAdd::Kind:
       case BindName::Kind:
       case BindValue::Kind:
@@ -401,7 +403,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case Builtin::Kind:
       case Call::Kind:
       case ClassDecl::Kind:
-      case ClassFieldAccess::Kind:
+      case ClassElementAccess::Kind:
       case ClassInit::Kind:
       case Converted::Kind:
       case CrossRef::Kind:
@@ -470,6 +472,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case Assign::Kind:
+      case Base::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
@@ -521,7 +524,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TupleValue::Kind:
       case TupleType::Kind:
       case UnaryOperatorNot::Kind:
-      case UnboundFieldType::Kind:
+      case UnboundElementType::Kind:
       case ValueOfInitializer::Kind:
         return value_category;
 
@@ -542,8 +545,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case ClassFieldAccess::Kind: {
-        inst_id = inst.As<ClassFieldAccess>().base_id;
+      case ClassElementAccess::Kind: {
+        inst_id = inst.As<ClassElementAccess>().base_id;
         // A value of class type is a pointer to an object representation.
         // Therefore, if the base is a value, the result is an ephemeral
         // reference.

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/modifiers_allowed.h"
 
 namespace Carbon::Check {
@@ -161,6 +162,99 @@ auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
   // We may need to track a list of instruction blocks here, as we do for a
   // function.
   class_info.body_block_id = context.inst_block_stack().PeekOrAdd();
+  return true;
+}
+
+auto HandleBaseIntroducer(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
+}
+
+auto HandleBaseColon(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
+}
+
+auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
+  auto base_type_expr_id = context.node_stack().PopExpr();
+
+  auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  if (!enclosing_class_decl) {
+    CARBON_DIAGNOSTIC(BaseOutsideClass, Error,
+                      "`base` declaration can only be used in a class.");
+    context.emitter().Emit(parse_node, BaseOutsideClass);
+    return true;
+  }
+
+  auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
+  if (class_info.base_id.is_valid()) {
+    CARBON_DIAGNOSTIC(BaseRepeated, Error,
+                      "Multiple `base` declarations in class. Multiple "
+                      "inheritance is not permitted.");
+    CARBON_DIAGNOSTIC(BasePrevious, Note,
+                      "Previous `base` declaration is here.");
+    context.emitter()
+        .Build(parse_node, BaseRepeated)
+        .Note(context.insts().Get(class_info.base_id).parse_node(),
+              BasePrevious)
+        .Emit();
+    return true;
+  }
+
+  auto base_type_id = ExprAsType(context, parse_node, base_type_expr_id);
+  if (!context.TryToCompleteType(base_type_id, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
+                          "Base `{0}` is an incomplete type.", std::string);
+        return context.emitter().Build(
+            parse_node, IncompleteTypeInBaseDecl,
+            context.sem_ir().StringifyType(base_type_id, true));
+      })) {
+    base_type_id = SemIR::TypeId::Error;
+  }
+
+  if (base_type_id != SemIR::TypeId::Error) {
+    // For now, we treat all types that aren't introduced by a `class`
+    // declaration as being final classes.
+    // TODO: Once we have a better idea of which types are considered to be
+    // classes, produce a better diagnostic for deriving from a non-class type.
+    auto base_class =
+        context.insts()
+            .Get(context.sem_ir().GetTypeAllowBuiltinTypes(base_type_id))
+            .TryAs<SemIR::ClassType>();
+    if (!base_class ||
+        context.classes().Get(base_class->class_id).inheritance_kind ==
+            SemIR::Class::Final) {
+      CARBON_DIAGNOSTIC(BaseIsFinal, Error,
+                        "Deriving from final type `{0}`. Base type must be an "
+                        "`abstract` or `base` class.",
+                        std::string);
+      context.emitter().Emit(
+          parse_node, BaseIsFinal,
+          context.sem_ir().StringifyType(base_type_id, true));
+    }
+  }
+
+  // The `base` value in the class scope has an unbound element type. Instance
+  // binding will be performed when it's found by name lookup into an instance.
+  auto field_type_inst_id = context.AddInst(SemIR::UnboundElementType{
+      parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+      class_info.self_type_id, base_type_id});
+  auto field_type_id = context.CanonicalizeType(field_type_inst_id);
+  class_info.base_id = context.AddInst(SemIR::Base{
+      parse_node, field_type_id, base_type_id,
+      SemIR::ElementIndex(
+          context.args_type_info_stack().PeekCurrentBlockContents().size())});
+
+  // Add a corresponding field to the object representation of the class.
+  // TODO: Consider whether we want to use `partial T` here.
+  context.args_type_info_stack().AddInst(
+      SemIR::StructTypeField{parse_node, SemIR::NameId::Base, base_type_id});
+
+  // Bind the name `base` in the class to the base field.
+  context.decl_name_stack().AddNameToLookup(
+      context.decl_name_stack().MakeUnqualifiedName(parse_node,
+                                                    SemIR::NameId::Base),
+      class_info.base_id);
   return true;
 }
 

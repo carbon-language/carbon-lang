@@ -19,6 +19,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .Run = %Run}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -42,7 +43,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_22.1: init (i32,) = call %F.ref()
 // CHECK:STDOUT:   %.loc10_22.2: ref (i32,) = temporary_storage
 // CHECK:STDOUT:   %.loc10_22.3: ref (i32,) = temporary %.loc10_22.2, %.loc10_22.1
-// CHECK:STDOUT:   %.loc10_22.4: ref i32 = tuple_access %.loc10_22.3, member0
+// CHECK:STDOUT:   %.loc10_22.4: ref i32 = tuple_access %.loc10_22.3, element0
 // CHECK:STDOUT:   %.loc10_22.5: i32 = bind_value %.loc10_22.4
 // CHECK:STDOUT:   %.loc10_22.6: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc10_22.7: ref i32 = array_index %t.var, %.loc10_22.6

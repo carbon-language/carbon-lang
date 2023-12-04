@@ -105,6 +105,12 @@ struct Class : public Printable<Class> {
   // TODO: Handle control flow in the class body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::Invalid;
 
+  // The following members are accumulated throughout the class definition.
+
+  // The base class declaration. Invalid if the class has no base class. This is
+  // a Base instruction.
+  InstId base_id = InstId::Invalid;
+
   // The following members are set at the `}` of the class definition.
 
   // The object representation type to use for this class. This is valid once

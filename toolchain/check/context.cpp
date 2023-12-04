@@ -360,6 +360,7 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
         inst_id = inst.As<SemIR::BindName>().value_id;
         break;
 
+      case SemIR::Base::Kind:
       case SemIR::Field::Kind:
       case SemIR::FunctionDecl::Kind:
         return inst_id;
@@ -836,6 +837,7 @@ class TypeCompleter {
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
+      case SemIR::Base::Kind:
       case SemIR::BinaryOperatorAdd::Kind:
       case SemIR::BindName::Kind:
       case SemIR::BindValue::Kind:
@@ -847,7 +849,7 @@ class TypeCompleter {
       case SemIR::BranchWithArg::Kind:
       case SemIR::Call::Kind:
       case SemIR::ClassDecl::Kind:
-      case SemIR::ClassFieldAccess::Kind:
+      case SemIR::ClassElementAccess::Kind:
       case SemIR::ClassInit::Kind:
       case SemIR::Converted::Kind:
       case SemIR::Deref::Kind:
@@ -921,7 +923,7 @@ class TypeCompleter {
         CARBON_FATAL() << "Builtins should be named as cross-references";
 
       case SemIR::PointerType::Kind:
-      case SemIR::UnboundFieldType::Kind:
+      case SemIR::UnboundElementType::Kind:
         return MakeCopyRepresentation(type_id);
 
       case SemIR::ConstType::Kind:
@@ -1057,10 +1059,10 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
                            inst.As<SemIR::TupleType>().elements_id),
                        canonical_id);
       break;
-    case SemIR::UnboundFieldType::Kind: {
-      auto unbound_field_type = inst.As<SemIR::UnboundFieldType>();
+    case SemIR::UnboundElementType::Kind: {
+      auto unbound_field_type = inst.As<SemIR::UnboundElementType>();
       canonical_id.AddInteger(unbound_field_type.class_type_id.index);
-      canonical_id.AddInteger(unbound_field_type.field_type_id.index);
+      canonical_id.AddInteger(unbound_field_type.element_type_id.index);
       break;
     }
     default: {

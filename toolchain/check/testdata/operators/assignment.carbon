@@ -32,6 +32,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -51,9 +52,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_24: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc11_27: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc11_28.1: (i32, i32) = tuple_literal (%.loc11_24, %.loc11_27)
-// CHECK:STDOUT:   %.loc11_28.2: ref i32 = tuple_access %b.var, member0
+// CHECK:STDOUT:   %.loc11_28.2: ref i32 = tuple_access %b.var, element0
 // CHECK:STDOUT:   %.loc11_28.3: init i32 = initialize_from %.loc11_24 to %.loc11_28.2
-// CHECK:STDOUT:   %.loc11_28.4: ref i32 = tuple_access %b.var, member1
+// CHECK:STDOUT:   %.loc11_28.4: ref i32 = tuple_access %b.var, element1
 // CHECK:STDOUT:   %.loc11_28.5: init i32 = initialize_from %.loc11_27 to %.loc11_28.4
 // CHECK:STDOUT:   %.loc11_28.6: init (i32, i32) = tuple_init (%.loc11_28.3, %.loc11_28.5) to %b.var
 // CHECK:STDOUT:   %.loc11_28.7: init (i32, i32) = converted %.loc11_28.1, %.loc11_28.6
@@ -74,19 +75,19 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_37: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc15_45: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc15_46.1: {.a: i32, .b: i32} = struct_literal (%.loc15_37, %.loc15_45)
-// CHECK:STDOUT:   %.loc15_46.2: ref i32 = struct_access %c.var, member0
+// CHECK:STDOUT:   %.loc15_46.2: ref i32 = struct_access %c.var, element0
 // CHECK:STDOUT:   %.loc15_46.3: init i32 = initialize_from %.loc15_37 to %.loc15_46.2
-// CHECK:STDOUT:   %.loc15_46.4: ref i32 = struct_access %c.var, member1
+// CHECK:STDOUT:   %.loc15_46.4: ref i32 = struct_access %c.var, element1
 // CHECK:STDOUT:   %.loc15_46.5: init i32 = initialize_from %.loc15_45 to %.loc15_46.4
 // CHECK:STDOUT:   %.loc15_46.6: init {.a: i32, .b: i32} = struct_init (%.loc15_46.3, %.loc15_46.5) to %c.var
 // CHECK:STDOUT:   %.loc15_46.7: init {.a: i32, .b: i32} = converted %.loc15_46.1, %.loc15_46.6
 // CHECK:STDOUT:   assign %c.var, %.loc15_46.7
 // CHECK:STDOUT:   %c.ref.loc16: ref {.a: i32, .b: i32} = name_ref c, %c
-// CHECK:STDOUT:   %.loc16_4: ref i32 = struct_access %c.ref.loc16, member0
+// CHECK:STDOUT:   %.loc16_4: ref i32 = struct_access %c.ref.loc16, element0
 // CHECK:STDOUT:   %.loc16_9: i32 = int_literal 3
 // CHECK:STDOUT:   assign %.loc16_4, %.loc16_9
 // CHECK:STDOUT:   %c.ref.loc17: ref {.a: i32, .b: i32} = name_ref c, %c
-// CHECK:STDOUT:   %.loc17_4: ref i32 = struct_access %c.ref.loc17, member1
+// CHECK:STDOUT:   %.loc17_4: ref i32 = struct_access %c.ref.loc17, element1
 // CHECK:STDOUT:   %.loc17_9: i32 = int_literal 4
 // CHECK:STDOUT:   assign %.loc17_4, %.loc17_9
 // CHECK:STDOUT:   %.loc19_13: type = ptr_type i32

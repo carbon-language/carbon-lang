@@ -18,6 +18,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -26,9 +27,9 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc9_11: i32 = int_literal 15
 // CHECK:STDOUT:   %.loc9_15: i32 = int_literal 35
 // CHECK:STDOUT:   %.loc9_17.1: (i32, i32) = tuple_literal (%.loc9_11, %.loc9_15)
-// CHECK:STDOUT:   %.loc9_17.2: ref i32 = tuple_access %return, member0
+// CHECK:STDOUT:   %.loc9_17.2: ref i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc9_17.3: init i32 = initialize_from %.loc9_11 to %.loc9_17.2
-// CHECK:STDOUT:   %.loc9_17.4: ref i32 = tuple_access %return, member1
+// CHECK:STDOUT:   %.loc9_17.4: ref i32 = tuple_access %return, element1
 // CHECK:STDOUT:   %.loc9_17.5: init i32 = initialize_from %.loc9_15 to %.loc9_17.4
 // CHECK:STDOUT:   %.loc9_17.6: init (i32, i32) = tuple_init (%.loc9_17.3, %.loc9_17.5) to %return
 // CHECK:STDOUT:   %.loc9_17.7: init (i32, i32) = converted %.loc9_17.1, %.loc9_17.6

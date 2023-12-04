@@ -140,7 +140,7 @@ static auto MakeElementAccessInst(Context& context, Parse::NodeId parse_node,
         AccessInstT{parse_node, elem_type_id, aggregate_id, index_id});
   } else {
     return block.AddInst(AccessInstT{parse_node, elem_type_id, aggregate_id,
-                                     SemIR::MemberIndex(i)});
+                                     SemIR::ElementIndex(i)});
   }
 }
 
@@ -561,7 +561,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
         context.insts().Get(value_id).parse_node(), target.type_id});
   }
 
-  auto result_id = ConvertStructToStructOrClass<SemIR::ClassFieldAccess>(
+  auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, src_type, dest_struct_type, value_id, target, /*is_class=*/true);
 
   if (need_temporary) {

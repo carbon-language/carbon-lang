@@ -15,9 +15,7 @@ auto HandleStructComma(Context& context, Parse::NodeId /*parse_node*/) -> bool {
 auto HandleStructFieldDesignator(Context& context, Parse::NodeId /*parse_node*/)
     -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
-  CARBON_CHECK(
-      context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      Parse::NodeKind::Name);
+  CARBON_CHECK(context.node_stack().PeekIsName());
   return true;
 }
 
@@ -25,8 +23,7 @@ auto HandleStructFieldType(Context& context, Parse::NodeId parse_node) -> bool {
   auto [type_node, type_id] = context.node_stack().PopExprWithParseNode();
   SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id);
 
-  auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+  auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   context.AddInstAndPush(
       parse_node, SemIR::StructTypeField{name_node, name_id, cast_type_id});
@@ -41,8 +38,7 @@ auto HandleStructFieldUnknown(Context& context, Parse::NodeId parse_node)
 auto HandleStructFieldValue(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto value_inst_id = context.node_stack().PopExpr();
-  auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+  auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Store the name for the type.
   context.args_type_info_stack().AddInst(SemIR::StructTypeField{

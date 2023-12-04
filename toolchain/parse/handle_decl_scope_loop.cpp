@@ -136,10 +136,35 @@ auto HandleDeclScopeLoop(Context& context) -> void {
         break;
       }
 
+      case Lex::TokenKind::Base:
+        // `base` may be followed by:
+        // - a colon
+        //   => assume it is an introducer, as in `extend base: BaseType;`
+        // - a modifier or an introducer
+        //   => assume it is a modifier, as in `base class`
+        // Anything else is an error.
+        if (context.PositionIs(Lex::TokenKind::Colon, Lookahead::NextToken)) {
+          context.ReplacePlaceholderNode(
+              state.subtree_start, NodeKind::BaseIntroducer, context.Consume());
+          // Reuse state here to retain its `subtree_start`
+          state.state = State::BaseDecl;
+          context.PushState(state);
+          context.PushState(State::Expr);
+          context.AddLeafNode(NodeKind::BaseColon, context.Consume());
+          return;
+        } else if (!TokenIsModifierOrIntroducer(
+                       context.PositionKind(Lookahead::NextToken))) {
+          // TODO: If the next token isn't a colon or `class`, try to recover
+          // based on whether we're in a class, whether we have an `extend`
+          // modifier, and the following tokens.
+          HandleUnrecognizedDecl(context, state.subtree_start);
+          return;
+        }
+        [[fallthrough]];
+
       // If we see a declaration modifier keyword token, add it as a leaf node
       // and repeat with the next token.
       case Lex::TokenKind::Abstract:
-      case Lex::TokenKind::Base:
       case Lex::TokenKind::Default:
       case Lex::TokenKind::Final:
       case Lex::TokenKind::Virtual: {

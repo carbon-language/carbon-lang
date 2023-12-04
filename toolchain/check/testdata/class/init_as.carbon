@@ -21,17 +21,18 @@ fn F() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .F = %F}
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field a, member0
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field a, element0
 // CHECK:STDOUT:   %a: <unbound field of class Class> = bind_name a, %.loc8_8.2
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Class> = field b, member1
+// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Class> = field b, element1
 // CHECK:STDOUT:   %b: <unbound field of class Class> = bind_name b, %.loc9_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -46,14 +47,14 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_26.1: {.a: i32, .b: i32} = struct_literal (%.loc13_17, %.loc13_25)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %.loc13_26.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc13_26.3: ref i32 = class_field_access %.loc13_26.2, member0
+// CHECK:STDOUT:   %.loc13_26.3: ref i32 = class_element_access %.loc13_26.2, element0
 // CHECK:STDOUT:   %.loc13_26.4: init i32 = initialize_from %.loc13_17 to %.loc13_26.3
-// CHECK:STDOUT:   %.loc13_26.5: ref i32 = class_field_access %.loc13_26.2, member1
+// CHECK:STDOUT:   %.loc13_26.5: ref i32 = class_element_access %.loc13_26.2, element1
 // CHECK:STDOUT:   %.loc13_26.6: init i32 = initialize_from %.loc13_25 to %.loc13_26.5
 // CHECK:STDOUT:   %.loc13_26.7: init Class = class_init (%.loc13_26.4, %.loc13_26.6), %.loc13_26.2
 // CHECK:STDOUT:   %.loc13_26.8: ref Class = temporary %.loc13_26.2, %.loc13_26.7
 // CHECK:STDOUT:   %.loc13_26.9: ref Class = converted %.loc13_26.1, %.loc13_26.8
-// CHECK:STDOUT:   %.loc13_37.1: ref i32 = class_field_access %.loc13_26.9, member0
+// CHECK:STDOUT:   %.loc13_37.1: ref i32 = class_element_access %.loc13_26.9, element0
 // CHECK:STDOUT:   %.loc13_37.2: i32 = bind_value %.loc13_37.1
 // CHECK:STDOUT:   return %.loc13_37.2
 // CHECK:STDOUT: }
