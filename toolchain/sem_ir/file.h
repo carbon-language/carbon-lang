@@ -226,7 +226,8 @@ class File : public Printable<File> {
     complete_types_.push_back(object_type_id);
   }
 
-  auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> InstId {
+  // Returns the ID of the instruction used to define the specified type.
+  auto GetTypeInstId(TypeId type_id) const -> InstId {
     if (type_id == TypeId::TypeType) {
       return InstId::BuiltinTypeType;
     } else if (type_id == TypeId::Error) {
@@ -236,6 +237,30 @@ class File : public Printable<File> {
     } else {
       return types().Get(type_id).inst_id;
     }
+  }
+
+  // Returns the instruction used to define the specified type.
+  auto GetType(TypeId type_id) const -> Inst {
+    return insts().Get(GetTypeInstId(type_id));
+  }
+
+  // Returns the instruction used to define the specified type, which is known
+  // to be a particular kind of instruction.
+  template <typename InstKind>
+  auto GetTypeAs(TypeId type_id) const -> InstKind {
+    if constexpr (std::is_same_v<InstKind, Builtin>) {
+      return GetType(type_id).As<InstKind>();
+    } else {
+      // The type is not a builtin, so no need to check for special values.
+      return insts().Get(types().Get(type_id).inst_id).As<InstKind>();
+    }
+  }
+
+  // Returns the instruction used to define the specified type, if it is of a
+  // particular kind.
+  template <typename InstKind>
+  auto TryGetTypeAs(TypeId type_id) const -> std::optional<InstKind> {
+    return GetType(type_id).TryAs<InstKind>();
   }
 
   // Gets the value representation to use for a type. This returns an

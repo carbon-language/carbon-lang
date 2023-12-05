@@ -92,11 +92,7 @@ static auto GetStructFieldName(FunctionContext& context,
                                SemIR::TypeId struct_type_id,
                                SemIR::ElementIndex index) -> llvm::StringRef {
   auto fields = context.sem_ir().inst_blocks().Get(
-      context.sem_ir()
-          .insts()
-          .GetAs<SemIR::StructType>(
-              context.sem_ir().types().Get(struct_type_id).inst_id)
-          .fields_id);
+      context.sem_ir().GetTypeAs<SemIR::StructType>(struct_type_id).fields_id);
   auto field = context.sem_ir().insts().GetAs<SemIR::StructTypeField>(
       fields[index.index]);
   return context.sem_ir().names().GetIRBaseName(field.name_id);
@@ -107,11 +103,7 @@ auto HandleClassElementAccess(FunctionContext& context, SemIR::InstId inst_id,
   // Find the class that we're performing access into.
   auto class_type_id = context.sem_ir().insts().Get(inst.base_id).type_id();
   auto class_id =
-      context.sem_ir()
-          .insts()
-          .GetAs<SemIR::ClassType>(
-              context.sem_ir().GetTypeAllowBuiltinTypes(class_type_id))
-          .class_id;
+      context.sem_ir().GetTypeAs<SemIR::ClassType>(class_type_id).class_id;
   const auto& class_info = context.sem_ir().classes().Get(class_id);
 
   // Translate the class field access into a struct access on the object

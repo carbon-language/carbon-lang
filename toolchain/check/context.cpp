@@ -558,9 +558,7 @@ class TypeCompleter {
       return true;
     }
 
-    auto inst_id = context_.sem_ir().GetTypeAllowBuiltinTypes(type_id);
-    auto inst = context_.insts().Get(inst_id);
-
+    auto inst = context_.sem_ir().GetType(type_id);
     auto old_work_list_size = work_list_.size();
 
     switch (phase) {
@@ -1141,9 +1139,7 @@ auto Context::GetPointerType(Parse::NodeId parse_node,
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
-  SemIR::Inst type_inst =
-      insts().Get(sem_ir_->GetTypeAllowBuiltinTypes(type_id));
-  if (auto const_type = type_inst.TryAs<SemIR::ConstType>()) {
+  if (auto const_type = sem_ir_->TryGetTypeAs<SemIR::ConstType>(type_id)) {
     return const_type->inner_id;
   }
   return type_id;
