@@ -264,7 +264,7 @@ class Context {
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
-  // Get the lex::TokenKind of a node for diagnostics.
+  // Get the Lex::TokenKind of a node for diagnostics.
   auto token_kind(Parse::NodeId parse_node) -> Lex::TokenKind {
     return tokens().GetKind(parse_tree().node_token(parse_node));
   }
