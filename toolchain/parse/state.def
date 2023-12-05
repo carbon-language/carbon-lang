@@ -285,14 +285,16 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //
 // abstract
 // ^~~~~~~~
-// base
+// base class
 // ^~~~
 // default
 // ^~~~~~~
+// extend base
+// ^~~~~~
 // final
 // ^~~~~
-// override
-// ^~~~~~~~
+// impl fn
+// ^~~~
 // private
 // ^~~~~~~
 // protected

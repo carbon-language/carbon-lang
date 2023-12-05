@@ -41,6 +41,7 @@ static auto TokenIsModifierOrIntroducer(Lex::TokenKind token_kind) -> bool {
     case Lex::TokenKind::Class:
     case Lex::TokenKind::Constraint:
     case Lex::TokenKind::Default:
+    case Lex::TokenKind::Extend:
     case Lex::TokenKind::Final:
     case Lex::TokenKind::Fn:
     case Lex::TokenKind::Impl:
@@ -182,6 +183,21 @@ auto HandleDeclScopeLoop(Context& context) -> void {
           saw_modifier = true;
         } else {
           // TODO: Treat this `impl` token as a declaration introducer
+          HandleUnrecognizedDecl(context, state.subtree_start);
+          return;
+        }
+        break;
+      }
+
+      case Lex::TokenKind::Extend: {
+        // `extend` is considered a declaration modifier if it is followed by
+        // another modifier or an introducer.
+        if (TokenIsModifierOrIntroducer(
+                context.PositionKind(Lookahead::NextToken))) {
+          context.AddLeafNode(NodeKind::DeclModifierKeyword, context.Consume());
+          saw_modifier = true;
+        } else {
+          // TODO: Treat this `extend` token as a declaration introducer
           HandleUnrecognizedDecl(context, state.subtree_start);
           return;
         }
