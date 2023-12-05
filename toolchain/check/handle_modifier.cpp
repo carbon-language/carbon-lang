@@ -83,6 +83,8 @@ static auto GetDeclModifierEnum(Lex::TokenKind token_kind)
       return KeywordModifierSet::Base;
     case Lex::TokenKind::Default:
       return KeywordModifierSet::Default;
+    case Lex::TokenKind::Extend:
+      return KeywordModifierSet::Extend;
     case Lex::TokenKind::Final:
       return KeywordModifierSet::Final;
     case Lex::TokenKind::Impl:

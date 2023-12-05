@@ -23,9 +23,10 @@ enum class KeywordModifierSet {
   Abstract = 1 << 2,
   Base = 1 << 3,
   Default = 1 << 4,
-  Final = 1 << 5,
-  Impl = 1 << 6,
-  Virtual = 1 << 7,
+  Extend = 1 << 5,
+  Final = 1 << 6,
+  Impl = 1 << 7,
+  Virtual = 1 << 8,
 
   // Sets of modifiers:
   Access = Private | Protected,
