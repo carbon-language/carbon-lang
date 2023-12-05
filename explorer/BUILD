@@ -43,6 +43,69 @@ cc_binary(
     ],
 )
 
+EXPLORER_GTEST_TESTS = [
+    (
+        "ast",
+        "ast_test_matchers_test",
+        "ASTTestMatchers",
+    ),
+    (
+        "ast",
+        "expression_test",
+        "ExpressionTest",
+    ),
+    (
+        "ast",
+        "element_test",
+        "ElementTest",
+    ),
+    (
+        "ast",
+        "pattern_test",
+        "PatternTest",
+    ),
+    (
+        "base",
+        "arena_test",
+        "ArenaTest",
+    ),
+    (
+        "base",
+        "decompose_test",
+        "HashFromDecomposeTest",
+    ),
+    (
+        "base",
+        "error_builders_test",
+        "ErrorBuildersTest",
+    ),
+    (
+        "base",
+        "set_file_context_raii_test",
+        "SetFileContextRaiiTest",
+    ),
+    (
+        "base",
+        "set_program_phase_raii_test",
+        "SetProgramPhaseRaiiTest",
+    ),
+    (
+        "parse_and_execute",
+        "parse_and_execute_test",
+        "ParseAndExecuteTest",
+    ),
+    (
+        "syntax",
+        "parse_test",
+        "ParseTest",
+    ),
+    (
+        "syntax",
+        "unimplemented_example_test",
+        "UnimplementedExampleTest",
+    ),
+]
+
 # All explorer tests are packaged into a single binary to reduce disk usage.
 cc_binary(
     name = "explorer_tests",
@@ -51,39 +114,30 @@ cc_binary(
     deps = [
         ":main",
         "//common:check",
-        "//explorer/ast:ast_test_matchers_test",
-        "//explorer/ast:expression_test",
-        "//explorer/ast:element_test",
-        "//explorer/ast:pattern_test",
-        "//explorer/base:arena_test",
-        "//explorer/base:decompose_test",
-        "//explorer/base:error_builders_test",
-        "//explorer/base:set_file_context_raii_test",
-        "//explorer/base:set_program_phase_raii_test",
-        "//explorer/parse_and_execute:parse_and_execute_test",
-        "//explorer/syntax:parse_test",
-        "//explorer/syntax:unimplemented_example_test",
         "//testing/base:test_raw_ostream",
         "//testing/file_test:file_test_base",
         "@com_google_absl//absl/flags:flag",
         "@com_googlesource_code_re2//:re2",
-    ],
+    ] + ["//explorer/%s:%s" % (test_dir, test_target) for (test_dir, test_target, test_suite) in EXPLORER_GTEST_TESTS],
 )
 
 file_test(
     name = "file_test",
-    prebuilt_binary = ":explorer_tests",
     size = "small",
     args = ["--gtest_filter=ExplorerFileTest.*"],
+    prebuilt_binary = ":explorer_tests",
     shard_count = 20,
     tests = glob(["testdata/**/*.carbon"]),
 )
 
 file_test(
     name = "file_test.trace",
-    prebuilt_binary = ":explorer_tests",
     size = "small",
-    args = ["--trace", "--gtest_filter=ExplorerFileTest.*"],
+    args = [
+        "--trace",
+        "--gtest_filter=ExplorerFileTest.*",
+    ],
+    prebuilt_binary = ":explorer_tests",
     shard_count = 30,
     tests = glob(
         ["testdata/**/*.carbon"],
@@ -101,89 +155,19 @@ file_test(
     ),
 )
 
-sh_test(
-    name = "ast_test_matchers_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=ASTTestMatchers.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "ast_expression_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=ExpressionTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "ast_element_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=ElementTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "ast_pattern_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=PatternTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "base_arena_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=ArenaTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "base_decompose_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=HashFromDecomposeTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "base_error_builders_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=ErrorBuildersTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "base_set_file_context_raii_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=SetFileContextRaiiTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "base_set_program_phase_raii_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=SetProgramPhaseRaiiTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "parse_and_execute_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=ParseAndExecuteTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "syntax_parse_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=ParseTest.*"],
-    size = "small",
-)
-
-sh_test(
-    name = "syntax_unimplemented_example_test",
-    srcs = [":explorer_tests"],
-    args = ["--no_file_tests", "--gtest_filter=UnimplementedExampleTest.*"],
-    size = "small",
-)
+[
+    sh_test(
+        name = "%s_%s" % (test_dir, test_target),
+        size = "small",
+        srcs = ["explorer_tests"],
+        args = [
+            "--no_file_tests",
+            "--gtest_filter=" + test_suite + ".*",
+            "--fail_if_no_tests_run",
+        ],
+    )
+    for (test_dir, test_target, test_suite) in EXPLORER_GTEST_TESTS
+]
 
 glob_sh_run(
     args = ["$(location //explorer)"],

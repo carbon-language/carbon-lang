@@ -38,6 +38,8 @@ ABSL_FLAG(bool, autoupdate, false,
 ABSL_FLAG(unsigned int, threads, 0,
           "Number of threads to use when autoupdating tests, or 0 to "
           "automatically determine a thread count.");
+ABSL_FLAG(bool, fail_if_no_tests_run, false,
+          "Inject a test failure if no tests are run.");
 
 namespace Carbon::Testing {
 
@@ -775,7 +777,21 @@ static auto Main(int argc, char** argv) -> int {
                               return test_factory.factory_fn(test_name);
                             });
     }
-    return RUN_ALL_TESTS();
+
+    if (RUN_ALL_TESTS()) {
+      return EXIT_FAILURE;
+    }
+
+    if (absl::GetFlag(FLAGS_fail_if_no_tests_run)) {
+      int tests_run = ::testing::UnitTest::GetInstance()->test_suite_to_run_count();
+      EXPECT_GT(tests_run, 0)
+          << "No tests to run. Is the --gtest_filter= flag set correctly?";
+      if (tests_run == 0) {
+        return EXIT_FAILURE;
+      }
+    }
+
+    return EXIT_SUCCESS;
   }
 }
 
