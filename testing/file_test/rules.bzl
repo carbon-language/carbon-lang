@@ -38,7 +38,8 @@ _tests_as_input_file_rule = rule(
     implementation = _tests_as_input_file_rule_impl,
 )
 
-def file_test(name, tests, data = [], args = [], **kwargs):
+def file_test(name, tests, data = [], args = [], prebuilt_binary = None,
+              **kwargs):
     """Generates tests using the file_test base.
 
     There will be one main test using `name` that can be sharded, and includes
@@ -50,6 +51,8 @@ def file_test(name, tests, data = [], args = [], **kwargs):
       tests: The list of test files to use as data, typically a glob.
       data: Passed to cc_test.
       args: Passed to cc_test.
+      prebuilt_binary: If set, specifies a prebuilt test binary to use instead
+                       of building a new one.
       **kwargs: Passed to cc_test.
     """
 
@@ -60,9 +63,21 @@ def file_test(name, tests, data = [], args = [], **kwargs):
         data = tests,
         testonly = 1,
     )
-    cc_test(
-        name = name,
-        data = [tests_file] + tests + data,
-        args = ["--test_targets_file=$(rootpath :{0})".format(tests_file)] + args,
-        **kwargs
-    )
+    args = ["--test_targets_file=$(rootpath :{0})".format(tests_file)] + args
+    data = [tests_file] + tests + data
+
+    if prebuilt_binary:
+        native.sh_test(
+            name = name,
+            srcs = [prebuilt_binary],
+            data = data,
+            args = args,
+            **kwargs
+        )
+    else:
+        cc_test(
+            name = name,
+            data = data,
+            args = args,
+            **kwargs
+        )

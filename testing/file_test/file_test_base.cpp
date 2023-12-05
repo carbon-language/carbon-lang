@@ -24,6 +24,9 @@
 #include "llvm/Support/ThreadPool.h"
 #include "testing/file_test/autoupdate.h"
 
+ABSL_FLAG(bool, no_file_tests, false,
+          "Do not perform any file tests. Useful only if this test binary also "
+          "contains other tests.");
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
           "A comma-separated list of repo-relative names of test files. "
           "Overrides test_targets_file.");
@@ -689,6 +692,10 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
 
 // Returns the tests to run.
 static auto GetTests() -> llvm::SmallVector<std::string> {
+  if (absl::GetFlag(FLAGS_no_file_tests)) {
+    return {};
+  }
+
   // Prefer a user-specified list if present.
   auto specific_tests = absl::GetFlag(FLAGS_file_tests);
   if (!specific_tests.empty()) {
@@ -713,8 +720,13 @@ static auto GetTests() -> llvm::SmallVector<std::string> {
 // Implements main() within the Carbon::Testing namespace for convenience.
 static auto Main(int argc, char** argv) -> int {
   Carbon::InitLLVM init_llvm(argc, argv);
-  testing::InitGoogleTest(&argc, argv);
-  auto args = absl::ParseCommandLine(argc, argv);
+
+  // Initialize gtest using a copy of argv because gtest wants to modify it,
+  // and InitLLVM registered it with a PrettyStackTraceProgram which gtest's
+  // modifications break.
+  llvm::SmallVector<char*> argv_copy(argv, argv + argc);
+  testing::InitGoogleTest(&argc, argv_copy.data());
+  auto args = absl::ParseCommandLine(argc, argv_copy.data());
 
   if (args.size() > 1) {
     llvm::errs() << "Unexpected arguments:";

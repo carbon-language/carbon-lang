@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//explorer:__subpackages__"])
 
@@ -78,28 +78,34 @@ cc_library(
     ],
 )
 
-cc_test(
+cc_library(
     name = "ast_test_matchers_test",
-    size = "small",
+    testonly = 1,
+    alwayslink = 1,
     srcs = ["ast_test_matchers_test.cpp"],
+    visibility = [
+        "//explorer:__pkg__",
+    ],
     deps = [
         ":ast",
         ":ast_test_matchers",
         "//explorer/base:arena",
-        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
 
-cc_test(
+cc_library(
     name = "expression_test",
-    size = "small",
+    testonly = 1,
+    alwayslink = 1,
     srcs = ["expression_test.cpp"],
+    visibility = [
+        "//explorer:__pkg__",
+    ],
     deps = [
         ":ast",
         ":paren_contents",
         "//explorer/base:arena",
-        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -119,29 +125,35 @@ cc_library(
     ],
 )
 
-cc_test(
+cc_library(
     name = "element_test",
-    size = "small",
+    testonly = 1,
+    alwayslink = 1,
     srcs = ["element_test.cpp"],
+    visibility = [
+        "//explorer:__pkg__",
+    ],
     deps = [
         ":ast",
         ":paren_contents",
         "//explorer/base:arena",
-        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
 
-cc_test(
+cc_library(
     name = "pattern_test",
-    size = "small",
+    testonly = 1,
+    alwayslink = 1,
     srcs = ["pattern_test.cpp"],
+    visibility = [
+        "//explorer:__pkg__",
+    ],
     deps = [
         ":ast",
         ":paren_contents",
         "//explorer/base:arena",
-        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
