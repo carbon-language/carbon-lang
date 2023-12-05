@@ -41,11 +41,11 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc12_16.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc12_16.2: <unbound field of class Class> = field j, element0
-// CHECK:STDOUT:   %j: <unbound field of class Class> = bind_name j, %.loc12_16.2
+// CHECK:STDOUT:   %.loc12_16.2: <unbound element of class Class> = field_decl j, element0
+// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc12_16.2
 // CHECK:STDOUT:   %.loc17_14.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc17_14.2: <unbound field of class Class> = field k, element1
-// CHECK:STDOUT:   %k: <unbound field of class Class> = bind_name k, %.loc17_14.2
+// CHECK:STDOUT:   %.loc17_14.2: <unbound element of class Class> = field_decl k, element1
+// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc17_14.2
 // CHECK:STDOUT:   %.loc22: i32 = int_literal 0
 // CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22
 // CHECK:STDOUT:   %.loc27: i32 = int_literal 1

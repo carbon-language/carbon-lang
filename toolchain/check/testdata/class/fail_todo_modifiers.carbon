@@ -79,11 +79,11 @@ abstract class Abstract {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %.loc22_16.1: type = unbound_element_type Access, i32
-// CHECK:STDOUT:   %.loc22_16.2: <unbound field of class Access> = field k, element0
-// CHECK:STDOUT:   %k: <unbound field of class Access> = bind_name k, %.loc22_16.2
+// CHECK:STDOUT:   %.loc22_16.2: <unbound element of class Access> = field_decl k, element0
+// CHECK:STDOUT:   %k: <unbound element of class Access> = bind_name k, %.loc22_16.2
 // CHECK:STDOUT:   %.loc27_18.1: type = unbound_element_type Access, i32
-// CHECK:STDOUT:   %.loc27_18.2: <unbound field of class Access> = field l, element1
-// CHECK:STDOUT:   %l: <unbound field of class Access> = bind_name l, %.loc27_18.2
+// CHECK:STDOUT:   %.loc27_18.2: <unbound element of class Access> = field_decl l, element1
+// CHECK:STDOUT:   %l: <unbound element of class Access> = bind_name l, %.loc27_18.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
