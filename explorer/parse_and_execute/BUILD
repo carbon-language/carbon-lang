@@ -29,10 +29,10 @@ cc_library(
 cc_library(
     name = "parse_and_execute_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["parse_and_execute_test.cpp"],
     deps = [
         ":parse_and_execute",
         "@com_google_googletest//:gtest",
     ],
+    alwayslink = 1,
 )

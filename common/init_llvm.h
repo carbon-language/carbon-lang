@@ -23,6 +23,6 @@ class InitLLVM : public llvm::InitLLVM {
   ~InitLLVM() = default;
 };
 
-}
+}  // namespace Carbon
 
 #endif  // CARBON_COMMON_INIT_LLVM_H_

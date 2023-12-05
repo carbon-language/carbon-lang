@@ -38,8 +38,13 @@ _tests_as_input_file_rule = rule(
     implementation = _tests_as_input_file_rule_impl,
 )
 
-def file_test(name, tests, data = [], args = [], prebuilt_binary = None,
-              **kwargs):
+def file_test(
+        name,
+        tests,
+        data = [],
+        args = [],
+        prebuilt_binary = None,
+        **kwargs):
     """Generates tests using the file_test base.
 
     There will be one main test using `name` that can be sharded, and includes

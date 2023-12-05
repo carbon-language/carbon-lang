@@ -81,7 +81,6 @@ cc_library(
 cc_library(
     name = "ast_test_matchers_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["ast_test_matchers_test.cpp"],
     visibility = [
         "//explorer:__pkg__",
@@ -92,12 +91,12 @@ cc_library(
         "//explorer/base:arena",
         "@com_google_googletest//:gtest",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
     name = "expression_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["expression_test.cpp"],
     visibility = [
         "//explorer:__pkg__",
@@ -109,6 +108,7 @@ cc_library(
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -128,7 +128,6 @@ cc_library(
 cc_library(
     name = "element_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["element_test.cpp"],
     visibility = [
         "//explorer:__pkg__",
@@ -140,12 +139,12 @@ cc_library(
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
     name = "pattern_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["pattern_test.cpp"],
     visibility = [
         "//explorer:__pkg__",
@@ -157,6 +156,7 @@ cc_library(
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+    alwayslink = 1,
 )
 
 cc_library(

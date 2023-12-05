@@ -783,7 +783,8 @@ static auto Main(int argc, char** argv) -> int {
     }
 
     if (absl::GetFlag(FLAGS_fail_if_no_tests_run)) {
-      int tests_run = ::testing::UnitTest::GetInstance()->test_suite_to_run_count();
+      int tests_run =
+          ::testing::UnitTest::GetInstance()->test_suite_to_run_count();
       EXPECT_GT(tests_run, 0)
           << "No tests to run. Is the --gtest_filter= flag set correctly?";
       if (tests_run == 0) {

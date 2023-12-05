@@ -8,7 +8,7 @@
 
 namespace Carbon {
 
-InitLLVM::InitLLVM(int &argc, char**& argv) : llvm::InitLLVM(argc, argv) {
+InitLLVM::InitLLVM(int& argc, char**& argv) : llvm::InitLLVM(argc, argv) {
   llvm::setBugReportMsg(
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
@@ -20,4 +20,4 @@ InitLLVM::InitLLVM(int &argc, char**& argv) : llvm::InitLLVM(argc, argv) {
   llvm::InitializeAllAsmPrinters();
 }
 
-}
+}  // namespace Carbon

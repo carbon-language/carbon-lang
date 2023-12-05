@@ -16,7 +16,6 @@ cc_library(
 cc_library(
     name = "parse_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["parse_test.cpp"],
     visibility = [
         "//explorer:__pkg__",
@@ -26,6 +25,7 @@ cc_library(
         "//explorer/base:arena",
         "@com_google_googletest//:gtest",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -152,7 +152,6 @@ py_test(
 cc_library(
     name = "unimplemented_example_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["unimplemented_example_test.cpp"],
     visibility = [
         "//explorer:__pkg__",
@@ -163,4 +162,5 @@ cc_library(
         "//explorer/ast:ast_test_matchers",
         "@com_google_googletest//:gtest",
     ],
+    alwayslink = 1,
 )

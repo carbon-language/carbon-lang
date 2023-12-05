@@ -18,12 +18,12 @@ cc_library(
 cc_library(
     name = "arena_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["arena_test.cpp"],
     deps = [
         ":arena",
         "@com_google_googletest//:gtest",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -37,12 +37,12 @@ cc_library(
 cc_library(
     name = "decompose_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["decompose_test.cpp"],
     deps = [
         ":decompose",
         "@com_google_googletest//:gtest",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -57,7 +57,6 @@ cc_library(
 cc_library(
     name = "error_builders_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["error_builders_test.cpp"],
     deps = [
         ":error_builders",
@@ -65,6 +64,7 @@ cc_library(
         "//testing/base:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -107,22 +107,22 @@ cc_library(
 cc_library(
     name = "set_program_phase_raii_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["set_program_phase_raii_test.cpp"],
     deps = [
         ":trace_stream",
         "@com_google_googletest//:gtest",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
     name = "set_file_context_raii_test",
     testonly = 1,
-    alwayslink = 1,
     srcs = ["set_file_context_raii_test.cpp"],
     deps = [
         ":source_location",
         ":trace_stream",
         "@com_google_googletest//:gtest",
     ],
+    alwayslink = 1,
 )
