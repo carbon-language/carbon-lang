@@ -402,7 +402,7 @@ CARBON_PARSE_STATE(Expr)
 //
 //  (
 // ^
-//   1. OpenParen
+//   1. ParenExpr
 //   2. ExprInPostfixLoop
 //
 //  [
