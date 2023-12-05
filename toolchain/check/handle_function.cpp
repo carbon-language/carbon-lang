@@ -4,7 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/modifiers_allowed.h"
+#include "toolchain/check/modifiers.h"
 #include "toolchain/sem_ir/entry_point.h"
 
 namespace Carbon::Check {

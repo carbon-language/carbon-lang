@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/modifiers_allowed.h"
+#include "toolchain/check/modifiers.h"
 
 namespace Carbon::Check {
 

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_MODIFIERS_ALLOWED_H_
-#define CARBON_TOOLCHAIN_CHECK_MODIFIERS_ALLOWED_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_MODIFIERS_H_
+#define CARBON_TOOLCHAIN_CHECK_MODIFIERS_H_
 
 #include "toolchain/check/context.h"
 
@@ -37,4 +37,4 @@ auto RequireDefaultFinalOnlyInInterfaces(Context& context,
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_MODIFIERS_ALLOWED_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_MODIFIERS_H_

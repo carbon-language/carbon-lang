@@ -36,7 +36,7 @@ cc_library(
         "convert.cpp",
         "decl_name_stack.cpp",
         "inst_block_stack.cpp",
-        "modifiers_allowed.cpp",
+        "modifiers.cpp",
         "return.cpp",
         "return.h",
     ] +
@@ -51,7 +51,7 @@ cc_library(
         "decl_name_stack.h",
         "decl_state.h",
         "inst_block_stack.h",
-        "modifiers_allowed.h",
+        "modifiers.h",
         "pending_block.h",
     ],
     deps = [
