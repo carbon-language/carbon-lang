@@ -187,6 +187,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
     case Assign::Kind:
+    case BaseDecl::Kind:
     case BinaryOperatorAdd::Kind:
     case BindName::Kind:
     case BindValue::Kind:
@@ -202,7 +203,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ClassInit::Kind:
     case Converted::Kind:
     case Deref::Kind:
-    case Field::Kind:
+    case FieldDecl::Kind:
     case FunctionDecl::Kind:
     case Import::Kind:
     case InitializeFrom::Kind:
@@ -236,13 +237,11 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   }
 }
 
-auto File::StringifyType(TypeId type_id, bool in_type_context) const
-    -> std::string {
-  return StringifyTypeExpr(GetTypeAllowBuiltinTypes(type_id), in_type_context);
+auto File::StringifyType(TypeId type_id) const -> std::string {
+  return StringifyTypeExpr(GetTypeAllowBuiltinTypes(type_id));
 }
 
-auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
-    -> std::string {
+auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -376,7 +375,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       }
       case UnboundElementType::Kind: {
         if (step.index == 0) {
-          out << "<unbound field of class ";
+          out << "<unbound element of class ";
           steps.push_back(step.Next());
           steps.push_back({.inst_id = GetTypeAllowBuiltinTypes(
                                inst.As<UnboundElementType>().class_type_id)});
@@ -389,6 +388,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
       case Assign::Kind:
+      case BaseDecl::Kind:
       case BinaryOperatorAdd::Kind:
       case BindName::Kind:
       case BindValue::Kind:
@@ -406,7 +406,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case Converted::Kind:
       case CrossRef::Kind:
       case Deref::Kind:
-      case Field::Kind:
+      case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
       case InitializeFrom::Kind:
@@ -443,17 +443,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
     }
   }
 
-  // For `{}` or any tuple type, we've printed a non-type expression, so add a
-  // conversion to type `type` if it's not implied by the context.
-  if (!in_type_context) {
-    auto outer_inst = insts().Get(outer_inst_id);
-    if (outer_inst.Is<TupleType>() ||
-        (outer_inst.Is<StructType>() &&
-         inst_blocks().Get(outer_inst.As<StructType>().fields_id).empty())) {
-      out << " as type";
-    }
-  }
-
   return str;
 }
 
@@ -470,11 +459,12 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case Assign::Kind:
+      case BaseDecl::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
       case ClassDecl::Kind:
-      case Field::Kind:
+      case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
       case Namespace::Kind:

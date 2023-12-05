@@ -37,6 +37,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT: --- fail_returned_var_shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.SameScope = %SameScope, .DifferentScopes = %DifferentScopes}
 // CHECK:STDOUT:   %SameScope: <function> = fn_decl @SameScope
 // CHECK:STDOUT:   %DifferentScopes: <function> = fn_decl @DifferentScopes
 // CHECK:STDOUT: }

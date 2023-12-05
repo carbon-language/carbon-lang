@@ -38,6 +38,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Outer = %Outer.decl, .F = %F}
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -49,18 +50,18 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Outer
 // CHECK:STDOUT:   %.loc14_15: type = ptr_type Outer
 // CHECK:STDOUT:   %.loc14_9.1: type = unbound_element_type Outer, Outer*
-// CHECK:STDOUT:   %.loc14_9.2: <unbound field of class Outer> = field po, element0
-// CHECK:STDOUT:   %po: <unbound field of class Outer> = bind_name po, %.loc14_9.2
+// CHECK:STDOUT:   %.loc14_9.2: <unbound element of class Outer> = field_decl po, element0
+// CHECK:STDOUT:   %po: <unbound element of class Outer> = bind_name po, %.loc14_9.2
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer
 // CHECK:STDOUT:   %.loc15_16: type = ptr_type Outer
 // CHECK:STDOUT:   %.loc15_9.1: type = unbound_element_type Outer, Outer*
-// CHECK:STDOUT:   %.loc15_9.2: <unbound field of class Outer> = field qo, element1
-// CHECK:STDOUT:   %qo: <unbound field of class Outer> = bind_name qo, %.loc15_9.2
+// CHECK:STDOUT:   %.loc15_9.2: <unbound element of class Outer> = field_decl qo, element1
+// CHECK:STDOUT:   %qo: <unbound element of class Outer> = bind_name qo, %.loc15_9.2
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner
 // CHECK:STDOUT:   %.loc16_16: type = ptr_type Inner
 // CHECK:STDOUT:   %.loc16_9.1: type = unbound_element_type Outer, Inner*
-// CHECK:STDOUT:   %.loc16_9.2: <unbound field of class Outer> = field pi, element2
-// CHECK:STDOUT:   %pi: <unbound field of class Outer> = bind_name pi, %.loc16_9.2
+// CHECK:STDOUT:   %.loc16_9.2: <unbound element of class Outer> = field_decl pi, element2
+// CHECK:STDOUT:   %pi: <unbound element of class Outer> = bind_name pi, %.loc16_9.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Inner = %Inner.decl
@@ -73,18 +74,18 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, @Outer.%Inner
 // CHECK:STDOUT:   %.loc9_17: type = ptr_type Inner
 // CHECK:STDOUT:   %.loc9_11.1: type = unbound_element_type Inner, Inner*
-// CHECK:STDOUT:   %.loc9_11.2: <unbound field of class Inner> = field pi, element0
-// CHECK:STDOUT:   %pi: <unbound field of class Inner> = bind_name pi, %.loc9_11.2
+// CHECK:STDOUT:   %.loc9_11.2: <unbound element of class Inner> = field_decl pi, element0
+// CHECK:STDOUT:   %pi: <unbound element of class Inner> = bind_name pi, %.loc9_11.2
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer
 // CHECK:STDOUT:   %.loc10_18: type = ptr_type Outer
 // CHECK:STDOUT:   %.loc10_11.1: type = unbound_element_type Inner, Outer*
-// CHECK:STDOUT:   %.loc10_11.2: <unbound field of class Inner> = field po, element1
-// CHECK:STDOUT:   %po: <unbound field of class Inner> = bind_name po, %.loc10_11.2
+// CHECK:STDOUT:   %.loc10_11.2: <unbound element of class Inner> = field_decl po, element1
+// CHECK:STDOUT:   %po: <unbound element of class Inner> = bind_name po, %.loc10_11.2
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner
 // CHECK:STDOUT:   %.loc11_18: type = ptr_type Inner
 // CHECK:STDOUT:   %.loc11_11.1: type = unbound_element_type Inner, Inner*
-// CHECK:STDOUT:   %.loc11_11.2: <unbound field of class Inner> = field qi, element2
-// CHECK:STDOUT:   %qi: <unbound field of class Inner> = bind_name qi, %.loc11_11.2
+// CHECK:STDOUT:   %.loc11_11.2: <unbound element of class Inner> = field_decl qi, element2
+// CHECK:STDOUT:   %qi: <unbound element of class Inner> = bind_name qi, %.loc11_11.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .pi = %pi

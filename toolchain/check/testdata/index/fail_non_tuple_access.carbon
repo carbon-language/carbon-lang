@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn Main() {
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+3]]:3: ERROR: `i32` does not support indexing.
+  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+3]]:3: ERROR: Type `i32` does not support indexing.
   // CHECK:STDERR:   0[1];
   // CHECK:STDERR:   ^~~~
   0[1];
@@ -14,6 +14,7 @@ fn Main() {
 // CHECK:STDOUT: --- fail_non_tuple_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

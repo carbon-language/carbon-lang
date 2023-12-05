@@ -7,6 +7,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -24,10 +25,10 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
       CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                         "Member access into incomplete class `{0}`.",
                         std::string);
-      auto builder = context.emitter().Build(
-          context.insts().Get(base_id).parse_node(),
-          QualifiedExprInIncompleteClassScope,
-          context.sem_ir().StringifyTypeExpr(base_id, true));
+      auto builder =
+          context.emitter().Build(context.insts().Get(base_id).parse_node(),
+                                  QualifiedExprInIncompleteClassScope,
+                                  context.sem_ir().StringifyTypeExpr(base_id));
       context.NoteIncompleteClass(base_as_class->class_id, builder);
       builder.Emit();
     }
@@ -54,9 +55,22 @@ static auto GetExprValueForLookupResult(Context& context,
   return lookup_result_id;
 }
 
+static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
+    -> SemIR::ElementIndex {
+  auto element_inst = context.insts().Get(element_id);
+  if (auto field = element_inst.TryAs<SemIR::FieldDecl>()) {
+    return field->index;
+  }
+  if (auto base = element_inst.TryAs<SemIR::BaseDecl>()) {
+    return base->index;
+  }
+  CARBON_FATAL() << "Unexpected value " << element_inst
+                 << " in class element name";
+}
+
 auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
     -> bool {
-  SemIR::NameId name_id = context.node_stack().Pop<Parse::NodeKind::Name>();
+  SemIR::NameId name_id = context.node_stack().PopName();
   auto base_id = context.node_stack().PopExpr();
 
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -84,7 +98,7 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
         return context.emitter().Build(
             context.insts().Get(base_id).parse_node(),
             IncompleteTypeInMemberAccess,
-            context.sem_ir().StringifyType(base_type_id, true));
+            context.sem_ir().StringifyType(base_type_id));
       })) {
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
@@ -111,32 +125,29 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
       auto member_type_id = context.insts().Get(member_id).type_id();
       auto member_type_inst = context.insts().Get(
           context.sem_ir().GetTypeAllowBuiltinTypes(member_type_id));
-      if (auto unbound_field_type =
+      if (auto unbound_element_type =
               member_type_inst.TryAs<SemIR::UnboundElementType>()) {
-        // TODO: Check that the unbound field type describes a member of this
+        // TODO: Check that the unbound element type describes a member of this
         // class. Perform a conversion of the base if necessary.
 
-        // Find the named field and build a field access expression.
-        auto field_id = context.GetConstantValue(member_id);
-        CARBON_CHECK(field_id.is_valid())
+        // Find the specified element, which could be either a field or a base
+        // class, and build an element access expression.
+        auto element_id = context.GetConstantValue(member_id);
+        CARBON_CHECK(element_id.is_valid())
             << "Non-constant value " << context.insts().Get(member_id)
-            << " of unbound field type";
-        auto field = context.insts().Get(field_id).TryAs<SemIR::Field>();
-        CARBON_CHECK(field)
-            << "Unexpected value " << context.insts().Get(field_id)
-            << " for field name expression";
+            << " of unbound element type";
+        auto index = GetClassElementIndex(context, element_id);
         auto access_id = context.AddInst(SemIR::ClassElementAccess{
-            parse_node, unbound_field_type->element_type_id, base_id,
-            field->index});
+            parse_node, unbound_element_type->element_type_id, base_id, index});
         if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
                 SemIR::ExprCategory::Value &&
             SemIR::GetExprCategory(context.sem_ir(), access_id) !=
                 SemIR::ExprCategory::Value) {
-          // Class field access on a value expression produces an ephemeral
-          // reference if the class's value representation is a pointer to the
-          // object representation. Add a value binding in that case so that the
-          // expression category of the result matches the expression category
-          // of the base.
+          // Class element access on a value expression produces an
+          // ephemeral reference if the class's value representation is a
+          // pointer to the object representation. Add a value binding in
+          // that case so that the expression category of the result
+          // matches the expression category of the base.
           access_id = ConvertToValueExpr(context, access_id);
         }
         context.node_stack().Push(parse_node, access_id);
@@ -222,17 +233,46 @@ auto HandlePointerMemberAccessExpr(Context& context, Parse::NodeId parse_node)
   return context.TODO(parse_node, "HandlePointerMemberAccessExpr");
 }
 
+static auto GetIdentifierAsName(Context& context, Parse::NodeId parse_node)
+    -> std::optional<SemIR::NameId> {
+  auto token = context.parse_tree().node_token(parse_node);
+  if (context.tokens().GetKind(token) != Lex::TokenKind::Identifier) {
+    CARBON_CHECK(context.parse_tree().node_has_error(parse_node));
+    return std::nullopt;
+  }
+  return SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(token));
+}
+
 auto HandleName(Context& context, Parse::NodeId parse_node) -> bool {
-  auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
-      context.parse_tree().node_token(parse_node)));
   // The parent is responsible for binding the name.
-  context.node_stack().Push(parse_node, name_id);
+  auto name_id = GetIdentifierAsName(context, parse_node);
+  if (!name_id) {
+    return context.TODO(parse_node, "Error recovery from keyword name.");
+  }
+  context.node_stack().Push(parse_node, *name_id);
   return true;
 }
 
 auto HandleNameExpr(Context& context, Parse::NodeId parse_node) -> bool {
-  auto name_id = SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(
-      context.parse_tree().node_token(parse_node)));
+  auto name_id = GetIdentifierAsName(context, parse_node);
+  if (!name_id) {
+    return context.TODO(parse_node, "Error recovery from keyword name.");
+  }
+  auto value_id = context.LookupUnqualifiedName(parse_node, *name_id);
+  value_id = GetExprValueForLookupResult(context, value_id);
+  auto value = context.insts().Get(value_id);
+  context.AddInstAndPush(parse_node, SemIR::NameRef{parse_node, value.type_id(),
+                                                    *name_id, value_id});
+  return true;
+}
+
+auto HandleBaseName(Context& context, Parse::NodeId parse_node) -> bool {
+  context.node_stack().Push(parse_node, SemIR::NameId::Base);
+  return true;
+}
+
+auto HandleBaseNameExpr(Context& context, Parse::NodeId parse_node) -> bool {
+  auto name_id = SemIR::NameId::Base;
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   value_id = GetExprValueForLookupResult(context, value_id);
   auto value = context.insts().Get(value_id);
@@ -242,8 +282,7 @@ auto HandleNameExpr(Context& context, Parse::NodeId parse_node) -> bool {
 }
 
 auto HandleQualifiedDecl(Context& context, Parse::NodeId parse_node) -> bool {
-  auto [parse_node2, name_id2] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+  auto [parse_node2, name_id2] = context.node_stack().PopNameWithParseNode();
 
   Parse::NodeId parse_node1 = context.node_stack().PeekParseNode();
   switch (context.parse_tree().node_kind(parse_node1)) {
@@ -269,6 +308,15 @@ auto HandleQualifiedDecl(Context& context, Parse::NodeId parse_node) -> bool {
   }
 
   context.decl_name_stack().ApplyNameQualifier(parse_node2, name_id2);
+  return true;
+}
+
+auto HandlePackageExpr(Context& context, Parse::NodeId parse_node) -> bool {
+  context.AddInstAndPush(
+      parse_node,
+      SemIR::NameRef{
+          parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+          SemIR::NameId::PackageNamespace, SemIR::InstId::PackageNamespace});
   return true;
 }
 

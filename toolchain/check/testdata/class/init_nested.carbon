@@ -32,6 +32,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Inner = %Inner.decl, .MakeInner = %MakeInner, .Outer = %Outer.decl, .MakeOuter = %MakeOuter}
 // CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
 // CHECK:STDOUT:   %MakeInner: <function> = fn_decl @MakeInner
@@ -42,11 +43,11 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
 // CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Inner, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Inner> = field a, element0
-// CHECK:STDOUT:   %a: <unbound field of class Inner> = bind_name a, %.loc8_8.2
+// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Inner> = field_decl a, element0
+// CHECK:STDOUT:   %a: <unbound element of class Inner> = bind_name a, %.loc8_8.2
 // CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Inner, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Inner> = field b, element1
-// CHECK:STDOUT:   %b: <unbound field of class Inner> = bind_name b, %.loc9_8.2
+// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Inner> = field_decl b, element1
+// CHECK:STDOUT:   %b: <unbound element of class Inner> = bind_name b, %.loc9_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -56,12 +57,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, file.%Inner
 // CHECK:STDOUT:   %.loc15_8.1: type = unbound_element_type Outer, Inner
-// CHECK:STDOUT:   %.loc15_8.2: <unbound field of class Outer> = field c, element0
-// CHECK:STDOUT:   %c: <unbound field of class Outer> = bind_name c, %.loc15_8.2
+// CHECK:STDOUT:   %.loc15_8.2: <unbound element of class Outer> = field_decl c, element0
+// CHECK:STDOUT:   %c: <unbound element of class Outer> = bind_name c, %.loc15_8.2
 // CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, file.%Inner
 // CHECK:STDOUT:   %.loc16_8.1: type = unbound_element_type Outer, Inner
-// CHECK:STDOUT:   %.loc16_8.2: <unbound field of class Outer> = field d, element1
-// CHECK:STDOUT:   %d: <unbound field of class Outer> = bind_name d, %.loc16_8.2
+// CHECK:STDOUT:   %.loc16_8.2: <unbound element of class Outer> = field_decl d, element1
+// CHECK:STDOUT:   %d: <unbound element of class Outer> = bind_name d, %.loc16_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .c = %c

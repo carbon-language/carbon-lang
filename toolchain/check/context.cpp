@@ -360,7 +360,8 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
         inst_id = inst.As<SemIR::BindName>().value_id;
         break;
 
-      case SemIR::Field::Kind:
+      case SemIR::BaseDecl::Kind:
+      case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
         return inst_id;
 
@@ -836,6 +837,7 @@ class TypeCompleter {
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
+      case SemIR::BaseDecl::Kind:
       case SemIR::BinaryOperatorAdd::Kind:
       case SemIR::BindName::Kind:
       case SemIR::BindValue::Kind:
@@ -851,7 +853,7 @@ class TypeCompleter {
       case SemIR::ClassInit::Kind:
       case SemIR::Converted::Kind:
       case SemIR::Deref::Kind:
-      case SemIR::Field::Kind:
+      case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
       case SemIR::Import::Kind:
       case SemIR::InitializeFrom::Kind:

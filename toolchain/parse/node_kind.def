@@ -584,6 +584,18 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Class)))
 
+// `base`:
+//   BaseIntroducer
+//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   BaseColon
+//   _external_: expression
+// BaseDecl
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseIntroducer, 0, CARBON_TOKEN(Base))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseColon, 0, CARBON_TOKEN(Colon))
+CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer,
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Base)))
+
 // `interface`:
 //     InterfaceIntroducer
 //     _external_: Name or QualifiedDecl
@@ -637,6 +649,16 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpr, 0,
                                    CARBON_TOKEN(SelfValueIdentifier))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpr, 0,
                                    CARBON_TOKEN(SelfTypeIdentifier))
+
+// The `base` value keyword, introduced by `base: B`. Typically referenced in
+// an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
+// declared name, as in `{.base: partial B}`.
+//
+// BaseName
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseName, 0, CARBON_TOKEN(Base))
+
+// The `package` keyword in an expression.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageExpr, 0, CARBON_TOKEN(Package))
 
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET

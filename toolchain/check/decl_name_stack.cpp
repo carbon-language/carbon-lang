@@ -36,8 +36,7 @@ auto DeclNameStack::FinishName() -> NameContext {
         .PopAndDiscardSoloParseNode<Parse::NodeKind::QualifiedDecl>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
-    auto [parse_node, name_id] =
-        context_->node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+    auto [parse_node, name_id] = context_->node_stack().PopNameWithParseNode();
     ApplyNameQualifier(parse_node, name_id);
   }
 
@@ -182,8 +181,7 @@ auto DeclNameStack::CanResolveQualifier(NameContext& name_context,
         auto builder = context_->emitter().Build(
             name_context.parse_node, QualifiedDeclInIncompleteClassScope,
             context_->sem_ir().StringifyType(
-                context_->classes().Get(class_decl->class_id).self_type_id,
-                true));
+                context_->classes().Get(class_decl->class_id).self_type_id));
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
       } else {

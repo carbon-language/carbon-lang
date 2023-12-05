@@ -21,6 +21,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %.loc7}
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Baz = %Baz.loc9}
 // CHECK:STDOUT:   %Baz.loc9: <function> = fn_decl @Baz
 // CHECK:STDOUT:   %Baz.loc18: <function> = fn_decl @Baz

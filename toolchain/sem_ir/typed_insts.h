@@ -86,6 +86,18 @@ struct Assign {
   InstId rhs_id;
 };
 
+// A base in a class, of the form `base: base_type;`. A base class is an
+// element of the derived class, and the type of the `BaseDecl` instruction is
+// an `UnboundElementType`.
+struct BaseDecl {
+  static constexpr auto Kind = InstKind::BaseDecl.Define("base_decl");
+
+  Parse::NodeId parse_node;
+  TypeId type_id;
+  TypeId base_type_id;
+  ElementIndex index;
+};
+
 struct BinaryOperatorAdd {
   static constexpr auto Kind = InstKind::BinaryOperatorAdd.Define("add");
 
@@ -272,9 +284,9 @@ struct Deref {
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the
-// `Field` instruction is an `UnboundElementType`.
-struct Field {
-  static constexpr auto Kind = InstKind::Field.Define("field");
+// `FieldDecl` instruction is an `UnboundElementType`.
+struct FieldDecl {
+  static constexpr auto Kind = InstKind::FieldDecl.Define("field_decl");
 
   Parse::NodeId parse_node;
   TypeId type_id;

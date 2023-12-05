@@ -35,6 +35,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .F = %F}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -42,11 +43,11 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field a, element0
-// CHECK:STDOUT:   %a: <unbound field of class Class> = bind_name a, %.loc8_8.2
+// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl a, element0
+// CHECK:STDOUT:   %a: <unbound element of class Class> = bind_name a, %.loc8_8.2
 // CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Class> = field b, element1
-// CHECK:STDOUT:   %b: <unbound field of class Class> = bind_name b, %.loc9_8.2
+// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl b, element1
+// CHECK:STDOUT:   %b: <unbound element of class Class> = bind_name b, %.loc9_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a

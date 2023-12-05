@@ -61,21 +61,25 @@ import library default;
 // CHECK:STDOUT: --- api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- api_lib.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_lib.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT:   %import.loc2: <namespace> = import ir1, ir2
 // CHECK:STDOUT:   %Api: <namespace> = bind_name Api, %import.loc2
 // CHECK:STDOUT:   %import.loc20: <namespace> = import ir3, ir3
@@ -84,6 +88,7 @@ import library default;
 // CHECK:STDOUT: --- default_import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

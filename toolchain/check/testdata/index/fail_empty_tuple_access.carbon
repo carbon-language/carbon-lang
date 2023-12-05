@@ -7,7 +7,7 @@
 fn F() {}
 
 fn Run() {
-  // CHECK:STDERR: fail_empty_tuple_access.carbon:[[@LINE+3]]:3: ERROR: Index `0` is past the end of `() as type`.
+  // CHECK:STDERR: fail_empty_tuple_access.carbon:[[@LINE+3]]:3: ERROR: Index `0` is past the end of type `()`.
   // CHECK:STDERR:   F()[0];
   // CHECK:STDERR:   ^~~~~~
   F()[0];
@@ -20,6 +20,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .Run = %Run}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }

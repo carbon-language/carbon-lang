@@ -20,12 +20,12 @@ fn F();
 // CHECK:STDERR:              ^
 var b: i32 = F[1];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: `{.a: i32, .b: i32}` does not support indexing.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Type `{.a: i32, .b: i32}` does not support indexing.
 // CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~
 var c: i32 = {.a = 1, .b = 2}[0];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: `type` does not support indexing.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Type `type` does not support indexing.
 // CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
 var d: i32 = {.a: i32, .b: i32}[0];
@@ -38,6 +38,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.N = %.loc11, .a = %a, .F = %F, .b = %b, .c = %c, .d = %d}
 // CHECK:STDOUT:   %.loc11: <namespace> = namespace {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var

@@ -45,6 +45,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .F = %F}
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
@@ -62,8 +63,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc12_8.1: type = unbound_element_type B, A
-// CHECK:STDOUT:   %.loc12_8.2: <unbound field of class B> = field a, element0
-// CHECK:STDOUT:   %a: <unbound field of class B> = bind_name a, %.loc12_8.2
+// CHECK:STDOUT:   %.loc12_8.2: <unbound element of class B> = field_decl a, element0
+// CHECK:STDOUT:   %a: <unbound element of class B> = bind_name a, %.loc12_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a

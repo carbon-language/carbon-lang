@@ -278,7 +278,7 @@ static auto TryConsumeConflictMarker(llvm::StringRef line,
                                      bool* inside_conflict_marker)
     -> ErrorOr<bool> {
   bool is_start = line.starts_with("<<<<<<<");
-  bool is_middle = line.starts_with("=======");
+  bool is_middle = line.starts_with("=======") || line.starts_with("|||||||");
   bool is_end = line.starts_with(">>>>>>>");
 
   // When running the test, any conflict marker is an error.

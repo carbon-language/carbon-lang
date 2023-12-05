@@ -14,6 +14,7 @@ fn And() -> bool {
 // CHECK:STDOUT: --- and.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G, .And = %And}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %And: <function> = fn_decl @And

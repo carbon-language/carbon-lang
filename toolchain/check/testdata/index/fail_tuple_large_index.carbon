@@ -6,7 +6,7 @@
 
 var a: (i32,) = (12,);
 var b: (i32,) = a;
-// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+3]]:14: ERROR: Index `295147905179352825855` is past the end of `(i32,) as type`.
+// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+3]]:14: ERROR: Index `295147905179352825855` is past the end of type `(i32,)`.
 // CHECK:STDERR: var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
 var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
@@ -19,6 +19,7 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b, .c = %c}
 // CHECK:STDOUT:   %.loc7_13.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_13.2: type = converted %.loc7_13.1, constants.%.loc7_13.2
 // CHECK:STDOUT:   %a.var: ref (i32,) = var a

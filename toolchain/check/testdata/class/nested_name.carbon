@@ -29,6 +29,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Outer = %Outer.decl, .F = %F, .G = %G}
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -45,8 +46,8 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
 // CHECK:STDOUT:   %.loc9_10.1: type = unbound_element_type Inner, i32
-// CHECK:STDOUT:   %.loc9_10.2: <unbound field of class Inner> = field n, element0
-// CHECK:STDOUT:   %n: <unbound field of class Inner> = bind_name n, %.loc9_10.2
+// CHECK:STDOUT:   %.loc9_10.2: <unbound element of class Inner> = field_decl n, element0
+// CHECK:STDOUT:   %n: <unbound element of class Inner> = bind_name n, %.loc9_10.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .n = %n

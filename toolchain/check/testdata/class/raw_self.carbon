@@ -29,6 +29,7 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -39,8 +40,8 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %.loc10_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc10_8.2: <unbound field of class Class> = field n, element0
-// CHECK:STDOUT:   %n: <unbound field of class Class> = bind_name n, %.loc10_8.2
+// CHECK:STDOUT:   %.loc10_8.2: <unbound element of class Class> = field_decl n, element0
+// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc10_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

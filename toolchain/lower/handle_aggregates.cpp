@@ -157,8 +157,13 @@ auto HandleClassInit(FunctionContext& context, SemIR::InstId inst_id,
                                         "class.init"));
 }
 
-auto HandleField(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                 SemIR::Field /*inst*/) -> void {
+auto HandleBaseDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                    SemIR::BaseDecl /*inst*/) -> void {
+  // No action to perform.
+}
+
+auto HandleFieldDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                     SemIR::FieldDecl /*inst*/) -> void {
   // No action to perform.
 }
 

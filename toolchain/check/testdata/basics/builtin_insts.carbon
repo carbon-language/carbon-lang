@@ -12,7 +12,8 @@
 // CHECK:STDOUT:   cross_ref_irs_size: 1
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
-// CHECK:STDOUT:   types:           {}
+// CHECK:STDOUT:   types:
+// CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instTypeType:    {kind: CrossRef, arg0: ir0, arg1: instTypeType, type: typeTypeType}
@@ -24,6 +25,9 @@
 // CHECK:STDOUT:     instFunctionType: {kind: CrossRef, arg0: ir0, arg1: instFunctionType, type: typeTypeType}
 // CHECK:STDOUT:     instBoundMethodType: {kind: CrossRef, arg0: ir0, arg1: instBoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: CrossRef, arg0: ir0, arg1: instNamespaceType, type: typeTypeType}
+// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, type: type0}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}
+// CHECK:STDOUT:     block1:
+// CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT: ...
