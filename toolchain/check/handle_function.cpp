@@ -37,7 +37,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
                             std::string);
           return context.emitter().Build(
               return_node_copy, IncompleteTypeInFunctionReturnType,
-              context.sem_ir().StringifyType(return_type_id, true));
+              context.sem_ir().StringifyType(return_type_id));
         })) {
       return_type_id = SemIR::TypeId::Error;
     } else if (!SemIR::GetInitializingRepresentation(context.sem_ir(),
@@ -202,7 +202,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
           std::string);
       return context.emitter().Build(
           param.parse_node(), IncompleteTypeInFunctionParam,
-          context.sem_ir().StringifyType(param.type_id(), true));
+          context.sem_ir().StringifyType(param.type_id()));
     });
 
     if (auto fn_param = param.TryAs<SemIR::Param>()) {

@@ -25,9 +25,8 @@ auto HandleCallExpr(Context& context, Parse::NodeId parse_node) -> bool {
     if (callee_type_id != SemIR::TypeId::Error) {
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,
                         "Value of type `{0}` is not callable.", std::string);
-      context.emitter().Emit(
-          call_expr_parse_node, CallToNonCallable,
-          context.sem_ir().StringifyType(callee_type_id, true));
+      context.emitter().Emit(call_expr_parse_node, CallToNonCallable,
+                             context.sem_ir().StringifyType(callee_type_id));
     }
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;

@@ -209,7 +209,7 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
                           "Base `{0}` is an incomplete type.", std::string);
         return context.emitter().Build(
             parse_node, IncompleteTypeInBaseDecl,
-            context.sem_ir().StringifyType(base_type_id, true));
+            context.sem_ir().StringifyType(base_type_id));
       })) {
     base_type_id = SemIR::TypeId::Error;
   }
@@ -230,9 +230,8 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
                         "Deriving from final type `{0}`. Base type must be an "
                         "`abstract` or `base` class.",
                         std::string);
-      context.emitter().Emit(
-          parse_node, BaseIsFinal,
-          context.sem_ir().StringifyType(base_type_id, true));
+      context.emitter().Emit(parse_node, BaseIsFinal,
+                             context.sem_ir().StringifyType(base_type_id));
     }
   }
 

@@ -20,12 +20,12 @@ fn F();
 // CHECK:STDERR:              ^
 var b: i32 = F[1];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:32: ERROR: `{.a: i32, .b: i32}` does not support indexing.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:32: ERROR: Type `{.a: i32, .b: i32}` does not support indexing.
 // CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
 // CHECK:STDERR:                                ^
 var c: i32 = {.a = 1, .b = 2}[0];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:34: ERROR: `type` does not support indexing.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:34: ERROR: Type `type` does not support indexing.
 // CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDERR:                                  ^
 var d: i32 = {.a: i32, .b: i32}[0];

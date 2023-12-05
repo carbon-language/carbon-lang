@@ -261,17 +261,12 @@ class File : public Printable<File> {
         .pointee_id;
   }
 
-  // Produces a string version of a type. If `in_type_context` is false, an
-  // explicit conversion to type `type` will be added in cases where the type
-  // expression would otherwise have a different type, such as a tuple or
-  // struct type.
-  auto StringifyType(TypeId type_id, bool in_type_context = false) const
-      -> std::string;
+  // Produces a string version of a type.
+  auto StringifyType(TypeId type_id) const -> std::string;
 
   // Same as `StringifyType`, but starting with an instruction representing a
   // type expression rather than a canonical type.
-  auto StringifyTypeExpr(InstId outer_inst_id,
-                         bool in_type_context = false) const -> std::string;
+  auto StringifyTypeExpr(InstId outer_inst_id) const -> std::string;
 
   // Directly expose SharedValueStores members.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {

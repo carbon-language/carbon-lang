@@ -237,13 +237,11 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   }
 }
 
-auto File::StringifyType(TypeId type_id, bool in_type_context) const
-    -> std::string {
-  return StringifyTypeExpr(GetTypeAllowBuiltinTypes(type_id), in_type_context);
+auto File::StringifyType(TypeId type_id) const -> std::string {
+  return StringifyTypeExpr(GetTypeAllowBuiltinTypes(type_id));
 }
 
-auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
-    -> std::string {
+auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -442,17 +440,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
         // clearer when stringification is needed.
         out << "<cannot stringify " << step.inst_id << ">";
         break;
-    }
-  }
-
-  // For `{}` or any tuple type, we've printed a non-type expression, so add a
-  // conversion to type `type` if it's not implied by the context.
-  if (!in_type_context) {
-    auto outer_inst = insts().Get(outer_inst_id);
-    if (outer_inst.Is<TupleType>() ||
-        (outer_inst.Is<StructType>() &&
-         inst_blocks().Get(outer_inst.As<StructType>().fields_id).empty())) {
-      out << " as type";
     }
   }
 
