@@ -350,11 +350,11 @@ class NodeStack {
       case Parse::NodeKind::BaseName:
       case Parse::NodeKind::Name:
         return IdKind::NameId;
-      case Parse::NodeKind::AbstractModifier:
+      case Parse::NodeKind::AccessModifierKeyword:
       case Parse::NodeKind::ArrayExprSemi:
-      case Parse::NodeKind::BaseModifier:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
+      case Parse::NodeKind::DeclModifierKeyword:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:

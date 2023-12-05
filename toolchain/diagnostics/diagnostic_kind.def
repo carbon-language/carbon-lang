@@ -109,6 +109,8 @@ CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
 CARBON_DIAGNOSTIC_KIND(ParamsRequiredAfterImplicit)
 CARBON_DIAGNOSTIC_KIND(ParamsRequiredByIntroducer)
+CARBON_DIAGNOSTIC_KIND(ExpectedAfterBase)
+CARBON_DIAGNOSTIC_KIND(NamespaceAfterModifiers)
 
 // ============================================================================
 // Semantics diagnostics
@@ -215,6 +217,14 @@ CARBON_DIAGNOSTIC_KIND(QualifiedExprInIncompleteClassScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprUnsupported)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprNameNotFound)
 CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
+
+// Modifier checking.
+CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOn)
+CARBON_DIAGNOSTIC_KIND(ModifierNotInContext)
+CARBON_DIAGNOSTIC_KIND(ModifierRepeated)
+CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedWith)
+CARBON_DIAGNOSTIC_KIND(ModifierMustAppearBefore)
+CARBON_DIAGNOSTIC_KIND(ModifierPrevious)
 
 // ============================================================================
 // Other diagnostics

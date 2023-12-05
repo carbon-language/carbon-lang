@@ -4,9 +4,41 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/modifiers.h"
 #include "toolchain/sem_ir/entry_point.h"
 
 namespace Carbon::Check {
+
+static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
+  Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
+  CheckAccessModifiersOnDecl(context, decl_kind);
+  LimitModifiersOnDecl(context,
+                       KeywordModifierSet::Access | KeywordModifierSet::Method |
+                           KeywordModifierSet::Interface,
+                       decl_kind);
+  // Rules for abstract, virtual, and impl, which are only allowed in classes.
+  auto containing_kind = context.decl_state_stack().containing().kind;
+  if (containing_kind != DeclState::Class) {
+    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_kind,
+                          " outside of a class");
+  } else {
+    auto containing_decl_modifiers =
+        context.decl_state_stack().containing().modifier_set;
+    if (!(containing_decl_modifiers & KeywordModifierSet::Class)) {
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
+                            " in a non-abstract non-base `class` definition",
+                            context.decl_state_stack().containing().first_node);
+    }
+    if (!(containing_decl_modifiers & KeywordModifierSet::Abstract)) {
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
+                            " in a non-abstract `class` definition",
+                            context.decl_state_stack().containing().first_node);
+    }
+  }
+  RequireDefaultFinalOnlyInInterfaces(context, decl_kind);
+
+  return context.decl_state_stack().innermost().modifier_set;
+}
 
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
@@ -55,13 +87,29 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
       context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>().value_or(
           SemIR::InstBlockId::Empty);
   auto name_context = context.decl_name_stack().FinishName();
-  auto fn_node =
-      context.node_stack()
-          .PopForSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
+
+  auto first_node = context.decl_state_stack().innermost().first_node;
+
+  // Process modifiers.
+  auto modifiers = DiagnoseModifiers(context);
+  if (!!(modifiers & KeywordModifierSet::Access)) {
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "access modifier");
+  }
+  if (!!(modifiers & KeywordModifierSet::Method)) {
+    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+                 "method modifier");
+  }
+  if (!!(modifiers & KeywordModifierSet::Interface)) {
+    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+                 "interface modifier");
+  }
 
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
-      fn_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
+      first_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
       SemIR::FunctionId::Invalid};
   auto function_decl_id = context.AddInst(function_decl);
 
@@ -116,11 +164,11 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
         (return_slot_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
-         return_type_id != context.CanonicalizeTupleType(fn_node, {}))) {
+         return_type_id != context.CanonicalizeTupleType(first_node, {}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
                         "`fn ()` or `fn () -> i32`.");
-      context.emitter().Emit(fn_node, InvalidMainRunSignature);
+      context.emitter().Emit(first_node, InvalidMainRunSignature);
     }
   }
 
@@ -131,6 +179,7 @@ auto HandleFunctionDecl(Context& context, Parse::NodeId /*parse_node*/)
     -> bool {
   BuildFunctionDecl(context, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
+  context.decl_state_stack().Pop(DeclState::Fn);
   return true;
 }
 
@@ -156,6 +205,7 @@ auto HandleFunctionDefinition(Context& context, Parse::NodeId parse_node)
   context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();
+  context.decl_state_stack().Pop(DeclState::Fn);
   return true;
 }
 
@@ -228,7 +278,8 @@ auto HandleFunctionIntroducer(Context& context, Parse::NodeId parse_node)
   context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
-  // A name should always follow.
+  // Optional modifiers and the name follow.
+  context.decl_state_stack().Push(DeclState::Fn, parse_node);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
