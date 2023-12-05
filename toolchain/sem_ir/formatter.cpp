@@ -966,7 +966,7 @@ class Formatter {
     if (!id.is_valid()) {
       out_ << "invalid";
     } else {
-      out_ << sem_ir_.StringifyType(id, /*in_type_context=*/true);
+      out_ << sem_ir_.StringifyType(id);
     }
   }
 

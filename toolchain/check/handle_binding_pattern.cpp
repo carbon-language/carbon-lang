@@ -73,7 +73,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
                 type_node_copy, IncompleteTypeInVarDecl,
                 enclosing_class_decl ? llvm::StringLiteral("Field")
                                      : llvm::StringLiteral("Variable"),
-                context.sem_ir().StringifyType(cast_type_id, true));
+                context.sem_ir().StringifyType(cast_type_id));
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }
@@ -130,7 +130,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
                               std::string);
             return context.emitter().Build(
                 type_node_copy, IncompleteTypeInLetDecl,
-                context.sem_ir().StringifyType(cast_type_id, true));
+                context.sem_ir().StringifyType(cast_type_id));
           })) {
         cast_type_id = SemIR::TypeId::Error;
       }

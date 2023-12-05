@@ -25,10 +25,10 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
       CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                         "Member access into incomplete class `{0}`.",
                         std::string);
-      auto builder = context.emitter().Build(
-          context.insts().Get(base_id).parse_node(),
-          QualifiedExprInIncompleteClassScope,
-          context.sem_ir().StringifyTypeExpr(base_id, true));
+      auto builder =
+          context.emitter().Build(context.insts().Get(base_id).parse_node(),
+                                  QualifiedExprInIncompleteClassScope,
+                                  context.sem_ir().StringifyTypeExpr(base_id));
       context.NoteIncompleteClass(base_as_class->class_id, builder);
       builder.Emit();
     }
@@ -98,7 +98,7 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
         return context.emitter().Build(
             context.insts().Get(base_id).parse_node(),
             IncompleteTypeInMemberAccess,
-            context.sem_ir().StringifyType(base_type_id, true));
+            context.sem_ir().StringifyType(base_type_id));
       })) {
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;

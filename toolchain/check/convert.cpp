@@ -804,7 +804,7 @@ auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
             : target.kind == ConversionTarget::Value
                 ? IncompleteTypeInValueConversion
                 : IncompleteTypeInConversion,
-            context.sem_ir().StringifyType(target.type_id, true));
+            context.sem_ir().StringifyType(target.type_id));
       })) {
     return SemIR::InstId::BuiltinError;
   }
