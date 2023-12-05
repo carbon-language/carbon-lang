@@ -64,7 +64,7 @@ class D {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1
 // CHECK:STDOUT:   %.loc11_11.1: type = unbound_element_type C, B1
-// CHECK:STDOUT:   %.loc11_11.2: <unbound field of class C> = base B1, element0
+// CHECK:STDOUT:   %.loc11_11.2: <unbound element of class C> = base_decl B1, element0
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -74,7 +74,7 @@ class D {
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B1.ref.loc23: type = name_ref B1, file.%B1
 // CHECK:STDOUT:   %.loc23_11.1: type = unbound_element_type D, B1
-// CHECK:STDOUT:   %.loc23_11.2: <unbound field of class D> = base B1, element0
+// CHECK:STDOUT:   %.loc23_11.2: <unbound element of class D> = base_decl B1, element0
 // CHECK:STDOUT:   %B1.ref.loc30: type = name_ref B1, file.%B1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -33,11 +33,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field j, element0
-// CHECK:STDOUT:   %j: <unbound field of class Class> = bind_name j, %.loc8_8.2
+// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl j, element0
+// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc8_8.2
 // CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Class> = field k, element1
-// CHECK:STDOUT:   %k: <unbound field of class Class> = bind_name k, %.loc9_8.2
+// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl k, element1
+// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc9_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .j = %j
