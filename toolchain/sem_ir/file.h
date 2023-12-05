@@ -108,7 +108,7 @@ struct Class : public Printable<Class> {
   // The following members are accumulated throughout the class definition.
 
   // The base class declaration. Invalid if the class has no base class. This is
-  // a Base instruction.
+  // a BaseDecl instruction.
   InstId base_id = InstId::Invalid;
 
   // The following members are set at the `}` of the class definition.

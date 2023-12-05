@@ -50,8 +50,8 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Base> = field b, element0
-// CHECK:STDOUT:   %b: <unbound field of class Base> = bind_name b, %.loc8_8.2
+// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl b, element0
+// CHECK:STDOUT:   %b: <unbound element of class Base> = bind_name b, %.loc8_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .b = %b
@@ -60,10 +60,10 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base
 // CHECK:STDOUT:   %.loc13_13.1: type = unbound_element_type Derived, Base
-// CHECK:STDOUT:   %.loc13_13.2: <unbound field of class Derived> = base Base, element0
+// CHECK:STDOUT:   %.loc13_13.2: <unbound element of class Derived> = base_decl Base, element0
 // CHECK:STDOUT:   %.loc15_8.1: type = unbound_element_type Derived, i32
-// CHECK:STDOUT:   %.loc15_8.2: <unbound field of class Derived> = field d, element1
-// CHECK:STDOUT:   %d: <unbound field of class Derived> = bind_name d, %.loc15_8.2
+// CHECK:STDOUT:   %.loc15_8.2: <unbound element of class Derived> = field_decl d, element1
+// CHECK:STDOUT:   %d: <unbound element of class Derived> = bind_name d, %.loc15_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc13_13.2

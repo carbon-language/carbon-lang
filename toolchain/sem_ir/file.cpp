@@ -187,7 +187,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
     case Assign::Kind:
-    case Base::Kind:
+    case BaseDecl::Kind:
     case BinaryOperatorAdd::Kind:
     case BindName::Kind:
     case BindValue::Kind:
@@ -203,7 +203,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ClassInit::Kind:
     case Converted::Kind:
     case Deref::Kind:
-    case Field::Kind:
+    case FieldDecl::Kind:
     case FunctionDecl::Kind:
     case Import::Kind:
     case InitializeFrom::Kind:
@@ -377,7 +377,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       }
       case UnboundElementType::Kind: {
         if (step.index == 0) {
-          out << "<unbound field of class ";
+          out << "<unbound element of class ";
           steps.push_back(step.Next());
           steps.push_back({.inst_id = GetTypeAllowBuiltinTypes(
                                inst.As<UnboundElementType>().class_type_id)});
@@ -390,7 +390,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
       case Assign::Kind:
-      case Base::Kind:
+      case BaseDecl::Kind:
       case BinaryOperatorAdd::Kind:
       case BindName::Kind:
       case BindValue::Kind:
@@ -408,7 +408,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case Converted::Kind:
       case CrossRef::Kind:
       case Deref::Kind:
-      case Field::Kind:
+      case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
       case InitializeFrom::Kind:
@@ -472,12 +472,12 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case Assign::Kind:
-      case Base::Kind:
+      case BaseDecl::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
       case ClassDecl::Kind:
-      case Field::Kind:
+      case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
       case Namespace::Kind:

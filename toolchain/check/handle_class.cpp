@@ -242,7 +242,7 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
       parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
       class_info.self_type_id, base_type_id});
   auto field_type_id = context.CanonicalizeType(field_type_inst_id);
-  class_info.base_id = context.AddInst(SemIR::Base{
+  class_info.base_id = context.AddInst(SemIR::BaseDecl{
       parse_node, field_type_id, base_type_id,
       SemIR::ElementIndex(
           context.args_type_info_stack().PeekCurrentBlockContents().size())});

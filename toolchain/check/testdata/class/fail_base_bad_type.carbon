@@ -108,7 +108,7 @@ class DeriveFromFinal {
 // CHECK:STDOUT: class @DeriveFromNonType {
 // CHECK:STDOUT:   %.loc14_9: i32 = int_literal 32
 // CHECK:STDOUT:   %.loc14_11.1: type = unbound_element_type DeriveFromNonType, <error>
-// CHECK:STDOUT:   %.loc14_11.2: <unbound field of class DeriveFromNonType> = base <error>, element0
+// CHECK:STDOUT:   %.loc14_11.2: <unbound element of class DeriveFromNonType> = base_decl <error>, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc14_11.2
@@ -116,7 +116,7 @@ class DeriveFromFinal {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromi32 {
 // CHECK:STDOUT:   %.loc21_12.1: type = unbound_element_type DeriveFromi32, i32
-// CHECK:STDOUT:   %.loc21_12.2: <unbound field of class DeriveFromi32> = base i32, element0
+// CHECK:STDOUT:   %.loc21_12.2: <unbound element of class DeriveFromi32> = base_decl i32, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc21_12.2
@@ -127,7 +127,7 @@ class DeriveFromFinal {
 // CHECK:STDOUT:   %.loc28_15: (type,) = tuple_literal (%Base.ref)
 // CHECK:STDOUT:   %.loc28_16.1: type = converted %.loc28_15, constants.%.loc28_16.1
 // CHECK:STDOUT:   %.loc28_16.2: type = unbound_element_type DeriveFromTuple, (Base,)
-// CHECK:STDOUT:   %.loc28_16.3: <unbound field of class DeriveFromTuple> = base (Base,), element0
+// CHECK:STDOUT:   %.loc28_16.3: <unbound element of class DeriveFromTuple> = base_decl (Base,), element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc28_16.3
@@ -136,7 +136,7 @@ class DeriveFromFinal {
 // CHECK:STDOUT: class @DeriveFromStruct {
 // CHECK:STDOUT:   %.loc37_26: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc37_27.1: type = unbound_element_type DeriveFromStruct, {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc37_27.2: <unbound field of class DeriveFromStruct> = base {.a: i32, .b: i32}, element0
+// CHECK:STDOUT:   %.loc37_27.2: <unbound element of class DeriveFromStruct> = base_decl {.a: i32, .b: i32}, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc37_27.2
@@ -147,7 +147,7 @@ class DeriveFromFinal {
 // CHECK:STDOUT: class @DeriveFromIncomplete {
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete
 // CHECK:STDOUT:   %.loc49_19.1: type = unbound_element_type DeriveFromIncomplete, <error>
-// CHECK:STDOUT:   %.loc49_19.2: <unbound field of class DeriveFromIncomplete> = base <error>, element0
+// CHECK:STDOUT:   %.loc49_19.2: <unbound element of class DeriveFromIncomplete> = base_decl <error>, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc49_19.2
@@ -156,7 +156,7 @@ class DeriveFromFinal {
 // CHECK:STDOUT: class @DeriveFromFinal {
 // CHECK:STDOUT:   %Final.ref: type = name_ref Final, file.%Final
 // CHECK:STDOUT:   %.loc56_14.1: type = unbound_element_type DeriveFromFinal, Final
-// CHECK:STDOUT:   %.loc56_14.2: <unbound field of class DeriveFromFinal> = base Final, element0
+// CHECK:STDOUT:   %.loc56_14.2: <unbound element of class DeriveFromFinal> = base_decl Final, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc56_14.2
