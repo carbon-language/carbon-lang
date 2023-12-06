@@ -739,6 +739,17 @@ CARBON_PARSE_STATE_VARIANTS2(ParenExprParamFinish, Unknown, Tuple)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Normal, Tuple)
 
+// Handles processing of a pattern.
+//
+//  ( ... )
+// ^
+//   1. ParamListAsRegular
+//
+//  ...
+// ^
+//   1. BindingPattern
+CARBON_PARSE_STATE(Pattern)
+
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.
 //

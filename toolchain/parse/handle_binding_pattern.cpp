@@ -11,11 +11,17 @@ auto HandleBindingPattern(Context& context) -> void {
 
   // Parameters may have keywords prefixing the pattern. They become the parent
   // for the full BindingPattern.
-  context.ConsumeIfBindingPatternKeyword(Lex::TokenKind::Template,
-                                         State::BindingPatternTemplate,
-                                         state.subtree_start);
-  context.ConsumeIfBindingPatternKeyword(
-      Lex::TokenKind::Addr, State::BindingPatternAddress, state.subtree_start);
+  if (auto token = context.ConsumeIf(Lex::TokenKind::Template)) {
+    context.PushState(Context::StateStackEntry(
+        State::BindingPatternTemplate, PrecedenceGroup::ForTopLevelExpr(),
+        PrecedenceGroup::ForTopLevelExpr(), *token, state.subtree_start));
+  }
+
+  if (auto token = context.ConsumeIf(Lex::TokenKind::Addr)) {
+    context.PushState(Context::StateStackEntry(
+        State::BindingPatternAddress, PrecedenceGroup::ForTopLevelExpr(),
+        PrecedenceGroup::ForTopLevelExpr(), *token, state.subtree_start));
+  }
 
   // Handle an invalid pattern introducer for parameters and variables.
   auto on_error = [&]() {

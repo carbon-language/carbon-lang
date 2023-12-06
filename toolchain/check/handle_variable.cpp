@@ -37,6 +37,7 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   if (next_kind == Parse::NodeKind::ParamList) {
     return context.TODO(parse_node, "tuple pattern in var");
   }
+  // TODO: find a more robust way to determine if there was an initializer.
   bool has_init = next_kind != Parse::NodeKind::BindingPattern;
   if (has_init) {
     init_id = context.node_stack().PopExpr();
