@@ -59,6 +59,8 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
 
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
+  // TODO: The node stack is a fragile way of getting context information.
+  // Get this information from somewhere else.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::ReturnedModifier:

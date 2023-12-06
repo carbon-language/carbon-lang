@@ -8,9 +8,6 @@ namespace Carbon::Parse {
 
 auto HandleFunctionIntroducer(Context& context) -> void {
   auto state = context.PopState();
-
-  context.AddLeafNode(NodeKind::FunctionIntroducer, context.Consume());
-
   state.state = State::FunctionAfterParams;
   context.PushState(state);
   context.PushState(State::DeclNameAndParamsAsRequired, state.token);

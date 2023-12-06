@@ -10,6 +10,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/decl_state.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/tree.h"
@@ -264,6 +265,11 @@ class Context {
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
+  // Get the Lex::TokenKind of a node for diagnostics.
+  auto token_kind(Parse::NodeId parse_node) -> Lex::TokenKind {
+    return tokens().GetKind(parse_tree().node_token(parse_node));
+  }
+
   auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
 
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
@@ -293,6 +299,8 @@ class Context {
   }
 
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
+
+  auto decl_state_stack() -> DeclStateStack& { return decl_state_stack_; }
 
   // Directly expose SemIR::File data accessors for brevity in calls.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
@@ -451,6 +459,9 @@ class Context {
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
+
+  // The stack of declarations that could have modifiers.
+  DeclStateStack decl_state_stack_;
 
   // Maps identifiers to name lookup results. Values are a stack of name lookup
   // results in the ancestor scopes. This offers constant-time lookup of names,

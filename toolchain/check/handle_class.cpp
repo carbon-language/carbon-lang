@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/modifiers.h"
 
 namespace Carbon::Check {
 
@@ -13,44 +14,40 @@ auto HandleClassIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
   context.inst_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
-  // A name should always follow.
+  // Optional modifiers and the name follow.
+  context.decl_state_stack().Push(DeclState::Class, parse_node);
   context.decl_name_stack().PushScopeAndStartName();
-  return true;
-}
-
-auto HandleAbstractModifier(Context& context, Parse::NodeId parse_node)
-    -> bool {
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
-auto HandleBaseModifier(Context& context, Parse::NodeId parse_node) -> bool {
-  context.node_stack().Push(parse_node);
   return true;
 }
 
 static auto BuildClassDecl(Context& context)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
-  auto introducer = context.node_stack().PeekParseNode();
-  bool abstract =
-      context.node_stack()
-          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::AbstractModifier>();
-  bool base =
-      context.node_stack()
-          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::BaseModifier>();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
-  auto decl_block_id = context.inst_block_stack().Pop();
+  auto first_node = context.decl_state_stack().innermost().first_node;
 
-  CARBON_CHECK(!(abstract && base)) << "Cannot be both `abstract` and `base`";
-  auto inheritance_kind = abstract ? SemIR::Class::Abstract
-                          : base   ? SemIR::Class::Base
-                                   : SemIR::Class::Final;
+  // Process modifiers.
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class);
+  LimitModifiersOnDecl(context,
+                       KeywordModifierSet::Class | KeywordModifierSet::Access,
+                       Lex::TokenKind::Class);
+
+  auto modifiers = context.decl_state_stack().innermost().modifier_set;
+  if (!!(modifiers & KeywordModifierSet::Access)) {
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "access modifier");
+  }
+  auto inheritance_kind =
+      !!(modifiers & KeywordModifierSet::Abstract) ? SemIR::Class::Abstract
+      : !!(modifiers & KeywordModifierSet::Base)   ? SemIR::Class::Base
+                                                   : SemIR::Class::Final;
+
+  auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
   auto class_decl =
-      SemIR::ClassDecl{introducer, SemIR::ClassId::Invalid, decl_block_id};
+      SemIR::ClassDecl{first_node, SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddInst(class_decl);
 
   // Check whether this is a redeclaration.
@@ -71,7 +68,7 @@ static auto BuildClassDecl(Context& context)
         CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
                           "Previously declared here.");
         context.emitter()
-            .Build(introducer, ClassRedeclarationDifferentIntroducer)
+            .Build(first_node, ClassRedeclarationDifferentIntroducer)
             .Note(existing_class_decl->parse_node,
                   ClassRedeclarationDifferentIntroducerPrevious)
             .Emit();
@@ -104,7 +101,7 @@ static auto BuildClassDecl(Context& context)
     auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id =
         context.CanonicalizeType(context.AddInst(SemIR::ClassType{
-            introducer, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+            first_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_decl.class_id}));
   }
 
@@ -117,6 +114,7 @@ static auto BuildClassDecl(Context& context)
 auto HandleClassDecl(Context& context, Parse::NodeId /*parse_node*/) -> bool {
   BuildClassDecl(context);
   context.decl_name_stack().PopScope();
+  context.decl_state_stack().Pop(DeclState::Class);
   return true;
 }
 
@@ -266,6 +264,7 @@ auto HandleClassDefinition(Context& context, Parse::NodeId parse_node) -> bool {
   context.inst_block_stack().Pop();
   context.PopScope();
   context.decl_name_stack().PopScope();
+  context.decl_state_stack().Pop(DeclState::Class);
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);
