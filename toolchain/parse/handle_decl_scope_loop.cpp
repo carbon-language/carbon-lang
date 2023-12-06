@@ -48,7 +48,8 @@ static auto TryHandleEndOrPackagingDecl(Context& context) -> bool {
   }
 }
 
-static auto OutputInvalidParseSubtree(Context& context, int32_t subtree_start)
+// Finishes an invalid declaration, skipping past its end.
+static auto FinishAndSkipInvalidDecl(Context& context, int32_t subtree_start)
     -> void {
   auto cursor = *context.position();
   // Consume to the next `;` or end of line. We ignore the return value since
@@ -67,41 +68,55 @@ static auto OutputInvalidParseSubtree(Context& context, int32_t subtree_start)
                   /*has_error=*/true);
 }
 
-// Reports an error and outputs an invalid parse tree.
+// Prints a diagnostic and calls FinishAndSkipInvalidDecl.
 static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
     -> void {
   CARBON_DIAGNOSTIC(UnrecognizedDecl, Error,
                     "Unrecognized declaration introducer.");
   context.emitter().Emit(*context.position(), UnrecognizedDecl);
-  OutputInvalidParseSubtree(context, subtree_start);
+  FinishAndSkipInvalidDecl(context, subtree_start);
 }
 
-static auto TokenIsModifierOrIntroducer(Lex::TokenKind token_kind) -> bool {
-  // We use the macro for modifiers, including introducers which are also
-  // modifiers (such as `base`). Other introducer tokens need to be added by
-  // hand.
-  switch (token_kind) {
-    case Lex::TokenKind::Class:
-    case Lex::TokenKind::Constraint:
-    case Lex::TokenKind::Fn:
-    case Lex::TokenKind::Interface:
-    case Lex::TokenKind::Let:
-    case Lex::TokenKind::Namespace:
-    case Lex::TokenKind::Var:
+// Returns true if position_kind could be either a token or modifier, and should
+// be treated as a modifier.
+static auto ResolveAmbiguousTokenAsModifier(Context& context,
+                                            Lex::TokenKind position_kind)
+    -> bool {
+  switch (position_kind) {
+    case Lex::TokenKind::Base:
+    case Lex::TokenKind::Extend:
+    case Lex::TokenKind::Impl:
+      // This is an ambiguous token, so now we check what the next token is.
+
+      // We use the macro for modifiers, including introducers which are
+      // also modifiers (such as `base`). Other introducer tokens need to be
+      // added by hand.
+      switch (context.PositionKind(Lookahead::NextToken)) {
+        case Lex::TokenKind::Class:
+        case Lex::TokenKind::Constraint:
+        case Lex::TokenKind::Fn:
+        case Lex::TokenKind::Interface:
+        case Lex::TokenKind::Let:
+        case Lex::TokenKind::Namespace:
+        case Lex::TokenKind::Var:
 #define CARBON_PARSE_NODE_KIND(...)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
   case Lex::TokenKind::Name:
 #include "toolchain/parse/node_kind.def"
-      return true;
+          return true;
 
+        default:
+          return false;
+      }
+      break;
     default:
       return false;
   }
 }
 
-// Returns true if the `base` is a declaration, handling it if so.
-static auto TryHandleBaseAsDecl(Context& context,
-                                Context::StateStackEntry state) -> bool {
+// Handles `base` as a declaration.
+static auto HandleBaseAsDecl(Context& context, Context::StateStackEntry state)
+    -> void {
   // `base` may be followed by:
   // - a colon
   //   => assume it is an introducer, as in `extend base: BaseType;`.
@@ -117,9 +132,7 @@ static auto TryHandleBaseAsDecl(Context& context,
     context.PushState(state);
     context.PushState(State::Expr);
     context.AddLeafNode(NodeKind::BaseColon, context.Consume());
-    return true;
-  } else if (!TokenIsModifierOrIntroducer(
-                 context.PositionKind(Lookahead::NextToken))) {
+  } else {
     // TODO: If the next token isn't a colon or `class`, try to recover
     // based on whether we're in a class, whether we have an `extend`
     // modifier, and the following tokens.
@@ -128,16 +141,13 @@ static auto TryHandleBaseAsDecl(Context& context,
     CARBON_DIAGNOSTIC(ExpectedAfterBase, Error,
                       "`class` or `:` expected after `base`.");
     context.emitter().Emit(*context.position(), ExpectedAfterBase);
-    OutputInvalidParseSubtree(context, state.subtree_start);
-    return true;
-  } else {
-    // `base` is considered a declaration modifier if it is followed by
-    // another modifier or an introducer.
-    return false;
+    FinishAndSkipInvalidDecl(context, state.subtree_start);
   }
 }
 
-// Returns true if the current position is a declaration, handling it if so.
+// Returns true if the current position is a declaration. If we see a
+// declaration introducer keyword token, replace the placeholder node and switch
+// to a state to parse the rest of the declaration.
 static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
                             bool saw_modifier, Lex::TokenKind position_kind)
     -> bool {
@@ -149,42 +159,15 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
     context.PushState(state);
   };
 
+  if (ResolveAmbiguousTokenAsModifier(context, position_kind)) {
+    return false;
+  }
+
   switch (position_kind) {
     case Lex::TokenKind::Base: {
-      return TryHandleBaseAsDecl(context, state);
+      HandleBaseAsDecl(context, state);
+      return true;
     }
-
-    case Lex::TokenKind::Extend: {
-      if (TokenIsModifierOrIntroducer(
-              context.PositionKind(Lookahead::NextToken))) {
-        // `extend` is considered a declaration modifier if it is followed by
-        // another modifier or an introducer.
-        return false;
-      } else {
-        // TODO: Treat this `extend` token as a declaration introducer
-        HandleUnrecognizedDecl(context, state.subtree_start);
-        return true;
-      }
-    }
-
-    case Lex::TokenKind::Impl: {
-      if (TokenIsModifierOrIntroducer(
-              context.PositionKind(Lookahead::NextToken))) {
-        // `impl` is considered a declaration modifier if it is followed by
-        // another modifier or an introducer.
-        return false;
-      } else {
-        // TODO: Treat this `impl` token as a declaration introducer
-        HandleUnrecognizedDecl(context, state.subtree_start);
-        return true;
-      }
-    }
-
-    // If we see a declaration introducer keyword token, replace the
-    // placeholder node and switch to a state to parse the rest of the
-    // declaration. We don't allow namespace or empty declarations here since
-    // they can't have modifiers and don't use bracketing parse nodes that
-    // would allow a variable number of modifier nodes.
     case Lex::TokenKind::Class: {
       introducer(NodeKind::ClassIntroducer, State::TypeAfterIntroducerAsClass);
       return true;
@@ -194,8 +177,18 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
                  State::TypeAfterIntroducerAsNamedConstraint);
       return true;
     }
+    case Lex::TokenKind::Extend: {
+      // TODO: Treat this `extend` token as a declaration introducer
+      HandleUnrecognizedDecl(context, state.subtree_start);
+      return true;
+    }
     case Lex::TokenKind::Fn: {
       introducer(NodeKind::FunctionIntroducer, State::FunctionIntroducer);
+      return true;
+    }
+    case Lex::TokenKind::Impl: {
+      // TODO: Treat this `impl` token as a declaration introducer
+      HandleUnrecognizedDecl(context, state.subtree_start);
       return true;
     }
     case Lex::TokenKind::Interface: {
@@ -218,6 +211,7 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
 
     case Lex::TokenKind::Semi: {
       if (saw_modifier) {
+        // Modifiers require an introducer keyword.
         HandleUnrecognizedDecl(context, state.subtree_start);
       } else {
         context.ReplacePlaceholderNode(state.subtree_start, NodeKind::EmptyDecl,
