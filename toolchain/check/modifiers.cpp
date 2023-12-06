@@ -64,34 +64,33 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
 
 auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind)
     -> void {
-  switch (context.decl_state_stack().containing().kind) {
-    case DeclState::FileScope:
-      ForbidModifiersOnDecl(
-          context, KeywordModifierSet::Protected, decl_kind,
-          " at file scope, `protected` is only allowed on class members");
-      break;
-
-    case DeclState::Class:
-      // Both `private` and `protected` allowed in a class definition.
-      break;
-
-    default:
-      // Otherwise neither `private` nor `protected` allowed.
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Protected, decl_kind,
-                            ", `protected` is only allowed on class members");
-      ForbidModifiersOnDecl(
-          context, KeywordModifierSet::Private, decl_kind,
-          ", `private` is only allowed on class members and at file scope");
-      break;
+  if (context.at_file_scope()) {
+    ForbidModifiersOnDecl(
+        context, KeywordModifierSet::Protected, decl_kind,
+        " at file scope, `protected` is only allowed on class members");
+    return;
   }
+
+  if (auto kind = context.current_scope_kind()) {
+    if (*kind == SemIR::ClassDecl::Kind) {
+      // Both `private` and `protected` allowed in a class definition.
+      return;
+    }
+  }
+
+  // Otherwise neither `private` nor `protected` allowed.
+  ForbidModifiersOnDecl(context, KeywordModifierSet::Protected, decl_kind,
+                        ", `protected` is only allowed on class members");
+  ForbidModifiersOnDecl(
+      context, KeywordModifierSet::Private, decl_kind,
+      ", `private` is only allowed on class members and at file scope");
 }
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          Lex::TokenKind decl_kind) -> void {
-  if (context.decl_state_stack().containing().kind != DeclState::Interface) {
-    ForbidModifiersOnDecl(context, KeywordModifierSet::Interface, decl_kind,
-                          " outside of an interface");
-  }
+  // FIXME: Skip this if *context.current_scope_kind() == SemIR::InterfaceDecl
+  ForbidModifiersOnDecl(context, KeywordModifierSet::Interface, decl_kind,
+                        " outside of an interface");
 }
 
 }  // namespace Carbon::Check
