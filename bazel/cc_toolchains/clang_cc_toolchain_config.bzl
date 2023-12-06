@@ -685,9 +685,17 @@ def _impl(ctx):
                                 ),
                             ),
                             flag_group(
-                                flags = ["-Wl,-whole-archive"],
-                                expand_if_true =
-                                    "libraries_to_link.is_whole_archive",
+                                expand_if_true = "libraries_to_link.is_whole_archive",
+                                flag_groups = [
+                                    flag_group(
+                                        expand_if_false = "macos_flags",
+                                        flags = ["-Wl,-whole-archive"],
+                                    ),
+                                    flag_group(
+                                        expand_if_true = "macos_flags",
+                                        flags = ["-Wl,-force_load"],
+                                    ),
+                                ],
                             ),
                             flag_group(
                                 flags = ["%{libraries_to_link.object_files}"],
@@ -733,8 +741,14 @@ def _impl(ctx):
                                 ),
                             ),
                             flag_group(
-                                flags = ["-Wl,-no-whole-archive"],
                                 expand_if_true = "libraries_to_link.is_whole_archive",
+                                flag_groups = [
+                                    flag_group(
+                                        expand_if_false = "macos_flags",
+                                        flags = ["-Wl,-no-whole-archive"],
+                                    ),
+                                    # On MacOS, -force_load only affects the next library.
+                                ],
                             ),
                             flag_group(
                                 flags = ["-Wl,--end-lib"],
