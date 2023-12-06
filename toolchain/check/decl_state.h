@@ -84,13 +84,6 @@ class DeclStateStack {
   // declaration currently being processed.
   auto innermost() -> DeclState& { return stack_.back(); }
 
-  // Gets the state for the declaration containing the innermost declaration.
-  // Requires that the innermost declaration is not `FileScope`.
-  auto containing() const -> const DeclState& {
-    CARBON_CHECK(stack_.size() >= 2);
-    return stack_[stack_.size() - 2];
-  }
-
   // Exits a declaration of kind `k`.
   auto Pop(DeclState::DeclKind k) -> void {
     CARBON_CHECK(stack_.back().kind == k);

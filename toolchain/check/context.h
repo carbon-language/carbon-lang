@@ -123,6 +123,18 @@ class Context {
     return current_scope().scope_id;
   }
 
+  // Returns true if currently at file scope.
+  auto at_file_scope() const -> bool { return scope_stack_.size() == 1; }
+
+  // Returns the instruction kind associated with the current scope, if any.
+  auto current_scope_kind() const -> std::optional<SemIR::InstKind> {
+    auto current_scope_inst_id = current_scope().scope_inst_id;
+    if (!current_scope_inst_id.is_valid()) {
+      return std::nullopt;
+    }
+    return sem_ir_->insts().Get(current_scope_inst_id).kind();
+  }
+
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
