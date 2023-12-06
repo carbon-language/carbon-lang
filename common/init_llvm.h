@@ -26,6 +26,9 @@ class InitLLVM {
  private:
   llvm::InitLLVM init_llvm;
   llvm::SmallVector<char*> args;
+
+  static auto (*InitializeTargets)() -> void;
+  static char RegisterTargets;
 };
 
 }  // namespace Carbon

@@ -183,6 +183,7 @@ cc_library(
     name = "all_llvm_targets",
     srcs = ["all_llvm_targets.cpp"],
     deps = [
+        ":init_llvm",
         "@llvm-project//llvm:AllTargetsAsmParsers",
         "@llvm-project//llvm:AllTargetsCodeGens",
         "@llvm-project//llvm:Support",

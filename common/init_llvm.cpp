@@ -8,9 +8,6 @@
 
 namespace Carbon {
 
-// Defined in all_llvm_targets.cpp. Will be null if that file is not linked in.
-[[gnu::weak]] extern auto InitLLVMTargets() -> void;
-
 InitLLVM::InitLLVM(int& argc, char**& argv)
     : init_llvm(argc, argv), args(argv, argv + argc) {
   // LLVM assumes that argc and argv won't change, and registers them with an
@@ -26,9 +23,11 @@ InitLLVM::InitLLVM(int& argc, char**& argv)
       "crash backtrace.\n");
 
   // Initialize LLVM targets if //common:all_llvm_targets was linked in.
-  if (InitLLVMTargets) {
-    InitLLVMTargets();
+  if (InitializeTargets) {
+    InitializeTargets();
   }
 }
+
+auto (*InitLLVM::InitializeTargets)() -> void = nullptr;
 
 }  // namespace Carbon
