@@ -182,13 +182,13 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
   LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
                        Lex::TokenKind::Base);
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
-  context.decl_state_stack().Pop(DeclState::Base);
   if (!(modifiers & KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
                       "Missing `extend` before `base` declaration in class.");
-    context.emitter().Build(context.decl_state_stack().innermost().first_node,
-                            BaseMissingExtend);
+    context.emitter().Emit(context.decl_state_stack().innermost().first_node,
+                           BaseMissingExtend);
   }
+  context.decl_state_stack().Pop(DeclState::Base);
 
   auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!enclosing_class_decl) {

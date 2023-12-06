@@ -7,6 +7,9 @@
 base class B {}
 
 class C {
+  // CHECK:STDERR: fail_base_no_extend.carbon:[[@LINE+3]]:3: ERROR: Missing `extend` before `base` declaration in class.
+  // CHECK:STDERR:   base: B;
+  // CHECK:STDERR:   ^~~~
   base: B;
 }
 
@@ -16,7 +19,7 @@ class C {
 // CHECK:STDOUT:   %.loc7_15.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc7_15.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7_1: type = ptr_type {}
-// CHECK:STDOUT:   %.loc11: type = struct_type {.base: B}
+// CHECK:STDOUT:   %.loc14: type = struct_type {.base: B}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,10 +37,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
-// CHECK:STDOUT:   %.loc10_10.1: type = unbound_element_type C, B
-// CHECK:STDOUT:   %.loc10_10.2: <unbound element of class C> = base_decl B, element0
+// CHECK:STDOUT:   %.loc13_10.1: type = unbound_element_type C, B
+// CHECK:STDOUT:   %.loc13_10.2: <unbound element of class C> = base_decl B, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc10_10.2
+// CHECK:STDOUT:   .base = %.loc13_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
