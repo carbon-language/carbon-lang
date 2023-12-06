@@ -5,7 +5,6 @@
 // AUTOUPDATE
 
 base class B {}
-base class B2 {}
 
 class C1 {
   // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: ERROR: `private` not allowed on `base` declaration.
