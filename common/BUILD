@@ -174,17 +174,20 @@ cc_library(
     ],
 )
 
+# Link against this to cause `:init_llvm` to pull in all LLVM targets.
+#
 # Be careful when depending on this: it pulls in several hundred megabytes of
-# LLVM binary size in -c fastbuild.
+# LLVM binary size in -c fastbuild. This should only be depended on by a
+# `cc_binary` or `cc_test` target, never a `cc_library`.
 cc_library(
-    name = "init_llvm_with_targets",
-    srcs = ["init_llvm_with_targets.cpp"],
-    hdrs = ["init_llvm_with_targets.h"],
+    name = "all_llvm_targets",
+    srcs = ["all_llvm_targets.cpp"],
     deps = [
-        ":init_llvm",
         "@llvm-project//llvm:AllTargetsAsmParsers",
         "@llvm-project//llvm:AllTargetsCodeGens",
+        "@llvm-project//llvm:Support",
     ],
+    alwayslink = 1,
 )
 
 cc_library(

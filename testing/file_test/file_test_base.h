@@ -174,10 +174,6 @@ extern auto GetFileTestFactory() -> FileTestFactory;
     return {#Name, [](llvm::StringRef path) { return new Name(path); }}; \
   }
 
-// Main entry point for file tests. You should initialize LLVM if needed before
-// calling this.
-auto FileTestMain(int argc, char** argv) -> int;
-
 }  // namespace Carbon::Testing
 
 #endif  // CARBON_TESTING_FILE_TEST_FILE_TEST_BASE_H_

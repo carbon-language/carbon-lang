@@ -44,7 +44,8 @@ cc_test(
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
-        "//testing/base:gtest_main_with_targets",
+        "//common:all_llvm_targets",
+        "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:tokenized_buffer_test_helpers",
@@ -73,8 +74,9 @@ cc_binary(
     env = cc_env(),
     deps = [
         ":driver",
+        "//common:all_llvm_targets",
         "//common:bazel_working_dir",
-        "//common:init_llvm_with_targets",
+        "//common:init_llvm",
         "@llvm-project//llvm:Support",
     ],
 )

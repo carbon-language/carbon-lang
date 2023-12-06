@@ -25,17 +25,6 @@ cc_library(
     ],
 )
 
-# Same as :gtest_main, but also include LLVM targets.
-cc_library(
-    name = "gtest_main_with_targets",
-    testonly = 1,
-    srcs = ["gtest_main_with_targets.cpp"],
-    deps = [
-        "//common:init_llvm_with_targets",
-        "@com_google_googletest//:gtest",
-    ],
-)
-
 cc_library(
     name = "test_raw_ostream",
     testonly = 1,

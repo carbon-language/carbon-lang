@@ -2,14 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "common/init_llvm_with_targets.h"
-
 #include "llvm/Support/TargetSelect.h"
 
 namespace Carbon {
 
-InitLLVMWithTargets::InitLLVMWithTargets(int& argc, char**& argv)
-    : init_llvm(argc, argv) {
+// Declared in init_llvm.cpp.
+auto InitLLVMTargets() -> void {
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
   llvm::InitializeAllTargetMCs();

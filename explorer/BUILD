@@ -50,7 +50,7 @@ cc_binary(
         ":main",
         "//common:check",
         "//testing/base:test_raw_ostream",
-        "//testing/file_test:file_test_main",
+        "//testing/file_test:file_test_base",
         "@com_google_absl//absl/flags:flag",
         "@com_googlesource_code_re2//:re2",
     ],

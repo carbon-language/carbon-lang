@@ -33,6 +33,7 @@ cc_library(
         ":autoupdate",
         "//common:check",
         "//common:error",
+        "//common:init_llvm",
         "//common:ostream",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
@@ -47,30 +48,9 @@ file_test(
     srcs = ["file_test_base_test.cpp"],
     tests = glob(["testdata/**"]),
     deps = [
-        ":file_test_main",
+        ":file_test_base",
         "//common:ostream",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "file_test_main",
-    testonly = 1,
-    srcs = ["file_test_main.cpp"],
-    hdrs = ["file_test_base.h"],
-    deps = [
-        ":file_test_base",
-        "//common:init_llvm",
-    ],
-)
-
-cc_library(
-    name = "file_test_main_with_targets",
-    testonly = 1,
-    srcs = ["file_test_main_with_targets.cpp"],
-    deps = [
-        ":file_test_base",
-        "//common:init_llvm_with_targets",
     ],
 )

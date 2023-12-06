@@ -21,7 +21,8 @@ file_test(
         "//toolchain/parse:testdata",
     ],
     deps = [
-        "//testing/file_test:file_test_main_with_targets",
+        "//common:all_llvm_targets",
+        "//testing/file_test:file_test_base",
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
     ],
