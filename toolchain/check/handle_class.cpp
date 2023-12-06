@@ -280,7 +280,7 @@ auto HandleClassDefinition(Context& context, Parse::NodeId parse_node) -> bool {
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);
-  class_info.object_representation_id =
+  class_info.object_repr_id =
       context.CanonicalizeStructType(parse_node, fields_id);
   return true;
 }

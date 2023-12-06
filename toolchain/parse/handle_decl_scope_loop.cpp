@@ -47,6 +47,7 @@ static auto TokenIsModifierOrIntroducer(Lex::TokenKind token_kind) -> bool {
     case Lex::TokenKind::Impl:
     case Lex::TokenKind::Interface:
     case Lex::TokenKind::Let:
+    case Lex::TokenKind::Namespace:
     case Lex::TokenKind::Private:
     case Lex::TokenKind::Protected:
     case Lex::TokenKind::Var:
@@ -120,15 +121,32 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   bool saw_modifier = false;
   while (true) {
     switch (context.PositionKind()) {
-      // If we see a access modifier keyword token, add it as a leaf node
-      // and repeat with the next token.
-      case Lex::TokenKind::Private:
-      case Lex::TokenKind::Protected: {
-        auto modifier_token = context.Consume();
-        context.AddLeafNode(NodeKind::AccessModifierKeyword, modifier_token);
+      // If we see a modifier keyword token, add it as a leaf node and loop to
+      // the next token.
+      case Lex::TokenKind::Abstract:
+        context.AddLeafNode(NodeKind::AbstractModifier, context.Consume());
         saw_modifier = true;
         break;
-      }
+      case Lex::TokenKind::Default:
+        context.AddLeafNode(NodeKind::DefaultModifier, context.Consume());
+        saw_modifier = true;
+        break;
+      case Lex::TokenKind::Final:
+        context.AddLeafNode(NodeKind::FinalModifier, context.Consume());
+        saw_modifier = true;
+        break;
+      case Lex::TokenKind::Private:
+        context.AddLeafNode(NodeKind::PrivateModifier, context.Consume());
+        saw_modifier = true;
+        break;
+      case Lex::TokenKind::Protected:
+        context.AddLeafNode(NodeKind::ProtectedModifier, context.Consume());
+        saw_modifier = true;
+        break;
+      case Lex::TokenKind::Virtual:
+        context.AddLeafNode(NodeKind::VirtualModifier, context.Consume());
+        saw_modifier = true;
+        break;
 
       case Lex::TokenKind::Base:
         // `base` may be followed by:
@@ -160,26 +178,16 @@ auto HandleDeclScopeLoop(Context& context) -> void {
           OutputInvalidParseSubtree(context, state.subtree_start);
           return;
         }
-        [[fallthrough]];
-
-      // If we see a declaration modifier keyword token, add it as a leaf node
-      // and repeat with the next token.
-      case Lex::TokenKind::Abstract:
-      case Lex::TokenKind::Default:
-      case Lex::TokenKind::Final:
-      case Lex::TokenKind::Virtual: {
-        auto modifier_token = context.Consume();
-        context.AddLeafNode(NodeKind::DeclModifierKeyword, modifier_token);
+        context.AddLeafNode(NodeKind::BaseModifier, context.Consume());
         saw_modifier = true;
         break;
-      }
 
       case Lex::TokenKind::Impl: {
         // `impl` is considered a declaration modifier if it is followed by
         // another modifier or an introducer.
         if (TokenIsModifierOrIntroducer(
                 context.PositionKind(Lookahead::NextToken))) {
-          context.AddLeafNode(NodeKind::DeclModifierKeyword, context.Consume());
+          context.AddLeafNode(NodeKind::ImplModifier, context.Consume());
           saw_modifier = true;
         } else {
           // TODO: Treat this `impl` token as a declaration introducer
@@ -194,7 +202,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
         // another modifier or an introducer.
         if (TokenIsModifierOrIntroducer(
                 context.PositionKind(Lookahead::NextToken))) {
-          context.AddLeafNode(NodeKind::DeclModifierKeyword, context.Consume());
+          context.AddLeafNode(NodeKind::ExtendModifier, context.Consume());
           saw_modifier = true;
         } else {
           // TODO: Treat this `extend` token as a declaration introducer
@@ -241,14 +249,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
       // they can't have modifiers and don't use bracketing parse nodes that
       // would allow a variable number of modifier nodes.
       case Lex::TokenKind::Namespace: {
-        if (saw_modifier) {
-          CARBON_DIAGNOSTIC(NamespaceAfterModifiers, Error,
-                            "`namespace` unexpected after modifiers.");
-          context.emitter().Emit(*context.position(), NamespaceAfterModifiers);
-          OutputInvalidParseSubtree(context, state.subtree_start);
-        } else {
-          introducer(NodeKind::NamespaceStart, State::Namespace);
-        }
+        introducer(NodeKind::NamespaceStart, State::Namespace);
         return;
       }
       case Lex::TokenKind::Semi: {

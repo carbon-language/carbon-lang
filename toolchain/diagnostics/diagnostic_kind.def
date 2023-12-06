@@ -110,7 +110,6 @@ CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
 CARBON_DIAGNOSTIC_KIND(ParamsRequiredAfterImplicit)
 CARBON_DIAGNOSTIC_KIND(ParamsRequiredByIntroducer)
 CARBON_DIAGNOSTIC_KIND(ExpectedAfterBase)
-CARBON_DIAGNOSTIC_KIND(NamespaceAfterModifiers)
 
 // ============================================================================
 // Semantics diagnostics
