@@ -145,7 +145,8 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
       auto scope_id = resolved_inst.As<SemIR::Namespace>().name_scope_id;
       name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id = scope_id;
-      context_->PushScope(name_context.resolved_inst_id, scope_id);
+      context_->PushScope(name_context.resolved_inst_id, scope_id,
+                          context_->name_scopes().Get(scope_id).has_load_error);
       break;
     }
     default:

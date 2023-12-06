@@ -12,6 +12,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -494,6 +495,10 @@ class InstNamer {
                            ".decl");
           continue;
         }
+        case LazyImportRef::Kind: {
+          add_inst_name("lazy_import_ref");
+          continue;
+        }
         case NameRef::Kind: {
           add_inst_name_id(inst.As<NameRef>().name_id, ".ref");
           continue;
@@ -703,10 +708,12 @@ class Formatter {
 
   auto FormatNameScope(NameScopeId id, llvm::StringRef separator,
                        llvm::StringRef prefix) -> void {
+    const auto& scope = sem_ir_.name_scopes().Get(id);
+
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
     llvm::SmallVector<std::pair<InstId, NameId>> entries;
-    for (auto [name_id, inst_id] : sem_ir_.name_scopes().Get(id)) {
+    for (auto [name_id, inst_id] : scope.names) {
       entries.push_back({inst_id, name_id});
     }
     llvm::sort(entries,
@@ -718,6 +725,10 @@ class Formatter {
       FormatName(name_id);
       out_ << " = ";
       FormatInstName(inst_id);
+    }
+
+    if (scope.has_load_error) {
+      out_ << sep << "has_load_error";
     }
   }
 
@@ -810,6 +821,11 @@ class Formatter {
   auto FormatInstructionRHS(BlockArg inst) -> void {
     out_ << " ";
     FormatLabel(inst.block_id);
+  }
+
+  auto FormatInstructionRHS(LazyImportRef inst) -> void {
+    // Don't format the inst_id because it refers to a different IR.
+    out_ << " " << inst.ir_id << ", " << inst.inst_id;
   }
 
   auto FormatInstruction(InstId /*inst_id*/, BranchIf inst) -> void {

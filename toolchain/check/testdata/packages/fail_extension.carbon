@@ -92,7 +92,6 @@ package SwappedExt impl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package.incorrect
@@ -105,8 +104,6 @@ package SwappedExt impl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %Package: <namespace> = bind_name Package, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package_lib.incorrect
@@ -119,8 +116,6 @@ package SwappedExt impl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %Package: <namespace> = bind_name Package, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- swapped_ext.impl.carbon
@@ -133,7 +128,5 @@ package SwappedExt impl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %SwappedExt: <namespace> = bind_name SwappedExt, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

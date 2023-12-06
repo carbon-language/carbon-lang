@@ -137,20 +137,17 @@ auto Context::AddPackageImports(Parse::NodeId import_node,
                                        .type_id = type_id,
                                        .first_cross_ref_ir_id = first_id,
                                        .last_cross_ref_ir_id = last_id});
-  if (name_id.is_valid()) {
-    // Add the import to lookup. Should always succeed because imports will be
-    // uniquely named.
-    AddNameToLookup(import_node, name_id, inst_id);
-    // Add a name for formatted output. This isn't used in name lookup in order
-    // to reduce indirection, but it's separate from the Import because it
-    // otherwise fits in an Inst.
-    AddInst(SemIR::BindName{.parse_node = import_node,
-                            .type_id = type_id,
-                            .name_id = name_id,
-                            .value_id = inst_id});
-  } else {
-    // TODO: All names from the current package should be added.
-  }
+
+  // Add the import to lookup. Should always succeed because imports will be
+  // uniquely named.
+  AddNameToLookup(import_node, name_id, inst_id);
+  // Add a name for formatted output. This isn't used in name lookup in order
+  // to reduce indirection, but it's separate from the Import because it
+  // otherwise fits in an Inst.
+  AddInst(SemIR::BindName{.parse_node = import_node,
+                          .type_id = type_id,
+                          .name_id = name_id,
+                          .value_id = inst_id});
 }
 
 auto Context::AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
@@ -166,6 +163,45 @@ auto Context::AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
         {.inst_id = target_id, .scope_index = current_scope_index()});
   } else {
     DiagnoseDuplicateName(name_node, name_lookup_[name_id].back().inst_id);
+  }
+}
+
+auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
+  auto inst = insts().Get(inst_id);
+  auto lazy_inst = inst.TryAs<SemIR::LazyImportRef>();
+  if (!lazy_inst) {
+    return;
+  }
+  const SemIR::File& import_ir = *cross_ref_irs().Get(lazy_inst->ir_id);
+  auto import_inst = import_ir.insts().Get(lazy_inst->inst_id);
+  switch (import_inst.kind()) {
+    case SemIR::InstKind::FunctionDecl: {
+      // TODO: Fill this in better.
+      auto function_id =
+          functions().Add({.name_id = SemIR::NameId::Invalid,
+                           .decl_id = inst_id,
+                           .implicit_param_refs_id = SemIR::InstBlockId::Empty,
+                           .param_refs_id = SemIR::InstBlockId::Empty,
+                           .return_type_id = SemIR::TypeId::Invalid,
+                           .return_slot_id = SemIR::InstId::Invalid});
+      insts().Set(inst_id, SemIR::FunctionDecl{
+                               Parse::NodeId::Invalid,
+                               GetBuiltinType(SemIR::BuiltinKind::FunctionType),
+                               function_id});
+      break;
+    }
+
+    default:
+      // TODO: We need more type support. For now we inject an arbitrary
+      // invalid node that's unrelated to the underlying value. The TODO
+      // diagnostic is used since this section shouldn't typically be able to
+      // error.
+      TODO(Parse::NodeId::Invalid,
+           (llvm::Twine("TODO: support ") + import_inst.kind().name()).str());
+      insts().Set(inst_id, SemIR::VarStorage{Parse::NodeId::Invalid,
+                                             SemIR::TypeId::Error,
+                                             SemIR::NameId::PackageNamespace});
+      break;
   }
 }
 
@@ -201,6 +237,7 @@ auto Context::LookupNameInDecl(Parse::NodeId parse_node, SemIR::NameId name_id,
           << "Should have been erased: " << names().GetFormatted(name_id);
       auto result = name_it->second.back();
       if (result.scope_index == current_scope_index()) {
+        ResolveIfLazyImportRef(result.inst_id);
         return result.inst_id;
       }
     }
@@ -233,23 +270,29 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
     // it shadows all further non-lexical results and we're done.
     if (!lexical_results.empty() &&
         lexical_results.back().scope_index > index) {
-      return lexical_results.back().inst_id;
+      auto inst_id = lexical_results.back().inst_id;
+      ResolveIfLazyImportRef(inst_id);
+      return inst_id;
     }
 
-    auto non_lexical_result =
-        LookupQualifiedName(parse_node, name_id, name_scope_id,
-                            /*required=*/false);
-    if (non_lexical_result.is_valid()) {
+    if (auto non_lexical_result =
+            LookupQualifiedName(parse_node, name_id, name_scope_id,
+                                /*required=*/false);
+        non_lexical_result.is_valid()) {
       return non_lexical_result;
     }
   }
 
   if (!lexical_results.empty()) {
-    return lexical_results.back().inst_id;
+    auto inst_id = lexical_results.back().inst_id;
+    ResolveIfLazyImportRef(inst_id);
+    return inst_id;
   }
 
   // We didn't find anything at all.
-  DiagnoseNameNotFound(parse_node, name_id);
+  if (!name_lookup_has_load_error_) {
+    DiagnoseNameNotFound(parse_node, name_id);
+  }
   return SemIR::InstId::BuiltinError;
 }
 
@@ -259,27 +302,35 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
     -> SemIR::InstId {
   CARBON_CHECK(scope_id.is_valid()) << "No scope to perform lookup into";
   const auto& scope = name_scopes().Get(scope_id);
-  auto it = scope.find(name_id);
-  if (it == scope.end()) {
-    // TODO: Also perform lookups into `extend`ed scopes.
-    if (required) {
-      DiagnoseNameNotFound(parse_node, name_id);
-      return SemIR::InstId::BuiltinError;
-    }
-    return SemIR::InstId::Invalid;
+  if (auto it = scope.names.find(name_id); it != scope.names.end()) {
+    ResolveIfLazyImportRef(it->second);
+    return it->second;
   }
 
-  return it->second;
+  // TODO: Also perform lookups into `extend`ed scopes.
+
+  if (!required) {
+    return SemIR::InstId::Invalid;
+  }
+  if (!scope.has_load_error) {
+    DiagnoseNameNotFound(parse_node, name_id);
+  }
+  return SemIR::InstId::BuiltinError;
 }
 
 auto Context::PushScope(SemIR::InstId scope_inst_id,
-                        SemIR::NameScopeId scope_id) -> void {
-  scope_stack_.push_back({.index = next_scope_index_,
-                          .scope_inst_id = scope_inst_id,
-                          .scope_id = scope_id});
+                        SemIR::NameScopeId scope_id,
+                        bool name_lookup_has_load_error) -> void {
+  scope_stack_.push_back(
+      {.index = next_scope_index_,
+       .scope_inst_id = scope_inst_id,
+       .scope_id = scope_id,
+       .prev_name_lookup_has_load_error = name_lookup_has_load_error_});
   if (scope_id.is_valid()) {
     non_lexical_scope_stack_.push_back({next_scope_index_, scope_id});
   }
+
+  name_lookup_has_load_error_ |= name_lookup_has_load_error;
 
   // TODO: Handle this case more gracefully.
   CARBON_CHECK(next_scope_index_.index != std::numeric_limits<int32_t>::max())
@@ -289,6 +340,9 @@ auto Context::PushScope(SemIR::InstId scope_inst_id,
 
 auto Context::PopScope() -> void {
   auto scope = scope_stack_.pop_back_val();
+
+  name_lookup_has_load_error_ = scope.prev_name_lookup_has_load_error;
+
   for (const auto& str_id : scope.names) {
     auto it = name_lookup_.find(str_id);
     CARBON_CHECK(it->second.back().scope_index == scope.index)
@@ -848,6 +902,7 @@ class TypeCompleter {
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
       case SemIR::IntLiteral::Kind:
+      case SemIR::LazyImportRef::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::NoOp::Kind:

@@ -65,16 +65,12 @@ library "lib" impl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %WithImpl: <namespace> = bind_name WithImpl, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl_extra.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %WithImpl: <namespace> = bind_name WithImpl, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_impl_lib.carbon
@@ -87,8 +83,6 @@ library "lib" impl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %WithImpl: <namespace> = bind_name WithImpl, %import
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main.carbon
@@ -107,6 +101,5 @@ library "lib" impl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

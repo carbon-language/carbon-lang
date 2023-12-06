@@ -164,6 +164,15 @@ class NameStoreWrapper {
   const StringStoreWrapper<IdentifierId>* identifiers_;
 };
 
+struct NameScope {
+  // Names in the scope.
+  llvm::DenseMap<NameId, InstId> names;
+
+  // Whether the scope corresponds to an import that failed. There may still be
+  // names from successful imports, or the current file.
+  bool has_load_error = false;
+};
+
 // Provides a ValueStore wrapper for an API specific to name scopes.
 class NameScopeStore {
  public:
@@ -174,12 +183,14 @@ class NameScopeStore {
   // duplicates.
   auto AddEntry(NameScopeId scope_id, NameId name_id, InstId target_id)
       -> bool {
-    return values_.Get(scope_id).insert({name_id, target_id}).second;
+    return values_.Get(scope_id).names.insert({name_id, target_id}).second;
   }
 
   // Returns the requested name scope.
-  auto Get(NameScopeId scope_id) const
-      -> const llvm::DenseMap<NameId, InstId>& {
+  auto Get(NameScopeId scope_id) -> NameScope& { return values_.Get(scope_id); }
+
+  // Returns the requested name scope.
+  auto Get(NameScopeId scope_id) const -> const NameScope& {
     return values_.Get(scope_id);
   }
 
