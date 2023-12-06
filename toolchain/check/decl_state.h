@@ -23,9 +23,10 @@ enum class KeywordModifierSet {
   Abstract = 1 << 2,
   Base = 1 << 3,
   Default = 1 << 4,
-  Final = 1 << 5,
-  Impl = 1 << 6,
-  Virtual = 1 << 7,
+  Extend = 1 << 5,
+  Final = 1 << 6,
+  Impl = 1 << 7,
+  Virtual = 1 << 8,
 
   // Sets of modifiers:
   Access = Private | Protected,
@@ -45,7 +46,7 @@ inline auto operator!(KeywordModifierSet k) -> bool {
 // declaration and the keyword modifiers that apply to that declaration.
 struct DeclState {
   // What kind of declaration
-  enum DeclKind { FileScope, Class, Constraint, Fn, Interface, Let, Var };
+  enum DeclKind { FileScope, Class, Base, Constraint, Fn, Interface, Let, Var };
 
   explicit DeclState(DeclKind decl_kind, Parse::NodeId parse_node)
       : kind(decl_kind), first_node(parse_node) {}
@@ -86,7 +87,8 @@ class DeclStateStack {
 
   // Exits a declaration of kind `k`.
   auto Pop(DeclState::DeclKind k) -> void {
-    CARBON_CHECK(stack_.back().kind == k);
+    CARBON_CHECK(stack_.back().kind == k)
+        << "Found: " << stack_.back().kind << " expected: " << k;
     stack_.pop_back();
     CARBON_CHECK(!stack_.empty());
   }

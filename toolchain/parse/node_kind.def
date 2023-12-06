@@ -17,9 +17,12 @@
 //   - CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount, LexTokenKinds)
 //     Defines a parse node with a set number of children, often 0. This count
 //     must be correct even when the node contains errors.
-//   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, TokenIndex)
+//   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKinds)
 //     Defines a parse node that corresponds to a token that is a single-token
 //     literal. The token is wrapped for LexTokenKinds.
+//   - CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)
+//     A token-based modifier. The Name is the TokenKind, and will be appended
+//     with "Modifier" for the parse kind.
 //
 //   In both cases, LexTokenKinds says which Lex::TokenKind values that this
 //   parse node can correspond to, and is a sequence of:
@@ -58,6 +61,16 @@
 #ifndef CARBON_PARSE_NODE_KIND_TOKEN_LITERAL
 #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKinds) \
   CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0, LexTokenKinds)
+#endif
+
+// This is expected to be used with something like:
+//
+//   // Use x-macros to handle modifier cases.
+//   #define CARBON_PARSE_NODE_KIND(...)
+//   #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) <code>
+#ifndef CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) \
+  CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name##Modifier, 0, CARBON_TOKEN(Name))
 #endif
 
 // The start of the file.
@@ -182,7 +195,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 
 // `fn`:
 //     FunctionIntroducer
-//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //     _external_: ParamList
 //       _external_: type expression
@@ -252,7 +265,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 
 // `let`:
 //   LetIntroducer
-//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   _repeated_ _external_: modifier
 //   _external_: BindingPattern
 //   LetInitializer
 //   _external_: expression
@@ -267,7 +280,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 
 // `var` and `returned var`:
 //   VariableIntroducer
-//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
 //   _external_: BindingPattern
 //     VariableInitializer
@@ -448,8 +461,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpr, 2,
 // A value literal.
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralFalse, CARBON_TOKEN(False))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralTrue, CARBON_TOKEN(True))
-CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntLiteral,
-                                     CARBON_TOKEN(IntLiteral))
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntLiteral, CARBON_TOKEN(IntLiteral))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(RealLiteral, CARBON_TOKEN(RealLiteral))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringLiteral, CARBON_TOKEN(StringLiteral))
 
@@ -586,34 +598,20 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 
-// TODO: Is there a benefit to having different parse node kinds for every
-// different modifier token?
-
-// Access modifier keywords `private` or `protected`:
-// AccessModifierKeyword
-//
-// The kind of keyword is determined by looking at the token kind.
-// These may be repeated, including possibly zero times.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(AccessModifierKeyword, 0,
-                                   CARBON_TOKEN(Private)
-                                   CARBON_TOKEN(Protected))
-
-// Declaration modifier keywords such as `abstract` or `virtual`:
-// DeclModifierKeyword
-//
-// The kind of keyword is determined by looking at the token kind.
-// These may be repeated, including possibly zero times.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclModifierKeyword, 0,
-                                   CARBON_TOKEN(Abstract)
-                                   CARBON_TOKEN(Base)
-                                   CARBON_TOKEN(Default)
-                                   CARBON_TOKEN(Final)
-                                   CARBON_TOKEN(Impl)
-                                   CARBON_TOKEN(Virtual))
+// Various modifiers. These are all a single token.
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Abstract)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Base)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Default)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Extend)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Final)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Impl)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Private)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Protected)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Virtual)
 
 // `class`:
 //     ClassIntroducer
-//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
@@ -633,7 +631,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
 
 // `base`:
 //   BaseIntroducer
-//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   _repeated_ _external_: modifier
 //   BaseColon
 //   _external_: expression
 // BaseDecl
@@ -645,7 +643,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer,
 
 // `interface`:
 //     InterfaceIntroducer
-//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //   InterfaceDefinitionStart
 //   _external_: declarations
@@ -666,7 +664,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
 
 // `constraint`:
 //     NamedConstraintIntroducer
-//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
@@ -713,6 +711,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageExpr, 0, CARBON_TOKEN(Package))
 #undef CARBON_PARSE_NODE_KIND_BRACKET
 #undef CARBON_PARSE_NODE_KIND_CHILD_COUNT
 #undef CARBON_PARSE_NODE_KIND_TOKEN_LITERAL
+#undef CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER
 #undef CARBON_TOKEN
 #undef CARBON_ANY_TOKEN
 #undef CARBON_IF_ERROR
