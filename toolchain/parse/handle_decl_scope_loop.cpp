@@ -47,6 +47,7 @@ static auto TokenIsModifierOrIntroducer(Lex::TokenKind token_kind) -> bool {
     case Lex::TokenKind::Impl:
     case Lex::TokenKind::Interface:
     case Lex::TokenKind::Let:
+    case Lex::TokenKind::Namespace:
     case Lex::TokenKind::Private:
     case Lex::TokenKind::Protected:
     case Lex::TokenKind::Var:
@@ -248,14 +249,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
       // they can't have modifiers and don't use bracketing parse nodes that
       // would allow a variable number of modifier nodes.
       case Lex::TokenKind::Namespace: {
-        if (saw_modifier) {
-          CARBON_DIAGNOSTIC(NamespaceAfterModifiers, Error,
-                            "`namespace` unexpected after modifiers.");
-          context.emitter().Emit(*context.position(), NamespaceAfterModifiers);
-          OutputInvalidParseSubtree(context, state.subtree_start);
-        } else {
-          introducer(NodeKind::NamespaceStart, State::Namespace);
-        }
+        introducer(NodeKind::NamespaceStart, State::Namespace);
         return;
       }
       case Lex::TokenKind::Semi: {
