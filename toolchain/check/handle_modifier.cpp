@@ -34,8 +34,8 @@ static auto EmitNotAllowedWithDiagnostic(Context& context,
       .Emit();
 }
 
-auto HandleModifier(Context& context, Parse::NodeId parse_node,
-                    KeywordModifierSet keyword) -> bool {
+static auto HandleModifier(Context& context, Parse::NodeId parse_node,
+                           KeywordModifierSet keyword) -> bool {
   auto& s = context.decl_state_stack().innermost();
   bool is_access = !!(keyword & KeywordModifierSet::Access);
   auto& saw_modifier = is_access ? s.saw_access_modifier : s.saw_decl_modifier;
