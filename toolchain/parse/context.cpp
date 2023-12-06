@@ -425,11 +425,11 @@ auto Context::GetDeclContext() -> DeclContext {
     // DeclScopeLoop.
     if (state_stack_[i].state == State::DeclScopeLoop) {
       switch (state_stack_[i - 1].state) {
-        case State::TypeDefinitionFinishAsClass:
+        case State::DeclDefinitionFinishAsClass:
           return DeclContext::Class;
-        case State::TypeDefinitionFinishAsInterface:
+        case State::DeclDefinitionFinishAsInterface:
           return DeclContext::Interface;
-        case State::TypeDefinitionFinishAsNamedConstraint:
+        case State::DeclDefinitionFinishAsNamedConstraint:
           return DeclContext::NamedConstraint;
         default:
           llvm_unreachable("Missing handling for a declaration scope");
