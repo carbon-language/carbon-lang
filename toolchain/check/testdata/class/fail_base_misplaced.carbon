@@ -6,19 +6,19 @@
 
 base class B {}
 
-// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:8: ERROR: `base` declaration can only be used in a class.
-// CHECK:STDERR: base: B;
-// CHECK:STDERR:        ^
-base: B;
+// CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:15: ERROR: `base` declaration can only be used in a class.
+// CHECK:STDERR: extend base: B;
+// CHECK:STDERR:               ^
+extend base: B;
 
 fn F() {
   // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+6]]:3: ERROR: Expected expression.
-  // CHECK:STDERR:   base: B;
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:   extend base: B;
+  // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `HandleInvalidParse`.
-  // CHECK:STDERR:   base: B;
-  // CHECK:STDERR:   ^~~~
-  base: B;
+  // CHECK:STDERR:   extend base: B;
+  // CHECK:STDERR:   ^~~~~~
+  extend base: B;
 }
 
 // CHECK:STDOUT: --- fail_base_misplaced.carbon
