@@ -5,7 +5,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
-load("//testing/base:rules.bzl", "gtest_test")
 load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = [
@@ -25,7 +24,6 @@ cc_library(
     hdrs = ["main.h"],
     deps = [
         "//common:error",
-        "//common:init_llvm",
         "//common:ostream",
         "//explorer/base:trace_stream",
         "//explorer/parse_and_execute",
@@ -44,25 +42,10 @@ cc_binary(
     ],
 )
 
-# All explorer tests are packaged into a single binary to reduce disk usage.
-gtest_test(
-    name = "explorer_test",
+cc_binary(
+    name = "file_test",
+    testonly = 1,
     srcs = ["file_test.cpp"],
-    args = ["--no_file_tests"],
-    tests = [
-        ("//explorer/ast:ast_test_matchers_test", "ASTTestMatchers"),
-        ("//explorer/ast:expression_test", "ExpressionTest"),
-        ("//explorer/ast:element_test", "ElementTest"),
-        ("//explorer/ast:pattern_test", "PatternTest"),
-        ("//explorer/base:arena_test", "ArenaTest"),
-        ("//explorer/base:decompose_test", "HashFromDecomposeTest"),
-        ("//explorer/base:error_builders_test", "ErrorBuildersTest"),
-        ("//explorer/base:set_file_context_raii_test", "SetFileContextRaiiTest"),
-        ("//explorer/base:set_program_phase_raii_test", "SetProgramPhaseRaiiTest"),
-        ("//explorer/parse_and_execute:parse_and_execute_test", "ParseAndExecuteTest"),
-        ("//explorer/syntax:parse_test", "ParseTest"),
-        ("//explorer/syntax:unimplemented_example_test", "UnimplementedExampleTest"),
-    ],
     deps = [
         ":main",
         "//common:check",
@@ -74,10 +57,10 @@ gtest_test(
 )
 
 file_test(
-    name = "file_test",
+    name = "file_test.notrace",
     size = "small",
     args = ["--gtest_filter=ExplorerFileTest.*"],
-    prebuilt_binary = ":explorer_test",
+    prebuilt_binary = ":file_test",
     shard_count = 20,
     tests = glob(["testdata/**/*.carbon"]),
 )
@@ -89,7 +72,7 @@ file_test(
         "--trace",
         "--gtest_filter=ExplorerFileTest.*",
     ],
-    prebuilt_binary = ":explorer_test",
+    prebuilt_binary = ":file_test",
     shard_count = 30,
     tests = glob(
         ["testdata/**/*.carbon"],

@@ -15,13 +15,13 @@
 #include <vector>
 
 #include "common/error.h"
-#include "common/init_llvm.h"
 #include "explorer/base/trace_stream.h"
 #include "explorer/parse_and_execute/parse_and_execute.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -32,7 +32,11 @@ namespace path = llvm::sys::path;
 
 auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                   llvm::StringRef relative_prelude_path) -> int {
-  Carbon::InitLLVM init_llvm(argc, argv);
+  llvm::setBugReportMsg(
+      "Please report issues to "
+      "https://github.com/carbon-language/carbon-lang/issues and include the "
+      "crash backtrace.\n");
+  llvm::InitLLVM init_llvm(argc, argv);
 
   // Printing to stderr should flush stdout. This is most noticeable when stderr
   // is piped to stdout.

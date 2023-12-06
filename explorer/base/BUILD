@@ -2,8 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//testing/base:rules.bzl", "gtest_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 package(default_visibility = ["//explorer:__subpackages__"])
 
@@ -16,10 +15,15 @@ cc_library(
     ],
 )
 
-gtest_library(
+cc_test(
     name = "arena_test",
+    size = "small",
     srcs = ["arena_test.cpp"],
-    deps = [":arena"],
+    deps = [
+        ":arena",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
 )
 
 cc_library(
@@ -30,10 +34,15 @@ cc_library(
     ],
 )
 
-gtest_library(
+cc_test(
     name = "decompose_test",
+    size = "small",
     srcs = ["decompose_test.cpp"],
-    deps = [":decompose"],
+    deps = [
+        ":decompose",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
 )
 
 cc_library(
@@ -45,13 +54,16 @@ cc_library(
     ],
 )
 
-gtest_library(
+cc_test(
     name = "error_builders_test",
+    size = "small",
     srcs = ["error_builders_test.cpp"],
     deps = [
         ":error_builders",
         ":source_location",
+        "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -92,17 +104,25 @@ cc_library(
     ],
 )
 
-gtest_library(
+cc_test(
     name = "set_program_phase_raii_test",
+    size = "small",
     srcs = ["set_program_phase_raii_test.cpp"],
-    deps = [":trace_stream"],
+    deps = [
+        ":trace_stream",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
 )
 
-gtest_library(
+cc_test(
     name = "set_file_context_raii_test",
+    size = "small",
     srcs = ["set_file_context_raii_test.cpp"],
     deps = [
         ":source_location",
         ":trace_stream",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

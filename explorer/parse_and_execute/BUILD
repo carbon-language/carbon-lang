@@ -2,8 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//testing/base:rules.bzl", "gtest_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 package(default_visibility = [
     "//explorer:__pkg__",
@@ -26,8 +25,13 @@ cc_library(
     ],
 )
 
-gtest_library(
+cc_test(
     name = "parse_and_execute_test",
+    size = "small",
     srcs = ["parse_and_execute_test.cpp"],
-    deps = [":parse_and_execute"],
+    deps = [
+        ":parse_and_execute",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
 )

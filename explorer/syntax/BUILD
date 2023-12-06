@@ -2,9 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
-load("//testing/base:rules.bzl", "gtest_library")
 
 package(default_visibility = ["//explorer/parse_and_execute:__pkg__"])
 
@@ -14,13 +13,15 @@ cc_library(
     deps = ["//common:check"],
 )
 
-gtest_library(
+cc_test(
     name = "parse_test",
+    size = "small",
     srcs = ["parse_test.cpp"],
-    visibility = ["//explorer:__pkg__"],
     deps = [
         ":syntax",
         "//explorer/base:arena",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -145,13 +146,15 @@ py_test(
     deps = ["format_grammar_lib"],
 )
 
-gtest_library(
+cc_test(
     name = "unimplemented_example_test",
+    size = "small",
     srcs = ["unimplemented_example_test.cpp"],
-    visibility = ["//explorer:__pkg__"],
     deps = [
         ":parse_test_matchers",
         ":syntax",
         "//explorer/ast:ast_test_matchers",
+        "//testing/base:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

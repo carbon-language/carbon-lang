@@ -23,7 +23,7 @@ using ::testing::Not;
 
 static constexpr SourceLocation DummyLoc("dummy", 0, FileKind::Main);
 
-TEST(ASTTestMatchers, BlockContentsAreTest) {
+TEST(BlockContentsAreTest, BasicUsage) {
   Block empty_block(DummyLoc, {});
   EXPECT_THAT(empty_block, BlockContentsAre(IsEmpty()));
   EXPECT_THAT(&empty_block, BlockContentsAre(IsEmpty()));
@@ -35,7 +35,7 @@ TEST(ASTTestMatchers, BlockContentsAreTest) {
   EXPECT_THAT(break_block, Not(BlockContentsAre(IsEmpty())));
 }
 
-TEST(ASTTestMatchers, MatchesLiteralTest) {
+TEST(MatchesLiteralTest, BasicUsage) {
   IntLiteral literal(DummyLoc, 42);
   EXPECT_THAT(literal, MatchesLiteral(42));
   EXPECT_THAT(&literal, MatchesLiteral(42));
@@ -43,7 +43,7 @@ TEST(ASTTestMatchers, MatchesLiteralTest) {
   EXPECT_THAT(StringLiteral(DummyLoc, "foo"), Not(MatchesLiteral(42)));
 }
 
-TEST(ASTTestMatchers, MatchesMulTest) {
+TEST(MatchesMulTest, BasicUsage) {
   IntLiteral two(DummyLoc, 2);
   IntLiteral three(DummyLoc, 3);
   OperatorExpression mul(DummyLoc, Operator::Mul, {&two, &three});
@@ -61,7 +61,7 @@ TEST(ASTTestMatchers, MatchesMulTest) {
                          MatchesMul(MatchesLiteral(2), MatchesLiteral(3))));
 }
 
-TEST(ASTTestMatchers, MatchesBinaryOpTest) {
+TEST(MatchesBinaryOpTest, BasicUsage) {
   IntLiteral two(DummyLoc, 2);
   IntLiteral three(DummyLoc, 3);
 
@@ -80,7 +80,7 @@ TEST(ASTTestMatchers, MatchesBinaryOpTest) {
               MatchesSub(MatchesLiteral(2), MatchesLiteral(3)));
 }
 
-TEST(ASTTestMatchers, MatchesReturnTest) {
+TEST(MatchesReturnTest, BasicUsage) {
   TupleLiteral unit(DummyLoc);
   ReturnExpression empty_return(DummyLoc, &unit,
                                 /*is_omitted_expression=*/true);
@@ -98,7 +98,7 @@ TEST(ASTTestMatchers, MatchesReturnTest) {
   EXPECT_THAT(int_val, Not(MatchesReturn(_)));
 }
 
-TEST(ASTTestMatchers, MatchesFunctionDeclarationTest) {
+TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
   FunctionDeclaration decl(DummyLoc, DeclaredName(DummyLoc, "Foo"), {},
@@ -124,7 +124,7 @@ TEST(ASTTestMatchers, MatchesFunctionDeclarationTest) {
   EXPECT_THAT(body, Not(MatchesFunctionDeclaration()));
 }
 
-TEST(ASTTestMatchers, MatchesUnimplementedExpressionTest) {
+TEST(MatchesUnimplementedExpressionTest, BasicUsage) {
   IntLiteral two(DummyLoc, 2);
   IntLiteral three(DummyLoc, 3);
   UnimplementedExpression unimplemented(DummyLoc, "DummyLabel", &two, &three);
@@ -146,7 +146,7 @@ TEST(ASTTestMatchers, MatchesUnimplementedExpressionTest) {
               Not(MatchesUnimplementedExpression("DummyLabel", IsEmpty())));
 }
 
-TEST(ASTTestMatchers, ASTDeclarationsTest) {
+TEST(ASTDeclarationsTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
   FunctionDeclaration decl(DummyLoc, DeclaredName(DummyLoc, "Foo"), {},
