@@ -130,10 +130,6 @@ auto HandleDeclScopeLoop(Context& context) -> void {
         context.AddLeafNode(NodeKind::DefaultModifier, context.Consume());
         saw_modifier = true;
         break;
-      case Lex::TokenKind::Extend:
-        context.AddLeafNode(NodeKind::ExtendModifier, context.Consume());
-        saw_modifier = true;
-        break;
       case Lex::TokenKind::Final:
         context.AddLeafNode(NodeKind::FinalModifier, context.Consume());
         saw_modifier = true;
@@ -205,7 +201,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
         // another modifier or an introducer.
         if (TokenIsModifierOrIntroducer(
                 context.PositionKind(Lookahead::NextToken))) {
-          context.AddLeafNode(NodeKind::DeclModifierKeyword, context.Consume());
+          context.AddLeafNode(NodeKind::ExtendModifier, context.Consume());
           saw_modifier = true;
         } else {
           // TODO: Treat this `extend` token as a declaration introducer
