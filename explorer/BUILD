@@ -59,7 +59,6 @@ cc_binary(
 file_test(
     name = "file_test.notrace",
     size = "small",
-    args = ["--gtest_filter=ExplorerFileTest.*"],
     prebuilt_binary = ":file_test",
     shard_count = 20,
     tests = glob(["testdata/**/*.carbon"]),
@@ -68,10 +67,7 @@ file_test(
 file_test(
     name = "file_test.trace",
     size = "small",
-    args = [
-        "--trace",
-        "--gtest_filter=ExplorerFileTest.*",
-    ],
+    args = ["--trace"],
     prebuilt_binary = ":file_test",
     shard_count = 30,
     tests = glob(
