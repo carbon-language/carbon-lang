@@ -17,7 +17,7 @@ class InitLLVM {
   // Initializes LLVM for use by a Carbon binary. On Windows, `argc` and `argv`
   // are updated to refer to properly-encoded UTF-8 versions of the command line
   // arguments.
-  InitLLVM(int& argc, char**& argv);
+  explicit InitLLVM(int& argc, char**& argv);
 
   // Shuts down LLVM.
   ~InitLLVM() = default;
