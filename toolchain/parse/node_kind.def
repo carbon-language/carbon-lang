@@ -607,6 +607,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclModifierKeyword, 0,
                                    CARBON_TOKEN(Abstract)
                                    CARBON_TOKEN(Base)
                                    CARBON_TOKEN(Default)
+                                   CARBON_TOKEN(Extend)
                                    CARBON_TOKEN(Final)
                                    CARBON_TOKEN(Impl)
                                    CARBON_TOKEN(Virtual))

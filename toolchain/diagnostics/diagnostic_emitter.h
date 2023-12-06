@@ -214,7 +214,9 @@ class DiagnosticEmitter {
   // A builder-pattern type to provide a fluent interface for constructing
   // a more complex diagnostic. See `DiagnosticEmitter::Build` for the
   // expected usage.
-  class DiagnosticBuilder {
+  // This is nodiscard to protect against accidentally building a diagnostic
+  // without emitting it.
+  class [[nodiscard]] DiagnosticBuilder {
    public:
     // DiagnosticBuilder is move-only and cannot be copied.
     DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
