@@ -685,17 +685,8 @@ def _impl(ctx):
                                 ),
                             ),
                             flag_group(
+                                flags = ["-Wl,-whole-archive"],
                                 expand_if_true = "libraries_to_link.is_whole_archive",
-                                flag_groups = [
-                                    flag_group(
-                                        expand_if_false = "macos_flags",
-                                        flags = ["-Wl,-whole-archive"],
-                                    ),
-                                    flag_group(
-                                        expand_if_true = "macos_flags",
-                                        flags = ["-Wl,-force_load"],
-                                    ),
-                                ],
                             ),
                             flag_group(
                                 flags = ["%{libraries_to_link.object_files}"],
@@ -741,13 +732,138 @@ def _impl(ctx):
                                 ),
                             ),
                             flag_group(
+                                flags = ["-Wl,-no-whole-archive"],
+                                expand_if_true = "libraries_to_link.is_whole_archive",
+                            ),
+                            flag_group(
+                                flags = ["-Wl,--end-lib"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                            ),
+                        ],
+                        expand_if_available = "libraries_to_link",
+                    ),
+                    # Note that the params file comes at the end, after the
+                    # libraries to link above.
+                    flag_group(
+                        expand_if_available = "linker_param_file",
+                        flags = ["@%{linker_param_file}"],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    macos_link_libraries_feature = feature(
+        name = "macos_link_libraries",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{linkstamp_paths}"],
+                        iterate_over = "linkstamp_paths",
+                        expand_if_available = "linkstamp_paths",
+                    ),
+                    flag_group(
+                        iterate_over = "libraries_to_link",
+                        flag_groups = [
+                            flag_group(
+                                flags = ["-Wl,--start-lib"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                            ),
+                            flag_group(
+                                iterate_over = "libraries_to_link.object_files",
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                                flag_groups = [
+                                    flag_group(
+                                        flags = ["%{libraries_to_link.object_files}"],
+                                        expand_if_false = "libraries_to_link.is_whole_archive",
+                                    ),
+                                    flag_group(
+                                        flags = ["-Wl,-force_load,%{libraries_to_link.object_files}"],
+                                        expand_if_true = "libraries_to_link.is_whole_archive",
+                                    ),
+                                ],
+                            ),
+                            flag_group(
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file",
+                                ),
+                                flag_groups = [
+                                    flag_group(
+                                        flags = ["%{libraries_to_link.name}"],
+                                        expand_if_false = "libraries_to_link.is_whole_archive",
+                                    ),
+                                    flag_group(
+                                        flags = ["-Wl,-force_load,%{libraries_to_link.name}"],
+                                        expand_if_true = "libraries_to_link.is_whole_archive",
+                                    ),
+                                ],
+                            ),
+                            flag_group(
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "interface_library",
+                                ),
+                                flag_groups = [
+                                    flag_group(
+                                        flags = ["%{libraries_to_link.name}"],
+                                        expand_if_false = "libraries_to_link.is_whole_archive",
+                                    ),
+                                    flag_group(
+                                        flags = ["-Wl,-force_load,%{libraries_to_link.name}"],
+                                        expand_if_true = "libraries_to_link.is_whole_archive",
+                                    ),
+                                ],
+                            ),
+                            flag_group(
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "static_library",
+                                ),
+                                flag_groups = [
+                                    flag_group(
+                                        flags = ["%{libraries_to_link.name}"],
+                                        expand_if_false = "libraries_to_link.is_whole_archive",
+                                    ),
+                                    flag_group(
+                                        flags = ["-Wl,-force_load,%{libraries_to_link.name}"],
+                                        expand_if_true = "libraries_to_link.is_whole_archive",
+                                    ),
+                                ],
+                            ),
+                            flag_group(
+                                flags = ["-l%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "dynamic_library",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["-l:%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "versioned_dynamic_library",
+                                ),
+                            ),
+                            flag_group(
                                 expand_if_true = "libraries_to_link.is_whole_archive",
                                 flag_groups = [
                                     flag_group(
                                         expand_if_false = "macos_flags",
                                         flags = ["-Wl,-no-whole-archive"],
                                     ),
-                                    # On MacOS, -force_load only affects the next library.
                                 ],
                             ),
                             flag_group(
@@ -927,10 +1043,11 @@ def _impl(ctx):
         features.append(x86_64_cpu_flags)
 
     # Finally append the libraries to link and any final flags.
-    features += [
-        default_link_libraries_feature,
-        final_flags_feature,
-    ]
+    if ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+        features.append(macos_link_libraries_feature)
+    else:
+        features.append(default_link_libraries_feature)
+    features.append(final_flags_feature)
 
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
