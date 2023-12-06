@@ -36,11 +36,11 @@ fn CallGThroughPointer(p: Class*) -> i32 {
 
 fn Make() -> Class;
 
-fn CallFOnInitializingExpr() -> i32 {
+fn CallFOnInitExpr() -> i32 {
   return Make().F();
 }
 
-fn CallGOnInitializingExpr() -> i32 {
+fn CallGOnInitExpr() -> i32 {
   return Make().G();
 }
 
@@ -52,7 +52,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Call = %Call, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitializingExpr = %CallFOnInitializingExpr, .CallGOnInitializingExpr = %CallGOnInitializingExpr}
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Call = %Call, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitExpr = %CallFOnInitExpr, .CallGOnInitExpr = %CallGOnInitExpr}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
@@ -61,8 +61,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %CallFThroughPointer: <function> = fn_decl @CallFThroughPointer
 // CHECK:STDOUT:   %CallGThroughPointer: <function> = fn_decl @CallGThroughPointer
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
-// CHECK:STDOUT:   %CallFOnInitializingExpr: <function> = fn_decl @CallFOnInitializingExpr
-// CHECK:STDOUT:   %CallGOnInitializingExpr: <function> = fn_decl @CallGOnInitializingExpr
+// CHECK:STDOUT:   %CallFOnInitExpr: <function> = fn_decl @CallFOnInitExpr
+// CHECK:STDOUT:   %CallGOnInitExpr: <function> = fn_decl @CallGOnInitExpr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -138,7 +138,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Class;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFOnInitializingExpr() -> i32 {
+// CHECK:STDOUT: fn @CallFOnInitExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make
 // CHECK:STDOUT:   %.loc40_14.1: ref Class = temporary_storage
@@ -152,7 +152,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc40_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallGOnInitializingExpr() -> i32 {
+// CHECK:STDOUT: fn @CallGOnInitExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make
 // CHECK:STDOUT:   %.loc44_14.1: ref Class = temporary_storage

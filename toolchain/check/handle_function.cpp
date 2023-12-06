@@ -71,8 +71,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
               context.sem_ir().StringifyType(return_type_id));
         })) {
       return_type_id = SemIR::TypeId::Error;
-    } else if (!SemIR::GetInitializingRepresentation(context.sem_ir(),
-                                                     return_type_id)
+    } else if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
                     .has_return_slot()) {
       // The function only has a return slot if it uses in-place initialization.
     } else {
