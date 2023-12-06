@@ -789,8 +789,7 @@ class Formatter {
 
     llvm::ArrayRef<InstId> args = sem_ir_.inst_blocks().Get(inst.args_id);
 
-    bool has_return_slot =
-        GetInitializingRepresentation(sem_ir_, inst.type_id).has_return_slot();
+    bool has_return_slot = GetInitRepr(sem_ir_, inst.type_id).has_return_slot();
     InstId return_slot_id = InstId::Invalid;
     if (has_return_slot) {
       return_slot_id = args.back();

@@ -16,7 +16,7 @@
 
 namespace Carbon::SemIR {
 
-auto ValueRepresentation::Print(llvm::raw_ostream& out) const -> void {
+auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
   out << "{kind: ";
   switch (kind) {
     case Unknown:
@@ -39,7 +39,7 @@ auto ValueRepresentation::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{inst: " << inst_id << ", value_rep: " << value_representation << "}";
+  out << "{inst: " << inst_id << ", value_rep: " << value_repr << "}";
 }
 
 File::File(SharedValueStores& value_stores)
@@ -585,23 +585,22 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   }
 }
 
-auto GetInitializingRepresentation(const File& file, TypeId type_id)
-    -> InitializingRepresentation {
-  auto value_rep = GetValueRepresentation(file, type_id);
+auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr {
+  auto value_rep = GetValueRepr(file, type_id);
   switch (value_rep.kind) {
-    case ValueRepresentation::None:
-      return {.kind = InitializingRepresentation::None};
+    case ValueRepr::None:
+      return {.kind = InitRepr::None};
 
-    case ValueRepresentation::Copy:
+    case ValueRepr::Copy:
       // TODO: Use in-place initialization for types that have non-trivial
       // destructive move.
-      return {.kind = InitializingRepresentation::ByCopy};
+      return {.kind = InitRepr::ByCopy};
 
-    case ValueRepresentation::Pointer:
-    case ValueRepresentation::Custom:
-      return {.kind = InitializingRepresentation::InPlace};
+    case ValueRepr::Pointer:
+    case ValueRepr::Custom:
+      return {.kind = InitRepr::InPlace};
 
-    case ValueRepresentation::Unknown:
+    case ValueRepr::Unknown:
       CARBON_FATAL()
           << "Attempting to perform initialization of incomplete type";
   }
