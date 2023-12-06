@@ -8,16 +8,19 @@
 
 namespace Carbon {
 
-InitLLVM::InitLLVM(int& argc, char**& argv) : init_llvm(argc, argv) {
+InitLLVM::InitLLVM(int& argc, char**& argv)
+    : init_llvm(argc, argv), args(argv, argv + argc) {
+  // LLVM assumes that argc and argv won't change, and registers them with an
+  // `llvm::PrettyStackTraceProgram` that will crash if an argv element gets
+  // nulled out, which for example `testing::InitGoogleTest` does. So make a
+  // copy of argv for use by the program to satisfy LLVM's assumptions.
+  argc = args.size();
+  argv = args.data();
+
   llvm::setBugReportMsg(
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
       "crash backtrace.\n");
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargets();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-  llvm::InitializeAllAsmPrinters();
 }
 
 }  // namespace Carbon

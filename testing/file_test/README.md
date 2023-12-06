@@ -19,7 +19,7 @@ file_test(
     tests = glob(["testdata/**"]),
     deps = [
         ":my_lib",
-        "//testing/file_test:file_test_base",
+        "//testing/file_test:file_test_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

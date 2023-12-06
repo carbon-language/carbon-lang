@@ -5,13 +5,13 @@
 #include <cstdlib>
 
 #include "common/bazel_working_dir.h"
-#include "common/init_llvm.h"
+#include "common/init_llvm_with_targets.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/driver/driver.h"
 
 auto main(int argc, char** argv) -> int {
-  Carbon::InitLLVM init_llvm(argc, argv);
+  Carbon::InitLLVMWithTargets init_llvm(argc, argv);
 
   if (argc < 1) {
     return EXIT_FAILURE;

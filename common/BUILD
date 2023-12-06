@@ -170,9 +170,20 @@ cc_library(
     srcs = ["init_llvm.cpp"],
     hdrs = ["init_llvm.h"],
     deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+# Be careful when depending on this: it pulls in several hundred megabytes of
+# LLVM binary size in -c fastbuild.
+cc_library(
+    name = "init_llvm_with_targets",
+    srcs = ["init_llvm_with_targets.cpp"],
+    hdrs = ["init_llvm_with_targets.h"],
+    deps = [
+        ":init_llvm",
         "@llvm-project//llvm:AllTargetsAsmParsers",
         "@llvm-project//llvm:AllTargetsCodeGens",
-        "@llvm-project//llvm:Support",
     ],
 )
 

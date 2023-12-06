@@ -14,7 +14,6 @@
 #include "absl/flags/parse.h"
 #include "common/check.h"
 #include "common/error.h"
-#include "common/init_llvm.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -720,15 +719,9 @@ static auto GetTests() -> llvm::SmallVector<std::string> {
 }
 
 // Implements main() within the Carbon::Testing namespace for convenience.
-static auto Main(int argc, char** argv) -> int {
-  Carbon::InitLLVM init_llvm(argc, argv);
-
-  // Initialize gtest using a copy of argv because gtest wants to modify it,
-  // and InitLLVM registered it with a PrettyStackTraceProgram which gtest's
-  // modifications break.
-  llvm::SmallVector<char*> argv_copy(argv, argv + argc);
-  testing::InitGoogleTest(&argc, argv_copy.data());
-  auto args = absl::ParseCommandLine(argc, argv_copy.data());
+auto FileTestMain(int argc, char** argv) -> int {
+  testing::InitGoogleTest(&argc, argv);
+  auto args = absl::ParseCommandLine(argc, argv);
 
   if (args.size() > 1) {
     llvm::errs() << "Unexpected arguments:";
@@ -797,7 +790,3 @@ static auto Main(int argc, char** argv) -> int {
 }
 
 }  // namespace Carbon::Testing
-
-auto main(int argc, char** argv) -> int {
-  return Carbon::Testing::Main(argc, argv);
-}

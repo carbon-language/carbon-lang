@@ -5,6 +5,7 @@
 #ifndef CARBON_COMMON_INIT_LLVM_H_
 #define CARBON_COMMON_INIT_LLVM_H_
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/InitLLVM.h"
 
 namespace Carbon {
@@ -24,6 +25,7 @@ class InitLLVM {
 
  private:
   llvm::InitLLVM init_llvm;
+  llvm::SmallVector<char*> args;
 };
 
 }  // namespace Carbon
