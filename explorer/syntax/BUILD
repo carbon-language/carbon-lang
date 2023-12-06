@@ -4,6 +4,7 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("//testing/base:rules.bzl", "gtest_library")
 
 package(default_visibility = ["//explorer/parse_and_execute:__pkg__"])
 
@@ -13,19 +14,14 @@ cc_library(
     deps = ["//common:check"],
 )
 
-cc_library(
+gtest_library(
     name = "parse_test",
-    testonly = 1,
     srcs = ["parse_test.cpp"],
-    visibility = [
-        "//explorer:__pkg__",
-    ],
+    visibility = ["//explorer:__pkg__"],
     deps = [
         ":syntax",
         "//explorer/base:arena",
-        "@com_google_googletest//:gtest",
     ],
-    alwayslink = 1,
 )
 
 cc_library(
@@ -149,18 +145,13 @@ py_test(
     deps = ["format_grammar_lib"],
 )
 
-cc_library(
+gtest_library(
     name = "unimplemented_example_test",
-    testonly = 1,
     srcs = ["unimplemented_example_test.cpp"],
-    visibility = [
-        "//explorer:__pkg__",
-    ],
+    visibility = ["//explorer:__pkg__"],
     deps = [
         ":parse_test_matchers",
         ":syntax",
         "//explorer/ast:ast_test_matchers",
-        "@com_google_googletest//:gtest",
     ],
-    alwayslink = 1,
 )

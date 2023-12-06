@@ -5,6 +5,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
+load("//testing/base:rules.bzl", "gtest_test")
 load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = [
@@ -43,74 +44,25 @@ cc_binary(
     ],
 )
 
-EXPLORER_GTEST_TESTS = [
-    (
-        "ast",
-        "ast_test_matchers_test",
-        "ASTTestMatchers",
-    ),
-    (
-        "ast",
-        "expression_test",
-        "ExpressionTest",
-    ),
-    (
-        "ast",
-        "element_test",
-        "ElementTest",
-    ),
-    (
-        "ast",
-        "pattern_test",
-        "PatternTest",
-    ),
-    (
-        "base",
-        "arena_test",
-        "ArenaTest",
-    ),
-    (
-        "base",
-        "decompose_test",
-        "HashFromDecomposeTest",
-    ),
-    (
-        "base",
-        "error_builders_test",
-        "ErrorBuildersTest",
-    ),
-    (
-        "base",
-        "set_file_context_raii_test",
-        "SetFileContextRaiiTest",
-    ),
-    (
-        "base",
-        "set_program_phase_raii_test",
-        "SetProgramPhaseRaiiTest",
-    ),
-    (
-        "parse_and_execute",
-        "parse_and_execute_test",
-        "ParseAndExecuteTest",
-    ),
-    (
-        "syntax",
-        "parse_test",
-        "ParseTest",
-    ),
-    (
-        "syntax",
-        "unimplemented_example_test",
-        "UnimplementedExampleTest",
-    ),
-]
-
 # All explorer tests are packaged into a single binary to reduce disk usage.
-cc_binary(
-    name = "explorer_tests",
-    testonly = 1,
+gtest_test(
+    name = "explorer_test",
     srcs = ["file_test.cpp"],
+    args = ["--no_file_tests"],
+    tests = [
+        ("//explorer/ast:ast_test_matchers_test", "ASTTestMatchers"),
+        ("//explorer/ast:expression_test", "ExpressionTest"),
+        ("//explorer/ast:element_test", "ElementTest"),
+        ("//explorer/ast:pattern_test", "PatternTest"),
+        ("//explorer/base:arena_test", "ArenaTest"),
+        ("//explorer/base:decompose_test", "HashFromDecomposeTest"),
+        ("//explorer/base:error_builders_test", "ErrorBuildersTest"),
+        ("//explorer/base:set_file_context_raii_test", "SetFileContextRaiiTest"),
+        ("//explorer/base:set_program_phase_raii_test", "SetProgramPhaseRaiiTest"),
+        ("//explorer/parse_and_execute:parse_and_execute_test", "ParseAndExecuteTest"),
+        ("//explorer/syntax:parse_test", "ParseTest"),
+        ("//explorer/syntax:unimplemented_example_test", "UnimplementedExampleTest"),
+    ],
     deps = [
         ":main",
         "//common:check",
@@ -118,14 +70,14 @@ cc_binary(
         "//testing/file_test:file_test_base",
         "@com_google_absl//absl/flags:flag",
         "@com_googlesource_code_re2//:re2",
-    ] + ["//explorer/%s:%s" % (test_dir, test_target) for (test_dir, test_target, test_suite) in EXPLORER_GTEST_TESTS],
+    ],
 )
 
 file_test(
     name = "file_test",
     size = "small",
     args = ["--gtest_filter=ExplorerFileTest.*"],
-    prebuilt_binary = ":explorer_tests",
+    prebuilt_binary = ":explorer_test",
     shard_count = 20,
     tests = glob(["testdata/**/*.carbon"]),
 )
@@ -137,7 +89,7 @@ file_test(
         "--trace",
         "--gtest_filter=ExplorerFileTest.*",
     ],
-    prebuilt_binary = ":explorer_tests",
+    prebuilt_binary = ":explorer_test",
     shard_count = 30,
     tests = glob(
         ["testdata/**/*.carbon"],
@@ -154,20 +106,6 @@ file_test(
         ],
     ),
 )
-
-[
-    sh_test(
-        name = "%s_%s" % (test_dir, test_target),
-        size = "small",
-        srcs = ["explorer_tests"],
-        args = [
-            "--no_file_tests",
-            "--gtest_filter=" + test_suite + ".*",
-            "--fail_if_no_tests_run",
-        ],
-    )
-    for (test_dir, test_target, test_suite) in EXPLORER_GTEST_TESTS
-]
 
 glob_sh_run(
     args = ["$(location //explorer)"],

@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//testing/base:rules.bzl", "gtest_library")
 
 package(default_visibility = ["//explorer:__subpackages__"])
 
@@ -78,37 +79,27 @@ cc_library(
     ],
 )
 
-cc_library(
+gtest_library(
     name = "ast_test_matchers_test",
-    testonly = 1,
     srcs = ["ast_test_matchers_test.cpp"],
-    visibility = [
-        "//explorer:__pkg__",
-    ],
+    visibility = ["//explorer:__pkg__"],
     deps = [
         ":ast",
         ":ast_test_matchers",
         "//explorer/base:arena",
-        "@com_google_googletest//:gtest",
     ],
-    alwayslink = 1,
 )
 
-cc_library(
+gtest_library(
     name = "expression_test",
-    testonly = 1,
     srcs = ["expression_test.cpp"],
-    visibility = [
-        "//explorer:__pkg__",
-    ],
+    visibility = ["//explorer:__pkg__"],
     deps = [
         ":ast",
         ":paren_contents",
         "//explorer/base:arena",
-        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
-    alwayslink = 1,
 )
 
 cc_library(
@@ -125,38 +116,28 @@ cc_library(
     ],
 )
 
-cc_library(
+gtest_library(
     name = "element_test",
-    testonly = 1,
     srcs = ["element_test.cpp"],
-    visibility = [
-        "//explorer:__pkg__",
-    ],
+    visibility = ["//explorer:__pkg__"],
     deps = [
         ":ast",
         ":paren_contents",
         "//explorer/base:arena",
-        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
-    alwayslink = 1,
 )
 
-cc_library(
+gtest_library(
     name = "pattern_test",
-    testonly = 1,
     srcs = ["pattern_test.cpp"],
-    visibility = [
-        "//explorer:__pkg__",
-    ],
+    visibility = ["//explorer:__pkg__"],
     deps = [
         ":ast",
         ":paren_contents",
         "//explorer/base:arena",
-        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
-    alwayslink = 1,
 )
 
 cc_library(
