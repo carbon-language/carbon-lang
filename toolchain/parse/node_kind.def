@@ -195,7 +195,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 
 // `fn`:
 //     FunctionIntroducer
-//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //     _external_: ParamList
 //       _external_: type expression
@@ -265,7 +265,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 
 // `let`:
 //   LetIntroducer
-//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   _repeated_ _external_: modifier
 //   _external_: BindingPattern
 //   LetInitializer
 //   _external_: expression
@@ -280,7 +280,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 
 // `var` and `returned var`:
 //   VariableIntroducer
-//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
 //   _external_: BindingPattern
 //     VariableInitializer
@@ -598,30 +598,20 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 
-// Access modifier keywords `private` or `protected`:
-// AccessModifierKeyword
-//
-// The kind of keyword is determined by looking at the token kind.
-// These may be repeated, including possibly zero times.
-CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Private)
-CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Protected)
-
-// Declaration modifier keywords such as `abstract` or `virtual`:
-// DeclModifierKeyword
-//
-// The kind of keyword is determined by looking at the token kind.
-// These may be repeated, including possibly zero times.
+// Various modifiers. These are all a single token.
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Abstract)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Base)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Default)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Extend)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Final)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Impl)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Private)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Protected)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Virtual)
 
 // `class`:
 //     ClassIntroducer
-//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
@@ -641,7 +631,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
 
 // `base`:
 //   BaseIntroducer
-//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   _repeated_ _external_: modifier
 //   BaseColon
 //   _external_: expression
 // BaseDecl
@@ -653,7 +643,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer,
 
 // `interface`:
 //     InterfaceIntroducer
-//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //   InterfaceDefinitionStart
 //   _external_: declarations
@@ -674,7 +664,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
 
 // `constraint`:
 //     NamedConstraintIntroducer
-//     _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
