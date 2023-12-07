@@ -100,6 +100,8 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
                  "method modifier");
   }
   if (!!(modifiers & KeywordModifierSet::Interface)) {
+    // TODO: Once we are saving the modifiers for a function, add check that
+    // the function may only be defined if it is marked `default` or `final`.
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
                  "interface modifier");
   }
