@@ -181,7 +181,6 @@ CARBON_KEYWORD_TOKEN(Not,                 "not")
 CARBON_KEYWORD_TOKEN(Observe,             "observe")
 CARBON_TOKEN_WITH_VIRTUAL_NODE(
   CARBON_KEYWORD_TOKEN(Or,                "or"))
-CARBON_KEYWORD_TOKEN(Override,            "override")
 CARBON_KEYWORD_TOKEN(Package,             "package")
 CARBON_KEYWORD_TOKEN(Partial,             "partial")
 CARBON_KEYWORD_TOKEN(Private,             "private")

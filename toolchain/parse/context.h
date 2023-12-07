@@ -128,6 +128,25 @@ class Context {
   auto AddNode(NodeKind kind, Lex::TokenIndex token, int subtree_start,
                bool has_error) -> void;
 
+  // Replaces the placeholder node at the indicated position with a leaf node.
+  //
+  // To reserve a position in the parse tree, you may add a placeholder parse
+  // node using code like:
+  //   ```
+  //   context.PushState(State::WillFillInPlaceholder);
+  //   context.AddLeafNode(NodeKind::Placeholder, *context.position());
+  //   ```
+  // It may be replaced with the intended leaf parse node with code like:
+  //   ```
+  //   auto HandleWillFillInPlaceholder(Context& context) -> void {
+  //     auto state = context.PopState();
+  //     context.ReplacePlaceholderNode(state.subtree_start, /* replacement */);
+  //   }
+  //   ```
+  auto ReplacePlaceholderNode(int32_t position, NodeKind kind,
+                              Lex::TokenIndex token, bool has_error = false)
+      -> void;
+
   // Returns the current position and moves past it.
   auto Consume() -> Lex::TokenIndex { return *(position_++); }
 

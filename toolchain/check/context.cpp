@@ -360,8 +360,8 @@ auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
         inst_id = inst.As<SemIR::BindName>().value_id;
         break;
 
-      case SemIR::Base::Kind:
-      case SemIR::Field::Kind:
+      case SemIR::BaseDecl::Kind:
+      case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
         return inst_id;
 
@@ -516,7 +516,7 @@ namespace {
 //
 // - An `AddNestedIncompleteTypes` step adds a task for all incomplete types
 //   nested within a type to the work list.
-// - A `BuildValueRepresentation` step computes the value representation for a
+// - A `BuildValueRepr` step computes the value representation for a
 //   type, once all of its nested types are complete, and marks the type as
 //   complete.
 class TypeCompleter {
@@ -570,31 +570,28 @@ class TypeCompleter {
         }
         CARBON_CHECK(work_list_.size() >= old_work_list_size)
             << "AddNestedIncompleteTypes should not remove work items";
-        work_list_[old_work_list_size - 1].phase =
-            Phase::BuildValueRepresentation;
+        work_list_[old_work_list_size - 1].phase = Phase::BuildValueRepr;
         break;
 
-      case Phase::BuildValueRepresentation: {
-        auto value_rep = BuildValueRepresentation(type_id, inst);
+      case Phase::BuildValueRepr: {
+        auto value_rep = BuildValueRepr(type_id, inst);
         context_.sem_ir().CompleteType(type_id, value_rep);
         CARBON_CHECK(old_work_list_size == work_list_.size())
-            << "BuildValueRepresentation should not change work items";
+            << "BuildValueRepr should not change work items";
         work_list_.pop_back();
 
         // Also complete the value representation type, if necessary. This
         // should never fail: the value representation shouldn't require any
         // additional nested types to be complete.
         if (!context_.sem_ir().IsTypeComplete(value_rep.type_id)) {
-          work_list_.push_back(
-              {value_rep.type_id, Phase::BuildValueRepresentation});
+          work_list_.push_back({value_rep.type_id, Phase::BuildValueRepr});
         }
         // For a pointer representation, the pointee also needs to be complete.
-        if (value_rep.kind == SemIR::ValueRepresentation::Pointer) {
+        if (value_rep.kind == SemIR::ValueRepr::Pointer) {
           auto pointee_type_id =
               context_.sem_ir().GetPointeeType(value_rep.type_id);
           if (!context_.sem_ir().IsTypeComplete(pointee_type_id)) {
-            work_list_.push_back(
-                {pointee_type_id, Phase::BuildValueRepresentation});
+            work_list_.push_back({pointee_type_id, Phase::BuildValueRepr});
           }
         }
         break;
@@ -639,7 +636,7 @@ class TypeCompleter {
           }
           return false;
         }
-        Push(class_info.object_representation_id);
+        Push(class_info.object_repr_id);
         break;
       }
 
@@ -656,51 +653,47 @@ class TypeCompleter {
 
   // Makes an empty value representation, which is used for types that have no
   // state, such as empty structs and tuples.
-  auto MakeEmptyRepresentation(Parse::NodeId parse_node) const
-      -> SemIR::ValueRepresentation {
-    return {.kind = SemIR::ValueRepresentation::None,
+  auto MakeEmptyValueRepr(Parse::NodeId parse_node) const -> SemIR::ValueRepr {
+    return {.kind = SemIR::ValueRepr::None,
             .type_id = context_.CanonicalizeTupleType(parse_node, {})};
   }
 
   // Makes a value representation that uses pass-by-copy, copying the given
   // type.
-  auto MakeCopyRepresentation(
-      SemIR::TypeId rep_id,
-      SemIR::ValueRepresentation::AggregateKind aggregate_kind =
-          SemIR::ValueRepresentation::NotAggregate) const
-      -> SemIR::ValueRepresentation {
-    return {.kind = SemIR::ValueRepresentation::Copy,
+  auto MakeCopyValueRepr(SemIR::TypeId rep_id,
+                         SemIR::ValueRepr::AggregateKind aggregate_kind =
+                             SemIR::ValueRepr::NotAggregate) const
+      -> SemIR::ValueRepr {
+    return {.kind = SemIR::ValueRepr::Copy,
             .aggregate_kind = aggregate_kind,
             .type_id = rep_id};
   }
 
   // Makes a value representation that uses pass-by-address with the given
   // pointee type.
-  auto MakePointerRepresentation(
-      Parse::NodeId parse_node, SemIR::TypeId pointee_id,
-      SemIR::ValueRepresentation::AggregateKind aggregate_kind =
-          SemIR::ValueRepresentation::NotAggregate) const
-      -> SemIR::ValueRepresentation {
+  auto MakePointerValueRepr(Parse::NodeId parse_node, SemIR::TypeId pointee_id,
+                            SemIR::ValueRepr::AggregateKind aggregate_kind =
+                                SemIR::ValueRepr::NotAggregate) const
+      -> SemIR::ValueRepr {
     // TODO: Should we add `const` qualification to `pointee_id`?
-    return {.kind = SemIR::ValueRepresentation::Pointer,
+    return {.kind = SemIR::ValueRepr::Pointer,
             .aggregate_kind = aggregate_kind,
             .type_id = context_.GetPointerType(parse_node, pointee_id)};
   }
 
   // Gets the value representation of a nested type, which should already be
   // complete.
-  auto GetNestedValueRepresentation(SemIR::TypeId nested_type_id) const {
+  auto GetNestedValueRepr(SemIR::TypeId nested_type_id) const {
     CARBON_CHECK(context_.sem_ir().IsTypeComplete(nested_type_id))
         << "Nested type should already be complete";
-    auto value_rep = context_.sem_ir().GetValueRepresentation(nested_type_id);
-    CARBON_CHECK(value_rep.kind != SemIR::ValueRepresentation::Unknown)
+    auto value_rep = context_.sem_ir().GetValueRepr(nested_type_id);
+    CARBON_CHECK(value_rep.kind != SemIR::ValueRepr::Unknown)
         << "Complete type should have a value representation";
     return value_rep;
   };
 
-  auto BuildCrossRefValueRepresentation(SemIR::TypeId type_id,
-                                        SemIR::CrossRef xref) const
-      -> SemIR::ValueRepresentation {
+  auto BuildCrossRefValueRepr(SemIR::TypeId type_id, SemIR::CrossRef xref) const
+      -> SemIR::ValueRepr {
     auto xref_inst =
         context_.cross_ref_irs().Get(xref.ir_id)->insts().Get(xref.inst_id);
 
@@ -723,25 +716,25 @@ class TypeCompleter {
       case SemIR::BuiltinKind::NamespaceType:
       case SemIR::BuiltinKind::FunctionType:
       case SemIR::BuiltinKind::BoundMethodType:
-        return MakeCopyRepresentation(type_id);
+        return MakeCopyValueRepr(type_id);
 
       case SemIR::BuiltinKind::StringType:
         // TODO: Decide on string value semantics. This should probably be a
         // custom value representation carrying a pointer and size or
         // similar.
-        return MakePointerRepresentation(Parse::NodeId::Invalid, type_id);
+        return MakePointerValueRepr(Parse::NodeId::Invalid, type_id);
     }
     llvm_unreachable("All builtin kinds were handled above");
   }
 
-  auto BuildStructOrTupleValueRepresentation(Parse::NodeId parse_node,
-                                             std::size_t num_elements,
-                                             SemIR::TypeId elementwise_rep,
-                                             bool same_as_object_rep) const
-      -> SemIR::ValueRepresentation {
-    SemIR::ValueRepresentation::AggregateKind aggregate_kind =
-        same_as_object_rep ? SemIR::ValueRepresentation::ValueAndObjectAggregate
-                           : SemIR::ValueRepresentation::ValueAggregate;
+  auto BuildStructOrTupleValueRepr(Parse::NodeId parse_node,
+                                   std::size_t num_elements,
+                                   SemIR::TypeId elementwise_rep,
+                                   bool same_as_object_rep) const
+      -> SemIR::ValueRepr {
+    SemIR::ValueRepr::AggregateKind aggregate_kind =
+        same_as_object_rep ? SemIR::ValueRepr::ValueAndObjectAggregate
+                           : SemIR::ValueRepr::ValueAggregate;
 
     if (num_elements == 1) {
       // The value representation for a struct or tuple with a single element
@@ -749,21 +742,20 @@ class TypeCompleter {
       // element.
       // TODO: Consider doing the same whenever `elementwise_rep` is
       // sufficiently small.
-      return MakeCopyRepresentation(elementwise_rep, aggregate_kind);
+      return MakeCopyValueRepr(elementwise_rep, aggregate_kind);
     }
     // For a struct or tuple with multiple fields, we use a pointer
     // to the elementwise value representation.
-    return MakePointerRepresentation(parse_node, elementwise_rep,
-                                     aggregate_kind);
+    return MakePointerValueRepr(parse_node, elementwise_rep, aggregate_kind);
   }
 
-  auto BuildStructTypeValueRepresentation(SemIR::TypeId type_id,
-                                          SemIR::StructType struct_type) const
-      -> SemIR::ValueRepresentation {
+  auto BuildStructTypeValueRepr(SemIR::TypeId type_id,
+                                SemIR::StructType struct_type) const
+      -> SemIR::ValueRepr {
     // TODO: Share more code with tuples.
     auto fields = context_.inst_blocks().Get(struct_type.fields_id);
     if (fields.empty()) {
-      return MakeEmptyRepresentation(struct_type.parse_node);
+      return MakeEmptyValueRepr(struct_type.parse_node);
     }
 
     // Find the value representation for each field, and construct a struct
@@ -773,7 +765,7 @@ class TypeCompleter {
     bool same_as_object_rep = true;
     for (auto field_id : fields) {
       auto field = context_.insts().GetAs<SemIR::StructTypeField>(field_id);
-      auto field_value_rep = GetNestedValueRepresentation(field.field_type_id);
+      auto field_value_rep = GetNestedValueRepr(field.field_type_id);
       if (field_value_rep.type_id != field.field_type_id) {
         same_as_object_rep = false;
         field.field_type_id = field_value_rep.type_id;
@@ -787,17 +779,17 @@ class TypeCompleter {
                          : context_.CanonicalizeStructType(
                                struct_type.parse_node,
                                context_.inst_blocks().Add(value_rep_fields));
-    return BuildStructOrTupleValueRepresentation(
-        struct_type.parse_node, fields.size(), value_rep, same_as_object_rep);
+    return BuildStructOrTupleValueRepr(struct_type.parse_node, fields.size(),
+                                       value_rep, same_as_object_rep);
   }
 
-  auto BuildTupleTypeValueRepresentation(SemIR::TypeId type_id,
-                                         SemIR::TupleType tuple_type) const
-      -> SemIR::ValueRepresentation {
+  auto BuildTupleTypeValueRepr(SemIR::TypeId type_id,
+                               SemIR::TupleType tuple_type) const
+      -> SemIR::ValueRepr {
     // TODO: Share more code with structs.
     auto elements = context_.type_blocks().Get(tuple_type.elements_id);
     if (elements.empty()) {
-      return MakeEmptyRepresentation(tuple_type.parse_node);
+      return MakeEmptyValueRepr(tuple_type.parse_node);
     }
 
     // Find the value representation for each element, and construct a tuple
@@ -806,7 +798,7 @@ class TypeCompleter {
     value_rep_elements.reserve(elements.size());
     bool same_as_object_rep = true;
     for (auto element_type_id : elements) {
-      auto element_value_rep = GetNestedValueRepresentation(element_type_id);
+      auto element_value_rep = GetNestedValueRepr(element_type_id);
       if (element_value_rep.type_id != element_type_id) {
         same_as_object_rep = false;
       }
@@ -817,14 +809,14 @@ class TypeCompleter {
                          ? type_id
                          : context_.CanonicalizeTupleType(tuple_type.parse_node,
                                                           value_rep_elements);
-    return BuildStructOrTupleValueRepresentation(
-        tuple_type.parse_node, elements.size(), value_rep, same_as_object_rep);
+    return BuildStructOrTupleValueRepr(tuple_type.parse_node, elements.size(),
+                                       value_rep, same_as_object_rep);
   }
 
   // Builds and returns the value representation for the given type. All nested
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
-  auto BuildValueRepresentation(SemIR::TypeId type_id, SemIR::Inst inst) const
-      -> SemIR::ValueRepresentation {
+  auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
+      -> SemIR::ValueRepr {
     // TODO: This can emit new SemIR instructions. Consider emitting them into a
     // dedicated file-scope instruction block where possible, or somewhere else
     // that better reflects the definition of the type, rather than wherever the
@@ -837,7 +829,7 @@ class TypeCompleter {
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
-      case SemIR::Base::Kind:
+      case SemIR::BaseDecl::Kind:
       case SemIR::BinaryOperatorAdd::Kind:
       case SemIR::BindName::Kind:
       case SemIR::BindValue::Kind:
@@ -853,7 +845,7 @@ class TypeCompleter {
       case SemIR::ClassInit::Kind:
       case SemIR::Converted::Kind:
       case SemIR::Deref::Kind:
-      case SemIR::Field::Kind:
+      case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
       case SemIR::Import::Kind:
       case SemIR::InitializeFrom::Kind:
@@ -887,50 +879,45 @@ class TypeCompleter {
         CARBON_FATAL() << "Type refers to non-type inst " << inst;
 
       case SemIR::CrossRef::Kind:
-        return BuildCrossRefValueRepresentation(type_id,
-                                                inst.As<SemIR::CrossRef>());
+        return BuildCrossRefValueRepr(type_id, inst.As<SemIR::CrossRef>());
 
       case SemIR::ArrayType::Kind: {
         // For arrays, it's convenient to always use a pointer representation,
         // even when the array has zero or one element, in order to support
         // indexing.
-        return MakePointerRepresentation(
-            inst.parse_node(), type_id,
-            SemIR::ValueRepresentation::ObjectAggregate);
+        return MakePointerValueRepr(inst.parse_node(), type_id,
+                                    SemIR::ValueRepr::ObjectAggregate);
       }
 
       case SemIR::StructType::Kind:
-        return BuildStructTypeValueRepresentation(type_id,
-                                                  inst.As<SemIR::StructType>());
+        return BuildStructTypeValueRepr(type_id, inst.As<SemIR::StructType>());
 
       case SemIR::TupleType::Kind:
-        return BuildTupleTypeValueRepresentation(type_id,
-                                                 inst.As<SemIR::TupleType>());
+        return BuildTupleTypeValueRepr(type_id, inst.As<SemIR::TupleType>());
 
       case SemIR::ClassType::Kind:
         // The value representation for a class is a pointer to the object
         // representation.
         // TODO: Support customized value representations for classes.
         // TODO: Pick a better value representation when possible.
-        return MakePointerRepresentation(
+        return MakePointerValueRepr(
             inst.parse_node(),
             context_.classes()
                 .Get(inst.As<SemIR::ClassType>().class_id)
-                .object_representation_id,
-            SemIR::ValueRepresentation::ObjectAggregate);
+                .object_repr_id,
+            SemIR::ValueRepr::ObjectAggregate);
 
       case SemIR::Builtin::Kind:
         CARBON_FATAL() << "Builtins should be named as cross-references";
 
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
-        return MakeCopyRepresentation(type_id);
+        return MakeCopyValueRepr(type_id);
 
       case SemIR::ConstType::Kind:
         // The value representation of `const T` is the same as that of `T`.
         // Objects are not modifiable through their value representations.
-        return GetNestedValueRepresentation(
-            inst.As<SemIR::ConstType>().inner_id);
+        return GetNestedValueRepr(inst.As<SemIR::ConstType>().inner_id);
     }
   }
 
@@ -938,7 +925,7 @@ class TypeCompleter {
     // The next step is to add nested types to the list of types to complete.
     AddNestedIncompleteTypes,
     // The next step is to build the value representation for the type.
-    BuildValueRepresentation,
+    BuildValueRepr,
   };
 
   struct WorkItem {

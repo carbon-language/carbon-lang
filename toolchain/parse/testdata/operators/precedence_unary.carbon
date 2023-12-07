@@ -6,7 +6,7 @@
 
 fn F(p: i32*) {
   // Numeric, bitwise, and bit-shift binary operators are lower precedence than
-  // Numeric and bitwise unary operators, which are lower precedence than
+  // numeric and bitwise unary operators, which are lower precedence than
   // dereference.
   -*p + ^*p;
   -*p | ^*p;

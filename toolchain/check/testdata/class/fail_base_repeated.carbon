@@ -8,26 +8,26 @@ base class B1 {}
 base class B2 {}
 
 class C {
-  base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:11: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
-  // CHECK:STDERR:   base: B2;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:11: Previous `base` declaration is here.
-  // CHECK:STDERR:   base: B1;
-  // CHECK:STDERR:           ^
-  base: B2;
+  extend base: B1;
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:18: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
+  // CHECK:STDERR:   extend base: B2;
+  // CHECK:STDERR:                  ^
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:18: Previous `base` declaration is here.
+  // CHECK:STDERR:   extend base: B1;
+  // CHECK:STDERR:                  ^
+  extend base: B2;
 }
 
 class D {
   // TODO: Consider adding a custom diagnostic for this case.
-  base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:11: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
-  // CHECK:STDERR:   base: B1;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:11: Previous `base` declaration is here.
-  // CHECK:STDERR:   base: B1;
-  // CHECK:STDERR:           ^
-  base: B1;
+  extend base: B1;
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:18: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
+  // CHECK:STDERR:   extend base: B1;
+  // CHECK:STDERR:                  ^
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:18: Previous `base` declaration is here.
+  // CHECK:STDERR:   extend base: B1;
+  // CHECK:STDERR:                  ^
+  extend base: B1;
 }
 
 // CHECK:STDOUT: --- fail_base_repeated.carbon
@@ -63,21 +63,21 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1
-// CHECK:STDOUT:   %.loc11_11.1: type = unbound_element_type C, B1
-// CHECK:STDOUT:   %.loc11_11.2: <unbound field of class C> = base B1, element0
+// CHECK:STDOUT:   %.loc11_18.1: type = unbound_element_type C, B1
+// CHECK:STDOUT:   %.loc11_18.2: <unbound element of class C> = base_decl B1, element0
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc11_11.2
+// CHECK:STDOUT:   .base = %.loc11_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B1.ref.loc23: type = name_ref B1, file.%B1
-// CHECK:STDOUT:   %.loc23_11.1: type = unbound_element_type D, B1
-// CHECK:STDOUT:   %.loc23_11.2: <unbound field of class D> = base B1, element0
+// CHECK:STDOUT:   %.loc23_18.1: type = unbound_element_type D, B1
+// CHECK:STDOUT:   %.loc23_18.2: <unbound element of class D> = base_decl B1, element0
 // CHECK:STDOUT:   %B1.ref.loc30: type = name_ref B1, file.%B1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc23_11.2
+// CHECK:STDOUT:   .base = %.loc23_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

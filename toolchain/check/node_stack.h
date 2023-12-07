@@ -330,11 +330,6 @@ class NodeStack {
       case Parse::NodeKind::StructFieldType:
       case Parse::NodeKind::StructTypeLiteral:
       case Parse::NodeKind::TupleLiteral:
-// Use x-macros to handle literal cases.
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) \
-  case Parse::NodeKind::Name:
-#include "toolchain/parse/node_kind.def"
         return IdKind::InstId;
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
@@ -350,9 +345,7 @@ class NodeStack {
       case Parse::NodeKind::BaseName:
       case Parse::NodeKind::IdentifierName:
         return IdKind::NameId;
-      case Parse::NodeKind::AbstractModifier:
       case Parse::NodeKind::ArrayExprSemi:
-      case Parse::NodeKind::BaseModifier:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::FunctionIntroducer:
@@ -370,6 +363,15 @@ class NodeStack {
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
         return IdKind::SoloParseNode;
+// Use x-macros to handle token cases.
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) \
+  case Parse::NodeKind::Name:                           \
+    return IdKind::InstId;
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
+  case Parse::NodeKind::Name##Modifier:                  \
+    return IdKind::SoloParseNode;
+#include "toolchain/parse/node_kind.def"
       default:
         return IdKind::Unused;
     }

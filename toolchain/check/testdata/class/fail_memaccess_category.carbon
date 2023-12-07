@@ -63,8 +63,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc12_8.1: type = unbound_element_type B, A
-// CHECK:STDOUT:   %.loc12_8.2: <unbound field of class B> = field a, element0
-// CHECK:STDOUT:   %a: <unbound field of class B> = bind_name a, %.loc12_8.2
+// CHECK:STDOUT:   %.loc12_8.2: <unbound element of class B> = field_decl a, element0
+// CHECK:STDOUT:   %a: <unbound element of class B> = bind_name a, %.loc12_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a

@@ -5,11 +5,12 @@
 // AUTOUPDATE
 
 fn F(n: i32) {
-  // Type operators and unary operators are lower precedence than `as`.
+  // Type operators and unary operators are higher precedence than `as`.
   -n as const i32;
   &n as i32*;
 
-  // `as` is lower precedence than relational comparisons and logical operators.
+  // `as` is higher precedence than relational comparisons and
+  // logical operators.
   if (1 as i32 < 2 as i32 and true as bool and false as bool) {}
 }
 
