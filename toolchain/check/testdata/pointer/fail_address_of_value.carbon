@@ -82,6 +82,8 @@ fn AddressOfParam(param: i32) {
   var param_addr: i32* = &param;
 }
 
+// CHECK:STDOUT: --- fail_address_of_value.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = ptr_type i32
 // CHECK:STDOUT:   %.loc19: type = ptr_type bool
@@ -93,7 +95,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc64: type = ptr_type type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_address_of_value.carbon" {
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G, .H = %H, .AddressOfLiteral = %AddressOfLiteral, .AddressOfOperator = %AddressOfOperator, .AddressOfCall = %AddressOfCall, .AddressOfType = %AddressOfType, .AddressOfTupleElementValue = %AddressOfTupleElementValue, .AddressOfParam = %AddressOfParam}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral
@@ -134,11 +137,11 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc42_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc42_7: i32 = add %.loc42_5, %.loc42_9
 // CHECK:STDOUT:   %.loc42_3: i32* = address_of %.loc42_7
-// CHECK:STDOUT:   %H.ref: <function> = name_reference H, file.%H
+// CHECK:STDOUT:   %H.ref: <function> = name_ref H, file.%H
 // CHECK:STDOUT:   %.loc46_5.1: init {.a: i32} = call %H.ref()
 // CHECK:STDOUT:   %.loc46_5.2: ref {.a: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc46_5.3: ref {.a: i32} = temporary %.loc46_5.2, %.loc46_5.1
-// CHECK:STDOUT:   %.loc46_7: ref i32 = struct_access %.loc46_5.3, member0
+// CHECK:STDOUT:   %.loc46_7: ref i32 = struct_access %.loc46_5.3, element0
 // CHECK:STDOUT:   %.loc46_3: i32* = address_of %.loc46_7
 // CHECK:STDOUT:   %.loc50_9: bool = bool_literal true
 // CHECK:STDOUT:   %.loc50_5: bool = not %.loc50_9
@@ -148,7 +151,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfCall() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: <function> = name_reference G, file.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
 // CHECK:STDOUT:   %.loc57_5: init i32 = call %G.ref()
 // CHECK:STDOUT:   %.loc57_3: i32* = address_of %.loc57_5
 // CHECK:STDOUT:   return
@@ -181,8 +184,9 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc82_22: type = ptr_type i32
 // CHECK:STDOUT:   %param_addr.var: ref i32* = var param_addr
 // CHECK:STDOUT:   %param_addr: ref i32* = bind_name param_addr, %param_addr.var
-// CHECK:STDOUT:   %param.ref: i32 = name_reference param, %param
+// CHECK:STDOUT:   %param.ref: i32 = name_ref param, %param
 // CHECK:STDOUT:   %.loc82_26: i32* = address_of %param.ref
 // CHECK:STDOUT:   assign %param_addr.var, %.loc82_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

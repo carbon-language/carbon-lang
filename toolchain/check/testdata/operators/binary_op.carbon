@@ -8,7 +8,10 @@ fn Main() -> i32 {
   return 12 + 34;
 }
 
-// CHECK:STDOUT: file "binary_op.carbon" {
+// CHECK:STDOUT: --- binary_op.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -19,3 +22,4 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.loc8_13: i32 = add %.loc8_10, %.loc8_15
 // CHECK:STDOUT:   return %.loc8_13
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

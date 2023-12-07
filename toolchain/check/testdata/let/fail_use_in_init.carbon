@@ -11,13 +11,17 @@ fn F() {
   let a: i32 = a;
 }
 
-// CHECK:STDOUT: file "fail_use_in_init.carbon" {
+// CHECK:STDOUT: --- fail_use_in_init.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: <error> = name_reference a, <error>
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error>
 // CHECK:STDOUT:   %a: i32 = bind_name a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

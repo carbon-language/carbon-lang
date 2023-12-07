@@ -13,11 +13,11 @@ let ? = 4;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'Name', text: '?', has_error: yes},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: '?', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '?', has_error: yes},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: '?', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: '?', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'Literal', text: '4'},
+// CHECK:STDOUT:       {kind: 'IntLiteral', text: '4'},
 // CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

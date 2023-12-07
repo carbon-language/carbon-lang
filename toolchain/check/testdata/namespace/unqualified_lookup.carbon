@@ -26,11 +26,14 @@ fn OuterN.InnerN.CallABC() {
   C();
 }
 
+// CHECK:STDOUT: --- unqualified_lookup.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "unqualified_lookup.carbon" {
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.OuterN = %.loc7, .A = %A, .CallA = %CallA}
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {.InnerN = %.loc8, .B = %B, .CallAB = %CallAB}
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace {.C = %C, .CallABC = %CallABC}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
@@ -49,27 +52,28 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallA() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_reference A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc15: init () = call %A.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallAB() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_reference A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc19: init () = call %A.ref()
-// CHECK:STDOUT:   %B.ref: <function> = name_reference B, file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc20: init () = call %B.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallABC() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_reference A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc24: init () = call %A.ref()
-// CHECK:STDOUT:   %B.ref: <function> = name_reference B, file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc25: init () = call %B.ref()
-// CHECK:STDOUT:   %C.ref: <function> = name_reference C, file.%C
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C
 // CHECK:STDOUT:   %.loc26: init () = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -21,28 +21,28 @@ library "lib" api;
 import Api;
 // CHECK:STDERR: import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import Api;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import Api;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~
 import Api;
 
 import Api library "lib";
 // CHECK:STDERR: import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import Api library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import Api library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~
 import Api library "lib";
 
 import library "lib";
 // CHECK:STDERR: import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import library "lib";
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~
 import library "lib";
 
 // --- default_import.carbon
@@ -52,19 +52,43 @@ package Api library "not_default" api;
 import library default;
 // CHECK:STDERR: default_import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import library default;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: default_import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import library default;
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~
 import library default;
 
-// CHECK:STDOUT: file "api.carbon" {
+// CHECK:STDOUT: --- api.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "api_lib.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- api_lib.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "main_lib.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- main_lib.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "import.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
+// CHECK:STDOUT:   %import.loc2: <namespace> = import ir1, ir2
+// CHECK:STDOUT:   %Api: <namespace> = bind_name Api, %import.loc2
+// CHECK:STDOUT:   %import.loc20: <namespace> = import ir3, ir3
 // CHECK:STDOUT: }
-// CHECK:STDOUT: file "default_import.carbon" {
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- default_import.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
+// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

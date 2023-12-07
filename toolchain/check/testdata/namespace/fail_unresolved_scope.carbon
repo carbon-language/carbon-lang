@@ -6,11 +6,14 @@
 
 // CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: ERROR: Name `Foo` not found.
 // CHECK:STDERR: fn Foo.Baz() {
-// CHECK:STDERR:    ^
+// CHECK:STDERR:    ^~~
 fn Foo.Baz() {
 }
 
-// CHECK:STDOUT: file "fail_unresolved_scope.carbon" {
+// CHECK:STDOUT: --- fail_unresolved_scope.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT:   %.loc10: <function> = fn_decl @.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -18,3 +21,4 @@ fn Foo.Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

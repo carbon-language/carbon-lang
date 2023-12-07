@@ -17,6 +17,7 @@ load(
     "variable_with_value",
     "with_feature_set",
 )
+load("@rules_cc//cc:defs.bzl", "cc_toolchain", "cc_toolchain_suite")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
@@ -685,8 +686,7 @@ def _impl(ctx):
                             ),
                             flag_group(
                                 flags = ["-Wl,-whole-archive"],
-                                expand_if_true =
-                                    "libraries_to_link.is_whole_archive",
+                                expand_if_true = "libraries_to_link.is_whole_archive",
                             ),
                             flag_group(
                                 flags = ["%{libraries_to_link.object_files}"],
@@ -734,6 +734,137 @@ def _impl(ctx):
                             flag_group(
                                 flags = ["-Wl,-no-whole-archive"],
                                 expand_if_true = "libraries_to_link.is_whole_archive",
+                            ),
+                            flag_group(
+                                flags = ["-Wl,--end-lib"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                            ),
+                        ],
+                        expand_if_available = "libraries_to_link",
+                    ),
+                    # Note that the params file comes at the end, after the
+                    # libraries to link above.
+                    flag_group(
+                        expand_if_available = "linker_param_file",
+                        flags = ["@%{linker_param_file}"],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    macos_link_libraries_feature = feature(
+        name = "macos_link_libraries",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{linkstamp_paths}"],
+                        iterate_over = "linkstamp_paths",
+                        expand_if_available = "linkstamp_paths",
+                    ),
+                    flag_group(
+                        iterate_over = "libraries_to_link",
+                        flag_groups = [
+                            flag_group(
+                                flags = ["-Wl,--start-lib"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                            ),
+                            flag_group(
+                                iterate_over = "libraries_to_link.object_files",
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                                flag_groups = [
+                                    flag_group(
+                                        flags = ["%{libraries_to_link.object_files}"],
+                                        expand_if_false = "libraries_to_link.is_whole_archive",
+                                    ),
+                                    flag_group(
+                                        flags = ["-Wl,-force_load,%{libraries_to_link.object_files}"],
+                                        expand_if_true = "libraries_to_link.is_whole_archive",
+                                    ),
+                                ],
+                            ),
+                            flag_group(
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file",
+                                ),
+                                flag_groups = [
+                                    flag_group(
+                                        flags = ["%{libraries_to_link.name}"],
+                                        expand_if_false = "libraries_to_link.is_whole_archive",
+                                    ),
+                                    flag_group(
+                                        flags = ["-Wl,-force_load,%{libraries_to_link.name}"],
+                                        expand_if_true = "libraries_to_link.is_whole_archive",
+                                    ),
+                                ],
+                            ),
+                            flag_group(
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "interface_library",
+                                ),
+                                flag_groups = [
+                                    flag_group(
+                                        flags = ["%{libraries_to_link.name}"],
+                                        expand_if_false = "libraries_to_link.is_whole_archive",
+                                    ),
+                                    flag_group(
+                                        flags = ["-Wl,-force_load,%{libraries_to_link.name}"],
+                                        expand_if_true = "libraries_to_link.is_whole_archive",
+                                    ),
+                                ],
+                            ),
+                            flag_group(
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "static_library",
+                                ),
+                                flag_groups = [
+                                    flag_group(
+                                        flags = ["%{libraries_to_link.name}"],
+                                        expand_if_false = "libraries_to_link.is_whole_archive",
+                                    ),
+                                    flag_group(
+                                        flags = ["-Wl,-force_load,%{libraries_to_link.name}"],
+                                        expand_if_true = "libraries_to_link.is_whole_archive",
+                                    ),
+                                ],
+                            ),
+                            flag_group(
+                                flags = ["-l%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "dynamic_library",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["-l:%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "versioned_dynamic_library",
+                                ),
+                            ),
+                            flag_group(
+                                expand_if_true = "libraries_to_link.is_whole_archive",
+                                flag_groups = [
+                                    flag_group(
+                                        expand_if_false = "macos_flags",
+                                        flags = ["-Wl,-no-whole-archive"],
+                                    ),
+                                ],
                             ),
                             flag_group(
                                 flags = ["-Wl,--end-lib"],
@@ -886,7 +1017,7 @@ def _impl(ctx):
 
     # Next, add the features based on the target platform. Here too the
     # features are order sensitive. We also setup the sysroot here.
-    if ctx.attr.target_cpu == "k8":
+    if ctx.attr.target_cpu in ["aarch64", "k8"]:
         features.append(sanitizer_static_lib_flags)
         features.append(linux_flags_feature)
         sysroot = None
@@ -906,17 +1037,17 @@ def _impl(ctx):
     else:
         fail("Unsupported target platform!")
 
-    # TODO: Need to support non-macOS ARM platforms here.
-    if ctx.attr.target_cpu == "darwin_arm64":
+    if ctx.attr.target_cpu in ["aarch64", "darwin_arm64"]:
         features.append(aarch64_cpu_flags)
     else:
         features.append(x86_64_cpu_flags)
 
     # Finally append the libraries to link and any final flags.
-    features += [
-        default_link_libraries_feature,
-        final_flags_feature,
-    ]
+    if ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+        features.append(macos_link_libraries_feature)
+    else:
+        features.append(default_link_libraries_feature)
+    features.append(final_flags_feature)
 
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
@@ -954,3 +1085,44 @@ cc_toolchain_config = rule(
     },
     provides = [CcToolchainConfigInfo],
 )
+
+def cc_local_toolchain_suite(name, cpus):
+    """Create a toolchain suite that uses the local Clang/LLVM install.
+
+    Args:
+        name: The name of the toolchain suite to produce.
+        cpus: An array of CPU strings to support in the toolchain.
+    """
+
+    # An empty filegroup to use when stubbing out the toolchains.
+    native.filegroup(
+        name = name + "_empty",
+        srcs = [],
+    )
+
+    # Create the individual local toolchains for each CPU.
+    for cpu in cpus:
+        cc_toolchain_config(
+            name = name + "_local_config_" + cpu,
+            target_cpu = cpu,
+        )
+        cc_toolchain(
+            name = name + "_local_" + cpu,
+            all_files = ":" + name + "_empty",
+            ar_files = ":" + name + "_empty",
+            as_files = ":" + name + "_empty",
+            compiler_files = ":" + name + "_empty",
+            dwp_files = ":" + name + "_empty",
+            linker_files = ":" + name + "_empty",
+            objcopy_files = ":" + name + "_empty",
+            strip_files = ":" + name + "_empty",
+            supports_param_files = 1,
+            toolchain_config = ":" + name + "_local_config_" + cpu,
+            toolchain_identifier = name + "_local_" + cpu,
+        )
+
+    # Now build the suite, associating each CPU with its toolchain.
+    cc_toolchain_suite(
+        name = name,
+        toolchains = {cpu: ":" + name + "_local_" + cpu for cpu in cpus},
+    )

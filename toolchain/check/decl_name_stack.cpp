@@ -13,7 +13,7 @@ auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
                      .target_scope_id = context_->current_scope_id()};
 }
 
-auto DeclNameStack::MakeUnqualifiedName(Parse::Node parse_node,
+auto DeclNameStack::MakeUnqualifiedName(Parse::NodeId parse_node,
                                         SemIR::NameId name_id) -> NameContext {
   NameContext context = MakeEmptyNameContext();
   ApplyNameQualifierTo(context, parse_node, name_id);
@@ -36,8 +36,7 @@ auto DeclNameStack::FinishName() -> NameContext {
         .PopAndDiscardSoloParseNode<Parse::NodeKind::QualifiedDecl>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
-    auto [parse_node, name_id] =
-        context_->node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+    auto [parse_node, name_id] = context_->node_stack().PopNameWithParseNode();
     ApplyNameQualifier(parse_node, name_id);
   }
 
@@ -98,13 +97,13 @@ auto DeclNameStack::AddNameToLookup(NameContext name_context,
   }
 }
 
-auto DeclNameStack::ApplyNameQualifier(Parse::Node parse_node,
+auto DeclNameStack::ApplyNameQualifier(Parse::NodeId parse_node,
                                        SemIR::NameId name_id) -> void {
   ApplyNameQualifierTo(decl_name_stack_.back(), parse_node, name_id);
 }
 
 auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
-                                         Parse::Node parse_node,
+                                         Parse::NodeId parse_node,
                                          SemIR::NameId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
@@ -156,7 +155,7 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
 }
 
 auto DeclNameStack::CanResolveQualifier(NameContext& name_context,
-                                        Parse::Node parse_node) -> bool {
+                                        Parse::NodeId parse_node) -> bool {
   switch (name_context.state) {
     case NameContext::State::Error:
       // Already in an error state, so return without examining.
@@ -182,8 +181,7 @@ auto DeclNameStack::CanResolveQualifier(NameContext& name_context,
         auto builder = context_->emitter().Build(
             name_context.parse_node, QualifiedDeclInIncompleteClassScope,
             context_->sem_ir().StringifyType(
-                context_->classes().Get(class_decl->class_id).self_type_id,
-                true));
+                context_->classes().Get(class_decl->class_id).self_type_id));
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
       } else {

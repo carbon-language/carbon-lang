@@ -226,7 +226,7 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
                                         char*& buffer_cursor) -> bool {
   unsigned code_point;
-  if (!CanLexInteger(emitter, digits)) {
+  if (!CanLexInt(emitter, digits)) {
     return false;
   }
   if (digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {

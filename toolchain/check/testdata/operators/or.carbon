@@ -11,7 +11,10 @@ fn Or() -> bool {
   return F() or G();
 }
 
-// CHECK:STDOUT: file "or.carbon" {
+// CHECK:STDOUT: --- or.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G, .Or = %Or}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %Or: <function> = fn_decl @Or
@@ -31,7 +34,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference F, file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
 // CHECK:STDOUT:   %.loc11_11: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
 // CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_11, %.loc11_14.1
@@ -40,7 +43,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   if %.loc11_14.3 br !or.rhs else br !or.result(%.loc11_14.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
-// CHECK:STDOUT:   %G.ref: <function> = name_reference G, file.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
 // CHECK:STDOUT:   %.loc11_18: init bool = call %G.ref()
 // CHECK:STDOUT:   %.loc11_14.5: bool = value_of_initializer %.loc11_18
 // CHECK:STDOUT:   %.loc11_14.6: bool = converted %.loc11_18, %.loc11_14.5
@@ -50,3 +53,4 @@ fn Or() -> bool {
 // CHECK:STDOUT:   %.loc11_14.7: bool = block_arg !or.result
 // CHECK:STDOUT:   return %.loc11_14.7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

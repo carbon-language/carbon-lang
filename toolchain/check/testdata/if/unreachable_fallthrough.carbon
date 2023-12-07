@@ -13,13 +13,16 @@ fn If(b: bool) -> i32 {
   // Missing return here is OK.
 }
 
-// CHECK:STDOUT: file "unreachable_fallthrough.carbon" {
+// CHECK:STDOUT: --- unreachable_fallthrough.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.If = %If}
 // CHECK:STDOUT:   %If: <function> = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_reference b, %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
@@ -30,3 +33,4 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 2
 // CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -68,6 +68,9 @@ bazel test //...:all
 > NOTE: Most LLVM 14+ installs should build Carbon. If you're having issues, see
 > [troubleshooting build issues](#troubleshooting-build-issues).
 
+> NOTE: If you don't have a `bazel` package, see
+> [Bazel's install instructions](https://bazel.build/install) for help.
+
 ### macOS
 
 ```

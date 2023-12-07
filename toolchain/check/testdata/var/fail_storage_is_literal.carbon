@@ -11,7 +11,10 @@ fn Main() {
   var x: 1 = 1;
 }
 
-// CHECK:STDOUT: file "fail_storage_is_literal.carbon" {
+// CHECK:STDOUT: --- fail_storage_is_literal.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -24,3 +27,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

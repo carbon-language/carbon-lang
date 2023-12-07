@@ -11,6 +11,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
@@ -59,7 +60,7 @@ class InstNamer {
       auto fn_scope = GetScopeFor(fn_id);
       // TODO: Provide a location for the function for use as a
       // disambiguator.
-      auto fn_loc = Parse::Node::Invalid;
+      auto fn_loc = Parse::NodeId::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
       CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
@@ -88,7 +89,7 @@ class InstNamer {
       auto class_scope = GetScopeFor(class_id);
       // TODO: Provide a location for the class for use as a
       // disambiguator.
-      auto class_loc = Parse::Node::Invalid;
+      auto class_loc = Parse::NodeId::Invalid;
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
           sem_ir.names().GetIRBaseName(class_info.name_id).str());
@@ -136,6 +137,10 @@ class InstNamer {
     // Check for a builtin.
     if (inst_id.index < BuiltinKind::ValidCount) {
       return BuiltinKind::FromInt(inst_id.index).label().str();
+    }
+
+    if (inst_id == InstId::PackageNamespace) {
+      return "package";
     }
 
     auto& [inst_scope, inst_name] = insts[inst_id.index];
@@ -217,7 +222,7 @@ class InstNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const InstNamer& namer, Parse::Node node,
+    auto AllocateName(const InstNamer& namer, Parse::NodeId node,
                       std::string name = "") -> Name {
       // The best (shortest) name for this instruction so far, and the current
       // name for it.
@@ -293,12 +298,13 @@ class InstNamer {
 
   auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
                      std::string name = "",
-                     Parse::Node parse_node = Parse::Node::Invalid) -> void {
+                     Parse::NodeId parse_node = Parse::NodeId::Invalid)
+      -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
 
-    if (parse_node == Parse::Node::Invalid) {
+    if (parse_node == Parse::NodeId::Invalid) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
         parse_node = sem_ir_.insts().Get(block.front()).parse_node();
@@ -435,13 +441,23 @@ class InstNamer {
                                .name_id);
           continue;
         }
+        case ClassDecl::Kind: {
+          add_inst_name_id(
+              sem_ir_.classes().Get(inst.As<ClassDecl>().class_id).name_id,
+              ".decl");
+          continue;
+        }
         case ClassType::Kind: {
           add_inst_name_id(
               sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
           continue;
         }
-        case NameReference::Kind: {
-          add_inst_name_id(inst.As<NameReference>().name_id, ".ref");
+        case Import::Kind: {
+          add_inst_name("import");
+          continue;
+        }
+        case NameRef::Kind: {
+          add_inst_name_id(inst.As<NameRef>().name_id, ".ref");
           continue;
         }
         case Param::Kind: {
@@ -490,12 +506,17 @@ class Formatter {
         out_(out),
         inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
 
+  // Prints the SemIR.
+  //
+  // Constants are printed first and may be referenced by later sections,
+  // including file-scoped instructions. The file scope may contain entity
+  // declarations which are defined later, such as classes.
   auto Format() -> void {
+    out_ << "--- " << sem_ir_.filename() << "\n\n";
+
     FormatConstants();
 
-    out_ << "file \"" << sem_ir_.filename() << "\" {\n";
-    // TODO: Include information from the `package` declaration, once we
-    // fully support it.
+    out_ << "file {\n";
     // TODO: Handle the case where there are multiple top-level instruction
     // blocks. For example, there may be branching in the initializer of a
     // global or a type expression.
@@ -512,6 +533,9 @@ class Formatter {
     for (int i : llvm::seq(sem_ir_.functions().size())) {
       FormatFunction(FunctionId(i));
     }
+
+    // End-of-file newline.
+    out_ << "\n";
   }
 
   auto FormatConstants() -> void {
@@ -680,8 +704,8 @@ class Formatter {
           case ExprCategory::Value:
           case ExprCategory::Mixed:
             break;
-          case ExprCategory::DurableReference:
-          case ExprCategory::EphemeralReference:
+          case ExprCategory::DurableRef:
+          case ExprCategory::EphemeralRef:
             out_ << "ref ";
             break;
           case ExprCategory::Initializing:
@@ -694,6 +718,12 @@ class Formatter {
       case InstValueKind::None:
         break;
     }
+  }
+
+  // Print ClassDecl with type-like semantics even though it lacks a type_id.
+  auto FormatInstructionLHS(InstId inst_id, ClassDecl /*inst*/) -> void {
+    FormatInstName(inst_id);
+    out_ << " = ";
   }
 
   template <typename InstT>
@@ -759,8 +789,7 @@ class Formatter {
 
     llvm::ArrayRef<InstId> args = sem_ir_.inst_blocks().Get(inst.args_id);
 
-    bool has_return_slot =
-        GetInitializingRepresentation(sem_ir_, inst.type_id).has_return_slot();
+    bool has_return_slot = GetInitRepr(sem_ir_, inst.type_id).has_return_slot();
     InstId return_slot_id = InstId::Invalid;
     if (has_return_slot) {
       return_slot_id = args.back();
@@ -800,7 +829,7 @@ class Formatter {
     FormatReturnSlot(init.dest_id);
   }
 
-  auto FormatInstructionRHS(CrossReference inst) -> void {
+  auto FormatInstructionRHS(CrossRef inst) -> void {
     // TODO: Figure out a way to make this meaningful. We'll need some way to
     // name cross-reference IRs, perhaps by the instruction ID of the import?
     out_ << " " << inst.ir_id << "." << inst.inst_id;
@@ -853,11 +882,13 @@ class Formatter {
 
   auto FormatArg(ClassId id) -> void { FormatClassName(id); }
 
-  auto FormatArg(IntegerId id) -> void {
-    sem_ir_.integers().Get(id).print(out_, /*isSigned=*/false);
+  auto FormatArg(CrossRefIRId id) -> void { out_ << id; }
+
+  auto FormatArg(IntId id) -> void {
+    sem_ir_.ints().Get(id).print(out_, /*isSigned=*/false);
   }
 
-  auto FormatArg(MemberIndex index) -> void { out_ << index; }
+  auto FormatArg(ElementIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
     out_ << '{';
@@ -934,7 +965,7 @@ class Formatter {
     if (!id.is_valid()) {
       out_ << "invalid";
     } else {
-      out_ << sem_ir_.StringifyType(id, /*in_type_context=*/true);
+      out_ << sem_ir_.StringifyType(id);
     }
   }
 

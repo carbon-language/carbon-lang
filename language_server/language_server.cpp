@@ -76,12 +76,13 @@ auto LanguageServer::onReply(llvm::json::Value /*id*/,
   return true;
 }
 
-// Returns the text of first child of kind Parse::NodeKind::Name.
-static auto GetName(const SharedValueStores& value_stores,
-                    const Lex::TokenizedBuffer& tokens, const Parse::Tree& p,
-                    Parse::Node node) -> std::optional<llvm::StringRef> {
+// Returns the text of first child of kind Parse::NodeKind::IdentifierName.
+static auto GetIdentifierName(const SharedValueStores& value_stores,
+                              const Lex::TokenizedBuffer& tokens,
+                              const Parse::Tree& p, Parse::NodeId node)
+    -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
-    if (p.node_kind(ch) == Parse::NodeKind::Name) {
+    if (p.node_kind(ch) == Parse::NodeKind::IdentifierName) {
       return value_stores.identifiers().Get(
           tokens.GetIdentifier(p.node_token(node)));
     }
@@ -123,7 +124,7 @@ void LanguageServer::OnDocumentSymbol(
         continue;
     }
 
-    if (auto name = GetName(value_stores, lexed, parsed, node)) {
+    if (auto name = GetIdentifierName(value_stores, lexed, parsed, node)) {
       auto tok = parsed.node_token(node);
       clang::clangd::Position pos{lexed.GetLineNumber(tok) - 1,
                                   lexed.GetColumnNumber(tok) - 1};

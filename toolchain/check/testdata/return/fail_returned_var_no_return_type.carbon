@@ -7,19 +7,22 @@
 fn Procedure() {
   // CHECK:STDERR: fail_returned_var_no_return_type.carbon:[[@LINE+6]]:3: ERROR: Cannot declare a `returned var` in this function.
   // CHECK:STDERR:   returned var v: () = ();
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_returned_var_no_return_type.carbon:[[@LINE-4]]:1: There was no return type provided.
   // CHECK:STDERR: fn Procedure() {
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~
   returned var v: () = ();
   return;
 }
 
+// CHECK:STDOUT: --- fail_returned_var_no_return_type.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc14: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_returned_var_no_return_type.carbon" {
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Procedure = %Procedure}
 // CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -32,3 +35,4 @@ fn Procedure() {
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

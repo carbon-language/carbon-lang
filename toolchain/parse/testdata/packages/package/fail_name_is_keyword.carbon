@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+3]]:9: ERROR: Expected identifier after `package`.
 // CHECK:STDERR: package fn;
-// CHECK:STDERR:         ^
+// CHECK:STDERR:         ^~
 package fn;
 
 // CHECK:STDOUT: - filename: fail_name_is_keyword.carbon

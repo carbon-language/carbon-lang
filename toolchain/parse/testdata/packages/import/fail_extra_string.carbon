@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:26: ERROR: `import` declarations must end with a `;`.
 // CHECK:STDERR: import Foo library "bar" "baz";
-// CHECK:STDERR:                          ^
+// CHECK:STDERR:                          ^~~~~
 import Foo library "bar" "baz";
 
 // CHECK:STDOUT: - filename: fail_extra_string.carbon

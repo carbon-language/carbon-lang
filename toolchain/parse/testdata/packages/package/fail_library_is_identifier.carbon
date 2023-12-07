@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_library_is_identifier.carbon:[[@LINE+3]]:26: ERROR: Expected a string literal to specify the library name.
 // CHECK:STDERR: package Geometry library Shapes api;
-// CHECK:STDERR:                          ^
+// CHECK:STDERR:                          ^~~~~~
 package Geometry library Shapes api;
 
 // CHECK:STDOUT: - filename: fail_library_is_identifier.carbon

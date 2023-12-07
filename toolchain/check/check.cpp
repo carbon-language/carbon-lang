@@ -8,16 +8,41 @@
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/context.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
 struct UnitInfo {
+  // A given import within the file, with its destination.
+  struct Import {
+    Parse::Tree::PackagingNames names;
+    UnitInfo* unit_info;
+  };
+  // A file's imports corresponding to a single package, for the map.
+  struct PackageImports {
+    // Use the constructor so that the SmallVector is only constructed
+    // as-needed.
+    explicit PackageImports(Parse::NodeId node) : node(node) {}
+
+    // The first `import` directive in the file, which declared the package's
+    // identifier (even if the import failed). Used for associating diagnostics
+    // not specific to a single import.
+    Parse::NodeId node;
+    // Whether there's an import that failed to load.
+    bool has_load_error = false;
+    // The list of valid imports.
+    llvm::SmallVector<Import> imports;
+  };
+
   explicit UnitInfo(Unit& unit)
       : unit(&unit),
-        translator(unit.tokens, unit.parse_tree),
+        translator(unit.tokens, unit.tokens->source().filename(),
+                   unit.parse_tree),
         err_tracker(*unit.consumer),
         emitter(translator, err_tracker) {}
 
@@ -26,10 +51,13 @@ struct UnitInfo {
   // Emitter information.
   Parse::NodeLocationTranslator translator;
   ErrorTrackingDiagnosticConsumer err_tracker;
-  DiagnosticEmitter<Parse::Node> emitter;
+  DiagnosticEmitter<Parse::NodeId> emitter;
 
-  // A list of outgoing imports.
-  llvm::SmallVector<std::pair<Parse::Node, UnitInfo*>> imports;
+  // A map of package names to outgoing imports. If the
+  // import's target isn't available, the unit will be nullptr to assist with
+  // name lookup. Invalid imports (for example, `import Main;`) aren't added
+  // because they won't add identifiers to name lookup.
+  llvm::DenseMap<IdentifierId, PackageImports> package_imports_map;
 
   // The remaining number of imports which must be checked before this unit can
   // be processed.
@@ -40,46 +68,77 @@ struct UnitInfo {
   llvm::SmallVector<UnitInfo*> incoming_imports;
 };
 
-// Produces and checks the IR for the provided Parse::Tree.
-// TODO: Both valid and invalid imports should be recorded on the SemIR. Invalid
-// imports should suppress errors where it makes sense.
-static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
-                           llvm::raw_ostream* vlog_stream) -> void {
-  unit_info.unit->sem_ir->emplace(*unit_info.unit->value_stores,
-                                  unit_info.unit->tokens->filename().str(),
-                                  &builtin_ir);
+// Add imports to the root block.
+static auto AddImports(Context& context, UnitInfo& unit_info) -> void {
+  for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
+    llvm::SmallVector<const SemIR::File*> sem_irs;
+    for (auto import : package_imports.imports) {
+      sem_irs.push_back(&**import.unit_info->unit->sem_ir);
+    }
+    context.AddPackageImports(package_imports.node, package_id, sem_irs,
+                              package_imports.has_load_error);
+  }
+}
 
-  // For ease-of-access.
-  SemIR::File& sem_ir = **unit_info.unit->sem_ir;
-  const Parse::Tree& parse_tree = *unit_info.unit->parse_tree;
-
-  Check::Context context(*unit_info.unit->tokens, unit_info.emitter, parse_tree,
-                         sem_ir, vlog_stream);
-  PrettyStackTraceFunction context_dumper(
-      [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
-
-  // Add a block for the Parse::Tree.
-  context.inst_block_stack().Push();
-  context.PushScope();
-
-  // Loops over all nodes in the tree. On some errors, this may return early,
-  // for example if an unrecoverable state is encountered.
-  for (auto parse_node : parse_tree.postorder()) {
+// Loops over all nodes in the tree. On some errors, this may return early,
+// for example if an unrecoverable state is encountered.
+static auto ProcessParseNodes(Context& context,
+                              ErrorTrackingDiagnosticConsumer& err_tracker)
+    -> bool {
+  for (auto parse_node : context.parse_tree().postorder()) {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (auto parse_kind = parse_tree.node_kind(parse_node)) {
+    switch (auto parse_kind = context.parse_tree().node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::NodeKind::Name: {                                              \
     if (!Check::Handle##Name(context, parse_node)) {                         \
-      CARBON_CHECK(unit_info.err_tracker.seen_error())                       \
+      CARBON_CHECK(err_tracker.seen_error())                                 \
           << "Handle" #Name " returned false without printing a diagnostic"; \
-      sem_ir.set_has_errors(true);                                           \
-      return;                                                                \
+      return false;                                                          \
     }                                                                        \
     break;                                                                   \
   }
 #include "toolchain/parse/node_kind.def"
     }
+  }
+  return true;
+}
+
+// Produces and checks the IR for the provided Parse::Tree.
+// TODO: Both valid and invalid imports should be recorded on the SemIR. Invalid
+// imports should suppress errors where it makes sense.
+static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
+                           llvm::raw_ostream* vlog_stream) -> void {
+  unit_info.unit->sem_ir->emplace(
+      *unit_info.unit->value_stores,
+      unit_info.unit->tokens->source().filename().str(), &builtin_ir);
+
+  // For ease-of-access.
+  SemIR::File& sem_ir = **unit_info.unit->sem_ir;
+
+  Context context(*unit_info.unit->tokens, unit_info.emitter,
+                  *unit_info.unit->parse_tree, sem_ir, vlog_stream);
+  PrettyStackTraceFunction context_dumper(
+      [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
+
+  // Add a block for the file.
+  context.inst_block_stack().Push();
+
+  // Define the package scope, with an instruction for `package` expressions to
+  // reference.
+  auto package_scope = context.name_scopes().Add();
+  auto package_inst = context.AddInst(SemIR::Namespace{
+      Parse::NodeId::Invalid,
+      context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+      package_scope});
+  CARBON_CHECK(package_inst == SemIR::InstId::PackageNamespace);
+  context.PushScope(SemIR::InstId::Invalid, package_scope);
+
+  AddImports(context, unit_info);
+
+  if (!ProcessParseNodes(context, unit_info.err_tracker)) {
+    context.sem_ir().set_has_errors(true);
+    return;
   }
 
   // Pop information for the file-level scope.
@@ -126,7 +185,7 @@ static constexpr llvm::StringLiteral ExplicitMainName = "Main";
 // come from the same file.
 static auto TrackImport(
     llvm::DenseMap<ImportKey, UnitInfo*>& api_map,
-    llvm::DenseMap<ImportKey, Parse::Node>* explicit_import_map,
+    llvm::DenseMap<ImportKey, Parse::NodeId>* explicit_import_map,
     UnitInfo& unit_info, Parse::Tree::PackagingNames import) -> void {
   const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
 
@@ -225,17 +284,114 @@ static auto TrackImport(
     return;
   }
 
+  // Get the package imports.
+  auto package_imports_it =
+      unit_info.package_imports_map.try_emplace(import.package_id, import.node)
+          .first;
+
   if (auto api = api_map.find(import_key); api != api_map.end()) {
-    unit_info.imports.push_back({import.node, api->second});
+    // Add references between the file and imported api.
+    package_imports_it->second.imports.push_back({import, api->second});
     ++unit_info.imports_remaining;
     api->second->incoming_imports.push_back(&unit_info);
   } else {
+    // The imported api is missing.
+    package_imports_it->second.has_load_error = true;
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
                       "Corresponding API not found.");
     CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API not found.");
     unit_info.emitter.Emit(
         import.node, explicit_import_map ? ImportNotFound : LibraryApiNotFound);
   }
+}
+
+// Builds a map of `api` files which might be imported. Also diagnoses issues
+// related to the packaging because the strings are loaded as part of getting
+// the ImportKey (which we then do for `impl` files too).
+static auto BuildApiMapAndDiagnosePackaging(
+    llvm::SmallVector<UnitInfo, 0>& unit_infos)
+    -> llvm::DenseMap<ImportKey, UnitInfo*> {
+  llvm::DenseMap<ImportKey, UnitInfo*> api_map;
+  for (auto& unit_info : unit_infos) {
+    const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
+    // An import key formed from the `package` or `library` directive. Or, for
+    // Main//default, a placeholder key.
+    auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::Invalid,
+                                               packaging->names)
+                                // Construct a boring key for Main//default.
+                                : ImportKey{"", ""};
+
+    // Diagnose explicit `Main` uses before they become marked as possible
+    // APIs.
+    if (import_key.first == ExplicitMainName) {
+      CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
+                        "`Main//default` must omit `package` directive.");
+      CARBON_DIAGNOSTIC(ExplicitMainLibrary, Error,
+                        "Use `library` directive in `Main` package libraries.");
+      unit_info.emitter.Emit(packaging->names.node, import_key.second.empty()
+                                                        ? ExplicitMainPackage
+                                                        : ExplicitMainLibrary);
+      continue;
+    }
+
+    bool is_impl =
+        packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl;
+
+    // Add to the `api` map and diagnose duplicates. This occurs before the
+    // file extension check because we might emit both diagnostics in situation
+    // where the user forgets (or has syntax errors with) a package line
+    // multiple times.
+    if (!is_impl) {
+      auto [entry, success] = api_map.insert({import_key, &unit_info});
+      if (!success) {
+        llvm::StringRef prev_filename =
+            entry->second->unit->tokens->source().filename();
+        if (packaging) {
+          CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
+                            "Library's API previously provided by `{0}`.",
+                            std::string);
+          unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi,
+                                 prev_filename.str());
+        } else {
+          CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
+                            "Main//default previously provided by `{0}`.",
+                            std::string);
+          // Use the invalid node because there's no node to associate with.
+          unit_info.emitter.Emit(Parse::NodeId::Invalid, DuplicateMainApi,
+                                 prev_filename.str());
+        }
+      }
+    }
+
+    // Validate file extensions. Note imports rely the packaging directive, not
+    // the extension. If the input is not a regular file, for example because it
+    // is stdin, no filename checking is performed.
+    if (unit_info.unit->tokens->source().is_regular_file()) {
+      auto filename = unit_info.unit->tokens->source().filename();
+      static constexpr llvm::StringLiteral ApiExt = ".carbon";
+      static constexpr llvm::StringLiteral ImplExt = ".impl.carbon";
+      bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);
+      auto want_ext = is_impl ? ImplExt : ApiExt;
+      if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
+        CARBON_DIAGNOSTIC(IncorrectExtension, Error,
+                          "File extension of `{0}` required for `{1}`.",
+                          llvm::StringLiteral, Lex::TokenKind);
+        auto diag = unit_info.emitter.Build(
+            packaging ? packaging->names.node : Parse::NodeId::Invalid,
+            IncorrectExtension, want_ext,
+            is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
+        if (is_api_with_impl_ext) {
+          CARBON_DIAGNOSTIC(IncorrectExtensionImplNote, Note,
+                            "File extension of `{0}` only allowed for `{1}`.",
+                            llvm::StringLiteral, Lex::TokenKind);
+          diag.Note(Parse::NodeId::Invalid, IncorrectExtensionImplNote, ImplExt,
+                    Lex::TokenKind::Impl);
+        }
+        diag.Emit();
+      }
+    }
+  }
+  return api_map;
 }
 
 auto CheckParseTrees(const SemIR::File& builtin_ir,
@@ -251,43 +407,8 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     unit_infos.emplace_back(unit);
   }
 
-  // Create a map of APIs which might be imported.
-  llvm::DenseMap<ImportKey, UnitInfo*> api_map;
-  for (auto& unit_info : unit_infos) {
-    // TODO: It may be good to validate filenames here, but that would have use
-    // put .impl.carbon on almost all tests (which are in `Main//default`). We
-    // should probably get leads direction on filenames before enforcing.
-    const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
-    if (packaging) {
-      auto import_key =
-          GetImportKey(unit_info, IdentifierId::Invalid, packaging->names);
-      // Diagnose explicit `Main` uses before they become marked as possible
-      // APIs.
-      if (import_key.first == ExplicitMainName) {
-        CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
-                          "`Main//default` must omit `package` directive.");
-        CARBON_DIAGNOSTIC(
-            ExplicitMainLibrary, Error,
-            "Use `library` directive in `Main` package libraries.");
-        unit_info.emitter.Emit(packaging->names.node,
-                               import_key.second.empty() ? ExplicitMainPackage
-                                                         : ExplicitMainLibrary);
-        continue;
-      }
-
-      if (packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
-        continue;
-      }
-
-      auto [entry, success] = api_map.insert({import_key, &unit_info});
-      if (!success) {
-        // TODO: Cross-reference the source, deal with library, etc.
-        CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
-                          "Library's API declared in more than one file.");
-        unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi);
-      }
-    }
-  }
+  llvm::DenseMap<ImportKey, UnitInfo*> api_map =
+      BuildApiMapAndDiagnosePackaging(unit_infos);
 
   // Mark down imports for all files.
   llvm::SmallVector<UnitInfo*> ready_to_check;
@@ -301,7 +422,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
       }
     }
 
-    llvm::DenseMap<ImportKey, Parse::Node> explicit_import_map;
+    llvm::DenseMap<ImportKey, Parse::NodeId> explicit_import_map;
     for (const auto& import : unit_info.unit->parse_tree->imports()) {
       TrackImport(api_map, &explicit_import_map, unit_info, import);
     }
@@ -335,17 +456,24 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     // TODO: Better identify cycles, maybe try to untangle them.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        for (auto* import_it = unit_info.imports.begin();
-             import_it != unit_info.imports.end();) {
-          auto* import_unit = import_it->second->unit;
-          if (*import_unit->sem_ir) {
-            ++import_it;
-          } else {
-            CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
-                              "Import cannot be used due to a cycle. Cycle "
-                              "must be fixed to import.");
-            unit_info.emitter.Emit(import_it->first, ImportCycleDetected);
-            import_it = unit_info.imports.erase(import_it);
+        for (auto& [package_id, package_imports] :
+             unit_info.package_imports_map) {
+          for (auto* import_it = package_imports.imports.begin();
+               import_it != package_imports.imports.end();) {
+            if (*import_it->unit_info->unit->sem_ir) {
+              // The import is checked, so continue.
+              ++import_it;
+            } else {
+              // The import hasn't been checked, indicating a cycle.
+              CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
+                                "Import cannot be used due to a cycle. Cycle "
+                                "must be fixed to import.");
+              unit_info.emitter.Emit(import_it->names.node,
+                                     ImportCycleDetected);
+              // Make this look the same as an import which wasn't found.
+              package_imports.has_load_error = true;
+              import_it = package_imports.imports.erase(import_it);
+            }
           }
         }
       }

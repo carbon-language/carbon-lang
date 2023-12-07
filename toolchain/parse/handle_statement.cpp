@@ -32,6 +32,7 @@ auto HandleStatement(Context& context) -> void {
     }
     case Lex::TokenKind::Let: {
       context.PushState(State::Let);
+      context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
       break;
     }
     case Lex::TokenKind::Return: {
@@ -44,6 +45,7 @@ auto HandleStatement(Context& context) -> void {
     }
     case Lex::TokenKind::Var: {
       context.PushState(State::VarAsDecl);
+      context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
       break;
     }
     case Lex::TokenKind::While: {
@@ -91,7 +93,7 @@ auto HandleStatementContinueFinish(Context& context) -> void {
 auto HandleStatementForHeader(Context& context) -> void {
   auto state = context.PopState();
 
-  std::optional<Lex::Token> open_paren =
+  std::optional<Lex::TokenIndex> open_paren =
       context.ConsumeAndAddOpenParen(state.token, NodeKind::ForHeaderStart);
   if (open_paren) {
     state.token = *open_paren;
@@ -101,6 +103,7 @@ auto HandleStatementForHeader(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::Var)) {
     context.PushState(state);
     context.PushState(State::VarAsFor);
+    context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
   } else {
     CARBON_DIAGNOSTIC(ExpectedVariableDecl, Error,
                       "Expected `var` declaration.");

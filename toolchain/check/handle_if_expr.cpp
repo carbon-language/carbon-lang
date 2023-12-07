@@ -7,7 +7,7 @@
 
 namespace Carbon::Check {
 
-auto HandleIfExprIf(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIfExprIf(Context& context, Parse::NodeId parse_node) -> bool {
   // Alias parse_node for if/then/else consistency.
   auto& if_node = parse_node;
 
@@ -28,7 +28,7 @@ auto HandleIfExprIf(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleIfExprThen(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIfExprThen(Context& context, Parse::NodeId parse_node) -> bool {
   auto then_value_id = context.node_stack().PopExpr();
   auto else_block_id = context.node_stack().Peek<Parse::NodeKind::IfExprIf>();
 
@@ -43,7 +43,7 @@ auto HandleIfExprThen(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleIfExprElse(Context& context, Parse::Node parse_node) -> bool {
+auto HandleIfExprElse(Context& context, Parse::NodeId parse_node) -> bool {
   // Alias parse_node for if/then/else consistency.
   auto& else_node = parse_node;
 

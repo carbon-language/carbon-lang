@@ -14,10 +14,10 @@ namespace Carbon::Check {
 // that haven't been inserted yet.
 class PendingBlock {
  public:
-  PendingBlock(Context& context) : context_(context) {}
+  explicit PendingBlock(Context& context) : context_(context) {}
 
   PendingBlock(const PendingBlock&) = delete;
-  PendingBlock& operator=(const PendingBlock&) = delete;
+  auto operator=(const PendingBlock&) -> PendingBlock& = delete;
 
   // A scope in which we will tentatively add instructions to a pending block.
   // If we leave the scope without inserting or merging the block, instructions
@@ -26,7 +26,7 @@ class PendingBlock {
    public:
     // If `block` is not null, enters the scope. If `block` is null, this object
     // has no effect.
-    DiscardUnusedInstsScope(PendingBlock* block)
+    explicit DiscardUnusedInstsScope(PendingBlock* block)
         : block_(block), size_(block ? block->insts_.size() : 0) {}
     ~DiscardUnusedInstsScope() {
       if (block_ && block_->insts_.size() > size_) {

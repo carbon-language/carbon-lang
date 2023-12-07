@@ -20,6 +20,8 @@ namespace Carbon {
 struct Success {};
 
 // Tracks an error message.
+//
+// This is nodiscard to enforce error handling prior to destruction.
 class [[nodiscard]] Error : public Printable<Error> {
  public:
   // Represents an error state.
@@ -66,6 +68,8 @@ class [[nodiscard]] Error : public Printable<Error> {
 
 // Holds a value of type `T`, or an Error explaining why the value is
 // unavailable.
+//
+// This is nodiscard to enforce error handling prior to destruction.
 template <typename T>
 class [[nodiscard]] ErrorOr {
  public:
@@ -137,7 +141,7 @@ class ErrorBuilder {
   // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
   // the builder must be converted to an `Error` or `ErrorOr`.
   template <typename T>
-  [[nodiscard]] auto operator<<(const T& message) && -> ErrorBuilder&& {
+  auto operator<<(const T& message) && -> ErrorBuilder&& {
     *out_ << message;
     return std::move(*this);
   }

@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Imports from the current package](#imports-from-the-current-package)
     -   [Namespaces](#namespaces)
         -   [Re-declaring imported namespaces](#re-declaring-imported-namespaces)
+        -   [Declaring namespace members](#declaring-namespace-members)
         -   [Aliasing](#aliasing)
 -   [Caveats](#caveats)
     -   [Package and library name conflicts](#package-and-library-name-conflicts)
@@ -618,10 +619,11 @@ fn GetArea(c: Circle) { ... }
 
 ### Namespaces
 
-Namespaces offer named paths for entities. Namespaces may be nested. Multiple
-libraries may contribute to the same namespace. In practice, packages may have
-namespaces such as `Testing` containing entities that benefit from an isolated
-space but are present in many libraries.
+Namespaces offer named paths for entities. Namespaces must be declared at file
+scope, and may be nested. Multiple libraries may contribute to the same
+namespace. In practice, packages may have namespaces such as `Testing`
+containing entities that benefit from an isolated space but are present in many
+libraries.
 
 The `namespace` keyword's syntax may loosely be expressed as a regular
 expression:
@@ -670,6 +672,54 @@ namespace Shapes;
 // `Geometry.Shapes` from `Geometry//Shapes/ThreeSides`.
 struct Shapes.Square { ... };
 ```
+
+#### Declaring namespace members
+
+Namespace members may only be declared in the same name scope which was used to
+declare the namespace. For example:
+
+```carbon
+namespace NS;
+
+// ✅ Allowed: declaration is in file scope, which also declared `NS`.
+class NS.ClassT {
+  // ❌ Error: A class body has its own name scope.
+  var NS.a: i32 = 0;
+}
+
+fn Function() {
+  // ❌ Error: A function body has its own name scope.
+  var NS.b: i32 = 1;
+}
+
+// ✅ Allowed: declaration is in file scope, which also declared `NS`.
+namespace NS.MemberNS;
+
+// ✅ Allowed: declaration is in file scope, which also declared `NS.MemberNS`.
+class NS.MemberNS.MemberClassT {}
+```
+
+When multiple names are declared by binding patterns in the same pattern, all
+names must be in the same namespace. Because namespace members can only be
+declared in the same scope as the namespace, a namespace-qualified pattern
+binding can only be used in the pattern of a `var` or `let` declaration. For
+example:
+
+```carbon
+namespace NS;
+
+// ✅ Allowed: `a` and `b` use the default namespace.
+var (a: i32, b: i32) = (1, 2);
+
+// ✅ Allowed: `c` and `d` are in the same namespace.
+var (NS.c: i32, NS.d: i32) = (3, 4);
+
+// ❌ Error: `e` and `f` are not in the same namespace.
+var (e: i32, NS.f: i32) = (5, 6);
+```
+
+This restriction only applies when declaring names in binding patterns, not
+other name uses in patterns.
 
 #### Aliasing
 
@@ -969,6 +1019,10 @@ should be part of a larger testing plan.
 -   Namespaces
     -   [File-level namespaces](/proposals/p0107.md#file-level-namespaces)
     -   [Scoped namespaces](/proposals/p0107.md#scoped-namespaces)
+    -   [Allow prefixing a tuple binding pattern with a namespace](/proposals/p3407.md#allow-prefixing-a-tuple-binding-pattern-with-a-namespace)
+    -   [Allow binding patterns to declare names in multiple namespaces](/proposals/p3407.md#allow-binding-patterns-to-declare-names-in-multiple-namespaces)
+    -   [Allow declaring names in namespaces not owned by the current scope](/proposals/p3407.md#allow-declaring-names-in-namespaces-not-owned-by-the-current-scope)
+    -   [Allow declaring namespaces in scopes other than the file scope](/proposals/p3407.md#allow-declaring-namespaces-in-scopes-other-than-the-file-scope)
 
 ## References
 
@@ -978,3 +1032,5 @@ should be part of a larger testing plan.
     [#2550: Simplified package declaration for the main package](https://github.com/carbon-language/carbon-lang/pull/2550)
 -   Proposal
     [#3403: Change Main//default to an api file](https://github.com/carbon-language/carbon-lang/pull/3403)
+-   Proposal
+    [#3453: Clarify name bindings in namespaces.](https://github.com/carbon-language/carbon-lang/pull/3407)

@@ -16,6 +16,7 @@ class MockDiagnosticConsumer : public DiagnosticConsumer {
   MOCK_METHOD(void, HandleDiagnostic, (Diagnostic diagnostic), (override));
 };
 
+// NOLINTNEXTLINE(modernize-use-trailing-return-type): From the macro.
 MATCHER_P(IsDiagnosticMessage, matcher, "") {
   const Diagnostic& diag = arg;
   return testing::ExplainMatchResult(

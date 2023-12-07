@@ -9,11 +9,14 @@
 // CHECK:STDERR:                             ^
 var x: {.a: i32} = {.b = 1.0};
 
+// CHECK:STDOUT: --- fail_field_type_mismatch.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {.b: f64}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_field_type_mismatch.carbon" {
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x}
 // CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
@@ -21,3 +24,4 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   %.loc10_29: {.b: f64} = struct_literal (%.loc10_26)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

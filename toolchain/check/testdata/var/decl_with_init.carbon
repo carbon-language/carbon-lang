@@ -8,7 +8,10 @@ fn Main() {
   var x: i32 = 0;
 }
 
-// CHECK:STDOUT: file "decl_with_init.carbon" {
+// CHECK:STDOUT: --- decl_with_init.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -20,3 +23,4 @@ fn Main() {
 // CHECK:STDOUT:   assign %x.var, %.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

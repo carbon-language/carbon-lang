@@ -11,7 +11,10 @@ fn Procedure() -> i32 {
   return var;
 }
 
-// CHECK:STDOUT: file "fail_return_var_no_returned_var.carbon" {
+// CHECK:STDOUT: --- fail_return_var_no_returned_var.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Procedure = %Procedure}
 // CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -19,3 +22,4 @@ fn Procedure() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

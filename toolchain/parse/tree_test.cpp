@@ -66,7 +66,8 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
       Yaml::Mapping(ElementsAre(Pair("kind", "FileStart"), Pair("text", ""))),
       Yaml::Mapping(
           ElementsAre(Pair("kind", "FunctionIntroducer"), Pair("text", "fn"))),
-      Yaml::Mapping(ElementsAre(Pair("kind", "Name"), Pair("text", "F"))),
+      Yaml::Mapping(
+          ElementsAre(Pair("kind", "IdentifierName"), Pair("text", "F"))),
       Yaml::Mapping(
           ElementsAre(Pair("kind", "ParamListStart"), Pair("text", "("))),
       Yaml::Mapping(ElementsAre(Pair("kind", "ParamList"), Pair("text", ")"),
@@ -97,7 +98,8 @@ TEST_F(TreeTest, PrintPreorderAsYAML) {
       Yaml::Mapping(ElementsAre(Pair("node_index", "1"),
                                 Pair("kind", "FunctionIntroducer"),
                                 Pair("text", "fn"))),
-      Yaml::Mapping(ElementsAre(Pair("node_index", "2"), Pair("kind", "Name"),
+      Yaml::Mapping(ElementsAre(Pair("node_index", "2"),
+                                Pair("kind", "IdentifierName"),
                                 Pair("text", "F"))),
       Yaml::Mapping(ElementsAre(
           Pair("node_index", "4"), Pair("kind", "ParamList"), Pair("text", ")"),

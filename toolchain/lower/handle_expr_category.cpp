@@ -9,28 +9,27 @@ namespace Carbon::Lower {
 
 auto HandleBindValue(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::BindValue inst) -> void {
-  switch (auto rep =
-              SemIR::GetValueRepresentation(context.sem_ir(), inst.type_id);
+  switch (auto rep = SemIR::GetValueRepr(context.sem_ir(), inst.type_id);
           rep.kind) {
-    case SemIR::ValueRepresentation::Unknown:
+    case SemIR::ValueRepr::Unknown:
       CARBON_FATAL()
           << "Value binding for type with incomplete value representation";
-    case SemIR::ValueRepresentation::None:
-      // Nothing should use this value, but StubReference needs a value to
+    case SemIR::ValueRepr::None:
+      // Nothing should use this value, but StubRef needs a value to
       // propagate.
-      // TODO: Remove this now the StubReferences are gone.
+      // TODO: Remove this now the StubRefs are gone.
       context.SetLocal(inst_id,
                        llvm::PoisonValue::get(context.GetType(inst.type_id)));
       break;
-    case SemIR::ValueRepresentation::Copy:
+    case SemIR::ValueRepr::Copy:
       context.SetLocal(inst_id, context.builder().CreateLoad(
                                     context.GetType(inst.type_id),
                                     context.GetValue(inst.value_id)));
       break;
-    case SemIR::ValueRepresentation::Pointer:
+    case SemIR::ValueRepr::Pointer:
       context.SetLocal(inst_id, context.GetValue(inst.value_id));
       break;
-    case SemIR::ValueRepresentation::Custom:
+    case SemIR::ValueRepr::Custom:
       CARBON_FATAL() << "TODO: Add support for BindValue with custom value rep";
   }
 }
@@ -48,13 +47,12 @@ auto HandleTemporaryStorage(FunctionContext& context, SemIR::InstId inst_id,
                                                   nullptr, "temp"));
 }
 
-auto HandleValueAsReference(FunctionContext& context, SemIR::InstId inst_id,
-                            SemIR::ValueAsReference inst) -> void {
+auto HandleValueAsRef(FunctionContext& context, SemIR::InstId inst_id,
+                      SemIR::ValueAsRef inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.value_id) ==
                SemIR::ExprCategory::Value);
-  CARBON_CHECK(
-      SemIR::GetValueRepresentation(context.sem_ir(), inst.type_id).kind ==
-      SemIR::ValueRepresentation::Pointer);
+  CARBON_CHECK(SemIR::GetValueRepr(context.sem_ir(), inst.type_id).kind ==
+               SemIR::ValueRepr::Pointer);
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
@@ -62,12 +60,10 @@ auto HandleValueOfInitializer(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::ValueOfInitializer inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.init_id) ==
                SemIR::ExprCategory::Initializing);
-  CARBON_CHECK(
-      SemIR::GetValueRepresentation(context.sem_ir(), inst.type_id).kind ==
-      SemIR::ValueRepresentation::Copy);
-  CARBON_CHECK(
-      SemIR::GetInitializingRepresentation(context.sem_ir(), inst.type_id)
-          .kind == SemIR::InitializingRepresentation::ByCopy);
+  CARBON_CHECK(SemIR::GetValueRepr(context.sem_ir(), inst.type_id).kind ==
+               SemIR::ValueRepr::Copy);
+  CARBON_CHECK(SemIR::GetInitRepr(context.sem_ir(), inst.type_id).kind ==
+               SemIR::InitRepr::ByCopy);
   context.SetLocal(inst_id, context.GetValue(inst.init_id));
 }
 

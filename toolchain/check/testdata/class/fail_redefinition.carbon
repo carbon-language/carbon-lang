@@ -14,7 +14,7 @@ class Class {
 // CHECK:STDERR:             ^
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-8]]:1: Previous definition was here.
 // CHECK:STDERR: class Class {
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~
 class Class {
   fn G();
   fn H();
@@ -24,14 +24,17 @@ fn Class.F() {}
 fn Class.G() {}
 fn Class.H() {}
 
+// CHECK:STDOUT: --- fail_redefinition.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_redefinition.carbon" {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl.loc7}
+// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl.loc18 = class_decl @Class, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
@@ -42,8 +45,8 @@ fn Class.H() {}
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = <unexpected instref inst+2>
-// CHECK:STDOUT:   .H = <unexpected instref inst+3>
+// CHECK:STDOUT:   .F = <unexpected instref inst+3>
+// CHECK:STDOUT:   .H = <unexpected instref inst+4>
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,3 +64,4 @@ fn Class.H() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

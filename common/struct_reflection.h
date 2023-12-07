@@ -36,8 +36,11 @@ namespace Internal {
 template <typename T>
 struct AnyField {
   template <typename FieldT>
+  // NOLINTNEXTLINE(google-explicit-constructor)
   operator FieldT&() const;
+
   template <typename FieldT>
+  // NOLINTNEXTLINE(google-explicit-constructor)
   operator FieldT&&() const;
 
   // Don't allow conversion to T itself. This ensures we don't match against a
@@ -52,11 +55,11 @@ struct AnyField {
 
 // Detector for whether we can list-initialize T from the given list of fields.
 template <typename T, typename... Fields>
-constexpr bool CanListInitialize(decltype(T{Fields()...})*) {
+constexpr auto CanListInitialize(decltype(T{Fields()...})* /*unused*/) -> bool {
   return true;
 }
 template <typename T, typename... Fields>
-constexpr bool CanListInitialize(...) {
+constexpr auto CanListInitialize(...) -> bool {
   return false;
 }
 

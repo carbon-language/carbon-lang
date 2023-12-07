@@ -4114,8 +4114,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
       auto& array_literal = cast<ArrayTypeLiteral>(*e);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> element_type,
-          TypeCheckTypeExp(&array_literal.element_type_expression(),
-                           impl_scope));
+          TypeCheckTypeExp(&array_literal.element_type_expression(), impl_scope,
+                           false));
       std::optional<size_t> array_size;
       if (array_literal.has_size_expression()) {
         CARBON_RETURN_IF_ERROR(
@@ -4331,7 +4331,7 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         // TODO: Per proposal #2188, we should be performing conversions at
         // this level rather than on the overall initializer.
-        if (!IsNonDeduceableType(type)) {
+        if (TypeIsDeduceable(type)) {
           BindingMap generic_args;
           if (!PatternMatch(type, ExpressionResult::Value(*expected),
                             binding.type().source_loc(), std::nullopt,
@@ -4341,15 +4341,9 @@ auto TypeChecker::TypeCheckPattern(
                    << "' does not match actual type '" << **expected << "'";
           }
 
-          if (type->kind() == Value::Kind::StaticArrayType) {
-            const auto& arr = cast<StaticArrayType>(*type);
-            CARBON_CHECK(!arr.has_size());
-            const size_t size = GetSize(*expected);
-            type = arena_->New<StaticArrayType>(&arr.element_type(), size);
-          } else {
-            type = *expected;
-          }
+          type = DeducePatternType(type, *expected, arena_);
         }
+
       } else {
         CARBON_RETURN_IF_ERROR(ExpectResolvedBindingType(binding, type));
       }
@@ -5173,16 +5167,27 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
     CARBON_CHECK(!fun->name().is_qualified())
         << "qualified function name not permitted in class scope";
+
+    if (fun->virt_override() == VirtualOverride::Abstract &&
+        fun->body().has_value()) {
+      return ProgramError(fun->source_loc())
+             << "Error declaring `" << fun->name() << "`"
+             << ": abstract method cannot have a body.";
+    }
+
     bool has_vtable_entry =
         class_vtable.find(fun->name().inner_name()) != class_vtable.end();
     // TODO: Implement complete declaration logic from
     // `/docs/design/classes.md#virtual-methods`.
     switch (fun->virt_override()) {
       case VirtualOverride::Abstract:
-        // Not supported yet.
-        return ProgramError(fun->source_loc())
-               << "Error declaring `" << fun->name() << "`"
-               << ": `abstract` methods are not yet supported.";
+        if (class_decl->extensibility() != ClassExtensibility::Abstract) {
+          return ProgramError(fun->source_loc())
+                 << "Error declaring `" << fun->name() << "`"
+                 << ": `abstract` methods are allowed only in abstract "
+                    "classes.";
+        }
+        break;
       case VirtualOverride::None:
       case VirtualOverride::Virtual:
         if (has_vtable_entry) {
@@ -5240,6 +5245,24 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         }
         class_vtable[DestructorName] = {fun, class_level};
         break;
+    }
+  }
+
+  if (class_decl->extensibility() != ClassExtensibility::Abstract) {
+    auto abstract_method_it = std::find_if(
+        class_vtable.begin(), class_vtable.end(), [](const auto& vt) {
+          const auto* const fun = vt.getValue().first;
+          return fun->is_method() &&
+                 fun->virt_override() == VirtualOverride::Abstract;
+        });
+
+    if (abstract_method_it != class_vtable.end()) {
+      auto fun_name = GetName(*abstract_method_it->getValue().first);
+      CARBON_CHECK(fun_name.has_value());
+      return ProgramError(class_decl->source_loc())
+             << "Error declaring `" << class_decl->name() << "`"
+             << ": non abstract class should implement abstract method `"
+             << *fun_name << "`.";
     }
   }
 

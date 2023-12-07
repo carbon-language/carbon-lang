@@ -36,37 +36,31 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   // inside of other tokens, outside of the contents of other tokens they
   // don't require any specific characters before or after to distinguish them
   // in the source. Returns false otherwise.
-  [[nodiscard]] auto is_symbol() const -> bool { return IsSymbol[AsInt()]; }
+  auto is_symbol() const -> bool { return IsSymbol[AsInt()]; }
 
   // Test whether this kind of token is a grouping symbol (part of an opening
   // and closing pair that must always be matched in the token stream).
-  [[nodiscard]] auto is_grouping_symbol() const -> bool {
-    return IsGroupingSymbol[AsInt()];
-  }
+  auto is_grouping_symbol() const -> bool { return IsGroupingSymbol[AsInt()]; }
 
   // Test whether this kind of token is an opening symbol for a group.
-  [[nodiscard]] auto is_opening_symbol() const -> bool {
-    return IsOpeningSymbol[AsInt()];
-  }
+  auto is_opening_symbol() const -> bool { return IsOpeningSymbol[AsInt()]; }
 
   // Returns the associated closing symbol for an opening symbol.
   //
   // The token kind must be an opening symbol.
-  [[nodiscard]] auto closing_symbol() const -> TokenKind {
+  auto closing_symbol() const -> TokenKind {
     auto result = ClosingSymbol[AsInt()];
     CARBON_DCHECK(result != Error) << "Only opening symbols are valid!";
     return result;
   }
 
   // Test whether this kind of token is a closing symbol for a group.
-  [[nodiscard]] auto is_closing_symbol() const -> bool {
-    return IsClosingSymbol[AsInt()];
-  }
+  auto is_closing_symbol() const -> bool { return IsClosingSymbol[AsInt()]; }
 
   // Returns the associated opening symbol for a closing symbol.
   //
   // The token kind must be a closing symbol.
-  [[nodiscard]] auto opening_symbol() const -> TokenKind {
+  auto opening_symbol() const -> TokenKind {
     auto result = OpeningSymbol[AsInt()];
     CARBON_DCHECK(result != Error) << "Only closing symbols are valid!";
     return result;
@@ -74,35 +68,32 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 
   // Test whether this kind of token is a one-character symbol whose character
   // is not part of any other symbol.
-  [[nodiscard]] auto is_one_char_symbol() const -> bool {
-    return IsOneCharSymbol[AsInt()];
-  };
+  auto is_one_char_symbol() const -> bool { return IsOneCharSymbol[AsInt()]; };
 
   // Test whether this kind of token is a keyword.
-  [[nodiscard]] auto is_keyword() const -> bool { return IsKeyword[AsInt()]; };
+  auto is_keyword() const -> bool { return IsKeyword[AsInt()]; };
 
   // Test whether this kind of token is a sized type literal.
-  [[nodiscard]] auto is_sized_type_literal() const -> bool {
-    return *this == TokenKind::IntegerTypeLiteral ||
-           *this == TokenKind::UnsignedIntegerTypeLiteral ||
-           *this == TokenKind::FloatingPointTypeLiteral;
+  auto is_sized_type_literal() const -> bool {
+    return *this == TokenKind::IntTypeLiteral ||
+           *this == TokenKind::UnsignedIntTypeLiteral ||
+           *this == TokenKind::FloatTypeLiteral;
   };
 
   // If this token kind has a fixed spelling when in source code, returns it.
   // Otherwise returns an empty string.
-  [[nodiscard]] auto fixed_spelling() const -> llvm::StringRef {
+  auto fixed_spelling() const -> llvm::StringLiteral {
     return FixedSpelling[AsInt()];
   };
 
   // Get the expected number of parse tree nodes that will be created for this
   // token.
-  [[nodiscard]] auto expected_parse_tree_size() const -> int {
+  auto expected_parse_tree_size() const -> int {
     return ExpectedParseTreeSize[AsInt()];
   }
 
   // Test whether this token kind is in the provided list.
-  [[nodiscard]] auto IsOneOf(std::initializer_list<TokenKind> kinds) const
-      -> bool {
+  auto IsOneOf(std::initializer_list<TokenKind> kinds) const -> bool {
     for (TokenKind kind : kinds) {
       if (*this == kind) {
         return true;

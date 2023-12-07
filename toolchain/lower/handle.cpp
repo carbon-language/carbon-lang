@@ -16,9 +16,8 @@
 
 namespace Carbon::Lower {
 
-auto HandleCrossReference(FunctionContext& /*context*/,
-                          SemIR::InstId /*inst_id*/, SemIR::CrossReference inst)
-    -> void {
+auto HandleCrossRef(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                    SemIR::CrossRef inst) -> void {
   CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
@@ -145,16 +144,15 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  if (SemIR::GetInitializingRepresentation(context.sem_ir(), inst.type_id)
-          .has_return_slot()) {
+  if (SemIR::GetInitRepr(context.sem_ir(), inst.type_id).has_return_slot()) {
     args.push_back(context.GetValue(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
   }
 
   for (auto arg_id : arg_ids) {
     auto arg_type_id = context.sem_ir().insts().Get(arg_id).type_id();
-    if (SemIR::GetValueRepresentation(context.sem_ir(), arg_type_id).kind !=
-        SemIR::ValueRepresentation::None) {
+    if (SemIR::GetValueRepr(context.sem_ir(), arg_type_id).kind !=
+        SemIR::ValueRepr::None) {
       args.push_back(context.GetValue(arg_id));
     }
   }
@@ -174,13 +172,21 @@ auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleDereference(FunctionContext& context, SemIR::InstId inst_id,
-                       SemIR::Dereference inst) -> void {
+auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
+                 SemIR::Deref inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
 }
 
 auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                         SemIR::FunctionDecl inst) -> void {
+  CARBON_FATAL()
+      << "Should not be encountered. If that changes, we may want to change "
+         "higher-level logic to skip them rather than calling this. "
+      << inst;
+}
+
+auto HandleImport(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                  SemIR::Import inst) -> void {
   CARBON_FATAL()
       << "Should not be encountered. If that changes, we may want to change "
          "higher-level logic to skip them rather than calling this. "
@@ -193,17 +199,17 @@ auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
 }
 
-auto HandleIntegerLiteral(FunctionContext& context, SemIR::InstId inst_id,
-                          SemIR::IntegerLiteral inst) -> void {
-  const llvm::APInt& i = context.sem_ir().integers().Get(inst.integer_id);
+auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
+                      SemIR::IntLiteral inst) -> void {
+  const llvm::APInt& i = context.sem_ir().ints().Get(inst.int_id);
   // TODO: This won't offer correct semantics, but seems close enough for now.
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());
   context.SetLocal(inst_id, v);
 }
 
-auto HandleNameReference(FunctionContext& context, SemIR::InstId inst_id,
-                         SemIR::NameReference inst) -> void {
+auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,
+                   SemIR::NameRef inst) -> void {
   auto type_inst_id = context.sem_ir().GetTypeAllowBuiltinTypes(inst.type_id);
   if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
     return;
@@ -249,16 +255,16 @@ auto HandleReturn(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleReturnExpr(FunctionContext& context, SemIR::InstId /*inst_id*/,
                       SemIR::ReturnExpr inst) -> void {
-  switch (SemIR::GetInitializingRepresentation(
-              context.sem_ir(),
-              context.sem_ir().insts().Get(inst.expr_id).type_id())
-              .kind) {
-    case SemIR::InitializingRepresentation::None:
-    case SemIR::InitializingRepresentation::InPlace:
+  switch (
+      SemIR::GetInitRepr(context.sem_ir(),
+                         context.sem_ir().insts().Get(inst.expr_id).type_id())
+          .kind) {
+    case SemIR::InitRepr::None:
+    case SemIR::InitRepr::InPlace:
       // Nothing to return.
       context.builder().CreateRetVoid();
       return;
-    case SemIR::InitializingRepresentation::ByCopy:
+    case SemIR::InitRepr::ByCopy:
       // The expression produces the value representation for the type.
       context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;

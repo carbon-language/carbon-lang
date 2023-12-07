@@ -6,7 +6,7 @@
 
 // CHECK:STDERR: fail_library_is_identifier.carbon:[[@LINE+3]]:25: ERROR: Expected a string literal to specify the library name.
 // CHECK:STDERR: import Geometry library Shapes;
-// CHECK:STDERR:                         ^
+// CHECK:STDERR:                         ^~~~~~
 import Geometry library Shapes;
 
 // CHECK:STDOUT: - filename: fail_library_is_identifier.carbon
