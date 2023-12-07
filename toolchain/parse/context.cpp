@@ -417,30 +417,6 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
   }
 }
 
-auto Context::GetDeclContext() -> DeclContext {
-  // i == 0 is the file-level DeclScopeLoop. Additionally, i == 1 can be
-  // skipped because it will never be a DeclScopeLoop.
-  for (int i = state_stack_.size() - 1; i > 1; --i) {
-    // The declaration context is always the state _above_ a
-    // DeclScopeLoop.
-    if (state_stack_[i].state == State::DeclScopeLoop) {
-      switch (state_stack_[i - 1].state) {
-        case State::DeclDefinitionFinishAsClass:
-          return DeclContext::Class;
-        case State::DeclDefinitionFinishAsInterface:
-          return DeclContext::Interface;
-        case State::DeclDefinitionFinishAsNamedConstraint:
-          return DeclContext::NamedConstraint;
-        default:
-          llvm_unreachable("Missing handling for a declaration scope");
-      }
-    }
-  }
-  CARBON_CHECK(!state_stack_.empty() &&
-               state_stack_[0].state == State::DeclScopeLoop);
-  return DeclContext::File;
-}
-
 auto Context::RecoverFromDeclError(StateStackEntry state,
                                    NodeKind parse_node_kind,
                                    bool skip_past_likely_end) -> void {

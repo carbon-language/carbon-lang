@@ -190,8 +190,7 @@ auto HandleDeclScopeLoop(Context& context) -> void {
           context.AddLeafNode(NodeKind::ImplModifier, context.Consume());
           saw_modifier = true;
         } else {
-          // TODO: Treat this `impl` token as a declaration introducer
-          HandleUnrecognizedDecl(context, state.subtree_start);
+          introducer(NodeKind::ImplIntroducer, State::ImplAfterIntroducer);
           return;
         }
         break;

@@ -681,12 +681,16 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
 // ImplDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplIntroducer, 0, CARBON_TOKEN(Impl))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplForall, 0, CARBON_TOKEN(Forall))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplAs, 0, CARBON_TOKEN(As))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplAs, 0,
+                                   CARBON_TOKEN(As)
+                                       CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinitionStart, ImplIntroducer,
                                CARBON_TOKEN(OpenCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinition, ImplDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
-CARBON_PARSE_NODE_KIND_BRACKET(ImplDecl, ImplIntroducer, CARBON_TOKEN(Semi))
+CARBON_PARSE_NODE_KIND_BRACKET(ImplDecl, ImplIntroducer,
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `constraint`:
 //     NamedConstraintIntroducer

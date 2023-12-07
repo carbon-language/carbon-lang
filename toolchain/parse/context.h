@@ -47,14 +47,6 @@ class Context {
     Let
   };
 
-  // Supported return values for GetDeclContext.
-  enum class DeclContext : int8_t {
-    File,  // Top-level context.
-    Class,
-    Interface,
-    NamedConstraint,
-  };
-
   // Used for restricting ordering of `package` and `import` directives.
   enum class PackagingState : int8_t {
     FileStart,
@@ -299,15 +291,6 @@ class Context {
     CARBON_CHECK(state_stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
   }
-
-  // Returns the current declaration context according to state_stack_.
-  // This is expected to be called in cases which are close to a context.
-  // Although it looks like it could be O(n) for state_stack_'s depth, valid
-  // parses should only need to look down a couple steps.
-  //
-  // This currently assumes it's being called from within the declaration's
-  // DeclScopeLoop.
-  auto GetDeclContext() -> DeclContext;
 
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }

@@ -4,19 +4,18 @@
 //
 // AUTOUPDATE
 
-constraint Foo {
-  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+3]]:39: ERROR: Method implementations are not allowed in interfaces.
-  // CHECK:STDERR:   fn Add[self: Self](b: Self) -> Self {}
-  // CHECK:STDERR:                                       ^
-  fn Add[self: Self](b: Self) -> Self {}
+impl i32 as Interface {
+  fn Add[self: Self](b: Self) -> Self;
 }
 
-// CHECK:STDOUT: - filename: fail_no_impl_allowed.carbon
+// CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'Foo'},
-// CHECK:STDOUT:       {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
+// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'ImplAs', text: 'as'},
+// CHECK:STDOUT:         {kind: 'NameExpr', text: 'Interface'},
+// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'Add'},
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
@@ -31,7 +30,7 @@ constraint Foo {
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: 'fn', has_error: yes, subtree_size: 15},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 19},
+// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 15},
+// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 21},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

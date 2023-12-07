@@ -1020,10 +1020,10 @@ CARBON_PARSE_STATE(StatementWhileBlockFinish)
 
 // Handles parsing after the declaration scope of a type.
 //
-// class/interface/constraint { ... }
-//                                  ^
+// class/impl/interface/constraint { ... }
+//                                       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(DeclDefinitionFinish, Class, Interface,
+CARBON_PARSE_STATE_VARIANTS4(DeclDefinitionFinish, Class, Impl, Interface,
                              NamedConstraint)
 
 // Handles processing of a type after its introducer.
@@ -1036,17 +1036,17 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface, NamedConstra
 
 // Handles processing of a type after its optional parameters.
 //
-// class/interface/constraint name ( ... ) {
-//                                         ^
+// class/impl/interface/constraint name ( ... ) {
+//                                              ^
 //   1. DeclScopeLoop
-//   2. DeclDefinitionFinishAs(Class|Interface|NamedConstraint)
+//   2. DeclDefinitionFinishAs(Class|Impl|Interface|NamedConstraint)
 //
-// class/interface/constraint name ( ... ) ;
-//                                         ^
-// class/interface/constraint name ( ... ) ???
-//                                        ^
+// class/impl/interface/constraint name ( ... ) ;
+//                                              ^
+// class/impl/interface/constraint name ( ... ) ???
+//                                              ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(DeclOrDefinition, Class, Interface, NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface, NamedConstraint)
 
 // Handles processing of a completed `base: B` declaration.
 //
@@ -1063,16 +1063,16 @@ CARBON_PARSE_STATE(BaseDecl)
 //      ^~~~~~
 //   1. ParamListAsImplicit
 //   2. ImplAfterForall
-//   3. ImplDeclFinish
+//   3. DeclOrDefinitionAsImpl
 // impl as ...
 //      ^~
 //   1. Expr
-//   2. ImplDeclFinish
+//   2. DeclOrDefinitionAsImpl
 // impl type_expression as ...
 //     ^
 //   1. Expr
 //   2. ImplAs
-//   4. ImplDeclFinish
+//   3. DeclOrDefinitionAsImpl
 CARBON_PARSE_STATE(ImplAfterIntroducer)
 
 // Handles processing of an `impl forall` declaration after the implicit
@@ -1094,8 +1094,6 @@ CARBON_PARSE_STATE(ImplAfterForall)
 //                      ^~
 //   1. Expr
 CARBON_PARSE_STATE(ImplAs)
-
-CARBON_PARSE_STATE(ImplDeclFinish)
 
 // Handles the start of a `var` or `returned var`.
 //
