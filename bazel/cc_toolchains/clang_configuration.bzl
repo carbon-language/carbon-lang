@@ -69,8 +69,6 @@ def _detect_system_clang(repository_ctx):
     if "clang" not in version_output:
         fail("Searching for clang or CC (%s), and found (%s), which is not a Clang compiler" % (cc, cc_path))
     clang_version, clang_version_for_cache = _clang_version(version_output)
-    if clang_version and clang_version <= 14:
-        fail("Minimum clang version is 15, found %s at %s" % (clang_version, cc_path))
     return (cc_path.realpath, clang_version, clang_version_for_cache)
 
 def _compute_clang_resource_dir(repository_ctx, clang):
