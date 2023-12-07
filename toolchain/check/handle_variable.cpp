@@ -45,8 +45,7 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
         .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
   }
 
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      Parse::NodeKind::ParamList) {
+  if (context.node_stack().PeekIs<Parse::NodeKind::ParamList>()) {
     return context.TODO(parse_node, "tuple pattern in var");
   }
 
