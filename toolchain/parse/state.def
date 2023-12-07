@@ -1002,7 +1002,7 @@ CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
 // Handles processing of a type after its introducer.
 //
 // class/interface/constraint ...
-// ^~~~~~~~~~~~~~~~~~~~~~~~~~
+//                           ^
 //   1. DeclNameAndParamsAsOptional
 //   2. TypeAfterParamsAs(Class|Interface|NamedConstraint)
 CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface, NamedConstraint)
