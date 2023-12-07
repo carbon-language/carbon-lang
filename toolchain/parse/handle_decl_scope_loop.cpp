@@ -77,43 +77,6 @@ static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
   FinishAndSkipInvalidDecl(context, subtree_start);
 }
 
-// Returns true if position_kind could be either a token or modifier, and should
-// be treated as a modifier.
-static auto ResolveAmbiguousTokenAsModifier(Context& context,
-                                            Lex::TokenKind position_kind)
-    -> bool {
-  switch (position_kind) {
-    case Lex::TokenKind::Base:
-    case Lex::TokenKind::Extend:
-    case Lex::TokenKind::Impl:
-      // This is an ambiguous token, so now we check what the next token is.
-
-      // We use the macro for modifiers, including introducers which are
-      // also modifiers (such as `base`). Other introducer tokens need to be
-      // added by hand.
-      switch (context.PositionKind(Lookahead::NextToken)) {
-        case Lex::TokenKind::Class:
-        case Lex::TokenKind::Constraint:
-        case Lex::TokenKind::Fn:
-        case Lex::TokenKind::Interface:
-        case Lex::TokenKind::Let:
-        case Lex::TokenKind::Namespace:
-        case Lex::TokenKind::Var:
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
-  case Lex::TokenKind::Name:
-#include "toolchain/parse/node_kind.def"
-          return true;
-
-        default:
-          return false;
-      }
-      break;
-    default:
-      return false;
-  }
-}
-
 // Handles `base` as a declaration.
 static auto HandleBaseAsDecl(Context& context, Context::StateStackEntry state)
     -> void {
@@ -158,10 +121,6 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
     state.state = next_state;
     context.PushState(state);
   };
-
-  if (ResolveAmbiguousTokenAsModifier(context, position_kind)) {
-    return false;
-  }
 
   switch (position_kind) {
     case Lex::TokenKind::Base: {
@@ -225,9 +184,50 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
   }
 }
 
+// Returns true if position_kind could be either an introducer or modifier, and
+// should be treated as an introducer.
+static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
+                                               Lex::TokenKind position_kind)
+    -> bool {
+  switch (position_kind) {
+    case Lex::TokenKind::Base:
+    case Lex::TokenKind::Extend:
+    case Lex::TokenKind::Impl:
+      // This is an ambiguous token, so now we check what the next token is.
+
+      // We use the macro for modifiers, including introducers which are
+      // also modifiers (such as `base`). Other introducer tokens need to be
+      // added by hand.
+      switch (context.PositionKind(Lookahead::NextToken)) {
+        case Lex::TokenKind::Class:
+        case Lex::TokenKind::Constraint:
+        case Lex::TokenKind::Fn:
+        case Lex::TokenKind::Interface:
+        case Lex::TokenKind::Let:
+        case Lex::TokenKind::Namespace:
+        case Lex::TokenKind::Var:
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
+  case Lex::TokenKind::Name:
+#include "toolchain/parse/node_kind.def"
+          return false;
+
+        default:
+          return true;
+      }
+      break;
+    default:
+      return false;
+  }
+}
+
 // Returns true if the current position is a modifier, handling it if so.
 static auto TryHandleAsModifier(Context& context, Lex::TokenKind position_kind)
     -> bool {
+  if (ResolveAmbiguousTokenAsDeclaration(context, position_kind)) {
+    return false;
+  }
+
   switch (position_kind) {
 #define CARBON_PARSE_NODE_KIND(...)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)              \
@@ -260,11 +260,11 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   bool saw_modifier = false;
   while (true) {
     auto position_kind = context.PositionKind();
-    if (TryHandleAsDecl(context, state, saw_modifier, position_kind)) {
-      return;
-    } else if (TryHandleAsModifier(context, position_kind)) {
+    if (TryHandleAsModifier(context, position_kind)) {
       // Modifiers will continue through the loop, but we track we saw them.
       saw_modifier = true;
+    } else if (TryHandleAsDecl(context, state, saw_modifier, position_kind)) {
+      return;
     } else {
       HandleUnrecognizedDecl(context, state.subtree_start);
       return;
