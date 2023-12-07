@@ -43,7 +43,8 @@ class InstNamer {
     insts.resize(sem_ir.insts().size());
     labels.resize(sem_ir.inst_blocks().size());
     scopes.resize(static_cast<int32_t>(ScopeIndex::FirstFunction) +
-                  sem_ir.functions().size() + sem_ir.classes().size());
+                  sem_ir.functions().size() + sem_ir.classes().size() +
+                  sem_ir.interfaces().size());
 
     // Build the constants scope.
     GetScopeInfo(ScopeIndex::Constants).name =

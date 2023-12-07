@@ -88,7 +88,12 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind)
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          Lex::TokenKind decl_kind) -> void {
-  // TODO: Skip this if *context.current_scope_kind() == SemIR::InterfaceDecl
+  if (auto kind = context.current_scope_kind()) {
+    if (*kind == SemIR::InterfaceDecl::Kind) {
+      // Both `default` and `final` allowed in an interface definition.
+      return;
+    }
+  }
   ForbidModifiersOnDecl(context, KeywordModifierSet::Interface, decl_kind,
                         " outside of an interface");
 }
