@@ -4,8 +4,6 @@
 //
 // AUTOUPDATE
 
-// The following should work, but the support for `final fn` has not been
-// implemented yet.
 interface Order {
   fn Less[self: Self](right: Self) -> bool;
   final fn Greater[self: Self](right: Self) -> bool {

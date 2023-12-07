@@ -4,10 +4,9 @@
 //
 // AUTOUPDATE
 
-// The following should work, but the support for `default fn` has not been
-// implemented yet.
 interface Foo {
   fn Scale[self: Self](s: i32) -> Self;
+
   // Default definition of `Invert` calls `Scale`.
   default fn Invert[self: Self]() -> Self {
     return self.Scale(-1);
