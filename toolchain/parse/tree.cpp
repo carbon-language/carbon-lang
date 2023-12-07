@@ -46,7 +46,12 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   context.AddLeafNode(NodeKind::FileEnd, *context.position());
 
   if (auto verify = tree.Verify(); !verify.ok()) {
-    // TODO: This is temporarily printing to stderr directly during development. If we can, restrict this to a subtree with the error and add it to the stack trace (such as with PrettyStackTraceFunction). Otherwise, switch back to vlog_stream prior to broader distribution so that end users are hopefully comfortable copy-pasting stderr when there are bugs in tree construction.
+    // TODO: This is temporarily printing to stderr directly during development.
+    // If we can, restrict this to a subtree with the error and add it to the
+    // stack trace (such as with PrettyStackTraceFunction). Otherwise, switch
+    // back to vlog_stream prior to broader distribution so that end users are
+    // hopefully comfortable copy-pasting stderr when there are bugs in tree
+    // construction.
     tree.Print(llvm::errs());
     CARBON_FATAL() << "Invalid tree returned by Parse(): " << verify.error();
   }
