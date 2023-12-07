@@ -59,6 +59,8 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
 
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
+  // TODO: The node stack is a fragile way of getting context information.
+  // Get this information from somewhere else.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::ReturnedModifier:
@@ -73,7 +75,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
             type_node_copy, IncompleteTypeInVarDecl,
             enclosing_class_decl ? llvm::StringLiteral("Field")
                                  : llvm::StringLiteral("Variable"),
-            context.sem_ir().StringifyType(cast_type_id, true));
+            context.sem_ir().StringifyType(cast_type_id));
       });
       SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
@@ -90,10 +92,10 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
             class_info.self_type_id, cast_type_id});
         value_type_id = context.CanonicalizeType(field_type_inst_id);
         value_id = context.AddInst(
-            SemIR::Field{parse_node, value_type_id, name_id,
-                         SemIR::ElementIndex(context.args_type_info_stack()
-                                                 .PeekCurrentBlockContents()
-                                                 .size())});
+            SemIR::FieldDecl{parse_node, value_type_id, name_id,
+                             SemIR::ElementIndex(context.args_type_info_stack()
+                                                     .PeekCurrentBlockContents()
+                                                     .size())});
 
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddInst(
@@ -128,7 +130,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
                           std::string);
         return context.emitter().Build(
             type_node_copy, IncompleteTypeInLetDecl,
-            context.sem_ir().StringifyType(cast_type_id, true));
+            context.sem_ir().StringifyType(cast_type_id));
       });
       // Create the instruction, but don't add it to a block until after we've
       // formed its initializer.

@@ -78,9 +78,7 @@ struct Class : public Printable<Class> {
 
   // Determines whether this class has been fully defined. This is false until
   // we reach the `}` of the class definition.
-  auto is_defined() const -> bool {
-    return object_representation_id.is_valid();
-  }
+  auto is_defined() const -> bool { return object_repr_id.is_valid(); }
 
   // The following members always have values, and do not change throughout the
   // lifetime of the class.
@@ -108,18 +106,18 @@ struct Class : public Printable<Class> {
   // The following members are accumulated throughout the class definition.
 
   // The base class declaration. Invalid if the class has no base class. This is
-  // a Base instruction.
+  // a BaseDecl instruction.
   InstId base_id = InstId::Invalid;
 
   // The following members are set at the `}` of the class definition.
 
   // The object representation type to use for this class. This is valid once
   // the class is defined.
-  TypeId object_representation_id = TypeId::Invalid;
+  TypeId object_repr_id = TypeId::Invalid;
 };
 
 // The value representation to use when passing by value.
-struct ValueRepresentation : public Printable<ValueRepresentation> {
+struct ValueRepr : public Printable<ValueRepr> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
   enum Kind : int8_t {
@@ -178,7 +176,7 @@ struct TypeInfo : public Printable<TypeInfo> {
   InstId inst_id;
   // The value representation for this type. Will be `Unknown` if the type is
   // not complete.
-  ValueRepresentation value_representation = ValueRepresentation();
+  ValueRepr value_repr = ValueRepr();
 };
 
 // Provides semantic analysis on a Parse::Tree.
@@ -213,16 +211,15 @@ class File : public Printable<File> {
   }
 
   // Marks a type as complete, and sets its value representation.
-  auto CompleteType(TypeId object_type_id,
-                    ValueRepresentation value_representation) -> void {
+  auto CompleteType(TypeId object_type_id, ValueRepr value_repr) -> void {
     if (object_type_id.index < 0) {
       // We already know our builtin types are complete.
       return;
     }
-    CARBON_CHECK(types().Get(object_type_id).value_representation.kind ==
-                 ValueRepresentation::Unknown)
+    CARBON_CHECK(types().Get(object_type_id).value_repr.kind ==
+                 ValueRepr::Unknown)
         << "Type " << object_type_id << " completed more than once";
-    types().Get(object_type_id).value_representation = value_representation;
+    types().Get(object_type_id).value_repr = value_repr;
     complete_types_.push_back(object_type_id);
   }
 
@@ -240,18 +237,18 @@ class File : public Printable<File> {
 
   // Gets the value representation to use for a type. This returns an
   // invalid type if the given type is not complete.
-  auto GetValueRepresentation(TypeId type_id) const -> ValueRepresentation {
+  auto GetValueRepr(TypeId type_id) const -> ValueRepr {
     if (type_id.index < 0) {
       // TypeType and InvalidType are their own value representation.
-      return {.kind = ValueRepresentation::Copy, .type_id = type_id};
+      return {.kind = ValueRepr::Copy, .type_id = type_id};
     }
-    return types().Get(type_id).value_representation;
+    return types().Get(type_id).value_repr;
   }
 
   // Determines whether the given type is known to be complete. This does not
   // determine whether the type could be completed, only whether it has been.
   auto IsTypeComplete(TypeId type_id) const -> bool {
-    return GetValueRepresentation(type_id).kind != ValueRepresentation::Unknown;
+    return GetValueRepr(type_id).kind != ValueRepr::Unknown;
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
@@ -261,17 +258,12 @@ class File : public Printable<File> {
         .pointee_id;
   }
 
-  // Produces a string version of a type. If `in_type_context` is false, an
-  // explicit conversion to type `type` will be added in cases where the type
-  // expression would otherwise have a different type, such as a tuple or
-  // struct type.
-  auto StringifyType(TypeId type_id, bool in_type_context = false) const
-      -> std::string;
+  // Produces a string version of a type.
+  auto StringifyType(TypeId type_id) const -> std::string;
 
   // Same as `StringifyType`, but starting with an instruction representing a
   // type expression rather than a canonical type.
-  auto StringifyTypeExpr(InstId outer_inst_id,
-                         bool in_type_context = false) const -> std::string;
+  auto StringifyTypeExpr(InstId outer_inst_id) const -> std::string;
 
   // Directly expose SharedValueStores members.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
@@ -425,13 +417,12 @@ enum class ExprCategory : int8_t {
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 // Returns information about the value representation to use for a type.
-inline auto GetValueRepresentation(const File& file, TypeId type_id)
-    -> ValueRepresentation {
-  return file.GetValueRepresentation(type_id);
+inline auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr {
+  return file.GetValueRepr(type_id);
 }
 
 // The initializing representation to use when returning by value.
-struct InitializingRepresentation {
+struct InitRepr {
   enum Kind : int8_t {
     // The type has no initializing representation. This is used for empty
     // types, where no initialization is necessary.
@@ -454,8 +445,7 @@ struct InitializingRepresentation {
 };
 
 // Returns information about the initializing representation to use for a type.
-auto GetInitializingRepresentation(const File& file, TypeId type_id)
-    -> InitializingRepresentation;
+auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr;
 
 }  // namespace Carbon::SemIR
 

@@ -9,8 +9,7 @@ base class Base {
 }
 
 class Derived {
-  // TODO: `extend base: Base;`
-  base: Base;
+  extend base: Base;
 
   var d: i32;
 }
