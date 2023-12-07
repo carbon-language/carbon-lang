@@ -17,11 +17,11 @@ static auto HandleDeclNameAndParams(Context& context, State after_name)
     context.PushState(state);
 
     if (context.PositionIs(Lex::TokenKind::Period)) {
-      context.AddLeafNode(NodeKind::Name, *identifier);
+      context.AddLeafNode(NodeKind::IdentifierName, *identifier);
       state.state = State::PeriodAsDecl;
       context.PushState(state);
     } else {
-      context.AddLeafNode(NodeKind::Name, *identifier);
+      context.AddLeafNode(NodeKind::IdentifierName, *identifier);
     }
   } else {
     CARBON_DIAGNOSTIC(ExpectedDeclName, Error,

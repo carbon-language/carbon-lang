@@ -311,12 +311,12 @@ class NodeStack {
       case Parse::NodeKind::BindingPattern:
       case Parse::NodeKind::CallExpr:
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::IdentifierNameExpr:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::IfExprElse:
       case Parse::NodeKind::IndexExpr:
       case Parse::NodeKind::InfixOperator:
       case Parse::NodeKind::MemberAccessExpr:
-      case Parse::NodeKind::NameExpr:
       case Parse::NodeKind::PackageExpr:
       case Parse::NodeKind::ParenExpr:
       case Parse::NodeKind::PostfixOperator:
@@ -343,7 +343,7 @@ class NodeStack {
       case Parse::NodeKind::ClassDefinitionStart:
         return IdKind::ClassId;
       case Parse::NodeKind::BaseName:
-      case Parse::NodeKind::Name:
+      case Parse::NodeKind::IdentifierName:
         return IdKind::NameId;
       case Parse::NodeKind::ArrayExprSemi:
       case Parse::NodeKind::ClassIntroducer:
