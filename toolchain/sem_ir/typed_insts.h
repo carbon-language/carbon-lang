@@ -328,6 +328,20 @@ struct InitializeFrom {
   InstId dest_id;
 };
 
+struct InterfaceDecl {
+  static constexpr auto Kind = InstKind::InterfaceDecl.Define("interface_decl");
+
+  Parse::NodeId parse_node;
+  // No type: an interface declaration is not itself a value. The name of an
+  // interface declaration becomes a facet type value.
+  // TODO: For a generic interface declaration, the name of the interface
+  // declaration should become a parameterized entity name value.
+  InterfaceId interface_id;
+  // The declaration block, containing the interface name's qualifiers and the
+  // interface's generic parameters.
+  InstBlockId decl_block_id;
+};
+
 struct IntLiteral {
   static constexpr auto Kind = InstKind::IntLiteral.Define("int_literal");
 

@@ -336,6 +336,9 @@ class Context {
     return sem_ir().functions();
   }
   auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
+  auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
+    return sem_ir().interfaces();
+  }
   auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId>& {
     return sem_ir().cross_ref_irs();
   }

@@ -849,6 +849,7 @@ class TypeCompleter {
       case SemIR::FunctionDecl::Kind:
       case SemIR::Import::Kind:
       case SemIR::InitializeFrom::Kind:
+      case SemIR::InterfaceDecl::Kind:
       case SemIR::IntLiteral::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:

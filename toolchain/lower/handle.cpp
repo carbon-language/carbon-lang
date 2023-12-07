@@ -199,6 +199,12 @@ auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
 }
 
+auto HandleInterfaceDecl(FunctionContext& /*context*/,
+                         SemIR::InstId /*inst_id*/,
+                         SemIR::InterfaceDecl /*inst*/) -> void {
+  // No action to perform.
+}
+
 auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::IntLiteral inst) -> void {
   const llvm::APInt& i = context.sem_ir().ints().Get(inst.int_id);

@@ -96,6 +96,22 @@ class InstNamer {
       AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
       CollectNamesInBlock(class_scope, class_info.body_block_id);
     }
+
+    // Build each interface scope.
+    for (auto [i, interface_info] :
+         llvm::enumerate(sem_ir.interfaces().array_ref())) {
+      auto interface_id = InterfaceId(i);
+      auto interface_scope = GetScopeFor(interface_id);
+      // TODO: Provide a location for the interface for use as a
+      // disambiguator.
+      auto interface_loc = Parse::NodeId::Invalid;
+      GetScopeInfo(interface_scope).name = globals.AllocateName(
+          *this, interface_loc,
+          sem_ir.names().GetIRBaseName(interface_info.name_id).str());
+      AddBlockLabel(interface_scope, interface_info.body_block_id, "interface",
+                    interface_loc);
+      CollectNamesInBlock(interface_scope, interface_info.body_block_id);
+    }
   }
 
   // Returns the scope index corresponding to a function.
@@ -109,6 +125,14 @@ class InstNamer {
     return static_cast<ScopeIndex>(
         static_cast<int32_t>(ScopeIndex::FirstFunction) +
         sem_ir_.functions().size() + class_id.index);
+  }
+
+  // Returns the scope index corresponding to an interface.
+  auto GetScopeFor(InterfaceId interface_id) -> ScopeIndex {
+    return static_cast<ScopeIndex>(
+        static_cast<int32_t>(ScopeIndex::FirstFunction) +
+        sem_ir_.functions().size() + sem_ir_.classes().size() +
+        interface_id.index);
   }
 
   // Returns the IR name to use for a function.
@@ -125,6 +149,14 @@ class InstNamer {
       return "invalid";
     }
     return GetScopeInfo(GetScopeFor(class_id)).name.str();
+  }
+
+  // Returns the IR name to use for an interface.
+  auto GetNameFor(InterfaceId interface_id) -> llvm::StringRef {
+    if (!interface_id.is_valid()) {
+      return "invalid";
+    }
+    return GetScopeInfo(GetScopeFor(interface_id)).name.str();
   }
 
   // Returns the IR name to use for an instruction, when referenced from a given
@@ -456,6 +488,13 @@ class InstNamer {
           add_inst_name("import");
           continue;
         }
+        case InterfaceDecl::Kind: {
+          add_inst_name_id(sem_ir_.interfaces()
+                               .Get(inst.As<InterfaceDecl>().interface_id)
+                               .name_id,
+                           ".decl");
+          continue;
+        }
         case NameRef::Kind: {
           add_inst_name_id(inst.As<NameRef>().name_id, ".ref");
           continue;
@@ -563,6 +602,25 @@ class Formatter {
       FormatCodeBlock(class_info.body_block_id);
       out_ << "\n!members:";
       FormatNameScope(class_info.scope_id, "", "\n  .");
+      out_ << "\n}\n";
+    } else {
+      out_ << ";\n";
+    }
+  }
+
+  auto FormatInterface(InterfaceId id) -> void {
+    const Interface& interface_info = sem_ir_.interfaces().Get(id);
+
+    out_ << "\ninterface ";
+    FormatInterfaceName(id);
+
+    llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
+
+    if (interface_info.scope_id.is_valid()) {
+      out_ << " {\n";
+      FormatCodeBlock(interface_info.body_block_id);
+      out_ << "\n!members:";
+      FormatNameScope(interface_info.scope_id, "", "\n  .");
       out_ << "\n}\n";
     } else {
       out_ << ";\n";
@@ -726,6 +784,13 @@ class Formatter {
     out_ << " = ";
   }
 
+  // Print InterfaceDecl with type-like semantics even though it lacks a
+  // type_id.
+  auto FormatInstructionLHS(InstId inst_id, InterfaceDecl /*inst*/) -> void {
+    FormatInstName(inst_id);
+    out_ << " = ";
+  }
+
   template <typename InstT>
   auto FormatInstructionRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
@@ -882,6 +947,8 @@ class Formatter {
 
   auto FormatArg(ClassId id) -> void { FormatClassName(id); }
 
+  auto FormatArg(InterfaceId id) -> void { FormatInterfaceName(id); }
+
   auto FormatArg(CrossRefIRId id) -> void { out_ << id; }
 
   auto FormatArg(IntId id) -> void {
@@ -958,6 +1025,10 @@ class Formatter {
   }
 
   auto FormatClassName(ClassId id) -> void {
+    out_ << inst_namer_.GetNameFor(id);
+  }
+
+  auto FormatInterfaceName(InterfaceId id) -> void {
     out_ << inst_namer_.GetNameFor(id);
   }
 
