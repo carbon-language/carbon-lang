@@ -4,6 +4,8 @@
 
 #include "toolchain/diagnostics/diagnostic_kind.h"
 
+// TODO: Remove this line.
+
 namespace Carbon {
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(DiagnosticKind) = {
