@@ -8,9 +8,6 @@
 // implemented yet.
 interface Order {
   fn Less[self: Self](right: Self) -> bool;
-  // CHECK:STDERR: final_fn.carbon:[[@LINE+3]]:3: ERROR: Unrecognized declaration introducer.
-  // CHECK:STDERR:   final fn Greater[self: Self](right: Self) -> bool {
-  // CHECK:STDERR:   ^
   final fn Greater[self: Self](right: Self) -> bool {
     return right.Less(self);
   }
@@ -20,24 +17,48 @@ interface Order {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'Order'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Order'},
 // CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'Less'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Less'},
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:             {kind: 'SelfValueName', text: 'self'},
 // CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'ParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'Name', text: 'right'},
+// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'right'},
 // CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'Literal', text: 'bool'},
+// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 15},
-// CHECK:STDOUT:       {kind: 'EmptyDecl', text: 'final', has_error: yes},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 20},
+// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:           {kind: 'FinalModifier', text: 'final'},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'Greater'},
+// CHECK:STDOUT:             {kind: 'ImplicitParamListStart', text: '['},
+// CHECK:STDOUT:               {kind: 'SelfValueName', text: 'self'},
+// CHECK:STDOUT:               {kind: 'SelfTypeNameExpr', text: 'Self'},
+// CHECK:STDOUT:             {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ImplicitParamList', text: ']', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'ParamListStart', text: '('},
+// CHECK:STDOUT:               {kind: 'IdentifierName', text: 'right'},
+// CHECK:STDOUT:               {kind: 'SelfTypeNameExpr', text: 'Self'},
+// CHECK:STDOUT:             {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ParamList', text: ')', subtree_size: 5},
+// CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
+// CHECK:STDOUT:           {kind: 'ReturnType', text: '->', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 16},
+// CHECK:STDOUT:           {kind: 'ReturnStatementStart', text: 'return'},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'right'},
+// CHECK:STDOUT:                 {kind: 'IdentifierName', text: 'Less'},
+// CHECK:STDOUT:               {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'CallExprStart', text: '(', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'SelfValueNameExpr', text: 'self'},
+// CHECK:STDOUT:           {kind: 'CallExpr', text: ')', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'ReturnStatement', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 25},
+// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 44},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
