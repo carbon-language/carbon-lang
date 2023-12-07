@@ -15,7 +15,7 @@ class FileTestLineBase : public Printable<FileTestLineBase> {
  public:
   explicit FileTestLineBase(int file_number, int line_number)
       : file_number_(file_number), line_number_(line_number) {}
-  virtual ~FileTestLineBase() {}
+  virtual ~FileTestLineBase() = default;
 
   // Prints the autoupdated line.
   virtual auto Print(llvm::raw_ostream& out) const -> void = 0;
