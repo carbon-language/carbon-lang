@@ -65,7 +65,7 @@ pre-commit install
 bazel test //...:all
 ```
 
-> NOTE: Most LLVM 14+ installs should build Carbon. If you're having issues, see
+> NOTE: Most LLVM 15+ installs should build Carbon. If you're having issues, see
 > [troubleshooting build issues](#troubleshooting-build-issues).
 
 > NOTE: If you don't have a `bazel` package, see
@@ -139,7 +139,7 @@ These tools are essential for work on Carbon.
     -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html)
         (for macOS): Handles Bazel versions.
     -   [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/)
-        -   NOTE: Most LLVM 14+ installs should build Carbon. If you're having
+        -   NOTE: Most LLVM 15+ installs should build Carbon. If you're having
             issues, see
             [troubleshooting build issues](#troubleshooting-build-issues).
     -   [gh CLI](https://github.com/cli/cli): Helps with GitHub.
@@ -219,7 +219,7 @@ work reliably include:
 
 Many build issues result from the particular options `clang` and `llvm` have
 been built with, particularly when it comes to system-installed versions. If you
-run `clang --version`, you should see at least version 14. If you see an older
+run `clang --version`, you should see at least version 15. If you see an older
 version, please update.
 
 System installs of macOS typically won't work, for example being an old LLVM

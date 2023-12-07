@@ -6,7 +6,8 @@ name: test
 
 on:
   push:
-    branches: [trunk]
+    # TODO: Remove action-test.
+    branches: [action-test, trunk]
   pull_request:
   merge_group:
 
@@ -77,14 +78,10 @@ jobs:
 
       # Use LLVM following:
       # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
-      # Both 14 and 15 are candidates because GitHub is testing new images.
       - name: Setup LLVM and Clang (macOS)
         if: steps.filter.outputs.ignore == 'false' && matrix.os == 'macos-12'
         run: |
           LLVM_PATH="$(brew --prefix llvm@15)"
-          if [[ ! -e "${LLVM_PATH}" ]]; then
-            LLVM_PATH="$(brew --prefix llvm@14)"
-          fi
           echo "Using ${LLVM_PATH}"
           echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
           echo '*** ls "${LLVM_PATH}"'
@@ -94,18 +91,11 @@ jobs:
 
       # Use LLVM following:
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
-      # Both 14 and 15 are candidates for forwards compatibility, although 15
-      # isn't provided.
       - name: Setup LLVM and Clang (Ubuntu)
         if:
           steps.filter.outputs.ignore == 'false' && matrix.os == 'ubuntu-22.04'
         run: |
-          # TODO: Re-enable once llvm-15 is working.
-          # https://github.com/actions/runner-images/issues/8253
-          # LLVM_PATH="/usr/lib/llvm-15"
-          # if [[ ! -e "${LLVM_PATH}" ]]; then
-          LLVM_PATH="/usr/lib/llvm-14"
-          # fi
+          LLVM_PATH="/usr/lib/llvm-15"
           echo "Using ${LLVM_PATH}"
           echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
           echo '*** ls "${LLVM_PATH}"'
