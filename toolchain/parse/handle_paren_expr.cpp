@@ -33,19 +33,17 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
     return;
   }
 
-  // If this is the first item and a comma was found, switch to tuple handling.
-  // Note this could be `(expr,)` so we may not reuse the current state, but
-  // it's still necessary to switch the parent.
-  state.state = State::TupleLiteralElementFinish;
-
+  // We found a comma, so switch parent state to tuple handling.
   auto finish_state = context.PopState();
   CARBON_CHECK(finish_state.state == State::ParenExprFinish)
       << "Unexpected parent state, found: " << finish_state.state;
   finish_state.state = State::TupleLiteralFinish;
   context.PushState(finish_state);
 
-  // On a comma, push another expression handler.
-  if (list_token_kind == Context::ListTokenKind::Comma) {
+  // If the comma is not immediately followed by a close paren, push handlers
+  // for the next tuple element.
+  if (list_token_kind != Context::ListTokenKind::CommaClose) {
+    state.state = State::TupleLiteralElementFinish;
     context.PushState(state);
     context.PushState(State::Expr);
   }
