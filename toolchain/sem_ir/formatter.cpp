@@ -566,6 +566,10 @@ class Formatter {
     }
     out_ << "}\n";
 
+    for (int i : llvm::seq(sem_ir_.interfaces().size())) {
+      FormatInterface(InterfaceId(i));
+    }
+
     for (int i : llvm::seq(sem_ir_.classes().size())) {
       FormatClass(ClassId(i));
     }

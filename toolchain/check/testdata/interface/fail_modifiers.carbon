@@ -36,3 +36,17 @@ protected interface Protected;
 // CHECK:STDOUT:   %Protected.decl = interface_decl @Protected, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: interface @Abstract {
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Default;
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Virtual {
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Protected;
+// CHECK:STDOUT:

@@ -22,5 +22,17 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc12 = interface_decl @ForwardDeclared, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @ForwardDeclared {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:

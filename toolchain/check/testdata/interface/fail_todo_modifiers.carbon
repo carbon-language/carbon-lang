@@ -29,6 +29,20 @@ private interface Private {
 // CHECK:STDOUT:   %Private.decl = interface_decl @Private, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: interface @Modifiers {
+// CHECK:STDOUT:   %Final: <function> = fn_decl @Final
+// CHECK:STDOUT:   %Default: <function> = fn_decl @Default
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Final = %Final
+// CHECK:STDOUT:   .Default = %Default
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Private {
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Final() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
