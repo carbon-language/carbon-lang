@@ -838,7 +838,6 @@ class TypeCompleter {
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
       case SemIR::BaseDecl::Kind:
-      case SemIR::BinaryOperatorAdd::Kind:
       case SemIR::BindName::Kind:
       case SemIR::BindValue::Kind:
       case SemIR::BlockArg::Kind:
