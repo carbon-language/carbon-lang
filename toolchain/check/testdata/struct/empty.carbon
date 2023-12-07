@@ -15,6 +15,7 @@ var y: {} = x;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}
 // CHECK:STDOUT:   %.loc7_9.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.loc7_9.1
 // CHECK:STDOUT:   %x.var: ref {} = var x

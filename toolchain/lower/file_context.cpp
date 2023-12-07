@@ -81,12 +81,10 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       sem_ir().inst_blocks().Get(function.implicit_param_refs_id);
   auto param_refs = sem_ir().inst_blocks().Get(function.param_refs_id);
 
-  SemIR::InitializingRepresentation return_rep =
+  SemIR::InitRepr return_rep =
       function.return_type_id.is_valid()
-          ? SemIR::GetInitializingRepresentation(sem_ir(),
-                                                 function.return_type_id)
-          : SemIR::InitializingRepresentation{
-                .kind = SemIR::InitializingRepresentation::None};
+          ? SemIR::GetInitRepr(sem_ir(), function.return_type_id)
+          : SemIR::InitRepr{.kind = SemIR::InitRepr::None};
   CARBON_CHECK(return_rep.has_return_slot() == has_return_slot);
 
   llvm::SmallVector<llvm::Type*> param_types;
@@ -106,17 +104,16 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     auto param_type_id = sem_ir().insts().Get(param_ref_id).type_id();
-    switch (auto value_rep =
-                SemIR::GetValueRepresentation(sem_ir(), param_type_id);
+    switch (auto value_rep = SemIR::GetValueRepr(sem_ir(), param_type_id);
             value_rep.kind) {
-      case SemIR::ValueRepresentation::Unknown:
+      case SemIR::ValueRepr::Unknown:
         CARBON_FATAL()
             << "Incomplete parameter type lowering function declaration";
-      case SemIR::ValueRepresentation::None:
+      case SemIR::ValueRepr::None:
         break;
-      case SemIR::ValueRepresentation::Copy:
-      case SemIR::ValueRepresentation::Custom:
-      case SemIR::ValueRepresentation::Pointer:
+      case SemIR::ValueRepr::Copy:
+      case SemIR::ValueRepr::Custom:
+      case SemIR::ValueRepr::Pointer:
         param_types.push_back(GetType(value_rep.type_id));
         param_inst_ids.push_back(param_ref_id);
         break;
@@ -125,10 +122,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
 
   // If the initializing representation doesn't produce a value, set the return
   // type to void.
-  llvm::Type* return_type =
-      return_rep.kind == SemIR::InitializingRepresentation::ByCopy
-          ? GetType(function.return_type_id)
-          : llvm::Type::getVoidTy(llvm_context());
+  llvm::Type* return_type = return_rep.kind == SemIR::InitRepr::ByCopy
+                                ? GetType(function.return_type_id)
+                                : llvm::Type::getVoidTy(llvm_context());
 
   std::string mangled_name;
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
@@ -199,8 +195,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
     auto param_type_id = sem_ir().insts().Get(param_ref_id).type_id();
-    if (SemIR::GetValueRepresentation(sem_ir(), param_type_id).kind ==
-        SemIR::ValueRepresentation::None) {
+    if (SemIR::GetValueRepr(sem_ir(), param_type_id).kind ==
+        SemIR::ValueRepr::None) {
       function_lowering.SetLocal(
           param_ref_id, llvm::PoisonValue::get(GetType(param_type_id)));
     } else {
@@ -260,11 +256,10 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
           sem_ir_->GetArrayBoundValue(array_type.bound_id));
     }
     case SemIR::ClassType::Kind: {
-      auto object_representation_id =
-          sem_ir_->classes()
-              .Get(inst.As<SemIR::ClassType>().class_id)
-              .object_representation_id;
-      return GetType(object_representation_id);
+      auto object_repr_id = sem_ir_->classes()
+                                .Get(inst.As<SemIR::ClassType>().class_id)
+                                .object_repr_id;
+      return GetType(object_repr_id);
     }
     case SemIR::ConstType::Kind:
       return GetType(inst.As<SemIR::ConstType>().inner_id);
@@ -299,7 +294,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
-    case SemIR::UnboundFieldType::Kind: {
+    case SemIR::UnboundElementType::Kind: {
       // Return an empty struct as a placeholder.
       return llvm::StructType::get(*llvm_context_);
     }

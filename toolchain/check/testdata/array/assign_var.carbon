@@ -17,6 +17,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b}
 // CHECK:STDOUT:   %.loc7_22.1: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc7_22.2: type = converted %.loc7_22.1, constants.%.loc7_22.2
 // CHECK:STDOUT:   %a.var: ref (i32, i32, i32) = var a
@@ -25,11 +26,11 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc7_30: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_33: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc7_34.1: (i32, i32, i32) = tuple_literal (%.loc7_27, %.loc7_30, %.loc7_33)
-// CHECK:STDOUT:   %.loc7_34.2: ref i32 = tuple_access %a.var, member0
+// CHECK:STDOUT:   %.loc7_34.2: ref i32 = tuple_access %a.var, element0
 // CHECK:STDOUT:   %.loc7_34.3: init i32 = initialize_from %.loc7_27 to %.loc7_34.2
-// CHECK:STDOUT:   %.loc7_34.4: ref i32 = tuple_access %a.var, member1
+// CHECK:STDOUT:   %.loc7_34.4: ref i32 = tuple_access %a.var, element1
 // CHECK:STDOUT:   %.loc7_34.5: init i32 = initialize_from %.loc7_30 to %.loc7_34.4
-// CHECK:STDOUT:   %.loc7_34.6: ref i32 = tuple_access %a.var, member2
+// CHECK:STDOUT:   %.loc7_34.6: ref i32 = tuple_access %a.var, element2
 // CHECK:STDOUT:   %.loc7_34.7: init i32 = initialize_from %.loc7_33 to %.loc7_34.6
 // CHECK:STDOUT:   %.loc7_34.8: init (i32, i32, i32) = tuple_init (%.loc7_34.3, %.loc7_34.5, %.loc7_34.7) to %a.var
 // CHECK:STDOUT:   %.loc7_34.9: init (i32, i32, i32) = converted %.loc7_34.1, %.loc7_34.8
@@ -39,17 +40,17 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %b.var: ref [i32; 3] = var b
 // CHECK:STDOUT:   %b: ref [i32; 3] = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: ref (i32, i32, i32) = name_ref a, %a
-// CHECK:STDOUT:   %.loc8_19.1: ref i32 = tuple_access %a.ref, member0
+// CHECK:STDOUT:   %.loc8_19.1: ref i32 = tuple_access %a.ref, element0
 // CHECK:STDOUT:   %.loc8_19.2: i32 = bind_value %.loc8_19.1
 // CHECK:STDOUT:   %.loc8_19.3: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc8_19.4: ref i32 = array_index %b.var, %.loc8_19.3
 // CHECK:STDOUT:   %.loc8_19.5: init i32 = initialize_from %.loc8_19.2 to %.loc8_19.4
-// CHECK:STDOUT:   %.loc8_19.6: ref i32 = tuple_access %a.ref, member1
+// CHECK:STDOUT:   %.loc8_19.6: ref i32 = tuple_access %a.ref, element1
 // CHECK:STDOUT:   %.loc8_19.7: i32 = bind_value %.loc8_19.6
 // CHECK:STDOUT:   %.loc8_19.8: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc8_19.9: ref i32 = array_index %b.var, %.loc8_19.8
 // CHECK:STDOUT:   %.loc8_19.10: init i32 = initialize_from %.loc8_19.7 to %.loc8_19.9
-// CHECK:STDOUT:   %.loc8_19.11: ref i32 = tuple_access %a.ref, member2
+// CHECK:STDOUT:   %.loc8_19.11: ref i32 = tuple_access %a.ref, element2
 // CHECK:STDOUT:   %.loc8_19.12: i32 = bind_value %.loc8_19.11
 // CHECK:STDOUT:   %.loc8_19.13: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc8_19.14: ref i32 = array_index %b.var, %.loc8_19.13

@@ -6,7 +6,7 @@
 
 fn F(p: i32*) {
   // Numeric, bitwise, and bit-shift binary operators are lower precedence than
-  // Numeric and bitwise unary operators, which are lower precedence than
+  // numeric and bitwise unary operators, which are lower precedence than
   // dereference.
   -*p + ^*p;
   -*p | ^*p;
@@ -22,7 +22,7 @@ fn F(p: i32*) {
 // CHECK:STDOUT:             {kind: 'Name', text: 'p'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'PatternBinding', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 9},
 // CHECK:STDOUT:               {kind: 'NameExpr', text: 'p'},

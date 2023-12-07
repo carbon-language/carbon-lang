@@ -24,6 +24,7 @@ fn Bar() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %.loc7, .Baz = %Baz.loc10, .Bar = %Bar}
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Baz = %Baz.loc13}
 // CHECK:STDOUT:   %Baz.loc10: <function> = fn_decl @Baz.1
 // CHECK:STDOUT:   %Baz.loc13: <function> = fn_decl @Baz.2

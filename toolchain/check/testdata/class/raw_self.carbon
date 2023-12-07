@@ -29,7 +29,8 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl}
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
@@ -38,9 +39,9 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %.loc10_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc10_8.2: <unbound field of class Class> = field n, member0
-// CHECK:STDOUT:   %n: <unbound field of class Class> = bind_name n, %.loc10_8.2
+// CHECK:STDOUT:   %.loc10_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc10_8.2: <unbound element of class Class> = field_decl n, element0
+// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc10_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -52,7 +53,7 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc14_5: Class* = name_ref self, %self.addr
 // CHECK:STDOUT:   %.loc14_4: ref Class = deref %self.ref.loc14_5
-// CHECK:STDOUT:   %.loc14_10: ref i32 = class_field_access %.loc14_4, member0
+// CHECK:STDOUT:   %.loc14_10: ref i32 = class_element_access %.loc14_4, element0
 // CHECK:STDOUT:   %self.ref.loc14_15: i32 = name_ref r#self, %self
 // CHECK:STDOUT:   assign %.loc14_10, %self.ref.loc14_15
 // CHECK:STDOUT:   return
@@ -61,13 +62,13 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: fn @G[%self.loc17_12: Class](%self.loc17_25: i32) -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc18_11: Class = name_ref self, %self.loc17_12
-// CHECK:STDOUT:   %.loc18_15.1: ref i32 = class_field_access %self.ref.loc18_11, member0
+// CHECK:STDOUT:   %.loc18_15.1: ref i32 = class_element_access %self.ref.loc18_11, element0
 // CHECK:STDOUT:   %.loc18_15.2: i32 = bind_value %.loc18_15.1
 // CHECK:STDOUT:   %self.ref.loc18_19: i32 = name_ref r#self, %self.loc17_25
 // CHECK:STDOUT:   %.loc18_25.1: (i32, i32) = tuple_literal (%.loc18_15.2, %self.ref.loc18_19)
-// CHECK:STDOUT:   %.loc18_25.2: ref i32 = tuple_access %return, member0
+// CHECK:STDOUT:   %.loc18_25.2: ref i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc18_25.3: init i32 = initialize_from %.loc18_15.2 to %.loc18_25.2
-// CHECK:STDOUT:   %.loc18_25.4: ref i32 = tuple_access %return, member1
+// CHECK:STDOUT:   %.loc18_25.4: ref i32 = tuple_access %return, element1
 // CHECK:STDOUT:   %.loc18_25.5: init i32 = initialize_from %self.ref.loc18_19 to %.loc18_25.4
 // CHECK:STDOUT:   %.loc18_25.6: init (i32, i32) = tuple_init (%.loc18_25.3, %.loc18_25.5) to %return
 // CHECK:STDOUT:   %.loc18_25.7: init (i32, i32) = converted %.loc18_25.1, %.loc18_25.6

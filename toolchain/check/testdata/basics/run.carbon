@@ -9,6 +9,7 @@ fn Run() {}
 // CHECK:STDOUT: --- run.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Run = %Run}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

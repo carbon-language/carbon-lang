@@ -23,7 +23,7 @@ fn F() -> String {
 // CHECK:STDOUT:         {kind: 'ReturnedModifier', text: 'returned'},
 // CHECK:STDOUT:           {kind: 'Name', text: 's'},
 // CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'String'},
-// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StringLiteral', text: '"hello"'},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},

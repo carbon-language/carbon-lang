@@ -283,22 +283,44 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // Handles processing of a declaration scope. Things like fn, class, interface,
 // and so on.
 //
+// abstract
+// ^~~~~~~~
+// base class
+// ^~~~
+// default
+// ^~~~~~~
+// extend base
+// ^~~~~~
+// final
+// ^~~~~
+// impl fn
+// ^~~~
+// private
+// ^~~~~~~
+// protected
+// ^~~~~~~~~
+// virtual
+// ^~~~~~~
+//   1. DeclScopeLoop
+//
 // class ...
 // ^~~~~
-// abstract class ...
-// ^~~~~~~~~~~~~~
-// base class ...
-// ^~~~~~~~~~
 //   1. TypeAfterIntroducerAsClass
 //   2. DeclScopeLoop
+//
+// base : ...
+// ^~~~~~
+//   1. Expr
+//   2. BaseDecl
+//   3. DeclScopeLoop
 //
 // constraint ...
 // ^~~~~~~~~~
 //   1. TypeAfterIntroducerAsNamedConstraint
 //   2. DeclScopeLoop
 //
-//  fn ...
-// ^
+// fn ...
+// ^~
 //   1. FunctionIntroducer
 //   2. DeclScopeLoop
 //
@@ -307,8 +329,8 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //   1. TypeAfterIntroducerAsInterface
 //   2. DeclScopeLoop
 //
-//  namespace ...
-// ^
+// namespace ...
+// ^~~~~~~~~
 //   1. Namespace
 //   2. DeclScopeLoop
 //
@@ -316,13 +338,13 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // ^
 //   1. DeclScopeLoop
 //
-//  var ...
-// ^
+// var ...
+// ^~~
 //   1. VarAsDecl
 //   2. DeclScopeLoop
 //
-//  let ...
-// ^
+// let ...
+// ^~~
 //   1. Let
 //   2. DeclScopeLoop
 //
@@ -529,7 +551,7 @@ CARBON_PARSE_STATE(ExprStatementFinish)
 // Handles a function's introducer.
 //
 // fn ...
-// ^~
+//   ^
 //   1. DeclNameAndParamsAsRequired
 //   2. FunctionAfterParams
 CARBON_PARSE_STATE(FunctionIntroducer)
@@ -600,7 +622,7 @@ CARBON_PARSE_STATE(Library)
 // Handles `namespace`.
 //
 // namespace ...
-// ^~~~~~~~~
+//          ^
 //   1. DeclNameAndParamsAsNone
 //   2. NamespaceFinish
 CARBON_PARSE_STATE(Namespace)
@@ -627,7 +649,7 @@ CARBON_PARSE_STATE(Package)
 //
 //  ...
 // ^
-//   1. PatternAs(ImplicitParam|Param)
+//   1. BindingPatternAs(ImplicitParam|Param)
 //   2. ParamFinishAs(Implicit|Regular)
 CARBON_PARSE_STATE_VARIANTS2(Param, Implicit, Regular)
 
@@ -759,18 +781,18 @@ CARBON_PARSE_STATE(TupleLiteralElementFinish)
 //   (state done)
 CARBON_PARSE_STATE(ParenExprFinish)
 
-// Handles pattern parsing for a pattern, enqueuing type expression processing.
-// This covers parameter, `let`, and `var` support.
+// Handles the initial part of a binding pattern, enqueuing type expression
+// processing.
 //
 // template    (variant is not Variable)
 // ^~~~~~~~
-//   4. PatternTemplate
+//   4. BindingPatternTemplate
 //
 // THEN
 //
 // addr        (variant is not Variable)
 // ^~~~
-//   3. PatternAddress
+//   3. BindingPatternAddress
 //
 // THEN
 //
@@ -779,41 +801,41 @@ CARBON_PARSE_STATE(ParenExprFinish)
 // self: ...
 // ^~~~~
 //   1. Expr
-//   2. PatternFinishAsRegular
+//   2. BindingPatternFinishAsRegular
 //
 // name:! ...
 // ^~~~~~
 // self:! ...
 // ^~~~~~
 //   1. Expr
-//   2. PatternFinishAsGeneric
+//   2. BindingPatternFinishAsGeneric
 //
 //  ???
 // ^
-//   1. PatternFinishAsRegular
-CARBON_PARSE_STATE_VARIANTS4(Pattern, ImplicitParam, Param, Variable,
+//   1. BindingPatternFinishAsRegular
+CARBON_PARSE_STATE_VARIANTS4(BindingPattern, ImplicitParam, Param, Variable,
                              Let)
 
-// Handles `addr` in a pattern.
+// Handles `addr` in a binding pattern.
 //
 // addr name: type
 //                ^
 //   (state done)
-CARBON_PARSE_STATE(PatternAddress)
+CARBON_PARSE_STATE(BindingPatternAddress)
 
-// Handles `template` in a pattern.
+// Handles `template` in a binding pattern.
 //
 // template name:! type
 //                     ^
 //   (state done)
-CARBON_PARSE_STATE(PatternTemplate)
+CARBON_PARSE_STATE(BindingPatternTemplate)
 
-// Finishes pattern processing.
+// Finishes binding pattern processing.
 //
 // name: type
 //           ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(PatternFinish, Generic, Regular)
+CARBON_PARSE_STATE_VARIANTS2(BindingPatternFinish, Generic, Regular)
 
 // Handles a single statement. While typically within a statement block, this
 // can also be used for error recovery where we expect a statement block and
@@ -872,7 +894,7 @@ CARBON_PARSE_STATE(StatementBreakFinish)
 //   (state done)
 CARBON_PARSE_STATE(StatementContinueFinish)
 
-// Handles `for` processing of `(var`, proceeding to a pattern before
+// Handles `for` processing of `(var`, proceeding to a binding pattern before
 // continuing.
 //
 // for ( var ... )
@@ -1024,7 +1046,7 @@ CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
 // Handles processing of a type after its introducer.
 //
 // class/interface/constraint ...
-// ^~~~~~~~~~~~~~~~~~~~~~~~~~
+//                           ^
 //   1. DeclNameAndParamsAsOptional
 //   2. TypeAfterParamsAs(Class|Interface|NamedConstraint)
 CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface, NamedConstraint)
@@ -1043,17 +1065,26 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface, NamedConstra
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
 
+// Handles processing of a completed `base: B` declaration.
+//
+// base: B ;
+//         ^
+// base: B ??? ;
+//         ^
+//   (state done)
+CARBON_PARSE_STATE(BaseDecl)
+
 // Handles the start of a `var` or `returned var`.
 //
 // var ...             (variant is not Returned)
-// ^~~
-//   1. PatternAsVariable
+//    ^
+//   1. BindingPatternAsVariable
 //   2. VarAfterPattern
 //   3. VarFinishAs(Decl|For)
 //
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
-//   1. PatternAsVariable
+//   1. BindingPatternAsVariable
 //   2. VarAfterPattern
 //   3. VarFinishAsDecl
 //
@@ -1094,8 +1125,8 @@ CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
 // Handles the start of a `let`.
 //
 // let ...
-// ^~~
-//   1. PatternAsLet
+//    ^
+//   1. BindingPatternAsLet
 //   2. LetAfterPattern
 //   3. LetFinish
 CARBON_PARSE_STATE(Let)

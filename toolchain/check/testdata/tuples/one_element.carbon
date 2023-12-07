@@ -15,6 +15,7 @@ var y: (i32,) = x;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}
 // CHECK:STDOUT:   %.loc7_13.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_13.2: type = converted %.loc7_13.1, constants.%.loc7_13.2
 // CHECK:STDOUT:   %x.var: ref (i32,) = var x
@@ -29,7 +30,7 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   %y.var: ref (i32,) = var y
 // CHECK:STDOUT:   %y: ref (i32,) = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: ref (i32,) = name_ref x, %x
-// CHECK:STDOUT:   %.loc8_17.1: ref i32 = tuple_access %x.ref, member0
+// CHECK:STDOUT:   %.loc8_17.1: ref i32 = tuple_access %x.ref, element0
 // CHECK:STDOUT:   %.loc8_17.2: i32 = bind_value %.loc8_17.1
 // CHECK:STDOUT:   %.loc8_17.3: init (i32,) = tuple_init (%.loc8_17.2) to %y.var
 // CHECK:STDOUT:   %.loc8_17.4: init (i32,) = converted %x.ref, %.loc8_17.3

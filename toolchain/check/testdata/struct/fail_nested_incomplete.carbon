@@ -26,7 +26,8 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Incomplete, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.Incomplete = %Incomplete.decl, .s = %s, .p = %p}
+// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete
 // CHECK:STDOUT:   %.loc15: type = struct_type {.a: Incomplete}

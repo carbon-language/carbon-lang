@@ -17,6 +17,7 @@ var d: i32 = a[b];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b, .c = %c, .d = %d}
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
 // CHECK:STDOUT:   %a.var: ref [i32; 2] = var a

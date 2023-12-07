@@ -19,9 +19,10 @@ fn Class.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl.loc7}
+// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl.loc9 = class_decl @Class, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

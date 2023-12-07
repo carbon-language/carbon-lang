@@ -88,6 +88,22 @@ auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, int subtree_start,
   }
 }
 
+auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
+                                     Lex::TokenIndex token, bool has_error)
+    -> void {
+  CARBON_CHECK(position >= 0 && position < tree_->size())
+      << "position: " << position << " size: " << tree_->size();
+  auto* node_impl = &tree_->node_impls_[position];
+  CARBON_CHECK(node_impl->subtree_size == 1);
+  CARBON_CHECK(node_impl->kind == NodeKind::Placeholder);
+  node_impl->kind = kind;
+  node_impl->has_error = has_error;
+  node_impl->token = token;
+  if (has_error) {
+    tree_->has_errors_ = true;
+  }
+}
+
 auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
                                      NodeKind start_kind)
     -> std::optional<Lex::TokenIndex> {
@@ -150,9 +166,9 @@ auto Context::ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex> {
   return Consume();
 }
 
-auto Context::ConsumeIfPatternKeyword(Lex::TokenKind keyword_token,
-                                      State keyword_state, int subtree_start)
-    -> void {
+auto Context::ConsumeIfBindingPatternKeyword(Lex::TokenKind keyword_token,
+                                             State keyword_state,
+                                             int subtree_start) -> void {
   if (auto token = ConsumeIf(keyword_token)) {
     PushState(Context::StateStackEntry(
         keyword_state, PrecedenceGroup::ForTopLevelExpr(),

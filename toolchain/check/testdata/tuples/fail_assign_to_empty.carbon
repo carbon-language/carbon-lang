@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:17: ERROR: Cannot implicitly convert from `i32` to `() as type`.
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:17: ERROR: Cannot implicitly convert from `i32` to `()`.
 // CHECK:STDERR: var x: () = (66);
 // CHECK:STDERR:                 ^
 var x: () = (66);
@@ -16,6 +16,7 @@ var x: () = (66);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x}
 // CHECK:STDOUT:   %.loc10_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.loc10
 // CHECK:STDOUT:   %x.var: ref () = var x

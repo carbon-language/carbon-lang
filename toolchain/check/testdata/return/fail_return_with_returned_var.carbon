@@ -35,19 +35,20 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .C = %C.decl, .G = %G}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   class_decl @C, ()
+// CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc18_16.1: type = unbound_field_type C, i32
-// CHECK:STDOUT:   %.loc18_16.2: <unbound field of class C> = field a, member0
-// CHECK:STDOUT:   %a: <unbound field of class C> = bind_name a, %.loc18_16.2
-// CHECK:STDOUT:   %.loc18_28.1: type = unbound_field_type C, i32
-// CHECK:STDOUT:   %.loc18_28.2: <unbound field of class C> = field b, member1
-// CHECK:STDOUT:   %b: <unbound field of class C> = bind_name b, %.loc18_28.2
+// CHECK:STDOUT:   %.loc18_16.1: type = unbound_element_type C, i32
+// CHECK:STDOUT:   %.loc18_16.2: <unbound element of class C> = field_decl a, element0
+// CHECK:STDOUT:   %a: <unbound element of class C> = bind_name a, %.loc18_16.2
+// CHECK:STDOUT:   %.loc18_28.1: type = unbound_element_type C, i32
+// CHECK:STDOUT:   %.loc18_28.2: <unbound element of class C> = field_decl b, element1
+// CHECK:STDOUT:   %b: <unbound element of class C> = bind_name b, %.loc18_28.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -71,9 +72,9 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc20_29: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc20_38.1: {.a: i32, .b: i32} = struct_literal (%.loc20_29, %.loc20_37)
-// CHECK:STDOUT:   %.loc20_38.2: ref i32 = class_field_access %return, member0
+// CHECK:STDOUT:   %.loc20_38.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc20_38.3: init i32 = initialize_from %.loc20_29 to %.loc20_38.2
-// CHECK:STDOUT:   %.loc20_38.4: ref i32 = class_field_access %return, member1
+// CHECK:STDOUT:   %.loc20_38.4: ref i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc20_38.5: init i32 = initialize_from %.loc20_37 to %.loc20_38.4
 // CHECK:STDOUT:   %.loc20_38.6: init C = class_init (%.loc20_38.3, %.loc20_38.5), %return
 // CHECK:STDOUT:   %.loc20_38.7: init C = converted %.loc20_38.1, %.loc20_38.6

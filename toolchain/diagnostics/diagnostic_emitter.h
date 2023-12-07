@@ -35,7 +35,7 @@ enum class DiagnosticLevel : int8_t {
 // Provides a definition of a diagnostic. For example:
 //   CARBON_DIAGNOSTIC(MyDiagnostic, Error, "Invalid code!");
 //   CARBON_DIAGNOSTIC(MyDiagnostic, Warning, "Found {0}, expected {1}.",
-//              llvm::StringRef, llvm::StringRef);
+//                     std::string, std::string);
 //
 // Arguments are passed to llvm::formatv; see:
 // https://llvm.org/doxygen/FormatVariadic_8h_source.html
@@ -214,7 +214,9 @@ class DiagnosticEmitter {
   // A builder-pattern type to provide a fluent interface for constructing
   // a more complex diagnostic. See `DiagnosticEmitter::Build` for the
   // expected usage.
-  class DiagnosticBuilder {
+  // This is nodiscard to protect against accidentally building a diagnostic
+  // without emitting it.
+  class [[nodiscard]] DiagnosticBuilder {
    public:
     // DiagnosticBuilder is move-only and cannot be copied.
     DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;

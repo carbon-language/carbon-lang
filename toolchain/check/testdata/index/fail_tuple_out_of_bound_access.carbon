@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_tuple_out_of_bound_access.carbon:[[@LINE+3]]:17: ERROR: Index `2` is past the end of `(i32, i32) as type`.
+// CHECK:STDERR: fail_tuple_out_of_bound_access.carbon:[[@LINE+3]]:17: ERROR: Index `2` is past the end of type `(i32, i32)`.
 // CHECK:STDERR: var b: i32 = a[2];
 // CHECK:STDERR:                 ^
 var b: i32 = a[2];
@@ -19,6 +19,7 @@ var b: i32 = a[2];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b}
 // CHECK:STDOUT:   %.loc7_17.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.loc7_17.2
 // CHECK:STDOUT:   %a.var: ref (i32, i32) = var a
@@ -26,9 +27,9 @@ var b: i32 = a[2];
 // CHECK:STDOUT:   %.loc7_22: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc7_26: i32 = int_literal 6
 // CHECK:STDOUT:   %.loc7_27.1: (i32, i32) = tuple_literal (%.loc7_22, %.loc7_26)
-// CHECK:STDOUT:   %.loc7_27.2: ref i32 = tuple_access %a.var, member0
+// CHECK:STDOUT:   %.loc7_27.2: ref i32 = tuple_access %a.var, element0
 // CHECK:STDOUT:   %.loc7_27.3: init i32 = initialize_from %.loc7_22 to %.loc7_27.2
-// CHECK:STDOUT:   %.loc7_27.4: ref i32 = tuple_access %a.var, member1
+// CHECK:STDOUT:   %.loc7_27.4: ref i32 = tuple_access %a.var, element1
 // CHECK:STDOUT:   %.loc7_27.5: init i32 = initialize_from %.loc7_26 to %.loc7_27.4
 // CHECK:STDOUT:   %.loc7_27.6: init (i32, i32) = tuple_init (%.loc7_27.3, %.loc7_27.5) to %a.var
 // CHECK:STDOUT:   %.loc7_27.7: init (i32, i32) = converted %.loc7_27.1, %.loc7_27.6

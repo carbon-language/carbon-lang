@@ -55,6 +55,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .Main = %Main}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
@@ -76,9 +77,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc21_13: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc21_16: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc21_17.1: (i32, i32) = tuple_literal (%.loc21_13, %.loc21_16)
-// CHECK:STDOUT:   %.loc21_17.2: i32 = tuple_access %.loc21_8.1, member0
+// CHECK:STDOUT:   %.loc21_17.2: i32 = tuple_access %.loc21_8.1, element0
 // CHECK:STDOUT:   %.loc21_17.3: init i32 = initialize_from %.loc21_13 to %.loc21_17.2
-// CHECK:STDOUT:   %.loc21_17.4: i32 = tuple_access %.loc21_8.1, member1
+// CHECK:STDOUT:   %.loc21_17.4: i32 = tuple_access %.loc21_8.1, element1
 // CHECK:STDOUT:   %.loc21_17.5: init i32 = initialize_from %.loc21_16 to %.loc21_17.4
 // CHECK:STDOUT:   %.loc21_17.6: init (i32, i32) = tuple_init (%.loc21_17.3, %.loc21_17.5) to %.loc21_8.1
 // CHECK:STDOUT:   %.loc21_17.7: init (i32, i32) = converted %.loc21_17.1, %.loc21_17.6
@@ -95,9 +96,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc26_13: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc26_16: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc26_17.1: (i32, i32) = tuple_literal (%.loc26_13, %.loc26_16)
-// CHECK:STDOUT:   %.loc26_17.2: i32 = tuple_access %.loc26_8.1, member0
+// CHECK:STDOUT:   %.loc26_17.2: i32 = tuple_access %.loc26_8.1, element0
 // CHECK:STDOUT:   %.loc26_17.3: init i32 = initialize_from %.loc26_13 to %.loc26_17.2
-// CHECK:STDOUT:   %.loc26_17.4: i32 = tuple_access %.loc26_8.1, member1
+// CHECK:STDOUT:   %.loc26_17.4: i32 = tuple_access %.loc26_8.1, element1
 // CHECK:STDOUT:   %.loc26_17.5: init i32 = initialize_from %.loc26_16 to %.loc26_17.4
 // CHECK:STDOUT:   %.loc26_17.6: init (i32, i32) = tuple_init (%.loc26_17.3, %.loc26_17.5) to %.loc26_8.1
 // CHECK:STDOUT:   %.loc26_17.7: init (i32, i32) = converted %.loc26_17.1, %.loc26_17.6
@@ -114,9 +115,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc34_28: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc34_36: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc34_37.1: {.x: i32, .y: i32} = struct_literal (%.loc34_28, %.loc34_36)
-// CHECK:STDOUT:   %.loc34_37.2: i32 = struct_access %.loc34_18.1, member0
+// CHECK:STDOUT:   %.loc34_37.2: i32 = struct_access %.loc34_18.1, element0
 // CHECK:STDOUT:   %.loc34_37.3: init i32 = initialize_from %.loc34_28 to %.loc34_37.2
-// CHECK:STDOUT:   %.loc34_37.4: i32 = struct_access %.loc34_18.1, member1
+// CHECK:STDOUT:   %.loc34_37.4: i32 = struct_access %.loc34_18.1, element1
 // CHECK:STDOUT:   %.loc34_37.5: init i32 = initialize_from %.loc34_36 to %.loc34_37.4
 // CHECK:STDOUT:   %.loc34_37.6: init {.x: i32, .y: i32} = struct_init (%.loc34_37.3, %.loc34_37.5) to %.loc34_18.1
 // CHECK:STDOUT:   %.loc34_37.7: init {.x: i32, .y: i32} = converted %.loc34_37.1, %.loc34_37.6
