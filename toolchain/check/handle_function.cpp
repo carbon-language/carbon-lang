@@ -71,7 +71,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
     });
 
     if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
-                    .has_return_slot()) {
+             .has_return_slot()) {
       // The function only has a return slot if it uses in-place initialization.
     } else {
       return_slot_id = return_storage_id;
