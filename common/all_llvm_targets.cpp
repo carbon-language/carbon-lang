@@ -15,6 +15,8 @@ static auto InitLLVMTargets() -> void {
   llvm::InitializeAllAsmPrinters();
 }
 
+// On program startup, set `InitLLVM::InitializeTargets` to be our
+// initialization function so that `InitLLVM` can call it at the right moment.
 char InitLLVM::RegisterTargets = (InitializeTargets = &InitLLVMTargets, 0);
 
 }  // namespace Carbon

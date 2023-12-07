@@ -24,10 +24,16 @@ class InitLLVM {
   ~InitLLVM() = default;
 
  private:
-  llvm::InitLLVM init_llvm;
-  llvm::SmallVector<char*> args;
+  llvm::InitLLVM init_llvm_;
+  llvm::SmallVector<char*> args_;
 
+  // A pointer to the LLVM target initialization function, if :all_llvm_targets
+  // is linked in. Otherwise nullptr.
   static auto (*InitializeTargets)() -> void;
+
+  // The initializer of this static data member populates `InitializeTargets`.
+  // Defined only if :all_llvm_targets is linked in. This is a member so that
+  // it has access to `InitializeTargets`.
   static char RegisterTargets;
 };
 

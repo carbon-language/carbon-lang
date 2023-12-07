@@ -9,13 +9,19 @@
 namespace Carbon {
 
 InitLLVM::InitLLVM(int& argc, char**& argv)
-    : init_llvm(argc, argv), args(argv, argv + argc) {
-  // LLVM assumes that argc and argv won't change, and registers them with an
-  // `llvm::PrettyStackTraceProgram` that will crash if an argv element gets
-  // nulled out, which for example `testing::InitGoogleTest` does. So make a
-  // copy of argv for use by the program to satisfy LLVM's assumptions.
-  argc = args.size();
-  argv = args.data();
+    : init_llvm_(argc, argv),
+      // LLVM assumes that argc and argv won't change, and registers them with
+      // an `llvm::PrettyStackTraceProgram` that will crash if an argv element
+      // gets nulled out, which for example `testing::InitGoogleTest` does. So
+      // make a copy of the argv that LLVM produces in order to support
+      // mutation.
+      args_(argv, argv + argc) {
+  // Return our mutable copy of argv for the program to use.
+  argc = args_.size();
+  argv = args_.data();
+
+  // `argv[argc]` is expected to be a null pointer.
+  args_.push_back(0);
 
   llvm::setBugReportMsg(
       "Please report issues to "
