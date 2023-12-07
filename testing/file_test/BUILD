@@ -33,6 +33,7 @@ cc_library(
         ":autoupdate",
         "//common:check",
         "//common:error",
+        "//common:init_llvm",
         "//common:ostream",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
