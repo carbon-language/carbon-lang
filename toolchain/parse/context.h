@@ -384,9 +384,7 @@ class Context {
   Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::Invalid;
 };
 
-// `clang-format` has a bug with spacing around `->` returns in macros. See
-// https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context)->void;
+#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context) -> void;
 #include "toolchain/parse/state.def"
 
 }  // namespace Carbon::Parse
