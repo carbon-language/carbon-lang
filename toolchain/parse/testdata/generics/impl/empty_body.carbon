@@ -13,7 +13,7 @@ impl String as Interface {
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:         {kind: 'StringTypeLiteral', text: 'String'},
 // CHECK:STDOUT:         {kind: 'ImplAs', text: 'as'},
-// CHECK:STDOUT:         {kind: 'NameExpr', text: 'Interface'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Interface'},
 // CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

@@ -16,8 +16,6 @@ cc_library(
     srcs = ["codegen.cpp"],
     hdrs = ["codegen.h"],
     deps = [
-        "@llvm-project//llvm:AllTargetsAsmParsers",
-        "@llvm-project//llvm:AllTargetsCodeGens",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Support",

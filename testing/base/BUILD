@@ -20,8 +20,8 @@ cc_library(
     testonly = 1,
     srcs = ["gtest_main.cpp"],
     deps = [
+        "//common:init_llvm",
         "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
     ],
 )
 

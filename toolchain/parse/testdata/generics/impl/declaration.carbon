@@ -12,7 +12,7 @@ impl bool as Interface;
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:       {kind: 'ImplAs', text: 'as'},
-// CHECK:STDOUT:       {kind: 'NameExpr', text: 'Interface'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'Interface'},
 // CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

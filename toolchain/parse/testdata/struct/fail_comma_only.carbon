@@ -13,7 +13,7 @@ var x: {,} = {};
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'x'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: ',', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructComma', text: ','},

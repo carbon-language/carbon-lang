@@ -40,7 +40,7 @@ import G;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'A'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'A'},
 // CHECK:STDOUT:         {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
@@ -51,7 +51,7 @@ import G;
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'E'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'E'},
 // CHECK:STDOUT:         {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},

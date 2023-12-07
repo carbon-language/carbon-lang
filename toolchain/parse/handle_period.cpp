@@ -18,7 +18,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
                                              : Lex::TokenKind::Period);
 
   if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                      NodeKind::Name)) {
+                                      NodeKind::IdentifierName)) {
     // OK, `.` identifier.
   } else if (node_kind != NodeKind::QualifiedDecl &&
              context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
@@ -34,10 +34,10 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     // If we see a keyword, assume it was intended to be a name.
     // TODO: Should keywords be valid here?
     if (context.PositionKind().is_keyword()) {
-      context.AddLeafNode(NodeKind::Name, context.Consume(),
+      context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
                           /*has_error=*/true);
     } else {
-      context.AddLeafNode(NodeKind::Name, *context.position(),
+      context.AddLeafNode(NodeKind::IdentifierName, *context.position(),
                           /*has_error=*/true);
       // Indicate the error to the parent state so that it can avoid producing
       // more errors.
