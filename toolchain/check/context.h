@@ -227,9 +227,9 @@ class Context {
   // complete, or `false` if it could not be completed. A complete type has
   // known object and value representations.
   //
-  // If the type is not complete, `diagnoser` is invoked to diagnose the issue.
-  // The builder it returns will be annotated to describe the reason why the
-  // type is not complete.
+  // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
+  // if a `diagnoser` is provided. The builder it returns will be annotated to
+  // describe the reason why the type is not complete.
   auto TryToCompleteType(
       SemIR::TypeId type_id,
       std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
@@ -238,10 +238,9 @@ class Context {
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
   // TryToCompleteType.
-  auto AsCompleteType(
-      SemIR::TypeId type_id,
-      std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
-          std::nullopt) -> SemIR::TypeId {
+  auto AsCompleteType(SemIR::TypeId type_id,
+                      llvm::function_ref<auto()->DiagnosticBuilder> diagnoser)
+      -> SemIR::TypeId {
     return TryToCompleteType(type_id, diagnoser) ? type_id
                                                  : SemIR::TypeId::Error;
   }
