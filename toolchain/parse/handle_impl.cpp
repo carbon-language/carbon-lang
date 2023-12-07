@@ -33,8 +33,7 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
 auto HandleImplAfterForall(Carbon::Parse::Context& context) -> void {
   auto state = context.PopState();
   if (state.has_error) {
-    context.RecoverFromDeclError(state, NodeKind::ImplDecl,
-                                 /*skip_past_likely_end=*/true);
+    context.ReturnErrorOnState();
     return;
   }
 
@@ -45,20 +44,18 @@ auto HandleImplAfterForall(Carbon::Parse::Context& context) -> void {
 auto HandleImplAs(Carbon::Parse::Context& context) -> void {
   auto state = context.PopState();
   if (state.has_error) {
-    context.RecoverFromDeclError(state, NodeKind::ImplDecl,
-                                 /*skip_past_likely_end=*/true);
+    context.ReturnErrorOnState();
     return;
   }
   if (auto as = context.ConsumeIf(Lex::TokenKind::As)) {
     context.AddLeafNode(NodeKind::ImplAs, *as);
+    context.PushState(State::Expr);
   } else {
     CARBON_DIAGNOSTIC(ImplExpectedAs, Error,
                       "Expected `as` in `impl` declaration.");
     context.emitter().Emit(*context.position(), ImplExpectedAs);
-    context.AddLeafNode(NodeKind::ImplAs, *context.position(),
-                        /*has_error*/ true);
+    context.ReturnErrorOnState();
   }
-  context.PushState(State::Expr);
 }
 
 }  // namespace Carbon::Parse
