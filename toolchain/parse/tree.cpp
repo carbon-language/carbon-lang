@@ -46,9 +46,7 @@ auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   context.AddLeafNode(NodeKind::FileEnd, *context.position());
 
   if (auto verify = tree.Verify(); !verify.ok()) {
-    if (vlog_stream) {
-      tree.Print(*vlog_stream);
-    }
+    tree.Print(llvm::errs());
     CARBON_FATAL() << "Invalid tree returned by Parse(): " << verify.error();
   }
   return tree;
