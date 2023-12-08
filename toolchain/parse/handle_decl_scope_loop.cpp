@@ -80,13 +80,9 @@ static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
 // Handles `base` as a declaration.
 static auto HandleBaseAsDecl(Context& context, Context::StateStackEntry state)
     -> void {
-  // `base` may be followed by:
-  // - a colon
-  //   => assume it is an introducer, as in `extend base: BaseType;`.
-  // - a modifier or an introducer
-  //   => assume it is a modifier, as in `base class`; which is handled
-  //      by falling through to the next case.
-  // Anything else is an error.
+  // At this point, `base` has been ruled out as a modifier (`base class`). If
+  // it's followed by a colon, it's an introducer (`extend base: BaseType;`).
+  // Otherwise it's an error.
   if (context.PositionIs(Lex::TokenKind::Colon, Lookahead::NextToken)) {
     context.ReplacePlaceholderNode(state.subtree_start,
                                    NodeKind::BaseIntroducer, context.Consume());
@@ -112,8 +108,7 @@ static auto HandleBaseAsDecl(Context& context, Context::StateStackEntry state)
 // declaration introducer keyword token, replace the placeholder node and switch
 // to a state to parse the rest of the declaration.
 static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
-                            bool saw_modifier, Lex::TokenKind position_kind)
-    -> bool {
+                            bool saw_modifier) -> bool {
   auto introducer = [&](NodeKind node_kind, State next_state) {
     context.ReplacePlaceholderNode(state.subtree_start, node_kind,
                                    context.Consume());
@@ -122,7 +117,7 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
     context.PushState(state);
   };
 
-  switch (position_kind) {
+  switch (context.PositionKind()) {
     case Lex::TokenKind::Base: {
       HandleBaseAsDecl(context, state);
       return true;
@@ -222,8 +217,8 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
 }
 
 // Returns true if the current position is a modifier, handling it if so.
-static auto TryHandleAsModifier(Context& context, Lex::TokenKind position_kind)
-    -> bool {
+static auto TryHandleAsModifier(Context& context) -> bool {
+  auto position_kind = context.PositionKind();
   if (ResolveAmbiguousTokenAsDeclaration(context, position_kind)) {
     return false;
   }
@@ -258,17 +253,11 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   context.AddLeafNode(NodeKind::Placeholder, *context.position());
 
   bool saw_modifier = false;
-  while (true) {
-    auto position_kind = context.PositionKind();
-    if (TryHandleAsModifier(context, position_kind)) {
-      // Modifiers will continue through the loop, but we track we saw them.
-      saw_modifier = true;
-    } else if (TryHandleAsDecl(context, state, saw_modifier, position_kind)) {
-      return;
-    } else {
-      HandleUnrecognizedDecl(context, state.subtree_start);
-      return;
-    }
+  while (TryHandleAsModifier(context)) {
+    saw_modifier = true;
+  }
+  if (!TryHandleAsDecl(context, state, saw_modifier)) {
+    HandleUnrecognizedDecl(context, state.subtree_start);
   }
 }
 
