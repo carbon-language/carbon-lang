@@ -400,9 +400,9 @@ class Context {
 
   // A lookup result in the lexical lookup table `name_lookup_`.
   struct LexicalLookupResult {
-    // The node that was added to lookup.
-    SemIR::InstId node_id;
-    // The scope in which the node was added.
+    // The instruction that was added to lookup.
+    SemIR::InstId inst_id;
+    // The scope in which the instruction was added.
     ScopeIndex scope_index;
   };
 
