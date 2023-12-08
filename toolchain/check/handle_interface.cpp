@@ -37,6 +37,7 @@ static auto BuildInterfaceDecl(Context& context)
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "access modifier");
   }
+  context.decl_state_stack().Pop(DeclState::Interface);
 
   auto decl_block_id = context.inst_block_stack().Pop();
 
@@ -87,7 +88,6 @@ auto HandleInterfaceDecl(Context& context, Parse::NodeId /*parse_node*/)
     -> bool {
   BuildInterfaceDecl(context);
   context.decl_name_stack().PopScope();
-  context.decl_state_stack().Pop(DeclState::Interface);
   return true;
 }
 
@@ -142,7 +142,6 @@ auto HandleInterfaceDefinition(Context& context, Parse::NodeId /*parse_node*/)
   context.inst_block_stack().Pop();
   context.PopScope();
   context.decl_name_stack().PopScope();
-  context.decl_state_stack().Pop(DeclState::Interface);
 
   // The interface type is now fully defined.
   auto& interface_info = context.interfaces().Get(interface_id);
