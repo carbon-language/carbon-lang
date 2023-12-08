@@ -1071,7 +1071,7 @@ CARBON_PARSE_STATE(BaseDecl)
 // impl type_expression as ...
 //     ^
 //   1. Expr
-//   2. ImplAs
+//   2. ImplBeforeAs
 //   3. DeclOrDefinitionAsImpl
 CARBON_PARSE_STATE(ImplAfterIntroducer)
 
@@ -1084,16 +1084,16 @@ CARBON_PARSE_STATE(ImplAfterIntroducer)
 // impl forall [ ... ] type_expression as ...
 //                    ^
 //   1. Expr
-//   2. ImplAs
+//   2. ImplBeforeAs
 CARBON_PARSE_STATE(ImplAfterForall)
 
 // Handles processing of the `as` in an `impl` declaration after the type
 // expression.
 //
-// impl type_expression as ...
-//                      ^~
+// impl TypeExpression as ...
+//                     ^~
 //   1. Expr
-CARBON_PARSE_STATE(ImplAs)
+CARBON_PARSE_STATE(ImplBeforeAs)
 
 // Handles the start of a `var` or `returned var`.
 //

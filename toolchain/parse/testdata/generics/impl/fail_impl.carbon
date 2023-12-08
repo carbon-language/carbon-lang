@@ -19,9 +19,12 @@ impl i32 as;
 // CHECK:STDERR:                  ^~~~~~~~~~
 impl bool as bar unexpected;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+3]]:13: ERROR: Expected `[` after `forall` in `impl` declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+6]]:13: ERROR: Expected `[` after `forall` in `impl` declaration.
 // CHECK:STDERR: impl forall f32;
 // CHECK:STDERR:             ^~~
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+3]]:16: ERROR: Expected `as` in `impl` declaration.
+// CHECK:STDERR: impl forall f32;
+// CHECK:STDERR:                ^
 impl forall f32;
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+3]]:19: ERROR: Expected `as` in `impl` declaration.
@@ -64,7 +67,7 @@ impl;
 
 impl
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+78]]:21: ERROR: Expected expression.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+82]]:21: ERROR: Expected expression.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_impl.carbon
@@ -86,7 +89,8 @@ impl
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: 'f32', has_error: yes},
 // CHECK:STDOUT:       {kind: 'ImplForall', text: 'forall', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'FloatTypeLiteral', text: 'f32'},
+// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 2},
@@ -105,7 +109,10 @@ impl
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: 'f16', has_error: yes},
 // CHECK:STDOUT:       {kind: 'ImplForall', text: 'forall', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'FloatTypeLiteral', text: 'f16'},
+// CHECK:STDOUT:       {kind: 'ImplAs', text: 'as'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'Quux'},
+// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'T'},
