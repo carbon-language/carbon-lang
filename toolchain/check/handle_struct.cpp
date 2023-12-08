@@ -30,11 +30,6 @@ auto HandleStructFieldType(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleStructFieldUnknown(Context& context, Parse::NodeId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleStructFieldUnknown");
-}
-
 auto HandleStructFieldValue(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto value_inst_id = context.node_stack().PopExpr();

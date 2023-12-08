@@ -18,7 +18,7 @@ var x: {."hello" = 0, .y = 4} = {};
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: '"hello"', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: '=', has_error: yes},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: '=', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'y'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
