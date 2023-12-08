@@ -155,6 +155,10 @@ CARBON_DIAGNOSTIC_KIND(ClassRedefinition)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(ConstructionOfAbstractClass)
 
+// Interface checking.
+CARBON_DIAGNOSTIC_KIND(InterfacePreviousDefinition)
+CARBON_DIAGNOSTIC_KIND(InterfaceRedefinition)
+
 CARBON_DIAGNOSTIC_KIND(AddressOfEphemeralRef)
 CARBON_DIAGNOSTIC_KIND(AddressOfNonRef)
 CARBON_DIAGNOSTIC_KIND(AddrOnNonSelfParam)
