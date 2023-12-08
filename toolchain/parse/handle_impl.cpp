@@ -13,6 +13,7 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
 
   switch (context.PositionKind()) {
     case Lex::TokenKind::Forall:
+      // forall [<implicit parameter list>] ...
       context.PushState(State::ImplAfterForall);
       context.ConsumeAndDiscard();
       if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
@@ -26,11 +27,13 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
       break;
 
     case Lex::TokenKind::As:
+      // as <expression> ...
       context.AddLeafNode(NodeKind::ImplAs, context.Consume());
       context.PushState(State::Expr);
       break;
 
     default:
+      // <expression> as <expression>...
       context.PushState(State::ImplAs);
       context.PushStateForExpr(PrecedenceGroup::ForImplAs());
       break;
@@ -40,17 +43,19 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
 auto HandleImplAfterForall(Carbon::Parse::Context& context) -> void {
   auto state = context.PopState();
   if (state.has_error) {
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                        /*has_error=*/true);
     context.ReturnErrorOnState();
-    return;
   }
-
   context.AddNode(NodeKind::ImplForall, state.token, state.subtree_start,
                   state.has_error);
 
   if (context.PositionKind() == Lex::TokenKind::As) {
+    // as <expression> ...
     context.AddLeafNode(NodeKind::ImplAs, context.Consume());
     context.PushState(State::Expr);
-  } else {
+  } else if (!state.has_error) {
+    // <expression> as <expression>...
     context.PushState(State::ImplAs);
     context.PushStateForExpr(PrecedenceGroup::ForImplAs());
   }
