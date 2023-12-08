@@ -658,9 +658,9 @@ CARBON_PARSE_STATE(Package)
 //   2. PatternListElementFinishAs(Implicit|Tuple)
 CARBON_PARSE_STATE_VARIANTS2(PatternListElement, Implicit, Tuple)
 
-// Finishes parsing a pattern in a comma-separated list, including the optional
-// trailing `,`. If there are more patterns, enqueues another pattern
-// parsing state.
+// Finishes parsing a pattern in a comma-separated list, including the
+// optional trailing `,`. If there are more patterns, enqueues another
+// pattern parsing state.
 //
 // ... , )  (variant is Tuple)
 //     ^
