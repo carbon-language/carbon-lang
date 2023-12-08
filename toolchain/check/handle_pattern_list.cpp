@@ -25,23 +25,24 @@ auto HandleImplicitParamListStart(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleParamList(Context& context, Parse::NodeId parse_node) -> bool {
-  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ParamListStart);
+auto HandleTuplePattern(Context& context, Parse::NodeId parse_node) -> bool {
+  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::TuplePatternStart);
   context.PopScope();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ParamListStart>();
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::TuplePatternStart>();
   context.node_stack().Push(parse_node, refs_id);
   return true;
 }
 
-auto HandleParamListComma(Context& context, Parse::NodeId /*parse_node*/)
+auto HandlePatternListComma(Context& context, Parse::NodeId /*parse_node*/)
     -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleParamListStart(Context& context, Parse::NodeId parse_node) -> bool {
-  // A parameter list following an implicit parameter list shares the same
+auto HandleTuplePatternStart(Context& context, Parse::NodeId parse_node)
+    -> bool {
+  // A tuple pattern following an implicit parameter list shares the same
   // scope.
   //
   // TODO: For a declaration like

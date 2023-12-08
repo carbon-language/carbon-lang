@@ -36,7 +36,7 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   auto init_id = SemIR::InstId::Invalid;
   Parse::NodeKind next_kind =
       context.parse_tree().node_kind(context.node_stack().PeekParseNode());
-  if (next_kind == Parse::NodeKind::ParamList) {
+  if (next_kind == Parse::NodeKind::TuplePattern) {
     return context.TODO(parse_node, "tuple pattern in var");
   }
   // TODO: find a more robust way to determine if there was an initializer.
@@ -47,7 +47,7 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
         .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
   }
 
-  if (context.node_stack().PeekIs<Parse::NodeKind::ParamList>()) {
+  if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     return context.TODO(parse_node, "tuple pattern in var");
   }
 

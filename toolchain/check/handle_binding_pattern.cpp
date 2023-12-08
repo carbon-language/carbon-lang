@@ -115,7 +115,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
     }
 
     case Parse::NodeKind::ImplicitParamListStart:
-    case Parse::NodeKind::ParamListStart:
+    case Parse::NodeKind::TuplePatternStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
       context.AddInstAndPush(parse_node,
