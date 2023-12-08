@@ -62,7 +62,7 @@ class ConstantStore {
 // Provides a ValueStore wrapper with an API specific to types.
 class TypeStore : public ValueStore<TypeId> {
  public:
-  TypeStore(InstStore* insts) : insts_(insts) {}
+  explicit TypeStore(InstStore* insts) : insts_(insts) {}
 
   // Returns the ID of the instruction used to define the specified type.
   auto GetInstId(TypeId type_id) const -> InstId {
