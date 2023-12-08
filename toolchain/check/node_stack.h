@@ -365,13 +365,13 @@ class NodeStack {
       case Parse::NodeKind::ArrayExprSemi:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
+      case Parse::NodeKind::ExprOpenParen:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::InterfaceIntroducer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::ParamListStart:
-      case Parse::NodeKind::ParenExprOrTupleLiteralStart:
       case Parse::NodeKind::QualifiedDecl:
       case Parse::NodeKind::ReturnedModifier:
       case Parse::NodeKind::ReturnStatementStart:

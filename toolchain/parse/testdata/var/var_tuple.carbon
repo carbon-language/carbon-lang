@@ -27,7 +27,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 9},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'ParenExprOrTupleLiteralStart', text: '('},
+// CHECK:STDOUT:           {kind: 'ExprOpenParen', text: '('},
 // CHECK:STDOUT:           {kind: 'StringLiteral', text: '"hello"'},
 // CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
