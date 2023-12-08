@@ -6,7 +6,7 @@
 
 fn Main() {
   return;
-  var n: i32 = 1 + 1;
+  var n: i32 = 1;
 }
 
 // CHECK:STDOUT: --- code_after_return.carbon

@@ -9,11 +9,12 @@ class Class {
   var k: i32;
 }
 
-fn Run() -> i32 {
+fn Run() {
   var c: Class;
   c.j = 1;
   c.k = 2;
-  return c.j + c.k;
+  var cj: i32 = c.j;
+  var ck: i32 = c.k;
 }
 
 // CHECK:STDOUT: --- field_access.carbon
@@ -43,7 +44,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   .k = %k
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run() -> i32 {
+// CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %c.var: ref Class = var c
@@ -56,13 +57,18 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc15_4: ref i32 = class_element_access %c.ref.loc15, element1
 // CHECK:STDOUT:   %.loc15_9: i32 = int_literal 2
 // CHECK:STDOUT:   assign %.loc15_4, %.loc15_9
-// CHECK:STDOUT:   %c.ref.loc16_10: ref Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc16_11.1: ref i32 = class_element_access %c.ref.loc16_10, element0
-// CHECK:STDOUT:   %c.ref.loc16_16: ref Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc16_17.1: ref i32 = class_element_access %c.ref.loc16_16, element1
-// CHECK:STDOUT:   %.loc16_11.2: i32 = bind_value %.loc16_11.1
-// CHECK:STDOUT:   %.loc16_17.2: i32 = bind_value %.loc16_17.1
-// CHECK:STDOUT:   %.loc16_14: i32 = add %.loc16_11.2, %.loc16_17.2
-// CHECK:STDOUT:   return %.loc16_14
+// CHECK:STDOUT:   %cj.var: ref i32 = var cj
+// CHECK:STDOUT:   %cj: ref i32 = bind_name cj, %cj.var
+// CHECK:STDOUT:   %c.ref.loc16: ref Class = name_ref c, %c
+// CHECK:STDOUT:   %.loc16_18.1: ref i32 = class_element_access %c.ref.loc16, element0
+// CHECK:STDOUT:   %.loc16_18.2: i32 = bind_value %.loc16_18.1
+// CHECK:STDOUT:   assign %cj.var, %.loc16_18.2
+// CHECK:STDOUT:   %ck.var: ref i32 = var ck
+// CHECK:STDOUT:   %ck: ref i32 = bind_name ck, %ck.var
+// CHECK:STDOUT:   %c.ref.loc17: ref Class = name_ref c, %c
+// CHECK:STDOUT:   %.loc17_18.1: ref i32 = class_element_access %c.ref.loc17, element1
+// CHECK:STDOUT:   %.loc17_18.2: i32 = bind_value %.loc17_18.1
+// CHECK:STDOUT:   assign %ck.var, %.loc17_18.2
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -4,17 +4,20 @@
 //
 // AUTOUPDATE
 
-fn Foo(a: i32, b: i32, c: i32) {}
+fn Foo(a: i32, b: i32) {}
 
 fn Main() {
-  // Generates multiple IR instructions for the first two parameters.
-  Foo(1 + 2 + 3, 4 + 5, 6);
+  var x: (i32,) = (1,);
+  // Generates multiple IR instructions for the first parameter.
+  Foo(x[0], 6);
 }
 
 // CHECK:STDOUT: --- more_param_ir.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_15.1: type = tuple_type (type)
+// CHECK:STDOUT:   %.loc10_15.2: type = tuple_type (i32)
+// CHECK:STDOUT:   %.loc12: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -23,24 +26,29 @@ fn Main() {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: i32, %b: i32, %c: i32) {
+// CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10_15.1: (type,) = tuple_literal (i32)
+// CHECK:STDOUT:   %.loc10_15.2: type = converted %.loc10_15.1, constants.%.loc10_15.2
+// CHECK:STDOUT:   %x.var: ref (i32,) = var x
+// CHECK:STDOUT:   %x: ref (i32,) = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_22.1: (i32,) = tuple_literal (%.loc10_20)
+// CHECK:STDOUT:   %.loc10_22.2: init (i32,) = tuple_init (%.loc10_20) to %x.var
+// CHECK:STDOUT:   %.loc10_22.3: init (i32,) = converted %.loc10_22.1, %.loc10_22.2
+// CHECK:STDOUT:   assign %x.var, %.loc10_22.3
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo
-// CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc11_11: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc11_9: i32 = add %.loc11_7, %.loc11_11
-// CHECK:STDOUT:   %.loc11_15: i32 = int_literal 3
-// CHECK:STDOUT:   %.loc11_13: i32 = add %.loc11_9, %.loc11_15
-// CHECK:STDOUT:   %.loc11_18: i32 = int_literal 4
-// CHECK:STDOUT:   %.loc11_22: i32 = int_literal 5
-// CHECK:STDOUT:   %.loc11_20: i32 = add %.loc11_18, %.loc11_22
-// CHECK:STDOUT:   %.loc11_25: i32 = int_literal 6
-// CHECK:STDOUT:   %.loc11_6: init () = call %Foo.ref(%.loc11_13, %.loc11_20, %.loc11_25)
+// CHECK:STDOUT:   %x.ref: ref (i32,) = name_ref x, %x
+// CHECK:STDOUT:   %.loc12_9: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc12_10.1: ref i32 = tuple_index %x.ref, %.loc12_9
+// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 6
+// CHECK:STDOUT:   %.loc12_10.2: i32 = bind_value %.loc12_10.1
+// CHECK:STDOUT:   %.loc12_6: init () = call %Foo.ref(%.loc12_10.2, %.loc12_13)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
