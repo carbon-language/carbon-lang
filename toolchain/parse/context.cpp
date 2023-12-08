@@ -166,16 +166,6 @@ auto Context::ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex> {
   return Consume();
 }
 
-auto Context::ConsumeIfBindingPatternKeyword(Lex::TokenKind keyword_token,
-                                             State keyword_state,
-                                             int subtree_start) -> void {
-  if (auto token = ConsumeIf(keyword_token)) {
-    PushState(Context::StateStackEntry(
-        keyword_state, PrecedenceGroup::ForTopLevelExpr(),
-        PrecedenceGroup::ForTopLevelExpr(), *token, subtree_start));
-  }
-}
-
 auto Context::FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
     -> std::optional<Lex::TokenIndex> {
   auto new_position = position_;
@@ -415,30 +405,6 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
     return PositionIs(close_kind) ? ListTokenKind::CommaClose
                                   : ListTokenKind::Comma;
   }
-}
-
-auto Context::GetDeclContext() -> DeclContext {
-  // i == 0 is the file-level DeclScopeLoop. Additionally, i == 1 can be
-  // skipped because it will never be a DeclScopeLoop.
-  for (int i = state_stack_.size() - 1; i > 1; --i) {
-    // The declaration context is always the state _above_ a
-    // DeclScopeLoop.
-    if (state_stack_[i].state == State::DeclScopeLoop) {
-      switch (state_stack_[i - 1].state) {
-        case State::TypeDefinitionFinishAsClass:
-          return DeclContext::Class;
-        case State::TypeDefinitionFinishAsInterface:
-          return DeclContext::Interface;
-        case State::TypeDefinitionFinishAsNamedConstraint:
-          return DeclContext::NamedConstraint;
-        default:
-          llvm_unreachable("Missing handling for a declaration scope");
-      }
-    }
-  }
-  CARBON_CHECK(!state_stack_.empty() &&
-               state_stack_[0].state == State::DeclScopeLoop);
-  return DeclContext::File;
 }
 
 auto Context::RecoverFromDeclError(StateStackEntry state,

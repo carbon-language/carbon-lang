@@ -4,11 +4,11 @@
 //
 // AUTOUPDATE
 
-fn Main() -> i32 {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:10: ERROR: Cannot implicitly convert from `i32` to `f64`.
-  // CHECK:STDERR:   return 12 + 3.4;
-  // CHECK:STDERR:          ^~~~~~~~
-  return 12 + 3.4;
+fn Main() {
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:17: ERROR: Cannot implicitly convert from `i32` to `bool`.
+  // CHECK:STDERR:   var x: bool = not 12;
+  // CHECK:STDERR:                 ^~~~~~
+  var x: bool = not 12;
 }
 
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
@@ -18,11 +18,13 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 12
-// CHECK:STDOUT:   %.loc11_15: f64 = real_literal 34e-1
-// CHECK:STDOUT:   %.loc11_13: <error> = add <error>, %.loc11_15
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %x.var: ref bool = var x
+// CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc11_21: i32 = int_literal 12
+// CHECK:STDOUT:   %.loc11_17: <error> = not <error>
+// CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

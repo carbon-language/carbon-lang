@@ -124,6 +124,18 @@ class Context {
     return current_scope().scope_id;
   }
 
+  // Returns true if currently at file scope.
+  auto at_file_scope() const -> bool { return scope_stack_.size() == 1; }
+
+  // Returns the instruction kind associated with the current scope, if any.
+  auto current_scope_kind() const -> std::optional<SemIR::InstKind> {
+    auto current_scope_inst_id = current_scope().scope_inst_id;
+    if (!current_scope_inst_id.is_valid()) {
+      return std::nullopt;
+    }
+    return sem_ir_->insts().Get(current_scope_inst_id).kind();
+  }
+
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
@@ -216,13 +228,23 @@ class Context {
   // complete, or `false` if it could not be completed. A complete type has
   // known object and value representations.
   //
-  // If the type is not complete, `diagnoser` is invoked to diagnose the issue.
-  // The builder it returns will be annotated to describe the reason why the
-  // type is not complete.
+  // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
+  // if a `diagnoser` is provided. The builder it returns will be annotated to
+  // describe the reason why the type is not complete.
   auto TryToCompleteType(
       SemIR::TypeId type_id,
       std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
           std::nullopt) -> bool;
+
+  // Returns the type `type_id` as a complete type, or produces an incomplete
+  // type error and returns an error type. This is a convenience wrapper around
+  // TryToCompleteType.
+  auto AsCompleteType(SemIR::TypeId type_id,
+                      llvm::function_ref<auto()->DiagnosticBuilder> diagnoser)
+      -> SemIR::TypeId {
+    return TryToCompleteType(type_id, diagnoser) ? type_id
+                                                 : SemIR::TypeId::Error;
+  }
 
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
@@ -488,7 +510,7 @@ class Context {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::NodeId parse_node)->bool;
+  auto Handle##Name(Context& context, Parse::NodeId parse_node) -> bool;
 #include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Check

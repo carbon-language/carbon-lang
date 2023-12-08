@@ -165,8 +165,8 @@ auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleBaseIntroducer(Context& /*context*/, Parse::NodeId /*parse_node*/)
-    -> bool {
+auto HandleBaseIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
+  context.decl_state_stack().Push(DeclState::Base, parse_node);
   return true;
 }
 
@@ -177,6 +177,18 @@ auto HandleBaseColon(Context& /*context*/, Parse::NodeId /*parse_node*/)
 
 auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
   auto base_type_expr_id = context.node_stack().PopExpr();
+
+  // Process modifiers. `extend` is required, none others are allowed.
+  LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
+                       Lex::TokenKind::Base);
+  auto modifiers = context.decl_state_stack().innermost().modifier_set;
+  if (!(modifiers & KeywordModifierSet::Extend)) {
+    CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
+                      "Missing `extend` before `base` declaration in class.");
+    context.emitter().Emit(context.decl_state_stack().innermost().first_node,
+                           BaseMissingExtend);
+  }
+  context.decl_state_stack().Pop(DeclState::Base);
 
   auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!enclosing_class_decl) {
@@ -202,15 +214,13 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
   }
 
   auto base_type_id = ExprAsType(context, parse_node, base_type_expr_id);
-  if (!context.TryToCompleteType(base_type_id, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                          "Base `{0}` is an incomplete type.", std::string);
-        return context.emitter().Build(
-            parse_node, IncompleteTypeInBaseDecl,
-            context.sem_ir().StringifyType(base_type_id));
-      })) {
-    base_type_id = SemIR::TypeId::Error;
-  }
+  base_type_id = context.AsCompleteType(base_type_id, [&] {
+    CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
+                      "Base `{0}` is an incomplete type.", std::string);
+    return context.emitter().Build(
+        parse_node, IncompleteTypeInBaseDecl,
+        context.sem_ir().StringifyType(base_type_id));
+  });
 
   if (base_type_id != SemIR::TypeId::Error) {
     // For now, we treat all types that aren't introduced by a `class`
@@ -268,7 +278,7 @@ auto HandleClassDefinition(Context& context, Parse::NodeId parse_node) -> bool {
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);
-  class_info.object_representation_id =
+  class_info.object_repr_id =
       context.CanonicalizeStructType(parse_node, fields_id);
   return true;
 }

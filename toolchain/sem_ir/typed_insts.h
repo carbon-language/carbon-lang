@@ -98,15 +98,6 @@ struct BaseDecl {
   ElementIndex index;
 };
 
-struct BinaryOperatorAdd {
-  static constexpr auto Kind = InstKind::BinaryOperatorAdd.Define("add");
-
-  Parse::NodeId parse_node;
-  TypeId type_id;
-  InstId lhs_id;
-  InstId rhs_id;
-};
-
 struct BindName {
   static constexpr auto Kind = InstKind::BindName.Define("bind_name");
 

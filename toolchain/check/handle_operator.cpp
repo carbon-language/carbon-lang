@@ -14,19 +14,6 @@ auto HandleInfixOperator(Context& context, Parse::NodeId parse_node) -> bool {
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
-    case Lex::TokenKind::Plus:
-      // TODO: This should search for a compatible interface. For now, it's a
-      // very trivial check of validity on the operation.
-      lhs_id = ConvertToValueOfType(context, parse_node, lhs_id,
-                                    context.insts().Get(rhs_id).type_id());
-      rhs_id = ConvertToValueExpr(context, rhs_id);
-
-      context.AddInstAndPush(
-          parse_node, SemIR::BinaryOperatorAdd{
-                          parse_node, context.insts().Get(lhs_id).type_id(),
-                          lhs_id, rhs_id});
-      return true;
-
     case Lex::TokenKind::And:
     case Lex::TokenKind::Or: {
       // The first operand is wrapped in a ShortCircuitOperand, which we

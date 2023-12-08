@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/decl_state.h"
 #include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Check {
@@ -33,28 +34,16 @@ static auto EmitNotAllowedWithDiagnostic(Context& context,
       .Emit();
 }
 
-static auto GetAccessModifierEnum(Lex::TokenKind token_kind)
-    -> KeywordModifierSet {
-  switch (token_kind) {
-    case Lex::TokenKind::Private:
-      return KeywordModifierSet::Private;
-    case Lex::TokenKind::Protected:
-      return KeywordModifierSet::Protected;
-    default:
-      CARBON_FATAL() << "Unhandled access modifier keyword";
-  }
-}
-
-auto HandleAccessModifierKeyword(Context& context, Parse::NodeId parse_node)
-    -> bool {
-  auto keyword = GetAccessModifierEnum(
-      context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
+static auto HandleModifier(Context& context, Parse::NodeId parse_node,
+                           KeywordModifierSet keyword) -> bool {
   auto& s = context.decl_state_stack().innermost();
+  bool is_access = !!(keyword & KeywordModifierSet::Access);
+  auto& saw_modifier = is_access ? s.saw_access_modifier : s.saw_decl_modifier;
   if (!!(s.modifier_set & keyword)) {
-    EmitRepeatedDiagnostic(context, s.saw_access_modifier, parse_node);
-  } else if (s.saw_access_modifier.is_valid()) {
-    EmitNotAllowedWithDiagnostic(context, s.saw_access_modifier, parse_node);
-  } else if (s.saw_decl_modifier.is_valid()) {
+    EmitRepeatedDiagnostic(context, saw_modifier, parse_node);
+  } else if (saw_modifier.is_valid()) {
+    EmitNotAllowedWithDiagnostic(context, saw_modifier, parse_node);
+  } else if (is_access && s.saw_decl_modifier.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
                       "`{0}` must appear before `{1}`.", Lex::TokenKind,
                       Lex::TokenKind);
@@ -67,50 +56,20 @@ auto HandleAccessModifierKeyword(Context& context, Parse::NodeId parse_node)
         .Emit();
   } else {
     s.modifier_set |= keyword;
-    s.saw_access_modifier = parse_node;
-    s.first_node = parse_node;
-  }
-
-  return true;
-}
-
-static auto GetDeclModifierEnum(Lex::TokenKind token_kind)
-    -> KeywordModifierSet {
-  switch (token_kind) {
-    case Lex::TokenKind::Abstract:
-      return KeywordModifierSet::Abstract;
-    case Lex::TokenKind::Base:
-      return KeywordModifierSet::Base;
-    case Lex::TokenKind::Default:
-      return KeywordModifierSet::Default;
-    case Lex::TokenKind::Final:
-      return KeywordModifierSet::Final;
-    case Lex::TokenKind::Impl:
-      return KeywordModifierSet::Impl;
-    case Lex::TokenKind::Virtual:
-      return KeywordModifierSet::Virtual;
-    default:
-      CARBON_FATAL() << "Unhandled declaration modifier keyword";
-  }
-}
-
-auto HandleDeclModifierKeyword(Context& context, Parse::NodeId parse_node)
-    -> bool {
-  auto keyword = GetDeclModifierEnum(
-      context.tokens().GetKind(context.parse_tree().node_token(parse_node)));
-  auto& s = context.decl_state_stack().innermost();
-  if (!!(s.modifier_set & keyword)) {
-    EmitRepeatedDiagnostic(context, s.saw_decl_modifier, parse_node);
-  } else if (s.saw_decl_modifier.is_valid()) {
-    EmitNotAllowedWithDiagnostic(context, s.saw_decl_modifier, parse_node);
-  } else {
-    s.modifier_set |= keyword;
-    s.saw_decl_modifier = parse_node;
-    if (s.saw_access_modifier == Parse::NodeId::Invalid) {
+    saw_modifier = parse_node;
+    if (is_access || !s.saw_access_modifier.is_valid()) {
       s.first_node = parse_node;
     }
   }
   return true;
 }
+
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)                  \
+  auto Handle##Name##Modifier(Context& context, Parse::NodeId parse_node) \
+      -> bool {                                                           \
+    return HandleModifier(context, parse_node, KeywordModifierSet::Name); \
+  }
+#include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Check

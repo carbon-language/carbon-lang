@@ -311,12 +311,12 @@ class NodeStack {
       case Parse::NodeKind::BindingPattern:
       case Parse::NodeKind::CallExpr:
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::IdentifierNameExpr:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::IfExprElse:
       case Parse::NodeKind::IndexExpr:
       case Parse::NodeKind::InfixOperator:
       case Parse::NodeKind::MemberAccessExpr:
-      case Parse::NodeKind::NameExpr:
       case Parse::NodeKind::PackageExpr:
       case Parse::NodeKind::ParenExpr:
       case Parse::NodeKind::PostfixOperator:
@@ -330,11 +330,6 @@ class NodeStack {
       case Parse::NodeKind::StructFieldType:
       case Parse::NodeKind::StructTypeLiteral:
       case Parse::NodeKind::TupleLiteral:
-// Use x-macros to handle literal cases.
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) \
-  case Parse::NodeKind::Name:
-#include "toolchain/parse/node_kind.def"
         return IdKind::InstId;
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
@@ -348,13 +343,11 @@ class NodeStack {
       case Parse::NodeKind::ClassDefinitionStart:
         return IdKind::ClassId;
       case Parse::NodeKind::BaseName:
-      case Parse::NodeKind::Name:
+      case Parse::NodeKind::IdentifierName:
         return IdKind::NameId;
-      case Parse::NodeKind::AccessModifierKeyword:
       case Parse::NodeKind::ArrayExprSemi:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
-      case Parse::NodeKind::DeclModifierKeyword:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:
@@ -370,6 +363,15 @@ class NodeStack {
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
         return IdKind::SoloParseNode;
+// Use x-macros to handle token cases.
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) \
+  case Parse::NodeKind::Name:                           \
+    return IdKind::InstId;
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
+  case Parse::NodeKind::Name##Modifier:                  \
+    return IdKind::SoloParseNode;
+#include "toolchain/parse/node_kind.def"
       default:
         return IdKind::Unused;
     }

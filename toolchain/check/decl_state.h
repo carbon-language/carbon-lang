@@ -6,13 +6,17 @@
 #define CARBON_TOOLCHAIN_CHECK_DECL_STATE_H_
 
 #include "llvm/ADT/BitmaskEnum.h"
+#include "toolchain/parse/tree.h"
 
 namespace Carbon::Check {
 
 LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 
 // Represents a set of keyword modifiers, using a separate bit per modifier.
-enum class KeywordModifierSet {
+//
+// We expect this to grow, so are using a bigger size than needed.
+// NOLINTNEXTLINE(performance-enum-size)
+enum class KeywordModifierSet : uint32_t {
   // At most one of these access modifiers allowed for a given declaration,
   // and if present it must be first:
   Private = 1 << 0,
@@ -23,9 +27,10 @@ enum class KeywordModifierSet {
   Abstract = 1 << 2,
   Base = 1 << 3,
   Default = 1 << 4,
-  Final = 1 << 5,
-  Impl = 1 << 6,
-  Virtual = 1 << 7,
+  Extend = 1 << 5,
+  Final = 1 << 6,
+  Impl = 1 << 7,
+  Virtual = 1 << 8,
 
   // Sets of modifiers:
   Access = Private | Protected,
@@ -34,7 +39,7 @@ enum class KeywordModifierSet {
   Interface = Default | Final,
   None = 0,
 
-  LLVM_MARK_AS_BITMASK_ENUM(/* LargestValue = */ Virtual)
+  LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Virtual)
 };
 
 inline auto operator!(KeywordModifierSet k) -> bool {
@@ -44,8 +49,18 @@ inline auto operator!(KeywordModifierSet k) -> bool {
 // State stored for each declaration we are currently in: the kind of
 // declaration and the keyword modifiers that apply to that declaration.
 struct DeclState {
-  // What kind of declaration
-  enum DeclKind { FileScope, Class, Constraint, Fn, Interface, Let, Var };
+  // The kind of declaration.
+  enum DeclKind : int8_t {
+    FileScope,
+    Base,
+    Class,
+    Constraint,
+    Fn,
+    Interface,
+    Let,
+    Namespace,
+    Var
+  };
 
   explicit DeclState(DeclKind decl_kind, Parse::NodeId parse_node)
       : kind(decl_kind), first_node(parse_node) {}
@@ -84,16 +99,10 @@ class DeclStateStack {
   // declaration currently being processed.
   auto innermost() -> DeclState& { return stack_.back(); }
 
-  // Gets the state for the declaration containing the innermost declaration.
-  // Requires that the innermost declaration is not `FileScope`.
-  auto containing() const -> const DeclState& {
-    CARBON_CHECK(stack_.size() >= 2);
-    return stack_[stack_.size() - 2];
-  }
-
   // Exits a declaration of kind `k`.
   auto Pop(DeclState::DeclKind k) -> void {
-    CARBON_CHECK(stack_.back().kind == k);
+    CARBON_CHECK(stack_.back().kind == k)
+        << "Found: " << stack_.back().kind << " expected: " << k;
     stack_.pop_back();
     CARBON_CHECK(!stack_.empty());
   }

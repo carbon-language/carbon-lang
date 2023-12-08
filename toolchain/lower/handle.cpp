@@ -51,12 +51,6 @@ auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
 }
 
-auto HandleBinaryOperatorAdd(FunctionContext& /*context*/,
-                             SemIR::InstId /*inst_id*/,
-                             SemIR::BinaryOperatorAdd inst) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << inst;
-}
-
 auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
                     SemIR::BindName inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
@@ -144,16 +138,15 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  if (SemIR::GetInitializingRepresentation(context.sem_ir(), inst.type_id)
-          .has_return_slot()) {
+  if (SemIR::GetInitRepr(context.sem_ir(), inst.type_id).has_return_slot()) {
     args.push_back(context.GetValue(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
   }
 
   for (auto arg_id : arg_ids) {
     auto arg_type_id = context.sem_ir().insts().Get(arg_id).type_id();
-    if (SemIR::GetValueRepresentation(context.sem_ir(), arg_type_id).kind !=
-        SemIR::ValueRepresentation::None) {
+    if (SemIR::GetValueRepr(context.sem_ir(), arg_type_id).kind !=
+        SemIR::ValueRepr::None) {
       args.push_back(context.GetValue(arg_id));
     }
   }
@@ -256,16 +249,16 @@ auto HandleReturn(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleReturnExpr(FunctionContext& context, SemIR::InstId /*inst_id*/,
                       SemIR::ReturnExpr inst) -> void {
-  switch (SemIR::GetInitializingRepresentation(
-              context.sem_ir(),
-              context.sem_ir().insts().Get(inst.expr_id).type_id())
-              .kind) {
-    case SemIR::InitializingRepresentation::None:
-    case SemIR::InitializingRepresentation::InPlace:
+  switch (
+      SemIR::GetInitRepr(context.sem_ir(),
+                         context.sem_ir().insts().Get(inst.expr_id).type_id())
+          .kind) {
+    case SemIR::InitRepr::None:
+    case SemIR::InitRepr::InPlace:
       // Nothing to return.
       context.builder().CreateRetVoid();
       return;
-    case SemIR::InitializingRepresentation::ByCopy:
+    case SemIR::InitRepr::ByCopy:
       // The expression produces the value representation for the type.
       context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;

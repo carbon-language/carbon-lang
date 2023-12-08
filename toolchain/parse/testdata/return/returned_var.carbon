@@ -13,7 +13,7 @@ fn F() -> String {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'F'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'String'},
@@ -21,7 +21,7 @@ fn F() -> String {
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'ReturnedModifier', text: 'returned'},
-// CHECK:STDOUT:           {kind: 'Name', text: 's'},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: 's'},
 // CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'String'},
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},

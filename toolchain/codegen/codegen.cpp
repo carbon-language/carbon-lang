@@ -8,7 +8,6 @@
 
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/TargetParser/Host.h"
 
@@ -17,13 +16,6 @@ namespace Carbon {
 auto CodeGen::Create(llvm::Module& module, llvm::StringRef target_triple,
                      llvm::raw_pwrite_stream& errors)
     -> std::optional<CodeGen> {
-  // Initialize the target registry etc.
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargets();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-  llvm::InitializeAllAsmPrinters();
-
   std::string error;
   const llvm::Target* target =
       llvm::TargetRegistry::lookupTarget(target_triple, error);

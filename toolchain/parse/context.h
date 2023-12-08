@@ -39,22 +39,6 @@ class Context {
   // Possible return values for FindListToken.
   enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
-  // Supported kinds for HandleBindingPattern.
-  enum class BindingPatternKind : int8_t {
-    ImplicitParam,
-    Param,
-    Variable,
-    Let
-  };
-
-  // Supported return values for GetDeclContext.
-  enum class DeclContext : int8_t {
-    File,  // Top-level context.
-    Class,
-    Interface,
-    NamedConstraint,
-  };
-
   // Used for restricting ordering of `package` and `import` directives.
   enum class PackagingState : int8_t {
     FileStart,
@@ -300,22 +284,8 @@ class Context {
         << "Excessive stack size: likely infinite loop";
   }
 
-  // Returns the current declaration context according to state_stack_.
-  // This is expected to be called in cases which are close to a context.
-  // Although it looks like it could be O(n) for state_stack_'s depth, valid
-  // parses should only need to look down a couple steps.
-  //
-  // This currently assumes it's being called from within the declaration's
-  // DeclScopeLoop.
-  auto GetDeclContext() -> DeclContext;
-
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
-
-  // For HandleBindingPattern, tries to consume a wrapping keyword.
-  auto ConsumeIfBindingPatternKeyword(Lex::TokenKind keyword_token,
-                                      State keyword_state, int subtree_start)
-      -> void;
 
   // Emits a diagnostic for a declaration missing a semi.
   auto EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
@@ -401,9 +371,7 @@ class Context {
   Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::Invalid;
 };
 
-// `clang-format` has a bug with spacing around `->` returns in macros. See
-// https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context)->void;
+#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context) -> void;
 #include "toolchain/parse/state.def"
 
 }  // namespace Carbon::Parse

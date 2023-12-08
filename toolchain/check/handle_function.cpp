@@ -18,23 +18,22 @@ static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
                            KeywordModifierSet::Interface,
                        decl_kind);
   // Rules for abstract, virtual, and impl, which are only allowed in classes.
-  auto containing_kind = context.decl_state_stack().containing().kind;
-  if (containing_kind != DeclState::Class) {
-    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_kind,
-                          " outside of a class");
-  } else {
-    auto containing_decl_modifiers =
-        context.decl_state_stack().containing().modifier_set;
-    if (!(containing_decl_modifiers & KeywordModifierSet::Class)) {
+  if (auto class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
+    auto inheritance_kind =
+        context.classes().Get(class_decl->class_id).inheritance_kind;
+    if (inheritance_kind == SemIR::Class::Final) {
       ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
                             " in a non-abstract non-base `class` definition",
-                            context.decl_state_stack().containing().first_node);
+                            class_decl->parse_node);
     }
-    if (!(containing_decl_modifiers & KeywordModifierSet::Abstract)) {
+    if (inheritance_kind != SemIR::Class::Abstract) {
       ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
                             " in a non-abstract `class` definition",
-                            context.decl_state_stack().containing().first_node);
+                            class_decl->parse_node);
     }
+  } else {
+    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_kind,
+                          " outside of a class");
   }
   RequireDefaultFinalOnlyInInterfaces(context, decl_kind);
 
@@ -64,18 +63,16 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
     auto return_node_copy = return_node;
     return_type_id = context.insts().Get(return_storage_id).type_id();
 
-    if (!context.TryToCompleteType(return_type_id, [&] {
-          CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                            "Function returns incomplete type `{0}`.",
-                            std::string);
-          return context.emitter().Build(
-              return_node_copy, IncompleteTypeInFunctionReturnType,
-              context.sem_ir().StringifyType(return_type_id));
-        })) {
-      return_type_id = SemIR::TypeId::Error;
-    } else if (!SemIR::GetInitializingRepresentation(context.sem_ir(),
-                                                     return_type_id)
-                    .has_return_slot()) {
+    return_type_id = context.AsCompleteType(return_type_id, [&] {
+      CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
+                        "Function returns incomplete type `{0}`.", std::string);
+      return context.emitter().Build(
+          return_node_copy, IncompleteTypeInFunctionReturnType,
+          context.sem_ir().StringifyType(return_type_id));
+    });
+
+    if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
+             .has_return_slot()) {
       // The function only has a return slot if it uses in-place initialization.
     } else {
       return_slot_id = return_storage_id;
