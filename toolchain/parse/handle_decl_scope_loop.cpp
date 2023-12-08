@@ -258,17 +258,11 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   context.AddLeafNode(NodeKind::Placeholder, *context.position());
 
   bool saw_modifier = false;
-  while (true) {
-    auto position_kind = context.PositionKind();
-    if (TryHandleAsModifier(context, position_kind)) {
-      // Modifiers will continue through the loop, but we track we saw them.
-      saw_modifier = true;
-    } else if (TryHandleAsDecl(context, state, saw_modifier, position_kind)) {
-      return;
-    } else {
-      HandleUnrecognizedDecl(context, state.subtree_start);
-      return;
-    }
+  while (TryHandleAsModifier(context, context.PositionKind())) {
+    saw_modifier = true;
+  }
+  if (!TryHandleAsDecl(context, state, saw_modifier, context.PositionKind())) {
+    HandleUnrecognizedDecl(context, state.subtree_start);
   }
 }
 
