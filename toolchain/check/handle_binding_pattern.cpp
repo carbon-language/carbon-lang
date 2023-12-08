@@ -55,29 +55,28 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
   // TODO: Handle `_` bindings.
 
   // Every other kind of pattern binding has a name.
-  auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+  auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
+  // TODO: The node stack is a fragile way of getting context information.
+  // Get this information from somewhere else.
   switch (auto context_parse_node_kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
     case Parse::NodeKind::ReturnedModifier:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
-      if (!context.TryToCompleteType(cast_type_id, [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
-                              "{0} has incomplete type `{1}`.",
-                              llvm::StringLiteral, std::string);
-            return context.emitter().Build(
-                type_node_copy, IncompleteTypeInVarDecl,
-                enclosing_class_decl ? llvm::StringLiteral("Field")
-                                     : llvm::StringLiteral("Variable"),
-                context.sem_ir().StringifyType(cast_type_id, true));
-          })) {
-        cast_type_id = SemIR::TypeId::Error;
-      }
+      cast_type_id = context.AsCompleteType(cast_type_id, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
+                          "{0} has incomplete type `{1}`.", llvm::StringLiteral,
+                          std::string);
+        return context.emitter().Build(
+            type_node_copy, IncompleteTypeInVarDecl,
+            enclosing_class_decl ? llvm::StringLiteral("Field")
+                                 : llvm::StringLiteral("Variable"),
+            context.sem_ir().StringifyType(cast_type_id));
+      });
       SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
       if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
@@ -88,15 +87,15 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
       } else if (enclosing_class_decl) {
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
-        auto field_type_inst_id = context.AddInst(SemIR::UnboundFieldType{
+        auto field_type_inst_id = context.AddInst(SemIR::UnboundElementType{
             parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_info.self_type_id, cast_type_id});
         value_type_id = context.CanonicalizeType(field_type_inst_id);
         value_id = context.AddInst(
-            SemIR::Field{parse_node, value_type_id, name_id,
-                         SemIR::MemberIndex(context.args_type_info_stack()
-                                                .PeekCurrentBlockContents()
-                                                .size())});
+            SemIR::FieldDecl{parse_node, value_type_id, name_id,
+                             SemIR::ElementIndex(context.args_type_info_stack()
+                                                     .PeekCurrentBlockContents()
+                                                     .size())});
 
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddInst(
@@ -125,16 +124,14 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
       break;
 
     case Parse::NodeKind::LetIntroducer:
-      if (!context.TryToCompleteType(cast_type_id, [&] {
-            CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
-                              "`let` binding has incomplete type `{0}`.",
-                              std::string);
-            return context.emitter().Build(
-                type_node_copy, IncompleteTypeInLetDecl,
-                context.sem_ir().StringifyType(cast_type_id, true));
-          })) {
-        cast_type_id = SemIR::TypeId::Error;
-      }
+      cast_type_id = context.AsCompleteType(cast_type_id, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
+                          "`let` binding has incomplete type `{0}`.",
+                          std::string);
+        return context.emitter().Build(
+            type_node_copy, IncompleteTypeInLetDecl,
+            context.sem_ir().StringifyType(cast_type_id));
+      });
       // Create the instruction, but don't add it to a block until after we've
       // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold

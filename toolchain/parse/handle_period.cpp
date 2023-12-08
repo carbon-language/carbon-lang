@@ -13,12 +13,19 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
                                 bool is_arrow) -> void {
   auto state = context.PopState();
 
-  // `.` identifier
+  // We're handling `.something` or `->something`.
   auto dot = context.ConsumeChecked(is_arrow ? Lex::TokenKind::MinusGreater
                                              : Lex::TokenKind::Period);
 
-  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                       NodeKind::Name)) {
+  if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
+                                      NodeKind::IdentifierName)) {
+    // OK, `.` identifier.
+  } else if (node_kind != NodeKind::QualifiedDecl &&
+             context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
+                                             NodeKind::BaseName)) {
+    // OK, `.base`. This is allowed in any name context other than declaring a
+    // new qualified name: `fn Namespace.base() {}`
+  } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
                       "Expected identifier after `{0}`.", llvm::StringLiteral);
     context.emitter().Emit(
@@ -27,10 +34,10 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
     // If we see a keyword, assume it was intended to be a name.
     // TODO: Should keywords be valid here?
     if (context.PositionKind().is_keyword()) {
-      context.AddLeafNode(NodeKind::Name, context.Consume(),
+      context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
                           /*has_error=*/true);
     } else {
-      context.AddLeafNode(NodeKind::Name, *context.position(),
+      context.AddLeafNode(NodeKind::IdentifierName, *context.position(),
                           /*has_error=*/true);
       // Indicate the error to the parent state so that it can avoid producing
       // more errors.

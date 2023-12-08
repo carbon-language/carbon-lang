@@ -16,6 +16,7 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT: --- unreachable_fallthrough.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.If = %If}
 // CHECK:STDOUT:   %If: <function> = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

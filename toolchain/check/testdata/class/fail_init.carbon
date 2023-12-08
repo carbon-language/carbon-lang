@@ -35,18 +35,19 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .F = %F}
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound field of class Class> = field a, member0
-// CHECK:STDOUT:   %a: <unbound field of class Class> = bind_name a, %.loc8_8.2
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound field of class Class> = field b, member1
-// CHECK:STDOUT:   %b: <unbound field of class Class> = bind_name b, %.loc9_8.2
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl a, element0
+// CHECK:STDOUT:   %a: <unbound element of class Class> = bind_name a, %.loc8_8.2
+// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl b, element1
+// CHECK:STDOUT:   %b: <unbound element of class Class> = bind_name b, %.loc9_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -66,7 +67,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc20_18.1: {.a: i32, .c: i32} = struct_literal (%.loc20_9, %.loc20_17)
 // CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %.loc20_18.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc20_18.3: ref i32 = class_field_access %.loc20_18.2, member0
+// CHECK:STDOUT:   %.loc20_18.3: ref i32 = class_element_access %.loc20_18.2, element0
 // CHECK:STDOUT:   %.loc20_18.4: init i32 = initialize_from %.loc20_9 to %.loc20_18.3
 // CHECK:STDOUT:   %.loc20_18.5: ref Class = temporary %.loc20_18.2, <error>
 // CHECK:STDOUT:   %.loc20_18.6: ref Class = converted %.loc20_18.1, %.loc20_18.5

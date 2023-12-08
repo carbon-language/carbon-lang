@@ -14,12 +14,14 @@
 #include "absl/flags/parse.h"
 #include "common/check.h"
 #include "common/error.h"
+#include "common/init_llvm.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/ThreadPool.h"
 #include "testing/file_test/autoupdate.h"
 
 ABSL_FLAG(std::vector<std::string>, file_tests, {},
@@ -30,6 +32,9 @@ ABSL_FLAG(std::string, test_targets_file, "",
 ABSL_FLAG(bool, autoupdate, false,
           "Instead of verifying files match test output, autoupdate files "
           "based on test output.");
+ABSL_FLAG(unsigned int, threads, 0,
+          "Number of threads to use when autoupdating tests, or 0 to "
+          "automatically determine a thread count.");
 
 namespace Carbon::Testing {
 
@@ -273,7 +278,7 @@ static auto TryConsumeConflictMarker(llvm::StringRef line,
                                      bool* inside_conflict_marker)
     -> ErrorOr<bool> {
   bool is_start = line.starts_with("<<<<<<<");
-  bool is_middle = line.starts_with("=======");
+  bool is_middle = line.starts_with("=======") || line.starts_with("|||||||");
   bool is_end = line.starts_with(">>>>>>>");
 
   // When running the test, any conflict marker is an error.
@@ -707,31 +712,47 @@ static auto GetTests() -> llvm::SmallVector<std::string> {
 
 // Implements main() within the Carbon::Testing namespace for convenience.
 static auto Main(int argc, char** argv) -> int {
-  absl::ParseCommandLine(argc, argv);
+  Carbon::InitLLVM init_llvm(argc, argv);
   testing::InitGoogleTest(&argc, argv);
-  llvm::setBugReportMsg(
-      "Please report issues to "
-      "https://github.com/carbon-language/carbon-lang/issues and include the "
-      "crash backtrace.\n");
-  llvm::InitLLVM init_llvm(argc, argv);
+  auto args = absl::ParseCommandLine(argc, argv);
 
-  if (argc > 1) {
-    llvm::errs() << "Unexpected arguments starting at: " << argv[1] << "\n";
+  if (args.size() > 1) {
+    llvm::errs() << "Unexpected arguments:";
+    for (char* arg : llvm::ArrayRef(args).drop_front()) {
+      llvm::errs() << " ";
+      llvm::errs().write_escaped(arg);
+    }
+    llvm::errs() << "\n";
     return EXIT_FAILURE;
   }
+
+  // Tests might try to read from stdin. Ensure those reads fail by closing
+  // stdin and reopening it as /dev/null. Note that STDIN_FILENO doesn't exist
+  // on Windows, but POSIX requires it to be 0.
+  llvm::sys::Process::SafelyCloseFileDescriptor(0);
+  llvm::sys::Process::FixupStandardFileDescriptors();
 
   llvm::SmallVector<std::string> tests = GetTests();
   auto test_factory = GetFileTestFactory();
   if (absl::GetFlag(FLAGS_autoupdate)) {
+    llvm::ThreadPool pool({.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
+    std::mutex errs_mutex;
+
     for (const auto& test_name : tests) {
-      std::unique_ptr<FileTestBase> test(test_factory.factory_fn(test_name));
-      auto result = test->Autoupdate();
-      if (result.ok()) {
-        llvm::errs() << (*result ? "!" : ".");
-      } else {
-        llvm::errs() << result.error().message() << "\n";
-      }
+      pool.async([&test_factory, &errs_mutex, test_name] {
+        std::unique_ptr<FileTestBase> test(test_factory.factory_fn(test_name));
+        auto result = test->Autoupdate();
+
+        // Guard access to llvm::errs, which is not thread-safe.
+        std::unique_lock<std::mutex> lock(errs_mutex);
+        if (result.ok()) {
+          llvm::errs() << (*result ? "!" : ".");
+        } else {
+          llvm::errs() << "\n" << result.error().message() << "\n";
+        }
+      });
     }
+    pool.wait();
     llvm::errs() << "\nDone!\n";
     return EXIT_SUCCESS;
   } else {

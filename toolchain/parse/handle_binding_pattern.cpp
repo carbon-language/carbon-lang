@@ -39,7 +39,7 @@ auto HandleBindingPattern(Context& context) -> void {
   // The first item should be an identifier or `self`.
   bool has_name = false;
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-    context.AddLeafNode(NodeKind::Name, *identifier);
+    context.AddLeafNode(NodeKind::IdentifierName, *identifier);
     has_name = true;
   } else if (auto self =
                  context.ConsumeIf(Lex::TokenKind::SelfValueIdentifier)) {
@@ -50,7 +50,7 @@ auto HandleBindingPattern(Context& context) -> void {
   }
   if (!has_name) {
     // Add a placeholder for the name.
-    context.AddLeafNode(NodeKind::Name, *context.position(),
+    context.AddLeafNode(NodeKind::IdentifierName, *context.position(),
                         /*has_error=*/true);
     on_error();
     return;

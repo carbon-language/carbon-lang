@@ -9,11 +9,11 @@ fn Deref(n: i32) {
   // CHECK:STDERR:   *n;
   // CHECK:STDERR:   ^
   *n;
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `() as type`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `()`.
   // CHECK:STDERR:   *();
   // CHECK:STDERR:   ^
   *();
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `{} as type`.
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:3: ERROR: Cannot dereference operand of non-pointer type `{}`.
   // CHECK:STDERR:   *{};
   // CHECK:STDERR:   ^
   *{};
@@ -27,6 +27,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Deref = %Deref}
 // CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

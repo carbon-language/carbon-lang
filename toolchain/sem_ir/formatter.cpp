@@ -139,6 +139,10 @@ class InstNamer {
       return BuiltinKind::FromInt(inst_id.index).label().str();
     }
 
+    if (inst_id == InstId::PackageNamespace) {
+      return "package";
+    }
+
     auto& [inst_scope, inst_name] = insts[inst_id.index];
     if (!inst_name) {
       // This should not happen in valid IR.
@@ -437,6 +441,12 @@ class InstNamer {
                                .name_id);
           continue;
         }
+        case ClassDecl::Kind: {
+          add_inst_name_id(
+              sem_ir_.classes().Get(inst.As<ClassDecl>().class_id).name_id,
+              ".decl");
+          continue;
+        }
         case ClassType::Kind: {
           add_inst_name_id(
               sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
@@ -710,6 +720,12 @@ class Formatter {
     }
   }
 
+  // Print ClassDecl with type-like semantics even though it lacks a type_id.
+  auto FormatInstructionLHS(InstId inst_id, ClassDecl /*inst*/) -> void {
+    FormatInstName(inst_id);
+    out_ << " = ";
+  }
+
   template <typename InstT>
   auto FormatInstructionRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
@@ -773,8 +789,7 @@ class Formatter {
 
     llvm::ArrayRef<InstId> args = sem_ir_.inst_blocks().Get(inst.args_id);
 
-    bool has_return_slot =
-        GetInitializingRepresentation(sem_ir_, inst.type_id).has_return_slot();
+    bool has_return_slot = GetInitRepr(sem_ir_, inst.type_id).has_return_slot();
     InstId return_slot_id = InstId::Invalid;
     if (has_return_slot) {
       return_slot_id = args.back();
@@ -873,7 +888,7 @@ class Formatter {
     sem_ir_.ints().Get(id).print(out_, /*isSigned=*/false);
   }
 
-  auto FormatArg(MemberIndex index) -> void { out_ << index; }
+  auto FormatArg(ElementIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
     out_ << '{';
@@ -950,7 +965,7 @@ class Formatter {
     if (!id.is_valid()) {
       out_ << "invalid";
     } else {
-      out_ << sem_ir_.StringifyType(id, /*in_type_context=*/true);
+      out_ << sem_ir_.StringifyType(id);
     }
   }
 

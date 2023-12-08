@@ -8,9 +8,6 @@ namespace Carbon::Parse {
 
 auto HandleFunctionIntroducer(Context& context) -> void {
   auto state = context.PopState();
-
-  context.AddLeafNode(NodeKind::FunctionIntroducer, context.Consume());
-
   state.state = State::FunctionAfterParams;
   context.PushState(state);
   context.PushState(State::DeclNameAndParamsAsRequired, state.token);
@@ -49,18 +46,6 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::OpenCurlyBrace: {
-      if (auto decl_context = context.GetDeclContext();
-          decl_context == Context::DeclContext::Interface ||
-          decl_context == Context::DeclContext::NamedConstraint) {
-        CARBON_DIAGNOSTIC(
-            MethodImplNotAllowed, Error,
-            "Method implementations are not allowed in interfaces.");
-        context.emitter().Emit(*context.position(), MethodImplNotAllowed);
-        context.RecoverFromDeclError(state, NodeKind::FunctionDecl,
-                                     /*skip_past_likely_end=*/true);
-        break;
-      }
-
       context.AddNode(NodeKind::FunctionDefinitionStart, context.Consume(),
                       state.subtree_start, state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/modifiers.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -12,6 +13,7 @@ auto HandleVariableIntroducer(Context& context, Parse::NodeId parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
+  context.decl_state_stack().Push(DeclState::Var, parse_node);
   return true;
 }
 
@@ -81,6 +83,18 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
 
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableIntroducer>();
+
+  // Process declaration modifiers.
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Var);
+  LimitModifiersOnDecl(context, KeywordModifierSet::Access,
+                       Lex::TokenKind::Var);
+  auto modifiers = context.decl_state_stack().innermost().modifier_set;
+  if (!!(modifiers & KeywordModifierSet::Access)) {
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "access modifier");
+  }
+
+  context.decl_state_stack().Pop(DeclState::Var);
 
   return true;
 }

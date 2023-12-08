@@ -29,7 +29,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Run = %Run}
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
@@ -38,9 +39,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %.loc14_8.1: type = unbound_field_type Class, i32
-// CHECK:STDOUT:   %.loc14_8.2: <unbound field of class Class> = field k, member0
-// CHECK:STDOUT:   %k: <unbound field of class Class> = bind_name k, %.loc14_8.2
+// CHECK:STDOUT:   %.loc14_8.1: type = unbound_element_type Class, i32
+// CHECK:STDOUT:   %.loc14_8.2: <unbound element of class Class> = field_decl k, element0
+// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc14_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

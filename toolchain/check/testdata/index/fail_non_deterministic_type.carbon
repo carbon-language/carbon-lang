@@ -20,6 +20,7 @@ var c: i32 = a[b];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b, .c = %c}
 // CHECK:STDOUT:   %.loc7_17.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.loc7_17.2
 // CHECK:STDOUT:   %a.var: ref (i32, i32) = var a
@@ -27,9 +28,9 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_22: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_25: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc7_26.1: (i32, i32) = tuple_literal (%.loc7_22, %.loc7_25)
-// CHECK:STDOUT:   %.loc7_26.2: ref i32 = tuple_access %a.var, member0
+// CHECK:STDOUT:   %.loc7_26.2: ref i32 = tuple_access %a.var, element0
 // CHECK:STDOUT:   %.loc7_26.3: init i32 = initialize_from %.loc7_22 to %.loc7_26.2
-// CHECK:STDOUT:   %.loc7_26.4: ref i32 = tuple_access %a.var, member1
+// CHECK:STDOUT:   %.loc7_26.4: ref i32 = tuple_access %a.var, element1
 // CHECK:STDOUT:   %.loc7_26.5: init i32 = initialize_from %.loc7_25 to %.loc7_26.4
 // CHECK:STDOUT:   %.loc7_26.6: init (i32, i32) = tuple_init (%.loc7_26.3, %.loc7_26.5) to %a.var
 // CHECK:STDOUT:   %.loc7_26.7: init (i32, i32) = converted %.loc7_26.1, %.loc7_26.6

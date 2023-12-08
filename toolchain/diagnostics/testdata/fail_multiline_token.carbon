@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile %s
+// ARGS: compile --phase=parse %s
 //
 // AUTOUPDATE
 
