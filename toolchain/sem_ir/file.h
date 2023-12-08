@@ -164,59 +164,6 @@ class File : public Printable<File> {
     complete_types_.push_back(object_type_id);
   }
 
-  // Returns the ID of the instruction used to define the specified type.
-  auto GetTypeInstId(TypeId type_id) const -> InstId {
-    if (type_id == TypeId::TypeType) {
-      return InstId::BuiltinTypeType;
-    } else if (type_id == TypeId::Error) {
-      return InstId::BuiltinError;
-    } else if (type_id == TypeId::Invalid) {
-      return InstId::Invalid;
-    } else {
-      return types().Get(type_id).inst_id;
-    }
-  }
-
-  // Returns the instruction used to define the specified type.
-  auto GetType(TypeId type_id) const -> Inst {
-    return insts().Get(GetTypeInstId(type_id));
-  }
-
-  // Returns the instruction used to define the specified type, which is known
-  // to be a particular kind of instruction.
-  template <typename InstKind>
-  auto GetTypeAs(TypeId type_id) const -> InstKind {
-    if constexpr (std::is_same_v<InstKind, Builtin>) {
-      return GetType(type_id).As<InstKind>();
-    } else {
-      // The type is not a builtin, so no need to check for special values.
-      return insts().Get(types().Get(type_id).inst_id).As<InstKind>();
-    }
-  }
-
-  // Returns the instruction used to define the specified type, if it is of a
-  // particular kind.
-  template <typename InstKind>
-  auto TryGetTypeAs(TypeId type_id) const -> std::optional<InstKind> {
-    return GetType(type_id).TryAs<InstKind>();
-  }
-
-  // Gets the value representation to use for a type. This returns an
-  // invalid type if the given type is not complete.
-  auto GetValueRepr(TypeId type_id) const -> ValueRepr {
-    if (type_id.index < 0) {
-      // TypeType and InvalidType are their own value representation.
-      return {.kind = ValueRepr::Copy, .type_id = type_id};
-    }
-    return types().Get(type_id).value_repr;
-  }
-
-  // Determines whether the given type is known to be complete. This does not
-  // determine whether the type could be completed, only whether it has been.
-  auto IsTypeComplete(TypeId type_id) const -> bool {
-    return GetValueRepr(type_id).kind != ValueRepr::Unknown;
-  }
-
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
     return insts()
@@ -384,7 +331,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 // Returns information about the value representation to use for a type.
 inline auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr {
-  return file.GetValueRepr(type_id);
+  return file.types().GetValueRepr(type_id);
 }
 
 // The initializing representation to use when returning by value.
