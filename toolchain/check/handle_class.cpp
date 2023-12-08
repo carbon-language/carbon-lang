@@ -43,6 +43,7 @@ static auto BuildClassDecl(Context& context)
       : !!(modifiers & KeywordModifierSet::Base)   ? SemIR::Class::Base
                                                    : SemIR::Class::Final;
 
+  context.decl_state_stack().Pop(DeclState::Class);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
@@ -114,7 +115,6 @@ static auto BuildClassDecl(Context& context)
 auto HandleClassDecl(Context& context, Parse::NodeId /*parse_node*/) -> bool {
   BuildClassDecl(context);
   context.decl_name_stack().PopScope();
-  context.decl_state_stack().Pop(DeclState::Class);
   return true;
 }
 
@@ -270,7 +270,6 @@ auto HandleClassDefinition(Context& context, Parse::NodeId parse_node) -> bool {
   context.inst_block_stack().Pop();
   context.PopScope();
   context.decl_name_stack().PopScope();
-  context.decl_state_stack().Pop(DeclState::Class);
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);
