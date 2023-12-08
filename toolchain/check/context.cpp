@@ -542,7 +542,7 @@ class TypeCompleter {
  private:
   // Adds `type_id` to the work list, if it's not already complete.
   auto Push(SemIR::TypeId type_id) -> void {
-    if (!context_.sem_ir().IsTypeComplete(type_id)) {
+    if (!context_.types().IsComplete(type_id)) {
       work_list_.push_back({type_id, Phase::AddNestedIncompleteTypes});
     }
   }
@@ -553,14 +553,12 @@ class TypeCompleter {
 
     // We might have enqueued the same type more than once. Just skip the
     // type if it's already complete.
-    if (context_.sem_ir().IsTypeComplete(type_id)) {
+    if (context_.types().IsComplete(type_id)) {
       work_list_.pop_back();
       return true;
     }
 
-    auto inst_id = context_.sem_ir().GetTypeAllowBuiltinTypes(type_id);
-    auto inst = context_.insts().Get(inst_id);
-
+    auto inst = context_.types().GetAsInst(type_id);
     auto old_work_list_size = work_list_.size();
 
     switch (phase) {
@@ -583,14 +581,14 @@ class TypeCompleter {
         // Also complete the value representation type, if necessary. This
         // should never fail: the value representation shouldn't require any
         // additional nested types to be complete.
-        if (!context_.sem_ir().IsTypeComplete(value_rep.type_id)) {
+        if (!context_.types().IsComplete(value_rep.type_id)) {
           work_list_.push_back({value_rep.type_id, Phase::BuildValueRepr});
         }
         // For a pointer representation, the pointee also needs to be complete.
         if (value_rep.kind == SemIR::ValueRepr::Pointer) {
           auto pointee_type_id =
               context_.sem_ir().GetPointeeType(value_rep.type_id);
-          if (!context_.sem_ir().IsTypeComplete(pointee_type_id)) {
+          if (!context_.types().IsComplete(pointee_type_id)) {
             work_list_.push_back({pointee_type_id, Phase::BuildValueRepr});
           }
         }
@@ -684,9 +682,9 @@ class TypeCompleter {
   // Gets the value representation of a nested type, which should already be
   // complete.
   auto GetNestedValueRepr(SemIR::TypeId nested_type_id) const {
-    CARBON_CHECK(context_.sem_ir().IsTypeComplete(nested_type_id))
+    CARBON_CHECK(context_.types().IsComplete(nested_type_id))
         << "Nested type should already be complete";
-    auto value_rep = context_.sem_ir().GetValueRepr(nested_type_id);
+    auto value_rep = context_.types().GetValueRepr(nested_type_id);
     CARBON_CHECK(value_rep.kind != SemIR::ValueRepr::Unknown)
         << "Complete type should have a value representation";
     return value_rep;
@@ -1128,9 +1126,7 @@ auto Context::GetPointerType(Parse::NodeId parse_node,
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
-  SemIR::Inst type_inst =
-      insts().Get(sem_ir_->GetTypeAllowBuiltinTypes(type_id));
-  if (auto const_type = type_inst.TryAs<SemIR::ConstType>()) {
+  if (auto const_type = types().TryGetAs<SemIR::ConstType>(type_id)) {
     return const_type->inner_id;
   }
   return type_id;

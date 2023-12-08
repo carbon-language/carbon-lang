@@ -12,6 +12,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::SemIR {
@@ -150,69 +151,6 @@ struct Interface : public Printable<Interface> {
   bool defined = true;
 };
 
-// The value representation to use when passing by value.
-struct ValueRepr : public Printable<ValueRepr> {
-  auto Print(llvm::raw_ostream& out) const -> void;
-
-  enum Kind : int8_t {
-    // The value representation is not yet known. This is used for incomplete
-    // types.
-    Unknown,
-    // The type has no value representation. This is used for empty types, such
-    // as `()`, where there is no value.
-    None,
-    // The value representation is a copy of the value. On call boundaries, the
-    // value itself will be passed. `type` is the value type.
-    Copy,
-    // The value representation is a pointer to the value. When used as a
-    // parameter, the argument is a reference expression. `type` is the pointee
-    // type.
-    Pointer,
-    // The value representation has been customized, and has the same behavior
-    // as the value representation of some other type.
-    // TODO: This is not implemented or used yet.
-    Custom,
-  };
-
-  enum AggregateKind : int8_t {
-    // This type is not an aggregation of other types.
-    NotAggregate,
-    // This type is an aggregate that holds the value representations of its
-    // elements.
-    ValueAggregate,
-    // This type is an aggregate that holds the object representations of its
-    // elements.
-    ObjectAggregate,
-    // This type is an aggregate for which the value and object representation
-    // of all elements are the same, so it effectively holds both.
-    ValueAndObjectAggregate,
-  };
-
-  // Returns whether this is an aggregate that holds its elements by value.
-  auto elements_are_values() const {
-    return aggregate_kind == ValueAggregate ||
-           aggregate_kind == ValueAndObjectAggregate;
-  }
-
-  // The kind of value representation used by this type.
-  Kind kind = Unknown;
-  // The kind of aggregate representation used by this type.
-  AggregateKind aggregate_kind = AggregateKind::NotAggregate;
-  // The type used to model the value representation.
-  TypeId type_id = TypeId::Invalid;
-};
-
-// Information stored about a TypeId.
-struct TypeInfo : public Printable<TypeInfo> {
-  auto Print(llvm::raw_ostream& out) const -> void;
-
-  // The instruction that defines this type.
-  InstId inst_id;
-  // The value representation for this type. Will be `Unknown` if the type is
-  // not complete.
-  ValueRepr value_repr = ValueRepr();
-};
-
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
@@ -222,6 +160,9 @@ class File : public Printable<File> {
   // Starts a new file for Check::CheckParseTree. Builtins are required.
   explicit File(SharedValueStores& value_stores, std::string filename,
                 const File* builtins);
+
+  File(const File&) = delete;
+  File& operator=(const File&) = delete;
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
@@ -257,39 +198,9 @@ class File : public Printable<File> {
     complete_types_.push_back(object_type_id);
   }
 
-  auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> InstId {
-    if (type_id == TypeId::TypeType) {
-      return InstId::BuiltinTypeType;
-    } else if (type_id == TypeId::Error) {
-      return InstId::BuiltinError;
-    } else if (type_id == TypeId::Invalid) {
-      return InstId::Invalid;
-    } else {
-      return types().Get(type_id).inst_id;
-    }
-  }
-
-  // Gets the value representation to use for a type. This returns an
-  // invalid type if the given type is not complete.
-  auto GetValueRepr(TypeId type_id) const -> ValueRepr {
-    if (type_id.index < 0) {
-      // TypeType and InvalidType are their own value representation.
-      return {.kind = ValueRepr::Copy, .type_id = type_id};
-    }
-    return types().Get(type_id).value_repr;
-  }
-
-  // Determines whether the given type is known to be complete. This does not
-  // determine whether the type could be completed, only whether it has been.
-  auto IsTypeComplete(TypeId type_id) const -> bool {
-    return GetValueRepr(type_id).kind != ValueRepr::Unknown;
-  }
-
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
-    return insts()
-        .GetAs<PointerType>(types().Get(pointer_id).inst_id)
-        .pointee_id;
+    return types().GetAs<PointerType>(pointer_id).pointee_id;
   }
 
   // Produces a string version of a type.
@@ -338,8 +249,8 @@ class File : public Printable<File> {
   }
   auto name_scopes() -> NameScopeStore& { return name_scopes_; }
   auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }
-  auto types() -> ValueStore<TypeId>& { return types_; }
-  auto types() const -> const ValueStore<TypeId>& { return types_; }
+  auto types() -> TypeStore& { return types_; }
+  auto types() const -> const TypeStore& { return types_; }
   auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
   auto type_blocks() const -> const BlockValueStore<TypeBlockId>& {
     return type_blocks_;
@@ -399,12 +310,6 @@ class File : public Printable<File> {
   // Storage for name scopes.
   NameScopeStore name_scopes_;
 
-  // Descriptions of types used in this file.
-  ValueStore<TypeId> types_;
-
-  // Types that were completed in this file.
-  llvm::SmallVector<TypeId> complete_types_;
-
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId> type_blocks_;
@@ -423,6 +328,12 @@ class File : public Printable<File> {
   // Storage for instructions that represent computed global constants, such as
   // types.
   ConstantStore constants_;
+
+  // Descriptions of types used in this file.
+  TypeStore types_ = TypeStore(&insts_);
+
+  // Types that were completed in this file.
+  llvm::SmallVector<TypeId> complete_types_;
 };
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md
@@ -459,7 +370,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 // Returns information about the value representation to use for a type.
 inline auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr {
-  return file.GetValueRepr(type_id);
+  return file.types().GetValueRepr(type_id);
 }
 
 // The initializing representation to use when returning by value.
