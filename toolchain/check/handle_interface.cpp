@@ -120,8 +120,7 @@ auto HandleInterfaceDefinitionStart(Context& context, Parse::NodeId parse_node)
 
   context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, interface_id);
-  // TODO: do we need this for an interface?
-  context.args_type_info_stack().Push();
+  // TODO: Perhaps use the args_type_info_stack for a witness table.
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:
@@ -138,8 +137,6 @@ auto HandleInterfaceDefinitionStart(Context& context, Parse::NodeId parse_node)
 
 auto HandleInterfaceDefinition(Context& context, Parse::NodeId /*parse_node*/)
     -> bool {
-  // TODO: should we do something with the return value?
-  context.args_type_info_stack().Pop();
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();
   context.inst_block_stack().Pop();

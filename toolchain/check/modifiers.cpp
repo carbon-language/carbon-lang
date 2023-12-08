@@ -71,11 +71,9 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind)
     return;
   }
 
-  if (auto kind = context.current_scope_kind()) {
-    if (*kind == SemIR::ClassDecl::Kind) {
-      // Both `private` and `protected` allowed in a class definition.
-      return;
-    }
+  if (context.CurrentScopeIs<SemIR::ClassDecl>()) {
+    // Both `private` and `protected` allowed in a class definition.
+    return;
   }
 
   // Otherwise neither `private` nor `protected` allowed.
@@ -88,11 +86,9 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind)
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          Lex::TokenKind decl_kind) -> void {
-  if (auto kind = context.current_scope_kind()) {
-    if (*kind == SemIR::InterfaceDecl::Kind) {
-      // Both `default` and `final` allowed in an interface definition.
-      return;
-    }
+  if (context.CurrentScopeIs<SemIR::InterfaceDecl>()) {
+    // Both `default` and `final` allowed in an interface definition.
+    return;
   }
   ForbidModifiersOnDecl(context, KeywordModifierSet::Interface, decl_kind,
                         " outside of an interface");
