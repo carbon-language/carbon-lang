@@ -245,6 +245,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
 //
 // [Generic]PatternBinding and ParamListComma may repeat with ParamListComma
 // as a separator.
+//
+// TODO: rename ParamList to TuplePattern to reflect wider usage.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0, CARBON_TOKEN(OpenParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
@@ -285,7 +287,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 // `let`:
 //   LetIntroducer
 //   _repeated_ _external_: modifier
-//   _external_: BindingPattern
+//   _external_: BindingPattern or ParamList
 //   LetInitializer
 //   _external_: expression
 // LetDecl
@@ -301,7 +303,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 //   VariableIntroducer
 //   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
-//   _external_: BindingPattern
+//   _external_: BindingPattern or ParamList
 //     VariableInitializer
 //     _external_: expression
 //   _optional_

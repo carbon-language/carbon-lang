@@ -39,14 +39,6 @@ class Context {
   // Possible return values for FindListToken.
   enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
-  // Supported kinds for HandleBindingPattern.
-  enum class BindingPatternKind : int8_t {
-    ImplicitParam,
-    Param,
-    Variable,
-    Let
-  };
-
   // Used for restricting ordering of `package` and `import` directives.
   enum class PackagingState : int8_t {
     FileStart,
@@ -294,11 +286,6 @@ class Context {
 
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
-
-  // For HandleBindingPattern, tries to consume a wrapping keyword.
-  auto ConsumeIfBindingPatternKeyword(Lex::TokenKind keyword_token,
-                                      State keyword_state, int subtree_start)
-      -> void;
 
   // Emits a diagnostic for a declaration missing a semi.
   auto EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
