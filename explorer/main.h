@@ -13,7 +13,7 @@ namespace Carbon {
 
 // Runs explorer. relative_prelude_path must be POSIX-style, not native, and
 // will be translated to native.
-auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
+auto ExplorerMain(int argc, const char** argv, void* static_for_main_addr,
                   llvm::StringRef relative_prelude_path) -> int;
 
 // Wrapped by the above, but without some process init. This is used directly by
