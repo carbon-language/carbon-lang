@@ -47,51 +47,33 @@ auto NodeKind::child_count() const -> int32_t {
   return child_count;
 }
 
-// NOLINTNEXTLINE(readability-function-size): It's hard to extract macros.
-auto CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
-                                bool has_error) -> void {
-  // As a special-case, a placeholder node may correspond to any lexer token.
-  if (node_kind == NodeKind::Placeholder) {
-    return;
-  }
-
-  switch (node_kind) {
-    // Use `CARBON_LOG CARBON_ANY_TOKEN` to discover which combinations happen
-    // in practice.
-#define CARBON_LOG                                                        \
-  llvm::errs() << "ZZZ: Created parse node with NodeKind " << node_kind   \
-               << " and has_error " << has_error << " for lexical token " \
-               << token_kind << "\n";
-
-#define CARBON_TOKEN(Expected)                  \
-  if (token_kind == Lex::TokenKind::Expected) { \
-    return;                                     \
-  }
-
-#define CARBON_ANY_TOKEN_ON_ERROR \
-  if (has_error) {                \
-    return;                       \
-  }
-
-#define CARBON_CASE(Name, MatchActions)                    \
-  case NodeKind::Name:                                     \
-    MatchActions; /* NOLINT(bugprone-macro-parentheses) */ \
-    break;
-
-#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, MatchActions) \
-  CARBON_CASE(Name, MatchActions)
-
-#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, MatchActions) \
-  CARBON_CASE(Name, MatchActions)
-
+auto NodeKind::CheckMatchesTokenKind(Lex::TokenKind token_kind, bool has_error)
+    -> void {
+  static constexpr Lex::TokenKind TokenIfValid[] = {
+#define CARBON_ONLY_IF_VALID(LexTokenKind) LexTokenKind
+#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, LexTokenKind) \
+  Lex::TokenKind::LexTokenKind,
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, LexTokenKind) \
+  Lex::TokenKind::LexTokenKind,
 #include "toolchain/parse/node_kind.def"
+  };
+  static constexpr Lex::TokenKind TokenIfError[] = {
+#define CARBON_ONLY_IF_VALID(LexTokenKind) Error
+#define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, LexTokenKind) \
+  Lex::TokenKind::LexTokenKind,
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, LexTokenKind) \
+  Lex::TokenKind::LexTokenKind,
+#include "toolchain/parse/node_kind.def"
+  };
 
-#undef CARBON_LOG
-#undef CARBON_CASE
-  }
-  CARBON_FATAL() << "Created parse node with NodeKind " << node_kind
-                 << " and has_error " << has_error
-                 << " for unexpected lexical token " << token_kind;
+  Lex::TokenKind expected_token_kind =
+      has_error ? TokenIfError[AsInt()] : TokenIfValid[AsInt()];
+  // Error indicates that the kind shouldn't be enforced.
+  CARBON_CHECK(Lex::TokenKind::Error == expected_token_kind ||
+               token_kind == expected_token_kind)
+      << "Created parse node with NodeKind " << *this << " and has_error "
+      << has_error << " for lexical token kind " << token_kind
+      << ", but expected token kind " << expected_token_kind;
 }
 
 }  // namespace Carbon::Parse
