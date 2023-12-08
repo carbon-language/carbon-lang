@@ -16,8 +16,7 @@ static auto HandleParenCondition(Context& context, NodeKind start_kind,
   if (open_paren) {
     state.token = *open_paren;
   }
-  state.state = finish_state;
-  context.PushState(state);
+  context.PushState(state, finish_state);
 
   if (!open_paren && context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     // For an open curly, assume the condition was completely omitted.

@@ -8,9 +8,7 @@ namespace Carbon::Parse {
 
 auto HandleNamespace(Context& context) -> void {
   auto state = context.PopState();
-  state.state = State::NamespaceFinish;
-  context.PushState(state);
-
+  context.PushState(state, State::NamespaceFinish);
   context.PushState(State::DeclNameAndParamsAsNone, state.token);
 }
 

@@ -85,8 +85,7 @@ static auto ApplyIntroducer(Context& context, Context::StateStackEntry state,
   context.ReplacePlaceholderNode(state.subtree_start, introducer_kind,
                                  context.Consume());
   // Reuse state here to retain its `subtree_start`.
-  state.state = next_state;
-  context.PushState(state);
+  context.PushState(state, next_state);
 }
 
 // Handles `base` as a declaration.

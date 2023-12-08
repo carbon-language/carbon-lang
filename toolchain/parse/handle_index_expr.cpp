@@ -9,8 +9,7 @@ namespace Carbon::Parse {
 
 auto HandleIndexExpr(Context& context) -> void {
   auto state = context.PopState();
-  state.state = State::IndexExprFinish;
-  context.PushState(state);
+  context.PushState(state, State::IndexExprFinish);
   context.AddNode(NodeKind::IndexExprStart,
                   context.ConsumeChecked(Lex::TokenKind::OpenSquareBracket),
                   state.subtree_start, state.has_error);

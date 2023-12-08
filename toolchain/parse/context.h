@@ -273,6 +273,12 @@ class Context {
         << "Excessive stack size: likely infinite loop";
   }
 
+  // Pushes a constructed state onto the stack, with a different parse state.
+  auto PushState(StateStackEntry state_entry, State parse_state) -> void {
+    state_entry.state = parse_state;
+    PushState(state_entry);
+  }
+
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 

@@ -182,26 +182,22 @@ auto HandleExprInPostfixLoop(Context& context) -> void {
   switch (context.PositionKind()) {
     case Lex::TokenKind::Period: {
       context.PushState(state);
-      state.state = State::PeriodAsExpr;
-      context.PushState(state);
+      context.PushState(state, State::PeriodAsExpr);
       break;
     }
     case Lex::TokenKind::MinusGreater: {
       context.PushState(state);
-      state.state = State::ArrowExpr;
-      context.PushState(state);
+      context.PushState(state, State::ArrowExpr);
       break;
     }
     case Lex::TokenKind::OpenParen: {
       context.PushState(state);
-      state.state = State::CallExpr;
-      context.PushState(state);
+      context.PushState(state, State::CallExpr);
       break;
     }
     case Lex::TokenKind::OpenSquareBracket: {
       context.PushState(state);
-      state.state = State::IndexExpr;
-      context.PushState(state);
+      context.PushState(state, State::IndexExpr);
       break;
     }
     default: {
@@ -276,8 +272,7 @@ auto HandleExprLoop(Context& context) -> void {
                       state.subtree_start, state.has_error);
     }
 
-    state.state = State::ExprLoopForBinary;
-    context.PushState(state);
+    context.PushState(state, State::ExprLoopForBinary);
     context.PushStateForExpr(operator_precedence);
   } else {
     context.AddNode(NodeKind::PostfixOperator, state.token, state.subtree_start,
@@ -292,9 +287,8 @@ auto HandleExprLoopForBinary(Context& context) -> void {
 
   context.AddNode(NodeKind::InfixOperator, state.token, state.subtree_start,
                   state.has_error);
-  state.state = State::ExprLoop;
   state.has_error = false;
-  context.PushState(state);
+  context.PushState(state, State::ExprLoop);
 }
 
 auto HandleExprLoopForPrefix(Context& context) -> void {
@@ -302,9 +296,8 @@ auto HandleExprLoopForPrefix(Context& context) -> void {
 
   context.AddNode(NodeKind::PrefixOperator, state.token, state.subtree_start,
                   state.has_error);
-  state.state = State::ExprLoop;
   state.has_error = false;
-  context.PushState(state);
+  context.PushState(state, State::ExprLoop);
 }
 
 auto HandleIfExprFinishCondition(Context& context) -> void {

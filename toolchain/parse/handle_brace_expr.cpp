@@ -8,9 +8,7 @@ namespace Carbon::Parse {
 
 auto HandleBraceExpr(Context& context) -> void {
   auto state = context.PopState();
-
-  state.state = State::BraceExprFinishAsUnknown;
-  context.PushState(state);
+  context.PushState(state, State::BraceExprFinishAsUnknown);
 
   CARBON_CHECK(context.ConsumeAndAddLeafNodeIf(
       Lex::TokenKind::OpenCurlyBrace,
@@ -39,9 +37,8 @@ static auto HandleBraceExprParamError(Context& context,
       (is_value || is_unknown) ? llvm::StringLiteral("`.field = value`")
                                : llvm::StringLiteral(""));
 
-  state.state = param_finish_state;
   state.has_error = true;
-  context.PushState(state);
+  context.PushState(state, param_finish_state);
 }
 
 // Handles BraceExprParamAs(Type|Value|Unknown).
@@ -54,8 +51,7 @@ static auto HandleBraceExprParam(Context& context, State after_designator_state,
     return;
   }
 
-  state.state = after_designator_state;
-  context.PushState(state);
+  context.PushState(state, after_designator_state);
   context.PushState(State::PeriodAsStruct);
 }
 
@@ -85,8 +81,7 @@ static auto HandleBraceExprParamAfterDesignator(Context& context,
         {Lex::TokenKind::Equal, Lex::TokenKind::Colon, Lex::TokenKind::Comma});
     if (!recovery_pos ||
         context.tokens().GetKind(*recovery_pos) == Lex::TokenKind::Comma) {
-      state.state = param_finish_state;
-      context.PushState(state);
+      context.PushState(state, param_finish_state);
       return;
     }
     context.SkipTo(*recovery_pos);
@@ -126,9 +121,8 @@ static auto HandleBraceExprParamAfterDesignator(Context& context,
 
   // Struct type fields and value fields use the same grammar except
   // that one has a `:` separator and the other has an `=` separator.
-  state.state = param_finish_state;
   state.token = context.Consume();
-  context.PushState(state);
+  context.PushState(state, param_finish_state);
   context.PushState(State::Expr);
 }
 
