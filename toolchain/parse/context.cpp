@@ -88,6 +88,22 @@ auto Context::AddNode(NodeKind kind, Lex::TokenIndex token, int subtree_start,
   }
 }
 
+auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
+                                     Lex::TokenIndex token, bool has_error)
+    -> void {
+  CARBON_CHECK(position >= 0 && position < tree_->size())
+      << "position: " << position << " size: " << tree_->size();
+  auto* node_impl = &tree_->node_impls_[position];
+  CARBON_CHECK(node_impl->subtree_size == 1);
+  CARBON_CHECK(node_impl->kind == NodeKind::Placeholder);
+  node_impl->kind = kind;
+  node_impl->has_error = has_error;
+  node_impl->token = token;
+  if (has_error) {
+    tree_->has_errors_ = true;
+  }
+}
+
 auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
                                      NodeKind start_kind)
     -> std::optional<Lex::TokenIndex> {
@@ -148,16 +164,6 @@ auto Context::ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex> {
     return std::nullopt;
   }
   return Consume();
-}
-
-auto Context::ConsumeIfBindingPatternKeyword(Lex::TokenKind keyword_token,
-                                             State keyword_state,
-                                             int subtree_start) -> void {
-  if (auto token = ConsumeIf(keyword_token)) {
-    PushState(Context::StateStackEntry(
-        keyword_state, PrecedenceGroup::ForTopLevelExpr(),
-        PrecedenceGroup::ForTopLevelExpr(), *token, subtree_start));
-  }
 }
 
 auto Context::FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
@@ -399,30 +405,6 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
     return PositionIs(close_kind) ? ListTokenKind::CommaClose
                                   : ListTokenKind::Comma;
   }
-}
-
-auto Context::GetDeclContext() -> DeclContext {
-  // i == 0 is the file-level DeclScopeLoop. Additionally, i == 1 can be
-  // skipped because it will never be a DeclScopeLoop.
-  for (int i = state_stack_.size() - 1; i > 1; --i) {
-    // The declaration context is always the state _above_ a
-    // DeclScopeLoop.
-    if (state_stack_[i].state == State::DeclScopeLoop) {
-      switch (state_stack_[i - 1].state) {
-        case State::TypeDefinitionFinishAsClass:
-          return DeclContext::Class;
-        case State::TypeDefinitionFinishAsInterface:
-          return DeclContext::Interface;
-        case State::TypeDefinitionFinishAsNamedConstraint:
-          return DeclContext::NamedConstraint;
-        default:
-          llvm_unreachable("Missing handling for a declaration scope");
-      }
-    }
-  }
-  CARBON_CHECK(!state_stack_.empty() &&
-               state_stack_[0].state == State::DeclScopeLoop);
-  return DeclContext::File;
 }
 
 auto Context::RecoverFromDeclError(StateStackEntry state,

@@ -6,46 +6,28 @@
 
 namespace Carbon::Parse {
 
-// Handles BindingPatternAs(ImplicitParam|FunctionParam|Variable|Let).
-static auto HandleBindingPattern(Context& context,
-                                 Context::BindingPatternKind pattern_kind)
-    -> void {
+auto HandleBindingPattern(Context& context) -> void {
   auto state = context.PopState();
 
   // Parameters may have keywords prefixing the pattern. They become the parent
   // for the full BindingPattern.
-  if (pattern_kind != Context::BindingPatternKind::Variable) {
-    context.ConsumeIfBindingPatternKeyword(Lex::TokenKind::Template,
-                                           State::BindingPatternTemplate,
-                                           state.subtree_start);
-    context.ConsumeIfBindingPatternKeyword(Lex::TokenKind::Addr,
-                                           State::BindingPatternAddress,
-                                           state.subtree_start);
+  if (auto token = context.ConsumeIf(Lex::TokenKind::Template)) {
+    context.PushState(Context::StateStackEntry(
+        State::BindingPatternTemplate, PrecedenceGroup::ForTopLevelExpr(),
+        PrecedenceGroup::ForTopLevelExpr(), *token, state.subtree_start));
+  }
+
+  if (auto token = context.ConsumeIf(Lex::TokenKind::Addr)) {
+    context.PushState(Context::StateStackEntry(
+        State::BindingPatternAddress, PrecedenceGroup::ForTopLevelExpr(),
+        PrecedenceGroup::ForTopLevelExpr(), *token, state.subtree_start));
   }
 
   // Handle an invalid pattern introducer for parameters and variables.
   auto on_error = [&]() {
-    switch (pattern_kind) {
-      case Context::BindingPatternKind::ImplicitParam:
-      case Context::BindingPatternKind::Param: {
-        CARBON_DIAGNOSTIC(ExpectedParamName, Error,
-                          "Expected parameter declaration.");
-        context.emitter().Emit(*context.position(), ExpectedParamName);
-        break;
-      }
-      case Context::BindingPatternKind::Variable: {
-        CARBON_DIAGNOSTIC(ExpectedVariableName, Error,
-                          "Expected pattern in `var` declaration.");
-        context.emitter().Emit(*context.position(), ExpectedVariableName);
-        break;
-      }
-      case Context::BindingPatternKind::Let: {
-        CARBON_DIAGNOSTIC(ExpectedLetBindingName, Error,
-                          "Expected pattern in `let` declaration.");
-        context.emitter().Emit(*context.position(), ExpectedLetBindingName);
-        break;
-      }
-    }
+    CARBON_DIAGNOSTIC(ExpectedBindingPattern, Error,
+                      "Expected binding pattern.");
+    context.emitter().Emit(*context.position(), ExpectedBindingPattern);
     // Add a placeholder for the type.
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
@@ -57,7 +39,7 @@ static auto HandleBindingPattern(Context& context,
   // The first item should be an identifier or `self`.
   bool has_name = false;
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-    context.AddLeafNode(NodeKind::Name, *identifier);
+    context.AddLeafNode(NodeKind::IdentifierName, *identifier);
     has_name = true;
   } else if (auto self =
                  context.ConsumeIf(Lex::TokenKind::SelfValueIdentifier)) {
@@ -68,7 +50,7 @@ static auto HandleBindingPattern(Context& context,
   }
   if (!has_name) {
     // Add a placeholder for the name.
-    context.AddLeafNode(NodeKind::Name, *context.position(),
+    context.AddLeafNode(NodeKind::IdentifierName, *context.position(),
                         /*has_error=*/true);
     on_error();
     return;
@@ -87,22 +69,6 @@ static auto HandleBindingPattern(Context& context,
     on_error();
     return;
   }
-}
-
-auto HandleBindingPatternAsImplicitParam(Context& context) -> void {
-  HandleBindingPattern(context, Context::BindingPatternKind::ImplicitParam);
-}
-
-auto HandleBindingPatternAsParam(Context& context) -> void {
-  HandleBindingPattern(context, Context::BindingPatternKind::Param);
-}
-
-auto HandleBindingPatternAsVariable(Context& context) -> void {
-  HandleBindingPattern(context, Context::BindingPatternKind::Variable);
-}
-
-auto HandleBindingPatternAsLet(Context& context) -> void {
-  HandleBindingPattern(context, Context::BindingPatternKind::Let);
 }
 
 // Handles BindingPatternFinishAs(Generic|Regular).

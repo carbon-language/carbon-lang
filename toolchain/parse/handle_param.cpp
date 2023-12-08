@@ -16,13 +16,11 @@ static auto HandleParam(Context& context, State pattern_state,
 }
 
 auto HandleParamAsImplicit(Context& context) -> void {
-  HandleParam(context, State::BindingPatternAsImplicitParam,
-              State::ParamFinishAsImplicit);
+  HandleParam(context, State::BindingPattern, State::ParamFinishAsImplicit);
 }
 
 auto HandleParamAsRegular(Context& context) -> void {
-  HandleParam(context, State::BindingPatternAsParam,
-              State::ParamFinishAsRegular);
+  HandleParam(context, State::BindingPattern, State::ParamFinishAsRegular);
 }
 
 // Handles ParamFinishAs(Implicit|Regular).

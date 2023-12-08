@@ -37,20 +37,19 @@ static auto GetAggregateElement(FunctionContext& context,
 
     case SemIR::ExprCategory::Value: {
       auto value_rep =
-          SemIR::GetValueRepresentation(context.sem_ir(), aggr_inst.type_id());
-      CARBON_CHECK(value_rep.aggregate_kind !=
-                   SemIR::ValueRepresentation::NotAggregate)
+          SemIR::GetValueRepr(context.sem_ir(), aggr_inst.type_id());
+      CARBON_CHECK(value_rep.aggregate_kind != SemIR::ValueRepr::NotAggregate)
           << "aggregate type should have aggregate value representation";
       switch (value_rep.kind) {
-        case SemIR::ValueRepresentation::Unknown:
+        case SemIR::ValueRepr::Unknown:
           CARBON_FATAL() << "Lowering access to incomplete aggregate type";
-        case SemIR::ValueRepresentation::None:
+        case SemIR::ValueRepr::None:
           return aggr_value;
-        case SemIR::ValueRepresentation::Copy:
+        case SemIR::ValueRepr::Copy:
           // We are holding the values of the aggregate directly, elementwise.
           return context.builder().CreateExtractValue(aggr_value, idx.index,
                                                       name);
-        case SemIR::ValueRepresentation::Pointer: {
+        case SemIR::ValueRepr::Pointer: {
           // The value representation is a pointer to an aggregate that we want
           // to index into.
           auto pointee_type_id =
@@ -67,12 +66,11 @@ static auto GetAggregateElement(FunctionContext& context,
 
           // `elem_ptr` points to a value representation. Load it.
           auto result_value_type_id =
-              SemIR::GetValueRepresentation(context.sem_ir(), result_type_id)
-                  .type_id;
+              SemIR::GetValueRepr(context.sem_ir(), result_type_id).type_id;
           return context.builder().CreateLoad(
               context.GetType(result_value_type_id), elem_ptr, name + ".load");
         }
-        case SemIR::ValueRepresentation::Custom:
+        case SemIR::ValueRepr::Custom:
           CARBON_FATAL()
               << "Aggregate should never have custom value representation";
       }
@@ -112,8 +110,7 @@ auto HandleClassElementAccess(FunctionContext& context, SemIR::InstId inst_id,
       inst_id,
       GetAggregateElement(
           context, inst.base_id, inst.index, inst.type_id,
-          GetStructFieldName(context, class_info.object_representation_id,
-                             inst.index)));
+          GetStructFieldName(context, class_info.object_repr_id, inst.index)));
 }
 
 static auto EmitAggregateInitializer(FunctionContext& context,
@@ -122,14 +119,13 @@ static auto EmitAggregateInitializer(FunctionContext& context,
                                      llvm::Twine name) -> llvm::Value* {
   auto* llvm_type = context.GetType(type_id);
 
-  switch (
-      SemIR::GetInitializingRepresentation(context.sem_ir(), type_id).kind) {
-    case SemIR::InitializingRepresentation::None:
-    case SemIR::InitializingRepresentation::InPlace:
+  switch (SemIR::GetInitRepr(context.sem_ir(), type_id).kind) {
+    case SemIR::InitRepr::None:
+    case SemIR::InitRepr::InPlace:
       // TODO: Add a helper to poison a value slot.
       return llvm::PoisonValue::get(llvm_type);
 
-    case SemIR::InitializingRepresentation::ByCopy: {
+    case SemIR::InitRepr::ByCopy: {
       auto refs = context.sem_ir().inst_blocks().Get(refs_id);
       CARBON_CHECK(refs.size() == 1)
           << "Unexpected size for aggregate with by-copy value representation";
@@ -149,13 +145,13 @@ auto HandleClassInit(FunctionContext& context, SemIR::InstId inst_id,
                                         "class.init"));
 }
 
-auto HandleBase(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::Base /*inst*/) -> void {
+auto HandleBaseDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                    SemIR::BaseDecl /*inst*/) -> void {
   // No action to perform.
 }
 
-auto HandleField(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                 SemIR::Field /*inst*/) -> void {
+auto HandleFieldDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                     SemIR::FieldDecl /*inst*/) -> void {
   // No action to perform.
 }
 
@@ -177,20 +173,19 @@ auto HandleStructLiteral(FunctionContext& /*context*/,
 
 // Emits the value representation for a struct or tuple whose elements are the
 // contents of `refs_id`.
-auto EmitAggregateValueRepresentation(FunctionContext& context,
-                                      SemIR::TypeId type_id,
-                                      SemIR::InstBlockId refs_id,
-                                      llvm::Twine name) -> llvm::Value* {
-  auto value_rep = SemIR::GetValueRepresentation(context.sem_ir(), type_id);
+auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
+                            SemIR::InstBlockId refs_id, llvm::Twine name)
+    -> llvm::Value* {
+  auto value_rep = SemIR::GetValueRepr(context.sem_ir(), type_id);
   switch (value_rep.kind) {
-    case SemIR::ValueRepresentation::Unknown:
+    case SemIR::ValueRepr::Unknown:
       CARBON_FATAL() << "Incomplete aggregate type in lowering";
 
-    case SemIR::ValueRepresentation::None:
+    case SemIR::ValueRepr::None:
       // TODO: Add a helper to get a "no value representation" value.
       return llvm::PoisonValue::get(context.GetType(value_rep.type_id));
 
-    case SemIR::ValueRepresentation::Copy: {
+    case SemIR::ValueRepr::Copy: {
       auto refs = context.sem_ir().inst_blocks().Get(refs_id);
       CARBON_CHECK(refs.size() == 1)
           << "Unexpected size for aggregate with by-copy value representation";
@@ -201,7 +196,7 @@ auto EmitAggregateValueRepresentation(FunctionContext& context,
           context.GetValue(refs[0]), {0});
     }
 
-    case SemIR::ValueRepresentation::Pointer: {
+    case SemIR::ValueRepr::Pointer: {
       auto pointee_type_id = context.sem_ir().GetPointeeType(value_rep.type_id);
       auto* llvm_value_rep_type = context.GetType(pointee_type_id);
 
@@ -219,7 +214,7 @@ auto EmitAggregateValueRepresentation(FunctionContext& context,
       return alloca;
     }
 
-    case SemIR::ValueRepresentation::Custom:
+    case SemIR::ValueRepr::Custom:
       CARBON_FATAL()
           << "Aggregate should never have custom value representation";
   }
@@ -234,9 +229,8 @@ auto HandleStructInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleStructValue(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::StructValue inst) -> void {
-  context.SetLocal(
-      inst_id, EmitAggregateValueRepresentation(context, inst.type_id,
-                                                inst.elements_id, "struct"));
+  context.SetLocal(inst_id, EmitAggregateValueRepr(context, inst.type_id,
+                                                   inst.elements_id, "struct"));
 }
 
 auto HandleStructTypeField(FunctionContext& /*context*/,
@@ -277,9 +271,8 @@ auto HandleTupleInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleTupleValue(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::TupleValue inst) -> void {
-  context.SetLocal(inst_id,
-                   EmitAggregateValueRepresentation(context, inst.type_id,
-                                                    inst.elements_id, "tuple"));
+  context.SetLocal(inst_id, EmitAggregateValueRepr(context, inst.type_id,
+                                                   inst.elements_id, "tuple"));
 }
 
 }  // namespace Carbon::Lower

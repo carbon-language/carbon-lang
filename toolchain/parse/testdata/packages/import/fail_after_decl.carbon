@@ -18,7 +18,7 @@ import B;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'A'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'A'},
 // CHECK:STDOUT:         {kind: 'ParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},

@@ -24,8 +24,8 @@ static auto ValidateIntLiteralBound(Context& context, Parse::NodeId parse_node,
   const auto& index_val = context.ints().Get(index_inst.int_id);
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(IndexOutOfBounds, Error,
-                      "Index `{0}` is past the end of `{1}`.", llvm::APSInt,
-                      std::string);
+                      "Index `{0}` is past the end of type `{1}`.",
+                      llvm::APSInt, std::string);
     context.emitter().Emit(
         parse_node, IndexOutOfBounds,
         llvm::APSInt(index_val, /*isUnsigned=*/true),
@@ -106,7 +106,7 @@ auto HandleIndexExpr(Context& context, Parse::NodeId parse_node) -> bool {
     default: {
       if (operand_type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
-                          "`{0}` does not support indexing.", std::string);
+                          "Type `{0}` does not support indexing.", std::string);
         context.emitter().Emit(parse_node, TypeNotIndexable,
                                context.sem_ir().StringifyType(operand_type_id));
       }

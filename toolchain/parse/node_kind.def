@@ -17,9 +17,12 @@
 //   - CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount, LexTokenKinds)
 //     Defines a parse node with a set number of children, often 0. This count
 //     must be correct even when the node contains errors.
-//   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, TokenIndex)
+//   - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKinds)
 //     Defines a parse node that corresponds to a token that is a single-token
 //     literal. The token is wrapped for LexTokenKinds.
+//   - CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)
+//     A token-based modifier. The Name is the TokenKind, and will be appended
+//     with "Modifier" for the parse kind.
 //
 //   In both cases, LexTokenKinds says which Lex::TokenKind values that this
 //   parse node can correspond to, and is a sequence of:
@@ -60,6 +63,16 @@
   CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0, LexTokenKinds)
 #endif
 
+// This is expected to be used with something like:
+//
+//   // Use x-macros to handle modifier cases.
+//   #define CARBON_PARSE_NODE_KIND(...)
+//   #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) <code>
+#ifndef CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) \
+  CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name##Modifier, 0, CARBON_TOKEN(Name))
+#endif
+
 // The start of the file.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0, CARBON_TOKEN(FileStart))
 
@@ -70,18 +83,45 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, CARBON_TOKEN(FileEnd))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0,
                                    CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
+// An invalid subtree. Always has an error.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParseStart, 0,
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+CARBON_PARSE_NODE_KIND_BRACKET(InvalidParseSubtree, InvalidParseStart,
+                               CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+
+// A placeholder node to be replaced.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Placeholder, 0, CARBON_ANY_TOKEN)
+
 // An empty declaration, such as `;`.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDecl, 0,
                                    CARBON_TOKEN(Semi)
                                        CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
-// A name in a non-expression context, such as a declaration.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0,
+// An identifier name in a non-expression context, such as a declaration.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IdentifierName, 0,
                                    CARBON_TOKEN(Identifier)
                                        CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
-// A name in an expression context.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0, CARBON_TOKEN(Identifier))
+// An identifier name in an expression context.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IdentifierNameExpr, 0,
+                                   CARBON_TOKEN(Identifier))
+
+// The `self` value and `Self` type identifier keywords. Typically of the form
+// `self: Self`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueName, 0,
+                                   CARBON_TOKEN(SelfValueIdentifier))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpr, 0,
+                                   CARBON_TOKEN(SelfValueIdentifier))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpr, 0,
+                                   CARBON_TOKEN(SelfTypeIdentifier))
+
+// The `base` value keyword, introduced by `base: B`. Typically referenced in
+// an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
+// declared name, as in `{.base: partial B}`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseName, 0, CARBON_TOKEN(Base))
+
+// The `package` keyword in an expression.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageExpr, 0, CARBON_TOKEN(Package))
 
 // ----------------------------------------------------------------------------
 
@@ -98,10 +138,12 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0, CARBON_TOKEN(Identifier))
 // tree.h for more information.
 //
 // A parse node kind may be preceded by:
+// -  `_optional_` if this node (or nodes) may be present or omitted in valid
+//    parses, depending on which tokens are in the source code.
+// -  `_repeated_` if this node (or nodes) may be repeated or omitted in valid
+//    parses, depending on which tokens are in the source code.
 // -  `_external_:` if this node is the child of multiple kinds of nodes and
 //    is documented separately.
-// -  `_optional_` if this node may be present or omitted in valid parses,
-//    depending on which tokens are in the source code.
 //
 // There is generally a close correspondence between handling of tokens and the
 // creation of non-external nodes in a given block.
@@ -151,16 +193,17 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, CARBON_TOKEN(Library))
 
 // `namespace`:
 //   NamespaceStart
+//   _repeated_ _external_: modifier
 //   _external_: Name or QualifiedDecl
 // Namespace
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0, CARBON_TOKEN(Namespace))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2,
-                                   CARBON_TOKEN(Semi)
-                                       CARBON_IF_ERROR(CARBON_TOKEN(Namespace)))
+CARBON_PARSE_NODE_KIND_BRACKET(Namespace, NamespaceStart,
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_TOKEN(Namespace)))
 
 // A code block:
 //   CodeBlockStart
-//   _external_: statements
+//   _repeated_ _external_: statement
 // CodeBlock
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CodeBlockStart, 0,
                                    CARBON_TOKEN(OpenCurlyBrace)
@@ -171,12 +214,13 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 
 // `fn`:
 //     FunctionIntroducer
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //     _external_: ParamList
 //       _external_: type expression
 //     ReturnType
 //   FunctionDefinitionStart
-//   _external_: statements
+//   _repeated_ _external_: statement
 // FunctionDefinition
 //
 // The above is the structure for a definition; for a declaration,
@@ -194,12 +238,15 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
 
 // A parameter list, possibly implicit:
 //   [Implicit]ParamListStart
-//   _external_: [Generic]BindingPattern
-//   ParamListComma
+//     _external_: [Generic]BindingPattern
+//     ParamListComma
+//   _repeated_
 // [Implicit]ParamList
 //
-// Exprs and ParamListComma may repeat with ParamListComma as a
-// separator.
+// [Generic]PatternBinding and ParamListComma may repeat with ParamListComma
+// as a separator.
+//
+// TODO: rename ParamList to TuplePattern to reflect wider usage.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0, CARBON_TOKEN(OpenParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
@@ -239,10 +286,13 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 
 // `let`:
 //   LetIntroducer
-//   _external_: BindingPattern
+//   _repeated_ _external_: modifier
+//   _external_: BindingPattern or ParamList
 //   LetInitializer
 //   _external_: expression
 // LetDecl
+//
+// Modifier keywords only appear for `let` declarations, not `let` statements.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetIntroducer, 0, CARBON_TOKEN(Let))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
@@ -251,12 +301,16 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 
 // `var` and `returned var`:
 //   VariableIntroducer
+//   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
-//   _external_: BindingPattern
-//   _optional_ VariableInitializer
-//   _optional_ _external_: expression
+//   _external_: BindingPattern or ParamList
+//     VariableInitializer
+//     _external_: expression
+//   _optional_
 // VariableDecl
 //
+// Access and declaration modifier keywords only appear for `var` declarations,
+// whereas the returned modifier only appears on `var` statements.
 // The VariableInitializer and following expression are paired: either both will
 // be present, or neither will.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0,
@@ -372,11 +426,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(IndexExpr, IndexExprStart,
 //
 // Tuples, such as `(1, 2)`:
 //   ParenExprOrTupleLiteralStart
-//   _external_: expression
-//   TupleLiteralComma
+//     _external_: expression
+//     TupleLiteralComma
+//   _repeated_
 // TupleLiteral
 //
-// Exprs and TupleLiteralComma may repeat with TupleLiteralComma as a
+// Expressions and TupleLiteralComma may repeat with TupleLiteralComma as a
 // separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExprOrTupleLiteralStart, 0,
                                    CARBON_TOKEN(OpenParen))
@@ -389,12 +444,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExprOrTupleLiteralStart,
 // Call expressions, such as `a()`:
 //     _external_: expression
 //   CallExprStart
-//   _external_: expression
-//   CallExprComma
+//     _external_: expression
+//     CallExprComma
+//   _repeated_
 // CallExpr
 //
-// Exprs and CallExprComma may repeat with CallExprComma as a
-// separator.
+// Exprs and CallExprComma may repeat with CallExprComma as a separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprStart, 1, CARBON_TOKEN(OpenParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprComma, 0, CARBON_TOKEN(Comma))
 CARBON_PARSE_NODE_KIND_BRACKET(CallExpr, CallExprStart,
@@ -427,8 +482,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpr, 2,
 // A value literal.
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralFalse, CARBON_TOKEN(False))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralTrue, CARBON_TOKEN(True))
-CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntLiteral,
-                                     CARBON_TOKEN(IntLiteral))
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntLiteral, CARBON_TOKEN(IntLiteral))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(RealLiteral, CARBON_TOKEN(RealLiteral))
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringLiteral, CARBON_TOKEN(StringLiteral))
 
@@ -525,19 +579,22 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3,
 
 // Struct literals, such as `{.a = 0}`:
 //   StructLiteralOrStructTypeLiteralStart
-//       _external_: Name
-//     StructFieldDesignator
-//     _external_: expression
-//   StructFieldValue
-//   StructComma
+//         _external_: Name
+//       StructFieldDesignator
+//       _external_: expression
+//     StructFieldValue
+//     StructComma
+//   _repeated_
 // StructLiteral
 //
 // Struct type literals, such as `{.a: i32}`:
-//       _external_: Name
-//     StructFieldDesignator
-//     _external_: type expression
-//   StructFieldType
-//   StructComma
+//   StructLiteralOrStructTypeLiteralStart
+//         _external_: Name
+//       StructFieldDesignator
+//       _external_: type expression
+//     StructFieldType
+//     StructComma
+//   _repeated_
 // StructTypeLiteral
 //
 // Elements (StructFieldValue and StructFieldType, respectively) and StructComma
@@ -562,9 +619,20 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 
+// Various modifiers. These are all a single token.
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Abstract)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Base)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Default)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Extend)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Final)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Impl)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Private)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Protected)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Virtual)
+
 // `class`:
 //     ClassIntroducer
-//     _optional_ AbstractModifier or BaseModifier
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
@@ -574,8 +642,6 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 // ClassDefinitionStart and later nodes are removed and replaced by
 // ClassDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassIntroducer, 0, CARBON_TOKEN(Class))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(AbstractModifier, 0, CARBON_TOKEN(Abstract))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseModifier, 0, CARBON_TOKEN(Base))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer,
                                CARBON_TOKEN(OpenCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,
@@ -586,7 +652,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
 
 // `base`:
 //   BaseIntroducer
-//   _repeated_ _external_: AccessModifierKeyword or DeclModifierKeyword
+//   _repeated_ _external_: modifier
 //   BaseColon
 //   _external_: expression
 // BaseDecl
@@ -598,6 +664,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer,
 
 // `interface`:
 //     InterfaceIntroducer
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //   InterfaceDefinitionStart
 //   _external_: declarations
@@ -618,6 +685,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
 
 // `constraint`:
 //     NamedConstraintIntroducer
+//     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
@@ -637,33 +705,11 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinition,
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDecl, NamedConstraintIntroducer,
                                CARBON_TOKEN(Semi))
 
-// The `self` value and `Self` type identifier keywords. Typically of the form
-// `self: Self`:
-//   SelfValueName
-//   SelfValueNameExpr
-//   SelfTypeNameExpr
-// BindingPattern
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueName, 0,
-                                   CARBON_TOKEN(SelfValueIdentifier))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpr, 0,
-                                   CARBON_TOKEN(SelfValueIdentifier))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpr, 0,
-                                   CARBON_TOKEN(SelfTypeIdentifier))
-
-// The `base` value keyword, introduced by `base: B`. Typically referenced in
-// an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
-// declared name, as in `{.base: partial B}`.
-//
-// BaseName
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseName, 0, CARBON_TOKEN(Base))
-
-// The `package` keyword in an expression.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageExpr, 0, CARBON_TOKEN(Package))
-
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET
 #undef CARBON_PARSE_NODE_KIND_CHILD_COUNT
 #undef CARBON_PARSE_NODE_KIND_TOKEN_LITERAL
+#undef CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER
 #undef CARBON_TOKEN
 #undef CARBON_ANY_TOKEN
 #undef CARBON_IF_ERROR

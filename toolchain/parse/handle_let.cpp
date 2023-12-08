@@ -7,16 +7,16 @@
 namespace Carbon::Parse {
 
 auto HandleLet(Context& context) -> void {
-  context.PopAndDiscardState();
+  auto state = context.PopState();
 
   // These will start at the `let`.
-  context.PushState(State::LetFinish);
-  context.PushState(State::LetAfterPattern);
-
-  context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
+  state.state = State::LetFinish;
+  context.PushState(state);
+  state.state = State::LetAfterPattern;
+  context.PushState(state);
 
   // This will start at the pattern.
-  context.PushState(State::BindingPatternAsLet);
+  context.PushState(State::Pattern);
 }
 
 auto HandleLetAfterPattern(Context& context) -> void {

@@ -170,7 +170,7 @@ extern auto GetFileTestFactory() -> FileTestFactory;
 
 // Provides a standard GetFileTestFactory implementation.
 #define CARBON_FILE_TEST_FACTORY(Name)                                   \
-  auto GetFileTestFactory()->FileTestFactory {                           \
+  auto GetFileTestFactory() -> FileTestFactory {                         \
     return {#Name, [](llvm::StringRef path) { return new Name(path); }}; \
   }
 

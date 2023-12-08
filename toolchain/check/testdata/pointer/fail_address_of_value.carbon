@@ -37,9 +37,9 @@ fn AddressOfLiteral() {
 
 fn AddressOfOperator() {
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of non-reference expression.
-  // CHECK:STDERR:   &(1 + 1);
+  // CHECK:STDERR:   &(true and false);
   // CHECK:STDERR:   ^
-  &(1 + 1);
+  &(true and false);
   // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: ERROR: Cannot take the address of a temporary object.
   // CHECK:STDERR:   &H().a;
   // CHECK:STDERR:   ^
@@ -133,10 +133,17 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfOperator() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc42_5: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc42_9: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc42_7: i32 = add %.loc42_5, %.loc42_9
-// CHECK:STDOUT:   %.loc42_3: i32* = address_of %.loc42_7
+// CHECK:STDOUT:   %.loc42_5: bool = bool_literal true
+// CHECK:STDOUT:   %.loc42_10.1: bool = bool_literal false
+// CHECK:STDOUT:   if %.loc42_5 br !and.rhs else br !and.result(%.loc42_10.1)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !and.rhs:
+// CHECK:STDOUT:   %.loc42_14: bool = bool_literal false
+// CHECK:STDOUT:   br !and.result(%.loc42_14)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !and.result:
+// CHECK:STDOUT:   %.loc42_10.2: bool = block_arg !and.result
+// CHECK:STDOUT:   %.loc42_3: bool* = address_of %.loc42_10.2
 // CHECK:STDOUT:   %H.ref: <function> = name_ref H, file.%H
 // CHECK:STDOUT:   %.loc46_5.1: init {.a: i32} = call %H.ref()
 // CHECK:STDOUT:   %.loc46_5.2: ref {.a: i32} = temporary_storage

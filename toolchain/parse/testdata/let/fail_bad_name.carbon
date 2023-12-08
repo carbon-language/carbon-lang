@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+3]]:5: ERROR: Expected pattern in `let` declaration.
+// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+3]]:5: ERROR: Expected binding pattern.
 // CHECK:STDERR: let ? = 4;
 // CHECK:STDERR:     ^
 let ? = 4;
@@ -13,7 +13,7 @@ let ? = 4;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'Name', text: '?', has_error: yes},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: '?', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '?', has_error: yes},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: '?', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},

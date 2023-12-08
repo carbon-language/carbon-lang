@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+3]]:5: ERROR: Expected pattern in `var` declaration.
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+3]]:5: ERROR: Expected binding pattern.
 // CHECK:STDERR: var package.val: i32;
 // CHECK:STDERR:     ^~~~~~~
 var package.val: i32;
@@ -24,7 +24,7 @@ class package.C {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'package', has_error: yes},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'package', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: 'package', has_error: yes},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: 'package', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 5},
