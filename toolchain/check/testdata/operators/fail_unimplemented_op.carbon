@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: ERROR: Semantics TODO: `Handle +`.
+  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: ERROR: Semantics TODO: `HandleInfixOperatorPlus`.
   // CHECK:STDERR:   return 12 + 34;
   // CHECK:STDERR:          ^~~~~~~
   return 12 + 34;

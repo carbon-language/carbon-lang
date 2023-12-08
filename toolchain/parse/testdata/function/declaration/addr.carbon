@@ -14,7 +14,7 @@ fn foo(addr a: i32*);
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'a'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'Address', text: 'addr', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 7},

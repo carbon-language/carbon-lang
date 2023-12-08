@@ -15,7 +15,7 @@ fn F(p: i32*, n: i32) {
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'p'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'n'},

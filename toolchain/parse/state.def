@@ -501,7 +501,7 @@ CARBON_PARSE_STATE(ExprLoop)
 // expr <infix operator> expr ...
 //                           ^
 //   1. ExprLoop
-CARBON_PARSE_STATE(ExprLoopForBinary)
+CARBON_PARSE_STATE(ExprLoopForInfixOperator)
 
 // Completes an ExprLoop pass by adding a prefix operator, then goes back
 // to ExprLoop.
@@ -509,7 +509,7 @@ CARBON_PARSE_STATE(ExprLoopForBinary)
 // <prefix operator> expr ...
 //                       ^
 //   1. ExprLoop
-CARBON_PARSE_STATE(ExprLoopForPrefix)
+CARBON_PARSE_STATE(ExprLoopForPrefixOperator)
 
 // Completes an ExprLoop pass by adding a short circuit operator, then goes back
 // to ExprLoop.
