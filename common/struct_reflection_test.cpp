@@ -25,7 +25,7 @@ struct ReferenceField {
 };
 
 struct NoDefaultConstructor {
-  NoDefaultConstructor(int n) : v(n) {}
+  explicit NoDefaultConstructor(int n) : v(n) {}
   int v;
 };
 
@@ -42,8 +42,8 @@ TEST(StructReflectionTest, CanListInitialize) {
   {
     using Type = OneField;
     using Field = Internal::AnyField<Type>;
-    static_assert(Internal::CanListInitialize<Type>(0));
-    static_assert(Internal::CanListInitialize<Type, Field>(0));
+    static_assert(Internal::CanListInitialize<Type>(nullptr));
+    static_assert(Internal::CanListInitialize<Type, Field>(nullptr));
     static_assert(!Internal::CanListInitialize<Type, Field, Field>(0));
   }
 
@@ -51,7 +51,7 @@ TEST(StructReflectionTest, CanListInitialize) {
     using Type = OneFieldNoDefaultConstructor;
     using Field = Internal::AnyField<Type>;
     static_assert(!Internal::CanListInitialize<Type>(0));
-    static_assert(Internal::CanListInitialize<Type, Field>(0));
+    static_assert(Internal::CanListInitialize<Type, Field>(nullptr));
     static_assert(!Internal::CanListInitialize<Type, Field, Field>(0));
   }
 }
@@ -82,7 +82,8 @@ TEST(StructReflectionTest, TwoField) {
 
 TEST(StructReflectionTest, NoDefaultConstructor) {
   std::tuple<NoDefaultConstructor, NoDefaultConstructor> fields =
-      AsTuple(TwoFieldsNoDefaultConstructor{.x = 1, .y = 2});
+      AsTuple(TwoFieldsNoDefaultConstructor{.x = NoDefaultConstructor(1),
+                                            .y = NoDefaultConstructor(2)});
   EXPECT_EQ(std::get<0>(fields).v, 1);
   EXPECT_EQ(std::get<1>(fields).v, 2);
 }

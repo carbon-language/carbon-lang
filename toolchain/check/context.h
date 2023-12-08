@@ -126,13 +126,14 @@ class Context {
   // Returns true if currently at file scope.
   auto at_file_scope() const -> bool { return scope_stack_.size() == 1; }
 
-  // Returns the instruction kind associated with the current scope, if any.
-  auto current_scope_kind() const -> std::optional<SemIR::InstKind> {
+  // Returns true if the current scope is of the specified kind.
+  template <typename InstT>
+  auto CurrentScopeIs() -> bool {
     auto current_scope_inst_id = current_scope().scope_inst_id;
     if (!current_scope_inst_id.is_valid()) {
-      return std::nullopt;
+      return false;
     }
-    return sem_ir_->insts().Get(current_scope_inst_id).kind();
+    return sem_ir_->insts().Get(current_scope_inst_id).kind() == InstT::Kind;
   }
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
@@ -227,13 +228,23 @@ class Context {
   // complete, or `false` if it could not be completed. A complete type has
   // known object and value representations.
   //
-  // If the type is not complete, `diagnoser` is invoked to diagnose the issue.
-  // The builder it returns will be annotated to describe the reason why the
-  // type is not complete.
+  // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
+  // if a `diagnoser` is provided. The builder it returns will be annotated to
+  // describe the reason why the type is not complete.
   auto TryToCompleteType(
       SemIR::TypeId type_id,
       std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
           std::nullopt) -> bool;
+
+  // Returns the type `type_id` as a complete type, or produces an incomplete
+  // type error and returns an error type. This is a convenience wrapper around
+  // TryToCompleteType.
+  auto AsCompleteType(SemIR::TypeId type_id,
+                      llvm::function_ref<auto()->DiagnosticBuilder> diagnoser)
+      -> SemIR::TypeId {
+    return TryToCompleteType(type_id, diagnoser) ? type_id
+                                                 : SemIR::TypeId::Error;
+  }
 
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
@@ -326,6 +337,9 @@ class Context {
     return sem_ir().functions();
   }
   auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
+  auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
+    return sem_ir().interfaces();
+  }
   auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId>& {
     return sem_ir().cross_ref_irs();
   }
@@ -386,9 +400,9 @@ class Context {
 
   // A lookup result in the lexical lookup table `name_lookup_`.
   struct LexicalLookupResult {
-    // The node that was added to lookup.
-    SemIR::InstId node_id;
-    // The scope in which the node was added.
+    // The instruction that was added to lookup.
+    SemIR::InstId inst_id;
+    // The scope in which the instruction was added.
     ScopeIndex scope_index;
   };
 
@@ -499,7 +513,7 @@ class Context {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::NodeId parse_node)->bool;
+  auto Handle##Name(Context& context, Parse::NodeId parse_node) -> bool;
 #include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Check

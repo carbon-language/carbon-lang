@@ -39,22 +39,6 @@ class Context {
   // Possible return values for FindListToken.
   enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
-  // Supported kinds for HandleBindingPattern.
-  enum class BindingPatternKind : int8_t {
-    ImplicitParam,
-    Param,
-    Variable,
-    Let
-  };
-
-  // Supported return values for GetDeclContext.
-  enum class DeclContext : int8_t {
-    File,  // Top-level context.
-    Class,
-    Interface,
-    NamedConstraint,
-  };
-
   // Used for restricting ordering of `package` and `import` directives.
   enum class PackagingState : int8_t {
     FileStart,
@@ -68,15 +52,6 @@ class Context {
 
   // Used to track state on state_stack_.
   struct StateStackEntry : public Printable<StateStackEntry> {
-    explicit StateStackEntry(State state, PrecedenceGroup ambient_precedence,
-                             PrecedenceGroup lhs_precedence,
-                             Lex::TokenIndex token, int32_t subtree_start)
-        : state(state),
-          ambient_precedence(ambient_precedence),
-          lhs_precedence(lhs_precedence),
-          token(token),
-          subtree_start(subtree_start) {}
-
     // Prints state information for verbose output.
     auto Print(llvm::raw_ostream& output) const -> void {
       output << state << " @" << token << " subtree_start=" << subtree_start
@@ -93,8 +68,8 @@ class Context {
     // operator precedence. The ambient_precedence deals with how the expression
     // should interact with outside context, while the lhs_precedence is
     // specific to the lhs of an operator expression.
-    PrecedenceGroup ambient_precedence;
-    PrecedenceGroup lhs_precedence;
+    PrecedenceGroup ambient_precedence = PrecedenceGroup::ForTopLevelExpr();
+    PrecedenceGroup lhs_precedence = PrecedenceGroup::ForTopLevelExpr();
 
     // A token providing context based on the subtree. This will typically be
     // the first token in the subtree, but may sometimes be a token within. It
@@ -264,32 +239,30 @@ class Context {
   }
 
   // Pushes a new state with the current position for context.
-  auto PushState(State state) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpr(),
-                              PrecedenceGroup::ForTopLevelExpr(), *position_,
-                              tree_->size()));
-  }
+  auto PushState(State state) -> void { PushState(state, *position_); }
 
   // Pushes a new state with a specific token for context. Used when forming a
-  // new subtree with a token that isn't the start of the subtree.
+  // new subtree when the current position isn't the start of the subtree.
   auto PushState(State state, Lex::TokenIndex token) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpr(),
-                              PrecedenceGroup::ForTopLevelExpr(), token,
-                              tree_->size()));
+    PushState({.state = state, .token = token, .subtree_start = tree_->size()});
   }
 
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
-    PushState(StateStackEntry(State::Expr, ambient_precedence,
-                              PrecedenceGroup::ForTopLevelExpr(), *position_,
-                              tree_->size()));
+    PushState({.state = State::Expr,
+               .ambient_precedence = ambient_precedence,
+               .token = *position_,
+               .subtree_start = tree_->size()});
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
   auto PushStateForExprLoop(State state, PrecedenceGroup ambient_precedence,
                             PrecedenceGroup lhs_precedence) -> void {
-    PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
-                              *position_, tree_->size()));
+    PushState({.state = state,
+               .ambient_precedence = ambient_precedence,
+               .lhs_precedence = lhs_precedence,
+               .token = *position_,
+               .subtree_start = tree_->size()});
   }
 
   // Pushes a constructed state onto the stack.
@@ -300,22 +273,8 @@ class Context {
         << "Excessive stack size: likely infinite loop";
   }
 
-  // Returns the current declaration context according to state_stack_.
-  // This is expected to be called in cases which are close to a context.
-  // Although it looks like it could be O(n) for state_stack_'s depth, valid
-  // parses should only need to look down a couple steps.
-  //
-  // This currently assumes it's being called from within the declaration's
-  // DeclScopeLoop.
-  auto GetDeclContext() -> DeclContext;
-
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
-
-  // For HandleBindingPattern, tries to consume a wrapping keyword.
-  auto ConsumeIfBindingPatternKeyword(Lex::TokenKind keyword_token,
-                                      State keyword_state, int subtree_start)
-      -> void;
 
   // Emits a diagnostic for a declaration missing a semi.
   auto EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
@@ -401,9 +360,7 @@ class Context {
   Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::Invalid;
 };
 
-// `clang-format` has a bug with spacing around `->` returns in macros. See
-// https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context)->void;
+#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context) -> void;
 #include "toolchain/parse/state.def"
 
 }  // namespace Carbon::Parse

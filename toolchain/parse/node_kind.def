@@ -97,13 +97,31 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDecl, 0,
                                    CARBON_TOKEN(Semi)
                                        CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
-// A name in a non-expression context, such as a declaration.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0,
+// An identifier name in a non-expression context, such as a declaration.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IdentifierName, 0,
                                    CARBON_TOKEN(Identifier)
                                        CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
-// A name in an expression context.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpr, 0, CARBON_TOKEN(Identifier))
+// An identifier name in an expression context.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IdentifierNameExpr, 0,
+                                   CARBON_TOKEN(Identifier))
+
+// The `self` value and `Self` type identifier keywords. Typically of the form
+// `self: Self`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueName, 0,
+                                   CARBON_TOKEN(SelfValueIdentifier))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpr, 0,
+                                   CARBON_TOKEN(SelfValueIdentifier))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpr, 0,
+                                   CARBON_TOKEN(SelfTypeIdentifier))
+
+// The `base` value keyword, introduced by `base: B`. Typically referenced in
+// an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
+// declared name, as in `{.base: partial B}`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseName, 0, CARBON_TOKEN(Base))
+
+// The `package` keyword in an expression.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageExpr, 0, CARBON_TOKEN(Package))
 
 // ----------------------------------------------------------------------------
 
@@ -227,6 +245,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
 //
 // [Generic]PatternBinding and ParamListComma may repeat with ParamListComma
 // as a separator.
+//
+// TODO: rename ParamList to TuplePattern to reflect wider usage.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0, CARBON_TOKEN(OpenParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
@@ -267,7 +287,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 // `let`:
 //   LetIntroducer
 //   _repeated_ _external_: modifier
-//   _external_: BindingPattern
+//   _external_: BindingPattern or ParamList
 //   LetInitializer
 //   _external_: expression
 // LetDecl
@@ -283,7 +303,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 //   VariableIntroducer
 //   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
-//   _external_: BindingPattern
+//   _external_: BindingPattern or ParamList
 //     VariableInitializer
 //     _external_: expression
 //   _optional_
@@ -684,29 +704,6 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinition,
                                CARBON_TOKEN(CloseCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDecl, NamedConstraintIntroducer,
                                CARBON_TOKEN(Semi))
-
-// The `self` value and `Self` type identifier keywords. Typically of the form
-// `self: Self`:
-//   SelfValueName
-//   SelfValueNameExpr
-//   SelfTypeNameExpr
-// BindingPattern
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueName, 0,
-                                   CARBON_TOKEN(SelfValueIdentifier))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpr, 0,
-                                   CARBON_TOKEN(SelfValueIdentifier))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpr, 0,
-                                   CARBON_TOKEN(SelfTypeIdentifier))
-
-// The `base` value keyword, introduced by `base: B`. Typically referenced in
-// an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
-// declared name, as in `{.base: partial B}`.
-//
-// BaseName
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseName, 0, CARBON_TOKEN(Base))
-
-// The `package` keyword in an expression.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageExpr, 0, CARBON_TOKEN(Package))
 
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET

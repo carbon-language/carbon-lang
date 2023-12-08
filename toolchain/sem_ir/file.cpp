@@ -188,7 +188,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ArrayInit::Kind:
     case Assign::Kind:
     case BaseDecl::Kind:
-    case BinaryOperatorAdd::Kind:
     case BindName::Kind:
     case BindValue::Kind:
     case BlockArg::Kind:
@@ -207,6 +206,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case FunctionDecl::Kind:
     case Import::Kind:
     case InitializeFrom::Kind:
+    case InterfaceDecl::Kind:
     case IntLiteral::Kind:
     case Namespace::Kind:
     case NoOp::Kind:
@@ -389,7 +389,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case ArrayInit::Kind:
       case Assign::Kind:
       case BaseDecl::Kind:
-      case BinaryOperatorAdd::Kind:
       case BindName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
@@ -410,6 +409,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case FunctionDecl::Kind:
       case Import::Kind:
       case InitializeFrom::Kind:
+      case InterfaceDecl::Kind:
       case IntLiteral::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
@@ -467,6 +467,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
+      case InterfaceDecl::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
       case Return::Kind:
@@ -493,7 +494,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
       case AddressOf::Kind:
       case ArrayType::Kind:
-      case BinaryOperatorAdd::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:

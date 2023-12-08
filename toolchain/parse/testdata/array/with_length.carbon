@@ -10,7 +10,7 @@ var x: [i32; 10];
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'x'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
 // CHECK:STDOUT:             {kind: 'ArrayExprStart', text: '['},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: ';', subtree_size: 3},

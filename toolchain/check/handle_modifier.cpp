@@ -67,7 +67,7 @@ static auto HandleModifier(Context& context, Parse::NodeId parse_node,
 #define CARBON_PARSE_NODE_KIND(...)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)                  \
   auto Handle##Name##Modifier(Context& context, Parse::NodeId parse_node) \
-      ->bool {                                                            \
+      -> bool {                                                           \
     return HandleModifier(context, parse_node, KeywordModifierSet::Name); \
   }
 #include "toolchain/parse/node_kind.def"

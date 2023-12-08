@@ -116,6 +116,40 @@ struct Class : public Printable<Class> {
   TypeId object_repr_id = TypeId::Invalid;
 };
 
+// An interface.
+struct Interface : public Printable<Interface> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{name: " << name_id;
+    out << "}";
+  }
+
+  // Determines whether this interface has been fully defined. This is false
+  // until we reach the `}` of the interface definition.
+  auto is_defined() const -> bool { return defined; }
+
+  // The following members always have values, and do not change throughout the
+  // lifetime of the interface.
+
+  // The interface name.
+  NameId name_id;
+  // TODO: TypeId self_type_id;
+  // The first declaration of the interface. This is a InterfaceDecl.
+  InstId decl_id = InstId::Invalid;
+
+  // The following members are set at the `{` of the interface definition.
+
+  // The definition of the interface. This is a InterfaceDecl.
+  InstId definition_id = InstId::Invalid;
+  // The interface scope.
+  NameScopeId scope_id = NameScopeId::Invalid;
+  // The first block of the interface body.
+  // TODO: Handle control flow in the interface body, such as if-expressions.
+  InstBlockId body_block_id = InstBlockId::Invalid;
+
+  // The following members are set at the `}` of the class definition.
+  bool defined = true;
+};
+
 // The value representation to use when passing by value.
 struct ValueRepr : public Printable<ValueRepr> {
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -291,6 +325,10 @@ class File : public Printable<File> {
   auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
   auto classes() -> ValueStore<ClassId>& { return classes_; }
   auto classes() const -> const ValueStore<ClassId>& { return classes_; }
+  auto interfaces() -> ValueStore<InterfaceId>& { return interfaces_; }
+  auto interfaces() const -> const ValueStore<InterfaceId>& {
+    return interfaces_;
+  }
   auto cross_ref_irs() -> ValueStore<CrossRefIRId>& { return cross_ref_irs_; }
   auto cross_ref_irs() const -> const ValueStore<CrossRefIRId>& {
     return cross_ref_irs_;
@@ -349,6 +387,9 @@ class File : public Printable<File> {
 
   // Storage for classes.
   ValueStore<ClassId> classes_;
+
+  // Storage for interfaces.
+  ValueStore<InterfaceId> interfaces_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references

@@ -23,7 +23,7 @@ static auto HandleVar(Context& context, State finish_state,
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
 
-  context.PushState(State::BindingPatternAsVariable);
+  context.PushState(State::Pattern);
 }
 
 auto HandleVarAsDecl(Context& context) -> void {

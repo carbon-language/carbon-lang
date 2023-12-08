@@ -131,8 +131,7 @@ class FunctionContext {
 // Declare handlers for each SemIR::File instruction.
 #define CARBON_SEM_IR_INST_KIND(Name)                                \
   auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
-                    SemIR::Name inst)                                \
-      ->void;
+                    SemIR::Name inst) -> void;
 #include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::Lower

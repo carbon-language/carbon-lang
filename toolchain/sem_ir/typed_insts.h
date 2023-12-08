@@ -98,15 +98,6 @@ struct BaseDecl {
   ElementIndex index;
 };
 
-struct BinaryOperatorAdd {
-  static constexpr auto Kind = InstKind::BinaryOperatorAdd.Define("add");
-
-  Parse::NodeId parse_node;
-  TypeId type_id;
-  InstId lhs_id;
-  InstId rhs_id;
-};
-
 struct BindName {
   static constexpr auto Kind = InstKind::BindName.Define("bind_name");
 
@@ -326,6 +317,20 @@ struct InitializeFrom {
   TypeId type_id;
   InstId src_id;
   InstId dest_id;
+};
+
+struct InterfaceDecl {
+  static constexpr auto Kind = InstKind::InterfaceDecl.Define("interface_decl");
+
+  Parse::NodeId parse_node;
+  // No type: an interface declaration is not itself a value. The name of an
+  // interface declaration becomes a facet type value.
+  // TODO: For a generic interface declaration, the name of the interface
+  // declaration should become a parameterized entity name value.
+  InterfaceId interface_id;
+  // The declaration block, containing the interface name's qualifiers and the
+  // interface's generic parameters.
+  InstBlockId decl_block_id;
 };
 
 struct IntLiteral {

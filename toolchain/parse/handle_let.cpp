@@ -16,7 +16,7 @@ auto HandleLet(Context& context) -> void {
   context.PushState(state);
 
   // This will start at the pattern.
-  context.PushState(State::BindingPatternAsLet);
+  context.PushState(State::Pattern);
 }
 
 auto HandleLetAfterPattern(Context& context) -> void {

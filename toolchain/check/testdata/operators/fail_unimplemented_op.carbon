@@ -5,21 +5,18 @@
 // AUTOUPDATE
 
 fn Main() -> i32 {
+  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:13: ERROR: Semantics TODO: `Handle +`.
+  // CHECK:STDERR:   return 12 + 34;
+  // CHECK:STDERR:             ^
   return 12 + 34;
 }
 
-// CHECK:STDOUT: --- binary_op.carbon
+// CHECK:STDOUT: --- fail_unimplemented_op.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_10: i32 = int_literal 12
-// CHECK:STDOUT:   %.loc8_15: i32 = int_literal 34
-// CHECK:STDOUT:   %.loc8_13: i32 = add %.loc8_10, %.loc8_15
-// CHECK:STDOUT:   return %.loc8_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -51,12 +51,6 @@ auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
 }
 
-auto HandleBinaryOperatorAdd(FunctionContext& /*context*/,
-                             SemIR::InstId /*inst_id*/,
-                             SemIR::BinaryOperatorAdd inst) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << inst;
-}
-
 auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
                     SemIR::BindName inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
@@ -197,6 +191,12 @@ auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
                           SemIR::InitializeFrom inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.dest_id).type_id();
   context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
+}
+
+auto HandleInterfaceDecl(FunctionContext& /*context*/,
+                         SemIR::InstId /*inst_id*/,
+                         SemIR::InterfaceDecl /*inst*/) -> void {
+  // No action to perform.
 }
 
 auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,

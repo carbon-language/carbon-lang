@@ -53,6 +53,10 @@
   CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
   CARBON_PARSE_STATE_VARIANTS3(State, Variant2, Variant3, Variant4)
 
+// Used as a default for StateStackEntry initialization in some cases. Should
+// not be put on the state stack.
+CARBON_PARSE_STATE(Invalid)
+
 // Handles an index expression:
 //
 // a[0]
@@ -649,7 +653,7 @@ CARBON_PARSE_STATE(Package)
 //
 //  ...
 // ^
-//   1. BindingPatternAs(ImplicitParam|Param)
+//   1. BindingPattern
 //   2. ParamFinishAs(Implicit|Regular)
 CARBON_PARSE_STATE_VARIANTS2(Param, Implicit, Regular)
 
@@ -670,6 +674,8 @@ CARBON_PARSE_STATE_VARIANTS2(Param, Implicit, Regular)
 CARBON_PARSE_STATE_VARIANTS2(ParamFinish, Implicit, Regular)
 
 // Handles processing of a parameter list `[` or `(`.
+//
+// TODO: Rename this to TuplePattern to reflect wider usage.
 //
 // ( )        (variant is Regular)
 // ^
@@ -781,6 +787,17 @@ CARBON_PARSE_STATE(TupleLiteralElementFinish)
 //   (state done)
 CARBON_PARSE_STATE(ParenExprFinish)
 
+// Handles processing of a pattern.
+//
+//  ( ... )
+// ^
+//   1. ParamListAsRegular
+//
+//  ...
+// ^
+//   1. BindingPattern
+CARBON_PARSE_STATE(Pattern)
+
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.
 //
@@ -813,8 +830,7 @@ CARBON_PARSE_STATE(ParenExprFinish)
 //  ???
 // ^
 //   1. BindingPatternFinishAsRegular
-CARBON_PARSE_STATE_VARIANTS4(BindingPattern, ImplicitParam, Param, Variable,
-                             Let)
+CARBON_PARSE_STATE(BindingPattern)
 
 // Handles `addr` in a binding pattern.
 //
@@ -1049,7 +1065,8 @@ CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
 //                           ^
 //   1. DeclNameAndParamsAsOptional
 //   2. TypeAfterParamsAs(Class|Interface|NamedConstraint)
-CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface, NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
+                             NamedConstraint)
 
 // Handles processing of a type after its optional parameters.
 //
@@ -1078,13 +1095,25 @@ CARBON_PARSE_STATE(BaseDecl)
 //
 // var ...             (variant is not Returned)
 //    ^
-//   1. BindingPatternAsVariable
+//   1. BindingPattern
+//   2. VarAfterPattern
+//   3. VarFinishAs(Decl|For)
+//
+// var (...)
+//    ^
+//   1. ParamListAsRegular
 //   2. VarAfterPattern
 //   3. VarFinishAs(Decl|For)
 //
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
-//   1. BindingPatternAsVariable
+//   1. BindingPattern
+//   2. VarAfterPattern
+//   3. VarFinishAsDecl
+//
+// returned var ...    (variant is Returned)
+// ^~~~~~~~~~~~
+//   1. ParamListAsRegular
 //   2. VarAfterPattern
 //   3. VarFinishAsDecl
 //
@@ -1124,9 +1153,15 @@ CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
 
 // Handles the start of a `let`.
 //
+// let (...)
+// ^~~
+//   1. ParamListAsRegular
+//   2. LetAfterPattern
+//   3. LetFinish
+//
 // let ...
 //    ^
-//   1. BindingPatternAsLet
+//   1. BindingPattern
 //   2. LetAfterPattern
 //   3. LetFinish
 CARBON_PARSE_STATE(Let)

@@ -62,17 +62,16 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
     auto return_node_copy = return_node;
     return_type_id = context.insts().Get(return_storage_id).type_id();
 
-    if (!context.TryToCompleteType(return_type_id, [&] {
-          CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                            "Function returns incomplete type `{0}`.",
-                            std::string);
-          return context.emitter().Build(
-              return_node_copy, IncompleteTypeInFunctionReturnType,
-              context.sem_ir().StringifyType(return_type_id));
-        })) {
-      return_type_id = SemIR::TypeId::Error;
-    } else if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
-                    .has_return_slot()) {
+    return_type_id = context.AsCompleteType(return_type_id, [&] {
+      CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
+                        "Function returns incomplete type `{0}`.", std::string);
+      return context.emitter().Build(
+          return_node_copy, IncompleteTypeInFunctionReturnType,
+          context.sem_ir().StringifyType(return_type_id));
+    });
+
+    if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
+             .has_return_slot()) {
       // The function only has a return slot if it uses in-place initialization.
     } else {
       return_slot_id = return_storage_id;
@@ -101,6 +100,8 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
                  "method modifier");
   }
   if (!!(modifiers & KeywordModifierSet::Interface)) {
+    // TODO: Once we are saving the modifiers for a function, add check that
+    // the function may only be defined if it is marked `default` or `final`.
     context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
                  "interface modifier");
   }
