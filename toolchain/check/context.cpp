@@ -163,9 +163,9 @@ auto Context::AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
                  lexical_results.back().scope_index < current_scope_index())
         << "Failed to clean up after scope nested within the current scope";
     lexical_results.push_back(
-        {.node_id = target_id, .scope_index = current_scope_index()});
+        {.inst_id = target_id, .scope_index = current_scope_index()});
   } else {
-    DiagnoseDuplicateName(name_node, name_lookup_[name_id].back().node_id);
+    DiagnoseDuplicateName(name_node, name_lookup_[name_id].back().inst_id);
   }
 }
 
@@ -201,7 +201,7 @@ auto Context::LookupNameInDecl(Parse::NodeId parse_node, SemIR::NameId name_id,
           << "Should have been erased: " << names().GetFormatted(name_id);
       auto result = name_it->second.back();
       if (result.scope_index == current_scope_index()) {
-        return result.node_id;
+        return result.inst_id;
       }
     }
     return SemIR::InstId::Invalid;
@@ -233,7 +233,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
     // it shadows all further non-lexical results and we're done.
     if (!lexical_results.empty() &&
         lexical_results.back().scope_index > index) {
-      return lexical_results.back().node_id;
+      return lexical_results.back().inst_id;
     }
 
     auto non_lexical_result =
@@ -245,7 +245,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   }
 
   if (!lexical_results.empty()) {
-    return lexical_results.back().node_id;
+    return lexical_results.back().inst_id;
   }
 
   // We didn't find anything at all.
