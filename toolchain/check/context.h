@@ -343,7 +343,7 @@ class Context {
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
   }
-  auto types() -> TypeStore& { return sem_ir().types(); }
+  auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }

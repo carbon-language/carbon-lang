@@ -107,7 +107,7 @@ cc_library(
     hdrs = ["type_info.h"],
     deps = [
         ":inst",
-        "//common/ostream",
+        "//common:ostream",
     ],
 )
 
