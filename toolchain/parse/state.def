@@ -1020,8 +1020,8 @@ CARBON_PARSE_STATE(StatementWhileBlockFinish)
 
 // Handles parsing after the declaration scope of a type.
 //
-// class/impl/interface/constraint { ... }
-//                                       ^
+// class/impl/interface/constraint ... { ... }
+//                                           ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS4(DeclDefinitionFinish, Class, Impl, Interface,
                              NamedConstraint)
