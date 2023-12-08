@@ -45,7 +45,7 @@ static auto GetExprValueForLookupResult(Context& context,
   // If lookup finds a class declaration, the value is its `Self` type.
   auto lookup_result = context.insts().Get(lookup_result_id);
   if (auto class_decl = lookup_result.TryAs<SemIR::ClassDecl>()) {
-    return context.sem_ir().GetTypeAllowBuiltinTypes(
+    return context.types().GetInstId(
         context.classes().Get(class_decl->class_id).self_type_id);
   }
 
@@ -108,10 +108,8 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
   base_id = ConvertToValueOrRefExpr(context, base_id);
   base_type_id = context.insts().Get(base_id).type_id();
 
-  auto base_type = context.insts().Get(
-      context.sem_ir().GetTypeAllowBuiltinTypes(base_type_id));
-
-  switch (base_type.kind()) {
+  switch (auto base_type = context.types().GetAsInst(base_type_id);
+          base_type.kind()) {
     case SemIR::ClassType::Kind: {
       // Perform lookup for the name in the class scope.
       auto class_scope_id = context.classes()
@@ -123,10 +121,9 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
 
       // Perform instance binding if we found an instance member.
       auto member_type_id = context.insts().Get(member_id).type_id();
-      auto member_type_inst = context.insts().Get(
-          context.sem_ir().GetTypeAllowBuiltinTypes(member_type_id));
       if (auto unbound_element_type =
-              member_type_inst.TryAs<SemIR::UnboundElementType>()) {
+              context.types().TryGetAs<SemIR::UnboundElementType>(
+                  member_type_id)) {
         // TODO: Check that the unbound element type describes a member of this
         // class. Perform a conversion of the base if necessary.
 

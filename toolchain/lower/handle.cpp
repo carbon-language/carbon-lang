@@ -210,7 +210,7 @@ auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,
                    SemIR::NameRef inst) -> void {
-  auto type_inst_id = context.sem_ir().GetTypeAllowBuiltinTypes(inst.type_id);
+  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
   if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
     return;
   }

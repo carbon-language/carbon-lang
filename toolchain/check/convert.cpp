@@ -546,8 +546,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                            context.sem_ir().StringifyType(target.type_id));
     return SemIR::InstId::BuiltinError;
   }
-  auto dest_struct_type = context.insts().GetAs<SemIR::StructType>(
-      context.sem_ir().GetTypeAllowBuiltinTypes(class_info.object_repr_id));
+  auto dest_struct_type =
+      context.types().GetAs<SemIR::StructType>(class_info.object_repr_id);
 
   // If we're trying to create a class value, form a temporary for the value to
   // point to.
@@ -599,8 +599,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
   auto& sem_ir = context.sem_ir();
   auto value = sem_ir.insts().Get(value_id);
   auto value_type_id = value.type_id();
-  auto target_type_inst =
-      sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(target.type_id));
+  auto target_type_inst = sem_ir.types().GetAsInst(target.type_id);
 
   // Various forms of implicit conversion are supported as builtin conversions,
   // either in addition to or instead of `impl`s of `ImplicitAs` in the Carbon
@@ -660,9 +659,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
   // A tuple (T1, T2, ..., Tn) converts to (U1, U2, ..., Un) if each Ti
   // converts to Ui.
   if (auto target_tuple_type = target_type_inst.TryAs<SemIR::TupleType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_tuple_type = value_type_inst.TryAs<SemIR::TupleType>()) {
+    if (auto src_tuple_type =
+            sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
       return ConvertTupleToTuple(context, *src_tuple_type, *target_tuple_type,
                                  value_id, target);
     }
@@ -673,9 +671,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
   // (p(1), ..., p(n)) is a permutation of (1, ..., n) and each Ti converts
   // to Ui.
   if (auto target_struct_type = target_type_inst.TryAs<SemIR::StructType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_struct_type = value_type_inst.TryAs<SemIR::StructType>()) {
+    if (auto src_struct_type =
+            sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       return ConvertStructToStruct(context, *src_struct_type,
                                    *target_struct_type, value_id, target);
     }
@@ -683,9 +680,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
 
   // A tuple (T1, T2, ..., Tn) converts to [T; n] if each Ti converts to T.
   if (auto target_array_type = target_type_inst.TryAs<SemIR::ArrayType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_tuple_type = value_type_inst.TryAs<SemIR::TupleType>()) {
+    if (auto src_tuple_type =
+            sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
     }
@@ -696,9 +692,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
   // (a struct with the same fields as the class, plus a base field where
   // relevant).
   if (auto target_class_type = target_type_inst.TryAs<SemIR::ClassType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_struct_type = value_type_inst.TryAs<SemIR::StructType>()) {
+    if (auto src_struct_type =
+            sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       return ConvertStructToClass(context, *src_struct_type, *target_class_type,
                                   value_id, target);
     }
@@ -716,7 +711,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
         type_ids.push_back(ExprAsType(context, parse_node, tuple_inst_id));
       }
       auto tuple_type_id = context.CanonicalizeTupleType(parse_node, type_ids);
-      return sem_ir.GetTypeAllowBuiltinTypes(tuple_type_id);
+      return sem_ir.types().GetInstId(tuple_type_id);
     }
 
     // `{}` converts to `{} as type`.
@@ -725,7 +720,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
     if (auto struct_literal = value.TryAs<SemIR::StructLiteral>();
         struct_literal &&
         struct_literal->elements_id == SemIR::InstBlockId::Empty) {
-      value_id = sem_ir.GetTypeAllowBuiltinTypes(value_type_id);
+      value_id = sem_ir.types().GetInstId(value_type_id);
     }
   }
 

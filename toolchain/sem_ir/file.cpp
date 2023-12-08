@@ -238,7 +238,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
 }
 
 auto File::StringifyType(TypeId type_id) const -> std::string {
-  return StringifyTypeExpr(GetTypeAllowBuiltinTypes(type_id));
+  return StringifyTypeExpr(types().GetInstId(type_id));
 }
 
 auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
@@ -280,7 +280,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
           out << "[";
           steps.push_back(step.Next());
           steps.push_back(
-              {.inst_id = GetTypeAllowBuiltinTypes(array.element_type_id)});
+              {.inst_id = types().GetInstId(array.element_type_id)});
         } else if (step.index == 1) {
           out << "; " << GetArrayBoundValue(array.bound_id) << "]";
         }
@@ -298,7 +298,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
 
           // Add parentheses if required.
           auto inner_type_inst_id =
-              GetTypeAllowBuiltinTypes(inst.As<ConstType>().inner_id);
+              types().GetInstId(inst.As<ConstType>().inner_id);
           if (GetTypePrecedence(insts().Get(inner_type_inst_id).kind()) <
               GetTypePrecedence(inst.kind())) {
             out << "(";
@@ -318,7 +318,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case PointerType::Kind: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back({.inst_id = GetTypeAllowBuiltinTypes(
+          steps.push_back({.inst_id = types().GetInstId(
                                inst.As<PointerType>().pointee_id)});
         } else if (step.index == 1) {
           out << "*";
@@ -346,8 +346,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case StructTypeField::Kind: {
         auto field = inst.As<StructTypeField>();
         out << "." << names().GetFormatted(field.name_id) << ": ";
-        steps.push_back(
-            {.inst_id = GetTypeAllowBuiltinTypes(field.field_type_id)});
+        steps.push_back({.inst_id = types().GetInstId(field.field_type_id)});
         break;
       }
       case TupleType::Kind: {
@@ -369,15 +368,14 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
           break;
         }
         steps.push_back(step.Next());
-        steps.push_back(
-            {.inst_id = GetTypeAllowBuiltinTypes(refs[step.index])});
+        steps.push_back({.inst_id = types().GetInstId(refs[step.index])});
         break;
       }
       case UnboundElementType::Kind: {
         if (step.index == 0) {
           out << "<unbound element of class ";
           steps.push_back(step.Next());
-          steps.push_back({.inst_id = GetTypeAllowBuiltinTypes(
+          steps.push_back({.inst_id = types().GetInstId(
                                inst.As<UnboundElementType>().class_type_id)});
         } else {
           out << ">";
