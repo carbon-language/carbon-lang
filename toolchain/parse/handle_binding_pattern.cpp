@@ -12,15 +12,15 @@ auto HandleBindingPattern(Context& context) -> void {
   // Parameters may have keywords prefixing the pattern. They become the parent
   // for the full BindingPattern.
   if (auto token = context.ConsumeIf(Lex::TokenKind::Template)) {
-    context.PushState(Context::StateStackEntry(
-        State::BindingPatternTemplate, PrecedenceGroup::ForTopLevelExpr(),
-        PrecedenceGroup::ForTopLevelExpr(), *token, state.subtree_start));
+    context.PushState({.state = State::BindingPatternTemplate,
+                       .token = *token,
+                       .subtree_start = state.subtree_start});
   }
 
   if (auto token = context.ConsumeIf(Lex::TokenKind::Addr)) {
-    context.PushState(Context::StateStackEntry(
-        State::BindingPatternAddress, PrecedenceGroup::ForTopLevelExpr(),
-        PrecedenceGroup::ForTopLevelExpr(), *token, state.subtree_start));
+    context.PushState({.state = State::BindingPatternAddress,
+                       .token = *token,
+                       .subtree_start = state.subtree_start});
   }
 
   // Handle an invalid pattern introducer for parameters and variables.
