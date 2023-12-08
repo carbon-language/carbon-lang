@@ -77,6 +77,18 @@ static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
   FinishAndSkipInvalidDecl(context, subtree_start);
 }
 
+// Replaces the introducer placeholder node, and pushes the introducer state for
+// processing.
+static auto ApplyIntroducer(Context& context, Context::StateStackEntry state,
+                            NodeKind introducer_kind, State next_state)
+    -> void {
+  context.ReplacePlaceholderNode(state.subtree_start, introducer_kind,
+                                 context.Consume());
+  // Reuse state here to retain its `subtree_start`.
+  state.state = next_state;
+  context.PushState(state);
+}
+
 // Handles `base` as a declaration.
 static auto HandleBaseAsDecl(Context& context, Context::StateStackEntry state)
     -> void {
@@ -84,11 +96,7 @@ static auto HandleBaseAsDecl(Context& context, Context::StateStackEntry state)
   // it's followed by a colon, it's an introducer (`extend base: BaseType;`).
   // Otherwise it's an error.
   if (context.PositionIs(Lex::TokenKind::Colon, Lookahead::NextToken)) {
-    context.ReplacePlaceholderNode(state.subtree_start,
-                                   NodeKind::BaseIntroducer, context.Consume());
-    // Reuse state here to retain its `subtree_start`
-    state.state = State::BaseDecl;
-    context.PushState(state);
+    ApplyIntroducer(context, state, NodeKind::BaseIntroducer, State::BaseDecl);
     context.PushState(State::Expr);
     context.AddLeafNode(NodeKind::BaseColon, context.Consume());
   } else {
@@ -109,26 +117,19 @@ static auto HandleBaseAsDecl(Context& context, Context::StateStackEntry state)
 // to a state to parse the rest of the declaration.
 static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
                             bool saw_modifier) -> bool {
-  auto introducer = [&](NodeKind node_kind, State next_state) {
-    context.ReplacePlaceholderNode(state.subtree_start, node_kind,
-                                   context.Consume());
-    // Reuse state here to retain its `subtree_start`.
-    state.state = next_state;
-    context.PushState(state);
-  };
-
   switch (context.PositionKind()) {
     case Lex::TokenKind::Base: {
       HandleBaseAsDecl(context, state);
       return true;
     }
     case Lex::TokenKind::Class: {
-      introducer(NodeKind::ClassIntroducer, State::TypeAfterIntroducerAsClass);
+      ApplyIntroducer(context, state, NodeKind::ClassIntroducer,
+                      State::TypeAfterIntroducerAsClass);
       return true;
     }
     case Lex::TokenKind::Constraint: {
-      introducer(NodeKind::NamedConstraintIntroducer,
-                 State::TypeAfterIntroducerAsNamedConstraint);
+      ApplyIntroducer(context, state, NodeKind::NamedConstraintIntroducer,
+                      State::TypeAfterIntroducerAsNamedConstraint);
       return true;
     }
     case Lex::TokenKind::Extend: {
@@ -137,7 +138,8 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
       return true;
     }
     case Lex::TokenKind::Fn: {
-      introducer(NodeKind::FunctionIntroducer, State::FunctionIntroducer);
+      ApplyIntroducer(context, state, NodeKind::FunctionIntroducer,
+                      State::FunctionIntroducer);
       return true;
     }
     case Lex::TokenKind::Impl: {
@@ -146,20 +148,22 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
       return true;
     }
     case Lex::TokenKind::Interface: {
-      introducer(NodeKind::InterfaceIntroducer,
-                 State::TypeAfterIntroducerAsInterface);
+      ApplyIntroducer(context, state, NodeKind::InterfaceIntroducer,
+                      State::TypeAfterIntroducerAsInterface);
       return true;
     }
     case Lex::TokenKind::Namespace: {
-      introducer(NodeKind::NamespaceStart, State::Namespace);
+      ApplyIntroducer(context, state, NodeKind::NamespaceStart,
+                      State::Namespace);
       return true;
     }
     case Lex::TokenKind::Let: {
-      introducer(NodeKind::LetIntroducer, State::Let);
+      ApplyIntroducer(context, state, NodeKind::LetIntroducer, State::Let);
       return true;
     }
     case Lex::TokenKind::Var: {
-      introducer(NodeKind::VariableIntroducer, State::VarAsDecl);
+      ApplyIntroducer(context, state, NodeKind::VariableIntroducer,
+                      State::VarAsDecl);
       return true;
     }
 
@@ -243,10 +247,11 @@ auto HandleDeclScopeLoop(Context& context) -> void {
     return;
   }
 
-  // Create a state with the correct starting position, with a dummy kind until
-  // we see the declaration's introducer.
-  context.PushState(State::DeclScopeLoop);
-  auto state = context.PopState();
+  // Create a state with the correct starting position, with a dummy kind
+  // until we see the declaration's introducer.
+  Context::StateStackEntry state{.state = State::Invalid,
+                                 .token = *context.position(),
+                                 .subtree_start = context.tree().size()};
 
   // Add a placeholder node, to be replaced by the declaration introducer once
   // it is found.

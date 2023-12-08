@@ -53,6 +53,10 @@
   CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
   CARBON_PARSE_STATE_VARIANTS3(State, Variant2, Variant3, Variant4)
 
+// Used as a default for StateStackEntry initialization in some cases. Should
+// not be put on the state stack.
+CARBON_PARSE_STATE(Invalid)
+
 // Handles an index expression:
 //
 // a[0]
@@ -1039,7 +1043,8 @@ CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
 //                           ^
 //   1. DeclNameAndParamsAsOptional
 //   2. TypeAfterParamsAs(Class|Interface|NamedConstraint)
-CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface, NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
+                             NamedConstraint)
 
 // Handles processing of a type after its optional parameters.
 //
