@@ -5,7 +5,7 @@
 #include "explorer/main.h"
 #include "llvm/Support/Path.h"
 
-auto main(int argc, char** argv) -> int {
+auto main(int argc, const char** argv) -> int {
   llvm::StringRef bin = llvm::sys::path::filename(argv[0]);
   if (bin == "carbon-explorer") {
     static int static_for_main_addr;

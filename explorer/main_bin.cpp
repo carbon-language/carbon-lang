@@ -5,7 +5,7 @@
 #include "common/bazel_working_dir.h"
 #include "explorer/main.h"
 
-auto main(int argc, char** argv) -> int {
+auto main(int argc, const char** argv) -> int {
   Carbon::SetWorkingDirForBazel();
 
   static int static_for_main_addr;
