@@ -109,6 +109,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 CARBON_DIAGNOSTIC_KIND(ParamsRequiredAfterImplicit)
 CARBON_DIAGNOSTIC_KIND(ParamsRequiredByIntroducer)
 CARBON_DIAGNOSTIC_KIND(ExpectedAfterBase)
+CARBON_DIAGNOSTIC_KIND(ImplExpectedAfterForall)
 CARBON_DIAGNOSTIC_KIND(ImplExpectedAs)
 
 // ============================================================================

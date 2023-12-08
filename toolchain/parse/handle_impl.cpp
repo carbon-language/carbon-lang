@@ -15,7 +15,14 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
     case Lex::TokenKind::Forall:
       context.PushState(State::ImplAfterForall);
       context.ConsumeAndDiscard();
-      context.PushState(State::ParamListAsImplicit);
+      if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
+        context.PushState(State::ParamListAsImplicit);
+      } else {
+        CARBON_DIAGNOSTIC(ImplExpectedAfterForall, Error,
+                          "Expected `[` after `forall` in `impl` declaration.");
+        context.emitter().Emit(*context.position(), ImplExpectedAfterForall);
+        context.ReturnErrorOnState();
+      }
       break;
 
     case Lex::TokenKind::As:
@@ -39,6 +46,14 @@ auto HandleImplAfterForall(Carbon::Parse::Context& context) -> void {
 
   context.AddNode(NodeKind::ImplForall, state.token, state.subtree_start,
                   state.has_error);
+
+  if (context.PositionKind() == Lex::TokenKind::As) {
+    context.AddLeafNode(NodeKind::ImplAs, context.Consume());
+    context.PushState(State::Expr);
+  } else {
+    context.PushState(State::ImplAs);
+    context.PushStateForExpr(PrecedenceGroup::ForImplAs());
+  }
 }
 
 auto HandleImplAs(Carbon::Parse::Context& context) -> void {
