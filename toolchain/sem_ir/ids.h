@@ -18,6 +18,7 @@ class File;
 class Inst;
 struct Class;
 struct Function;
+struct Interface;
 struct TypeInfo;
 
 // The ID of an instruction.
@@ -96,6 +97,23 @@ struct ClassId : public IdBase, public Printable<ClassId> {
 };
 
 constexpr ClassId ClassId::Invalid = ClassId(ClassId::InvalidIndex);
+
+// The ID of an interface.
+struct InterfaceId : public IdBase, public Printable<InterfaceId> {
+  using ValueType = Interface;
+
+  // An explicitly invalid interface ID.
+  static const InterfaceId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "interface";
+    IdBase::Print(out);
+  }
+};
+
+constexpr InterfaceId InterfaceId::Invalid =
+    InterfaceId(InterfaceId::InvalidIndex);
 
 // The ID of a cross-referenced IR.
 struct CrossRefIRId : public IdBase, public Printable<CrossRefIRId> {
