@@ -530,7 +530,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PrefixOperator, 1,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2,
                                    CARBON_TOKEN(Amp)
                                    CARBON_TOKEN(AmpEqual)
-                                   CARBON_TOKEN(And)
                                    CARBON_TOKEN(As)
                                    CARBON_TOKEN(Caret)
                                    CARBON_TOKEN(CaretEqual)
@@ -547,7 +546,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2,
                                    CARBON_TOKEN(LessLessEqual)
                                    CARBON_TOKEN(Minus)
                                    CARBON_TOKEN(MinusEqual)
-                                   CARBON_TOKEN(Or)
                                    CARBON_TOKEN(Percent)
                                    CARBON_TOKEN(PercentEqual)
                                    CARBON_TOKEN(Pipe)
@@ -561,13 +559,15 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2,
 
 // clang-format on
 
-// The first operand of a short-circuiting infix operator:
+// A short-circuiting infix operator:
 //     _external_: expression
-//   ShortCircuitOperand
+//   ShortCircuitOperand(And|Or)
 //   _external_: expression
-// _external_: InfixOperator
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperand, 1,
-                                   CARBON_TOKEN(And) CARBON_TOKEN(Or))
+// ShortCircuitOperand(And|Or)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperandAnd, 1, CARBON_TOKEN(And))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperandOr, 1, CARBON_TOKEN(Or))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperatorAnd, 2, CARBON_TOKEN(And))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperatorOr, 2, CARBON_TOKEN(Or))
 
 // A postfix operator:
 //   _external_: expression
