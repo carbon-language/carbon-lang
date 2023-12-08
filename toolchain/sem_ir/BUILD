@@ -106,6 +106,7 @@ cc_library(
     name = "type_info",
     hdrs = ["type_info.h"],
     deps = [
+        ":ids",
         ":inst",
         "//common:ostream",
     ],

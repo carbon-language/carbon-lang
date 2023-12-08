@@ -166,9 +166,7 @@ class File : public Printable<File> {
 
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
-    return insts()
-        .GetAs<PointerType>(types().Get(pointer_id).inst_id)
-        .pointee_id;
+    return types().GetAs<PointerType>(pointer_id).pointee_id;
   }
 
   // Produces a string version of a type.

@@ -278,7 +278,8 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         if (step.index == 0) {
           out << "[";
           steps.push_back(step.Next());
-          steps.push_back({.inst_id = types().GetInstId(array.element_type_id)});
+          steps.push_back(
+              {.inst_id = types().GetInstId(array.element_type_id)});
         } else if (step.index == 1) {
           out << "; " << GetArrayBoundValue(array.bound_id) << "]";
         }
@@ -316,8 +317,8 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case PointerType::Kind: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back(
-              {.inst_id = types().GetInstId(inst.As<PointerType>().pointee_id)});
+          steps.push_back({.inst_id = types().GetInstId(
+                               inst.As<PointerType>().pointee_id)});
         } else if (step.index == 1) {
           out << "*";
         }
