@@ -13,11 +13,9 @@ static auto HandleVar(Context& context, State finish_state,
   auto state = context.PopState();
 
   // The finished variable declaration will start at the `var` or `returned`.
-  state.state = finish_state;
-  context.PushState(state);
+  context.PushState(state, finish_state);
 
-  state.state = State::VarAfterPattern;
-  context.PushState(state);
+  context.PushState(state, State::VarAfterPattern);
 
   if (returned_token.is_valid()) {
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);

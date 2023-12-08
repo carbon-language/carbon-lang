@@ -14,11 +14,9 @@ auto HandleParenExpr(Context& context) -> void {
                       context.ConsumeChecked(Lex::TokenKind::OpenParen));
 
   if (context.PositionIs(Lex::TokenKind::CloseParen)) {
-    state.state = State::TupleLiteralFinish;
-    context.PushState(state);
+    context.PushState(state, State::TupleLiteralFinish);
   } else {
-    state.state = State::ParenExprFinish;
-    context.PushState(state);
+    context.PushState(state, State::ParenExprFinish);
     context.PushState(State::ExprAfterOpenParenFinish);
     context.PushState(State::Expr);
   }
@@ -37,14 +35,12 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
   auto finish_state = context.PopState();
   CARBON_CHECK(finish_state.state == State::ParenExprFinish)
       << "Unexpected parent state, found: " << finish_state.state;
-  finish_state.state = State::TupleLiteralFinish;
-  context.PushState(finish_state);
+  context.PushState(finish_state, State::TupleLiteralFinish);
 
   // If the comma is not immediately followed by a close paren, push handlers
   // for the next tuple element.
   if (list_token_kind != Context::ListTokenKind::CommaClose) {
-    state.state = State::TupleLiteralElementFinish;
-    context.PushState(state);
+    context.PushState(state, State::TupleLiteralElementFinish);
     context.PushState(State::Expr);
   }
 }

@@ -10,8 +10,7 @@ namespace Carbon::Parse {
 static auto HandleTypeAfterIntroducer(Context& context,
                                       State after_params_state) -> void {
   auto state = context.PopState();
-  state.state = after_params_state;
-  context.PushState(state);
+  context.PushState(state, after_params_state);
   context.PushState(State::DeclNameAndParamsAsOptional, state.token);
 }
 
@@ -53,8 +52,7 @@ static auto HandleTypeAfterParams(Context& context, NodeKind decl_kind,
     return;
   }
 
-  state.state = definition_finish_state;
-  context.PushState(state);
+  context.PushState(state, definition_finish_state);
   context.PushState(State::DeclScopeLoop);
   context.AddNode(definition_start_kind, context.Consume(), state.subtree_start,
                   state.has_error);

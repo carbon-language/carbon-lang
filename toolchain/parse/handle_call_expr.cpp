@@ -8,9 +8,7 @@ namespace Carbon::Parse {
 
 auto HandleCallExpr(Context& context) -> void {
   auto state = context.PopState();
-
-  state.state = State::CallExprFinish;
-  context.PushState(state);
+  context.PushState(state, State::CallExprFinish);
 
   context.AddNode(NodeKind::CallExprStart, context.Consume(),
                   state.subtree_start, state.has_error);

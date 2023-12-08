@@ -31,9 +31,8 @@ auto HandleBindingPattern(Context& context) -> void {
     // Add a placeholder for the type.
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
-    state.state = State::BindingPatternFinishAsRegular;
     state.has_error = true;
-    context.PushState(state);
+    context.PushState(state, State::BindingPatternFinishAsRegular);
   };
 
   // The first item should be an identifier or `self`.

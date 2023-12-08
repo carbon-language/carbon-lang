@@ -12,11 +12,10 @@ namespace Carbon::Parse {
 
 auto HandleArrayExpr(Context& context) -> void {
   auto state = context.PopState();
-  state.state = State::ArrayExprSemi;
   context.AddLeafNode(NodeKind::ArrayExprStart,
                       context.ConsumeChecked(Lex::TokenKind::OpenSquareBracket),
                       state.has_error);
-  context.PushState(state);
+  context.PushState(state, State::ArrayExprSemi);
   context.PushState(State::Expr);
 }
 
@@ -33,8 +32,7 @@ auto HandleArrayExprSemi(Context& context) -> void {
     context.AddNode(NodeKind::ArrayExprSemi, *semi, state.subtree_start,
                     state.has_error);
   }
-  state.state = State::ArrayExprFinish;
-  context.PushState(state);
+  context.PushState(state, State::ArrayExprFinish);
   if (!context.PositionIs(Lex::TokenKind::CloseSquareBracket)) {
     context.PushState(State::Expr);
   }

@@ -13,13 +13,11 @@ static auto HandleDeclNameAndParams(Context& context, State after_name)
 
   // TODO: Should handle designated names.
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-    state.state = after_name;
-    context.PushState(state);
+    context.PushState(state, after_name);
 
     if (context.PositionIs(Lex::TokenKind::Period)) {
       context.AddLeafNode(NodeKind::IdentifierName, *identifier);
-      state.state = State::PeriodAsDecl;
-      context.PushState(state);
+      context.PushState(state, State::PeriodAsDecl);
     } else {
       context.AddLeafNode(NodeKind::IdentifierName, *identifier);
     }
@@ -66,8 +64,7 @@ static auto HandleDeclNameAndParamsAfterName(Context& context, Params params)
   if (context.PositionIs(Lex::TokenKind::Period)) {
     // Continue designator processing.
     context.PushState(state);
-    state.state = State::PeriodAsDecl;
-    context.PushState(state);
+    context.PushState(state, State::PeriodAsDecl);
     return;
   }
 
