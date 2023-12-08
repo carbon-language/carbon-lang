@@ -9,7 +9,7 @@ namespace Carbon::Parse {
 auto HandlePattern(Context& context) -> void {
   context.PopAndDiscardState();
   if (context.PositionKind() == Lex::TokenKind::OpenParen) {
-    context.PushState(State::ParamListAsRegular);
+    context.PushState(State::PatternListAsTuple);
   } else {
     context.PushState(State::BindingPattern);
   }

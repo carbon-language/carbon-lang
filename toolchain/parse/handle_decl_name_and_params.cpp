@@ -86,9 +86,9 @@ static auto HandleDeclNameAndParamsAfterName(Context& context, Params params)
 
   if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
     context.PushState(State::DeclNameAndParamsAfterImplicit);
-    context.PushState(State::ParamListAsImplicit);
+    context.PushState(State::PatternListAsImplicit);
   } else if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::ParamListAsRegular);
+    context.PushState(State::PatternListAsTuple);
   } else if (params == Params::Required) {
     CARBON_DIAGNOSTIC(ParamsRequiredByIntroducer, Error,
                       "`{0}` requires a `(` for parameters.", Lex::TokenKind);
@@ -114,7 +114,7 @@ auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   context.PopAndDiscardState();
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::ParamListAsRegular);
+    context.PushState(State::PatternListAsTuple);
   } else {
     CARBON_DIAGNOSTIC(
         ParamsRequiredAfterImplicit, Error,

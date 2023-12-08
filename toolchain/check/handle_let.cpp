@@ -11,7 +11,7 @@ namespace Carbon::Check {
 
 auto HandleLetDecl(Context& context, Parse::NodeId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
-  if (context.node_stack().PeekIs<Parse::NodeKind::ParamList>()) {
+  if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     return context.TODO(parse_node, "tuple pattern in let");
   }
   SemIR::InstId pattern_id =

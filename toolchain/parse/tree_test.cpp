@@ -69,8 +69,8 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
       Yaml::Mapping(
           ElementsAre(Pair("kind", "IdentifierName"), Pair("text", "F"))),
       Yaml::Mapping(
-          ElementsAre(Pair("kind", "ParamListStart"), Pair("text", "("))),
-      Yaml::Mapping(ElementsAre(Pair("kind", "ParamList"), Pair("text", ")"),
+          ElementsAre(Pair("kind", "TuplePatternStart"), Pair("text", "("))),
+      Yaml::Mapping(ElementsAre(Pair("kind", "TuplePattern"), Pair("text", ")"),
                                 Pair("subtree_size", "2"))),
       Yaml::Mapping(ElementsAre(Pair("kind", "FunctionDecl"), Pair("text", ";"),
                                 Pair("subtree_size", "5"))),
@@ -91,7 +91,7 @@ TEST_F(TreeTest, PrintPreorderAsYAML) {
   tree.Print(print_stream, /*preorder=*/true);
 
   auto param_list = Yaml::Sequence(ElementsAre(Yaml::Mapping(
-      ElementsAre(Pair("node_index", "3"), Pair("kind", "ParamListStart"),
+      ElementsAre(Pair("node_index", "3"), Pair("kind", "TuplePatternStart"),
                   Pair("text", "(")))));
 
   auto function_decl = Yaml::Sequence(ElementsAre(
@@ -101,9 +101,10 @@ TEST_F(TreeTest, PrintPreorderAsYAML) {
       Yaml::Mapping(ElementsAre(Pair("node_index", "2"),
                                 Pair("kind", "IdentifierName"),
                                 Pair("text", "F"))),
-      Yaml::Mapping(ElementsAre(
-          Pair("node_index", "4"), Pair("kind", "ParamList"), Pair("text", ")"),
-          Pair("subtree_size", "2"), Pair("children", param_list)))));
+      Yaml::Mapping(ElementsAre(Pair("node_index", "4"),
+                                Pair("kind", "TuplePattern"), Pair("text", ")"),
+                                Pair("subtree_size", "2"),
+                                Pair("children", param_list)))));
 
   auto file = Yaml::Sequence(ElementsAre(
       Yaml::Mapping(ElementsAre(Pair("node_index", "0"),

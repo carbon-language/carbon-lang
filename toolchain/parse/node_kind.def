@@ -216,7 +216,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 //     FunctionIntroducer
 //     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
-//     _external_: ParamList
+//     _external_: TuplePattern
 //       _external_: type expression
 //     ReturnType
 //   FunctionDefinitionStart
@@ -236,24 +236,34 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Fn)))
 
-// A parameter list, possibly implicit:
-//   [Implicit]ParamListStart
+// A tuple pattern:
+//   TuplePatternStart
 //     _external_: [Generic]BindingPattern
-//     ParamListComma
+//     PatternListComma
 //   _repeated_
-// [Implicit]ParamList
+// TuplePattern
 //
-// [Generic]PatternBinding and ParamListComma may repeat with ParamListComma
-// as a separator.
+// Patterns and PatternListComma may repeat with PatternListComma as a
+// separator.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(TuplePatternStart, 0,
+                                   CARBON_TOKEN(OpenParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternListComma, 0, CARBON_TOKEN(Comma))
+CARBON_PARSE_NODE_KIND_BRACKET(TuplePattern, TuplePatternStart,
+                               CARBON_TOKEN(CloseParen))
+
+// An implicit parameter list:
+//   ImplicitParamListStart
+//     _external_: [Generic]BindingPattern
+//     PatternListComma
+//   _repeated_
+// ImplicitParamList
 //
-// TODO: rename ParamList to TuplePattern to reflect wider usage.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0, CARBON_TOKEN(OpenParen))
+// Patterns and PatternListComma may repeat with PatternListComma as a
+// separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListComma, 0, CARBON_TOKEN(Comma))
-CARBON_PARSE_NODE_KIND_BRACKET(ParamList, ParamListStart,
-                               CARBON_TOKEN(CloseParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParamList, ImplicitParamListStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParamList,
+                               ImplicitParamListStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // An array type, such as  `[i32; 3]` or `[i32;]`:
@@ -287,7 +297,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 // `let`:
 //   LetIntroducer
 //   _repeated_ _external_: modifier
-//   _external_: BindingPattern or ParamList
+//   _external_: BindingPattern or TuplePattern
 //   LetInitializer
 //   _external_: expression
 // LetDecl
@@ -303,7 +313,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 //   VariableIntroducer
 //   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
-//   _external_: BindingPattern or ParamList
+//   _external_: BindingPattern or TuplePattern
 //     VariableInitializer
 //     _external_: expression
 //   _optional_

@@ -79,7 +79,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   }
 
   SemIR::InstBlockId param_refs_id =
-      context.node_stack().Pop<Parse::NodeKind::ParamList>();
+      context.node_stack().Pop<Parse::NodeKind::TuplePattern>();
   SemIR::InstBlockId implicit_param_refs_id =
       context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>().value_or(
           SemIR::InstBlockId::Empty);
