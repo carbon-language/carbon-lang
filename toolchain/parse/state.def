@@ -471,14 +471,19 @@ CARBON_PARSE_STATE(ExprInPostfixLoop)
 
 // Handles processing of an expression.
 //
-// expr <binary operator> ...
-//      ^~~~~~~~~~~~~~~~~
+// expr <infix operator> ...
+//      ^~~~~~~~~~~~~~~~
 //   1. Expr
 //   2. ExprLoopForBinary
 //
 // expr <postfix operator>
 //      ^~~~~~~~~~~~~~~~~~
 //   1. ExprLoop
+//
+// expr <short circuit operator> ...
+//      ^~~~~~~~~~~~~~~~~~~~~~~~
+//   1. Expr
+//   2. ExprLoopForShortCircuitOperator
 //
 // expr ...
 //     ^
@@ -488,8 +493,8 @@ CARBON_PARSE_STATE(ExprLoop)
 // Completes an ExprLoop pass by adding an infix operator, then goes back
 // to ExprLoop.
 //
-// expr <binary operator> expr ...
-//                            ^
+// expr <infix operator> expr ...
+//                           ^
 //   1. ExprLoop
 CARBON_PARSE_STATE(ExprLoopForBinary)
 
@@ -500,6 +505,14 @@ CARBON_PARSE_STATE(ExprLoopForBinary)
 //                       ^
 //   1. ExprLoop
 CARBON_PARSE_STATE(ExprLoopForPrefix)
+
+// Completes an ExprLoop pass by adding a short circuit operator, then goes back
+// to ExprLoop.
+//
+// expr <short circuit operator> expr ...
+//                                   ^
+//   1. ExprLoop
+CARBON_PARSE_STATE_VARIANTS2(ExprLoopForShortCircuitOperator, And, Or)
 
 // Completes the condition of an `if` expression and handles the `then` token.
 //

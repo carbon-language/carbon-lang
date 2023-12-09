@@ -388,14 +388,12 @@ class InstNamer {
         name = "if.done";
         break;
 
-      case Parse::NodeKind::ShortCircuitOperand: {
-        bool is_rhs = inst.Is<BranchIf>();
-        bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
-                          inst.parse_node())) == Lex::TokenKind::And;
-        name = is_and ? (is_rhs ? "and.rhs" : "and.result")
-                      : (is_rhs ? "or.rhs" : "or.result");
+      case Parse::NodeKind::ShortCircuitOperandAnd:
+        name = inst.Is<BranchIf>() ? "and.rhs" : "and.result";
         break;
-      }
+      case Parse::NodeKind::ShortCircuitOperandOr:
+        name = inst.Is<BranchIf>() ? "or.rhs" : "or.result";
+        break;
 
       case Parse::NodeKind::WhileConditionStart:
         name = "while.cond";
