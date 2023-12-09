@@ -1154,17 +1154,27 @@ CARBON_PARSE_STATE(ImplBeforeAs)
 
 // Handles the start of a `var` or `returned var`.
 //
-// var ...             (variant is not Returned)
+// var ...             (variant is Decl)
 //    ^
 //   1. BindingPattern
 //   2. VarAfterPattern
-//   3. VarFinishAs(Decl|For)
+//   3. VarFinishAsDecl
 //
-// var (...)
+// var (...)           (variant is Decl)
 //    ^
 //   1. ParamListAsRegular
 //   2. VarAfterPattern
-//   3. VarFinishAs(Decl|For)
+//   3. VarFinishAsDecl
+//
+// var ...             (variant is For)
+//    ^
+//   1. BindingPattern
+//   2. VarFinishAsFor
+//
+// var (...)           (variant is For)
+//    ^
+//   1. ParamListAsRegular
+//   2. VarFinishAsFor
 //
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
