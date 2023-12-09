@@ -22,6 +22,13 @@ class B2 {
 // CHECK:STDERR:                                              ^
 fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 
+class Incomplete;
+
+// CHECK:STDERR: fail_not_derived_to_base.carbon:[[@LINE+3]]:55: ERROR: Cannot implicitly convert from `Incomplete*` to `A2*`.
+// CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
+// CHECK:STDERR:                                                       ^
+fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
+
 // CHECK:STDOUT: --- fail_not_derived_to_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -34,7 +41,7 @@ fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A1 = %A1.decl, .A2 = %A2.decl, .B2 = %B2.decl, .ConvertUnrelated = %ConvertUnrelated}
+// CHECK:STDOUT:   package: <namespace> = namespace {.A1 = %A1.decl, .A2 = %A2.decl, .B2 = %B2.decl, .ConvertUnrelated = %ConvertUnrelated, .Incomplete = %Incomplete.decl, .ConvertIncomplete = %ConvertIncomplete}
 // CHECK:STDOUT:   %A1.decl = class_decl @A1, ()
 // CHECK:STDOUT:   %A1: type = class_type @A1
 // CHECK:STDOUT:   %A2.decl = class_decl @A2, ()
@@ -42,6 +49,9 @@ fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDOUT:   %B2.decl = class_decl @B2, ()
 // CHECK:STDOUT:   %B2: type = class_type @B2
 // CHECK:STDOUT:   %ConvertUnrelated: <function> = fn_decl @ConvertUnrelated
+// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
+// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
+// CHECK:STDOUT:   %ConvertIncomplete: <function> = fn_decl @ConvertIncomplete
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A1 {
@@ -75,9 +85,17 @@ fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDOUT:   .b = %b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: class @Incomplete;
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertUnrelated(%p: B2*) -> A1* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: B2* = name_ref p, %p
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ConvertIncomplete(%p: Incomplete*) -> A2* {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %p.ref: Incomplete* = name_ref p, %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
