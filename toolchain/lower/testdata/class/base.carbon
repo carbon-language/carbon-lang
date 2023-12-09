@@ -23,9 +23,7 @@ fn Access(d: Derived) -> (i32, i32) {
 }
 
 fn Convert(p: Derived*) -> Base* {
-  // TODO: This should be allowed as an implicit conversion.
-  // TODO: We should support `p->base`.
-  return &(*p).base;
+  return p;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'base.carbon'
