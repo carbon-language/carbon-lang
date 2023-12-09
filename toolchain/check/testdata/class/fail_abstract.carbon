@@ -71,6 +71,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc12_24.2
 // CHECK:STDOUT:   .d = %d
+// CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Derived {

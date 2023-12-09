@@ -140,6 +140,7 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc14_18.2
+// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromi32 {
@@ -148,6 +149,7 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc21_19.2
+// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromTuple {
@@ -159,6 +161,7 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc32_23.3
+// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromStruct {
@@ -168,6 +171,7 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc43_34.2
+// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
@@ -179,6 +183,7 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc57_26.2
+// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
@@ -188,6 +193,7 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc69_21.2
+// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBasei32(%p: DeriveFromi32*) -> i32* {

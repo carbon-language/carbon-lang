@@ -221,21 +221,27 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
         context.sem_ir().StringifyType(base_type_id));
   });
 
+  SemIR::NameScopeId base_scope_id = SemIR::NameScopeId::Invalid;
   if (base_type_id != SemIR::TypeId::Error) {
     // For now, we treat all types that aren't introduced by a `class`
     // declaration as being final classes.
     // TODO: Once we have a better idea of which types are considered to be
     // classes, produce a better diagnostic for deriving from a non-class type.
     auto base_class = context.types().TryGetAs<SemIR::ClassType>(base_type_id);
-    if (!base_class ||
-        context.classes().Get(base_class->class_id).inheritance_kind ==
-            SemIR::Class::Final) {
+    auto* base_class_info =
+        base_class ? &context.classes().Get(base_class->class_id) : nullptr;
+    if (!base_class_info ||
+        base_class_info->inheritance_kind == SemIR::Class::Final) {
       CARBON_DIAGNOSTIC(BaseIsFinal, Error,
                         "Deriving from final type `{0}`. Base type must be an "
                         "`abstract` or `base` class.",
                         std::string);
       context.emitter().Emit(parse_node, BaseIsFinal,
                              context.sem_ir().StringifyType(base_type_id));
+    } else {
+      base_scope_id = base_class_info->scope_id;
+      CARBON_CHECK(base_scope_id.is_valid())
+          << "Complete class should have a scope";
     }
   }
 
@@ -260,6 +266,16 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
       context.decl_name_stack().MakeUnqualifiedName(parse_node,
                                                     SemIR::NameId::Base),
       class_info.base_id);
+
+  // Extend the class scope with the base class.
+  if (!!(modifiers & KeywordModifierSet::Extend)) {
+    auto& class_scope = context.name_scopes().Get(class_info.scope_id);
+    if (base_scope_id.is_valid()) {
+      class_scope.extended_scopes.push_back(base_scope_id);
+    } else {
+      class_scope.has_error = true;
+    }
+  }
   return true;
 }
 

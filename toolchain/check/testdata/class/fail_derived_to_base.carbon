@@ -83,6 +83,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc16_18.2
 // CHECK:STDOUT:   .b = %b
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

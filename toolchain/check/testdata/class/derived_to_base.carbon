@@ -87,6 +87,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc12_17.2
 // CHECK:STDOUT:   .b = %b
+// CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -100,6 +101,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc17_17.2
 // CHECK:STDOUT:   .c = %c
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToB(%p: C*) -> B* {
