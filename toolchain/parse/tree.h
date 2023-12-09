@@ -85,7 +85,7 @@ class Tree : public Printable<Tree> {
                     llvm::raw_ostream* vlog_stream) -> Tree;
 
   // Tests whether there are any errors in the parse tree.
-  auto has_errors() const -> bool { return has_errors_; }
+  constexpr auto has_errors() const noexcept -> bool { return has_errors_; }
 
   // Returns the number of nodes in this parse tree.
   auto size() const -> int { return node_impls_.size(); }
@@ -120,10 +120,13 @@ class Tree : public Printable<Tree> {
 
   auto node_subtree_size(NodeId n) const -> int32_t;
 
-  auto packaging_directive() const -> const std::optional<PackagingDirective>& {
+  auto packaging_directive() const noexcept
+      -> const std::optional<PackagingDirective>& {
     return packaging_directive_;
   }
-  auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
+  auto imports() const noexcept -> llvm::ArrayRef<PackagingNames> {
+    return imports_;
+  }
 
   // See the other Print comments.
   auto Print(llvm::raw_ostream& output) const -> void;
@@ -275,24 +278,26 @@ class Tree::PostorderIterator
  public:
   PostorderIterator() = delete;
 
-  auto operator==(const PostorderIterator& rhs) const -> bool {
+  constexpr auto operator==(const PostorderIterator& rhs) const noexcept
+      -> bool {
     return node_ == rhs.node_;
   }
-  auto operator<(const PostorderIterator& rhs) const -> bool {
+  constexpr auto operator<(const PostorderIterator& rhs) const noexcept
+      -> bool {
     return node_.index < rhs.node_.index;
   }
 
-  auto operator*() const -> NodeId { return node_; }
+  constexpr auto operator*() const noexcept -> NodeId { return node_; }
 
-  auto operator-(const PostorderIterator& rhs) const -> int {
+  constexpr auto operator-(const PostorderIterator& rhs) const noexcept -> int {
     return node_.index - rhs.node_.index;
   }
 
-  auto operator+=(int offset) -> PostorderIterator& {
+  constexpr auto operator+=(int offset) noexcept -> PostorderIterator& {
     node_.index += offset;
     return *this;
   }
-  auto operator-=(int offset) -> PostorderIterator& {
+  constexpr auto operator-=(int offset) noexcept -> PostorderIterator& {
     node_.index -= offset;
     return *this;
   }
@@ -327,11 +332,11 @@ class Tree::SiblingIterator
  public:
   explicit SiblingIterator() = delete;
 
-  auto operator==(const SiblingIterator& rhs) const -> bool {
+  constexpr auto operator==(const SiblingIterator& rhs) const noexcept -> bool {
     return node_ == rhs.node_;
   }
 
-  auto operator*() const -> NodeId { return node_; }
+  constexpr auto operator*() const noexcept -> NodeId { return node_; }
 
   using iterator_facade_base::operator++;
   auto operator++() -> SiblingIterator& {
