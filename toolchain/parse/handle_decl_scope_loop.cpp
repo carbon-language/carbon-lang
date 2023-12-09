@@ -142,8 +142,8 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
       return true;
     }
     case Lex::TokenKind::Impl: {
-      // TODO: Treat this `impl` token as a declaration introducer
-      HandleUnrecognizedDecl(context, state.subtree_start);
+      ApplyIntroducer(context, state, NodeKind::ImplIntroducer,
+                      State::ImplAfterIntroducer);
       return true;
     }
     case Lex::TokenKind::Interface: {

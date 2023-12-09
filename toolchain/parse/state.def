@@ -328,6 +328,11 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //   1. FunctionIntroducer
 //   2. DeclScopeLoop
 //
+// impl ...
+// ^~~~
+//   1. ImplAfterIntroducer
+//   2. DeclScopeLoop
+//
 // interface ...
 // ^~~~~~~~~
 //   1. TypeAfterIntroducerAsInterface
@@ -1071,10 +1076,10 @@ CARBON_PARSE_STATE(StatementWhileBlockFinish)
 
 // Handles parsing after the declaration scope of a type.
 //
-// class/interface/constraint { ... }
-//                                  ^
+// class/impl/interface/constraint ... { ... }
+//                                           ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
+CARBON_PARSE_STATE_VARIANTS4(DeclDefinitionFinish, Class, Impl, Interface,
                              NamedConstraint)
 
 // Handles processing of a type after its introducer.
@@ -1082,23 +1087,23 @@ CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
 // class/interface/constraint ...
 //                           ^
 //   1. DeclNameAndParamsAsOptional
-//   2. TypeAfterParamsAs(Class|Interface|NamedConstraint)
+//   2. DeclOrDefinitionAs(Class|Interface|NamedConstraint)
 CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
                              NamedConstraint)
 
 // Handles processing of a type after its optional parameters.
 //
-// class/interface/constraint name ( ... ) {
-//                                         ^
+// class/impl/interface/constraint name ( ... ) {
+//                                              ^
 //   1. DeclScopeLoop
-//   2. TypeDefinitionFinishAs(Class|Interface|NamedConstraint)
+//   2. DeclDefinitionFinishAs(Class|Impl|Interface|NamedConstraint)
 //
-// class/interface/constraint name ( ... ) ;
-//                                         ^
-// class/interface/constraint name ( ... ) ???
-//                                        ^
+// class/impl/interface/constraint name ( ... ) ;
+//                                              ^
+// class/impl/interface/constraint name ( ... ) ???
+//                                              ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface, NamedConstraint)
 
 // Handles processing of a completed `base: B` declaration.
 //
@@ -1108,6 +1113,44 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
 //         ^
 //   (state done)
 CARBON_PARSE_STATE(BaseDecl)
+
+// Handles processing of an `impl...as` declaration after the introducer.
+//
+// impl forall [ ...
+//      ^~~~~~
+//   1. PatternListAsImplicit
+//   2. ImplAfterForall
+//   3. DeclOrDefinitionAsImpl
+// impl as ...
+//      ^~
+//   1. Expr
+//   2. DeclOrDefinitionAsImpl
+// impl type_expression as ...
+//     ^
+//   1. Expr
+//   2. ImplBeforeAs
+//   3. DeclOrDefinitionAsImpl
+CARBON_PARSE_STATE(ImplAfterIntroducer)
+
+// Handles processing of an `impl forall` declaration after the implicit
+// parameter list.
+//
+// impl forall [ ... ] as ...
+//                     ^~
+//   1. Expr
+// impl forall [ ... ] type_expression as ...
+//                    ^
+//   1. Expr
+//   2. ImplBeforeAs
+CARBON_PARSE_STATE(ImplAfterForall)
+
+// Handles processing of the `as` in an `impl` declaration after the type
+// expression.
+//
+// impl TypeExpression as ...
+//                     ^~
+//   1. Expr
+CARBON_PARSE_STATE(ImplBeforeAs)
 
 // Handles the start of a `var` or `returned var`.
 //
