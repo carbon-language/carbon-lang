@@ -7,7 +7,7 @@
 namespace Carbon::Parse {
 
 static auto ExpectAsOrTypeExpression(Carbon::Parse::Context& context) -> void {
-  if (context.PositionKind() == Lex::TokenKind::As) {
+  if (context.PositionIs(Lex::TokenKind::As)) {
     // as <expression> ...
     context.AddLeafNode(NodeKind::ImplAs, context.Consume());
     context.PushState(State::Expr);
@@ -23,7 +23,7 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
   state.state = State::DeclOrDefinitionAsImpl;
   context.PushState(state);
 
-  if (context.PositionKind() == Lex::TokenKind::Forall) {
+  if (context.PositionIs(Lex::TokenKind::Forall)) {
     // forall [<implicit parameter list>] ...
     context.PushState(State::ImplAfterForall);
     context.ConsumeAndDiscard();
