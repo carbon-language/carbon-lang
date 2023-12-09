@@ -15,6 +15,11 @@
 
 namespace Carbon::Parse {
 
+auto HandleInvalid(Context& context) -> void {
+  CARBON_FATAL() << "The Invalid state shouldn't be on the stack: "
+                 << context.PopState();
+}
+
 auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
                  llvm::raw_ostream* vlog_stream) -> Tree {
   Lex::TokenLocationTranslator translator(&tokens);

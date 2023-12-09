@@ -10,8 +10,7 @@ namespace Carbon::Parse {
 static auto HandleTypeAfterIntroducer(Context& context,
                                       State after_params_state) -> void {
   auto state = context.PopState();
-  state.state = after_params_state;
-  context.PushState(state);
+  context.PushState(state, after_params_state);
   context.PushState(State::DeclNameAndParamsAsOptional, state.token);
 }
 

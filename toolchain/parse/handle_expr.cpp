@@ -182,26 +182,22 @@ auto HandleExprInPostfixLoop(Context& context) -> void {
   switch (context.PositionKind()) {
     case Lex::TokenKind::Period: {
       context.PushState(state);
-      state.state = State::PeriodAsExpr;
-      context.PushState(state);
+      context.PushState(state, State::PeriodAsExpr);
       break;
     }
     case Lex::TokenKind::MinusGreater: {
       context.PushState(state);
-      state.state = State::ArrowExpr;
-      context.PushState(state);
+      context.PushState(state, State::ArrowExpr);
       break;
     }
     case Lex::TokenKind::OpenParen: {
       context.PushState(state);
-      state.state = State::CallExpr;
-      context.PushState(state);
+      context.PushState(state, State::CallExpr);
       break;
     }
     case Lex::TokenKind::OpenSquareBracket: {
       context.PushState(state);
-      state.state = State::IndexExpr;
-      context.PushState(state);
+      context.PushState(state, State::IndexExpr);
       break;
     }
     default: {
@@ -268,15 +264,25 @@ auto HandleExprLoop(Context& context) -> void {
   state.lhs_precedence = operator_precedence;
 
   if (is_binary) {
-    if (operator_kind == Lex::TokenKind::And ||
-        operator_kind == Lex::TokenKind::Or) {
+    switch (operator_kind) {
       // For `and` and `or`, wrap the first operand in a virtual parse tree
-      // node so that semantics can insert control flow here.
-      context.AddNode(NodeKind::ShortCircuitOperand, state.token,
-                      state.subtree_start, state.has_error);
+      // node so that checking can insert control flow here.
+      case Lex::TokenKind::And:
+        context.AddNode(NodeKind::ShortCircuitOperandAnd, state.token,
+                        state.subtree_start, state.has_error);
+        state.state = State::ExprLoopForShortCircuitOperatorAsAnd;
+        break;
+      case Lex::TokenKind::Or:
+        context.AddNode(NodeKind::ShortCircuitOperandOr, state.token,
+                        state.subtree_start, state.has_error);
+        state.state = State::ExprLoopForShortCircuitOperatorAsOr;
+        break;
+
+      default:
+        state.state = State::ExprLoopForBinary;
+        break;
     }
 
-    state.state = State::ExprLoopForBinary;
     context.PushState(state);
     context.PushStateForExpr(operator_precedence);
   } else {
@@ -287,24 +293,30 @@ auto HandleExprLoop(Context& context) -> void {
   }
 }
 
-auto HandleExprLoopForBinary(Context& context) -> void {
+// Adds the operator node and returns the the main expression loop.
+static auto HandleExprLoopForOperator(Context& context, NodeKind node_kind)
+    -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::InfixOperator, state.token, state.subtree_start,
-                  state.has_error);
-  state.state = State::ExprLoop;
+  context.AddNode(node_kind, state.token, state.subtree_start, state.has_error);
   state.has_error = false;
-  context.PushState(state);
+  context.PushState(state, State::ExprLoop);
+}
+
+auto HandleExprLoopForBinary(Context& context) -> void {
+  HandleExprLoopForOperator(context, NodeKind::InfixOperator);
 }
 
 auto HandleExprLoopForPrefix(Context& context) -> void {
-  auto state = context.PopState();
+  HandleExprLoopForOperator(context, NodeKind::PrefixOperator);
+}
 
-  context.AddNode(NodeKind::PrefixOperator, state.token, state.subtree_start,
-                  state.has_error);
-  state.state = State::ExprLoop;
-  state.has_error = false;
-  context.PushState(state);
+auto HandleExprLoopForShortCircuitOperatorAsAnd(Context& context) -> void {
+  HandleExprLoopForOperator(context, NodeKind::ShortCircuitOperatorAnd);
+}
+
+auto HandleExprLoopForShortCircuitOperatorAsOr(Context& context) -> void {
+  HandleExprLoopForOperator(context, NodeKind::ShortCircuitOperatorOr);
 }
 
 auto HandleIfExprFinishCondition(Context& context) -> void {

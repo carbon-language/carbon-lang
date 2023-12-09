@@ -115,9 +115,11 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
     }
 
     case Parse::NodeKind::ImplicitParamListStart:
-    case Parse::NodeKind::ParamListStart:
+    case Parse::NodeKind::TuplePatternStart:
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
+      // TODO: A tuple pattern can appear in other places than function
+      // parameters.
       context.AddInstAndPush(parse_node,
                              SemIR::Param{name_node, cast_type_id, name_id});
       // TODO: Create a `BindName` instruction.
@@ -150,6 +152,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
 }
 
 auto HandleTemplate(Context& context, Parse::NodeId parse_node) -> bool {
+  // TODO: diagnose if this occurs in a `var` context.
   return context.TODO(parse_node, "HandleTemplate");
 }
 

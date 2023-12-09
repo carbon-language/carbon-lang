@@ -10,13 +10,11 @@ auto HandleLet(Context& context) -> void {
   auto state = context.PopState();
 
   // These will start at the `let`.
-  state.state = State::LetFinish;
-  context.PushState(state);
-  state.state = State::LetAfterPattern;
-  context.PushState(state);
+  context.PushState(state, State::LetFinish);
+  context.PushState(state, State::LetAfterPattern);
 
   // This will start at the pattern.
-  context.PushState(State::BindingPatternAsLet);
+  context.PushState(State::Pattern);
 }
 
 auto HandleLetAfterPattern(Context& context) -> void {

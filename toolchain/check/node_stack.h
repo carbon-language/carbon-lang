@@ -153,6 +153,11 @@ class NodeStack {
       RequireParseKind<RequiredParseKind>(back.first);
       return back;
     }
+    if constexpr (RequiredIdKind == IdKind::InterfaceId) {
+      auto back = PopWithParseNode<SemIR::InterfaceId>();
+      RequireParseKind<RequiredParseKind>(back.first);
+      return back;
+    }
     if constexpr (RequiredIdKind == IdKind::NameId) {
       auto back = PopWithParseNode<SemIR::NameId>();
       RequireParseKind<RequiredParseKind>(back.first);
@@ -215,6 +220,9 @@ class NodeStack {
     if constexpr (RequiredIdKind == IdKind::ClassId) {
       return back.id<SemIR::ClassId>();
     }
+    if constexpr (RequiredIdKind == IdKind::InterfaceId) {
+      return back.id<SemIR::InterfaceId>();
+    }
     if constexpr (RequiredIdKind == IdKind::NameId) {
       return back.id<SemIR::NameId>();
     }
@@ -239,6 +247,7 @@ class NodeStack {
     InstBlockId,
     FunctionId,
     ClassId,
+    InterfaceId,
     NameId,
     TypeId,
     // No associated ID type.
@@ -257,6 +266,8 @@ class NodeStack {
         : parse_node(parse_node), function_id(function_id) {}
     explicit Entry(Parse::NodeId parse_node, SemIR::ClassId class_id)
         : parse_node(parse_node), class_id(class_id) {}
+    explicit Entry(Parse::NodeId parse_node, SemIR::InterfaceId interface_id)
+        : parse_node(parse_node), interface_id(interface_id) {}
     explicit Entry(Parse::NodeId parse_node, SemIR::NameId name_id)
         : parse_node(parse_node), name_id(name_id) {}
     explicit Entry(Parse::NodeId parse_node, SemIR::TypeId type_id)
@@ -276,6 +287,9 @@ class NodeStack {
       }
       if constexpr (std::is_same<T, SemIR::ClassId>()) {
         return class_id;
+      }
+      if constexpr (std::is_same<T, SemIR::InterfaceId>()) {
+        return interface_id;
       }
       if constexpr (std::is_same<T, SemIR::NameId>()) {
         return name_id;
@@ -298,6 +312,7 @@ class NodeStack {
       SemIR::InstBlockId inst_block_id;
       SemIR::FunctionId function_id;
       SemIR::ClassId class_id;
+      SemIR::InterfaceId interface_id;
       SemIR::NameId name_id;
       SemIR::TypeId type_id;
     };
@@ -324,7 +339,10 @@ class NodeStack {
       case Parse::NodeKind::ReturnType:
       case Parse::NodeKind::SelfTypeNameExpr:
       case Parse::NodeKind::SelfValueNameExpr:
-      case Parse::NodeKind::ShortCircuitOperand:
+      case Parse::NodeKind::ShortCircuitOperandAnd:
+      case Parse::NodeKind::ShortCircuitOperandOr:
+      case Parse::NodeKind::ShortCircuitOperatorAnd:
+      case Parse::NodeKind::ShortCircuitOperatorOr:
       case Parse::NodeKind::StructFieldValue:
       case Parse::NodeKind::StructLiteral:
       case Parse::NodeKind::StructFieldType:
@@ -334,7 +352,7 @@ class NodeStack {
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
       case Parse::NodeKind::ImplicitParamList:
-      case Parse::NodeKind::ParamList:
+      case Parse::NodeKind::TuplePattern:
       case Parse::NodeKind::WhileCondition:
       case Parse::NodeKind::WhileConditionStart:
         return IdKind::InstBlockId;
@@ -342,24 +360,27 @@ class NodeStack {
         return IdKind::FunctionId;
       case Parse::NodeKind::ClassDefinitionStart:
         return IdKind::ClassId;
+      case Parse::NodeKind::InterfaceDefinitionStart:
+        return IdKind::InterfaceId;
       case Parse::NodeKind::BaseName:
       case Parse::NodeKind::IdentifierName:
         return IdKind::NameId;
       case Parse::NodeKind::ArrayExprSemi:
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
+      case Parse::NodeKind::ExprOpenParen:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:
+      case Parse::NodeKind::InterfaceIntroducer:
       case Parse::NodeKind::LetIntroducer:
-      case Parse::NodeKind::ParamListStart:
-      case Parse::NodeKind::ParenExprOrTupleLiteralStart:
       case Parse::NodeKind::QualifiedDecl:
       case Parse::NodeKind::ReturnedModifier:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::ReturnVarModifier:
       case Parse::NodeKind::SelfValueName:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
+      case Parse::NodeKind::TuplePatternStart:
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
         return IdKind::SoloParseNode;
@@ -396,6 +417,9 @@ class NodeStack {
     }
     if constexpr (std::is_same_v<IdT, SemIR::ClassId>) {
       return IdKind::ClassId;
+    }
+    if constexpr (std::is_same_v<IdT, SemIR::InterfaceId>) {
+      return IdKind::InterfaceId;
     }
     if constexpr (std::is_same_v<IdT, SemIR::NameId>) {
       return IdKind::NameId;

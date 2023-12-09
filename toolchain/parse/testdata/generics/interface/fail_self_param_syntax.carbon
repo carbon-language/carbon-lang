@@ -5,12 +5,12 @@
 // AUTOUPDATE
 
 interface Foo {
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:13: ERROR: Expected parameter declaration.
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:13: ERROR: Expected binding pattern.
   // CHECK:STDERR:   fn Sub[me Self](b: Self) -> Self;
   // CHECK:STDERR:             ^~~~
   fn Sub[me Self](b: Self) -> Self;
 
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: ERROR: Expected parameter declaration.
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: ERROR: Expected binding pattern.
   // CHECK:STDERR:   fn Mul[Self](b: Self) -> Self;
   // CHECK:STDERR:          ^~~~
   fn Mul[Self](b: Self) -> Self;
@@ -29,11 +29,11 @@ interface Foo {
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: 'Self', has_error: yes},
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: 'me', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ParamListStart', text: '('},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'b'},
 // CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 15},
@@ -44,11 +44,11 @@ interface Foo {
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: 'Self', has_error: yes},
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: 'Self', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ParamListStart', text: '('},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'b'},
 // CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ParamList', text: ')', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 15},

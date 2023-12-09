@@ -51,12 +51,6 @@ auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
 }
 
-auto HandleBinaryOperatorAdd(FunctionContext& /*context*/,
-                             SemIR::InstId /*inst_id*/,
-                             SemIR::BinaryOperatorAdd inst) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << inst;
-}
-
 auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
                     SemIR::BindName inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
@@ -199,6 +193,12 @@ auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
 }
 
+auto HandleInterfaceDecl(FunctionContext& /*context*/,
+                         SemIR::InstId /*inst_id*/,
+                         SemIR::InterfaceDecl /*inst*/) -> void {
+  // No action to perform.
+}
+
 auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::IntLiteral inst) -> void {
   const llvm::APInt& i = context.sem_ir().ints().Get(inst.int_id);
@@ -210,7 +210,7 @@ auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,
                    SemIR::NameRef inst) -> void {
-  auto type_inst_id = context.sem_ir().GetTypeAllowBuiltinTypes(inst.type_id);
+  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
   if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
     return;
   }

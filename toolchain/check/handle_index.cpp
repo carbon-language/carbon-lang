@@ -42,8 +42,7 @@ auto HandleIndexExpr(Context& context, Parse::NodeId parse_node) -> bool {
   operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
   auto operand_inst = context.insts().Get(operand_inst_id);
   auto operand_type_id = operand_inst.type_id();
-  auto operand_type_inst = context.insts().Get(
-      context.sem_ir().GetTypeAllowBuiltinTypes(operand_type_id));
+  auto operand_type_inst = context.types().GetAsInst(operand_type_id);
 
   switch (operand_type_inst.kind()) {
     case SemIR::ArrayType::Kind: {

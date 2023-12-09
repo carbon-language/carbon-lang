@@ -126,13 +126,14 @@ class Context {
   // Returns true if currently at file scope.
   auto at_file_scope() const -> bool { return scope_stack_.size() == 1; }
 
-  // Returns the instruction kind associated with the current scope, if any.
-  auto current_scope_kind() const -> std::optional<SemIR::InstKind> {
+  // Returns true if the current scope is of the specified kind.
+  template <typename InstT>
+  auto CurrentScopeIs() -> bool {
     auto current_scope_inst_id = current_scope().scope_inst_id;
     if (!current_scope_inst_id.is_valid()) {
-      return std::nullopt;
+      return false;
     }
-    return sem_ir_->insts().Get(current_scope_inst_id).kind();
+    return sem_ir_->insts().Get(current_scope_inst_id).kind() == InstT::Kind;
   }
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
@@ -336,6 +337,9 @@ class Context {
     return sem_ir().functions();
   }
   auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
+  auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
+    return sem_ir().interfaces();
+  }
   auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId>& {
     return sem_ir().cross_ref_irs();
   }
@@ -343,7 +347,7 @@ class Context {
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
   }
-  auto types() -> ValueStore<SemIR::TypeId>& { return sem_ir().types(); }
+  auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }
@@ -396,9 +400,9 @@ class Context {
 
   // A lookup result in the lexical lookup table `name_lookup_`.
   struct LexicalLookupResult {
-    // The node that was added to lookup.
-    SemIR::InstId node_id;
-    // The scope in which the node was added.
+    // The instruction that was added to lookup.
+    SemIR::InstId inst_id;
+    // The scope in which the instruction was added.
     ScopeIndex scope_index;
   };
 
@@ -509,7 +513,7 @@ class Context {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::NodeId parse_node)->bool;
+  auto Handle##Name(Context& context, Parse::NodeId parse_node) -> bool;
 #include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Check

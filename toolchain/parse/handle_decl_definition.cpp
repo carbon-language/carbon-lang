@@ -32,8 +32,7 @@ static auto HandleDeclOrDefinition(Context& context, NodeKind decl_kind,
     return;
   }
 
-  state.state = definition_finish_state;
-  context.PushState(state);
+  context.PushState(state, definition_finish_state);
   context.PushState(State::DeclScopeLoop);
   context.AddNode(definition_start_kind, context.Consume(), state.subtree_start,
                   state.has_error);

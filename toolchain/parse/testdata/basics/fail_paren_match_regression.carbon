@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+6]]:5: ERROR: Expected pattern in `var` declaration.
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+6]]:5: ERROR: Expected binding pattern.
 // CHECK:STDERR: var = (foo {})
 // CHECK:STDERR:     ^
 // CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+3]]:12: ERROR: Expected `,` or `)`.
@@ -23,7 +23,7 @@ var = (foo {})
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: '=', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'ParenExprOrTupleLiteralStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExprOpenParen', text: '('},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'foo'},
 // CHECK:STDOUT:       {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: 'var', has_error: yes, subtree_size: 9},

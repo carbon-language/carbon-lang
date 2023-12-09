@@ -163,9 +163,9 @@ auto Context::AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
                  lexical_results.back().scope_index < current_scope_index())
         << "Failed to clean up after scope nested within the current scope";
     lexical_results.push_back(
-        {.node_id = target_id, .scope_index = current_scope_index()});
+        {.inst_id = target_id, .scope_index = current_scope_index()});
   } else {
-    DiagnoseDuplicateName(name_node, name_lookup_[name_id].back().node_id);
+    DiagnoseDuplicateName(name_node, name_lookup_[name_id].back().inst_id);
   }
 }
 
@@ -201,7 +201,7 @@ auto Context::LookupNameInDecl(Parse::NodeId parse_node, SemIR::NameId name_id,
           << "Should have been erased: " << names().GetFormatted(name_id);
       auto result = name_it->second.back();
       if (result.scope_index == current_scope_index()) {
-        return result.node_id;
+        return result.inst_id;
       }
     }
     return SemIR::InstId::Invalid;
@@ -233,7 +233,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
     // it shadows all further non-lexical results and we're done.
     if (!lexical_results.empty() &&
         lexical_results.back().scope_index > index) {
-      return lexical_results.back().node_id;
+      return lexical_results.back().inst_id;
     }
 
     auto non_lexical_result =
@@ -245,7 +245,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   }
 
   if (!lexical_results.empty()) {
-    return lexical_results.back().node_id;
+    return lexical_results.back().inst_id;
   }
 
   // We didn't find anything at all.
@@ -542,7 +542,7 @@ class TypeCompleter {
  private:
   // Adds `type_id` to the work list, if it's not already complete.
   auto Push(SemIR::TypeId type_id) -> void {
-    if (!context_.sem_ir().IsTypeComplete(type_id)) {
+    if (!context_.types().IsComplete(type_id)) {
       work_list_.push_back({type_id, Phase::AddNestedIncompleteTypes});
     }
   }
@@ -553,14 +553,12 @@ class TypeCompleter {
 
     // We might have enqueued the same type more than once. Just skip the
     // type if it's already complete.
-    if (context_.sem_ir().IsTypeComplete(type_id)) {
+    if (context_.types().IsComplete(type_id)) {
       work_list_.pop_back();
       return true;
     }
 
-    auto inst_id = context_.sem_ir().GetTypeAllowBuiltinTypes(type_id);
-    auto inst = context_.insts().Get(inst_id);
-
+    auto inst = context_.types().GetAsInst(type_id);
     auto old_work_list_size = work_list_.size();
 
     switch (phase) {
@@ -583,14 +581,14 @@ class TypeCompleter {
         // Also complete the value representation type, if necessary. This
         // should never fail: the value representation shouldn't require any
         // additional nested types to be complete.
-        if (!context_.sem_ir().IsTypeComplete(value_rep.type_id)) {
+        if (!context_.types().IsComplete(value_rep.type_id)) {
           work_list_.push_back({value_rep.type_id, Phase::BuildValueRepr});
         }
         // For a pointer representation, the pointee also needs to be complete.
         if (value_rep.kind == SemIR::ValueRepr::Pointer) {
           auto pointee_type_id =
               context_.sem_ir().GetPointeeType(value_rep.type_id);
-          if (!context_.sem_ir().IsTypeComplete(pointee_type_id)) {
+          if (!context_.types().IsComplete(pointee_type_id)) {
             work_list_.push_back({pointee_type_id, Phase::BuildValueRepr});
           }
         }
@@ -684,9 +682,9 @@ class TypeCompleter {
   // Gets the value representation of a nested type, which should already be
   // complete.
   auto GetNestedValueRepr(SemIR::TypeId nested_type_id) const {
-    CARBON_CHECK(context_.sem_ir().IsTypeComplete(nested_type_id))
+    CARBON_CHECK(context_.types().IsComplete(nested_type_id))
         << "Nested type should already be complete";
-    auto value_rep = context_.sem_ir().GetValueRepr(nested_type_id);
+    auto value_rep = context_.types().GetValueRepr(nested_type_id);
     CARBON_CHECK(value_rep.kind != SemIR::ValueRepr::Unknown)
         << "Complete type should have a value representation";
     return value_rep;
@@ -830,7 +828,6 @@ class TypeCompleter {
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
       case SemIR::BaseDecl::Kind:
-      case SemIR::BinaryOperatorAdd::Kind:
       case SemIR::BindName::Kind:
       case SemIR::BindValue::Kind:
       case SemIR::BlockArg::Kind:
@@ -849,6 +846,7 @@ class TypeCompleter {
       case SemIR::FunctionDecl::Kind:
       case SemIR::Import::Kind:
       case SemIR::InitializeFrom::Kind:
+      case SemIR::InterfaceDecl::Kind:
       case SemIR::IntLiteral::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
@@ -1128,9 +1126,7 @@ auto Context::GetPointerType(Parse::NodeId parse_node,
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
-  SemIR::Inst type_inst =
-      insts().Get(sem_ir_->GetTypeAllowBuiltinTypes(type_id));
-  if (auto const_type = type_inst.TryAs<SemIR::ConstType>()) {
+  if (auto const_type = types().TryGetAs<SemIR::ConstType>(type_id)) {
     return const_type->inner_id;
   }
   return type_id;

@@ -8,8 +8,7 @@ namespace Carbon::Parse {
 
 auto HandleFunctionIntroducer(Context& context) -> void {
   auto state = context.PopState();
-  state.state = State::FunctionAfterParams;
-  context.PushState(state);
+  context.PushState(state, State::FunctionAfterParams);
   context.PushState(State::DeclNameAndParamsAsRequired, state.token);
 }
 
@@ -17,8 +16,7 @@ auto HandleFunctionAfterParams(Context& context) -> void {
   auto state = context.PopState();
 
   // Regardless of whether there's a return type, we'll finish the signature.
-  state.state = State::FunctionSignatureFinish;
-  context.PushState(state);
+  context.PushState(state, State::FunctionSignatureFinish);
 
   // If there is a return type, parse the expression before adding the return
   // type node.
@@ -50,8 +48,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
                       state.subtree_start, state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.
       state.has_error = false;
-      state.state = State::FunctionDefinitionFinish;
-      context.PushState(state);
+      context.PushState(state, State::FunctionDefinitionFinish);
       context.PushState(State::StatementScopeLoop);
       break;
     }

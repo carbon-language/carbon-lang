@@ -68,6 +68,7 @@ cc_library(
         ":ids",
         ":inst",
         ":inst_kind",
+        ":type_info",
         ":value_stores",
         "//common:check",
         "//toolchain/base:value_store",
@@ -102,11 +103,22 @@ cc_library(
 )
 
 cc_library(
+    name = "type_info",
+    hdrs = ["type_info.h"],
+    deps = [
+        ":ids",
+        ":inst",
+        "//common:ostream",
+    ],
+)
+
+cc_library(
     name = "value_stores",
     srcs = ["value_stores.cpp"],
     hdrs = ["value_stores.h"],
     deps = [
         ":inst",
+        ":type_info",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "//toolchain/lex:token_kind",

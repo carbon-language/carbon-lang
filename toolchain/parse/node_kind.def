@@ -216,7 +216,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 //     FunctionIntroducer
 //     _repeated_ _external_: modifier
 //     _external_: Name or QualifiedDecl
-//     _external_: ParamList
+//     _external_: TuplePattern
 //       _external_: type expression
 //     ReturnType
 //   FunctionDefinitionStart
@@ -236,22 +236,34 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_TOKEN(Fn)))
 
-// A parameter list, possibly implicit:
-//   [Implicit]ParamListStart
+// A tuple pattern:
+//   TuplePatternStart
 //     _external_: [Generic]BindingPattern
-//     ParamListComma
+//     PatternListComma
 //   _repeated_
-// [Implicit]ParamList
+// TuplePattern
 //
-// [Generic]PatternBinding and ParamListComma may repeat with ParamListComma
-// as a separator.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListStart, 0, CARBON_TOKEN(OpenParen))
+// Patterns and PatternListComma may repeat with PatternListComma as a
+// separator.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(TuplePatternStart, 0,
+                                   CARBON_TOKEN(OpenParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternListComma, 0, CARBON_TOKEN(Comma))
+CARBON_PARSE_NODE_KIND_BRACKET(TuplePattern, TuplePatternStart,
+                               CARBON_TOKEN(CloseParen))
+
+// An implicit parameter list:
+//   ImplicitParamListStart
+//     _external_: [Generic]BindingPattern
+//     PatternListComma
+//   _repeated_
+// ImplicitParamList
+//
+// Patterns and PatternListComma may repeat with PatternListComma as a
+// separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0,
                                    CARBON_TOKEN(OpenSquareBracket))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParamListComma, 0, CARBON_TOKEN(Comma))
-CARBON_PARSE_NODE_KIND_BRACKET(ParamList, ParamListStart,
-                               CARBON_TOKEN(CloseParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParamList, ImplicitParamListStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParamList,
+                               ImplicitParamListStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
 // An array type, such as  `[i32; 3]` or `[i32;]`:
@@ -285,7 +297,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, CARBON_TOKEN(Template))
 // `let`:
 //   LetIntroducer
 //   _repeated_ _external_: modifier
-//   _external_: BindingPattern
+//   _external_: BindingPattern or TuplePattern
 //   LetInitializer
 //   _external_: expression
 // LetDecl
@@ -301,7 +313,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
 //   VariableIntroducer
 //   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
-//   _external_: BindingPattern
+//   _external_: BindingPattern or TuplePattern
 //     VariableInitializer
 //     _external_: expression
 //   _optional_
@@ -417,13 +429,13 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IndexExprStart, 1,
 CARBON_PARSE_NODE_KIND_BRACKET(IndexExpr, IndexExprStart,
                                CARBON_TOKEN(CloseSquareBracket))
 
-// Parenthesized expressions, such as `(2)`:
-//   ParenExprOrTupleLiteralStart
+// Parenthesized single expressions, such as `(2)`:
+//   ExprOpenParen
 //   _external_: expression
 // ParenExpr
 //
 // Tuples, such as `(1, 2)`:
-//   ParenExprOrTupleLiteralStart
+//   ExprOpenParen
 //     _external_: expression
 //     TupleLiteralComma
 //   _repeated_
@@ -431,12 +443,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(IndexExpr, IndexExprStart,
 //
 // Expressions and TupleLiteralComma may repeat with TupleLiteralComma as a
 // separator.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExprOrTupleLiteralStart, 0,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExprOpenParen, 0,
                                    CARBON_TOKEN(OpenParen))
-CARBON_PARSE_NODE_KIND_BRACKET(ParenExpr, ParenExprOrTupleLiteralStart,
+CARBON_PARSE_NODE_KIND_BRACKET(ParenExpr, ExprOpenParen,
                                CARBON_TOKEN(CloseParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralComma, 0, CARBON_TOKEN(Comma))
-CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ParenExprOrTupleLiteralStart,
+CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, ExprOpenParen,
                                CARBON_TOKEN(CloseParen))
 
 // Call expressions, such as `a()`:
@@ -518,7 +530,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PrefixOperator, 1,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2,
                                    CARBON_TOKEN(Amp)
                                    CARBON_TOKEN(AmpEqual)
-                                   CARBON_TOKEN(And)
                                    CARBON_TOKEN(As)
                                    CARBON_TOKEN(Caret)
                                    CARBON_TOKEN(CaretEqual)
@@ -535,7 +546,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2,
                                    CARBON_TOKEN(LessLessEqual)
                                    CARBON_TOKEN(Minus)
                                    CARBON_TOKEN(MinusEqual)
-                                   CARBON_TOKEN(Or)
                                    CARBON_TOKEN(Percent)
                                    CARBON_TOKEN(PercentEqual)
                                    CARBON_TOKEN(Pipe)
@@ -549,13 +559,15 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2,
 
 // clang-format on
 
-// The first operand of a short-circuiting infix operator:
+// A short-circuiting infix operator:
 //     _external_: expression
-//   ShortCircuitOperand
+//   ShortCircuitOperand(And|Or)
 //   _external_: expression
-// _external_: InfixOperator
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperand, 1,
-                                   CARBON_TOKEN(And) CARBON_TOKEN(Or))
+// ShortCircuitOperand(And|Or)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperandAnd, 1, CARBON_TOKEN(And))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperandOr, 1, CARBON_TOKEN(Or))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperatorAnd, 2, CARBON_TOKEN(And))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperatorOr, 2, CARBON_TOKEN(Or))
 
 // A postfix operator:
 //   _external_: expression

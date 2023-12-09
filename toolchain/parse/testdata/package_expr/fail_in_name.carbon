@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+3]]:5: ERROR: Expected pattern in `var` declaration.
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+3]]:5: ERROR: Expected binding pattern.
 // CHECK:STDERR: var package.val: i32;
 // CHECK:STDERR:     ^~~~~~~
 var package.val: i32;
