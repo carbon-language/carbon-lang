@@ -32,7 +32,7 @@ impl forall f32;
 // CHECK:STDERR:                   ^
 impl forall [] u32;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+6]]:21: ERROR: Expected parameter declaration.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+6]]:21: ERROR: Expected binding pattern.
 // CHECK:STDERR: impl forall [invalid] i8;
 // CHECK:STDERR:                     ^
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+3]]:25: ERROR: Expected `as` in `impl` declaration.

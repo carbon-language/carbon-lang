@@ -28,7 +28,7 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
     context.PushState(State::ImplAfterForall);
     context.ConsumeAndDiscard();
     if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
-      context.PushState(State::ParamListAsImplicit);
+      context.PushState(State::PatternListAsImplicit);
     } else {
       CARBON_DIAGNOSTIC(ImplExpectedAfterForall, Error,
                         "Expected `[` after `forall` in `impl` declaration.");

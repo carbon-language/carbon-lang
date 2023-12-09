@@ -28,7 +28,7 @@ impl forall [T:! type, U:! Interface] U as Interface(T) {
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'T'},
 // CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:             {kind: 'GenericBindingPattern', text: ':!', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'ParamListComma', text: ','},
+// CHECK:STDOUT:             {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'U'},
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Interface'},
 // CHECK:STDOUT:             {kind: 'GenericBindingPattern', text: ':!', subtree_size: 3},

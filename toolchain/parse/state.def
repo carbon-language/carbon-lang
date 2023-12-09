@@ -1118,7 +1118,7 @@ CARBON_PARSE_STATE(BaseDecl)
 //
 // impl forall [ ...
 //      ^~~~~~
-//   1. ParamListAsImplicit
+//   1. PatternListAsImplicit
 //   2. ImplAfterForall
 //   3. DeclOrDefinitionAsImpl
 // impl as ...
