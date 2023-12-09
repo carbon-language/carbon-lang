@@ -17,19 +17,19 @@ class B2 {
   var b: i32;
 }
 
-// CHECK:STDERR: fail_not_derived_to_base.carbon:[[@LINE+3]]:46: ERROR: Cannot implicitly convert from `B2*` to `A1*`.
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:46: ERROR: Cannot implicitly convert from `B2*` to `A1*`.
 // CHECK:STDERR: fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDERR:                                              ^
 fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 
 class Incomplete;
 
-// CHECK:STDERR: fail_not_derived_to_base.carbon:[[@LINE+3]]:55: ERROR: Cannot implicitly convert from `Incomplete*` to `A2*`.
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:55: ERROR: Cannot implicitly convert from `Incomplete*` to `A2*`.
 // CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDERR:                                                       ^
 fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 
-// CHECK:STDOUT: --- fail_not_derived_to_base.carbon
+// CHECK:STDOUT: --- fail_derived_to_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc9: type = struct_type {.a: i32}
