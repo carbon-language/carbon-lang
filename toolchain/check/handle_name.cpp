@@ -48,10 +48,14 @@ static auto GetExprValueForLookupResult(Context& context,
     return context.types().GetInstId(
         context.classes().Get(class_decl->class_id).self_type_id);
   }
+  if (auto interface_decl = lookup_result.TryAs<SemIR::InterfaceDecl>()) {
+    // TODO: unimplemented
+    return SemIR::InstId::Invalid;
+  }
 
   // Anything else should be a typed value already.
   CARBON_CHECK(lookup_result.kind().value_kind() == SemIR::InstValueKind::Typed)
-      << "Unexpected kind for lookup result";
+      << "Unexpected kind for lookup result, " << lookup_result;
   return lookup_result_id;
 }
 
@@ -81,6 +85,9 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
             ? context.LookupQualifiedName(parse_node, name_id, *name_scope_id)
             : SemIR::InstId::BuiltinError;
     inst_id = GetExprValueForLookupResult(context, inst_id);
+    if (!inst_id.is_valid()) {
+      return context.TODO(parse_node, "Unimplemented use of interface");
+    }
     auto inst = context.insts().Get(inst_id);
     // TODO: Track that this instruction was named within `base_id`.
     context.AddInstAndPush(
@@ -246,6 +253,9 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId parse_node,
                              SemIR::NameId name_id) -> bool {
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
   value_id = GetExprValueForLookupResult(context, value_id);
+  if (!value_id.is_valid()) {
+    return context.TODO(parse_node, "Unimplemented use of interface");
+  }
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(parse_node, SemIR::NameRef{parse_node, value.type_id(),
                                                     name_id, value_id});
