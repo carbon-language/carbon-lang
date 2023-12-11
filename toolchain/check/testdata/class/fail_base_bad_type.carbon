@@ -78,22 +78,22 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT:   %.loc15: type = struct_type {.base: <error>}
 // CHECK:STDOUT:   %.loc22: type = struct_type {.base: i32}
 // CHECK:STDOUT:   %.loc17: type = ptr_type {.base: i32}
-// CHECK:STDOUT:   %.loc30_22: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc30_23.1: type = tuple_type (Base)
+// CHECK:STDOUT:   %.loc32_22: type = tuple_type (type)
+// CHECK:STDOUT:   %.loc32_23.1: type = tuple_type (Base)
 // CHECK:STDOUT:   %.loc7_18.2: type = tuple_type ()
 // CHECK:STDOUT:   %.loc7_1: type = ptr_type {}
-// CHECK:STDOUT:   %.loc30_23.2: type = tuple_type ({}*)
-// CHECK:STDOUT:   %.loc31_1.1: type = struct_type {.base: (Base,)}
-// CHECK:STDOUT:   %.loc31_1.2: type = struct_type {.base: ({}*,)}
-// CHECK:STDOUT:   %.loc26: type = ptr_type {.base: (Base,)}
-// CHECK:STDOUT:   %.loc41: type = ptr_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc42_1.1: type = struct_type {.base: {.a: i32, .b: i32}}
-// CHECK:STDOUT:   %.loc42_1.2: type = struct_type {.base: {.a: i32, .b: i32}*}
-// CHECK:STDOUT:   %.loc37: type = ptr_type {.base: {.a: i32, .b: i32}}
-// CHECK:STDOUT:   %.loc48: type = ptr_type {.base: <error>}
-// CHECK:STDOUT:   %.loc65_1.1: type = struct_type {.base: Final}
-// CHECK:STDOUT:   %.loc65_1.2: type = struct_type {.base: {}*}
-// CHECK:STDOUT:   %.loc60: type = ptr_type {.base: Final}
+// CHECK:STDOUT:   %.loc32_23.2: type = tuple_type ({}*)
+// CHECK:STDOUT:   %.loc33_1.1: type = struct_type {.base: (Base,)}
+// CHECK:STDOUT:   %.loc33_1.2: type = struct_type {.base: ({}*,)}
+// CHECK:STDOUT:   %.loc28: type = ptr_type {.base: (Base,)}
+// CHECK:STDOUT:   %.loc43: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc44_1.1: type = struct_type {.base: {.a: i32, .b: i32}}
+// CHECK:STDOUT:   %.loc44_1.2: type = struct_type {.base: {.a: i32, .b: i32}*}
+// CHECK:STDOUT:   %.loc39: type = ptr_type {.base: {.a: i32, .b: i32}}
+// CHECK:STDOUT:   %.loc50: type = ptr_type {.base: <error>}
+// CHECK:STDOUT:   %.loc70_1.1: type = struct_type {.base: Final}
+// CHECK:STDOUT:   %.loc70_1.2: type = struct_type {.base: {}*}
+// CHECK:STDOUT:   %.loc65: type = ptr_type {.base: Final}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -152,72 +152,72 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromTuple {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base
-// CHECK:STDOUT:   %.loc30_22: (type,) = tuple_literal (%Base.ref)
-// CHECK:STDOUT:   %.loc30_23.1: type = converted %.loc30_22, constants.%.loc30_23.1
-// CHECK:STDOUT:   %.loc30_23.2: type = unbound_element_type DeriveFromTuple, (Base,)
-// CHECK:STDOUT:   %.loc30_23.3: <unbound element of class DeriveFromTuple> = base_decl (Base,), element0
+// CHECK:STDOUT:   %.loc32_22: (type,) = tuple_literal (%Base.ref)
+// CHECK:STDOUT:   %.loc32_23.1: type = converted %.loc32_22, constants.%.loc32_23.1
+// CHECK:STDOUT:   %.loc32_23.2: type = unbound_element_type DeriveFromTuple, (Base,)
+// CHECK:STDOUT:   %.loc32_23.3: <unbound element of class DeriveFromTuple> = base_decl (Base,), element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc30_23.3
+// CHECK:STDOUT:   .base = %.loc32_23.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromStruct {
-// CHECK:STDOUT:   %.loc41_33: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc41_34.1: type = unbound_element_type DeriveFromStruct, {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc41_34.2: <unbound element of class DeriveFromStruct> = base_decl {.a: i32, .b: i32}, element0
+// CHECK:STDOUT:   %.loc43_33: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc43_34.1: type = unbound_element_type DeriveFromStruct, {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc43_34.2: <unbound element of class DeriveFromStruct> = base_decl {.a: i32, .b: i32}, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc41_34.2
+// CHECK:STDOUT:   .base = %.loc43_34.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromIncomplete {
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete
-// CHECK:STDOUT:   %.loc55_26.1: type = unbound_element_type DeriveFromIncomplete, <error>
-// CHECK:STDOUT:   %.loc55_26.2: <unbound element of class DeriveFromIncomplete> = base_decl <error>, element0
+// CHECK:STDOUT:   %.loc57_26.1: type = unbound_element_type DeriveFromIncomplete, <error>
+// CHECK:STDOUT:   %.loc57_26.2: <unbound element of class DeriveFromIncomplete> = base_decl <error>, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc55_26.2
+// CHECK:STDOUT:   .base = %.loc57_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
 // CHECK:STDOUT:   %Final.ref: type = name_ref Final, file.%Final
-// CHECK:STDOUT:   %.loc64_21.1: type = unbound_element_type DeriveFromFinal, Final
-// CHECK:STDOUT:   %.loc64_21.2: <unbound element of class DeriveFromFinal> = base_decl Final, element0
+// CHECK:STDOUT:   %.loc69_21.1: type = unbound_element_type DeriveFromFinal, Final
+// CHECK:STDOUT:   %.loc69_21.2: <unbound element of class DeriveFromFinal> = base_decl Final, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc64_21.2
+// CHECK:STDOUT:   .base = %.loc69_21.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBasei32(%p: DeriveFromi32*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: DeriveFromi32* = name_ref p, %p
-// CHECK:STDOUT:   %.loc24_61.1: ref DeriveFromi32 = deref %p.ref
-// CHECK:STDOUT:   %.loc24_61.2: ref i32 = class_element_access %.loc24_61.1, element0
-// CHECK:STDOUT:   %.loc24_61.3: i32* = address_of %.loc24_61.2
-// CHECK:STDOUT:   %.loc24_61.4: i32* = converted %p.ref, %.loc24_61.3
-// CHECK:STDOUT:   return %.loc24_61.4
+// CHECK:STDOUT:   %.loc26_61.1: ref DeriveFromi32 = deref %p.ref
+// CHECK:STDOUT:   %.loc26_61.2: ref i32 = class_element_access %.loc26_61.1, element0
+// CHECK:STDOUT:   %.loc26_61.3: i32* = address_of %.loc26_61.2
+// CHECK:STDOUT:   %.loc26_61.4: i32* = converted %p.ref, %.loc26_61.3
+// CHECK:STDOUT:   return %.loc26_61.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBaseTuple(%p: DeriveFromTuple*) -> (Base,)* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: DeriveFromTuple* = name_ref p, %p
-// CHECK:STDOUT:   %.loc33_69.1: ref DeriveFromTuple = deref %p.ref
-// CHECK:STDOUT:   %.loc33_69.2: ref (Base,) = class_element_access %.loc33_69.1, element0
-// CHECK:STDOUT:   %.loc33_69.3: (Base,)* = address_of %.loc33_69.2
-// CHECK:STDOUT:   %.loc33_69.4: (Base,)* = converted %p.ref, %.loc33_69.3
-// CHECK:STDOUT:   return %.loc33_69.4
+// CHECK:STDOUT:   %.loc35_69.1: ref DeriveFromTuple = deref %p.ref
+// CHECK:STDOUT:   %.loc35_69.2: ref (Base,) = class_element_access %.loc35_69.1, element0
+// CHECK:STDOUT:   %.loc35_69.3: (Base,)* = address_of %.loc35_69.2
+// CHECK:STDOUT:   %.loc35_69.4: (Base,)* = converted %p.ref, %.loc35_69.3
+// CHECK:STDOUT:   return %.loc35_69.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBaseStruct(%p: DeriveFromStruct*) -> {.a: i32, .b: i32}* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: DeriveFromStruct* = name_ref p, %p
-// CHECK:STDOUT:   %.loc44_82.1: ref DeriveFromStruct = deref %p.ref
-// CHECK:STDOUT:   %.loc44_82.2: ref {.a: i32, .b: i32} = class_element_access %.loc44_82.1, element0
-// CHECK:STDOUT:   %.loc44_82.3: {.a: i32, .b: i32}* = address_of %.loc44_82.2
-// CHECK:STDOUT:   %.loc44_82.4: {.a: i32, .b: i32}* = converted %p.ref, %.loc44_82.3
-// CHECK:STDOUT:   return %.loc44_82.4
+// CHECK:STDOUT:   %.loc46_82.1: ref DeriveFromStruct = deref %p.ref
+// CHECK:STDOUT:   %.loc46_82.2: ref {.a: i32, .b: i32} = class_element_access %.loc46_82.1, element0
+// CHECK:STDOUT:   %.loc46_82.3: {.a: i32, .b: i32}* = address_of %.loc46_82.2
+// CHECK:STDOUT:   %.loc46_82.4: {.a: i32, .b: i32}* = converted %p.ref, %.loc46_82.3
+// CHECK:STDOUT:   return %.loc46_82.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBaseIncomplete(%p: DeriveFromIncomplete*) -> Incomplete* {
@@ -229,10 +229,10 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT: fn @ConvertToBadBaseFinal(%p: DeriveFromFinal*) -> Final* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: DeriveFromFinal* = name_ref p, %p
-// CHECK:STDOUT:   %.loc67_67.1: ref DeriveFromFinal = deref %p.ref
-// CHECK:STDOUT:   %.loc67_67.2: ref Final = class_element_access %.loc67_67.1, element0
-// CHECK:STDOUT:   %.loc67_67.3: Final* = address_of %.loc67_67.2
-// CHECK:STDOUT:   %.loc67_67.4: Final* = converted %p.ref, %.loc67_67.3
-// CHECK:STDOUT:   return %.loc67_67.4
+// CHECK:STDOUT:   %.loc72_67.1: ref DeriveFromFinal = deref %p.ref
+// CHECK:STDOUT:   %.loc72_67.2: ref Final = class_element_access %.loc72_67.1, element0
+// CHECK:STDOUT:   %.loc72_67.3: Final* = address_of %.loc72_67.2
+// CHECK:STDOUT:   %.loc72_67.4: Final* = converted %p.ref, %.loc72_67.3
+// CHECK:STDOUT:   return %.loc72_67.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
