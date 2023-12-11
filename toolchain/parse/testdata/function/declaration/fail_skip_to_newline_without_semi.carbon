@@ -15,7 +15,7 @@ fn F();
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: 'fn', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'F'},
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},

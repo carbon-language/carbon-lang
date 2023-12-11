@@ -33,6 +33,6 @@ class package.C {
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: 'package', has_error: yes},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: 'class', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'ClassDecl', text: '}', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

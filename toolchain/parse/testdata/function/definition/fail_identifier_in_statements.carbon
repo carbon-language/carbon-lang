@@ -21,7 +21,8 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'bar'},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', has_error: yes, subtree_size: 7},
+// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'bar'},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: 'bar', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

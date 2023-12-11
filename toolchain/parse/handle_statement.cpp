@@ -72,12 +72,8 @@ static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
     context.emitter().Emit(*context.position(), ExpectedStatementSemi,
                            context.tokens().GetKind(state.token));
     state.has_error = true;
-    // Recover to the next semicolon if possible, otherwise indicate the
-    // keyword for the error.
+    // Recover to the next semicolon if possible.
     semi = context.SkipPastLikelyEnd(state.token);
-    if (!semi) {
-      semi = state.token;
-    }
   }
   context.AddNode(node_kind, *semi, state.subtree_start, state.has_error);
 }

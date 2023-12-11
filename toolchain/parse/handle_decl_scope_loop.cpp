@@ -52,20 +52,14 @@ static auto TryHandleEndOrPackagingDecl(Context& context) -> bool {
 static auto FinishAndSkipInvalidDecl(Context& context, int32_t subtree_start)
     -> void {
   auto cursor = *context.position();
-  // Consume to the next `;` or end of line. We ignore the return value since
-  // we only care how much was consumed, not whether it ended with a `;`.
-  // TODO: adjust the return of SkipPastLikelyEnd or create a new function
-  // to avoid going through these hoops.
-  context.SkipPastLikelyEnd(cursor);
-  // Set `iter` to the last token consumed, one before the current position.
-  auto iter = context.position();
-  --iter;
+  // Consume to the next `;` or end of line.
+  auto last_consumed_token = context.SkipPastLikelyEnd(cursor);
   // Output an invalid parse subtree including everything up to the last token
   // consumed.
   context.ReplacePlaceholderNode(subtree_start, NodeKind::InvalidParseStart,
                                  cursor, /*has_error=*/true);
-  context.AddNode(NodeKind::InvalidParseSubtree, *iter, subtree_start,
-                  /*has_error=*/true);
+  context.AddNode(NodeKind::InvalidParseSubtree, last_consumed_token,
+                  subtree_start, /*has_error=*/true);
 }
 
 // Prints a diagnostic and calls FinishAndSkipInvalidDecl.
