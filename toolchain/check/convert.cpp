@@ -571,6 +571,80 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   return result_id;
 }
 
+// An inheritance path is a sequence of `BaseDecl`s in order from derived to
+// base.
+using InheritancePath = llvm::SmallVector<SemIR::InstId>;
+
+// Computes the inheritance path from class `derived_id` to class `base_id`.
+// Returns nullopt if `derived_id` is not a class derived from `base_id`.
+static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
+                                   SemIR::TypeId base_id)
+    -> std::optional<InheritancePath> {
+  // We intend for NRVO to be applied to `result`. All `return` statements in
+  // this function should `return result;`.
+  std::optional<InheritancePath> result(std::in_place);
+  if (!context.TryToCompleteType(derived_id)) {
+    // TODO: Should we give an error here? If we don't, and there is an
+    // inheritance path when the class is defined, we may have a coherence
+    // problem.
+    result = std::nullopt;
+    return result;
+  }
+  while (derived_id != base_id) {
+    auto derived_class_type =
+        context.types().TryGetAs<SemIR::ClassType>(derived_id);
+    if (!derived_class_type) {
+      result = std::nullopt;
+      break;
+    }
+    auto& derived_class = context.classes().Get(derived_class_type->class_id);
+    if (!derived_class.base_id.is_valid()) {
+      result = std::nullopt;
+      break;
+    }
+    result->push_back(derived_class.base_id);
+    derived_id = context.insts()
+                     .GetAs<SemIR::BaseDecl>(derived_class.base_id)
+                     .base_type_id;
+  }
+  return result;
+}
+
+// Performs a conversion from a derived class value or reference to a base class
+// value or reference.
+static auto ConvertDerivedToBase(Context& context, Parse::NodeId parse_node,
+                                 SemIR::InstId value_id,
+                                 const InheritancePath& path) -> SemIR::InstId {
+  // Materialize a temporary if necessary.
+  value_id = ConvertToValueOrRefExpr(context, value_id);
+
+  // Add a series of `.base` accesses.
+  for (auto base_id : path) {
+    auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(base_id);
+    value_id = context.AddInst(SemIR::ClassElementAccess{
+        parse_node, base_decl.base_type_id, value_id, base_decl.index});
+  }
+  return value_id;
+}
+
+// Performs a conversion from a derived class pointer to a base class pointer.
+static auto ConvertDerivedPointerToBasePointer(
+    Context& context, Parse::NodeId parse_node, SemIR::PointerType src_ptr_type,
+    SemIR::TypeId dest_ptr_type_id, SemIR::InstId ptr_id,
+    const InheritancePath& path) -> SemIR::InstId {
+  // Form `*p`.
+  ptr_id = ConvertToValueExpr(context, ptr_id);
+  auto ref_id = context.AddInst(
+      SemIR::Deref{parse_node, src_ptr_type.pointee_id, ptr_id});
+
+  // Convert as a reference expression.
+  ref_id = ConvertDerivedToBase(context, parse_node, ref_id, path);
+
+  // Take the address.
+  return context.AddInst(
+      SemIR::AddressOf{parse_node, dest_ptr_type_id, ref_id});
+}
+
 // Returns whether `category` is a valid expression category to produce as a
 // result of a conversion with kind `target_kind`, or at most needs a temporary
 // to be materialized.
@@ -696,6 +770,28 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
             sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       return ConvertStructToClass(context, *src_struct_type, *target_class_type,
                                   value_id, target);
+    }
+
+    // An expression of type T converts to U if T is a class derived from U.
+    if (auto path =
+            ComputeInheritancePath(context, value_type_id, target.type_id);
+        path && !path->empty()) {
+      return ConvertDerivedToBase(context, parse_node, value_id, *path);
+    }
+  }
+
+  // A pointer T* converts to U* if T is a class derived from U.
+  if (auto target_pointer_type = target_type_inst.TryAs<SemIR::PointerType>()) {
+    if (auto src_pointer_type =
+            sem_ir.types().TryGetAs<SemIR::PointerType>(value_type_id)) {
+      if (auto path =
+              ComputeInheritancePath(context, src_pointer_type->pointee_id,
+                                     target_pointer_type->pointee_id);
+          path && !path->empty()) {
+        return ConvertDerivedPointerToBasePointer(
+            context, parse_node, *src_pointer_type, target.type_id, value_id,
+            *path);
+      }
     }
   }
 
