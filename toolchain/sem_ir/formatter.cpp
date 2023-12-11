@@ -805,6 +805,13 @@ class Formatter {
     out_ << " = ";
   }
 
+  // Print LazyImportRef with type-like semantics even though it lacks a
+  // type_id.
+  auto FormatInstructionLHS(InstId inst_id, LazyImportRef /*inst*/) -> void {
+    FormatInstName(inst_id);
+    out_ << " = ";
+  }
+
   template <typename InstT>
   auto FormatInstructionRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
@@ -821,11 +828,6 @@ class Formatter {
   auto FormatInstructionRHS(BlockArg inst) -> void {
     out_ << " ";
     FormatLabel(inst.block_id);
-  }
-
-  auto FormatInstructionRHS(LazyImportRef inst) -> void {
-    // Don't format the inst_id because it refers to a different IR.
-    out_ << " " << inst.ir_id << ", " << inst.inst_id;
   }
 
   auto FormatInstruction(InstId /*inst_id*/, BranchIf inst) -> void {
@@ -916,7 +918,13 @@ class Formatter {
   auto FormatInstructionRHS(CrossRef inst) -> void {
     // TODO: Figure out a way to make this meaningful. We'll need some way to
     // name cross-reference IRs, perhaps by the instruction ID of the import?
-    out_ << " " << inst.ir_id << "." << inst.inst_id;
+    out_ << " " << inst.ir_id << ", " << inst.inst_id;
+  }
+
+  auto FormatInstructionRHS(LazyImportRef inst) -> void {
+    // Don't format the inst_id because it refers to a different IR.
+    // TODO: Consider a better way to format the InstID from other IRs.
+    out_ << " " << inst.ir_id << ", " << inst.inst_id;
   }
 
   auto FormatInstructionRHS(SpliceBlock inst) -> void {
