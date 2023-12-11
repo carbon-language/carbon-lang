@@ -9,12 +9,12 @@ load(":cc_toolchain_config.bzl", "cc_local_toolchain_suite")
 
 cc_local_toolchain_suite(
     name = "bazel_cc_toolchain",
-    cpus = [
-        "aarch64",
-        "darwin",
-        "darwin_arm64",
-        "freebsd",
-        "k8",
-        "x64_windows",
+    configs = [
+        ("linux", "aarch64"),
+        ("linux", "x86_64"),
+        ("freebsd", "x86_64"),
+        ("macos", "arm64"),
+        ("macos", "x86_64"),
+        ("windows", "x86_64"),
     ],
 )

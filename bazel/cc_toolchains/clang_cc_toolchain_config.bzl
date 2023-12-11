@@ -17,7 +17,7 @@ load(
     "variable_with_value",
     "with_feature_set",
 )
-load("@rules_cc//cc:defs.bzl", "cc_toolchain", "cc_toolchain_suite")
+load("@rules_cc//cc:defs.bzl", "cc_toolchain")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
@@ -979,8 +979,7 @@ def _impl(ctx):
     # Now that we have built up the constituent feature definitions, compose
     # them, including configuration based on the target platform. Currently,
     # the target platform is configured with the "cpu" attribute for legacy
-    # reasons. Further, for legacy reasons the default is a Linux OS target and
-    # the x88-64 CPU name is "k8".
+    # reasons. Further, for legacy reasons the default is a Linux OS target.
 
     # First, define features that are simply used to configure others.
     features = [
@@ -990,9 +989,9 @@ def _impl(ctx):
         feature(name = "no_legacy_features"),
         feature(name = "nonhost"),
         feature(name = "opt"),
-        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_cpu == "k8"),
+        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_cpu == "x86_64"),
         feature(name = "supports_pic", enabled = True),
-        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_cpu == "k8"),
+        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_cpu == "x86_64"),
     ]
 
     # The order of the features determines the relative order of flags used.
@@ -1017,7 +1016,7 @@ def _impl(ctx):
 
     # Next, add the features based on the target platform. Here too the
     # features are order sensitive. We also setup the sysroot here.
-    if ctx.attr.target_cpu in ["aarch64", "k8"]:
+    if ctx.attr.target_cpu in ["aarch64", "x86_64"]:
         features.append(sanitizer_static_lib_flags)
         features.append(linux_flags_feature)
         sysroot = None
@@ -1082,16 +1081,17 @@ cc_toolchain_config = rule(
     implementation = _impl,
     attrs = {
         "target_cpu": attr.string(mandatory = True),
+        "target_os": attr.string(mandatory = True),
     },
     provides = [CcToolchainConfigInfo],
 )
 
-def cc_local_toolchain_suite(name, cpus):
+def cc_local_toolchain_suite(name, configs):
     """Create a toolchain suite that uses the local Clang/LLVM install.
 
     Args:
         name: The name of the toolchain suite to produce.
-        cpus: An array of CPU strings to support in the toolchain.
+        configs: An array of (os, cpu) pairs to support in the toolchain.
     """
 
     # An empty filegroup to use when stubbing out the toolchains.
@@ -1101,13 +1101,15 @@ def cc_local_toolchain_suite(name, cpus):
     )
 
     # Create the individual local toolchains for each CPU.
-    for cpu in cpus:
+    for (os, cpu) in configs:
+        config_name = name + "_" + os + "_" + cpu
         cc_toolchain_config(
-            name = name + "_local_config_" + cpu,
+            name = config_name + "_config",
+            target_os = os,
             target_cpu = cpu,
         )
         cc_toolchain(
-            name = name + "_local_" + cpu,
+            name = config_name + "_tools",
             all_files = ":" + name + "_empty",
             ar_files = ":" + name + "_empty",
             as_files = ":" + name + "_empty",
@@ -1117,12 +1119,13 @@ def cc_local_toolchain_suite(name, cpus):
             objcopy_files = ":" + name + "_empty",
             strip_files = ":" + name + "_empty",
             supports_param_files = 1,
-            toolchain_config = ":" + name + "_local_config_" + cpu,
-            toolchain_identifier = name + "_local_" + cpu,
+            toolchain_config = ":" + config_name + "_config",
+            toolchain_identifier = config_name,
         )
-
-    # Now build the suite, associating each CPU with its toolchain.
-    cc_toolchain_suite(
-        name = name,
-        toolchains = {cpu: ":" + name + "_local_" + cpu for cpu in cpus},
-    )
+        native.toolchain(
+            name = config_name,
+            exec_compatible_with = ["@platforms//cpu:" + cpu, "@platforms//os:" + os],
+            target_compatible_with = ["@platforms//cpu:" + cpu, "@platforms//os:" + os],
+            toolchain = config_name + "_tools",
+            toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+        )
