@@ -2,6 +2,14 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+# TODO: Get a better toolchain fix for
+# https://github.com/bazelbuild/bazel/issues/7260
+build --noincompatible_enable_cc_toolchain_resolution
+
+# TODO: https://bazel.build/external/migration for
+# https://github.com/bazelbuild/bazel/issues/18958
+build --noenable_bzlmod
+
 build --crosstool_top=@bazel_cc_toolchain
 build --host_crosstool_top=@bazel_cc_toolchain
 
