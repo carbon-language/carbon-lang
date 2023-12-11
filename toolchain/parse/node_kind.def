@@ -543,6 +543,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2,
                                    CARBON_TOKEN(GreaterGreaterEqual)
                                    CARBON_TOKEN(Less)
                                    CARBON_TOKEN(LessEqual)
+                                   CARBON_TOKEN(LessEqualGreater)
                                    CARBON_TOKEN(LessLess)
                                    CARBON_TOKEN(LessLessEqual)
                                    CARBON_TOKEN(Minus)
