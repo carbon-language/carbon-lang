@@ -401,8 +401,9 @@ auto HandleExprStatementFinish(Context& context) -> void {
     context.emitter().Emit(*context.position(), ExpectedExprSemi);
   }
 
-  context.AddNode(NodeKind::ExprStatement, context.SkipPastLikelyEnd(state.token),
-                  state.subtree_start, /*has_error=*/true);
+  context.AddNode(NodeKind::ExprStatement,
+                  context.SkipPastLikelyEnd(state.token), state.subtree_start,
+                  /*has_error=*/true);
 }
 
 }  // namespace Carbon::Parse
