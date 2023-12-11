@@ -165,7 +165,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageApi, 0, CARBON_TOKEN(Api))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageImpl, 0, CARBON_TOKEN(Impl))
 CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Package)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `import`:
 //   ImportIntroducer
@@ -175,7 +175,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImportIntroducer, 0, CARBON_TOKEN(Import))
 CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Import)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 // `library` as directive:
 //   LibraryIntroducer
 //   DefaultLibrary or _external_: LibraryName
@@ -184,7 +184,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultLibrary, 0, CARBON_TOKEN(Default))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryIntroducer, 0, CARBON_TOKEN(Library))
 CARBON_PARSE_NODE_KIND_BRACKET(LibraryDirective, LibraryIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Library)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `library` in `package` or `import`:
 //   _external_: LibraryName
@@ -199,7 +199,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, CARBON_TOKEN(Library))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0, CARBON_TOKEN(Namespace))
 CARBON_PARSE_NODE_KIND_BRACKET(Namespace, NamespaceStart,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Namespace)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // A code block:
 //   CodeBlockStart
@@ -234,7 +234,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinition, FunctionDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Fn)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // A tuple pattern:
 //   TuplePatternStart
@@ -307,7 +307,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetIntroducer, 0, CARBON_TOKEN(Let))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Let)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `var` and `returned var`:
 //   VariableIntroducer
@@ -330,13 +330,14 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnedModifier, 0, CARBON_TOKEN(Returned))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDecl, VariableIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Var)
-                                                       CARBON_TOKEN(Returned)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // An expression statement:
 //   _external_: expression
 // ExprStatement
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExprStatement, 1, CARBON_TOKEN(Semi))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExprStatement, 1,
+                                   CARBON_TOKEN(Semi)
+                                       CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `break`:
 //   BreakStatementStart
@@ -344,7 +345,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExprStatement, 1, CARBON_TOKEN(Semi))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatementStart, 0, CARBON_TOKEN(Break))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatement, 1,
                                    CARBON_TOKEN(Semi)
-                                       CARBON_IF_ERROR(CARBON_TOKEN(Break)))
+                                       CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `continue`:
 //   ContinueStatementStart
@@ -353,7 +354,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatementStart, 0,
                                    CARBON_TOKEN(Continue))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1,
                                    CARBON_TOKEN(Semi)
-                                       CARBON_IF_ERROR(CARBON_TOKEN(Continue)))
+                                       CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `return`:
 //   ReturnStatementStart
@@ -364,7 +365,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnStatementStart, 0,
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnVarModifier, 0, CARBON_TOKEN(Var))
 CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Return)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `for`:
 //     ForHeaderStart
@@ -658,7 +659,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Class)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `base`:
 //   BaseIntroducer
@@ -670,7 +671,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseIntroducer, 0, CARBON_TOKEN(Base))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseColon, 0, CARBON_TOKEN(Colon))
 CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Base)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `interface`:
 //     InterfaceIntroducer
@@ -691,7 +692,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, InterfaceDefinitionStart,
                                CARBON_TOKEN(CloseCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
                                CARBON_TOKEN(Semi)
-                                   CARBON_IF_ERROR(CARBON_TOKEN(Interface)))
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
 // `impl ... as`:
 //     ImplIntroducer

@@ -401,14 +401,9 @@ auto HandleExprStatementFinish(Context& context) -> void {
     context.emitter().Emit(*context.position(), ExpectedExprSemi);
   }
 
-  if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
-    context.AddNode(NodeKind::ExprStatement, *semi_token, state.subtree_start,
-                    /*has_error=*/true);
-    return;
-  }
-
-  // Found junk not even followed by a `;`, no node to add.
-  context.ReturnErrorOnState();
+  context.AddNode(NodeKind::ExprStatement,
+                  context.SkipPastLikelyEnd(state.token), state.subtree_start,
+                  /*has_error=*/true);
 }
 
 }  // namespace Carbon::Parse

@@ -181,9 +181,8 @@ class Context {
   //   less indentation, there is likely a missing semicolon. Continued
   //   declarations or statements across multiple lines should be indented.
   //
-  // Returns a semicolon token if one is the likely end.
-  auto SkipPastLikelyEnd(Lex::TokenIndex skip_root)
-      -> std::optional<Lex::TokenIndex>;
+  // Returns the last token consumed.
+  auto SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex;
 
   // Skip forward to the given token. Verifies that it is actually forward.
   auto SkipTo(Lex::TokenIndex t) -> void;

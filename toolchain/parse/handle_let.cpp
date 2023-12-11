@@ -48,9 +48,7 @@ auto HandleLetFinish(Context& context) -> void {
   } else {
     context.EmitExpectedDeclSemi(Lex::TokenKind::Let);
     state.has_error = true;
-    if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
-      end_token = *semi_token;
-    }
+    end_token = context.SkipPastLikelyEnd(state.token);
   }
   context.AddNode(NodeKind::LetDecl, end_token, state.subtree_start,
                   state.has_error);

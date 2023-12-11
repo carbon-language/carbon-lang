@@ -200,10 +200,9 @@ auto Context::SkipMatchingGroup() -> bool {
   return true;
 }
 
-auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root)
-    -> std::optional<Lex::TokenIndex> {
+auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
   if (position_ == end_) {
-    return std::nullopt;
+    return *(position_ - 1);
   }
 
   Lex::LineIndex root_line = tokens().GetLine(skip_root);
@@ -224,13 +223,13 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root)
     if (PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
       // Immediately bail out if we hit an unmatched close curly, this will
       // pop us up a level of the syntax grouping.
-      return std::nullopt;
+      return *(position_ - 1);
     }
 
     // We assume that a semicolon is always intended to be the end of the
     // current construct.
     if (auto semi = ConsumeIf(Lex::TokenKind::Semi)) {
-      return semi;
+      return *semi;
     }
 
     // Skip over any matching group of tokens().
@@ -243,7 +242,7 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root)
   } while (position_ != end_ &&
            is_same_line_or_indent_greater_than_root(*position_));
 
-  return std::nullopt;
+  return *(position_ - 1);
 }
 
 auto Context::SkipTo(Lex::TokenIndex t) -> void {
@@ -412,9 +411,7 @@ auto Context::RecoverFromDeclError(StateStackEntry state,
                                    bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {
-    if (auto semi = SkipPastLikelyEnd(token)) {
-      token = *semi;
-    }
+    token = SkipPastLikelyEnd(token);
   }
   AddNode(parse_node_kind, token, state.subtree_start,
           /*has_error=*/true);
