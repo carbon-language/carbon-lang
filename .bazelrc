@@ -6,9 +6,6 @@
 # https://github.com/bazelbuild/bazel/issues/18958
 build --noenable_bzlmod
 
-build --crosstool_top=@bazel_cc_toolchain
-build --host_crosstool_top=@bazel_cc_toolchain
-
 # Default to using a disk cache to minimize re-building LLVM and Clang which we
 # try to avoid updating too frequently to minimize rebuild cost. The location
 # here can be overridden in the user configuration where needed.
