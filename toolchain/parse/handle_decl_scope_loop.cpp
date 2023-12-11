@@ -52,14 +52,13 @@ static auto TryHandleEndOrPackagingDecl(Context& context) -> bool {
 static auto FinishAndSkipInvalidDecl(Context& context, int32_t subtree_start)
     -> void {
   auto cursor = *context.position();
-  // Consume to the next `;` or end of line.
-  auto last_consumed_token = context.SkipPastLikelyEnd(cursor);
-  // Output an invalid parse subtree including everything up to the last token
-  // consumed.
+  // Output an invalid parse subtree including everything up to the next `;`
+  // or end of line.
   context.ReplacePlaceholderNode(subtree_start, NodeKind::InvalidParseStart,
                                  cursor, /*has_error=*/true);
-  context.AddNode(NodeKind::InvalidParseSubtree, last_consumed_token,
-                  subtree_start, /*has_error=*/true);
+  context.AddNode(NodeKind::InvalidParseSubtree,
+                  context.SkipPastLikelyEnd(cursor), subtree_start,
+                  /*has_error=*/true);
 }
 
 // Prints a diagnostic and calls FinishAndSkipInvalidDecl.

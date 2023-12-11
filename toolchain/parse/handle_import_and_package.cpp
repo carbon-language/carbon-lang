@@ -12,9 +12,8 @@ namespace Carbon::Parse {
 // Provides common error exiting logic that skips to the semi, if present.
 static auto OnParseError(Context& context, Context::StateStackEntry state,
                          NodeKind directive) -> void {
-  auto last_consumed_token = context.SkipPastLikelyEnd(state.token);
-  return context.AddNode(directive, last_consumed_token, state.subtree_start,
-                         /*has_error=*/true);
+  return context.AddNode(directive, context.SkipPastLikelyEnd(state.token),
+                         state.subtree_start, /*has_error=*/true);
 }
 
 // Handles parsing of the library name. Returns the name's ID on success, which

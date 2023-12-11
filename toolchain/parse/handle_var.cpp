@@ -35,8 +35,8 @@ auto HandleVarAsReturned(Context& context) -> void {
     CARBON_DIAGNOSTIC(ExpectedVarAfterReturned, Error,
                       "Expected `var` after `returned`.");
     context.emitter().Emit(*context.position(), ExpectedVarAfterReturned);
-    auto last_consumed_token = context.SkipPastLikelyEnd(returned_token);
-    context.AddLeafNode(NodeKind::EmptyDecl, last_consumed_token,
+    context.AddLeafNode(NodeKind::EmptyDecl,
+                        context.SkipPastLikelyEnd(returned_token),
                         /*has_error=*/true);
     context.PopAndDiscardState();
     return;
