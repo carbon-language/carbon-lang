@@ -401,8 +401,7 @@ auto HandleExprStatementFinish(Context& context) -> void {
     context.emitter().Emit(*context.position(), ExpectedExprSemi);
   }
 
-  auto last_consumed_token = context.SkipPastLikelyEnd(state.token);
-  context.AddNode(NodeKind::ExprStatement, last_consumed_token,
+  context.AddNode(NodeKind::ExprStatement, context.SkipPastLikelyEnd(state.token),
                   state.subtree_start, /*has_error=*/true);
 }
 
