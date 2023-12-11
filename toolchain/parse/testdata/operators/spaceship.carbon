@@ -5,9 +5,6 @@
 // AUTOUPDATE
 
 fn F() {
-  var a: i32;
-  var b: i32;
-
   a <=> b;
 }
 
