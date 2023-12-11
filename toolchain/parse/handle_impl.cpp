@@ -34,6 +34,11 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
                         "Expected `[` after `forall` in `impl` declaration.");
       context.emitter().Emit(*context.position(), ImplExpectedAfterForall);
       context.ReturnErrorOnState();
+      // If we aren't producing a node from the PatternListAsImplicit state,
+      // we still need to create a node to be the child of the `ImplForall`
+      // token created in the `ImplAfterForall` state.
+      context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                          /*has_error=*/true);
     }
   } else {
     // One of:
@@ -46,8 +51,6 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
 auto HandleImplAfterForall(Carbon::Parse::Context& context) -> void {
   auto state = context.PopState();
   if (state.has_error) {
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
     context.ReturnErrorOnState();
   }
   context.AddNode(NodeKind::ImplForall, state.token, state.subtree_start,
