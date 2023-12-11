@@ -339,7 +339,10 @@ class NodeStack {
       case Parse::NodeKind::ReturnType:
       case Parse::NodeKind::SelfTypeNameExpr:
       case Parse::NodeKind::SelfValueNameExpr:
-      case Parse::NodeKind::ShortCircuitOperand:
+      case Parse::NodeKind::ShortCircuitOperandAnd:
+      case Parse::NodeKind::ShortCircuitOperandOr:
+      case Parse::NodeKind::ShortCircuitOperatorAnd:
+      case Parse::NodeKind::ShortCircuitOperatorOr:
       case Parse::NodeKind::StructFieldValue:
       case Parse::NodeKind::StructLiteral:
       case Parse::NodeKind::StructFieldType:
