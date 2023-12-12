@@ -2,9 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Temporary debugging aid
-build --toolchain_resolution_debug=.*
-
 # TODO: https://bazel.build/external/migration for
 # https://github.com/bazelbuild/bazel/issues/18958
 build --noenable_bzlmod
