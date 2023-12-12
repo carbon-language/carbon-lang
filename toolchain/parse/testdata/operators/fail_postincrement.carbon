@@ -31,7 +31,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'n'},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'n'},

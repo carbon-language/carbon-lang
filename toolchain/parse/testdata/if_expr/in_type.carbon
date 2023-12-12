@@ -17,7 +17,7 @@ fn F() -> if true then i32 else i32* {
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'n'},
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'VariableDeclNoInitializer', text: ';', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},

@@ -309,26 +309,35 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 
-// `var` and `returned var`:
+// `var` and `returned var` with no initializer:
 //   VariableIntroducer
 //   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
 //   _external_: BindingPattern or TuplePattern
-//     VariableInitializer
-//     _external_: expression
-//   _optional_
-// VariableDecl
+// VariableDeclNoInitializer
 //
 // Access and declaration modifier keywords only appear for `var` declarations,
 // whereas the returned modifier only appears on `var` statements.
-// The VariableInitializer and following expression are paired: either both will
-// be present, or neither will.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0,
                                    CARBON_TOKEN(Var)
                                        CARBON_IF_ERROR(CARBON_TOKEN(Returned)))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnedModifier, 0, CARBON_TOKEN(Returned))
+CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclNoInitializer, VariableIntroducer,
+                               CARBON_TOKEN(Semi)
+                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
+
+// `var` and `returned var` with an initializer:
+//   VariableIntroducer
+//   _repeated_ _external_: modifier
+//   _optional_ ReturnedModifier
+//   _external_: BindingPattern or TuplePattern
+//   _external_: expression
+// VariableDeclWithInitializer
+//
+// Access and declaration modifier keywords only appear for `var` declarations,
+// whereas the returned modifier only appears on `var` statements.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, CARBON_TOKEN(Equal))
-CARBON_PARSE_NODE_KIND_BRACKET(VariableDecl, VariableIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclWithInitializer, VariableIntroducer,
                                CARBON_TOKEN(Semi)
                                    CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 

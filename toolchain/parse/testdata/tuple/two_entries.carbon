@@ -23,6 +23,6 @@ var x: (i32, i32) = (1, 2);
 // CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '2'},
 // CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 15},
+// CHECK:STDOUT:     {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 15},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

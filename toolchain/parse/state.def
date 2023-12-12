@@ -1158,13 +1158,13 @@ CARBON_PARSE_STATE(ImplBeforeAs)
 //    ^
 //   1. BindingPattern
 //   2. VarAfterPattern
-//   3. VarFinishAsDecl
+//   3. VarFinishAsDecl         (SPECIAL: may be replaced)
 //
 // var (...)           (variant is Decl)
 //    ^
 //   1. ParamListAsRegular
 //   2. VarAfterPattern
-//   3. VarFinishAsDecl
+//   3. VarFinishAsDecl         (SPECIAL: may be replaced)
 //
 // var ...             (variant is For)
 //    ^
@@ -1180,13 +1180,13 @@ CARBON_PARSE_STATE(ImplBeforeAs)
 // ^~~~~~~~~~~~
 //   1. BindingPattern
 //   2. VarAfterPattern
-//   3. VarFinishAsDecl
+//   3. VarFinishAsDecl         (SPECIAL: may be replaced)
 //
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
 //   1. ParamListAsRegular
 //   2. VarAfterPattern
-//   3. VarFinishAsDecl
+//   3. VarFinishAsDecl         (SPECIAL: may be replaced)
 //
 // returned ??? ;      (variant is Returned)
 // ^~~~~~~~~~~~~~
@@ -1201,6 +1201,7 @@ CARBON_PARSE_STATE_VARIANTS3(Var, Decl, Returned, For)
 // var ... ??? = ...
 //         ^~~~~
 //   1. Expr
+//   SPECIAL: parent becomes VarFinishAsInit
 //
 // var ... ...
 //        ^
@@ -1209,9 +1210,9 @@ CARBON_PARSE_STATE(VarAfterPattern)
 
 // Handles `var` parsing at the end.
 //
-// var ... ;        (variant is Semicolon)
+// var ... ;        (variant is not For)
 //         ^
-// var ... ??? ;    (variant is Semicolon)
+// var ... ??? ;    (variant is not For)
 //         ^~~~~
 //   (state done)
 //
@@ -1220,7 +1221,7 @@ CARBON_PARSE_STATE(VarAfterPattern)
 // var ... :        (variant is For, invalid)
 //         ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
+CARBON_PARSE_STATE_VARIANTS3(VarFinish, Decl, For, Init)
 
 // Handles the start of a `let`.
 //

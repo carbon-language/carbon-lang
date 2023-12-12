@@ -24,29 +24,13 @@ auto HandleReturnedModifier(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleVariableInitializer(Context& context, Parse::NodeId parse_node)
-    -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
+auto HandleVariableInitializer(Context&, Parse::NodeId) -> bool {
+  // No action, node only exists to satisfy tree invariants.
   return true;
 }
 
-auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
-  // Handle the optional initializer.
-  auto init_id = SemIR::InstId::Invalid;
-  Parse::NodeKind next_kind =
-      context.parse_tree().node_kind(context.node_stack().PeekParseNode());
-  if (next_kind == Parse::NodeKind::TuplePattern) {
-    return context.TODO(parse_node, "tuple pattern in var");
-  }
-  // TODO: find a more robust way to determine if there was an initializer.
-  bool has_init = next_kind != Parse::NodeKind::BindingPattern;
-  if (has_init) {
-    init_id = context.node_stack().PopExpr();
-    context.node_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
-  }
-
+static auto HandleVariableDecl(Context& context, Parse::NodeId parse_node,
+                               std::optional<SemIR::InstId> init_id) -> bool {
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     return context.TODO(parse_node, "tuple pattern in var");
   }
@@ -68,16 +52,16 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
       .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ReturnedModifier>();
 
   // If there was an initializer, assign it to the storage.
-  if (has_init) {
+  if (init_id.has_value()) {
     if (context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.
       context.TODO(parse_node, "Field initializer");
     } else {
-      init_id = Initialize(context, parse_node, value_id, init_id);
+      init_id = Initialize(context, parse_node, value_id, *init_id);
       // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
-      context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
+      context.AddInst(SemIR::Assign{parse_node, value_id, *init_id});
     }
   }
 
@@ -97,6 +81,17 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   context.decl_state_stack().Pop(DeclState::Var);
 
   return true;
+}
+
+auto HandleVariableDeclNoInitializer(Context& context, Parse::NodeId parse_node)
+    -> bool {
+  return HandleVariableDecl(context, parse_node, std::nullopt);
+}
+
+auto HandleVariableDeclWithInitializer(Context& context,
+                                       Parse::NodeId parse_node) -> bool {
+  return HandleVariableDecl(context, parse_node,
+                            context.node_stack().PopExpr());
 }
 
 }  // namespace Carbon::Check

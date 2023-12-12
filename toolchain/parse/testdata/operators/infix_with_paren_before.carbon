@@ -19,6 +19,6 @@ var n: i8 = (n)*3;
 // CHECK:STDOUT:         {kind: 'ParenExpr', text: ')', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '3'},
 // CHECK:STDOUT:       {kind: 'InfixOperator', text: '*', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 11},
+// CHECK:STDOUT:     {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

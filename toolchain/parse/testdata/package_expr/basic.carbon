@@ -19,6 +19,6 @@ var x: package.Foo = package.Bar;
 // CHECK:STDOUT:         {kind: 'PackageExpr', text: 'package'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Bar'},
 // CHECK:STDOUT:       {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 11},
+// CHECK:STDOUT:     {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

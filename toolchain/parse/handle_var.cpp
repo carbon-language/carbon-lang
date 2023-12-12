@@ -68,11 +68,15 @@ auto HandleVarAfterPattern(Context& context) -> void {
 
   if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::VariableInitializer, *equals);
+    auto parent_state = context.PopState();
+    CARBON_CHECK(parent_state.state == State::VarFinishAsDecl);
+    parent_state.state = State::VarFinishAsInit;
+    context.PushState(parent_state);
     context.PushState(State::Expr);
   }
 }
 
-auto HandleVarFinishAsDecl(Context& context) -> void {
+static auto HandleVarFinish(Context& context, NodeKind node_kind) -> void {
   auto state = context.PopState();
 
   auto end_token = state.token;
@@ -84,8 +88,15 @@ auto HandleVarFinishAsDecl(Context& context) -> void {
     state.has_error = true;
     end_token = context.SkipPastLikelyEnd(state.token);
   }
-  context.AddNode(NodeKind::VariableDecl, end_token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(node_kind, end_token, state.subtree_start, state.has_error);
+}
+
+auto HandleVarFinishAsDecl(Context& context) -> void {
+  HandleVarFinish(context, NodeKind::VariableDeclNoInitializer);
+}
+
+auto HandleVarFinishAsInit(Context& context) -> void {
+  HandleVarFinish(context, NodeKind::VariableDeclWithInitializer);
 }
 
 auto HandleVarFinishAsFor(Context& context) -> void {

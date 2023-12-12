@@ -18,7 +18,7 @@ class Foo {
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: 'x'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'VariableDeclNoInitializer', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

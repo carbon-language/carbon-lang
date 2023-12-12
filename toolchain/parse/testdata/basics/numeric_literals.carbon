@@ -54,7 +54,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '39999999999999999993'},
 // CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 12},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 22},
+// CHECK:STDOUT:       {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 22},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: 'floats'},
 // CHECK:STDOUT:               {kind: 'ArrayExprStart', text: '['},
@@ -80,7 +80,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'RealLiteral', text: '39999999999999999993.0e39999999999999999993'},
 // CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 16},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 26},
+// CHECK:STDOUT:       {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 26},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 54},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

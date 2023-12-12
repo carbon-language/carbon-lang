@@ -27,7 +27,7 @@ class package.C {
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'package', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: 'package', has_error: yes},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: 'package', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'VariableDeclNoInitializer', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: 'package', has_error: yes},
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},

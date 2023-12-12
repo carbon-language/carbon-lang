@@ -16,6 +16,6 @@ var x: [i32;];
 // CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'VariableDeclNoInitializer', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

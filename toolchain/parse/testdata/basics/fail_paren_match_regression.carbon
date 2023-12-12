@@ -26,6 +26,6 @@ var = (foo {})
 // CHECK:STDOUT:         {kind: 'ExprOpenParen', text: '('},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'foo'},
 // CHECK:STDOUT:       {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ')', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'VariableDeclWithInitializer', text: ')', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

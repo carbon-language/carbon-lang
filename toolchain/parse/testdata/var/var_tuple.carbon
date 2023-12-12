@@ -32,7 +32,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 17},
+// CHECK:STDOUT:       {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 23},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

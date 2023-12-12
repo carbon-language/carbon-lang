@@ -29,7 +29,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:         {kind: 'IfExprElse', text: 'if', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 11},
+// CHECK:STDOUT:       {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

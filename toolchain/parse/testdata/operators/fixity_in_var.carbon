@@ -24,7 +24,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'p'},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 8},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: 't'},
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
@@ -32,7 +32,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'VariableDeclWithInitializer', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 22},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
