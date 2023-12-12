@@ -103,7 +103,7 @@ def _impl(ctx):
     std_compile_flags = ["-std=c++17"]
 
     # libc++ is only used on non-Windows platforms.
-    if ctx.attr.target_cpu != "x64_windows":
+    if ctx.attr.target_os != "windows":
         std_compile_flags.append("-stdlib=libc++")
 
     # TODO: Regression that warns on anonymous unions; remove depending on fix.
@@ -977,9 +977,7 @@ def _impl(ctx):
     )
 
     # Now that we have built up the constituent feature definitions, compose
-    # them, including configuration based on the target platform. Currently,
-    # the target platform is configured with the "cpu" attribute for legacy
-    # reasons. Further, for legacy reasons the default is a Linux OS target.
+    # them, including configuration based on the target platform.
 
     # First, define features that are simply used to configure others.
     features = [
@@ -1016,38 +1014,39 @@ def _impl(ctx):
 
     # Next, add the features based on the target platform. Here too the
     # features are order sensitive. We also setup the sysroot here.
-    if ctx.attr.target_cpu in ["aarch64", "x86_64"]:
+    if ctx.attr.target_os == "linux":
         features.append(sanitizer_static_lib_flags)
         features.append(linux_flags_feature)
         sysroot = None
-    elif ctx.attr.target_cpu == "x64_windows":
+    elif ctx.attr.target_os == "windows":
         # TODO: Need to figure out if we need to add windows specific features
         # I think the .pdb debug files will need to be handled differently,
         # so that might be an example where a feature must be added.
         sysroot = None
-    elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+    elif ctx.attr.target_os == "macos":
         features.append(macos_asan_workarounds)
         features.append(macos_flags_feature)
         sysroot = sysroot_dir
-    elif ctx.attr.target_cpu == "freebsd":
+    elif ctx.attr.target_os == "freebsd":
         features.append(sanitizer_static_lib_flags)
         features.append(freebsd_flags_feature)
         sysroot = sysroot_dir
     else:
-        fail("Unsupported target platform!")
+        fail("Unsupported target OS!")
 
-    if ctx.attr.target_cpu in ["aarch64", "darwin_arm64"]:
+    if ctx.attr.target_cpu in ["aarch64", "arm64"]:
         features.append(aarch64_cpu_flags)
     else:
         features.append(x86_64_cpu_flags)
 
     # Finally append the libraries to link and any final flags.
-    if ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+    if ctx.attr.target_os == "macos":
         features.append(macos_link_libraries_feature)
     else:
         features.append(default_link_libraries_feature)
     features.append(final_flags_feature)
 
+    identifier = "local-" + "-" + ctx.attr.target_cpu + "-" + ctx.attr.target_os
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = features,
@@ -1061,9 +1060,9 @@ def _impl(ctx):
 
         # This configuration only supports local non-cross builds so derive
         # everything from the target CPU selected.
-        toolchain_identifier = "local-" + ctx.attr.target_cpu,
-        host_system_name = "local-" + ctx.attr.target_cpu,
-        target_system_name = "local-" + ctx.attr.target_cpu,
+        toolchain_identifier = identifier,
+        host_system_name = identifier,
+        target_system_name = identifier,
         target_cpu = ctx.attr.target_cpu,
 
         # These attributes aren't meaningful at all so just use placeholder
