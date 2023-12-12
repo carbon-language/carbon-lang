@@ -17,7 +17,7 @@ var x: {.} = {};
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: '}', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: '.', has_error: yes},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: '.', has_error: yes},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},

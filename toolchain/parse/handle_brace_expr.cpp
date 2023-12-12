@@ -147,7 +147,7 @@ static auto HandleBraceExprParamFinish(Context& context, NodeKind node_kind,
   auto state = context.PopState();
 
   if (state.has_error) {
-    context.AddLeafNode(NodeKind::StructFieldUnknown, state.token,
+    context.AddLeafNode(NodeKind::InvalidParse, state.token,
                         /*has_error=*/true);
   } else {
     context.AddNode(node_kind, state.token, state.subtree_start,
@@ -172,7 +172,7 @@ auto HandleBraceExprParamFinishAsValue(Context& context) -> void {
 }
 
 auto HandleBraceExprParamFinishAsUnknown(Context& context) -> void {
-  HandleBraceExprParamFinish(context, NodeKind::StructFieldUnknown,
+  HandleBraceExprParamFinish(context, NodeKind::InvalidParse,
                              State::BraceExprParamAsUnknown);
 }
 

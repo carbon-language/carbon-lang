@@ -613,7 +613,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3,
 // may repeat with StructComma as a separator.
 //
 // When a valid StructFieldType or StructFieldValue cannot be formed, elements
-// may be replaced by StructFieldUnknown, which may have a preceding sibling
+// may be replaced by InvalidParse, which may have a preceding sibling
 // StructFieldDesignator if one was successfully parsed.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructLiteralOrStructTypeLiteralStart, 0,
                                    CARBON_TOKEN(OpenCurlyBrace))
@@ -621,8 +621,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldDesignator, 1,
                                    CARBON_TOKEN(Period))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldValue, 2, CARBON_TOKEN(Equal))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldType, 2, CARBON_TOKEN(Colon))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldUnknown, 0,
-                                   CARBON_IF_ERROR(CARBON_ANY_TOKEN))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructComma, 0, CARBON_TOKEN(Comma))
 CARBON_PARSE_NODE_KIND_BRACKET(StructLiteral,
                                StructLiteralOrStructTypeLiteralStart,
