@@ -772,6 +772,13 @@ def _impl(ctx):
                         iterate_over = "libraries_to_link",
                         flag_groups = [
                             flag_group(
+                                flags = ["-Wl,--start-lib"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                            ),
+                            flag_group(
                                 iterate_over = "libraries_to_link.object_files",
                                 expand_if_equal = variable_with_value(
                                     name = "libraries_to_link.type",
@@ -858,6 +865,13 @@ def _impl(ctx):
                                         flags = ["-Wl,-no-whole-archive"],
                                     ),
                                 ],
+                            ),
+                            flag_group(
+                                flags = ["-Wl,--end-lib"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
                             ),
                         ],
                         expand_if_available = "libraries_to_link",
@@ -973,9 +987,9 @@ def _impl(ctx):
         feature(name = "no_legacy_features"),
         feature(name = "nonhost"),
         feature(name = "opt"),
-        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_cpu == "x86_64"),
+        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_os == "linux"),
         feature(name = "supports_pic", enabled = True),
-        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_cpu == "x86_64"),
+        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_os == "linux"),
     ]
 
     # The order of the features determines the relative order of flags used.
