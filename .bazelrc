@@ -2,16 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# TODO: Get a better toolchain fix for
-# https://github.com/bazelbuild/bazel/issues/7260
-build --noincompatible_enable_cc_toolchain_resolution
-
 # TODO: https://bazel.build/external/migration for
 # https://github.com/bazelbuild/bazel/issues/18958
 build --noenable_bzlmod
-
-build --crosstool_top=@bazel_cc_toolchain
-build --host_crosstool_top=@bazel_cc_toolchain
 
 # Default to using a disk cache to minimize re-building LLVM and Clang which we
 # try to avoid updating too frequently to minimize rebuild cost. The location
@@ -35,7 +28,15 @@ build --experimental_guard_against_concurrent_changes
 #
 # Bazel bug tracking undoing the default here:
 # https://github.com/bazelbuild/bazel/issues/13315
+#
+# TODO: Remove this once we require at least Bazel version 7, where
+# --incompatible_use_host_features is the default.
 build --incompatible_dont_enable_host_nonhost_crosstool_features=false
+
+# Opt into the new Bazel toolchain resolution mechanism.
+# TODO: Remove this once we require at least Bazel version 7, where it is the
+# default.
+build --incompatible_enable_cc_toolchain_resolution
 
 # Disable warnings for all external compilations. These involve code that isn't
 # developed as part of Carbon and may be difficult or impossible to patch, so

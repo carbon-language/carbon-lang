@@ -62,10 +62,10 @@ install_deps()
 # Configure the bootstrapped Clang and LLVM toolchain for Bazel.
 load(
     "//bazel/cc_toolchains:clang_configuration.bzl",
-    "configure_clang_toolchain",
+    "clang_register_toolchains",
 )
 
-configure_clang_toolchain(name = "bazel_cc_toolchain")
+clang_register_toolchains(name = "bazel_cc_toolchain")
 
 ###############################################################################
 # Abseil libraries
