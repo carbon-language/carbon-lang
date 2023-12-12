@@ -772,13 +772,6 @@ def _impl(ctx):
                         iterate_over = "libraries_to_link",
                         flag_groups = [
                             flag_group(
-                                flags = ["-Wl,--start-lib"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "object_file_group",
-                                ),
-                            ),
-                            flag_group(
                                 iterate_over = "libraries_to_link.object_files",
                                 expand_if_equal = variable_with_value(
                                     name = "libraries_to_link.type",
@@ -865,13 +858,6 @@ def _impl(ctx):
                                         flags = ["-Wl,-no-whole-archive"],
                                     ),
                                 ],
-                            ),
-                            flag_group(
-                                flags = ["-Wl,--end-lib"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "object_file_group",
-                                ),
                             ),
                         ],
                         expand_if_available = "libraries_to_link",
