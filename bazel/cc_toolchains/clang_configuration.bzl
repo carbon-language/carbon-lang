@@ -9,6 +9,8 @@ configured values into a `clang_detected_variables.bzl` file that can be used
 by the actual toolchain configuration.
 """
 
+load(":clang_configs.bzl", "clang_configs")
+
 def _run(repository_ctx, cmd):
     """Runs the provided `cmd`, checks for failure, and returns the result."""
     exec_result = repository_ctx.execute(cmd)
@@ -168,6 +170,10 @@ def _configure_clang_toolchain_impl(repository_ctx):
         repository_ctx.attr._clang_cc_toolchain_config,
         "cc_toolchain_config.bzl",
     )
+    repository_ctx.symlink(
+        repository_ctx.attr._clang_configs,
+        "clang_configs.bzl",
+    )
 
     # Find a Clang C++ compiler, and where it lives. We need to walk symlinks
     # here as the other LLVM tools may not be symlinked into the PATH even if
@@ -237,6 +243,10 @@ configure_clang_toolchain = repository_rule(
             ),
             allow_single_file = True,
         ),
+        "_clang_configs": attr.label(
+            default = Label("//bazel/cc_toolchains:clang_configs.bzl"),
+            allow_single_file = True,
+        ),
         "_clang_detected_variables_template": attr.label(
             default = Label(
                 "//bazel/cc_toolchains:clang_detected_variables.tpl.bzl",
@@ -250,3 +260,9 @@ configure_clang_toolchain = repository_rule(
     },
     environ = ["CC"],
 )
+
+def clang_register_toolchains(name):
+    configure_clang_toolchain(name = name)
+
+    for os, cpu in clang_configs:
+        native.register_toolchains("@{0}//:bazel_cc_toolchain_{1}_{2}".format(name, os, cpu))
