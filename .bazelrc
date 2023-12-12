@@ -28,10 +28,14 @@ build --experimental_guard_against_concurrent_changes
 #
 # Bazel bug tracking undoing the default here:
 # https://github.com/bazelbuild/bazel/issues/13315
+#
+# TODO: Remove this once we require at least Bazel version 7, where
+# --incompatible_use_host_features is the default.
 build --incompatible_dont_enable_host_nonhost_crosstool_features=false
 
-# Opt into the new Bazel toolchain resolution mechanism. This is enabled by
-# default in Bazel 7.
+# Opt into the new Bazel toolchain resolution mechanism.
+# TODO: Remove this once we require at least Bazel version 7, where it is the
+# default.
 build --incompatible_enable_cc_toolchain_resolution
 
 # Disable warnings for all external compilations. These involve code that isn't
