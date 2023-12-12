@@ -266,5 +266,5 @@ def clang_register_toolchains(name):
 
     for os, cpu in clang_configs:
         native.register_toolchains(
-            "@{0}//:bazel_cc_toolchain_{1}_{2}".format(name, os, cpu)
+            "@{0}//:bazel_cc_toolchain_{1}_{2}".format(name, os, cpu),
         )
