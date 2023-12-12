@@ -1032,7 +1032,7 @@ def _impl(ctx):
         features.append(default_link_libraries_feature)
     features.append(final_flags_feature)
 
-    identifier = "local-" + "-" + ctx.attr.target_cpu + "-" + ctx.attr.target_os
+    identifier = "local-{0}-{1}".format(ctx.attr.target_cpu, ctx.attr.target_os)
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = features,
@@ -1087,7 +1087,7 @@ def cc_local_toolchain_suite(name, configs):
 
     # Create the individual local toolchains for each CPU.
     for (os, cpu) in configs:
-        config_name = name + "_" + os + "_" + cpu
+        config_name = "{0}_{1}_{2}".format(name, os, cpu)
         cc_toolchain_config(
             name = config_name + "_config",
             target_os = os,
@@ -1107,10 +1107,11 @@ def cc_local_toolchain_suite(name, configs):
             toolchain_config = ":" + config_name + "_config",
             toolchain_identifier = config_name,
         )
+        compatible_with = ["@platforms//cpu:" + cpu, "@platforms//os:" + os]
         native.toolchain(
             name = config_name,
-            exec_compatible_with = ["@platforms//cpu:" + cpu, "@platforms//os:" + os],
-            target_compatible_with = ["@platforms//cpu:" + cpu, "@platforms//os:" + os],
+            exec_compatible_with = compatible_with,
+            target_compatible_with = compatible_with,
             toolchain = config_name + "_tools",
             toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
         )
