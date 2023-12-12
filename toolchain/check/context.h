@@ -102,10 +102,13 @@ class Context {
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
 
-  // Pushes a new scope onto scope_stack_.
+  // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
+  // scopes. name_lookup_has_load_error is used to limit diagnostics when a
+  // given namespace may contain a mix of both successful and failed name
+  // imports.
   auto PushScope(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
-                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid)
-      -> void;
+                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
+                 bool name_lookup_has_load_error = false) -> void;
 
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
@@ -387,6 +390,9 @@ class Context {
     // The name scope associated with this entry, if any.
     SemIR::NameScopeId scope_id;
 
+    // The previous state of name_lookup_has_load_error_, restored on pop.
+    bool prev_name_lookup_has_load_error;
+
     // Names which are registered with name_lookup_, and will need to be
     // unregistered when the scope ends.
     llvm::DenseSet<SemIR::NameId> names;
@@ -426,6 +432,10 @@ class Context {
   // Forms a canonical type ID for a type. If the type is new, adds the
   // instruction to the current block.
   auto CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst) -> SemIR::TypeId;
+
+  // If the passed in instruction ID is a LazyImportRef, resolves it for use.
+  // Called when name lookup intends to return an inst_id.
+  auto ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
   auto current_scope() const -> const ScopeStackEntry& {
@@ -498,6 +508,10 @@ class Context {
   // Names which no longer have lookup results are erased.
   llvm::DenseMap<SemIR::NameId, llvm::SmallVector<LexicalLookupResult>>
       name_lookup_;
+
+  // Whether name_lookup_ has load errors, updated whenever scope_stack_ is
+  // pushed or popped.
+  bool name_lookup_has_load_error_ = false;
 
   // Cache of the mapping from instructions to types, to avoid recomputing the
   // folding set ID.

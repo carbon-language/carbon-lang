@@ -74,9 +74,7 @@ import B;
 // CHECK:STDOUT: --- c.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %C: <namespace> = bind_name C, %import
+// CHECK:STDOUT:   package: <namespace> = namespace {has_load_error}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- cycle_child.carbon

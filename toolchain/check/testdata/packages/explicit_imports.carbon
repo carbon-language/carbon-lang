@@ -50,7 +50,6 @@ import library "lib";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- different_package.carbon
@@ -71,6 +70,5 @@ import library "lib";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

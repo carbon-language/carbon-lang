@@ -19,6 +19,7 @@ class Inst;
 struct Class;
 struct Function;
 struct Interface;
+struct NameScope;
 struct TypeInfo;
 
 // The ID of an instruction.
@@ -181,7 +182,7 @@ struct NameId : public IdBase, public Printable<NameId> {
 
   // Returns the IdentifierId corresponding to this NameId, or an invalid
   // IdentifierId if this is a special name.
-  auto AsIdentifierId() -> IdentifierId {
+  auto AsIdentifierId() const -> IdentifierId {
     return index >= 0 ? IdentifierId(index) : IdentifierId::Invalid;
   }
 
@@ -213,10 +214,12 @@ constexpr NameId NameId::Base = NameId(NameId::InvalidIndex - 5);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase, public Printable<NameScopeId> {
-  using ValueType = llvm::DenseMap<NameId, InstId>;
+  using ValueType = NameScope;
 
   // An explicitly invalid ID.
   static const NameScopeId Invalid;
+  // The package (or file) name scope, guaranteed to be the first added.
+  static const NameScopeId Package;
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -227,6 +230,7 @@ struct NameScopeId : public IdBase, public Printable<NameScopeId> {
 
 constexpr NameScopeId NameScopeId::Invalid =
     NameScopeId(NameScopeId::InvalidIndex);
+constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
 // The ID of an instruction block.
 struct InstBlockId : public IdBase, public Printable<InstBlockId> {
