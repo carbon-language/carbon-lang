@@ -50,6 +50,11 @@ auto NodeKind::child_count() const -> int32_t {
 // NOLINTNEXTLINE(readability-function-size): It's hard to extract macros.
 auto CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
                                 bool has_error) -> void {
+  // As a special-case, a placeholder node may correspond to any lexer token.
+  if (node_kind == NodeKind::Placeholder) {
+    return;
+  }
+
   switch (node_kind) {
     // Use `CARBON_LOG CARBON_ANY_TOKEN` to discover which combinations happen
     // in practice.
@@ -58,16 +63,14 @@ auto CheckNodeMatchesLexerToken(NodeKind node_kind, Lex::TokenKind token_kind,
                << " and has_error " << has_error << " for lexical token " \
                << token_kind << "\n";
 
-#define CARBON_ANY_TOKEN return;
-
 #define CARBON_TOKEN(Expected)                  \
   if (token_kind == Lex::TokenKind::Expected) { \
     return;                                     \
   }
 
-#define CARBON_IF_ERROR(MatchActions) \
-  if (has_error) {                    \
-    MatchActions                      \
+#define CARBON_ANY_TOKEN_ON_ERROR \
+  if (has_error) {                \
+    return;                       \
   }
 
 #define CARBON_CASE(Name, MatchActions)                    \
