@@ -20,7 +20,7 @@ var n: i8 = F(i8 *, 0);
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'F'},
 // CHECK:STDOUT:         {kind: 'CallExprStart', text: '(', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i8'},
-// CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'CallExprComma', text: ','},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:       {kind: 'CallExpr', text: ')', subtree_size: 7},

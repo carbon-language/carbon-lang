@@ -29,7 +29,7 @@ fn foo(bar: i64, baz: i64) {
 // CHECK:STDOUT:           {kind: 'CallExprComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'bar'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'baz'},
-// CHECK:STDOUT:           {kind: 'InfixOperator', text: '+', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'InfixOperatorPlus', text: '+', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 22},

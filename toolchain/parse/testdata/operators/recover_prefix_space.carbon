@@ -18,7 +18,7 @@ var n: i8 = - n;
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:       {kind: 'PrefixOperator', text: '-', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'PrefixOperatorMinus', text: '-', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

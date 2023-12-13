@@ -22,8 +22,8 @@ var n: i8 = n**p;
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'PostfixOperator', text: '*', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'PostfixOperatorStar', text: '*', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
