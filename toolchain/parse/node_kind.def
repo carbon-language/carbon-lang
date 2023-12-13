@@ -16,10 +16,12 @@
 //   - CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount, LexTokenKind)
 //     Defines a parse node with a set number of children, often 0. This count
 //     must be correct even when the node contains errors.
-//     - CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name)
-//       Defines a parse node for an infix operator, with the Name as token.
 //     - CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name)
 //       Defines a parse node for a prefix operator, with the Name as token.
+//     - CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name)
+//       Defines a parse node for an infix operator, with the Name as token.
+//     - CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name)
+//       Defines a parse node for a postfix operator, with the Name as token.
 //     - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind)
 //       Defines a parse node that corresponds to a token that is a single-token
 //       literal. The token is wrapped for LexTokenKinds.
@@ -60,6 +62,16 @@
 //
 //   // Use x-macros to handle modifier cases.
 //   #define CARBON_PARSE_NODE_KIND(...)
+//   #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...) <code>
+#ifndef CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR
+#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name) \
+  CARBON_PARSE_NODE_KIND_CHILD_COUNT(PrefixOperator##Name, 1, Name)
+#endif
+
+// This is expected to be used with something like:
+//
+//   // Use x-macros to handle modifier cases.
+//   #define CARBON_PARSE_NODE_KIND(...)
 //   #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) <code>
 #ifndef CARBON_PARSE_NODE_KIND_INFIX_OPERATOR
 #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name) \
@@ -70,10 +82,10 @@
 //
 //   // Use x-macros to handle modifier cases.
 //   #define CARBON_PARSE_NODE_KIND(...)
-//   #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...) <code>
-#ifndef CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR
-#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name) \
-  CARBON_PARSE_NODE_KIND_CHILD_COUNT(PrefixOperator##Name, 1, Name)
+//   #define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) <code>
+#ifndef CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name) \
+  CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperator##Name, 1, Name)
 #endif
 
 // This is expected to be used with something like:
@@ -472,8 +484,6 @@ CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(FloatTypeLiteral, FloatTypeLiteral)
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringTypeLiteral, StringTypeLiteral)
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(TypeTypeLiteral, Type)
 
-// clang-format off
-
 // A prefix operator, such as `not`:
 //   _external_: expression
 // PrefixOperator<name>
@@ -520,7 +530,10 @@ CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(SlashEqual)
 CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Star)
 CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(StarEqual)
 
-// clang-format on
+// A postfix operator, currently only `*`:
+//   _external_: expression
+// PostfixOperator<name>
+CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Star)
 
 // A short-circuiting infix operator, such as `and`:
 //     _external_: expression
@@ -531,11 +544,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperandAnd, 1, And)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperandOr, 1, Or)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperatorAnd, 2, And)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperatorOr, 2, Or)
-
-// A postfix operator, currently only `*`:
-//   _external_: expression
-// PostfixOperatorStar
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperatorStar, 1, Star)
 
 // `if` expression + `then` + `else`:
 //     _external_: expression
@@ -696,6 +704,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDecl, NamedConstraintIntroducer,
 #undef CARBON_PARSE_NODE_KIND_BRACKET
 #undef CARBON_PARSE_NODE_KIND_CHILD_COUNT
 #undef CARBON_PARSE_NODE_KIND_INFIX_OPERATOR
+#undef CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR
 #undef CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR
 #undef CARBON_PARSE_NODE_KIND_TOKEN_LITERAL
 #undef CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER
