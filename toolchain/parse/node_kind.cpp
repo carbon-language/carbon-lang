@@ -50,7 +50,7 @@ auto NodeKind::child_count() const -> int32_t {
 auto NodeKind::CheckMatchesTokenKind(Lex::TokenKind token_kind, bool has_error)
     -> void {
   static constexpr Lex::TokenKind TokenIfValid[] = {
-#define CARBON_ONLY_IF_VALID(LexTokenKind) LexTokenKind
+#define CARBON_IF_VALID(LexTokenKind) LexTokenKind
 #define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, LexTokenKind) \
   Lex::TokenKind::LexTokenKind,
 #define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, LexTokenKind) \
@@ -58,7 +58,7 @@ auto NodeKind::CheckMatchesTokenKind(Lex::TokenKind token_kind, bool has_error)
 #include "toolchain/parse/node_kind.def"
   };
   static constexpr Lex::TokenKind TokenIfError[] = {
-#define CARBON_ONLY_IF_VALID(LexTokenKind) Error
+#define CARBON_IF_VALID(LexTokenKind) Error
 #define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, LexTokenKind) \
   Lex::TokenKind::LexTokenKind,
 #define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size, LexTokenKind) \
