@@ -5,9 +5,9 @@
 // AUTOUPDATE
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:13: ERROR: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `f64` to `i32`.
   // CHECK:STDERR:   return 1.0;
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:   ^~~~~~~~~~~
   return 1.0;
 }
 

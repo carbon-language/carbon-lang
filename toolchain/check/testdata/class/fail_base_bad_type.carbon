@@ -8,16 +8,16 @@ base class Base {}
 class Final {}
 
 class DeriveFromNonType {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:18: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
   // CHECK:STDERR:   extend base: 32;
-  // CHECK:STDERR:                  ^
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   extend base: 32;
 }
 
 class DeriveFromi32 {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:19: ERROR: Deriving from final type `i32`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Deriving from final type `i32`. Base type must be an `abstract` or `base` class.
   // CHECK:STDERR:   extend base: i32;
-  // CHECK:STDERR:                   ^
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   extend base: i32;
 }
 
@@ -26,9 +26,9 @@ class DeriveFromi32 {
 fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 
 class DeriveFromTuple {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:23: ERROR: Deriving from final type `(Base,)`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Deriving from final type `(Base,)`. Base type must be an `abstract` or `base` class.
   // CHECK:STDERR:   extend base: (Base,);
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   extend base: (Base,);
 }
 
@@ -37,9 +37,9 @@ fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 // TODO: Should we allow this?
 // We do allow `{.base = {.a: i32, .b: i32}}`.
 class DeriveFromStruct {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:34: ERROR: Deriving from final type `{.a: i32, .b: i32}`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Deriving from final type `{.a: i32, .b: i32}`. Base type must be an `abstract` or `base` class.
   // CHECK:STDERR:   extend base: {.a: i32, .b: i32};
-  // CHECK:STDERR:                                  ^
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   extend base: {.a: i32, .b: i32};
 }
 
@@ -48,24 +48,24 @@ fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return 
 base class Incomplete;
 
 class DeriveFromIncomplete {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+6]]:26: ERROR: Base `Incomplete` is an incomplete type.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+6]]:3: ERROR: Base `Incomplete` is an incomplete type.
   // CHECK:STDERR:   extend base: Incomplete;
-  // CHECK:STDERR:                          ^
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE-6]]:1: Class was forward declared here.
   // CHECK:STDERR: base class Incomplete;
   // CHECK:STDERR: ^~~~
   extend base: Incomplete;
 }
 
-// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:82: ERROR: Cannot implicitly convert from `DeriveFromIncomplete*` to `Incomplete*`.
+// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:74: ERROR: Cannot implicitly convert from `DeriveFromIncomplete*` to `Incomplete*`.
 // CHECK:STDERR: fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
-// CHECK:STDERR:                                                                                  ^
+// CHECK:STDERR:                                                                          ^~~~~~~~~
 fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 
 class DeriveFromFinal {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:21: ERROR: Deriving from final type `Final`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Deriving from final type `Final`. Base type must be an `abstract` or `base` class.
   // CHECK:STDERR:   extend base: Final;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   extend base: Final;
 }
 

@@ -80,13 +80,13 @@ auto HandlePrefixOperator(Context& context, Parse::NodeId parse_node) -> bool {
         case SemIR::ExprCategory::EphemeralRef:
           CARBON_DIAGNOSTIC(AddressOfEphemeralRef, Error,
                             "Cannot take the address of a temporary object.");
-          context.emitter().Emit(parse_node, AddressOfEphemeralRef);
+          context.emitter().Emit(TokenOnly(parse_node), AddressOfEphemeralRef);
           break;
         default:
           CARBON_DIAGNOSTIC(
               AddressOfNonRef, Error,
               "Cannot take the address of non-reference expression.");
-          context.emitter().Emit(parse_node, AddressOfNonRef);
+          context.emitter().Emit(TokenOnly(parse_node), AddressOfNonRef);
           break;
       }
       context.AddInstAndPush(
@@ -138,14 +138,14 @@ auto HandlePrefixOperator(Context& context, Parse::NodeId parse_node) -> bool {
             "Cannot dereference operand of non-pointer type `{0}`.",
             std::string);
         auto builder =
-            context.emitter().Build(parse_node, DerefOfNonPointer,
+            context.emitter().Build(TokenOnly(parse_node), DerefOfNonPointer,
                                     context.sem_ir().StringifyType(type_id));
         // TODO: Check for any facet here, rather than only a type.
         if (type_id == SemIR::TypeId::TypeType) {
           CARBON_DIAGNOSTIC(
               DerefOfType, Note,
               "To form a pointer type, write the `*` after the pointee type.");
-          builder.Note(parse_node, DerefOfType);
+          builder.Note(TokenOnly(parse_node), DerefOfType);
         }
         builder.Emit();
       }

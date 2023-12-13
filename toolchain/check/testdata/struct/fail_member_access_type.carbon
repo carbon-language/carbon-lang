@@ -5,9 +5,9 @@
 // AUTOUPDATE
 
 var x: {.a: f64} = {.a = 4.0};
-// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:15: ERROR: Type `{.a: f64}` does not have a member `b`.
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:14: ERROR: Type `{.a: f64}` does not have a member `b`.
 // CHECK:STDERR: var y: i32 = x.b;
-// CHECK:STDERR:               ^
+// CHECK:STDERR:              ^~~
 var y: i32 = x.b;
 
 // CHECK:STDOUT: --- fail_member_access_type.carbon
