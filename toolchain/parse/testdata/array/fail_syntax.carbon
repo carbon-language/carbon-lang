@@ -87,8 +87,8 @@ var x: [i32];
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'X'},
-// CHECK:STDOUT:         {kind: 'ParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'ArrayExprStart', text: '['},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: ':', has_error: yes},
 // CHECK:STDOUT:           {kind: 'ArrayExprSemi', text: ':', has_error: yes, subtree_size: 3},
@@ -123,7 +123,7 @@ var x: [i32];
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:         {kind: 'ArrayExpr', text: ']', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: 'var', has_error: yes, subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ']', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: no_semi.carbon

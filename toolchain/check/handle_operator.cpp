@@ -14,28 +14,6 @@ auto HandleInfixOperator(Context& context, Parse::NodeId parse_node) -> bool {
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
-    case Lex::TokenKind::And:
-    case Lex::TokenKind::Or: {
-      // The first operand is wrapped in a ShortCircuitOperand, which we
-      // already handled by creating a RHS block and a resumption block, which
-      // are the current block and its enclosing block.
-      rhs_id = ConvertToBoolValue(context, parse_node, rhs_id);
-
-      // When the second operand is evaluated, the result of `and` and `or` is
-      // its value.
-      auto resume_block_id = context.inst_block_stack().PeekOrAdd(/*depth=*/1);
-      context.AddInst(
-          SemIR::BranchWithArg{parse_node, resume_block_id, rhs_id});
-      context.inst_block_stack().Pop();
-      context.AddCurrentCodeBlockToFunction();
-
-      // Collect the result from either the first or second operand.
-      context.AddInstAndPush(
-          parse_node,
-          SemIR::BlockArg{parse_node, context.insts().Get(rhs_id).type_id(),
-                          resume_block_id});
-      return true;
-    }
     case Lex::TokenKind::As: {
       auto rhs_type_id = ExprAsType(context, rhs_node, rhs_id);
       context.node_stack().Push(
@@ -150,10 +128,9 @@ auto HandlePrefixOperator(Context& context, Parse::NodeId parse_node) -> bool {
       value_id = ConvertToValueExpr(context, value_id);
       auto type_id =
           context.GetUnqualifiedType(context.insts().Get(value_id).type_id());
-      auto type_inst = context.insts().Get(
-          context.sem_ir().GetTypeAllowBuiltinTypes(type_id));
       auto result_type_id = SemIR::TypeId::Error;
-      if (auto pointer_type = type_inst.TryAs<SemIR::PointerType>()) {
+      if (auto pointer_type =
+              context.types().TryGetAs<SemIR::PointerType>(type_id)) {
         result_type_id = pointer_type->pointee_id;
       } else if (type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(
@@ -182,7 +159,9 @@ auto HandlePrefixOperator(Context& context, Parse::NodeId parse_node) -> bool {
   }
 }
 
-auto HandleShortCircuitOperand(Context& context, Parse::NodeId parse_node)
+// Adds the branch for a short circuit operand.
+static auto HandleShortCircuitOperand(Context& context,
+                                      Parse::NodeId parse_node, bool is_or)
     -> bool {
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().PopExpr();
@@ -190,26 +169,13 @@ auto HandleShortCircuitOperand(Context& context, Parse::NodeId parse_node)
   auto bool_type_id = context.insts().Get(cond_value_id).type_id();
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
-  auto token = context.parse_tree().node_token(parse_node);
-  SemIR::InstId branch_value_id = SemIR::InstId::Invalid;
-  auto short_circuit_result_id = SemIR::InstId::Invalid;
-  switch (auto token_kind = context.tokens().GetKind(token)) {
-    case Lex::TokenKind::And:
-      branch_value_id = cond_value_id;
-      short_circuit_result_id = context.AddInst(SemIR::BoolLiteral{
-          parse_node, bool_type_id, SemIR::BoolValue::False});
-      break;
-
-    case Lex::TokenKind::Or:
-      branch_value_id = context.AddInst(
-          SemIR::UnaryOperatorNot{parse_node, bool_type_id, cond_value_id});
-      short_circuit_result_id = context.AddInst(
-          SemIR::BoolLiteral{parse_node, bool_type_id, SemIR::BoolValue::True});
-      break;
-
-    default:
-      CARBON_FATAL() << "Unexpected short-circuiting operator " << token_kind;
-  }
+  SemIR::InstId branch_value_id =
+      is_or ? context.AddInst(SemIR::UnaryOperatorNot{parse_node, bool_type_id,
+                                                      cond_value_id})
+            : cond_value_id;
+  auto short_circuit_result_id = context.AddInst(SemIR::BoolLiteral{
+      parse_node, bool_type_id,
+      is_or ? SemIR::BoolValue::True : SemIR::BoolValue::False});
 
   // Create a block for the right-hand side and for the continuation.
   auto rhs_block_id =
@@ -224,9 +190,55 @@ auto HandleShortCircuitOperand(Context& context, Parse::NodeId parse_node)
   context.inst_block_stack().Push(rhs_block_id);
   context.AddCurrentCodeBlockToFunction();
 
-  // Put the condition back on the stack for HandleInfixOperator.
-  context.node_stack().Push(parse_node, cond_value_id);
+  // HandleShortCircuitOperator will follow, and doesn't need the operand on the
+  // node stack.
   return true;
+}
+
+auto HandleShortCircuitOperandAnd(Context& context, Parse::NodeId parse_node)
+    -> bool {
+  return HandleShortCircuitOperand(context, parse_node, /*is_or=*/false);
+}
+
+auto HandleShortCircuitOperandOr(Context& context, Parse::NodeId parse_node)
+    -> bool {
+  return HandleShortCircuitOperand(context, parse_node, /*is_or=*/true);
+}
+
+// Short circuit operator handling is uniform because the branching logic
+// occurs during operand handling.
+static auto HandleShortCircuitOperator(Context& context,
+                                       Parse::NodeId parse_node) -> bool {
+  auto [rhs_node, rhs_id] = context.node_stack().PopExprWithParseNode();
+
+  // The first operand is wrapped in a ShortCircuitOperand, which we
+  // already handled by creating a RHS block and a resumption block, which
+  // are the current block and its enclosing block.
+  rhs_id = ConvertToBoolValue(context, parse_node, rhs_id);
+
+  // When the second operand is evaluated, the result of `and` and `or` is
+  // its value.
+  auto resume_block_id = context.inst_block_stack().PeekOrAdd(/*depth=*/1);
+  context.AddInst(SemIR::BranchWithArg{parse_node, resume_block_id, rhs_id});
+  context.inst_block_stack().Pop();
+  context.AddCurrentCodeBlockToFunction();
+
+  // Collect the result from either the first or second operand.
+  context.AddInstAndPush(
+      parse_node,
+      SemIR::BlockArg{parse_node, context.insts().Get(rhs_id).type_id(),
+                      resume_block_id});
+  return true;
+}
+
+auto HandleShortCircuitOperatorAnd(Context& context, Parse::NodeId parse_node)
+    -> bool {
+  return HandleShortCircuitOperator(context, parse_node);
+}
+
+auto HandleShortCircuitOperatorOr(Context& context, Parse::NodeId parse_node)
+    -> bool {
+  return HandleShortCircuitOperator(context, parse_node);
 }
 
 }  // namespace Carbon::Check

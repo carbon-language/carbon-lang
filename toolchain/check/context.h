@@ -103,10 +103,13 @@ class Context {
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
 
-  // Pushes a new scope onto scope_stack_.
+  // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
+  // scopes. name_lookup_has_load_error is used to limit diagnostics when a
+  // given namespace may contain a mix of both successful and failed name
+  // imports.
   auto PushScope(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
-                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid)
-      -> void;
+                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
+                 bool name_lookup_has_load_error = false) -> void;
 
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
@@ -127,13 +130,14 @@ class Context {
   // Returns true if currently at file scope.
   auto at_file_scope() const -> bool { return scope_stack_.size() == 1; }
 
-  // Returns the instruction kind associated with the current scope, if any.
-  auto current_scope_kind() const -> std::optional<SemIR::InstKind> {
+  // Returns true if the current scope is of the specified kind.
+  template <typename InstT>
+  auto CurrentScopeIs() -> bool {
     auto current_scope_inst_id = current_scope().scope_inst_id;
     if (!current_scope_inst_id.is_valid()) {
-      return std::nullopt;
+      return false;
     }
-    return sem_ir_->insts().Get(current_scope_inst_id).kind();
+    return sem_ir_->insts().Get(current_scope_inst_id).kind() == InstT::Kind;
   }
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
@@ -337,6 +341,9 @@ class Context {
     return sem_ir().functions();
   }
   auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
+  auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
+    return sem_ir().interfaces();
+  }
   auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId>& {
     return sem_ir().cross_ref_irs();
   }
@@ -344,7 +351,7 @@ class Context {
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
   }
-  auto types() -> ValueStore<SemIR::TypeId>& { return sem_ir().types(); }
+  auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }
@@ -384,6 +391,9 @@ class Context {
     // The name scope associated with this entry, if any.
     SemIR::NameScopeId scope_id;
 
+    // The previous state of name_lookup_has_load_error_, restored on pop.
+    bool prev_name_lookup_has_load_error;
+
     // Names which are registered with name_lookup_, and will need to be
     // unregistered when the scope ends.
     llvm::DenseSet<SemIR::NameId> names;
@@ -397,9 +407,9 @@ class Context {
 
   // A lookup result in the lexical lookup table `name_lookup_`.
   struct LexicalLookupResult {
-    // The node that was added to lookup.
-    SemIR::InstId node_id;
-    // The scope in which the node was added.
+    // The instruction that was added to lookup.
+    SemIR::InstId inst_id;
+    // The scope in which the instruction was added.
     ScopeIndex scope_index;
   };
 
@@ -423,6 +433,10 @@ class Context {
   // Forms a canonical type ID for a type. If the type is new, adds the
   // instruction to the current block.
   auto CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst) -> SemIR::TypeId;
+
+  // If the passed in instruction ID is a LazyImportRef, resolves it for use.
+  // Called when name lookup intends to return an inst_id.
+  auto ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
   auto current_scope() const -> const ScopeStackEntry& {
@@ -495,6 +509,10 @@ class Context {
   // Names which no longer have lookup results are erased.
   llvm::DenseMap<SemIR::NameId, llvm::SmallVector<LexicalLookupResult>>
       name_lookup_;
+
+  // Whether name_lookup_ has load errors, updated whenever scope_stack_ is
+  // pushed or popped.
+  bool name_lookup_has_load_error_ = false;
 
   // Cache of the mapping from instructions to types, to avoid recomputing the
   // folding set ID.

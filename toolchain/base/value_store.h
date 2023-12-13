@@ -172,7 +172,9 @@ class ValueStore
   auto size() const -> int { return values_.size(); }
 
  private:
-  llvm::SmallVector<std::decay_t<ValueType>> values_;
+  // Set inline size to 0 because these will typically be too large for the
+  // stack, while this does make File smaller.
+  llvm::SmallVector<std::decay_t<ValueType>, 0> values_;
 };
 
 // Storage for StringRefs. The caller is responsible for ensuring storage is
@@ -207,7 +209,9 @@ class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
 
  private:
   llvm::DenseMap<llvm::StringRef, StringId> map_;
-  llvm::SmallVector<llvm::StringRef> values_;
+  // Set inline size to 0 because these will typically be too large for the
+  // stack, while this does make File smaller.
+  llvm::SmallVector<llvm::StringRef, 0> values_;
 };
 
 // A thin wrapper around a `ValueStore<StringId>` that provides a different IdT,

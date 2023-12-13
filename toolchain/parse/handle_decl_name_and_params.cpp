@@ -13,13 +13,11 @@ static auto HandleDeclNameAndParams(Context& context, State after_name)
 
   // TODO: Should handle designated names.
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-    state.state = after_name;
-    context.PushState(state);
+    context.PushState(state, after_name);
 
     if (context.PositionIs(Lex::TokenKind::Period)) {
       context.AddLeafNode(NodeKind::IdentifierName, *identifier);
-      state.state = State::PeriodAsDecl;
-      context.PushState(state);
+      context.PushState(state, State::PeriodAsDecl);
     } else {
       context.AddLeafNode(NodeKind::IdentifierName, *identifier);
     }
@@ -66,8 +64,7 @@ static auto HandleDeclNameAndParamsAfterName(Context& context, Params params)
   if (context.PositionIs(Lex::TokenKind::Period)) {
     // Continue designator processing.
     context.PushState(state);
-    state.state = State::PeriodAsDecl;
-    context.PushState(state);
+    context.PushState(state, State::PeriodAsDecl);
     return;
   }
 
@@ -86,9 +83,9 @@ static auto HandleDeclNameAndParamsAfterName(Context& context, Params params)
 
   if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
     context.PushState(State::DeclNameAndParamsAfterImplicit);
-    context.PushState(State::ParamListAsImplicit);
+    context.PushState(State::PatternListAsImplicit);
   } else if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::ParamListAsRegular);
+    context.PushState(State::PatternListAsTuple);
   } else if (params == Params::Required) {
     CARBON_DIAGNOSTIC(ParamsRequiredByIntroducer, Error,
                       "`{0}` requires a `(` for parameters.", Lex::TokenKind);
@@ -114,7 +111,7 @@ auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   context.PopAndDiscardState();
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::ParamListAsRegular);
+    context.PushState(State::PatternListAsTuple);
   } else {
     CARBON_DIAGNOSTIC(
         ParamsRequiredAfterImplicit, Error,

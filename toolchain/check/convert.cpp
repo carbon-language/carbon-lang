@@ -546,8 +546,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                            context.sem_ir().StringifyType(target.type_id));
     return SemIR::InstId::BuiltinError;
   }
-  auto dest_struct_type = context.insts().GetAs<SemIR::StructType>(
-      context.sem_ir().GetTypeAllowBuiltinTypes(class_info.object_repr_id));
+  auto dest_struct_type =
+      context.types().GetAs<SemIR::StructType>(class_info.object_repr_id);
 
   // If we're trying to create a class value, form a temporary for the value to
   // point to.
@@ -569,6 +569,80 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                          target.type_id, target.init_id, result_id});
   }
   return result_id;
+}
+
+// An inheritance path is a sequence of `BaseDecl`s in order from derived to
+// base.
+using InheritancePath = llvm::SmallVector<SemIR::InstId>;
+
+// Computes the inheritance path from class `derived_id` to class `base_id`.
+// Returns nullopt if `derived_id` is not a class derived from `base_id`.
+static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
+                                   SemIR::TypeId base_id)
+    -> std::optional<InheritancePath> {
+  // We intend for NRVO to be applied to `result`. All `return` statements in
+  // this function should `return result;`.
+  std::optional<InheritancePath> result(std::in_place);
+  if (!context.TryToCompleteType(derived_id)) {
+    // TODO: Should we give an error here? If we don't, and there is an
+    // inheritance path when the class is defined, we may have a coherence
+    // problem.
+    result = std::nullopt;
+    return result;
+  }
+  while (derived_id != base_id) {
+    auto derived_class_type =
+        context.types().TryGetAs<SemIR::ClassType>(derived_id);
+    if (!derived_class_type) {
+      result = std::nullopt;
+      break;
+    }
+    auto& derived_class = context.classes().Get(derived_class_type->class_id);
+    if (!derived_class.base_id.is_valid()) {
+      result = std::nullopt;
+      break;
+    }
+    result->push_back(derived_class.base_id);
+    derived_id = context.insts()
+                     .GetAs<SemIR::BaseDecl>(derived_class.base_id)
+                     .base_type_id;
+  }
+  return result;
+}
+
+// Performs a conversion from a derived class value or reference to a base class
+// value or reference.
+static auto ConvertDerivedToBase(Context& context, Parse::NodeId parse_node,
+                                 SemIR::InstId value_id,
+                                 const InheritancePath& path) -> SemIR::InstId {
+  // Materialize a temporary if necessary.
+  value_id = ConvertToValueOrRefExpr(context, value_id);
+
+  // Add a series of `.base` accesses.
+  for (auto base_id : path) {
+    auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(base_id);
+    value_id = context.AddInst(SemIR::ClassElementAccess{
+        parse_node, base_decl.base_type_id, value_id, base_decl.index});
+  }
+  return value_id;
+}
+
+// Performs a conversion from a derived class pointer to a base class pointer.
+static auto ConvertDerivedPointerToBasePointer(
+    Context& context, Parse::NodeId parse_node, SemIR::PointerType src_ptr_type,
+    SemIR::TypeId dest_ptr_type_id, SemIR::InstId ptr_id,
+    const InheritancePath& path) -> SemIR::InstId {
+  // Form `*p`.
+  ptr_id = ConvertToValueExpr(context, ptr_id);
+  auto ref_id = context.AddInst(
+      SemIR::Deref{parse_node, src_ptr_type.pointee_id, ptr_id});
+
+  // Convert as a reference expression.
+  ref_id = ConvertDerivedToBase(context, parse_node, ref_id, path);
+
+  // Take the address.
+  return context.AddInst(
+      SemIR::AddressOf{parse_node, dest_ptr_type_id, ref_id});
 }
 
 // Returns whether `category` is a valid expression category to produce as a
@@ -599,8 +673,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
   auto& sem_ir = context.sem_ir();
   auto value = sem_ir.insts().Get(value_id);
   auto value_type_id = value.type_id();
-  auto target_type_inst =
-      sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(target.type_id));
+  auto target_type_inst = sem_ir.types().GetAsInst(target.type_id);
 
   // Various forms of implicit conversion are supported as builtin conversions,
   // either in addition to or instead of `impl`s of `ImplicitAs` in the Carbon
@@ -660,9 +733,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
   // A tuple (T1, T2, ..., Tn) converts to (U1, U2, ..., Un) if each Ti
   // converts to Ui.
   if (auto target_tuple_type = target_type_inst.TryAs<SemIR::TupleType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_tuple_type = value_type_inst.TryAs<SemIR::TupleType>()) {
+    if (auto src_tuple_type =
+            sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
       return ConvertTupleToTuple(context, *src_tuple_type, *target_tuple_type,
                                  value_id, target);
     }
@@ -673,9 +745,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
   // (p(1), ..., p(n)) is a permutation of (1, ..., n) and each Ti converts
   // to Ui.
   if (auto target_struct_type = target_type_inst.TryAs<SemIR::StructType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_struct_type = value_type_inst.TryAs<SemIR::StructType>()) {
+    if (auto src_struct_type =
+            sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       return ConvertStructToStruct(context, *src_struct_type,
                                    *target_struct_type, value_id, target);
     }
@@ -683,9 +754,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
 
   // A tuple (T1, T2, ..., Tn) converts to [T; n] if each Ti converts to T.
   if (auto target_array_type = target_type_inst.TryAs<SemIR::ArrayType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_tuple_type = value_type_inst.TryAs<SemIR::TupleType>()) {
+    if (auto src_tuple_type =
+            sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
     }
@@ -696,11 +766,32 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
   // (a struct with the same fields as the class, plus a base field where
   // relevant).
   if (auto target_class_type = target_type_inst.TryAs<SemIR::ClassType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_struct_type = value_type_inst.TryAs<SemIR::StructType>()) {
+    if (auto src_struct_type =
+            sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       return ConvertStructToClass(context, *src_struct_type, *target_class_type,
                                   value_id, target);
+    }
+
+    // An expression of type T converts to U if T is a class derived from U.
+    if (auto path =
+            ComputeInheritancePath(context, value_type_id, target.type_id);
+        path && !path->empty()) {
+      return ConvertDerivedToBase(context, parse_node, value_id, *path);
+    }
+  }
+
+  // A pointer T* converts to U* if T is a class derived from U.
+  if (auto target_pointer_type = target_type_inst.TryAs<SemIR::PointerType>()) {
+    if (auto src_pointer_type =
+            sem_ir.types().TryGetAs<SemIR::PointerType>(value_type_id)) {
+      if (auto path =
+              ComputeInheritancePath(context, src_pointer_type->pointee_id,
+                                     target_pointer_type->pointee_id);
+          path && !path->empty()) {
+        return ConvertDerivedPointerToBasePointer(
+            context, parse_node, *src_pointer_type, target.type_id, value_id,
+            *path);
+      }
     }
   }
 
@@ -716,7 +807,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
         type_ids.push_back(ExprAsType(context, parse_node, tuple_inst_id));
       }
       auto tuple_type_id = context.CanonicalizeTupleType(parse_node, type_ids);
-      return sem_ir.GetTypeAllowBuiltinTypes(tuple_type_id);
+      return sem_ir.types().GetInstId(tuple_type_id);
     }
 
     // `{}` converts to `{} as type`.
@@ -725,7 +816,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
     if (auto struct_literal = value.TryAs<SemIR::StructLiteral>();
         struct_literal &&
         struct_literal->elements_id == SemIR::InstBlockId::Empty) {
-      value_id = sem_ir.GetTypeAllowBuiltinTypes(value_type_id);
+      value_id = sem_ir.types().GetInstId(value_type_id);
     }
   }
 

@@ -17,7 +17,7 @@ load(
     "variable_with_value",
     "with_feature_set",
 )
-load("@rules_cc//cc:defs.bzl", "cc_toolchain", "cc_toolchain_suite")
+load("@rules_cc//cc:defs.bzl", "cc_toolchain")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
@@ -103,7 +103,7 @@ def _impl(ctx):
     std_compile_flags = ["-std=c++17"]
 
     # libc++ is only used on non-Windows platforms.
-    if ctx.attr.target_cpu != "x64_windows":
+    if ctx.attr.target_os != "windows":
         std_compile_flags.append("-stdlib=libc++")
 
     # TODO: Regression that warns on anonymous unions; remove depending on fix.
@@ -977,10 +977,7 @@ def _impl(ctx):
     )
 
     # Now that we have built up the constituent feature definitions, compose
-    # them, including configuration based on the target platform. Currently,
-    # the target platform is configured with the "cpu" attribute for legacy
-    # reasons. Further, for legacy reasons the default is a Linux OS target and
-    # the x88-64 CPU name is "k8".
+    # them, including configuration based on the target platform.
 
     # First, define features that are simply used to configure others.
     features = [
@@ -990,9 +987,9 @@ def _impl(ctx):
         feature(name = "no_legacy_features"),
         feature(name = "nonhost"),
         feature(name = "opt"),
-        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_cpu == "k8"),
+        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_os == "linux"),
         feature(name = "supports_pic", enabled = True),
-        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_cpu == "k8"),
+        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_os == "linux"),
     ]
 
     # The order of the features determines the relative order of flags used.
@@ -1017,38 +1014,39 @@ def _impl(ctx):
 
     # Next, add the features based on the target platform. Here too the
     # features are order sensitive. We also setup the sysroot here.
-    if ctx.attr.target_cpu in ["aarch64", "k8"]:
+    if ctx.attr.target_os == "linux":
         features.append(sanitizer_static_lib_flags)
         features.append(linux_flags_feature)
         sysroot = None
-    elif ctx.attr.target_cpu == "x64_windows":
+    elif ctx.attr.target_os == "windows":
         # TODO: Need to figure out if we need to add windows specific features
         # I think the .pdb debug files will need to be handled differently,
         # so that might be an example where a feature must be added.
         sysroot = None
-    elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+    elif ctx.attr.target_os == "macos":
         features.append(macos_asan_workarounds)
         features.append(macos_flags_feature)
         sysroot = sysroot_dir
-    elif ctx.attr.target_cpu == "freebsd":
+    elif ctx.attr.target_os == "freebsd":
         features.append(sanitizer_static_lib_flags)
         features.append(freebsd_flags_feature)
         sysroot = sysroot_dir
     else:
-        fail("Unsupported target platform!")
+        fail("Unsupported target OS!")
 
-    if ctx.attr.target_cpu in ["aarch64", "darwin_arm64"]:
+    if ctx.attr.target_cpu in ["aarch64", "arm64"]:
         features.append(aarch64_cpu_flags)
     else:
         features.append(x86_64_cpu_flags)
 
     # Finally append the libraries to link and any final flags.
-    if ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+    if ctx.attr.target_os == "macos":
         features.append(macos_link_libraries_feature)
     else:
         features.append(default_link_libraries_feature)
     features.append(final_flags_feature)
 
+    identifier = "local-{0}-{1}".format(ctx.attr.target_cpu, ctx.attr.target_os)
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = features,
@@ -1062,9 +1060,9 @@ def _impl(ctx):
 
         # This configuration only supports local non-cross builds so derive
         # everything from the target CPU selected.
-        toolchain_identifier = "local-" + ctx.attr.target_cpu,
-        host_system_name = "local-" + ctx.attr.target_cpu,
-        target_system_name = "local-" + ctx.attr.target_cpu,
+        toolchain_identifier = identifier,
+        host_system_name = identifier,
+        target_system_name = identifier,
         target_cpu = ctx.attr.target_cpu,
 
         # These attributes aren't meaningful at all so just use placeholder
@@ -1082,16 +1080,17 @@ cc_toolchain_config = rule(
     implementation = _impl,
     attrs = {
         "target_cpu": attr.string(mandatory = True),
+        "target_os": attr.string(mandatory = True),
     },
     provides = [CcToolchainConfigInfo],
 )
 
-def cc_local_toolchain_suite(name, cpus):
+def cc_local_toolchain_suite(name, configs):
     """Create a toolchain suite that uses the local Clang/LLVM install.
 
     Args:
         name: The name of the toolchain suite to produce.
-        cpus: An array of CPU strings to support in the toolchain.
+        configs: An array of (os, cpu) pairs to support in the toolchain.
     """
 
     # An empty filegroup to use when stubbing out the toolchains.
@@ -1101,13 +1100,15 @@ def cc_local_toolchain_suite(name, cpus):
     )
 
     # Create the individual local toolchains for each CPU.
-    for cpu in cpus:
+    for (os, cpu) in configs:
+        config_name = "{0}_{1}_{2}".format(name, os, cpu)
         cc_toolchain_config(
-            name = name + "_local_config_" + cpu,
+            name = config_name + "_config",
+            target_os = os,
             target_cpu = cpu,
         )
         cc_toolchain(
-            name = name + "_local_" + cpu,
+            name = config_name + "_tools",
             all_files = ":" + name + "_empty",
             ar_files = ":" + name + "_empty",
             as_files = ":" + name + "_empty",
@@ -1117,12 +1118,14 @@ def cc_local_toolchain_suite(name, cpus):
             objcopy_files = ":" + name + "_empty",
             strip_files = ":" + name + "_empty",
             supports_param_files = 1,
-            toolchain_config = ":" + name + "_local_config_" + cpu,
-            toolchain_identifier = name + "_local_" + cpu,
+            toolchain_config = ":" + config_name + "_config",
+            toolchain_identifier = config_name,
         )
-
-    # Now build the suite, associating each CPU with its toolchain.
-    cc_toolchain_suite(
-        name = name,
-        toolchains = {cpu: ":" + name + "_local_" + cpu for cpu in cpus},
-    )
+        compatible_with = ["@platforms//cpu:" + cpu, "@platforms//os:" + os]
+        native.toolchain(
+            name = config_name,
+            exec_compatible_with = compatible_with,
+            target_compatible_with = compatible_with,
+            toolchain = config_name + "_tools",
+            toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+        )

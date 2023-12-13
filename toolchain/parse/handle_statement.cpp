@@ -72,12 +72,8 @@ static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
     context.emitter().Emit(*context.position(), ExpectedStatementSemi,
                            context.tokens().GetKind(state.token));
     state.has_error = true;
-    // Recover to the next semicolon if possible, otherwise indicate the
-    // keyword for the error.
+    // Recover to the next semicolon if possible.
     semi = context.SkipPastLikelyEnd(state.token);
-    if (!semi) {
-      semi = state.token;
-    }
   }
   context.AddNode(node_kind, *semi, state.subtree_start, state.has_error);
 }
@@ -120,9 +116,7 @@ auto HandleStatementForHeader(Context& context) -> void {
 
 auto HandleStatementForHeaderIn(Context& context) -> void {
   auto state = context.PopState();
-
-  state.state = State::StatementForHeaderFinish;
-  context.PushState(state);
+  context.PushState(state, State::StatementForHeaderFinish);
   context.PushState(State::Expr);
 }
 
@@ -151,9 +145,7 @@ auto HandleStatementIf(Context& context) -> void {
 
 auto HandleStatementIfConditionFinish(Context& context) -> void {
   auto state = context.PopState();
-
-  state.state = State::StatementIfThenBlockFinish;
-  context.PushState(state);
+  context.PushState(state, State::StatementIfThenBlockFinish);
   context.PushState(State::CodeBlock);
 }
 
@@ -162,8 +154,7 @@ auto HandleStatementIfThenBlockFinish(Context& context) -> void {
 
   if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Else,
                                       NodeKind::IfStatementElse)) {
-    state.state = State::StatementIfElseBlockFinish;
-    context.PushState(state);
+    context.PushState(state, State::StatementIfElseBlockFinish);
     // `else if` is permitted as a special case.
     context.PushState(context.PositionIs(Lex::TokenKind::If)
                           ? State::StatementIf
@@ -182,8 +173,7 @@ auto HandleStatementIfElseBlockFinish(Context& context) -> void {
 
 auto HandleStatementReturn(Context& context) -> void {
   auto state = context.PopState();
-  state.state = State::StatementReturnFinish;
-  context.PushState(state);
+  context.PushState(state, State::StatementReturnFinish);
 
   context.AddLeafNode(NodeKind::ReturnStatementStart, context.Consume());
 
@@ -227,8 +217,7 @@ auto HandleStatementWhile(Context& context) -> void {
 auto HandleStatementWhileConditionFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = State::StatementWhileBlockFinish;
-  context.PushState(state);
+  context.PushState(state, State::StatementWhileBlockFinish);
   context.PushState(State::CodeBlock);
 }
 

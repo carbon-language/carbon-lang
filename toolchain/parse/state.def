@@ -53,6 +53,10 @@
   CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
   CARBON_PARSE_STATE_VARIANTS3(State, Variant2, Variant3, Variant4)
 
+// Used as a default for StateStackEntry initialization in some cases. Should
+// not be put on the state stack.
+CARBON_PARSE_STATE(Invalid)
+
 // Handles an index expression:
 //
 // a[0]
@@ -251,12 +255,12 @@ CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParams, None, Optional, Required)
 //
 // name [ ... ]    (variant is not None)
 //     ^
-//   1. ParamListAsImplicit
+//   1. PatternListAsImplicit
 //   2. DeclNameAndParamsAfterImplicit
 //
 // name ( ... )    (variant is not None)
 //     ^
-//   1. ParamListAsRegular
+//   1. PatternListAsTuple
 //
 // name ...        (variant is not Required)
 //     ^
@@ -273,7 +277,7 @@ CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParamsAfterName, None, Optional,
 //
 // name [ ... ] ( ... )
 //             ^
-//   1. ParamListAsRegular
+//   1. PatternListAsTuple
 //
 // name [ ... ] ???
 //             ^
@@ -322,6 +326,11 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // fn ...
 // ^~
 //   1. FunctionIntroducer
+//   2. DeclScopeLoop
+//
+// impl ...
+// ^~~~
+//   1. ImplAfterIntroducer
 //   2. DeclScopeLoop
 //
 // interface ...
@@ -467,14 +476,19 @@ CARBON_PARSE_STATE(ExprInPostfixLoop)
 
 // Handles processing of an expression.
 //
-// expr <binary operator> ...
-//      ^~~~~~~~~~~~~~~~~
+// expr <infix operator> ...
+//      ^~~~~~~~~~~~~~~~
 //   1. Expr
 //   2. ExprLoopForBinary
 //
 // expr <postfix operator>
 //      ^~~~~~~~~~~~~~~~~~
 //   1. ExprLoop
+//
+// expr <short circuit operator> ...
+//      ^~~~~~~~~~~~~~~~~~~~~~~~
+//   1. Expr
+//   2. ExprLoopForShortCircuitOperator
 //
 // expr ...
 //     ^
@@ -484,8 +498,8 @@ CARBON_PARSE_STATE(ExprLoop)
 // Completes an ExprLoop pass by adding an infix operator, then goes back
 // to ExprLoop.
 //
-// expr <binary operator> expr ...
-//                            ^
+// expr <infix operator> expr ...
+//                           ^
 //   1. ExprLoop
 CARBON_PARSE_STATE(ExprLoopForBinary)
 
@@ -496,6 +510,14 @@ CARBON_PARSE_STATE(ExprLoopForBinary)
 //                       ^
 //   1. ExprLoop
 CARBON_PARSE_STATE(ExprLoopForPrefix)
+
+// Completes an ExprLoop pass by adding a short circuit operator, then goes back
+// to ExprLoop.
+//
+// expr <short circuit operator> expr ...
+//                                   ^
+//   1. ExprLoop
+CARBON_PARSE_STATE_VARIANTS2(ExprLoopForShortCircuitOperator, And, Or)
 
 // Completes the condition of an `if` expression and handles the `then` token.
 //
@@ -645,56 +667,61 @@ CARBON_PARSE_STATE(NamespaceFinish)
 //   (state done)
 CARBON_PARSE_STATE(Package)
 
-// Starts parameter parsing.
+// Starts parsing a pattern in a comma-separated list. The variants mark
+// whether it is part of an implicit parameter list or a tuple pattern.
 //
 //  ...
 // ^
 //   1. BindingPattern
-//   2. ParamFinishAs(Implicit|Regular)
-CARBON_PARSE_STATE_VARIANTS2(Param, Implicit, Regular)
+//   2. PatternListElementFinishAs(Implicit|Tuple)
+CARBON_PARSE_STATE_VARIANTS2(PatternListElement, Implicit, Tuple)
 
-// Finishes parsing a parameter, including the optional trailing `,`. If there
-// are more parameters, enqueues another parameter parsing state.
+// Finishes parsing a pattern in a comma-separated list, including the
+// optional trailing `,`. If there are more patterns, enqueues another
+// pattern parsing state.
 //
-// ... , )
+// ... , )  (variant is Tuple)
+//     ^
+//   (state done)
+//
+// ... , ]  (variant is Implicit)
 //     ^
 //   (state done)
 //
 // ... , ...
 //     ^
-//   1. ParamAs(Implicit|Regular)
+//   1. PatternListElementAs(Implicit|Tuple)
 //
 // ...
 //    ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParamFinish, Implicit, Regular)
+CARBON_PARSE_STATE_VARIANTS2(PatternListElementFinish, Implicit, Tuple)
 
-// Handles processing of a parameter list `[` or `(`.
+// Handles processing of a tuple pattern (parentheses) or implicit parameter
+// list (square brackets).
 //
-// TODO: Rename this to TuplePattern to reflect wider usage.
-//
-// ( )        (variant is Regular)
+// ( )        (variant is Tuple)
 // ^
 // [ ]        (variant is Implicit)
 // ^
-//   1. ParamListFinishAs(Regular|Implicit)
+//   1. PatternListFinishAs(Tuple|Implicit)
 //
-// ( ... )    (variant is Regular)
+// ( ... )    (variant is Tuple)
 // ^
 // [ ... ]    (variant is Implicit)
 // ^
-//   1. ParamAs(Regular|Implicit)
-//   2. ParamListFinishAs(Regular|Implicit)
-CARBON_PARSE_STATE_VARIANTS2(ParamList, Implicit, Regular)
+//   1. PatternListElementAs(Tuple|Implicit)
+//   2. PatternListFinishAs(Tuple|Implicit)
+CARBON_PARSE_STATE_VARIANTS2(PatternList, Implicit, Tuple)
 
 // Handles processing of a parameter list `]` or `)`.
 //
-// ( ... )    (variant is Regular)
+// ( ... )    (variant is Tuple)
 //       ^
 // [ ... ]    (variant is Implicit)
 //       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParamListFinish, Implicit, Regular)
+CARBON_PARSE_STATE_VARIANTS2(PatternListFinish, Implicit, Tuple)
 
 // Handles the processing of a `(condition)` up through the expression.
 //
@@ -721,45 +748,67 @@ CARBON_PARSE_STATE_VARIANTS2(ParenCondition, If, While)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(ParenConditionFinish, If, While)
 
-// Handles the `(` of a parenthesized expression.
+// Handles the `(` of a parenthesized single expression
 //
 // ( )
 // ^
-//   1. ParenExprFinishAsTuple
+//   1. TupleLiteralFinish
 //
 // ( ... )
 // ^
 //   1. Expr
-//   2. ParenExprParamFinishAsUnknown
-//   3. ParenExprFinishAsNormal    (SPECIAL: may be replaced)
+//   2. ExprAfterOpenParenFinish
+//   3. ParenExprFinish    (SPECIAL: may be replaced)
 CARBON_PARSE_STATE(ParenExpr)
 
-// Handles the end of a parenthesized expression's parameter. This will start as
-// AsUnknown on the first parameter; if there are more, it switches to AsTuple
-// processing.
-//
-// ( ... , )
-//       ^
-//   (state done)
-//   SPECIAL (variant is Unknown): parent becomes ParenExprFinishAsTuple
-//
-// ( ... , ... )
-//       ^
-//   1. Expression
-//   2. ParenExpressionParamFinishAsTuple
-//   SPECIAL (variant is Unknown): parent becomes ParenExprFinishAsTuple
-//
-//  ...
-// ^
-//   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprParamFinish, Unknown, Tuple)
-
-// Handles the `)` of a parenthesized expression.
+// Handles the `)` of a tuple literal.
 //
 // ( ... )
 //       ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Normal, Tuple)
+CARBON_PARSE_STATE(TupleLiteralFinish)
+
+// Handles the end of an expression following an open parenthesis.
+//
+// ( ... , )
+//       ^
+//   (state done)
+//   SPECIAL: parent becomes TupleLiteralFinish
+//
+// ( ... , ... )
+//       ^
+//   1. Expression
+//   2. TupleLiteralElementFinish
+//   SPECIAL: parent becomes TupleLiteralFinish
+//
+// ( ... )
+//      ^
+//   (state done)
+CARBON_PARSE_STATE(ExprAfterOpenParenFinish)
+
+// Handles the end of an expression that is known to be an element of a tuple
+// literal expression.
+//
+// ( ... , )
+//       ^
+//   (state done)
+//
+// ( ... , ... )
+//       ^
+//   1. Expression
+//   2. TupleLiteralElementFinish
+//
+// ( ... )
+//      ^
+//   (state done)
+CARBON_PARSE_STATE(TupleLiteralElementFinish)
+
+// Handles the `)` of a parenthesized single expression.
+//
+// ( ... )
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(ParenExprFinish)
 
 // Handles processing of a pattern.
 //
@@ -1027,10 +1076,10 @@ CARBON_PARSE_STATE(StatementWhileBlockFinish)
 
 // Handles parsing after the declaration scope of a type.
 //
-// class/interface/constraint { ... }
-//                                  ^
+// class/impl/interface/constraint ... { ... }
+//                                           ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
+CARBON_PARSE_STATE_VARIANTS4(DeclDefinitionFinish, Class, Impl, Interface,
                              NamedConstraint)
 
 // Handles processing of a type after its introducer.
@@ -1038,22 +1087,23 @@ CARBON_PARSE_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
 // class/interface/constraint ...
 //                           ^
 //   1. DeclNameAndParamsAsOptional
-//   2. TypeAfterParamsAs(Class|Interface|NamedConstraint)
-CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface, NamedConstraint)
+//   2. DeclOrDefinitionAs(Class|Interface|NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
+                             NamedConstraint)
 
 // Handles processing of a type after its optional parameters.
 //
-// class/interface/constraint name ( ... ) {
-//                                         ^
+// class/impl/interface/constraint name ( ... ) {
+//                                              ^
 //   1. DeclScopeLoop
-//   2. TypeDefinitionFinishAs(Class|Interface|NamedConstraint)
+//   2. DeclDefinitionFinishAs(Class|Impl|Interface|NamedConstraint)
 //
-// class/interface/constraint name ( ... ) ;
-//                                         ^
-// class/interface/constraint name ( ... ) ???
-//                                        ^
+// class/impl/interface/constraint name ( ... ) ;
+//                                              ^
+// class/impl/interface/constraint name ( ... ) ???
+//                                              ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface, NamedConstraint)
 
 // Handles processing of a completed `base: B` declaration.
 //
@@ -1063,6 +1113,44 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterParams, Class, Interface, NamedConstraint)
 //         ^
 //   (state done)
 CARBON_PARSE_STATE(BaseDecl)
+
+// Handles processing of an `impl...as` declaration after the introducer.
+//
+// impl forall [ ...
+//      ^~~~~~
+//   1. PatternListAsImplicit
+//   2. ImplAfterForall
+//   3. DeclOrDefinitionAsImpl
+// impl as ...
+//      ^~
+//   1. Expr
+//   2. DeclOrDefinitionAsImpl
+// impl type_expression as ...
+//     ^
+//   1. Expr
+//   2. ImplBeforeAs
+//   3. DeclOrDefinitionAsImpl
+CARBON_PARSE_STATE(ImplAfterIntroducer)
+
+// Handles processing of an `impl forall` declaration after the implicit
+// parameter list.
+//
+// impl forall [ ... ] as ...
+//                     ^~
+//   1. Expr
+// impl forall [ ... ] type_expression as ...
+//                    ^
+//   1. Expr
+//   2. ImplBeforeAs
+CARBON_PARSE_STATE(ImplAfterForall)
+
+// Handles processing of the `as` in an `impl` declaration after the type
+// expression.
+//
+// impl TypeExpression as ...
+//                     ^~
+//   1. Expr
+CARBON_PARSE_STATE(ImplBeforeAs)
 
 // Handles the start of a `var` or `returned var`.
 //

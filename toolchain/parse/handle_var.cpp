@@ -13,11 +13,9 @@ static auto HandleVar(Context& context, State finish_state,
   auto state = context.PopState();
 
   // The finished variable declaration will start at the `var` or `returned`.
-  state.state = finish_state;
-  context.PushState(state);
+  context.PushState(state, finish_state);
 
-  state.state = State::VarAfterPattern;
-  context.PushState(state);
+  context.PushState(state, State::VarAfterPattern);
 
   if (returned_token.is_valid()) {
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
@@ -37,8 +35,8 @@ auto HandleVarAsReturned(Context& context) -> void {
     CARBON_DIAGNOSTIC(ExpectedVarAfterReturned, Error,
                       "Expected `var` after `returned`.");
     context.emitter().Emit(*context.position(), ExpectedVarAfterReturned);
-    auto semi = context.SkipPastLikelyEnd(returned_token);
-    context.AddLeafNode(NodeKind::EmptyDecl, semi ? *semi : returned_token,
+    context.AddLeafNode(NodeKind::EmptyDecl,
+                        context.SkipPastLikelyEnd(returned_token),
                         /*has_error=*/true);
     context.PopAndDiscardState();
     return;
@@ -78,9 +76,7 @@ auto HandleVarFinishAsDecl(Context& context) -> void {
     // TODO: Disambiguate between statement and member declaration.
     context.EmitExpectedDeclSemi(Lex::TokenKind::Var);
     state.has_error = true;
-    if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
-      end_token = *semi_token;
-    }
+    end_token = context.SkipPastLikelyEnd(state.token);
   }
   context.AddNode(NodeKind::VariableDecl, end_token, state.subtree_start,
                   state.has_error);

@@ -319,12 +319,40 @@ struct InitializeFrom {
   InstId dest_id;
 };
 
+struct InterfaceDecl {
+  static constexpr auto Kind = InstKind::InterfaceDecl.Define("interface_decl");
+
+  Parse::NodeId parse_node;
+  // No type: an interface declaration is not itself a value. The name of an
+  // interface declaration becomes a facet type value.
+  // TODO: For a generic interface declaration, the name of the interface
+  // declaration should become a parameterized entity name value.
+  InterfaceId interface_id;
+  // The declaration block, containing the interface name's qualifiers and the
+  // interface's generic parameters.
+  InstBlockId decl_block_id;
+};
+
 struct IntLiteral {
   static constexpr auto Kind = InstKind::IntLiteral.Define("int_literal");
 
   Parse::NodeId parse_node;
   TypeId type_id;
   IntId int_id;
+};
+
+// This instruction is not intended for direct use. Instead, it should be loaded
+// if it's referenced through name resolution.
+struct LazyImportRef {
+  static constexpr auto Kind =
+      InstKind::LazyImportRef.Define("lazy_import_ref");
+
+  // No parse node: an instruction's parse tree node must refer to a node in the
+  // current parse tree. This cannot use the cross-referenced instruction's
+  // parse tree node because it will be in a different parse tree.
+
+  CrossRefIRId ir_id;
+  InstId inst_id;
 };
 
 struct NameRef {

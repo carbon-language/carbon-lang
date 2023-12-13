@@ -14,7 +14,7 @@ var n: i8 = (n)*3;
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i8'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'ParenExprOrTupleLiteralStart', text: '('},
+// CHECK:STDOUT:           {kind: 'ExprOpenParen', text: '('},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
 // CHECK:STDOUT:         {kind: 'ParenExpr', text: ')', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '3'},

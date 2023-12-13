@@ -52,15 +52,6 @@ class Context {
 
   // Used to track state on state_stack_.
   struct StateStackEntry : public Printable<StateStackEntry> {
-    explicit StateStackEntry(State state, PrecedenceGroup ambient_precedence,
-                             PrecedenceGroup lhs_precedence,
-                             Lex::TokenIndex token, int32_t subtree_start)
-        : state(state),
-          ambient_precedence(ambient_precedence),
-          lhs_precedence(lhs_precedence),
-          token(token),
-          subtree_start(subtree_start) {}
-
     // Prints state information for verbose output.
     auto Print(llvm::raw_ostream& output) const -> void {
       output << state << " @" << token << " subtree_start=" << subtree_start
@@ -77,8 +68,8 @@ class Context {
     // operator precedence. The ambient_precedence deals with how the expression
     // should interact with outside context, while the lhs_precedence is
     // specific to the lhs of an operator expression.
-    PrecedenceGroup ambient_precedence;
-    PrecedenceGroup lhs_precedence;
+    PrecedenceGroup ambient_precedence = PrecedenceGroup::ForTopLevelExpr();
+    PrecedenceGroup lhs_precedence = PrecedenceGroup::ForTopLevelExpr();
 
     // A token providing context based on the subtree. This will typically be
     // the first token in the subtree, but may sometimes be a token within. It
@@ -190,9 +181,8 @@ class Context {
   //   less indentation, there is likely a missing semicolon. Continued
   //   declarations or statements across multiple lines should be indented.
   //
-  // Returns a semicolon token if one is the likely end.
-  auto SkipPastLikelyEnd(Lex::TokenIndex skip_root)
-      -> std::optional<Lex::TokenIndex>;
+  // Returns the last token consumed.
+  auto SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex;
 
   // Skip forward to the given token. Verifies that it is actually forward.
   auto SkipTo(Lex::TokenIndex t) -> void;
@@ -248,32 +238,30 @@ class Context {
   }
 
   // Pushes a new state with the current position for context.
-  auto PushState(State state) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpr(),
-                              PrecedenceGroup::ForTopLevelExpr(), *position_,
-                              tree_->size()));
-  }
+  auto PushState(State state) -> void { PushState(state, *position_); }
 
   // Pushes a new state with a specific token for context. Used when forming a
-  // new subtree with a token that isn't the start of the subtree.
+  // new subtree when the current position isn't the start of the subtree.
   auto PushState(State state, Lex::TokenIndex token) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpr(),
-                              PrecedenceGroup::ForTopLevelExpr(), token,
-                              tree_->size()));
+    PushState({.state = state, .token = token, .subtree_start = tree_->size()});
   }
 
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
-    PushState(StateStackEntry(State::Expr, ambient_precedence,
-                              PrecedenceGroup::ForTopLevelExpr(), *position_,
-                              tree_->size()));
+    PushState({.state = State::Expr,
+               .ambient_precedence = ambient_precedence,
+               .token = *position_,
+               .subtree_start = tree_->size()});
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
   auto PushStateForExprLoop(State state, PrecedenceGroup ambient_precedence,
                             PrecedenceGroup lhs_precedence) -> void {
-    PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
-                              *position_, tree_->size()));
+    PushState({.state = state,
+               .ambient_precedence = ambient_precedence,
+               .lhs_precedence = lhs_precedence,
+               .token = *position_,
+               .subtree_start = tree_->size()});
   }
 
   // Pushes a constructed state onto the stack.
@@ -282,6 +270,12 @@ class Context {
     state_stack_.push_back(state);
     CARBON_CHECK(state_stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
+  }
+
+  // Pushes a constructed state onto the stack, with a different parse state.
+  auto PushState(StateStackEntry state_entry, State parse_state) -> void {
+    state_entry.state = parse_state;
+    PushState(state_entry);
   }
 
   // Propagates an error up the state stack, to the parent state.

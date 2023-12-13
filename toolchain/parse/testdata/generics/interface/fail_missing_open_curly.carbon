@@ -19,9 +19,9 @@ interface Foo
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Bar'},
-// CHECK:STDOUT:     {kind: 'InterfaceDecl', text: 'interface', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'InterfaceDecl', text: '}', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
-// CHECK:STDOUT:     {kind: 'InterfaceDecl', text: 'interface', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'InterfaceDecl', text: 'Foo', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

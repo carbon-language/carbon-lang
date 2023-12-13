@@ -22,7 +22,7 @@ var x: {.a: i32, .b = 0} = {};
 // CHECK:STDOUT:           {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'b'},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: '.', has_error: yes},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: '.', has_error: yes},
 // CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 12},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},

@@ -18,7 +18,7 @@ var x: {."hello": i32, .y: i32} = {};
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: '"hello"', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: ':', has_error: yes},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: ':', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:               {kind: 'IdentifierName', text: 'y'},
 // CHECK:STDOUT:             {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},

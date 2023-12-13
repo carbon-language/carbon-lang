@@ -43,6 +43,7 @@ static auto BuildClassDecl(Context& context)
       : !!(modifiers & KeywordModifierSet::Base)   ? SemIR::Class::Base
                                                    : SemIR::Class::Final;
 
+  context.decl_state_stack().Pop(DeclState::Class);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
@@ -114,7 +115,6 @@ static auto BuildClassDecl(Context& context)
 auto HandleClassDecl(Context& context, Parse::NodeId /*parse_node*/) -> bool {
   BuildClassDecl(context);
   context.decl_name_stack().PopScope();
-  context.decl_state_stack().Pop(DeclState::Class);
   return true;
 }
 
@@ -144,9 +144,8 @@ auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
   context.PushScope(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
-  context.AddNameToLookup(
-      parse_node, SemIR::NameId::SelfType,
-      context.sem_ir().GetTypeAllowBuiltinTypes(class_info.self_type_id));
+  context.AddNameToLookup(parse_node, SemIR::NameId::SelfType,
+                          context.types().GetInstId(class_info.self_type_id));
 
   context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, class_id);
@@ -227,10 +226,7 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
     // declaration as being final classes.
     // TODO: Once we have a better idea of which types are considered to be
     // classes, produce a better diagnostic for deriving from a non-class type.
-    auto base_class =
-        context.insts()
-            .Get(context.sem_ir().GetTypeAllowBuiltinTypes(base_type_id))
-            .TryAs<SemIR::ClassType>();
+    auto base_class = context.types().TryGetAs<SemIR::ClassType>(base_type_id);
     if (!base_class ||
         context.classes().Get(base_class->class_id).inheritance_kind ==
             SemIR::Class::Final) {
@@ -274,7 +270,6 @@ auto HandleClassDefinition(Context& context, Parse::NodeId parse_node) -> bool {
   context.inst_block_stack().Pop();
   context.PopScope();
   context.decl_name_stack().PopScope();
-  context.decl_state_stack().Pop(DeclState::Class);
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);

@@ -15,7 +15,7 @@ var x: {i32} = {};
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:           {kind: 'StructFieldUnknown', text: 'i32', has_error: yes},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'i32', has_error: yes},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},

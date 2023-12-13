@@ -69,8 +69,73 @@ struct UnitInfo {
 };
 
 // Add imports to the root block.
-static auto AddImports(Context& context, UnitInfo& unit_info) -> void {
+static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
+    -> void {
+  // Define the package scope, with an instruction for `package` expressions to
+  // reference.
+  auto package_scope_id = context.name_scopes().Add();
+  CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
+
+  auto package_inst = context.AddInst(SemIR::Namespace{
+      Parse::NodeId::Invalid,
+      context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+      SemIR::NameScopeId::Package});
+  CARBON_CHECK(package_inst == SemIR::InstId::PackageNamespace);
+
+  // Add imports from the current package.
+  auto self_import = unit_info.package_imports_map.find(IdentifierId::Invalid);
+  if (self_import != unit_info.package_imports_map.end()) {
+    auto& package_scope =
+        context.name_scopes().Get(SemIR::NameScopeId::Package);
+    package_scope.has_load_error = self_import->second.has_load_error;
+
+    for (const auto& import : self_import->second.imports) {
+      const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
+      const auto& import_scope =
+          import_sem_ir.name_scopes().Get(SemIR::NameScopeId::Package);
+
+      // If an import of the current package caused an error for the imported
+      // file, it transitively affects the current file too.
+      package_scope.has_load_error |= import_scope.has_load_error;
+
+      auto ir_id = context.sem_ir().cross_ref_irs().Add(&import_sem_ir);
+
+      for (const auto& [import_name_id, import_inst_id] : import_scope.names) {
+        // Translate the name to the current IR.
+        auto name_id = SemIR::NameId::Invalid;
+        if (auto import_identifier_id = import_name_id.AsIdentifierId();
+            import_identifier_id.is_valid()) {
+          auto name = import_sem_ir.identifiers().Get(import_identifier_id);
+          name_id =
+              SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
+        } else {
+          // A builtin name ID which is equivalent cross-IR.
+          name_id = import_name_id;
+        }
+
+        // Leave a placeholder that the inst comes from the other IR.
+        auto target_id = context.AddInst(
+            SemIR::LazyImportRef{.ir_id = ir_id, .inst_id = import_inst_id});
+        // TODO: The scope's names should be changed to allow for ambiguous
+        // names.
+        package_scope.names.insert({name_id, target_id});
+      }
+    }
+
+    // Push the scope.
+    context.PushScope(package_inst, SemIR::NameScopeId::Package,
+                      package_scope.has_load_error);
+  } else {
+    // Push the scope; there are no names to add.
+    context.PushScope(package_inst, SemIR::NameScopeId::Package);
+  }
+
   for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
+    if (!package_id.is_valid()) {
+      // Current package is handled above.
+      continue;
+    }
+
     llvm::SmallVector<const SemIR::File*> sem_irs;
     for (auto import : package_imports.imports) {
       sem_irs.push_back(&**import.unit_info->unit->sem_ir);
@@ -105,8 +170,6 @@ static auto ProcessParseNodes(Context& context,
 }
 
 // Produces and checks the IR for the provided Parse::Tree.
-// TODO: Both valid and invalid imports should be recorded on the SemIR. Invalid
-// imports should suppress errors where it makes sense.
 static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
                            llvm::raw_ostream* vlog_stream) -> void {
   unit_info.unit->sem_ir->emplace(
@@ -124,17 +187,7 @@ static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
   // Add a block for the file.
   context.inst_block_stack().Push();
 
-  // Define the package scope, with an instruction for `package` expressions to
-  // reference.
-  auto package_scope = context.name_scopes().Add();
-  auto package_inst = context.AddInst(SemIR::Namespace{
-      Parse::NodeId::Invalid,
-      context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
-      package_scope});
-  CARBON_CHECK(package_inst == SemIR::InstId::PackageNamespace);
-  context.PushScope(SemIR::InstId::Invalid, package_scope);
-
-  AddImports(context, unit_info);
+  InitPackageScopeAndImports(context, unit_info);
 
   if (!ProcessParseNodes(context, unit_info.err_tracker)) {
     context.sem_ir().set_has_errors(true);
@@ -338,7 +391,7 @@ static auto BuildApiMapAndDiagnosePackaging(
         packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl;
 
     // Add to the `api` map and diagnose duplicates. This occurs before the
-    // file extension check because we might emit both diagnostics in situation
+    // file extension check because we might emit both diagnostics in situations
     // where the user forgets (or has syntax errors with) a package line
     // multiple times.
     if (!is_impl) {
@@ -418,7 +471,9 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
             unit_info.unit->parse_tree->packaging_directive()) {
       if (packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
         // An `impl` has an implicit import of its `api`.
-        TrackImport(api_map, nullptr, unit_info, packaging->names);
+        auto implicit_names = packaging->names;
+        implicit_names.package_id = IdentifierId::Invalid;
+        TrackImport(api_map, nullptr, unit_info, implicit_names);
       }
     }
 
