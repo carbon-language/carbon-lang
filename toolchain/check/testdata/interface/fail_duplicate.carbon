@@ -6,9 +6,9 @@
 
 interface Interface { }
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:21: ERROR: Redefinition of interface Interface.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: ERROR: Redefinition of interface Interface.
 // CHECK:STDERR: interface Interface {
-// CHECK:STDERR:                     ^
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Previous definition was here.
 // CHECK:STDERR: interface Interface { }
 // CHECK:STDERR: ^~~~~~~~~

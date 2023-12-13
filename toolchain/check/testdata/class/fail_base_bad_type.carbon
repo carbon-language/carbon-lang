@@ -57,9 +57,9 @@ class DeriveFromIncomplete {
   extend base: Incomplete;
 }
 
-// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:82: ERROR: Cannot implicitly convert from `DeriveFromIncomplete*` to `Incomplete*`.
+// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:74: ERROR: Cannot implicitly convert from `DeriveFromIncomplete*` to `Incomplete*`.
 // CHECK:STDERR: fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
-// CHECK:STDERR:                                                                                  ^
+// CHECK:STDERR:                                                                          ^~~~~~~~~
 fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 
 class DeriveFromFinal {
