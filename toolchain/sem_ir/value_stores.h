@@ -178,11 +178,19 @@ struct NameScope {
   //   }
   //
   // needs to describe the `T*` argument.
+  //
+  // Small vector size is set to 1: we expect that there will rarely be more
+  // than a single extended scope. Currently the only kind of extended scope is
+  // a base class, and there can be only one of those per scope.
+  // TODO: Revisit this once we have more kinds of extended scope and data.
+  // TODO: Consider using something like `TinyPtrVector` for this.
   llvm::SmallVector<NameScopeId, 1> extended_scopes;
 
-  // Whether the scope is incomplete, for example due to an import that failed
-  // or an invalid `extend` declaration. There may still be names from
-  // successful imports, or the current file.
+  // Whether we have diagnosed an error in a construct that would have added
+  // names to this scope. For example, this can happen if an `import` failed or
+  // an `extend` declaration was ill-formed. If true, the `names` map is
+  // assumed to be missing names as a result of the error, and no further
+  // errors are produced for lookup failures in this scope.
   bool has_error = false;
 };
 

@@ -329,17 +329,21 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
     auto scope_result_id = LookupNameInExactScope(name_id, scope);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
-      scope_ids.append(scope.extended_scopes);
+      auto extended = llvm::reverse(scope.extended_scopes);
+      scope_ids.append(extended.begin(), extended.end());
       continue;
     }
 
     // If this is our second lookup result, diagnose an ambiguity.
     if (result_id.is_valid()) {
+      // TODO: This is currently not reachable because the only scope that can
+      // extend is a class scope, and it can only extend a single base class.
+      // Add test coverage once this is possible.
       CARBON_DIAGNOSTIC(
-          NameAmbiguousViaExtend, Error,
+          NameAmbiguousDueToExtend, Error,
           "Ambiguous use of name `{0}` found in multiple extended scopes.",
           std::string);
-      emitter_->Emit(parse_node, NameAmbiguousViaExtend,
+      emitter_->Emit(parse_node, NameAmbiguousDueToExtend,
                      names().GetFormatted(name_id).str());
       // TODO: Add notes pointing to the scopes.
       return SemIR::InstId::BuiltinError;
