@@ -287,8 +287,22 @@ auto HandleExprLoop(Context& context) -> void {
     context.PushState(state);
     context.PushStateForExpr(operator_precedence);
   } else {
-    context.AddNode(NodeKind::PostfixOperatorStar, state.token,
-                    state.subtree_start, state.has_error);
+    NodeKind node_kind;
+    switch (operator_kind) {
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) \
+  case Lex::TokenKind::Name:                               \
+    node_kind = NodeKind::PostfixOperator##Name;           \
+    break;
+#include "toolchain/parse/node_kind.def"
+
+      default:
+        CARBON_FATAL() << "Unexpected token kind for postfix operator: "
+                       << operator_kind;
+    }
+
+    context.AddNode(node_kind, state.token, state.subtree_start,
+                    state.has_error);
     state.has_error = false;
     context.PushState(state);
   }
