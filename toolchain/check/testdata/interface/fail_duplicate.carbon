@@ -16,12 +16,37 @@ interface Interface {
   fn F();
 }
 
+fn Function();
+
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:11: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: interface Function;
+// CHECK:STDERR:           ^~~~~~~~
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Name is previously declared here.
+// CHECK:STDERR: fn Function();
+// CHECK:STDERR: ^~
+interface Function;
+
+class Class;
+
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:11: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: interface Class { }
+// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Name is previously declared here.
+// CHECK:STDERR: class Class;
+// CHECK:STDERR: ^~~~~
+interface Class { }
+
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Interface = %Interface.decl.loc7}
+// CHECK:STDOUT:   package: <namespace> = namespace {.Interface = %Interface.decl.loc7, .Function = %Function, .Class = %Class.decl}
 // CHECK:STDOUT:   %Interface.decl.loc7 = interface_decl @Interface, ()
 // CHECK:STDOUT:   %Interface.decl.loc15 = interface_decl @Interface, ()
+// CHECK:STDOUT:   %Function: <function> = fn_decl @Function
+// CHECK:STDOUT:   %.decl.loc27 = interface_decl @.1, ()
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
+// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.decl.loc37 = interface_decl @.2, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
@@ -31,5 +56,16 @@ interface Interface {
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: interface @.1;
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @.2 {
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Class;
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Function();
 // CHECK:STDOUT:
