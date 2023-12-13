@@ -1,0 +1,59 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+"""Bazel modules."""
+
+module(name = "carbon")
+
+bazel_dep(name = "bazel_skylib", version = "1.5.0")
+bazel_dep(
+    name = "abseil-cpp",
+    version = "20230802.0",
+    repo_name = "com_google_absl",
+)
+bazel_dep(
+    name = "re2",
+    version = "2023-11-01",
+    repo_name = "com_googlesource_code_re2",
+)
+bazel_dep(
+    name = "googletest",
+    version = "1.14.0.bcr.1",
+    repo_name = "com_google_googletest",
+)
+bazel_dep(
+    name = "google_benchmark",
+    version = "1.8.3",
+    repo_name = "com_github_google_benchmark",
+)
+bazel_dep(name = "rules_bison", version = "0.2.2")
+bazel_dep(name = "rules_flex", version = "0.2.1")
+bazel_dep(name = "rules_m4", version = "0.2.3")
+bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "rules_proto", version = "6.0.0-rc1")
+bazel_dep(
+    name = "protobuf",
+    version = "21.7",
+    repo_name = "com_google_protobuf",
+)
+bazel_dep(name = "rules_python", version = "0.27.1")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = "3.11",
+)
+use_repo(python, "python_versions")
+
+pip = use_extension(
+    "@rules_python//python/extensions:pip.bzl",
+    "pip",
+)
+
+# Create a central repo that knows about the pip dependencies.
+pip.parse(
+    hub_name = "py_deps",
+    python_version = "3.11",
+    requirements_lock = "//github_tools:requirements.txt",
+)
+use_repo(pip, "py_deps")
