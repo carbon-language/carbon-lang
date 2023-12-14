@@ -10,7 +10,7 @@ fn Mismatch() -> i32 {
   // CHECK:STDERR:                   ^~~
   // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:1: Return type of function is `i32`.
   // CHECK:STDERR: fn Mismatch() -> i32 {
-  // CHECK:STDERR: ^~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   returned var v: f64 = 0.0;
   return var;
 }

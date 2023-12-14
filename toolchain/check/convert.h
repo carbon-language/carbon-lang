@@ -70,9 +70,15 @@ auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
 auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId;
 
-// Converts `value_id` to a value expression of type `type_id`.
+// Converts `expr_id` to a value expression of type `type_id`.
 auto ConvertToValueOfType(Context& context, Parse::NodeId parse_node,
-                          SemIR::InstId value_id, SemIR::TypeId type_id)
+                          SemIR::InstId expr_id, SemIR::TypeId type_id)
+    -> SemIR::InstId;
+
+// Convert the given expression to a value or reference expression of the given
+// type.
+auto ConvertToValueOrRefOfType(Context& context, Parse::NodeId parse_node,
+                               SemIR::InstId expr_id, SemIR::TypeId type_id)
     -> SemIR::InstId;
 
 // Converts `value_id` to a value expression of type `bool`.

@@ -205,7 +205,8 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
   }
 }
 
-auto Context::LookupNameInDecl(Parse::NodeId parse_node, SemIR::NameId name_id,
+auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
+                               SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
   if (scope_id == SemIR::NameScopeId::Invalid) {
     // Look for a name in the current scope only. There are two cases where the
@@ -243,10 +244,16 @@ auto Context::LookupNameInDecl(Parse::NodeId parse_node, SemIR::NameId name_id,
     }
     return SemIR::InstId::Invalid;
   } else {
-    // TODO: Once we support `extend`, do not look into `extend`ed scopes here,
-    // following the same logic as above.
-    return LookupQualifiedName(parse_node, name_id, scope_id,
-                               /*required=*/false);
+    // We do not look into `extend`ed scopes here. A qualified name in a
+    // declaration must specify the exact scope in which the name was originally
+    // introduced:
+    //
+    //    base class A { fn F(); }
+    //    class B { extend base: A; }
+    //
+    //    // Error, no `F` in `B`.
+    //    fn B.F() {}
+    return LookupNameInExactScope(name_id, name_scopes().Get(scope_id));
   }
 }
 
@@ -296,26 +303,63 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupQualifiedName(Parse::NodeId parse_node,
-                                  SemIR::NameId name_id,
-                                  SemIR::NameScopeId scope_id, bool required)
+auto Context::LookupNameInExactScope(SemIR::NameId name_id,
+                                     const SemIR::NameScope& scope)
     -> SemIR::InstId {
-  CARBON_CHECK(scope_id.is_valid()) << "No scope to perform lookup into";
-  const auto& scope = name_scopes().Get(scope_id);
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
     ResolveIfLazyImportRef(it->second);
     return it->second;
   }
+  return SemIR::InstId::Invalid;
+}
 
-  // TODO: Also perform lookups into `extend`ed scopes.
+auto Context::LookupQualifiedName(Parse::NodeId parse_node,
+                                  SemIR::NameId name_id,
+                                  SemIR::NameScopeId scope_id, bool required)
+    -> SemIR::InstId {
+  llvm::SmallVector<SemIR::NameScopeId> scope_ids = {scope_id};
+  auto result_id = SemIR::InstId::Invalid;
+  bool has_error = false;
 
-  if (!required) {
-    return SemIR::InstId::Invalid;
+  // Walk this scope and, if nothing is found here, the scopes it extends.
+  while (!scope_ids.empty()) {
+    const auto& scope = name_scopes().Get(scope_ids.pop_back_val());
+    has_error |= scope.has_error;
+
+    auto scope_result_id = LookupNameInExactScope(name_id, scope);
+    if (!scope_result_id.is_valid()) {
+      // Nothing found in this scope: also look in its extended scopes.
+      auto extended = llvm::reverse(scope.extended_scopes);
+      scope_ids.append(extended.begin(), extended.end());
+      continue;
+    }
+
+    // If this is our second lookup result, diagnose an ambiguity.
+    if (result_id.is_valid()) {
+      // TODO: This is currently not reachable because the only scope that can
+      // extend is a class scope, and it can only extend a single base class.
+      // Add test coverage once this is possible.
+      CARBON_DIAGNOSTIC(
+          NameAmbiguousDueToExtend, Error,
+          "Ambiguous use of name `{0}` found in multiple extended scopes.",
+          std::string);
+      emitter_->Emit(parse_node, NameAmbiguousDueToExtend,
+                     names().GetFormatted(name_id).str());
+      // TODO: Add notes pointing to the scopes.
+      return SemIR::InstId::BuiltinError;
+    }
+
+    result_id = scope_result_id;
   }
-  if (!scope.has_load_error) {
-    DiagnoseNameNotFound(parse_node, name_id);
+
+  if (required && !result_id.is_valid()) {
+    if (!has_error) {
+      DiagnoseNameNotFound(parse_node, name_id);
+    }
+    return SemIR::InstId::BuiltinError;
   }
-  return SemIR::InstId::BuiltinError;
+
+  return result_id;
 }
 
 auto Context::PushScope(SemIR::InstId scope_inst_id,

@@ -19,7 +19,7 @@ class C2 {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: ERROR: Missing `extend` before `base` declaration in class.
   // CHECK:STDERR:   abstract base: B;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   abstract base: B;
 }
 
@@ -48,7 +48,7 @@ class C4 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_15.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc7_15.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_1: type = ptr_type {}
+// CHECK:STDOUT:   %.loc7_14: type = ptr_type {}
 // CHECK:STDOUT:   %.loc14: type = struct_type {.base: B}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -78,6 +78,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc13_25.2
+// CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
@@ -96,6 +97,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc33_25.2
+// CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
@@ -105,5 +107,6 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc43_24.2
+// CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

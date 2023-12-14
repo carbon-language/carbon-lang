@@ -87,7 +87,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   if (self_import != unit_info.package_imports_map.end()) {
     auto& package_scope =
         context.name_scopes().Get(SemIR::NameScopeId::Package);
-    package_scope.has_load_error = self_import->second.has_load_error;
+    package_scope.has_error = self_import->second.has_load_error;
 
     for (const auto& import : self_import->second.imports) {
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
@@ -96,7 +96,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
 
       // If an import of the current package caused an error for the imported
       // file, it transitively affects the current file too.
-      package_scope.has_load_error |= import_scope.has_load_error;
+      package_scope.has_error |= import_scope.has_error;
 
       auto ir_id = context.sem_ir().cross_ref_irs().Add(&import_sem_ir);
 
@@ -124,7 +124,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
 
     // Push the scope.
     context.PushScope(package_inst, SemIR::NameScopeId::Package,
-                      package_scope.has_load_error);
+                      package_scope.has_error);
   } else {
     // Push the scope; there are no names to add.
     context.PushScope(package_inst, SemIR::NameScopeId::Package);

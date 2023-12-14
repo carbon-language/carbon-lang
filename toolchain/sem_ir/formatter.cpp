@@ -612,7 +612,7 @@ class Formatter {
       out_ << " {\n";
       FormatCodeBlock(class_info.body_block_id);
       out_ << "\n!members:";
-      FormatNameScope(class_info.scope_id, "", "\n  .");
+      FormatNameScope(class_info.scope_id, "", "\n  ");
       out_ << "\n}\n";
     } else {
       out_ << ";\n";
@@ -631,7 +631,7 @@ class Formatter {
       out_ << " {\n";
       FormatCodeBlock(interface_info.body_block_id);
       out_ << "\n!members:";
-      FormatNameScope(interface_info.scope_id, "", "\n  .");
+      FormatNameScope(interface_info.scope_id, "", "\n  ");
       out_ << "\n}\n";
     } else {
       out_ << ";\n";
@@ -728,14 +728,19 @@ class Formatter {
 
     llvm::ListSeparator sep(separator);
     for (auto [inst_id, name_id] : entries) {
-      out_ << sep << prefix;
+      out_ << sep << prefix << ".";
       FormatName(name_id);
       out_ << " = ";
       FormatInstName(inst_id);
     }
 
-    if (scope.has_load_error) {
-      out_ << sep << "has_load_error";
+    for (auto extended_scope_id : scope.extended_scopes) {
+      // TODO: Print this scope in a better way.
+      out_ << sep << prefix << "extend " << extended_scope_id;
+    }
+
+    if (scope.has_error) {
+      out_ << sep << prefix << "has_error";
     }
   }
 
@@ -993,7 +998,7 @@ class Formatter {
 
   auto FormatArg(NameScopeId id) -> void {
     out_ << '{';
-    FormatNameScope(id, ", ", ".");
+    FormatNameScope(id, ", ", "");
     out_ << '}';
   }
 

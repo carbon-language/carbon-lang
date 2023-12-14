@@ -146,7 +146,7 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
       name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id = scope_id;
       context_->PushScope(name_context.resolved_inst_id, scope_id,
-                          context_->name_scopes().Get(scope_id).has_load_error);
+                          context_->name_scopes().Get(scope_id).has_error);
       break;
     }
     default:

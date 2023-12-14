@@ -35,7 +35,7 @@ class D {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_16.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc7_16.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_1: type = ptr_type {}
+// CHECK:STDOUT:   %.loc7_15: type = ptr_type {}
 // CHECK:STDOUT:   %.loc19: type = struct_type {.base: B1}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,6 +69,7 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc11_18.2
+// CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -79,5 +80,6 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc23_18.2
+// CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

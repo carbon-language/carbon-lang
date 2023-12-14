@@ -151,8 +151,9 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
       if (auto unbound_element_type =
               context.types().TryGetAs<SemIR::UnboundElementType>(
                   member_type_id)) {
-        // TODO: Check that the unbound element type describes a member of this
-        // class. Perform a conversion of the base if necessary.
+        // Convert the base to the type of the element if necessary.
+        base_id = ConvertToValueOrRefOfType(
+            context, parse_node, base_id, unbound_element_type->class_type_id);
 
         // Find the specified element, which could be either a field or a base
         // class, and build an element access expression.

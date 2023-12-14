@@ -20,7 +20,7 @@ let b: B = C.base;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_15.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc7_15.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_1: type = ptr_type {}
+// CHECK:STDOUT:   %.loc7_14: type = ptr_type {}
 // CHECK:STDOUT:   %.loc11: type = struct_type {.base: B}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,5 +48,6 @@ let b: B = C.base;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc10_17.2
+// CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
