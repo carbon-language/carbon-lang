@@ -177,11 +177,11 @@ auto HandleBaseColon(Context& /*context*/, Parse::NodeId /*parse_node*/)
 namespace {
 // Information gathered about a base type specified in a `base` declaration.
 struct BaseInfo {
-  SemIR::TypeId type_id;
-  SemIR::NameScopeId scope_id;
-
   // A `BaseInfo` representing an erroneous base.
   static const BaseInfo Error;
+
+  SemIR::TypeId type_id;
+  SemIR::NameScopeId scope_id;
 };
 constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
                                       .scope_id = SemIR::NameScopeId::Invalid};
