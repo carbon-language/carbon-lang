@@ -11,7 +11,7 @@ class FinalClass {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: Containing definition here.
   // CHECK:STDERR: class FinalClass {
-  // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
   abstract fn Abstract[self: Self]();
 
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE+6]]:3: ERROR: `virtual` not allowed on `fn` declaration in a non-abstract non-base `class` definition.
@@ -19,7 +19,7 @@ class FinalClass {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-13]]:1: Containing definition here.
   // CHECK:STDERR: class FinalClass {
-  // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
   virtual fn Virtual[self: Self]();
 }
 
@@ -43,7 +43,7 @@ base class BaseClass {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_method_modifiers.carbon:[[@LINE-5]]:1: Containing definition here.
   // CHECK:STDERR: base class BaseClass {
-  // CHECK:STDERR: ^~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   abstract fn Abstract[self: Self]();
 }
 

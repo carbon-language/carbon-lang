@@ -43,7 +43,8 @@ static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
-static auto BuildFunctionDecl(Context& context, bool is_definition)
+static auto BuildFunctionDecl(Context& context, Parse::NodeId parse_node,
+                              bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   // TODO: This contains the IR block for the parameters and return type. At
   // present, it's just loose, but it's not strictly required for parameter
@@ -88,8 +89,6 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
-  auto first_node = context.decl_state_stack().innermost().first_node;
-
   // Process modifiers.
   auto modifiers = DiagnoseModifiers(context);
   if (!!(modifiers & KeywordModifierSet::Access)) {
@@ -110,7 +109,7 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
 
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
-      first_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
+      parse_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
       SemIR::FunctionId::Invalid};
   auto function_decl_id = context.AddInst(function_decl);
 
@@ -165,20 +164,19 @@ static auto BuildFunctionDecl(Context& context, bool is_definition)
         (return_slot_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
-         return_type_id != context.CanonicalizeTupleType(first_node, {}))) {
+         return_type_id != context.CanonicalizeTupleType(parse_node, {}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
                         "`fn ()` or `fn () -> i32`.");
-      context.emitter().Emit(first_node, InvalidMainRunSignature);
+      context.emitter().Emit(parse_node, InvalidMainRunSignature);
     }
   }
 
   return {function_decl.function_id, function_decl_id};
 }
 
-auto HandleFunctionDecl(Context& context, Parse::NodeId /*parse_node*/)
-    -> bool {
-  BuildFunctionDecl(context, /*is_definition=*/false);
+auto HandleFunctionDecl(Context& context, Parse::NodeId parse_node) -> bool {
+  BuildFunctionDecl(context, parse_node, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;
 }
@@ -212,7 +210,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
-      BuildFunctionDecl(context, /*is_definition=*/true);
+      BuildFunctionDecl(context, parse_node, /*is_definition=*/true);
   auto& function = context.functions().Get(function_id);
 
   // Track that this declaration is the definition.
@@ -278,7 +276,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::NodeId parse_node)
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Fn, parse_node);
+  context.decl_state_stack().Push(DeclState::Fn);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }

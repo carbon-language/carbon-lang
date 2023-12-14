@@ -62,8 +62,7 @@ struct DeclState {
     Var
   };
 
-  explicit DeclState(DeclKind decl_kind, Parse::NodeId parse_node)
-      : kind(decl_kind), first_node(parse_node) {}
+  explicit DeclState(DeclKind decl_kind) : kind(decl_kind) {}
 
   DeclKind kind;
 
@@ -75,9 +74,6 @@ struct DeclState {
   // Invariant: contains just the modifiers represented by `saw_access_modifier`
   // and `saw_other_modifier`.
   KeywordModifierSet modifier_set = KeywordModifierSet::None;
-
-  // Node corresponding to the first token of the declaration.
-  Parse::NodeId first_node;
 };
 
 // Stack of `DeclState` values, representing all the declarations we are
@@ -85,15 +81,10 @@ struct DeclState {
 // Invariant: Bottom of the stack always has a "DeclState::FileScope" entry.
 class DeclStateStack {
  public:
-  DeclStateStack() {
-    stack_.emplace_back(DeclState::FileScope, Parse::NodeId::Invalid);
-  }
+  DeclStateStack() { stack_.emplace_back(DeclState::FileScope); }
 
-  // Enters a declaration of kind `k`, with `parse_node` for the introducer
-  // token.
-  auto Push(DeclState::DeclKind k, Parse::NodeId parse_node) -> void {
-    stack_.push_back(DeclState(k, parse_node));
-  }
+  // Enters a declaration of kind `k`.
+  auto Push(DeclState::DeclKind k) -> void { stack_.emplace_back(k); }
 
   // Gets the state of declaration at the top of the stack -- the innermost
   // declaration currently being processed.

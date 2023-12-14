@@ -57,9 +57,6 @@ static auto HandleModifier(Context& context, Parse::NodeId parse_node,
   } else {
     s.modifier_set |= keyword;
     saw_modifier = parse_node;
-    if (is_access || !s.saw_access_modifier.is_valid()) {
-      s.first_node = parse_node;
-    }
   }
   return true;
 }

@@ -13,7 +13,7 @@ class Class {
     // CHECK:STDERR:            ^~~~~
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE-7]]:1: Class is incomplete within its definition.
     // CHECK:STDERR: class Class {
-    // CHECK:STDERR: ^~~~~
+    // CHECK:STDERR: ^~~~~~~~~~~~~
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE+3]]:12: ERROR: Name `F` not found.
     // CHECK:STDERR:     return Class.F();
     // CHECK:STDERR:            ^~~~~~~

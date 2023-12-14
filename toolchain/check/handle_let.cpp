@@ -57,7 +57,7 @@ auto HandleLetDecl(Context& context, Parse::NodeId parse_node) -> bool {
 }
 
 auto HandleLetIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
-  context.decl_state_stack().Push(DeclState::Let, parse_node);
+  context.decl_state_stack().Push(DeclState::Let);
   // Push a bracketing node to establish the pattern context.
   context.node_stack().Push(parse_node);
   return true;
