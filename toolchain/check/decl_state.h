@@ -74,6 +74,11 @@ struct DeclState {
   // Invariant: contains just the modifiers represented by `saw_access_modifier`
   // and `saw_other_modifier`.
   KeywordModifierSet modifier_set = KeywordModifierSet::None;
+
+  // True if this declaration has an initializer.
+  // TODO: should this be generalized/renamed to also represent e.g. whether
+  // this is a forward declaration?
+  bool has_initializer = false;
 };
 
 // Stack of `DeclState` values, representing all the declarations we are
