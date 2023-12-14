@@ -6,9 +6,15 @@
 # root `BUILD` file for that repository.
 
 load(":cc_toolchain_config.bzl", "cc_local_toolchain_suite")
-load(":clang_configs.bzl", "clang_configs")
 
 cc_local_toolchain_suite(
     name = "bazel_cc_toolchain",
-    configs = clang_configs,
+    configs = [
+        ("linux", "aarch64"),
+        ("linux", "x86_64"),
+        ("freebsd", "x86_64"),
+        ("macos", "arm64"),
+        ("macos", "x86_64"),
+        ("windows", "x86_64"),
+    ],
 )

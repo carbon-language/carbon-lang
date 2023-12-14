@@ -6,6 +6,11 @@
 
 module(name = "carbon")
 
+http_archive = use_repo_rule(
+    "@bazel_tools//tools/build_defs/repo:http.bzl",
+    "http_archive",
+)
+
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
 bazel_dep(
     name = "abseil-cpp",
@@ -38,6 +43,79 @@ bazel_dep(
     repo_name = "com_google_protobuf",
 )
 
+libprotobuf_mutator_version = "1.1"
+
+http_archive(
+    name = "com_google_libprotobuf_mutator",
+    build_file = "@//:third_party/libprotobuf_mutator/BUILD.txt",
+    sha256 = "fd299fd72c5cf664259d9bd43a72cb74dc6a8b9604d107fe2d2e90885aeb7c16",
+    strip_prefix = "libprotobuf-mutator-{0}".format(libprotobuf_mutator_version),
+    urls = ["https://github.com/google/libprotobuf-mutator/archive/v{0}.tar.gz".format(libprotobuf_mutator_version)],
+)
+
+bazel_cc_toolchain = use_extension(
+    "//bazel/cc_toolchains:clang_configuration.bzl",
+    "clang_toolchain_extension",
+)
+use_repo(bazel_cc_toolchain, "bazel_cc_toolchain")
+
+register_toolchains("@bazel_cc_toolchain//:all")
+
+###############################################################################
+# llvm-project
+###############################################################################
+
+# We pin to specific upstream commits and try to track top-of-tree reasonably
+# closely rather than pinning to a specific release.
+llvm_project_version = "3d51010a3350660160981c6b8e624dcc87c208a3"
+
+# Required for llvm-project.
+bazel_dep(name = "platforms", version = "0.0.8")
+
+# zlib and zstd dependencies are copied from
+# https://github.com/llvm/llvm-project/blob/main/utils/bazel/WORKSPACE.
+http_archive(
+    name = "llvm_zlib",
+    build_file = "@llvm-raw//utils/bazel/third_party_build:zlib-ng.BUILD",
+    sha256 = "e36bb346c00472a1f9ff2a0a4643e590a254be6379da7cddd9daeb9a7f296731",
+    strip_prefix = "zlib-ng-2.0.7",
+    urls = [
+        "https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.0.7.zip",
+    ],
+)
+
+http_archive(
+    name = "llvm_zstd",
+    build_file = "@llvm-raw//utils/bazel/third_party_build:zstd.BUILD",
+    sha256 = "7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0",
+    strip_prefix = "zstd-1.5.2",
+    urls = [
+        "https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz",
+    ],
+)
+
+# Load a repository for the raw llvm-project, pre-overlay.
+http_archive(
+    name = "llvm-raw",
+    build_file_content = "# empty",
+    patch_args = ["-p1"],
+    patches = [
+        "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
+        "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+        "@carbon//bazel/llvm_project:0003_Add_library_for_clangd.patch",
+    ],
+    sha256 = "efbca707a6eb1c714b849de120309070eef282660c0f4be5b68efef62cc95cf5",
+    strip_prefix = "llvm-project-{0}".format(llvm_project_version),
+    urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],
+)
+
+# Apply the overlay to produce llvm-project.
+llvm_project = use_extension(
+    "//bazel/llvm_project:llvm_project.bzl",
+    "llvm_project",
+)
+use_repo(llvm_project, "llvm-project")
+
 ###############################################################################
 # Python
 ###############################################################################
@@ -50,12 +128,8 @@ python.toolchain(
 )
 use_repo(python, "python_versions")
 
-pip = use_extension(
-    "@rules_python//python/extensions:pip.bzl",
-    "pip",
-)
-
 # Create a central repo that knows about the pip dependencies.
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip.parse(
     hub_name = "py_deps",
     python_version = "3.11",

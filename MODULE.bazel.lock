@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "ce8fc25c1f07e706daf7c1f5efe324d1252fc316136371c441539603588fbf2f",
+  "moduleFileHash": "a6f6c48df119a90ca673e963d0fc75ce0fabe343e566d3d15e004381f8bbd637",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -22,15 +22,152 @@
       "key": "<root>",
       "repoName": "carbon",
       "executionPlatformsToRegister": [],
-      "toolchainsToRegister": [],
+      "toolchainsToRegister": [
+        "@bazel_cc_toolchain//:all"
+      ],
       "extensionUsages": [
+        {
+          "extensionBzlFile": "//:MODULE.bazel",
+          "extensionName": "_repo_rules",
+          "usingModule": "<root>",
+          "location": {
+            "file": "@@//:MODULE.bazel",
+            "line": 0,
+            "column": 0
+          },
+          "imports": {
+            "com_google_libprotobuf_mutator": "com_google_libprotobuf_mutator",
+            "llvm_zlib": "llvm_zlib",
+            "llvm_zstd": "llvm_zstd",
+            "llvm-raw": "llvm-raw"
+          },
+          "devImports": [],
+          "tags": [
+            {
+              "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+              "attributeValues": {
+                "build_file": "@//:third_party/libprotobuf_mutator/BUILD.txt",
+                "sha256": "fd299fd72c5cf664259d9bd43a72cb74dc6a8b9604d107fe2d2e90885aeb7c16",
+                "strip_prefix": "libprotobuf-mutator-1.1",
+                "urls": [
+                  "https://github.com/google/libprotobuf-mutator/archive/v1.1.tar.gz"
+                ],
+                "name": "com_google_libprotobuf_mutator"
+              },
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 48,
+                "column": 13
+              }
+            },
+            {
+              "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+              "attributeValues": {
+                "build_file": "@llvm-raw//utils/bazel/third_party_build:zlib-ng.BUILD",
+                "sha256": "e36bb346c00472a1f9ff2a0a4643e590a254be6379da7cddd9daeb9a7f296731",
+                "strip_prefix": "zlib-ng-2.0.7",
+                "urls": [
+                  "https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.0.7.zip"
+                ],
+                "name": "llvm_zlib"
+              },
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 77,
+                "column": 13
+              }
+            },
+            {
+              "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+              "attributeValues": {
+                "build_file": "@llvm-raw//utils/bazel/third_party_build:zstd.BUILD",
+                "sha256": "7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0",
+                "strip_prefix": "zstd-1.5.2",
+                "urls": [
+                  "https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz"
+                ],
+                "name": "llvm_zstd"
+              },
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 87,
+                "column": 13
+              }
+            },
+            {
+              "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+              "attributeValues": {
+                "build_file_content": "# empty",
+                "patch_args": [
+                  "-p1"
+                ],
+                "patches": [
+                  "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
+                  "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+                  "@carbon//bazel/llvm_project:0003_Add_library_for_clangd.patch"
+                ],
+                "sha256": "efbca707a6eb1c714b849de120309070eef282660c0f4be5b68efef62cc95cf5",
+                "strip_prefix": "llvm-project-3d51010a3350660160981c6b8e624dcc87c208a3",
+                "urls": [
+                  "https://github.com/llvm/llvm-project/archive/3d51010a3350660160981c6b8e624dcc87c208a3.tar.gz"
+                ],
+                "name": "llvm-raw"
+              },
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 98,
+                "column": 13
+              }
+            }
+          ],
+          "hasDevUseExtension": false,
+          "hasNonDevUseExtension": true
+        },
+        {
+          "extensionBzlFile": "@carbon//bazel/cc_toolchains:clang_configuration.bzl",
+          "extensionName": "clang_toolchain_extension",
+          "usingModule": "<root>",
+          "location": {
+            "file": "@@//:MODULE.bazel",
+            "line": 56,
+            "column": 35
+          },
+          "imports": {
+            "bazel_cc_toolchain": "bazel_cc_toolchain"
+          },
+          "devImports": [],
+          "tags": [],
+          "hasDevUseExtension": false,
+          "hasNonDevUseExtension": true
+        },
+        {
+          "extensionBzlFile": "@carbon//bazel/llvm_project:llvm_project.bzl",
+          "extensionName": "llvm_project",
+          "usingModule": "<root>",
+          "location": {
+            "file": "@@//:MODULE.bazel",
+            "line": 113,
+            "column": 29
+          },
+          "imports": {
+            "llvm-project": "llvm-project"
+          },
+          "devImports": [],
+          "tags": [],
+          "hasDevUseExtension": false,
+          "hasNonDevUseExtension": true
+        },
         {
           "extensionBzlFile": "@rules_python//python/extensions:python.bzl",
           "extensionName": "python",
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 47,
+            "line": 125,
             "column": 23
           },
           "imports": {
@@ -46,7 +183,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 48,
+                "line": 126,
                 "column": 17
               }
             }
@@ -60,7 +197,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 53,
+            "line": 132,
             "column": 20
           },
           "imports": {
@@ -78,7 +215,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 59,
+                "line": 133,
                 "column": 10
               }
             }
@@ -99,6 +236,7 @@
         "rules_cc": "rules_cc@0.0.9",
         "rules_proto": "rules_proto@6.0.0-rc1",
         "com_google_protobuf": "protobuf@21.7",
+        "platforms": "platforms@0.0.8",
         "rules_python": "rules_python@0.27.1",
         "bazel_tools": "bazel_tools@_",
         "local_config_platform": "local_config_platform@_"
@@ -609,6 +747,34 @@
         }
       }
     },
+    "platforms@0.0.8": {
+      "name": "platforms",
+      "version": "0.0.8",
+      "key": "platforms@0.0.8",
+      "repoName": "platforms",
+      "executionPlatformsToRegister": [],
+      "toolchainsToRegister": [],
+      "extensionUsages": [],
+      "deps": {
+        "rules_license": "rules_license@0.0.7",
+        "bazel_tools": "bazel_tools@_",
+        "local_config_platform": "local_config_platform@_"
+      },
+      "repoSpec": {
+        "bzlFile": "@bazel_tools//tools/build_defs/repo:http.bzl",
+        "ruleClassName": "http_archive",
+        "attributes": {
+          "name": "platforms",
+          "urls": [
+            "https://github.com/bazelbuild/platforms/releases/download/0.0.8/platforms-0.0.8.tar.gz"
+          ],
+          "integrity": "sha256-gVBAZgU4ns7LbaB8vLUJ1WN6OrmiS8abEQFTE2fYnXQ=",
+          "strip_prefix": "",
+          "remote_patches": {},
+          "remote_patch_strip": 0
+        }
+      }
+    },
     "rules_python@0.27.1": {
       "name": "rules_python",
       "version": "0.27.1",
@@ -865,34 +1031,6 @@
       "deps": {
         "platforms": "platforms@0.0.8",
         "bazel_tools": "bazel_tools@_"
-      }
-    },
-    "platforms@0.0.8": {
-      "name": "platforms",
-      "version": "0.0.8",
-      "key": "platforms@0.0.8",
-      "repoName": "platforms",
-      "executionPlatformsToRegister": [],
-      "toolchainsToRegister": [],
-      "extensionUsages": [],
-      "deps": {
-        "rules_license": "rules_license@0.0.7",
-        "bazel_tools": "bazel_tools@_",
-        "local_config_platform": "local_config_platform@_"
-      },
-      "repoSpec": {
-        "bzlFile": "@bazel_tools//tools/build_defs/repo:http.bzl",
-        "ruleClassName": "http_archive",
-        "attributes": {
-          "name": "platforms",
-          "urls": [
-            "https://github.com/bazelbuild/platforms/releases/download/0.0.8/platforms-0.0.8.tar.gz"
-          ],
-          "integrity": "sha256-gVBAZgU4ns7LbaB8vLUJ1WN6OrmiS8abEQFTE2fYnXQ=",
-          "strip_prefix": "",
-          "remote_patches": {},
-          "remote_patch_strip": 0
-        }
       }
     },
     "pybind11_bazel@2.11.1": {
@@ -1468,6 +1606,111 @@
     }
   },
   "moduleExtensions": {
+    "//:MODULE.bazel%_repo_rules": {
+      "general": {
+        "bzlTransitiveDigest": "5N51b9xEpf2bMJAN5rd4XedkyF3mkBazoyfbR0iSAoA=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "com_google_libprotobuf_mutator": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_archive",
+            "attributes": {
+              "build_file": "@@//:third_party/libprotobuf_mutator/BUILD.txt",
+              "sha256": "fd299fd72c5cf664259d9bd43a72cb74dc6a8b9604d107fe2d2e90885aeb7c16",
+              "strip_prefix": "libprotobuf-mutator-1.1",
+              "urls": [
+                "https://github.com/google/libprotobuf-mutator/archive/v1.1.tar.gz"
+              ],
+              "name": "_main~_repo_rules~com_google_libprotobuf_mutator"
+            }
+          },
+          "llvm_zlib": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_archive",
+            "attributes": {
+              "build_file": "@@_main~_repo_rules~llvm-raw//utils/bazel/third_party_build:zlib-ng.BUILD",
+              "sha256": "e36bb346c00472a1f9ff2a0a4643e590a254be6379da7cddd9daeb9a7f296731",
+              "strip_prefix": "zlib-ng-2.0.7",
+              "urls": [
+                "https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.0.7.zip"
+              ],
+              "name": "_main~_repo_rules~llvm_zlib"
+            }
+          },
+          "llvm_zstd": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_archive",
+            "attributes": {
+              "build_file": "@@_main~_repo_rules~llvm-raw//utils/bazel/third_party_build:zstd.BUILD",
+              "sha256": "7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0",
+              "strip_prefix": "zstd-1.5.2",
+              "urls": [
+                "https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz"
+              ],
+              "name": "_main~_repo_rules~llvm_zstd"
+            }
+          },
+          "llvm-raw": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_archive",
+            "attributes": {
+              "build_file_content": "# empty",
+              "patch_args": [
+                "-p1"
+              ],
+              "patches": [
+                "@@//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
+                "@@//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+                "@@//bazel/llvm_project:0003_Add_library_for_clangd.patch"
+              ],
+              "sha256": "efbca707a6eb1c714b849de120309070eef282660c0f4be5b68efef62cc95cf5",
+              "strip_prefix": "llvm-project-3d51010a3350660160981c6b8e624dcc87c208a3",
+              "urls": [
+                "https://github.com/llvm/llvm-project/archive/3d51010a3350660160981c6b8e624dcc87c208a3.tar.gz"
+              ],
+              "name": "_main~_repo_rules~llvm-raw"
+            }
+          }
+        }
+      }
+    },
+    "//bazel/cc_toolchains:clang_configuration.bzl%clang_toolchain_extension": {
+      "general": {
+        "bzlTransitiveDigest": "Kc8IiGDwk4jswZNBnPRlrEMAB8XGoLRpc9IHkKq/DQI=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "bazel_cc_toolchain": {
+            "bzlFile": "@@//bazel/cc_toolchains:clang_configuration.bzl",
+            "ruleClassName": "configure_clang_toolchain",
+            "attributes": {
+              "name": "_main~clang_toolchain_extension~bazel_cc_toolchain"
+            }
+          }
+        }
+      }
+    },
+    "//bazel/llvm_project:llvm_project.bzl%llvm_project": {
+      "general": {
+        "bzlTransitiveDigest": "GK7ZPGpGNMETAY4fDDQ0FmDBGMcFSueFxHo+BSPaIoo=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "llvm-project": {
+            "bzlFile": "@@_main~_repo_rules~llvm-raw//utils/bazel:configure.bzl",
+            "ruleClassName": "llvm_configure",
+            "attributes": {
+              "name": "_main~llvm_project~llvm-project",
+              "targets": [
+                "AArch64",
+                "X86"
+              ]
+            }
+          }
+        }
+      }
+    },
     "@@apple_support~1.5.0//crosstool:setup.bzl%apple_cc_configure_extension": {
       "general": {
         "bzlTransitiveDigest": "pMLFCYaRPkgXPQ8vtuNkMfiHfPmRBy6QJfnid4sWfv0=",
