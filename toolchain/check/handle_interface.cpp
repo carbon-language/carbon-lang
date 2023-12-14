@@ -15,7 +15,7 @@ auto HandleInterfaceIntroducer(Context& context, Parse::NodeId parse_node)
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Interface, parse_node);
+  context.decl_state_stack().Push(DeclState::Interface);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }

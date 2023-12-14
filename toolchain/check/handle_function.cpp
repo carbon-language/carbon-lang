@@ -276,7 +276,7 @@ auto HandleFunctionIntroducer(Context& context, Parse::NodeId parse_node)
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Fn, parse_node);
+  context.decl_state_stack().Push(DeclState::Fn);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }

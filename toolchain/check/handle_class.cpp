@@ -15,7 +15,7 @@ auto HandleClassIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Class, parse_node);
+  context.decl_state_stack().Push(DeclState::Class);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
@@ -163,8 +163,9 @@ auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleBaseIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
-  context.decl_state_stack().Push(DeclState::Base, parse_node);
+auto HandleBaseIntroducer(Context& context, Parse::NodeId /*parse_node*/)
+    -> bool {
+  context.decl_state_stack().Push(DeclState::Base);
   return true;
 }
 

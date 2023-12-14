@@ -9,9 +9,10 @@
 
 namespace Carbon::Check {
 
-auto HandleNamespaceStart(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleNamespaceStart(Context& context, Parse::NodeId /*parse_node*/)
+    -> bool {
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Namespace, parse_node);
+  context.decl_state_stack().Push(DeclState::Namespace);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
