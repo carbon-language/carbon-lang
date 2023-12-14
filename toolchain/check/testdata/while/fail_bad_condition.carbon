@@ -5,9 +5,9 @@
 // AUTOUPDATE
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:17: ERROR: Cannot implicitly convert from `String` to `bool`.
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: ERROR: Cannot implicitly convert from `String` to `bool`.
   // CHECK:STDERR:   while ("Hello") {}
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:         ^~~~~~~~~
   while ("Hello") {}
 }
 

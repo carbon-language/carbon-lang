@@ -18,9 +18,9 @@ var n: i8 = n* -n;
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:       {kind: 'InfixOperator', text: '-', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'InfixOperatorMinus', text: '-', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

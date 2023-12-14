@@ -5,9 +5,9 @@
 // AUTOUPDATE
 
 fn ConstMismatch(p: const {}*) -> const ({}*) {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:11: ERROR: Cannot implicitly convert from `const {}*` to `const ({}*)`.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `const {}*` to `const ({}*)`.
   // CHECK:STDERR:   return p;
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR:   ^~~~~~~~~
   return p;
 }
 

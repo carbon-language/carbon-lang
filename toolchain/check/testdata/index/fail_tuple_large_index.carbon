@@ -6,9 +6,9 @@
 
 var a: (i32,) = (12,);
 var b: (i32,) = a;
-// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+3]]:35: ERROR: Index `295147905179352825855` is past the end of type `(i32,)`.
+// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+3]]:14: ERROR: Index `295147905179352825855` is past the end of type `(i32,)`.
 // CHECK:STDERR: var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
-// CHECK:STDERR:                                   ^
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
 var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 
 // CHECK:STDOUT: --- fail_tuple_large_index.carbon

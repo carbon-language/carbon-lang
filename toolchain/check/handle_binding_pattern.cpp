@@ -22,7 +22,7 @@ auto HandleAddress(Context& context, Parse::NodeId parse_node) -> bool {
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter.");
-    context.emitter().Emit(parse_node, AddrOnNonSelfParam);
+    context.emitter().Emit(TokenOnly(parse_node), AddrOnNonSelfParam);
     context.node_stack().Push(parse_node, self_param_id);
   }
   return true;
@@ -46,7 +46,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
 
   // A `self` binding can only appear in an implicit parameter list.
   if (name_id == SemIR::NameId::SelfValue &&
-      context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamListStart>()) {
+      !context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamListStart>()) {
     CARBON_DIAGNOSTIC(
         SelfOutsideImplicitParamList, Error,
         "`self` can only be declared in an implicit parameter list.");

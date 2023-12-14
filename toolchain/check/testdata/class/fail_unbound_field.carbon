@@ -15,9 +15,9 @@ class Class {
 }
 
 fn G() -> i32 {
-  // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+3]]:15: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+3]]:10: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   return Class.field;
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR:          ^~~~~~~~~~~
   return Class.field;
 }
 

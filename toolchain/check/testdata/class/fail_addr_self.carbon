@@ -29,9 +29,9 @@ fn F(c: Class, p: Class*) {
   // This call is OK.
   (*p).F();
 
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:9: ERROR: Cannot implicitly convert from `Class*` to `Class`.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `Class*` to `Class`.
   // CHECK:STDERR:   (*p).G();
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-26]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:             ^~~~

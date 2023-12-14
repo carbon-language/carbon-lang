@@ -14,6 +14,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -23,7 +24,7 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
-  using DiagnosticEmitter = Carbon::DiagnosticEmitter<Parse::NodeId>;
+  using DiagnosticEmitter = Carbon::DiagnosticEmitter<Parse::NodeLocation>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
 
   // A scope in which `break` and `continue` can be used.

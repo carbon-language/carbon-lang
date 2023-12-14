@@ -9,9 +9,9 @@ class Class {
   fn H();
 }
 
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:13: ERROR: Redefinition of class Class.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: ERROR: Redefinition of class Class.
 // CHECK:STDERR: class Class {
-// CHECK:STDERR:             ^
+// CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-8]]:1: Previous definition was here.
 // CHECK:STDERR: class Class {
 // CHECK:STDERR: ^~~~~

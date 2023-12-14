@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 
 namespace Carbon::Parse {
@@ -48,7 +49,7 @@ auto HandleExpr(Context& context) -> void {
       context.PushState(State::IfExprFinish);
       context.PushState(State::IfExprFinishCondition);
     } else {
-      context.PushStateForExprLoop(State::ExprLoopForPrefix,
+      context.PushStateForExprLoop(State::ExprLoopForPrefixOperator,
                                    state.ambient_precedence,
                                    *operator_precedence);
     }
@@ -279,14 +280,28 @@ auto HandleExprLoop(Context& context) -> void {
         break;
 
       default:
-        state.state = State::ExprLoopForBinary;
+        state.state = State::ExprLoopForInfixOperator;
         break;
     }
 
     context.PushState(state);
     context.PushStateForExpr(operator_precedence);
   } else {
-    context.AddNode(NodeKind::PostfixOperator, state.token, state.subtree_start,
+    NodeKind node_kind;
+    switch (operator_kind) {
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) \
+  case Lex::TokenKind::Name:                               \
+    node_kind = NodeKind::PostfixOperator##Name;           \
+    break;
+#include "toolchain/parse/node_kind.def"
+
+      default:
+        CARBON_FATAL() << "Unexpected token kind for postfix operator: "
+                       << operator_kind;
+    }
+
+    context.AddNode(node_kind, state.token, state.subtree_start,
                     state.has_error);
     state.has_error = false;
     context.PushState(state);
@@ -294,29 +309,57 @@ auto HandleExprLoop(Context& context) -> void {
 }
 
 // Adds the operator node and returns the the main expression loop.
-static auto HandleExprLoopForOperator(Context& context, NodeKind node_kind)
-    -> void {
-  auto state = context.PopState();
-
+static auto HandleExprLoopForOperator(Context& context,
+                                      Context::StateStackEntry state,
+                                      NodeKind node_kind) -> void {
   context.AddNode(node_kind, state.token, state.subtree_start, state.has_error);
   state.has_error = false;
   context.PushState(state, State::ExprLoop);
 }
 
-auto HandleExprLoopForBinary(Context& context) -> void {
-  HandleExprLoopForOperator(context, NodeKind::InfixOperator);
+auto HandleExprLoopForInfixOperator(Context& context) -> void {
+  auto state = context.PopState();
+
+  switch (auto token_kind = context.tokens().GetKind(state.token)) {
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...)                      \
+  case Lex::TokenKind::Name:                                                  \
+    HandleExprLoopForOperator(context, state, NodeKind::InfixOperator##Name); \
+    break;
+#include "toolchain/parse/node_kind.def"
+
+    default:
+      CARBON_FATAL() << "Unexpected token kind for infix operator: "
+                     << token_kind;
+  }
 }
 
-auto HandleExprLoopForPrefix(Context& context) -> void {
-  HandleExprLoopForOperator(context, NodeKind::PrefixOperator);
+auto HandleExprLoopForPrefixOperator(Context& context) -> void {
+  auto state = context.PopState();
+
+  switch (auto token_kind = context.tokens().GetKind(state.token)) {
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...)                      \
+  case Lex::TokenKind::Name:                                                   \
+    HandleExprLoopForOperator(context, state, NodeKind::PrefixOperator##Name); \
+    break;
+#include "toolchain/parse/node_kind.def"
+
+    default:
+      CARBON_FATAL() << "Unexpected token kind for prefix operator: "
+                     << token_kind;
+  }
 }
 
 auto HandleExprLoopForShortCircuitOperatorAsAnd(Context& context) -> void {
-  HandleExprLoopForOperator(context, NodeKind::ShortCircuitOperatorAnd);
+  auto state = context.PopState();
+  HandleExprLoopForOperator(context, state, NodeKind::ShortCircuitOperatorAnd);
 }
 
 auto HandleExprLoopForShortCircuitOperatorAsOr(Context& context) -> void {
-  HandleExprLoopForOperator(context, NodeKind::ShortCircuitOperatorOr);
+  auto state = context.PopState();
+
+  HandleExprLoopForOperator(context, state, NodeKind::ShortCircuitOperatorOr);
 }
 
 auto HandleIfExprFinishCondition(Context& context) -> void {
