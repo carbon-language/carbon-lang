@@ -11,7 +11,7 @@ interface Interface { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Previous definition was here.
 // CHECK:STDERR: interface Interface { }
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 interface Interface {
   fn F();
 }

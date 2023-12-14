@@ -20,12 +20,11 @@ auto HandleInterfaceIntroducer(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-static auto BuildInterfaceDecl(Context& context)
+static auto BuildInterfaceDecl(Context& context, Parse::NodeId parse_node)
     -> std::tuple<SemIR::InterfaceId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::InterfaceIntroducer>();
-  auto first_node = context.decl_state_stack().innermost().first_node;
 
   // Process modifiers.
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Interface);
@@ -43,7 +42,7 @@ static auto BuildInterfaceDecl(Context& context)
 
   // Add the interface declaration.
   auto interface_decl = SemIR::InterfaceDecl{
-      first_node, SemIR::InterfaceId::Invalid, decl_block_id};
+      parse_node, SemIR::InterfaceId::Invalid, decl_block_id};
   auto interface_decl_id = context.AddInst(interface_decl);
 
   // Check whether this is a redeclaration.
@@ -84,16 +83,16 @@ static auto BuildInterfaceDecl(Context& context)
   return {interface_decl.interface_id, interface_decl_id};
 }
 
-auto HandleInterfaceDecl(Context& context, Parse::NodeId /*parse_node*/)
-    -> bool {
-  BuildInterfaceDecl(context);
+auto HandleInterfaceDecl(Context& context, Parse::NodeId parse_node) -> bool {
+  BuildInterfaceDecl(context, parse_node);
   context.decl_name_stack().PopScope();
   return true;
 }
 
 auto HandleInterfaceDefinitionStart(Context& context, Parse::NodeId parse_node)
     -> bool {
-  auto [interface_id, interface_decl_id] = BuildInterfaceDecl(context);
+  auto [interface_id, interface_decl_id] =
+      BuildInterfaceDecl(context, parse_node);
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Track that this declaration is the definition.
