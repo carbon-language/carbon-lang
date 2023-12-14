@@ -53,7 +53,7 @@ class DeriveFromIncomplete {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE-6]]:1: Class was forward declared here.
   // CHECK:STDERR: base class Incomplete;
-  // CHECK:STDERR: ^~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   extend base: Incomplete;
 }
 
@@ -81,7 +81,7 @@ fn ConvertToBadBaseFinal(p: DeriveFromFinal*) -> Final* { return p; }
 // CHECK:STDOUT:   %.loc32_22: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc32_23.1: type = tuple_type (Base)
 // CHECK:STDOUT:   %.loc7_18.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_1: type = ptr_type {}
+// CHECK:STDOUT:   %.loc7_17: type = ptr_type {}
 // CHECK:STDOUT:   %.loc32_23.2: type = tuple_type ({}*)
 // CHECK:STDOUT:   %.loc33_1.1: type = struct_type {.base: (Base,)}
 // CHECK:STDOUT:   %.loc33_1.2: type = struct_type {.base: ({}*,)}

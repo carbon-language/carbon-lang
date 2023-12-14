@@ -10,7 +10,7 @@ fn Procedure() {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_returned_var_no_return_type.carbon:[[@LINE-4]]:1: There was no return type provided.
   // CHECK:STDERR: fn Procedure() {
-  // CHECK:STDERR: ^~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
   returned var v: () = ();
   return;
 }

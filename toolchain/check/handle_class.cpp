@@ -20,12 +20,11 @@ auto HandleClassIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-static auto BuildClassDecl(Context& context)
+static auto BuildClassDecl(Context& context, Parse::NodeId parse_node)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
-  auto first_node = context.decl_state_stack().innermost().first_node;
 
   // Process modifiers.
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class);
@@ -48,7 +47,7 @@ static auto BuildClassDecl(Context& context)
 
   // Add the class declaration.
   auto class_decl =
-      SemIR::ClassDecl{first_node, SemIR::ClassId::Invalid, decl_block_id};
+      SemIR::ClassDecl{parse_node, SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddInst(class_decl);
 
   // Check whether this is a redeclaration.
@@ -69,7 +68,7 @@ static auto BuildClassDecl(Context& context)
         CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
                           "Previously declared here.");
         context.emitter()
-            .Build(first_node, ClassRedeclarationDifferentIntroducer)
+            .Build(parse_node, ClassRedeclarationDifferentIntroducer)
             .Note(existing_class_decl->parse_node,
                   ClassRedeclarationDifferentIntroducerPrevious)
             .Emit();
@@ -102,7 +101,7 @@ static auto BuildClassDecl(Context& context)
     auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id =
         context.CanonicalizeType(context.AddInst(SemIR::ClassType{
-            first_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+            parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_decl.class_id}));
   }
 
@@ -112,15 +111,15 @@ static auto BuildClassDecl(Context& context)
   return {class_decl.class_id, class_decl_id};
 }
 
-auto HandleClassDecl(Context& context, Parse::NodeId /*parse_node*/) -> bool {
-  BuildClassDecl(context);
+auto HandleClassDecl(Context& context, Parse::NodeId parse_node) -> bool {
+  BuildClassDecl(context, parse_node);
   context.decl_name_stack().PopScope();
   return true;
 }
 
 auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
     -> bool {
-  auto [class_id, class_decl_id] = BuildClassDecl(context);
+  auto [class_id, class_decl_id] = BuildClassDecl(context, parse_node);
   auto& class_info = context.classes().Get(class_id);
 
   // Track that this declaration is the definition.

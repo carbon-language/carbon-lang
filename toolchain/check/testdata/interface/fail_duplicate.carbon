@@ -23,7 +23,7 @@ fn Function();
 // CHECK:STDERR:           ^~~~~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Name is previously declared here.
 // CHECK:STDERR: fn Function();
-// CHECK:STDERR: ^~
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 interface Function;
 
 class Class;
@@ -33,7 +33,7 @@ class Class;
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Name is previously declared here.
 // CHECK:STDERR: class Class;
-// CHECK:STDERR: ^~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~
 interface Class { }
 
 // CHECK:STDOUT: --- fail_duplicate.carbon
