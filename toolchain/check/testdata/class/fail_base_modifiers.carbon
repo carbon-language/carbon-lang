@@ -19,7 +19,7 @@ class C2 {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: ERROR: Missing `extend` before `base` declaration in class.
   // CHECK:STDERR:   abstract base: B;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   abstract base: B;
 }
 
