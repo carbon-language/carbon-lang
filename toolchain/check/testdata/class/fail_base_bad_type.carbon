@@ -83,7 +83,7 @@ class DeriveFromIncomplete {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE-6]]:1: Class was forward declared here.
   // CHECK:STDERR: base class Incomplete;
-  // CHECK:STDERR: ^~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
   extend base: Incomplete;
 }
 
@@ -127,7 +127,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc51_22: type = tuple_type (type)
 // CHECK:STDOUT:   %.loc51_23.1: type = tuple_type (Base)
 // CHECK:STDOUT:   %.loc7_18.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_1: type = ptr_type {}
+// CHECK:STDOUT:   %.loc7_17: type = ptr_type {}
 // CHECK:STDOUT:   %.loc51_23.2: type = tuple_type ({}*)
 // CHECK:STDOUT:   %.loc67: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc8: type = ptr_type {.a: i32}

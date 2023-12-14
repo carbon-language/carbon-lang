@@ -9,20 +9,20 @@
 
 namespace Carbon::Check {
 
-auto HandleNamespaceStart(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleNamespaceStart(Context& context, Parse::NodeId /*parse_node*/)
+    -> bool {
   // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Namespace, parse_node);
+  context.decl_state_stack().Push(DeclState::Namespace);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
-auto HandleNamespace(Context& context, Parse::NodeId /*parse_node*/) -> bool {
+auto HandleNamespace(Context& context, Parse::NodeId parse_node) -> bool {
   auto name_context = context.decl_name_stack().FinishName();
-  auto first_node = context.decl_state_stack().innermost().first_node;
   LimitModifiersOnDecl(context, KeywordModifierSet::None,
                        Lex::TokenKind::Namespace);
   auto namespace_id = context.AddInst(SemIR::Namespace{
-      first_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+      parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
       context.name_scopes().Add()});
   context.decl_name_stack().AddNameToLookup(name_context, namespace_id);
 

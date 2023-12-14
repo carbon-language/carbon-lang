@@ -15,7 +15,7 @@ class Class {
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-9]]:1: Class is incomplete within its definition.
   // CHECK:STDERR: class Class {
-  // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR: ^~~~~~~~~~~~~
   fn G() -> Class;
 }
 

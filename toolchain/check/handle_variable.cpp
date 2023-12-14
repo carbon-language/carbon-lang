@@ -13,7 +13,7 @@ auto HandleVariableIntroducer(Context& context, Parse::NodeId parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
-  context.decl_state_stack().Push(DeclState::Var, parse_node);
+  context.decl_state_stack().Push(DeclState::Var);
   return true;
 }
 
