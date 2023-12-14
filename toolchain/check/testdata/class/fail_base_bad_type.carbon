@@ -37,9 +37,9 @@ class DeriveFromi32 {
 
 // It's not really important whether this conversion produces an error or not,
 // but it shouldn't crash.
-// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:61: ERROR: Cannot implicitly convert from `DeriveFromi32*` to `i32*`.
+// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:53: ERROR: Cannot implicitly convert from `DeriveFromi32*` to `i32*`.
 // CHECK:STDERR: fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
-// CHECK:STDERR:                                                             ^
+// CHECK:STDERR:                                                     ^~~~~~~~~
 fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 
 fn AccessMemberWithInvalidBasei32(p: DeriveFromi32*) -> i32 { return (*p).n; }
@@ -51,9 +51,9 @@ class DeriveFromTuple {
   extend base: (Base,);
 }
 
-// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:69: ERROR: Cannot implicitly convert from `DeriveFromTuple*` to `(Base,)*`.
+// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:61: ERROR: Cannot implicitly convert from `DeriveFromTuple*` to `(Base,)*`.
 // CHECK:STDERR: fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
-// CHECK:STDERR:                                                                     ^
+// CHECK:STDERR:                                                             ^~~~~~~~~
 fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 
 fn AccessMemberWithInvalidBaseTuple(p: DeriveFromTuple*) -> i32 { return (*p).n; }
@@ -67,9 +67,9 @@ class DeriveFromStruct {
   extend base: {.a: i32, .b: i32};
 }
 
-// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:82: ERROR: Cannot implicitly convert from `DeriveFromStruct*` to `{.a: i32, .b: i32}*`.
+// CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:74: ERROR: Cannot implicitly convert from `DeriveFromStruct*` to `{.a: i32, .b: i32}*`.
 // CHECK:STDERR: fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
-// CHECK:STDERR:                                                                                  ^
+// CHECK:STDERR:                                                                          ^~~~~~~~~
 fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 
 // It would be OK to reject this if we start actually looking in the struct type.
@@ -111,9 +111,9 @@ fn AccessMemberWithInvalidBaseFinal_WithMember(p: DeriveFromFinal*) -> i32 {
 }
 
 fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:14: ERROR: Name `b` not found.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:10: ERROR: Name `b` not found.
   // CHECK:STDERR:   return (*p).b;
-  // CHECK:STDERR:              ^
+  // CHECK:STDERR:          ^~~~~~
   return (*p).b;
 }
 
