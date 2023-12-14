@@ -241,6 +241,13 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
            context.inst_blocks().Get(function.param_refs_id))) {
     auto param = context.insts().Get(param_id);
 
+    // Find the parameter in the pattern.
+    // TODO: More general pattern handling?
+    if (auto addr_pattern = param.TryAs<SemIR::AddrPattern>()) {
+      param_id = addr_pattern->inner_id;
+      param = context.insts().Get(param_id);
+    }
+
     // The parameter types need to be complete.
     context.TryToCompleteType(param.type_id(), [&] {
       CARBON_DIAGNOSTIC(
@@ -254,9 +261,6 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
 
     if (auto fn_param = param.TryAs<SemIR::Param>()) {
       context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
-                              param_id);
-    } else if (auto self_param = param.TryAs<SemIR::SelfParam>()) {
-      context.AddNameToLookup(self_param->parse_node, SemIR::NameId::SelfValue,
                               param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "

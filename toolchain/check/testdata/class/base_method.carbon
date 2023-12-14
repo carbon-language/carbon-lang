@@ -64,9 +64,9 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.addr: Base*]() {
+// CHECK:STDOUT: fn @F[addr %self: Base*]() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self.addr
+// CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self
 // CHECK:STDOUT:   %.loc14_4: ref Base = deref %self.ref
 // CHECK:STDOUT:   %.loc14_10: ref i32 = class_element_access %.loc14_4, element0
 // CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1

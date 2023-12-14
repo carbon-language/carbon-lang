@@ -62,9 +62,9 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[%self.addr: Class*]();
+// CHECK:STDOUT: fn @F.1[addr %self: Class*]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.addr: Class]();
+// CHECK:STDOUT: fn @G[addr %self: Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c: Class, %p: Class*) {
 // CHECK:STDOUT: !entry:

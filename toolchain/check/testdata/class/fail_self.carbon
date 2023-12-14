@@ -30,7 +30,7 @@ fn Class.G() -> Class {
   // CHECK:STDERR:   var self: Class;
   // CHECK:STDERR:       ^~~~~~~~~~~
   var self: Class;
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:10: ERROR: Name `self` not found.
+  // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:10: ERROR: Cannot copy value of type `Class`.
   // CHECK:STDERR:   return self;
   // CHECK:STDERR:          ^~~~
   return self;
@@ -93,8 +93,10 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
-// CHECK:STDOUT:   %self: Class = self_param false
-// CHECK:STDOUT:   %self.ref: <error> = name_ref self, <error>
+// CHECK:STDOUT:   %self.var: ref Class = var self
+// CHECK:STDOUT:   %self: ref Class = bind_name self, %self.var
+// CHECK:STDOUT:   %self.ref: ref Class = name_ref self, %self
+// CHECK:STDOUT:   %.loc36: Class = bind_value %self.ref
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -70,7 +70,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   .a = %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[%self.addr: A*]();
+// CHECK:STDOUT: fn @F.1[addr %self: A*]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: {.a: A}, %b: B) {
 // CHECK:STDOUT: !entry:

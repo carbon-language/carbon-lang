@@ -97,11 +97,11 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[%self.addr: A*]();
+// CHECK:STDOUT: fn @F.1[addr %self: A*]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.addr: B*]();
+// CHECK:STDOUT: fn @F.2[addr %self: B*]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[%self.addr: C*]();
+// CHECK:STDOUT: fn @F.3[addr %self: C*]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%a: A*, %b: B*, %c: C*, %d: D*) {
 // CHECK:STDOUT: !entry:
