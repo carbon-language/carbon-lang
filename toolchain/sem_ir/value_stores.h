@@ -170,8 +170,8 @@ struct NameScope {
 
   // Scopes extended by this scope.
   //
-  // TODO: A `NameScopeId` is not sufficient to describe an extended scope in
-  // general. For example:
+  // TODO: A `NameScopeId` is currently insufficient to describe an extended
+  // scope in general. For example:
   //
   //   class A(T:! type) {
   //     extend base: B(T*);
