@@ -27,13 +27,10 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
 auto DeclNameStack::FinishName() -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
-  if (context_->parse_tree().node_kind(
-          context_->node_stack().PeekParseNode()) ==
-      Parse::NodeKind::QualifiedDecl) {
+  if (context_->node_stack()
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::QualifiedDecl>()) {
     // Any parts from a QualifiedDecl will already have been processed
     // into the name.
-    context_->node_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::QualifiedDecl>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
     auto [parse_node, name_id] = context_->node_stack().PopNameWithParseNode();

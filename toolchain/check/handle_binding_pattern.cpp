@@ -57,8 +57,8 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
   // error locations.
   // TODO: The node stack is a fragile way of getting context information.
   // Get this information from somewhere else.
-  switch (auto context_parse_node_kind = context.parse_tree().node_kind(
-              context.node_stack().PeekParseNode())) {
+  switch (auto context_parse_node_kind =
+              context.node_stack().PeekParseNodeKind()) {
     case Parse::NodeKind::ReturnedModifier:
     case Parse::NodeKind::VariableIntroducer: {
       // A `var` declaration at class scope introduces a field.

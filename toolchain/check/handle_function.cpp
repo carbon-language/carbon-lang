@@ -57,18 +57,17 @@ static auto BuildFunctionDecl(Context& context, Parse::NodeId parse_node,
 
   auto return_type_id = SemIR::TypeId::Invalid;
   auto return_slot_id = SemIR::InstId::Invalid;
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      Parse::NodeKind::ReturnType) {
-    auto [return_node, return_storage_id] =
-        context.node_stack().PopWithParseNode<Parse::NodeKind::ReturnType>();
-    auto return_node_copy = return_node;
+  if (auto return_node_and_id =
+          context.node_stack()
+              .PopWithParseNodeIf<Parse::NodeKind::ReturnType>()) {
+    auto return_storage_id = return_node_and_id->second;
     return_type_id = context.insts().Get(return_storage_id).type_id();
 
     return_type_id = context.AsCompleteType(return_type_id, [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                         "Function returns incomplete type `{0}`.", std::string);
       return context.emitter().Build(
-          return_node_copy, IncompleteTypeInFunctionReturnType,
+          return_node_and_id->first, IncompleteTypeInFunctionReturnType,
           context.sem_ir().StringifyType(return_type_id));
     });
 

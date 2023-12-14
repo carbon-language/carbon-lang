@@ -21,9 +21,8 @@ auto HandleArrayExprSemi(Context& context, Parse::NodeId parse_node) -> bool {
 
 auto HandleArrayExpr(Context& context, Parse::NodeId parse_node) -> bool {
   // TODO: Handle array type with undefined bound.
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      Parse::NodeKind::ArrayExprSemi) {
-    context.node_stack().PopAndIgnore();
+  if (context.node_stack()
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ArrayExprSemi>()) {
     context.node_stack().PopAndIgnore();
     return context.TODO(parse_node, "HandleArrayExprWithoutBounds");
   }

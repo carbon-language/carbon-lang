@@ -46,8 +46,7 @@ auto HandleIfStatementElse(Context& context, Parse::NodeId parse_node) -> bool {
 }
 
 auto HandleIfStatement(Context& context, Parse::NodeId parse_node) -> bool {
-  switch (auto kind = context.parse_tree().node_kind(
-              context.node_stack().PeekParseNode())) {
+  switch (auto kind = context.node_stack().PeekParseNodeKind()) {
     case Parse::NodeKind::IfCondition: {
       // Branch from then block to else block, and start emitting the else
       // block.

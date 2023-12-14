@@ -590,7 +590,7 @@ auto Context::ParamOrArgComma() -> void {
 }
 
 auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
-  if (parse_tree_->node_kind(node_stack_.PeekParseNode()) != start_kind) {
+  if (!node_stack_.PeekIs(start_kind)) {
     ParamOrArgSave(node_stack_.PopExpr());
   }
 }

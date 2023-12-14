@@ -34,8 +34,7 @@ auto HandleVariableInitializer(Context& context, Parse::NodeId parse_node)
 auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
-  Parse::NodeKind next_kind =
-      context.parse_tree().node_kind(context.node_stack().PeekParseNode());
+  Parse::NodeKind next_kind = context.node_stack().PeekParseNodeKind();
   if (next_kind == Parse::NodeKind::TuplePattern) {
     return context.TODO(parse_node, "tuple pattern in var");
   }
