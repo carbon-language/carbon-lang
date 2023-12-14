@@ -22,8 +22,7 @@ auto HandleReturnVarModifier(Context& context, Parse::NodeId parse_node)
 }
 
 auto HandleReturnStatement(Context& context, Parse::NodeId parse_node) -> bool {
-  switch (
-      context.parse_tree().node_kind(context.node_stack().PeekParseNode())) {
+  switch (context.node_stack().PeekParseNodeKind()) {
     case Parse::NodeKind::ReturnStatementStart:
       // This is a `return;` statement.
       context.node_stack()
