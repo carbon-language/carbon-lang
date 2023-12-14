@@ -191,6 +191,10 @@ auto PrecedenceGroup::ForExprStatement() -> PrecedenceGroup {
 
 auto PrecedenceGroup::ForType() -> PrecedenceGroup { return ForTopLevelExpr(); }
 
+auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
+  return PrecedenceGroup(As);
+}
+
 auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
     -> std::optional<PrecedenceGroup> {
   switch (kind) {

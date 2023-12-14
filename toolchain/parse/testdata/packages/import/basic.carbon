@@ -10,7 +10,7 @@ import Geometry;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
+// CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
 // CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

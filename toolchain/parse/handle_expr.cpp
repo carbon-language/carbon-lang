@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 
 namespace Carbon::Parse {
@@ -48,7 +49,7 @@ auto HandleExpr(Context& context) -> void {
       context.PushState(State::IfExprFinish);
       context.PushState(State::IfExprFinishCondition);
     } else {
-      context.PushStateForExprLoop(State::ExprLoopForPrefix,
+      context.PushStateForExprLoop(State::ExprLoopForPrefixOperator,
                                    state.ambient_precedence,
                                    *operator_precedence);
     }
@@ -73,22 +74,62 @@ auto HandleExprInPostfix(Context& context) -> void {
   // expression.
   switch (context.PositionKind()) {
     case Lex::TokenKind::Identifier: {
-      context.AddLeafNode(NodeKind::NameExpr, context.Consume());
+      context.AddLeafNode(NodeKind::IdentifierNameExpr, context.Consume());
       context.PushState(state);
       break;
     }
-    case Lex::TokenKind::False:
-    case Lex::TokenKind::True:
-    case Lex::TokenKind::IntegerLiteral:
-    case Lex::TokenKind::RealLiteral:
-    case Lex::TokenKind::StringLiteral:
-    case Lex::TokenKind::Bool:
-    case Lex::TokenKind::IntegerTypeLiteral:
-    case Lex::TokenKind::UnsignedIntegerTypeLiteral:
-    case Lex::TokenKind::FloatingPointTypeLiteral:
-    case Lex::TokenKind::StringTypeLiteral:
+    case Lex::TokenKind::False: {
+      context.AddLeafNode(NodeKind::BoolLiteralFalse, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::True: {
+      context.AddLeafNode(NodeKind::BoolLiteralTrue, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::IntLiteral: {
+      context.AddLeafNode(NodeKind::IntLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::RealLiteral: {
+      context.AddLeafNode(NodeKind::RealLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::StringLiteral: {
+      context.AddLeafNode(NodeKind::StringLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::Bool: {
+      context.AddLeafNode(NodeKind::BoolTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::IntTypeLiteral: {
+      context.AddLeafNode(NodeKind::IntTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::UnsignedIntTypeLiteral: {
+      context.AddLeafNode(NodeKind::UnsignedIntTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::FloatTypeLiteral: {
+      context.AddLeafNode(NodeKind::FloatTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
+    case Lex::TokenKind::StringTypeLiteral: {
+      context.AddLeafNode(NodeKind::StringTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
     case Lex::TokenKind::Type: {
-      context.AddLeafNode(NodeKind::Literal, context.Consume());
+      context.AddLeafNode(NodeKind::TypeTypeLiteral, context.Consume());
       context.PushState(state);
       break;
     }
@@ -105,6 +146,11 @@ auto HandleExprInPostfix(Context& context) -> void {
     case Lex::TokenKind::OpenSquareBracket: {
       context.PushState(state);
       context.PushState(State::ArrayExpr);
+      break;
+    }
+    case Lex::TokenKind::Package: {
+      context.AddLeafNode(NodeKind::PackageExpr, context.Consume());
+      context.PushState(state);
       break;
     }
     case Lex::TokenKind::SelfValueIdentifier: {
@@ -137,26 +183,22 @@ auto HandleExprInPostfixLoop(Context& context) -> void {
   switch (context.PositionKind()) {
     case Lex::TokenKind::Period: {
       context.PushState(state);
-      state.state = State::PeriodAsExpr;
-      context.PushState(state);
+      context.PushState(state, State::PeriodAsExpr);
       break;
     }
     case Lex::TokenKind::MinusGreater: {
       context.PushState(state);
-      state.state = State::ArrowExpr;
-      context.PushState(state);
+      context.PushState(state, State::ArrowExpr);
       break;
     }
     case Lex::TokenKind::OpenParen: {
       context.PushState(state);
-      state.state = State::CallExpr;
-      context.PushState(state);
+      context.PushState(state, State::CallExpr);
       break;
     }
     case Lex::TokenKind::OpenSquareBracket: {
       context.PushState(state);
-      state.state = State::IndexExpr;
-      context.PushState(state);
+      context.PushState(state, State::IndexExpr);
       break;
     }
     default: {
@@ -223,43 +265,101 @@ auto HandleExprLoop(Context& context) -> void {
   state.lhs_precedence = operator_precedence;
 
   if (is_binary) {
-    if (operator_kind == Lex::TokenKind::And ||
-        operator_kind == Lex::TokenKind::Or) {
+    switch (operator_kind) {
       // For `and` and `or`, wrap the first operand in a virtual parse tree
-      // node so that semantics can insert control flow here.
-      context.AddNode(NodeKind::ShortCircuitOperand, state.token,
-                      state.subtree_start, state.has_error);
+      // node so that checking can insert control flow here.
+      case Lex::TokenKind::And:
+        context.AddNode(NodeKind::ShortCircuitOperandAnd, state.token,
+                        state.subtree_start, state.has_error);
+        state.state = State::ExprLoopForShortCircuitOperatorAsAnd;
+        break;
+      case Lex::TokenKind::Or:
+        context.AddNode(NodeKind::ShortCircuitOperandOr, state.token,
+                        state.subtree_start, state.has_error);
+        state.state = State::ExprLoopForShortCircuitOperatorAsOr;
+        break;
+
+      default:
+        state.state = State::ExprLoopForInfixOperator;
+        break;
     }
 
-    state.state = State::ExprLoopForBinary;
     context.PushState(state);
     context.PushStateForExpr(operator_precedence);
   } else {
-    context.AddNode(NodeKind::PostfixOperator, state.token, state.subtree_start,
+    NodeKind node_kind;
+    switch (operator_kind) {
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) \
+  case Lex::TokenKind::Name:                               \
+    node_kind = NodeKind::PostfixOperator##Name;           \
+    break;
+#include "toolchain/parse/node_kind.def"
+
+      default:
+        CARBON_FATAL() << "Unexpected token kind for postfix operator: "
+                       << operator_kind;
+    }
+
+    context.AddNode(node_kind, state.token, state.subtree_start,
                     state.has_error);
     state.has_error = false;
     context.PushState(state);
   }
 }
 
-auto HandleExprLoopForBinary(Context& context) -> void {
-  auto state = context.PopState();
-
-  context.AddNode(NodeKind::InfixOperator, state.token, state.subtree_start,
-                  state.has_error);
-  state.state = State::ExprLoop;
+// Adds the operator node and returns the the main expression loop.
+static auto HandleExprLoopForOperator(Context& context,
+                                      Context::StateStackEntry state,
+                                      NodeKind node_kind) -> void {
+  context.AddNode(node_kind, state.token, state.subtree_start, state.has_error);
   state.has_error = false;
-  context.PushState(state);
+  context.PushState(state, State::ExprLoop);
 }
 
-auto HandleExprLoopForPrefix(Context& context) -> void {
+auto HandleExprLoopForInfixOperator(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::PrefixOperator, state.token, state.subtree_start,
-                  state.has_error);
-  state.state = State::ExprLoop;
-  state.has_error = false;
-  context.PushState(state);
+  switch (auto token_kind = context.tokens().GetKind(state.token)) {
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...)                      \
+  case Lex::TokenKind::Name:                                                  \
+    HandleExprLoopForOperator(context, state, NodeKind::InfixOperator##Name); \
+    break;
+#include "toolchain/parse/node_kind.def"
+
+    default:
+      CARBON_FATAL() << "Unexpected token kind for infix operator: "
+                     << token_kind;
+  }
+}
+
+auto HandleExprLoopForPrefixOperator(Context& context) -> void {
+  auto state = context.PopState();
+
+  switch (auto token_kind = context.tokens().GetKind(state.token)) {
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...)                      \
+  case Lex::TokenKind::Name:                                                   \
+    HandleExprLoopForOperator(context, state, NodeKind::PrefixOperator##Name); \
+    break;
+#include "toolchain/parse/node_kind.def"
+
+    default:
+      CARBON_FATAL() << "Unexpected token kind for prefix operator: "
+                     << token_kind;
+  }
+}
+
+auto HandleExprLoopForShortCircuitOperatorAsAnd(Context& context) -> void {
+  auto state = context.PopState();
+  HandleExprLoopForOperator(context, state, NodeKind::ShortCircuitOperatorAnd);
+}
+
+auto HandleExprLoopForShortCircuitOperatorAsOr(Context& context) -> void {
+  auto state = context.PopState();
+
+  HandleExprLoopForOperator(context, state, NodeKind::ShortCircuitOperatorOr);
 }
 
 auto HandleIfExprFinishCondition(Context& context) -> void {
@@ -344,14 +444,9 @@ auto HandleExprStatementFinish(Context& context) -> void {
     context.emitter().Emit(*context.position(), ExpectedExprSemi);
   }
 
-  if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
-    context.AddNode(NodeKind::ExprStatement, *semi_token, state.subtree_start,
-                    /*has_error=*/true);
-    return;
-  }
-
-  // Found junk not even followed by a `;`, no node to add.
-  context.ReturnErrorOnState();
+  context.AddNode(NodeKind::ExprStatement,
+                  context.SkipPastLikelyEnd(state.token), state.subtree_start,
+                  /*has_error=*/true);
 }
 
 }  // namespace Carbon::Parse

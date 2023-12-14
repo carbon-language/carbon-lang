@@ -7,7 +7,10 @@
 fn F() {
 }
 
-// CHECK:STDOUT: file "missing_return_no_return_type.carbon" {
+// CHECK:STDOUT: --- missing_return_no_return_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -15,3 +18,4 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

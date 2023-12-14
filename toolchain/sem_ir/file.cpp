@@ -10,12 +10,13 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::SemIR {
 
-auto ValueRepresentation::Print(llvm::raw_ostream& out) const -> void {
+auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
   out << "{kind: ";
   switch (kind) {
     case Unknown:
@@ -38,16 +39,18 @@ auto ValueRepresentation::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{inst: " << inst_id << ", value_rep: " << value_representation << "}";
+  out << "{inst: " << inst_id << ", value_rep: " << value_repr << "}";
 }
 
 File::File(SharedValueStores& value_stores)
     : value_stores_(&value_stores),
       filename_("<builtins>"),
-      // Builtins are always the first IR, even when self-referential.
-      cross_reference_irs_({this}),
       type_blocks_(allocator_),
       inst_blocks_(allocator_) {
+  auto builtins_id = cross_ref_irs_.Add(this);
+  CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
+      << "Builtins must be the first IR, even if self-referential";
+
   // Default entry for InstBlockId::Empty.
   inst_blocks_.AddDefaultValue();
 
@@ -72,24 +75,22 @@ File::File(SharedValueStores& value_stores, std::string filename,
            const File* builtins)
     : value_stores_(&value_stores),
       filename_(std::move(filename)),
-      // Builtins are always the first IR.
-      cross_reference_irs_({builtins}),
       type_blocks_(allocator_),
       inst_blocks_(allocator_) {
   CARBON_CHECK(builtins != nullptr);
-  CARBON_CHECK(builtins->cross_reference_irs_[0] == builtins)
-      << "Not called with builtins!";
+  auto builtins_id = cross_ref_irs_.Add(builtins);
+  CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
+      << "Builtins must be the first IR";
 
   // Default entry for InstBlockId::Empty.
   inst_blocks_.AddDefaultValue();
 
   // Copy builtins over.
   insts_.Reserve(BuiltinKind::ValidCount);
-  static constexpr auto BuiltinIR = CrossReferenceIRId(0);
+  static constexpr auto BuiltinIR = CrossRefIRId(0);
   for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
     // We can reuse builtin type IDs because they're special-cased values.
-    insts_.AddInNoBlock(
-        CrossReference{inst.type_id(), BuiltinIR, SemIR::InstId(i)});
+    insts_.AddInNoBlock(CrossRef{inst.type_id(), BuiltinIR, SemIR::InstId(i)});
   }
 }
 
@@ -135,8 +136,8 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
                               include_builtins](Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-              map.Add("cross_reference_irs_size",
-                      Yaml::OutputScalar(cross_reference_irs_.size()));
+              map.Add("cross_ref_irs_size",
+                      Yaml::OutputScalar(cross_ref_irs_.size()));
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
               map.Add("types", types_.OutputYaml());
@@ -166,27 +167,28 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ArrayType::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
-    case NameReference::Kind:
+    case NameRef::Kind:
     case StructType::Kind:
     case TupleType::Kind:
-    case UnboundFieldType::Kind:
+    case UnboundElementType::Kind:
       return 0;
     case ConstType::Kind:
       return -1;
     case PointerType::Kind:
       return -2;
 
-    case CrossReference::Kind:
+    case CrossRef::Kind:
       // TODO: Once we support stringification of cross-references, we'll need
       // to determine the precedence of the target of the cross-reference. For
       // now, all cross-references refer to builtin types from the prelude.
       return 0;
 
     case AddressOf::Kind:
+    case AddrPattern::Kind:
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
     case Assign::Kind:
-    case BinaryOperatorAdd::Kind:
+    case BaseDecl::Kind:
     case BindName::Kind:
     case BindValue::Kind:
     case BlockArg::Kind:
@@ -197,21 +199,23 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case BranchWithArg::Kind:
     case Call::Kind:
     case ClassDecl::Kind:
-    case ClassFieldAccess::Kind:
+    case ClassElementAccess::Kind:
     case ClassInit::Kind:
     case Converted::Kind:
-    case Dereference::Kind:
-    case Field::Kind:
+    case Deref::Kind:
+    case FieldDecl::Kind:
     case FunctionDecl::Kind:
+    case Import::Kind:
     case InitializeFrom::Kind:
-    case IntegerLiteral::Kind:
+    case InterfaceDecl::Kind:
+    case IntLiteral::Kind:
+    case LazyImportRef::Kind:
     case Namespace::Kind:
     case NoOp::Kind:
-    case Parameter::Kind:
+    case Param::Kind:
     case RealLiteral::Kind:
     case Return::Kind:
     case ReturnExpr::Kind:
-    case SelfParameter::Kind:
     case SpliceBlock::Kind:
     case StringLiteral::Kind:
     case StructAccess::Kind:
@@ -227,20 +231,18 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case TupleInit::Kind:
     case TupleValue::Kind:
     case UnaryOperatorNot::Kind:
-    case ValueAsReference::Kind:
+    case ValueAsRef::Kind:
     case ValueOfInitializer::Kind:
     case VarStorage::Kind:
       CARBON_FATAL() << "GetTypePrecedence for non-type inst kind " << kind;
   }
 }
 
-auto File::StringifyType(TypeId type_id, bool in_type_context) const
-    -> std::string {
-  return StringifyTypeExpr(GetTypeAllowBuiltinTypes(type_id), in_type_context);
+auto File::StringifyType(TypeId type_id) const -> std::string {
+  return StringifyTypeExpr(types().GetInstId(type_id));
 }
 
-auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
-    -> std::string {
+auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -279,7 +281,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
           out << "[";
           steps.push_back(step.Next());
           steps.push_back(
-              {.inst_id = GetTypeAllowBuiltinTypes(array.element_type_id)});
+              {.inst_id = types().GetInstId(array.element_type_id)});
         } else if (step.index == 1) {
           out << "; " << GetArrayBoundValue(array.bound_id) << "]";
         }
@@ -297,7 +299,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
 
           // Add parentheses if required.
           auto inner_type_inst_id =
-              GetTypeAllowBuiltinTypes(inst.As<ConstType>().inner_id);
+              types().GetInstId(inst.As<ConstType>().inner_id);
           if (GetTypePrecedence(insts().Get(inner_type_inst_id).kind()) <
               GetTypePrecedence(inst.kind())) {
             out << "(";
@@ -310,14 +312,14 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
         }
         break;
       }
-      case NameReference::Kind: {
-        out << names().GetFormatted(inst.As<NameReference>().name_id);
+      case NameRef::Kind: {
+        out << names().GetFormatted(inst.As<NameRef>().name_id);
         break;
       }
       case PointerType::Kind: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back({.inst_id = GetTypeAllowBuiltinTypes(
+          steps.push_back({.inst_id = types().GetInstId(
                                inst.As<PointerType>().pointee_id)});
         } else if (step.index == 1) {
           out << "*";
@@ -345,8 +347,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case StructTypeField::Kind: {
         auto field = inst.As<StructTypeField>();
         out << "." << names().GetFormatted(field.name_id) << ": ";
-        steps.push_back(
-            {.inst_id = GetTypeAllowBuiltinTypes(field.field_type_id)});
+        steps.push_back({.inst_id = types().GetInstId(field.field_type_id)});
         break;
       }
       case TupleType::Kind: {
@@ -368,26 +369,26 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
           break;
         }
         steps.push_back(step.Next());
-        steps.push_back(
-            {.inst_id = GetTypeAllowBuiltinTypes(refs[step.index])});
+        steps.push_back({.inst_id = types().GetInstId(refs[step.index])});
         break;
       }
-      case UnboundFieldType::Kind: {
+      case UnboundElementType::Kind: {
         if (step.index == 0) {
-          out << "<unbound field of class ";
+          out << "<unbound element of class ";
           steps.push_back(step.Next());
-          steps.push_back({.inst_id = GetTypeAllowBuiltinTypes(
-                               inst.As<UnboundFieldType>().class_type_id)});
+          steps.push_back({.inst_id = types().GetInstId(
+                               inst.As<UnboundElementType>().class_type_id)});
         } else {
           out << ">";
         }
         break;
       }
       case AddressOf::Kind:
+      case AddrPattern::Kind:
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
       case Assign::Kind:
-      case BinaryOperatorAdd::Kind:
+      case BaseDecl::Kind:
       case BindName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
@@ -399,22 +400,24 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case Builtin::Kind:
       case Call::Kind:
       case ClassDecl::Kind:
-      case ClassFieldAccess::Kind:
+      case ClassElementAccess::Kind:
       case ClassInit::Kind:
       case Converted::Kind:
-      case CrossReference::Kind:
-      case Dereference::Kind:
-      case Field::Kind:
+      case CrossRef::Kind:
+      case Deref::Kind:
+      case FieldDecl::Kind:
       case FunctionDecl::Kind:
+      case Import::Kind:
       case InitializeFrom::Kind:
-      case IntegerLiteral::Kind:
+      case InterfaceDecl::Kind:
+      case IntLiteral::Kind:
+      case LazyImportRef::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
-      case Parameter::Kind:
+      case Param::Kind:
       case RealLiteral::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
-      case SelfParameter::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:
@@ -429,7 +432,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
       case TupleInit::Kind:
       case TupleValue::Kind:
       case UnaryOperatorNot::Kind:
-      case ValueAsReference::Kind:
+      case ValueAsRef::Kind:
       case ValueOfInitializer::Kind:
       case VarStorage::Kind:
         // We don't need to handle stringification for instructions that don't
@@ -437,17 +440,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id, bool in_type_context) const
         // clearer when stringification is needed.
         out << "<cannot stringify " << step.inst_id << ">";
         break;
-    }
-  }
-
-  // For `{}` or any tuple type, we've printed a non-type expression, so add a
-  // conversion to type `type` if it's not implied by the context.
-  if (!in_type_context) {
-    auto outer_inst = insts().Get(outer_inst_id);
-    if (outer_inst.Is<TupleType>() ||
-        (outer_inst.Is<StructType>() &&
-         inst_blocks().Get(outer_inst.As<StructType>().fields_id).empty())) {
-      out << " as type";
     }
   }
 
@@ -467,12 +459,16 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case Assign::Kind:
+      case BaseDecl::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
       case ClassDecl::Kind:
-      case Field::Kind:
+      case FieldDecl::Kind:
       case FunctionDecl::Kind:
+      case Import::Kind:
+      case InterfaceDecl::Kind:
+      case LazyImportRef::Kind:
       case Namespace::Kind:
       case NoOp::Kind:
       case Return::Kind:
@@ -480,15 +476,15 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case StructTypeField::Kind:
         return ExprCategory::NotExpr;
 
-      case CrossReference::Kind: {
-        auto xref = inst.As<CrossReference>();
-        ir = &ir->GetCrossReferenceIR(xref.ir_id);
+      case CrossRef::Kind: {
+        auto xref = inst.As<CrossRef>();
+        ir = ir->cross_ref_irs().Get(xref.ir_id);
         inst_id = xref.inst_id;
         continue;
       }
 
-      case NameReference::Kind: {
-        inst_id = inst.As<NameReference>().value_id;
+      case NameRef::Kind: {
+        inst_id = inst.As<NameRef>().value_id;
         continue;
       }
 
@@ -498,26 +494,25 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case AddressOf::Kind:
+      case AddrPattern::Kind:
       case ArrayType::Kind:
-      case BinaryOperatorAdd::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
       case BoundMethod::Kind:
       case ClassType::Kind:
       case ConstType::Kind:
-      case IntegerLiteral::Kind:
-      case Parameter::Kind:
+      case IntLiteral::Kind:
+      case Param::Kind:
       case PointerType::Kind:
       case RealLiteral::Kind:
-      case SelfParameter::Kind:
       case StringLiteral::Kind:
       case StructValue::Kind:
       case StructType::Kind:
       case TupleValue::Kind:
       case TupleType::Kind:
       case UnaryOperatorNot::Kind:
-      case UnboundFieldType::Kind:
+      case UnboundElementType::Kind:
       case ValueOfInitializer::Kind:
         return value_category;
 
@@ -538,12 +533,12 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case ClassFieldAccess::Kind: {
-        inst_id = inst.As<ClassFieldAccess>().base_id;
+      case ClassElementAccess::Kind: {
+        inst_id = inst.As<ClassElementAccess>().base_id;
         // A value of class type is a pointer to an object representation.
         // Therefore, if the base is a value, the result is an ephemeral
         // reference.
-        value_category = ExprCategory::EphemeralReference;
+        value_category = ExprCategory::EphemeralRef;
         continue;
       }
 
@@ -579,35 +574,34 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TupleInit::Kind:
         return ExprCategory::Initializing;
 
-      case Dereference::Kind:
+      case Deref::Kind:
       case VarStorage::Kind:
-        return ExprCategory::DurableReference;
+        return ExprCategory::DurableRef;
 
       case Temporary::Kind:
       case TemporaryStorage::Kind:
-      case ValueAsReference::Kind:
-        return ExprCategory::EphemeralReference;
+      case ValueAsRef::Kind:
+        return ExprCategory::EphemeralRef;
     }
   }
 }
 
-auto GetInitializingRepresentation(const File& file, TypeId type_id)
-    -> InitializingRepresentation {
-  auto value_rep = GetValueRepresentation(file, type_id);
+auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr {
+  auto value_rep = GetValueRepr(file, type_id);
   switch (value_rep.kind) {
-    case ValueRepresentation::None:
-      return {.kind = InitializingRepresentation::None};
+    case ValueRepr::None:
+      return {.kind = InitRepr::None};
 
-    case ValueRepresentation::Copy:
+    case ValueRepr::Copy:
       // TODO: Use in-place initialization for types that have non-trivial
       // destructive move.
-      return {.kind = InitializingRepresentation::ByCopy};
+      return {.kind = InitRepr::ByCopy};
 
-    case ValueRepresentation::Pointer:
-    case ValueRepresentation::Custom:
-      return {.kind = InitializingRepresentation::InPlace};
+    case ValueRepr::Pointer:
+    case ValueRepr::Custom:
+      return {.kind = InitRepr::InPlace};
 
-    case ValueRepresentation::Unknown:
+    case ValueRepr::Unknown:
       CARBON_FATAL()
           << "Attempting to perform initialization of incomplete type";
   }

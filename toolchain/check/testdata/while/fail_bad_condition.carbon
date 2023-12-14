@@ -5,17 +5,20 @@
 // AUTOUPDATE
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:17: ERROR: Cannot implicitly convert from `String` to `bool`.
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9: ERROR: Cannot implicitly convert from `String` to `bool`.
   // CHECK:STDERR:   while ("Hello") {}
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:         ^~~~~~~~~
   while ("Hello") {}
 }
 
+// CHECK:STDOUT: --- fail_bad_condition.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "fail_bad_condition.carbon" {
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.While = %While}
 // CHECK:STDOUT:   %While: <function> = fn_decl @While
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -33,3 +36,4 @@ fn While() {
 // CHECK:STDOUT: !while.done:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

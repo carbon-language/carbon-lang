@@ -11,7 +11,8 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
-#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::SemIR {
@@ -37,8 +38,8 @@ struct Function : public Printable<Function> {
 
   // The function name.
   NameId name_id;
-  // The first declaration of the function. This is a FunctionDeclaration.
-  InstId declaration_id = InstId::Invalid;
+  // The first declaration of the function. This is a FunctionDecl.
+  InstId decl_id = InstId::Invalid;
   // The definition, if the function has been defined or is currently being
   // defined. This is a FunctionDecl.
   InstId definition_id = InstId::Invalid;
@@ -62,6 +63,15 @@ struct Function : public Printable<Function> {
 
 // A class.
 struct Class : public Printable<Class> {
+  enum InheritanceKind : int8_t {
+    // `abstract class`
+    Abstract,
+    // `base class`
+    Base,
+    // `class`
+    Final,
+  };
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id;
     out << "}";
@@ -69,7 +79,7 @@ struct Class : public Printable<Class> {
 
   // Determines whether this class has been fully defined. This is false until
   // we reach the `}` of the class definition.
-  bool is_defined() const { return object_representation_id.is_valid(); }
+  auto is_defined() const -> bool { return object_repr_id.is_valid(); }
 
   // The following members always have values, and do not change throughout the
   // lifetime of the class.
@@ -80,6 +90,9 @@ struct Class : public Printable<Class> {
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDecl.
   InstId decl_id = InstId::Invalid;
+  // The kind of inheritance that this class supports.
+  // TODO: The rules here are not yet decided. See #3384.
+  InheritanceKind inheritance_kind;
 
   // The following members are set at the `{` of the class definition.
 
@@ -91,74 +104,51 @@ struct Class : public Printable<Class> {
   // TODO: Handle control flow in the class body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::Invalid;
 
+  // The following members are accumulated throughout the class definition.
+
+  // The base class declaration. Invalid if the class has no base class. This is
+  // a BaseDecl instruction.
+  InstId base_id = InstId::Invalid;
+
   // The following members are set at the `}` of the class definition.
 
   // The object representation type to use for this class. This is valid once
   // the class is defined.
-  TypeId object_representation_id = TypeId::Invalid;
+  TypeId object_repr_id = TypeId::Invalid;
 };
 
-// The value representation to use when passing by value.
-struct ValueRepresentation : public Printable<ValueRepresentation> {
-  auto Print(llvm::raw_ostream& out) const -> void;
-
-  enum Kind : int8_t {
-    // The value representation is not yet known. This is used for incomplete
-    // types.
-    Unknown,
-    // The type has no value representation. This is used for empty types, such
-    // as `()`, where there is no value.
-    None,
-    // The value representation is a copy of the value. On call boundaries, the
-    // value itself will be passed. `type` is the value type.
-    Copy,
-    // The value representation is a pointer to the value. When used as a
-    // parameter, the argument is a reference expression. `type` is the pointee
-    // type.
-    Pointer,
-    // The value representation has been customized, and has the same behavior
-    // as the value representation of some other type.
-    // TODO: This is not implemented or used yet.
-    Custom,
-  };
-
-  enum AggregateKind : int8_t {
-    // This type is not an aggregation of other types.
-    NotAggregate,
-    // This type is an aggregate that holds the value representations of its
-    // elements.
-    ValueAggregate,
-    // This type is an aggregate that holds the object representations of its
-    // elements.
-    ObjectAggregate,
-    // This type is an aggregate for which the value and object representation
-    // of all elements are the same, so it effectively holds both.
-    ValueAndObjectAggregate,
-  };
-
-  // Returns whether this is an aggregate that holds its elements by value.
-  auto elements_are_values() const {
-    return aggregate_kind == ValueAggregate ||
-           aggregate_kind == ValueAndObjectAggregate;
+// An interface.
+struct Interface : public Printable<Interface> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{name: " << name_id;
+    out << "}";
   }
 
-  // The kind of value representation used by this type.
-  Kind kind = Unknown;
-  // The kind of aggregate representation used by this type.
-  AggregateKind aggregate_kind = AggregateKind::NotAggregate;
-  // The type used to model the value representation.
-  TypeId type_id = TypeId::Invalid;
-};
+  // Determines whether this interface has been fully defined. This is false
+  // until we reach the `}` of the interface definition.
+  auto is_defined() const -> bool { return defined; }
 
-// Information stored about a TypeId.
-struct TypeInfo : public Printable<TypeInfo> {
-  auto Print(llvm::raw_ostream& out) const -> void;
+  // The following members always have values, and do not change throughout the
+  // lifetime of the interface.
 
-  // The instruction that defines this type.
-  InstId inst_id;
-  // The value representation for this type. Will be `Unknown` if the type is
-  // not complete.
-  ValueRepresentation value_representation = ValueRepresentation();
+  // The interface name.
+  NameId name_id;
+  // TODO: TypeId self_type_id;
+  // The first declaration of the interface. This is a InterfaceDecl.
+  InstId decl_id = InstId::Invalid;
+
+  // The following members are set at the `{` of the interface definition.
+
+  // The definition of the interface. This is a InterfaceDecl.
+  InstId definition_id = InstId::Invalid;
+  // The interface scope.
+  NameScopeId scope_id = NameScopeId::Invalid;
+  // The first block of the interface body.
+  // TODO: Handle control flow in the interface body, such as if-expressions.
+  InstBlockId body_block_id = InstBlockId::Invalid;
+
+  // The following members are set at the `}` of the class definition.
+  bool defined = true;
 };
 
 // Provides semantic analysis on a Parse::Tree.
@@ -170,6 +160,9 @@ class File : public Printable<File> {
   // Starts a new file for Check::CheckParseTree. Builtins are required.
   explicit File(SharedValueStores& value_stores, std::string filename,
                 const File* builtins);
+
+  File(const File&) = delete;
+  File& operator=(const File&) = delete;
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
@@ -187,76 +180,35 @@ class File : public Printable<File> {
 
   // Returns array bound value from the bound instruction.
   auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
-    return integers()
-        .Get(insts().GetAs<IntegerLiteral>(bound_id).integer_id)
+    return ints()
+        .Get(insts().GetAs<IntLiteral>(bound_id).int_id)
         .getZExtValue();
   }
 
-  // Returns the requested IR.
-  auto GetCrossReferenceIR(CrossReferenceIRId xref_id) const -> const File& {
-    return *cross_reference_irs_[xref_id.index];
-  }
-
   // Marks a type as complete, and sets its value representation.
-  auto CompleteType(TypeId object_type_id,
-                    ValueRepresentation value_representation) -> void {
+  auto CompleteType(TypeId object_type_id, ValueRepr value_repr) -> void {
     if (object_type_id.index < 0) {
       // We already know our builtin types are complete.
       return;
     }
-    CARBON_CHECK(types().Get(object_type_id).value_representation.kind ==
-                 ValueRepresentation::Unknown)
+    CARBON_CHECK(types().Get(object_type_id).value_repr.kind ==
+                 ValueRepr::Unknown)
         << "Type " << object_type_id << " completed more than once";
-    types().Get(object_type_id).value_representation = value_representation;
+    types().Get(object_type_id).value_repr = value_repr;
     complete_types_.push_back(object_type_id);
-  }
-
-  auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> InstId {
-    if (type_id == TypeId::TypeType) {
-      return InstId::BuiltinTypeType;
-    } else if (type_id == TypeId::Error) {
-      return InstId::BuiltinError;
-    } else if (type_id == TypeId::Invalid) {
-      return InstId::Invalid;
-    } else {
-      return types().Get(type_id).inst_id;
-    }
-  }
-
-  // Gets the value representation to use for a type. This returns an
-  // invalid type if the given type is not complete.
-  auto GetValueRepresentation(TypeId type_id) const -> ValueRepresentation {
-    if (type_id.index < 0) {
-      // TypeType and InvalidType are their own value representation.
-      return {.kind = ValueRepresentation::Copy, .type_id = type_id};
-    }
-    return types().Get(type_id).value_representation;
-  }
-
-  // Determines whether the given type is known to be complete. This does not
-  // determine whether the type could be completed, only whether it has been.
-  auto IsTypeComplete(TypeId type_id) const -> bool {
-    return GetValueRepresentation(type_id).kind != ValueRepresentation::Unknown;
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
-    return insts()
-        .GetAs<PointerType>(types().Get(pointer_id).inst_id)
-        .pointee_id;
+    return types().GetAs<PointerType>(pointer_id).pointee_id;
   }
 
-  // Produces a string version of a type. If `in_type_context` is false, an
-  // explicit conversion to type `type` will be added in cases where the type
-  // expression would otherwise have a different type, such as a tuple or
-  // struct type.
-  auto StringifyType(TypeId type_id, bool in_type_context = false) const
-      -> std::string;
+  // Produces a string version of a type.
+  auto StringifyType(TypeId type_id) const -> std::string;
 
   // Same as `StringifyType`, but starting with an instruction representing a
   // type expression rather than a canonical type.
-  auto StringifyTypeExpr(InstId outer_inst_id,
-                         bool in_type_context = false) const -> std::string;
+  auto StringifyTypeExpr(InstId outer_inst_id) const -> std::string;
 
   // Directly expose SharedValueStores members.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
@@ -265,11 +217,9 @@ class File : public Printable<File> {
   auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
     return value_stores_->identifiers();
   }
-  auto integers() -> ValueStore<IntegerId>& {
-    return value_stores_->integers();
-  }
-  auto integers() const -> const ValueStore<IntegerId>& {
-    return value_stores_->integers();
+  auto ints() -> ValueStore<IntId>& { return value_stores_->ints(); }
+  auto ints() const -> const ValueStore<IntId>& {
+    return value_stores_->ints();
   }
   auto reals() -> ValueStore<RealId>& { return value_stores_->reals(); }
   auto reals() const -> const ValueStore<RealId>& {
@@ -282,23 +232,27 @@ class File : public Printable<File> {
     return value_stores_->string_literals();
   }
 
-  auto functions() -> ValueStore<FunctionId, Function>& { return functions_; }
-  auto functions() const -> const ValueStore<FunctionId, Function>& {
-    return functions_;
+  auto functions() -> ValueStore<FunctionId>& { return functions_; }
+  auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
+  auto classes() -> ValueStore<ClassId>& { return classes_; }
+  auto classes() const -> const ValueStore<ClassId>& { return classes_; }
+  auto interfaces() -> ValueStore<InterfaceId>& { return interfaces_; }
+  auto interfaces() const -> const ValueStore<InterfaceId>& {
+    return interfaces_;
   }
-  auto classes() -> ValueStore<ClassId, Class>& { return classes_; }
-  auto classes() const -> const ValueStore<ClassId, Class>& { return classes_; }
+  auto cross_ref_irs() -> ValueStore<CrossRefIRId>& { return cross_ref_irs_; }
+  auto cross_ref_irs() const -> const ValueStore<CrossRefIRId>& {
+    return cross_ref_irs_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
   auto name_scopes() -> NameScopeStore& { return name_scopes_; }
   auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }
-  auto types() -> ValueStore<TypeId, TypeInfo>& { return types_; }
-  auto types() const -> const ValueStore<TypeId, TypeInfo>& { return types_; }
-  auto type_blocks() -> BlockValueStore<TypeBlockId, TypeId>& {
-    return type_blocks_;
-  }
-  auto type_blocks() const -> const BlockValueStore<TypeBlockId, TypeId>& {
+  auto types() -> TypeStore& { return types_; }
+  auto types() const -> const TypeStore& { return types_; }
+  auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
+  auto type_blocks() const -> const BlockValueStore<TypeBlockId>& {
     return type_blocks_;
   }
   auto insts() -> InstStore& { return insts_; }
@@ -340,28 +294,25 @@ class File : public Printable<File> {
   std::string filename_;
 
   // Storage for callable objects.
-  ValueStore<FunctionId, Function> functions_;
+  ValueStore<FunctionId> functions_;
 
   // Storage for classes.
-  ValueStore<ClassId, Class> classes_;
+  ValueStore<ClassId> classes_;
+
+  // Storage for interfaces.
+  ValueStore<InterfaceId> interfaces_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
   // crossing instruction blocks).
-  llvm::SmallVector<const File*> cross_reference_irs_;
+  ValueStore<CrossRefIRId> cross_ref_irs_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_;
 
-  // Descriptions of types used in this file.
-  ValueStore<TypeId, TypeInfo> types_;
-
-  // Types that were completed in this file.
-  llvm::SmallVector<TypeId> complete_types_;
-
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.
-  BlockValueStore<TypeBlockId, TypeId> type_blocks_;
+  BlockValueStore<TypeBlockId> type_blocks_;
 
   // All instructions. The first entries will always be cross-references to
   // builtins, at indices matching BuiltinKind ordering.
@@ -377,6 +328,12 @@ class File : public Printable<File> {
   // Storage for instructions that represent computed global constants, such as
   // types.
   ConstantStore constants_;
+
+  // Descriptions of types used in this file.
+  TypeStore types_ = TypeStore(&insts_);
+
+  // Types that were completed in this file.
+  llvm::SmallVector<TypeId> complete_types_;
 };
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md
@@ -391,11 +348,11 @@ enum class ExprCategory : int8_t {
   Value,
   // This instruction represents a durable reference expression, that denotes an
   // object that outlives the current full expression context.
-  DurableReference,
+  DurableRef,
   // This instruction represents an ephemeral reference expression, that denotes
   // an
   // object that does not outlive the current full expression context.
-  EphemeralReference,
+  EphemeralRef,
   // This instruction represents an initializing expression, that describes how
   // to
   // initialize an object.
@@ -412,13 +369,12 @@ enum class ExprCategory : int8_t {
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 // Returns information about the value representation to use for a type.
-inline auto GetValueRepresentation(const File& file, TypeId type_id)
-    -> ValueRepresentation {
-  return file.GetValueRepresentation(type_id);
+inline auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr {
+  return file.types().GetValueRepr(type_id);
 }
 
 // The initializing representation to use when returning by value.
-struct InitializingRepresentation {
+struct InitRepr {
   enum Kind : int8_t {
     // The type has no initializing representation. This is used for empty
     // types, where no initialization is necessary.
@@ -441,8 +397,7 @@ struct InitializingRepresentation {
 };
 
 // Returns information about the initializing representation to use for a type.
-auto GetInitializingRepresentation(const File& file, TypeId type_id)
-    -> InitializingRepresentation;
+auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr;
 
 }  // namespace Carbon::SemIR
 

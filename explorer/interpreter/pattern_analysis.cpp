@@ -196,7 +196,7 @@ auto PatternMatrix::FirstColumnDiscriminators() const -> DiscriminatorSet {
           num_discrims = choice->declaration().alternatives().size();
           elem_size = 1;
         } else if (isa<BoolType>(type)) {
-          // `bool` behaves like a choice type with two alternativs,
+          // `bool` behaves like a choice type with two alternatives,
           // and with no nested patterns for either of them.
           num_discrims = 2;
           elem_size = 0;

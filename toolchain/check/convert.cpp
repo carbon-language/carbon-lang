@@ -10,11 +10,8 @@
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/check/context.h"
-#include "toolchain/diagnostics/diagnostic_kind.h"
-#include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -51,8 +48,7 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
 
       case SemIR::Call::Kind: {
         auto call = init.As<SemIR::Call>();
-        if (!SemIR::GetInitializingRepresentation(sem_ir, call.type_id)
-                 .has_return_slot()) {
+        if (!SemIR::GetInitRepr(sem_ir, call.type_id).has_return_slot()) {
           return SemIR::InstId::Invalid;
         }
         return sem_ir.inst_blocks().Get(call.args_id).back();
@@ -128,22 +124,22 @@ static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
 
 // Creates and adds an instruction to perform element access into an aggregate.
 template <typename AccessInstT, typename InstBlockT>
-static auto MakeElemAccessInst(Context& context, Parse::Node parse_node,
-                               SemIR::InstId aggregate_id,
-                               SemIR::TypeId elem_type_id, InstBlockT& block,
-                               std::size_t i) {
+static auto MakeElementAccessInst(Context& context, Parse::NodeId parse_node,
+                                  SemIR::InstId aggregate_id,
+                                  SemIR::TypeId elem_type_id, InstBlockT& block,
+                                  std::size_t i) {
   if constexpr (std::is_same_v<AccessInstT, SemIR::ArrayIndex>) {
     // TODO: Add a new instruction kind for indexing an array at a constant
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
-    auto index_id = block.AddInst(SemIR::IntegerLiteral{
-        parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntegerType),
-        context.sem_ir().integers().Add(llvm::APInt(32, i))});
+    auto index_id = block.AddInst(SemIR::IntLiteral{
+        parse_node, context.GetBuiltinType(SemIR::BuiltinKind::IntType),
+        context.sem_ir().ints().Add(llvm::APInt(32, i))});
     return block.AddInst(
         AccessInstT{parse_node, elem_type_id, aggregate_id, index_id});
   } else {
     return block.AddInst(AccessInstT{parse_node, elem_type_id, aggregate_id,
-                                     SemIR::MemberIndex(i)});
+                                     SemIR::ElementIndex(i)});
   }
 }
 
@@ -162,7 +158,7 @@ static auto MakeElemAccessInst(Context& context, Parse::Node parse_node,
 // instruction used to access the destination element.
 template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
-    Context& context, Parse::Node parse_node, SemIR::InstId src_id,
+    Context& context, Parse::NodeId parse_node, SemIR::InstId src_id,
     SemIR::TypeId src_elem_type,
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
@@ -173,8 +169,8 @@ static auto ConvertAggregateElement(
   auto src_elem_id =
       !src_literal_elems.empty()
           ? src_literal_elems[i]
-          : MakeElemAccessInst<SourceAccessInstT>(context, parse_node, src_id,
-                                                  src_elem_type, context, i);
+          : MakeElementAccessInst<SourceAccessInstT>(
+                context, parse_node, src_id, src_elem_type, context, i);
 
   // If we're performing a conversion rather than an initialization, we won't
   // have or need a target.
@@ -186,7 +182,7 @@ static auto ConvertAggregateElement(
   // Compute the location of the target element and initialize it.
   PendingBlock::DiscardUnusedInstsScope scope(target_block);
   target.init_block = target_block;
-  target.init_id = MakeElemAccessInst<TargetAccessInstT>(
+  target.init_id = MakeElementAccessInst<TargetAccessInstT>(
       context, parse_node, target_id, target_elem_type, *target_block, i);
   return Convert(context, parse_node, src_elem_id, target);
 }
@@ -213,7 +209,7 @@ class CopyOnWriteBlock {
     }
   }
 
-  auto id() -> SemIR::InstBlockId const { return id_; }
+  auto id() const -> SemIR::InstBlockId { return id_; }
 
   auto Set(int i, SemIR::InstId value) -> void {
     if (source_id_.is_valid() && file_.inst_blocks().Get(id_)[i] == value) {
@@ -356,8 +352,8 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   bool is_init = target.is_initializer();
   ConversionTarget::Kind inner_kind =
       !is_init ? ConversionTarget::Value
-      : SemIR::GetInitializingRepresentation(sem_ir, target.type_id).kind ==
-              SemIR::InitializingRepresentation::InPlace
+      : SemIR::GetInitRepr(sem_ir, target.type_id).kind ==
+              SemIR::InitRepr::InPlace
           ? ConversionTarget::FullInitializer
           : ConversionTarget::Initializer;
 
@@ -447,8 +443,8 @@ static auto ConvertStructToStructOrClass(Context& context,
   bool is_init = target.is_initializer();
   ConversionTarget::Kind inner_kind =
       !is_init ? ConversionTarget::Value
-      : SemIR::GetInitializingRepresentation(sem_ir, target.type_id).kind ==
-              SemIR::InitializingRepresentation::InPlace
+      : SemIR::GetInitRepr(sem_ir, target.type_id).kind ==
+              SemIR::InitRepr::InPlace
           ? ConversionTarget::FullInitializer
           : ConversionTarget::Initializer;
 
@@ -469,20 +465,20 @@ static auto ConvertStructToStructOrClass(Context& context,
           CARBON_DIAGNOSTIC(
               StructInitMissingFieldInLiteral, Error,
               "Missing value for field `{0}` in struct initialization.",
-              llvm::StringRef);
+              std::string);
           context.emitter().Emit(
               value.parse_node(), StructInitMissingFieldInLiteral,
-              sem_ir.names().GetFormatted(dest_field.name_id));
+              sem_ir.names().GetFormatted(dest_field.name_id).str());
         } else {
           CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
                             "Cannot convert from struct type `{0}` to `{1}`: "
                             "missing field `{2}` in source type.",
-                            std::string, std::string, llvm::StringRef);
+                            std::string, std::string, std::string);
           context.emitter().Emit(
               value.parse_node(), StructInitMissingFieldInConversion,
               sem_ir.StringifyType(value.type_id()),
               sem_ir.StringifyType(target.type_id),
-              sem_ir.names().GetFormatted(dest_field.name_id));
+              sem_ir.names().GetFormatted(dest_field.name_id).str());
         }
         return SemIR::InstId::BuiltinError;
       }
@@ -539,9 +535,19 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                                  SemIR::InstId value_id,
                                  ConversionTarget target) -> SemIR::InstId {
   PendingBlock target_block(context);
-  auto dest_struct_type = context.insts().GetAs<SemIR::StructType>(
-      context.sem_ir().GetTypeAllowBuiltinTypes(
-          context.classes().Get(dest_type.class_id).object_representation_id));
+  auto& class_info = context.classes().Get(dest_type.class_id);
+  if (class_info.inheritance_kind == SemIR::Class::Abstract) {
+    CARBON_DIAGNOSTIC(ConstructionOfAbstractClass, Error,
+                      "Cannot construct instance of abstract class. "
+                      "Consider using `partial {0}` instead.",
+                      std::string);
+    context.emitter().Emit(context.insts().Get(value_id).parse_node(),
+                           ConstructionOfAbstractClass,
+                           context.sem_ir().StringifyType(target.type_id));
+    return SemIR::InstId::BuiltinError;
+  }
+  auto dest_struct_type =
+      context.types().GetAs<SemIR::StructType>(class_info.object_repr_id);
 
   // If we're trying to create a class value, form a temporary for the value to
   // point to.
@@ -553,7 +559,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
         context.insts().Get(value_id).parse_node(), target.type_id});
   }
 
-  auto result_id = ConvertStructToStructOrClass<SemIR::ClassFieldAccess>(
+  auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, src_type, dest_struct_type, value_id, target, /*is_class=*/true);
 
   if (need_temporary) {
@@ -565,19 +571,93 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   return result_id;
 }
 
+// An inheritance path is a sequence of `BaseDecl`s in order from derived to
+// base.
+using InheritancePath = llvm::SmallVector<SemIR::InstId>;
+
+// Computes the inheritance path from class `derived_id` to class `base_id`.
+// Returns nullopt if `derived_id` is not a class derived from `base_id`.
+static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
+                                   SemIR::TypeId base_id)
+    -> std::optional<InheritancePath> {
+  // We intend for NRVO to be applied to `result`. All `return` statements in
+  // this function should `return result;`.
+  std::optional<InheritancePath> result(std::in_place);
+  if (!context.TryToCompleteType(derived_id)) {
+    // TODO: Should we give an error here? If we don't, and there is an
+    // inheritance path when the class is defined, we may have a coherence
+    // problem.
+    result = std::nullopt;
+    return result;
+  }
+  while (derived_id != base_id) {
+    auto derived_class_type =
+        context.types().TryGetAs<SemIR::ClassType>(derived_id);
+    if (!derived_class_type) {
+      result = std::nullopt;
+      break;
+    }
+    auto& derived_class = context.classes().Get(derived_class_type->class_id);
+    if (!derived_class.base_id.is_valid()) {
+      result = std::nullopt;
+      break;
+    }
+    result->push_back(derived_class.base_id);
+    derived_id = context.insts()
+                     .GetAs<SemIR::BaseDecl>(derived_class.base_id)
+                     .base_type_id;
+  }
+  return result;
+}
+
+// Performs a conversion from a derived class value or reference to a base class
+// value or reference.
+static auto ConvertDerivedToBase(Context& context, Parse::NodeId parse_node,
+                                 SemIR::InstId value_id,
+                                 const InheritancePath& path) -> SemIR::InstId {
+  // Materialize a temporary if necessary.
+  value_id = ConvertToValueOrRefExpr(context, value_id);
+
+  // Add a series of `.base` accesses.
+  for (auto base_id : path) {
+    auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(base_id);
+    value_id = context.AddInst(SemIR::ClassElementAccess{
+        parse_node, base_decl.base_type_id, value_id, base_decl.index});
+  }
+  return value_id;
+}
+
+// Performs a conversion from a derived class pointer to a base class pointer.
+static auto ConvertDerivedPointerToBasePointer(
+    Context& context, Parse::NodeId parse_node, SemIR::PointerType src_ptr_type,
+    SemIR::TypeId dest_ptr_type_id, SemIR::InstId ptr_id,
+    const InheritancePath& path) -> SemIR::InstId {
+  // Form `*p`.
+  ptr_id = ConvertToValueExpr(context, ptr_id);
+  auto ref_id = context.AddInst(
+      SemIR::Deref{parse_node, src_ptr_type.pointee_id, ptr_id});
+
+  // Convert as a reference expression.
+  ref_id = ConvertDerivedToBase(context, parse_node, ref_id, path);
+
+  // Take the address.
+  return context.AddInst(
+      SemIR::AddressOf{parse_node, dest_ptr_type_id, ref_id});
+}
+
 // Returns whether `category` is a valid expression category to produce as a
 // result of a conversion with kind `target_kind`, or at most needs a temporary
 // to be materialized.
-static bool IsValidExprCategoryForConversionTarget(
-    SemIR::ExprCategory category, ConversionTarget::Kind target_kind) {
+static auto IsValidExprCategoryForConversionTarget(
+    SemIR::ExprCategory category, ConversionTarget::Kind target_kind) -> bool {
   switch (target_kind) {
     case ConversionTarget::Value:
       return category == SemIR::ExprCategory::Value;
-    case ConversionTarget::ValueOrReference:
+    case ConversionTarget::ValueOrRef:
     case ConversionTarget::Discarded:
       return category == SemIR::ExprCategory::Value ||
-             category == SemIR::ExprCategory::DurableReference ||
-             category == SemIR::ExprCategory::EphemeralReference ||
+             category == SemIR::ExprCategory::DurableRef ||
+             category == SemIR::ExprCategory::EphemeralRef ||
              category == SemIR::ExprCategory::Initializing;
     case ConversionTarget::ExplicitAs:
       return true;
@@ -587,14 +667,13 @@ static bool IsValidExprCategoryForConversionTarget(
   }
 }
 
-static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
+static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
                                      SemIR::InstId value_id,
                                      ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto value = sem_ir.insts().Get(value_id);
   auto value_type_id = value.type_id();
-  auto target_type_inst =
-      sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(target.type_id));
+  auto target_type_inst = sem_ir.types().GetAsInst(target.type_id);
 
   // Various forms of implicit conversion are supported as builtin conversions,
   // either in addition to or instead of `impl`s of `ImplicitAs` in the Carbon
@@ -637,10 +716,10 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
     if (value_cat == SemIR::ExprCategory::Initializing &&
         IsValidExprCategoryForConversionTarget(SemIR::ExprCategory::Value,
                                                target.kind) &&
-        SemIR::GetInitializingRepresentation(sem_ir, value_type_id).kind ==
-            SemIR::InitializingRepresentation::ByCopy) {
-      auto value_rep = SemIR::GetValueRepresentation(sem_ir, value_type_id);
-      if (value_rep.kind == SemIR::ValueRepresentation::Copy &&
+        SemIR::GetInitRepr(sem_ir, value_type_id).kind ==
+            SemIR::InitRepr::ByCopy) {
+      auto value_rep = SemIR::GetValueRepr(sem_ir, value_type_id);
+      if (value_rep.kind == SemIR::ValueRepr::Copy &&
           value_rep.type_id == value_type_id) {
         // The initializer produces an object representation by copy, and the
         // value representation is a copy of the object representation, so we
@@ -654,9 +733,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   // A tuple (T1, T2, ..., Tn) converts to (U1, U2, ..., Un) if each Ti
   // converts to Ui.
   if (auto target_tuple_type = target_type_inst.TryAs<SemIR::TupleType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_tuple_type = value_type_inst.TryAs<SemIR::TupleType>()) {
+    if (auto src_tuple_type =
+            sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
       return ConvertTupleToTuple(context, *src_tuple_type, *target_tuple_type,
                                  value_id, target);
     }
@@ -667,9 +745,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   // (p(1), ..., p(n)) is a permutation of (1, ..., n) and each Ti converts
   // to Ui.
   if (auto target_struct_type = target_type_inst.TryAs<SemIR::StructType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_struct_type = value_type_inst.TryAs<SemIR::StructType>()) {
+    if (auto src_struct_type =
+            sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       return ConvertStructToStruct(context, *src_struct_type,
                                    *target_struct_type, value_id, target);
     }
@@ -677,9 +754,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
 
   // A tuple (T1, T2, ..., Tn) converts to [T; n] if each Ti converts to T.
   if (auto target_array_type = target_type_inst.TryAs<SemIR::ArrayType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_tuple_type = value_type_inst.TryAs<SemIR::TupleType>()) {
+    if (auto src_tuple_type =
+            sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
     }
@@ -690,11 +766,32 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
   // (a struct with the same fields as the class, plus a base field where
   // relevant).
   if (auto target_class_type = target_type_inst.TryAs<SemIR::ClassType>()) {
-    auto value_type_inst =
-        sem_ir.insts().Get(sem_ir.GetTypeAllowBuiltinTypes(value_type_id));
-    if (auto src_struct_type = value_type_inst.TryAs<SemIR::StructType>()) {
+    if (auto src_struct_type =
+            sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
       return ConvertStructToClass(context, *src_struct_type, *target_class_type,
                                   value_id, target);
+    }
+
+    // An expression of type T converts to U if T is a class derived from U.
+    if (auto path =
+            ComputeInheritancePath(context, value_type_id, target.type_id);
+        path && !path->empty()) {
+      return ConvertDerivedToBase(context, parse_node, value_id, *path);
+    }
+  }
+
+  // A pointer T* converts to U* if T is a class derived from U.
+  if (auto target_pointer_type = target_type_inst.TryAs<SemIR::PointerType>()) {
+    if (auto src_pointer_type =
+            sem_ir.types().TryGetAs<SemIR::PointerType>(value_type_id)) {
+      if (auto path =
+              ComputeInheritancePath(context, src_pointer_type->pointee_id,
+                                     target_pointer_type->pointee_id);
+          path && !path->empty()) {
+        return ConvertDerivedPointerToBasePointer(
+            context, parse_node, *src_pointer_type, target.type_id, value_id,
+            *path);
+      }
     }
   }
 
@@ -709,9 +806,8 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
         // iterative approach.
         type_ids.push_back(ExprAsType(context, parse_node, tuple_inst_id));
       }
-      auto tuple_type_id =
-          context.CanonicalizeTupleType(parse_node, std::move(type_ids));
-      return sem_ir.GetTypeAllowBuiltinTypes(tuple_type_id);
+      auto tuple_type_id = context.CanonicalizeTupleType(parse_node, type_ids);
+      return sem_ir.types().GetInstId(tuple_type_id);
     }
 
     // `{}` converts to `{} as type`.
@@ -720,7 +816,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::Node parse_node,
     if (auto struct_literal = value.TryAs<SemIR::StructLiteral>();
         struct_literal &&
         struct_literal->elements_id == SemIR::InstBlockId::Empty) {
-      value_id = sem_ir.GetTypeAllowBuiltinTypes(value_type_id);
+      value_id = sem_ir.types().GetInstId(value_type_id);
     }
   }
 
@@ -740,9 +836,9 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
 
   // TODO: Directly track on the value representation whether it's a copy of
   // the object representation.
-  auto value_rep = SemIR::GetValueRepresentation(context.sem_ir(), type_id);
-  if (value_rep.kind == SemIR::ValueRepresentation::Copy &&
-      value_rep.aggregate_kind == SemIR::ValueRepresentation::NotAggregate &&
+  auto value_rep = SemIR::GetValueRepr(context.sem_ir(), type_id);
+  if (value_rep.kind == SemIR::ValueRepr::Copy &&
+      value_rep.aggregate_kind == SemIR::ValueRepr::NotAggregate &&
       value_rep.type_id == type_id) {
     // For by-value scalar types, no explicit action is required. Initializing
     // from a value expression is treated as copying the value.
@@ -758,7 +854,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   return SemIR::InstId::BuiltinError;
 }
 
-auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
+auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto orig_expr_id = expr_id;
@@ -783,7 +879,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
 
   // We can only perform initialization for complete types.
   if (!context.TryToCompleteType(target.type_id, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInInitialization, Error,
+        CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
                           "Initialization of incomplete type `{0}`.",
                           std::string);
         CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
@@ -793,11 +889,11 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
                           "Invalid use of incomplete type `{0}`.", std::string);
         return context.emitter().Build(
             parse_node,
-            target.is_initializer() ? IncompleteTypeInInitialization
+            target.is_initializer() ? IncompleteTypeInInit
             : target.kind == ConversionTarget::Value
                 ? IncompleteTypeInValueConversion
                 : IncompleteTypeInConversion,
-            context.sem_ir().StringifyType(target.type_id, true));
+            context.sem_ir().StringifyType(target.type_id));
       })) {
     return SemIR::InstId::BuiltinError;
   }
@@ -873,10 +969,10 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
       // We now have an ephemeral reference.
       [[fallthrough]];
 
-    case SemIR::ExprCategory::DurableReference:
-    case SemIR::ExprCategory::EphemeralReference:
+    case SemIR::ExprCategory::DurableRef:
+    case SemIR::ExprCategory::EphemeralRef:
       // If a reference expression is an acceptable result, we're done.
-      if (target.kind == ConversionTarget::ValueOrReference ||
+      if (target.kind == ConversionTarget::ValueOrRef ||
           target.kind == ConversionTarget::Discarded) {
         break;
       }
@@ -898,9 +994,8 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
 
   // Perform a final destination store, if necessary.
   if (target.kind == ConversionTarget::FullInitializer) {
-    if (auto init_rep =
-            SemIR::GetInitializingRepresentation(sem_ir, target.type_id);
-        init_rep.kind == SemIR::InitializingRepresentation::ByCopy) {
+    if (auto init_rep = SemIR::GetInitRepr(sem_ir, target.type_id);
+        init_rep.kind == SemIR::InitRepr::ByCopy) {
       target.init_block->InsertHere();
       expr_id = context.AddInst(SemIR::InitializeFrom{
           parse_node, target.type_id, expr_id, target.init_id});
@@ -910,7 +1005,7 @@ auto Convert(Context& context, Parse::Node parse_node, SemIR::InstId expr_id,
   return expr_id;
 }
 
-auto Initialize(Context& context, Parse::Node parse_node,
+auto Initialize(Context& context, Parse::NodeId parse_node,
                 SemIR::InstId target_id, SemIR::InstId value_id)
     -> SemIR::InstId {
   PendingBlock target_block(context);
@@ -928,29 +1023,36 @@ auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
                  {.kind = ConversionTarget::Value, .type_id = expr.type_id()});
 }
 
-auto ConvertToValueOrReferenceExpr(Context& context, SemIR::InstId expr_id)
+auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
   auto expr = context.sem_ir().insts().Get(expr_id);
   return Convert(
       context, expr.parse_node(), expr_id,
-      {.kind = ConversionTarget::ValueOrReference, .type_id = expr.type_id()});
+      {.kind = ConversionTarget::ValueOrRef, .type_id = expr.type_id()});
 }
 
-auto ConvertToValueOfType(Context& context, Parse::Node parse_node,
-                          SemIR::InstId value_id, SemIR::TypeId type_id)
+auto ConvertToValueOfType(Context& context, Parse::NodeId parse_node,
+                          SemIR::InstId expr_id, SemIR::TypeId type_id)
     -> SemIR::InstId {
-  return Convert(context, parse_node, value_id,
+  return Convert(context, parse_node, expr_id,
                  {.kind = ConversionTarget::Value, .type_id = type_id});
 }
 
-auto ConvertToBoolValue(Context& context, Parse::Node parse_node,
+auto ConvertToValueOrRefOfType(Context& context, Parse::NodeId parse_node,
+                               SemIR::InstId expr_id, SemIR::TypeId type_id)
+    -> SemIR::InstId {
+  return Convert(context, parse_node, expr_id,
+                 {.kind = ConversionTarget::ValueOrRef, .type_id = type_id});
+}
+
+auto ConvertToBoolValue(Context& context, Parse::NodeId parse_node,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
       context, parse_node, value_id,
       context.GetBuiltinType(SemIR::BuiltinKind::BoolType));
 }
 
-auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
+auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
                           SemIR::InstId value_id, SemIR::TypeId type_id)
     -> SemIR::InstId {
   return Convert(context, as_node, value_id,
@@ -960,9 +1062,10 @@ auto ConvertForExplicitAs(Context& context, Parse::Node as_node,
 CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 
 // Convert the object argument in a method call to match the `self` parameter.
-static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
-                        Parse::Node callee_parse_node,
-                        SemIR::SelfParameter self_param, SemIR::InstId self_id)
+static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
+                        Parse::NodeId callee_parse_node,
+                        std::optional<SemIR::AddrPattern> addr_pattern,
+                        SemIR::Param self_param, SemIR::InstId self_id)
     -> SemIR::InstId {
   if (!self_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
@@ -981,25 +1084,24 @@ static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
             "Initializing `{0}` parameter of method declared here.",
             llvm::StringLiteral);
         builder.Note(self_param.parse_node, InCallToFunctionSelf,
-                     self_param.is_addr_self.index
-                         ? llvm::StringLiteral("addr self")
-                         : llvm::StringLiteral("self"));
+                     addr_pattern ? llvm::StringLiteral("addr self")
+                                  : llvm::StringLiteral("self"));
       });
 
   // For `addr self`, take the address of the object argument.
   auto self_or_addr_id = self_id;
-  if (self_param.is_addr_self.index) {
-    self_or_addr_id = ConvertToValueOrReferenceExpr(context, self_or_addr_id);
+  if (addr_pattern) {
+    self_or_addr_id = ConvertToValueOrRefExpr(context, self_or_addr_id);
     auto self = context.insts().Get(self_or_addr_id);
     switch (SemIR::GetExprCategory(context.sem_ir(), self_id)) {
       case SemIR::ExprCategory::Error:
-      case SemIR::ExprCategory::DurableReference:
-      case SemIR::ExprCategory::EphemeralReference:
+      case SemIR::ExprCategory::DurableRef:
+      case SemIR::ExprCategory::EphemeralRef:
         break;
       default:
-        CARBON_DIAGNOSTIC(AddrSelfIsNonReference, Error,
+        CARBON_DIAGNOSTIC(AddrSelfIsNonRef, Error,
                           "`addr self` method cannot be invoked on a value.");
-        context.emitter().Emit(call_parse_node, AddrSelfIsNonReference);
+        context.emitter().Emit(TokenOnly(call_parse_node), AddrSelfIsNonRef);
         return SemIR::InstId::BuiltinError;
     }
     self_or_addr_id = context.AddInst(SemIR::AddressOf{
@@ -1012,11 +1114,11 @@ static auto ConvertSelf(Context& context, Parse::Node call_parse_node,
                               self_param.type_id);
 }
 
-auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
+auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_storage_id,
-                     Parse::Node callee_parse_node,
+                     Parse::NodeId callee_parse_node,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
   auto implicit_param_refs =
@@ -1044,10 +1146,16 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
 
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_refs) {
-    auto param = context.insts().Get(implicit_param_id);
-    if (auto self_param = param.TryAs<SemIR::SelfParameter>()) {
-      auto converted_self_id = ConvertSelf(
-          context, call_parse_node, callee_parse_node, *self_param, self_id);
+    auto pattern = context.insts().Get(implicit_param_id);
+    auto addr_pattern = pattern.TryAs<SemIR::AddrPattern>();
+    if (addr_pattern) {
+      pattern = context.insts().Get(addr_pattern->inner_id);
+    }
+    if (auto param = pattern.TryAs<SemIR::Param>();
+        param && param->name_id == SemIR::NameId::SelfValue) {
+      auto converted_self_id =
+          ConvertSelf(context, call_parse_node, callee_parse_node, addr_pattern,
+                      *param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }
@@ -1093,7 +1201,7 @@ auto ConvertCallArgs(Context& context, Parse::Node call_parse_node,
   return context.inst_blocks().Add(args);
 }
 
-auto ExprAsType(Context& context, Parse::Node parse_node,
+auto ExprAsType(Context& context, Parse::NodeId parse_node,
                 SemIR::InstId value_id) -> SemIR::TypeId {
   auto type_inst_id = ConvertToValueOfType(context, parse_node, value_id,
                                            SemIR::TypeId::TypeType);

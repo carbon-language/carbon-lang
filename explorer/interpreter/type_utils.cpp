@@ -222,4 +222,29 @@ auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
       return true;
   }
 }
+
+auto DeducePatternType(Nonnull<const Value*> type,
+                       Nonnull<const Value*> expected, Nonnull<Arena*> arena)
+    -> Nonnull<const Value*> {
+  if (type->kind() == Value::Kind::StaticArrayType) {
+    const auto& arr = cast<StaticArrayType>(*type);
+    const size_t size = arr.has_size() ? arr.size() : GetSize(expected);
+    if (!IsNonDeduceableType(&arr.element_type())) {
+      CARBON_CHECK(expected->kind() == Value::Kind::StaticArrayType ||
+                   expected->kind() == Value::Kind::TupleType);
+
+      Nonnull<const Value*> expected_elem_type =
+          expected->kind() == Value::Kind::StaticArrayType
+              ? &cast<StaticArrayType>(expected)->element_type()
+              : cast<TupleType>(expected)->elements()[0];
+      return arena->New<StaticArrayType>(
+          DeducePatternType(&arr.element_type(), expected_elem_type, arena),
+          size);
+    } else {
+      return arena->New<StaticArrayType>(&arr.element_type(), size);
+    }
+  }
+
+  return expected;
+}
 }  // namespace Carbon

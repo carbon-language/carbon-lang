@@ -7,12 +7,15 @@
 // TODO: Some variant of this should work, once compile-time function calls are
 // supported.
 fn ReturnType() -> type { return i32; }
-// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+3]]:24: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+3]]:13: ERROR: Cannot evaluate type expression.
 // CHECK:STDERR: fn Six() -> ReturnType() { return 6; }
-// CHECK:STDERR:                        ^
+// CHECK:STDERR:             ^~~~~~~~~~~~
 fn Six() -> ReturnType() { return 6; }
 
-// CHECK:STDOUT: file "fail_call_in_type.carbon" {
+// CHECK:STDOUT: --- fail_call_in_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.ReturnType = %ReturnType, .Six = %Six}
 // CHECK:STDOUT:   %ReturnType: <function> = fn_decl @ReturnType
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six
 // CHECK:STDOUT: }
@@ -27,3 +30,4 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %.loc13: i32 = int_literal 6
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

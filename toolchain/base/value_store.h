@@ -11,7 +11,6 @@
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -49,37 +48,37 @@ class Real : public Printable<Real> {
 };
 
 // Corresponds to an integer value represented by an APInt.
-struct IntegerId : public IndexBase, public Printable<IntegerId> {
-  using IndexedType = const llvm::APInt;
-  static const IntegerId Invalid;
-  using IndexBase::IndexBase;
+struct IntId : public IdBase, public Printable<IntId> {
+  using ValueType = const llvm::APInt;
+  static const IntId Invalid;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "int";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
-constexpr IntegerId IntegerId::Invalid(IntegerId::InvalidIndex);
+constexpr IntId IntId::Invalid(IntId::InvalidIndex);
 
 // Corresponds to a Real value.
-struct RealId : public IndexBase, public Printable<RealId> {
-  using IndexedType = const Real;
+struct RealId : public IdBase, public Printable<RealId> {
+  using ValueType = const Real;
   static const RealId Invalid;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "real";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 constexpr RealId RealId::Invalid(RealId::InvalidIndex);
 
 // Corresponds to a StringRef.
-struct StringId : public IndexBase, public Printable<StringId> {
-  using IndexedType = const std::string;
+struct StringId : public IdBase, public Printable<StringId> {
+  using ValueType = const std::string;
   static const StringId Invalid;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "str";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 constexpr StringId StringId::Invalid(StringId::InvalidIndex);
@@ -88,23 +87,23 @@ constexpr StringId StringId::Invalid(StringId::InvalidIndex);
 //
 // `NameId` relies on the values of this type other than `Invalid` all being
 // non-negative.
-struct IdentifierId : public IndexBase, public Printable<IdentifierId> {
+struct IdentifierId : public IdBase, public Printable<IdentifierId> {
   static const IdentifierId Invalid;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "strId";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 constexpr IdentifierId IdentifierId::Invalid(IdentifierId::InvalidIndex);
 
 // Adapts StringId for string literals.
-struct StringLiteralId : public IndexBase, public Printable<StringLiteralId> {
+struct StringLiteralId : public IdBase, public Printable<StringLiteralId> {
   static const StringLiteralId Invalid;
-  using IndexBase::IndexBase;
+  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "strLit";
-    IndexBase::Print(out);
+    IdBase::Print(out);
   }
 };
 constexpr StringLiteralId StringLiteralId::Invalid(
@@ -118,14 +117,19 @@ class ValueStoreNotPrintable {};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
-template <typename IdT, typename ValueT = typename IdT::IndexedType>
+//
+// IdT::ValueType must represent the type being indexed.
+template <typename IdT>
 class ValueStore
-    : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
-                              Yaml::Printable<ValueStore<IdT, ValueT>>,
-                              Internal::ValueStoreNotPrintable> {
+    : public std::conditional<
+          std::is_base_of_v<Printable<typename IdT::ValueType>,
+                            typename IdT::ValueType>,
+          Yaml::Printable<ValueStore<IdT>>, Internal::ValueStoreNotPrintable> {
  public:
+  using ValueType = typename IdT::ValueType;
+
   // Stores the value and returns an ID to reference it.
-  auto Add(ValueT value) -> IdT {
+  auto Add(ValueType value) -> IdT {
     IdT id = IdT(values_.size());
     CARBON_CHECK(id.index >= 0) << "Id overflow";
     values_.push_back(std::move(value));
@@ -140,13 +144,13 @@ class ValueStore
   }
 
   // Returns a mutable value for an ID.
-  auto Get(IdT id) -> ValueT& {
+  auto Get(IdT id) -> ValueType& {
     CARBON_CHECK(id.index >= 0) << id.index;
     return values_[id.index];
   }
 
   // Returns the value for an ID.
-  auto Get(IdT id) const -> const ValueT& {
+  auto Get(IdT id) const -> const ValueType& {
     CARBON_CHECK(id.index >= 0) << id.index;
     return values_[id.index];
   }
@@ -164,11 +168,13 @@ class ValueStore
     });
   }
 
-  auto array_ref() const -> llvm::ArrayRef<ValueT> { return values_; }
+  auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }
   auto size() const -> int { return values_.size(); }
 
  private:
-  llvm::SmallVector<std::decay_t<ValueT>> values_;
+  // Set inline size to 0 because these will typically be too large for the
+  // stack, while this does make File smaller.
+  llvm::SmallVector<std::decay_t<ValueType>, 0> values_;
 };
 
 // Storage for StringRefs. The caller is responsible for ensuring storage is
@@ -203,7 +209,9 @@ class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
 
  private:
   llvm::DenseMap<llvm::StringRef, StringId> map_;
-  llvm::SmallVector<llvm::StringRef> values_;
+  // Set inline size to 0 because these will typically be too large for the
+  // stack, while this does make File smaller.
+  llvm::SmallVector<llvm::StringRef, 0> values_;
 };
 
 // A thin wrapper around a `ValueStore<StringId>` that provides a different IdT,
@@ -245,8 +253,8 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
     return identifiers_;
   }
-  auto integers() -> ValueStore<IntegerId>& { return integers_; }
-  auto integers() const -> const ValueStore<IntegerId>& { return integers_; }
+  auto ints() -> ValueStore<IntId>& { return ints_; }
+  auto ints() const -> const ValueStore<IntId>& { return ints_; }
   auto reals() -> ValueStore<RealId>& { return reals_; }
   auto reals() const -> const ValueStore<RealId>& { return reals_; }
   auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
@@ -264,7 +272,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
       }
       map.Add("shared_values",
               Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                map.Add("integers", integers_.OutputYaml());
+                map.Add("ints", ints_.OutputYaml());
                 map.Add("reals", reals_.OutputYaml());
                 map.Add("strings", strings_.OutputYaml());
               }));
@@ -272,7 +280,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   }
 
  private:
-  ValueStore<IntegerId> integers_;
+  ValueStore<IntId> ints_;
   ValueStore<RealId> reals_;
 
   ValueStore<StringId> strings_;

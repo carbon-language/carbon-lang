@@ -13,21 +13,25 @@ static auto HandleDeclNameAndParams(Context& context, State after_name)
 
   // TODO: Should handle designated names.
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
-    state.state = after_name;
-    context.PushState(state);
+    context.PushState(state, after_name);
 
     if (context.PositionIs(Lex::TokenKind::Period)) {
-      context.AddLeafNode(NodeKind::Name, *identifier);
-      state.state = State::PeriodAsDecl;
-      context.PushState(state);
+      context.AddLeafNode(NodeKind::IdentifierName, *identifier);
+      context.PushState(state, State::PeriodAsDecl);
     } else {
-      context.AddLeafNode(NodeKind::Name, *identifier);
+      context.AddLeafNode(NodeKind::IdentifierName, *identifier);
     }
   } else {
     CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
                       "`{0}` introducer should be followed by a name.",
                       Lex::TokenKind);
-    context.emitter().Emit(*context.position(), ExpectedDeclName,
+    Lex::TokenIndex location = *context.position();
+    if (context.tokens().GetKind(location) == Lex::TokenKind::FileEnd) {
+      // The end of file is often an especially unhelpful location. If that's
+      // the best we can do here, back up the location to the introducer itself.
+      location = state.token;
+    }
+    context.emitter().Emit(location, ExpectedDeclName,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
@@ -60,8 +64,7 @@ static auto HandleDeclNameAndParamsAfterName(Context& context, Params params)
   if (context.PositionIs(Lex::TokenKind::Period)) {
     // Continue designator processing.
     context.PushState(state);
-    state.state = State::PeriodAsDecl;
-    context.PushState(state);
+    context.PushState(state, State::PeriodAsDecl);
     return;
   }
 
@@ -80,13 +83,13 @@ static auto HandleDeclNameAndParamsAfterName(Context& context, Params params)
 
   if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
     context.PushState(State::DeclNameAndParamsAfterImplicit);
-    context.PushState(State::ParameterListAsImplicit);
+    context.PushState(State::PatternListAsImplicit);
   } else if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::ParameterListAsRegular);
+    context.PushState(State::PatternListAsTuple);
   } else if (params == Params::Required) {
-    CARBON_DIAGNOSTIC(ParametersRequiredByIntroducer, Error,
+    CARBON_DIAGNOSTIC(ParamsRequiredByIntroducer, Error,
                       "`{0}` requires a `(` for parameters.", Lex::TokenKind);
-    context.emitter().Emit(*context.position(), ParametersRequiredByIntroducer,
+    context.emitter().Emit(*context.position(), ParamsRequiredByIntroducer,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
   }
@@ -108,13 +111,12 @@ auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   context.PopAndDiscardState();
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    context.PushState(State::ParameterListAsRegular);
+    context.PushState(State::PatternListAsTuple);
   } else {
     CARBON_DIAGNOSTIC(
-        ParametersRequiredAfterImplicit, Error,
+        ParamsRequiredAfterImplicit, Error,
         "A `(` for parameters is required after implicit parameters.");
-    context.emitter().Emit(*context.position(),
-                           ParametersRequiredAfterImplicit);
+    context.emitter().Emit(*context.position(), ParamsRequiredAfterImplicit);
     context.ReturnErrorOnState();
   }
 }

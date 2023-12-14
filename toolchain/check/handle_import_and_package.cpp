@@ -6,32 +6,67 @@
 
 namespace Carbon::Check {
 
-auto HandleImportIntroducer(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleImportIntroducer");
+// `import` and `package` are structured by parsing. As a consequence, no
+// checking logic is needed here.
+
+auto HandleImportIntroducer(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
 }
 
-auto HandlePackageIntroducer(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePackageIntroducer");
+auto HandleImportDirective(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
 }
 
-auto HandleLibrary(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleLibrary");
+auto HandleLibraryIntroducer(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
 }
 
-auto HandlePackageApi(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePackageApi");
+auto HandleLibraryDirective(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
 }
 
-auto HandlePackageImpl(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePackageImpl");
+auto HandlePackageIntroducer(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
 }
 
-auto HandleImportDirective(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleImportDirective");
+auto HandlePackageDirective(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
 }
 
-auto HandlePackageDirective(Context& context, Parse::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePackageDirective");
+auto HandleLibrarySpecifier(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
+}
+
+auto HandlePackageName(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
+}
+
+auto HandleLibraryName(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
+}
+
+auto HandleDefaultLibrary(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
+}
+
+auto HandlePackageApi(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
+}
+
+auto HandlePackageImpl(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  return true;
 }
 
 }  // namespace Carbon::Check

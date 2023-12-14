@@ -7,23 +7,22 @@
 
 namespace Carbon::Check {
 
-auto HandleReturnStatementStart(Context& context, Parse::Node parse_node)
+auto HandleReturnStatementStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleReturnVarSpecifier(Context& context, Parse::Node parse_node)
+auto HandleReturnVarModifier(Context& context, Parse::NodeId parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
-  switch (
-      context.parse_tree().node_kind(context.node_stack().PeekParseNode())) {
+auto HandleReturnStatement(Context& context, Parse::NodeId parse_node) -> bool {
+  switch (context.node_stack().PeekParseNodeKind()) {
     case Parse::NodeKind::ReturnStatementStart:
       // This is a `return;` statement.
       context.node_stack()
@@ -31,10 +30,10 @@ auto HandleReturnStatement(Context& context, Parse::Node parse_node) -> bool {
       BuildReturnWithNoExpr(context, parse_node);
       break;
 
-    case Parse::NodeKind::ReturnVarSpecifier:
+    case Parse::NodeKind::ReturnVarModifier:
       // This is a `return var;` statement.
       context.node_stack()
-          .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnVarSpecifier>();
+          .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnVarModifier>();
       context.node_stack()
           .PopAndDiscardSoloParseNode<Parse::NodeKind::ReturnStatementStart>();
       BuildReturnVar(context, parse_node);

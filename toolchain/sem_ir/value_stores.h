@@ -9,6 +9,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/type_info.h"
 
 namespace Carbon::SemIR {
 
@@ -32,6 +33,13 @@ class InstStore {
     return Get(inst_id).As<InstT>();
   }
 
+  // Returns the requested instruction as the specified type, if it is of that
+  // type.
+  template <typename InstT>
+  auto TryGetAs(InstId inst_id) const -> std::optional<InstT> {
+    return Get(inst_id).TryAs<InstT>();
+  }
+
   // Overwrites a given instruction with a new value.
   auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
 
@@ -42,7 +50,7 @@ class InstStore {
   auto size() const -> int { return values_.size(); }
 
  private:
-  ValueStore<InstId, Inst> values_;
+  ValueStore<InstId> values_;
 };
 
 // Provides storage for instructions representing global constants.
@@ -56,6 +64,68 @@ class ConstantStore {
 
  private:
   llvm::SmallVector<InstId> values_;
+};
+
+// Provides a ValueStore wrapper with an API specific to types.
+class TypeStore : public ValueStore<TypeId> {
+ public:
+  explicit TypeStore(InstStore* insts) : insts_(insts) {}
+
+  // Returns the ID of the instruction used to define the specified type.
+  auto GetInstId(TypeId type_id) const -> InstId {
+    if (type_id == TypeId::TypeType) {
+      return InstId::BuiltinTypeType;
+    } else if (type_id == TypeId::Error) {
+      return InstId::BuiltinError;
+    } else if (type_id == TypeId::Invalid) {
+      return InstId::Invalid;
+    } else {
+      return Get(type_id).inst_id;
+    }
+  }
+
+  // Returns the instruction used to define the specified type.
+  auto GetAsInst(TypeId type_id) const -> Inst {
+    return insts_->Get(GetInstId(type_id));
+  }
+
+  // Returns the instruction used to define the specified type, which is known
+  // to be a particular kind of instruction.
+  template <typename InstT>
+  auto GetAs(TypeId type_id) const -> InstT {
+    if constexpr (std::is_same_v<InstT, Builtin>) {
+      return GetAsInst(type_id).As<InstT>();
+    } else {
+      // The type is not a builtin, so no need to check for special values.
+      return insts_->Get(Get(type_id).inst_id).As<InstT>();
+    }
+  }
+
+  // Returns the instruction used to define the specified type, if it is of a
+  // particular kind.
+  template <typename InstT>
+  auto TryGetAs(TypeId type_id) const -> std::optional<InstT> {
+    return GetAsInst(type_id).TryAs<InstT>();
+  }
+
+  // Gets the value representation to use for a type. This returns an
+  // invalid type if the given type is not complete.
+  auto GetValueRepr(TypeId type_id) const -> ValueRepr {
+    if (type_id.index < 0) {
+      // TypeType and InvalidType are their own value representation.
+      return {.kind = ValueRepr::Copy, .type_id = type_id};
+    }
+    return Get(type_id).value_repr;
+  }
+
+  // Determines whether the given type is known to be complete. This does not
+  // determine whether the type could be completed, only whether it has been.
+  auto IsComplete(TypeId type_id) const -> bool {
+    return GetValueRepr(type_id).kind != ValueRepr::Unknown;
+  }
+
+ private:
+  InstStore* insts_;
 };
 
 // Provides a ValueStore-like interface for names.
@@ -101,6 +171,36 @@ class NameStoreWrapper {
   const StringStoreWrapper<IdentifierId>* identifiers_;
 };
 
+struct NameScope {
+  // Names in the scope.
+  llvm::DenseMap<NameId, InstId> names;
+
+  // Scopes extended by this scope.
+  //
+  // TODO: A `NameScopeId` is currently insufficient to describe an extended
+  // scope in general. For example:
+  //
+  //   class A(T:! type) {
+  //     extend base: B(T*);
+  //   }
+  //
+  // needs to describe the `T*` argument.
+  //
+  // Small vector size is set to 1: we expect that there will rarely be more
+  // than a single extended scope. Currently the only kind of extended scope is
+  // a base class, and there can be only one of those per scope.
+  // TODO: Revisit this once we have more kinds of extended scope and data.
+  // TODO: Consider using something like `TinyPtrVector` for this.
+  llvm::SmallVector<NameScopeId, 1> extended_scopes;
+
+  // Whether we have diagnosed an error in a construct that would have added
+  // names to this scope. For example, this can happen if an `import` failed or
+  // an `extend` declaration was ill-formed. If true, the `names` map is
+  // assumed to be missing names as a result of the error, and no further
+  // errors are produced for lookup failures in this scope.
+  bool has_error = false;
+};
+
 // Provides a ValueStore wrapper for an API specific to name scopes.
 class NameScopeStore {
  public:
@@ -111,17 +211,19 @@ class NameScopeStore {
   // duplicates.
   auto AddEntry(NameScopeId scope_id, NameId name_id, InstId target_id)
       -> bool {
-    return values_.Get(scope_id).insert({name_id, target_id}).second;
+    return values_.Get(scope_id).names.insert({name_id, target_id}).second;
   }
 
   // Returns the requested name scope.
-  auto Get(NameScopeId scope_id) const
-      -> const llvm::DenseMap<NameId, InstId>& {
+  auto Get(NameScopeId scope_id) -> NameScope& { return values_.Get(scope_id); }
+
+  // Returns the requested name scope.
+  auto Get(NameScopeId scope_id) const -> const NameScope& {
     return values_.Get(scope_id);
   }
 
  private:
-  ValueStore<NameScopeId, llvm::DenseMap<NameId, InstId>> values_;
+  ValueStore<NameScopeId> values_;
 };
 
 // Provides a block-based ValueStore, which uses slab allocation of added
@@ -130,22 +232,33 @@ class NameScopeStore {
 //
 // BlockValueStore is used as-is, but there are also children that expose the
 // protected members for type-specific functionality.
-template <typename IdT, typename ValueT>
-class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
+//
+// On IdT, this requires:
+//   - IdT::ElementType to represent the underlying type in the block.
+//   - IdT::ValueType to be llvm::MutableArrayRef<IdT::ElementType> for
+//     compatibility with ValueStore.
+template <typename IdT>
+class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
  public:
+  using ElementType = typename IdT::ElementType;
+
   explicit BlockValueStore(llvm::BumpPtrAllocator& allocator)
       : allocator_(&allocator) {}
 
   // Adds a block with the given content, returning an ID to reference it.
-  auto Add(llvm::ArrayRef<ValueT> content) -> IdT {
+  auto Add(llvm::ArrayRef<ElementType> content) -> IdT {
     return values_.Add(AllocateCopy(content));
   }
 
   // Returns the requested block.
-  auto Get(IdT id) const -> llvm::ArrayRef<ValueT> { return values_.Get(id); }
+  auto Get(IdT id) const -> llvm::ArrayRef<ElementType> {
+    return values_.Get(id);
+  }
 
   // Returns the requested block.
-  auto Get(IdT id) -> llvm::MutableArrayRef<ValueT> { return values_.Get(id); }
+  auto Get(IdT id) -> llvm::MutableArrayRef<ElementType> {
+    return values_.Get(id);
+  }
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
@@ -184,31 +297,31 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ValueT>> {
  private:
   // Allocates an uninitialized array using our slab allocator.
   auto AllocateUninitialized(std::size_t size)
-      -> llvm::MutableArrayRef<ValueT> {
+      -> llvm::MutableArrayRef<ElementType> {
     // We're not going to run a destructor, so ensure that's OK.
-    static_assert(std::is_trivially_destructible_v<ValueT>);
+    static_assert(std::is_trivially_destructible_v<ElementType>);
 
-    auto storage = static_cast<ValueT*>(
-        allocator_->Allocate(size * sizeof(ValueT), alignof(ValueT)));
-    return llvm::MutableArrayRef<ValueT>(storage, size);
+    auto storage = static_cast<ElementType*>(
+        allocator_->Allocate(size * sizeof(ElementType), alignof(ElementType)));
+    return llvm::MutableArrayRef<ElementType>(storage, size);
   }
 
   // Allocates a copy of the given data using our slab allocator.
-  auto AllocateCopy(llvm::ArrayRef<ValueT> data)
-      -> llvm::MutableArrayRef<ValueT> {
+  auto AllocateCopy(llvm::ArrayRef<ElementType> data)
+      -> llvm::MutableArrayRef<ElementType> {
     auto result = AllocateUninitialized(data.size());
     std::uninitialized_copy(data.begin(), data.end(), result.begin());
     return result;
   }
 
   llvm::BumpPtrAllocator* allocator_;
-  ValueStore<IdT, llvm::MutableArrayRef<ValueT>> values_;
+  ValueStore<IdT> values_;
 };
 
 // Adapts BlockValueStore for instruction blocks.
-class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
+class InstBlockStore : public BlockValueStore<InstBlockId> {
  public:
-  using BaseType = BlockValueStore<InstBlockId, InstId>;
+  using BaseType = BlockValueStore<InstBlockId>;
 
   using BaseType::AddDefaultValue;
   using BaseType::AddUninitialized;
@@ -216,7 +329,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
     CARBON_CHECK(block_id != InstBlockId::Unreachable);
-    BlockValueStore<InstBlockId, InstId>::Set(block_id, content);
+    BlockValueStore<InstBlockId>::Set(block_id, content);
   }
 };
 

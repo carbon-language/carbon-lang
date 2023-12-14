@@ -24,9 +24,6 @@ namespace Carbon::Testing {
 class FileTestBase : public testing::Test {
  public:
   struct TestFile {
-    explicit TestFile(std::string filename, llvm::StringRef content)
-        : filename(std::move(filename)), content(content) {}
-
     friend void PrintTo(const TestFile& f, std::ostream* os) {
       // Print content escaped.
       llvm::raw_os_ostream os_wrap(*os);
@@ -36,7 +33,7 @@ class FileTestBase : public testing::Test {
     }
 
     std::string filename;
-    llvm::StringRef content;
+    std::string content;
   };
 
   // Provided for child class convenience.
@@ -146,11 +143,6 @@ class FileTestBase : public testing::Test {
   // Processes the test input, producing test files and expected output.
   auto ProcessTestFile(TestContext& context) -> ErrorOr<Success>;
 
-  // Transforms an expectation on a given line from `FileCheck` syntax into a
-  // standard regex matcher.
-  static auto TransformExpectation(int line_index, llvm::StringRef in)
-      -> ErrorOr<testing::Matcher<std::string>>;
-
   // Runs the FileTestAutoupdater, returning the result.
   auto RunAutoupdater(const TestContext& context, bool dry_run) -> bool;
 
@@ -178,7 +170,7 @@ extern auto GetFileTestFactory() -> FileTestFactory;
 
 // Provides a standard GetFileTestFactory implementation.
 #define CARBON_FILE_TEST_FACTORY(Name)                                   \
-  auto GetFileTestFactory()->FileTestFactory {                           \
+  auto GetFileTestFactory() -> FileTestFactory {                         \
     return {#Name, [](llvm::StringRef path) { return new Name(path); }}; \
   }
 

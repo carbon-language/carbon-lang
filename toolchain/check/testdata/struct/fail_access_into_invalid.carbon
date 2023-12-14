@@ -10,12 +10,16 @@
 // CHECK:STDERR:          ^
 fn F() { a.b; }
 
-// CHECK:STDOUT: file "fail_access_into_invalid.carbon" {
+// CHECK:STDOUT: --- fail_access_into_invalid.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: <error> = name_reference a, <error>
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

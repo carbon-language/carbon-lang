@@ -13,7 +13,7 @@ auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
                      .target_scope_id = context_->current_scope_id()};
 }
 
-auto DeclNameStack::MakeUnqualifiedName(Parse::Node parse_node,
+auto DeclNameStack::MakeUnqualifiedName(Parse::NodeId parse_node,
                                         SemIR::NameId name_id) -> NameContext {
   NameContext context = MakeEmptyNameContext();
   ApplyNameQualifierTo(context, parse_node, name_id);
@@ -27,17 +27,13 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
 auto DeclNameStack::FinishName() -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
-  if (context_->parse_tree().node_kind(
-          context_->node_stack().PeekParseNode()) ==
-      Parse::NodeKind::QualifiedDecl) {
+  if (context_->node_stack()
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::QualifiedDecl>()) {
     // Any parts from a QualifiedDecl will already have been processed
     // into the name.
-    context_->node_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::QualifiedDecl>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
-    auto [parse_node, name_id] =
-        context_->node_stack().PopWithParseNode<Parse::NodeKind::Name>();
+    auto [parse_node, name_id] = context_->node_stack().PopNameWithParseNode();
     ApplyNameQualifier(parse_node, name_id);
   }
 
@@ -98,13 +94,13 @@ auto DeclNameStack::AddNameToLookup(NameContext name_context,
   }
 }
 
-auto DeclNameStack::ApplyNameQualifier(Parse::Node parse_node,
+auto DeclNameStack::ApplyNameQualifier(Parse::NodeId parse_node,
                                        SemIR::NameId name_id) -> void {
   ApplyNameQualifierTo(decl_name_stack_.back(), parse_node, name_id);
 }
 
 auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
-                                         Parse::Node parse_node,
+                                         Parse::NodeId parse_node,
                                          SemIR::NameId name_id) -> void {
   if (CanResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
@@ -146,7 +142,8 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
       auto scope_id = resolved_inst.As<SemIR::Namespace>().name_scope_id;
       name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id = scope_id;
-      context_->PushScope(name_context.resolved_inst_id, scope_id);
+      context_->PushScope(name_context.resolved_inst_id, scope_id,
+                          context_->name_scopes().Get(scope_id).has_error);
       break;
     }
     default:
@@ -156,7 +153,7 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
 }
 
 auto DeclNameStack::CanResolveQualifier(NameContext& name_context,
-                                        Parse::Node parse_node) -> bool {
+                                        Parse::NodeId parse_node) -> bool {
   switch (name_context.state) {
     case NameContext::State::Error:
       // Already in an error state, so return without examining.
@@ -182,8 +179,7 @@ auto DeclNameStack::CanResolveQualifier(NameContext& name_context,
         auto builder = context_->emitter().Build(
             name_context.parse_node, QualifiedDeclInIncompleteClassScope,
             context_->sem_ir().StringifyType(
-                context_->classes().Get(class_decl->class_id).self_type_id,
-                true));
+                context_->classes().Get(class_decl->class_id).self_type_id));
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
       } else {

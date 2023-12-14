@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+3]]:8: ERROR: Expected identifier after `import`.
+// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+3]]:8: ERROR: Expected identifier or `library` after `import`.
 // CHECK:STDERR: import fn;
-// CHECK:STDERR:        ^
+// CHECK:STDERR:        ^~
 import fn;
 
 // CHECK:STDOUT: - filename: fail_name_is_keyword.carbon

@@ -15,13 +15,13 @@ fn F() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ParameterList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
+// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:         {kind: 'ReturnVarSpecifier', text: 'var'},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: 'return', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'ReturnVarModifier', text: 'var'},
+// CHECK:STDOUT:       {kind: 'ReturnStatement', text: 'var', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -10,10 +10,13 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/decl_state.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -21,7 +24,7 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
-  using DiagnosticEmitter = Carbon::DiagnosticEmitter<Parse::Node>;
+  using DiagnosticEmitter = Carbon::DiagnosticEmitter<Parse::NodeLocation>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
 
   // A scope in which `break` and `continue` can be used.
@@ -44,10 +47,10 @@ class Context {
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
-                   SemIR::File& semantics, llvm::raw_ostream* vlog_stream);
+                   SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(Parse::Node parse_node, std::string label) -> bool;
+  auto TODO(Parse::NodeId parse_node, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
@@ -60,44 +63,59 @@ class Context {
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
-  auto AddInstAndPush(Parse::Node parse_node, SemIR::Inst inst) -> void;
+  auto AddInstAndPush(Parse::NodeId parse_node, SemIR::Inst inst) -> void;
+
+  // Adds a package's imports to name lookup, with all libraries together.
+  // sem_irs will all be non-null; has_load_error must be used for any errors.
+  auto AddPackageImports(Parse::NodeId import_node, IdentifierId package_id,
+                         llvm::ArrayRef<const SemIR::File*> sem_irs,
+                         bool has_load_error) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Parse::Node name_node, SemIR::NameId name_id,
+  auto AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
                        SemIR::InstId target_id) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
-  auto LookupNameInDecl(Parse::Node parse_node, SemIR::NameId name_id,
+  auto LookupNameInDecl(Parse::NodeId parse_node, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
-  auto LookupUnqualifiedName(Parse::Node parse_node, SemIR::NameId name_id)
+  auto LookupUnqualifiedName(Parse::NodeId parse_node, SemIR::NameId name_id)
       -> SemIR::InstId;
+
+  // Performs a name lookup in a specified scope, returning the referenced
+  // instruction. Does not look into extended scopes. Returns an invalid
+  // instruction if the name is not found.
+  auto LookupNameInExactScope(SemIR::NameId name_id,
+                              const SemIR::NameScope& scope) -> SemIR::InstId;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
-  auto LookupQualifiedName(Parse::Node parse_node, SemIR::NameId name_id,
+  auto LookupQualifiedName(Parse::NodeId parse_node, SemIR::NameId name_id,
                            SemIR::NameScopeId scope_id, bool required = true)
       -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(Parse::Node parse_node, SemIR::InstId prev_def_id)
-      -> void;
+  auto DiagnoseDuplicateName(Parse::NodeId parse_node,
+                             SemIR::InstId prev_def_id) -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::Node parse_node, SemIR::NameId name_id)
+  auto DiagnoseNameNotFound(Parse::NodeId parse_node, SemIR::NameId name_id)
       -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
 
-  // Pushes a new scope onto scope_stack_.
+  // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
+  // scopes. name_lookup_has_load_error is used to limit diagnostics when a
+  // given namespace may contain a mix of both successful and failed name
+  // imports.
   auto PushScope(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
-                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid)
-      -> void;
+                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
+                 bool name_lookup_has_load_error = false) -> void;
 
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
@@ -115,6 +133,19 @@ class Context {
     return current_scope().scope_id;
   }
 
+  // Returns true if currently at file scope.
+  auto at_file_scope() const -> bool { return scope_stack_.size() == 1; }
+
+  // Returns true if the current scope is of the specified kind.
+  template <typename InstT>
+  auto CurrentScopeIs() -> bool {
+    auto current_scope_inst_id = current_scope().scope_inst_id;
+    if (!current_scope_inst_id.is_valid()) {
+      return false;
+    }
+    return sem_ir_->insts().Get(current_scope_inst_id).kind() == InstT::Kind;
+  }
+
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
@@ -129,11 +160,11 @@ class Context {
   // If there is no `returned var` in scope, sets the given instruction to be
   // the current `returned var` and returns an invalid instruction ID. If there
   // is already a `returned var`, returns it instead.
-  auto SetReturnedVarOrGetExisting(SemIR::InstId bind_id) -> SemIR::InstId;
+  auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
-  // Follows NameReference instructions to find the value named by a given
+  // Follows NameRef instructions to find the value named by a given
   // instruction.
-  auto FollowNameReferences(SemIR::InstId inst_id) -> SemIR::InstId;
+  auto FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId;
 
   // Gets the constant value of the given instruction, if it has one.
   auto GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId;
@@ -141,26 +172,27 @@ class Context {
   // Adds a `Branch` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block, though not necessarily through this branch.
-  auto AddDominatedBlockAndBranch(Parse::Node parse_node) -> SemIR::InstBlockId;
+  auto AddDominatedBlockAndBranch(Parse::NodeId parse_node)
+      -> SemIR::InstBlockId;
 
   // Adds a `Branch` instruction branching to a new instruction block with a
   // value, and returns the ID of the new block. All paths to the branch target
   // must go through the current block.
-  auto AddDominatedBlockAndBranchWithArg(Parse::Node parse_node,
+  auto AddDominatedBlockAndBranchWithArg(Parse::NodeId parse_node,
                                          SemIR::InstId arg_id)
       -> SemIR::InstBlockId;
 
   // Adds a `BranchIf` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block.
-  auto AddDominatedBlockAndBranchIf(Parse::Node parse_node,
+  auto AddDominatedBlockAndBranchIf(Parse::NodeId parse_node,
                                     SemIR::InstId cond_id)
       -> SemIR::InstBlockId;
 
   // Handles recovergence of control flow. Adds branches from the top
   // `num_blocks` on the instruction block stack to a new block, pops the
   // existing blocks, and pushes the new block onto the instruction block stack.
-  auto AddConvergenceBlockAndPush(Parse::Node parse_node, int num_blocks)
+  auto AddConvergenceBlockAndPush(Parse::NodeId parse_node, int num_blocks)
       -> void;
 
   // Handles recovergence of control flow with a result value. Adds branches
@@ -170,15 +202,15 @@ class Context {
   // corresponding result values are the elements of `block_args`. Returns an
   // instruction referring to the result value.
   auto AddConvergenceBlockWithArgAndPush(
-      Parse::Node parse_node,
-      std::initializer_list<SemIR::InstId> blocks_and_args) -> SemIR::InstId;
+      Parse::NodeId parse_node, std::initializer_list<SemIR::InstId> block_args)
+      -> SemIR::InstId;
 
   // Add the current code block to the enclosing function.
   // TODO: The parse_node is taken for expressions, which can occur in
   // non-function contexts. This should be refactored to support non-function
   // contexts, and parse_node removed.
   auto AddCurrentCodeBlockToFunction(
-      Parse::Node parse_node = Parse::Node::Invalid) -> void;
+      Parse::NodeId parse_node = Parse::NodeId::Invalid) -> void;
 
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
@@ -193,12 +225,12 @@ class Context {
   // Individual struct type fields aren't canonicalized because they may have
   // name conflicts or other diagnostics during creation, which can use the
   // parse node.
-  auto CanonicalizeStructType(Parse::Node parse_node,
+  auto CanonicalizeStructType(Parse::NodeId parse_node,
                               SemIR::InstBlockId refs_id) -> SemIR::TypeId;
 
   // Handles canonicalization of tuple types. This may create a new tuple type
   // if the `type_ids` doesn't match an existing tuple type.
-  auto CanonicalizeTupleType(Parse::Node parse_node,
+  auto CanonicalizeTupleType(Parse::NodeId parse_node,
                              llvm::ArrayRef<SemIR::TypeId> type_ids)
       -> SemIR::TypeId;
 
@@ -206,19 +238,29 @@ class Context {
   // complete, or `false` if it could not be completed. A complete type has
   // known object and value representations.
   //
-  // If the type is not complete, `diagnoser` is invoked to diagnose the issue.
-  // The builder it returns will be annotated to describe the reason why the
-  // type is not complete.
+  // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
+  // if a `diagnoser` is provided. The builder it returns will be annotated to
+  // describe the reason why the type is not complete.
   auto TryToCompleteType(
       SemIR::TypeId type_id,
       std::optional<llvm::function_ref<auto()->DiagnosticBuilder>> diagnoser =
           std::nullopt) -> bool;
 
+  // Returns the type `type_id` as a complete type, or produces an incomplete
+  // type error and returns an error type. This is a convenience wrapper around
+  // TryToCompleteType.
+  auto AsCompleteType(SemIR::TypeId type_id,
+                      llvm::function_ref<auto()->DiagnosticBuilder> diagnoser)
+      -> SemIR::TypeId {
+    return TryToCompleteType(type_id, diagnoser) ? type_id
+                                                 : SemIR::TypeId::Error;
+  }
+
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
-  auto GetPointerType(Parse::Node parse_node, SemIR::TypeId pointee_type_id)
+  auto GetPointerType(Parse::NodeId parse_node, SemIR::TypeId pointee_type_id)
       -> SemIR::TypeId;
 
   // Removes any top-level `const` qualifiers from a type.
@@ -255,6 +297,11 @@ class Context {
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
+  // Get the Lex::TokenKind of a node for diagnostics.
+  auto token_kind(Parse::NodeId parse_node) -> Lex::TokenKind {
+    return tokens().GetKind(parse_tree().node_token(parse_node));
+  }
+
   auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
 
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
@@ -285,30 +332,33 @@ class Context {
 
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
+  auto decl_state_stack() -> DeclStateStack& { return decl_state_stack_; }
+
   // Directly expose SemIR::File data accessors for brevity in calls.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
     return sem_ir().identifiers();
   }
-  auto integers() -> ValueStore<IntegerId>& { return sem_ir().integers(); }
+  auto ints() -> ValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
   auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
     return sem_ir().string_literals();
   }
-  auto functions() -> ValueStore<SemIR::FunctionId, SemIR::Function>& {
+  auto functions() -> ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();
   }
-  auto classes() -> ValueStore<SemIR::ClassId, SemIR::Class>& {
-    return sem_ir().classes();
+  auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
+  auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
+    return sem_ir().interfaces();
+  }
+  auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId>& {
+    return sem_ir().cross_ref_irs();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
   }
-  auto types() -> ValueStore<SemIR::TypeId, SemIR::TypeInfo>& {
-    return sem_ir().types();
-  }
-  auto type_blocks()
-      -> SemIR::BlockValueStore<SemIR::TypeBlockId, SemIR::TypeId>& {
+  auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
+  auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }
   auto insts() -> SemIR::InstStore& { return sem_ir().insts(); }
@@ -347,6 +397,9 @@ class Context {
     // The name scope associated with this entry, if any.
     SemIR::NameScopeId scope_id;
 
+    // The previous state of name_lookup_has_load_error_, restored on pop.
+    bool prev_name_lookup_has_load_error;
+
     // Names which are registered with name_lookup_, and will need to be
     // unregistered when the scope ends.
     llvm::DenseSet<SemIR::NameId> names;
@@ -360,9 +413,9 @@ class Context {
 
   // A lookup result in the lexical lookup table `name_lookup_`.
   struct LexicalLookupResult {
-    // The node that was added to lookup.
-    SemIR::InstId node_id;
-    // The scope in which the node was added.
+    // The instruction that was added to lookup.
+    SemIR::InstId inst_id;
+    // The scope in which the instruction was added.
     ScopeIndex scope_index;
   };
 
@@ -386,6 +439,10 @@ class Context {
   // Forms a canonical type ID for a type. If the type is new, adds the
   // instruction to the current block.
   auto CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst) -> SemIR::TypeId;
+
+  // If the passed in instruction ID is a LazyImportRef, resolves it for use.
+  // Called when name lookup intends to return an inst_id.
+  auto ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
   auto current_scope() const -> const ScopeStackEntry& {
@@ -445,6 +502,9 @@ class Context {
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
 
+  // The stack of declarations that could have modifiers.
+  DeclStateStack decl_state_stack_;
+
   // Maps identifiers to name lookup results. Values are a stack of name lookup
   // results in the ancestor scopes. This offers constant-time lookup of names,
   // regardless of how many scopes exist between the name declaration and
@@ -455,6 +515,10 @@ class Context {
   // Names which no longer have lookup results are erased.
   llvm::DenseMap<SemIR::NameId, llvm::SmallVector<LexicalLookupResult>>
       name_lookup_;
+
+  // Whether name_lookup_ has load errors, updated whenever scope_stack_ is
+  // pushed or popped.
+  bool name_lookup_has_load_error_ = false;
 
   // Cache of the mapping from instructions to types, to avoid recomputing the
   // folding set ID.
@@ -470,7 +534,7 @@ class Context {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::Node parse_node)->bool;
+  auto Handle##Name(Context& context, Parse::NodeId parse_node) -> bool;
 #include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Check

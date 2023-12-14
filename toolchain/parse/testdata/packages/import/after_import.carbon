@@ -11,10 +11,10 @@ import B;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'A'},
+// CHECK:STDOUT:       {kind: 'PackageName', text: 'A'},
 // CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'B'},
+// CHECK:STDOUT:       {kind: 'PackageName', text: 'B'},
 // CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -8,21 +8,20 @@ namespace Carbon::Parse {
 
 // Handles VarAs(Decl|For).
 static auto HandleVar(Context& context, State finish_state,
-                      Lex::Token returned_token = Lex::Token::Invalid) -> void {
+                      Lex::TokenIndex returned_token = Lex::TokenIndex::Invalid)
+    -> void {
   auto state = context.PopState();
 
   // The finished variable declaration will start at the `var` or `returned`.
-  state.state = finish_state;
-  context.PushState(state);
+  context.PushState(state, finish_state);
 
-  context.PushState(State::VarAfterPattern);
+  context.PushState(state, State::VarAfterPattern);
 
-  context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
   if (returned_token.is_valid()) {
-    context.AddLeafNode(NodeKind::ReturnedSpecifier, returned_token);
+    context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
 
-  context.PushState(State::PatternAsVariable);
+  context.PushState(State::Pattern);
 }
 
 auto HandleVarAsDecl(Context& context) -> void {
@@ -36,13 +35,14 @@ auto HandleVarAsReturned(Context& context) -> void {
     CARBON_DIAGNOSTIC(ExpectedVarAfterReturned, Error,
                       "Expected `var` after `returned`.");
     context.emitter().Emit(*context.position(), ExpectedVarAfterReturned);
-    auto semi = context.SkipPastLikelyEnd(returned_token);
-    context.AddLeafNode(NodeKind::EmptyDecl, semi ? *semi : returned_token,
+    context.AddLeafNode(NodeKind::EmptyDecl,
+                        context.SkipPastLikelyEnd(returned_token),
                         /*has_error=*/true);
     context.PopAndDiscardState();
     return;
   }
 
+  context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
   HandleVar(context, State::VarFinishAsDecl, returned_token);
 }
 
@@ -76,9 +76,7 @@ auto HandleVarFinishAsDecl(Context& context) -> void {
     // TODO: Disambiguate between statement and member declaration.
     context.EmitExpectedDeclSemi(Lex::TokenKind::Var);
     state.has_error = true;
-    if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
-      end_token = *semi_token;
-    }
+    end_token = context.SkipPastLikelyEnd(state.token);
   }
   context.AddNode(NodeKind::VariableDecl, end_token, state.subtree_start,
                   state.has_error);

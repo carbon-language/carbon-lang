@@ -10,7 +10,6 @@
 #include "llvm/IR/Module.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Lower {
 
@@ -90,8 +89,8 @@ class FunctionContext {
   // initialization of `dest_id` from that initializer. This is a no-op if the
   // initialization was performed in-place, and otherwise performs a store or a
   // copy.
-  auto FinishInitialization(SemIR::TypeId type_id, SemIR::InstId dest_id,
-                            SemIR::InstId init_id) -> void;
+  auto FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
+                  SemIR::InstId source_id) -> void;
 
   auto llvm_context() -> llvm::LLVMContext& {
     return file_context_->llvm_context();
@@ -132,8 +131,7 @@ class FunctionContext {
 // Declare handlers for each SemIR::File instruction.
 #define CARBON_SEM_IR_INST_KIND(Name)                                \
   auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
-                    SemIR::Name inst)                                \
-      ->void;
+                    SemIR::Name inst) -> void;
 #include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::Lower

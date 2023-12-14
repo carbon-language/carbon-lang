@@ -54,6 +54,10 @@ class PrecedenceGroup {
   // operators have higher precedence than this.
   static auto ForType() -> PrecedenceGroup;
 
+  // Get the precedence level at which to parse the type expression between
+  // `impl` and `as`.
+  static auto ForImplAs() -> PrecedenceGroup;
+
   // Look up the operator information of the given prefix operator token, or
   // return std::nullopt if the given token is not a prefix operator.
   static auto ForLeading(Lex::TokenKind kind) -> std::optional<PrecedenceGroup>;
@@ -78,7 +82,7 @@ class PrecedenceGroup {
       -> OperatorPriority;
 
   // Get the associativity of this precedence group.
-  [[nodiscard]] auto GetAssociativity() const -> Associativity {
+  auto GetAssociativity() const -> Associativity {
     return static_cast<Associativity>(GetPriority(*this, *this));
   }
 

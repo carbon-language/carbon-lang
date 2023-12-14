@@ -56,10 +56,10 @@ CARBON_SEM_IR_BUILTIN_KIND(Error, "<error>")
 CARBON_SEM_IR_BUILTIN_KIND(BoolType, "bool")
 
 // The type of integer values and integer literals, currently always i32.
-CARBON_SEM_IR_BUILTIN_KIND(IntegerType, "i32")
+CARBON_SEM_IR_BUILTIN_KIND(IntType, "i32")
 
 // The type of floating point values and real literals, currently always f64.
-CARBON_SEM_IR_BUILTIN_KIND(FloatingPointType, "f64")
+CARBON_SEM_IR_BUILTIN_KIND(FloatType, "f64")
 
 // The type of string values and String literals.
 CARBON_SEM_IR_BUILTIN_KIND(StringType, "String")
@@ -70,7 +70,7 @@ CARBON_SEM_IR_BUILTIN_KIND(FunctionType, "<function>")
 // The type of bound method values.
 CARBON_SEM_IR_BUILTIN_KIND(BoundMethodType, "<bound method>")
 
-// The type of namespace names.
+// The type of namespace and imported package names.
 CARBON_SEM_IR_BUILTIN_KIND(NamespaceType, "<namespace>")
 
 // Keep invalid last, so that we can use values as array indices without needing

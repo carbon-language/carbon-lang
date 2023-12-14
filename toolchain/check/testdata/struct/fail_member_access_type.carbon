@@ -5,12 +5,15 @@
 // AUTOUPDATE
 
 var x: {.a: f64} = {.a = 4.0};
-// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:15: ERROR: Type `{.a: f64}` does not have a member `b`.
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:14: ERROR: Type `{.a: f64}` does not have a member `b`.
 // CHECK:STDERR: var y: i32 = x.b;
-// CHECK:STDERR:               ^
+// CHECK:STDERR:              ^~~
 var y: i32 = x.b;
 
-// CHECK:STDOUT: file "fail_member_access_type.carbon" {
+// CHECK:STDOUT: --- fail_member_access_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: f64}
 // CHECK:STDOUT:   %x.var: ref {.a: f64} = var x
 // CHECK:STDOUT:   %x: ref {.a: f64} = bind_name x, %x.var
@@ -21,6 +24,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   assign %x.var, %.loc7_29.3
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %x.ref: ref {.a: f64} = name_reference x, %x
+// CHECK:STDOUT:   %x.ref: ref {.a: f64} = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -4,5 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDOUT: file "empty.carbon" {
+// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {}
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

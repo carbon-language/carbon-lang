@@ -12,19 +12,27 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
 
-auto HandleCrossReference(FunctionContext& /*context*/,
-                          SemIR::InstId /*inst_id*/, SemIR::CrossReference inst)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << inst;
+template <typename InstT>
+static auto FatalErrorIfEncountered(InstT inst) -> void {
+  CARBON_FATAL()
+      << "Encountered an instruction that isn't expected to lower. It's "
+         "possible that logic needs to be changed in order to stop "
+         "showing this instruction in lowered contexts. Instruction: "
+      << inst;
 }
 
 auto HandleAddressOf(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::AddressOf inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
+}
+
+auto HandleAddrPattern(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                       SemIR::AddrPattern /*inst*/) -> void {
+  CARBON_FATAL() << "`addr` should be lowered by `BuildFunctionDefinition`";
 }
 
 auto HandleArrayIndex(FunctionContext& context, SemIR::InstId inst_id,
@@ -49,13 +57,7 @@ auto HandleArrayInit(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
                   SemIR::Assign inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.lhs_id).type_id();
-  context.FinishInitialization(storage_type_id, inst.lhs_id, inst.rhs_id);
-}
-
-auto HandleBinaryOperatorAdd(FunctionContext& /*context*/,
-                             SemIR::InstId /*inst_id*/,
-                             SemIR::BinaryOperatorAdd inst) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << inst;
+  context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
 }
 
 auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
@@ -145,16 +147,15 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  if (SemIR::GetInitializingRepresentation(context.sem_ir(), inst.type_id)
-          .has_return_slot()) {
+  if (SemIR::GetInitRepr(context.sem_ir(), inst.type_id).has_return_slot()) {
     args.push_back(context.GetValue(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
   }
 
   for (auto arg_id : arg_ids) {
     auto arg_type_id = context.sem_ir().insts().Get(arg_id).type_id();
-    if (SemIR::GetValueRepresentation(context.sem_ir(), arg_type_id).kind !=
-        SemIR::ValueRepresentation::None) {
+    if (SemIR::GetValueRepr(context.sem_ir(), arg_type_id).kind !=
+        SemIR::ValueRepr::None) {
       args.push_back(context.GetValue(arg_id));
     }
   }
@@ -174,37 +175,56 @@ auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleDereference(FunctionContext& context, SemIR::InstId inst_id,
-                       SemIR::Dereference inst) -> void {
+auto HandleCrossRef(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                    SemIR::CrossRef inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
+                 SemIR::Deref inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
 }
 
 auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                         SemIR::FunctionDecl inst) -> void {
-  CARBON_FATAL()
-      << "Should not be encountered. If that changes, we may want to change "
-         "higher-level logic to skip them rather than calling this. "
-      << inst;
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleImport(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                  SemIR::Import inst) -> void {
+  FatalErrorIfEncountered(inst);
 }
 
 auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
                           SemIR::InitializeFrom inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.dest_id).type_id();
-  context.FinishInitialization(storage_type_id, inst.dest_id, inst.src_id);
+  context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
 }
 
-auto HandleIntegerLiteral(FunctionContext& context, SemIR::InstId inst_id,
-                          SemIR::IntegerLiteral inst) -> void {
-  const llvm::APInt& i = context.sem_ir().integers().Get(inst.integer_id);
+auto HandleInterfaceDecl(FunctionContext& /*context*/,
+                         SemIR::InstId /*inst_id*/,
+                         SemIR::InterfaceDecl /*inst*/) -> void {
+  // No action to perform.
+}
+
+auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
+                      SemIR::IntLiteral inst) -> void {
+  const llvm::APInt& i = context.sem_ir().ints().Get(inst.int_id);
   // TODO: This won't offer correct semantics, but seems close enough for now.
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());
   context.SetLocal(inst_id, v);
 }
 
-auto HandleNameReference(FunctionContext& context, SemIR::InstId inst_id,
-                         SemIR::NameReference inst) -> void {
-  auto type_inst_id = context.sem_ir().GetTypeAllowBuiltinTypes(inst.type_id);
+auto HandleLazyImportRef(FunctionContext& /*context*/,
+                         SemIR::InstId /*inst_id*/, SemIR::LazyImportRef inst)
+    -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,
+                   SemIR::NameRef inst) -> void {
+  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
   if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
     return;
   }
@@ -214,10 +234,7 @@ auto HandleNameReference(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleNamespace(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                      SemIR::Namespace inst) -> void {
-  CARBON_FATAL()
-      << "Should not be encountered. If that changes, we may want to change "
-         "higher-level logic to skip them rather than calling this. "
-      << inst;
+  FatalErrorIfEncountered(inst);
 }
 
 auto HandleNoOp(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -225,8 +242,8 @@ auto HandleNoOp(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   // No action to take.
 }
 
-auto HandleParameter(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                     SemIR::Parameter /*inst*/) -> void {
+auto HandleParam(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                 SemIR::Param /*inst*/) -> void {
   CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
 }
 
@@ -249,26 +266,20 @@ auto HandleReturn(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleReturnExpr(FunctionContext& context, SemIR::InstId /*inst_id*/,
                       SemIR::ReturnExpr inst) -> void {
-  switch (SemIR::GetInitializingRepresentation(
-              context.sem_ir(),
-              context.sem_ir().insts().Get(inst.expr_id).type_id())
-              .kind) {
-    case SemIR::InitializingRepresentation::None:
-    case SemIR::InitializingRepresentation::InPlace:
+  switch (
+      SemIR::GetInitRepr(context.sem_ir(),
+                         context.sem_ir().insts().Get(inst.expr_id).type_id())
+          .kind) {
+    case SemIR::InitRepr::None:
+    case SemIR::InitRepr::InPlace:
       // Nothing to return.
       context.builder().CreateRetVoid();
       return;
-    case SemIR::InitializingRepresentation::ByCopy:
+    case SemIR::InitRepr::ByCopy:
       // The expression produces the value representation for the type.
       context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
   }
-}
-
-auto HandleSelfParameter(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/,
-                         SemIR::SelfParameter /*inst*/) -> void {
-  CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
 }
 
 auto HandleSpliceBlock(FunctionContext& context, SemIR::InstId inst_id,

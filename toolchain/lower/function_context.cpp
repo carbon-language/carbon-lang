@@ -78,14 +78,13 @@ auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
   return synthetic_block_;
 }
 
-auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
-                                           SemIR::InstId dest_id,
-                                           SemIR::InstId source_id) -> void {
-  switch (SemIR::GetInitializingRepresentation(sem_ir(), type_id).kind) {
-    case SemIR::InitializingRepresentation::None:
-    case SemIR::InitializingRepresentation::InPlace:
+auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
+                                 SemIR::InstId source_id) -> void {
+  switch (SemIR::GetInitRepr(sem_ir(), type_id).kind) {
+    case SemIR::InitRepr::None:
+    case SemIR::InitRepr::InPlace:
       break;
-    case SemIR::InitializingRepresentation::ByCopy:
+    case SemIR::InitRepr::ByCopy:
       CopyValue(type_id, source_id, dest_id);
       break;
   }
@@ -93,16 +92,15 @@ auto FunctionContext::FinishInitialization(SemIR::TypeId type_id,
 
 auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
-  switch (auto rep = SemIR::GetValueRepresentation(sem_ir(), type_id);
-          rep.kind) {
-    case SemIR::ValueRepresentation::Unknown:
+  switch (auto rep = SemIR::GetValueRepr(sem_ir(), type_id); rep.kind) {
+    case SemIR::ValueRepr::Unknown:
       CARBON_FATAL() << "Attempt to copy incomplete type";
-    case SemIR::ValueRepresentation::None:
+    case SemIR::ValueRepr::None:
       break;
-    case SemIR::ValueRepresentation::Copy:
+    case SemIR::ValueRepr::Copy:
       builder().CreateStore(GetValue(source_id), GetValue(dest_id));
       break;
-    case SemIR::ValueRepresentation::Pointer: {
+    case SemIR::ValueRepr::Pointer: {
       const auto& layout = llvm_module().getDataLayout();
       auto* type = GetType(type_id);
       // TODO: Compute known alignment of the source and destination, which may
@@ -115,7 +113,7 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
                              align, layout.getTypeAllocSize(type));
       break;
     }
-    case SemIR::ValueRepresentation::Custom:
+    case SemIR::ValueRepr::Custom:
       CARBON_FATAL() << "TODO: Add support for CopyValue with custom value rep";
   }
 }

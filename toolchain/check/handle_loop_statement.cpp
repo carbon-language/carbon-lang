@@ -7,12 +7,12 @@
 
 namespace Carbon::Check {
 
-auto HandleBreakStatement(Context& /*context*/, Parse::Node /*parse_node*/)
+auto HandleBreakStatement(Context& /*context*/, Parse::NodeId /*parse_node*/)
     -> bool {
   return true;
 }
 
-auto HandleBreakStatementStart(Context& context, Parse::Node parse_node)
+auto HandleBreakStatementStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto& stack = context.break_continue_stack();
   if (stack.empty()) {
@@ -28,12 +28,12 @@ auto HandleBreakStatementStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleContinueStatement(Context& /*context*/, Parse::Node /*parse_node*/)
+auto HandleContinueStatement(Context& /*context*/, Parse::NodeId /*parse_node*/)
     -> bool {
   return true;
 }
 
-auto HandleContinueStatementStart(Context& context, Parse::Node parse_node)
+auto HandleContinueStatementStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   auto& stack = context.break_continue_stack();
   if (stack.empty()) {
@@ -49,23 +49,24 @@ auto HandleContinueStatementStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleForHeader(Context& context, Parse::Node parse_node) -> bool {
+auto HandleForHeader(Context& context, Parse::NodeId parse_node) -> bool {
   return context.TODO(parse_node, "HandleForHeader");
 }
 
-auto HandleForHeaderStart(Context& context, Parse::Node parse_node) -> bool {
+auto HandleForHeaderStart(Context& context, Parse::NodeId parse_node) -> bool {
   return context.TODO(parse_node, "HandleForHeaderStart");
 }
 
-auto HandleForIn(Context& context, Parse::Node parse_node) -> bool {
+auto HandleForIn(Context& context, Parse::NodeId parse_node) -> bool {
+  context.decl_state_stack().Pop(DeclState::Var);
   return context.TODO(parse_node, "HandleForIn");
 }
 
-auto HandleForStatement(Context& context, Parse::Node parse_node) -> bool {
+auto HandleForStatement(Context& context, Parse::NodeId parse_node) -> bool {
   return context.TODO(parse_node, "HandleForStatement");
 }
 
-auto HandleWhileConditionStart(Context& context, Parse::Node parse_node)
+auto HandleWhileConditionStart(Context& context, Parse::NodeId parse_node)
     -> bool {
   // Branch to the loop header block. Note that we create a new block here even
   // if the current block is empty; this ensures that the loop always has a
@@ -81,7 +82,7 @@ auto HandleWhileConditionStart(Context& context, Parse::Node parse_node)
   return true;
 }
 
-auto HandleWhileCondition(Context& context, Parse::Node parse_node) -> bool {
+auto HandleWhileCondition(Context& context, Parse::NodeId parse_node) -> bool {
   auto cond_value_id = context.node_stack().PopExpr();
   auto loop_header_id =
       context.node_stack().Peek<Parse::NodeKind::WhileConditionStart>();
@@ -103,7 +104,7 @@ auto HandleWhileCondition(Context& context, Parse::Node parse_node) -> bool {
   return true;
 }
 
-auto HandleWhileStatement(Context& context, Parse::Node parse_node) -> bool {
+auto HandleWhileStatement(Context& context, Parse::NodeId parse_node) -> bool {
   auto loop_exit_id =
       context.node_stack().Pop<Parse::NodeKind::WhileCondition>();
   auto loop_header_id =

@@ -5,13 +5,16 @@
 // AUTOUPDATE
 
 fn Procedure() -> i32 {
-  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+3]]:13: ERROR: `return var;` with no `returned var` in scope.
+  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+3]]:3: ERROR: `return var;` with no `returned var` in scope.
   // CHECK:STDERR:   return var;
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR:   ^~~~~~~~~~~
   return var;
 }
 
-// CHECK:STDOUT: file "fail_return_var_no_returned_var.carbon" {
+// CHECK:STDOUT: --- fail_return_var_no_returned_var.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Procedure = %Procedure}
 // CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -19,3 +22,4 @@ fn Procedure() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

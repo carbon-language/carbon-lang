@@ -7,16 +7,14 @@
 namespace Carbon::Parse {
 
 auto HandleLet(Context& context) -> void {
-  context.PopAndDiscardState();
+  auto state = context.PopState();
 
   // These will start at the `let`.
-  context.PushState(State::LetFinish);
-  context.PushState(State::LetAfterPattern);
-
-  context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
+  context.PushState(state, State::LetFinish);
+  context.PushState(state, State::LetAfterPattern);
 
   // This will start at the pattern.
-  context.PushState(State::PatternAsLet);
+  context.PushState(State::Pattern);
 }
 
 auto HandleLetAfterPattern(Context& context) -> void {
@@ -50,9 +48,7 @@ auto HandleLetFinish(Context& context) -> void {
   } else {
     context.EmitExpectedDeclSemi(Lex::TokenKind::Let);
     state.has_error = true;
-    if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
-      end_token = *semi_token;
-    }
+    end_token = context.SkipPastLikelyEnd(state.token);
   }
   context.AddNode(NodeKind::LetDecl, end_token, state.subtree_start,
                   state.has_error);

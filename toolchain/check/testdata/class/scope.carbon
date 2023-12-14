@@ -18,16 +18,20 @@ fn F() -> i32 {
   return 2;
 }
 
-fn Run() -> i32 {
-  return F() + Class.F();
+fn Run() {
+  var a: i32 = F();
+  var b: i32 = Class.F();
 }
 
+// CHECK:STDOUT: --- scope.carbon
+// CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc15: type = struct_type {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "scope.carbon" {
-// CHECK:STDOUT:   class_decl @Class, ()
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .F = %F, .Run = %Run}
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
@@ -50,7 +54,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_reference F, @Class.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F
 // CHECK:STDOUT:   %.loc13_13: init i32 = call %F.ref()
 // CHECK:STDOUT:   %.loc13_15.1: i32 = value_of_initializer %.loc13_13
 // CHECK:STDOUT:   %.loc13_15.2: i32 = converted %.loc13_13, %.loc13_15.1
@@ -63,17 +67,19 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   return %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run() -> i32 {
+// CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref.loc22_10: <function> = name_reference F, file.%F
-// CHECK:STDOUT:   %.loc22_11: init i32 = call %F.ref.loc22_10()
-// CHECK:STDOUT:   %Class.ref: type = name_reference Class, file.%Class
-// CHECK:STDOUT:   %F.ref.loc22_21: <function> = name_reference F, @Class.%F
-// CHECK:STDOUT:   %.loc22_23.1: init i32 = call %F.ref.loc22_21()
-// CHECK:STDOUT:   %.loc22_14.1: i32 = value_of_initializer %.loc22_11
-// CHECK:STDOUT:   %.loc22_14.2: i32 = converted %.loc22_11, %.loc22_14.1
-// CHECK:STDOUT:   %.loc22_23.2: i32 = value_of_initializer %.loc22_23.1
-// CHECK:STDOUT:   %.loc22_23.3: i32 = converted %.loc22_23.1, %.loc22_23.2
-// CHECK:STDOUT:   %.loc22_14.3: i32 = add %.loc22_14.2, %.loc22_23.3
-// CHECK:STDOUT:   return %.loc22_14.3
+// CHECK:STDOUT:   %a.var: ref i32 = var a
+// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %F.ref.loc22: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %.loc22: init i32 = call %F.ref.loc22()
+// CHECK:STDOUT:   assign %a.var, %.loc22
+// CHECK:STDOUT:   %b.var: ref i32 = var b
+// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %F.ref.loc23: <function> = name_ref F, @Class.%F
+// CHECK:STDOUT:   %.loc23: init i32 = call %F.ref.loc23()
+// CHECK:STDOUT:   assign %b.var, %.loc23
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

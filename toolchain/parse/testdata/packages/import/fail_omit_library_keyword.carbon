@@ -6,14 +6,14 @@
 
 // CHECK:STDERR: fail_omit_library_keyword.carbon:[[@LINE+3]]:17: ERROR: Missing `library` keyword.
 // CHECK:STDERR: import Geometry "Shapes";
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:                 ^~~~~~~~
 import Geometry "Shapes";
 
 // CHECK:STDOUT: - filename: fail_omit_library_keyword.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'Geometry'},
+// CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
 // CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

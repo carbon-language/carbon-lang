@@ -1981,7 +1981,7 @@ checks, like `ValidDate` with the same data layout as `Date`. Or to record the
 units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
 versus `Meters`. We should have some way of restricting the casts between a type
 and an adapter to address this use case. One possibility would be to add the
-keyword `private` before `adpat`, so you might write
+keyword `private` before `adapt`, so you might write
 `extend private adapt Date;`.
 
 ## Associated constants
@@ -4634,12 +4634,14 @@ This problem can also result from a chain of `impl` declarations, as in
 `A impls B` if `A* impls C`, if `Optional(A) impls B`, and so on.
 
 Determining whether a particular set of `impl` declarations terminates is
-[equivalent to the halting problem](https://sdleffler.github.io/RustTypeSystemTuringComplete/)
-(content warning: contains many instances of an obscene word as part of a
-programming language name), and so is undecidable in general. Carbon adopts an
-approximation that guarantees termination, but may mistakenly report an error
-when the query would terminate if left to run long enough. The hope is that this
-criteria is accurate on code that occurs in practice.
+equivalent to the halting problem (content warning: contains many instances of
+an obscene word as part of a programming language name
+[1](https://sdleffler.github.io/RustTypeSystemTuringComplete/),
+[2](https://forums.swift.org/t/two-more-undecidable-problems-in-the-swift-type-system/64814)),
+and so is undecidable in general. Carbon adopts an approximation that guarantees
+termination, but may mistakenly report an error when the query would terminate
+if left to run long enough. The hope is that this criteria is accurate on code
+that occurs in practice.
 
 Rule: the types in the `impl` query must never get strictly more complicated
 when considering the same `impl` declaration again. The way we measure the

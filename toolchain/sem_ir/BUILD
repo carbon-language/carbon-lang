@@ -65,8 +65,10 @@ cc_library(
     hdrs = ["file.h"],
     deps = [
         ":builtin_kind",
+        ":ids",
         ":inst",
         ":inst_kind",
+        ":type_info",
         ":value_stores",
         "//common:check",
         "//toolchain/base:value_store",
@@ -81,6 +83,7 @@ cc_library(
     hdrs = ["formatter.h"],
     deps = [
         ":file",
+        ":ids",
         ":inst_kind",
         "//toolchain/base:value_store",
         "//toolchain/lex:tokenized_buffer",
@@ -100,11 +103,22 @@ cc_library(
 )
 
 cc_library(
+    name = "type_info",
+    hdrs = ["type_info.h"],
+    deps = [
+        ":ids",
+        ":inst",
+        "//common:ostream",
+    ],
+)
+
+cc_library(
     name = "value_stores",
     srcs = ["value_stores.cpp"],
     hdrs = ["value_stores.h"],
     deps = [
         ":inst",
+        ":type_info",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "//toolchain/lex:token_kind",

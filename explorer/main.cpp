@@ -6,13 +6,7 @@
 
 #include <unistd.h>
 
-#include <chrono>
-#include <cstdio>
-#include <cstring>
-#include <iostream>
-#include <optional>
 #include <string>
-#include <vector>
 
 #include "common/error.h"
 #include "explorer/base/trace_stream.h"

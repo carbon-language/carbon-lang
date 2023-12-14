@@ -23,7 +23,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
   return var;
 }
 
-// CHECK:STDOUT: file "returned_var_scope.carbon" {
+// CHECK:STDOUT: --- returned_var_scope.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.UnrelatedScopes = %UnrelatedScopes, .EnclosingButAfter = %EnclosingButAfter}
 // CHECK:STDOUT:   %UnrelatedScopes: <function> = fn_decl @UnrelatedScopes
 // CHECK:STDOUT:   %EnclosingButAfter: <function> = fn_decl @EnclosingButAfter
 // CHECK:STDOUT: }
@@ -58,7 +61,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @EnclosingButAfter(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_reference b, %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
@@ -77,3 +80,4 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc22_16: i32 = bind_value %w
 // CHECK:STDOUT:   return %.loc22_16
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

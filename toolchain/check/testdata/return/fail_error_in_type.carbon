@@ -9,8 +9,12 @@
 // CHECK:STDERR:             ^
 fn Six() -> x;
 
-// CHECK:STDOUT: file "fail_error_in_type.carbon" {
+// CHECK:STDOUT: --- fail_error_in_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Six = %Six}
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error>;
+// CHECK:STDOUT:

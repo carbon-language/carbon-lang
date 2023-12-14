@@ -6,7 +6,7 @@
 
 let
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+15]]:21: ERROR: Expected pattern in `let` declaration.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+15]]:21: ERROR: Expected binding pattern.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+12]]:21: ERROR: `let` declarations must end with a `;`.
@@ -16,9 +16,9 @@ let
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'Name', text: '', has_error: yes},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: '', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:       {kind: 'PatternBinding', text: '', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'BindingPattern', text: '', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'LetDecl', text: 'let', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

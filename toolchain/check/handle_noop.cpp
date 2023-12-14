@@ -6,13 +6,30 @@
 
 namespace Carbon::Check {
 
-auto HandleEmptyDecl(Context& /*context*/, Parse::Node /*parse_node*/) -> bool {
+auto HandleEmptyDecl(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
   // Empty declarations have no actions associated.
   return true;
 }
 
-auto HandleInvalidParse(Context& context, Parse::Node parse_node) -> bool {
+auto HandleInvalidParse(Context& context, Parse::NodeId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInvalidParse");
+}
+
+auto HandleInvalidParseStart(Context& context, Parse::NodeId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleInvalidParseStart");
+}
+
+auto HandleInvalidParseSubtree(Context& context, Parse::NodeId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleInvalidParseSubtree");
+}
+
+auto HandlePlaceholder(Context& /*context*/, Parse::NodeId /*parse_node*/)
+    -> bool {
+  CARBON_FATAL()
+      << "Placeholder node should always be replaced before parse completes";
 }
 
 }  // namespace Carbon::Check

@@ -8,18 +8,18 @@ namespace Foo;
 
 // CHECK:STDERR: fail_arrow.carbon:[[@LINE+3]]:7: ERROR: `fn` requires a `(` for parameters.
 // CHECK:STDERR: fn Foo->Bar() {}
-// CHECK:STDERR:       ^
+// CHECK:STDERR:       ^~
 fn Foo->Bar() {}
 
 // CHECK:STDOUT: - filename: fail_arrow.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'Name', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'Name', text: 'Foo'},
-// CHECK:STDOUT:               {kind: 'NameExpr', text: 'Bar'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Foo'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Bar'},
 // CHECK:STDOUT:             {kind: 'CallExprStart', text: '(', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'CallExpr', text: ')', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 4},

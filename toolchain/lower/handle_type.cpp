@@ -36,8 +36,8 @@ auto HandleTupleType(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
-auto HandleUnboundFieldType(FunctionContext& context, SemIR::InstId inst_id,
-                            SemIR::UnboundFieldType /*inst*/) -> void {
+auto HandleUnboundElementType(FunctionContext& context, SemIR::InstId inst_id,
+                              SemIR::UnboundElementType /*inst*/) -> void {
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 

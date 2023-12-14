@@ -58,6 +58,7 @@ cc_library(
         "//common:struct_reflection",
         "//common:vlog",
         "//toolchain/base:pretty_stack_trace_function",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
@@ -131,7 +132,11 @@ cc_fuzz_test(
 cc_library(
     name = "tree_node_location_translator",
     hdrs = ["tree_node_location_translator.h"],
-    deps = [":tree"],
+    deps = [
+        ":tree",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lex:tokenized_buffer",
+    ],
 )
 
 cc_library(
