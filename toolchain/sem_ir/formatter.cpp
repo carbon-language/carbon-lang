@@ -448,8 +448,10 @@ class InstNamer {
 
       switch (inst.kind()) {
         case AddrPattern::Kind: {
-          // TODO: Visit the entire parameter block, not just the parameter
-          // refs, so that we visit the parameter inside an `addr` pattern.
+          // TODO: We need to assign names to parameters that appear in
+          // function declarations, which may be nested within a pattern. For
+          // now, just look through `addr`, but we should find a better way to
+          // visit parameters.
           CollectNamesInBlock(scope_idx, inst.As<AddrPattern>().inner_id);
           break;
         }
