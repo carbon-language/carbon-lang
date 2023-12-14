@@ -72,6 +72,26 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
                  << " in class element name";
 }
 
+// Returns whether `function_id` is an instance method, that is, whether it has
+// an implicit `self` parameter.
+static auto IsInstanceMethod(const SemIR::File& sem_ir,
+                             SemIR::FunctionId function_id) -> bool {
+  auto& function = sem_ir.functions().Get(function_id);
+  for (auto param_id :
+       sem_ir.inst_blocks().Get(function.implicit_param_refs_id)) {
+    auto inst = sem_ir.insts().Get(param_id);
+    if (auto addr = inst.TryAs<SemIR::AddrPattern>()) {
+      inst = sem_ir.insts().Get(addr->inner_id);
+    }
+    if (auto param = inst.TryAs<SemIR::Param>();
+        param && param->name_id == SemIR::NameId::SelfValue) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
     -> bool {
   SemIR::NameId name_id = context.node_stack().PopName();
@@ -169,18 +189,14 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
         CARBON_CHECK(function_decl)
             << "Unexpected value " << context.insts().Get(function_name_id)
             << " of function type";
-        auto& function = context.functions().Get(function_decl->function_id);
-        for (auto param_id :
-             context.inst_blocks().Get(function.implicit_param_refs_id)) {
-          if (context.insts().Get(param_id).Is<SemIR::SelfParam>()) {
-            context.AddInstAndPush(
-                parse_node,
-                SemIR::BoundMethod{
-                    parse_node,
-                    context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
-                    base_id, member_id});
-            return true;
-          }
+        if (IsInstanceMethod(context.sem_ir(), function_decl->function_id)) {
+          context.AddInstAndPush(
+              parse_node,
+              SemIR::BoundMethod{
+                  parse_node,
+                  context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
+                  base_id, member_id});
+          return true;
         }
       }
 
@@ -292,7 +308,7 @@ auto HandleSelfTypeNameExpr(Context& context, Parse::NodeId parse_node)
 }
 
 auto HandleSelfValueName(Context& context, Parse::NodeId parse_node) -> bool {
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(parse_node, SemIR::NameId::SelfValue);
   return true;
 }
 

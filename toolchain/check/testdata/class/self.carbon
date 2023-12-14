@@ -55,9 +55,9 @@ fn Class.G[addr self: Class*]() -> i32 {
 // CHECK:STDOUT:   return %.loc15_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.addr: Class*]() -> i32 {
+// CHECK:STDOUT: fn @G[addr %self: Class*]() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: Class* = name_ref self, %self.addr
+// CHECK:STDOUT:   %self.ref: Class* = name_ref self, %self
 // CHECK:STDOUT:   %.loc19_11: ref Class = deref %self.ref
 // CHECK:STDOUT:   %.loc19_17.1: ref i32 = class_element_access %.loc19_11, element0
 // CHECK:STDOUT:   %.loc19_17.2: i32 = bind_value %.loc19_17.1

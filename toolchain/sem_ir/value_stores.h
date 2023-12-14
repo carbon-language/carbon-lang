@@ -33,6 +33,13 @@ class InstStore {
     return Get(inst_id).As<InstT>();
   }
 
+  // Returns the requested instruction as the specified type, if it is of that
+  // type.
+  template <typename InstT>
+  auto TryGetAs(InstId inst_id) const -> std::optional<InstT> {
+    return Get(inst_id).TryAs<InstT>();
+  }
+
   // Overwrites a given instruction with a new value.
   auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
 

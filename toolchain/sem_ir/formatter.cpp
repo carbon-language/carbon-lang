@@ -447,6 +447,12 @@ class InstNamer {
       };
 
       switch (inst.kind()) {
+        case AddrPattern::Kind: {
+          // TODO: Visit the entire parameter block, not just the parameter
+          // refs, so that we visit the parameter inside an `addr` pattern.
+          CollectNamesInBlock(scope_idx, inst.As<AddrPattern>().inner_id);
+          break;
+        }
         case Branch::Kind: {
           AddBlockLabel(scope_idx, inst.As<Branch>().target_id, inst);
           break;
@@ -505,11 +511,6 @@ class InstNamer {
         }
         case Param::Kind: {
           add_inst_name_id(inst.As<Param>().name_id);
-          continue;
-        }
-        case SelfParam::Kind: {
-          add_inst_name(inst.As<SelfParam>().is_addr_self.index ? "self.addr"
-                                                                : "self");
           continue;
         }
         case VarStorage::Kind: {
@@ -682,11 +683,15 @@ class Formatter {
 
   auto FormatParamList(InstBlockId param_refs_id) -> void {
     llvm::ListSeparator sep;
-    for (const InstId param_id : sem_ir_.inst_blocks().Get(param_refs_id)) {
+    for (InstId param_id : sem_ir_.inst_blocks().Get(param_refs_id)) {
       out_ << sep;
       if (!param_id.is_valid()) {
         out_ << "invalid";
         continue;
+      }
+      if (auto addr = sem_ir_.insts().TryGetAs<SemIR::AddrPattern>(param_id)) {
+        out_ << "addr ";
+        param_id = addr->inner_id;
       }
       FormatInstName(param_id);
       out_ << ": ";

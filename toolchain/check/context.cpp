@@ -878,6 +878,7 @@ class TypeCompleter {
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case SemIR::AddressOf::Kind:
+      case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
@@ -910,7 +911,6 @@ class TypeCompleter {
       case SemIR::RealLiteral::Kind:
       case SemIR::Return::Kind:
       case SemIR::ReturnExpr::Kind:
-      case SemIR::SelfParam::Kind:
       case SemIR::SpliceBlock::Kind:
       case SemIR::StringLiteral::Kind:
       case SemIR::StructAccess::Kind:

@@ -80,9 +80,9 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   return %.loc19_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AddrSelfBase[%self.addr: Base*]() {
+// CHECK:STDOUT: fn @AddrSelfBase[addr %self: Base*]() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self.addr
+// CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self
 // CHECK:STDOUT:   %.loc23_4: ref Base = deref %self.ref
 // CHECK:STDOUT:   %.loc23_10: ref i32 = class_element_access %.loc23_4, element0
 // CHECK:STDOUT:   %.loc23_15: i32 = int_literal 1

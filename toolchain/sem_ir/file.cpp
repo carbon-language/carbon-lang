@@ -184,6 +184,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
       return 0;
 
     case AddressOf::Kind:
+    case AddrPattern::Kind:
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
     case Assign::Kind:
@@ -215,7 +216,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case RealLiteral::Kind:
     case Return::Kind:
     case ReturnExpr::Kind:
-    case SelfParam::Kind:
     case SpliceBlock::Kind:
     case StringLiteral::Kind:
     case StructAccess::Kind:
@@ -384,6 +384,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         break;
       }
       case AddressOf::Kind:
+      case AddrPattern::Kind:
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
       case Assign::Kind:
@@ -417,7 +418,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case RealLiteral::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
-      case SelfParam::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:
@@ -494,6 +494,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case AddressOf::Kind:
+      case AddrPattern::Kind:
       case ArrayType::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
@@ -505,7 +506,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Param::Kind:
       case PointerType::Kind:
       case RealLiteral::Kind:
-      case SelfParam::Kind:
       case StringLiteral::Kind:
       case StructValue::Kind:
       case StructType::Kind:

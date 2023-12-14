@@ -1057,7 +1057,8 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
                         Parse::NodeId callee_parse_node,
-                        SemIR::SelfParam self_param, SemIR::InstId self_id)
+                        std::optional<SemIR::AddrPattern> addr_pattern,
+                        SemIR::Param self_param, SemIR::InstId self_id)
     -> SemIR::InstId {
   if (!self_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingObjectInMethodCall, Error,
@@ -1076,14 +1077,13 @@ static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
             "Initializing `{0}` parameter of method declared here.",
             llvm::StringLiteral);
         builder.Note(self_param.parse_node, InCallToFunctionSelf,
-                     self_param.is_addr_self.index
-                         ? llvm::StringLiteral("addr self")
-                         : llvm::StringLiteral("self"));
+                     addr_pattern ? llvm::StringLiteral("addr self")
+                                  : llvm::StringLiteral("self"));
       });
 
   // For `addr self`, take the address of the object argument.
   auto self_or_addr_id = self_id;
-  if (self_param.is_addr_self.index) {
+  if (addr_pattern) {
     self_or_addr_id = ConvertToValueOrRefExpr(context, self_or_addr_id);
     auto self = context.insts().Get(self_or_addr_id);
     switch (SemIR::GetExprCategory(context.sem_ir(), self_id)) {
@@ -1139,10 +1139,16 @@ auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
 
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_refs) {
-    auto param = context.insts().Get(implicit_param_id);
-    if (auto self_param = param.TryAs<SemIR::SelfParam>()) {
-      auto converted_self_id = ConvertSelf(
-          context, call_parse_node, callee_parse_node, *self_param, self_id);
+    auto pattern = context.insts().Get(implicit_param_id);
+    auto addr_pattern = pattern.TryAs<SemIR::AddrPattern>();
+    if (addr_pattern) {
+      pattern = context.insts().Get(addr_pattern->inner_id);
+    }
+    if (auto param = pattern.TryAs<SemIR::Param>();
+        param && param->name_id == SemIR::NameId::SelfValue) {
+      auto converted_self_id =
+          ConvertSelf(context, call_parse_node, callee_parse_node, addr_pattern,
+                      *param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }

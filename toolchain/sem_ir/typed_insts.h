@@ -44,6 +44,15 @@ struct AddressOf {
   InstId lvalue_id;
 };
 
+struct AddrPattern {
+  static constexpr auto Kind = InstKind::AddrPattern.Define("addr_pattern");
+
+  Parse::NodeId parse_node;
+  TypeId type_id;
+  // The `self` parameter.
+  InstId inner_id;
+};
+
 struct ArrayIndex {
   static constexpr auto Kind = InstKind::ArrayIndex.Define("array_index");
 
@@ -418,15 +427,6 @@ struct ReturnExpr {
   Parse::NodeId parse_node;
   // This is a statement, so has no type.
   InstId expr_id;
-};
-
-struct SelfParam {
-  static constexpr auto Kind = InstKind::SelfParam.Define("self_param");
-  static constexpr llvm::StringLiteral Name = "self";
-
-  Parse::NodeId parse_node;
-  TypeId type_id;
-  BoolValue is_addr_self;
 };
 
 struct SpliceBlock {

@@ -49,12 +49,12 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   .n = %n
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.addr: Class*](%self: i32) {
+// CHECK:STDOUT: fn @F[addr %self.loc13_17: Class*](%self.loc13_31: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref.loc14_5: Class* = name_ref self, %self.addr
+// CHECK:STDOUT:   %self.ref.loc14_5: Class* = name_ref self, %self.loc13_17
 // CHECK:STDOUT:   %.loc14_4: ref Class = deref %self.ref.loc14_5
 // CHECK:STDOUT:   %.loc14_10: ref i32 = class_element_access %.loc14_4, element0
-// CHECK:STDOUT:   %self.ref.loc14_15: i32 = name_ref r#self, %self
+// CHECK:STDOUT:   %self.ref.loc14_15: i32 = name_ref r#self, %self.loc13_31
 // CHECK:STDOUT:   assign %.loc14_10, %self.ref.loc14_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

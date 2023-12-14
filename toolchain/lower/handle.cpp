@@ -30,6 +30,11 @@ auto HandleAddressOf(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
 }
 
+auto HandleAddrPattern(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                       SemIR::AddrPattern /*inst*/) -> void {
+  CARBON_FATAL() << "`addr` should be lowered by `BuildFunctionDefinition`";
+}
+
 auto HandleArrayIndex(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::ArrayIndex inst) -> void {
   auto* array_value = context.GetValue(inst.array_id);
@@ -275,11 +280,6 @@ auto HandleReturnExpr(FunctionContext& context, SemIR::InstId /*inst_id*/,
       context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
   }
-}
-
-auto HandleSelfParam(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                     SemIR::SelfParam /*inst*/) -> void {
-  CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
 }
 
 auto HandleSpliceBlock(FunctionContext& context, SemIR::InstId inst_id,

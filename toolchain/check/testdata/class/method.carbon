@@ -86,7 +86,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc15_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.addr: Class*]() -> i32;
+// CHECK:STDOUT: fn @G[addr %self: Class*]() -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
