@@ -70,6 +70,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   .base = %.loc12_20.2
 // CHECK:STDOUT:   .SelfBase = %SelfBase
 // CHECK:STDOUT:   .AddrSelfBase = %AddrSelfBase
+// CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SelfBase[%self: Base]() -> i32 {

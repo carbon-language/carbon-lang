@@ -168,9 +168,30 @@ struct NameScope {
   // Names in the scope.
   llvm::DenseMap<NameId, InstId> names;
 
-  // Whether the scope corresponds to an import that failed. There may still be
-  // names from successful imports, or the current file.
-  bool has_load_error = false;
+  // Scopes extended by this scope.
+  //
+  // TODO: A `NameScopeId` is currently insufficient to describe an extended
+  // scope in general. For example:
+  //
+  //   class A(T:! type) {
+  //     extend base: B(T*);
+  //   }
+  //
+  // needs to describe the `T*` argument.
+  //
+  // Small vector size is set to 1: we expect that there will rarely be more
+  // than a single extended scope. Currently the only kind of extended scope is
+  // a base class, and there can be only one of those per scope.
+  // TODO: Revisit this once we have more kinds of extended scope and data.
+  // TODO: Consider using something like `TinyPtrVector` for this.
+  llvm::SmallVector<NameScopeId, 1> extended_scopes;
+
+  // Whether we have diagnosed an error in a construct that would have added
+  // names to this scope. For example, this can happen if an `import` failed or
+  // an `extend` declaration was ill-formed. If true, the `names` map is
+  // assumed to be missing names as a result of the error, and no further
+  // errors are produced for lookup failures in this scope.
+  bool has_error = false;
 };
 
 // Provides a ValueStore wrapper for an API specific to name scopes.

@@ -1032,10 +1032,17 @@ auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
 }
 
 auto ConvertToValueOfType(Context& context, Parse::NodeId parse_node,
-                          SemIR::InstId value_id, SemIR::TypeId type_id)
+                          SemIR::InstId expr_id, SemIR::TypeId type_id)
     -> SemIR::InstId {
-  return Convert(context, parse_node, value_id,
+  return Convert(context, parse_node, expr_id,
                  {.kind = ConversionTarget::Value, .type_id = type_id});
+}
+
+auto ConvertToValueOrRefOfType(Context& context, Parse::NodeId parse_node,
+                               SemIR::InstId expr_id, SemIR::TypeId type_id)
+    -> SemIR::InstId {
+  return Convert(context, parse_node, expr_id,
+                 {.kind = ConversionTarget::ValueOrRef, .type_id = type_id});
 }
 
 auto ConvertToBoolValue(Context& context, Parse::NodeId parse_node,

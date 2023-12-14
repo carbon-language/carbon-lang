@@ -74,7 +74,7 @@ import B;
 // CHECK:STDOUT: --- c.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {has_load_error}
+// CHECK:STDOUT:   package: <namespace> = namespace {has_error}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- cycle_child.carbon
