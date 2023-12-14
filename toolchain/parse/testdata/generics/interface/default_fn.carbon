@@ -53,7 +53,7 @@ interface Foo {
 // CHECK:STDOUT:               {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:             {kind: 'CallExprStart', text: '(', subtree_size: 4},
 // CHECK:STDOUT:               {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:             {kind: 'PrefixOperator', text: '-', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'PrefixOperatorMinus', text: '-', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'CallExpr', text: ')', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'ReturnStatement', text: ';', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 23},

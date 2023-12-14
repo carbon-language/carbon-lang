@@ -5,9 +5,9 @@
 // AUTOUPDATE
 
 fn Main() {
-  // CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:23: ERROR: Name `x` not found.
+  // CHECK:STDERR: fail_not_found.carbon:[[@LINE+3]]:16: ERROR: Name `x` not found.
   // CHECK:STDERR:   var y: i32 = package.x;
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR:                ^~~~~~~~~
   var y: i32 = package.x;
 }
 

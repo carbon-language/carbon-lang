@@ -330,12 +330,9 @@ class NodeStack {
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::IfExprElse:
       case Parse::NodeKind::IndexExpr:
-      case Parse::NodeKind::InfixOperator:
       case Parse::NodeKind::MemberAccessExpr:
       case Parse::NodeKind::PackageExpr:
       case Parse::NodeKind::ParenExpr:
-      case Parse::NodeKind::PostfixOperator:
-      case Parse::NodeKind::PrefixOperator:
       case Parse::NodeKind::ReturnType:
       case Parse::NodeKind::SelfTypeNameExpr:
       case Parse::NodeKind::SelfValueNameExpr:
@@ -386,6 +383,15 @@ class NodeStack {
         return IdKind::SoloParseNode;
 // Use x-macros to handle token cases.
 #define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) \
+  case Parse::NodeKind::InfixOperator##Name:             \
+    return IdKind::InstId;
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) \
+  case Parse::NodeKind::PostfixOperator##Name:             \
+    return IdKind::InstId;
+#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...) \
+  case Parse::NodeKind::PrefixOperator##Name:             \
+    return IdKind::InstId;
 #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) \
   case Parse::NodeKind::Name:                           \
     return IdKind::InstId;

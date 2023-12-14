@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:23: ERROR: Cannot convert from `i32` to `(i32, i32)` with `as`.
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:21: ERROR: Cannot convert from `i32` to `(i32, i32)` with `as`.
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
-// CHECK:STDERR:                       ^~
+// CHECK:STDERR:                     ^~~~~~~~~~~~~~~
 let n: (i32, i32) = 1 as (i32, i32);
 
 // CHECK:STDOUT: --- fail_no_conversion.carbon

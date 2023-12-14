@@ -51,7 +51,7 @@ struct UnitInfo {
   // Emitter information.
   Parse::NodeLocationTranslator translator;
   ErrorTrackingDiagnosticConsumer err_tracker;
-  DiagnosticEmitter<Parse::NodeId> emitter;
+  DiagnosticEmitter<Parse::NodeLocation> emitter;
 
   // A map of package names to outgoing imports. If the
   // import's target isn't available, the unit will be nullptr to assist with

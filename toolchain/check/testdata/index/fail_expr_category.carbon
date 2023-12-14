@@ -12,9 +12,9 @@ fn G(b: [i32; 3]) {
   // CHECK:STDERR:   var pb: i32* = &b[0];
   // CHECK:STDERR:                  ^
   var pb: i32* = &b[0];
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:6: ERROR: Expression is not assignable.
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:3: ERROR: Expression is not assignable.
   // CHECK:STDERR:   b[0] = 4;
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:   ^~~~
   b[0] = 4;
 
   // Indexing an ephemeral reference (materialized from an initializing
@@ -23,9 +23,9 @@ fn G(b: [i32; 3]) {
   // CHECK:STDERR:   var pf: i32* = &F()[0];
   // CHECK:STDERR:                  ^
   var pf: i32* = &F()[0];
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:8: ERROR: Expression is not assignable.
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:3: ERROR: Expression is not assignable.
   // CHECK:STDERR:   F()[0] = 4;
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:   ^~~~~~
   F()[0] = 4;
 }
 

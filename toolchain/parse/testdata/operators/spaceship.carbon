@@ -18,7 +18,7 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:         {kind: 'InfixOperator', text: '<=>', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'InfixOperatorLessEqualGreater', text: '<=>', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
