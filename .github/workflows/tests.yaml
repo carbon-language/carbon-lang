@@ -164,6 +164,9 @@ jobs:
           CACHE_VERSION: 1
         run: |
           cat >user.bazelrc <<EOF
+          # Make MODULE.bazel.lock updates an error in CI.
+          common --lockfile_mode=error
+
           # Enable remote cache for our CI but minimize downloads.
           build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ env.os_for_cache }}
           build --remote_download_minimal
