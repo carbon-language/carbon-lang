@@ -33,12 +33,8 @@ auto HandleVariableInitializer(Context& context, Parse::NodeId parse_node)
 
 auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   // Handle the optional initializer.
-  auto init_id = SemIR::InstId::Invalid;
-  Parse::NodeKind next_kind = context.node_stack().PeekParseNodeKind();
-  bool has_init = next_kind == Parse::NodeKind::VariableInitializer;
-  if (has_init) {
-    init_id = context.node_stack().PopExpr();
-  }
+  std::optional<SemIR::InstId> init_id =
+      context.node_stack().PopIf<Parse::NodeKind::VariableInitializer>();
 
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     return context.TODO(parse_node, "tuple pattern in var");
@@ -61,16 +57,16 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
       .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ReturnedModifier>();
 
   // If there was an initializer, assign it to the storage.
-  if (has_init) {
+  if (init_id.has_value()) {
     if (context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.
       context.TODO(parse_node, "Field initializer");
     } else {
-      init_id = Initialize(context, parse_node, value_id, init_id);
+      init_id = Initialize(context, parse_node, value_id, *init_id);
       // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
-      context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
+      context.AddInst(SemIR::Assign{parse_node, value_id, *init_id});
     }
   }
 
