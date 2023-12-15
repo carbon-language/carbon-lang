@@ -203,6 +203,22 @@ jobs:
         if: steps.filter.outputs.has_code == 'true'
         run: df -h
 
+      - name: Verify MODULE.bazel.lock
+        if: steps.filter.outputs.has_code == 'true'
+        run: |
+          exit_code=0
+          bazelisk mod deps --lockfile_mode=error || exit_code=$?
+          if (( $exit_code != 0 )); then
+            bazelisk mod deps --lockfile_mode=update
+            echo "MODULE.bazel.lock is out of date! Use below file for update."
+            echo "Platforms may require merging output, for example by applying"
+            echo "an update, re-running triggers, and applying the next update."
+            echo "============================================================"
+            cat MODULE.bazel.lock
+            echo "============================================================"
+            exit 1
+          fi
+
       # Build and run all targets on branch pushes to ensure we always have a
       # clean tree. We don't expect this to be an interactive path and so don't
       # optimize the latency of this step.
@@ -233,7 +249,12 @@ jobs:
           git fetch --depth=1 origin $GIT_BASE_SHA
 
           # Then use `target-determinator` as wrapped by our script.
-          ./scripts/target_determinator.py $GIT_BASE_SHA >$TARGETS_FILE
+          exit_code=0
+          ./scripts/target_determinator.py $GIT_BASE_SHA >$TARGETS_FILE || exit_code=$?
+          if (( $exit_code != 0 )); then
+            echo "./scripts/target_determinator.py failed! Running all tests."
+            echo "//..." >$TARGETS_FILE
+          fi
 
       # Build and run just the tests impacted by the PR or merge group.
       - name: Test (${{ matrix.build_mode }})
