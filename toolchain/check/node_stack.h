@@ -369,6 +369,7 @@ class NodeStack {
       case Parse::NodeKind::StructFieldType:
       case Parse::NodeKind::StructTypeLiteral:
       case Parse::NodeKind::TupleLiteral:
+      case Parse::NodeKind::VariableInitializer:
         return IdKind::InstId;
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
@@ -402,7 +403,6 @@ class NodeStack {
       case Parse::NodeKind::ReturnVarModifier:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
       case Parse::NodeKind::TuplePatternStart:
-      case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
         return IdKind::SoloParseNode;
 // Use x-macros to handle token cases.

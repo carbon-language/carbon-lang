@@ -26,8 +26,8 @@ auto HandleReturnedModifier(Context& context, Parse::NodeId parse_node)
 
 auto HandleVariableInitializer(Context& context, Parse::NodeId parse_node)
     -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
+  SemIR::InstId init_id = context.node_stack().PopExpr();
+  context.node_stack().Push(parse_node, init_id);
   return true;
 }
 
@@ -35,15 +35,9 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
   Parse::NodeKind next_kind = context.node_stack().PeekParseNodeKind();
-  if (next_kind == Parse::NodeKind::TuplePattern) {
-    return context.TODO(parse_node, "tuple pattern in var");
-  }
-  // TODO: find a more robust way to determine if there was an initializer.
-  bool has_init = next_kind != Parse::NodeKind::BindingPattern;
+  bool has_init = next_kind == Parse::NodeKind::VariableInitializer;
   if (has_init) {
     init_id = context.node_stack().PopExpr();
-    context.node_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
   }
 
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
