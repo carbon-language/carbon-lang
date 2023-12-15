@@ -814,7 +814,7 @@ CARBON_PARSE_STATE(ParenExprFinish)
 //
 //  ( ... )
 // ^
-//   1. ParamListAsRegular
+//   1. PatternListAsTuple
 //
 //  ...
 // ^
@@ -1156,35 +1156,18 @@ CARBON_PARSE_STATE(ImplBeforeAs)
 //
 // var ...             (variant is Decl)
 //    ^
-//   1. BindingPattern
-//   2. VarAfterPattern
-//   3. VarFinishAsDecl
-//
-// var (...)           (variant is Decl)
-//    ^
-//   1. ParamListAsRegular
+//   1. Pattern
 //   2. VarAfterPattern
 //   3. VarFinishAsDecl
 //
 // var ...             (variant is For)
 //    ^
-//   1. BindingPattern
-//   2. VarFinishAsFor
-//
-// var (...)           (variant is For)
-//    ^
-//   1. ParamListAsRegular
+//   1. Pattern
 //   2. VarFinishAsFor
 //
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
-//   1. BindingPattern
-//   2. VarAfterPattern
-//   3. VarFinishAsDecl
-//
-// returned var ...    (variant is Returned)
-// ^~~~~~~~~~~~
-//   1. ParamListAsRegular
+//   1. Pattern
 //   2. VarAfterPattern
 //   3. VarFinishAsDecl
 //
@@ -1232,14 +1215,14 @@ CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
 // Handles the start of a `let`.
 //
 // let (...)
-// ^~~
-//   1. ParamListAsRegular
+//    ^
+//   1. Pattern
 //   2. LetAfterPattern
 //   3. LetFinish
 //
 // let ...
 //    ^
-//   1. BindingPattern
+//   1. Pattern
 //   2. LetAfterPattern
 //   3. LetFinish
 CARBON_PARSE_STATE(Let)
