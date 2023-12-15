@@ -13,37 +13,31 @@
 
 namespace Carbon::Parse {
 
-// A child that can be any parse node.
-class AnyNode : public Node {
- public:
-  explicit AnyNode(Node node) : Node(node) {}
-};
-
-// Extract an `AnyNode` as a single child.
+// Extract an `NodeId` as a single child.
 template <>
-struct Tree::Extractable<AnyNode> {
+struct Tree::Extractable<NodeId> {
   static auto Extract(const Tree* /*tree*/, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<AnyNode> {
+                      SiblingIterator end) -> std::optional<NodeId> {
     if (it == end) {
       return std::nullopt;
     }
-    return AnyNode(*it++);
+    return NodeId(*it++);
   }
 };
 
-// Aliases for `AnyNode` to describe particular kinds of nodes.
+// Aliases for `NodeId` to describe particular kinds of nodes.
 //
 // TODO: We should check that the right kind of node is present.
-using AnyExpr = AnyNode;
-using AnyDecl = AnyNode;
-using AnyStatement = AnyNode;
-using AnyPattern = AnyNode;
+using AnyExpr = NodeId;
+using AnyDecl = NodeId;
+using AnyStatement = NodeId;
+using AnyPattern = NodeId;
 
 // A child that is known to be of the specified kind `T`.
 template <typename T>
-class Required : public Node {
+class Required : public NodeId {
  public:
-  explicit Required(Node node) : Node(node) {}
+  explicit Required(NodeId node_id) : NodeId(node_id) {}
 
   // Get the representation of this child node. Returns `nullopt` if the node is
   // invalid.
@@ -69,15 +63,15 @@ struct Tree::Extractable<Required<T>> {
 template <typename T>
 class Optional {
  public:
-  explicit Optional(Node node) : node_(node) {}
-  explicit Optional(std::nullopt_t) : node_(Node::Invalid) {}
+  explicit Optional(NodeId node_id) : node_id_(node_id) {}
+  explicit Optional(std::nullopt_t) : node_id_(NodeId::Invalid) {}
 
   // Returns whether this element was present.
-  auto is_present() -> bool { return node_ != Node::Invalid; }
+  auto is_present() -> bool { return node_id_ != NodeId::Invalid; }
 
   // Gets the `Node`, if this element was present.
-  auto GetNode() const -> std::optional<Node> {
-    return is_present() ? node_ : std::nullopt;
+  auto GetNode() const -> std::optional<NodeId> {
+    return is_present() ? node_id_ : std::nullopt;
   }
 
   // Gets the typed node, if it is present and valid. Note that this returns
@@ -88,7 +82,7 @@ class Optional {
   }
 
  private:
-  Node node_;
+  NodeId node_id_;
 };
 
 // Extract an `Optional<T>` as either zero or one child.
@@ -107,19 +101,19 @@ struct Tree::Extractable<Optional<T>> {
 template <typename T>
 class OptionalNot {
  public:
-  explicit OptionalNot(Node node) : node_(node) {}
-  explicit OptionalNot(std::nullopt_t) : node_(Node::Invalid) {}
+  explicit OptionalNot(NodeId node_id) : node_id_(node_id) {}
+  explicit OptionalNot(std::nullopt_t) : node_id_(NodeId::Invalid) {}
 
   // Returns whether this element was present.
-  auto is_present() -> bool { return node_ != Node::Invalid; }
+  auto is_present() -> bool { return node_id_ != NodeId::Invalid; }
 
   // Gets the `Node`, if this element was present.
-  auto GetNode() const -> std::optional<Node> {
-    return is_present() ? node_ : std::nullopt;
+  auto GetNode() const -> std::optional<NodeId> {
+    return is_present() ? node_id_ : std::nullopt;
   }
 
  private:
-  Node node_;
+  NodeId node_id_;
 };
 
 // Extract an `OptionalNot<T>` as either zero or one child.

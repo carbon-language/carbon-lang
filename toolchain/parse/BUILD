@@ -91,6 +91,7 @@ cc_library(
     name = "typed_nodes",
     hdrs = ["typed_nodes.h"],
     deps = [
+        ":node_kind",
         ":tree",
         "//common:struct_reflection",
         "//toolchain/lex:tokenized_buffer",

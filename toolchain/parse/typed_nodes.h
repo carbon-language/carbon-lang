@@ -19,7 +19,7 @@ struct LeafNode {
 // A pair of a list item and its optional following comma.
 template <typename Comma>
 struct ListItem {
-  AnyNode value;
+  NodeId value;
   Optional<Comma> comma;
 };
 
@@ -58,10 +58,10 @@ struct File {
 using EmptyDecl = LeafNode<NodeKind::EmptyDecl>;
 
 // A name in a non-expression context, such as a declaration.
-using Name = LeafNode<NodeKind::Name>;
+using IdentifierName = LeafNode<NodeKind::IdentifierName>;
 
 // A name in an expression context.
-using NameExpr = LeafNode<NodeKind::NameExpr>;
+using IdentifierNameExpr = LeafNode<NodeKind::IdentifierNameExpr>;
 
 // TODO: Library, package, import (likely to change soon).
 
@@ -72,7 +72,7 @@ struct Namespace {
   static constexpr auto Kind = NodeKind::Namespace;
   NamespaceStart introducer;
   // Name or QualifiedDecl.
-  AnyNode name;
+  NodeId name;
 };
 
 using CodeBlockStart = LeafNode<NodeKind::CodeBlockStart>;
@@ -86,23 +86,22 @@ struct CodeBlock {
 
 using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
 
-using ParameterListStart = LeafNode<NodeKind::ParameterListStart>;
-using ImplicitParameterListStart =
-    LeafNode<NodeKind::ImplicitParameterListStart>;
-using ParameterListComma = LeafNode<NodeKind::ParameterListComma>;
+using TuplePatternStart = LeafNode<NodeKind::TuplePatternStart>;
+using ImplicitParamListStart = LeafNode<NodeKind::ImplicitParamListStart>;
+using PatternListComma = LeafNode<NodeKind::PatternListComma>;
 
 // A parameter list: `(a: i32, b: i32)`.
-struct ParameterList {
-  static constexpr auto Kind = NodeKind::ParameterList;
-  Required<ParameterListStart> left_paren;
-  CommaSeparatedList<ParameterListComma, ParameterListStart> parameters;
+struct TuplePattern {
+  static constexpr auto Kind = NodeKind::TuplePattern;
+  Required<TuplePatternStart> left_paren;
+  CommaSeparatedList<PatternListComma, TuplePatternStart> params;
 };
 
 // An implicit parameter list: `[T:! type, self: Self]`.
-struct ImplicitParameterList {
-  static constexpr auto Kind = NodeKind::ImplicitParameterList;
-  Required<ImplicitParameterListStart> left_square;
-  CommaSeparatedList<ParameterListComma, ImplicitParameterListStart> parameters;
+struct ImplicitParamList {
+  static constexpr auto Kind = NodeKind::ImplicitParamList;
+  Required<ImplicitParamListStart> left_square;
+  CommaSeparatedList<PatternListComma, ImplicitParamListStart> params;
 };
 
 using FunctionIntroducer = LeafNode<NodeKind::FunctionIntroducer>;
@@ -118,8 +117,8 @@ template <const NodeKind& KindT>
 struct FunctionSignature {
   static constexpr auto Kind = KindT;
   Required<FunctionIntroducer> introducer;
-  Required<Name> name;
-  Required<ParameterList> parameters;
+  Required<IdentifierName> name;
+  Required<TuplePattern> params;
   Optional<ReturnType> return_type;
 };
 
@@ -152,10 +151,10 @@ struct ArrayExpr {
 };
 
 // A pattern binding, such as `name: Type`.
-struct PatternBinding {
-  static constexpr auto Kind = NodeKind::PatternBinding;
+struct BindingPattern {
+  static constexpr auto Kind = NodeKind::BindingPattern;
   // Either `Name` or `SelfValueName`.
-  AnyNode name;
+  NodeId name;
   AnyExpr type;
 };
 
@@ -168,7 +167,7 @@ struct Address {
 // A template binding: `template T:! type`.
 struct Template {
   static constexpr auto Kind = NodeKind::Template;
-  // This is a Required<GenericPatternBinding> in any valid program.
+  // This is a Required<GenericBindingPattern> in any valid program.
   // TODO: Should the parser enforce that?
   AnyPattern inner;
 };
@@ -186,14 +185,14 @@ struct LetDecl {
 };
 
 using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
-using ReturnedSpecifier = LeafNode<NodeKind::ReturnedSpecifier>;
+using ReturnedModifier = LeafNode<NodeKind::ReturnedModifier>;
 using VariableInitializer = LeafNode<NodeKind::VariableInitializer>;
 
 // A `var` declaration: `var a: i32;` or `var a: i32 = 5;`.
 struct VariableDecl {
   static constexpr auto Kind = NodeKind::VariableDecl;
   Required<VariableIntroducer> introducer;
-  Optional<ReturnedSpecifier> returned;
+  Optional<ReturnedModifier> returned;
   AnyPattern pattern;
 
   struct Initializer {
@@ -226,14 +225,14 @@ struct ContinueStatement {
 };
 
 using ReturnStatementStart = LeafNode<NodeKind::ReturnStatementStart>;
-using ReturnVarSpecifier = LeafNode<NodeKind::ReturnVarSpecifier>;
+using ReturnVarModifier = LeafNode<NodeKind::ReturnVarModifier>;
 
 // A return statement: `return;` or `return expr;` or `return var;`.
 struct ReturnStatement {
   static constexpr auto Kind = NodeKind::ReturnStatement;
   Required<ReturnStatementStart> introducer;
   OptionalNot<ReturnStatementStart> expr;
-  Optional<ReturnVarSpecifier> var;
+  Optional<ReturnVarModifier> var;
 };
 
 using ForHeaderStart = LeafNode<NodeKind::ForHeaderStart>;
@@ -316,13 +315,12 @@ struct IndexExpr {
   AnyExpr index;
 };
 
-using ParenExprOrTupleLiteralStart =
-    LeafNode<NodeKind::ParenExprOrTupleLiteralStart>;
+using ExprOpenParen = LeafNode<NodeKind::ExprOpenParen>;
 
 // A parenthesized expression: `(a)`.
 struct ParenExpr {
   static constexpr auto Kind = NodeKind::ParenExpr;
-  Required<ParenExprOrTupleLiteralStart> left_paren;
+  Required<ExprOpenParen> left_paren;
   AnyExpr expr;
 };
 
@@ -331,8 +329,8 @@ using TupleLiteralComma = LeafNode<NodeKind::TupleLiteralComma>;
 // A tuple literal: `()`, `(a, b, c)`, or `(a,)`.
 struct TupleLiteral {
   static constexpr auto Kind = NodeKind::TupleLiteral;
-  Required<ParenExprOrTupleLiteralStart> left_paren;
-  CommaSeparatedList<TupleLiteralComma, ParenExprOrTupleLiteralStart> elements;
+  Required<ExprOpenParen> left_paren;
+  CommaSeparatedList<TupleLiteralComma, ExprOpenParen> elements;
 };
 
 // The opening portion of a call expression: `F(`.
@@ -359,56 +357,73 @@ struct QualifiedDecl {
   static constexpr auto Kind = NodeKind::QualifiedDecl;
 
   // For now, this is either a Name or a QualifiedDecl.
-  AnyNode lhs;
+  NodeId lhs;
 
   // TODO: This will eventually need to support more general expressions, for
   // example `GenericType(type_args).ChildType(child_type_args).Name`.
-  Required<Name> rhs;
+  Required<IdentifierName> rhs;
 };
 
 // A simple member access expression: `a.b`.
 struct MemberAccessExpr {
   static constexpr auto Kind = NodeKind::MemberAccessExpr;
   AnyExpr lhs;
-  Required<Name> rhs;
+  Required<IdentifierName> rhs;
 };
 
 // A simple indirect member access expression: `a->b`.
 struct PointerMemberAccessExpr {
   static constexpr auto Kind = NodeKind::PointerMemberAccessExpr;
   AnyExpr lhs;
-  Required<Name> rhs;
-};
-
-// A literal.
-using Literal = LeafNode<NodeKind::Literal>;
-
-// A prefix operator expression.
-struct PrefixOperator {
-  static constexpr auto Kind = NodeKind::PrefixOperator;
-  AnyExpr operand;
+  Required<IdentifierName> rhs;
 };
 
 // The first operand of a short-circuiting infix operator: `a and` or `a or`.
 // The complete operator expression will be an InfixOperator with this as the
 // `lhs`.
-struct ShortCircuitOperand {
-  static constexpr auto Kind = NodeKind::ShortCircuitOperand;
+// FIXME: should this be a template?
+struct ShortCircuitOperandAnd {
+  static constexpr auto Kind = NodeKind::ShortCircuitOperandAnd;
+  AnyExpr operand;
+};
+struct ShortCircuitOperandOr {
+  static constexpr auto Kind = NodeKind::ShortCircuitOperandOr;
+  AnyExpr operand;
+};
+
+// A prefix operator expression.
+template <const NodeKind& KindT>
+struct PrefixOperator {
+  static constexpr auto Kind = KindT;
   AnyExpr operand;
 };
 
 // An infix operator expression.
+template <const NodeKind& KindT>
 struct InfixOperator {
-  static constexpr auto Kind = NodeKind::InfixOperator;
+  static constexpr auto Kind = KindT;
   AnyExpr lhs;
   AnyExpr rhs;
 };
 
 // A postfix operator expression.
+template <const NodeKind& KindT>
 struct PostfixOperator {
-  static constexpr auto Kind = NodeKind::PostfixOperator;
+  static constexpr auto Kind = KindT;
   AnyExpr operand;
 };
+
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) \
+  using Name = LeafNode<NodeKind::Name>;
+#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...) \
+  using PrefixOperator##Name = PrefixOperator<NodeKind::PrefixOperator##Name>;
+#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) \
+  using InfixOperator##Name = InfixOperator<NodeKind::InfixOperator##Name>;
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) \
+  using PostfixOperator##Name =                            \
+      PostfixOperator<NodeKind::PostfixOperator##Name>;
+#include "toolchain/parse/node_kind.def"
 
 // The `if` portion of an `if` expression: `if expr`.
 struct IfExprIf {

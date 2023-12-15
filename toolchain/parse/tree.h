@@ -78,6 +78,26 @@ class Tree : public Printable<Tree> {
     ApiOrImpl api_or_impl;
   };
 
+  // A trait type that should be specialized by types that can be extracted
+  // from a parse tree. A specialization should provide the following API:
+  //
+  // ```
+  // interface Extractable {
+  //   // Extract a value of this type from the sequence of nodes starting at
+  //   // `it`, and increment `it` past this type. Returns `std::nullopt` if
+  //   // the tree is malformed.
+  //   static auto Extract(Tree* tree, Tree::SiblingIterator& it,
+  //                       Tree::SiblingIterator end) -> std::optional<Self>;
+  // }
+  // ```
+  //
+  // Note that `SiblingIterator`s iterate in reverse order through the children
+  // of a node.
+  //
+  // Specializations of this class are defined in extract.h.
+  template <typename T>
+  struct Extractable;
+
   // Parses the token buffer into a `Tree`.
   //
   // This is the factory function which is used to build parse trees.
