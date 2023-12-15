@@ -233,7 +233,12 @@ jobs:
           git fetch --depth=1 origin $GIT_BASE_SHA
 
           # Then use `target-determinator` as wrapped by our script.
-          ./scripts/target_determinator.py $GIT_BASE_SHA >$TARGETS_FILE
+          exit_code=0
+          ./scripts/target_determinator.py $GIT_BASE_SHA >$TARGETS_FILE || exit_code=$?
+          if (( $exit_code != 0 )); then
+            echo "./scripts/target_determinator.py failed! Running all tests."
+            echo "//..." >$TARGETS_FILE
+          fi
 
       # Build and run just the tests impacted by the PR or merge group.
       - name: Test (${{ matrix.build_mode }})
