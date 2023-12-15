@@ -7,54 +7,6 @@ workspace(name = "carbon")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-skylib_version = "1.3.0"
-
-http_archive(
-    name = "bazel_skylib",
-    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/{0}/bazel-skylib-{0}.tar.gz".format(skylib_version),
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/{0}/bazel-skylib-{0}.tar.gz".format(skylib_version),
-    ],
-)
-
-###############################################################################
-# Python rules
-###############################################################################
-
-rules_python_version = "0.27.0"
-
-# Add Bazel's python rules and set up pip.
-http_archive(
-    name = "rules_python",
-    sha256 = "9acc0944c94adb23fba1c9988b48768b1bacc6583b52a2586895c5b7491e2e31",
-    strip_prefix = "rules_python-{0}".format(rules_python_version),
-    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/{0}.tar.gz".format(rules_python_version),
-)
-
-load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
-
-py_repositories()
-
-python_register_toolchains(
-    name = "python311",
-    python_version = "3.11",
-)
-
-load("@python311//:defs.bzl", "interpreter")
-load("@rules_python//python:pip.bzl", "pip_parse")
-
-# Create a central repo that knows about the pip dependencies.
-pip_parse(
-    name = "py_deps",
-    python_interpreter_target = interpreter,
-    requirements_lock = "//github_tools:requirements.txt",
-)
-
-load("@py_deps//:requirements.bzl", "install_deps")
-
-install_deps()
-
 ###############################################################################
 # C++ rules
 ###############################################################################
@@ -66,61 +18,6 @@ load(
 )
 
 clang_register_toolchains(name = "bazel_cc_toolchain")
-
-###############################################################################
-# Abseil libraries
-###############################################################################
-
-# Head as of 2023-07-31.
-abseil_version = "407f2fdd5ec6f79287919486aa5869b346093906"
-
-http_archive(
-    name = "com_google_absl",
-    sha256 = "953a914ac42f87caf5ed6a86890e183ae4e2bc69666a90c67605091d6e77e502",
-    strip_prefix = "abseil-cpp-{0}".format(abseil_version),
-    urls = ["https://github.com/abseil/abseil-cpp/archive/{0}.tar.gz".format(abseil_version)],
-)
-
-###############################################################################
-# RE2 libraries
-###############################################################################
-
-# Head as of 2023-07-31.
-re2_version = "960c861764ff54c9a12ff683ba55ccaad1a8f73b"
-
-http_archive(
-    name = "com_googlesource_code_re2",
-    sha256 = "8315f22198c25e9f7f1a3754566824710c08ddbb39d93e9920f4a131e871fc15",
-    strip_prefix = "re2-{0}".format(re2_version),
-    urls = ["https://github.com/google/re2/archive/{0}.tar.gz".format(re2_version)],
-)
-
-###############################################################################
-# GoogleTest libraries
-###############################################################################
-
-# Head as of 2023-07-31.
-googletest_version = "c875c4e2249ec124c24f72141b3780c22256fd44"
-
-http_archive(
-    name = "com_google_googletest",
-    sha256 = "21e0cd1110ba534409facccdda1bad90174e7ee7ded60c00dd2b43b4df654080",
-    strip_prefix = "googletest-{0}".format(googletest_version),
-    urls = ["https://github.com/google/googletest/archive/{0}.tar.gz".format(googletest_version)],
-)
-
-###############################################################################
-# Google Benchmark libraries
-###############################################################################
-
-benchmark_version = "1.6.1"
-
-http_archive(
-    name = "com_github_google_benchmark",
-    sha256 = "6132883bc8c9b0df5375b16ab520fac1a85dc9e4cf5be59480448ece74b278d4",
-    strip_prefix = "benchmark-{0}".format(benchmark_version),
-    urls = ["https://github.com/google/benchmark/archive/refs/tags/v{0}.tar.gz".format(benchmark_version)],
-)
 
 ###############################################################################
 # LLVM libraries
@@ -177,80 +74,6 @@ maybe(
         "https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz",
     ],
 )
-
-###############################################################################
-# Flex/Bison rules
-###############################################################################
-
-rules_m4_version = "0.2.3"
-
-http_archive(
-    name = "rules_m4",
-    sha256 = "10ce41f150ccfbfddc9d2394ee680eb984dc8a3dfea613afd013cfb22ea7445c",
-    urls = ["https://github.com/jmillikin/rules_m4/releases/download/v{0}/rules_m4-v{0}.tar.xz".format(rules_m4_version)],
-)
-
-load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
-
-# When building M4, disable all compiler warnings as we can't realistically fix
-# them anyways.
-m4_register_toolchains(extra_copts = ["-w"])
-
-rules_flex_version = "0.2.1"
-
-http_archive(
-    name = "rules_flex",
-    sha256 = "8929fedc40909d19a4b42548d0785f796c7677dcef8b5d1600b415e5a4a7749f",
-    urls = ["https://github.com/jmillikin/rules_flex/releases/download/v{0}/rules_flex-v{0}.tar.xz".format(rules_flex_version)],
-)
-
-load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
-
-# When building Flex, disable all compiler warnings as we can't realistically
-# fix them anyways.
-flex_register_toolchains(extra_copts = ["-w"])
-
-rules_bison_version = "0.2.2"
-
-http_archive(
-    name = "rules_bison",
-    sha256 = "2279183430e438b2dc77cacd7b1dbb63438971b2411406570f1ddd920b7c9145",
-    urls = ["https://github.com/jmillikin/rules_bison/releases/download/v{0}/rules_bison-v{0}.tar.xz".format(rules_bison_version)],
-)
-
-load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
-
-# When building Bison, disable all compiler warnings as we can't realistically
-# fix them anyways.
-bison_register_toolchains(extra_copts = ["-w"])
-
-###############################################################################
-# Protocol buffers - for structured fuzzer testing.
-###############################################################################
-
-rules_cc_version = "0.0.4"
-
-http_archive(
-    name = "rules_cc",
-    sha256 = "af6cc82d87db94585bceeda2561cb8a9d55ad435318ccb4ddfee18a43580fb5d",
-    strip_prefix = "rules_cc-{0}".format(rules_cc_version),
-    urls = ["https://github.com/bazelbuild/rules_cc/releases/download/{0}/rules_cc-{0}.tar.gz".format(rules_cc_version)],
-)
-
-rules_proto_version = "5.3.0-21.7"
-
-http_archive(
-    name = "rules_proto",
-    sha256 = "dc3fb206a2cb3441b485eb1e423165b231235a1ea9b031b4433cf7bc1fa460dd",
-    strip_prefix = "rules_proto-{0}".format(rules_proto_version),
-    urls = ["https://github.com/bazelbuild/rules_proto/archive/refs/tags/{0}.tar.gz".format(rules_proto_version)],
-)
-
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-
-rules_proto_dependencies()
-
-rules_proto_toolchains()
 
 ###############################################################################
 # libprotobuf_mutator - for structured fuzzer testing.

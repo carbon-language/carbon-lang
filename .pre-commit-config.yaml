@@ -219,6 +219,7 @@ repos:
 # This excludes third-party code, and patches to third-party code.
 exclude: |
   (?x)^(
+      MODULE.bazel.lock|
       bazel/patches/.*\.patch|
       third_party/examples/.*/carbon/.*|
       third_party/llvm-project/.*|

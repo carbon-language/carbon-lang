@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import re
 import subprocess
-from typing import Callable, Dict, List, NamedTuple, Optional, Set, Tuple
+from typing import Callable, Dict, List, NamedTuple, Set, Tuple
 from xml.etree import ElementTree
 
 import scripts_utils
@@ -27,8 +27,6 @@ class ExternalRepo(NamedTuple):
     remap: Callable[[str], str]
     # The target expression to gather rules for within the repo.
     target: str
-    # The repo to use for dependencies.
-    dep_repo: Optional[str]
 
 
 # Maps external repository names to a method translating bazel labels to file
@@ -39,31 +37,25 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     "@llvm-project": ExternalRepo(
         lambda x: re.sub(":", "/", re.sub("^(.*:(lib|include))/", "", x)),
         "...",
-        None,
     ),
     # :src/google/protobuf/descriptor.h -> google/protobuf/descriptor.h
     # - protobuf_headers is specified because there are multiple overlapping
     #   targets.
-    # - @com_google_protobuf is the official dependency, and we use it, but it
-    #   aliases @com_github_protocolbuffers_protobuf.
-    "@com_github_protocolbuffers_protobuf": ExternalRepo(
+    "@com_google_protobuf": ExternalRepo(
         lambda x: re.sub("^(.*:src)/", "", x),
         ":protobuf_headers",
-        "@com_google_protobuf",
     ),
     # :src/libfuzzer/libfuzzer_macro.h -> libfuzzer/libfuzzer_macro.h
     "@com_google_libprotobuf_mutator": ExternalRepo(
-        lambda x: re.sub("^(.*:src)/", "", x), "...", None
+        lambda x: re.sub("^(.*:src)/", "", x), "..."
     ),
     # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
-    "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "...", None),
+    "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
     # absl/flags:flag.h -> absl/flags/flag.h
-    "@com_google_absl": ExternalRepo(
-        lambda x: re.sub(":", "/", x), "...", None
-    ),
+    "@com_google_absl": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
     # :re2/re2.h -> re2/re2.h
     "@com_googlesource_code_re2": ExternalRepo(
-        lambda x: re.sub(":", "", x), ":re2", None
+        lambda x: re.sub(":", "", x), ":re2"
     ),
 }
 
@@ -94,6 +86,8 @@ def remap_file(label: str) -> str:
     repo, _, path = label.partition("//")
     if not repo:
         return path.replace(":", "/")
+    # Ignore the version, just use the repo name.
+    repo = repo.split("~", 1)[0]
     assert repo in EXTERNAL_REPOS, repo
     return EXTERNAL_REPOS[repo].remap(path)
 
@@ -175,9 +169,6 @@ def map_headers(
     """
     for rule_name, rule in rules.items():
         repo, _, path = rule_name.partition("//")
-        if repo and EXTERNAL_REPOS[repo].dep_repo:
-            rule_name = f"{EXTERNAL_REPOS[repo].dep_repo}//{path}"
-
         for header in rule.hdrs:
             if header in header_to_rule_map:
                 header_to_rule_map[header].add(rule_name)
